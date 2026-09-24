@@ -1,0 +1,519 @@
+{{--
+    Store → Security. (Lane C — Phase 18, items 6 and 7)
+
+    Pulled into resources/views/admin/app.blade.php at the very end, after that
+    file closes its raw block, so this runs once the console's own script has
+    defined window.go, window.kbbAddNavEntry and toast(). It registers its own
+    sidebar entry and wraps window.go, exactly as the screens beside it do, so
+    that one include is the whole of the change to that file.
+
+    ── WHAT THIS SCREEN IS FOR ──────────────────────────────────────────────
+
+    The owner asked for "a full fledge security module ... and provide report to
+    me on backend". The plan's own answer to that, written before any of it was
+    built, is that the module reports first and enforces later — because one
+    that starts blocking on day one blocks the owner, the payment provider's
+    webhooks and Google's crawler, gets switched off, and leaves the shop worse
+    off than before because everybody now believes it is protected.
+
+    So this screen SHOWS and changes nothing. It draws four things:
+
+      1. one verdict sentence, not a dashboard to be interpreted;
+      2. the failed sign-ins, including the ones the login throttle turned away;
+      3. the rate-limit trips, which vanish silently today;
+      4. the audit rows, each with what the value was before and after.
+
+    ── NOTHING BELOW MAY NAME BLADE'S RAW-BLOCK DIRECTIVES ──────────────────
+
+    Not in the code and not in this comment either. Blade pairs the first such
+    opening directive it finds anywhere in the file -- inside a comment
+    included -- with the next closing one, so writing the word in prose
+    swallows everything between them and serves the whole docblock to the
+    browser as visible text.
+
+    ── THE LAYOUT RULE ──────────────────────────────────────────────────────
+
+    Nothing here may be wider than its column at 390px: the owner reviews on a
+    phone. Every grid and flex child that can hold something wide carries
+    min-width:0, because a grid item's default min-width is auto — which is the
+    defect AdminScreenGridOverflowTest exists for, measured at 677px on the
+    Coupons screen.
+
+    AND THERE IS NO TABLE ON THIS SCREEN, which is the other half of that. An
+    audit row has seven fields and one of them is a setting value of unknown
+    length; laid out as a table it is 900px wide on every phone that opens it.
+    Each row is a grid that becomes a stack under 720px instead, in CSS, on the
+    one render — no JavaScript measures anything here, and none may: two tests
+    in this repo forbid the element-measuring APIs by name.
+
+    EVERY CLASS IS PREFIXED sx- AND APPEARS NOWHERE ELSE IN THE CONSOLE, and so
+    is every data- attribute anything clicks: app.blade.php binds delegated
+    listeners to `document` itself, each claiming a bare attribute name, and a
+    click on any element carrying one is handled by that listener whichever
+    screen it belongs to. `sec-` was NOT available — app.blade.php already has
+    `.sec-` rules of its own and `data-sec` is the sidebar's group attribute.
+--}}
+@verbatim
+<style>
+.sx-wrap{display:grid;gap:14px;min-width:0}
+.sx-wrap > *{min-width:0}
+.sx-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:16px;min-width:0}
+.sx-title{font-weight:650;font-size:15px}
+.sx-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin-top:3px;max-width:72ch}
+
+/* ── the verdict ──────────────────────────────────────────────────────────
+   One sentence, at the top, in the size of a heading, with the reasoning under
+   it in the size of body text. The three tones are the only colour on this
+   screen: a report that colours everything says nothing by colouring one
+   thing. */
+.sx-verdict{border-left:4px solid var(--ink-soft,#6b7280)}
+.sx-verdict.is-quiet{border-left-color:#15a85a}
+.sx-verdict.is-watch{border-left-color:#c2831a}
+.sx-verdict.is-act{border-left-color:#b4443c}
+.sx-vline{font-size:17px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.sx-verdict.is-quiet .sx-vline{color:#15a85a}
+.sx-verdict.is-watch .sx-vline{color:#c2831a}
+.sx-verdict.is-act .sx-vline{color:#b4443c}
+
+.sx-counts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;min-width:0}
+.sx-count{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:8px 11px;min-width:0}
+.sx-count b{display:block;font-size:19px;font-weight:750;font-variant-numeric:tabular-nums;line-height:1.2}
+.sx-count span{font-size:11.5px;color:var(--ink-soft,#6b7280)}
+
+/* ── a list of rows ─────────────────────────────────────────────────────── */
+.sx-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;min-width:0}
+.sx-rows{display:grid;gap:0;margin-top:10px;min-width:0}
+.sx-row{display:grid;grid-template-columns:150px 1fr;gap:4px 14px;align-items:start;
+        padding:11px 0;border-top:1px solid var(--border,#e6e6e6);min-width:0}
+.sx-row > *{min-width:0}
+.sx-rows > .sx-row:first-child{border-top:0}
+.sx-when{font-size:11.5px;color:var(--ink-soft,#6b7280);font-variant-numeric:tabular-nums;
+         overflow-wrap:anywhere}
+.sx-what{display:grid;gap:3px;min-width:0}
+.sx-sum{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.sx-meta{font-size:11.5px;color:var(--ink-soft,#6b7280);overflow-wrap:anywhere}
+.sx-meta b{font-weight:650;color:inherit}
+/* The evidence: what it was, and what it is now. A monospace face because
+   these are values rather than prose, and pre-wrap so a setting that ships
+   with newlines does not read as one run-on line. */
+.sx-diff{display:grid;gap:3px;margin-top:4px;font-size:11.5px;min-width:0}
+.sx-diff div{display:flex;gap:7px;min-width:0}
+.sx-diff i{flex:none;font-style:normal;font-weight:650;color:var(--ink-soft,#6b7280);width:42px}
+.sx-diff code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+              white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;
+              background:var(--chip,#f6f7f9);border-radius:6px;padding:2px 6px}
+.sx-pill{display:inline-block;font-size:10.5px;font-weight:650;border-radius:999px;
+         padding:1px 7px;border:1px solid var(--border,#e6e6e6);white-space:nowrap}
+.sx-pill.is-notice{border-color:#c2831a;color:#c2831a}
+.sx-pill.is-alert{border-color:#b4443c;color:#b4443c}
+.sx-empty{padding:18px 2px;color:var(--ink-soft,#6b7280);font-size:13px}
+.sx-off{border:1px dashed #c2831a;color:#c2831a;border-radius:10px;padding:9px 11px;
+        font-size:12px;line-height:1.5;margin-top:10px}
+
+/* ── the settings, the same four field types every module screen draws ──── */
+.sx-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.sx-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+        background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.sx-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.sx-fields{display:grid;gap:14px;margin-top:14px;min-width:0}
+.sx-f{display:grid;gap:5px;min-width:0}
+.sx-fh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
+.sx-fh label{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
+.sx-val{font-size:11.5px;font-weight:650;color:var(--accent,#15a85a);white-space:nowrap;
+        font-variant-numeric:tabular-nums}
+.sx-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:72ch}
+.sx-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
+.sx-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.sx-check input{margin-top:3px;flex:none;width:16px;height:16px}
+.sx-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
+.sx-btn{padding:8px 13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
+        color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.sx-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.sx-btn[disabled]{opacity:.45;cursor:default}
+.sx-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;
+         font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
+
+/* THE ONE BREAKPOINT. Two columns need 150px plus a readable second column;
+   below 720 the timestamp goes above the line it belongs to instead. Nothing
+   here is measured in JavaScript and nothing needs to be. */
+@media (max-width:720px){
+  .sx-row{grid-template-columns:1fr;gap:3px}
+  .sx-diff i{width:38px}
+}
+@media (max-width:640px){
+  .sx-card{padding:13px}
+  .sx-vline{font-size:15.5px}
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  var SCREEN = 'security';
+
+  var tabs = null, report = null, values = {}, open = null, banner = null, busy = false, seq = 0;
+
+  function cookie(n) {
+    var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return m ? decodeURIComponent(m.pop()) : '';
+  }
+
+  async function api(path, body) {
+    var opts = { headers: { Accept: 'application/json' }, credentials: 'same-origin' };
+    opts.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
+
+    if (body !== undefined) {
+      opts.method = 'POST';
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+
+    var base = window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '');
+    var r = await fetch(base + '/admin-api' + path, opts);
+    var payload = null;
+    try { payload = await r.json(); } catch (e) { payload = null; }
+    if (!r.ok) {
+      var err = new Error('api ' + path + ' -> ' + r.status);
+      err.status = r.status; err.body = payload;
+      throw err;
+    }
+    return payload;
+  }
+
+  /* EVERYTHING from the server goes through this on its way into the document.
+     A summary names a setting key and an email, `before`/`after` are values the
+     owner typed, and `actor` is whatever somebody put in a login box — not one
+     of them is a constant, so not one of them may be printed raw. */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function say(msg) { try { window.toast(msg); } catch (e) {} }
+
+  function explain(e, fallback) {
+    if (e && e.status === 404) {
+      return 'The Security endpoints are not in this server\'s compiled route table yet. '
+        + 'Clear the route cache and reload.';
+    }
+    if (e && e.status === 403) {
+      return 'Your role cannot open Store → Security. This screen is the owner\'s.';
+    }
+    return (e && e.body && e.body.error) ? e.body.error : fallback;
+  }
+
+  function addNavEntry() {
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label: 'Security',
+      icon: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/>',
+      group: 'Store',
+      after: ['payments', 'modules', 'analytics']
+    });
+  }
+
+  var previousGo = window.go;
+
+  window.go = function (id) {
+    if (id !== SCREEN) return previousGo.apply(this, arguments);
+
+    document.querySelectorAll('.side .nav-item').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.go === SCREEN);
+    });
+    var group = document.querySelector('#nav .nav-group[data-sec="Store"]');
+    if (group) group.classList.add('open');
+
+    var crumb = document.querySelector('#crumb');
+    var title = document.querySelector('#ptitle');
+    if (crumb) crumb.textContent = 'Store';
+    if (title) title.textContent = 'Security';
+
+    var side = document.querySelector('#side');
+    if (side) side.classList.remove('open');
+
+    render();
+    load();
+    return undefined;
+  };
+
+  async function load() {
+    var mine = ++seq;
+    busy = true; banner = null;
+    render();
+
+    try {
+      var body = await api('/security');
+      if (mine !== seq) return;
+
+      tabs = body.tabs || [];
+      report = body.report || null;
+      values = {};
+      tabs.forEach(function (t) { t.fields.forEach(function (f) { values[f.key] = f.value; }); });
+      if (!open || !tabs.some(function (t) { return t.key === open; })) {
+        open = tabs.length ? tabs[0].key : null;
+      }
+    } catch (e) {
+      if (mine !== seq) return;
+      banner = explain(e, 'The security report could not be read.');
+    } finally {
+      if (mine === seq) { busy = false; render(); }
+    }
+  }
+
+  async function save() {
+    if (busy) return;
+    busy = true; render();
+
+    var payload = {};
+    Object.keys(values).forEach(function (k) { payload[k] = values[k]; });
+
+    try {
+      var body = await api('/security', { settings: payload });
+      report = body.report || report;
+      say('Security settings saved.');
+    } catch (e) {
+      banner = explain(e, 'That could not be saved.');
+    } finally {
+      busy = false; render();
+    }
+  }
+
+  /* ------------------------------------------------------------- the fields */
+  function shown(f) {
+    return String(values[f.key]) + ((f.options || {}).unit || '');
+  }
+
+  function fieldHTML(f) {
+    var id = 'sx-' + f.key;
+    var help = f.help ? '<p class="sx-help">' + esc(f.help) + '</p>' : '';
+
+    if (f.type === 'bool') {
+      return '<div class="sx-f"><div class="sx-check">'
+        + '<input type="checkbox" id="' + id + '" data-sx-key="' + esc(f.key) + '"'
+        + (values[f.key] ? ' checked' : '') + '>'
+        + '<div><label for="' + id + '">' + esc(f.label) + '</label>' + help + '</div>'
+        + '</div></div>';
+    }
+
+    if (f.type === 'select') {
+      var opts = Object.keys(f.options || {}).map(function (k) {
+        return '<option value="' + esc(k) + '"' + (String(values[f.key]) === k ? ' selected' : '')
+          + '>' + esc(f.options[k]) + '</option>';
+      }).join('');
+      return '<div class="sx-f"><div class="sx-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<select id="' + id + '" data-sx-key="' + esc(f.key) + '">' + opts + '</select>' + help + '</div>';
+    }
+
+    if (f.type === 'range') {
+      var o = f.options || {};
+      return '<div class="sx-f"><div class="sx-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
+        + '<span class="sx-val" data-sx-val="' + esc(f.key) + '">' + esc(shown(f)) + '</span></div>'
+        + '<input type="range" id="' + id + '" data-sx-key="' + esc(f.key) + '"'
+        + ' min="' + o.min + '" max="' + o.max + '" step="' + o.step + '" value="' + esc(values[f.key]) + '">'
+        + help + '</div>';
+    }
+
+    return '<div class="sx-f"><div class="sx-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+      + '<input type="text" id="' + id + '" data-sx-key="' + esc(f.key) + '" value="'
+      + esc(values[f.key]) + '" autocomplete="off">' + help + '</div>';
+  }
+
+  /* -------------------------------------------------------------- the lists */
+  function pill(row) {
+    if (row.severity === 'alert') return '<span class="sx-pill is-alert">needs a look</span>';
+    if (row.severity === 'notice') return '<span class="sx-pill is-notice">notice</span>';
+    return '';
+  }
+
+  function rowHTML(row) {
+    var meta = [];
+    /* "TRIED AS", NOT "BY", on a failed sign-in. The actor on those rows is
+       whatever was typed into the email box — it names nobody, and printing it
+       as "by" would read as an accusation against the owner of that address,
+       who is very often the person reading this screen. */
+    var tried = row.event === 'signin.failed' || row.event === 'signin.blocked';
+    if (row.actor) {
+      meta.push((tried ? 'tried as <b>' : 'by <b>') + esc(row.actor) + '</b>'
+        + (!tried && row.role ? ' (' + esc(row.role) + ')' : ''));
+    }
+    if (row.ip) meta.push('from <b>' + esc(row.ip) + '</b>');
+    if (row.path) meta.push(esc(row.method ? row.method + ' ' + row.path : row.path));
+    if (row.hits > 1) meta.push('<b>' + esc(row.hits) + '</b> times, last at ' + esc(row.last_at));
+
+    var diff = '';
+    if (row.before !== null || row.after !== null) {
+      diff = '<div class="sx-diff">'
+        + (row.before !== null ? '<div><i>was</i><code>' + esc(row.before) + '</code></div>' : '')
+        + (row.after !== null ? '<div><i>now</i><code>' + esc(row.after) + '</code></div>' : '')
+        + '</div>';
+    }
+
+    return '<div class="sx-row">'
+      + '<div class="sx-when">' + esc(row.at) + '</div>'
+      + '<div class="sx-what">'
+      + '<div class="sx-sum">' + esc(row.summary) + ' ' + pill(row) + '</div>'
+      + (meta.length ? '<div class="sx-meta">' + meta.join(' · ') + '</div>' : '')
+      + diff
+      + '</div></div>';
+  }
+
+  function listHTML(title, note, rows, empty, off) {
+    return '<div class="sx-card">'
+      + '<div class="sx-head"><div class="sx-title">' + esc(title) + '</div>'
+      + '<span class="sx-meta">' + esc(rows.length) + ' shown</span></div>'
+      + '<p class="sx-sub">' + esc(note) + '</p>'
+      + (off ? '<div class="sx-off">' + esc(off) + '</div>' : '')
+      + (rows.length
+          ? '<div class="sx-rows">' + rows.map(rowHTML).join('') + '</div>'
+          : '<div class="sx-empty">' + esc(empty) + '</div>')
+      + '</div>';
+  }
+
+  function verdictHTML() {
+    var v = report.verdict, c = report.counts;
+
+    return '<div class="sx-card sx-verdict is-' + esc(v.tone) + '">'
+      + '<div class="sx-vline">' + esc(v.line) + '</div>'
+      + '<p class="sx-sub">' + esc(v.detail) + '</p>'
+      + '<div class="sx-counts">'
+      + '<div class="sx-count"><b>' + esc(c.changed) + '</b><span>administrative changes</span></div>'
+      + '<div class="sx-count"><b>' + esc(c.failed) + '</b><span>failed sign-ins</span></div>'
+      + '<div class="sx-count"><b>' + esc(c.tripped) + '</b><span>requests refused as too many</span></div>'
+      + '<div class="sx-count"><b>' + esc(c.total) + '</b><span>rows kept in all</span></div>'
+      + '</div>'
+      + '<p class="sx-help" style="margin-top:10px">The four counts above the line cover the last '
+      + esc(report.window_hours) + ' hours, except the last, which is everything still kept. '
+      + 'Rows are deleted once they are ' + esc(report.keep_days) + ' days old.</p>'
+      + '</div>';
+  }
+
+  function render() {
+    var host = document.querySelector('#content');
+    if (!host || (document.querySelector('#ptitle') || {}).textContent !== 'Security') return;
+
+    if (busy && !tabs) {
+      host.innerHTML = '<div class="sx-wrap"><div class="sx-card"><div class="sx-empty">Loading…</div></div></div>';
+      return;
+    }
+
+    if (!tabs || !report) {
+      host.innerHTML = '<div class="sx-wrap"><div class="sx-card">'
+        + '<div class="sx-title">Security</div>'
+        + '<p class="sx-sub">' + esc(banner || 'Nothing to show yet.') + '</p>'
+        + '<div class="sx-actions"><button class="sx-btn" data-sx-reload>Retry</button></div>'
+        + '</div></div>';
+      return;
+    }
+
+    var strip = tabs.map(function (t) {
+      return '<button type="button" class="sx-tab" data-sx-tab="' + esc(t.key) + '"'
+        + ' aria-selected="' + (t.key === open ? 'true' : 'false') + '">' + esc(t.label) + '</button>';
+    }).join('');
+
+    var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+    var rec = report.recording;
+
+    host.innerHTML = '<div class="sx-wrap">'
+      + (banner ? '<div class="sx-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
+          + esc(banner) + '</div>' : '')
+      + verdictHTML()
+      /* The long form of the one clause the verdict carries. The verdict says
+         "it blocks nothing"; this says what that buys and where blocking does
+         belong, without repeating those three words directly under them. */
+      + '<div class="sx-note">Blocking, content-security-policy and file-integrity checking are '
+      + '<b>later rounds, on purpose</b>. A module that starts refusing traffic on its first day refuses '
+      + 'the wrong thing \u2014 you, your payment provider\u2019s webhooks, Google\u2019s crawler \u2014 and gets '
+      + 'switched off, which leaves the shop worse off than one with no module at all, because everybody '
+      + 'now believes it is protected. Volumetric floods and most bot traffic are answered before the '
+      + 'request ever reaches this application too, and belong at Cloudflare or your host rather than here.</div>'
+
+      + listHTML('Failed sign-ins', 'Every wrong password on the admin login, and every attempt the '
+          + 'five-per-minute throttle turned away before it reached the password at all. The password '
+          + 'itself is never recorded — only the email that was tried.',
+          report.signin_trouble, 'No failed sign-in has been recorded.',
+          rec.signins ? '' : 'Recording sign-ins is switched off below, so nothing new will appear here.')
+
+      + listHTML('Requests refused as too many', 'The shop answers 429 to a caller that asks too often. '
+          + 'Until now it said so to that caller and forgot. Repeats from one address on one path collapse '
+          + 'onto a single row with a count.',
+          report.trips, 'No request has been refused as too many.',
+          rec.trips ? '' : 'Recording rate-limit trips is switched off below, so nothing new will appear here.')
+
+      + listHTML('Administrative changes', 'Settings, back-office accounts and core-update packages: who, '
+          + 'from where, and what the value said before. Values of settings whose name says they hold a '
+          + 'credential are withheld rather than copied here.',
+          report.changes, 'No administrative change has been recorded.',
+          rec.changes ? '' : 'Recording administrative changes is switched off below, so nothing new will appear here.')
+
+      + '<div class="sx-card">'
+      + '<div class="sx-title">Settings</div>'
+      + '<p class="sx-sub">What is recorded, what the verdict counts, and how long any of it is kept.</p>'
+      + '<div class="sx-tabs" style="margin-top:12px">' + strip + '</div>'
+      + '<p class="sx-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
+      + '<div class="sx-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
+      + '<div class="sx-actions">'
+      + '<button class="sx-btn is-primary" data-sx-save' + (busy ? ' disabled' : '') + '>'
+      + (busy ? 'Saving…' : 'Save') + '</button>'
+      + '<button class="sx-btn" data-sx-reload' + (busy ? ' disabled' : '') + '>Reload</button>'
+      + '<button class="sx-btn" data-sx-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
+      + '</div>'
+      + '<p class="sx-help" style="margin-top:8px">"Back to defaults" moves the controls in front of you. '
+      + 'Nothing is stored until you press Save, and Reload undoes it.</p>'
+      + '</div>'
+      + '</div>';
+  }
+
+  /* --------------------------------------------------------------- events */
+  document.addEventListener('input', function (e) {
+    var el = e.target.closest('[data-sx-key]');
+    if (!el) return;
+
+    var key = el.getAttribute('data-sx-key');
+    if (el.type === 'checkbox') values[key] = el.checked;
+    else if (el.type === 'range') values[key] = Number(el.value);
+    else values[key] = el.value;
+
+    /* A checkbox or a select can change what belongs on the screen, and both
+       are single clicks nobody is dragging, so they redraw. A range only
+       repaints its own read-out: rebuilding the controls mid-drag drops the
+       pointer capture. */
+    if (el.type === 'checkbox' || el.tagName === 'SELECT') { render(); return; }
+
+    var out = document.querySelector('[data-sx-val="' + key + '"]');
+    if (out) {
+      var f = null;
+      tabs.forEach(function (t) { t.fields.forEach(function (x) { if (x.key === key) f = x; }); });
+      if (f) out.textContent = shown(f);
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    var tab = e.target.closest('[data-sx-tab]');
+    if (tab) { open = tab.getAttribute('data-sx-tab'); render(); return; }
+    if (e.target.closest('[data-sx-save]')) { save(); return; }
+    if (e.target.closest('[data-sx-reload]')) { load(); return; }
+    if (e.target.closest('[data-sx-defaults]')) { defaults(); return; }
+  });
+
+  function defaults() {
+    if (!tabs) return;
+
+    tabs.forEach(function (t) {
+      t.fields.forEach(function (f) { values[f.key] = f['default']; });
+    });
+
+    render();
+    say('Back to the shipped values. Nothing is saved until you press Save.');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addNavEntry);
+  } else {
+    addNavEntry();
+  }
+})();
+</script>
+@endverbatim

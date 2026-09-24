@@ -265,6 +265,29 @@ class AppServiceProvider extends ServiceProvider
         \App\Support\OrderLocale::listen();
 
         /*
+         * `audit_events` — who changed which setting, who installed which
+         * package, who signed in from where (Lane C, Phase 18 items 6 and 7).
+         *
+         * One call, for the same reason as the two above: this file is shared
+         * by every lane, and the hooks live with the writer.
+         *
+         * HERE AND NOT IN bootstrap/app.php, AND NOT AS MIDDLEWARE. Not in
+         * bootstrap because that directory is on BuildPackage::NEVER_SHIP and
+         * UpdateGuard's forbidden list, so a registration there can never reach
+         * the live server in a package — the /ar block at the top of this
+         * method is the same story and it cost a release. Not as middleware
+         * because Phase 18's sequencing is REPORT BEFORE ENFORCE: what
+         * SecurityModule registers is model events, auth events and one
+         * listener on RequestHandled, which fires after the response exists
+         * and has nothing to return. Nothing it registers can refuse, delay or
+         * alter a single request.
+         *
+         * It records only while an admin is signed in, so the storefront and
+         * `php artisan migrate` write nothing at all.
+         */
+        \App\Services\SecurityModule::listen();
+
+        /*
          * Shipping zones, their locations and their methods are read on EVERY
          * storefront page — the header's free-delivery bar asks for the store
          * country's threshold — and used to cost two queries every time they
