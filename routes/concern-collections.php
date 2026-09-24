@@ -22,6 +22,32 @@ declare(strict_types=1);
 |
 |     GET /concern/{concern}/   a listing of the products tagged for one concern
 |
+| -- AND ONE MORE LINE, IN THE SAME COMMIT AS THE MOUNT ------------------------
+|
+| StorefrontEnglishUnchangedTest checks the route table against
+| EnglishRenderWalk::expectations() IN BOTH DIRECTIONS: a registered route with
+| no entry is red, and an entry for a route the router does not register is red
+| too. So this lane cannot pre-register the entry -- with the require absent it
+| would be the second kind of failure -- and the two halves have to land
+| together. Add this to tests/Support/EnglishRenderWalk.php, beside
+| 'everything-under-54-aed', in the same commit that adds the require:
+|
+|     'concern/{concern}' => [
+|         'params' => ['concern' => 'acne'],
+|         'render' => false,
+|         'why' => 'a concern page does not exist until the owner has tagged products for it; see ConcernCollectionsTest',
+|     ],
+|
+| `render => false` IS DELIBERATE and not a gap. A concern page 404s in a
+| shop's default state: it exists only once it has copy AND at least
+| App\Support\ConcernCollections::MIN_PRODUCTS live products tagged for it, and
+| this walk seeds a default shop in which nothing is tagged. So there is no
+| English body to pin against the base commit. Listing it as `render => true`
+| would pin a 404 page and then go red the day the owner tags his third acne
+| product, which is the wrong way round. The page's own English is pinned by
+| ConcernCollectionsTest, which builds the tagged rows that make it exist. The
+| Build my routine entries below are `render => false` for the same reason.
+|
 | ONE ROUTE FOR ALL EIGHT CONCERNS, and that is the point of the design. The
 | four existing collections take one line in routes/web.php each, with the key
 | pinned by ->defaults(). Doing that here would mean a route line — and so a

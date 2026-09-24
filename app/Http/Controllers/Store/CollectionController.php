@@ -248,6 +248,14 @@ class CollectionController extends Controller
         return view('store.collection', [
             'key' => 'concern-' . $concern,
             'title' => $title,
+            /*
+             * The short label for the card eyebrow, which is not the page's
+             * <h1>. RoutineConcerns' OWN shopper-facing key, not a second
+             * string: the concern already has a translated label and inventing
+             * a third wording for the same concept is the drift that class's
+             * header warns about.
+             */
+            'cardLabel' => __(\App\Support\RoutineConcerns::labelKey($concern)),
             'intro' => $intro,
             'products' => $products,
             'settings' => $this->settings,

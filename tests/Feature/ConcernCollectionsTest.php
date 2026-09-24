@@ -129,10 +129,11 @@ it('serves the concern page with its own copy, not a slug turned into a heading'
 
     $html = test()->get('/concern/acne/')->assertOk()->getContent();
 
-    // The heading is written for a shopper arriving from a search, not the
-    // back-office label an operator ticks ("Acne & blemishes").
+    // The HEADING is written for a shopper arriving from a search, rather than
+    // being the concern's short label with a slug turned into title case.
     expect($html)->toContain('Korean skincare for acne-prone skin')
-        ->and($html)->not->toContain('Acne &amp; blemishes');
+        ->and($html)->not->toContain('<h1>Acne &amp; blemishes</h1>')
+        ->and($html)->not->toContain('>acne<');
 });
 
 it('lists only the products tagged for that concern, and only live ones', function () {
@@ -272,4 +273,38 @@ it('ships exactly one concern live, because six thin pages cost more than one go
     // six." This is that instruction as a test, so the next lane to add a slug
     // has to read it.
     expect(ConcernCollections::ENABLED)->toBe(['acne']);
+});
+
+it('gives the product cards a short label without changing the four curated listings', function () {
+    /*
+     * The card eyebrow is the page title for the four curated listings, whose
+     * titles are two words and read well there. A concern title is a SENTENCE
+     * aimed at a search result, and it wrapped to two lines on every card and
+     * repeated the heading twenty-four times down the page.
+     *
+     * The short label is RoutineConcerns' own shopper-facing string, not a
+     * third wording for the same concept.
+     *
+     * MUTATION NOTE: change `$cardLabel ?? $title` back to `$title` in
+     * store/collection.blade.php and the first expectation goes red; pass a
+     * cardLabel from show() as well and the second goes red.
+     */
+    ccMount();
+    ccSettings();
+
+    foreach (range(1, ConcernCollections::MIN_PRODUCTS) as $i) {
+        ccProduct(['acne']);
+    }
+
+    $concern = test()->get('/concern/acne/')->assertOk()->getContent();
+
+    expect($concern)->toContain('kbb-card-cat">' . e(__(RoutineConcerns::labelKey('acne'))))
+        // The <h1> is still the sentence a search result wants.
+        ->and($concern)->toContain('Korean skincare for acne-prone skin');
+
+    // And the curated listing still prints its own title on its cards.
+    ccProduct([], ['name' => 'CC For New In']);
+
+    expect(test()->get('/new-in/')->assertOk()->getContent())
+        ->toContain('kbb-card-cat">' . e(__('store.collection.title_new_in')));
 });

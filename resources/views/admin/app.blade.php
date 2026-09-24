@@ -17504,11 +17504,19 @@ buildNav();
     var cards=Object.keys(findings).map(function(key){
       var f=findings[key], count=f.count|0, samples=f.samples||[];
       var rows=samples.map(function(s){
-        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px">'+
+        /* WRAPPING, AND A FLOOR UNDER THE NAME — round 2.
+           Six of the ten findings carry a `detail` ("3 of 3 shots", "62 chars"),
+           and on a 390px phone four inline-flex children on one unwrapped line
+           left the NAME column at nothing: the row read as a pill, a detail and
+           a URL running off the card, with the one thing identifying the row
+           squeezed to an ellipsis. The name is what an operator scans for.
+           Wrapping lets the address drop to its own line at narrow widths and
+           changes nothing at 1280, where all four still fit. */
+        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;flex-wrap:wrap">'+
           '<span class="pill" style="flex:0 0 auto">'+sesc(s.kind||'')+'</span>'+
-          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(s.name||s.url||'')+'</span>'+
+          '<span style="flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(s.name||s.url||'')+'</span>'+
           (s.detail?'<span style="color:var(--ink-soft);flex:0 0 auto">'+sesc(s.detail)+'</span>':'')+
-          '<span style="color:var(--ink-soft);flex:0 0 auto;font-size:11.5px">'+sesc(s.url||'')+'</span>'+
+          '<span style="color:var(--ink-soft);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px">'+sesc(s.url||'')+'</span>'+
         '</div>';
       }).join('');
       var more=count>samples.length?'<p class="description" style="margin:8px 0 0">+ '+(count-samples.length)+' more, not shown.</p>':'';
