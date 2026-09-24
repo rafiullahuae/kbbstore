@@ -114,39 +114,70 @@ it('derives the nested address correctly and then declines to write it, because 
     $grandchild = proposalFor('/product-category/makeup-removers/', $proposals);
 
     /*
-     * PIN ADVANCED, DELIBERATELY. This asserted DISCARD and a reason
-     * containing "404 handler" — which was correct while the redirects table
-     * was only consulted from the 404 handler. `CheckRedirects` is registered
-     * in the global pipeline now and runs BEFORE the router, so a row for an
-     * address this shop answers fires.
+     * PIN ADVANCED TWICE NOW, AND BOTH MOVES ARE KEPT, because the pair of them
+     * is the clearest record in this repository of a premise moving under a
+     * correct piece of reasoning.
      *
-     * That makes a DISCARD here the wrong answer and the dangerous one: a
-     * discard never reaches the list the owner approves, so the import would
-     * have thrown these away silently while the fix that reads them sat in the
-     * same package. It asks instead. The old assertion is quoted here rather
-     * than deleted, because the reasoning it recorded was right and only its
-     * premise moved:
+     * FIRST it asserted DISCARD with a reason containing "404 handler" — right
+     * while the redirects table was read only from the 404 handler, so a row
+     * for an address the shop answers could never fire:
      *
      *     ->and($child['decision'])->toBe(RedirectMap::DISCARD)
      *     ->and($child['reason'])->toContain('404 handler');
+     *
+     * THEN Lane GP registered CheckRedirects in the global pipeline, a row
+     * began to fire, and a silent discard became the dangerous answer — a
+     * discard never reaches the list the owner approves. So it asked:
+     *
+     *     ->and($child['decision'])->toBe(RedirectMap::ASK)
+     *     ->and($child['reason'])->toContain('consulted before the router');
+     *
+     * NOW IT DISCARDS AGAIN, and for a reason neither of the first two had.
+     * The question that was being asked was "the shop already redirects this —
+     * should a row override it?", and the honest answer was never in doubt:
+     * the shop sends /product-category/face-cleansers/ to
+     * /product-category/skincare/face-cleansers/, which is EXACTLY what this
+     * rule proposes. Asking is asking the owner to confirm a redirect against
+     * itself, once per category, and docs/FV-IMPORT-AT-VOLUME.md §10 is
+     * explicit about what a list of those is worth.
+     *
+     * And a row would be worse than redundant. The shop's answer is derived, so
+     * it follows the category when the tree is tidied up; a written row keeps
+     * pointing at the path the category had on import day, and it is the row
+     * that wins because the table is read before the router. See
+     * tests/Feature/SeoImportSensesUrlsTest.php, which measures exactly that.
+     *
+     * The rule remains ASK when the two destinations DISAGREE, which is the
+     * case immediately below and the one this question was written for.
      */
     expect($child)->not->toBeNull()
-        ->and($child['decision'])->toBe(RedirectMap::ASK)
+        ->and($child['decision'])->toBe(RedirectMap::DISCARD)
         ->and($child['target'])->toBe('/product-category/skincare/face-cleansers/')
-        ->and($child['reason'])->toContain('consulted before the router')
+        ->and($child['reason'])->toContain('already sends this address to exactly this destination')
         ->and($grandchild)->not->toBeNull()
-        ->and($grandchild['decision'])->toBe(RedirectMap::ASK)
+        ->and($grandchild['decision'])->toBe(RedirectMap::DISCARD)
         ->and($grandchild['target'])->toBe('/product-category/skincare/face-cleansers/makeup-removers/');
 
     /*
-     * And the address that IS worth a row: the flat root form kbeautybliss.com
-     * really published (App\Support\LegacyCategoryUrls), which 404s here.
+     * ▲ AND THE FLAT ROOT FORM IS NOW DISCARDED TOO, which is the round-1
+     * change arriving here.
+     *
+     * This asserted MIGRATE, with the note "the address that IS worth a row:
+     * the flat root form kbeautybliss.com really published, which 404s here".
+     * It does not 404 here any more. `/face-cleansers/` is one of the fifteen
+     * in LegacyCategoryUrls::PATHS, and CheckRedirects derives its 301 from the
+     * category itself — so the row this map would write is one the shop already
+     * makes for itself, and the only one of the two that can go stale.
+     *
+     * A root address that is NOT one of the fifteen still gets its row: the
+     * rollback test below turns on `/makeup-removers/`, which is exactly that.
      */
     $root = proposalFor('/face-cleansers/', $proposals);
 
     expect($root)->not->toBeNull()
-        ->and($root['decision'])->toBe(RedirectMap::MIGRATE)
-        ->and($root['target'])->toBe('/product-category/skincare/face-cleansers/');
+        ->and($root['decision'])->toBe(RedirectMap::DISCARD)
+        ->and($root['target'])->toBe('/product-category/skincare/face-cleansers/')
+        ->and($root['reason'])->toContain('already sends this address to exactly this destination');
 });
 
 it('never writes the base path into a redirect, because getPathInfo strips it', function () {
@@ -260,11 +291,33 @@ it('sends two rules claiming one address to the owner rather than picking one', 
 
     sort($decisions);
 
-    expect($decisions)->toBe([RedirectMap::ASK, RedirectMap::MIGRATE]);
+    /*
+     * ▲ BOTH ARE ASK NOW, AND THE WINNER'S ASK IS A NEW AND BETTER QUESTION.
+     *
+     * This read [ASK, MIGRATE]: the loser reported, the winner written. Since
+     * Lane SEO round 1 the shop DERIVES a 301 for `/face-cleansers/` — it is
+     * one of the fifteen — and it derives it to Face Cleansers' own nested
+     * path. This permalink row says the address belonged to term 15, Skincare.
+     *
+     * So the winner is no longer a row to write quietly: the export and the
+     * shop disagree about where this address goes, and that is precisely the
+     * `already-redirects` question. Round 2 REMOVES questions that were noise
+     * and ADDS this one, which is a real decision only the owner can make —
+     * and before round 1 there was nothing to notice the disagreement with.
+     */
+    expect($decisions)->toBe([RedirectMap::ASK, RedirectMap::ASK]);
+
+    $winner = array_values(array_filter(
+        $claims,
+        static fn (array $p): bool => $p['rule'] === 'permalink',
+    ))[0];
+
+    expect($winner['question'])->toBe(RedirectMap::Q_ALREADY_REDIRECTS)
+        ->and($winner['reason'])->toContain('NOT to where this rule would send it');
 
     $loser = array_values(array_filter(
         $claims,
-        static fn (array $p): bool => $p['decision'] === RedirectMap::ASK,
+        static fn (array $p): bool => $p['question'] === RedirectMap::Q_TWO_RULES_DISAGREE,
     ))[0];
 
     expect($loser['reason'])->toContain('permalink export');
@@ -314,18 +367,26 @@ it('rolls back exactly what it wrote and leaves an admin\'s own redirect alone',
         'auto_created' => false,
     ]);
 
-    // And one the map DID write, which an admin has since re-pointed.
-    // A row the map DID write. Root-flat, because that is the shape it writes
-    // now — the /product-category/ forms are discarded, never stored.
-    $edited = Redirect::query()->where('source', '/face-cleansers/')->firstOrFail();
+    /*
+     * And one the map DID write, which an admin has since re-pointed.
+     *
+     * ▲ `/makeup-removers/` AND NOT `/face-cleansers/`, WHICH THIS USED TO USE.
+     * Both are root-flat, which is the shape this map writes; the difference is
+     * that `face-cleansers` is one of the fifteen in LegacyCategoryUrls::PATHS,
+     * so since Lane SEO round 1 the shop derives that redirect itself and the
+     * map correctly writes no row for it. `makeup-removers` is not on that
+     * list, nothing derives it, and it is therefore still exactly what this
+     * test needs: a row the map really wrote.
+     */
+    $edited = Redirect::query()->where('source', '/makeup-removers/')->firstOrFail();
     $edited->update(['target' => '/somewhere-a-person-chose/']);
 
     $this->artisan('kbb:import-redirects --rollback')->assertExitCode(0);
 
     expect(Redirect::query()->where('source', '/an-admin-decision/')->exists())->toBeTrue()
-        ->and(Redirect::query()->where('source', '/face-cleansers/')->value('target'))
+        ->and(Redirect::query()->where('source', '/makeup-removers/')->value('target'))
         ->toBe('/somewhere-a-person-chose/')
-        ->and(Redirect::query()->where('source', '/makeup-removers/')->exists())->toBeFalse();
+        ->and(Redirect::query()->where('source', '/qa-nothing-here/')->exists())->toBeFalse();
 });
 
 it('does not overrule a redirect an admin created by hand', function () {

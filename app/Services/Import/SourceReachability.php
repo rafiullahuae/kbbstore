@@ -8,6 +8,7 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\Product;
 use App\Support\CategoryPath;
+use App\Support\LegacyCategoryUrls;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -145,6 +146,59 @@ final class SourceReachability
             return $this->categoryVerdict((string) $m[1]);
         }
 
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * THE DERIVED REDIRECT, AND WITHOUT IT THIS CLASS NOW LIES
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * routeVerdict() below asks the router and the tables, in the order
+         * the router asks them. That was the whole story until Lane SEO round
+         * 1: `CheckRedirects` now DERIVES a 301 for the fifteen legacy flat
+         * category addresses in `LegacyCategoryUrls::PATHS`, from the global
+         * pipeline, BEFORE the router is reached.
+         *
+         * So the router's answer for `/toners/` is no longer the shop's
+         * answer. Measured on this tree before this branch existed:
+         *
+         *     SourceReachability::verdict('/toners/')
+         *       → notfound, "PageController::post() throws a 404 for a slug
+         *          with no published post, so the redirect is reached"
+         *
+         * Every word of that was true when it was written and the address it
+         * describes now answers 301. routeVerdict()'s own comment still says
+         * "`/toners/` matches the blog catch-all `/{slug}/` and 404s, which is
+         * precisely why a redirect for it works" — the same sentence, one
+         * level down, and it is corrected there too.
+         *
+         * The cost of leaving it: `reachable()` reads `notfound` as "nothing
+         * serves this, a row here is pure gain" and the import writes thirty
+         * rows restating what the shop already does for itself. Measured at 38
+         * `migrate` proposals on a fully imported tree, of which 30 were that.
+         *
+         * ── THE DERIVED RULE ONLY, NEVER THE TABLE ──────────────────────────
+         *
+         * `LegacyCategoryUrls::landingPath()` and NOT `CheckRedirects::lookup()`,
+         * and the difference is not tidiness. lookup() consults the `redirects`
+         * TABLE first, and this class exists to help decide what to write INTO
+         * that table. Asking it would make the map's answer depend on its own
+         * previous run: the first import writes a row, the second sees the row
+         * and calls the address MOVED, and the reasons on the owner's screen
+         * change between two runs that imported identical data. The derived
+         * rule is a property of the shop's code and its categories, which is
+         * exactly the class of fact this verdict is about.
+         */
+        $derived = LegacyCategoryUrls::landingPath($path);
+
+        if ($derived !== null) {
+            return [
+                'status' => self::MOVED,
+                'to' => $derived,
+                'why' => 'this shop already forwards this address by itself, to '.$derived.' — it is one of the '
+                    .'old flat category addresses in LegacyCategoryUrls::PATHS, and CheckRedirects derives the '
+                    .'301 from the category that answers to it, with no row in the redirects table',
+            ];
+        }
+
         return $this->routeVerdict($path);
     }
 
@@ -166,8 +220,21 @@ final class SourceReachability
         }
 
         if ($resolved['status'] === 'redirect') {
+            /*
+             * `to_path` and not `to`. `to` has been through `Url::to()`, so it
+             * carries the base path and the reader's locale segment; `to_path`
+             * is the bare path, which is the spelling `redirects.target` uses
+             * and therefore the only one a proposal's target can be compared
+             * against. Comparing the prefixed form would make every one of
+             * these look like a DIFFERENT destination on a subfolder mount —
+             * the same prefix trap this file's neighbours already carry a
+             * warning about.
+             */
+            $toPath = trim((string) ($resolved['to_path'] ?? ''), '/');
+
             return [
                 'status' => self::MOVED,
+                'to' => $toPath === '' ? '' : '/product-category/'.$toPath.'/',
                 'why' => 'CategoryArchiveController already answers 301 here on its own, to '
                     .((string) ($resolved['to'] ?? '')).' — the leaf category exists and CategoryPath::resolve() '
                     .'sends the request to its canonical nested path without consulting the redirects table',
@@ -243,9 +310,16 @@ final class SourceReachability
 
         /*
          * A parameterised route. Its URI cannot say whether the controller will
-         * find a row or abort(404), and the difference is the whole question —
-         * `/toners/` matches the blog catch-all `/{slug}/` and 404s, which is
-         * precisely why a redirect for it works.
+         * find a row or abort(404), and the difference is the whole question.
+         *
+         * ▲ THE EXAMPLE THIS USED TO GIVE IS NO LONGER TRUE, and is corrected
+         * rather than deleted because it is what a reader reaches for. It read:
+         * "`/toners/` matches the blog catch-all `/{slug}/` and 404s, which is
+         * precisely why a redirect for it works." Since Lane SEO round 1 that
+         * address never reaches the router at all — the derived rule in
+         * verdict() above answers it first. An address that still makes the
+         * point is `/some-old-article-slug/`, which matches the same catch-all
+         * and 404s when no post carries the slug.
          */
         $name = (string) $route->getName();
 
