@@ -116,6 +116,63 @@ final class TranslationStore
     public const LONG_FIELDS = ['description', 'ingredients', 'how_to_use', 'content', 'body'];
 
     /**
+     * The group, and the fields in it, that a storefront template prints RAW.
+     *
+     * ── WHY A SANITISER LIVES IN A CACHE READER ────────────────────────────
+     *
+     * App\Support\RichText's header states the rule this enforces:
+     * partials/product-tabs.blade.php prints a product description with
+     * `{!! !!}` — twice, desktop panel and mobile accordion — so "the allowlist
+     * runs on the way IN to the database, on the server, every time. Nothing is
+     * trusted for having come from the editor's own toolbar."
+     *
+     * The English side obeys that in three places (ProductEditorApiController,
+     * CatalogProductsApiController, ProductImporter). The Arabic side had it in
+     * ONE: ProductEditorApiController hands TranslationInput::clean() its
+     * RICH_FIELDS, which is the T4b fix — the master plan records that the
+     * Arabic halves of two `{!! !!}` tabs going in unsanitised WAS the
+     * stored-XSS hole, not a two-line oversight beside it.
+     *
+     * TranslationsApiController::store() — Content -> Translations, the
+     * standalone screen, published immediately with no draft step — did not. It
+     * passed the owner's typing to put() verbatim. That bypass was INERT for as
+     * long as nothing on the storefront read a content translation, which is
+     * precisely what the render in this same cycle changed: the value now
+     * reaches `{!! $tab['body'] !!}`.
+     *
+     * So the rule is enforced HERE, at the one function all three writers go
+     * through (HasTranslations::writeTranslation, MachineTranslationRunner and
+     * TranslationsApiController), rather than added to the one caller that
+     * happened to be missing it. A sanitiser that each writer has to remember
+     * is a sanitiser one writer will not have; this is the choke point, and a
+     * fourth writer added later inherits the rule instead of re-opening the
+     * hole.
+     *
+     * ── WHY IT IS FOUR FIELDS IN ONE GROUP AND NOT EVERY VALUE ─────────────
+     *
+     * clean() parses its input as HTML. Over a NAME that is wrong in both
+     * directions: a product genuinely called "Serum <3" or a category described
+     * with a bare ampersand would come back re-encoded, and the shop would
+     * change under the owner for a value he typed correctly. The list is
+     * therefore exactly the set whose ENGLISH is cleaned by the product editor,
+     * on the group those columns belong to — parity per field, nothing wider.
+     *
+     * Deliberately NOT `pages.content` or `posts.body`, though both are printed
+     * raw as well. Their English is not sanitised either — those editors store
+     * operator HTML as trusted by a decision older than this lane — so cleaning
+     * only the Arabic would render one document differently in its two
+     * languages. That asymmetry is real and is reported rather than decided
+     * here.
+     *
+     * Held identical to ProductEditorApiController::RICH_FIELDS by a test
+     * rather than an import, because that file belongs to another lane.
+     */
+    public const RICH_FIELDS = ['short_description', 'description', 'ingredients', 'how_to_use'];
+
+    /** The group whose RICH_FIELDS are printed raw. */
+    public const RICH_GROUP = 'products';
+
+    /**
      * locale => group => item id => [ field => value ], published long prose.
      *
      * Filled by longFor() and cleared by flush(), exactly like $memo. There is
@@ -484,6 +541,11 @@ final class TranslationStore
         string $source = Translation::SOURCE_MANUAL,
         ?string $englishSource = null,
     ): Translation {
+        if ($value !== null && self::isRichField($group, $field)) {
+            // See RICH_FIELDS. On the way in, on the server, every time.
+            $value = \App\Support\RichText::clean($value);
+        }
+
         $attributes = [
             'value' => $value,
             'status' => $status,
@@ -504,5 +566,19 @@ final class TranslationStore
             'item_id' => $itemId,
             'field' => self::normaliseKey($field),
         ], $attributes);
+    }
+
+    /**
+     * Is this group/field pair one a storefront template prints unescaped?
+     *
+     * Normalised on both halves, because put() normalises before it writes and
+     * a caller may hand either form — a check on the raw string would let
+     * `Products` / `Description` past a rule that `products` / `description`
+     * is subject to, which is a sanitiser bypass spelled in capital letters.
+     */
+    public static function isRichField(string $group, string $field): bool
+    {
+        return self::normaliseKey($group) === self::RICH_GROUP
+            && in_array(self::normaliseKey($field), self::RICH_FIELDS, true);
     }
 }
