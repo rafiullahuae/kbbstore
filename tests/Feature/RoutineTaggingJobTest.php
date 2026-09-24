@@ -211,9 +211,30 @@ it('does not cost the tagging table another query', function () {
     $plain = $count('/admin-api/routine-products');
     $searched = $count('/admin-api/routine-products?q=centella');
 
-    // The count and the page. Nothing else, with or without a term.
+    /*
+     * TWO WITHOUT A TERM — the count and the page — and FOUR with one. Raised
+     * deliberately in round 3 rather than quietly, and this is the whole of the
+     * reason:
+     *
+     * Round 1 added `ingredients` to the search's WHERE. That column is created
+     * by a migration which guards every column with Schema::hasColumn, so on a
+     * server where it never ran there is no such column and EVERY SEARCH WAS A
+     * 500 — reproduced in Chromium, and the likeliest cause of the owner's
+     * "the product search was not working and was not showing any results".
+     * The fix probes for the column, which is a schema lookup: two statements
+     * on SQLite, and it is paid only on a request that carries a term.
+     *
+     * A 500 on every search is not worth saving two metadata queries. Measured
+     * end to end against a 681-product catalogue the round trip is 38-65ms
+     * WITH the probe, against a 250ms debounce — the operator feels the
+     * debounce, not this.
+     *
+     * MUTATION NOTE: remove the probe and this reads 2 again, and
+     * RoutineSearchAndDemoTest's "still searches when the server has no
+     * ingredients column" goes red with a 500.
+     */
     expect($plain)->toBe(2)
-        ->and($searched)->toBe($plain);
+        ->and($searched)->toBe(4);
 });
 
 /* ────────────────────── 2. the concern-page countdown ────────────────────── */

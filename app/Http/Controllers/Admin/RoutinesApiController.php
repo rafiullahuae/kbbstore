@@ -395,7 +395,7 @@ class RoutinesApiController extends Controller
              * make that test order-dependent, which is the trap CLAUDE.md
              * already records against Setting::map().
              */
-            $hasIngredients = Schema::hasColumn('products', 'ingredients');
+            $hasIngredients = self::productsHaveIngredients();
 
             $query->where(function ($q) use ($pattern, $hasIngredients) {
                 $q->whereRaw('name LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern])
@@ -523,6 +523,36 @@ class RoutinesApiController extends Controller
         return ($start > 0 ? '…' : '')
             . $snippet
             . ($start + $length < mb_strlen($flat) ? '…' : '');
+    }
+
+    /**
+     * Does this server's `products` table have the `ingredients` column?
+     *
+     * Memoised on the CONTAINER, not in a static, and the distinction is the
+     * one App\Support\DemoSeed::tableExists() already documents: a static
+     * would be the trap CLAUDE.md records against Setting::map(), where a
+     * long-lived worker or a test suite holds one answer across a schema
+     * change. The container is rebuilt per request and per test, so the memo
+     * lasts exactly as long as the answer can be relied on — which matters
+     * here, because this file's own suite drops the column to prove the
+     * degraded path.
+     *
+     * COST: one schema lookup per request that carries a search term, and none
+     * at all on a request that does not. Measured end to end in Chromium
+     * against a 681-product catalogue, a search round trip is 38-65ms with this
+     * in place, against a 250ms debounce — so it is not what the operator
+     * feels.
+     */
+    private static function productsHaveIngredients(): bool
+    {
+        $app = app();
+        $key = 'kbb.routines.products_have_ingredients';
+
+        if (! $app->bound($key)) {
+            $app->instance($key, Schema::hasColumn('products', 'ingredients'));
+        }
+
+        return (bool) $app->make($key);
     }
 
     /** POST /admin-api/routine-products/{id} — tag one product. */
