@@ -382,7 +382,26 @@ final class EnglishRenderWalk
      * byte 16152 -- the footer's own inline stylesheet. No other page in the
      * walk moved a byte.
      */
-    public const BASE_COMMIT = 'd7883f671cab6d99ea3bb76564538c232d6e1d08';
+    /*
+     * MOVED FORWARD for the footer's top and bottom padding becoming two
+     * controls instead of one.
+     *
+     * The owner asked for it: "the mobile checkout footer there's no control
+     * for inside footer block top padding". The bar now reads --sf-padt /
+     * --sf-padb, each declared as var(--sf-pady) so a bar nobody has touched
+     * computes the same padding it computed yesterday; the service emits the
+     * split pair only once one of the two has been moved off the shared value.
+     *
+     * The diff this test printed was that and nothing else -- ONE page,
+     * (with a basket) /checkout, at byte 8753, inside the footer's own inline
+     * stylesheet: the two new custom properties, their comment, and
+     * `padding:var(--sf-pady) var(--sf-padx)` becoming
+     * `padding:var(--sf-padt) var(--sf-padx) var(--sf-padb)`. No other page in
+     * the walk moved a byte. The header's side-padding control that shipped in
+     * the same commit lives in resources/css/kbb/kbb-checkout.css, which this
+     * walk does not read, so it is not in this diff by construction.
+     */
+    public const BASE_COMMIT = '05339c99faaf0abe8af8dfc7f62b1733aa9142bf';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
