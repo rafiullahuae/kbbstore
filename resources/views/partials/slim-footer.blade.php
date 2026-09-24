@@ -35,12 +35,26 @@
     $sfL2 = $sfC['l2_text'] !== '' ? $sf->url($sfC['l2_url']) : null;
     $sfL3 = $sfC['l3_text'] !== '' ? $sf->url($sfC['l3_url']) : null;
     $sfMarks = $sf->paymentMarks();
+
+    /* THE HEADER'S OWN WORDMARK, read live rather than copied into a setting
+       of its own -- Appearance -> Footer -> "The wordmark". Resolved here so
+       the markup below branches on a plain string rather than calling into a
+       service inside an @if. */
+    $sfWm = $sfC['brand_style'] === 'wordmark' ? $sf->headerLogo() : null;
+    $sfHasBrand = $sfWm !== null
+        ? ($sfWm['text'] !== '' || $sfWm['accent'] !== '')
+        : $sfC['brand'] !== '';
 @endphp
 <footer class="kbb-slimfoot{{ $sf->bodyClass() }}"{!! $sf->styleAttr() !!}>
     <div class="sf-in">
-@if ($sfC['brand'] !== '' || $sfC['byline'] !== '')
+@if ($sfHasBrand || $sfC['byline'] !== '')
         <div class="sf-brand">
-@if ($sfC['brand'] !== '')<b>{{ $sfC['brand'] }}</b>@endif
+{{-- WHOLE TAGS IN EVERY BRANCH, the same rule the phone and email links keep:
+     a <b> whose CONTENTS are interpolated differently per branch would leave
+     the scanner in StorefrontStringsAreKeyedTest reading a sentence. The two
+     halves of the wordmark are the header's own Wordmark and Accent word, so
+     neither is English this file owns. --}}
+@if ($sfWm !== null && $sfHasBrand)<b class="sf-wm">{{ $sfWm['text'] }}<span>{{ $sfWm['accent'] }}</span></b>@elseif ($sfHasBrand)<b>{{ $sfC['brand'] }}</b>@endif
 @if ($sfC['byline'] !== '')<i>{{ $sfC['byline'] }}</i>@endif
         </div>
 @endif
@@ -114,6 +128,14 @@
    correctness on either. */
 .kbb-slimfoot{
   --sf-pady:12px; --sf-padx:20px; --sf-gap:18px; --sf-f:1; --sf-bf:1;
+  /* The gap above the bar is a MARGIN and not padding: padding would be inside
+     the bar and would carry the tone with it, so a white bar on a cream page
+     would grow a white stripe above itself. A margin leaves the page's own
+     ground showing, which is what "space above the footer" means.
+     --sf-rowp had no control until now: `rows` derived it from the block gap as
+     calc(var(--sf-gap) * .5), so opening the rows meant opening every gap in
+     the bar. 9px is exactly what that produced at the shipped gap. */
+  --sf-above:0px; --sf-rowp:9px; --sf-rowh:0px;
   --sf-max:1240px; --sf-r:0px; --sf-lw:1px;
   --sf-ink:#17181C; --sf-ink-2:#5E545A; --sf-line:#EBE3E6; --sf-bg:#FBF5F4;
   background:var(--sf-bg);color:var(--sf-ink-2);
@@ -127,6 +149,11 @@
      161px tall against the 82px its own contents needed. Reset here, where
      .sf-in owns every pixel of spacing this footer has. */
   padding:0;margin:0;
+  /* ...and then the one margin this bar DOES want, put back deliberately: the
+     gap above it. It has to be written after the reset above, not folded into
+     it, or a future reader has to work out which half of `margin:0` was the
+     landmine and which was the control. */
+  margin-block-start:var(--sf-above);
 }
 .kbb-slimfoot.sf-noline{border-top:0}
 .kbb-slimfoot.sf-t-white{--sf-bg:#FFFFFF}
@@ -155,6 +182,31 @@
   letter-spacing:.02em;text-transform:uppercase;line-height:1.15;
 }
 .kbb-slimfoot.sf-nocaps .sf-brand b{text-transform:none;letter-spacing:0}
+/* ── THE HEADER'S WORDMARK ─────────────────────────────────────────────────
+   The same face, weight and tracking the header sets on `.logo` -- 800 at
+   -.02em -- and the same two colours, handed in as properties by the service
+   from Appearance -> Header rather than written here, so changing the accent
+   in one place changes it in both.
+
+   NEVER UPPERCASED, whatever the capitals switch says. That switch exists for
+   the typed brand box, which ships in capitals; the header's logo is mixed
+   case by design and "K-BEAUTYBLISS" is not the same logo. Both selectors are
+   written out rather than relying on source order, so the rule wins whether or
+   not sf-nocaps is on the element.
+
+   A <span> AND NOT AN <i> for the accent word, which is also what the header
+   writes: the byline is an <i> inside this same block, and `.sf-bar .sf-brand
+   i` gives it a 6px inline-start margin -- which on the accent half would open
+   a gap in the middle of the logo. */
+.kbb-slimfoot .sf-brand b.sf-wm,
+.kbb-slimfoot.sf-nocaps .sf-brand b.sf-wm{
+  text-transform:none;letter-spacing:-.02em;font-weight:800;
+  color:var(--sf-wm-c,#2A2228);
+}
+.kbb-slimfoot .sf-brand b.sf-wm span{color:var(--sf-wm-a,#E0567B)}
+/* The dark tone knocks the first half out to white and keeps the accent, which
+   is the only reason a two-tone wordmark survives an ink background at all. */
+.kbb-slimfoot.sf-t-ink .sf-brand b.sf-wm{color:#fff}
 .kbb-slimfoot.sf-noic .sf-c svg{display:none}
 .kbb-slimfoot .sf-copy{flex-basis:100%;font-size:calc(10.5px * var(--sf-f));opacity:.8}
 /* The marks are a row of their own drawings; the height comes from the em of
@@ -247,8 +299,13 @@
 .kbb-slimfoot.sf-rows .sf-in{flex-direction:column;align-items:stretch;gap:0}
 .kbb-slimfoot.sf-rows .sf-in > * + *{
   border-top:1px solid var(--sf-line);
-  padding-top:calc(var(--sf-gap) * .5);margin-top:calc(var(--sf-gap) * .5);
+  padding-top:var(--sf-rowp);margin-top:var(--sf-rowp);
 }
+/* The floor applies to EVERY row including the first, which has no top border
+   and so never matched the rule above. align-items keeps the words centred in
+   a row taller than they are rather than sitting them on its top edge. */
+.kbb-slimfoot.sf-rows .sf-in > *{min-height:var(--sf-rowh);display:flex;align-items:center;flex-wrap:wrap}
+.kbb-slimfoot.sf-rows .sf-in > .sf-brand{display:block}
 .kbb-slimfoot.sf-rows .sf-top{margin-inline-start:0;align-self:flex-end}
 .kbb-slimfoot.sf-rows.sf-a-center .sf-in{align-items:center}
 .kbb-slimfoot.sf-rows.sf-a-end .sf-in{align-items:flex-end}
@@ -282,6 +339,9 @@
     --sf-padx:var(--sf-m-padx,20px);
     --sf-gap:var(--sf-m-gap,14px);
     --sf-f:var(--sf-m-f,1);
+    --sf-above:var(--sf-m-above,0px);
+    --sf-rowp:var(--sf-m-rowp,7px);
+    --sf-rowh:var(--sf-m-rowh,0px);
   }
 
   /* Alignment. `start` has no class, so these three are the departures. */
@@ -319,8 +379,13 @@
   .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in{flex-direction:column;align-items:stretch;gap:0}
   .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > * + *{
     border-top:1px solid var(--sf-line);
-    padding-top:calc(var(--sf-gap) * .5);margin-top:calc(var(--sf-gap) * .5);
+    padding-top:var(--sf-rowp);margin-top:var(--sf-rowp);
   }
+  /* The floor on every row including the first, which the `* + *` rule above
+     cannot reach. --sf-rowp and --sf-rowh are already the phone's own values
+     here: the .sf-msplit block at the top of this media query reassigns both. */
+  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > *{min-height:var(--sf-rowh);display:flex;align-items:center;flex-wrap:wrap}
+  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > .sf-brand{display:block}
   .kbb-slimfoot.sf-msplit.sf-m-rows .sf-top{margin-inline-start:0;align-self:flex-end}
   .kbb-slimfoot.sf-msplit.sf-m-rows.sf-ma-center .sf-in{align-items:center}
   .kbb-slimfoot.sf-msplit.sf-m-rows.sf-ma-end .sf-in{align-items:flex-end}

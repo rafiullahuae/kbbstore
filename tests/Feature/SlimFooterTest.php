@@ -108,7 +108,10 @@ it('draws no element at all for a setting left empty', function () {
     // brand and a phone number gets a bar with those two in it — not a bar
     // with four empty gaps in it.
     foreach ([
-        "@if (\$sfC['brand'] !== '' || \$sfC['byline'] !== '')",
+        // The brand half is resolved above the markup now, because it is the
+        // header's wordmark or the typed box depending on one select; the guard
+        // is still "draw no element rather than an empty one".
+        "@if (\$sfHasBrand || \$sfC['byline'] !== '')",
         "@if (\$sfC['help_title'] !== '' || \$sfC['help_sub'] !== '')",
         "@if (\$sfC['phone'] !== '' || \$sfC['email'] !== '')",
         "@if (\$sfC['l1_text'] !== '' || \$sfC['l2_text'] !== '' || \$sfC['l3_text'] !== '')",
@@ -188,7 +191,7 @@ it('stores only a value the select actually offers', function () {
         ->and(sf()->get('tone'))->toBe('ink')
         ->and(sf()->get('pad_y'))->toBe(40);
 
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-ink sf-a-between sf-wa sf-msplit sf-m-rows');
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-ink sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
 });
 
 it('caps a pasted novel rather than printing it on every order', function () {
@@ -290,13 +293,13 @@ it('names a state class only where the stylesheet has a rule for it', function (
        which is the departure from "only what is not the default" this file
        otherwise keeps -- `between` and `rows` have rules and `start`/`bar` are
        the base, so a default that is not the base has to be said out loud. */
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-cream sf-a-between sf-wa sf-msplit sf-m-rows');
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-cream sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
 
     sf()->save(['align' => 'between', 'sep' => 'dot', 'top_style' => 'solid',
         'shadow' => true, 'upper' => false, 'icons_on' => false, 'divider' => false]);
 
     expect(sf()->bodyClass())
-        ->toBe(' sf-bar sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-noic sf-wa sf-msplit sf-m-rows');
+        ->toBe(' sf-bar sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-wm sf-noic sf-wa sf-msplit sf-m-rows');
 });
 
 it('draws a separator only where two blocks sit side by side', function () {
@@ -442,4 +445,178 @@ it('keeps the bar off the cart page, which is where it has always been', functio
     // the cart page alone.
     expect(\App\Services\SlimFooter::SCHEMA['co_on'][2])->toBeTrue()
         ->and(\App\Services\SlimFooter::SCHEMA['cart_on'][2])->toBeFalse();
+});
+
+/* ------------------------------------------------------------------------
+ | 6. The same logo as the header, not a second copy of it
+ |------------------------------------------------------------------------*/
+
+/**
+ * The owner, twice: "use the real logo which we use in the site header with
+ * same color scheme, font etc." and then "i told you to use the same logo and
+ * colors in the footer which is in the site header".
+ *
+ * The test that matters is the second one below: renaming the shop or changing
+ * its accent in Appearance → Header has to move the footer too, on the next
+ * render, with nothing to keep in step by hand. A footer that merely LOOKED
+ * like the header on the day it shipped is the drift this option removes.
+ *
+ * MUTATION: change headerLogo() to read SlimFooter's own `brand` and the second
+ * test is red.
+ */
+it('draws the header wordmark by default, in two halves', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    expect(\App\Services\SlimFooter::SCHEMA['brand_style'][2])->toBe('wordmark')
+        ->and(sf()->bodyClass())->toContain('sf-wm')
+        // A <span> and not an <i>: the byline is an <i> in this same block and
+        // `.sf-bar .sf-brand i` gives it a 6px margin, which on the accent half
+        // would open a gap in the middle of the logo.
+        ->and($partial)->toContain('<b class="sf-wm">{{ $sfWm[\'text\'] }}<span>{{ $sfWm[\'accent\'] }}</span></b>')
+        // The header's own face and tracking: 800 at -.02em, never uppercased.
+        ->and($partial)->toContain('text-transform:none;letter-spacing:-.02em;font-weight:800;');
+});
+
+it('follows the header when the header changes, rather than keeping its own copy', function () {
+    $header = app(\App\Services\HeaderSettings::class);
+
+    $header->save([
+        'logo_text' => 'Nova',
+        'logo_accent' => 'Skin',
+        'logo_colour' => '#101010',
+        'logo_accent_col' => '#00AA55',
+    ]);
+
+    $logo = app(\App\Services\SlimFooter::class)->headerLogo();
+
+    expect($logo['text'])->toBe('Nova')
+        ->and($logo['accent'])->toBe('Skin')
+        // BOTH COLOURS ARE EMITTED EVEN WHEN THEY ARE NOT THIS SCREEN'S
+        // DEFAULTS' business -- they are not this screen's values at all, so
+        // the "only what moved" rule every other line follows would freeze the
+        // footer at the header's shipped colours.
+        ->and(app(\App\Services\SlimFooter::class)->cssVariables())
+            ->toContain('--sf-wm-c:#101010')
+        ->and(app(\App\Services\SlimFooter::class)->cssVariables())
+            ->toContain('--sf-wm-a:#00AA55');
+});
+
+it('stays silent while the header still says what it shipped saying', function () {
+    /*
+     * The colours are only emitted once the HEADER has moved, not once this
+     * screen has -- so a shop that has touched neither still renders a footer
+     * with no style attribute at all, and the stylesheet's own fallbacks are
+     * those same two colours. The fallbacks are pinned here so the two places
+     * cannot drift.
+     */
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    expect(sf()->cssVariables())->toBe('')
+        ->and($partial)->toContain('color:var(--sf-wm-c,'.\App\Services\HeaderSettings::SCHEMA['logo_colour'][2].')')
+        ->and($partial)->toContain('color:var(--sf-wm-a,'.\App\Services\HeaderSettings::SCHEMA['logo_accent_col'][2].')');
+});
+
+it('cannot put anything but a validated hex into that declaration', function () {
+    $header = app(\App\Services\HeaderSettings::class);
+
+    /*
+     * Both colours end up inside a CSS declaration on the page an order is
+     * placed from. HeaderSettings::cast() answers a `colour` row with a
+     * six-digit hex or the shipped default, and the footer reads THROUGH that
+     * class rather than off the settings table so there is one validation and
+     * not a second one here to fall out of step with it.
+     */
+    $header->save(['logo_accent_col' => 'red;}</style><script>alert(1)</script>']);
+
+    $vars = app(\App\Services\SlimFooter::class)->cssVariables();
+
+    // Refused at cast, so the row falls back to the shipped colour -- which
+    // means nothing is emitted at all, and certainly not the script.
+    expect($vars)->not->toContain('<script')
+        ->and($vars)->not->toContain('--sf-wm-a')
+        ->and(app(\App\Services\SlimFooter::class)->headerLogo()['accent_col'])
+            ->toBe(\App\Services\HeaderSettings::SCHEMA['logo_accent_col'][2]);
+});
+
+it('draws the typed brand name instead when asked, which is what it did before', function () {
+    sf()->save(['brand_style' => 'text']);
+
+    expect(sf()->bodyClass())->not->toContain('sf-wm')
+        // And no header colours are emitted at all in that mode.
+        ->and(sf()->cssVariables())->not->toContain('--sf-wm-');
+});
+
+/* ------------------------------------------------------------------------
+ | 7. Spacing above the bar, the rows inside it, and the preset
+ |------------------------------------------------------------------------*/
+
+it('puts the gap above the bar outside the bar, so the page shows through it', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * A MARGIN AND NOT PADDING. Padding would be inside the bar and would carry
+     * the tone with it, so a white bar on a cream page would grow a white
+     * stripe above itself rather than a gap. And it has to be written AFTER the
+     * `margin:0` that resets kbb.css's bare `footer{padding:52px 0 26px}`, not
+     * folded into it, or the next reader cannot tell which half was the
+     * landmine and which is the control.
+     */
+    expect($partial)->toContain('margin-block-start:var(--sf-above);')
+        ->and($partial)->toContain('padding:0;margin:0;')
+        ->and(strpos($partial, 'padding:0;margin:0;'))
+            ->toBeLessThan(strpos($partial, 'margin-block-start:var(--sf-above);'));
+});
+
+it('gives the ruled rows their own padding and a height floor', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * The row padding was `calc(var(--sf-gap) * .5)`, so the only way to open
+     * the rows was to open every gap in the bar at once. 9px is exactly what
+     * that produced at the shipped gap of 18, which is why the bar does not
+     * move: SlimFooter::SCHEMA['row_pad'] defaults to it.
+     */
+    expect(\App\Services\SlimFooter::SCHEMA['row_pad'][2])->toBe(9)
+        ->and($partial)->toContain('padding-top:var(--sf-rowp);margin-top:var(--sf-rowp);')
+        ->and($partial)->not->toContain('padding-top:calc(var(--sf-gap) * .5);margin-top:calc(var(--sf-gap) * .5);')
+        // THE FLOOR APPLIES TO EVERY ROW INCLUDING THE FIRST, which has no top
+        // border and so never matched the `* + *` rule the padding lives on.
+        ->and($partial)->toContain('.kbb-slimfoot.sf-rows .sf-in > *{min-height:var(--sf-rowh)');
+});
+
+it('hands the screen a squeeze list rather than letting it keep its own copy', function () {
+    $body = test()->actingAs(sfOwner(), 'admin')
+        ->getJson('/admin-api/slim-footer')->assertOk()->json();
+
+    expect($body['squeeze'])->toBe(\App\Services\SlimFooter::SQUEEZE);
+
+    // Every squeezed key is a range on a tab, or the preset moves nothing.
+    $onTabs = collect(\App\Services\SlimFooter::TABS)->flatMap(fn ($t) => $t[2])->all();
+
+    foreach (\App\Services\SlimFooter::SQUEEZE as $key) {
+        expect(\App\Services\SlimFooter::SCHEMA)->toHaveKey($key)
+            ->and(\App\Services\SlimFooter::SCHEMA[$key][0])->toBe('range')
+            ->and($onTabs)->toContain($key);
+    }
+
+    /*
+     * What is NOT squeezed, and deliberately: the content width is a layout and
+     * not a size, the brand size is the shop's own logo, and the text size
+     * floors at 70% — 8.4px on a 12px base, which is a decision rather than a
+     * tidy-up.
+     */
+    expect(\App\Services\SlimFooter::SQUEEZE)->not->toContain('max_w')
+        ->and(\App\Services\SlimFooter::SQUEEZE)->not->toContain('brand_size')
+        ->and(\App\Services\SlimFooter::SQUEEZE)->not->toContain('font')
+        ->and(\App\Services\SlimFooter::SQUEEZE)->not->toContain('m_font');
+});
+
+it('offers a way back out of the preset it offers', function () {
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/slim-footer-screen.blade.php'));
+
+    // A preset with no way out is a trap: pressing Squeeze has to be undoable
+    // without remembering twelve numbers.
+    expect($screen)->toContain('data-sfs-squeeze')
+        ->and($screen)->toContain('data-sfs-defaults')
+        ->and($screen)->toContain('squeezeKeys = body.squeeze || [];');
 });

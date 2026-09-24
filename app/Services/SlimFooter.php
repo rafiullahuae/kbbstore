@@ -131,6 +131,30 @@ class SlimFooter
                          ]],
         'icons_on'   => ['bool', 'Marks beside the phone and email', true,
                          'The small WhatsApp and envelope glyphs. Off leaves the number and the address as plain text, which is shorter and quieter.'],
+        /*
+         * ── THE GAP ABOVE THE BAR, AND THE ROWS INSIDE IT ─────────────────
+         *
+         * `space_above` is a margin and not padding on purpose: padding would
+         * be inside the bar and would take the TONE with it, so a white bar on
+         * a cream page would grow a white stripe above itself. A margin leaves
+         * the page's own ground showing, which is what "spacing above the
+         * footer block" means.
+         *
+         * The row padding had no control at all: `rows` derived it from the
+         * block gap as `calc(var(--sf-gap) * .5)`, so the only way to open the
+         * rows was to open every gap in the bar at the same time. It now has
+         * its own number, defaulting to exactly what that expression produced
+         * at the shipped gap -- 18 * .5 = 9 -- so the bar does not move.
+         */
+        'space_above' => ['range', 'Space above the bar', 0,
+                          'Between the last block on the page and the top of the bar. The page\'s own background shows through it, so it reads as a gap rather than as more footer.',
+                          ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+        'row_pad'    => ['range', 'Padding inside each row', 9,
+                         'Above and below each row of the "Ruled rows" shape, and the space the hairline sits in. 9 is what the shape worked out from the block gap before this had a number of its own.',
+                         ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'row_h'      => ['range', 'Smallest row height', 0,
+                         'A floor under each ruled row, whatever the padding says. Zero is the row taking exactly the height of its words; 44 is a comfortable tap target on a phone.',
+                         ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
         'pad_y'      => ['range', 'Height', 12,
                          'Padding above and below. With "One line" this IS the height of the bar — 12 gives about 44px in total.',
                          ['min' => 2, 'max' => 40, 'step' => 1, 'unit' => 'px']],
@@ -200,10 +224,43 @@ class SlimFooter
         'm_font'     => ['range', 'Text size on a phone', 100,
                          'A multiplier on 12px, at 900px and below.',
                          ['min' => 70, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        'm_space_above' => ['range', 'Space above the bar on a phone', 0,
+                            'Its own value, because a gap that reads right under a 1240px page is usually too much under a 390px one.',
+                            ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+        'm_row_pad'  => ['range', 'Padding inside each row on a phone', 7,
+                         'Ruled rows is the shipped phone shape, so this is the control that decides how tall the bar is there. 7 is what it worked out from the phone block gap before.',
+                         ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'm_row_h'    => ['range', 'Smallest row height on a phone', 0,
+                         'A floor under each ruled row. 44 is the touch-target minimum if you want every row tappable.',
+                         ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
 
         // ── Content ──
+        /*
+         * ── THE SAME LOGO AS THE HEADER, NOT A SECOND COPY OF IT ──────────
+         *
+         * The owner, twice: "use the real logo which we use in the site header
+         * with same color scheme, font etc." and then "i told you to use the
+         * same logo and colors in the footer which is in the site header".
+         *
+         * ONE SOURCE, NOT ONE MORE SETTING. `wordmark` reads Appearance →
+         * Header's own Wordmark, Accent word and two colours — the same rows
+         * the header itself renders from — so the footer cannot drift from the
+         * header, and renaming the shop is still one edit in one place. There
+         * is deliberately no colour box and no font box here: a footer logo
+         * that could be set to something the header is not is the drift this
+         * option exists to remove.
+         *
+         * `text` is the flat `brand` box below, which is what the bar drew
+         * before this existed and what a shop wanting a different footer
+         * wordmark still gets.
+         */
+        'brand_style' => ['select', 'The wordmark', 'wordmark',
+                          'The header\'s own logo, colours and weight — read live from Appearance → Header, so the two cannot drift apart.', [
+                              'wordmark' => 'The site header\'s logo',
+                              'text'     => 'The typed brand name below',
+                          ]],
         'brand'      => ['text', 'Brand name', 'K-BEAUTY BLISS',
-                         'The wordmark at the start of the bar. Leave it empty to draw no brand at all.'],
+                         'Drawn only while "The wordmark" above is set to the typed name. Leave it empty to draw no brand at all.'],
         'byline'     => ['text', 'Under the brand', 'by FUSION DISTRICT GROUP.',
                          'The company line. Empty draws nothing.'],
         'help_title' => ['text', 'Help heading', 'Need Help?',
@@ -260,10 +317,12 @@ class SlimFooter
         'pages'   => ['Where it shows', 'One bar, two pages, two switches. The cart ships off so that page is untouched until you say otherwise.',
                       ['co_on', 'cart_on']],
         'phone'   => ['On a phone', 'The same bar at 900px and below, with its own shape. Ruled rows is what ships here and spread-to-both-edges is what ships on a desktop, which is the pair the owner chose; the switch at the top hands the phone back to the desktop\'s settings.',
-                      ['mobile_on', 'm_variant', 'm_align', 'm_pad_y', 'm_pad_x', 'm_gap', 'm_font']],
+                      ['mobile_on', 'm_variant', 'm_align', 'm_space_above', 'm_pad_y',
+                       'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap', 'm_font']],
         'layout'  => ['Shape & size', 'Four structures and four alignments, which is sixteen looks from two controls. "One line" left-aligned is the shortest, and is what ships.',
                       ['variant', 'align', 'tone', 'divider', 'line_w', 'radius', 'shadow',
-                       'pad_y', 'pad_x', 'max_w', 'gap', 'font', 'brand_size', 'upper', 'phone_mark',
+                       'space_above', 'pad_y', 'row_pad', 'row_h', 'pad_x', 'max_w', 'gap',
+                       'font', 'brand_style', 'brand_size', 'upper', 'phone_mark',
                        'sep', 'icons_on', 'top_on', 'top_style']],
         'content' => ['Content', 'Every word in the bar. Anything left empty is not drawn at all, rather than drawn empty — so the bar can be as short as a brand and a phone number.',
                       ['brand', 'byline', 'help_title', 'help_sub', 'phone', 'phone_url', 'email',
@@ -283,9 +342,36 @@ class SlimFooter
         'max_w'  => '--sf-max',
         'radius' => '--sf-r',
         'line_w' => '--sf-lw',
+        'space_above' => '--sf-above',
+        'row_pad'     => '--sf-rowp',
+        'row_h'       => '--sf-rowh',
         'm_pad_y' => '--sf-m-pady',
         'm_pad_x' => '--sf-m-padx',
         'm_gap'   => '--sf-m-gap',
+        'm_space_above' => '--sf-m-above',
+        'm_row_pad'     => '--sf-m-rowp',
+        'm_row_h'       => '--sf-m-rowh',
+    ];
+
+    /**
+     * The keys "Squeeze the bar" drives to their minimum.
+     *
+     * A LIST, NOT A MODE -- the same decision CheckoutPage::SQUEEZE states and
+     * for the same reason: a stored "squeezed" flag would leave every slider on
+     * the screen showing a number the bar was not using, so the preset WRITES
+     * the sliders and Save stores exactly what is on screen.
+     *
+     * What is NOT here is as deliberate. Content width is a layout and not a
+     * size; the brand size is the logo, and a preset that shrank the shop's
+     * wordmark to 70% would be a second thing happening under one button; and
+     * the text size floors at 70%, which on a 12px base is 8.4px -- small
+     * enough that squeezing it is a decision rather than a tidy-up.
+     *
+     * @var list<string>
+     */
+    public const SQUEEZE = [
+        'space_above', 'pad_y', 'row_pad', 'row_h', 'pad_x', 'gap',
+        'm_space_above', 'm_pad_y', 'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap',
     ];
 
     /** key => the custom property it is emitted as, as a unitless factor. */
@@ -296,6 +382,32 @@ class SlimFooter
     ];
 
     public function __construct(private SettingsService $settings) {}
+
+    /**
+     * The header's wordmark, as the footer has to draw it.
+     *
+     * READ THROUGH HeaderSettings AND NOT OFF THE SETTINGS TABLE, because that
+     * class is where the two colours are validated: its cast() answers a
+     * `colour` row with `preg_match('/^#[0-9a-fA-F]{6}$/')` or the shipped
+     * default. Both of these end up inside a CSS declaration on the page an
+     * order is placed from, and a declaration assembled out of an unchecked
+     * setting is the sink this project has a rule about. Going through the
+     * owner of the schema means there is one validation and not a second one
+     * here to fall out of step with it.
+     *
+     * @return array{text: string, accent: string, colour: string, accent_col: string}
+     */
+    public function headerLogo(): array
+    {
+        $header = app(HeaderSettings::class);
+
+        return [
+            'text'       => (string) $header->get('logo_text'),
+            'accent'     => (string) $header->get('logo_accent'),
+            'colour'     => (string) $header->get('logo_colour'),
+            'accent_col' => (string) $header->get('logo_accent_col'),
+        ];
+    }
 
     /** @return array<string, mixed> */
     public function all(): array
@@ -453,6 +565,7 @@ class SlimFooter
             $c['divider'] ? '' : 'sf-noline',
             $c['shadow'] ? 'sf-lift' : '',
             $c['upper'] ? '' : 'sf-nocaps',
+            $c['brand_style'] === 'wordmark' ? 'sf-wm' : '',
             $c['icons_on'] ? '' : 'sf-noic',
             $c['phone_mark'] === 'brand' ? 'sf-wa' : '',
             /* Every mobile class is gated on the switch, so "off" emits none of
@@ -483,6 +596,48 @@ class SlimFooter
         foreach (self::RATIO_VARS as $key => $prop) {
             if ($c[$key] !== self::SCHEMA[$key][2]) {
                 $out[] = $prop.':'.rtrim(rtrim(number_format((int) $c[$key] / 100, 2, '.', ''), '0'), '.');
+            }
+        }
+
+        /*
+         * The header's two logo colours, and only while the footer is actually
+         * drawing the header's logo.
+         *
+         * NOT SKIPPED WHEN THEY EQUAL THIS SCREEN'S DEFAULTS, which is the rule
+         * every line above follows, because they are not this screen's values
+         * at all — they belong to Appearance → Header, and an owner who changes
+         * the accent there has to see it here on the next render. Emitting them
+         * always is what makes "the same logo as the header" true rather than
+         * true-until-somebody-edits-the-header.
+         *
+         * Safe in a declaration: HeaderSettings::cast() answers a `colour` row
+         * with a six-digit hex or the shipped default, so neither of these can
+         * be anything else. e() in styleAttr() is the second lock.
+         */
+        if ($c['brand_style'] === 'wordmark') {
+            $logo = $this->headerLogo();
+
+            /*
+             * COMPARED AGAINST THE HEADER'S DEFAULTS, NOT THIS SCREEN'S.
+             *
+             * These are not this screen's values, so "only what the owner moved
+             * here" is the wrong question -- the right one is whether the
+             * header still says what it shipped saying. While it does, the
+             * stylesheet's own fallbacks are already those two colours and
+             * emitting them would put a style attribute on a page that had none
+             * before. The moment the header's accent changes, both are emitted
+             * and the footer follows it on the next render.
+             *
+             * Read out of HeaderSettings::SCHEMA rather than written here, so
+             * the two cannot drift; the fallbacks in the partial are pinned to
+             * the same rows by a test.
+             */
+            if ($logo['colour'] !== HeaderSettings::SCHEMA['logo_colour'][2]) {
+                $out[] = '--sf-wm-c:'.$logo['colour'];
+            }
+
+            if ($logo['accent_col'] !== HeaderSettings::SCHEMA['logo_accent_col'][2]) {
+                $out[] = '--sf-wm-a:'.$logo['accent_col'];
             }
         }
 

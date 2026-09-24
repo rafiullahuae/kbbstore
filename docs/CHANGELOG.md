@@ -3,6 +3,29 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.255
+The checkout footer wears the site header's own wordmark. It was drawing
+`brand`, a flat text box shipping "K-BEAUTY BLISS" in capitals; it now reads
+Appearance -> Header's Wordmark, Accent word and two colours, live, on every
+render -- so "K-Beauty" in the header's ink and "Bliss" in the header's accent,
+and renaming the shop stays one edit in one place. Not a second colour box: two
+copies drift, and the one that drifts is whichever nobody looks at. The two
+colours are compared against the HEADER's defaults, so a shop that has touched
+neither screen still renders a footer with no style attribute, and they are safe
+in a declaration because HeaderSettings::cast() answers a `colour` row with a
+six-digit hex or the shipped default. `The wordmark` -> `The typed brand name`
+restores the old box.
+It also gains the spacing controls it was missing: space above the bar (a margin
+and not padding, so the page's own ground shows through it rather than the bar's
+tone), padding inside each ruled row and a floor under every row -- the rows used
+to derive their padding from the block gap, so the only way to open them was to
+open every gap in the bar at once -- plus "Squeeze the bar" and "Back to
+defaults". Every one ships at what the bar was already doing; measured, 55px on
+a desktop and 187.8px on a phone before and after.
+`Services/SlimFooter.php`, `partials/slim-footer.blade.php`,
+`Admin/SlimFooterApiController.php`, `admin/partials/slim-footer-screen.blade.php`,
+`2026_12_09_000000_clear_caches_footer_wordmark_and_spacing.php`
+
 ## 2.60.254
 Three selects that were rendering as sliders, the notch beside the phone logo,
 the reviews line's wording, and the footer's own shape on a phone.

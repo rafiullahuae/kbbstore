@@ -185,6 +185,7 @@
   var SCREEN = 'slimfooter';
 
   var tabs = null, values = {}, open = null, banner = null, busy = false, seq = 0;
+  var squeezeKeys = [];  // which controls "Squeeze the bar" drives to their minimum
 
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -271,6 +272,7 @@
       if (mine !== seq) return;
 
       tabs = body.tabs || [];
+      squeezeKeys = body.squeeze || [];
       values = {};
       tabs.forEach(function (t) { t.fields.forEach(function (f) { values[f.key] = f.value; }); });
       if (!open || !tabs.some(function (t) { return t.key === open; })) {
@@ -379,7 +381,16 @@
       + '<button class="sfs-btn is-primary" data-sfs-save' + (busy ? ' disabled' : '') + '>'
       + (busy ? 'Saving…' : 'Save') + '</button>'
       + '<button class="sfs-btn" data-sfs-reload' + (busy ? ' disabled' : '') + '>Reload</button>'
-      + '</div></div>'
+      /* BOTH PRESETS WRITE THE SLIDERS AND NOTHING ELSE -- they move the values
+         in front of you, nothing is stored until Save, and Reload undoes
+         either. A stored "squeezed" mode would leave every slider on this
+         screen showing a number the bar was not using. */
+      + '<button class="sfs-btn" data-sfs-squeeze' + (busy ? ' disabled' : '') + '>Squeeze the bar</button>'
+      + '<button class="sfs-btn" data-sfs-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
+      + '</div>'
+      + '<p class="sfs-help" style="margin-top:8px">Both presets move the sliders in front of you across '
+      + '<b>every tab</b>, on desktop and on a phone. Nothing is stored until you press Save.</p>'
+      + '</div>'
       + previewHTML()
       + '</div>';
   }
@@ -525,7 +536,35 @@
     if (tab) { open = tab.getAttribute('data-sfs-tab'); render(); return; }
     if (e.target.closest('[data-sfs-save]')) { save(); return; }
     if (e.target.closest('[data-sfs-reload]')) { load(); return; }
+    if (e.target.closest('[data-sfs-squeeze]')) { preset('min'); return; }
+    if (e.target.closest('[data-sfs-defaults]')) { preset('default'); return; }
   });
+
+  /*
+   * The two presets, and why "Back to defaults" exists beside "Squeeze".
+   *
+   * A preset with no way out is a trap: pressing Squeeze has to be undoable
+   * without remembering twelve numbers. Reload undoes it before a Save and
+   * Back to defaults undoes it after one, and either can be nudged afterwards
+   * because both only WRITE THE SLIDERS.
+   */
+  function preset(which) {
+    if (!tabs) return;
+
+    tabs.forEach(function (t) {
+      t.fields.forEach(function (f) {
+        if (which === 'default') { values[f.key] = f['default']; return; }
+        if (f.type !== 'range') return;
+        if (squeezeKeys.indexOf(f.key) === -1) return;
+        values[f.key] = Number((f.options || {}).min);
+      });
+    });
+
+    render();
+    say(which === 'min'
+      ? 'Squeezed. Nothing is saved until you press Save.'
+      : 'Back to the shipped values. Nothing is saved until you press Save.');
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addNavEntry);

@@ -48,7 +48,13 @@ class SlimFooterApiController extends Controller
             ];
         }
 
-        return response()->json(['tabs' => $tabs]);
+        /*
+         * The squeeze list travels with the fields rather than being written
+         * out again in the screen's JavaScript, for the reason CheckoutPage's
+         * own screen states: two copies of a key list drift, and the copy that
+         * drifts is the one in the file nobody opens.
+         */
+        return response()->json(['tabs' => $tabs, 'squeeze' => SlimFooter::SQUEEZE]);
     }
 
     public function save(Request $request): JsonResponse
