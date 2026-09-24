@@ -956,9 +956,49 @@ class Seo
                  * carries the slash — advertising a URL the site then
                  * redirects is the defect, not a tidy-up.
                  */
+                /*
+                 * THE LANGUAGES THIS SITE IS PUBLISHED IN, not the language of
+                 * the page the node happens to be sitting on.
+                 *
+                 * `WebSite` describes the SITE, and this shop is one site in
+                 * two languages — so a node that said "ar" on an Arabic page
+                 * and "en" on an English one would be two contradictory claims
+                 * about one thing, made from different pages, with the same
+                 * `url`. The document's own language is stated on the node that
+                 * describes the DOCUMENT (Article and CollectionPage below) and
+                 * in `<html lang>`, which is where a consumer looks for it.
+                 *
+                 * A bare string while only one language is live, an array when
+                 * both are — both are valid, and the single-language shop must
+                 * not gain an array it did not have. Locale::enabledCodes()
+                 * returns ['en'] until the owner switches Arabic on, so this is
+                 * `"inLanguage":"en"` on the shop as it stands today.
+                 */
+                'inLanguage' => count($live = Locale::enabledCodes()) === 1 ? $live[0] : $live,
                 'potentialAction' => [
                     '@type' => 'SearchAction',
-                    'target' => ['@type' => 'EntryPoint', 'urlTemplate' => $base . '/shop/?s={search_term_string}'],
+                    /*
+                     * THE READER'S OWN SHOP, AND THIS IS THE ONE THING IN THIS
+                     * NODE THAT FOLLOWS THE PAGE RATHER THAN THE SITE.
+                     *
+                     * This was `$base . '/shop/?s='` — the English shop, on
+                     * every page in both languages. Google renders the sitelinks
+                     * searchbox under the result for the page it crawled, so an
+                     * Arabic reader who found the Arabic page and typed into
+                     * that box was sent to the English catalogue. Measured
+                     * before this change: the urlTemplate on /ar/shop/ was
+                     * byte-for-byte the one on /shop/.
+                     *
+                     * A search action is something a PERSON does from THIS
+                     * page, which is why it is localised where `url` and
+                     * `inLanguage` above are not. Locale::withSegment() adds
+                     * the segment and adds nothing in English, so this is
+                     * unchanged on the shop as it stands today.
+                     */
+                    'target' => [
+                        '@type' => 'EntryPoint',
+                        'urlTemplate' => $base . Locale::withSegment('/shop/') . '?s={search_term_string}',
+                    ],
                     'query-input' => 'required name=search_term_string',
                 ],
             ];
@@ -1225,6 +1265,18 @@ class Seo
                 'headline' => $a['title'] ?? $title,
                 'image' => $image ?: null,
                 'datePublished' => $a['published_at'] ?? null,
+                /*
+                 * THE LANGUAGE THIS DOCUMENT IS WRITTEN IN.
+                 *
+                 * An Article IS a CreativeWork, so `inLanguage` is a property
+                 * it really has — see the note on Product below for the nodes
+                 * that do NOT get one. It matches `<html lang>` exactly rather
+                 * than being spelled out as a regional tag: inventing `ar-AE`
+                 * would be a guess about an audience nothing in this shop
+                 * records, and two different answers to "what language is this
+                 * page" in one document is worse than a less precise one.
+                 */
+                'inLanguage' => Locale::current(),
                 'author' => ['@type' => 'Organization', 'name' => $siteName],
                 'publisher' => ['@type' => 'Organization', 'name' => $siteName],
             ]);
@@ -1302,6 +1354,10 @@ class Seo
                 'name' => $name,
                 'description' => $desc ?: null,
                 'url' => $url,
+                // A CollectionPage is a WebPage is a CreativeWork, and `url`
+                // above is this page's own localised address — so the language
+                // stated here is this document's, exactly as on Article.
+                'inLanguage' => Locale::current(),
             ], static fn ($v) => $v !== null);
 
             $rows = is_array($c['items'] ?? null) ? array_values($c['items']) : [];
