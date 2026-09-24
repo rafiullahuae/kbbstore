@@ -899,19 +899,19 @@ Route::middleware(['auth:admin'])->prefix($adminPath)->group(function () use ($a
     Route::post('/admin-path', [\App\Http\Controllers\Admin\AdminPathController::class, 'update'])->name('admin.path.update');
 });
 
-Route::get('/_kbb-health', function () {
-    $token = (string) config('kbb.health_token', '');
-
-    abort_if($token === '' || ! hash_equals($token, (string) request('token')), 404);
-
-    try {
-        \Illuminate\Support\Facades\DB::select('SELECT 1');
-    } catch (\Throwable $e) {
-        return response()->json(['ok' => false, 'reason' => 'database'], 500);
-    }
-
-    return response()->json(['ok' => true, 'version' => config('kbb.version')]);
-})->name('kbb.health');
+/*
+ * The health endpoint the updater calls to decide whether to keep an update.
+ *
+ * It used to be the closure that stood here, and that closure ran SELECT 1 and
+ * returned JSON. It never rendered a page -- which is why 2.60.260, a package
+ * that removed a class every product tile resolves out of the container, passed
+ * its post-update check and was kept, with the home page, /shop, every category
+ * and every product page answering 500 behind it.
+ *
+ * Same URI, same route name, same token gate, so CanonicalHost::EXEMPT_PREFIXES,
+ * CheckRedirects and RootSlugCollisionTest all still hold.
+ */
+require __DIR__.'/update-health.php';
 
 // Brands. All three of these URLs existed in the app and none resolved: the
 // homepage links to /brands/ twice, MenuDemo builds /korean-skincare-brands/
