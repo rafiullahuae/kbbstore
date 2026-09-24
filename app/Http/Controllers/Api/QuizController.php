@@ -386,12 +386,25 @@ class QuizController extends Controller
                  */
                 $routineUrl = QuizRoutineLink::forConcerns($concerns);
 
+                /*
+                 * And the fall-back destination that does NOT need the module —
+                 * Lane Q. /concern/{slug}/ answers the moment that concern has
+                 * copy and enough live tagged products, which is the job the
+                 * owner does on Catalog -> Build my routine. Resolved only when
+                 * there is no routine to send them to, so a shop with the module
+                 * on pays nothing for it; both null means the message keeps the
+                 * link to /shop/ it has always had.
+                 */
+                $concernUrl = $routineUrl === null
+                    ? QuizRoutineLink::concernUrlForConcerns($concerns)
+                    : null;
+
                 app(MailLog::class)->labelNext('quiz.plan');
 
                 Mail::mailer(MailConfigurator::MAILER)
                     ->to($email)
                     ->send(
-                        (new QuizPlanEmail($name, $skinType, $concerns, $routines, $shopUrl, $routineUrl))
+                        (new QuizPlanEmail($name, $skinType, $concerns, $routines, $shopUrl, $routineUrl, $concernUrl))
                             ->locale($locale)
                     );
             } catch (\Throwable $e) {

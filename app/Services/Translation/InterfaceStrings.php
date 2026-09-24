@@ -335,6 +335,19 @@ final class InterfaceStrings
             'quiz.js_avoiding' => 'Avoiding for you:',
             'quiz.js_back' => '‹ Back',
             'quiz.js_backend_preview' => 'What your store saves (backend preview)',
+            /*
+             * The way out of the quiz when the routine module is OFF — Lane Q.
+             * /concern/{slug}/ is not behind that switch; it exists once the
+             * owner has tagged enough products on Catalog -> Build my routine.
+             * The concern in both strings is the shopper's own English answer,
+             * for the same reason the routine pair below keeps it English.
+             *
+             * "picked by us, not by a filter" is the one claim the page makes
+             * and it is true of the page it links to: /concern/ lists products
+             * an operator tagged by hand, not a keyword match.
+             */
+            'quiz.js_concern_link_cta' => 'Shop :concern →',
+            'quiz.js_concern_link_lead' => 'Everything this shop stocks for :concern, in one place — picked by us, not by a filter.',
             'quiz.js_continue' => 'Continue',
             'quiz.js_err_email' => 'Enter a valid email',
             'quiz.js_err_name' => 'Please enter your name',
@@ -1727,6 +1740,14 @@ final class InterfaceStrings
             'quiz_plan.steps_note_text' => 'These are steps, not products. Nothing has been chosen, reserved or charged - pick what suits you in the shop, where the prices are.',
             'quiz_plan.shop_button' => 'Browse the shop',
             'quiz_plan.routine_button' => 'Build my routine',
+            /*
+             * The middle rung of the plan email's three-way button — Lane Q.
+             * Used when the routine module is off but the shopper's concern has
+             * a /concern/{slug}/ page. No concern name in it: the subject line
+             * note above this class keeps a shopper's answer out of anything a
+             * mail server logs, and a button label is the same kind of surface.
+             */
+            'quiz_plan.concern_button' => 'Shop for your concern',
             'quiz_plan.why' => 'You are getting this because this address was typed into the skin quiz on our website, and the form said we would email the plan. This is that one message — the address has not been added to any list.',
             'quiz_plan.why_text' => 'You are getting this because this address was typed into the skin quiz on our website, and the form said we would email the plan. This is that one message - the address has not been added to any list.',
 

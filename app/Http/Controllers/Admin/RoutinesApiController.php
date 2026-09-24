@@ -260,9 +260,34 @@ class RoutinesApiController extends Controller
                 $term
             ).'%';
 
+            /*
+             * NAME, SKU **AND INGREDIENTS** — Lane Q.
+             *
+             * docs/SEO-CONCERN-MAPPING.md §3 is a worksheet of about thirty
+             * words the owner is meant to type into this box, and §7 item A
+             * names the reason most of them would have returned nothing:
+             * `ingredients` is a real column on this table
+             * (2026_10_05_000000_add_product_editor_columns.php:84) and this
+             * search could not see it.
+             *
+             * It matters most for exactly the concern that is hardest to shop
+             * for. The sensitivity signal is "fragrance-free", "centella",
+             * "panthenol", "ceramide" — words that live in an ingredient list
+             * and almost never in a product name. Without this, tagging
+             * `sensitivity` means opening products one at a time.
+             *
+             * SAME PATTERN, SAME DECLARED ESCAPE. Not a second escaping scheme:
+             * §7 item A's guard, and the reason the escape character is spelled
+             * out at all, is in the note above.
+             *
+             * NO NEW QUERY. One more OR inside the WHERE this method already
+             * builds, so the endpoint still costs the same two round trips (the
+             * count and the page) however many columns are searched.
+             */
             $query->where(function ($q) use ($pattern) {
                 $q->whereRaw('name LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern])
-                    ->orWhereRaw('sku LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern]);
+                    ->orWhereRaw('sku LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern])
+                    ->orWhereRaw('ingredients LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern]);
             });
         }
 
@@ -306,8 +331,73 @@ class RoutinesApiController extends Controller
                     && (bool) $p->is_visible
                     && ! $p->isScheduled()
                     && $p->stock_status === 'instock',
+                /*
+                 * WHY THIS ROW CAME BACK, when the reason is not on the screen.
+                 * A search for "centella" now matches an ingredient list, and a
+                 * product whose name says "Calming Toner" would otherwise appear
+                 * with nothing about it explaining the hit -- which reads as a
+                 * broken search and is the fastest way to make the owner stop
+                 * trusting the box. Null whenever the name or the SKU already
+                 * shows the answer.
+                 */
+                'ingredient_hit' => $this->ingredientHit($p, $term),
             ])->all(),
         ]);
+    }
+
+    /**
+     * A short piece of this product's ingredient list around the search term.
+     *
+     * Null when there is no term, when the term is already visible in the name
+     * or the SKU, or when it is not in the ingredients at all.
+     *
+     * A SNIPPET AND NOT THE COLUMN. An ingredient list runs to hundreds of
+     * characters and this endpoint returns twenty-five rows; shipping all of
+     * them would multiply the payload for something the eye cannot read anyway.
+     * The window is deliberately small -- enough to show the matched word in the
+     * company it keeps, which is what tells the owner whether "centella" here is
+     * the third ingredient or the thirtieth.
+     *
+     * mb_* throughout: ingredient lists carry accented Latin and the occasional
+     * Korean, and splitting a multi-byte character in half would put invalid
+     * UTF-8 into a json response.
+     */
+    private function ingredientHit(Product $product, string $term): ?string
+    {
+        if ($term === '') {
+            return null;
+        }
+
+        $ingredients = (string) ($product->ingredients ?? '');
+
+        if ($ingredients === '') {
+            return null;
+        }
+
+        // Already answered by something the row prints.
+        if (mb_stripos((string) $product->name, $term) !== false
+            || mb_stripos((string) ($product->sku ?? ''), $term) !== false) {
+            return null;
+        }
+
+        // Collapse whitespace first, so a list stored with newlines does not
+        // produce a snippet that is mostly blank.
+        $flat = trim((string) preg_replace('/\s+/u', ' ', $ingredients));
+        $at = mb_stripos($flat, $term);
+
+        if ($at === false) {
+            return null;
+        }
+
+        $pad = 34;
+        $start = max(0, $at - $pad);
+        $length = mb_strlen($term) + ($at - $start) + $pad;
+
+        $snippet = mb_substr($flat, $start, $length);
+
+        return ($start > 0 ? '…' : '')
+            . $snippet
+            . ($start + $length < mb_strlen($flat) ? '…' : '');
     }
 
     /** POST /admin-api/routine-products/{id} — tag one product. */

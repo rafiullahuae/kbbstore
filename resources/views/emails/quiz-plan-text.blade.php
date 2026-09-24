@@ -29,9 +29,29 @@
 
 {!! wordwrap(__('email.quiz_plan.steps_note_text'), 78) !!}
 
-@if ($routineUrl !== null){!! __('email.quiz_plan.routine_button') !!}@else{!! __('email.quiz_plan.shop_button') !!}@endif
+@php
+    /*
+        THE ONE BUTTON THIS MESSAGE CARRIES, chosen three ways — Lane Q.
 
-{{ $routineUrl ?? $shopUrl }}
+        routine -> collection -> shop, and the label moves with the URL. The
+        routine page needs `build_my_routine`, which ships OFF; /concern/{slug}/
+        needs only that the owner has tagged enough products for that concern on
+        Catalog -> Build my routine; /shop/ always exists. Before this the
+        message fell straight from the first to the third, so a shopper who had
+        just named a concern was sent to the whole catalogue.
+
+        $concernUrl is read defensively because this view is also rendered
+        outside the mailable that supplies it.
+    */
+    $kbbConcernUrl = $concernUrl ?? null;
+    $kbbCtaUrl = $routineUrl ?? $kbbConcernUrl ?? $shopUrl;
+    $kbbCtaLabel = $routineUrl !== null
+        ? __('email.quiz_plan.routine_button')
+        : ($kbbConcernUrl !== null ? __('email.quiz_plan.concern_button') : __('email.quiz_plan.shop_button'));
+@endphp
+{!! $kbbCtaLabel !!}
+
+{{ $kbbCtaUrl }}
 
 {!! wordwrap(__('email.quiz_plan.why_text'), 78) !!}
 

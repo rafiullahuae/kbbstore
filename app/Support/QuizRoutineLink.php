@@ -53,6 +53,32 @@ use Illuminate\Support\Facades\Route;
  * NOTHING IS INVENTED. Every URL returned is a page that exists, for a concern
  * this shop has a product for. When the shop stocks nothing, the answer is
  * null and the quiz says nothing about routines at all.
+ *
+ * ── AND THE SECOND DESTINATION, WHICH IS THE ONE THAT WILL EXIST — Lane Q ──
+ *
+ * Everything above is about /routines/{concern}, and /routines/{concern} lives
+ * behind `build_my_routine`, which SHIPS OFF. So on the shop as it is applied
+ * today map() is null, the quiz emits nothing, and a shopper who has just named
+ * three concerns is shown three chips and four buttons that all go to /shop/.
+ * Measured, not assumed: /skin-quiz renders 46,136 bytes with no KBB_ROUTINES
+ * in them, and the only URL any results-screen button carries is SHOP_URL.
+ *
+ * There is a second page per concern and it is NOT behind that switch:
+ * /concern/{slug}/, App\Support\ConcernCollections. It exists when the concern
+ * has copy AND MIN_PRODUCTS live tagged products — which is precisely the job
+ * docs/SEO-FEATURE-MATRIX.md ranks as the highest-value action left in the
+ * project, and the job the owner does on Catalog -> Build my routine. The day
+ * he finishes tagging acne, /concern/acne/ starts answering 200 whether or not
+ * the routine module was ever switched on.
+ *
+ * So concernPages() is the same lookup against the same eight strings, pointed
+ * at the page that will be there. Both are offered, routine first, because a
+ * routine is a stronger answer than a shelf when the shop has one; the shelf is
+ * what it falls back to. Neither is invented and both are fetched in the tests.
+ *
+ * NULL IS STILL THE SHIPPED ANSWER FOR BOTH. Nothing in this repository is
+ * tagged for any concern, ConcernCollections::live() is [], and the quiz page
+ * is byte-identical to the one that is live today.
  */
 final class QuizRoutineLink
 {
@@ -128,6 +154,66 @@ final class QuizRoutineLink
     public static function forConcerns(iterable $concerns): ?string
     {
         $map = self::map();
+
+        if ($map === null) {
+            return null;
+        }
+
+        foreach ($concerns as $concern) {
+            if (is_string($concern) && isset($map[$concern])) {
+                return $map[$concern];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The quiz's English concern => the URL of that concern's COLLECTION page.
+     *
+     * Keyed the same way map() is and for the same reason: the shopper's answer
+     * is the English string, whatever language the shop is being read in.
+     *
+     * Null when no concern page exists — which is the state this repository
+     * ships in, because nothing is tagged. It is deliberately NOT gated on the
+     * routine module: /concern/{slug}/ answers independently of it, and gating
+     * it would hide the only destination the shipped shop can ever offer.
+     *
+     * One query for all eight, ConcernCollections::counts(); the quiz page's
+     * budget is two and this is the first one it spends.
+     *
+     * @return array<string, string>|null
+     */
+    public static function concernPages(): ?array
+    {
+        $map = [];
+
+        foreach (ConcernCollections::live() as $slug) {
+            /*
+             * Url::to(), not route(), for the reason map() gives: this shop is
+             * served under KBB_BASE_PATH on staging and Url::to() is what the
+             * storefront already uses. ConcernCollections::path() supplies the
+             * trailing slash the canonical carries, so the quiz never advertises
+             * an address the site would redirect.
+             */
+            $map[RoutineConcerns::adminLabel($slug)] = Url::to(ConcernCollections::path($slug));
+        }
+
+        return $map === [] ? null : $map;
+    }
+
+    /**
+     * The concern-page URL for one shopper's answers, or null.
+     *
+     * The FIRST of their concerns that has one, in the order they picked them —
+     * the same rule forConcerns() applies and for the same reason: a shopper who
+     * chose "Sun protection" is not sent to an acne page.
+     *
+     * @param  iterable<mixed>  $concerns  the lead's concerns, as posted
+     */
+    public static function concernUrlForConcerns(iterable $concerns): ?string
+    {
+        $map = self::concernPages();
 
         if ($map === null) {
             return null;

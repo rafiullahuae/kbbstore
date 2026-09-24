@@ -264,6 +264,15 @@ input,textarea{font-family:inherit}
     // App\Support\QuizRoutineLink: null emits no script, no element and not one
     // byte of difference from the page that is live today.
     $kbbQuizRoutines = \App\Support\QuizRoutineLink::map();
+
+    // The hand-off to the concern COLLECTION pages — Lane Q. Also null on the
+    // shop as it ships, but for a different reason and one the owner can clear
+    // on his own: /concern/{slug}/ exists once a concern has copy and at least
+    // ConcernCollections::MIN_PRODUCTS live tagged products. Nothing is tagged
+    // here, so this is null, no script is emitted and the page is byte-for-byte
+    // what it is today. It is NOT gated on the routine module, because that
+    // page is not either.
+    $kbbQuizConcernPages = \App\Support\QuizRoutineLink::concernPages();
 @endphp
 <script>const SHOP_URL = @json(\App\Support\Url::to('/shop/'));</script>
 @if ($kbbQuizStrings !== [])
@@ -276,6 +285,15 @@ input,textarea{font-family:inherit}
      rather than a mapping table — which is what App\Support\RoutineConcerns was
      built to make possible. --}}
 <script>window.KBB_ROUTINES = @json($kbbQuizRoutines);</script>
+@endif
+@if ($kbbQuizConcernPages !== null)
+{{-- The same shape as the table above, and absent in the same way when there is
+     nothing to point at. Kept as a SEPARATE table rather than merged into
+     KBB_ROUTINES because the two destinations are different pages and get
+     different wording: one offers a routine, the other offers a shelf, and a
+     button that says "Build my acne routine" over a collection URL would be
+     promising something the page does not do. --}}
+<script>window.KBB_CONCERN_PAGES = @json($kbbQuizConcernPages);</script>
 @endif
 @verbatim
 
@@ -619,8 +637,7 @@ function selRoutine(){}
  * off-switch is that absence. Looked up in the shopper's OWN order, with no
  * fallback: "Sun protection" must not be handed an acne routine.
  */
-function routinePick(){
-  const table=(typeof window!=='undefined' && window.KBB_ROUTINES)||null;
+function pickFrom(table){
   if(!table) return null;
   for(let i=0;i<state.concerns.length;i++){
     const c=state.concerns[i];
@@ -628,14 +645,47 @@ function routinePick(){
   }
   return null;
 }
+function routinePick(){
+  return pickFrom((typeof window!=='undefined' && window.KBB_ROUTINES)||null);
+}
+
+/* THE SECOND DESTINATION, AND THE ONE THE SHIPPED SHOP CAN ACTUALLY REACH —
+ * Lane Q.
+ *
+ * A routine page is behind the build_my_routine module and that module ships
+ * OFF, so routinePick() is null on the shop as applied. (This comment is served
+ * to the browser, so it does not spell that page's address: QuizFollowThroughTest
+ * asserts the shipped quiz contains no such path anywhere, comments included,
+ * and it is right to — a path in a comment is still a path in the page.)
+ * The concern collection page is not behind it: it exists the day the concern has copy and enough live
+ * tagged products, which is the tagging job the owner does on Catalog -> Build
+ * my routine. window.KBB_CONCERN_PAGES is the table for it, absent for exactly
+ * as long as no such page exists.
+ */
+function concernPick(){
+  return pickFrom((typeof window!=='undefined' && window.KBB_CONCERN_PAGES)||null);
+}
+
+/* Routine first, collection second, nothing third.
+ *
+ * A routine is a stronger answer than a shelf — it is five named steps filled
+ * from this shop's stock — so when both exist the routine wins. The two get
+ * DIFFERENT wording because they are different promises, and a button that
+ * said "Build my acne routine" over a collection URL would be describing a page
+ * the shopper is not about to see. */
 function routineLinkHTML(){
   const pick=routinePick();
-  if(!pick) return '';
   /* English, exactly as the chips above are: the concerns are VALUES, not
-     labels. The routine page prints the translated name at the far end. */
-  return `<div class="rtnlink">
+     labels. The destination page prints the translated name at the far end. */
+  if(pick) return `<div class="rtnlink">
     <div class="rl">${t('store.quiz.js_routine_link_lead','A :concern routine, step by step, from what this shop stocks. Steps it stocks nothing for are shown empty rather than filled with a guess.',{concern:pick.concern})}</div>
     <a class="btn sm" href="${pick.url}">${t('store.quiz.js_routine_link_cta','Build my :concern routine →',{concern:pick.concern})}</a>
+  </div>`;
+  const cpick=concernPick();
+  if(!cpick) return '';
+  return `<div class="rtnlink">
+    <div class="rl">${t('store.quiz.js_concern_link_lead','Everything this shop stocks for :concern, in one place — picked by us, not by a filter.',{concern:cpick.concern})}</div>
+    <a class="btn sm" href="${cpick.url}">${t('store.quiz.js_concern_link_cta','Shop :concern →',{concern:cpick.concern})}</a>
   </div>`;
 }
 

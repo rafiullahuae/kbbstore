@@ -158,6 +158,75 @@ final class ConcernCollections
     }
 
     /**
+     * The same figure for SEVERAL concerns, in ONE query — Lane Q.
+     *
+     * ── WHY THIS EXISTS AT ALL ─────────────────────────────────────────────
+     *
+     * count() is one SELECT COUNT per concern, which was right while exactly
+     * one concern was enabled. Two callers now want the figure for a whole set
+     * at once: live(), which the sitemap asks on every build, and the skin
+     * quiz, which asks it on a page whose query budget is TWO
+     * (StorefrontQueryBudgetTest, 'skin quiz'). Eight enabled concerns would
+     * have been eight queries on the sitemap and would have blown the quiz's
+     * budget the day a second concern got copy. This is one query for any
+     * number of them, so neither caller gets more expensive as the owner
+     * enables more pages.
+     *
+     * ── WHY READING ROWS HERE IS NOT THE THING THIS CLASS WARNS ABOUT ──────
+     *
+     * query()'s note argues against "the whole-table read into PHP that
+     * BuildMyRoutine does". This is not that. The WHERE keeps only rows that
+     * are TAGGED for one of the concerns asked about, which is the 30-45 rows
+     * the owner is being asked to tag rather than the catalogue, and it plucks
+     * ONE column. An untagged shop reads nothing at all.
+     *
+     * The tally is RoutineConcerns::clean(), not the LIKE, because a row that
+     * matched on `acne` still has to be attributed to the right concern when it
+     * carries three of them. The LIKE narrows; clean() decides. Both agree by
+     * construction — see query()'s note on why `%"slug"%` cannot cross-match —
+     * and ConcernCollectionsTest pins that the two routes give the same number.
+     *
+     * Unknown slugs are dropped rather than returned as 0, for the same reason
+     * RoutineConcerns::clean() drops them: they are not concerns this shop has.
+     *
+     * @param  list<string>  $slugs
+     * @return array<string, int>  every asked-for concern that exists, slug => count
+     */
+    public static function counts(array $slugs): array
+    {
+        $slugs = array_values(array_unique(array_filter(
+            $slugs,
+            static fn (mixed $s): bool => RoutineConcerns::exists($s)
+        )));
+
+        $out = array_fill_keys($slugs, 0);
+
+        if ($slugs === []) {
+            return $out;
+        }
+
+        $rows = Product::query()
+            ->visible()
+            ->where('stock_status', 'instock')
+            ->where(static function (Builder $q) use ($slugs): void {
+                foreach ($slugs as $slug) {
+                    $q->orWhere('routine_concerns', 'like', '%"' . $slug . '"%');
+                }
+            })
+            ->pluck('routine_concerns');
+
+        foreach ($rows as $raw) {
+            foreach (RoutineConcerns::clean($raw) as $slug) {
+                if (array_key_exists($slug, $out)) {
+                    $out[$slug]++;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Is there a page here at all?
      *
      * The ONE place both conditions are checked, so the route, the sitemap and
@@ -170,10 +239,21 @@ final class ConcernCollections
         return self::isEnabled($slug) && self::count((string) $slug) >= self::MIN_PRODUCTS;
     }
 
-    /** Every concern page that exists right now. Used by the sitemap. */
+    /**
+     * Every concern page that exists right now. Used by the sitemap.
+     *
+     * One query for all of them rather than one each — see counts(). The answer
+     * is identical to asking isLive() slug by slug, and ConcernCollectionsTest
+     * asserts exactly that against the router.
+     */
     public static function live(): array
     {
-        return array_values(array_filter(self::slugs(), static fn (string $s): bool => self::isLive($s)));
+        $counts = self::counts(self::slugs());
+
+        return array_values(array_filter(
+            self::slugs(),
+            static fn (string $s): bool => ($counts[$s] ?? 0) >= self::MIN_PRODUCTS
+        ));
     }
 
     /** This concern's URL path, with the trailing slash the canonical carries. */
