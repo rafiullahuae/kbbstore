@@ -60,11 +60,11 @@ use Illuminate\Http\Response;
  *
  * ── WHAT EACH OF THE FOUR CARRIES, IN ONE PLACE ─────────────────────────────
  *
- *                     money   address   item names   SKU   gift message
- *   invoice             yes     yes         yes      yes        yes
- *   packing slip        NO      yes         yes      yes        yes
- *   delivery note       NO      yes         yes      NO         NO
- *   dispatch label      COD*    yes         NO       NO         NO
+ *                     money   address   item names   SKU   gift message   language
+ *   invoice             yes     yes         yes      yes        yes         CUSTOMER
+ *   packing slip        NO      yes         yes      yes        yes         operator
+ *   delivery note       NO      yes         yes      NO         NO          CUSTOMER
+ *   dispatch label      COD*    yes         NO       NO         NO          operator
  *
  *   * the cash-on-delivery amount, and only on an unpaid COD order. See
  *     InvoiceDocument::codToCollect().
@@ -75,6 +75,14 @@ use Illuminate\Http\Response;
  * view's header argues its own line of that table, and DispatchDocumentsTest
  * asserts the NOs over the whole rendered page rather than over a list of
  * fields somebody has to remember to keep up to date.
+ *
+ * THE LAST COLUMN IS NOT "DOES IT LEAVE THE BUILDING", IT IS WHO READS IT. The
+ * dispatch label leaves too, on the outside of the box, and stays in the
+ * operator's language because a courier reads it. The invoice and the delivery
+ * note are addressed to the customer — one to their inbox and their file, one
+ * into the parcel for them to open and sign — so both follow the order's own
+ * language through OrderLocale::render(). The packing slip is a picking list
+ * for the bench. deliveryNote() below argues that line in full.
  *
  * FOUR, NOT FIVE. The order screen offers "Shipping Label" and "Dispatch Label"
  * as separate buttons. They are one document — see the shipping-label view's
@@ -111,11 +119,15 @@ class InvoiceController extends Controller
      * customer now does, and for the same reason: the person who reads it is
      * the customer.
      *
-     * AND ONLY THIS ONE OF THE FOUR. A packing slip is a picking list, a
-     * delivery note is a handover record and a dispatch label is an address on
-     * a box — all three are read inside the building or by a courier, by people
-     * who did not place the order. They stay in the operator's language, which
-     * is what they were already in.
+     * AND ONE OTHER OF THE FOUR, WHICH IS NOT WHAT THIS PARAGRAPH USED TO SAY.
+     * It read "and only this one of the four", on the grounds that the other
+     * three "are read inside the building or by a courier, by people who did
+     * not place the order". That is true of the packing slip and of the
+     * dispatch label and it was never true of the delivery note, which goes IN
+     * THE PARCEL and is handed to the customer to sign. deliveryNote() below
+     * carries the argument; the two that genuinely are read by this shop and by
+     * the courier stay in the operator's language, which is what they were
+     * already in.
      *
      * RENDERED HERE, NOT RETURNED AS A VIEW. A View returned from a controller
      * is rendered during response preparation, long after render()'s `finally`
@@ -188,6 +200,48 @@ class InvoiceController extends Controller
      * prices.
      *
      * Allocates nothing, for the same reason the packing slip does not.
+     *
+     * ── IT PRINTS IN THE CUSTOMER'S LANGUAGE, AND IT IS THE SECOND OF THE FOUR
+     *    TO DO SO ───────────────────────────────────────────────────────────
+     *
+     * THE WHOLE ARGUMENT IS WHERE THE SHEET ENDS UP. This one GOES IN THE
+     * PARCEL. It is read at the door by the person who ordered — the view's own
+     * header has said so since it was written, that it "is read at the door,
+     * facing the customer, so it leads with what is in the parcel in the
+     * customer's own words" — and every word on it was still the operator's.
+     * An Arabic shopper who bought under Arabic names, was emailed in Arabic and
+     * was invoiced in Arabic opened the box on an English handover sheet and was
+     * asked to sign it.
+     *
+     * AND THE PACKING SLIP SITTING NEXT TO IT IN THIS FILE DOES NOT MOVE, which
+     * is the distinction worth stating rather than inferring. A packing slip is
+     * a PICKING LIST: it is read at the bench, facing the shelves, by somebody
+     * who works here, and it carries the SKU to pick by. A dispatch label is an
+     * address on the outside of a box, read by a courier. Neither is addressed
+     * to the customer, so neither follows the customer's language. The
+     * difference is not "does it leave the building" — the label leaves too —
+     * it is WHO READS IT.
+     *
+     * So the split is now: the two documents the customer reads (invoice,
+     * delivery note) follow the order; the two the shop and the courier read
+     * (packing slip, dispatch label) stay in the operator's. The class header's
+     * table carries that as a column.
+     *
+     * The line names are the same decision one level down. `order_items.name`
+     * keeps the operator's language AND its exact value, which is what the
+     * picking list needs; `name_localised` carries the customer's, and
+     * InvoiceDocument exposes it as `nameForCustomer`. This sheet reads that
+     * one now, and it is the only change of key in the four.
+     *
+     * RENDERED HERE, NOT RETURNED AS A VIEW, for the reason invoice() gives at
+     * length: a View returned from a controller is rendered during response
+     * preparation, long after render()'s `finally` has put the previous locale
+     * back, so wrapping view() and returning its result compiles the template in
+     * English and looks like it worked.
+     *
+     * The toolbar is the exception inside the exception, exactly as it is on the
+     * invoice: it is `.no-print` navigation for the operator standing at the
+     * screen, so its two strings are resolved before the locale changes.
      */
     public function deliveryNote(int $id): View|Response
     {
@@ -197,11 +251,19 @@ class InvoiceController extends Controller
             return $this->missing();
         }
 
-        return view('invoices.delivery-note', [
+        // Resolved OUT HERE, before the locale moves — see invoice().
+        $toolbar = [
+            'toolbarHint' => __('invoice.document.print_hint'),
+            'toolbarButton' => __('invoice.document.print_button'),
+        ];
+
+        $html = OrderLocale::render($order, fn (): string => view('invoices.delivery-note', array_merge([
             'doc' => $this->documents->present($order),
             'packingSlipUrl' => self::packingSlipUrl($order->id),
             'labelUrl' => self::shippingLabelUrl($order->id),
-        ]);
+        ], $toolbar))->render());
+
+        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     /**

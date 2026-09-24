@@ -53,9 +53,15 @@
       rendered in. `dir` comes from Locale::direction(), never from the language
       alone, because this shop has two switches and not one: Arabic can be on
       while the mirrored layout is still being built, and direction() is the
-      single place that answers which state the shop is in. The other three
-      documents are not wrapped, so they render in the operator's language and
-      this resolves to exactly what it was hard-coded to.
+      single place that answers which state the shop is in.
+
+      TWO OF THE FOUR ARE WRAPPED, not one — this paragraph used to say the
+      invoice alone. The DELIVERY NOTE joined it, because that sheet goes in the
+      parcel and is opened and signed by the customer, which is the same
+      argument stated one document further along. The packing slip is a picking
+      list for the bench and the dispatch label is an address a courier reads;
+      neither is wrapped, so for those two this resolves to exactly what it was
+      hard-coded to.
 
       WHAT IS STILL PHYSICAL. The sheet's own stylesheet below uses physical
       sides (text-align:right on the money columns, margins that assume a
