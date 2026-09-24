@@ -888,6 +888,31 @@ class Seo
         ]));
         if (!empty($sameAs)) $org['sameAs'] = $sameAs;
 
+        /*
+         * WHERE THE SHOP IS -- address, telephone, and on a Place type the
+         * coordinates and the opening hours.
+         *
+         * MERGED INTO THE ORGANIZATION NODE, NOT EMITTED AS A SECOND ONE.
+         * The obvious shape -- a `LocalBusiness` node beside the `Organization`
+         * node -- would put two nodes on every page claiming to be the same
+         * business, which is the duplicate-schema defect docs/SEO-COMPETITIVE.md
+         * identifies as the classic Shopify review-app failure. It is also
+         * simply wrong: `Store` and `LocalBusiness` are SUBTYPES of
+         * Organization, so the address belongs on the node that already names
+         * the business, whose @type the owner has already chosen.
+         *
+         * App\Support\BusinessAddress decides what may be said -- see its
+         * class comment for why a half-filled address is worse than none, and
+         * why `geo` and `openingHoursSpecification` are gated on the type being
+         * a Place. A shop that has filled none of it in gets exactly the node
+         * it got before this existed, which is rule 1 of this project.
+         *
+         * The values are settings, so they are the same XSS vector `org_name`
+         * is, and they are safe by the same mechanism: encodeJsonLd()'s HEX
+         * flags, pinned by SeoRenderTest. Nothing here is printed unescaped.
+         */
+        $org += BusinessAddress::organizationFragment($s, (string) $org['@type']);
+
         $nodes[] = $org;
 
         if ($base) {
