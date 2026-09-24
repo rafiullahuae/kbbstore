@@ -40,8 +40,15 @@ use Illuminate\Support\Facades\DB;
  * A verdict, not a response — the caller owns the HTTP layer:
  *
  *   ['status' => 'ok',       'category' => Category]  render the archive
- *   ['status' => 'redirect', 'to' => '/product-category/real/path/', 'code' => 301]
+ *   ['status' => 'redirect', 'to' => '/product-category/real/path/',
+ *                            'to_path' => 'real/path', 'code' => 301]
  *   ['status' => 'notfound']                          404
+ *
+ * `to` is root-relative and is what the admin screens and the import map read.
+ * `to_path` is the same destination as a BARE path, and it is what the caller
+ * that is about to issue an HTTP redirect wants: redirectUrl() turns it into an
+ * absolute URL with the trailing slash intact. See redirectUrl() for why the
+ * two cannot be the same string.
  *
  * A canonical-prefix mismatch is a 301 rather than a 404 on purpose: the leaf
  * exists and the visitor plainly wants it, and those URLs have been answering
@@ -56,7 +63,7 @@ final class CategoryPath
     private const MAX_HOPS = 5;
 
     /**
-     * @return array{status:string, category?:Category, to?:string, code?:int}
+     * @return array{status:string, category?:Category, to?:string, to_path?:string, code?:int}
      */
     public static function resolve(string $rawPath): array
     {
@@ -82,6 +89,7 @@ final class CategoryPath
                 return [
                     'status' => 'redirect',
                     'to' => self::url($canonical),
+                    'to_path' => $canonical,
                     'code' => 301,
                 ];
             }
@@ -97,6 +105,7 @@ final class CategoryPath
             return [
                 'status' => 'redirect',
                 'to' => self::url(self::canonicalPath($target)),
+                'to_path' => self::canonicalPath($target),
                 'code' => 301,
             ];
         }
@@ -131,10 +140,58 @@ final class CategoryPath
         return self::normalise((string) ($category->path ?: $category->buildPath()));
     }
 
-    /** Root-relative archive URL, base path and trailing slash included. */
+    /**
+     * Root-relative archive URL, base path and trailing slash included.
+     *
+     * For an href. NOT for redirect() — see redirectUrl() below, which exists
+     * because handing this to redirect() silently loses the trailing slash.
+     */
     public static function url(string $path): string
     {
-        return Url::to('/product-category/' . $path . '/');
+        return Url::to(self::archivePath($path));
+    }
+
+    /**
+     * The same address, absolute, and safe to hand to redirect().
+     *
+     * ═════════════════════════════════════════════════════════════════════
+     * WHY THIS IS NOT url(), AND WHY IT IS NOT redirect(url(...)) EITHER
+     * ═════════════════════════════════════════════════════════════════════
+     *
+     * `redirect($relativePath)` hands the target to Laravel's UrlGenerator,
+     * which STRIPS THE TRAILING SLASH. This shop's archive addresses keep one
+     * (U-01, and Url's own class comment says why), so every 301 this class
+     * produced landed on `/product-category/skincare/toners` — an address that
+     * answers 200 and whose own `<link rel="canonical">` points at the slashed
+     * form. The shop 301'd to an address that then declared a different one
+     * canonical: a redirect hop and then a canonical hop, for every stale or
+     * non-canonical category URL on the site.
+     *
+     * That is the identical defect `docs/GP-ADDRESSES-LAND.md` §5.3 measured
+     * for the redirects TABLE and fixed there with `Url::redirect()`, which
+     * made `CategoryArchiveController` the last producer of a 301 in this
+     * application still doing it the other way. `CheckRedirects::handle()` and
+     * `PageController::legacyPost()` are the other two, and both already go
+     * through `Url::redirect()`.
+     *
+     * It takes the BARE path, not url()'s output, because `Url::redirect()`
+     * applies the base path and the locale segment itself. Passing an
+     * already-prefixed string would produce `/kbb-upgrade/kbb-upgrade/…` on the
+     * staging mount — the exact trap `Url::redirect()`'s own comment records.
+     *
+     * The language matters as much as the slash: `Url::redirect()` goes through
+     * `Url::to()`, so an Arabic reader following a stale link lands on the
+     * Arabic archive instead of being dropped onto the English one.
+     */
+    public static function redirectUrl(string $path): string
+    {
+        return Url::redirect(self::archivePath($path));
+    }
+
+    /** The one place the archive's address shape is written down. */
+    private static function archivePath(string $path): string
+    {
+        return '/product-category/' . $path . '/';
     }
 
     /**
