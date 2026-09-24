@@ -21445,6 +21445,21 @@ buildNav();
      to a new table that only this screen reads. --}}
 @include('admin.partials.security-screen')
 
+{{-- Platform → Site address: the banner that appears when this shop is being
+     served from an address that is not APP_URL. (Lane: domain-portability.)
+
+     One include, and the whole of the change to this file, for the reason the
+     nine partials above give: several lanes are in here at once. The screen it
+     draws on already exists a few thousand lines up; this adds a card at the
+     top of it and a button that writes the new address, and draws NOTHING at
+     all while the served address and APP_URL agree — which is the case on this
+     shop, so applying it moves nothing here.
+
+     App\Support\SiteUrl carries the argument for why the value written comes
+     from the request being answered rather than from the browser, and why an
+     authenticated owner's click is a different thing from a Host header. --}}
+@include('admin.partials.site-url-banner')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------
