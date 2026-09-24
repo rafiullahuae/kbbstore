@@ -564,6 +564,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // between an order id and somebody's delivery address.
         require __DIR__.'/invoices-admin.php';
 
+        // A sample order the owner can make and throw away, so the four
+        // documents above can be looked at on a shop that has no orders yet --
+        // which is where this one has been all round. Its own capability,
+        // owner only, because it is the only back-office endpoint that writes
+        // a row into `orders`.
+        require __DIR__.'/sample-order-admin.php';
+
         // The same four documents for several orders at once (Lane GC). Same
         // group and the same reason as the file above, only more so: one
         // response can carry a hundred buyers' names, street addresses, phone

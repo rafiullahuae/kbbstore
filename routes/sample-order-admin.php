@@ -7,15 +7,13 @@ declare(strict_types=1);
 | The sample order — Safety → Demo Content → Sample order (Lane O)
 |------------------------------------------------------------------------------
 |
-| NOT YET WIRED. CLAUDE.md forbids this lane from editing routes/web.php, so
-| this file ships unmounted and the integrator adds ONE line, inside the
-| EXISTING admin-api group — the group that already carries `web` and
-| `auth:admin` and the NoStoreAdminApi middleware — beside the other requires:
-|
-|     Route::prefix('admin-api')->middleware(\App\Http\Middleware\NoStoreAdminApi::class)->group(function () {
-|         ...
-|         require __DIR__.'/sample-order-admin.php';       <-- THIS LINE
-|     });
+| MOUNTED, inside the EXISTING admin-api group in routes/web.php — the group
+| that already carries `web`, `auth:admin` and NoStoreAdminApi — immediately
+| after the invoices-admin.php require, which is the file whose four documents
+| this one exists to make viewable. CLAUDE.md forbids a lane from editing
+| routes/web.php, so this file shipped unmounted and the integrator added that
+| line; RouteFileHeadersTest caught this paragraph still saying otherwise, which
+| is the guard doing exactly its job.
 |
 | THAT GROUP, AND NOTHING ELSE. The POST below writes a row into `orders`, and
 | the GET names an address and a phone number. /api/* in this application is
