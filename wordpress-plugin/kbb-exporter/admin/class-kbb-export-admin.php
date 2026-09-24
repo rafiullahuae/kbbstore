@@ -49,12 +49,48 @@ class KBB_Export_Admin {
 	 */
 	const DOWNLOAD_NONCE = 'kbb_export_download';
 
+	/*
+	 * ── THE DELETE HAS A CAPABILITY AND A NONCE OF ITS OWN ──────────────────
+	 *
+	 * `manage_woocommerce` is the right answer for running and downloading an
+	 * export: it is what a shop manager has, and the export is a shop manager's
+	 * job. It is the WRONG answer for destroying one. The export is the only
+	 * copy of a several-minute run over the whole shop, and on cutover day it is
+	 * the only copy of the shop's data that is not on the site being switched
+	 * off. Deleting it is not a shop-management task, it is an administrator's.
+	 *
+	 * So the destructive door gets its own capability, strictly narrower than
+	 * the one that opens the rest of the screen:
+	 *
+	 *   `kbb_export_delete`  a capability of this plugin's own, so a site can
+	 *                        grant exactly this to exactly one person without
+	 *                        granting anything else;
+	 *   `delete_users`       the fallback, and it is deliberately not
+	 *                        `manage_options`: `delete_users` is administrator-
+	 *                        only in core WordPress and a shop manager does not
+	 *                        have it, which is the line being drawn.
+	 *
+	 * It FAILS CLOSED. A user with neither gets 403 from the endpoint, not a
+	 * hidden button -- add_management_page() decides what is in a menu and not
+	 * what answers a URL, which is the same reason download() re-checks.
+	 *
+	 * And its own nonce, for DOWNLOAD_NONCE's reason one step further: a leaked
+	 * URL or a replayed body that could START an export is a nuisance; one that
+	 * could DELETE one is the incident.
+	 */
+	const DELETE_CAPABILITY = 'kbb_export_delete';
+
+	const DELETE_FALLBACK_CAPABILITY = 'delete_users';
+
+	const PURGE_NONCE = 'kbb_export_purge';
+
 	public static function boot() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'wp_ajax_kbb_export_start', array( __CLASS__, 'ajax_start' ) );
 		add_action( 'wp_ajax_kbb_export_step', array( __CLASS__, 'ajax_step' ) );
 		add_action( 'wp_ajax_kbb_export_zip', array( __CLASS__, 'ajax_zip' ) );
 		add_action( 'wp_ajax_kbb_export_reset', array( __CLASS__, 'ajax_reset' ) );
+		add_action( 'wp_ajax_kbb_export_purge', array( __CLASS__, 'ajax_purge' ) );
 
 		/*
 		 * admin-post.php and NOT admin-ajax.php, and not a URL under uploads.
@@ -256,6 +292,14 @@ class KBB_Export_Admin {
 		);
 	}
 
+	/**
+	 * FORGET THE RUN. This deletes no file, and the name says so.
+	 *
+	 * Left exactly as it was, and documented here because it is the trap: wired
+	 * to a button labelled Delete it would answer `ok`, reset the bar, and
+	 * leave every shopper's password hash on the server with nothing on the
+	 * screen still referring to it. ajax_purge() is the one that deletes.
+	 */
 	public static function ajax_reset() {
 		self::guard();
 
@@ -263,6 +307,57 @@ class KBB_Export_Admin {
 		$runner->reset();
 
 		wp_send_json( array( 'ok' => true, 'error' => '' ) );
+	}
+
+	/** Can the current user destroy an export? See DELETE_CAPABILITY. */
+	private static function can_delete() {
+		return current_user_can( self::DELETE_CAPABILITY )
+			|| current_user_can( self::DELETE_FALLBACK_CAPABILITY );
+	}
+
+	/**
+	 * DELETE THE EXPORT FROM THE SERVER.
+	 *
+	 * Three things stand in front of it and none of them is sufficient alone:
+	 *
+	 *  1. THE CAPABILITY, its own and narrower than the screen's. Checked here
+	 *     rather than inferred from the button being drawn.
+	 *  2. THE NONCE, its own (PURGE_NONCE), so nothing that leaked from the
+	 *     export or the download can be replayed into a delete.
+	 *  3. THE TYPED CONFIRMATION, checked by KBB_Export_Runner::purge() on the
+	 *     server. The page disables the button until the word is typed; that is
+	 *     a courtesy to the person using it, not a guard, because the endpoint
+	 *     is reachable without the page.
+	 *
+	 * The answer is the runner's, unaltered, and the runner computes `ok` from
+	 * a fresh walk of the folder rather than from how many unlink() calls
+	 * succeeded. An endpoint that reported success because it had tried is the
+	 * exact failure this whole path exists to avoid.
+	 */
+	public static function ajax_purge() {
+		if ( ! self::can_delete() ) {
+			wp_send_json(
+				array(
+					'ok'    => false,
+					'error' => 'You do not have permission to delete the export from this server. It needs the '
+						. 'kbb_export_delete capability, which an administrator has.',
+				),
+				403
+			);
+		}
+
+		check_ajax_referer( self::PURGE_NONCE, 'nonce' );
+
+		$confirm = isset( $_POST['confirm'] ) ? (string) wp_unslash( $_POST['confirm'] ) : ''; // phpcs:ignore
+
+		$runner = new KBB_Export_Runner();
+		$result = $runner->purge( $confirm );
+
+		// Whatever happened, the screen redraws from the disk rather than from
+		// what it thinks it just did.
+		$result['exports'] = $runner->exports();
+
+		wp_send_json( $result );
 	}
 
 	/** @return array<string,mixed> */
@@ -342,12 +437,14 @@ class KBB_Export_Admin {
 				and point the new shop at the folder.
 			</p>
 			<p>
-				When you have downloaded them all, <strong>delete the folder from the server</strong> &mdash;
+				When you have downloaded them all, <strong>delete the export from the server</strong> &mdash;
 				<code>customers.csv</code> holds every shopper&rsquo;s address and password hash and
 				<code>reviews.csv</code> holds reviewers&rsquo; email addresses and IPs. The folder is already
 				protected (a random name, an <code>index.php</code> and a deny-all <code>.htaccess</code>), and the
 				downloads below go through WordPress with your login checked &mdash; but the only completely safe
-				copy is the one that is not there.
+				copy is the one that is not there. <strong>There is a button for it at the bottom of this
+				page</strong>, under &ldquo;Delete the export from this server&rdquo;; you do not need FTP or a
+				shell.
 			</p>
 			<?php if ( ! KBB_Export_Zip::available() ) : ?>
 				<div class="notice notice-warning inline"><p><?php echo esc_html( KBB_Export_Zip::unavailable_reason() ); ?></p></div>
@@ -492,6 +589,60 @@ class KBB_Export_Admin {
 			<div id="kbb-downloads"></div>
 
 			<div id="kbb-notes"></div>
+
+			<?php
+			/*
+			 * ── THE DELETE, WHICH IS THE ONLY WAY HE HAS ────────────────────
+			 *
+			 * The paragraph at the top of this screen has always said to delete
+			 * the folder once the download is done, and it was an instruction
+			 * to do something he cannot do: no shell, no FTP. This is the
+			 * control that makes it true.
+			 *
+			 * WHAT IS ON THE SERVER IS READ OFF THE DISK, not out of the state
+			 * option. The option knows about the export this plugin is part-way
+			 * through; the disk knows about the four from last week that were
+			 * downloaded and left, which are the ones this section exists for.
+			 *
+			 * THE BUTTON IS DRAWN ONLY FOR SOMEBODY WHO COULD USE IT, and that
+			 * is a courtesy rather than the guard -- ajax_purge() checks the
+			 * capability itself, because a menu decides what is in a menu and
+			 * not what answers a URL.
+			 */
+			$kbb_exports = $runner->exports();
+			?>
+
+			<h2 id="kbb-delete-heading">Delete the export from this server</h2>
+
+			<?php if ( ! self::can_delete() ) : ?>
+				<p class="description" style="max-width:52em">
+					Deleting the export needs the <code>kbb_export_delete</code> capability, which an administrator
+					has and a shop manager does not. Ask an administrator to open this page and press the button.
+				</p>
+			<?php else : ?>
+				<p class="description" style="max-width:52em">
+					This removes the exported files from
+					<code><?php echo esc_html( $runner->exports_root() ); ?></code> for good. Download everything
+					you need first &mdash; <strong>there is no copy anywhere else</strong> and the export takes
+					several minutes to run again. The folder&rsquo;s own <code>index.php</code> and
+					<code>.htaccess</code> are left in place; they hold nothing.
+				</p>
+
+				<div id="kbb-purge-list"></div>
+
+				<p>
+					<label for="kbb-purge-confirm">
+						Type <code><?php echo esc_html( KBB_Export_Runner::PURGE_PHRASE ); ?></code> to confirm
+					</label><br>
+					<input type="text" id="kbb-purge-confirm" value="" autocomplete="off"
+						placeholder="<?php echo esc_attr( KBB_Export_Runner::PURGE_PHRASE ); ?>" style="max-width:12em">
+					<button type="button" class="button button-link-delete" id="kbb-purge" disabled>
+						Delete the export from this server
+					</button>
+				</p>
+
+				<p id="kbb-purge-said" class="description"></p>
+			<?php endif; ?>
 
 			<script>
 			(function () {
@@ -807,7 +958,7 @@ class KBB_Export_Admin {
 					if (z.done || z.available === false) {
 						say('Finished', z.available === false
 							? 'The export is written to the folder above. ' + z.reason
-							: 'Every group is packed. Download each one below, then delete the folder from the server.');
+							: 'Every group is packed. Download each one below, then delete the export from this server with the button at the bottom of this page.');
 						return;
 					}
 
@@ -854,6 +1005,101 @@ class KBB_Export_Admin {
 					running = false;
 					say('Paused', 'Nothing is lost. Press Resume to carry on from the last completed batch.');
 				});
+
+				/*
+				 * ── THE DELETE ─────────────────────────────────────────────
+				 *
+				 * Its own nonce (PURGE_NONCE) and therefore its own post, not
+				 * post() above: that one carries the export nonce and the batch
+				 * settings, and a destructive endpoint sharing a body with the
+				 * one that starts an export is how a replay of the second
+				 * becomes the first.
+				 *
+				 * THE LIST IS REDRAWN FROM THE SERVER'S ANSWER, and the answer
+				 * is the server's fresh walk of the folder -- not "we deleted
+				 * 12 files". If something could not be removed it is still in
+				 * the list afterwards, by name, which is the whole reason this
+				 * section is not a button that says Done.
+				 */
+				var PURGE_NONCE = <?php echo wp_json_encode( self::can_delete() ? wp_create_nonce( self::PURGE_NONCE ) : '' ); ?>;
+				var PURGE_PHRASE = <?php echo wp_json_encode( KBB_Export_Runner::PURGE_PHRASE ); ?>;
+				var EXPORTS = <?php echo wp_json_encode( self::can_delete() ? $kbb_exports : array() ); ?>;
+
+				function renderExports(list) {
+					var box = document.getElementById('kbb-purge-list');
+
+					if (!box) { return; }
+
+					if (!list || !list.length) {
+						box.innerHTML = '<p class="description"><em>There is no export on this server.</em></p>';
+						return;
+					}
+
+					var html = '<table class="widefat striped" style="max-width:60em"><thead><tr>' +
+						'<th>Export</th><th>Files</th><th>Size</th><th>What is in it</th></tr></thead><tbody>';
+
+					list.forEach(function (e) {
+						html += '<tr><td><code>' + esc(e.id) + '</code>' +
+							(e.current ? ' <span class="description">(the current one)</span>' : '') +
+							'<br><span class="description">' + esc(e.created) + '</span></td>' +
+							'<td>' + esc(e.files) + '</td><td>' + esc(e.size) + '</td><td>' +
+							((e.sensitive && e.sensitive.length)
+								? '<strong>' + esc(e.sensitive.join(', ')) + '</strong>' +
+									'<br><span class="description">addresses, password hashes, reviewer emails and IPs</span>'
+								: '<span class="description">no personal data files</span>') +
+							'</td></tr>';
+					});
+
+					box.innerHTML = html + '</tbody></table>';
+				}
+
+				var purgeBox = document.getElementById('kbb-purge-confirm');
+				var purgeButton = document.getElementById('kbb-purge');
+
+				if (purgeBox && purgeButton) {
+					purgeBox.addEventListener('input', function () {
+						// A courtesy, not a guard: KBB_Export_Runner::purge()
+						// checks the same phrase server side and refuses
+						// without it whatever this page does.
+						purgeButton.disabled = (purgeBox.value.trim() !== PURGE_PHRASE);
+					});
+
+					purgeButton.addEventListener('click', function () {
+						var said = document.getElementById('kbb-purge-said');
+
+						purgeButton.disabled = true;
+						said.textContent = 'Deleting…';
+
+						var body = new URLSearchParams();
+						body.set('action', 'kbb_export_purge');
+						body.set('nonce', PURGE_NONCE);
+						body.set('confirm', purgeBox.value.trim());
+
+						fetch(ajax, {method: 'POST', credentials: 'same-origin', body: body})
+							.then(function (r) { return r.json(); })
+							.then(function (r) {
+								renderExports(r.exports || []);
+								purgeBox.value = '';
+
+								if (r.ok) {
+									said.textContent = 'Deleted ' + r.deleted + ' item(s), ' + (r.size || '') +
+										' freed. ' + (r.note || '');
+									return;
+								}
+
+								said.textContent = (r.error || '') + ' ' + (r.note || '') +
+									((r.remaining && r.remaining.length)
+										? ' Still on the server: ' + r.remaining.join(', ')
+										: '');
+							})
+							.catch(function () {
+								said.textContent = 'The delete request did not come back. Reload this page — the ' +
+									'list above is read from the disk, so it will tell you what is really there.';
+							});
+					});
+
+					renderExports(EXPORTS);
+				}
 
 				recompute();
 				renderDownloads(INITIAL_ZIP);

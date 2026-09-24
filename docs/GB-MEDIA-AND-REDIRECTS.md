@@ -865,3 +865,179 @@ php artisan kbb:import-media-rewrite                            # which hosts?
 php artisan kbb:import-media-rewrite --host=kbeautybliss.com --write
 php artisan kbb:import-media                # remote: 0
 ```
+
+---
+
+# Lane A, Phase 13 — the three items that were left open here
+
+Written against the code in this branch. Everything below is measured; where a
+number is quoted, the command that produced it is quoted with it.
+
+## A1. Fetching now re-points the rows it landed
+
+**What was wrong.** Fetching and re-pointing were two steps, and between them the
+photograph was on this server's disk and the product row still said
+`https://<old host>/wp-content/uploads/…`. Every page rendered perfectly — from
+the old site. The whole mitigation was a sentence in a runbook: *"the old site
+must not be switched off between them."* On a migration whose point is switching
+the old site off, that is a procedure standing in for a fix.
+
+**What changed.** `MediaSideloader::batch()` re-points the rows that named the
+addresses it just wrote, in the same request, before it answers. It goes through
+`MediaRewrite::propose()` rather than around it, so it inherits every guard:
+only a file that is really on disk, only a path under one of the two upload
+roots, only a value still byte-identical to the one the proposal was built from,
+all in one transaction.
+
+**Scoped to what that batch fetched, deliberately.** `propose()` would offer
+every row on those hosts whose file is on disk, including one the owner copied
+across by FTP months ago. That is *Store → Import → Addresses & pictures →
+apply*'s job, and pressing Fetch must not do it as a side effect. The manual
+apply still exists and still does the rest.
+
+**The counter this could have broken.** A re-pointed row stops being a remote
+reference, so it leaves `plan()['total']` at the moment it would have joined
+`present` — a bar drawn from those two sits at 0 of N through a run that is going
+perfectly, then reads 0 of 0 at the end. `plan()` gained `repointed`, counted
+from the ledger and checked against the disk (a row counts only while the file it
+names is really there), and `MigrationProgress::pictures()` adds it to both
+halves. Measured in `it keeps the progress bar honest once finished work leaves
+the catalogue`: two pictures, one batch each, and the stage reads 0/2 → 1/2 → 2/2.
+
+## A2. The Journal was in none of it
+
+`MediaAudit` did not look at `posts`. An article's cover photograph and every
+`<img>` in its body were invisible: not counted as "still on the old site", never
+fetched by the sideloader, and `MediaRewrite` had no column for them. **A
+migration could reach `remote => 0` with the whole Journal hot-linked to a site
+about to go dark.**
+
+Two halves, because they are two different shapes:
+
+| | Shape | Where it is handled |
+|---|---|---|
+| `posts.cover` | a cell — the whole value is one address | one row added to `MediaRewrite::COLUMNS` |
+| `posts.body` | a document — an unknown number of `<img>` inside kilobytes of HTML | `App\Services\Import\DocumentMediaRewrite` |
+
+**The document rewriter does not use `DOMDocument`, and that is the design.**
+`saveHTML()` re-serialises: it closes tags, re-quotes attributes, infers `<p>`
+and turns non-ASCII into entities. An Arabic article would come back different in
+every byte for a change to one attribute, and a rewrite that touches what it was
+not asked to touch cannot be reviewed. The edit is made on the text: the `<img>`
+tags are found, the `src` value inside each is compared against the address being
+re-pointed, and only that run of characters is replaced. Pinned in `it changes
+the src and nothing else in the document`, which asserts the whole body byte for
+byte with one substitution spelled out — including a single-quoted attribute, an
+unquoted one, an `&amp;` in Arabic text and an `<a href>` to the same file that
+is deliberately left alone.
+
+**Idempotent, because the import is.** `PostImporter` re-presents every row on
+every run. Two properties make a double rewrite impossible, and neither is a flag
+or a ledger: the filter is the *host* (what this writes has none, so a second
+pass does not see it), and the match is on the *whole decoded value*, never a
+substring — so `/wp-content/uploads/wp-content/uploads/…` cannot be produced.
+
+**`MediaAudit` and the rewriter share one parser**
+(`DocumentMediaRewrite::sources()`). An address the audit cannot see is a file
+the sideloader never fetches, so every proposal about it would report `ABSENT`
+for ever.
+
+**The finish line, asked of the database.** `it leaves no row anywhere naming the
+old host after one fetch` seeds six addresses across five tables —
+`products.image`, `products.images`, `brands.logo`, `categories.image`,
+`posts.cover` and an `<img>` in `posts.body` — runs one batch, and then asks in
+SQL:
+
+```
+before  6 rows naming old-shop.test
+after   [] , and MediaAudit says present => 6, missing => 0, remote => 0
+        batch()['repointed'] === ['rows' => 5, 'documents' => 1]
+```
+
+**Mutations, each verified red:**
+
+| Mutation | Goes red |
+|---|---|
+| delete the `repoint($landed)` call in `batch()` | 4 tests, in two files |
+| `Post::query()->whereRaw('1=0')` in `MediaAudit::references()` | 2 tests |
+| remove `[Post::class, 'posts', 'cover', false]` from `COLUMNS` | 1 test |
+| `$repointed = 0` in `MigrationProgress::pictures()` | 1 test |
+
+**Admin path.** *Store → Import → Addresses & pictures*. `preview` and `apply`
+now return a `journal` key beside the existing row counts — reported separately,
+not summed, because "how many rows" and "how many pictures in how many articles"
+are different questions and one total over both has no unit.
+
+**Found and not fixed.** An `<a href>` inside an article body that points at an
+uploads file on the old host is still hot-linked; WordPress writes one whenever a
+thumbnail links to the full-size image. It is not an `<img>`, the plan item names
+`<img>` tags, and rewriting anchors changes link behaviour — so it is reported
+rather than done. `MediaAudit` does not see settings-held images either
+(`og_default_image`, `org_logo` — `MediaUsage::SITE_KEYS`), so a share image on
+the old host is neither audited nor re-pointed.
+
+**One consequence worth knowing.** Once a row is re-pointed, deleting its file
+makes it `missing` in the audit rather than `remaining` in the sideloader: the
+catalogue no longer names the old host, so there is nothing to re-fetch from.
+`MediaRewrite::restore($host)` is the way back, and it already existed.
+
+## A3. The articles the import will refuse, listed before it refuses them
+
+An article is served from `/{slug}/` with no prefix, and
+`PageController::RESERVED_SLUGS` owns that first segment for forty-odd addresses
+the storefront answers itself. `PostImporter` has always refused those correctly
+and named them in the discard list. **The owner's side was missing:**
+`EntityReport::SAMPLES_PER_KIND` is 5, so an export with nine colliding articles
+showed him five and a count — and he cannot rename an article he has not been
+told the name of.
+
+`App\Services\Import\ReservedArticleReport` reads `posts.csv` out of the import
+workspace and lists every one, with the title, the WordPress id, the URL it
+wanted and what to do about it. Two more lists come free from the same pass and
+are kept apart because the action differs.
+
+**It writes nothing**, and that is stronger than "rolls back": no transaction is
+opened, no checkpoint is touched, no ledger row is appended, and a live import
+part-way through is not disturbed. That is why it is a read and not a mode of the
+preview *run*.
+
+**It cannot disagree with the import.** The decision moved out of
+`PostImporter::settleSlug()` into `PostImporter::address()` — pure, no report, no
+context — and both call it.
+
+Run against this repository's own fixture export
+(`tests/Fixtures/woo/posts.csv`), in full:
+
+| decision | id | title | url it wanted | result |
+|---|---|---|---|---|
+| reserved — NOT imported | 7003 | The wishlist we keep coming back to | `/wishlist/` | the storefront itself answers `/wishlist/` |
+| reserved — NOT imported | 7004 | About the people behind the shop | `/about/` | the storefront itself answers `/about/` |
+| address changed — imported | 7005 | SPF 50, every day | `/SPF_50_Every_Day/` | imported at `/spf-50-every-day/` |
+| address changed — imported | 7006 | Skin care in the Gulf summer | `/العناية-بالبشرة/` | imported at `/skin-care-in-the-gulf-summer/` |
+
+The percent-encoded Arabic slug is decoded, because that is the address a person
+reads and the one Search Console shows.
+
+**Admin path.** *Store → Import*, the "Articles at addresses the shop owns"
+download. Two GETs in `routes/import-articles-admin.php`, for the integrator to
+mount inside the **existing** `admin-api` group beneath `import-admin.php`:
+
+```
+GET /admin-api/import/article-addresses       JSON
+GET /admin-api/import/article-addresses.csv   the spreadsheet he approves from
+```
+
+Under the `/import/` prefix on purpose: `AdminCapabilities::RULES` already
+carries `['*', 'admin-api/import/**', 'data.import']`, and a prefix of its own
+would have fallen through to the closed owner-only default. Ships with
+`2026_12_11_000000_clear_caches_article_addresses.php`.
+
+**Mutations, verified red:** cap the list at five the way the discard samples are
+capped; and give the report a plausible hard-coded reserved list of its own
+instead of calling `PostImporter::address()` — that one misses
+`mail-preferences`, `notify-me`, `routines` and `import-chain`, which is the
+whole argument for one implementation.
+
+**Not decided here.** Whether the shop should instead *serve* an article at a
+reserved address is a routing change and the owner's call; the brief says so and
+`PageController::RESERVED_SLUGS` was read-only for this lane.
