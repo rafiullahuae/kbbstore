@@ -220,7 +220,7 @@ final class SeoAudit
              */
             'legacy_url_no_redirect' => [
                 'Old shop address with no redirect',
-                'The WooCommerce site published its category pages at the site root (/skincare/, /skincare-sets/) and Google still holds those addresses. This application serves them at /product-category/… instead, so unless a redirect row sends the old address to the new one, the day this shop goes live every one of these returns 404 and whatever ranking and links it had are dropped rather than passed on. Fix them at Store → SEO & Meta → Redirects & 404s, or run the WordPress import and apply its redirect bucket, which writes all of them.',
+                'The WooCommerce site published its category pages at the site root (/skincare/, /skincare-sets/) and Google still holds those addresses. This shop now forwards each of them to the matching category archive by itself, with no redirect row needed — so the ones listed here are the ones it cannot: there is no category, page or article in this shop answering to that name. Until there is, the address returns 404 and whatever ranking and links it had are dropped rather than passed on. Import the catalogue so the category exists, or decide where the address should go by hand at Store → SEO & Meta → Redirects & 404s.',
             ],
         ];
 
@@ -775,10 +775,38 @@ final class SeoAudit
             $state[(string) $row->source] = (bool) $row->enabled;
         }
 
+        // Three queries for all fifteen, not two or three per path — the
+        // budget this method's own comment above sets. See landingPaths().
+        $lands = LegacyCategoryUrls::landingPaths();
+
         foreach (LegacyCategoryUrls::PATHS as $path) {
             $bare = rtrim($path, '/');
 
             if (($state[$path] ?? false) === true) {
+                continue;
+            }
+
+            /*
+             * ▲ THE SECOND WAY THIS ADDRESS CAN BE COVERED, AND IT NEEDS NO ROW
+             *
+             * CheckRedirects now derives a 301 for any of the fifteen whose
+             * category this shop actually carries — see
+             * LegacyCategoryUrls::landingPath(). An address that lands is not a
+             * finding, whatever the table says about it, and reporting one
+             * anyway would send the owner to fix something that is already
+             * fixed. This audit's whole value is that its count means
+             * something.
+             *
+             * ASKED THROUGH landingPaths() AND NOT REIMPLEMENTED HERE. A
+             * second copy of "where does this old address go" is a second
+             * answer that can drift from the one the middleware serves, and an
+             * audit that disagrees with the shop is worse than no audit. That
+             * batched method is itself asserted against the per-path one for
+             * all fifteen, so this screen and the middleware cannot part
+             * company — the arrangement docs/GP-ADDRESSES-LAND.md §13.6 had to
+             * retrofit between CanonicalHost and CheckRedirects.
+             */
+            if (($lands[$path] ?? null) !== null) {
                 continue;
             }
 
@@ -791,13 +819,41 @@ final class SeoAudit
                 // address, because getPathInfo() keeps the slash.
                 $detail = 'only "' . $bare . '" is set';
             } else {
-                $detail = 'no redirect set';
+                /*
+                 * ▲ AND THE REASON IS NOW KNOWN, RATHER THAN ASSUMED.
+                 *
+                 * With the derived rule in place, "no row" is no longer why
+                 * this address fails. It fails because nothing in this shop
+                 * answers to that slug, which is a different job for the owner
+                 * — import the catalogue, or decide by hand where this address
+                 * should go — and it is the only honest thing to put on the
+                 * screen. Naming the wrong cause is how an operator spends an
+                 * afternoon on the wrong screen; docs/GP-ADDRESSES-LAND.md §4
+                 * is the same mistake, found the same way.
+                 */
+                $detail = 'no category, page or article in this shop answers to "' . $bare . '"';
             }
 
             self::hit($findings, 'legacy_url_no_redirect', [
                 'kind' => 'Old address',
                 'name' => $path,
-                'url' => LegacyCategoryUrls::toCategoryPath($path),
+                /*
+                 * ▲ WAS toCategoryPath(), WHICH IS A DESTINATION AND NOT
+                 * NECESSARILY A PAGE.
+                 *
+                 * toCategoryPath('/toners/') is the FLAT form,
+                 * /product-category/toners/. For a category nested under a
+                 * parent that address is itself a 301 (CategoryPath::resolve
+                 * via CategoryArchiveController), so the audit was advertising
+                 * a two-hop answer; and for a slug this shop does not carry at
+                 * all — which, per the branch above, is now the only way to
+                 * reach this line — it is a 404. Offering the owner a link to a
+                 * not-found page as the fix for a not-found page helps nobody.
+                 *
+                 * The old address itself is the honest thing to show: it is
+                 * what he has to make a decision about.
+                 */
+                'url' => $path,
                 'detail' => $detail,
             ]);
         }
