@@ -1105,10 +1105,12 @@ and both produced differences that looked exactly like a regression:
   the request FAIL at its own pace moved when `networkidle` fired. Two runs of
   the SAME tree disagreed on six rows. Everything off `127.0.0.1` is now
   refused outright.
-- **The scrollbar gutter.** `.wrap` is `margin:0 auto`, so whether the vertical
-  scrollbar existed when that margin resolved flipped it between `0px` and
-  `50px` at 1280. `html{overflow-y:scroll}` is injected before measuring, which
-  takes the race away instead of tolerating it.
+- **The scrollbar gutter.** `.wrap` is `margin:0 auto`, and its reported margin
+  flipped between `0px` and `20`/`50px` at 1280. `html{overflow-y:scroll}` is
+  injected from an init script, before the first paint, and a settled frame is
+  waited for before reading. That reduced it and did NOT remove it — see the
+  last paragraph of §14.5 for what it actually is, which is a reporting artefact
+  of `margin:auto` and not a layout difference.
 
 The dispatch countdown is excluded by name — it is a clock, its `<b>` is a
 different width every minute, and two servers hit a second apart disagree over
@@ -1299,8 +1301,34 @@ cross-process control (the trunk against a second copy of the trunk) are also
 2 viewports, every off-canvas panel force-opened, comparing position and size to
 three decimals plus all four margins, paddings and border widths, both insets,
 `text-align`, `float`, all four corner radii, `transform`, `background-position`,
-`direction`, `display` and `position`. **10,250 nodes, 0 differing rows**, and
-both controls are 0 as well.
+`direction`, `display` and `position`. **10,250–10,268 nodes** depending on the
+base it was run against.
+
+Run first against `05339c9`, on an idle machine: **0 differing rows**, and both
+controls 0 as well. Re-run against `6420180` after the six-lane merge, with the
+suite and two other lanes on the box, it settles at **2 differing rows — and so
+does the same-server control**, which is the whole of the answer.
+
+**The one unstable field is named rather than tolerated.** Across all five pairs
+measured — treatment, same-server control, cross-process control, and two
+warm-up comparisons — the ONLY fields that ever differ are `marginLeft` and
+`marginRight`, twelve rows in total. `box` never differs once, on any node, in
+any pair; neither does `transform`, `direction`, either inset, or anything else
+in the list. So **no element ever changed position or size.**
+
+What moves is the *reported used value* of an `auto` margin. The element is
+always a centred `.wrap` — e.g. `.wrap.shop` at 1280, `max-width:1240px` in a
+1280 parent — and Chromium reports `marginLeft/Right` as `0px` on most loads and
+as the resolved `20px` (or `50px` on the product page's wider wrap) on a few,
+while `getBoundingClientRect()` returns the same 1240-wide box centred in the
+same place every time. Six consecutive loads of `/shop/` at 1280 gave `0px` five
+times and `20px` once, with width 1240 and parent 1280 in all six.
+
+Two harness changes were tried against it and neither removed it — reserving the
+scrollbar gutter from the first paint with an init script, and a settled frame
+before reading. It is a reporting artefact of `margin:auto`, not a layout fact,
+and the served HTML measurement below is the one that carries the claim, being
+deterministic and covering the whole page rather than one field of one node.
 
 **Every drawer photographed CLOSED in RTL at 390px**, which is the specific way
 this class of change breaks. `r2-rtl-390-drawers-closed-*.jpg`, and the numbers
