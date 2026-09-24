@@ -47,6 +47,8 @@ final class UpdateRunner
             'file_count' => count($package->files),
         ]);
 
+        $this->recordManifest($release, $package);
+
         // If PHP dies inside this request — a parse error in a new file, a memory
         // limit, a timeout — this still runs.
         register_shutdown_function(function () use ($release) {
@@ -125,6 +127,54 @@ final class UpdateRunner
             $this->rollback($release, $e->getMessage());
 
             return $release->fresh();
+        }
+    }
+
+    /**
+     * Records WHAT THIS PACKAGE CONTAINED, path by path with its SHA-256.
+     *
+     * Every package already carries this: `update.json` declares a hash for
+     * every file, and UpdatePackage::checkChecksums() has always verified each
+     * one against the bytes in the zip before a single file is written. The
+     * manifest was then thrown away — `update_releases` kept a file COUNT,
+     * which can say that 23 files landed and nothing about which 23.
+     *
+     * Keeping it is what lets App\Services\IntegrityChecker answer the question
+     * this host cannot otherwise answer at all: is the file on the server still
+     * the file the package installed? There is no shell here. The owner cannot
+     * diff, cannot list, cannot hash. A package applied twice, half-applied
+     * after a timeout, or hand-edited over FTP is invisible without this row —
+     * including the case this project has already paid for, where 2.60.102–.106
+     * were built against a stale tree, applied anyway, and reverted three files.
+     *
+     * ▲ IT CAN NEVER FAIL AN UPDATE, which is why it is a guarded method of its
+     * own and not two more keys in the create() above. That create() is the
+     * first statement of apply() and sits OUTSIDE its try, so a column this
+     * server's migrations have not added yet — the ordinary window between a
+     * package's files landing and its migrations running — would throw from
+     * there and 500 the update that was installing the migration. Recorded on a
+     * best-effort basis, logged and swallowed, exactly as archivePackage()
+     * already is: the site updating successfully matters far more than a record
+     * of what it updated with.
+     *
+     * Written with update() rather than at create() so it also cannot change
+     * what the `created` hook on this model sees.
+     */
+    private function recordManifest(UpdateRelease $release, UpdatePackage $package): void
+    {
+        try {
+            $declared = (array) ($package->manifest['files'] ?? []);
+
+            if ($declared === []) {
+                return;
+            }
+
+            $release->update(['manifest' => json_encode($declared, JSON_UNESCAPED_SLASHES)]);
+        } catch (\Throwable $e) {
+            Log::warning('kbb-update: could not record the package manifest', [
+                'version' => $release->version,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
