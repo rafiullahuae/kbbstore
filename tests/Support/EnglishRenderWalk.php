@@ -374,7 +374,15 @@ final class EnglishRenderWalk
      * moving inside .sf-brand. No other page in the walk moved a byte; the cart
      * page does not carry this footer, cart_on ships off.
      */
-    public const BASE_COMMIT = '0fb179a2fcaa8cb64f3a9442a6350543c2407c62';
+    /*
+     * MOVED FORWARD for the back-to-top arrow, which now waits until the page
+     * has been scrolled and is no longer treated as a ruled row.
+     *
+     * The diff this test printed was ONE page, (with a basket) /checkout, at
+     * byte 16152 -- the footer's own inline stylesheet. No other page in the
+     * walk moved a byte.
+     */
+    public const BASE_COMMIT = 'd7883f671cab6d99ea3bb76564538c232d6e1d08';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
