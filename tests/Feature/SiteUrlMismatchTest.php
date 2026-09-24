@@ -368,27 +368,44 @@ it('refuses a confirmation that does not match the address it is answering on', 
     expect((string) file_get_contents($env))->not->toContain('attacker.test');
 });
 
-it('is owner-only, and is so by failing closed rather than by being listed', function () {
+it('is owner-only, by being mapped to an owner-only capability', function () {
     /*
-     * AdminCapabilities fails closed: an unmapped admin route requires a
-     * capability of null, and null is held by nobody, so EnforceAdminCapability
-     * 403s every role except owner. Leaving these two routes unmapped is
-     * therefore the STRICTEST setting available, not an oversight -- naming a
-     * capability could only widen it. Same call, same reason, as
-     * SiteAddressApiController beside it.
+     * THIS TEST ASSERTED THE OPPOSITE WHEN IT WAS WRITTEN, and the reasoning
+     * behind that was checkably wrong on two counts.
      *
-     * Both halves are asserted, because the comment saying "owner-only by not
-     * being listed" is exactly the kind of property a later tidy-up of the map
-     * removes without noticing.
+     * It argued that leaving these routes out of AdminCapabilities is the
+     * strictest setting available, because the map fails closed -- for() gives
+     * null, nobody holds null, EnforceAdminCapability 403s every role but the
+     * owner. The runtime half of that is true. The rest is not:
      *
-     * MUTATION: add ['*', 'admin-api/site-url/**', 'settings.write'] to
-     * AdminCapabilities::RULES. Red on the first expectation, and the manager
-     * below is let in.
+     *   1. AdminCapabilityMapTest requires every admin route to be mapped, and
+     *      pins the deny-by-default property against a route it registers
+     *      inside itself, PRECISELY so that real routes cannot lean on it. A
+     *      real unmapped route makes that guard weaker, not the route stronger.
+     *   2. Its cited precedent was wrong. `admin-api/site-address`, the route
+     *      immediately beside this one, IS mapped -- to `store.settings`.
+     *
+     * And CLAUDE.md rule 5 asks for the capability by name: "Every new admin
+     * endpoint gets its own capability and fails closed."
+     *
+     * `platform.site_url` rather than `store.settings` because the blast radius
+     * differs in kind. A wrong currency shows up on the next page load; a wrong
+     * APP_URL is invisible until somebody's password-reset link arrives on a
+     * domain this shop no longer owns.
+     *
+     * Both halves are still asserted -- the mapping AND the 403 -- because
+     * "owner-only" stated in a comment is exactly the property a later tidy-up
+     * of the map removes without noticing.
+     *
+     * MUTATION (run, red): change the two `admin-api/site-url` rules to
+     * 'catalog.view'. The first expectations fail, and the manager below is let
+     * in and writes .env.
      */
     siteUrlRoutes();
 
-    expect(App\Support\AdminCapabilities::forPath('POST', 'admin-api/site-url/adopt'))->toBeNull();
-    expect(App\Support\AdminCapabilities::forPath('GET', 'admin-api/site-url'))->toBeNull();
+    expect(App\Support\AdminCapabilities::forPath('POST', 'admin-api/site-url/adopt'))->toBe('platform.site_url');
+    expect(App\Support\AdminCapabilities::forPath('GET', 'admin-api/site-url'))->toBe('platform.site_url');
+    expect(App\Support\AdminCapabilities::CAPABILITIES['platform.site_url'])->toBe(['owner']);
 
     $manager = AdminUser::create([
         'name' => 'Manager',

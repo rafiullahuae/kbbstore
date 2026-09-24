@@ -226,6 +226,27 @@ final class AdminCapabilities
         //                       hand them the button as well. It reads files
         //                       and writes rows; it restores nothing.
         'store.settings' => ['owner'],
+        /*
+         * Writing APP_URL into .env, which repoints every link this shop sends
+         * out of band -- password resets, order emails, the sitemap, and the
+         * webhook URLs registered at Stripe, Tabby and Tamara.
+         *
+         * ITS OWN CAPABILITY RATHER THAN store.settings, per CLAUDE.md rule 5,
+         * and because the blast radius is different in kind: a wrong currency
+         * is visible on the next page load, a wrong APP_URL is invisible until
+         * somebody's password-reset link lands on a domain the shop no longer
+         * owns. Owner-only, like every other capability in this block.
+         *
+         * Lane N argued this route should stay UNMAPPED on the grounds that an
+         * unmapped route is the strictest setting. That is true of the runtime
+         * -- for() returns null and EnforceAdminCapability refuses every role
+         * but the owner -- but it is not true of the test that guards this map,
+         * which pins the deny-by-default property against a route registered
+         * inside itself precisely so that real routes cannot rely on it. Its
+         * cited precedent was wrong too: admin-api/site-address beside this one
+         * IS mapped, to store.settings.
+         */
+        'platform.site_url' => ['owner'],
         'cache.manage' => ['owner'],
         'security.view' => ['owner'],
         'security.integrity' => ['owner'],
@@ -357,6 +378,8 @@ final class AdminCapabilities
          * "owner-only because nothing maps it" and "owner-only because somebody
          * decided so" are the same 403 and a very different piece of evidence.
          */
+        ['*', 'admin-api/site-url', 'platform.site_url'],
+        ['*', 'admin-api/site-url/**', 'platform.site_url'],
         ['*', 'admin-api/site-address', 'store.settings'],
         ['*', 'admin-api/site-address/**', 'store.settings'],
 

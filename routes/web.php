@@ -792,6 +792,17 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/site-address-admin.php';
 
+        /*
+         * The same group and the same reason, one step further: this one
+         * WRITES .env. Outside an authenticated admin group it would be an
+         * unauthenticated repoint of every email and webhook URL this shop
+         * emits. It is deliberately absent from AdminCapabilities, which is
+         * the strictest setting available rather than an oversight -- that map
+         * fails closed, so an unmapped admin route refuses every role but the
+         * owner. Naming a capability could only widen it.
+         */
+        require __DIR__.'/site-url-admin.php';
+
         Route::get('/orders',                [AdminController::class, 'orders']);
         Route::get('/orders/{id}',           [AdminController::class, 'order']);
         Route::get('/orders/{id}/detail',    [\App\Http\Controllers\Admin\AdminOrderController::class, 'show']);
