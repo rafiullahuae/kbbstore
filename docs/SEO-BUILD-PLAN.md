@@ -47,6 +47,75 @@ Test: same file. Risk: low; default-off keeps `/sitemap.xml` byte-identical.
 
 ---
 
+## Built in round 2 (2.60.259)
+
+Items 1, 2, 3 and 4 of the ranked list below. What each one turned out to
+actually need is recorded there; this is the summary.
+
+### ✅ `LocalBusiness` / `Store` markup with a real address — was item 2
+**Admin path: Store → Business Details → Business · "Where the shop is".**
+
+`App\Support\BusinessAddress`, `App\Support\OpeningHours`, eight settings,
+merged into the EXISTING Organization node in `Seo::jsonLd()`.
+
+Half an address is never published. `geo` and `openingHoursSpecification` are
+gated on `org_type` being a Place (`Store`/`LocalBusiness`), because they are
+invalid on `Organization` and `OnlineStore`. The telephone is `support_phone`,
+already on that tab. Everything ships blank.
+
+Test: `tests/Feature/LocalBusinessSchemaTest.php` (22 tests).
+
+### ✅ Item 3 is this, and it needed no new file
+The address went **into** the Organization node, not into a second one. That is
+the whole of item 3 below, discharged — there is still nothing for a separate
+`SeoGraph` to hold, and a test asserts the page carries exactly one node of
+Organization type.
+
+### ✅ Image `alt` coverage — was item 4, and half of it already existed
+**Admin path: Store → SEO & Meta → SEO Audit**, new card "Product image with no
+alt text". The fix for each row is **Catalog → Products → the product → Media**.
+
+The ranking assumed a migration plus an editor change. Neither was needed:
+`products.image_alts`, the per-row alt boxes in the product editor and
+`Product::altFor()` all landed with Lane E. The real gap was that nothing told
+the owner WHICH products still had none. So this round added the audit check
+only.
+
+New `SeoAudit::ADVISORY` keeps a finding where no page is broken from taking the
+verdict headline away from one where something is.
+
+Test: six new tests in `tests/Feature/IndexableSurfaceAuditTest.php`.
+
+### ✅ Concern-led collections — was item 1, and the mapping already existed
+**`/concern/acne/`**, `App\Support\ConcernCollections`,
+`routes/concern-collections.php`.
+
+**The big correction to item 1 below: there is no product-to-concern mapping to
+invent.** `products.routine_concerns` has held exactly that since Lane FM,
+written by **Catalog → Build my routine** against `App\Support\RoutineConcerns`
+— the skin quiz's own eight concerns. These pages read that column, so tagging a
+product for the routine builder tags it for this too.
+
+**The thin-page warning below is implemented as the design**: a concern page
+does not exist — 404, and absent from the sitemap — until it has copy AND at
+least `MIN_PRODUCTS` (3) live, in-stock tagged products. One route serves all
+eight concerns, so adding one later is copy plus a slug, not a route.
+
+**What the owner has to supply**, and it is the whole list:
+
+1. For `acne`, which ships with its copy written: tag at least three live,
+   in-stock products for **"Acne & blemishes"** under Catalog → Build my
+   routine. The page then exists. Nothing else.
+2. For the other seven concerns: the same tagging, plus one entry of English
+   copy in `InterfaceStrings` and the slug added to `ConcernCollections::ENABLED`
+   — three lines.
+
+**Measure `acne` before shipping six more.** There is a test that states it.
+
+Test: `tests/Feature/ConcernCollectionsTest.php` (14 tests).
+
+---
+
 ## The ranked list
 
 ### 1. Concern-led collections and the content that feeds them — **not code**

@@ -16471,6 +16471,60 @@ buildNav();
             'Printed on invoices when the Invoice tab has no address of its own.')+
         '</div>')+
 
+      /* ── WHERE THE SHOP IS — Lane S ─────────────────────────────────────
+         The SEO screen has offered an Organization type of "Store" and
+         "LocalBusiness" since it was built, and choosing either published
+         nothing that makes a business local: no address, no coordinates, no
+         hours. These are the boxes behind that choice. App\Support\
+         BusinessAddress decides what may be said and refuses to publish half
+         an address; App\Support\OpeningHours is the one parser that both this
+         screen's validator and the JSON-LD emitter call.
+
+         ON THIS TAB, beside the store name, the currency and the time zone,
+         because where a business trades is a fact about the business — the
+         same judgement Lane DI made putting the support phone here rather than
+         on Mail. It is not on SEO & Meta: that screen is where you say how
+         facts are presented to a search engine, not where the shop's street
+         lives.
+
+         THE PHONE IS NOT REPEATED HERE. The number published to Google is the
+         one in "How customers reach you" directly above, which is already the
+         number the site header and footer print. A second box would be a
+         second place for one fact.
+
+         Every box ships blank, so a shop that never opens this section emits
+         exactly the JSON-LD it emitted before the section existed. */
+      bdSec('Where the shop is',
+        'Your trading address, and — if you have a shop customers can walk into — its map pin and opening hours. This is what tells Google the business is in this city; it is published on every page as structured data, so leave it blank if you trade online only. Nothing here changes your invoices: the address printed on those is on the Invoice tab.',
+        '<div class="bd-grid">'+
+          bdField('set_store_street','Street address',
+            '<input id="set_store_street" value="'+sesc(SETTINGS.store_street)+'" placeholder="Shop 4, Al Wasl Road">',
+            'The building, unit and street, written as you would on a delivery note.')+
+          bdField('set_store_locality','City',
+            '<input id="set_store_locality" value="'+sesc(SETTINGS.store_locality)+'" placeholder="Dubai">',
+            'Required, along with the street and the country, before anything is published.')+
+          bdField('set_store_region','Emirate or region',
+            '<input id="set_store_region" value="'+sesc(SETTINGS.store_region)+'" placeholder="Dubai">',
+            'Optional.')+
+          bdField('set_store_postcode','Postal code',
+            '<input id="set_store_postcode" value="'+sesc(SETTINGS.store_postcode)+'" placeholder="">',
+            'Optional, and normally empty in the UAE — street addresses here do not carry one.')+
+          bdField('set_store_country','Country',
+            '<input id="set_store_country" value="'+sesc(SETTINGS.store_country)+'" placeholder="AE" maxlength="2" style="text-transform:uppercase">',
+            'Two letters, like AE for the United Arab Emirates.')+
+        '</div>'+
+        '<div class="bd-grid">'+
+          bdField('set_store_latitude','Latitude',
+            '<input id="set_store_latitude" value="'+sesc(SETTINGS.store_latitude)+'" placeholder="25.2048">',
+            'From the map pin. Both this and the longitude are needed, or neither is published.')+
+          bdField('set_store_longitude','Longitude',
+            '<input id="set_store_longitude" value="'+sesc(SETTINGS.store_longitude)+'" placeholder="55.2708">',
+            'Only published when the Organization type on SEO &amp; Meta is Store or LocalBusiness — those are the only two that can sit on a map.')+
+        '</div>'+
+        bdField('set_store_hours','Opening hours',
+          '<textarea id="set_store_hours" rows="4" placeholder="Mon-Sat 10:00-22:00&#10;Sun 12:00-20:00">'+sesc(SETTINGS.store_hours)+'</textarea>',
+          'One line per set of hours, like <b>Mon-Sat 10:00-22:00</b>. Use Mon, Tue, Wed, Thu, Fri, Sat, Sun — alone, in a range, or separated by commas. A day you do not list is treated as closed. Saving tells you which line it could not read.'))+
+
       /* YOUR BRAND COLOUR (Lane DN).
 
          `brand_accent` had a reader and no writer. App\View\Composers\Store-
@@ -16883,6 +16937,19 @@ buildNav();
         support_phone: sval('set_support_phone'),
         brand_whatsapp: sval('set_brand_whatsapp'),
         support_email: sval('set_support_email'),
+        /* Where the shop is (Lane S). Same reason as every block above: a key
+           with no line in AdminController::SETTING_RULES is dropped while this
+           endpoint still answers ok. All eight are sent every time, blank
+           included, so clearing a box is how an address is withdrawn — and
+           blank is the shipped state, in which nothing is published at all. */
+        store_street: sval('set_store_street'),
+        store_locality: sval('set_store_locality'),
+        store_region: sval('set_store_region'),
+        store_postcode: sval('set_store_postcode'),
+        store_country: sval('set_store_country'),
+        store_latitude: sval('set_store_latitude'),
+        store_longitude: sval('set_store_longitude'),
+        store_hours: sval('set_store_hours'),
         /* Your brand colour (Lane DN). The reader — StoreComposer, through
            layouts/store.blade.php — has existed since the baseline; this line
            and the `brand_accent` rule in AdminController::SETTING_RULES are the
@@ -17582,11 +17649,19 @@ buildNav();
     var cards=Object.keys(findings).map(function(key){
       var f=findings[key], count=f.count|0, samples=f.samples||[];
       var rows=samples.map(function(s){
-        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px">'+
+        /* WRAPPING, AND A FLOOR UNDER THE NAME — round 2.
+           Six of the ten findings carry a `detail` ("3 of 3 shots", "62 chars"),
+           and on a 390px phone four inline-flex children on one unwrapped line
+           left the NAME column at nothing: the row read as a pill, a detail and
+           a URL running off the card, with the one thing identifying the row
+           squeezed to an ellipsis. The name is what an operator scans for.
+           Wrapping lets the address drop to its own line at narrow widths and
+           changes nothing at 1280, where all four still fit. */
+        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;flex-wrap:wrap">'+
           '<span class="pill" style="flex:0 0 auto">'+sesc(s.kind||'')+'</span>'+
-          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(s.name||s.url||'')+'</span>'+
+          '<span style="flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(s.name||s.url||'')+'</span>'+
           (s.detail?'<span style="color:var(--ink-soft);flex:0 0 auto">'+sesc(s.detail)+'</span>':'')+
-          '<span style="color:var(--ink-soft);flex:0 0 auto;font-size:11.5px">'+sesc(s.url||'')+'</span>'+
+          '<span style="color:var(--ink-soft);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px">'+sesc(s.url||'')+'</span>'+
         '</div>';
       }).join('');
       var more=count>samples.length?'<p class="description" style="margin:8px 0 0">+ '+(count-samples.length)+' more, not shown.</p>':'';

@@ -478,6 +478,33 @@ final class InterfaceStrings
             'collection.intro_under_54' => 'Small joys, gently priced.',
 
             /*
+             * ── CONCERN-LED COLLECTIONS — Lane S ────────────────────────────
+             *
+             * /concern/acne/. docs/SEO-BUILD-PLAN.md ranks these first of
+             * everything in the SEO plan: "korean skincare for acne" is a query
+             * with buying intent and "new in" is not, and a concern page is the
+             * one thing the competitor demonstrably does that this shop does
+             * not.
+             *
+             * ONE CONCERN HAS COPY, DELIBERATELY. App\Support\
+             * ConcernCollections::ENABLED lists it, and a concern with no copy
+             * has no page at all — see that class's header for why a thin
+             * concern page is worse than none. The other seven slugs are valid
+             * RoutineConcerns and every one of them is a 404 until somebody
+             * writes its sentences here.
+             *
+             * THE COPY IS WRITTEN TO BE READ, not assembled from the slug.
+             * "Acne & blemishes" is the back-office label — it is how an
+             * operator ticks a box — and it is not a heading a shopper arrives
+             * on. The intro names what the shelf actually contains and makes no
+             * medical claim: this is a shop, the products are cosmetics, and
+             * "clears acne" is a sentence a skincare retailer must not print.
+             * It says what the ingredients are known for and leaves it there.
+             */
+            'concern.title_acne' => 'Korean skincare for acne-prone skin',
+            'concern.intro_acne' => 'Gentle, barrier-first routines for skin that breaks out. Salicylic acid and BHA to keep pores clear, centella and madecassoside to calm what is already angry, and lightweight hydration that will not sit heavily on congested skin. Every product here is one we stock and have tagged for blemish-prone skin — start with one new step at a time.',
+
+            /*
              * /best-sellers/ HAS NO INTRO IN THE CONSTANT: it is the one page
              * whose sentence is a MEASUREMENT, chosen by App\Support\RepeatPurchase
              * from the order history — "customers keep coming back" only if some
