@@ -82,6 +82,12 @@ function keyedAllowedText(): array
             => 'store/checkout: the express-pay button. A company name.',
         'G                          o                          o                          g                           l                          e           &nbsp;Pay'
             => 'store/checkout: the Google Pay wordmark, one <span> per letter so each takes its own colour.',
+        // invoices/document — the SAMPLE banner, which only ever renders on an
+        // order created from Safety → Demo Content → Sample order.
+        'SAMPLE ORDER &mdash; NOT A REAL ORDER. NOTHING WAS BOUGHT, PAID FOR OR SHIPPED.'
+            => "No shopper ever reads it. A sample order is never sent to one — OrderMailer refuses every send for it — so this sheet is only ever read by the operator, in the operator's language, which is the same argument the print toolbar above it carries. Keying it would make it worse: on an Arabic order with no Arabic published the key would fall back to English anyway, and on one with Arabic published the shop's most important warning would print in a language the person holding it may not read. It is a literal for the reason CLAUDE.md gives for constants, and it carries dir=\"ltr\" so an RTL sheet does not move its full stop.",
+        '&middot; created from Safety &rarr; Demo Content &rarr; Sample order, and removed from the same place.'
+            => 'The second line of the same banner: where the operator goes to delete it. Same argument, and it names an admin path, which is English on every screen of this console.',
     ];
 }
 

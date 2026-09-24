@@ -123,6 +123,19 @@ final class AdminCapabilities
         'orders.money' => ['owner', 'manager'],
         'orders.delete' => ['owner', 'manager'],
         'orders.export' => ['owner', 'manager'],
+        /*
+         * Safety -> Demo Content -> Sample order. OWNER ALONE, and a line of
+         * its own rather than a reuse of `data.import` beside the rest of Demo
+         * Content, because this is the only endpoint in the back office that
+         * WRITES A ROW INTO `orders` without a customer having placed one. That
+         * table is where this shop's money is counted from, and the row it
+         * writes is deliberately eligible for revenue -- kept out of it by one
+         * row in `demo_seed_log`. Widening `data.import` one day, to let a
+         * support account run a catalogue import say, must not hand out the
+         * ability to write into the orders table as a side effect nobody was
+         * looking at.
+         */
+        'orders.sample' => ['owner'],
         'invoices.view' => ['owner', 'manager', 'support'],
 
         // Customers. An invoice carries one person's address; the export
@@ -460,6 +473,30 @@ final class AdminCapabilities
         ['*', 'admin-api/urls-media/**', 'data.import'],
         ['*', 'admin-api/demo-content', 'data.import'],
         ['*', 'admin-api/demo-content/**', 'data.import'],
+        /*
+         * The sample order -- routes/sample-order-admin.php. Sits with Demo
+         * Content because that is the screen it is on, and carries its OWN
+         * capability for the reason given beside `orders.sample` above.
+         *
+         * A `*` rule covering all three verbs, which is what CLAUDE.md's
+         * write-before-read ordering asks for: the GET reports whether a sample
+         * order exists and where its documents are, and there is no narrower
+         * role that should reach that without the POST and the DELETE beside
+         * it -- they are one card on one screen.
+         *
+         * The '/**' line is a SIBLING of the exact one above it and neither can
+         * shadow the other: 'admin-api/sample-order' does not match
+         * 'admin-api/sample-order/anything'. Both are needed, and the second is
+         * what makes a fourth endpoint added to that route file later fail
+         * CLOSED against a capability rather than fall through to the unmapped
+         * default.
+         *
+         * Mapped although the route file is not required from routes/web.php
+         * yet: the integrator wires it, and a rule that lands before the route
+         * is the harmless order of the two.
+         */
+        ['*', 'admin-api/sample-order', 'orders.sample'],
+        ['*', 'admin-api/sample-order/**', 'orders.sample'],
 
         // ------------------------------------------------------------------ orders
         ['GET', 'admin-api/orders/*/invoice', 'invoices.view'],

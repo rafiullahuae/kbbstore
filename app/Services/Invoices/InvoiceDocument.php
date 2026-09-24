@@ -97,6 +97,21 @@ class InvoiceDocument
         return [
             'orderNumber' => (string) ($order->order_number ?: $order->id),
             'orderStatus' => (string) $order->status,
+            /*
+             * IS THIS A SAMPLE? Carried on the document rather than looked up
+             * in the template, and true on ALL FOUR SHEETS — the invoice, the
+             * packing slip, the delivery note and the dispatch label all
+             * present through this method, so one field here is what puts the
+             * SAMPLE banner on every one of them and on any fifth document
+             * added later.
+             *
+             * Read from `orders.origin`, which is a column on the order already
+             * loaded: no query, on a method that renders a sheet per order in a
+             * bulk print of twenty. App\Services\Orders\SampleOrder's header
+             * explains why that mark and not the `demo_seed_log` row, whose
+             * absence would make this silently print an unmarked sample.
+             */
+            'isSample' => \App\Services\Orders\SampleOrder::is($order),
             'invoiceNumber' => $invoiceNumber,
             'invoiceReference' => $invoiceNumber === null ? '' : InvoiceNumbers::format($invoiceNumber),
             /*

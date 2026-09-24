@@ -127,6 +127,10 @@ class OrderMailer
      */
     public function placed(Order $order): void
     {
+        if ($this->isSample($order)) {
+            return;
+        }
+
         /*
          * The outermost guard, and the reason it is here rather than only around
          * each send: CheckoutController calls this method directly, so anything
@@ -189,6 +193,10 @@ class OrderMailer
      */
     public function resendConfirmation(Order $order): array
     {
+        if ($this->isSample($order)) {
+            return $this->sampleRefusal();
+        }
+
         if (! $this->confirmationEnabled()) {
             return [
                 'ok' => false,
@@ -269,6 +277,18 @@ class OrderMailer
      */
     public function emailInvoice(Order $order): array
     {
+        /*
+         * BEFORE the invoice number is allocated, which is the whole of why
+         * this is the first line. allocate() MINTS a number out of the sequence
+         * an accountant reconciles, and it is idempotent, so a sample order
+         * that reached it would keep that number for good — a gap in the books
+         * with nothing behind it. InvoiceController::invoice() refuses in the
+         * same way and says so at more length.
+         */
+        if ($this->isSample($order)) {
+            return $this->sampleRefusal();
+        }
+
         $to = trim((string) $order->email);
 
         if ($to === '') {
@@ -340,6 +360,10 @@ class OrderMailer
      */
     public function statusChanged(Order $order, string $status): void
     {
+        if ($this->isSample($order)) {
+            return;
+        }
+
         if (! OrderStatusChanged::handles($status)) {
             return;
         }
@@ -387,6 +411,10 @@ class OrderMailer
      */
     public function refunded(Order $order, Refund $refund): void
     {
+        if ($this->isSample($order)) {
+            return;
+        }
+
         if (! $this->refundEnabled()) {
             return;
         }
@@ -471,6 +499,58 @@ class OrderMailer
      * Arabic order cannot leave a queue worker set to Arabic for every job
      * behind it.
      */
+
+    /**
+     * A sample order never mails anybody. The refusal, in one place, asked by
+     * every entry point in this class.
+     *
+     * ── WHY IT IS HERE AND NOT ONLY IN send() ───────────────────────────────
+     *
+     * send() is the choke point for three of the five, and putting the whole
+     * guarantee there would miss the two that matter MOST. resendConfirmation()
+     * and emailInvoice() build and send their own message directly, because
+     * they REPORT a failure to the operator instead of swallowing it — and they
+     * are the two that exist as BUTTONS on the order detail screen. An owner
+     * looking at a sample order to check that its invoice renders is one click
+     * away from both of them, which is precisely the accident this feature must
+     * not make possible. So the question is asked at every entry, and send()
+     * asks it again on the way past.
+     *
+     * ── WHY IT READS `origin` AND NOT `demo_seed_log` ───────────────────────
+     *
+     * Two reasons, and the second is the real one.
+     *
+     * It costs nothing: `origin` is a column on the model already in hand, so
+     * this adds no query to a checkout that is already the slowest request in
+     * the shop, on a code path taken by every real order.
+     *
+     * And it cannot go missing underneath the guarantee. A log row can be
+     * deleted on its own — DemoContentController::removeType() deletes log rows
+     * by type, and a half-finished removal is a state that has existed here
+     * before. An order whose log row has gone is an order this class would
+     * read as real and MAIL. `origin` lives on the order row itself: it goes
+     * when the order goes. App\Services\Orders\SampleOrder's header sets out
+     * the same argument from the other side — the money question reads the log,
+     * because for a FIGURE the safe error is to count a row you can see.
+     *
+     * The address on a sample order is in `.invalid`, which RFC 2606 reserves
+     * as permanently unresolvable, so a message that got past this could still
+     * reach nobody. That is the third layer and not the guarantee; this is.
+     */
+    private function isSample(Order $order): bool
+    {
+        return \App\Services\Orders\SampleOrder::is($order);
+    }
+
+    private function sampleRefusal(): array
+    {
+        return [
+            'ok' => false,
+            'message' => 'This is a sample order. Sample orders never send email to anybody — '
+                . 'remove it from Safety → Demo Content → Sample order when you are done with it.',
+        ];
+    }
+
     private function inLocale(Order $order, bool $enabled, \Closure $run): void
     {
         if (! $enabled) {
@@ -484,6 +564,16 @@ class OrderMailer
 
     private function send(callable $build, string $to, Order $order, string $kind, bool $inOrderLocale = true): void
     {
+        /*
+         * Asked again here, although all three callers have asked already. This
+         * is the backstop for the SIXTH send, written next month by somebody
+         * who has not read this file: a new public method that goes through
+         * send() is covered without being told to be.
+         */
+        if ($this->isSample($order)) {
+            return;
+        }
+
         $to = trim($to);
 
         if ($to === '' || ! str_contains($to, '@')) {
