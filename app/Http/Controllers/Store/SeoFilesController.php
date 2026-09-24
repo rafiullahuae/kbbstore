@@ -9,6 +9,7 @@ use App\Support\Locale;
 use App\Support\Url;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -184,6 +185,101 @@ class SeoFilesController extends Controller
     }
 
     /**
+     * The curated listings, as the ROUTER serves them: a leading and trailing
+     * slash, registration order, no duplicates.
+     *
+     * `CollectionController@show` and not `@concern`: the concern listings are
+     * one parameterised route whose live set is a question for
+     * ConcernCollections, and the block that adds them asks it. A route with
+     * parameters cannot be turned into an address from its URI alone, which is
+     * the same distinction SourceReachability draws.
+     *
+     * @return list<string>
+     */
+    private static function curatedListingPaths(): array
+    {
+        $out = [];
+
+        foreach (Route::getRoutes() as $route) {
+            if (! in_array('GET', $route->methods(), true)) {
+                continue;
+            }
+
+            if (! str_ends_with((string) $route->getActionName(), 'CollectionController@show')) {
+                continue;
+            }
+
+            if ($route->parameterNames() !== []) {
+                continue;
+            }
+
+            $path = '/' . trim($route->uri(), '/') . '/';
+
+            if ($path !== '//' && ! in_array($path, $out, true)) {
+                $out[] = $path;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The content pages routes/web.php actually routes: the row's slug mapped
+     * to the ADDRESS the router serves it at.
+     *
+     * Each of the seven is registered as a literal route carrying
+     * `->defaults('slug', 'about')` and friends, which is where
+     * PageController::show() reads the slug from — so the key is the
+     * controller's own string rather than a copy of it. A row that is not
+     * published is still excluded by the query below: PageController::show()
+     * 404s it, and a sitemap entry that 404s is a Search Console error.
+     *
+     * ── WHY BOTH HALVES, WHEN THEY ARE THE SAME STRING SEVEN TIMES ──────────
+     *
+     * The slug is what identifies the ROW and the URI is what identifies the
+     * ADDRESS, and this file needs one of each: it looks the row up by slug and
+     * publishes the address. For all seven pages the two are spelled the same,
+     * so keeping them apart buys nothing today — and that is exactly the
+     * unstated assumption worth removing, because the line that used to build
+     * the URL did `'/' . $page->slug . '/'`. Register `/about-us` with
+     * `->defaults('slug', 'about')` and the shop serves the page at /about-us/
+     * while the sitemap advertises /about/, which 404s.
+     *
+     * Not hypothetical in kind: `/everything-under-54-aed` is served from the
+     * key `under-54` one block up, so this application already does exactly
+     * this for its curated listings. It has simply never done it for a page.
+     *
+     * @return array<string, string> slug => path, with both slashes
+     */
+    private static function routedPagePaths(): array
+    {
+        $out = [];
+
+        foreach (Route::getRoutes() as $route) {
+            if (! in_array('GET', $route->methods(), true)) {
+                continue;
+            }
+
+            if (! str_ends_with((string) $route->getActionName(), 'PageController@show')) {
+                continue;
+            }
+
+            if ($route->parameterNames() !== []) {
+                continue;
+            }
+
+            $slug = (string) ($route->defaults['slug'] ?? '');
+            $path = '/' . trim($route->uri(), '/') . '/';
+
+            if ($slug !== '' && $path !== '//' && ! isset($out[$slug])) {
+                $out[$slug] = $path;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Does this `seo` value ask for noindex?
      *
      * Three tables now, not one: `products.seo`, `brands.seo` and
@@ -317,12 +413,35 @@ class SeoFilesController extends Controller
         $add($base . '/korean-skincare-brands/', null, '0.5', 'weekly');
         $add($base . '/skincare-guide/', null, '0.6', 'weekly');
 
-        // The curated listings. Four real, indexable pages, linked from the
-        // site header, that no sitemap has ever mentioned. The keys are the
-        // route paths, not CollectionController's internal keys -- 'under-54'
-        // is served at /everything-under-54-aed.
-        foreach (['new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed'] as $collection) {
-            $add($base . '/' . $collection . '/', null, '0.6', 'daily');
+        /*
+         * The curated listings — /new-in/, /best-sellers/, /super-sale/ and
+         * /everything-under-54-aed/.
+         *
+         * ▲ ASKED OF THE ROUTER, NOT WRITTEN OUT. This was a literal list of
+         * four path strings, and `docs/SEO-BUILD-PLAN.md` Part II item 9 is
+         * about exactly that: adding a fifth curated listing means editing four
+         * hardcoded lists that must agree, and "miss the last one and the page
+         * works perfectly and never enters the sitemap — a silent failure that
+         * no screenshot catches."
+         *
+         * The plan asked for a TEST that the lists agree. A test would have
+         * caught the drift; asking the router removes the second list, so
+         * there is nothing left to drift. That is the same move the concern
+         * block below already makes — "the same question the router asks,
+         * asked of the same class" — and this block was the one place on this
+         * page still doing it the other way.
+         *
+         * THE ROUTE PATH AND THE COLLECTION KEY ARE DIFFERENT STRINGS and this
+         * is why the naive version of that test would have been wrong:
+         * CollectionController's internal key `under-54` is served at
+         * `/everything-under-54-aed`. The router knows both — the URI and the
+         * `key` default — so it is the only source that cannot be half right.
+         *
+         * Registration order is preserved, so the bytes of /sitemap.xml are
+         * what they were.
+         */
+        foreach (self::curatedListingPaths() as $path) {
+            $add($base . $path, null, '0.6', 'daily');
         }
 
         /*
@@ -354,10 +473,14 @@ class SeoFilesController extends Controller
         // PageController::show() 404s anything else, and a sitemap entry that
         // 404s is a Search Console error.
         if (Schema::hasTable('pages')) {
-            $routed = [
-                'about', 'contact-us', 'delivery', 'faqs',
-                'privacy-policy', 'refund_returns', 'terms-and-conditions',
-            ];
+            // ▲ ASKED OF THE ROUTER, for the same reason as the curated
+            // listings above: this was the seven slugs written out, and an
+            // eighth routed content page would have rendered perfectly and
+            // never entered this file. Each of these routes carries its slug as
+            // a route default, which is where PageController::show() reads it
+            // from, so the router holds the same string the controller does.
+            $routedPaths = self::routedPagePaths();
+            $routed = array_keys($routedPaths);
 
             $pages = DB::table('pages')
                 ->select('slug', 'updated_at')
@@ -366,7 +489,9 @@ class SeoFilesController extends Controller
                 ->get();
 
             foreach ($pages as $page) {
-                $add($base . '/' . $page->slug . '/', $page->updated_at ?? null, '0.4', 'monthly');
+                // The ROUTER's address for this row, not the slug spelled into
+                // a URL — see routedPagePaths(). Identical for all seven today.
+                $add($base . $routedPaths[$page->slug], $page->updated_at ?? null, '0.4', 'monthly');
             }
         }
 
