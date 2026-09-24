@@ -77,11 +77,17 @@ return new class extends Migration
              * reading-then-writing, so two browser tabs answering at once
              * cannot make two rows.
              *
-             * 191 and not 255 because it is indexed and MySQL's utf8mb4 index
-             * ceiling is 767 bytes; `redirects.source` is the same width, and
-             * an address longer than that could not be stored there either.
+             * EXACTLY `redirects.source`'S WIDTH, which is the framework
+             * default of 255 (`0001_01_01_000000_create_kbb_schema` line 633,
+             * also unique). A narrower column here would make an address the
+             * map can propose AND can write into `redirects` into one the owner
+             * cannot answer — the write would fail on MySQL and be silently
+             * truncated into an answer about a DIFFERENT address on a host
+             * without strict mode. Matching it means anything answerable is
+             * storable, by construction rather than by a length check nobody
+             * updates when one of the two moves.
              */
-            $t->string('source', 191)->unique();
+            $t->string('source')->unique();
 
             /** 'accept' or 'reject'. 16 is room for both and nothing else. */
             $t->string('decision', 16);
@@ -91,14 +97,14 @@ return new class extends Migration
              * because the three undecidable questions have none — those can
              * only ever be declined.
              */
-            $t->string('target', 191)->nullable();
+            $t->string('target')->nullable();
 
             /** The RedirectMap::QUESTIONS code that was being answered. */
             $t->string('question', 32)->nullable();
 
             /** Which rule proposed it, and what it was about, for the screen. */
             $t->string('rule', 32)->nullable();
-            $t->string('subject', 191)->nullable();
+            $t->string('subject')->nullable();
 
             /*
              * Who answered and when. The email as it was, not a foreign key —

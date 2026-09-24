@@ -241,6 +241,24 @@ final class RedirectDecisions
                 continue;
             }
 
+            /*
+             * LONGER THAN THE COLUMN. `redirect_decisions.source` is
+             * `redirects.source`'s width, so an address that will not fit here
+             * would not fit there either and could never be written as a
+             * redirect. Refused by name rather than sent to the database, where
+             * MySQL in strict mode fails the whole bulk answer and MySQL
+             * without it stores an answer about a truncated, different address.
+             * The endpoint validates the same ceiling; this holds for the
+             * answer-a-whole-question path, which builds its own list.
+             */
+            if (mb_strlen($source) > 255) {
+                $refused[] = $source.' — this address is longer than the redirects table can store, so it '
+                    .'could not be written even if you approved it';
+                $handled[$source] = true;
+
+                continue;
+            }
+
             if ($action === self::ACCEPT && ! RedirectMap::decidable($proposal)) {
                 $refused[] = $source.' — this question cannot be answered with yes: '
                     .(trim((string) $proposal['target']) === ''

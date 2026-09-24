@@ -566,13 +566,13 @@ class UrlsMediaApiController extends Controller
             'action' => ['required', 'string', 'in:accept,reject,clear'],
             'question' => ['nullable', 'string', Rule::in(array_keys(RedirectMap::QUESTIONS))],
             /*
-             * 191 is `redirect_decisions.source`'s width. An address longer
-             * than that could not be stored in `redirects.source` either, so it
-             * is refused here rather than silently truncated into an answer
-             * about a different address.
+             * 255 is `redirect_decisions.source`'s width, which is
+             * `redirects.source`'s. An address longer than either could not be
+             * stored in the map's own table, so it is refused here rather than
+             * silently truncated into an answer about a DIFFERENT address.
              */
             'sources' => ['nullable', 'array', 'max:5000'],
-            'sources.*' => ['string', 'max:191'],
+            'sources.*' => ['string', 'max:255'],
         ]);
 
         $action = $request->string('action')->toString();

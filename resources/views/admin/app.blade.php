@@ -8431,7 +8431,6 @@ function gbUrlsMediaCard(){
       +'</div>'
     +'<div class="impfile"><b>'+u.buckets.discard.count+'</b><span>nothing to do</span></div>'
     +'</div>'
-    +gpQuestions(u)
     +'<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 0">'
     +u.diff.create+' new, '+u.diff.update+' corrected, '+u.diff.unchanged+' already right'
     +(u.diff.conflict?', <b>'+u.diff.conflict+' refused</b> — you pointed those somewhere yourself and this will not overrule you':'')
@@ -8441,6 +8440,10 @@ function gbUrlsMediaCard(){
     +'<button class="btn primary" id="gbUMWrite"'+(gbUMBusy?' disabled':'')+'>Write '+u.diff.create+' redirect(s)</button>'
     +'<button class="btn" id="gbUMUndo"'+(gbUMBusy?' disabled':'')+'>Undo</button>'
     +'</div>'
+    /* UNDER the Write button, not above it. The panel's own copy says "until
+       you press Write redirect(s) above", and a screen whose words point the
+       wrong way is a screen somebody follows into the wrong order. */
+    +gpQuestions(u)
 
     +'<div style="margin-top:16px"><b>Pictures</b></div>'
     +'<div class="impgrid" style="margin-top:8px">'
