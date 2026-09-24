@@ -7,8 +7,8 @@ declare(strict_types=1);
 | Store → Import → "Articles at addresses the shop owns"  (Lane A, Phase 13)
 |------------------------------------------------------------------------------
 |
-| NOT WIRED YET. CLAUDE.md makes routes/web.php the integrator's file, so this
-| ships as its own file and needs ONE line adding, inside the EXISTING
+| WIRED. CLAUDE.md makes routes/web.php the integrator's file, so this shipped
+| as its own file and the integrator added the one line, inside the EXISTING
 | admin-api group — the one that already carries `auth:admin` and
 | NoStoreAdminApi — directly beneath the import require, because these two
 | endpoints belong to that screen:

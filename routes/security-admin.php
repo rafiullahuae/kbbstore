@@ -18,8 +18,8 @@ declare(strict_types=1);
 |
 | THIS FILE IS REQUIRED FROM routes/web.php BY THE INTEGRATOR, inside the
 | existing admin-api group — the one that already carries `web`, `auth:admin`
-| and NoStoreAdminApi — beside the other module route files. It is not required
-| from anywhere yet. `/api/*` is unauthenticated and every row behind these two
+| and NoStoreAdminApi — beside the other module route files, which is where the
+| integrator required it. `/api/*` is unauthenticated and every row behind these two
 | endpoints carries an operator's email, their role and an IP address, so the
 | guarded group is not a preference here.
 |

@@ -315,9 +315,26 @@ it('discards every category-nesting row, because the shop already serves that mo
 
     $child = gbProposalFor('/product-category/face-cleansers-gb/', $proposals);
 
+    /*
+     * PIN ADVANCED, DELIBERATELY. This asserted DISCARD and a reason
+     * containing "404 handler" — which was correct while the redirects table
+     * was only consulted from the 404 handler. `CheckRedirects` is registered
+     * in the global pipeline now and runs BEFORE the router, so a row for an
+     * address this shop answers fires.
+     *
+     * That makes a DISCARD here the wrong answer and the dangerous one: a
+     * discard never reaches the list the owner approves, so the import would
+     * have thrown these away silently while the fix that reads them sat in the
+     * same package. It asks instead. The old assertion is quoted here rather
+     * than deleted, because the reasoning it recorded was right and only its
+     * premise moved:
+     *
+     *     ->and($child['decision'])->toBe(RedirectMap::DISCARD)
+     *     ->and($child['reason'])->toContain('404 handler');
+     */
     expect($child)->not->toBeNull()
-        ->and($child['decision'])->toBe(RedirectMap::DISCARD)
-        ->and($child['reason'])->toContain('404 handler');
+        ->and($child['decision'])->toBe(RedirectMap::ASK)
+        ->and($child['reason'])->toContain('consulted before the router');
 });
 
 it('proposes the flat root address the old site really published, and it is one that 404s', function () {
@@ -365,9 +382,20 @@ it('marks the corroborated fifteen apart from the ones inferred from the same se
 
 it('asks rather than writes when the old address is one this shop still serves', function () {
     /*
-     * A category whose slug collides with a live storefront route. The row
-     * cannot work — the redirect table is only read on a 404 — and pointing
-     * /shop/ elsewhere is a routing change, not a redirect.
+     * A category whose slug collides with a live storefront route.
+     *
+     * PIN ADVANCED, DELIBERATELY. This used to read "The row cannot work — the
+     * redirect table is only read on a 404 — and pointing /shop/ elsewhere is a
+     * routing change, not a redirect", and asserted a reason containing
+     * 'routing change'. The row CAN work now: `CheckRedirects` is registered in
+     * the global pipeline and runs before the router, so a row for /shop/ moves
+     * /shop/.
+     *
+     * The DECISION is unchanged and that is the point — it was ASK before and
+     * it is ASK now, for a better reason. Before, it asked because a row here
+     * would do nothing. Now it asks because a row here would do something
+     * rather large: 301 away a page that answers today. Same bucket, opposite
+     * cause, and the owner is still the one who decides.
      */
     $shop = Category::query()->create(['name' => 'Shop GB', 'slug' => 'shop', 'parent_id' => null]);
     $shop->forceFill(['path' => 'shop', 'depth' => 0])->save();
@@ -377,7 +405,7 @@ it('asks rather than writes when the old address is one this shop still serves',
 
     expect($clash)->not->toBeNull()
         ->and($clash['decision'])->toBe(RedirectMap::ASK)
-        ->and($clash['reason'])->toContain('routing change');
+        ->and($clash['reason'])->toContain('WILL move it');
 });
 
 it('never writes the base path into a redirect, in either column', function () {

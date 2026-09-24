@@ -1519,7 +1519,18 @@ it('adds no new route, so it needs no capability rule and no cache migration', f
      * reachable on a host with a compiled route cache, and it would have needed
      * the owner to know which box a zip goes in.
      */
+    /*
+     * The two article-address endpoints below are NOT this feature's — they are
+     * the reserved-slug report, mounted under the same `/import/` prefix so
+     * that AdminCapabilities' existing data.import rule covers them. Listed
+     * here because this assertion is a pin on the WHOLE admin-api/import
+     * surface, and a pin that is edited every time something else lands stops
+     * being read. The claim it makes is unchanged: no route below belongs to
+     * the zip feature.
+     */
     expect($paths)->toBe([
+        'GET|HEAD admin-api/import/article-addresses',
+        'GET|HEAD admin-api/import/article-addresses.csv',
         'GET|HEAD admin-api/import/rejects',
         'GET|HEAD admin-api/import/status',
         'POST admin-api/import/forget',

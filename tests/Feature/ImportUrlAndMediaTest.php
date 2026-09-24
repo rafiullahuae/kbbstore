@@ -113,12 +113,29 @@ it('derives the nested address correctly and then declines to write it, because 
     $child = proposalFor('/product-category/face-cleansers/', $proposals);
     $grandchild = proposalFor('/product-category/makeup-removers/', $proposals);
 
+    /*
+     * PIN ADVANCED, DELIBERATELY. This asserted DISCARD and a reason
+     * containing "404 handler" — which was correct while the redirects table
+     * was only consulted from the 404 handler. `CheckRedirects` is registered
+     * in the global pipeline now and runs BEFORE the router, so a row for an
+     * address this shop answers fires.
+     *
+     * That makes a DISCARD here the wrong answer and the dangerous one: a
+     * discard never reaches the list the owner approves, so the import would
+     * have thrown these away silently while the fix that reads them sat in the
+     * same package. It asks instead. The old assertion is quoted here rather
+     * than deleted, because the reasoning it recorded was right and only its
+     * premise moved:
+     *
+     *     ->and($child['decision'])->toBe(RedirectMap::DISCARD)
+     *     ->and($child['reason'])->toContain('404 handler');
+     */
     expect($child)->not->toBeNull()
-        ->and($child['decision'])->toBe(RedirectMap::DISCARD)
+        ->and($child['decision'])->toBe(RedirectMap::ASK)
         ->and($child['target'])->toBe('/product-category/skincare/face-cleansers/')
-        ->and($child['reason'])->toContain('404 handler')
+        ->and($child['reason'])->toContain('consulted before the router')
         ->and($grandchild)->not->toBeNull()
-        ->and($grandchild['decision'])->toBe(RedirectMap::DISCARD)
+        ->and($grandchild['decision'])->toBe(RedirectMap::ASK)
         ->and($grandchild['target'])->toBe('/product-category/skincare/face-cleansers/makeup-removers/');
 
     /*
