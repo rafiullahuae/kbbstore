@@ -36,7 +36,7 @@ use Illuminate\Support\Str;
  */
 class DemoContentController extends Controller
 {
-    private const TYPES = ['customers', 'products', 'orders', 'pages', 'posts', 'reviews', 'menu'];
+    private const TYPES = ['customers', 'products', 'orders', 'pages', 'posts', 'reviews', 'menu', 'routines'];
 
     /**
      * Self-healing rather than trusting the migration ran: if an update's
@@ -502,5 +502,112 @@ class DemoContentController extends Controller
         }
 
         return 0;
+    }
+
+    /**
+     * Demo content for Phase 10 — Build my routine (Lane Q, round 3).
+     *
+     * ── WHY THIS EXISTS ────────────────────────────────────────────────────
+     *
+     * The owner asked for it in as many words: "for the routines okay, but also
+     * give option to import demo data". Every routine on the storefront is
+     * filled from products HE has tagged, so a shop that has not done the
+     * tagging draws every step as "not stocked yet" — and the tagging is a
+     * two-to-three hour job he is trying to decide whether to commit to. He
+     * could not see the thing working before paying for it.
+     *
+     * ── THE ONE DECISION THAT MATTERS: NO CONCERNS ON ANY OF THEM ──────────
+     *
+     * These five rows carry a routine_role and NO routine_concerns, and that is
+     * not laziness — it is the whole safety argument, and it is made out of
+     * behaviour this shop already has rather than a new exclusion rule.
+     *
+     * An empty concern list means "suits any routine" (RoutineConcerns::clean's
+     * docblock). So:
+     *
+     *   1. EVERY ROUTINE FILLS. All eight concerns draw all five steps from
+     *      these, which is a better demonstration than tagging them for one
+     *      concern would have been.
+     *
+     *   2. NO CONCERN PAGE CAN BE PUBLISHED BY DEMO DATA, BY CONSTRUCTION.
+     *      App\Support\ConcernCollections::query() selects
+     *      `routine_concerns LIKE '%"slug"%'` — EXPLICIT tags only — so a row
+     *      with none can never match, never counts towards MIN_PRODUCTS, and
+     *      can never take /concern/{slug}/ from 404 to 200. That matters more
+     *      than it looks: a concern page published off demo data would enter
+     *      the sitemap, be offered by the quiz hand-off, and then 404 the day
+     *      he pressed Remove — teaching Google the shop has dead pages.
+     *
+     *   3. THE CONCERN COUNTDOWN ON CATALOG -> BUILD MY ROUTINE IS UNMOVED,
+     *      for the same reason: it counts explicit tags only
+     *      (BuildMyRoutine::concernPageProgress). He can import this, look at
+     *      it, remove it, and the number that tells him how close he is to a
+     *      real landing page never moved.
+     *
+     * The five STEP tabs do move, and should: that is what he is importing this
+     * to see. Remove the demo and they go back to zero.
+     *
+     * ── AND IT STILL CANNOT REACH A SHOPPER BY ACCIDENT ────────────────────
+     *
+     * /routines and /routines/{concern} are behind `build_my_routine`, which
+     * ships OFF and which this does not touch. If he switches the module on to
+     * look, the Build my routine screen carries a standing banner naming these
+     * rows for as long as they exist, and every one of them is called "Demo —"
+     * on the shelf. A demo routine that reaches a shopper unannounced is worse
+     * than no demo at all.
+     */
+    private function seedRoutines(): int
+    {
+        $brand = Brand::firstOrCreate(
+            ['slug' => 'demo-routine-brand'],
+            ['name' => 'Demo Routine Co.']
+        );
+        // Its own brand, NOT the one seedReviews() makes. Sharing that row would
+        // mean removing the routine demo deletes a brand the review demo still
+        // has products on.
+        $this->log('routines', Brand::class, $brand->id);
+
+        $steps = [
+            ['cleanse', 'Demo — Low-pH Gel Cleanser', 'DEMO-RTN-1', 4500,
+                'Water, Cocamidopropyl Betaine, Glycerin, Centella Asiatica Extract, Panthenol.'],
+            ['tone', 'Demo — Hydrating Essence Toner', 'DEMO-RTN-2', 6900,
+                'Water, Butylene Glycol, Hyaluronic Acid, Panthenol, Allantoin. Fragrance-free.'],
+            ['treat', 'Demo — Centella Repair Ampoule', 'DEMO-RTN-3', 9900,
+                'Water, Centella Asiatica Extract, Madecassoside, Niacinamide 5%, Squalane.'],
+            ['moisturise', 'Demo — Ceramide Barrier Cream', 'DEMO-RTN-4', 11900,
+                'Water, Glycerin, Ceramide NP, Cholesterol, Shea Butter, Panthenol.'],
+            ['protect', 'Demo — Daily Mineral Sunscreen SPF 50', 'DEMO-RTN-5', 8900,
+                'Water, Zinc Oxide 12%, Titanium Dioxide, Glycerin, Centella Asiatica Extract.'],
+        ];
+
+        $count = 0;
+
+        foreach ($steps as [$role, $name, $sku, $price, $ingredients]) {
+            $product = Product::create([
+                'name' => $name,
+                'slug' => $this->uniqueSlug(Str::slug($name), 'products'),
+                'sku' => $sku,
+                'brand_id' => $brand->id,
+                'price' => $price,
+                'status' => 'publish',
+                'is_visible' => true,
+                'stock_status' => 'instock',
+                'routine_role' => $role,
+                /*
+                 * NULL, DELIBERATELY, AND THE DOCBLOCK ABOVE IS WHY. Not [] and
+                 * not a concern list: NULL is the value an untouched row already
+                 * carries, so these rows are indistinguishable from "suits every
+                 * routine" to every reader of the column.
+                 */
+                'routine_concerns' => null,
+                'ingredients' => $ingredients,
+                'short_description' => 'Demo content for Build my routine. Remove it from Store → Demo Content.',
+            ]);
+
+            $this->log('routines', Product::class, $product->id);
+            $count++;
+        }
+
+        return $count;
     }
 }

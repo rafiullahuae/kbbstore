@@ -126,6 +126,15 @@
    as many rows as they need. Nothing measures anything: wrapping is the
    browser's, and `min-width:0` on the strip and `max-width:100%` on a tab stop
    a long label from forcing the card wider than its column. */
+/* The live search status. A row that is always the same height whether it is
+   counting or searching, so the list below does not jump by a line on every
+   keystroke -- a list that nudges while you type reads as instability. */
+.rtn-note-warn{border-color:#b4443c;color:#b4443c}
+.rtn-next-demo{border-left-color:#B4881F}
+.rtn-status{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;min-width:0;
+            margin:10px 0 2px;font-size:12px;color:var(--ink-soft,#6b7280);min-height:18px}
+.rtn-status.is-busy{color:var(--accent,#15a85a)}
+.rtn-warnline{color:#b4443c}
 .rtn-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
 .rtn-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
          background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;
@@ -220,6 +229,13 @@
      his place, and he is working through eight of them. */
   var open = 'cleanse';
   var page = 1;
+  /* Is a product request in flight? Drawn, because the owner's report was that
+     the search "was not working and was not showing any results" -- and a box
+     that says nothing while it works is indistinguishable from one that is
+     broken. */
+  var searching = false;
+  /* The debounce handle. See bind(). */
+  var typeTimer = null;
   var banner = null;
   var busy = false;
   var seq = 0;
@@ -366,6 +382,11 @@
   async function loadProducts(){
     var mine = ++pseq;
 
+    /* Painted before the request goes out, so the box acknowledges the
+       keystroke on the same frame rather than after the round trip. */
+    searching = true;
+    render();
+
     try {
       /* THE ROLE PARAMETER COMES FROM THE OPEN TAB, and this is the whole of
          the wiring between the strip and the list. The endpoint is unchanged
@@ -395,14 +416,27 @@
              + (query ? '&q=' + encodeURIComponent(query) : '')
              + (role ? '&role=' + encodeURIComponent(role) : '');
       var body = await api('/routine-products' + qs);
+
+      /* ── THE STALE-RESPONSE GUARD, AND IT IS NOT DECORATION ──────────────
+         Type "cent" quickly and four requests are in flight at once. They can
+         come back in any order, and the reply to "cen" landing after the reply
+         to "cent" repaints the older, wider result set over the newer one. It
+         looks exactly like a broken search, and because it depends on the
+         network it is intermittent, which is worse than always wrong.
+
+         `pseq` is bumped by every call, so a reply whose ticket is no longer
+         the current one is DROPPED -- not merged, not rendered, and it does not
+         clear the in-flight flag either, because a newer request is still out.
+         Copied from the pattern in admin/partials/slim-footer-screen.blade.php. */
       if (mine !== pseq) return;
       products = body;
+      banner = null;
     } catch (e) {
       if (mine !== pseq) return;
       banner = explain(e, 'Could not load the product list.');
       products = null;
     } finally {
-      if (mine === pseq) render();
+      if (mine === pseq) { searching = false; render(); }
     }
   }
 
@@ -429,7 +463,29 @@
       + '<div class="rtn-stat' + (c.untagged > 0 ? ' is-gap' : '') + '"><span>Still untagged</span><b>'
         + c.untagged + '</b></div>'
       + '</div>'
+      + demoStandingView()
       + nextActionView();
+  }
+
+  /* ── THE DEMO ROWS ARE NAMED ON EVERY TAB, NOT JUST WHERE THE BUTTON IS ───
+     A demo routine that reaches a shopper unannounced is worse than no demo at
+     all, and the way that happens is not malice: he imports it to look, turns
+     the module on to look properly, gets distracted, and it is still there next
+     week. So for exactly as long as demo rows exist, every tab of this screen
+     says so — and says it louder when the module is on, because that is when a
+     shopper can actually see them. It disappears the moment they are removed,
+     so it can never become furniture. */
+  function demoStandingView(){
+    var n = (data.demo || {}).routines || 0;
+    if (!n) return '';
+
+    return '<div class="rtn-next rtn-next-demo" style="margin-top:12px">'
+      + '<b>' + n + ' demo rows are in your catalogue.</b> '
+      + (data.module_on
+          ? 'The routine section is <b>on</b>, so shoppers can see them right now. '
+          : 'The routine section is off, so no shopper can see them yet. ')
+      + 'They are named “Demo —”. Remove them on the <b>Settings</b> tab, or at Store → Demo Content.'
+      + '</div>';
   }
 
   /* ── WHAT TO DO NEXT, FROM COLD ───────────────────────────────────────────
@@ -649,14 +705,62 @@
         + 'Press <b>Use for ' + esc(role.label) + '</b> on one to put it in this step.</div>'
       : '';
 
-    var body;
+    /* ── SAY WHAT IS HAPPENING WHILE IT HAPPENS ───────────────────────────
+       The owner's report was that the search "was not working and was not
+       showing any results". Half of that was two real defects, fixed; the other
+       half is that this box never acknowledged a keystroke, never said how many
+       rows came back, and drew the same word — "Loading…" — for "the first
+       request is out" and "your search is running". A control that says nothing
+       while it works cannot be told apart from one that is broken.
 
-    if (!products) {
-      body = '<div class="rtn-empty">Loading…</div>';
+       So: a live count, an in-flight line that does NOT blank the rows under it
+       (a list that flashes empty between keystrokes is the thing he reported),
+       and, when the server had to search fewer columns than it wanted to, a
+       line saying so. */
+    var status;
+
+    if (searching) {
+      status = 'Searching…';
+    } else if (!products) {
+      status = '';
+    } else if (query) {
+      // "1 product matches", "2 products match" — the verb agrees too, which
+      // the first draft got wrong and a screenshot caught.
+      status = products.total + (products.total === 1 ? ' product matches “' : ' products match “')
+             + esc(query) + '”';
+    } else {
+      status = products.total + ' product' + (products.total === 1 ? '' : 's');
+    }
+
+    /* THE SERVER SAYS WHICH COLUMNS IT ACTUALLY SEARCHED. On a server whose
+       product-editor migration has not run there is no `ingredients` column,
+       and before round 3 that made every search a 500. It now degrades to name
+       and SKU — and says so here, because a silent narrowing is how somebody
+       concludes the ingredient terms on the worksheet are wrong. */
+    var narrowed = products && products.searched
+      && products.searched.indexOf('ingredients') === -1;
+
+    var body = '';
+
+    if (status || narrowed) {
+      body += '<div class="rtn-status' + (searching ? ' is-busy' : '') + '">'
+        + (status ? '<span>' + status + '</span>' : '')
+        + (narrowed
+            ? '<span class="rtn-warnline">Ingredient search is off on this server — '
+              + 'the product-editor update has not been applied, so only names and SKUs are searched.</span>'
+            : '')
+        + '</div>';
+    }
+
+    if (!products && !searching) {
+      body += '<div class="rtn-empty">Nothing loaded.</div>';
+    } else if (!products) {
+      body += '<div class="rtn-empty">Searching…</div>';
     } else if (!products.products.length) {
-      body = '<div class="rtn-empty">'
+      body += '<div class="rtn-empty">'
            + (query
-               ? 'Nothing matches “' + esc(query) + '”. Try an ingredient — the search reads ingredient lists too.'
+               ? 'No product matches “' + esc(query) + '”.'
+                 + (narrowed ? '' : ' The search reads ingredient lists too, so try an ingredient.')
                : (scope === ''
                    /* FROM COLD THIS IS THE STATE HE IS IN — every step empty —
                       so the empty message carries the next press rather than
@@ -668,7 +772,7 @@
                    : 'Nothing matches that filter.'))
            + '</div>';
     } else {
-      body = '<div class="rtn-list">' + products.products.map(productRow).join('') + '</div>' + pagerView();
+      body += '<div class="rtn-list">' + products.products.map(productRow).join('') + '</div>' + pagerView();
     }
 
     return '<div class="rtn-card">'
@@ -798,16 +902,88 @@
            + (f.help ? '<div class="rtn-help">' + esc(f.help) + '</div>' : '') + '</div>';
     }).join('');
 
-    return '<div class="rtn-card">'
+    return moduleSwitchView()
+      + demoDataView()
+      + '<div class="rtn-card">'
       + '<div class="rtn-head"><div><div class="rtn-title">Settings</div>'
       + '<div class="rtn-sub">The two questions the plan left open. Both are answered here rather than in code, '
         + 'so either answer is a dropdown and not a rebuild.</div></div></div>'
       + '<div class="rtn-fields" style="margin-top:12px">' + html + '</div>'
       + '<div style="margin-top:12px"><button class="rtn-btn is-primary" id="rtn-save-settings">Save settings</button></div>'
-      + (data.module_on ? '' : '<div class="rtn-note" style="margin-top:12px">'
-          + 'The module is switched <b>off</b>, so /routines is a 404 on the storefront and nothing about the shop '
-          + 'changes. Turn it on under Store → Modules → Build my routine when you have tagged enough products.'
-          + '</div>')
+      + '</div>';
+  }
+
+  /* ── THE ON/OFF SWITCH, ON THE SCREEN THAT SHOWS THE WORK ─────────────────
+     The owner asked to "turn on off routine section completely". The switch
+     already existed at Store → Modules → Build my routine; what did not exist
+     was any sign of it here, so he either did not know it was there or did not
+     trust that it turned everything off.
+
+     IT IS THE SAME SETTING, NOT A SECOND ONE. This posts to
+     /admin-api/routines-module, which writes `module_toggles` through the same
+     SettingsService::setModule() the Modules screen uses, so the two screens
+     cannot disagree — there is nothing for them to disagree about.
+
+     AND IT SAYS WHAT IT DOES NOT TURN OFF. /concern/{slug}/ is deliberately not
+     behind this switch: those pages exist on their own terms, and a shopper who
+     lands on one from Google should not find it gone because a routine module
+     was toggled. Saying so here is the difference between a documented boundary
+     and a nasty surprise at the worst moment. */
+  function moduleSwitchView(){
+    var on = !!data.module_on;
+
+    return '<div class="rtn-card">'
+      + '<div class="rtn-head"><div>'
+      + '<div class="rtn-title">The routine section is ' + (on ? 'ON' : 'OFF') + '</div>'
+      + '<div class="rtn-sub">' + (on
+          ? 'Shoppers can reach <code>/routines</code> and a page for each concern. The routines are in the sitemap.'
+          : 'Nothing about the shop changes. <code>/routines</code> and every <code>/routines/&lt;concern&gt;</code> answer 404, '
+            + 'nothing links to them, and they are not in the sitemap.')
+      + '</div></div>'
+      + '<button type="button" class="rtn-btn' + (on ? '' : ' is-primary') + '" id="rtn-module-toggle">'
+      + (on ? 'Turn the routine section off' : 'Turn the routine section on')
+      + '</button>'
+      + '</div>'
+      + '<div class="rtn-note" style="margin-top:12px">'
+      + '<b>What this switch does not cover.</b> The concern landing pages at '
+      + '<code>/concern/&lt;concern&gt;/</code> are not part of it. They appear on their own once a concern has '
+      + 'copy and enough tagged products — see the <b>Concern pages</b> tab — and they keep answering whether '
+      + 'this is on or off. That is deliberate: they are ordinary shop pages that people find in Google, and a '
+      + 'switch here should not take them down.'
+      + '</div>'
+      + '<div class="rtn-note" style="margin-top:8px">This is the same switch as '
+      + '<b>Store → Modules → Build my routine</b>. Changing it in either place changes the other.</div>'
+      + '</div>';
+  }
+
+  /* ── DEMO DATA ────────────────────────────────────────────────────────────
+     "also give option to import demo data". Five products, one per step, so he
+     can see a filled routine before committing two or three hours to tagging
+     his own catalogue — which is the decision the demo exists to inform.
+
+     It runs the SHOP'S OWN demo machinery, Store → Demo Content, rather than a
+     second importer: same endpoints, same demo_seed_log, removable from either
+     screen. The button here is a shortcut to that, not a copy of it. */
+  function demoDataView(){
+    var n = (data.demo || {}).routines || 0;
+
+    return '<div class="rtn-card">'
+      + '<div class="rtn-head"><div>'
+      + '<div class="rtn-title">Demo data</div>'
+      + '<div class="rtn-sub">Five sample products, one for each step, so every routine fills and you can see '
+        + 'what the page looks like before tagging anything of your own. '
+        + 'They carry <b>no concerns</b>, so they cannot publish a concern landing page and they do not move the '
+        + 'countdown on the Concern pages tab.</div></div>'
+      + (n > 0
+          ? '<button type="button" class="rtn-btn" id="rtn-demo-remove">Remove demo data</button>'
+          : '<button type="button" class="rtn-btn" id="rtn-demo-import">Import demo data</button>')
+      + '</div>'
+      + (n > 0
+          ? '<div class="rtn-note rtn-note-warn" style="margin-top:12px">'
+            + '<b>' + n + ' demo rows are in your catalogue right now.</b> They are named “Demo —” and they are '
+            + 'real products: with the routine section on, a shopper sees them. Remove them before you go live, '
+            + 'here or at <b>Store → Demo Content</b>.</div>'
+          : '')
       + '</div>';
   }
 
@@ -898,8 +1074,41 @@
       }
     }
 
+    /* ── KEEP THE CARET WHERE HE LEFT IT ──────────────────────────────────
+       render() replaces the whole panel, which destroys and rebuilds the search
+       box. That was harmless while the search only ran on Enter or blur -- focus
+       was already leaving the field. Now that it runs AS HE TYPES, a render
+       between keystrokes would take the focus away mid-word and the next letter
+       would go nowhere: a search box you can type one character into is a worse
+       bug than the one this round is fixing.
+
+       So the id of the focused field and its caret are carried across the
+       swap. Only for the fields this screen owns, and only when one of them
+       really had focus -- this never steals focus, it only puts back what the
+       repaint took. selectionStart is a caret position, not a measurement; no
+       geometry is read. */
+    var active = document.activeElement;
+    var keepId = active && active.id && /^rtn-(q|scope)$/.test(active.id) ? active.id : null;
+    var keepAt = null;
+
+    if (keepId === 'rtn-q') {
+        try { keepAt = active.selectionStart; } catch (e) { keepAt = null; }
+    }
+
     host.innerHTML = html + '</div>';
     bind();
+
+    if (keepId) {
+      var restored = document.querySelector('#' + keepId);
+
+      if (restored) {
+        restored.focus();
+
+        if (keepAt !== null) {
+          try { restored.setSelectionRange(keepAt, keepAt); } catch (e) {}
+        }
+      }
+    }
   }
 
   /* ---------------------------------------------------------------- saves */
@@ -978,10 +1187,69 @@
       };
     });
 
+    /* ── THE SEARCH RUNS AS HE TYPES — Lane Q, round 3 ────────────────────
+       THE BUG THE OWNER REPORTED, and it is this line: "the product search on
+       build routine page was not working and was not showing any results upon
+       search". It was bound to `onchange`, which on a text input fires on BLUR
+       or ENTER and on nothing else. Typing a word did LITERALLY NOTHING — no
+       request, no spinner, no change to the list — and the rows already on
+       screen just sat there, which reads exactly like a search that ignores
+       you. Measured in Chromium against the shipped 2.60.268 screen: typing
+       "centella" fired ZERO requests and left all 24 rows showing.
+
+       It is bound to `input` now, so every keystroke counts, DEBOUNCED at
+       250ms. The number is chosen, not picked: a fast typist's inter-keystroke
+       gap is roughly 120-180ms, so 250 collapses a word typed at speed into one
+       request instead of eight, while staying under the ~300ms at which a
+       control stops feeling like it is responding to you. Measured on this
+       catalogue the round trip is ~25ms, so the debounce — not the server — is
+       what he will feel.
+
+       ENTER STILL SEARCHES, IMMEDIATELY, and cancels the pending timer so it
+       cannot fire a second identical request behind it. `onchange` is gone
+       entirely: with `input` bound it could only ever duplicate a request that
+       had already gone. Measured on the shipped screen, pressing Enter fired
+       the request TWICE, because onchange and onkeydown both answered it. */
     var q = document.querySelector('#rtn-q');
+
     if (q) {
-      q.onchange = function(){ query = q.value.trim(); page = 1; loadProducts(); };
-      q.onkeydown = function(ev){ if (ev.key === 'Enter') { query = q.value.trim(); page = 1; loadProducts(); } };
+      q.oninput = function(){
+        var typed = q.value.trim();
+
+        if (typed === query) return;      // a keystroke that changed nothing
+
+        clearTimeout(typeTimer);
+        typeTimer = setTimeout(function(){
+          query = typed;
+          page = 1;
+          loadProducts();
+        }, 250);
+      };
+
+      q.onkeydown = function(ev){
+        if (ev.key !== 'Enter') return;
+
+        ev.preventDefault();
+        clearTimeout(typeTimer);
+
+        var typed = q.value.trim();
+        if (typed === query && products) return;   // already showing this answer
+
+        query = typed;
+        page = 1;
+        loadProducts();
+      };
+
+      /* The × on a type=search input clears the field and fires `input` in
+         Chrome, but `search` is the event every browser agrees on. Bound as
+         well as, not instead of. */
+      q.onsearch = function(){
+        clearTimeout(typeTimer);
+        if (q.value.trim() === query) return;
+        query = q.value.trim();
+        page = 1;
+        loadProducts();
+      };
     }
 
     var sc = document.querySelector('#rtn-scope');
@@ -1060,6 +1328,75 @@
         }
       };
     });
+
+    /* THE MODULE SWITCH. Confirmed on the way ON only: switching it off takes
+       pages away from shoppers, which is recoverable in one press, while
+       switching it on PUBLISHES two pages — and the demo rows, if he still has
+       them. The asymmetry is deliberate. */
+    var mod = document.querySelector('#rtn-module-toggle');
+
+    if (mod) mod.onclick = async function(){
+      var turningOn = !data.module_on;
+
+      if (turningOn && !window.confirm(
+        'Turn the routine section on?\n\nShoppers will be able to reach /routines and a page for each concern'
+        + (((data.demo || {}).routines || 0) > 0
+            ? ', and the demo products now in your catalogue will be on them.'
+            : '.'))) {
+        return;
+      }
+
+      mod.disabled = true;
+
+      try {
+        await api('/routines-module', {on: turningOn});
+        say(turningOn ? 'The routine section is on.' : 'The routine section is off.');
+        loadAll();
+      } catch (e) {
+        mod.disabled = false;
+        say(explain(e, 'Could not change the routine section.'));
+      }
+    };
+
+    /* DEMO DATA. Runs the shop's own demo endpoints, so it is the same import
+       and the same removal as Store → Demo Content -- there is one ledger and
+       one button behind two screens. */
+    var demoIn = document.querySelector('#rtn-demo-import');
+
+    if (demoIn) demoIn.onclick = async function(){
+      demoIn.disabled = true;
+
+      try {
+        await api('/demo-content/routines/import', {});
+        say('Demo routine products imported.');
+        loadAll();
+        if (isStep(open)) loadProducts();
+      } catch (e) {
+        demoIn.disabled = false;
+        say(explain(e, 'Could not import the demo data.'));
+      }
+    };
+
+    var demoOut = document.querySelector('#rtn-demo-remove');
+
+    if (demoOut) demoOut.onclick = async function(){
+      if (!window.confirm('Remove the demo routine products?\n\nOnly the rows the demo import created are deleted. '
+        + 'Anything you tagged yourself is untouched.')) {
+        return;
+      }
+
+      demoOut.disabled = true;
+
+      try {
+        await api('/demo-content/routines/remove', {});
+        say('Demo routine products removed.');
+        loadAll();
+        if (isStep(open)) loadProducts();
+      } catch (e) {
+        demoOut.disabled = false;
+        say(explain(e, 'Could not remove the demo data.'));
+      }
+    };
 
     var save = document.querySelector('#rtn-save-settings');
     if (save) save.onclick = async function(){

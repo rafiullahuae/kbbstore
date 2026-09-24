@@ -492,7 +492,16 @@ it('registers every endpoint behind the admin guard, and neither storefront page
         }
     }
 
-    expect($admin)->toHaveCount(5);
+    /*
+     * SIX SINCE LANE Q ROUND 3, not five: POST /admin-api/routines-module joins
+     * the five Lane FM registered. It is the switch that publishes the two
+     * storefront pages, surfaced on the screen where the tagging happens, and
+     * it is the one endpoint in this file that is store.settings rather than
+     * catalog.* — AdminCapabilityMapTest and RoutineSearchAndDemoTest pin that
+     * separately. The count is here so a route added without a capability rule
+     * cannot slip in unnoticed; the loop below is what actually guards them.
+     */
+    expect($admin)->toHaveCount(6);
     expect($store)->toHaveCount(2);
 
     foreach ($admin as $route) {

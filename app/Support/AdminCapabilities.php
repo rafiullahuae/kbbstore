@@ -602,6 +602,15 @@ final class AdminCapabilities
          * Store → Modules, which is `admin-api/modules` above, store.settings,
          * and is not touched here.
          */
+        /*
+         * Lane Q, round 3 — and it is the ONE endpoint in this block that is
+         * not catalog.*. It flips `build_my_routine`, which is what puts
+         * /routines and /routines/{concern} on the storefront, so it sits with
+         * the Modules screen's permission rather than with the tagging screen's.
+         * First in the block so no broader `routines*` pattern below can be
+         * reached for it.
+         */
+        ['POST', 'admin-api/routines-module', 'store.settings'],
         ['POST', 'admin-api/routines-settings', 'catalog.manage'],
         ['POST', 'admin-api/routine-products/*', 'catalog.manage'],
         ['POST', 'admin-api/routines/*', 'catalog.manage'],
