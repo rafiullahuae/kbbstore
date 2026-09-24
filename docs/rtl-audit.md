@@ -917,16 +917,16 @@ declaration reader can see were wrong anyway. Those three are the change.
 
 | group | kept | verdict, and how it was reached |
 |---|---|---|
-| `fill-bar` | 16 | Unchanged, and **not touched at all**: they are in `kbb-checkout.css`, which is live under the checkout lane this round. §11.2 already mirrors the whole track with one rule, so nothing here needs a second opinion. |
+| `fill-bar` | 16 | Round one could not read them — `kbb-checkout.css` was live under the checkout lane. **Round two read all 16 on the merged file and they are correct as kept**; the reasoning, and the guard that now holds it, are in §14.2. |
 | `centre` | 13 | Re-read declaration by declaration. Every one is `left:50%` paired with `translateX(-50%)` **in the same block**, which is the centring idiom and not a direction. Confirmed in the browser as well: the home rail measures 12..378 in a 390px viewport in **both** directions, dots centred on 195. Settled, not converted. **But see 13.3** — one of them leaks onto a component that never asked for it. |
 | `off-screen` | 3 | Unchanged. §11.4's `[dir="rtl"]` twins park them on the discarded edge; `document.documentElement.scrollWidth` is 390 on every RTL page shot in `docs/rtl-shots/lane-g/`, so the ten-thousand-pixel scroll that defect used to open is gone and has not come back. |
 | `rotated` | 1 | Unchanged. `.acct::before` is two adjacent borders on a square rotated 45°, symmetric about the vertical axis. |
 | `transition` | 2 | Unchanged — one of them is the row §11.6 added, which is why the table has 35 rows and the original 57 gave up only 34. |
 
-**16 of the 34 are in a file this lane must not edit.** `kbb-checkout.css` is
-the checkout/cart lane's this round, so every `fill-bar` row above was read and
-left alone. None of them needs a change; if that ever stops being true it is a
-change to coordinate, not to make.
+**16 of the 34 were in a file round one could not edit.** `kbb-checkout.css` was
+the checkout/cart lane's that round, so every `fill-bar` row above was recorded
+unread. That work is merged and §14.2 is the reading, declaration by
+declaration, against the merged file.
 
 ### 13.2 What a declaration reader cannot see, and why it matters here
 
@@ -1025,23 +1025,33 @@ mirror position. One shortened wordmark and the phone inherits that. Fixed with
 
 ### 13.5 Found and NOT fixed
 
-- **The Arabic hero still travels left-to-right.** 13.3 B makes the carousel
-  work; making ▸ pull the next slide in from the reading direction's side is a
-  sign flip in `resources/js/kbb/home.js`, gated on `Locale::isRtl()`. That file
-  is not this lane's. When it is done, delete
-  `[dir="rtl"] .kbb-home .slides` with it — `RtlMirrorTest` fails the moment
-  both exist, which is deliberate.
+*Round two closed the first and the last of these. The entries are kept, struck
+through, because a reader who comes here from §13.3 B or §13.1 needs to know
+where the answer went rather than to find the question missing.*
+
+- ~~**The Arabic hero still travels left-to-right.**~~ **Done — §14.1.** The
+  sign flip landed in `resources/js/kbb/home.js` and the two CSS rules 13.3 B
+  added were deleted with it, which is what the guard was for.
 - **The burger icon's four tiles do not reverse.** `.kbbmi-tiles .s` are four
   identical 9×9 squares at `translate(±6px,±6px)`; the group mirrors, the tiles
   keep their DOM order. They differ only in animation phase, so the colour wave
   runs the same way physically in both directions. Visually indistinguishable at
   rest; recorded so the next sweep does not re-derive it.
 - **`store/app.blade.php` carries an inline `right:50%;margin-right:-24px`** on
-  the cart-count badge and is excluded from the sweep on purpose: that view
-  hard-codes `<html lang="en">` with no `dir`, so no `[dir="rtl"]` rule can
-  match in it. It belongs with §9.5's hand-off, not here.
-- **16 `fill-bar` declarations in `kbb-checkout.css` were read and not touched**
-  — that file is another lane's this round (13.1).
+  the cart-count badge, written by that document's own JavaScript. Round one
+  excluded it because the view hard-coded `<html lang="en">` with no `dir`, so
+  no `[dir="rtl"]` rule could match in it. **That half is now done** — commit
+  e2ce533 gave the five standalone documents `lang="{{ Locale::htmlLang() }}"
+  and `dir="{{ Locale::direction() }}"`, so the exclusion's stated reason has
+  expired. **The other half cannot be done from any file this lane owns**: that
+  document's stylesheet is an inline `<style>` block inside the same view, and
+  the physical declaration is inside a JavaScript template literal in the same
+  view again, so both the defect and every possible answer to it live in
+  `store/app.blade.php`. §14.3 has the exact patch and the measurement, for
+  whoever holds that file.
+- ~~**16 `fill-bar` declarations in `kbb-checkout.css` were read and not
+  touched.**~~ **Done — §14.2.** All 16 read on the merged file and confirmed
+  correct as kept, with a guard that says what makes them correct.
 
 ### 13.6 Proof that English did not move, except where it meant to
 
@@ -1078,3 +1088,210 @@ the English shot of the same page beside it. The numbers under each:
 Every one of them entirely outside the viewport, on the mirror of the side it
 parks on in English, and `scrollWidth` equal to `clientWidth` on all four — a
 panel parked off the wrong edge in RTL would show up as both.
+
+---
+
+## 14. Lane G, round two — the three §13.5 left open, and a build artefact
+
+§13 closed with four things named and not done. Three of them were not done
+because they were in files that lane did not own; the fourth was a puzzle. This
+section is those, on the merged tree, with the numbers.
+
+Everything below was measured the same way as §13.6 and with the same two
+controls, which is what makes "identical" a claim rather than a hope: the trunk
+served on one port, this branch on another, **the same seeded SQLite database
+copied to both**, and a THIRD server running the trunk again so a difference
+between two processes can be told from a difference between two trees.
+
+Two things had to be taken out of the harness before any of it meant anything,
+and both produced differences that looked exactly like a regression:
+
+- **The webfonts.** `fonts.googleapis.com` is unreachable from here, and letting
+  the request FAIL at its own pace moved when `networkidle` fired. Two runs of
+  the SAME tree disagreed on six rows. Everything off `127.0.0.1` is now
+  refused outright.
+- **The scrollbar gutter.** `.wrap` is `margin:0 auto`, so whether the vertical
+  scrollbar existed when that margin resolved flipped it between `0px` and
+  `50px` at 1280. `html{overflow-y:scroll}` is injected before measuring, which
+  takes the race away instead of tolerating it.
+
+The dispatch countdown is excluded by name — it is a clock, its `<b>` is a
+different width every minute, and two servers hit a second apart disagree over
+it honestly. That is 16 nodes of 10,266.
+
+### 14.1 The Arabic hero now travels the way Arabic is read
+
+§13.3 B made the carousel WORK by handing the track a left-to-right coordinate
+system, because `resources/js/kbb/home.js` was not that lane's file. It is this
+one's, and the sign now comes from `document.documentElement.dir` — which is
+what the server printed from `Locale::direction()`, not a layout query.
+
+**Where the next slide QUEUES is the measurement**, because that is the edge it
+enters from. The frame is 12..378 at 390px and 38.6..1241.4 at 1280px.
+
+| | slide 2 queues at | transform after ▸ | slide 2 in frame after |
+|---|---|---|---|
+| English 390 | 378..744 (right) | `translateX(-100%)` | 100% |
+| English 1280 | 1241.4..2444.2 (right) | `translateX(-100%)` | 100% |
+| Arabic 390, before | 378..744 — **the right, as in English** | `translateX(-100%)` | 100% |
+| Arabic 390, after | **-354..12 — the left** | `translateX(100%)` | 100% |
+| Arabic 1280, before | 1241.4..2444.2 (right) | `translateX(-100%)` | 100% |
+| Arabic 1280, after | **-1164.2..38.6 — the left** | `translateX(100%)` | 100% |
+
+Caught mid-transition, a quarter of the way through the 0.55s ease, which is the
+only way a still can show travel: Arabic before, slide 2 at 339.4..705.4,
+**entering from the RIGHT**; after, at -297..69, **entering from the LEFT**.
+English is 339.4..705.4 in both. Pictures: `r2-travel-BEFORE-rtl-390.jpg`,
+`r2-travel-rtl-390.jpg` and the 1280 pair, with `r2-travel-ltr-*.jpg` beside
+them.
+
+**Both CSS rules were deleted with it**, which is what §13.5 asked for and not
+tidiness: `direction:ltr` on the track and a positive translation cancel, and a
+shop that shipped both would be back to the blank Arabic hero of §13.3 B.
+`RtlMirrorTest` fails if either returns. Unlike `.ftrack` (§11.2), which mirrors
+a picture of a bar containing no text, every slide on this track carries a
+headline, a paragraph and a button.
+
+The swipe flipped with it: the track follows the finger, so the drag that
+advances it is leftward in English and rightward in Arabic. In an LTR document
+the expression is `dx < 0`, to the character, as before.
+
+### 14.2 The 16 `fill-bar` declarations, read at last
+
+§13.1 recorded them unread — `kbb-checkout.css` was the checkout lane's. That
+work is merged, and the declaration reader now finds **17** physical
+declarations in the file: the 16, plus WooCommerce's `#place_order` off-screen
+park, which §11.4 already answers and which is not a reading direction at all.
+The checkout's three new pieces since §13 — the logo override, the back-to-top
+arrow and the scroll-aware bar, plus the coordinator's header side-padding
+control merged mid-round — added **no** physical declaration; they spell their
+own alignment `text-align:start` and `padding-inline`.
+
+All 16 are correct as kept, and the reason is one fact rather than sixteen
+judgements: **every one of them is inside `.ftrack`**, and `.ftrack` is mirrored
+whole by `[dir="rtl"] .kbb-checkout .ftrack{direction:ltr;transform:scaleX(-1)}`.
+`partials/checkout/freeship-bar.blade.php:17-19` is the whole of that subtree —
+`.ffill` (carrying `.fs-rider`) and `.fs-cheer` with its eight `<i>` — and the
+16 selectors name nothing else. Inside a box forced to `direction:ltr`, a
+logical property resolves to the physical one anyway, so converting them would
+be inert at best and, since the sprite positions are measured against a fill
+that mirrors on its own, misleading at worst.
+
+So the marking is no longer "not touched". `RtlMirrorTest` now requires that
+the mirror rule carries **both** declarations and that **every** physical
+declaration in the file is on that subtree. A `right:` added anywhere else in
+`kbb-checkout.css` is not covered by the §11.2 bargain and now says so, instead
+of looking exactly like the sixteen that are fine three screens below a comment
+saying they are.
+
+### 14.3 `store/app.blade.php` — half answerable, and not by this lane
+
+§13.5 excluded this view because it hard-coded `<html lang="en">` with no `dir`.
+**That reason has expired**: commit e2ce533 gave the five standalone documents
+`lang="{{ Locale::htmlLang() }}"` and `dir="{{ Locale::direction() }}"`, so
+`[dir="rtl"]` can match in it now. The comment at `store/app.blade.php:397`
+still says it cannot, and the `$notBilingual` exclusion in `RtlMirrorTest` still
+names the file; both are now stale.
+
+**The defect.** Line 1301 builds the tab bar's cart badge from that document's
+own JavaScript:
+
+```
+<span class="count on" style="position:absolute;top:2px;right:50%;margin-right:-24px">
+```
+
+`right` and `margin-right` are physical, and an inline style beats every rule.
+The view's own stylesheet already spells the same idea logically at line 522 —
+`.bnav .count{top:0;inset-inline-end:50%;margin-inline-end:-22px}` — and loses
+to it. In Arabic the badge therefore sits 24px to the RIGHT of the icon's
+centre, where its mirror is 24px to the LEFT.
+
+**The fix is one line, and it is better than the §13.3 A answer** — no
+`!important`, and no new rule to keep in step:
+
+```
+style="position:absolute;top:2px;inset-inline-end:50%;margin-inline-end:-24px"
+```
+
+**This lane cannot make it.** That document carries its own `<html>`, its own
+inline `<style>` block and its own inline script, so the badge, the stylesheet
+that should reach it and the physical declaration itself are all three inside
+`resources/views/store/app.blade.php` — which belongs to the layouts lane this
+round. There is no file this lane owns from which the CSS half could be written.
+Handed over with the patch above; when it lands, drop the file from
+`$notBilingual` in `RtlMirrorTest` and correct the comment at line 397, and the
+existing sweep will hold it from then on.
+
+### 14.4 The bundle that renamed itself for nothing
+
+§13 left this as a puzzle: a rebuild produced `app-iyd4z9xL.js` byte-identical
+to the committed `app-DSE-434-.js`. It is not a puzzle, it is a dependency.
+
+`resources/js/kbb/app.js` carried `import '../../css/kbb/kbb.css';` while
+kbb.css was **also** a Vite entry of its own and **also** named explicitly in
+`layouts/store.blade.php`'s `@vite([...])`. Rollup folds a chunk's dependencies
+into that chunk's content hash, so every kbb.css edit renamed the JavaScript.
+
+| | bytes | md5 |
+|---|---|---|
+| `app-DSE-434-.js` (85fa244) | 45,971 | `32ea782cd95d7c9505c931b4632a2e98` |
+| `app-iyd4z9xL.js` (fcebbc0) | 45,971 | `32ea782cd95d7c9505c931b4632a2e98` |
+
+`git diff --stat 85fa244 fcebbc0 -- resources/js` is empty. Rebuilding
+85fa244's tree in isolation reproduces `app-DSE-434-.js` exactly; replacing
+**only** kbb.css with fcebbc0's copy and rebuilding produces `app-iyd4z9xL.js`,
+same 45,971 bytes. The import is removed, and the same experiment on this tree
+now renames only the stylesheet: appending a rule turned `kbb-K8tMRKKR.css` into
+`kbb-DCx1F9hh.css` and left `app-xW519gfI.js` where it was. The coordinator's
+`kbb-checkout.css` commit, merged mid-round, rebuilt to their exact
+`kbb-checkout-IiTDPH1p.css` and moved no JavaScript name either.
+
+It cost more than noise. **21 orphaned `app-*.js`** accumulated in
+`public/build/assets` before commit 965b0f0 swept them out, each one shipped in
+a package as a file the shop would never request; and on a store where packages
+are applied by hand by someone with no shell, a file list reading
+`app-<newhash>.js` cannot tell a reviewer whether the JavaScript changed.
+CLAUDE.md's first landmine is five packages built against a stale tree and
+applied anyway.
+
+Removing the import costs the 26-byte `empty css` banner Vite writes at the top
+of a chunk that imported a stylesheet, and the `css` array on that manifest
+entry — which Laravel's `@vite` deduplicates against the explicit entry
+(`$tags->unique()`), so the served `<head>` does not move by a byte.
+`BuiltAssetNamesAreStableTest` pins both halves, and the second is what makes
+the first safe: with no `css` array in the manifest, a later
+`@vite('resources/js/kbb/app.js')` on its own would ship a storefront page with
+no stylesheet at all, so every view that loads the bundle must name kbb.css
+itself.
+
+### 14.5 Proof that English did not move
+
+**Served HTML, byte for byte.** 11 English pages, three times each, masked only
+for the host:port (two trees, two ports), the CSRF token and session values, and
+the vite content hash in an asset filename — that last one being the change
+itself. **33 of 33 identical.** The control (the trunk against itself) and the
+cross-process control (the trunk against a second copy of the trunk) are also
+33 of 33, so the mask is sufficient and the flake rate is zero.
+
+**Computed geometry.** Every element and every `::before`/`::after` on 9 pages ×
+2 viewports, every off-canvas panel force-opened, comparing position and size to
+three decimals plus all four margins, paddings and border widths, both insets,
+`text-align`, `float`, all four corner radii, `transform`, `background-position`,
+`direction`, `display` and `position`. **10,250 nodes, 0 differing rows**, and
+both controls are 0 as well.
+
+**Every drawer photographed CLOSED in RTL at 390px**, which is the specific way
+this class of change breaks. `r2-rtl-390-drawers-closed-*.jpg`, and the numbers
+are the trunk's exactly:
+
+| page | `.drawer` | `.mnav` | `.filtercol` | `scrollWidth` |
+|---|---|---|---|---|
+| `/ar/` | -300.3..0 | 403.3..668.4 | — | 390 |
+| `/ar/shop/` | -300.3..0 | 390..690 | 390..690 | 390 |
+| `/ar/product/…` | -300.3..0 | 390..690 | — | 390 |
+| `/ar/cart/` | -300.3..0 | 403.3..668.4 | — | 390 |
+
+Each is the exact mirror of the same panel in English (`.drawer` 390..690.3,
+`.mnav` -278.4..-13.3 and -300..0), entirely outside the viewport, with
+`scrollWidth` equal to `clientWidth` on all four — a panel parked off the wrong
+edge in RTL shows up as both.
