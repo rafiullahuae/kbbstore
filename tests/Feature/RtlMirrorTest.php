@@ -648,8 +648,11 @@ it('keeps every physical declaration in the checkout stylesheet inside the one b
 
     $outside = [];
 
-    foreach (\Tests\Support\CssDirection::physicalIn(base_path(), $file) as $key => $_) {
-        [, $selector, $property, $value] = array_map('trim', explode('|', $key));
+    // The ROW, not the key. physicalIn() keys each row with a ` | `-joined
+    // string and carries the same four fields in the value; splitting the key
+    // would misread any selector that ever contains a pipe, which `[a|=b]` does.
+    foreach (\Tests\Support\CssDirection::physicalIn(base_path(), $file) as $row) {
+        ['selector' => $selector, 'property' => $property, 'value' => $value] = $row;
 
         if ($selector === $offScreen) {
             continue;
