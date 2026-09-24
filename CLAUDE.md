@@ -6,10 +6,34 @@ repo does and does not track.
 
 ## How this ships
 
-**Not a git deploy.** The host is shared hosting with no shell access. Changes
-reach the server as signed zip packages applied through Store → Core Updates in
-the admin panel. This repo is the durable record of server state; the packages
-are how code actually moves.
+**Not a git deploy.** Changes reach the server as zip packages applied through
+Store → Core Updates in the admin panel. This repo is the durable record of
+server state; the packages are how code actually moves.
+
+**The live shop is `extrabeauty.ae`, on Cloudways, and IT HAS A SHELL.** Both
+halves of that sentence were wrong in this file until 24 September 2026, and
+both cost real time:
+
+- `KBB_BASE_PATH` is **empty** there, not `/kbb-upgrade`, and the app root is
+  `/home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app` with the
+  web root at `../public_html`. `docs/CUTOVER-EXTRABEAUTY.md` is the authority
+  on that layout; the `easywebsol.com/kbb-upgrade` paths still named further
+  down this file are the OLD Hostinger box. Do not hand the owner a URL built
+  from them.
+- Cloudways provides SSH (**Servers → Launch SSH Terminal**, or Master
+  Credentials). `php artisan migrate --force`, `migrate:status`, `config:clear`
+  and reading `storage/logs/laravel.log` are all available. Ask before
+  designing around their absence.
+
+**BUILD PACKAGES WITH `php artisan kbb:package <version> --since=<ref>`, ALWAYS.**
+Never hand-roll a builder. `update.json` needs six keys and `UpdateRunner` keys
+off two of them that a hand-written script will not think of: `migrations`,
+which is the ONLY thing that decides whether migrations run at all
+(`hasMigrations()` never looks at the files), and `signature`. Five packages
+built by a scratch script in one afternoon shipped eight migrations that were
+copied to the live server and never ran. `UpdatePackage::verify()` now refuses a
+package that carries migrations without declaring them, so the mistake is caught
+at the door rather than silently — but do not rely on the door.
 
 Consequences that matter when you change something:
 
@@ -163,6 +187,23 @@ of it is blocked, finish everything else and say exactly what is left and why.
   `git remote -v` before blaming a push failure on credentials, and restore
   with `git remote set-url origin https://github.com/rafiullahuae/kbbstore`
   (and `git config --unset remote.origin.pushurl`).
+
+- **One swallowed exception bricked the updater for three hours.**
+  `UpdateRunner::recordManifest()` wrote a column with `$release->update()`
+  inside a try/catch, and its docblock claimed that made it incapable of failing
+  an update. Eloquent's `update()` is `fill()` then `save()`: `fill()` puts the
+  attribute on the model FIRST, and only then does the save throw. The catch
+  swallowed the throw and left the attribute dirty, so every later `save()` on
+  that instance re-sent it — including `rollback()`'s status write and the
+  `['status' => 'failed']` inside `rollback()`'s own catch, which is the third
+  throw and the one nothing catches. It escaped `apply()` and became a bare
+  "Server Error" on Core Updates, on every package, down to an 18 KB one.
+  **A guarded write that leaves state behind does not contain a failure, it
+  seeds one.** Every write to `update_releases` now goes through one private
+  writer that cannot dirty the model and cannot throw. The column was missing in
+  the first place because of the `migrations` flag above — two defects, and the
+  second made the first unrecoverable, because the fix could only travel through
+  the updater it had broken.
 
 - **`Setting::map()` memoises in a process-level static** as well as the cache.
   Within one long-lived process it will not see writes made after the first
