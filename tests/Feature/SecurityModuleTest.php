@@ -611,7 +611,15 @@ it('refuses no request the shop answered before', function () {
      * recording, compared against the same walk with every switch off. Any gate
      * in this module, now or later by accident, moves one of these codes.
      */
-    $paths = ['/', '/shop', '/cart', '/checkout', '/journal', '/wishlist', '/sec-probe-not-a-page'];
+    /*
+     * Pages this fixture actually serves, plus one address it does not. The
+     * missing one is load-bearing: without it the loop below could be satisfied
+     * by a shop that answers everything, including what it should refuse.
+     *
+     * `/journal` is deliberately absent — it is a 404 in this fixture as it
+     * stands, which is the storefront's business and not this module's.
+     */
+    $paths = ['/', '/shop', '/cart', '/checkout', '/wishlist', '/sec-probe-not-a-page'];
 
     $with = [];
 
@@ -629,9 +637,38 @@ it('refuses no request the shop answered before', function () {
 
     expect($with)->toBe($without);
 
+    /*
+     * AND THE SAME THING IN ABSOLUTE TERMS, which is the half that actually
+     * bites. The comparison above measures the module against ITSELF: a gate
+     * that refuses in both passes matches itself perfectly and the comparison
+     * reports all clear. Verified by mutation — forcing a 403 on /cart from
+     * inside SecurityModule left the two walks identical and the expectation
+     * above green.
+     *
+     * So the codes are also named: every page the shop serves still answers,
+     * and the only refusal is the address that does not exist.
+     */
+    foreach ($paths as $path) {
+        if ($path === '/sec-probe-not-a-page') {
+            expect($with[$path])->toBe(404, 'a missing page stopped being a 404');
+
+            continue;
+        }
+
+        expect($with[$path])->toBeLessThan(400, "{$path} answered {$with[$path]}");
+    }
+
     // And a storefront walk writes no audit row at all: nobody is signed in,
     // so nothing on it is an administrative act.
     expect(AuditEvent::query()->where('event', SecurityModule::E_SETTING)->count())->toBe(0);
+
+    /*
+     * MUTATION NOTE. Make the RequestHandled listener call
+     * $event->response->setStatusCode(403) for any path — one line, and the
+     * first line any request gate would grow — and this is red on the loop
+     * above. It was green on the comparison alone, which is why the loop is
+     * here.
+     */
 });
 
 it('registers no middleware anywhere', function () {
