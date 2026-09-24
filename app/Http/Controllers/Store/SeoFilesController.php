@@ -80,9 +80,44 @@ class SeoFilesController extends Controller
         }
 
         $base = $this->base();
+
+        /*
+         * ── PRODUCT IMAGES IN THE SITEMAP, AND WHY THE SWITCH SHIPS OFF ──
+         *
+         * Google Images is a real entry point for a shop that sells things
+         * people look at before they read about, and an <image:image> under a
+         * product's <url> is how a sitemap says "these pictures belong to this
+         * page" — which is the association Google otherwise has to infer from
+         * markup it may never fetch.
+         *
+         * This is where the competitor is beaten rather than matched. Shopify
+         * generates its product sitemap with the FEATURED image only, one
+         * <image:image> per product; nothing in the platform emits the rest of
+         * the gallery. Ours emits the whole gallery, de-duplicated, in order,
+         * because `products.images` is already selected on the query that is
+         * already running — the extra pictures cost one column, not one query.
+         *
+         * ONLY <image:loc>. Google withdrew support for <image:caption>,
+         * <image:title>, <image:license> and <image:geo_location>; they are
+         * parsed and ignored. Emitting them would be bytes on every product
+         * entry buying nothing, so the entry carries the one element that is
+         * still read.
+         *
+         * OFF BY DEFAULT, and that is rule 1 rather than timidity: /sitemap.xml
+         * is byte-pinned by the English render walk, and a package that moves
+         * a file Search Console has already fetched should move it because an
+         * operator decided to, on a day they can watch what happens. With the
+         * box unticked this method emits the bytes it emits today and runs the
+         * same queries — the images column is not even selected.
+         *
+         * Store → SEO & Meta → Settings · Sitemap & robots · "Product images
+         * in sitemap".
+         */
+        $withImages = SeoSettings::from($s, 'sitemap_images', '0') === '1';
+
         $urls = [];
-        $add = function ($loc, $lastmod = null, $priority = '0.6', $freq = 'weekly') use (&$urls) {
-            $urls[] = compact('loc', 'lastmod', 'priority', 'freq');
+        $add = function ($loc, $lastmod = null, $priority = '0.6', $freq = 'weekly', array $images = []) use (&$urls) {
+            $urls[] = compact('loc', 'lastmod', 'priority', 'freq', 'images');
         };
 
         // Static pages
@@ -240,6 +275,14 @@ class SeoFilesController extends Controller
                 $q->addSelect('seo');
             }
 
+            // Two more columns on the query that is already running, and only
+            // when they will be used. Both are on `products` from the first
+            // migration, so neither needs a schema probe — the probes above
+            // exist for columns that arrived later.
+            if ($withImages) {
+                $q->addSelect('image', 'images');
+            }
+
             foreach ($q->get() as $p) {
                 if (empty($p->slug)) continue;
 
@@ -252,7 +295,13 @@ class SeoFilesController extends Controller
                 }
 
                 if ($hasSeo && self::isNoindex($p->seo ?? null)) continue;
-                $add($base . '/product/' . $p->slug . '/', $p->updated_at ?? null, '0.8', 'weekly');
+                $add(
+                    $base . '/product/' . $p->slug . '/',
+                    $p->updated_at ?? null,
+                    '0.8',
+                    'weekly',
+                    $withImages ? $this->productImages($p, $base) : []
+                );
             }
         }
 
@@ -403,9 +452,27 @@ class SeoFilesController extends Controller
          */
         $bilingual = count(Locale::enabledCodes()) > 1;
 
+        /*
+         * The image namespace is declared only when an entry actually carries
+         * an image, for exactly the reason the xhtml one is declared only when
+         * there is a second language: an unused namespace on the root element
+         * is a byte change to a file crawlers have already fetched, in exchange
+         * for nothing. With the switch off, or with a catalogue that has no
+         * pictures at all, the root element is the one that ships today.
+         */
+        $anyImages = false;
+
+        foreach ($urls as $u) {
+            if (! empty($u['images'])) {
+                $anyImages = true;
+                break;
+            }
+        }
+
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
               . ($bilingual ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : '')
+              . ($anyImages ? ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"' : '')
               . '>' . "\n";
 
         foreach ($urls as $u) {
@@ -414,9 +481,28 @@ class SeoFilesController extends Controller
 
                 // Immediately after <loc>, which is where Google's own
                 // documented example puts them.
+                /*
+                 * ENT_QUOTES, AND THESE TWO NEED IT WHERE <loc> ABOVE DOES NOT.
+                 *
+                 * htmlspecialchars($v, ENT_XML1) does NOT escape a double
+                 * quote: passing a flag REPLACES the default set rather than
+                 * adding to it, and ENT_QUOTES is in the default. Inside
+                 * element text — <loc>, <image:loc> — a bare `"` is legal XML
+                 * and the document still parses, so that call is correct as it
+                 * stands. Here the value lands inside an ATTRIBUTE, where a
+                 * bare `"` closes it: one quote in a URL and this element
+                 * becomes malformed, which costs the whole sitemap rather than
+                 * one entry, because a parser that fails rejects the document.
+                 *
+                 * No URL the shop builds today carries one, so this emits the
+                 * same bytes it emits now. It is written this way because the
+                 * value is a URL and the rule for a URL going into an
+                 * attribute should not depend on nobody ever putting a quote
+                 * in a slug.
+                 */
                 foreach ($entry['alternates'] as $hreflang => $href) {
-                    $xml .= '<xhtml:link rel="alternate" hreflang="' . htmlspecialchars((string) $hreflang, ENT_XML1)
-                          . '" href="' . htmlspecialchars($href, ENT_XML1) . '"/>';
+                    $xml .= '<xhtml:link rel="alternate" hreflang="' . htmlspecialchars((string) $hreflang, ENT_QUOTES | ENT_XML1)
+                          . '" href="' . htmlspecialchars($href, ENT_QUOTES | ENT_XML1) . '"/>';
                 }
 
                 if (!empty($u['lastmod'])) {
@@ -424,12 +510,104 @@ class SeoFilesController extends Controller
                     if ($d) $xml .= '<lastmod>' . $d . '</lastmod>';
                 }
                 $xml .= '<changefreq>' . $u['freq'] . '</changefreq>';
-                $xml .= '<priority>' . $u['priority'] . '</priority></url>' . "\n";
+                $xml .= '<priority>' . $u['priority'] . '</priority>';
+
+                /*
+                 * THE SAME PICTURES ON EVERY LANGUAGE OF THE PAGE, which is
+                 * correct: /shop/x/ and /ar/shop/x/ are the same product and
+                 * the same photographs, and an image listed under only one of
+                 * a cluster's URLs tells Google the other language has none.
+                 */
+                foreach ($u['images'] as $img) {
+                    // ENT_QUOTES here too, for the same reason as the
+                    // attributes above even though this one is element text:
+                    // an image URL is the most operator-supplied value in this
+                    // file, and one escaping rule for it is easier to keep
+                    // right than two.
+                    $xml .= '<image:image><image:loc>' . htmlspecialchars($img, ENT_QUOTES | ENT_XML1) . '</image:loc></image:image>';
+                }
+
+                $xml .= '</url>' . "\n";
             }
         }
         $xml .= '</urlset>';
 
         return response($xml, 200)->header('Content-Type', 'application/xml; charset=UTF-8');
+    }
+
+    /**
+     * A product row's pictures, absolute, de-duplicated, order preserved.
+     *
+     * THE FEATURED SHOT FIRST AND THEN THE GALLERY. Google treats the first
+     * <image:image> under a <url> as the most representative one, and the
+     * featured image is what the shop itself puts at the top of the product
+     * page, so the two agree rather than disagreeing by accident of column
+     * order.
+     *
+     * A VALUE THAT IS NOT A PICTURE IS DROPPED RATHER THAN PUBLISHED. The
+     * `images` column is json written by the WooCommerce importer, the media
+     * sideloader and the product editor, and a row that has been through all
+     * three can hold a string, a null, or an object with the URL on a key
+     * this never sees. Anything that is not a non-empty string is skipped, and
+     * anything that is not http(s) after absolutising is skipped too — a
+     * sitemap is a document a crawler parses strictly, and one malformed
+     * <image:loc> is a reason to reject the entry around it.
+     *
+     * THE SCHEME CHECK IS NOT DECORATION. These values are operator-supplied
+     * (an image URL is a text box on the product editor), and this file prints
+     * them into XML that Google fetches. `javascript:` and `data:` are not
+     * addresses a crawler should ever be handed, and the rule this project
+     * already applies to a settings-supplied href applies to a row-supplied
+     * one for the same reason.
+     *
+     * @return list<string>
+     */
+    private function productImages(object $p, string $base): array
+    {
+        $raw = $p->images ?? null;
+
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        $candidates = [$p->image ?? null];
+
+        foreach (is_array($raw) ? $raw : [] as $one) {
+            $candidates[] = $one;
+        }
+
+        $root = rtrim($base, '/');
+        $out = [];
+
+        foreach ($candidates as $candidate) {
+            if (! is_string($candidate)) {
+                continue;
+            }
+
+            $candidate = trim($candidate);
+
+            if ($candidate === '') {
+                continue;
+            }
+
+            // Root-relative is how this shop stores an uploaded image, so it is
+            // the common case and not the exception.
+            $abs = str_starts_with($candidate, '/') && ! str_starts_with($candidate, '//')
+                ? $root . $candidate
+                : $candidate;
+
+            $scheme = parse_url($abs, PHP_URL_SCHEME);
+
+            if (! is_string($scheme) || ! in_array(strtolower($scheme), ['http', 'https'], true)) {
+                continue;
+            }
+
+            if (! in_array($abs, $out, true)) {
+                $out[] = $abs;
+            }
+        }
+
+        return $out;
     }
 
     /**

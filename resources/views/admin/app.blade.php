@@ -16901,16 +16901,25 @@ buildNav();
   async function renderSeo(){
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>SEO &amp; Meta</h2><p>Site-wide search-engine settings. These render into every storefront page\u2019s &lt;head&gt; and power the sitemap, robots.txt and structured data.</p></div>'+
-      '<div class="subtabs"><button class="subtab'+(seoTab==='settings'?' on':'')+'" data-st="settings">Settings</button><button class="subtab'+(seoTab==='redirects'?' on':'')+'" data-st="redirects">Redirects &amp; 404s</button><button class="subtab'+(seoTab==='schema'?' on':'')+'" data-st="schema">Schema Inspector</button><button class="subtab'+(seoTab==='audit'?' on':'')+'" data-st="audit">Catalogue Audit</button></div>'+
-      /* What the four tabs are and why they are one screen. The owner asked
+      '<div class="subtabs"><button class="subtab'+(seoTab==='settings'?' on':'')+'" data-st="settings">Settings</button><button class="subtab'+(seoTab==='redirects'?' on':'')+'" data-st="redirects">Redirects &amp; 404s</button><button class="subtab'+(seoTab==='schema'?' on':'')+'" data-st="schema">Schema Inspector</button><button class="subtab'+(seoTab==='audit'?' on':'')+'" data-st="audit">Catalogue Audit</button><button class="subtab'+(seoTab==='seoaudit'?' on':'')+'" data-st="seoaudit">SEO Audit</button></div>'+
+      /* What the five tabs are and why they are one screen. The owner asked
          this of Catalog and it is the same question here: a tab strip that only
-         names itself leaves you clicking each one to find out. */
-      '<p class="ectabs-hint">Four views of the same thing — how this shop looks to Google. <b>Settings</b> is what you write; <b>Redirects &amp; 404s</b> catches old WooCommerce addresses so a link from Google still lands somewhere; <b>Schema Inspector</b> and <b>Catalogue Audit</b> only read, and report what Google is being told and which products are missing something.</p>'+
+         names itself leaves you clicking each one to find out.
+
+         CATALOGUE AUDIT AND SEO AUDIT ARE NOT THE SAME TAB and the hint has to
+         say so, or the second one reads as a duplicate of the first and never
+         gets opened. Catalogue Audit asks three questions of PRODUCTS. SEO
+         Audit asks a wider set of the whole indexable surface — categories,
+         brands, articles and pages as well — and asks the two that no per-row
+         check can answer: which titles collide with each other, and which rows
+         carry a canonical pointing off this site. */
+      '<p class="ectabs-hint">Five views of the same thing — how this shop looks to Google. <b>Settings</b> is what you write; <b>Redirects &amp; 404s</b> catches old WooCommerce addresses so a link from Google still lands somewhere; <b>Schema Inspector</b>, <b>Catalogue Audit</b> and <b>SEO Audit</b> only read. Catalogue Audit checks products for a missing description, image or thin copy; SEO Audit covers categories, brands, articles and pages too, and finds the things only a whole-shop scan can see — two pages claiming the same title, or a canonical pointing at somebody else’s site.</p>'+
       '<div id="seoTabBody"></div></div>';
     $$('#content .subtab').forEach(function(b){ b.onclick=function(){ seoTab=b.dataset.st; renderSeo(); }; });
     if(seoTab==='redirects') return renderSeoRedirects();
     if(seoTab==='schema') return renderSchemaInspector();
     if(seoTab==='audit') return renderCatalogueAudit();
+    if(seoTab==='seoaudit') return renderSeoAudit();
     return renderSeoSettings();
   }
 
@@ -17085,6 +17094,12 @@ buildNav();
           smField('seo_sitemap','XML sitemap',
             seoSel('seo_sitemap',S.sitemap_enabled,[['1','Enabled'],['0','Disabled']],'1'),
             'How Google finds new products and posts.')+
+          /* Lane S. Off by default, and the help line says what turning it on
+             actually does rather than praising it: the operator is about to
+             change a file Search Console has already fetched. */
+          smField('seo_sitemap_images','Product images in sitemap',
+            seoSel('seo_sitemap_images',S.sitemap_images,[['1','Included'],['0','Not included']],'0'),
+            'Lists every gallery photo under its product, so Google Images can tie the pictures to the page. Adds bytes to sitemap.xml.')+
           /* The setting and the way to check it, on one row: the pair is the
              point, and it keeps a two-option select off a 957px line. */
           '<div class="sm-field"><span class="sm-label">Check what is being served</span>'+
@@ -17176,7 +17191,7 @@ buildNav();
         google_site_verification:sval('seo_gsv'), bing_site_verification:sval('seo_bing'),
         pinterest_site_verification:sval('seo_pin'), baidu_site_verification:sval('seo_baidu'),
         ga:sval('seo_ga'), meta_pixel:sval('seo_pixel'),
-        sitemap_enabled:sval('seo_sitemap'), robots_txt:sval('seo_robots_txt'),
+        sitemap_enabled:sval('seo_sitemap'), sitemap_images:sval('seo_sitemap_images'), robots_txt:sval('seo_robots_txt'),
         indexnow_on:document.getElementById('seo_indexnow_cbx').classList.contains('on')?'1':'0',
         llms_enabled:document.getElementById('seo_llms_cbx').classList.contains('on')?'1':'0',
         crawl_clean:document.getElementById('seo_crawlclean_cbx').classList.contains('on')?'1':'0',
@@ -17376,6 +17391,71 @@ buildNav();
       issueCard('Missing meta description', 'No per-product SEO description set, and the short description is too thin (under 15 words) to build a real fallback from.', 'no_description')+
       issueCard('Missing image', 'No image at all \u2014 affects search results, social shares, and Product schema.', 'no_image')+
       issueCard('Short description too thin', 'Under 15 words \u2014 not necessarily wrong, but too little for a real fallback SEO description or a useful product page.', 'thin_short_description');
+  }
+
+  /* ---------- Store \u2192 SEO & Meta \u2192 SEO Audit (Lane S) ----------------------
+
+     The whole indexable surface, not just products, and the two findings a
+     per-row check cannot produce: a title shared by two URLs, and a canonical
+     override pointing somewhere this shop does not control.
+
+     WHY THE FINDINGS ARE RENDERED FROM THE RESPONSE RATHER THAN FROM A LIST
+     HERE. The server owns which checks exist, what each is called and what
+     each means \u2014 App\Support\SeoAudit::emptyFindings(). If this file carried
+     its own copy of that list, a check added on the server would scan, count,
+     and then not be drawn; and a check removed would leave a card here reading
+     a key that no longer arrives. The screen iterates what it was sent, so the
+     two cannot drift.
+
+     EVERY STRING FROM THE SERVER GOES THROUGH sesc(). The names in here are
+     product, category and brand names out of the database \u2014 operator-supplied
+     text, which is exactly the class of value that must never reach innerHTML
+     raw. Same rule the rest of this console follows. */
+  function seoAuditApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/seo-audit'; }
+
+  async function renderSeoAudit(){
+    var body=document.getElementById('seoTabBody');
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Scanning the indexable surface\u2026</p>';
+    var data;
+    try{
+      var res=await fetch(seoAuditApiBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
+      data=await res.json();
+      /* A 403 from EnforceAdminCapability arrives as JSON with a message. It
+         is shown in the words the server chose rather than turned into a
+         generic failure: "you do not have this capability" and "the scan
+         broke" are different problems and an operator must be able to tell
+         them apart. */
+      if(!res.ok) throw new Error(data && data.message ? data.message : ('Request failed ('+res.status+')'));
+    }catch(e){ body.innerHTML='<p style="padding:24px;color:var(--sale)">Could not scan \u2014 '+sesc(e.message)+'</p>'; return; }
+
+    var scanned=data.scanned||{};
+    var chips=Object.keys(scanned).map(function(k){
+      return '<span class="pill" style="margin-right:6px">'+sesc(k)+' '+(scanned[k]|0)+'</span>';
+    }).join('');
+
+    var findings=data.findings||{};
+    var cards=Object.keys(findings).map(function(key){
+      var f=findings[key], count=f.count|0, samples=f.samples||[];
+      var rows=samples.map(function(s){
+        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px">'+
+          '<span class="pill" style="flex:0 0 auto">'+sesc(s.kind||'')+'</span>'+
+          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(s.name||s.url||'')+'</span>'+
+          (s.detail?'<span style="color:var(--ink-soft);flex:0 0 auto">'+sesc(s.detail)+'</span>':'')+
+          '<span style="color:var(--ink-soft);flex:0 0 auto;font-size:11.5px">'+sesc(s.url||'')+'</span>'+
+        '</div>';
+      }).join('');
+      var more=count>samples.length?'<p class="description" style="margin:8px 0 0">+ '+(count-samples.length)+' more, not shown.</p>':'';
+      return '<div class="card pad" style="margin-bottom:16px"><div class="between"><b style="font-size:13px">'+sesc(f.label||key)+'</b>'+
+        '<span class="pill '+(count===0?'green':'amber')+'">'+count+'</span></div>'+
+        '<p class="description" style="margin:4px 0 12px">'+sesc(f.why||'')+'</p>'+
+        (samples.length?rows:'<p style="font-size:12.5px;color:var(--ink-soft)">None \u2014 nothing on the shop has this problem.</p>')+more+'</div>';
+    }).join('');
+
+    body.innerHTML=
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">'+sesc(data.verdict||'')+'</b>'+
+        '<p class="description" style="margin:8px 0 0">'+chips+'</p>'+
+        '<p class="description" style="margin:8px 0 0">Rows marked noindex are left out on purpose \u2014 a page you have told Google to skip is not a page with a problem.</p>'+
+      '</div>'+cards;
   }
 
   /* ---------- Catalog → Brands (real CRUD, replacing the preview grid) ----------
