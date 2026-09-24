@@ -3,6 +3,82 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.266
+Three lanes, and a security item that this package CANNOT fix.
+
+▲ DELETE public_html/kbb-doctor.php OVER SSH. TODAY. It is reachable right now
+with a token that is committed to this repository. Unlike kbb-recover.php, which
+refuses to run while its token is the placeholder, the doctor has no such check
+-- it simply compares the request's token against the constant, so THE
+PLACEHOLDER IS THE PASSWORD, and the file's own header prints the complete URL
+with it in plain text. Anyone who has seen this repository can read the error
+log and its stack traces, enumerate every table, list the web root and clear the
+caches. No package can repair this: BuildPackage excludes public-web-root/ and
+UpdateGuard forbids those files outright, both deliberately, so that a bad
+update cannot damage its own escape route. It has to be `rm`.
+
+THE HEALTH CHECK NOW LOOKS AT THE SHOP, and this is the one deliberate rule-1
+departure in the package. `/_kbb-health` ran `SELECT 1` and returned JSON; it
+never rendered a page. That is why 2.60.260 -- which removed a class every
+product tile resolves out of the container -- passed its own post-update check
+and was KEPT, with the home page, /shop, every category, every brand and every
+product page answering 500 behind it. It now renders the home page and the first
+visible product page and asserts four things: status exactly 200; a body ending
+in `</html>` (the case a status code cannot reach, because a fatal mid-render
+flushes the buffer with 200 already sent); a length floor; and that the product
+page names its own slug -- which is DATA read from the database a moment
+earlier, never copy, so a lane stays free to rewrite every visible string but
+cannot ship a page that no longer knows which product it is.
+
+It changes which updates are KEPT: a package that leaves either page unable to
+render is now rolled back automatically. `KBB_HEALTH_DEEP=false` in .env is the
+escape hatch for the one case where that is wrong, a shop already broken for an
+unrelated reason that cannot otherwise install its own repair. An empty
+catalogue still passes, and one unrenderable product row cannot brick updates
+for ever -- it tries the first three visible products and passes if any renders.
+
+AND A PACKAGE CAN NO LONGER INSTALL CODE WHOSE CLASSES IT DOES NOT CARRY. Every
+PHP and Blade file in a package is tokenised, and each `App\` class it names
+must be in the package or already on the server. That is exactly what 2.60.260
+did: three templates resolving App\Services\VariantPricing, with the class
+itself in a package that had not been applied. It uses PHP's own tokeniser, so a
+name in a comment or a string is not a reference, and it never calls
+class_exists(), because a verifier must not execute what it is verifying.
+
+A SAMPLE ORDER, at Safety -> Demo Content -> Sample order. The owner has had no
+orders on this shop all round and has twice been asked to open a document he
+could not reach. Choose English or Arabic, press the button, and get an order
+worth looking at -- three lines, one a variable product with an option, an
+address, delivery, payment, AED 542 -- with direct links to the invoice, packing
+slip, delivery note and dispatch label, and a button to delete it again. An
+Arabic order shows the split this round built: invoice and delivery note in
+Arabic, packing slip and dispatch label in the operator's English.
+
+It is marked three ways, each failing safe for a different question: a
+demo_seed_log row written INSIDE the order's own transaction, so there is no
+instant where the order exists and the thing excluding it does not; `origin =
+'sample'` for the places that may not issue a query, such as the mailer and the
+document banner; and the order number SAMPLE-0001, which every screen, document
+and export prints by construction. No email, through six separate guards and a
+backstop. No stock. No invoice number. Its own owner-only capability.
+
+TWO FIGURES WERE ALREADY WRONG and are fixed here rather than buried: Store ->
+Orders' revenue tiles had no demo exclusion at all, so a demo order made the
+Dashboard and the very next screen disagree; and the Orders CSV export computed
+`is_demo` and discarded it, now the last column so no existing column moves.
+
+FOUND AND NOT FIXED: the COD drawer in Payments -> Reconciliation has no demo
+exclusion, so Demo Content's own eight seeded COD orders already inflate it.
+Pre-existing. The sample order avoids it by using a card gateway and a test pins
+that, so a later edit cannot break it silently.
+
+A NEW SEO AUDIT FINDING, Store -> SEO & Meta -> SEO Audit, last card, advisory.
+Fifteen legacy category addresses are indexed today, the cutover forwards the
+old domain preserving the path, and this app 404s those flat paths by
+construction -- so each one lands on a 404 at the end of a 301 and drops its
+ranking instead of passing it on. Nothing could see it, because a scan of the
+indexable surface cannot reach addresses the shop refuses to serve.
+
 ## 2.60.265
 2.60.264 plus the guard that stops its root cause recurring, rebuilt as one
 package. Apply this instead of .264.
