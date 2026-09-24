@@ -3,6 +3,68 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.267
+Ed25519 package signing, ENFORCING NOTHING — and a fix for the page that was
+supposed to save you when the admin console breaks.
+
+▲ /admin/updates?fallback=1 HAS ANSWERED 500 SINCE THE UPDATER WAS BUILT.
+routes/web.php called `UpdateController::index()` with no argument on a method
+typed `index(Request $request)` — an ArgumentCountError present since the
+baseline commit, 2.60.41. That page is the standalone fallback that exists
+PRECISELY for the case where the admin bundle will not load, so the one day
+anybody would ever open it is the one day it could not help them. Nobody found
+it because nobody loads a fallback page until they need it, and on that day the
+conclusion is that the server is dead rather than the page. Found by a lane
+photographing a banner on it. One line.
+
+SIGNING SHIPS PERMISSIVE, WITH AN EMPTY TRUSTED-KEY LIST. A signature that is
+present is verified; a package with no signature installs exactly as it does
+today; the Core Updates header still reads "unsigned packages accepted", byte
+for byte. Every package this project has ever built carries `"signature": ""`,
+so the same packages install before and after. The one behaviour change for any
+package that exists today is that one carrying a signature this server CANNOT
+check is refused rather than ignored, and no real package carries one.
+
+ON HOLD AT THE OWNER'S REQUEST. He asked for unsigned patches for now, so step
+6 of the rollout — the step that makes a signature mandatory — is not to be
+taken. `KBB-Master-Plan.md` Phase 14 records the hold; the lane is freed.
+
+WHY THE ROLLOUT IS SIX STEPS AND WHY THEY MAY NOT BE MERGED
+(docs/PACKAGE-SIGNING.md §1). The package that teaches a shop to REQUIRE a
+signature is applied by the verifier that came BEFORE it. So a shop must be
+able to check a signature before it can be told to demand one, and must have
+been SEEN to check one before that demand is safe. That is the identical
+new-code/old-data/no-way-in shape that bricked this shop's updater earlier the
+same day; the sequence exists so it cannot recur.
+
+AND SIGNING WOULD NOT HAVE CAUGHT THAT OUTAGE. Said plainly because the
+opposite is easy to assume: a signature proves ORIGIN, never CORRECTNESS. All
+five packages behind it would have been signed by this key, verified, and
+applied — they were built by the wrong script, not by the wrong person.
+`checkMigrationsAreDeclared()` and `ClassDependencyScan`, both shipped in
+2.60.266, are what stand between the shop and that fault. What signing adds is
+that a package which did not come from the build machine cannot be applied at
+all: the difference between a mistake and an attack.
+
+THE KEY NEVER TOUCHES THIS REPOSITORY OR A SHOP. Private half lives at
+~/.config/kbb/package-signing.key on the build machine, 0600; the code REFUSES
+a key inside the repository, a group- or world-readable key, and a symlink. A
+`.key` file is not an allowed package extension and a home directory is not an
+allowed prefix, so it cannot reach a shop even if it were committed. The public
+half is a LIST in config/kbb.php, so a key rotates by trusting both for one
+release.
+
+THE EMERGENCY HATCH IS A FILE, storage/app/kbb-accept-unsigned, not a setting —
+because `.env` is not read at all while the config cache exists (the trap that
+made KBB_NOINDEX read false for its whole life), because a database setting
+needs the app to boot, and because `storage/` is on UpdateGuard's forbidden
+list, so no package can create it to weaken a shop or delete it to strand one.
+It relaxes "must be signed" and never "if signed, must be genuine": a forged
+package is still refused with the hatch on.
+
+One migration, a cache clear: config/kbb.php gains two keys and is
+config-cached, and the /updates route closure changed.
+
 ## 2.60.266
 Three lanes, and a security item that this package CANNOT fix.
 
