@@ -16,12 +16,17 @@
     webhooks and Google's crawler, gets switched off, and leaves the shop worse
     off than before because everybody now believes it is protected.
 
-    So this screen SHOWS and changes nothing. It draws four things:
+    So this screen SHOWS and changes nothing. It draws five things:
 
       1. one verdict sentence, not a dashboard to be interpreted;
-      2. the failed sign-ins, including the ones the login throttle turned away;
-      3. the rate-limit trips, which vanish silently today;
-      4. the audit rows, each with what the value was before and after.
+      2. the integrity of the files update packages installed -- every package
+         declares a SHA-256 per path, so the shop can hash what is on disk and
+         say what differs. REPORT ONLY: nothing here restores a file, and
+         "restore automatically, or alert and wait?" is an open question the
+         plan records as the OWNER'S, not a lane's;
+      3. the failed sign-ins, including the ones the login throttle turned away;
+      4. the rate-limit trips, which vanish silently today;
+      5. the audit rows, each with what the value was before and after.
 
     ── NOTHING BELOW MAY NAME BLADE'S RAW-BLOCK DIRECTIVES ──────────────────
 
@@ -110,6 +115,18 @@
 .sx-empty{padding:18px 2px;color:var(--ink-soft,#6b7280);font-size:13px}
 .sx-off{border:1px dashed #c2831a;color:#c2831a;border-radius:10px;padding:9px 11px;
         font-size:12px;line-height:1.5;margin-top:10px}
+
+/* ── the integrity card's own state line ──────────────────────────────────
+   A row of small facts — when it last ran, how many files, from how many
+   packages — that wraps to as many lines as the column gives it. No table, no
+   fixed column, nothing measured: flex-wrap and min-width:0 do the whole job at
+   390px and at 1280px alike. */
+.sx-state{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;min-width:0;
+          font-size:11.5px;color:var(--ink-soft,#6b7280)}
+.sx-state span{min-width:0;overflow-wrap:anywhere}
+.sx-state b{font-weight:650;color:inherit;font-variant-numeric:tabular-nums}
+.sx-clean{border:1px dashed #15a85a;color:#15a85a;border-radius:10px;padding:9px 11px;
+          font-size:12px;line-height:1.5;margin-top:10px}
 
 /* ── the settings, the same four field types every module screen draws ──── */
 .sx-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
@@ -200,7 +217,8 @@
         + 'Clear the route cache and reload.';
     }
     if (e && e.status === 403) {
-      return 'Your role cannot open Store → Security. This screen is the owner\'s.';
+      return 'Your role cannot do that. This screen is the owner\'s, and running the integrity check '
+        + 'is a second capability of its own on top of reading it.';
     }
     return (e && e.body && e.body.error) ? e.body.error : fallback;
   }
@@ -335,13 +353,25 @@
        as "by" would read as an accusation against the owner of that address,
        who is very often the person reading this screen. */
     var tried = row.event === 'signin.failed' || row.event === 'signin.blocked';
-    if (row.actor) {
+    /* AND NO ACTOR AT ALL ON AN INTEGRITY FINDING. The row carries none — the
+       server writes it with no actor, no address and no request path — but this
+       branch is here so that a future row that somehow did carry one still
+       could not print it. Whoever changed a shipped file, the check cannot know
+       who it was, and the one name it could reach for is the owner who happened
+       to open this screen: the single person it can prove is innocent. */
+    var unattributed = row.event.indexOf('integrity.') === 0;
+    if (row.actor && !unattributed) {
       meta.push((tried ? 'tried as <b>' : 'by <b>') + esc(row.actor) + '</b>'
         + (!tried && row.role ? ' (' + esc(row.role) + ')' : ''));
     }
-    if (row.ip) meta.push('from <b>' + esc(row.ip) + '</b>');
-    if (row.path) meta.push(esc(row.method ? row.method + ' ' + row.path : row.path));
-    if (row.hits > 1) meta.push('<b>' + esc(row.hits) + '</b> times, last at ' + esc(row.last_at));
+    if (row.ip && !unattributed) meta.push('from <b>' + esc(row.ip) + '</b>');
+    if (row.path && !unattributed) meta.push(esc(row.method ? row.method + ' ' + row.path : row.path));
+    if (unattributed) meta.push('no record of who — this was not done through the admin');
+    if (row.hits > 1) {
+      meta.push('<b>' + esc(row.hits) + '</b> '
+        + (unattributed ? 'checks have found it this way, last at ' : 'times, last at ')
+        + esc(row.last_at));
+    }
 
     var diff = '';
     if (row.before !== null || row.after !== null) {
@@ -372,6 +402,81 @@
       + '</div>';
   }
 
+  /* ---------------------------------------------------------- the integrity card
+     Phase 18 item 3, report-only. The card says four things and in this order,
+     because that is the order somebody reading it needs them:
+
+       1. what the check is measuring, in one sentence;
+       2. when it last ran and over how much;
+       3. WHAT IT CANNOT SEE -- printed here, beside the findings, and not
+          tucked into a help text under a switch. The owner's ask was "no bot
+          can inject code anywhere", and a screen that let him believe this
+          covered a file somebody ADDED would be worse than no screen;
+       4. the findings themselves, each with the hash the package declared and
+          the hash the server holds now. */
+  function integrityHTML() {
+    var g = report.integrity, rows = report.integrity_rows || [];
+
+    var state = '';
+    if (!g.on) {
+      state = '<div class="sx-off">Integrity checking is switched off on the "File integrity" tab below, '
+        + 'so nothing new will appear here.</div>';
+    } else if (!g.ran_at) {
+      state = '<div class="sx-off">This has not run yet. Press "Check now" — it runs by itself when you '
+        + 'open this screen and the last check is more than ' + esc(g.every_hours) + ' hours old.</div>';
+    } else {
+      state = '<div class="sx-state">'
+        + '<span>last checked <b>' + esc(g.ran_at) + '</b></span>'
+        + '<span><b>' + esc(g.checked) + '</b> of <b>' + esc(g.expected) + '</b> files checked</span>'
+        + '<span>from <b>' + esc(g.releases) + '</b> installed ' + (g.releases === 1 ? 'package' : 'packages') + '</span>'
+        + (g.skipped ? '<span><b>' + esc(g.skipped) + '</b> too large to hash</span>' : '')
+        + '<span>took <b>' + esc(g.took_ms) + '</b>ms</span>'
+        + '</div>'
+        + (g.truncated
+            ? '<div class="sx-off">There were more files than one check may walk, so this covered the first '
+              + esc(g.checked) + '. The rest are unchecked rather than clean.</div>'
+            : '')
+        + (g.expected === 0
+            ? '<div class="sx-off">No package on this server has a manifest to check against yet. Packages '
+              + 'record one from this release onwards, and older ones are read from the archived zip when '
+              + 'there is one — so this fills in as you apply updates.</div>'
+            : (g.findings === 0
+                ? '<div class="sx-clean">Every file a package installed still hashes to what that package '
+                  + 'declared. Nothing was changed on disk to reach that answer.</div>'
+                : ''));
+    }
+
+    return '<div class="sx-card">'
+      + '<div class="sx-head"><div class="sx-title">Integrity of the files packages installed</div>'
+      + '<span class="sx-meta">' + esc(rows.length) + ' shown</span></div>'
+      + '<p class="sx-sub">Every update package declares a SHA-256 for each file it installs, and the shop '
+      + 'keeps those. This hashes the same files on the server and reports any that no longer match, or that '
+      + 'are gone. It is the one question this host cannot answer any other way — there is no shell on it, '
+      + 'so nothing else here can diff, list or hash anything.</p>'
+      + state
+      + '<div class="sx-actions">'
+      + '<button class="sx-btn" data-sx-check' + (busy || !g.on ? ' disabled' : '') + '>'
+      + (busy ? 'Checking…' : 'Check now') + '</button>'
+      + '</div>'
+      + '<div class="sx-note" style="margin-top:12px">'
+      + '<b>What this cannot see.</b> It speaks only about files an update package installed. The original '
+      + 'shop was not installed as a package, so most of the tree has no hash to compare against; uploads, '
+      + '<code>storage/</code> and anything created on the server are outside it. <b>It cannot see a file that '
+      + 'was ADDED</b> — there is no declared hash to miss, so a dropped-in script is invisible to this '
+      + 'check, and that is worth knowing before you trust it. And a change you made on purpose reads exactly '
+      + 'like one you did not, because from here they are the same event.'
+      + '<br><br><b>It reports and stops there.</b> Nothing is restored, quarantined or deleted. Putting a '
+      + 'file back from the package that installed it is genuinely possible — the package is still on this '
+      + 'server — but it is a write, and it would also silently undo a deliberate edit. Whether that should '
+      + 'happen automatically is your decision, and the "File integrity" tab below is where it appears once '
+      + 'you have taken it.'
+      + '</div>'
+      + (rows.length
+          ? '<div class="sx-rows" style="margin-top:12px">' + rows.map(rowHTML).join('') + '</div>'
+          : '')
+      + '</div>';
+  }
+
   function verdictHTML() {
     var v = report.verdict, c = report.counts;
 
@@ -382,11 +487,15 @@
       + '<div class="sx-count"><b>' + esc(c.changed) + '</b><span>administrative changes</span></div>'
       + '<div class="sx-count"><b>' + esc(c.failed) + '</b><span>failed sign-ins</span></div>'
       + '<div class="sx-count"><b>' + esc(c.tripped) + '</b><span>requests refused as too many</span></div>'
+      + '<div class="sx-count"><b>' + esc(report.integrity.findings) + '</b><span>files that do not match their package</span></div>'
       + '<div class="sx-count"><b>' + esc(c.total) + '</b><span>rows kept in all</span></div>'
       + '</div>'
-      + '<p class="sx-help" style="margin-top:10px">The four counts above the line cover the last '
-      + esc(report.window_hours) + ' hours, except the last, which is everything still kept. '
-      + 'Rows are deleted once they are ' + esc(report.keep_days) + ' days old.</p>'
+      + '<p class="sx-help" style="margin-top:10px">The counts above cover the last '
+      + esc(report.window_hours) + ' hours, except the files, which are what the last check found on disk, '
+      + 'and the last, which is everything still kept. Rows are deleted once they are '
+      + esc(report.keep_days) + ' days old, and the newest ' + esc(report.max_rows) + ' are kept whatever '
+      + 'their age — that ceiling is enforced as rows are written, so it holds even if nobody opens this '
+      + 'screen for a year.</p>'
       + '</div>';
   }
 
@@ -423,7 +532,9 @@
       /* The long form of the one clause the verdict carries. The verdict says
          "it blocks nothing"; this says what that buys and where blocking does
          belong, without repeating those three words directly under them. */
-      + '<div class="sx-note">Blocking, content-security-policy and file-integrity checking are '
+      + integrityHTML()
+
+      + '<div class="sx-note">Blocking and content-security-policy are '
       + '<b>later rounds, on purpose</b>. A module that starts refusing traffic on its first day refuses '
       + 'the wrong thing \u2014 you, your payment provider\u2019s webhooks, Google\u2019s crawler \u2014 and gets '
       + 'switched off, which leaves the shop worse off than one with no module at all, because everybody '
@@ -496,7 +607,30 @@
     if (e.target.closest('[data-sx-save]')) { save(); return; }
     if (e.target.closest('[data-sx-reload]')) { load(); return; }
     if (e.target.closest('[data-sx-defaults]')) { defaults(); return; }
+    if (e.target.closest('[data-sx-check]')) { check(); return; }
   });
+
+  /* "Check now". A POST, because it makes the server do work and write rows --
+     not because it edits anything: every file it touches it opens for reading.
+     Its own endpoint behind its own owner-only capability, which is why it is
+     a separate call rather than a flag on load(). */
+  async function check() {
+    if (busy) return;
+    busy = true; banner = null; render();
+
+    try {
+      var body = await api('/security/integrity', {});
+      report = body.report || report;
+      var n = (body.state || {}).findings || 0;
+      say(n === 0
+        ? 'Checked. Every file a package installed still matches it.'
+        : 'Checked. ' + n + (n === 1 ? ' file does' : ' files do') + ' not match — listed below.');
+    } catch (e) {
+      banner = explain(e, 'The integrity check could not be run.');
+    } finally {
+      busy = false; render();
+    }
+  }
 
   function defaults() {
     if (!tabs) return;

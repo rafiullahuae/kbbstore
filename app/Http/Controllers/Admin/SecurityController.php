@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\IntegrityChecker;
 use App\Services\SecurityModule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,9 +21,13 @@ use Illuminate\Http\Request;
  * ── WHAT IT CANNOT DO ───────────────────────────────────────────────────────
  *
  * Nothing here blocks, unblocks, restores or deletes a request. `save()` writes
- * schema rows and `show()` reads rows back. The only destructive act in the
- * whole module is retention — rows past `keep_days` are dropped when this
- * screen is opened — and it is bounded by a slider whose floor is 7 days.
+ * schema rows, `show()` reads rows back, and `integrity()` HASHES FILES AND
+ * WRITES ROWS ABOUT THEM — it opens every file for reading and not one for
+ * writing, which App\Services\IntegrityChecker's own docblock explains and
+ * SecurityIntegrityTest asserts by reading that file as text. The only
+ * destructive act in the whole module is retention — rows past `keep_days` or
+ * past `max_rows` are dropped — and both are bounded by sliders whose floors
+ * are 7 days and 1,000 rows.
  *
  * ── THE CAPABILITY ──────────────────────────────────────────────────────────
  *
@@ -41,18 +46,34 @@ use Illuminate\Http\Request;
  */
 class SecurityController extends Controller
 {
-    public function __construct(private SecurityModule $security) {}
+    public function __construct(
+        private SecurityModule $security,
+        private IntegrityChecker $integrity,
+    ) {}
 
     public function show(): JsonResponse
     {
         /*
          * Retention runs here, on a request that is already authenticated,
          * owner-only and off every hot path. This host has no cron and no
-         * queue worker, so a schedule would be a schedule that never runs; a
-         * shop nobody opens this screen on simply keeps its rows, which is the
-         * safe direction for evidence to fail in.
+         * queue worker, so a schedule would be a schedule that never runs.
+         *
+         * IT IS NO LONGER THE ONLY THING KEEPING THE TABLE BOUNDED, which was
+         * the honest gap in round one: SecurityModule::enforceCap() runs on the
+         * WRITE path, one write in a hundred, so a shop nobody ever opens this
+         * screen on still cannot grow the trail past `max_rows`. This call is
+         * the calendar half and that one is the count half.
          */
         $pruned = $this->security->prune();
+
+        /*
+         * And the integrity check, in the same place and for the same reasons:
+         * authenticated, owner-only, off every hot path, and throttled to
+         * `integrity_hours` so a refresh is not a filesystem walk. It returns
+         * null when the switch is off or the last scan is recent enough, and
+         * the report draws the stored summary either way.
+         */
+        $this->integrity->scanIfDue();
 
         $values = $this->security->all();
         $fields = [];
@@ -106,5 +127,51 @@ class SecurityController extends Controller
          * stored, not what the browser sent.
          */
         return response()->json(['ok' => true, 'report' => $this->security->report()]);
+    }
+
+    /**
+     * "Check now" — run the integrity check regardless of the throttle.
+     *
+     * ── ITS OWN CAPABILITY, AND WHY ─────────────────────────────────────────
+     *
+     * `security.integrity`, not `security.view`. CLAUDE.md's rule is that every
+     * new admin endpoint gets its own capability and fails closed, and this one
+     * earns it rather than merely obeying it: reading a report that is already
+     * written and making the server walk its own filesystem hashing every file
+     * a package installed are different acts with different costs. The day
+     * somebody wants a manager to be able to READ this screen — which is a
+     * reasonable thing to want — that must not hand them a button that puts a
+     * few thousand file reads on a shared plan on demand.
+     *
+     * It fails closed twice over. The route is mapped ABOVE the
+     * `admin-api/security/**` wildcard in App\Support\AdminCapabilities::RULES,
+     * which is first-match-wins, so it resolves to `security.integrity` and not
+     * to `security.view`; and an unmapped admin route resolves to null, which
+     * EnforceAdminCapability turns into a 403 for everyone but the owner.
+     *
+     * ── IT IS A POST AND IT CHANGES NOTHING ON DISK ─────────────────────────
+     *
+     * POST because it does work and writes rows, not because it edits anything:
+     * every file it touches it opens for reading. Nothing is restored, nothing
+     * is quarantined and nothing is deleted — Phase 18 records "restore
+     * automatically, or alert and wait?" as the OWNER's open question, and this
+     * round builds the alert half and leaves the seam.
+     */
+    public function integrity(): JsonResponse
+    {
+        if (! $this->security->get('integrity_on')) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Integrity checking is switched off on the "File integrity" tab below.',
+            ], 422);
+        }
+
+        $state = $this->integrity->scan();
+
+        return response()->json([
+            'ok' => true,
+            'state' => $state,
+            'report' => $this->security->report(),
+        ]);
     }
 }

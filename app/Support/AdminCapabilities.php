@@ -200,9 +200,22 @@ final class AdminCapabilities
         //                       reasonable thing to want, this must not widen
         //                       with it in a different file with nothing to
         //                       notice.
+        //   security.integrity  makes the server hash every file an update
+        //                       package installed and compare each one with the
+        //                       hash that package declared. Its own capability
+        //                       and NOT security.view, although both are
+        //                       owner-only as this ships: reading a report that
+        //                       is already written and asking a shared plan for
+        //                       a few thousand file reads on demand are
+        //                       different acts with different costs, and the
+        //                       day a manager may read this screen -- which is
+        //                       a reasonable thing to want -- that must not
+        //                       hand them the button as well. It reads files
+        //                       and writes rows; it restores nothing.
         'store.settings' => ['owner'],
         'cache.manage' => ['owner'],
         'security.view' => ['owner'],
+        'security.integrity' => ['owner'],
         'payments.manage' => ['owner'],
         'users.manage' => ['owner'],
         'updates.manage' => ['owner'],
@@ -381,6 +394,18 @@ final class AdminCapabilities
          * yet: the integrator wires it, and a rule that lands before the route
          * is the harmless order of the two.
          */
+        /*
+         * ▲ ABOVE THE WILDCARD, and that placement is the whole rule.
+         * forPath() is first-match-wins, so this exact line is what
+         * `admin-api/security/integrity` resolves to; move it below the
+         * '/**' line and the button silently becomes a security.view endpoint
+         * again, which is the shape of the quiz-leads and coupons/manage
+         * mistakes further down this file. Writes before reads, as CLAUDE.md
+         * has it — and this is the only endpoint under this prefix that does
+         * work rather than reads a row.
+         */
+        ['POST', 'admin-api/security/integrity', 'security.integrity'],
+
         ['*', 'admin-api/security', 'security.view'],
         ['*', 'admin-api/security/**', 'security.view'],
 
