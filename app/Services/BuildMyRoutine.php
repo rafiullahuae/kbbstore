@@ -600,8 +600,35 @@ class BuildMyRoutine
          */
         $overrides = Routine::overrides();
 
+        /*
+         * HOW MANY SHOWN ROUTINES STILL CANNOT FILL EACH STEP — Lane Q, round 2.
+         *
+         * This is what puts the tick on a step's tab, and it is deliberately not
+         * "how many products carry this role". The owner asked for tabs that
+         * "lock" once a step is done, and a step is not done because four
+         * products carry it: those four can all be tagged for one concern, and
+         * seven routines still draw that step empty on the storefront.
+         *
+         * `by_role` beside it is the COUNT — live, in stock, shopper-visible.
+         * This is the VERDICT. The tab prints the first and goes green on the
+         * second, so the number and the tick answer two different questions and
+         * neither is a proxy for the other.
+         *
+         * SHOWN ROUTINES ONLY. A routine the owner has switched off is not on
+         * the storefront, so a step it cannot fill is not a gap a shopper can
+         * reach, and counting it would leave a tab permanently amber over a page
+         * nobody sees — which is the "permanently alarming and therefore
+         * ignorable" failure this method's own header already names about the
+         * untagged count.
+         *
+         * No query: $overrides is already read, and $concernRole is already
+         * tallied above.
+         */
+        $shortByRole = array_fill_keys(RoutineRoles::ORDER, 0);
+
         foreach (RoutineConcerns::slugs() as $slug) {
-            $roles = $this->rolesFor($overrides[$slug] ?? null);
+            $override = $overrides[$slug] ?? null;
+            $roles = $this->rolesFor($override);
             $empty = [];
 
             foreach ($roles as $role) {
@@ -614,6 +641,20 @@ class BuildMyRoutine
                 'steps' => count($roles),
                 'empty' => $empty,
             ];
+
+            // Exactly the rule show() uses to draw the "Shown to shoppers"
+            // dropdown: no override row means shown.
+            $shown = $override === null ? true : (bool) $override->is_enabled;
+
+            if (! $shown) {
+                continue;
+            }
+
+            foreach ($empty as $role) {
+                if (array_key_exists($role, $shortByRole)) {
+                    $shortByRole[$role]++;
+                }
+            }
         }
 
         return [
@@ -621,6 +662,7 @@ class BuildMyRoutine
             'tagged' => $rows->count() - $untagged,
             'untagged' => $untagged,
             'by_role' => $byRole,
+            'by_role_short' => $shortByRole,
             'routines' => $routines,
             'concern_pages' => self::concernPageProgress($concernTagged),
         ];

@@ -16,6 +16,42 @@
     already exposes for exactly this. The shape is deliberately the same as
     admin/partials/coupon-usage-screen.blade.php; that is the precedent.
 
+    ── EIGHT TABS, AND WHY (Lane Q, round 2) ─────────────────────────────────
+
+    The owner's words: "The routine page is super long, i want tabs with every
+    step, so i can just fillup or select and the steps can be lock according."
+
+    This file used to render one continuous page -- the tiles, the role counts,
+    the whole product table, the concern countdown, eight routines' worth of
+    wording and the settings -- and he had to scroll past all of it to reach the
+    one job that matters, which is tagging. It is now ONE FLAT STRIP of eight:
+
+        Cleanser · Toner · Treatment · Moisturiser · SPF · Concern pages ·
+        Wording · Settings
+
+    FLAT, not nested, and the pattern is copied on purpose from
+    admin/partials/checkout-page-screen.blade.php -- he asked for it by name
+    because he uses that screen daily. Same markup, same aria-selected, same
+    open-tab-survives-a-save.
+
+    "LOCK" MEANS DONE, NOT DISABLED. He was asked and answered: no tab is ever
+    greyed out, nothing is gated on anything else, and there is no manual
+    done-tick. Each step tab carries its own count and goes green when no
+    routine he is showing still draws that step empty. He works in any order and
+    jumps straight at the zeros.
+
+    NOTHING WAS DROPPED. Every control that was on the long page is on a tab and
+    does exactly what it did. The one card that is gone is "What each step can
+    draw from", whose five role counts ARE the five step tabs now -- the same
+    numbers, one card earlier, in the place he is about to click.
+
+    WHAT THIS COSTS IN REQUESTS: opening the screen is still two, the same two
+    it always was -- GET /admin-api/routines and one GET /admin-api/routine-
+    products. Switching between Concern pages, Wording and Settings costs none
+    of either, because all three are drawn from the /routines response the
+    screen already holds. Switching to a step tab costs one product request,
+    which is the same request the search box has always made.
+
     WHAT THIS SCREEN IS FOR, AND WHY THE UNTAGGED COUNT IS THE FIRST THING ON
     IT. Every row in this catalogue starts with routine_role NULL. A routine
     engine that quietly skips everything it has no role for looks exactly like a
@@ -75,6 +111,42 @@
    two-column grid at any width -- name and progress -- with the name column
    allowed to shrink (min-width:0) so a long label wraps instead of pushing the
    bar off a 390px screen. */
+/* ── THE TAB STRIP (Lane Q, round 2) ────────────────────────────────────────
+   Deliberately the same shape as .chp-tabs / .chp-tab on
+   admin/partials/checkout-page-screen.blade.php, because the owner chose this
+   pattern by name: "the same as Appearance -> Checkout page, which I use
+   daily". Same 8px/12px padding, same 9px radius, same accent border and
+   weight on the selected one, and the same `aria-selected` attribute doing the
+   selecting rather than a second class.
+
+   FLEX-WRAP IS THE WHOLE MOBILE ANSWER. Eight tabs do not fit on a 390px
+   phone and must not become a horizontally scrolling strip -- a strip that
+   scrolls hides tabs behind an edge with nothing to say they are there, which
+   on this screen means hiding the empty step he is looking for. They wrap onto
+   as many rows as they need. Nothing measures anything: wrapping is the
+   browser's, and `min-width:0` on the strip and `max-width:100%` on a tab stop
+   a long label from forcing the card wider than its column. */
+.rtn-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.rtn-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+         background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;
+         max-width:100%;display:inline-flex;align-items:baseline;gap:6px}
+.rtn-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+/* The count and the verdict. `b` is the number, always; the tick is added only
+   when the step is genuinely finished, so the glyph is never decoration. */
+.rtn-tab b{font-weight:650;font-variant-numeric:tabular-nums}
+.rtn-tab.is-gap b{color:#b4443c}
+.rtn-tab.is-done b{color:#2f7d5d}
+.rtn-tab .rtn-tick{color:#2f7d5d;font-weight:700}
+.rtn-tabnote{font-size:12.5px;color:var(--ink-soft,#6b7280);line-height:1.55;margin-top:12px;max-width:68ch}
+/* The one-click "put this product in the open step" button on a row. */
+.rtn-use{padding:6px 11px;border:1px solid var(--accent,#15a85a);border-radius:8px;
+         background:transparent;color:var(--accent,#15a85a);font:inherit;font-size:12.5px;
+         font-weight:650;cursor:pointer;max-width:100%}
+.rtn-use[disabled]{border-color:var(--border,#e6e6e6);color:var(--ink-soft,#6b7280);cursor:default;font-weight:400}
+.rtn-rowacts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
+/* The "what to do next" line above the strip, on a shop with nothing tagged. */
+.rtn-next{border:1px solid var(--border,#e6e6e6);border-left:3px solid #b4443c;border-radius:10px;
+          padding:11px 13px;font-size:12.5px;line-height:1.55;min-width:0}
 .rtn-cp{display:grid;gap:10px;margin-top:12px;min-width:0}
 .rtn-cprow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline;min-width:0}
 .rtn-cpname{font-size:13px;font-weight:600;min-width:0}
@@ -134,7 +206,19 @@
   var data = null;          // GET /admin-api/routines
   var products = null;      // GET /admin-api/routine-products
   var query = '';
-  var roleFilter = '';
+  /* Which slice of the catalogue the open step tab is listing.
+       ''      the products already in this step   (role=<the open tab>)
+       'none'  the ones nobody has placed          (role=none)
+       'all'   everything                          (no role filter)
+     This is the same control the screen has always had -- it was a select
+     offering "Every product / Untagged only / <each role>". The per-role
+     options ARE the tabs now, so the select keeps the two that are not. */
+  var scope = '';
+  /* The open tab. One of the five role keys, or one of the three below. It
+     survives a save and a reload for the reason the checkout screen's `open`
+     does: a save that dumped him back on tab one would make saving cost him
+     his place, and he is working through eight of them. */
+  var open = 'cleanse';
   var page = 1;
   var banner = null;
   var busy = false;
@@ -261,6 +345,15 @@
       if (mine !== seq) return;
       data = body;
       banner = null;
+
+      /* THE OPEN TAB SURVIVES EVERY RELOAD, and is only moved when it has
+         stopped existing — the guard the checkout screen makes about its own
+         `open`. Saving a routine or the settings reloads through here, and a
+         save that dumped him back on tab one would cost him his place eight
+         times over. */
+      if (!isStep(open) && ['concern-pages', 'wording', 'settings'].indexOf(open) === -1) {
+        open = (data.roles && data.roles.length) ? data.roles[0].key : 'concern-pages';
+      }
     } catch (e) {
       if (mine !== seq) return;
       banner = explain(e, 'Could not load the routines screen.');
@@ -274,9 +367,33 @@
     var mine = ++pseq;
 
     try {
+      /* THE ROLE PARAMETER COMES FROM THE OPEN TAB, and this is the whole of
+         the wiring between the strip and the list. The endpoint is unchanged
+         and still takes the same three things; what moved is where the role
+         comes from. On a non-step tab this is never called at all -- those
+         three tabs are drawn entirely from the /routines response the screen
+         already had, so switching to them costs no request. */
+      /* A SEARCH ON THE DEFAULT SCOPE LOOKS AT THE WHOLE CATALOGUE, and that
+         is the difference between this screen working and not.
+
+         "In this step" narrows to products that already carry this role. Typing
+         a term while it is narrowed asks "which of the products already in this
+         step match centella" — and on an EMPTY step, which is every step on the
+         shop he is looking at, that is guaranteed to be nothing. He types the
+         first word off the worksheet, gets no rows, and concludes the search is
+         broken. It is the same defect round 1 fixed at the column level, one
+         layer up.
+
+         So the default scope means "what is in this step" when he is browsing
+         and "find me one to put in it" when he is searching. The two explicit
+         scopes are never overridden: if he chose "Untagged only" he gets
+         untagged only, term or no term. */
+      var role = scope === 'none' ? 'none'
+               : (scope === 'all' ? '' : (query ? '' : open));
+
       var qs = '?page=' + page
              + (query ? '&q=' + encodeURIComponent(query) : '')
-             + (roleFilter ? '&role=' + encodeURIComponent(roleFilter) : '');
+             + (role ? '&role=' + encodeURIComponent(role) : '');
       var body = await api('/routine-products' + qs);
       if (mine !== pseq) return;
       products = body;
@@ -290,13 +407,21 @@
   }
 
   /* ---------------------------------------------------------------- views */
+  /* ── THE THREE TILES, WHICH STAY ABOVE THE TABS ───────────────────────────
+     Not a tab of their own, deliberately. This file's own header states the
+     rule they exist for -- "the number of products nobody has placed is the
+     headline figure here" -- and a headline that lives behind a tab is not a
+     headline. They are the only thing on the screen that is about the whole
+     catalogue rather than about one step, so they sit above the strip and are
+     true whichever tab is open.
+
+     WHAT IS NOT HERE ANY MORE, AND WHERE IT WENT. The "What each step can draw
+     from" card used to sit here and draw one chip per role with that role's
+     live count on it. Those five numbers are now ON THE FIVE STEP TABS, which
+     is the same information in the place he is about to click. Nothing was
+     dropped: the chips were the strip, one card earlier. */
   function statsView(){
     var c = data.coverage;
-    var roles = (data.roles || []).map(function(r){
-      var n = (c.by_role || {})[r.key] || 0;
-      return '<span class="rtn-rolecount' + (n === 0 ? ' is-gap' : '') + '">'
-           + esc(r.label) + ' <b>' + n + '</b></span>';
-    }).join('');
 
     return '<div class="rtn-stats">'
       + '<div class="rtn-stat"><span>On the storefront</span><b>' + c.total + '</b></div>'
@@ -304,13 +429,105 @@
       + '<div class="rtn-stat' + (c.untagged > 0 ? ' is-gap' : '') + '"><span>Still untagged</span><b>'
         + c.untagged + '</b></div>'
       + '</div>'
-      + '<div class="rtn-card" style="margin-top:12px">'
-      + '<div class="rtn-title">What each step can draw from</div>'
-      + '<div class="rtn-sub">Counted over products a shopper can actually be shown — published, visible and in stock. '
-        + 'A step with nothing behind it is drawn on the storefront as “not stocked yet”, never filled with a guess.</div>'
-      + '<div class="rtn-roles">' + roles + '</div>'
-      + '</div>'
-      + concernPagesView();
+      + nextActionView();
+  }
+
+  /* ── WHAT TO DO NEXT, FROM COLD ───────────────────────────────────────────
+     The state this shop is actually in is "nothing tagged", and on that shop
+     every tab reads zero and the strip alone does not say where to start. This
+     names the first step that needs work and nothing else. It disappears the
+     moment there is no first step to name, so it never becomes furniture the
+     owner learns to read past.
+
+     It is a SENTENCE, not a control: it changes nothing and saves nothing. */
+  function nextActionView(){
+    var c = data.coverage || {};
+    var short = c.by_role_short || {};
+    var counts = c.by_role || {};
+
+    var firstEmpty = null;
+    var firstShort = null;
+
+    (data.roles || []).forEach(function(r){
+      if (!firstEmpty && (counts[r.key] || 0) === 0) firstEmpty = r;
+      if (!firstShort && (short[r.key] || 0) > 0) firstShort = r;
+    });
+
+    if (!firstEmpty && !firstShort) return '';
+
+    var step = firstEmpty || firstShort;
+
+    var why = firstEmpty
+      ? 'Nothing on the storefront fills it, so every routine draws it as “not stocked yet”.'
+      : 'It is filled for some concerns and not others — the tab says which.';
+
+    return '<div class="rtn-next" style="margin-top:12px">'
+      + '<b>Next: ' + esc(step.label) + '.</b> ' + why
+      + ' Open the <b>' + esc(step.label) + '</b> tab, search for a product — the search reads ingredient '
+      + 'lists as well as names — and press <b>Use for ' + esc(step.label) + '</b> on it.'
+      + '</div>';
+  }
+
+  /* ── THE STRIP ────────────────────────────────────────────────────────────
+     Eight tabs, flat, in one row-wrapping strip: the five steps in the order
+     skincare is applied, then the three things that are not steps.
+
+     THE LABEL IS THE PROGRESS INDICATOR, which is the point of the whole
+     rebuild -- he can read the entire job off the strip without opening
+     anything. Two figures, answering two different questions:
+
+       the NUMBER is coverage.by_role -- products carrying that step that a
+       shopper could actually be shown: published, visible, not scheduled, in
+       stock. Not "tagged". A step with four tagged products that are all out
+       of stock reads 0 here, because 0 is what the storefront can draw on.
+
+       the TICK is coverage.by_role_short === 0 -- no routine the owner is
+       showing still draws that step empty. That is what "done" means: not a
+       threshold somebody picked, and not a box he has to tick himself.
+
+     "LOCKED" IS DONE, NOT DISABLED. No tab is ever disabled, nothing is greyed
+     out, and no tab is gated on another -- he opens them in any order and jumps
+     straight at the zeros. A finished step goes green and stops asking. */
+  function tabsView(){
+    var c = data.coverage || {};
+    var counts = c.by_role || {};
+    var short = c.by_role_short || {};
+
+    var stepTabs = (data.roles || []).map(function(r){
+      var n = counts[r.key] || 0;
+      var done = n > 0 && (short[r.key] || 0) === 0;
+      var state = n === 0 ? ' is-gap' : (done ? ' is-done' : '');
+
+      return tabHTML(r.key, esc(r.label), '<b>' + n + '</b>' + (done ? '<span class="rtn-tick">✓</span>' : ''), state);
+    }).join('');
+
+    var pages = (c.concern_pages || []);
+    var livePages = pages.filter(function(p){ return p.live; }).length;
+
+    return '<div class="rtn-tabs" role="tablist" aria-label="Build my routine sections">'
+      + stepTabs
+      + tabHTML('concern-pages', 'Concern pages',
+          '<b>' + livePages + '/' + pages.length + '</b>'
+            + (pages.length && livePages === pages.length ? '<span class="rtn-tick">✓</span>' : ''),
+          livePages === 0 ? ' is-gap' : (pages.length && livePages === pages.length ? ' is-done' : ''))
+      + tabHTML('wording', 'Wording', '', '')
+      + tabHTML('settings', 'Settings', '', '')
+      + '</div>';
+  }
+
+  function tabHTML(key, label, badge, state){
+    return '<button type="button" role="tab" class="rtn-tab' + state + '" data-rtn-tab="' + esc(key) + '"'
+      + ' aria-selected="' + (key === open ? 'true' : 'false') + '">'
+      + label + (badge ? ' ' + badge : '') + '</button>';
+  }
+
+  /** Is this tab one of the five steps? */
+  function isStep(key){
+    return (data && data.roles || []).some(function(r){ return r.key === key; });
+  }
+
+  function roleFor(key){
+    return (data && data.roles || []).filter(function(r){ return r.key === key; })[0] || null;
   }
 
   /* ------------------------------------------- the concern-page countdown
@@ -371,34 +588,101 @@
       + '</div>';
   }
 
-  function productsView(){
-    var opts = '<option value="">Every product</option>'
-             + '<option value="none"' + (roleFilter === 'none' ? ' selected' : '') + '>Untagged only</option>'
-             + (data.roles || []).map(function(r){
-                 return '<option value="' + esc(r.key) + '"' + (roleFilter === r.key ? ' selected' : '') + '>'
-                      + esc(r.label) + '</option>';
-               }).join('');
+  /* ── ONE STEP TAB: THE PLACE HE ACTUALLY WORKS ────────────────────────────
+     "so i can just fillup or select" — so the tab he is standing in shows what
+     is in this step, lets him search the whole catalogue without leaving it,
+     and puts the product into THIS step in one press.
+
+     ONE REQUEST, NOT TWO. The obvious build is two lists — "filling this step"
+     and "candidates" — and that is two round trips per tab. It is also worse to
+     use: the same product appears in both. Instead the ONE list answers
+     whichever question is being asked. With no search term it is what fills
+     this step; type a term and it is the catalogue, each row saying which step
+     it is in now and offering this one. Same endpoint, same single request the
+     screen has always made.
+
+     EVERY ROW CONTROL IS THE ONE THAT WAS THERE BEFORE. The step select still
+     sets any of the five, the concern chips still toggle, and both still save
+     on change and read the row back from the response. The "Use for <step>"
+     button is an ADDITION, not a replacement — it is the select's first option
+     as one press. */
+  function stepView(){
+    var role = roleFor(open);
+    if (!role) return '';
+
+    var c = data.coverage || {};
+    var n = (c.by_role || {})[open] || 0;
+    var short = (c.by_role_short || {})[open] || 0;
+
+    /* WHICH ROUTINES STILL DRAW THIS STEP EMPTY, by name. "3 routines short" is
+       a number he cannot act on; "Hydration, Dullness & glow and Sun protection"
+       tells him which concern chips to tick on whatever he tags next. */
+    var shortNames = (data.routines || []).filter(function(r){
+      return r.is_enabled && (r.empty || []).indexOf(open) > -1;
+    }).map(function(r){ return r.label; });
+
+    var verdict;
+
+    if (n === 0) {
+      verdict = '<b>Nothing on the storefront fills this step.</b> Every routine draws it as '
+              + '“not stocked yet” — which is deliberate, and is not the same as a routine with four steps.';
+    } else if (short === 0) {
+      verdict = '<b>Done.</b> Every routine you are showing can fill this step from what is in stock.';
+    } else {
+      verdict = '<b>' + n + ' in stock, and ' + short + ' routine' + (short === 1 ? '' : 's')
+              + ' still cannot fill it:</b> ' + esc(shortNames.join(', '))
+              + '. Tag another product for this step and tick those concerns on it — or leave its concerns '
+              + 'all off, which makes it suit every routine.';
+    }
+
+    /* THE SCOPE SELECT IS THE OLD ROLE FILTER, less the five options that are
+       now tabs. "Untagged only" is kept because this file's header calls it out
+       by name as the one-click filter the screen exists for. */
+    var opts = '<option value=""' + (scope === '' ? ' selected' : '') + '>In this step</option>'
+             + '<option value="none"' + (scope === 'none' ? ' selected' : '') + '>Untagged only</option>'
+             + '<option value="all"' + (scope === 'all' ? ' selected' : '') + '>Every product</option>';
+
+    /* Said out loud, because the list just changed what it is showing without
+       the select above it moving. */
+    var scopeNote = (query && scope === '')
+      ? '<div class="rtn-tabnote">Showing every product matching “' + esc(query) + '”, wherever it sits today. '
+        + 'Press <b>Use for ' + esc(role.label) + '</b> on one to put it in this step.</div>'
+      : '';
 
     var body;
 
     if (!products) {
       body = '<div class="rtn-empty">Loading…</div>';
     } else if (!products.products.length) {
-      body = '<div class="rtn-empty">' + (query || roleFilter ? 'Nothing matches that filter.' : 'No products yet.') + '</div>';
+      body = '<div class="rtn-empty">'
+           + (query
+               ? 'Nothing matches “' + esc(query) + '”. Try an ingredient — the search reads ingredient lists too.'
+               : (scope === ''
+                   /* FROM COLD THIS IS THE STATE HE IS IN — every step empty —
+                      so the empty message carries the next press rather than
+                      describing it. It sets the scope select that is already
+                      above it; it is a shortcut to a control, not a second one. */
+                   ? 'No product fills this step yet.<div style="margin-top:10px">'
+                     + '<button type="button" class="rtn-use" id="rtn-show-untagged">'
+                     + 'Show the ' + ((data.coverage || {}).untagged || 0) + ' products with no step yet</button></div>'
+                   : 'Nothing matches that filter.'))
+           + '</div>';
     } else {
       body = '<div class="rtn-list">' + products.products.map(productRow).join('') + '</div>' + pagerView();
     }
 
     return '<div class="rtn-card">'
-      + '<div class="rtn-head"><div><div class="rtn-title">Which step does each product fill?</div>'
-      + '<div class="rtn-sub">A product with no step is never offered in a routine. Concerns are optional: '
+      + '<div class="rtn-head"><div><div class="rtn-title">' + esc(role.label) + '</div>'
+      + '<div class="rtn-sub">' + verdict + '</div></div></div>'
+      + '<div class="rtn-tabnote">A product with no step is never offered in a routine. Concerns are optional: '
         + 'leave them all off and the product suits every routine; switch some on and it is only offered in those. '
         + 'The search reads ingredient lists as well as names, so “centella”, “niacinamide” or “fragrance-free” '
-        + 'find the products whose labels say so even when their names do not.</div></div></div>'
+        + 'find the products whose labels say so even when their names do not.</div>'
       + '<div class="rtn-filters">'
       + '<input id="rtn-q" type="search" placeholder="Search name, SKU or ingredients" value="' + esc(query) + '" autocomplete="off">'
-      + '<select id="rtn-role">' + opts + '</select>'
+      + '<select id="rtn-scope">' + opts + '</select>'
       + '</div>'
+      + scopeNote
       + body
       + '</div>';
   }
@@ -427,9 +711,39 @@
          server sends this only in that case, so it never repeats what is
          already on the line above. */
       + (p.ingredient_hit ? '<div class="rtn-meta">Ingredients: ' + esc(p.ingredient_hit) + '</div>' : '')
-      + '<select data-rtn-rolefor="' + p.id + '">' + roleOpts + '</select>'
+      + '<div class="rtn-rowacts">'
+        + useButtonHTML(p)
+        + '<select data-rtn-rolefor="' + p.id + '">' + roleOpts + '</select>'
+      + '</div>'
       + '<div class="rtn-chips">' + chips + '</div>'
       + '</div>';
+  }
+
+  /* ── "USE FOR <STEP>", AND THE STEP IS THE OPEN TAB ───────────────────────
+     THE ONE-PRESS VERSION OF THE SELECT BESIDE IT. It writes exactly what
+     choosing that option in the select writes, through the same tag() call and
+     the same endpoint, and the row is read back from the response either way.
+
+     IT ACTS ON THE OPEN TAB AND NOTHING ELSE. That is the lesson the checkout
+     screen already paid for — the owner reported "when i click squeezed, it
+     applies on all tabs", and the fix there was to scope the action to the tab
+     being looked at. The step key is read from `open` at the moment of the
+     press, so a button on a row can only ever place that product in the step
+     whose tab is showing.
+
+     Drawn as a finished tick when the product is already in this step, rather
+     than hidden: a row that offers nothing looks like a row the screen forgot,
+     and the disabled state is what says "this one is already done". */
+  function useButtonHTML(p){
+    var role = roleFor(open);
+    if (!role) return '';
+
+    if (p.role === open) {
+      return '<button type="button" class="rtn-use" disabled>In ' + esc(role.label) + ' ✓</button>';
+    }
+
+    return '<button type="button" class="rtn-use" data-rtn-use="' + p.id + '">'
+      + 'Use for ' + esc(role.label) + '</button>';
   }
 
   function pagerView(){
@@ -567,7 +881,21 @@
     if (!data) {
       html += '<div class="rtn-card"><div class="rtn-empty">' + (busy ? 'Loading…' : 'Nothing to show.') + '</div></div>';
     } else {
-      html += statsView() + productsView() + routinesView() + settingsView();
+      /* THE STRIP IS ALWAYS DRAWN; EXACTLY ONE BODY IS DRAWN UNDER IT.
+         Every surface the screen had is still here and still does what it did;
+         what changed is that seven of the eight are not painted at once. */
+      html += statsView()
+            + '<div class="rtn-card" style="margin-top:12px">' + tabsView() + '</div>';
+
+      if (isStep(open)) {
+        html += stepView();
+      } else if (open === 'concern-pages') {
+        html += concernPagesView();
+      } else if (open === 'wording') {
+        html += routinesView();
+      } else {
+        html += settingsView();
+      }
     }
 
     host.innerHTML = html + '</div>';
@@ -594,15 +922,85 @@
     }
   }
 
+  /* ── SWITCHING TAB ────────────────────────────────────────────────────────
+     A step tab reloads the list; the other three are already in `data` and
+     reload nothing at all, so moving between Concern pages, Wording and
+     Settings costs no request.
+
+     THE SEARCH AND THE SCOPE ARE RESET ON THE WAY IN, and that is a decision
+     rather than an oversight. Carrying "centella" from Cleanser to SPF would
+     open SPF on "Nothing matches", which reads as an empty step when it is an
+     empty search — and the empty steps are exactly what he is hunting. Each
+     step therefore opens on what fills it. */
+  function goTab(key){
+    if (key === open) return;
+
+    open = key;
+    query = '';
+    scope = '';
+    page = 1;
+
+    if (isStep(open)) {
+      products = null;
+      render();
+      loadProducts();
+    } else {
+      render();
+    }
+  }
+
   function bind(){
+    /* BOUND HERE RATHER THAN DELEGATED ON `document`, which is what the
+       checkout screen does. This file's own header gives the reason:
+       app.blade.php already binds around a dozen delegated listeners to
+       `document`, each claiming a bare attribute name, and a click anywhere is
+       handled by whichever of them matches. Binding per render keeps every
+       listener on elements this screen drew. */
+    var tabs = [].slice.call(document.querySelectorAll('[data-rtn-tab]'));
+
+    tabs.forEach(function(btn, i){
+      btn.onclick = function(){ goTab(btn.dataset.rtnTab); };
+
+      /* Left/Right walk the strip, Home/End jump to its ends. Native <button>
+         focus and Enter/Space already worked; this is what a strip of eight on
+         one keyboard-driven screen is worth. Nothing here measures layout. */
+      btn.onkeydown = function(ev){
+        var to = null;
+
+        if (ev.key === 'ArrowRight') to = tabs[(i + 1) % tabs.length];
+        else if (ev.key === 'ArrowLeft') to = tabs[(i - 1 + tabs.length) % tabs.length];
+        else if (ev.key === 'Home') to = tabs[0];
+        else if (ev.key === 'End') to = tabs[tabs.length - 1];
+        else return;
+
+        ev.preventDefault();
+        if (to) { to.focus(); goTab(to.dataset.rtnTab); }
+      };
+    });
+
     var q = document.querySelector('#rtn-q');
     if (q) {
       q.onchange = function(){ query = q.value.trim(); page = 1; loadProducts(); };
       q.onkeydown = function(ev){ if (ev.key === 'Enter') { query = q.value.trim(); page = 1; loadProducts(); } };
     }
 
-    var rf = document.querySelector('#rtn-role');
-    if (rf) rf.onchange = function(){ roleFilter = rf.value; page = 1; loadProducts(); };
+    var sc = document.querySelector('#rtn-scope');
+    if (sc) sc.onchange = function(){ scope = sc.value; page = 1; loadProducts(); };
+
+    var showUntagged = document.querySelector('#rtn-show-untagged');
+    if (showUntagged) showUntagged.onclick = function(){ scope = 'none'; page = 1; loadProducts(); };
+
+    /* ONE PRESS, INTO THE OPEN STEP AND NO OTHER. `open` is read here, at the
+       moment of the click, so this cannot place a product in a step whose tab
+       is not showing. */
+    document.querySelectorAll('[data-rtn-use]').forEach(function(btn){
+      btn.onclick = function(){
+        var role = roleFor(open);
+        if (!role) return;
+
+        tag(btn.dataset.rtnUse, {role: open}, 'Step set to ' + role.label + '.');
+      };
+    });
 
     var prev = document.querySelector('#rtn-prev');
     if (prev) prev.onclick = function(){ if (page > 1) { page--; loadProducts(); } };
