@@ -49,7 +49,7 @@
 
   /* ===== mega nav ===== */
   .mbar{border-top:1px solid var(--line-2);background:#fff}
-  .mbar .wrap{display:flex;align-items:center;gap:2px}
+  .mbar .wrap{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
   .mbar{--nav-scale:1}
   .navitem{position:relative}
   /* THE LINE BOX IS NOT ALLOWED TO DEPEND ON --nav-scale, AND THAT IS THE
