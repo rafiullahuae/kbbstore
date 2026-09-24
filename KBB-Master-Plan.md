@@ -2236,6 +2236,17 @@ licence #1 with no special case, which is what keeps the customer path tested.
   **IndexNow**, which is the hole a header cannot close, because it is an
   outbound POST that *asks* Bing to come and look — and a staging copy of a live
   shop arrives with `indexnow_on` already `1`.
+- [~] ⏸ **ON HOLD AT THE OWNER'S INSTRUCTION, 24 September 2026.** He asked for
+  it in as many words: *"free the lane B, and put it on hold in the master plan,
+  bcz i need un signed patches for now."* The work is BUILT and merged in
+  2.60.267, and it changes nothing: it ships `permissive` with an empty trusted
+  key list, so an unsigned package installs exactly as it does today and the
+  Core Updates header still reads "unsigned packages accepted". Nothing is
+  enforced until step 6 of `docs/PACKAGE-SIGNING.md` §1, and **step 6 is not to
+  be taken.** The lane is freed. If the owner would rather the code were not in
+  the tree at all, the merge is a clean revert and that is his call, not a
+  lane's. The original entry follows, unchanged:
+
 - [ ] **Ed25519 signing — the next thing to do, and it is inside this repo.**
   `BuildPackage.php:199` writes `'signature' => ''` unconditionally, so no
   package has ever been signed, and `UpdatePackage`'s scheme is a **symmetric**
@@ -3040,3 +3051,50 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
    manual ZIP upload before the automated updater existed. Low priority,
    but flag before delete: confirm with Rafi it's safe to remove rather
    than assuming.
+
+---
+
+## Phase 20 — UGC video, shoppable  *(owner-requested 24 September 2026)*
+
+The owner asked for this against a named benchmark: the Whatmore Live app on
+the Shopify store, `apps.shopify.com/whatmore-live`. His words: *"i need the
+same features, but better videos grid style, and also multiple products can be
+tagged in a single video. please build the stunning different styles sections
+to choose from, also i need different previews when user click on any video,
+better than the attached. must be super mobile responsive and with great user
+interactions without stucking, handing or delaying etc."*
+
+He sent two screenshots of the benchmark: a "see it in action" rail of three
+portrait videos, each with ONE product card under it carrying a price, a struck
+original and a discount pill; and the opened state, a full-screen portrait
+player with mute and close at the top, Like and Share down the right edge, and
+a single product card pinned above an ADD TO CART button.
+
+**What he wants that the benchmark does not do**
+
+- **More than one product per video.** The benchmark pins exactly one. A salon
+  video showing a shampoo, a mask and a bond builder should sell all three.
+- **Several grid styles to choose from**, not one rail.
+- **Several opened-state styles**, and better than the one he was shown.
+- **No jank.** "without stucking, handing or delaying" is a performance
+  requirement and it is the one that decides whether this ships.
+
+**THE VIDEO SOURCE — he asked for a recommendation and this is it.**
+**Self-host. Do not embed Instagram or TikTok.** An embed drags a third-party
+player and its tracking onto every page that carries the rail, which costs the
+Core Web Vitals this project has spent phases protecting, needs new hosts in
+the content-security policy Lane C has just measured, and breaks silently on
+the day a creator deletes or privates the post. Take the file, re-encode it,
+serve it from this shop, and link back to the original post for credit. The
+admin should ACCEPT an Instagram or TikTok URL — that is how the owner thinks
+about his library — and resolve it to a stored file, rather than storing the
+URL and embedding it at render time.
+
+- [ ] Previews first: the grid styles and the opened-state styles, as
+  something the owner can look at and choose from, before any of it is built
+- [ ] Multiple products per video, with the tagging screen to do it
+- [ ] Self-hosted video pipeline: upload, poster frame, and the source-URL
+  path that resolves to a stored file
+- [ ] Ships OFF, and adds nothing to any page until the owner turns it on
+- [ ] Arabic and RTL from the start, not retrofitted
+
