@@ -176,8 +176,8 @@ it('leaves no directional glyph on the storefront that the bidi algorithm will n
     $exceptions = ['views/store/app.blade.php'];
 
     /*
-     * THREE MORE, NAMED AND HANDED OFF. store/skin-quiz.blade.php prints `→`
-     * three times, and every one of them is inside a TRANSLATABLE DEFAULT —
+     * MORE, NAMED AND HANDED OFF. store/skin-quiz.blade.php prints `→` several
+     * times, and every one of them is inside a TRANSLATABLE DEFAULT —
      * `t('store.quiz.js_start_cta', 'Start the quiz →')`. The arrow is part of
      * the sentence there, so it belongs to whoever writes the Arabic sentence,
      * and a published Arabic string supplies its own. What is left is the
@@ -208,6 +208,18 @@ it('leaves no directional glyph on the storefront that the bidi algorithm will n
          * sake of a fallback that is English anyway.
          */
         'store.quiz.js_routine_link_cta' => 'a translatable default, so the Arabic string carries its own arrow',
+        /*
+         * LANE Q'S, AND THE FIFTH OF THE SAME KIND rather than a new one. The
+         * quiz now falls back from the routine page to the concern collection
+         * page when the routine module is off, and that fallback's button ends
+         * its sentence with the same arrow in the same position. Everything the
+         * note above says about `js_routine_link_cta` applies here unchanged:
+         * the arrow is inside a translatable default, so an Arabic translation
+         * of "Shop :concern →" carries whatever arrow that sentence wants, and
+         * what is left is the English fallback an untranslated Arabic page
+         * shows.
+         */
+        'store.quiz.js_concern_link_cta' => 'a translatable default, so the Arabic string carries its own arrow',
     ];
 
     $seenHandedOff = [];
