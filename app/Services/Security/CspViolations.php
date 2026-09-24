@@ -79,6 +79,35 @@ final class CspViolations
     public const EVENT = 'csp.violation';
 
     /**
+     * A report the endpoint's own throttle turned away.
+     *
+     * ── FOUND BY RUNNING IT, NOT BY READING IT ──────────────────────────────
+     *
+     * The first screenshot of this card, taken against a real Chromium walking
+     * a real shop, had the verdict line at the top of the Security screen
+     * reading "Worth a look: 687 requests refused as too many in the last 24
+     * hours". Every one of those was this module's own endpoint answering 429
+     * to this module's own policy: one view of the home page makes a browser
+     * post 158 violation reports, the route's throttle allows 60 a minute, and
+     * SecurityModule's RequestHandled listener faithfully recorded every shed
+     * one as a rate-limit trip.
+     *
+     * Neither half was wrong on its own. Together they made the shop's own
+     * security screen report the owner's own visitors as an attack the moment
+     * he switched the policy on — which is precisely the "everyone now believes
+     * it is protected" failure running the other way, and he would have read it
+     * before anybody read this file.
+     *
+     * So a 429 on the report endpoint is still recorded, because it is a true
+     * thing that happened and reports really were lost — but it is recorded as
+     * what it is. It is filed under this event, it is counted on the policy
+     * card as "reports shed", and it is out of both the "requests refused as
+     * too many" list and the threshold that fires the verdict. That list means
+     * "somebody is hammering the shop", and this is not that.
+     */
+    public const EVENT_SHED = 'csp.shed';
+
+    /**
      * Longest report body read. A real one is a few hundred bytes.
      *
      * Dropped whole rather than truncated: a truncated JSON document does not
@@ -244,7 +273,7 @@ final class CspViolations
      * The keywords a browser sends in place of a URL — `inline`, `eval`,
      * `data`, `blob`, `self` — are not URLs and pass through as themselves.
      * `inline` is the one that matters most on this shop: it is what every one
-     * of the 121 inline handlers and 24 inline blocks reports as.
+     * of the 124 inline handlers and 24 inline blocks reports as.
      */
     private function uri(string $value): string
     {
@@ -373,8 +402,6 @@ final class CspViolations
             // bumping this one, and the ceiling below still holds.
         }
 
-        $this->enforceCspCap();
-
         return true;
     }
 
@@ -420,6 +447,11 @@ final class CspViolations
      * One indexed lookup and one ranged delete. `DELETE … ORDER BY … LIMIT` is
      * not portable to SQLite, which is what the tests run on.
      *
+     * CALLED FROM SecurityModule::record() AND NOT FROM HERE, so that both
+     * ways a row can reach this table from the public endpoint — a violation
+     * and a shed report — are swept by the same call. Written here anyway,
+     * because this is the class whose docblock has to carry the argument.
+     *
      * ON EVERY INSERT, not one in a hundred like the trail's own ceiling. The
      * collapse above means an insert here is a violation this shop has not
      * seen in the window — rare on a healthy shop, and rate-limited to 60 a
@@ -427,13 +459,24 @@ final class CspViolations
      * a minute and cost the tightness of the bound, which is the only thing
      * this method is for.
      */
-    private function enforceCspCap(): int
+    public function enforceCap(): int
     {
         try {
             $max = (int) $this->security->get('csp_rows');
 
+            /*
+             * BOTH POLICY EVENTS UNDER THE ONE CEILING. A shed report is
+             * collapsed per address per window like a rate-limit trip, so a
+             * flood from one address is one row — but a flood from a rotating
+             * address is not, and it arrives on the same public endpoint as the
+             * violations. Counting the two together is what makes the sentence
+             * on the card true without qualification: everything this endpoint
+             * can cause fits in `csp_rows` and nowhere else.
+             */
+            $events = [self::EVENT, self::EVENT_SHED];
+
             $cut = AuditEvent::query()
-                ->where('event', self::EVENT)
+                ->whereIn('event', $events)
                 ->orderByDesc('id')
                 ->skip($max)
                 ->take(1)
@@ -444,7 +487,7 @@ final class CspViolations
             }
 
             return (int) AuditEvent::query()
-                ->where('event', self::EVENT)
+                ->whereIn('event', $events)
                 ->where('id', '<=', $cut)
                 ->delete();
         } catch (\Throwable) {

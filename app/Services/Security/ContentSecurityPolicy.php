@@ -87,8 +87,8 @@ use App\Support\Url;
  * script-src does NOT carry 'unsafe-inline' and style-src does NOT carry it
  * either, and that is deliberate. The storefront views hold, counted:
  *
- *     24  inline <script> blocks        121  inline on* handlers
- *     29  inline <style> blocks         203  inline style="" attributes
+ *     24  inline <script> blocks        124  inline on* handlers
+ *     29  inline <style> blocks         210  inline style="" attributes
  *
  * A policy with 'unsafe-inline' in script-src is a policy that stops an
  * injected <script> from doing nothing at all, because an injected <script> IS

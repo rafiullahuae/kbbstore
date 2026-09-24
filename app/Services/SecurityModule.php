@@ -140,6 +140,19 @@ class SecurityModule
     public const E_CSP = \App\Services\Security\CspViolations::EVENT;
 
     /**
+     * A violation report the report endpoint's own throttle turned away.
+     *
+     * It is a 429, so the RequestHandled listener sees it — and it must not
+     * land among the rate-limit trips, which is a list that means "somebody is
+     * hammering the shop" and a threshold that fires the verdict. See
+     * CspViolations::EVENT_SHED for what this cost on the first real run.
+     */
+    public const E_CSP_SHED = \App\Services\Security\CspViolations::EVENT_SHED;
+
+    /** Both policy events, for the queries that have to keep them out. */
+    public const CSP = [self::E_CSP, self::E_CSP_SHED];
+
+    /**
      * A module switched on or off from Store → Modules.
      *
      * A GAP THIS LANE NAMED IN ROUND ONE AND LEFT OPEN. `module_toggles` is not
@@ -731,28 +744,59 @@ class SecurityModule
     public function recordRateLimitTrip(\Illuminate\Http\Request $request): void
     {
         try {
-            if (! $this->get('rl_on')) {
+            $path = '/'.ltrim($request->path(), '/');
+
+            /*
+             * WHICH KIND OF 429 THIS IS, decided before any setting is read.
+             *
+             * A 429 on the policy's own report endpoint is not a caller
+             * hammering the shop; it is this module shedding reports its own
+             * policy caused. Recorded either way — reports really were lost and
+             * that is worth knowing — but under its own event, so it stays out
+             * of the trips list and out of the threshold that fires the verdict.
+             *
+             * WHAT IT COST BEFORE IT WAS SEPARATED. One view of the home page
+             * makes a real browser post 158 violation reports; the route allows
+             * 60 a minute; so the first screenshot taken of the policy card had
+             * the verdict line at the top of this screen reading "Worth a look:
+             * 687 requests refused as too many in the last 24 hours", every one
+             * of them this module answering itself. Neither half was wrong
+             * alone, which is why only running it found it.
+             *
+             * A string compare and no setting read, so an ordinary storefront
+             * 429 pays nothing for it.
+             */
+            $isReport = $path === app(\App\Services\Security\ContentSecurityPolicy::class)->reportUri();
+            $event = $isReport ? self::E_CSP_SHED : self::E_RATE_LIMIT;
+
+            if (! $this->get($isReport ? 'csp_on' : 'rl_on')) {
                 return;
             }
 
             $ip = $this->address($request->ip());
-            $path = '/'.ltrim($request->path(), '/');
-            $window = (int) $this->get('rl_window');
+            $window = (int) $this->get($isReport ? 'csp_window' : 'rl_window');
             $cacheKey = 'kbb.sec.rl.'.sha1($ip.'|'.$path);
             $known = Cache::get($cacheKey);
 
-            if (is_int($known) && AuditEvent::whereKey($known)->update([
+            if (is_int($known) && AuditEvent::whereKey($known)->where('event', $event)->update([
                 'hits' => DB::raw('hits + 1'),
                 'last_seen_at' => Carbon::now(),
             ]) === 1) {
                 return;
             }
 
-            $row = $this->record(self::E_RATE_LIMIT, 'Refused as too many requests: '.$path, [
-                'group' => 'ratelimit',
-                'subject' => $path,
-                'severity' => 'notice',
-            ]);
+            $row = $isReport
+                ? $this->record($event, 'Violation reports turned away by the report endpoint\'s own limit', [
+                    'group' => 'csp',
+                    'subject' => $path,
+                    'no_actor' => true,
+                    'severity' => 'notice',
+                ])
+                : $this->record($event, 'Refused as too many requests: '.$path, [
+                    'group' => 'ratelimit',
+                    'subject' => $path,
+                    'severity' => 'notice',
+                ]);
 
             if ($row !== null) {
                 Cache::put($cacheKey, (int) $row->getKey(), $window);
@@ -901,6 +945,21 @@ class SecurityModule
                 $this->enforceCap();
             }
 
+            /*
+             * AND THE POLICY'S OWN CEILING, ON EVERY ROW IT WRITES.
+             *
+             * `csp` is the only group here a stranger can cause, so it is the
+             * only one bounded among itself as well as by the trail's ceiling —
+             * otherwise that ceiling, which deletes the OLDEST rows, becomes a
+             * way to delete the audit trail by posting enough reports. Here
+             * rather than in CspViolations so that both ways a row reaches this
+             * table from that public endpoint — a violation and a shed report —
+             * are swept by one call. See CspViolations::enforceCap().
+             */
+            if ($group === 'csp') {
+                app(\App\Services\Security\CspViolations::class)->enforceCap();
+            }
+
             return $row;
         } catch (\Throwable) {
             /*
@@ -953,7 +1012,7 @@ class SecurityModule
          * this list would file an intrusion under "who changed what".
          */
         $changes = AuditEvent::query()
-            ->whereNotIn('event', array_merge(self::SIGNIN_TROUBLE, self::INTEGRITY, [self::E_RATE_LIMIT, self::E_CSP]))
+            ->whereNotIn('event', array_merge(self::SIGNIN_TROUBLE, self::INTEGRITY, self::CSP, [self::E_RATE_LIMIT]))
             ->orderByDesc('occurred_at')->orderByDesc('id')->limit($rows)->get();
 
         /*
@@ -991,8 +1050,9 @@ class SecurityModule
          * flood of them as the owner's own work.
          */
         $violated = $windowed[self::E_CSP] ?? 0;
+        $shed = $windowed[self::E_CSP_SHED] ?? 0;
 
-        $changed = array_sum($windowed) - $failed - $tripped - $found - $violated;
+        $changed = array_sum($windowed) - $failed - $tripped - $found - $violated - $shed;
 
         $counts = [
             'failed' => $failed,
@@ -1061,6 +1121,13 @@ class SecurityModule
              * budget measures.
              */
             'kept' => (int) AuditEvent::query()->where('event', self::E_CSP)->count(),
+            /*
+             * How many reports the endpoint turned away in the verdict's own
+             * window — the number the owner needs in order to read the list
+             * below correctly. With reports being shed, an absent violation
+             * means "not seen", not "does not happen".
+             */
+            'shed' => $shed,
         ];
 
         return [

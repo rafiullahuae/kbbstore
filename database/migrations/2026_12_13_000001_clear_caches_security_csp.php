@@ -66,8 +66,8 @@ use Illuminate\Database\Migrations\Migration;
  *   today, so applying this package changes no response byte anywhere. It is
  *   also off for a reason the screen prints beside the switch: while it is on,
  *   every page view also costs a handful of violation POSTs from the visitor's
- *   browser, because this shop's pages carry 24 inline <script> blocks, 121
- *   inline on* handlers, 29 inline <style> blocks and 203 inline style
+ *   browser, because this shop's pages carry 24 inline <script> blocks, 124
+ *   inline on* handlers, 29 inline <style> blocks and 210 inline style
  *   attributes, and the policy does not pretend otherwise. That is a real cost
  *   on a shared plan and it is the owner's to spend when he wants the
  *   measurement. docs/LC-SECURITY-MODULE.md carries the list it produces.

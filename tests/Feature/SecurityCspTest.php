@@ -119,7 +119,7 @@ it('cannot emit the enforcing header, because the name is not in the tree', func
     /*
      * THE DEFECT THIS STANDS FOR is the one Phase 18's sequencing exists to
      * prevent: a CSP shipped in enforcing mode on a shop with 24 inline
-     * <script> blocks and 121 inline handlers takes the storefront apart — the
+     * <script> blocks and 124 inline handlers takes the storefront apart — the
      * cart, the checkout's card fields and every analytics tag stop working at
      * once — and the owner, with no shell, cannot turn it off from anywhere but
      * the screen that just stopped rendering.
@@ -341,6 +341,59 @@ it('does not put the policy on the admin console or on anything but HTML', funct
      */
 });
 
+it('leaves the crawl files alone and covers every storefront page there is', function () {
+    app(SecurityModule::class)->save(['csp_on' => true]);
+
+    /*
+     * TWO THINGS THE INTEGRATION ROUND MOVED UNDER THIS LANE, pinned here
+     * because both are silent when they break.
+     *
+     * 1. /sitemap.xml, /robots.txt and /llms.txt now run inside
+     *    `Route::withoutMiddleware(SeoFilesController::STATELESS)` so they can
+     *    carry a public Cache-Control. CspHeaders is not in that list, so it
+     *    still runs on them — and must still decline, because they are XML and
+     *    plain text. A content-security policy on a document no browser renders
+     *    is a header a shared cache stores for an hour for nothing.
+     * 2. /concern/{concern}/ is a new public storefront page. It is HTML served
+     *    through the web group, so it is covered by construction — which is the
+     *    property worth pinning, because the alternative design (a list of
+     *    paths) would have missed it in silence.
+     */
+    foreach (['/sitemap.xml', '/robots.txt', '/llms.txt'] as $crawl) {
+        $response = $this->get($crawl);
+
+        expect($response->getStatusCode())->toBeLessThan(400, "{$crawl} answered {$response->getStatusCode()}");
+        expect($response->headers->get(ContentSecurityPolicy::HEADER))->toBeNull(
+            "{$crawl} is carrying a content-security policy no browser will read"
+        );
+        // And the baseline headers that deliberately stayed on them still are.
+        expect($response->headers->get('X-Content-Type-Options'))->toBe('nosniff');
+    }
+
+    /*
+     * The concern listing, by the rule rather than by its status code: a
+     * concern page does not exist until the owner has tagged products for one,
+     * so this fixture may answer it 200 or 404. Either way it is HTML through
+     * the web group and must carry the policy — which is the whole point of
+     * keying on the content type instead of on a list of paths somebody has to
+     * remember to extend.
+     */
+    $page = $this->get('/concern/acne/');
+
+    expect(str_contains(strtolower((string) $page->headers->get('Content-Type', '')), 'text/html'))
+        ->toBeTrue('the concern listing stopped answering HTML');
+
+    expect($page->headers->get(ContentSecurityPolicy::HEADER))->not->toBeNull(
+        'a storefront page added after this lane is not carrying the policy'
+    );
+
+    /*
+     * MUTATION NOTE. Delete the text/html test in CspHeaders::applies() and the
+     * three crawl files are red. Make applies() match a list of storefront
+     * paths instead of the content type and the concern page is.
+     */
+});
+
 /* ═════════════════════════════════════════ 3. and it refuses nothing ═══ */
 
 it('refuses no request the shop answered before', function () {
@@ -355,7 +408,7 @@ it('refuses no request the shop answered before', function () {
      * `/journal` is deliberately absent: it is a 404 in this fixture, which is
      * the storefront's business and not this module's.
      */
-    $paths = ['/', '/shop', '/cart', '/checkout', '/wishlist', '/csp-probe-not-a-page'];
+    $paths = ['/', '/shop', '/cart', '/checkout', '/wishlist', '/sitemap.xml', '/robots.txt', '/csp-probe-not-a-page'];
 
     $off = [];
 
@@ -558,7 +611,7 @@ it('cannot push the audit trail out of the table however many are posted', funct
         ]))->assertNoContent();
     }
 
-    expect(AuditEvent::query()->where('event', CspViolations::EVENT)->count())
+    expect(AuditEvent::query()->whereIn('event', SecurityModule::CSP)->count())
         ->toBeLessThanOrEqual(20, 'violations passed their own ceiling');
 
     expect(AuditEvent::query()->whereKey($keeper)->exists())->toBeTrue(
@@ -721,8 +774,41 @@ it('turns a flood away at the route before any of it reaches a row', function ()
     expect($last->getStatusCode())->toBe(429, 'the report endpoint has no throttle on it');
 
     /*
-     * MUTATION NOTE. Delete `->middleware('throttle:60,1')` from
-     * routes/security-csp.php and this is red.
+     * AND THE SHED REPORTS DO NOT READ AS AN ATTACK. This is the defect the
+     * first screenshot of this card found, and it is the reason the shed event
+     * exists at all.
+     *
+     * One view of the home page makes a real Chromium post 158 violation
+     * reports; the throttle allows 60 a minute; and SecurityModule's
+     * RequestHandled listener recorded every shed one as a rate-limit trip. The
+     * verdict line at the top of Store → Security therefore read "Worth a look:
+     * 687 requests refused as too many in the last 24 hours" — every one of
+     * them this module's own endpoint answering this module's own policy — and
+     * the owner would have read that as somebody attacking his shop the first
+     * time he switched the policy on.
+     *
+     * Neither half was wrong alone, which is why only running it found it.
+     */
+    $report = app(SecurityModule::class)->report();
+
+    expect($report['counts']['tripped'])->toBe(0,
+        'the endpoint shedding its own reports is being counted as the shop being hammered'
+    );
+    expect($report['trips'])->toBe([],
+        'a shed violation report is in the "requests refused as too many" list'
+    );
+    expect($report['csp']['shed'])->toBeGreaterThan(0,
+        'the reports that were turned away are not reported anywhere at all'
+    );
+    // And it is not filed as administrative work either.
+    expect($report['counts']['changed'])->toBe(0);
+
+    /*
+     * MUTATION NOTE. Delete the $isReport branch in
+     * SecurityModule::recordRateLimitTrip() — one line — and `tripped` reads in
+     * the hundreds, `trips` fills up and the verdict changes to "worth a look".
+     * Delete `->middleware('throttle:60,1')` from routes/security-csp.php and
+     * the 429 expectation is red.
      */
 });
 

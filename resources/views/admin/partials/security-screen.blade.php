@@ -519,6 +519,17 @@
         + '<span><b>' + esc(c.kept) + '</b> of <b>' + esc(c.max_rows) + '</b> violation rows kept</span>'
         + '<span>repeats collapse for <b>' + esc(c.window) + '</b>s</span>'
         + '</div>'
+        /* SHED REPORTS, said plainly and not left out. A page view can make a
+           browser post more reports than the endpoint accepts in a minute, and
+           the ones it turns away are lost. Without this line the list below
+           reads as complete, and an absent violation reads as "does not
+           happen" when it means "was not seen". */
+        + (c.shed > 0
+            ? '<div class="sx-off"><b>' + esc(c.shed) + '</b> more reports were turned away by the '
+              + 'endpoint\u2019s own limit rather than recorded. That is the shop protecting itself and '
+              + 'not something going wrong \u2014 but it means the list below is a sample, not a count. '
+              + 'One view of a busy page can post more than a hundred of these.</div>'
+            : '')
       : '<div class="sx-off">The policy is not being sent. No page carries it, no browser is '
         + 'checking anything against it, and nothing new will appear below until you turn it on '
         + 'under "Content security policy" in the settings at the foot of this screen.</div>';
