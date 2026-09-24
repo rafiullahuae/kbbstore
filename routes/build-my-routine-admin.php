@@ -64,6 +64,21 @@ use Illuminate\Support\Facades\Route;
 Route::get('/routines', [RoutinesApiController::class, 'show']);
 Route::post('/routines-settings', [RoutinesApiController::class, 'saveSettings']);
 
+/*
+ * The module switch, surfaced on the screen where the work is done — Lane Q,
+ * round 3. `routines-module` is a SIBLING path, not `routines/module`, for the
+ * reason the header gives about `routines-settings`: it cannot collide with
+ * `routines/{concern}` however the two are ordered.
+ *
+ * It writes the same `module_toggles` key Store → Modules writes, through the
+ * same SettingsService::setModule(). It carries its own capability rule,
+ * store.settings rather than the catalog.* of everything else in this file,
+ * because it publishes pages rather than merchandising them — see the
+ * controller method's note. A clear_caches migration ships with it:
+ * database/migrations/2026_12_27_000000_clear_caches_routine_module_switch.php.
+ */
+Route::post('/routines-module', [RoutinesApiController::class, 'saveModule']);
+
 Route::get('/routine-products', [RoutinesApiController::class, 'products']);
 Route::post('/routine-products/{id}', [RoutinesApiController::class, 'tag'])
     ->where('id', '[0-9]+');
