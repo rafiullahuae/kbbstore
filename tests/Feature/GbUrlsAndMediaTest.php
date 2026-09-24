@@ -316,25 +316,34 @@ it('discards every category-nesting row, because the shop already serves that mo
     $child = gbProposalFor('/product-category/face-cleansers-gb/', $proposals);
 
     /*
-     * PIN ADVANCED, DELIBERATELY. This asserted DISCARD and a reason
-     * containing "404 handler" — which was correct while the redirects table
-     * was only consulted from the 404 handler. `CheckRedirects` is registered
-     * in the global pipeline now and runs BEFORE the router, so a row for an
-     * address this shop answers fires.
+     * PIN ADVANCED TWICE, AND THE TEST'S OWN NAME HAS BEEN RIGHT ALL ALONG.
      *
-     * That makes a DISCARD here the wrong answer and the dangerous one: a
-     * discard never reaches the list the owner approves, so the import would
-     * have thrown these away silently while the fix that reads them sat in the
-     * same package. It asks instead. The old assertion is quoted here rather
-     * than deleted, because the reasoning it recorded was right and only its
-     * premise moved:
+     * FIRST it asserted DISCARD with a reason containing "404 handler" — right
+     * while the redirects table was read only from the 404 handler:
      *
      *     ->and($child['decision'])->toBe(RedirectMap::DISCARD)
      *     ->and($child['reason'])->toContain('404 handler');
+     *
+     * THEN Lane GP registered CheckRedirects globally, a row began to fire, and
+     * a silent discard became the dangerous answer, so it asked:
+     *
+     *     ->and($child['decision'])->toBe(RedirectMap::ASK)
+     *     ->and($child['reason'])->toContain('consulted before the router');
+     *
+     * NOW IT DISCARDS AGAIN, on the ground neither earlier version had: the
+     * shop sends this address to the SAME destination this rule proposes, so
+     * there is no question in it. Lane SEO round 2 compares the two before
+     * deciding, rather than reading "the shop already moves this" as an answer
+     * in itself — docs/GP-ADDRESSES-LAND.md §13.7 left exactly that open.
+     *
+     * The ASK is still reachable and is still what this question is for: it
+     * fires when the shop's destination and the proposal's DIFFER. See
+     * tests/Feature/SeoImportSensesUrlsTest.php, which builds that out of a
+     * category_redirects merge row.
      */
     expect($child)->not->toBeNull()
-        ->and($child['decision'])->toBe(RedirectMap::ASK)
-        ->and($child['reason'])->toContain('consulted before the router');
+        ->and($child['decision'])->toBe(RedirectMap::DISCARD)
+        ->and($child['reason'])->toContain('already sends this address to exactly this destination');
 });
 
 it('proposes the flat root address the old site really published, and it is one that 404s', function () {

@@ -178,6 +178,19 @@ final class RedirectMap
     public const Q_UNMATCHABLE = 'unmatchable';
 
     /**
+     * The old site published a KIND of address this shop does not have at all.
+     *
+     * Not "the row was not imported" — the row may well have been imported.
+     * The taxonomy it belongs to has no archive here: this shop has no tag
+     * archive and no attribute archive, by design, the way U-05 says it has no
+     * brand archive. Told apart from Q_NOT_IMPORTED because the two are a
+     * completely different job for the owner, and because saying "it was never
+     * imported" about a tag that was imported is a false sentence on the one
+     * screen he is asked to make decisions from.
+     */
+    public const Q_NO_EQUIVALENT = 'no-equivalent';
+
+    /**
      * Every question this map asks, in the order a person should work through
      * them: the ones that are a decision first, the ones that are somebody
      * else's job last.
@@ -224,6 +237,17 @@ final class RedirectMap
             'heading' => 'This shop could never match this address, whatever row were written.',
             'decidable' => false,
         ],
+        /*
+         * LAST, like the others that are not a yes/no. `decidable` is false
+         * because there is no destination to accept: this shop has nowhere of
+         * this kind to send the address. The owner's move is to write a row by
+         * hand pointing it at whatever he considers the nearest page, or to let
+         * it 404 — and both are outside what this map may guess.
+         */
+        self::Q_NO_EQUIVALENT => [
+            'heading' => 'The old site published a kind of address this shop does not have.',
+            'decidable' => false,
+        ],
     ];
 
     /**
@@ -262,8 +286,23 @@ final class RedirectMap
     }
 
     /**
-     * Injectable only so a test can pin the reachability verdicts it depends on
-     * without standing up the route it is describing.
+     * Injectable so a caller can hand in the two collaborators rather than have
+     * them constructed here.
+     *
+     * ▲ THE NOTE THIS REPLACES SAID "injectable only so a test can pin the
+     * reachability verdicts it depends on without standing up the route it is
+     * describing", AND THAT IS NOT POSSIBLE. `SourceReachability` is `final`,
+     * so the only thing that can be passed for it is another real instance —
+     * a test reaching for the seam gets `cannot extend final class`. Found by
+     * reaching for it.
+     *
+     * Left `final` deliberately rather than opened up for a test's
+     * convenience: every verdict it gives is about the real router and the real
+     * tables, and a stub is exactly the thing that would let this map be
+     * asserted against a shop that does not exist. The disagreement cases in
+     * `tests/Feature/SeoImportSensesUrlsTest.php` are built out of a
+     * `category_redirects` row instead, which is a situation a real merge
+     * produces and is better evidence than a stub would have been.
      */
     public function __construct(
         private ?SourceReachability $reachability = null,
@@ -583,12 +622,63 @@ final class RedirectMap
              * it.
              */
             if ($verdict['status'] === SourceReachability::MOVED) {
+                /*
+                 * ═══════════════════════════════════════════════════════════
+                 * WHERE IT ALREADY GOES, COMPARED WITH WHERE THIS WOULD SEND
+                 * IT — AND THIS IS THE §13.7 DECISION, SETTLED
+                 * ═══════════════════════════════════════════════════════════
+                 *
+                 * docs/GP-ADDRESSES-LAND.md §13.7 handed this to a later lane
+                 * as "the one that needs a decision, not just an edit: some of
+                 * those discards are still right, and some are now wrong."
+                 * Neither blanket answer is right, and the reason is that
+                 * MOVED is two different situations wearing one word:
+                 *
+                 *   THE SHOP ALREADY SENDS IT EXACTLY HERE. There is nothing
+                 *   to decide. A row would restate, in the table, a 301 the
+                 *   application already makes for itself — and restating it is
+                 *   not free, which is the part that matters: the shop's own
+                 *   answer is DERIVED, so it follows the category when the
+                 *   owner re-parents or renames it. A written row does not. It
+                 *   goes on pointing at the path the category had on import
+                 *   day, and that path is then a 404. So the row is not merely
+                 *   redundant, it is the only one of the two that can rot.
+                 *
+                 *   THE SHOP SENDS IT SOMEWHERE ELSE. That IS a decision, and
+                 *   it is the owner's: a row here overrides the application's
+                 *   own hop, because the table is consulted before the router.
+                 *
+                 * MEASURED, on a tree with all fifteen categories imported and
+                 * before this branch: 38 proposals in `migrate`, of which 30
+                 * were the first case — every legacy root address and every
+                 * nesting rule whose destination the shop already produces.
+                 * Writing them was not wrong on the day, and every one of them
+                 * was a row that could later disagree with the shop that wrote
+                 * it.
+                 *
+                 * Compared as RAW PATHS. `$verdict['to']` is prefix-free and
+                 * locale-free by construction, for the reason the class
+                 * comment gives about `Category::url()` baking `/kbb-upgrade`
+                 * into a row.
+                 */
+                $already = trim((string) ($verdict['to'] ?? ''));
+
+                if ($already !== '' && $already === $proposal['target']) {
+                    $proposals[$index]['decision'] = self::DISCARD;
+                    $proposals[$index]['reason'] = 'this shop already sends this address to exactly this '
+                        .'destination without being told to — '.$verdict['why'].'. A row would restate it, and '
+                        .'unlike the shop\'s own answer a row does not follow the category if it is renamed or '
+                        .'re-parented: it would go on pointing at today\'s path after that path had become a 404';
+
+                    continue;
+                }
+
                 $proposals[$index]['decision'] = self::ASK;
                 $proposals[$index]['question'] = self::Q_ALREADY_REDIRECTS;
-                $proposals[$index]['reason'] = 'this address already redirects somewhere on this shop — '
-                    .$verdict['why'].'. A row here would now OVERRIDE that hop, because the redirects table is '
-                    .'consulted before the router. Worth writing if the shop sends it to the wrong place, and '
-                    .'worth leaving alone if it does not';
+                $proposals[$index]['reason'] = 'this address already redirects somewhere on this shop, and NOT to '
+                    .'where this rule would send it — '.$verdict['why'].'. A row here would OVERRIDE that hop, '
+                    .'because the redirects table is consulted before the router. Worth writing if the shop sends '
+                    .'it to the wrong place, and worth leaving alone if it does not';
 
                 continue;
             }
@@ -770,15 +860,58 @@ final class RedirectMap
             $target = $this->currentPathFor($type, $wcId);
 
             if ($target === null) {
+                /*
+                 * ═══════════════════════════════════════════════════════════
+                 * TWO DIFFERENT ANSWERS WERE WEARING ONE SENTENCE
+                 * ═══════════════════════════════════════════════════════════
+                 *
+                 * `currentPathFor()` answers for products, categories, posts,
+                 * pages and brands. It returns null for everything else, and
+                 * everything else got "nothing in this shop carries {type} id
+                 * {id} — either it was never imported, or it is in the discard
+                 * bucket and this address should 404 on purpose."
+                 *
+                 * For a PRODUCT that is true and useful. For a `product_tag` or
+                 * a `pa_*` attribute term it is FALSE, and falsely in the
+                 * direction that costs the owner work: the term very probably
+                 * WAS imported. What this shop does not have is a tag archive
+                 * or an attribute archive — no route, by design, exactly as
+                 * U-05 says of brands. No amount of importing will produce one.
+                 *
+                 * AND IT IS A VOLUME PROBLEM, which is what makes it worth a
+                 * question of its own rather than a better sentence. The
+                 * exporter writes one permalinks row per term of every `pa_*`
+                 * taxonomy plus every `product_tag`; on a six-year-old shop
+                 * that is hundreds. docs/FV-IMPORT-AT-VOLUME.md §10 is explicit
+                 * that a question list which is mostly noise is a question list
+                 * nobody finishes, and hundreds of rows each giving a false
+                 * reason is the purest form of that.
+                 *
+                 * WHAT THE EXPORT ALREADY SETTLES, so that none of this is a
+                 * guess about the old install: a taxonomy with no public
+                 * archive produces an EMPTY `permalink` and a note saying
+                 * WordPress returned no archive URL for it — and an empty
+                 * permalink never reaches this method, because the loop above
+                 * skips it. So a row arriving here with a real URL is the old
+                 * site stating that it DID serve this address. The question is
+                 * then genuine, and it is the only one left: this shop has
+                 * nowhere of that kind to send it.
+                 */
                 $out[] = [
                     'source' => $source,
                     'target' => '',
                     'rule' => 'permalink',
                     'decision' => self::ASK,
-                    'question' => self::Q_NOT_IMPORTED,
-                    'reason' => 'nothing in this shop carries '.($type === '' ? 'that' : $type).' id '.$wcId
-                        .' — either it was never imported, or it is in the discard bucket and this address '
-                        .'should 404 on purpose',
+                    'question' => self::hasNoArchiveHere($type) ? self::Q_NO_EQUIVALENT : self::Q_NOT_IMPORTED,
+                    'reason' => self::hasNoArchiveHere($type)
+                        ? 'the old site served a '.$type.' archive at this address, and this shop has no '
+                            .$type.' archive at all — there is no route for one, the same way U-05 says there is '
+                            .'no brand archive. This is not a row that failed to import: it is an address with no '
+                            .'equivalent here. Point it somewhere by hand on Store → SEO & Meta → Redirects & '
+                            .'404s, or let it 404'
+                        : 'nothing in this shop carries '.($type === '' ? 'that' : $type).' id '.$wcId
+                            .' — either it was never imported, or it is in the discard bucket and this address '
+                            .'should 404 on purpose',
                     'subject' => $subject,
                 ];
 
@@ -904,6 +1037,27 @@ final class RedirectMap
         }
 
         return null;
+    }
+
+    /**
+     * Is this a taxonomy the OLD site could publish an archive for and this one
+     * cannot?
+     *
+     * The spellings are the exporter's own labels (`class-kbb-export-stage-
+     * permalinks.php` — `product_tag`, `post_tag_blog`, `attribute`,
+     * `post_category`) plus the raw taxonomy names, because a permalinks file
+     * hand-made from another export is a shape this has to survive.
+     *
+     * Brands are NOT in this list and that is deliberate: `currentPathFor()`
+     * answers for a brand with `/shop/?filter_brands=…`, which is a real
+     * destination, so a brand row never reaches the branch this feeds.
+     */
+    private static function hasNoArchiveHere(string $type): bool
+    {
+        return in_array($type, [
+            'product_tag', 'product_tags', 'tag', 'tags', 'post_tag', 'post_tag_blog',
+            'attribute', 'attributes', 'post_category',
+        ], true) || str_starts_with($type, 'pa_');
     }
 
     /** `/product-category/{path}/` — U-03, trailing slash and all. */

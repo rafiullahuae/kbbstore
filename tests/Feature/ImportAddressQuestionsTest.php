@@ -70,7 +70,9 @@ function qaTree(): array
     $parent->forceFill(['path' => 'qa-skincare', 'depth' => 0])->save();
 
     $child = Category::query()->create(['name' => 'QA Toners', 'slug' => 'qa-toners', 'parent_id' => $parent->id]);
-    $child->forceFill(['path' => 'qa-skincare/qa-toners', 'depth' => 1])->save();
+    // `source_term_id` so a permalinks row can name this category by the id the
+    // old site knew it by, which is what makes the disagreement below possible.
+    $child->forceFill(['path' => 'qa-skincare/qa-toners', 'depth' => 1, 'source_term_id' => 77001])->save();
 
     /*
      * Slugged `shop`, so its flat root address is one this storefront really
@@ -86,6 +88,31 @@ function qaTree(): array
     // address is unknown, so it is a question that cannot be answered yes.
     $orphan = Category::query()->create(['name' => 'QA Orphan', 'slug' => 'qa-orphan', 'parent_id' => null]);
     $orphan->forceFill(['path' => null, 'depth' => 0])->save();
+
+    /*
+     * ▲ A MERGED CATEGORY, ADDED SO `already-redirects` IS STILL REACHABLE.
+     *
+     * That question used to be produced by the nesting rule alone:
+     * /product-category/qa-toners/ is 301'd by the shop on its own, so every
+     * nesting proposal was one. Since Lane SEO round 2 the map compares the
+     * shop's destination with its own and discards when they AGREE — and a
+     * nesting proposal always agrees, because both are the category's canonical
+     * path. That is the noise this round removed, and it took the fixture's
+     * only source of this question with it.
+     *
+     * So the fixture now produces the disagreement the question is actually
+     * for: `qa-merged` was merged into QA Skincare, which is a real edit that
+     * writes a category_redirects row, while the permalink export in the test
+     * below claims the same address for QA Toners. Two destinations, one
+     * address, and only the owner can say which wins.
+     */
+    DB::table('category_redirects')->insert([
+        'from_path' => 'qa-merged',
+        'category_id' => $parent->id,
+        'reason' => 'merge',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     return [$parent, $child, $collides, $orphan];
 }
@@ -128,7 +155,14 @@ it('gives every question it asks a code, and never asks one it has no heading fo
      */
     qaTree();
 
-    $proposals = (new RedirectMap)->propose();
+    /*
+     * The permalink row is what makes the merged address a DISAGREEMENT: the
+     * shop sends /product-category/qa-merged/ to QA Skincare, and the export
+     * says the address belonged to QA Toners.
+     */
+    $proposals = (new RedirectMap)->propose([
+        ['type' => 'category', 'wc_id' => 77001, 'permalink' => 'https://old.test/product-category/qa-merged/'],
+    ]);
     $asking = array_values(array_filter($proposals, fn ($p) => $p['decision'] === RedirectMap::ASK));
 
     expect(count($asking))->toBeGreaterThan(0, 'the fixture asks nothing, so the loop below asserts nothing');
