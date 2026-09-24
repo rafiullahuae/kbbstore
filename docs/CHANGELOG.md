@@ -3,6 +3,30 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.265
+2.60.264 plus the guard that stops its root cause recurring, rebuilt as one
+package. Apply this instead of .264.
+
+THE SERVER NOW REFUSES A PACKAGE THAT CARRIES MIGRATIONS WITHOUT DECLARING
+THEM. `UpdateRunner` runs migrations only when `update.json` says
+`"migrations": true` -- `hasMigrations()` reads that key and never looks at the
+files. 2.60.259 through .263 were built by a hand-written script that omitted
+it, so eight migration files were copied to the live server and none ran, while
+every package reported "applied". That is what left the server holding an
+UpdateRunner which writes `update_releases.manifest` and no such column, which
+is what bricked the updater.
+
+The same shape had already happened once, with `orders.is_gift` in 2.60.85, and
+`PackageMigrationFlagTest` has warned about it since. A test in the repository
+cannot stop a builder that never runs it, so the check now lives in
+`UpdatePackage::verify()`, on the server, where every package passes however it
+was built. It refuses rather than inferring the flag: a silent correction would
+let a broken builder keep shipping and nobody would learn the builder is wrong.
+
+CONTENTS: everything from 2.60.259, .260, .261, .262 and .264, written whole
+against 2.60.258, so the order the earlier ones were applied in no longer
+matters.
+
 ## 2.60.264
 THE UPDATER COULD NOT APPLY ANYTHING AT ALL, and the cause was three
 defects stacked on each other. Every package, down to an 18 KB one carrying
