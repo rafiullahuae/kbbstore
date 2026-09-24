@@ -64,12 +64,32 @@
     --}}
     <p style="font-size:13px;color:#555;">{{ __('email.quiz_plan.steps_note') }}</p>
 
+@php
+    /*
+        THE ONE BUTTON THIS MESSAGE CARRIES, chosen three ways — Lane Q.
+
+        routine -> collection -> shop, and the label moves with the URL. The
+        routine page needs `build_my_routine`, which ships OFF; /concern/{slug}/
+        needs only that the owner has tagged enough products for that concern on
+        Catalog -> Build my routine; /shop/ always exists. Before this the
+        message fell straight from the first to the third, so a shopper who had
+        just named a concern was sent to the whole catalogue.
+
+        $concernUrl is read defensively because this view is also rendered
+        outside the mailable that supplies it.
+    */
+    $kbbConcernUrl = $concernUrl ?? null;
+    $kbbCtaUrl = $routineUrl ?? $kbbConcernUrl ?? $shopUrl;
+    $kbbCtaLabel = $routineUrl !== null
+        ? __('email.quiz_plan.routine_button')
+        : ($kbbConcernUrl !== null ? __('email.quiz_plan.concern_button') : __('email.quiz_plan.shop_button'));
+@endphp
     <p style="margin:24px 0;">
-        <a href="{{ $routineUrl ?? $shopUrl }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">{{ $routineUrl !== null ? __('email.quiz_plan.routine_button') : __('email.quiz_plan.shop_button') }}</a>
+        <a href="{{ $kbbCtaUrl }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">{{ $kbbCtaLabel }}</a>
     </p>
 
     <p style="font-size:13px;color:#555;">{{ __('email.common.paste_link') }}<br>
-        <span style="word-break:break-all;">{{ $routineUrl ?? $shopUrl }}</span></p>
+        <span style="word-break:break-all;">{{ $kbbCtaUrl }}</span></p>
 
     {{--
         WHY THIS MESSAGE ARRIVED, IN WORDS — the rule

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\Routine;
+use App\Support\ConcernCollections;
 use App\Support\RoutineConcerns;
 use App\Support\RoutineRoles;
 
@@ -539,7 +540,32 @@ class BuildMyRoutine
         $concernRole = [];
         $untagged = 0;
 
+        /*
+         * A SECOND TALLY, AND IT COUNTS A DIFFERENT THING — Lane Q.
+         *
+         * $concernRole below answers "what can a ROUTINE draw on", and for that
+         * an untagged product counts towards every concern, because that is what
+         * forConcern() does with it.
+         *
+         * A CONCERN PAGE is not that. App\Support\ConcernCollections::query()
+         * selects `routine_concerns LIKE '%"slug"%'` -- products EXPLICITLY
+         * tagged -- and it does not look at routine_role at all. So the number
+         * that decides whether /concern/acne/ exists is the number of live,
+         * in-stock products somebody ticked the "Acne & blemishes" chip on, and
+         * nothing else.
+         *
+         * Getting this wrong in the owner's favour would be the worst possible
+         * failure of this screen: a countdown reading "you have 400 products for
+         * acne" over a page that still 404s. So it is tallied here, before the
+         * role check, from the explicit list only.
+         */
+        $concernTagged = array_fill_keys(RoutineConcerns::slugs(), 0);
+
         foreach ($rows as $row) {
+            foreach (RoutineConcerns::clean($row->routine_concerns) as $slug) {
+                $concernTagged[$slug]++;
+            }
+
             $role = RoutineRoles::normalise($row->routine_role);
 
             if ($role === null) {
@@ -561,8 +587,21 @@ class BuildMyRoutine
 
         $routines = [];
 
+        /*
+         * READ ONCE — Lane Q. This was `Routine::overrides()[$slug]` INSIDE the
+         * loop, and overrides() is a query rather than a memoised accessor: the
+         * screen's own coverage call was doing `select * from routines` eight
+         * times, once per concern, for one table that does not change between
+         * them. Measured before and after on the same fixture: coverage() ran
+         * 10 queries and now runs 3. It is an N+1 in the exact shape
+         * StorefrontQueryBudgetTest's header describes — invisible to a budget
+         * because it scales with the CONCERN list rather than the catalogue,
+         * and so flat under every fixture anyone would have tried.
+         */
+        $overrides = Routine::overrides();
+
         foreach (RoutineConcerns::slugs() as $slug) {
-            $roles = $this->rolesFor(Routine::overrides()[$slug] ?? null);
+            $roles = $this->rolesFor($overrides[$slug] ?? null);
             $empty = [];
 
             foreach ($roles as $role) {
@@ -583,6 +622,81 @@ class BuildMyRoutine
             'untagged' => $untagged,
             'by_role' => $byRole,
             'routines' => $routines,
+            'concern_pages' => self::concernPageProgress($concernTagged),
         ];
+    }
+
+    /**
+     * How close each concern is to having a page — Lane Q.
+     *
+     * ── WHY THE OWNER NEEDS THIS AND DID NOT HAVE IT ───────────────────────
+     *
+     * docs/SEO-FEATURE-MATRIX.md ranks concern-led landing pages as the single
+     * highest-value action left in this project, and §3 item 1 sizes the job as
+     * "tag 30-45 products, about 2-3 hours". The screen that job is done on
+     * could not tell him how far through it he was. /concern/{slug}/ 404s until
+     * a concern has copy AND ConcernCollections::MIN_PRODUCTS live tagged
+     * products, and both halves were invisible from here — so the work was a
+     * leap of faith with no landing marked.
+     *
+     * This is the countdown. Per concern: how many count, how many are left,
+     * whether the copy exists, and whether the page is answering right now.
+     *
+     * ── WHAT IT COSTS: ONE QUERY, FOR ALL EIGHT ───────────────────────────
+     *
+     * The COUNTS are free — coverage() has already read every live, in-stock
+     * product's routine_concerns for its own tally, and this is arithmetic over
+     * that.
+     *
+     * The one query is ConcernCollections::live(), asked ONCE for the whole set
+     * rather than isLive() eight times. That is deliberate redundancy and worth
+     * its query: `live` is the claim "this page is answering right now", and it
+     * is answered by the same class the ROUTER asks rather than re-derived from
+     * the two numbers beside it. Two expressions of one rule drift, and this one
+     * is on a screen whose entire job is to be believed. counts() makes it one
+     * query however many concerns the owner enables.
+     *
+     * BuildMyRoutineTest asserts the tally here and ConcernCollections' own
+     * count agree, because a countdown that disagrees with the router is worse
+     * than no countdown.
+     *
+     * `needed` is what is LEFT, floored at zero rather than going negative:
+     * "0 more" is the finish line and a negative number invites the reading
+     * that something is wrong.
+     *
+     * @param  array<string, int>  $tagged  slug => live tagged products
+     * @return list<array<string, mixed>>
+     */
+    private static function concernPageProgress(array $tagged): array
+    {
+        $out = [];
+        $live = ConcernCollections::live();
+
+        foreach (RoutineConcerns::slugs() as $slug) {
+            $count = (int) ($tagged[$slug] ?? 0);
+            $hasCopy = ConcernCollections::isEnabled($slug);
+
+            $out[] = [
+                'concern' => $slug,
+                'label' => RoutineConcerns::adminLabel($slug),
+                'tagged' => $count,
+                'min' => ConcernCollections::MIN_PRODUCTS,
+                'needed' => max(0, ConcernCollections::MIN_PRODUCTS - $count),
+                /*
+                 * Copy is written in InterfaceStrings and listed in
+                 * ConcernCollections::ENABLED. The owner cannot add it from this
+                 * screen and is not meant to think he can — the screen says
+                 * "no page copy yet" and names what that costs, rather than
+                 * offering a box that would save nothing. ModuleSchema's header
+                 * is the standing rule about controls that save nothing.
+                 */
+                'has_copy' => $hasCopy,
+                // Straight from the class the router asks. See the note above.
+                'live' => in_array($slug, $live, true),
+                'path' => ConcernCollections::path($slug),
+            ];
+        }
+
+        return $out;
     }
 }

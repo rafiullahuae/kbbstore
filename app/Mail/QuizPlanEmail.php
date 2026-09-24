@@ -80,6 +80,19 @@ class QuizPlanEmail extends Mailable
         private array $routines,
         private string $shopUrl,
         private ?string $routineUrl,
+        /*
+         * The concern COLLECTION page for the same shopper, or null — Lane Q.
+         *
+         * Defaulted, so every existing caller and every test that builds this
+         * mailable by hand keeps working unchanged. The three-way fall is
+         * routine, then collection, then the shop: /routines/{concern} needs a
+         * module that ships OFF, /concern/{slug}/ does not, and the shop always
+         * exists. It is a separate parameter rather than a second value in
+         * $routineUrl because the BUTTON'S WORDING differs — "Build my routine"
+         * over a collection URL would describe a page the reader is not about
+         * to open.
+         */
+        private ?string $concernUrl = null,
     ) {
         $this->brand = \App\Services\Mail\EmailBranding::forMailable(true, self::class);
     }
@@ -111,6 +124,7 @@ class QuizPlanEmail extends Mailable
                 'routines' => $this->routines,
                 'shopUrl' => $this->shopUrl,
                 'routineUrl' => $this->routineUrl,
+                'concernUrl' => $this->concernUrl,
                 'brand' => $this->brand,
             ],
         );

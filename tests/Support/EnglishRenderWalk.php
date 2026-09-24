@@ -431,8 +431,27 @@ final class EnglishRenderWalk
      * The whole tile is already wrapped in a link to the product page, so
      * nothing became unreachable; `View product` is the word product-card has
      * always used for this case, so no new string was introduced either.
+     *
+     * ── ADVANCED AGAIN BY LANE Q, AND FOR EXACTLY ONE PAGE ─────────────────
+     *
+     * skin-quiz, and the whole of the change is INSIDE its inline script. The
+     * quiz gained a second hand-off destination: /concern/{slug}/, which unlike
+     * the routine pages is not behind the build_my_routine module, so it is the
+     * only way out of the quiz the shipped shop can ever offer. The script grew
+     * pickFrom() and concernPick(), and routineLinkHTML() grew a second branch.
+     *
+     * NOTHING A SHOPPER SEES MOVED, and that was measured rather than asserted.
+     * The rendered page was compared against the base commit with every
+     * <script> block removed and the two are IDENTICAL -- 15,349 bytes outside
+     * the scripts on both sides, six script blocks on both sides. The new table
+     * is emitted only when a concern page actually exists, nothing in this
+     * repository is tagged for any concern, and the shipped document contains
+     * neither `window.KBB_CONCERN_PAGES = ` nor the string `/concern/`.
+     * tests/Feature/QuizConcernHandoffTest.php's first case fetches all of it.
+     *
+     * No other page in the walk moved a byte.
      */
-    public const BASE_COMMIT = 'ec57966138d2b10009edf20e4209dc200e092324';
+    public const BASE_COMMIT = '6f5c54386eb4f45b4d5e7a68f46edff426cc72b8';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

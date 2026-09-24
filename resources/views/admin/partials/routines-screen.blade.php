@@ -70,6 +70,21 @@
                color:var(--ink-soft,#6b7280)}
 .rtn-rolecount b{color:inherit;font-variant-numeric:tabular-nums}
 .rtn-rolecount.is-gap{border-color:#b4443c;color:#b4443c}
+/* The concern-page countdown (Lane Q). Sized entirely with grid and calc(): no
+   script measures anything here, which two tests forbid by name. The row is a
+   two-column grid at any width -- name and progress -- with the name column
+   allowed to shrink (min-width:0) so a long label wraps instead of pushing the
+   bar off a 390px screen. */
+.rtn-cp{display:grid;gap:10px;margin-top:12px;min-width:0}
+.rtn-cprow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline;min-width:0}
+.rtn-cpname{font-size:13px;font-weight:600;min-width:0}
+.rtn-cpnum{font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft,#6b7280);white-space:nowrap}
+.rtn-cpbar{grid-column:1/-1;height:6px;border-radius:99px;background:var(--border,#e6e6e6);overflow:hidden}
+.rtn-cpfill{display:block;height:100%;border-radius:99px;background:#b4443c}
+.rtn-cprow.is-live .rtn-cpfill{background:#2f7d5d}
+.rtn-cprow.is-live .rtn-cpnum{color:#2f7d5d}
+.rtn-cpnote{grid-column:1/-1;font-size:11.5px;line-height:1.5;color:var(--ink-soft,#6b7280)}
+.rtn-cpnote code{font-size:11px;word-break:break-all}
 .rtn-filters{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .rtn-filters input{flex:1 1 170px;min-width:0;padding:8px 10px;font:inherit;
                    border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
@@ -294,6 +309,65 @@
       + '<div class="rtn-sub">Counted over products a shopper can actually be shown — published, visible and in stock. '
         + 'A step with nothing behind it is drawn on the storefront as “not stocked yet”, never filled with a guess.</div>'
       + '<div class="rtn-roles">' + roles + '</div>'
+      + '</div>'
+      + concernPagesView();
+  }
+
+  /* ------------------------------------------- the concern-page countdown
+     WHY THIS IS ON THIS SCREEN AND NOT ANOTHER ONE. This is where the tagging
+     happens, and until now the tagging had no visible finish line: a concern
+     page 404s until it has copy AND enough live tagged products, and neither
+     half could be seen from the screen the products are tagged on. So "tag
+     30-45 products" was a leap of faith. It is a countdown now.
+
+     IT COUNTS WHAT THE PAGE COUNTS, which is not what the routine counts. A
+     product with no concerns suits EVERY routine, and contributes to NO concern
+     page -- the page selects explicit tags only. The server does that
+     arithmetic (BuildMyRoutine::concernPageProgress); this only draws it. */
+  function concernPagesView(){
+    var rows = (data.coverage && data.coverage.concern_pages) || [];
+    if (!rows.length) return '';
+
+    var live = rows.filter(function(r){ return r.live; }).length;
+
+    var list = rows.map(function(r){
+      /* A bar that fills to the floor and stops there. Over-tagging past the
+         minimum is good but it is not more progress towards a page existing,
+         and a bar past 100% would say the opposite. calc() in a style
+         attribute, not a measured pixel width. */
+      var pct = r.min > 0 ? Math.min(100, Math.round((r.tagged / r.min) * 100)) : 0;
+
+      var note;
+      if (r.live) {
+        note = 'Live now at <code>' + esc(r.path) + '</code>.';
+      } else if (!r.has_copy && r.needed > 0) {
+        note = 'Needs ' + r.needed + ' more tagged product' + (r.needed === 1 ? '' : 's')
+             + ', and page copy — which is written in the code, not on this screen. Ask for it by name.';
+      } else if (!r.has_copy) {
+        note = 'Enough products. Waiting on page copy, which is written in the code, not on this screen. Ask for it by name.';
+      } else {
+        note = 'Needs ' + r.needed + ' more tagged product' + (r.needed === 1 ? '' : 's')
+             + ' to go live at <code>' + esc(r.path) + '</code>.';
+      }
+
+      return '<div class="rtn-cprow' + (r.live ? ' is-live' : '') + '">'
+        + '<div class="rtn-cpname">' + esc(r.label) + '</div>'
+        + '<div class="rtn-cpnum">' + r.tagged + ' / ' + r.min + '</div>'
+        + '<div class="rtn-cpbar"><span class="rtn-cpfill" style="width:' + pct + '%"></span></div>'
+        + '<div class="rtn-cpnote">' + note + '</div>'
+        + '</div>';
+    }).join('');
+
+    return '<div class="rtn-card" style="margin-top:12px">'
+      + '<div class="rtn-head"><div>'
+      + '<div class="rtn-title">Concern landing pages — ' + live + ' of ' + rows.length + ' live</div>'
+      + '<div class="rtn-sub">Each of these is a page of its own for shoppers searching by problem rather than by product type. '
+        + 'A concern page does not exist until it has page copy AND at least ' + esc(String((rows[0] || {}).min || '')) + ' products that are '
+        + 'tagged for it, published, visible and in stock — counted below. Until then the address is a 404 on purpose: '
+        + 'a near-empty collection page ranks worse than no page at all. '
+        + 'Only products you have ticked the chip on count here; a product with no concerns suits every routine and no page.</div>'
+      + '</div></div>'
+      + '<div class="rtn-cp">' + list + '</div>'
       + '</div>';
   }
 
@@ -318,9 +392,11 @@
     return '<div class="rtn-card">'
       + '<div class="rtn-head"><div><div class="rtn-title">Which step does each product fill?</div>'
       + '<div class="rtn-sub">A product with no step is never offered in a routine. Concerns are optional: '
-        + 'leave them all off and the product suits every routine; switch some on and it is only offered in those.</div></div></div>'
+        + 'leave them all off and the product suits every routine; switch some on and it is only offered in those. '
+        + 'The search reads ingredient lists as well as names, so “centella”, “niacinamide” or “fragrance-free” '
+        + 'find the products whose labels say so even when their names do not.</div></div></div>'
       + '<div class="rtn-filters">'
-      + '<input id="rtn-q" type="search" placeholder="Search name or SKU" value="' + esc(query) + '" autocomplete="off">'
+      + '<input id="rtn-q" type="search" placeholder="Search name, SKU or ingredients" value="' + esc(query) + '" autocomplete="off">'
       + '<select id="rtn-role">' + opts + '</select>'
       + '</div>'
       + body
@@ -347,6 +423,10 @@
       + '<div class="rtn-meta">' + esc(p.brand || '—')
         + (p.sku ? ' · ' + esc(p.sku) : '')
         + (p.live ? '' : ' · <span class="rtn-off">not on the storefront</span>') + '</div>'
+      /* Why this row matched, when neither the name nor the SKU shows it. The
+         server sends this only in that case, so it never repeats what is
+         already on the line above. */
+      + (p.ingredient_hit ? '<div class="rtn-meta">Ingredients: ' + esc(p.ingredient_hit) + '</div>' : '')
       + '<select data-rtn-rolefor="' + p.id + '">' + roleOpts + '</select>'
       + '<div class="rtn-chips">' + chips + '</div>'
       + '</div>';
