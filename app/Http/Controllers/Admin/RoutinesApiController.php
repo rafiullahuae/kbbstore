@@ -11,10 +11,13 @@ use App\Models\Routine;
 use App\Services\BuildMyRoutine;
 use App\Services\ModuleSchema;
 use App\Services\SettingsService;
+use App\Support\DemoSeed;
 use App\Support\RoutineConcerns;
 use App\Support\RoutineRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Catalog → Build my routine. The owner's half of Phase 10 — Lane FM.
@@ -81,6 +84,30 @@ class RoutinesApiController extends Controller
 
         return response()->json([
             'module_on' => $this->routines->enabled(),
+            /*
+             * How many demo rows this feature's own demo type has put in the
+             * catalogue, so the screen can say so on every tab rather than only
+             * where the button is. Read from the shop's existing demo ledger —
+             * there is no second record of what is demo.
+             *
+             * Guarded, because `demo_seed_log` is created on first use: a shop
+             * that has never imported anything has no table, and asking would
+             * throw on the screen's main request. DemoSeed::tableExists()
+             * memoises that question for the request.
+             */
+            'demo' => ['routines' => DemoSeed::tableExists()
+                ? DB::table(DemoSeed::TABLE)
+                    ->where('type', 'routines')
+                    /*
+                     * PRODUCTS ONLY. The import also logs the demo brand it
+                     * creates, and a screen that said "6 demo rows are in your
+                     * catalogue" over five products would be wrong in the one
+                     * direction that matters — he counts the shelf, not the
+                     * ledger.
+                     */
+                    ->where('model', Product::class)
+                    ->count()
+                : 0],
             'tabs' => ModuleSchema::tabs(BuildMyRoutine::SCHEMA, BuildMyRoutine::TABS, $values),
             'settings' => $values,
             'roles' => array_map(
@@ -111,6 +138,54 @@ class RoutinesApiController extends Controller
                     'amount' => (int) $c->amount,
                 ])->all(),
         ]);
+    }
+
+    /**
+     * POST /admin-api/routines-module — the one switch that publishes the pages.
+     *
+     * ── WHY THIS ENDPOINT EXISTS AND IS NOT THE MODULES SCREEN'S ───────────
+     *
+     * The owner asked to "turn on off routine section completely". The switch
+     * already existed at Store → Modules → Build my routine; what did not exist
+     * was any sign of it on the screen where the work is done, so he either did
+     * not know it was there or did not trust that it turned everything off.
+     *
+     * THERE IS STILL ONLY ONE SETTING. This writes `module_toggles` through
+     * SettingsService::setModule(), which is the same key, the same writer and
+     * the same storage the Modules screen uses. Flipping it here and reading it
+     * there agree because there is nothing to disagree.
+     *
+     * SO WHY NOT JUST POST TO admin-api/modules? Because that endpoint takes
+     * the WHOLE module map and ModuleRegistry::save() rebuilds `module_devices`
+     * from exactly the keys it was handed — posting one module from this screen
+     * would silently reset every other module's device setting to its default.
+     * A narrower writer that touches one toggle and nothing else is the safe
+     * shape, and it is strictly less powerful than the screen it complements.
+     *
+     * store.settings, NOT catalog.*, and that is the whole point of giving it
+     * its own rule. This block's own header states the line it must not cross:
+     * the catalog.* endpoints beside it change WHICH PRODUCT FILLS WHICH STEP,
+     * while this one puts two pages on the storefront. An `editor` who may
+     * retag the catalogue may not publish it. Fails closed: with no rule
+     * matching, AdminCapabilities refuses.
+     */
+    public function saveModule(Request $request): JsonResponse
+    {
+        $data = $request->validate(['on' => ['required', 'boolean']]);
+
+        $on = (bool) $data['on'];
+
+        $this->settings->setModule(BuildMyRoutine::MODULE, $on);
+
+        /*
+         * The value WRITTEN, not a read-back. Setting::map() memoises in a
+         * process-level static as well as the cache (CLAUDE.md), so asking the
+         * settings service again inside this same request can answer with what
+         * was true before the write. The screen reloads through
+         * GET /admin-api/routines straight afterwards, which is a fresh
+         * process and the honest source.
+         */
+        return response()->json(['ok' => true, 'module_on' => $on]);
     }
 
     /** POST /admin-api/routines-settings — the module's own settings. */
@@ -240,6 +315,10 @@ class RoutinesApiController extends Controller
 
         $term = trim((string) $request->query('q', ''));
 
+        // Declared out here so the response below can report it without a
+        // null-coalesce standing in for "this branch did not run".
+        $hasIngredients = false;
+
         if ($term !== '') {
             /*
              * The escape character is DECLARED, and that is not decoration.
@@ -284,10 +363,47 @@ class RoutinesApiController extends Controller
              * builds, so the endpoint still costs the same two round trips (the
              * count and the page) however many columns are searched.
              */
-            $query->where(function ($q) use ($pattern) {
+            /*
+             * ── THE COLUMN IS PROBED, NOT ASSUMED — Lane Q, round 3 ──────────
+             *
+             * THE BUG THIS FIXES, AND IT IS ONE THIS LANE SHIPPED. Round 2
+             * added `ingredients` to this WHERE. `products.ingredients` is
+             * added by 2026_10_05_000000_add_product_editor_columns.php, which
+             * guards every column with Schema::hasColumn -- so on a server where
+             * that migration has not run, the column simply is not there and
+             * this clause is a SQL error. Browsing the table works perfectly
+             * (no term, no clause) and EVERY SEARCH 500s. Reproduced in
+             * Chromium against a database with the column dropped: two 500s and
+             * "Could not load the product list."
+             *
+             * That is not hypothetical on this project. CLAUDE.md records five
+             * packages whose eight migrations "were copied to the live server
+             * and never ran", and the owner reported this screen's search as
+             * "not working, not showing any results" against a server this lane
+             * cannot inspect.
+             *
+             * So the search DEGRADES instead of failing: a shop without the
+             * column gets the name and SKU search it had before round 2, and
+             * the response says which it gave, so the screen can tell the owner
+             * why the ingredient terms are finding nothing instead of leaving
+             * him to conclude the box is broken. A 500 teaches him not to trust
+             * the search; a narrower search that says so does not.
+             *
+             * COST: one extra round trip, and only on a request that carries a
+             * term. Not memoised in a static -- this file's own suite drops the
+             * column to prove the degraded path, and a process-level memo would
+             * make that test order-dependent, which is the trap CLAUDE.md
+             * already records against Setting::map().
+             */
+            $hasIngredients = Schema::hasColumn('products', 'ingredients');
+
+            $query->where(function ($q) use ($pattern, $hasIngredients) {
                 $q->whereRaw('name LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern])
-                    ->orWhereRaw('sku LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern])
-                    ->orWhereRaw('ingredients LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern]);
+                    ->orWhereRaw('sku LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern]);
+
+                if ($hasIngredients) {
+                    $q->orWhereRaw('ingredients LIKE ? ESCAPE '.self::LIKE_ESCAPE_SQL, [$pattern]);
+                }
             });
         }
 
@@ -313,6 +429,15 @@ class RoutinesApiController extends Controller
             'total' => $total,
             'page' => $page,
             'per_page' => self::PER_PAGE,
+            /*
+             * WHICH COLUMNS THIS ANSWER ACTUALLY SEARCHED. Null when nothing was
+             * typed. The screen prints it, so "centella finds nothing" is
+             * distinguishable from "this server cannot search ingredients yet"
+             * without anybody reading a log.
+             */
+            'searched' => $term === ''
+                ? null
+                : ($hasIngredients ? ['name', 'sku', 'ingredients'] : ['name', 'sku']),
             'products' => $rows->map(fn (Product $p) => [
                 'id' => (int) $p->id,
                 'name' => (string) $p->name,
