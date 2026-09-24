@@ -3,6 +3,77 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.270
+Catalog -> Build my routine is now eight tabs, and the import stopped asking
+eleven questions whose answer was always the same.
+
+THE ROUTINE SCREEN WAS ONE 693-LINE PAGE and the owner had to scroll past all of
+it to reach the only job that matters. It is now one flat strip:
+Cleanser · Toner · Treatment · Moisturiser · SPF · Concern pages · Wording ·
+Settings, copied from Appearance -> Checkout page because that is the pattern he
+already uses daily. He chose the two things that would otherwise have been
+guesses: LOCKED MEANS DONE, NEVER DISABLED — nothing is gated on anything else
+and he works in any order — and every section gets a tab rather than staying
+stacked below. From a cold shop he is tagging in two clicks: the strip names the
+next step and the empty body carries the button that fills it.
+
+THE TAB LABEL CARRIES TWO FIGURES BECAUSE THEY ANSWER TWO QUESTIONS. The COUNT
+is products a shopper can actually be shown — published, visible, in stock — so
+four tagged products that are all out of stock read 0, which is what the
+storefront can draw on. The TICK is "no routine I am showing still draws this
+step empty": four toners all tagged for acne leave seven routines short, and a
+count-based tick would have called that finished. A routine he has hidden is not
+counted, because a step it cannot fill is not a gap a shopper can reach.
+
+AND THE SEARCH ON A STEP TAB LOOKS AT THE WHOLE CATALOGUE, NOT THE STEP.
+Narrowed to the open step it returns nothing on an empty step — which is every
+step on this shop today — and the owner would have concluded the search was
+broken on the first word off the worksheet. Measured: "centella" on the empty
+SPF tab returned 0 rows before and 14 after.
+
+ONE CARD WAS CONSOLIDATED AND IT IS SAID HERE RATHER THAN LEFT TO BE NOTICED:
+"What each step can draw from" is gone, because its five role chips ARE the five
+step tabs now — same numbers, one card earlier, where he is about to click. Its
+other two options, "Untagged only" and "Every product", survive as a scope
+select on every step tab. Nothing else was removed, and a test names all
+fourteen behaviour hooks the old page had and fails if one goes missing.
+
+THE IMPORT STOPPED ASKING ABOUT THINGS IT HAD ALREADY SOLVED. 2.60.269 taught
+the shop to derive the fifteen legacy category redirects; the importer had not
+learned, so it still proposed writing all of them and asked eleven identical
+questions, each ending "worth leaving alone if it does not" — where the answer
+is always leave it alone. On a fully imported tree: rows to write 38 -> 8,
+questions 11 -> 0.
+
+AND A WRITTEN ROW IS WORSE THAN REDUNDANT, which is why this is a defect and not
+tidying. The shop's answer is derived, so it follows the category when it is
+renamed or re-parented. A stored row does not — and the row WINS, because the
+redirects table is read before the router. Measured: write the row, rename the
+parent, and a one-hop redirect becomes a two-hop chain; rename the leaf too and
+it becomes a 301 onto a 404. The same reasoning that said 2.60.269 must not SEED
+those rows says the import must not WRITE them.
+
+Idempotency proved the strict way: first run writes 8, second writes ZERO — not
+"writes the same 8", which would pass on a build that recomputed every
+destination. Byte-identical table, no doubled path segments, and no article body
+edited.
+
+TWO SENTENCES ON THE IMPORT SCREEN STOPPED BEING FALSE. A product tag or
+attribute term used to read "nothing in this shop carries {type} id {id} —
+either it was never imported…", which is untrue: the term WAS imported; what
+this shop has no equivalent for is a tag ARCHIVE, by design. And the screen's
+headline note still described proposals as "questions rather than discards",
+which is exactly what this round reversed, above numbers that had changed
+underneath it.
+
+IN-CONTENT LINKS ARE STILL NOT REWRITTEN, and the case against got stronger
+rather than weaker: a body linking to /toners/ already lands in one hop with no
+row and no rewrite, a derived redirect follows the category while a rewritten
+body freezes today's nesting into the owner's prose, and a body is the one
+artefact here that cannot be recomputed.
+
+No new route, no new endpoint, no new capability, no migration.
+
 ## 2.60.269
 FIFTEEN ADDRESSES GOOGLE HAS INDEXED STOPPED BEING 404s.
 
