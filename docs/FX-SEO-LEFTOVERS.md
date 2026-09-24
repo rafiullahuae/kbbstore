@@ -193,3 +193,103 @@ and the test uses both.
   Left alone on purpose. An Arabic page reporting the English name to GA4 is
   arguably *right* — one `item_name` per product rather than two — and changing
   it is an analytics decision for the owner, not a defect to fix quietly.
+
+---
+
+# Lane E — the four Phase 12 `[~]` items, re-checked against the code
+
+**The headline: three of the four were already done, and the plan's `[~]` marks
+are stale.** This lane's brief opened "`products` carries no SEO columns at
+all", which is the opposite of what the plan text at that very line now says.
+Verified in the code rather than read off the plan:
+
+| Item | Plan line | State found | Left |
+|---|---|---|---|
+| Per-product SEO storage | 1782 | **Done.** `products.seo` is in the Phase 0 schema; the editor's *Search appearance* panel writes it through `ProductSeo::normalise()`; `Store\ProductController::show()` reads it | nothing |
+| Yoast importer | 1806 | **Done.** `SeoImporter` is entity #N on `ImportRunner` (line 164), not a side script | the tier question, which is the owner's |
+| Structured data | 1812 | **Done.** The named remainder — category pages on plain `website` — is gone; they publish `CollectionPage` + `ItemList` | nothing |
+| Image pipeline · cache | 1824 | **Done in code, off by default.** `CacheHeaders` is appended to the `web` group by `AppServiceProvider`; `cache.headers_enabled` ships `false` | one manual `.htaccess` placement by the owner |
+
+Measured on a real preview, every page type, JSON-LD parsed rather than grepped:
+
+```
+home       Organization, WebSite(+SearchAction)
+shop       Organization, WebSite, CollectionPage, BreadcrumbList
+category   Organization, WebSite, CollectionPage, BreadcrumbList
+product    Organization, WebSite, Product(+Offer), BreadcrumbList
+brands A–Z Organization, WebSite, CollectionPage, BreadcrumbList
+cart       Organization, WebSite
+```
+
+Cache headers, measured with the switch off (how it ships) and on:
+
+```
+off   /  /shop/  /cart/  /my-account   no-cache, private          (unchanged)
+on    /  /shop/                        max-age=0, must-revalidate, no-cache, private
+on    /cart/  /my-account              ... + no-store
+```
+
+So the switch is real and it is not "built, never wired up". It stays off.
+
+## The defect this lane actually found: `%%title%%` was deleted, not resolved
+
+**Yoast's shipped default title template for a product is
+`%%title%% %%sep%% %%sitename%%`**, so it is what most of a real export carries.
+`SeoImporter` stores it verbatim — correctly; expanding tokens at import time
+would freeze this store's name into every row.
+
+`App\Support\Seo::titleOf()`'s `title_is_final` branch rendered that template
+with `sep`, `sitename` and `page` and **not** `title`, and
+`TitleTemplate::render()` DELETES a token it is not given. Measured on a real
+product page through a real HTTP request, before and after:
+
+```
+before   <title>K-Beauty Bliss</title>
+         <meta property="og:title"  content="K-Beauty Bliss">
+         <meta name="twitter:title" content="K-Beauty Bliss">
+
+after    <title>Heartleaf Quercetinol Pore Deep Cleansing Foam | K-Beauty Bliss</title>
+         og:title and twitter:title likewise
+```
+
+Those three tags are the **only** lines that differ between the two documents;
+the body is byte-identical. Importing the owner's export would have published
+the same six words as the title of all 671 product pages — and as the share-card
+title — while the import reported every row imported successfully. It is silent
+on the shop, because the page itself renders perfectly either way.
+
+It could not be fixed by adding `'title' => $rawTitle` to that array: in that
+branch `$rawTitle` **is** the template, so that substitutes the template into
+itself. `%%title%%` in Yoast means the *post* title — here the product's own
+name — which only the caller knows. So the caller passes it as `title_token`,
+and the branch is byte-identical to before when it is absent. Only
+`Store\ProductController` passes it, so no other page's title can move.
+
+**Still physical, and deliberately not changed:** brand, category and page SEO
+overrides go through the same branch and still delete `%%title%%`. Nothing
+writes a Yoast template into those columns — `SeoImporter` resolves its row to a
+`Product` by `wc_id` and rejects anything else — so the only way to get one
+there is to type it by hand. Fixing it means each of those controllers passing
+its own natural title, which is four more files across two other lanes' areas
+for a case no import can produce. Named here rather than half-done.
+
+## The test that was missing, and why it was the expensive kind of missing
+
+`tests/Feature/YoastImportReachesTheHeadTest.php`. Before it,
+`YoastSeoImportTest` asserted what the importer writes to the model and issued
+**no HTTP request**; `ProductSeoTest` asserted the rendered `<head>` and **never
+ran the importer**. Each half was green over a join that was broken — which is
+exactly the shape of the two defects this feature has already shipped (the
+`seo_json`/`seo` column split, and the `seo_title`/`title` key rename). Both
+were live while both halves had passing tests.
+
+## Not fixed, and not this lane's to decide
+
+**A variable product's `products.price` is NULL and the tile reads AED 0.**
+`Product::effectivePrice()` ends `return (int) $this->price`, and `(int) null`
+is `0` — so the tile prints AED 0 and the product sorts first by price.
+`App\Support\Seo` no longer publishes `{"price":"0.00"}` (it publishes a real
+`AggregateOffer`), so the document is right while the tile is wrong. Backfilling
+the column breaks import idempotency unless `ProductImporter` stops writing null
+over it in the same change, and `ProductImporter` is Lane A's. **Reported, not
+decided.**
