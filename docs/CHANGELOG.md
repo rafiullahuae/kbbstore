@@ -3,6 +3,63 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.264
+THE UPDATER COULD NOT APPLY ANYTHING AT ALL, and the cause was three
+defects stacked on each other. Every package, down to an 18 KB one carrying
+two files, answered a bare "Server Error".
+
+1 · THE PACKAGES WERE BUILT WRONG, and this one is the root cause. 2.60.259
+through .263 were built by a hand-written script instead of
+`php artisan kbb:package`, and it left out the `migrations` key. UpdateRunner
+reads that key and nothing else -- `hasMigrations()` never looks at the files
+-- so all eight migration files were copied to the server and NONE of them
+ran, while every package still reported "applied". `PackageMigrationFlagTest`
+has warned about exactly this since the is_gift incident; the warning was in
+the repository and the builder that ignored it was not.
+
+2 · SO THE SERVER HELD THE CODE AND NOT THE COLUMN. 2.60.260 installed an
+UpdateRunner that writes `update_releases.manifest` and, because of 1, did not
+add the column. Every apply after that hit it.
+
+3 · AND ONE SWALLOWED EXCEPTION SPREAD TO EVERY WRITE AFTER IT.
+`recordManifest()` wrote with `$release->update()` inside a try/catch whose
+docblock claimed that made it incapable of failing an update. Eloquent's
+`update()` is `fill()` then `save()`: `fill()` puts `manifest` on the model
+FIRST, and only then does the save throw. The catch swallowed the throw and
+left the attribute on the model, dirty -- so every later `save()` re-sent it:
+the `backup_id` write, the `status` write, then `rollback()`'s status write,
+and finally the `['status' => 'failed']` inside `rollback()`'s own catch, which
+is the third throw and the one nothing catches. It escaped `apply()`, escaped
+the controller, and became the 500. The guard did not contain the failure, it
+seeded it.
+
+WHAT CHANGED. Every write to `update_releases` now goes through one private
+writer that cannot dirty the model (query builder, no model state) and cannot
+throw (logged, never raised) -- because by the time a rollback writes its
+status the files are already restored, and losing the row AND showing a bare
+500 is far worse than losing the row. `recordManifest()` also checks the column
+exists before writing, so the ordinary window between a package's files landing
+and its migrations running costs nothing. And the exit code of
+`Artisan::call('migrate')` is read: a migration that fails now fails the
+update, rolls the files back and puts the migrator's own output on the screen,
+instead of reporting success over a broken schema.
+
+NOTE ON APPLYING THIS ONE. The updater cannot repair itself -- `recordManifest`
+runs at the top of `apply()`, before any file is copied -- so the column has to
+exist before this package will go on. One statement, in the host's database
+tool:
+
+    ALTER TABLE `update_releases` ADD COLUMN `manifest` LONGTEXT NULL;
+
+After that this package applies normally, its eight migrations run for the
+first time, and the `add_manifest_to_update_releases` migration finds the
+column already there and returns without touching it.
+
+CONTENTS. Everything from 2.60.259, .260, .261 and .262 as well, written whole
+against 2.60.258, so the order the earlier packages were applied in no longer
+matters. Built with `php artisan kbb:package --since=`, which is the only
+builder this project should ever use again.
+
 ## 2.60.263
 NO CODE CHANGE. Two files out of 2.60.262, shipped alone because the host
 would not apply the whole thing.
