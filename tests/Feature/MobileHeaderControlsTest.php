@@ -92,8 +92,27 @@ it('changes nothing about a header nobody has touched', function () {
      * MUTATION (run, red): default `size_logo` to 22 instead of 0 in
      * MobileHeader::SCHEMA. `--mh-logo:22px` is emitted and this fails.
      */
+    /*
+     * ▲ array_key_exists(), NOT ->not->toHaveKey($var, $message).
+     *
+     * THIS BLOCK COULD NOT FAIL FOR ITS WHOLE LIFE. Pest's second argument to
+     * toHaveKey() is the expected VALUE, not a failure message -- so the old
+     * form asserted "does not have `--mh-logo` set to the string 'is emitted at
+     * the defaults, so an untouched shop's header moves'", which is true
+     * whatever the shop emits. The claim above it, that an untouched shop's
+     * header does not move, was therefore unverified while being counted as
+     * verified, which is worse than not having written it.
+     *
+     * Found by Lane SEO on 24 September 2026, in its OWN test first -- the
+     * identical shape, caught by mutating it -- and then reported here rather
+     * than left. MUTATION re-run after this fix: default `size_logo` to 22
+     * instead of 0 in MobileHeader::SCHEMA and this block is red on
+     * `--mh-logo`, as its docblock above always claimed.
+     */
     foreach (['--mh-logo', '--mh-logoacc', '--mh-stsize', '--mh-phsize', '--mh-badge', '--mh-trendsize'] as $var) {
-        expect($vars)->not->toHaveKey($var, "{$var} is emitted at the defaults, so an untouched shop's header moves");
+        expect(array_key_exists($var, $vars))->toBeFalse(
+            "{$var} is emitted at the defaults, so an untouched shop's header moves"
+        );
     }
 });
 
