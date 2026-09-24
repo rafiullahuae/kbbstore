@@ -401,8 +401,29 @@ final class DocumentMediaRewrite
             $from = $offset + $src['at'];
             $length = strlen($src['value']);
 
-            $out .= substr($html, $cursor, $from - $cursor)
-                .htmlspecialchars($map[$url], ENT_QUOTES | ENT_HTML5, 'UTF-8', false);
+            $written = htmlspecialchars($map[$url], ENT_QUOTES | ENT_HTML5, 'UTF-8', false);
+
+            /*
+             * AN UNQUOTED ATTRIBUTE IS QUOTED IF THE NEW VALUE NEEDS IT.
+             *
+             * `<img src=https://old/wp-content/uploads/a%20b.jpg>` is legal
+             * HTML, and `MediaUsage::normalise()` rawurldecodes — so the path
+             * this writes back has a real space in it, and written unquoted the
+             * space ENDS the attribute: `b.jpg` becomes a second attribute and
+             * the picture is a broken frame. htmlspecialchars does not escape
+             * whitespace and should not.
+             *
+             * Not an injection — the quote, angle bracket and ampersand are all
+             * escaped above, so nothing can break out of the tag — but it is a
+             * document this class would have corrupted, which is the one thing
+             * a surgical rewriter must not do. Adding the quotes is valid HTML
+             * and changes only the attribute it was already rewriting.
+             */
+            if ($src['quote'] === '' && preg_match('/[\s>"\'=`]/', $written) === 1) {
+                $written = '"'.$written.'"';
+            }
+
+            $out .= substr($html, $cursor, $from - $cursor).$written;
 
             $cursor = $from + $length;
         }
@@ -433,7 +454,7 @@ final class DocumentMediaRewrite
     /**
      * The `src` attribute of one tag: its raw value and where in the tag it is.
      *
-     * @return array{value: string, at: int}|null
+     * @return array{value: string, at: int, quote: string}|null
      */
     private static function srcOf(string $tag): ?array
     {
@@ -441,9 +462,9 @@ final class DocumentMediaRewrite
             return null;
         }
 
-        foreach ([1, 2, 3] as $group) {
+        foreach ([1 => '"', 2 => "'", 3 => ''] as $group => $quote) {
             if (isset($m[$group]) && $m[$group][1] >= 0) {
-                return ['value' => (string) $m[$group][0], 'at' => (int) $m[$group][1]];
+                return ['value' => (string) $m[$group][0], 'at' => (int) $m[$group][1], 'quote' => $quote];
             }
         }
 

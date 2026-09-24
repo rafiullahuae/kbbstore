@@ -503,3 +503,48 @@ it('reports the journal separately on Store → Import → Addresses & pictures'
     expect($apply->json('journal.articles'))->toBe(1)
         ->and(rpRowsNaming('old-shop.test'))->toBe([]);
 });
+
+it('quotes an unquoted src when the path it writes back contains a space', function () {
+    /*
+     * `<img src=https://old/wp-content/uploads/a%20b.jpg>` is legal HTML, and
+     * MediaUsage::normalise() rawurldecodes — so the path this writes back has
+     * a REAL SPACE in it, and written unquoted the space ends the attribute:
+     * `b.jpg` becomes a second attribute and the picture is a broken frame.
+     * htmlspecialchars does not escape whitespace and should not.
+     *
+     * Not an injection — the quote, the angle bracket and the ampersand are
+     * all escaped, so nothing can break out of the tag — but it is a document
+     * this class would have CORRUPTED, which is the one thing a surgical
+     * rewriter must not do.
+     *
+     * MUTATION: delete the `$src['quote'] === ''` branch in
+     * DocumentMediaRewrite::replace() and the body comes back
+     * `<img src=/wp-content/uploads/2021/a b.jpg>`, which this catches.
+     */
+    $url = RP_OLD.'/wp-content/uploads/2021/a%20b.jpg';
+    rpLand($url);
+
+    $post = Post::query()->create([
+        'slug' => 'spacey', 'title' => 'Spacey', 'status' => 'published',
+        'body' => '<img src='.$url.'>',
+    ]);
+
+    $rewrite = new DocumentMediaRewrite;
+
+    expect($rewrite->apply($rewrite->propose(['old-shop.test'])))->toBe(1);
+
+    $post->refresh();
+
+    expect($post->body)->toBe('<img src="/wp-content/uploads/2021/a b.jpg">');
+
+    // A quoted attribute keeps its own quotes and gains none.
+    $second = Post::query()->create([
+        'slug' => 'spacey-2', 'title' => 'Spacey two', 'status' => 'published',
+        'body' => "<img src='".$url."'>",
+    ]);
+
+    $rewrite->apply($rewrite->propose(['old-shop.test']));
+    $second->refresh();
+
+    expect($second->body)->toBe("<img src='/wp-content/uploads/2021/a b.jpg'>");
+});
