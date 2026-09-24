@@ -3,6 +3,76 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.260
+Two lanes: the variable-product basket, and the content-security policy in
+report-only.
+
+THE DEFECT THIS EXISTS FOR: a shopper could put a variable product in the
+basket for AED 0. Measured on a running server before the fix --
+`POST /api/cart/add {"product_id":27}` answered 200 with
+`cart_items.unit_price = 0` and no variant. `CartService::add()` now refuses
+it, and there were FOUR doors into it, not the two the tile suggested:
+
+  - Store\CartController::add()          the basket
+  - Store\CheckoutController::browsedAdd()  ON THE CHECKOUT PAGE. `browsed()`
+      lists the viewed-products cookie with no filter on type and `browsedAdd()`
+      passes no variant by construction, so a free line was one press away on
+      the page where people pay.
+  - Services\ManualOrderBuilder            an operator's draft order, which
+      would have been a 500. It now names the product that needs an option.
+  - anything written next month             the service throws.
+
+▲ RULE 1 EXCEPTION, SAID OUT LOUD. Tiles in the SKINNED grid that carry an
+"Add to cart" button today will lose it in two cases, and both are defects
+rather than preferences:
+
+  - a VARIABLE product, which is the AED 0 above. It now reads "View product".
+  - a SOLD-OUT product. The skinned grid offered Add to cart on out-of-stock
+    items and the server answered "That product is sold out." Found by the byte
+    pin, not by anybody looking.
+
+`components/product-card.blade.php` -- the tile everywhere else on the shop --
+has always shown "View product" for both. This makes the two agree. The whole
+tile is already a link to the product page, so nothing became unreachable, and
+the button box measures the same before and after at 390 and 1280: the label
+swap moves no layout. No new string, no new CSS.
+
+THE PRODUCT PAGE headline printed AED 0 for a variable product, and this was
+not a flicker: pdp.js writes the real figure from a CLICK listener only, so the
+page stood at AED 0 -- with an option already highlighted reading AED 35
+directly beneath it -- until the shopper tapped something. It now draws the
+same price range the tiles print.
+
+NEW, AND IT SHIPS OFF: `Content-Security-Policy-Report-Only`, with violations
+on Store -> Security -> Content security policy. The enforcing header does not
+occur anywhere under app/ and a test proves it by stripping comments and
+searching every PHP file. Measured in Chromium, every violation the shop
+produces today is INLINE SCRIPT OR INLINE STYLE -- not one external host was
+refused, so the allowlist is already right. The home page posts 158 reports in
+one view. Enforcing today would take the shop apart (24 inline `<script>`, 124
+`on*` handlers, 29 `<style>`, 210 `style=""` across 95 views), which is why
+this round buys the measurement rather than the enforcement.
+
+The policy deliberately does NOT cover the admin console: that page is one
+1.1 MB document of inline script and style, and a storefront policy on it would
+post thousands of violations from the screen the owner reads violations on.
+
+The violation endpoint is public by necessity and is bounded five ways:
+60/minute, a 16 KB body cap, four allowlisted fields, shape checks that cut the
+URI to scheme/host/path so a per-request query string cannot defeat the
+collapse, and a row ceiling that is scoped to policy rows -- so a flood cannot
+push the owner's own security trail out of the table. It answers 204 to
+everything and echoes nothing.
+
+Also: Store -> Security's verdict used to read "687 requests refused as too
+many" the first time the policy was switched on -- every one of them the
+owner's own visitors being shed by the throttle and recorded as a rate-limit
+trip. A shed report is now its own event: still counted, because reports really
+were lost and an absent violation must not read as "does not happen", but out
+of the trips list and out of the verdict.
+
+Three migrations, two of them cache clears.
+
 ## 2.60.259
 Six lanes, merged with no conflicts, and ONE package for the reason 2.60.258
 gives: `routes/web.php` carries both route changes in this round and a file
