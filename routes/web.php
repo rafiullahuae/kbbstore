@@ -452,6 +452,26 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/slim-footer-admin.php';
 
+        /*
+         * Store → Security. Lane C. Inside this group for the reason the
+         * health-admin comment above gives: RouteRegistrar::middleware()
+         * REPLACES rather than appends, so a fresh registration with a chained
+         * ->middleware() silently drops NoStoreAdminApi -- and every row this
+         * screen returns carries an operator's email and an IP address.
+         * Capability `security.view`, owner only, deliberately not
+         * `system.diagnostics` so that widening diagnostics later cannot widen
+         * this from another file.
+         */
+        require __DIR__.'/security-admin.php';
+
+        /*
+         * Store → SEO & Meta → SEO Audit. Lane S. Same group, same reason.
+         * Its rows are four hand-built keys and never a model: the tables it
+         * walks carry `wc_id`, `sku` and `total_sales`, which is the exact
+         * shape ApiSecurityTest exists for.
+         */
+        require __DIR__.'/seo-audit-admin.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';
@@ -484,6 +504,19 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // accepts uploaded CSVs and writes customers, orders and products —
         // outside auth:admin that is a stranger rewriting the catalogue.
         require __DIR__.'/import-admin.php';
+
+        /*
+         * Lane A's "Articles at addresses the shop owns" report, mounted here
+         * and not beside it: the `/import/` prefix is what makes
+         * AdminCapabilities' existing `['*','admin-api/import/**','data.import']`
+         * rule cover it. A prefix of its own would have fallen through to the
+         * closed owner-only default, and the person who needs this list is the
+         * person doing the migration.
+         *
+         * It writes nothing -- no transaction, no checkpoint, no ledger row --
+         * so it is safe to open while an import is in flight.
+         */
+        require __DIR__.'/import-articles-admin.php';
 
         // Store → Import → "What has been imported" (Lane GF). The read side of
         // the same screen: the record of which export this shop's data came

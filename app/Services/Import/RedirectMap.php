@@ -35,7 +35,12 @@ use App\Support\LegacyCategoryUrls;
  *    and the same request still answered 301 to the nested path. The redirect
  *    table is only consulted from the 404 handler (`CheckRedirects` is not
  *    registered as middleware — see its own comment), so an address that does
- *    not 404 can never be redirected by a row. `reachable()` below now demotes
+ *    not 404 can never be redirected by a row. THAT PREMISE IS GONE --
+ *    CheckRedirects is registered in the global pipeline and runs before the
+ *    router, so a row for an address this shop answers fires. `reachable()`
+ *    below no longer discards on those grounds; it asks. The original note is
+ *    kept because the reasoning it records is still how this file thinks, and
+ *    only its conclusion moved. `reachable()` below now demotes
  *    these to `discard`, per row and with the reason, rather than the rule
  *    being deleted: the derivation is still how the two shapes are related.
  *
@@ -313,10 +318,36 @@ final class RedirectMap
 
             $verdict = $this->reachability->verdict($proposal['source']);
 
+            /*
+             * ── THE PREMISE UNDER THESE THREE BRANCHES CHANGED ─────────────
+             *
+             * All three used to end "because the table is only consulted from
+             * the 404 handler". That was true, and it is not any more:
+             * CheckRedirects is registered in the global pipeline and now runs
+             * BEFORE the router, so a row for an address this shop answers
+             * fires. Measured by the lane that registered it: /shop/ and
+             * /product/tx-serum/ went 200 → 301.
+             *
+             * WHICH MAKES THE FIRST BRANCH THE DANGEROUS ONE. It DISCARDED —
+             * threw the proposal away silently, on the grounds that a row could
+             * never be read. Left as it was, the import would drop exactly the
+             * redirects the registration exists to enable, and the owner would
+             * never see them: a discard is not on the list he approves, because
+             * the whole point of the discard bucket is "there was nothing here
+             * worth deciding".
+             *
+             * So MOVED becomes ASK, and the other two keep ASK and lose a
+             * reason that is no longer true. Nothing here is decided for him:
+             * redirecting an address the shop serves is a real choice with a
+             * real cost, and the three-bucket rule in Phase 13 says who makes
+             * it.
+             */
             if ($verdict['status'] === SourceReachability::MOVED) {
-                $proposals[$index]['decision'] = self::DISCARD;
-                $proposals[$index]['reason'] = 'nothing to write — '.$verdict['why'].'. The redirects table is '
-                    .'only consulted from the 404 handler, so a row stored for this address would never be read';
+                $proposals[$index]['decision'] = self::ASK;
+                $proposals[$index]['reason'] = 'this address already redirects somewhere on this shop — '
+                    .$verdict['why'].'. A row here would now OVERRIDE that hop, because the redirects table is '
+                    .'consulted before the router. Worth writing if the shop sends it to the wrong place, and '
+                    .'worth leaving alone if it does not';
 
                 continue;
             }
@@ -324,16 +355,16 @@ final class RedirectMap
             if ($verdict['status'] === SourceReachability::SERVED) {
                 $proposals[$index]['decision'] = self::ASK;
                 $proposals[$index]['reason'] = 'this address still answers on this shop — '.$verdict['why']
-                    .'. A redirect row cannot move it, because the table is only consulted from the 404 handler. '
-                    .'Moving it is a routing change, not a redirect';
+                    .'. A row here WILL move it: the redirects table is consulted before the router, so the page '
+                    .'that answers today would 301 away instead. That is a real change to a working page';
 
                 continue;
             }
 
             if ($verdict['status'] === SourceReachability::UNKNOWN) {
                 $proposals[$index]['decision'] = self::ASK;
-                $proposals[$index]['reason'] = 'cannot tell whether this address 404s today, and a redirect only '
-                    .'fires on a 404 — '.$verdict['why'];
+                $proposals[$index]['reason'] = 'cannot tell what this address does today, and a row here is now '
+                    .'read whether it 404s or not — '.$verdict['why'];
 
                 continue;
             }

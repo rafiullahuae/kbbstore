@@ -30,11 +30,44 @@ class RedirectsApiController extends Controller
         ]);
     }
 
+    /**
+     * What a redirect's destination may be.
+     *
+     * A REDIRECT TABLE LEGITIMATELY POINTS OFF-SITE, so this is an allowlist of
+     * schemes and not a same-host rule: a shop that moved a policy page to its
+     * parent company's domain is doing a normal thing. What it may not be is a
+     * scheme the browser treats as code or as inline content.
+     *
+     * The exposure used to be narrow and is not any more. Until CheckRedirects
+     * was registered in the global pipeline, a row only fired on an address
+     * that already 404'd; now it fires before the router, on addresses the shop
+     * serves. The value was validated as `string|max:2048` and went straight
+     * into a Location header. This project's own rule -- a URL from a setting
+     * is scheme-checked before it becomes a destination -- had simply never
+     * been applied here.
+     *
+     * `regex` and not a closure, so the same rule can be stated once and used
+     * by both writers; `store()` and `update()` had their own copies of the
+     * old one, which is how one of them would eventually have been missed.
+     *
+     * Allowed: a site-relative path (`/a/b`, the overwhelming majority), and an
+     * absolute http/https URL. Refused: `javascript:`, `data:`, `vbscript:`,
+     * `file:`, a protocol-relative `//evil.test` (which reads as a path and is
+     * not one), and anything with a control character or a newline in it -- a
+     * newline in a Location header is response splitting.
+     */
+    public const TARGET_RULES = [
+        'required',
+        'string',
+        'max:2048',
+        'regex:/^(?:\\/(?!\\/)[^\\x00-\\x1F\\x7F]*|https?:\\/\\/[^\\x00-\\x1F\\x7F\\s]+)$/i',
+    ];
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'source' => ['required', 'string', 'max:255'],
-            'target' => ['required', 'string', 'max:2048'],
+            'target' => self::TARGET_RULES,
             'code' => ['required', 'integer', 'in:301,302'],
         ]);
 
@@ -70,7 +103,7 @@ class RedirectsApiController extends Controller
     public function resolveNotFound(Request $request, NotFoundLog $notFound): JsonResponse
     {
         $data = $request->validate([
-            'target' => ['required', 'string', 'max:2048'],
+            'target' => self::TARGET_RULES,
             'code' => ['required', 'integer', 'in:301,302'],
         ]);
 
