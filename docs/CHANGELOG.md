@@ -3,6 +3,33 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.263
+NO CODE CHANGE. Two files out of 2.60.262, shipped alone because the host
+would not apply the whole thing.
+
+WHY IT IS SPLIT. 2.60.260 (26 files) applied. 2.60.259 (56 files) left its row
+at `running` three times, and 2.60.262 (84 files) answered a plain "Server
+Error" from a screen whose endpoint returns JSON on every outcome including a
+rollback -- so the response was not the application's at all, and the PHP worker
+was killed by the host before it could write one. Applying copies every file,
+snapshots each one first, dumps the database when migrations are present and
+then makes an HTTP request to itself; somewhere between 26 and 56 files that
+exceeds this host's request limit.
+
+WHAT THESE TWO FILES ARE. The whole of the live breakage and nothing else:
+
+  - `app/Services/VariantPricing.php`, which does not exist on a server that
+    skipped .259, and which `product-card.blade.php`, `product-grid.blade.php`
+    and `store/product.blade.php` all resolve out of the container.
+  - `app/Services/Invoices/InvoiceDocument.php`, which is where the
+    `nameForCustomer` key the invoice and delivery-note sheets read is
+    produced.
+
+NEITHER NEEDS A MIGRATION OR A NEW DEPENDENCY. Every class the two import
+exists on the server at 2.60.258, checked one by one, and InvoiceDocument reads
+`name_localised` as `?? ''`, so it is correct before
+`order_lines_snapshot_the_customers_language` has run and correct after.
+
 ## 2.60.262
 NO CODE CHANGE. This is 2.60.259, .260 and .261 rebuilt as ONE cumulative
 package against 2.60.258, because the three were applied out of order on the
