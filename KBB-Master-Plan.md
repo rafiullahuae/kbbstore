@@ -1536,6 +1536,33 @@ pin that looks applied and is not is worse than none.**
   now says so on the row rather than leaving a concern sitting at 5/3 and dark
   for no stated reason. Both SEO lanes refused to generate that copy and were
   right to — see `docs/SEO-CONCERN-COPY.md`.
+- [x] **The screen was rebuilt as tabs, at the owner's request** — *24 September
+  2026*. His words: *"The routine page is super long, i want tabs with every
+  step, so i can just fillup or select and the steps can be lock according."*
+  One flat strip of eight — `Cleanser · Toner · Treatment · Moisturiser · SPF ·
+  Concern pages · Wording · Settings` — copied from `Appearance → Checkout page`
+  because he already uses that pattern daily. He chose the two things that would
+  otherwise have been guesses: **"locked" means DONE, never disabled** (nothing
+  is gated on anything else; he works in any order), and every section gets a
+  tab rather than staying stacked below.
+- [x] **The tab label carries two figures because they answer two questions.**
+  The COUNT is products a shopper can actually be shown — published, visible,
+  in stock — so four tagged products that are all out of stock read 0, which is
+  what the storefront can draw on. The TICK is "no routine I am showing still
+  draws this step empty": four toners all tagged for acne leave seven routines
+  short, and a count-based tick would have called that finished. A routine the
+  owner has HIDDEN is not counted, because a step it cannot fill is not a gap a
+  shopper can reach.
+- [x] **The search on a step tab looks at the whole catalogue, not the step.**
+  Narrowed to the open step it returns nothing on an empty step — which is every
+  step on his shop today — and he would have concluded the search was broken on
+  the first word off the worksheet. Measured: "centella" on the empty SPF tab
+  returned 0 rows before and 14 after.
+- [x] **One card was consolidated rather than kept**, and it is recorded rather
+  than buried: "What each step can draw from" is gone, because its five role
+  chips ARE the five step tabs now — same numbers, one card earlier, in the
+  place he is about to click. Its other two options, "Untagged only" and "Every
+  product", survive as a scope select on every step tab.
 - [ ] **No bulk-tag endpoint**, so tagging is one product at a time. Friction,
   not a defect; worth knowing before starting a 30–45 product session.
 
