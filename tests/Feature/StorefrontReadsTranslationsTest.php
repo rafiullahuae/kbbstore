@@ -97,6 +97,17 @@ function fpPublish(string $group, int $id, string $field, string $value): void
     TranslationStore::put('ar', $group, $id, $field, $value, Translation::STATUS_PUBLISHED, Translation::SOURCE_MANUAL);
 }
 
+/** An owner, for the one test here that writes through the admin endpoint. */
+function fpAdmin(): \App\Models\AdminUser
+{
+    return \App\Models\AdminUser::create([
+        'name' => 'FP owner',
+        'email' => 'fp-' . Str::random(8) . '@example.com',
+        'password' => bcrypt('secret'),
+        'role' => 'owner',
+    ]);
+}
+
 /** Count the queries one request runs, the way StorefrontQueryBudgetTest does. */
 function fpQueries(string $path): int
 {
@@ -722,4 +733,128 @@ it('never serves a draft translation to a shopper, long fields included', functi
 
     // And the page still shows the English, rather than a hole where the draft was.
     expect($html)->toContain(FP_NAME_EN);
+});
+
+it('sanitises an Arabic rich field on the way in, whatever wrote it', function () {
+    /*
+     * THE HOLE THIS CLOSES, AND WHY IT ONLY BECAME A HOLE THIS CYCLE.
+     *
+     * App\Support\RichText's own header states the rule: product description
+     * HTML is printed raw by partials/product-tabs.blade.php with {!! !!},
+     * twice, so "the allowlist runs on the way IN to the database, on the
+     * server, every time. Nothing is trusted for having come from the editor's
+     * own toolbar."
+     *
+     * Three writers reach translations.value for those fields. Two obey that
+     * rule: ProductEditorApiController runs TranslationInput::clean() over
+     * RICH_FIELDS (the T4b fix — the master plan records that the Arabic halves
+     * of two {!! !!} tabs going in unsanitised WAS the stored-XSS hole), and
+     * MachineTranslationRunner never sends markup out in the first place.
+     *
+     * The third does not. TranslationsApiController::store() — the writer
+     * behind Content -> Translations, the standalone screen, published
+     * immediately with no draft step — put the value straight into
+     * TranslationStore::put() verbatim.
+     *
+     * That bypass was INERT until this cycle, and that is the whole point: with
+     * nothing on the storefront reading a content translation, an unsanitised
+     * Arabic description was data in a table no page printed. The render is
+     * what connects the two ends, so the sanitiser has to arrive in the same
+     * change as the render or the change opens the hole it inherits.
+     *
+     * Driven through the real endpoint rather than the store, because the
+     * endpoint is the reachable half.
+     *
+     * MUTATION NOTE: remove the RichText::clean() call from
+     * TranslationStore::put() — the `if (self::isRichField(...))` block — and
+     * this test goes red twice over: `onerror=` is in the stored row and
+     * `onerror=` is in the bytes /ar/product serves.
+     */
+    fpArabicOn();
+
+    $product = fpProduct();
+
+    $payload = '<p>ZZSENTINELDESC</p><img src=x onerror=alert(1)><script>alert(2)</script>';
+
+    test()->actingAs(fpAdmin(), 'admin')
+        ->postJson('/admin-api/translations', [
+            'locale' => 'ar',
+            'group' => 'products',
+            'item_id' => $product->id,
+            'field' => 'description',
+            'value' => $payload,
+        ])
+        ->assertOk();
+
+    // 1. At the database, which is where RichText says the rule belongs.
+    $stored = (string) Translation::query()
+        ->where('locale', 'ar')->where('group', 'products')
+        ->where('item_id', $product->id)->where('field', 'description')
+        ->value('value');
+
+    expect(str_contains($stored, 'onerror'))->toBeFalse('An event handler was stored on an Arabic description.')
+        ->and(str_contains($stored, '<script'))->toBeFalse('A script tag was stored on an Arabic description.')
+        // Unwrapped, not dropped: the operator's own words survive.
+        ->and($stored)->toContain('ZZSENTINELDESC');
+
+    // 2. And at the page, which is where it would have fired.
+    TranslationStore::flush();
+
+    $html = (string) test()->get('/ar/product/' . $product->slug . '/')->assertOk()->getContent();
+
+    expect(str_contains($html, 'onerror'))->toBeFalse('An event handler reached the rendered Arabic product page.')
+        ->and(str_contains($html, 'alert(2)'))->toBeFalse('A script body reached the rendered Arabic product page.')
+        ->and($html)->toContain('ZZSENTINELDESC');
+});
+
+it('leaves a plain-text translation byte-identical, rich or not', function () {
+    /*
+     * The other half of the same change, and the reason it is scoped to four
+     * named fields in one group rather than applied to every value.
+     *
+     * RichText::clean() is an HTML sanitiser. Run over a NAME it would be
+     * wrong in both directions: it parses its input as markup, so a product
+     * genuinely called "Serum <3" or a category described with an ampersand
+     * would come back re-encoded, and the shop would change under the owner
+     * for a value he typed correctly.
+     *
+     * So put() cleans exactly the fields whose English is cleaned by the
+     * product editor, on the group those columns belong to, and nothing else.
+     *
+     * MUTATION NOTE: widen isRichField() to ignore the group (or to clean every
+     * field) and the `<3` assertion below goes red — clean() encodes the bare
+     * `<` it cannot parse as a tag.
+     */
+    fpArabicOn();
+
+    $product = fpProduct();
+    $category = Category::create(['name' => 'Serums', 'slug' => 'fp-serums-' . Str::random(6)]);
+
+    fpPublish('products', $product->id, 'name', 'Serum <3 & Co');
+    fpPublish('categories', $category->id, 'description', 'Dry & tired skin <3');
+
+    expect((string) Translation::query()
+        ->where('group', 'products')->where('item_id', $product->id)->where('field', 'name')->value('value'))
+        ->toBe('Serum <3 & Co')
+        ->and((string) Translation::query()
+            ->where('group', 'categories')->where('item_id', $category->id)->where('field', 'description')->value('value'))
+        ->toBe('Dry & tired skin <3');
+});
+
+it('keeps the sanitised list identical to the product editor\'s own', function () {
+    /*
+     * Two lists of rich fields in two files is exactly the drift the T4b fix
+     * was written to end ("Both loops now read one RICH_FIELDS constant").
+     * TranslationStore cannot read ProductEditorApiController's private const
+     * and that controller is another lane's file, so the lists are held
+     * together by this assertion instead of by an import: add a fifth rich
+     * column to the product editor and this goes red until the store is told
+     * about it.
+     *
+     * MUTATION NOTE: drop 'how_to_use' from TranslationStore::RICH_FIELDS and
+     * this is red.
+     */
+    $editor = new ReflectionClass(\App\Http\Controllers\Admin\ProductEditorApiController::class);
+
+    expect($editor->getConstant('RICH_FIELDS'))->toBe(TranslationStore::RICH_FIELDS);
 });

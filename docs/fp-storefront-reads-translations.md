@@ -154,6 +154,171 @@ a fourth language costs a fourth cache key and **nothing per request**. The
 trigger was always field **length**, and it had been crossed long before anyone
 looked. Corrected in place, with the measurement.
 
+## 3b. Re-verified this round, on a rebuilt fixture (Lane F)
+
+425 products, 2,053 published `ar` translations, Arabic and RTL on, served by a
+real HTTP server and read by headless Chromium.
+
+**The sentinel, both ways, on the rendered bytes:**
+
+| page | `ZZSENTINELNAME` | `Hydrating Serum No. 360` |
+| --- | ---: | ---: |
+| `/shop?s=Hydrating` | 0 | 3 |
+| `/ar/shop?s=Hydrating` | **3** | **0** |
+| `/product/fp-evidence-hero/` | 0 | 7 |
+| `/ar/product/fp-evidence-hero/` | **7** | **0** |
+
+**The map split, measured directly, three interleaved passes, warm file cache,
+one process per measurement** — identical on all three:
+
+| | entries | strings | serialized | resident | load |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| map `ar` **with** long prose | 2,053 | 3.07 MB | 3.13 MB | +2.00 MB | 52–62 ms |
+| map `ar` **as it ships** | 850 | **0.03 MB** | **0.06 MB** | **+0.00 MB** | **0.4–0.7 ms** |
+
+`+0.00 MB` is below `memory_get_usage(true)`'s 2 MB allocator step, not zero.
+The page-level peak in this rig is dominated by the console bootstrap and did
+not resolve a 3 MB difference either way, so section 2's MySQL page-cost table
+stands as the page-level record and nothing here amends it.
+
+**Queries, English against Arabic, at 425 products:**
+
+| page | English | Arabic |
+| --- | ---: | ---: |
+| `/shop/` | 4 | **4** |
+| `/cart` | 2 | **2** |
+| `/` | 1 | **1** |
+| `/product/…` | 8 | **9** |
+
+Flat everywhere but the product page, whose one extra statement is that page's
+own long prose — the trade the split is made of. (The absolute numbers are lower
+than section 2's because this rig is SQLite with array session rather than the
+live host's `SESSION_DRIVER=database`; the **equality** is the claim.)
+
+**Pictures** — `docs/fp-shots/`, Chromium, full page:
+
+| file | width | `scrollWidth` / `clientWidth` | `<html>` | `<h1>` | h1 size |
+| --- | ---: | --- | --- | --- | ---: |
+| `ar-shop-390.png` | 390 | 390 / 390 | `lang="ar" dir="rtl"` | `Search: Hydrating` | 32px |
+| `ar-shop-1280.png` | 1280 | 1280 / 1280 | `lang="ar" dir="rtl"` | `Search: Hydrating` | 32px |
+| `ar-product-390.png` | 390 | 390 / 390 | `lang="ar" dir="rtl"` | **`ZZSENTINELNAME`** | 25px |
+| `ar-product-1280.png` | 1280 | 1280 / 1280 | `lang="ar" dir="rtl"` | **`ZZSENTINELNAME`** | 25px |
+
+No horizontal page scroll at either width. The product page's `<h1>`, its
+breadcrumb, its Description tab body and its related-product cards are all the
+Arabic row; the English name appears zero times.
+
+## 4. The hole the render inherited, closed in the same cycle (Lane F)
+
+`App\Support\RichText`'s own header states the rule:
+`partials/product-tabs.blade.php` prints a product description with `{!! !!}` —
+twice, desktop panel and mobile accordion — so *"the allowlist runs on the way
+IN to the database, on the server, every time. Nothing is trusted for having
+come from the editor's own toolbar."*
+
+Three writers reach `translations.value` for those fields. Two obeyed it:
+
+| writer | sanitised? |
+| --- | --- |
+| `ProductEditorApiController` (the Arabic box beside the English one) | yes — `TranslationInput::clean(RICH_FIELDS)`, the T4b fix |
+| `MachineTranslationRunner` (the accelerator) | n/a — it never sends markup out |
+| **`TranslationsApiController::store()`** — Content → Translations, the standalone screen, **published immediately with no draft step** | **no** |
+
+The third passed the owner's typing to `TranslationStore::put()` verbatim.
+
+**That bypass was inert until this cycle, and that is the whole point.** With
+nothing on the storefront reading a content translation it was data in a table
+no page printed. Section 1 is what connected the two ends. So the sanitiser had
+to arrive in the same change as the render, or the render would have opened the
+hole it inherited.
+
+### Driven, not argued
+
+Through the real endpoint for the storage half, and in a real browser for the
+render half — `<p>ZZSENTINELDESC</p><img src=x onerror=alert(1)><script>alert(2)</script>`
+as the Arabic `description` of one product, `/ar/product/…` loaded headless:
+
+```
+written straight into the row (what store() did)
+    stored:   <p>ZZSENTINELDESC</p><img src=x onerror=alert(1)><script>alert(2)</script>
+    on load:  4 dialogs fired — "1", "2", "2", "1"
+              (each payload twice: the description is printed twice)
+    DOM:      onerror present, <script>alert(2) present
+
+through TranslationStore::put() (what it does now)
+    stored:   <p>ZZSENTINELDESC</p><img src="x">
+    on load:  0 dialogs
+    DOM:      no onerror, no script tag
+    and       ZZSENTINELDESC still visible — the operator's words survive
+```
+
+### Where it is enforced, and why there
+
+In `TranslationStore::put()`, which is the one function all three writers call,
+rather than in the one caller that was missing it. A sanitiser each writer has
+to remember is a sanitiser one writer will not have; a fourth writer added later
+now inherits the rule instead of re-opening the hole.
+
+Scoped to `TranslationStore::RICH_FIELDS` — `short_description`, `description`,
+`ingredients`, `how_to_use` — on group `products`, which is exactly the set
+whose **English** the product editor cleans. `clean()` parses its input as HTML,
+so run over a name it would re-encode a product genuinely called `Serum <3` and
+change the shop under the owner for a value he typed correctly. Group and field
+are normalised before the check, so `Products`/`Description` cannot walk past a
+rule `products`/`description` is subject to.
+
+The list is held identical to `ProductEditorApiController::RICH_FIELDS` by an
+assertion rather than an import, because that file belongs to another lane — add
+a fifth rich column there and the test goes red until the store is told.
+
+## 5. THE HARNESS DEFECT THIS LANE FELL INTO, WHICH IS EVERY LANE'S
+
+**`vendor/bin/pest` inside a worktree whose `vendor/` is a symlink runs that
+lane's TEST FILES against the MAIN CHECKOUT's APPLICATION CODE.** Five of the
+seven worktrees on this box are in that shape (`lane-c`, `lane-d`, `lane-e`,
+`lane-f`, `lane-g`); `lane-a` and `lane-cart-desktop` have a real `vendor/` and
+are unaffected.
+
+Two independent causes, both from the symlink:
+
+1. **Pest's root.** `vendor/pestphp/pest/bin/pest` computes
+   `$rootPath = dirname($autoloadPath, 2)` from the autoloader it included, and
+   PHP resolves the symlink, so the root is `/home/user/kbbstore`. `tests/Pest.php`
+   ends `->in('Feature')`, which then names the MAIN checkout's `tests/Feature`.
+   The worktree's own test files therefore get **no** `TestCase`, no
+   `RefreshDatabase` and no Laravel application at all. Observed: the whole
+   suite "fails" in 0.15 s with `Call to a member function connection() on null`
+   and `Call to undefined method Illuminate\Container\Container::path()` —
+   130 reds that say nothing about the code.
+2. **Composer's maps, and Laravel's base path.** `vendor/composer/autoload_static.php`
+   resolves `App\` through `__DIR__ . '/../..'`, which is the real directory, so
+   `App\Foo` loads from `/home/user/kbbstore/app/`. `Application::inferBasePath()`
+   then derives its base path from that same loader, so `config/`, `routes/` and
+   `resources/` come from the main checkout too.
+
+Cause 1 is loud. **Cause 2 is silent and is the dangerous one**: work around the
+first with `--test-directory` and the suite goes green — against somebody else's
+application code. This lane hit exactly that: three new tests passed, and the
+sanitiser they were written for was not in the file being loaded.
+
+Two lines fix it for one process, and they are what every measurement in this
+document was taken with:
+
+```php
+$_ENV['APP_BASE_PATH'] = $root;                 // inferBasePath() consults this first
+spl_autoload_register($psr4ForTheWorktree, true, /* prepend */ true);
+```
+
+```bash
+vendor/bin/pest --test-directory=.claude/worktrees/<lane>/tests \
+                --bootstrap=<wrapper that sets those two and then requires tests/bootstrap.php>
+```
+
+Under that harness the full suite is **5,125 passed, 41 skipped, 0 failed** on
+`lane/round-f`. This wants a permanent answer in `tests/bootstrap.php` or in the
+worktree setup — it is not Lane F's file, and it is worth more than any one
+lane's round.
+
 ## Found and deliberately not fixed
 
 **The Journal is not a bilingual document.** `store/post.blade.php` and
@@ -180,6 +345,16 @@ description. Translating only the name inside it would produce a mixed sentence,
 which is worse. The three sentences want keys, which is the interface lane's
 work; the same is true of the group labels in `SearchController`
 (`'Products'`, `'Categories'`, `'Brands'`, `' products'`).
+
+**`pages.content` and `posts.body` are stored as trusted operator HTML, in both
+languages.** `store/page.blade.php` and `store/post.blade.php` print them with
+`{!! !!}`, and unlike the product columns their **English** goes to the database
+with no `RichText::clean()` either — `PagesApiController` and
+`PostsApiController` sanitise nothing. So the Arabic half is no worse than the
+English half, which is why the sanitiser in section 4 deliberately stops short
+of them: cleaning only one language would render one document differently in its
+two. Making page and post bodies allowlisted on both sides is a real decision
+about what an admin may author, and it is the owner's, not this lane's.
 
 **`seo.title` / `seo.desc` and `banner.heading`** remain as Lane FN left them —
 argued, not done, because they are JSON sub-keys rather than columns and
