@@ -80,7 +80,7 @@
         @foreach ($doc['items'] as $item)
             <tr>
                 <td style="padding:9px 6px 9px 0;border-bottom:1px solid #eceff3;font-size:14px;">
-                    <div style="font-weight:600;">{{ $item['name'] }}</div>
+                    <div style="font-weight:600;">{{ $item['nameForCustomer'] }}</div>{{-- nameForCustomer: the customer's copy, sent inside OrderLocale::render(). Same string as `name` while this shop serves one language. At the END of this line, because Blade removes a comment and leaves its newline. --}}
                     @php
                         $sub = array_values(array_filter([
                             $item['brand'],

@@ -59,7 +59,7 @@
 
 {!! mb_strtoupper(__('email.text.items_heading')) !!}
 @foreach ($doc['items'] as $item)
-- {!! $item['name'] !!}@if ($item['brand'] !== '') ({!! $item['brand'] !!})@endif
+- {!! $item['nameForCustomer'] !!}@if ($item['brand'] !== '') ({!! $item['brand'] !!})@endif
 
 @if ($item['variant'] !== '')
   {!! $item['variant'] !!}

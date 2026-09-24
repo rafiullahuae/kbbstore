@@ -273,6 +273,16 @@ a fifth rich column there and the test goes red until the store is told.
 
 ## 5. THE HARNESS DEFECT THIS LANE FELL INTO, WHICH IS EVERY LANE'S
 
+> **FIXED IN THE TRUNK — do not re-derive this.** The worktrees now carry a real
+> HARD-LINKED `vendor/` rather than a symlink, and both causes below depend on
+> the symlink being resolved. Verified in `lane-f` at round 2 rather than
+> assumed: `ReflectionClass('App\Support\Locale')->getFileName()`, the booted
+> application's `basePath()` and `realpath('resources/views')` all report the
+> worktree, and the plain `vendor/bin/pest` the brief asks for runs 5,242 tests
+> in 488s against the lane's own code. The section is kept for the record of
+> what the symptom looked like, because it cost a lane a round.
+
+
 **`vendor/bin/pest` inside a worktree whose `vendor/` is a symlink runs that
 lane's TEST FILES against the MAIN CHECKOUT's APPLICATION CODE.** Five of the
 seven worktrees on this box are in that shape (`lane-c`, `lane-d`, `lane-e`,
@@ -321,15 +331,27 @@ lane's round.
 
 ## Found and deliberately not fixed
 
-**The Journal is not a bilingual document.** `store/post.blade.php` and
+**The Journal is not a bilingual document.** ~~`store/post.blade.php` and
 `store/blog.blade.php` open with `@verbatim<!DOCTYPE html><html lang="en">` and
-carry their own hard-coded navigation. They do not extend `layouts.store`, so an
+carry their own hard-coded navigation.~~ **DONE, by two other lanes and then
+finished here.** All five standalone documents declare a real
+`lang`/`dir` through `Locale::htmlLang()` and `Locale::direction()` (Lane FK,
+`docs/rtl-standalone-documents.md`) and all five link and NAME Cairo (Lane FS,
+`docs/FS-ARABIC-TYPOGRAPHY.md`). Lane F round 2 closed the last piece
+`docs/rtl-audit.md` §9.5 had bundled with it: the cart badge's inline
+`right:50%`, which no `[dir="rtl"]` rule could reach. The original text
+follows, for the record. They do not extend `layouts.store`, so an
 Arabic article's **words** are Arabic (asserted) while its document declares
 `lang="en"`, has no `dir="rtl"`, no hreflang and an English header. Rebuilding
 two standalone documents onto the shared layout is the RTL and SEO lanes'
 surface.
 
-**Order line names are still snapshots of the English.**
+**Order line names are still snapshots of the English.** — **SETTLED in round
+2: the snapshot is right and there are now two of them.** `order_items.name`
+stays the operator's English and `name_localised` carries the customer's, because
+the invoice and the order emails render inside `OrderLocale::render()` while the
+packing slip and the delivery note deliberately do not. Reasoning and what ships
+inert: `docs/f2-order-line-language.md`. The original note follows.
 `Store\CheckoutController` writes `'name' => $p?->name` onto each `order_items`
 row, under a comment saying that is deliberate — so the order still reads
 correctly if the product is renamed. Translating it would freeze one language
@@ -347,7 +369,18 @@ work; the same is true of the group labels in `SearchController`
 (`'Products'`, `'Categories'`, `'Brands'`, `' products'`).
 
 **`pages.content` and `posts.body` are stored as trusted operator HTML, in both
-languages.** `store/page.blade.php` and `store/post.blade.php` print them with
+languages.** — **MEASURED in round 2, and still the owner's to decide:
+`docs/f2-operator-authored-html.md`. Two corrections to the note below.** First,
+`PagesApiController` and `PostsApiController` are the wrong two files: neither
+writes anything, and every writer of those two columns is a constant in this
+repository or already runs `RichText::clean()`. The live unsanitised admin
+writers are `BlocksApiController` (whose HTML is injected into pages by
+`[kbb_block]`) and `TranslationsApiController` (whose Arabic half is outside
+`TranslationStore::RICH_GROUP`), and both were driven in a browser: 3 dialogs on
+`/about/`, 2 on `/ar/about/` with the English left clean. Second,
+`RichText::clean()` over the whole shipped corpus strips **no tag and no
+attribute** — it changes eight HTML entities into the characters they already
+rendered as, 34 bytes across 7 rows. The original note follows. `store/page.blade.php` and `store/post.blade.php` print them with
 `{!! !!}`, and unlike the product columns their **English** goes to the database
 with no `RichText::clean()` either — `PagesApiController` and
 `PostsApiController` sanitise nothing. So the Arabic half is no worse than the
