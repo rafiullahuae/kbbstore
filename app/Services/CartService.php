@@ -282,6 +282,37 @@ class CartService
 
     public function add(Cart $cart, Product $product, int $quantity = 1, ?ProductVariant $variant = null): CartItem
     {
+        /*
+         * ▲ A VARIABLE PRODUCT WITH NO OPTION CHOSEN IS AED 0, AND THIS LINE
+         *   IS WHY IT HAS TO BE REFUSED HERE RATHER THAN ON THE TILE.
+         *
+         * `$variant?->effectivePrice() ?? $product->effectivePrice()` below is
+         * the whole defect in one expression. A variable parent carries no
+         * price of its own — WooCommerce keeps the figures on the variations —
+         * and Product::effectivePrice() ends `return (int) $this->price` with
+         * `$this->price` NULL, so the ?? falls through to ZERO and this method
+         * wrote a basket line at nothing. The checkout then took the order:
+         * nothing between here and place() ever asked what the line cost.
+         *
+         * Three live ways in, and the tiles were only two of them.
+         * components/product-grid.blade.php drew an Add to cart button on every
+         * tile including variable ones, the checkout's "you were looking at"
+         * strip did the same, and /api/cart/add accepts a product_id with an
+         * OPTIONAL variant_id — so a fetch call, a tab left open, or a tile
+         * cached before this ships all reach this method directly. Fixing the
+         * buttons alone would have left the door open; this is the door.
+         *
+         * THE CALLER STILL CHECKS FIRST. Store\CartController::add(),
+         * Store\CheckoutController::browsedAdd() and
+         * Services\ManualOrderBuilder each test Product::requiresVariant()
+         * before calling this and answer in the shape their own endpoint
+         * already uses, so a shopper gets a sentence rather than a stack trace.
+         * This throw is for the caller nobody has written yet.
+         */
+        if ($variant === null && $product->requiresVariant()) {
+            throw new VariantRequired('Choose an option before adding this product to your bag.');
+        }
+
         // The lines just changed, so whatever was loaded for display is stale.
         $this->displayLoaded = false;
         $quantity = max(1, min(99, $quantity));

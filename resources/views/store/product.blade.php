@@ -45,6 +45,54 @@
     $rcount  = (int) $summary['total'];
     $onSale  = $product->isOnSale();
     $price   = $product->effectivePrice();
+
+    /* THE HEADLINE PRICE OF A VARIABLE PRODUCT, WHICH READ AED 0.
+
+       $price above is Product::effectivePrice(), and a variable parent carries
+       no price of its own -- WooCommerce keeps the figures on the variations,
+       `products.price` is NULL, and effectivePrice() ends `return (int)
+       $this->price`, which casts that to zero. So .bb-price and the sticky bar
+       both rendered `AED 0` on every variable product page in the shop.
+
+       AND IT IS NOT A FLICKER. pdp.js writes the real figure into `.now` from
+       a CLICK listener only -- see its `.variant` branch -- so nothing
+       overwrites this on load. An option is already highlighted server-side
+       ($buyable, below), and the price beside it still said AED 0 until the
+       shopper tapped something. On a page that quotes a price, a rating and a
+       delivery line, that is the one number they came for.
+
+       THE SAME ANSWER THE TILES PRINT, from the same class, rather than a
+       second computation: App\Services\VariantPricing mirrors
+       ProductVariant::effectivePrice() in SQL, parent sale window included, and
+       two implementations of "what does this cost" are how this codebase has
+       twice ended up with two different answers.
+
+       $price ITSELF IS NOT TOUCHED. It still feeds Money::decimalsToDistinguish
+       below and the sale comparison, and pdp.js still replaces what is drawn
+       the moment an option is chosen. Only what the page SAYS before that
+       changes. Fixing effectivePrice() is a backfill of `products.price` or a
+       change to the importer, and that decision is the owner's -- see
+       VariantPricing's header and the test that pins the zero deliberately. */
+    $kbbRange = app(\App\Services\VariantPricing::class)->range($product);
+    $kbbHeadline = null;
+
+    if ($kbbRange !== null) {
+        // Both ends at ONE precision, and the precision that separates them --
+        // the same rule as the struck/live pair below.
+        $kbbRangeDp = Money::decimalsToDistinguish($kbbRange[0], $kbbRange[1]);
+
+        /* store.product_card.price_range, REUSED rather than re-keyed. It is
+           the same phrase in the same words, and a second key would be a second
+           Arabic translation of one sentence -- the thing InterfaceStrings'
+           header warns about. Renaming it is worse still: a rename orphans
+           every translation already typed against the old key. */
+        $kbbHeadline = \App\Services\VariantPricing::isSpread($kbbRange)
+            ? __('store.product_card.price_range', [
+                'low' => Money::format($kbbRange[0], $kbbRangeDp),
+                'high' => Money::format($kbbRange[1], $kbbRangeDp),
+            ])
+            : Money::format($kbbRange[0]);
+    }
     $out     = $product->stock_status !== 'instock';
     $off     = $onSale ? $product->discountPercent() : 0;
     // $out is finished below, once the variants are in hand: a variable product
@@ -205,7 +253,7 @@
              answers 0 — no change at all — for every markdown the rounded form
              can already tell apart. --}}
         @php $kbbSaleDp = $onSale ? Money::decimalsToDistinguish((int) $product->price, $price) : null; @endphp
-        <span class="now">{!! Money::format($price, $kbbSaleDp) !!}</span>
+        <span class="now">@if ($kbbHeadline !== null){!! $kbbHeadline !!}@else{!! Money::format($price, $kbbSaleDp) !!}@endif</span>
         @if ($onSale)
             <s>{!! Money::format((int) $product->price, $kbbSaleDp) !!}</s>
             @if ($off)<span class="off">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
@@ -513,7 +561,7 @@
          document must not be quoted at two widths. Without it a page whose
          price block widened to AED 99.80 carried a sticky bar still reading
          AED 100. --}}
-    <span class="sp" id="stickyPrice"><span class="now">{!! Money::format($price, $kbbSaleDp) !!}</span></span>
+    <span class="sp" id="stickyPrice"><span class="now">@if ($kbbHeadline !== null){!! $kbbHeadline !!}@else{!! Money::format($price, $kbbSaleDp) !!}@endif</span></span>
     @endif
     <button class="addcart" type="button" onclick="document.querySelector('.kbb-cart-form .addcart')?.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $settings->get('sticky_label', __('store.product_card.add_to_cart')) }}</button>
   </div>

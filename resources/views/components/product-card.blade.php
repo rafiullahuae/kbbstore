@@ -103,7 +103,13 @@
         ? ''
         : '<span class="binit">' . e(\App\Support\Gradient::initials($brand ?: $name)) . '<br>' . e($brand ?: $name) . '</span>';
 
-    $canAdd = $product->stock_status === 'instock' && $product->type !== 'variable';
+    // Product::isDirectlyBuyable() rather than the two tests spelt out here,
+    // which is what this line was. Same answer, but it is now the SAME
+    // EXPRESSION the skinned grid reads and the same predicate
+    // CartService::add() refuses on, so the button a shopper sees and the door
+    // the request goes through cannot disagree. The grid had no copy of this
+    // rule at all and sold variable products for AED 0.
+    $canAdd = $product->isDirectlyBuyable();
 
     /*
      * A VARIABLE PRODUCT'S PRICE IS ON ITS VARIATIONS, AND THIS TILE PRINTED

@@ -1837,6 +1837,37 @@ class CheckoutController extends Controller
             return response()->json(['ok' => false, 'error' => 'That product is sold out.'], 422);
         }
 
+        /*
+         * THIS STRIP ADDS WITHOUT ASKING ANYTHING, WHICH IS FINE UNTIL THE
+         * PRODUCT HAS SOMETHING TO ASK.
+         *
+         * browsed() lists whatever the shopper has viewed, straight out of the
+         * kbb_viewed cookie, with no filter on `type` — so a variable product
+         * they looked at appears here with a one-click Add. There is no option
+         * picker on this page and none is passed below, so the parent row went
+         * to CartService::add() with no variant and was priced at AED 0: the
+         * `price` column is NULL on a variable parent and effectivePrice()
+         * casts that to zero. The shopper was already on the checkout, so the
+         * free line was one press from being paid for.
+         *
+         * A sentence the row can show, in the shape this method's own comment
+         * promises ("Nothing is ever removed from the page on a failure"), and
+         * it names what to do: the choice lives on the product page.
+         *
+         * ▲ THE BUTTON IS STILL DRAWN. partials/checkout/browsed-item.blade.php
+         * renders `.baddbtn` for every row, and turning it into a link to the
+         * product page for these products is a change to a checkout partial
+         * this lane was not given. The door is shut either way — this is the
+         * door — but the strip still invites a press it will refuse, and that
+         * is worth a lane of its own.
+         */
+        if ($product->requiresVariant()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'That product comes in options — please choose one on its own page.',
+            ], 422);
+        }
+
         // Adding the same product again increments the line rather than
         // duplicating it — CartService::add() matches on product and variant
         // and reprices the whole line, because a bundle rate depends on the

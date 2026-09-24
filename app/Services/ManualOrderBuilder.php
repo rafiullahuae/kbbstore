@@ -225,6 +225,18 @@ class ManualOrderBuilder
             });
         } catch (DraftCartRollback) {
             // Expected: the only way out of a transaction that must not commit.
+        } catch (ManualOrderFailure $e) {
+            /*
+             * buildDraftCart() can now refuse a line rather than price it — a
+             * variable product with no option chosen would otherwise become an
+             * AED 0 line, see there. create() already answers a
+             * ManualOrderFailure with `ok: false` and the service's own
+             * wording; this method promises an array rather than an exception,
+             * so it says the same thing in the shape it promised. The
+             * transaction unwinds on the way out, exactly as the rollback
+             * above does, so no draft cart survives either path.
+             */
+            return $this->failure($e->getMessage());
         }
 
         return $result ?? $this->failure('Nothing to price.');
@@ -444,6 +456,34 @@ class ManualOrderBuilder
             $variant = isset($line['variant_id'])
                 ? ProductVariant::where('product_id', $product->id)->find($line['variant_id'])
                 : null;
+
+            /*
+             * A VARIABLE PRODUCT WITH NO OPTION IS AED 0 HERE TOO, and on this
+             * screen it is an order an operator writes by hand and a customer
+             * is then invoiced for.
+             *
+             * `variant_id` is optional in the payload, and a line naming a
+             * variable product without one reached CartService::add(), which
+             * priced it `$variant?->effectivePrice() ?? $product->effectivePrice()`
+             * — zero, because a variable parent's `price` column is NULL. The
+             * operator would have seen a line at AED 0 in the quote and no
+             * explanation of it.
+             *
+             * TRANSLATED INTO ManualOrderFailure RATHER THAN LET ESCAPE, which
+             * is exactly what the CouponExhausted catch in createWithin() does
+             * and for the same reason: create() already turns a
+             * ManualOrderFailure into a 422 carrying this wording, so the
+             * operator is told which product and what is missing instead of
+             * being handed a 500. quote() catches it too — see there.
+             *
+             * The product is NAMED, because an operator building a ten-line
+             * order needs to know which line to fix.
+             */
+            if ($variant === null && $product->requiresVariant()) {
+                throw new ManualOrderFailure(
+                    '“' . $product->name . '” is sold in options — choose one for that line before saving.'
+                );
+            }
 
             // CartService::add() is what decides the unit price: sale window,
             // variant pricing, quantity-bundle tier. Nothing here recomputes it.

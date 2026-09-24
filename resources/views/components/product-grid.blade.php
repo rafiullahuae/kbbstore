@@ -99,6 +99,49 @@
                     // lowPrice equal to its highPrice for the same reason.
                     : \App\Support\Money::format($kbbRange[0]);
             }
+
+            /*
+             * CAN THIS TILE PUT IT IN THE BASKET ON ITS OWN?
+             *
+             * THIS TILE NEVER ASKED, AND THAT IS THE DEFECT. It drew an
+             * `Add to cart` on every product, including a VARIABLE one, which
+             * is bought by its variation and carries no price of its own:
+             * CartService::add() priced the parent
+             * `$variant?->effectivePrice() ?? $product->effectivePrice()`,
+             * a NULL `price` column casts to 0, and the basket took a line at
+             * AED 0 that the checkout would then collect.
+             * components/product-card.blade.php has had this test since it was
+             * written -- as `$canAdd` -- and this template simply did not.
+             *
+             * Product::isDirectlyBuyable() is that one expression, now read by
+             * both tiles AND by the refusal in CartService::add(), so the
+             * button a shopper sees and the door the request goes through
+             * cannot give different answers.
+             */
+            $kbbCanAdd = $p->isDirectlyBuyable();
+
+            /*
+             * AND THE BUTTON IS BRANCHED INSIDE ITS ONE LINE, never across
+             * several. A Blade directive on a line of its own contributes its
+             * indentation and its newline to the rendered page, and
+             * StorefrontEnglishUnchangedTest compares BYTES -- that is how the
+             * same mistake moved /shop, a category archive and the related rail
+             * last round without changing one visible character. A product that
+             * CAN be added renders exactly the bytes it rendered before.
+             *
+             * WHAT THE OTHER ANSWER IS. The whole tile is already wrapped in
+             * `<a class="kbb-card" href="{product url}">`, so a span carrying no
+             * data-kbb-add simply follows that link to the page where the
+             * option is chosen. No new markup, no new CSS -- resources/css/kbb
+             * belongs to another lane -- and no new string: `View product` is
+             * the word components/product-card.blade.php already uses for this
+             * exact case.
+             *
+             * data-kbb-add AND data-price GO WITH IT, deliberately. data-price
+             * was the AED 0; data-kbb-add is what cart.js binds and what
+             * MarketingPixels' capture listener counts an add-to-cart on, and
+             * no add happens here any more.
+             */
         @endphp
         <a class="kbb-card" href="{{ $p->url() }}">
             <div class="kbb-card-thumb">
@@ -121,7 +164,7 @@
                     <div class="kbb-card-rate"><span class="kbb-crate">@for ($i = 1; $i <= 5; $i++)<span class="kbb-cstar{{ $i <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $p->review_count }})</span></div>
                 @endif
                 <div class="cp">@if ($kbbRangeHtml !== null)<span class="kbb-card-price">{!! $kbbRangeHtml !!}</span>@elseif ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price, $kbbDp) !!}</span> <span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span>@else<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span>@endif</div>
-                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}">{{ __('store.product_card.add_to_cart') }}</span>
+                <span class="kbb-card-cart"@if ($kbbCanAdd) data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}"@endif>@if ($kbbCanAdd){{ __('store.product_card.add_to_cart') }}@else{{ __('store.product_card.view_product') }}@endif</span>
             </div>
         </a>
     @endforeach
