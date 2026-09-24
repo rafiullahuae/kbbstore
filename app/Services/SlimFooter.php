@@ -100,9 +100,50 @@ class SlimFooter
                          ['min' => 0, 'max' => 32, 'step' => 2, 'unit' => 'px']],
         'shadow'     => ['bool', 'Lift it off the page', false,
                          'A soft shadow above the bar. It reads as a separate surface rather than as the end of the page — worth it with a rounded or contrasting tone, and usually not otherwise.'],
-        'max_w'      => ['range', 'Content width', 1240,
-                         'The band the words are laid out in. The bar itself always runs the full width of the window; this is where its content stops.',
+        /*
+         * ── HOW WIDE THE WORDS SIT ────────────────────────────────────────
+         *
+         * "align the width of the checkout DESKTOP footer to the page." The
+         * bar was 1240 and the checkout page is 1040, so the footer's first
+         * word started 100px to the left of everything above it — a footer
+         * that is wider than the page it ends reads as a different page.
+         *
+         * `page` takes `--cop-d-max`, WHICH IS INHERITED AND NOT COPIED. The
+         * checkout emits that property on `.kbb-checkout` and this bar renders
+         * inside it, so the two cannot disagree: move Appearance → Checkout
+         * page → Desktop · Layout → Page width and the footer moves with it, on
+         * the same render. On the cart page the property is absent and the
+         * declaration falls back to the same 1040 the checkout ships.
+         */
+        'width_mode' => ['select', 'Content width', 'page',
+                         'Where the words stop. The bar itself always runs the full width of the window.', [
+                             'page'  => 'Line it up with the page above it',
+                             'fixed' => 'A width of my own, set below',
+                         ]],
+        'max_w'      => ['range', 'That width', 1240,
+                         'Read only while "A width of my own" is chosen above.',
                          ['min' => 600, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
+
+        /*
+         * ── WHERE THE POLICY LINKS SIT ────────────────────────────────────
+         *
+         * "bring the privacy two links under the logo column." In the one-line
+         * shapes they sat at the far end of the row, which put the two pieces
+         * of small print furthest from the small print they belong with — the
+         * byline and the payment marks are already under the wordmark.
+         *
+         * A COLUMN AND NOT A REORDER. Moving the block earlier in the flex row
+         * would still leave it on the row; what was asked for is the links
+         * BELOW the brand, which means the brand block becomes a column that
+         * holds them. `sf-links-brand` does that in the stylesheet rather than
+         * the markup moving, so the document order — and therefore the tab
+         * order and what a screen reader reads — is unchanged.
+         */
+        'links_pos'  => ['select', 'Where the policy links sit', 'brand',
+                         'Only the one-line shapes have a choice here; the stacked and ruled-row shapes put every block on its own line anyway.', [
+                             'brand'  => 'Under the wordmark, with the byline',
+                             'inline' => 'At the end of the row',
+                         ]],
         'sep'        => ['select', 'Separator between blocks', 'none',
                          'A mark in the space between the brand, the help line, the contacts and the links. Drawn only on the one-line shapes, where blocks sit side by side and a separator has somewhere to go.', [
                              'none'  => 'None — the gap alone',
@@ -321,7 +362,8 @@ class SlimFooter
                        'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap', 'm_font']],
         'layout'  => ['Shape & size', 'Four structures and four alignments, which is sixteen looks from two controls. "One line" left-aligned is the shortest, and is what ships.',
                       ['variant', 'align', 'tone', 'divider', 'line_w', 'radius', 'shadow',
-                       'space_above', 'pad_y', 'row_pad', 'row_h', 'pad_x', 'max_w', 'gap',
+                       'space_above', 'pad_y', 'row_pad', 'row_h', 'pad_x',
+                       'width_mode', 'max_w', 'links_pos', 'gap',
                        'font', 'brand_style', 'brand_size', 'upper', 'phone_mark',
                        'sep', 'icons_on', 'top_on', 'top_style']],
         'content' => ['Content', 'Every word in the bar. Anything left empty is not drawn at all, rather than drawn empty — so the bar can be as short as a brand and a phone number.',
@@ -558,6 +600,8 @@ class SlimFooter
          */
         $classes = array_filter([
             'sf-'.$c['variant'],
+            $c['width_mode'] === 'page' ? 'sf-w-page' : '',
+            $c['links_pos'] === 'brand' ? 'sf-links-brand' : '',
             'sf-t-'.$c['tone'],
             $c['align'] === 'start' ? '' : 'sf-a-'.$c['align'],
             $c['sep'] === 'none' ? '' : 'sf-sep-'.$c['sep'],
@@ -588,6 +632,14 @@ class SlimFooter
         $out = [];
 
         foreach (self::VARS as $key => $prop) {
+            /* The width slider is not read at all while the bar is lined up
+               with the page, so emitting it would put a property on the element
+               that nothing consults -- and would be the first thing a future
+               reader chased when the width looked wrong. */
+            if ($key === 'max_w' && $c['width_mode'] !== 'fixed') {
+                continue;
+            }
+
             if ($c[$key] !== self::SCHEMA[$key][2]) {
                 $out[] = $prop.':'.$c[$key].'px';
             }

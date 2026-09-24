@@ -78,8 +78,25 @@ body.woocommerce-checkout main#content>p:empty{display:none}
  * class at all and the element is still `class="kbb-checkout"`.
  */
 @media(max-width:900px){
-  .kbb-checkout .co-head .in{max-width:none;margin-inline:0}
-  .kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto}
+  /*
+   * LINED UP, AND NOT MERELY UNCENTRED.
+   *
+   * Removing the centring was half the answer and the report came back
+   * unchanged, so this was measured across the whole range rather than
+   * reasoned about: the band can ALSO be pushed in by its own side padding,
+   * `--cop-headpadx`, which is a separate control from the page's
+   * `--cop-padx` and defaults to the same 20 only by coincidence. Set the
+   * header's to 40 and the page's to 8 and the logo sits 32px inside every
+   * other block on the page, with the badge still reaching the right edge
+   * because it is pushed there by an auto margin.
+   *
+   * So in this mode the header takes the PAGE's padding, not its own. Two
+   * numbers that must agree are one number. The header's own side padding is
+   * hidden on the screen while this is on, because a slider that moves
+   * nothing is worse than no slider.
+   */
+  .kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-padx)}
+  .kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto;padding-inline:var(--cop-headpadx)}
 }
 @media(min-width:901px){
   .kbb-checkout.cop-dhead-page .co-head .in{max-width:none;margin-inline:0}

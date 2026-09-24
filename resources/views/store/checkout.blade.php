@@ -347,12 +347,86 @@
     (function () {
         var bar = document.querySelector('.kbb-checkout .mpbar');
         var target = document.querySelector('.kbb-checkout .kbb-mobile-order .place');
+        var form = document.getElementById('kbbCheckoutForm');
 
-        if (!bar || !target || !('IntersectionObserver' in window)) { return; }
+        if (!bar || !target || !form || !('IntersectionObserver' in window)) { return; }
 
+        var away = false;
+
+        /*
+         * IS THE ORDER ACTUALLY PLACEABLE?
+         *
+         * "with missing fields, or selection or missing payment selection, the
+         * floating place order bar will not show." A bar offering Place order
+         * on a form that cannot be placed is a button that exists to be
+         * refused, and on a phone it covers the field that is actually wrong.
+         *
+         * `:invalid` IS THE SAME TEST THE BUTTON ITSELF USES -- see the
+         * [data-place] handler in checkout.js, which scrolls to
+         * form.querySelector(':invalid') before it will submit. Using the
+         * browser's own constraint validation rather than a second list of
+         * field names means the two cannot disagree about what "complete"
+         * means, and it costs no layout: :invalid is a selector match, not a
+         * measurement.
+         *
+         * BUT :invalid IS NOT ENOUGH ON ITS OWN, and this is the part worth
+         * reading. The chosen address lands in HIDDEN inputs --
+         * billing_address_1, billing_city, billing_state -- and a hidden input
+         * is barred from constraint validation, so it is never :invalid however
+         * empty it is. The three guards below are each written as "if this
+         * control exists and is unanswered", so a shop with no delivery step,
+         * or one whose payment section has not loaded yet, is not held back by
+         * a question it never asked.
+         */
+        function placeable() {
+            if (form.querySelector(':invalid')) { return false; }
+
+            var address = form.querySelector('#billing_address_1');
+
+            if (address && address.value.trim() === '') { return false; }
+
+            var ship = form.querySelector('input[name="shipping_method"]');
+
+            if (ship && !form.querySelector('input[name="shipping_method"]:checked')) { return false; }
+
+            var pay = form.querySelector('input[name="payment_method"]');
+
+            if (pay && !form.querySelector('input[name="payment_method"]:checked')) { return false; }
+
+            return true;
+        }
+
+        function paint() {
+            bar.classList.toggle('is-on', away && placeable());
+        }
+
+        /*
+         * The target is the button inside .kbb-mobile-order, not `.place` --
+         * there are two of those and the other is in the desktop summary, which
+         * is display:none on a phone. An observer on a display:none element
+         * never reports as intersecting, so watching the wrong one would leave
+         * the bar showing for the whole page.
+         *
+         * No threshold and no rootMargin: "as soon as the on page place order
+         * button appears" is the default threshold of 0 exactly -- the first
+         * pixel in, or out.
+         */
         new IntersectionObserver(function (entries) {
-            bar.classList.toggle('is-on', !entries[entries.length - 1].isIntersecting);
+            away = !entries[entries.length - 1].isIntersecting;
+            paint();
         }).observe(target);
+
+        /*
+         * THREE DELEGATED LISTENERS AND NO POLLING. `input` and `change` catch
+         * typing and the radios; `click` is the one that catches what neither
+         * does -- the address sheet writes the chosen address straight into
+         * those hidden inputs, and setting an input's .value from script fires
+         * no event at all. Each check is four selector matches and reads no
+         * geometry, so paying it on a click costs nothing worth measuring.
+         */
+        document.addEventListener('input', paint);
+        document.addEventListener('change', paint);
+        document.addEventListener('click', function () { setTimeout(paint, 0); });
     })();
     </script>
     @endpush

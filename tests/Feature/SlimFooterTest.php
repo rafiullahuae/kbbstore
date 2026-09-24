@@ -111,10 +111,14 @@ it('draws no element at all for a setting left empty', function () {
         // The brand half is resolved above the markup now, because it is the
         // header's wordmark or the typed box depending on one select; the guard
         // is still "draw no element rather than an empty one".
-        "@if (\$sfHasBrand || \$sfC['byline'] !== '')",
+        "@if (\$sfHasBrand || \$sfC['byline'] !== '' || \$sfLinksInBrand)",
         "@if (\$sfC['help_title'] !== '' || \$sfC['help_sub'] !== '')",
         "@if (\$sfC['phone'] !== '' || \$sfC['email'] !== '')",
-        "@if (\$sfC['l1_text'] !== '' || \$sfC['l2_text'] !== '' || \$sfC['l3_text'] !== '')",
+        // The links are drawn in ONE of two places -- inside the brand column
+        // or at the end of the row -- and the standalone block is guarded on
+        // the inverse of the same flag, so "empty means absent" still holds
+        // whichever place they are in.
+        "@if (! \$sfLinksInBrand && (\$sfC['l1_text'] !== '' || \$sfC['l2_text'] !== '' || \$sfC['l3_text'] !== ''))",
         "@if (\$sfC['copy'] !== '')",
     ] as $guard) {
         expect($partial)->toContain($guard);
@@ -191,7 +195,7 @@ it('stores only a value the select actually offers', function () {
         ->and(sf()->get('tone'))->toBe('ink')
         ->and(sf()->get('pad_y'))->toBe(40);
 
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-ink sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-w-page sf-links-brand sf-t-ink sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
 });
 
 it('caps a pasted novel rather than printing it on every order', function () {
@@ -293,13 +297,13 @@ it('names a state class only where the stylesheet has a rule for it', function (
        which is the departure from "only what is not the default" this file
        otherwise keeps -- `between` and `rows` have rules and `start`/`bar` are
        the base, so a default that is not the base has to be said out loud. */
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-cream sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-w-page sf-links-brand sf-t-cream sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
 
     sf()->save(['align' => 'between', 'sep' => 'dot', 'top_style' => 'solid',
         'shadow' => true, 'upper' => false, 'icons_on' => false, 'divider' => false]);
 
     expect(sf()->bodyClass())
-        ->toBe(' sf-bar sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-wm sf-noic sf-wa sf-msplit sf-m-rows');
+        ->toBe(' sf-bar sf-w-page sf-links-brand sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-wm sf-noic sf-wa sf-msplit sf-m-rows');
 });
 
 it('draws a separator only where two blocks sit side by side', function () {
@@ -619,4 +623,73 @@ it('offers a way back out of the preset it offers', function () {
     expect($screen)->toContain('data-sfs-squeeze')
         ->and($screen)->toContain('data-sfs-defaults')
         ->and($screen)->toContain('squeezeKeys = body.squeeze || [];');
+});
+
+/* ------------------------------------------------------------------------
+ | 8. Lined up with the page, and the links under the wordmark
+ |------------------------------------------------------------------------*/
+
+it('takes the checkout page\'s own width rather than keeping a number beside it', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * "align the width of the checkout DESKTOP footer to the page." The bar was
+     * 1240 and the page is 1040, so the footer's first word started 100px left
+     * of everything above it.
+     *
+     * --cop-d-max is INHERITED, not copied: the checkout emits it on
+     * .kbb-checkout and this bar renders inside it, so moving Appearance →
+     * Checkout page → Page width moves the footer on the same render. On the
+     * cart page the property is absent and the fallback is the 1040 the
+     * checkout ships with.
+     *
+     * Measured in Chromium at 1440: .sf-brand left 220, .co-grid content left
+     * 220. MUTATION: change the fallback and the second assertion is red.
+     */
+    expect(\App\Services\SlimFooter::SCHEMA['width_mode'][2])->toBe('page')
+        ->and($partial)->toContain('.kbb-slimfoot.sf-w-page .sf-in{max-width:var(--cop-d-max,1040px)}')
+        ->and(\App\Services\CheckoutPage::SCHEMA['d_max'][2])->toBe(1040)
+        ->and(sf()->bodyClass())->toContain('sf-w-page');
+});
+
+it('does not emit a width nothing reads', function () {
+    // While the bar is lined up with the page, the slider is not consulted --
+    // and a property on the element that nothing consults is the first thing a
+    // future reader chases when the width looks wrong.
+    sf()->save(['max_w' => 900]);
+    expect(sf()->cssVariables())->not->toContain('--sf-max');
+
+    sf()->save(['width_mode' => 'fixed']);
+    expect(sf()->cssVariables())->toContain('--sf-max:900px');
+});
+
+it('renders the policy links inside the brand block rather than reordering them', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * FLEXBOX CANNOT PUT ONE SIBLING INSIDE ANOTHER'S COLUMN, which is worth
+     * recording because it was tried: `order` only reorders along the row, and
+     * a negative order plus flex-basis:100% drops the links onto their own
+     * full-width line -- a third row, not the brand's second.
+     *
+     * So the block moves in the markup, and the document order moves with the
+     * painting: the tab order and what a screen reader reads then match what is
+     * on screen, which is the right way round.
+     *
+     * Measured in Chromium at 1440 with the default: .sf-brand .sf-links
+     * exists, and its left is 220 -- the same as the wordmark's.
+     */
+    expect(\App\Services\SlimFooter::SCHEMA['links_pos'][2])->toBe('brand')
+        ->and($partial)->toContain('@if ($sfLinksInBrand)')
+        // Drawn once, not twice: the standalone block is guarded on the inverse.
+        ->and($partial)->toContain('@if (! $sfLinksInBrand && (')
+        ->and(substr_count($partial, '<div class="sf-links">'))->toBe(2)
+        ->and(sf()->bodyClass())->toContain('sf-links-brand');
+});
+
+it('carries the brand column with the alignment rather than leaving it left in a centred bar', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    expect($partial)->toContain('.kbb-slimfoot.sf-links-brand.sf-a-center .sf-brand{align-items:center}')
+        ->and($partial)->toContain('.kbb-slimfoot.sf-links-brand.sf-a-end .sf-brand{align-items:flex-end}');
 });

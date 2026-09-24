@@ -47,7 +47,16 @@
 @endphp
 <footer class="kbb-slimfoot{{ $sf->bodyClass() }}"{!! $sf->styleAttr() !!}>
     <div class="sf-in">
-@if ($sfHasBrand || $sfC['byline'] !== '')
+@php
+    /* Where the two policy links are RENDERED, not merely where they are
+       painted: flexbox cannot put one sibling inside another's column, so the
+       block moves in the markup and the tab order moves with it. Resolved once
+       here rather than asked twice below. */
+    $sfLinksInBrand = $sfC['links_pos'] === 'brand'
+        && ($sfL1 !== null || $sfL2 !== null || $sfL3 !== null
+            || $sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== '');
+@endphp
+@if ($sfHasBrand || $sfC['byline'] !== '' || $sfLinksInBrand)
         <div class="sf-brand">
 {{-- WHOLE TAGS IN EVERY BRANCH, the same rule the phone and email links keep:
      a <b> whose CONTENTS are interpolated differently per branch would leave
@@ -56,6 +65,13 @@
      neither is English this file owns. --}}
 @if ($sfWm !== null && $sfHasBrand)<b class="sf-wm">{{ $sfWm['text'] }}<span>{{ $sfWm['accent'] }}</span></b>@elseif ($sfHasBrand)<b>{{ $sfC['brand'] }}</b>@endif
 @if ($sfC['byline'] !== '')<i>{{ $sfC['byline'] }}</i>@endif
+@if ($sfLinksInBrand)
+        <div class="sf-links">
+@if ($sfC['l1_text'] !== '' && $sfL1 !== null)<a href="{{ $sfL1 }}">{{ $sfC['l1_text'] }}</a>@elseif ($sfC['l1_text'] !== '')<span>{{ $sfC['l1_text'] }}</span>@endif
+@if ($sfC['l2_text'] !== '' && $sfL2 !== null)<a href="{{ $sfL2 }}">{{ $sfC['l2_text'] }}</a>@elseif ($sfC['l2_text'] !== '')<span>{{ $sfC['l2_text'] }}</span>@endif
+@if ($sfC['l3_text'] !== '' && $sfL3 !== null)<a href="{{ $sfL3 }}">{{ $sfC['l3_text'] }}</a>@elseif ($sfC['l3_text'] !== '')<span>{{ $sfC['l3_text'] }}</span>@endif
+        </div>
+@endif
         </div>
 @endif
 @if ($sfC['help_title'] !== '' || $sfC['help_sub'] !== '')
@@ -83,7 +99,7 @@
 @endif
         </div>
 @endif
-@if ($sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== '')
+@if (! $sfLinksInBrand && ($sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== ''))
         <div class="sf-links">
 @if ($sfC['l1_text'] !== '' && $sfL1 !== null)<a href="{{ $sfL1 }}">{{ $sfC['l1_text'] }}</a>@elseif ($sfC['l1_text'] !== '')<span>{{ $sfC['l1_text'] }}</span>@endif
 @if ($sfC['l2_text'] !== '' && $sfL2 !== null)<a href="{{ $sfL2 }}">{{ $sfC['l2_text'] }}</a>@elseif ($sfC['l2_text'] !== '')<span>{{ $sfC['l2_text'] }}</span>@endif
@@ -155,6 +171,13 @@
      landmine and which was the control. */
   margin-block-start:var(--sf-above);
 }
+/* ── LINED UP WITH THE PAGE ────────────────────────────────────────────────
+   --cop-d-max is the checkout's OWN page width, emitted on .kbb-checkout, and
+   this bar renders inside it -- so the property is INHERITED rather than
+   copied and the two cannot drift. On the cart page it is absent and the
+   fallback is the 1040 the checkout ships with, which is also what the page
+   there is. The rule sits after the token block so it wins on order. */
+.kbb-slimfoot.sf-w-page .sf-in{max-width:var(--cop-d-max,1040px)}
 .kbb-slimfoot.sf-noline{border-top:0}
 .kbb-slimfoot.sf-t-white{--sf-bg:#FFFFFF}
 .kbb-slimfoot.sf-t-ink{--sf-bg:#17181C;--sf-ink:#FFFFFF;--sf-ink-2:#C9C1C5;--sf-line:#2C2A2E}
@@ -282,6 +305,32 @@
 .kbb-slimfoot.sf-bar .sf-brand b{display:inline}
 .kbb-slimfoot.sf-bar .sf-brand i{display:inline;margin-inline-start:6px}
 .kbb-slimfoot.sf-bar .sf-help b{margin-inline-end:2px}
+
+/* ── THE POLICY LINKS UNDER THE WORDMARK ───────────────────────────────────
+   DONE IN THE MARKUP AND NOT HERE, and the failed attempt is worth recording:
+   the links are a SIBLING of .sf-brand inside a flex row, and flexbox cannot
+   put one sibling inside another's column. `order` only reorders along the
+   row; a negative order plus flex-basis:100% drops the links onto their own
+   full-width line, which is a third row rather than the brand's second.
+
+   So the partial renders them inside .sf-brand when the mode asks for it, and
+   all this rule does is make that block a column. Document order moves with
+   the painting, which is the right way round: the tab order and what a screen
+   reader reads then match what is on screen.
+
+   Only the one-line shapes ask for it; `stack` and `rows` put every block on
+   its own line anyway. */
+.kbb-slimfoot.sf-links-brand:is(.sf-bar,.sf-split) .sf-in{align-items:flex-start}
+.kbb-slimfoot.sf-links-brand .sf-brand{
+  display:flex;flex-direction:column;align-items:flex-start;gap:calc(var(--sf-gap) * .3);
+}
+.kbb-slimfoot.sf-links-brand.sf-bar .sf-brand b{display:block}
+.kbb-slimfoot.sf-links-brand.sf-bar .sf-brand i{display:block;margin-inline-start:0}
+.kbb-slimfoot.sf-links-brand .sf-brand .sf-links{margin-inline-start:0}
+/* Centred and end alignments carry the column with them rather than leaving a
+   left-aligned block inside a centred bar. */
+.kbb-slimfoot.sf-links-brand.sf-a-center .sf-brand{align-items:center}
+.kbb-slimfoot.sf-links-brand.sf-a-end .sf-brand{align-items:flex-end}
 
 .kbb-slimfoot.sf-split .sf-in{align-items:flex-start}
 .kbb-slimfoot.sf-split .sf-brand{margin-inline-end:auto}

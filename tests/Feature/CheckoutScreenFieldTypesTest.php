@@ -109,8 +109,8 @@ it('lines the phone header band up with the page, and centres it only on request
      * The default is the page's edges and the CLASS restores the centring, so
      * the default emits no class and `class="kbb-checkout"` is unchanged.
      */
-    expect($css)->toContain('.kbb-checkout .co-head .in{max-width:none;margin-inline:0}')
-        ->and($css)->toContain('.kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto}')
+    expect($css)->toContain('.kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-padx)}')
+        ->and($css)->toContain('.kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto;padding-inline:var(--cop-headpadx)}')
         ->and($css)->toContain('.kbb-checkout.cop-dhead-page .co-head .in{max-width:none;margin-inline:0}');
 });
 
@@ -133,4 +133,45 @@ it('keeps the authenticity wording where the rest of the shop keeps its claims',
     expect(TrustClaims::CLAIMS)->toHaveKey('reassure_auth_text')
         ->and(CheckoutPage::SCHEMA)->not->toHaveKey('reassure_auth_text')
         ->and(CheckoutPage::TABS['trust'][1])->toContain('Business Details');
+});
+
+/* ------------------------------------------------------------------------
+ | The phone header band, swept rather than reasoned about
+ |------------------------------------------------------------------------*/
+
+it('takes the page\'s own side padding, so the header and the page cannot disagree', function () {
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+
+    /*
+     * REMOVING THE CENTRING WAS HALF THE ANSWER and the report came back
+     * unchanged, so this was swept in Chromium at 390px rather than reasoned
+     * about: 4 header widths x 3 header paddings x 3 page paddings = 36
+     * combinations, asserting `.co-head .logo` left === `.backlink` left.
+     *
+     *   before this rule   several combinations misaligned, worst 40px
+     *   after              0 of 36 misaligned
+     *
+     * The second cause was `--cop-headpadx`: a control separate from the
+     * page's `--cop-padx` that happens to default to the same 20. Set the
+     * header's to 40 and the page's to 8 and the logo sits 32px inside every
+     * other block, with the badge still reaching the right edge because an auto
+     * margin puts it there — which is the asymmetry in the photograph.
+     *
+     * Two numbers that must agree are one number.
+     *
+     * MUTATION: put --cop-headpadx back in the first rule. Red.
+     */
+    expect($css)->toContain('.kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-padx)}')
+        // And the centred mode keeps its own padding, because there the band is
+        // deliberately not the page's width and lining the padding up would
+        // mean nothing.
+        ->and($css)->toContain('.kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto;padding-inline:var(--cop-headpadx)}');
+});
+
+it('hides the header side padding while it is not the number being read', function () {
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/checkout-page-screen.blade.php'));
+
+    // A slider that moves nothing is worse than no slider: the owner drags it,
+    // watches nothing happen, and reports the control as broken.
+    expect($screen)->toContain("if (f.key === 'm_head_pad_x') return String(values.m_head_align) !== 'center';");
 });

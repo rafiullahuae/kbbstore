@@ -3,6 +3,30 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.256
+The floating Place order bar now waits for an order that can actually be placed:
+it asks `form.querySelector(':invalid')` -- the same test the button itself uses
+-- plus the address, delivery and payment, which constraint validation cannot
+see because the chosen address lands in hidden inputs and a hidden input is
+never `:invalid`. Driven at 390px: hidden on an empty form, hidden with the
+fields filled but no address, shown once the address is chosen, hidden again the
+moment the in-page button scrolls back or a field is cleared.
+
+The notch beside the phone logo had a SECOND cause, found by sweeping 36
+combinations rather than reasoning about it: `--cop-headpadx` is a control
+separate from the page's `--cop-padx` and defaults to the same 20 only by
+coincidence. In "lined up with the page" mode the header now takes the page's
+padding -- 0 of 36 combinations misaligned, against several before.
+
+And the footer lines up with the page: `width_mode` defaults to `page` and takes
+the checkout's own inherited `--cop-d-max`, so the two cannot drift. The two
+policy links move under the wordmark, in the markup rather than with `order` --
+flexbox cannot put one sibling inside another's column.
+`Services/SlimFooter.php`, `css/kbb/kbb-checkout.css`,
+`store/checkout.blade.php`, `partials/slim-footer.blade.php`,
+`admin/partials/checkout-page-screen.blade.php`,
+`2026_12_10_000000_clear_caches_float_gate_and_footer_align.php`
+
 ## 2.60.255
 The checkout footer wears the site header's own wordmark. It was drawing
 `brand`, a flat text box shipping "K-BEAUTY BLISS" in capitals; it now reads
