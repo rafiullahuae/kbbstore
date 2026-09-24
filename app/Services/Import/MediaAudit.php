@@ -6,6 +6,7 @@ namespace App\Services\Import;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Post;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Support\MediaUsage;
@@ -108,9 +109,24 @@ final class MediaAudit
     }
 
     /**
-     * The four columns that hold an image URL in this schema, per
-     * `App\Support\MediaUsage`'s inventory. There is no join to make here: the
-     * association IS the string on the row.
+     * Every place this schema holds an image URL. There is no join to make
+     * here: the association IS the string on the row.
+     *
+     * FOUR OF THEM ARE `App\Support\MediaUsage`'s inventory — products,
+     * brands, categories. THE JOURNAL IS NOT IN THAT INVENTORY and used to be
+     * absent here too, which was a hole rather than a simplification:
+     * `PostImporter` writes `posts.cover` and `posts.body` straight out of a
+     * WooCommerce export, where both carry full URLs on the old site. So every
+     * article's photographs were hot-linked to WordPress, `remote` did not
+     * count them, and the number the runbook tells the owner to watch reached
+     * zero with the whole Journal still depending on a site he was about to
+     * switch off.
+     *
+     * `posts.body` is a DOCUMENT, so its addresses are read out of the HTML by
+     * `DocumentMediaRewrite::sources()` — the same parser that re-points them.
+     * One implementation: an address the audit cannot see is a file the
+     * sideloader never fetches, so the rewrite that depends on it would report
+     * ABSENT for ever.
      *
      * @return iterable<int, array{0: string, 1: string, 2: string}>
      */
@@ -139,6 +155,23 @@ final class MediaAudit
         foreach (Category::query()->select(['id', 'slug', 'image'])->cursor() as $category) {
             if (is_string($category->image)) {
                 yield ['category '.$category->id.' ('.$category->slug.')', 'categories.image', $category->image];
+            }
+        }
+
+        /*
+         * `cursor()` and two columns, because `posts.body` is a longText and a
+         * five-year Journal is megabytes of HTML. Hydrating all of it at once
+         * is the memory spike a shared host answers with a blank page.
+         */
+        foreach (Post::query()->select(['id', 'slug', 'cover', 'body'])->cursor() as $post) {
+            $owner = 'article '.$post->id.' ('.$post->slug.')';
+
+            if (is_string($post->cover)) {
+                yield [$owner, 'posts.cover', $post->cover];
+            }
+
+            foreach (DocumentMediaRewrite::sources($post->body) as $source) {
+                yield [$owner, 'posts.body', $source];
             }
         }
     }

@@ -7,6 +7,7 @@ namespace App\Services\Import;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Media;
+use App\Models\Post;
 use App\Models\Product;
 use App\Support\MediaUsage;
 use Illuminate\Support\Facades\DB;
@@ -110,12 +111,29 @@ final class MediaRewrite
     /** Named host, but the file is not under the web root yet. */
     public const ABSENT = 'absent';
 
-    /** The four columns that hold an image URL, per App\Support\MediaUsage. */
+    /**
+     * The columns that hold an image URL, per App\Support\MediaUsage — plus
+     * the one it does not know about.
+     *
+     * `posts.cover` IS A CELL and belongs here. `MediaUsage`'s inventory stops
+     * at products, brands and categories because those are what the Media
+     * Library's delete guard asks about, and the Journal was empty when it was
+     * written. It is not empty now: `PostImporter` fills `posts` from
+     * `posts.csv`, and a WooCommerce export writes the featured image as a full
+     * URL on the site it came from — exactly as it does for a product. So after
+     * an import every article's cover photograph was hot-linked to WordPress
+     * and NOTHING IN THIS APPLICATION COULD RE-POINT IT.
+     *
+     * `posts.body` is NOT here, and that is the other half of the same fix. It
+     * is a document, not a cell: see App\Services\Import\DocumentMediaRewrite,
+     * which does to the `<img>` tags inside it what this does to a column.
+     */
     private const COLUMNS = [
         [Product::class, 'products', 'image', false],
         [Product::class, 'products', 'images', true],
         [Brand::class, 'brands', 'logo', false],
         [Category::class, 'categories', 'image', false],
+        [Post::class, 'posts', 'cover', false],
     ];
 
     /**
@@ -413,6 +431,19 @@ final class MediaRewrite
      * admin typed by hand — and the callers skip it rather than guessing.
      */
     private function uploadsRelative(string $path): ?string
+    {
+        return self::uploadsRelativeTo($path);
+    }
+
+    /**
+     * The same answer, reachable without an instance.
+     *
+     * `DocumentMediaRewrite` has to cut a path at exactly the same place this
+     * does, or a picture inside an article would be looked for somewhere a
+     * picture on a product is not. One implementation, two callers — the rule
+     * this file already follows for `Media::urlFor()`.
+     */
+    public static function uploadsRelativeTo(string $path): ?string
     {
         $path = ltrim(MediaUsage::normalise($path), '/');
 

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Redirect;
+use App\Services\Import\DocumentMediaRewrite;
 use App\Services\Import\MediaAudit;
 use App\Services\Import\MediaIndex;
 use App\Services\Import\MediaRewrite;
@@ -86,6 +87,15 @@ class UrlsMediaApiController extends Controller
         private readonly RedirectMap $map = new RedirectMap,
         private readonly MediaAudit $audit = new MediaAudit,
         private readonly MediaRewrite $rewrite = new MediaRewrite,
+        /*
+         * The other half of the same job. `posts.body` is an article, not a
+         * column that holds one address, so its `<img>` tags are re-pointed by
+         * a rewriter that edits documents — see DocumentMediaRewrite. Both run
+         * from the one button, because "the pictures are off WordPress" is one
+         * question and an answer that is true of products and false of the
+         * Journal is not an answer.
+         */
+        private readonly DocumentMediaRewrite $journal = new DocumentMediaRewrite,
         private readonly ImportWorkspace $workspace = new ImportWorkspace,
     ) {}
 
@@ -313,16 +323,23 @@ class UrlsMediaApiController extends Controller
         if ($action === 'restore') {
             $restored = 0;
             $kept = [];
+            $journalRestored = 0;
+            $journalDocuments = 0;
 
             foreach ($hosts as $host) {
                 $result = $this->rewrite->restore((string) $host);
                 $restored += $result['restored'];
                 $kept = array_merge($kept, $result['kept']);
+
+                $article = $this->journal->restore((string) $host);
+                $journalRestored += $article['restored'];
+                $journalDocuments += $article['documents'];
             }
 
             return response()->json([
                 'ok' => true,
                 'restored' => $restored,
+                'journal' => ['restored' => $journalRestored, 'articles' => $journalDocuments],
                 'kept' => array_slice($kept, 0, self::SHOW),
             ]);
         }
@@ -330,11 +347,21 @@ class UrlsMediaApiController extends Controller
         $proposals = $this->rewrite->propose(array_map(strval(...), $hosts));
         $summary = $this->rewrite->summarise($proposals);
 
+        $journal = $this->journal->propose(array_map(strval(...), $hosts));
+        $journalSummary = $this->journal->summarise($journal);
+
         if ($action === 'preview') {
             return response()->json([
                 'ok' => true,
                 'summary' => $summary,
                 'rows' => array_slice($proposals, 0, self::SHOW),
+                /*
+                 * REPORTED SEPARATELY AND NOT SUMMED INTO `summary`. The two
+                 * counts answer different questions — "how many rows" and "how
+                 * many pictures inside how many articles" — and a single number
+                 * over both would be a number with no unit.
+                 */
+                'journal' => ['summary' => $journalSummary, 'rows' => array_slice($journal, 0, self::SHOW)],
             ]);
         }
 
@@ -342,6 +369,14 @@ class UrlsMediaApiController extends Controller
             'ok' => true,
             'summary' => $summary,
             'rewritten' => $this->rewrite->apply($proposals),
+            'journal' => [
+                'summary' => $journalSummary,
+                'articles' => $this->journal->apply($journal),
+                'absent' => array_slice(array_values(array_filter(
+                    $journal,
+                    static fn (array $row): bool => $row['decision'] === DocumentMediaRewrite::ABSENT,
+                )), 0, self::SHOW),
+            ],
             'absent' => array_slice(array_values(array_filter(
                 $proposals,
                 static fn (array $row): bool => $row['decision'] === MediaRewrite::ABSENT,
