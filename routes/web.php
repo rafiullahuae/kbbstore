@@ -306,6 +306,19 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::get('/catalog/products', [\App\Http\Controllers\Admin\CatalogProductsApiController::class, 'index']);
         Route::get('/demo-content', [\App\Http\Controllers\Admin\DemoContentController::class, 'status']);
         Route::get('/posts', [\App\Http\Controllers\Admin\PostsApiController::class, 'index']);
+
+        /*
+         * Writing an article, as opposed to listing them. This group and
+         * nothing else: two of these routes publish a page at the SITE ROOT of
+         * this shop's own domain in one request, and /api/* is unauthenticated
+         * by design. Content -> Blog Posts was a read-only table by its own
+         * subtitle, over a "real page" for editing that did not exist, and
+         * POST /admin-api/posts answered 405 -- so an owner who had WRITTEN an
+         * article, rather than exported one from WordPress, had nowhere to put
+         * it. Which is awkward, given both SEO research rounds concluded the
+         * ranking now moves on writing rather than on code.
+         */
+        require __DIR__.'/post-editor-admin.php';
         Route::post('/demo-content/{type}/import', [\App\Http\Controllers\Admin\DemoContentController::class, 'import']);
         Route::post('/demo-content/{type}/remove', [\App\Http\Controllers\Admin\DemoContentController::class, 'remove']);
         Route::post('/demo-content/import-all', [\App\Http\Controllers\Admin\DemoContentController::class, 'importAll']);

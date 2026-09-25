@@ -1403,7 +1403,41 @@ pin that looks applied and is not is worse than none.**
       lines away already used. Verified through the real route table:
       `/ar/post/x` → 301 `/ar/x/`, `/ar/blog` → 301 `/ar/skincare-guide/` —
       *2.60.217*
-- [ ] ▲ **`posts` is empty and nothing in the repo can fill it.** No post seeder,
+- [x] ▲ **REWRITTEN, NOT TICKED — two of its three clauses had gone stale and
+      the third was the real gap.** Established on 25 September 2026 by driving a
+      running server, not by reading. `PostImporter` exists and is wired (Lane
+      GJ, registered last in `ImportRunner::entities()`, reachable at Store →
+      Store Import / Export); demo articles import and list; but **Content →
+      Blog Posts was a read-only table by its own subtitle** — "Editing happens
+      on the real page for now", over a real page that did not exist — and
+      `POST /admin-api/posts` answered **405**. `docs/f2-operator-authored-html.md`
+      §1 said the same from the other end: no POST, PUT or PATCH anywhere in
+      this application wrote `posts.body`.
+
+      **So an owner who had WRITTEN an article, rather than exported one from
+      WordPress, had nowhere to put it** — on a shop whose own SEO research
+      concluded that the ranking now moves on writing rather than on code. The
+      editor ships in 2.60.272 at **Content → Blog Posts → New article**, with an
+      Arabic box beside every translatable field.
+
+      Three things checked rather than assumed: Arabic needed no schema at all
+      (`Post::$translatable` already carried title, excerpt and body, and
+      `/ar/{slug}/` resolves once the language is on); a translated SLUG is a
+      deliberate no, argued in `HasTranslations`' own header, so one slug per row
+      with the language carried by `/ar`; and the reserved-slug refusal asks the
+      ROUTER's own pattern rather than a second copy of `RESERVED_SLUGS`, so a
+      segment reserved tomorrow moves the warning with it.
+
+      The original entry, for the record: *"`posts` is empty and nothing in the
+      repo can fill it. No post seeder, no post importer, and the admin Blog
+      Posts screen is read-only by its own comment."*
+- [ ] **Deliberately NOT built, so nobody fills them in quietly:** no delete
+      route (taking an article down is `status: draft`, which keeps the row and
+      therefore the address — a delete frees a slug Google is holding); no slug
+      field on save (moving an address is Store → SEO & Meta → Redirects, which
+      writes the 301); and no canonical or og:image override, those two being
+      the SEO Audit screen's own list of unsafe overrides.
+- [ ] ▲ **(original wording kept below for history)** No post seeder,
       no post importer (`app/Services/Import/Entities/` has nine importers and
       none reads `wp_posts`), and the admin Blog Posts screen is read-only by its
       own comment. So the permalink structure above is finished and serving

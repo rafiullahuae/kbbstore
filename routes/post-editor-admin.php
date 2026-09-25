@@ -7,11 +7,13 @@ declare(strict_types=1);
 | Content → Blog Posts → New article / Edit  (Lane J)
 |------------------------------------------------------------------------------
 |
-| NOT WIRED YET. CLAUDE.md forbids this lane from editing routes/web.php, so
-| this file ships unmounted and the integrator adds ONE line, inside the
-| EXISTING admin-api group in routes/web.php — the group that already carries
-| `auth:admin` and NoStoreAdminApi — immediately after the line that registers
-| the read-only Blog Posts list, so the Journal's two halves sit together:
+| MOUNTED, inside the EXISTING admin-api group in routes/web.php — the group
+| that already carries `auth:admin` and NoStoreAdminApi — immediately after the
+| line registering the read-only Blog Posts list, so the Journal's two halves
+| sit together. CLAUDE.md forbids a lane from editing routes/web.php, so this
+| file shipped unmounted and the integrator added that line; RouteFileHeadersTest
+| caught this paragraph still saying otherwise, which is the guard working. The
+| shape it was added in:
 |
 |     Route::prefix('admin-api')->middleware(\App\Http\Middleware\NoStoreAdminApi::class)->group(function () {
 |         ...
