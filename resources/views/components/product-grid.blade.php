@@ -9,6 +9,30 @@
         <x-product-grid :products="$products" />                 default skin
         <x-product-grid :products="$products" skin="luxe" />      forced skin
         <x-product-grid :products="$products" :columns="3" />
+
+    -- WHAT THIS COMPONENT NEEDS ALREADY LOADED ----------------------------
+
+        brand        `$p->brand?->t('name')` and the placeholder's seed
+        categories   `$p->categories->first()?->t('name')`, the eyebrow line
+
+    BOTH HAVE TO ARRIVE LOADED. This component does not fetch them and must
+    not: it is handed a collection, and a `loadMissing` here would hide the
+    caller's query from the caller. A caller that forgets gets no error and no
+    wrong pixel -- it gets ONE `brands` read and ONE `category_product` read
+    PER TILE. Measured on the brand landing page at 1, 2, 5 and 10 tiles:
+    5/5/5/5 statements as shipped, 5/6/9/14 without `categories:id,name`,
+    5/7/13/23 without either.
+
+    So a caller's query says, character for character:
+
+        ->with(['brand:id,name,slug', 'categories:id,name'])
+
+    TWO CALLERS TODAY, and the second is not a `<x-product-grid>` tag:
+    store/brands.blade.php, and App\Support\Shortcodes::products(), which
+    renders this file as a view for `[kbb_products]`. Both are named in
+    tests/Feature/ComponentLoadContractTest.php, which renders each of them
+    with `Model::preventLazyLoading()` on; a third caller reddens that file
+    until it is named there too.
 --}}
 @props([
     'products',
