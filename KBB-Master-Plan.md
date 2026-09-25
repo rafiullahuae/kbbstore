@@ -1597,8 +1597,39 @@ pin that looks applied and is not is worse than none.**
   chips ARE the five step tabs now — same numbers, one card earlier, in the
   place he is about to click. Its other two options, "Untagged only" and "Every
   product", survive as a scope select on every step tab.
-- [ ] **No bulk-tag endpoint**, so tagging is one product at a time. Friction,
-  not a defect; worth knowing before starting a 30–45 product session.
+- [x] **Bulk tagging, measured at 124 presses down to 12** — *2.60.272*. The
+  entry below stood as written until Lane Q4 drove it: a 40-product session over
+  the four worksheet terms took **124** presses on the screen as it shipped and
+  **12** with the bulk bar, both paths finishing with the same 40 products tagged
+  and counted identically (a click 1, a native select 2, a typed term 1). The 124
+  is not clumsiness — the per-row concern chips are **disabled until a product
+  has a step**, so the concern job forces the step job, 3 presses a row, 40 rows.
+
+  `Catalog → Build my routine → any step tab → Select all N on this page`, then
+  **`Use all N for <step>`** or **`Tag all N for a concern`**. Undo is its own bar
+  above the list.
+
+  Four decisions worth keeping: **Select all selects the visible PAGE**, and the
+  endpoint takes explicit ids with **no query parameter of any kind**, so a write
+  to 300 rows he has not seen is unreachable rather than merely unoffered.
+  **Undo restores each row's state as the server read it**, not the inverse write
+  — "add sensitivity to twelve" does not invert to "remove it from twelve" when
+  three already carried it. **A concern does not require a step**, because
+  `ConcernCollections::query()` selects on `routine_concerns` and never reads
+  `routine_role`. **Grouped writes**: one SELECT and one UPDATE per distinct value
+  — 5 queries for 40 rows against 44 for a save-per-row loop.
+
+  ▲ **And the lane shipped a defect and caught it by driving it.** The bulk chip
+  flips to a *remove* when every picked row already carries the concern, and it
+  was first drawn `✓ Redness & sensitivity` — which reads as a **status** and is a
+  **button that untags**. The real session walked into it: `centella` also matched
+  the `heartleaf` group, one press took the tag off all ten, and the session ended
+  with 10 products instead of 20 with nothing on screen saying so. It now reads
+  **`✓ Remove Redness & sensitivity`**, with a test and a mutation
+- [ ] **No modal confirm before a bulk write**, deliberately. The blast radius is
+  one visible page, the button names the count and the target before it is
+  pressed, and undo is one press — a modal would add ~40 presses a session to
+  guard something already reversible. Say the word if you want one
 
 ## Phase 11 — Payments
 
@@ -2338,6 +2369,49 @@ licence #1 with no special case, which is what keeps the customer path tested.
   **IndexNow**, which is the hole a header cannot close, because it is an
   outbound POST that *asks* Bing to come and look — and a staging copy of a live
   shop arrives with `indexnow_on` already `1`.
+- [x] **In-band and out-of-band URLs, split so a domain move cannot strand a
+  shopper mid-checkout** — *2.60.272*. `Url::redirect()` built every absolute URL
+  on `APP_URL`, which is one setting for two jobs that want opposite answers.
+  Measured with `APP_URL` still on the old domain: `GET https://new-shop.test/
+  checkout` answered `302 Location: https://old-shop.test/cart/`. The shopper is
+  on the new host, their session cookie is scoped to the new host, and they have
+  just been thrown onto a domain that cannot see their basket — on the way to
+  paying. Once the old domain stops resolving it is a dead end.
+
+  The split: a **redirect Location or a link on the page being served is
+  in-band**, built on the host the visitor is already on, because they are
+  already there and a forged `Host:` redirects the forger to their own domain and
+  nobody else's. An **email, a webhook callback, a canonical or a sitemap entry is
+  out-of-band**, built on `APP_URL` and never on a header a visitor chose —
+  a `Host:` written into a password-reset email is account takeover. `Url::
+  external()` is byte-for-byte what `redirect()` used to return, so every caller
+  moved onto it emits exactly what it emitted before.
+
+  That the in-band argument holds was **checked rather than assumed**: a 302 has
+  no path by which it leaves this app cacheable by a shared cache — `CacheHeaders`
+  ships off, returns early on any non-200 when on, and its storefront knob emits
+  `private` on both branches.
+
+  ▲ **Two call sites the previous round's audit missed.**
+  `CanonicalHost::targetFor()` is the inverse of the original bug: it is only ever
+  reached on an ALIAS host, so building on the request would have answered the
+  alias with a `Location` back on the alias — the forwarding that class exists to
+  perform silently stopping, and only for paths that also have a redirects row.
+  And `PaymentsApiController::webhookUrl()`, which registers an address at a
+  payment provider and is out-of-band by definition. A **second mail defect** was
+  found in the same sweep: `QuizController` emitted a root-relative link into the
+  plan email, the same shape as the one already fixed in `cart-recovery`. A
+  suite-wide invariant test now holds every mail template to it.
+
+  ▲ **And the shape the audit proposed would have been invisible to the suite.**
+  `SiteUrl::origin()` refuses a bound request under `runningInConsole()`, which is
+  true under PHPUnit as well as artisan — so the untreaded call is correct in
+  production and always answers `APP_URL` in a test. The request is now a
+  parameter, threaded at `CheckoutController`, `CheckRedirects` and the 404
+  handler, so the behaviour each one relies on is the behaviour its own test
+  exercises. Measured: inside a feature request to `http://new-shop.test`,
+  `SiteUrl::origin()` returns `http://localhost` and `SiteUrl::origin($request)`
+  returns `http://new-shop.test`
 - [~] ⏸ **ON HOLD AT THE OWNER'S INSTRUCTION, 24 September 2026.** He asked for
   it in as many words: *"free the lane B, and put it on hold in the master plan,
   bcz i need un signed patches for now."* The work is BUILT and merged in
