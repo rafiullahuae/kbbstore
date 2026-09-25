@@ -145,7 +145,35 @@ class Product extends Model
             'slug'              => $this->slug,
             'name'              => $this->name,
             'brand'             => $this->relationLoaded('brand') ? $this->brand?->name : null,
-            'price'             => $this->price,
+            /*
+             * THE COLUMN, OR THE "FROM" PRICE WHEN THERE IS NO COLUMN.
+             *
+             * `price` is NULL on a variable parent — WooCommerce keeps the
+             * figures on the variations — so this key published `null` for
+             * every variable product while the tile beside it printed
+             * "AED 120 – AED 190". Two public surfaces, two different answers
+             * to what a product costs, which is the disagreement this file has
+             * already been fixed for twice (see advertisedSalePrice() below).
+             *
+             * effectivePrice() now derives the low end of that range, so the
+             * feed quotes the same "from" figure the tile, the price sort and
+             * the listing JSON-LD quote.
+             *
+             * `?:` NOT `??`: effectivePrice() answers the int 0 when it has
+             * nothing to derive from either — a parent whose variations are all
+             * un-priced — and publishing `0` there would put back the AED 0
+             * this whole change removes. Nothing-known stays null, exactly as
+             * it reads today.
+             *
+             * ▲ ON /api/products THIS STILL ANSWERS null, and deliberately so.
+             * Api\ProductController::INDEX_COLUMNS does not select `type`, and
+             * App\Services\VariantPricing declines to derive a price for a row
+             * whose shape it cannot confirm rather than guessing from a
+             * narrowed SELECT — the same fail-closed rule advertisedSalePrice()
+             * applies to the sale window. Adding `type` to that list is what
+             * turns this on for the endpoint; that file is another lane's.
+             */
+            'price'             => $this->price ?? ($this->effectivePrice() ?: null),
             'sale_price'        => $this->advertisedSalePrice(),
             'image'             => $this->image,
             'images'            => $this->images,
@@ -265,19 +293,98 @@ class Product extends Model
         return $query->where('stock_status', 'instock');
     }
 
-    /** Effective unit price in fils, honouring a scheduled sale window. */
+    /**
+     * Effective unit price in fils, honouring a scheduled sale window.
+     *
+     * ── THE ZERO THIS USED TO ANSWER, AND WHO HEARD IT ──────────────────────
+     *
+     * This method used to end `return (int) $this->price`. A WooCommerce
+     * VARIABLE product keeps its money on its variations and `products.price`
+     * is genuinely NULL on the parent row, and `(int) null === 0` — so every
+     * variable product in the catalogue answered **0 fils**, and that zero was
+     * not an internal detail. It was published:
+     *
+     *   - App\Support\CollectionSchema put `"price": "0.00"` in the ItemList
+     *     JSON-LD of every /shop, category and brand listing page, so GOOGLE
+     *     was told the product was free — while the product page beside it
+     *     published a correct AggregateOffer from the same variations. The two
+     *     documents contradicted each other and the listing one was wrong.
+     *   - App\Services\MarketingPixels reported a ViewContent value of 0.
+     *   - The homepage routine total and Related products summed it as nothing.
+     *
+     * ── WHAT IT ANSWERS NOW, AND WHY THE LOW END ────────────────────────────
+     *
+     * The cheapest price its variations actually charge — the "from" price.
+     * A range has to collapse to ONE number for a sort, a bucket, a pixel or an
+     * Offer, and the low end is the number WooCommerce itself shows ("From AED
+     * 120"), the number Seo::aggregateOffer() already publishes as `lowPrice`,
+     * and the number App\Support\EffectivePrice now orders and buckets on in
+     * SQL. The tile and the product-page headline still print the full RANGE,
+     * because they have room to; everything that needs a scalar gets the same
+     * end of that range rather than a second opinion.
+     *
+     * ── IT IS NOT A QUERY PER PRODUCT ───────────────────────────────────────
+     *
+     * The answer comes from App\Services\VariantPricing, which is a `scoped`
+     * binding holding a per-request memo filled by ONE grouped query over
+     * `product_variants` — the same object, the same memo and the same query
+     * the tiles already resolve, so a 24-tile grid asks once whether it is the
+     * tile or this method that asks first. Resolving a fresh instance here, or
+     * doing the obvious `$this->variants()->min(...)`, would have been an N+1
+     * across that grid and a StorefrontQueryBudgetTest failure.
+     *
+     * range() also declines to answer for a product loaded by a narrowed SELECT
+     * that did not fetch `price`, which is a real shape on the public API — so
+     * such a row falls through to 0 exactly as it does today rather than
+     * silently acquiring a price the query never asked about.
+     *
+     * ── NOTHING WITH A PRICE OF ITS OWN CHANGES ─────────────────────────────
+     *
+     * ownPrice() below is this method's previous body, verbatim, returning null
+     * in the one case it used to cast to zero: a NULL `price` column. Every
+     * product that has a price — which is every simple product and every
+     * variable parent WooCommerce did put a figure on — takes exactly the path
+     * it took before, sale window included. The only rows whose answer moves
+     * are the rows that were answering 0.
+     */
     public function effectivePrice(): int
     {
+        $own = $this->ownPrice();
+
+        if ($own !== null) {
+            return $own;
+        }
+
+        $range = app(\App\Services\VariantPricing::class)->range($this);
+
+        // Still 0 when nothing under it is priced either. MIN() over an
+        // all-NULL set is NULL and range() answers null for that parent, which
+        // is the honest answer -- un-priced data is not a free product, and
+        // this is the one case that behaves exactly as it did before.
+        return $range === null ? 0 : $range[0];
+    }
+
+    /**
+     * The row's OWN effective price, or null when the column it lands on is
+     * NULL — i.e. when this product carries no price of its own at all.
+     *
+     * The three branches are effectivePrice()'s previous body unchanged; only
+     * the `(int) $this->price` casts have become an explicit null check, so
+     * that "no price" and "a price of zero" stop being the same answer. They
+     * never were the same thing and the cast is what conflated them.
+     */
+    private function ownPrice(): ?int
+    {
         if ($this->sale_price === null) {
-            return (int) $this->price;
+            return $this->price === null ? null : (int) $this->price;
         }
 
         $now = now();
         if ($this->sale_starts_at && $now->lt($this->sale_starts_at)) {
-            return (int) $this->price;
+            return $this->price === null ? null : (int) $this->price;
         }
         if ($this->sale_ends_at && $now->gt($this->sale_ends_at)) {
-            return (int) $this->price;
+            return $this->price === null ? null : (int) $this->price;
         }
 
         return (int) $this->sale_price;
