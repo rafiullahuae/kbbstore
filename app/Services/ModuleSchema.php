@@ -846,11 +846,11 @@ final class ModuleSchema
      * @param  array<string, array<int|string, mixed>>  $schema
      * @return array<string, array{0: string, 1: string}>
      */
-    public static function settingRules(array $schema): array
+    public static function settingRules(array $schema, array $policy = [], array $overrides = []): array
     {
         $out = [];
 
-        foreach (self::normalise($schema) as $f) {
+        foreach (self::normalise($schema, $policy, $overrides) as $f) {
             if ($f['store'] !== self::STORE_ADMIN) {
                 continue;
             }
@@ -867,10 +867,10 @@ final class ModuleSchema
      * @param  array<string, array<int|string, mixed>>  $schema
      * @return list<string>
      */
-    public static function missingRules(array $schema): array
+    public static function missingRules(array $schema, array $policy = [], array $overrides = []): array
     {
         return array_values(array_diff(
-            array_keys(self::settingRules($schema)),
+            array_keys(self::settingRules($schema, $policy, $overrides)),
             array_keys(AdminController::SETTING_RULES)
         ));
     }

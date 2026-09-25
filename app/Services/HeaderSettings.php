@@ -187,34 +187,6 @@ class HeaderSettings
         );
     }
 
-    /**
-     * Trending words as a tidy comma list.
-     *
-     * Accepts either an array from the picker or a typed string, so pasting a
-     * list works as well as clicking suggestions.
-     */
-    private function tags(mixed $value, string $default): string
-    {
-        $items = is_array($value) ? $value : explode(',', (string) $value);
-
-        $clean = [];
-
-        foreach ($items as $item) {
-            $item = trim(preg_replace('/\s+/', ' ', (string) $item));
-
-            if ($item === '' || mb_strlen($item) > 40) {
-                continue;
-            }
-
-            // Case-insensitive de-duplication, keeping the first spelling.
-            if (! in_array(mb_strtolower($item), array_map('mb_strtolower', $clean), true)) {
-                $clean[] = $item;
-            }
-        }
-
-        return $clean === [] ? $default : implode(', ', array_slice($clean, 0, 20));
-    }
-
     /** @return string[] */
     public function trendingWords(): array
     {
