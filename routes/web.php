@@ -552,6 +552,20 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/import-articles-admin.php';
 
+        /*
+         * The same report as a SCREEN (Lane U3). The two routes above answer in
+         * JSON and in CSV, which meant the owner had to know an admin-api URL
+         * and read a JSON body to see a list he has to act on by hand, one
+         * article at a time, before the old site is switched off.
+         *
+         * Mounted in this group for exactly the reason the block above gives:
+         * the `/import/` prefix is what the existing `data.import` rule covers.
+         * Nothing is chained onto it -- RouteRegistrar::middleware() REPLACES
+         * rather than appends, so a ->middleware() here would drop
+         * NoStoreAdminApi off a page that names the owner's own article titles.
+         */
+        require __DIR__.'/import-articles-page.php';
+
         // Store → Import → "What has been imported" (Lane GF). The read side of
         // the same screen: the record of which export this shop's data came
         // from, when it was taken and what each run did. Same group, because it

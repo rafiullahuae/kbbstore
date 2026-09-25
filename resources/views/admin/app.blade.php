@@ -7904,6 +7904,7 @@ function impPaint(){
     +gbUrlsMediaCard()
     +gdLiveProgressCard()
     +gfHistoryCard()
+    +u3ArticleAddressCard()
     +impExportCard()
     +'</div>';
 
@@ -8254,6 +8255,17 @@ function gfHistoryCard(){
     +'&ldquo;Forget progress and start over&rdquo;.</p>'
     +'<a href="'+impBase()+'/import/history-page" target="_blank" rel="noopener">'
     +'<button class="btn" style="margin-top:10px">Open the record</button></a></div>';
+}
+
+function u3ArticleAddressCard(){
+  return '<div class="card pad">'
+    +'<b style="font-size:14px">Articles this shop cannot serve</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:680px">'
+    +'Every live article whose address the storefront itself already answers &mdash; /about/, /wishlist/, '
+    +'/feed/ &mdash; with the URL it is indexed at today. Each one is a rename and a redirect in WordPress, '
+    +'before you export again. Opening it writes nothing.</p>'
+    +'<a href="'+impBase()+'/import/article-addresses-page" target="_blank" rel="noopener">'
+    +'<button class="btn" style="margin-top:10px">Open the list</button></a></div>';
 }
 
 function gdLiveProgressCard(){
