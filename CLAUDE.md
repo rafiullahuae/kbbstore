@@ -61,6 +61,24 @@ find app database routes -name '*.php' -print0 | xargs -0 -n1 php -l
 # and passed alone immediately before and after, which reads exactly like flake.
 # Name it per lane, the way KBB_TEST_DB already is:
 KBB_WP_DB=kbb_wp_<lane> KBB_TEST_DB=kbb_<lane> vendor/bin/pest -c phpunit-mysql.xml
+
+# AND KBB_WP_DB BELONGS ON THE ORDINARY RUN TOO, which the line above reads as
+# though it does not. GeWpExporterTest and GnExportScreenTest run on the DEFAULT
+# suite and reach that same MySQL database, so a plain `vendor/bin/pest` collides
+# with any other lane's WP harness exactly as the MySQL config does. It cost a
+# full integrator run: two exporter cases failed with the runner exiting non-zero
+# while a lane was driving the same harness, and the same file answered 41 passed
+# / 0 failed the moment it had a database of its own. Create it once and use it
+# on every run:
+KBB_WP_DB=kbb_wp_<lane> vendor/bin/pest --compact
+# mysql -u root -e "CREATE DATABASE IF NOT EXISTS kbb_wp_<lane>;"
+#
+# KBB_TEST_DB is NOT a database name on the default suite -- it is a FILE PATH,
+# and pointing it at a file that does not exist fails every test in the run with
+# "Database file at path [...] does not exist". Absent it, tests/bootstrap.php
+# already gives an unattended SQLite run a file of its own, named for the process
+# and deleted when it exits, so lanes are isolated without setting it. Leave it
+# alone unless you are on -c phpunit-mysql.xml, where it IS a database name.
 ```
 
 Tests run on file-based SQLite. **Do not switch them to `:memory:`** — the
