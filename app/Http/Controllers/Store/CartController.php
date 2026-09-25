@@ -221,8 +221,47 @@ class CartController extends Controller
     }
 
     /**
-     * One query for the cart, one for its lines with products and brands.
-     * Without the eager load this is an N+1 across every line in the basket.
+     * Everything /cart and the drawer read off a basket line, in a fixed number
+     * of queries however many lines there are.
+     *
+     * ── WHAT THE OLD DOCBLOCK CLAIMED, AND WHAT IT LEFT OUT ─────────────────
+     *
+     * It said "one query for the cart, one for its lines with products and
+     * brands", and every relation it named was indeed loaded. The list was
+     * short by ONE, and the missing one was the only relation on this page that
+     * is read inside the line loop:
+     *
+     *     store/cart-inner.blade.php:170   $attrs = $item->variant?->label()
+     *
+     * ProductVariant::label() reads `attributeValues`, a belongsToMany over
+     * `product_variant_attribute_value`. Unloaded, Eloquent fetches it the
+     * moment it is touched — one join per variant line, with a singular
+     * `where "product_variant_attribute_value"."product_variant_id" = ?` rather
+     * than an `in (...)`.
+     *
+     * MEASURED on /cart, squeeze layout, one variable line per product:
+     *
+     *     lines        1    2    3    5    8
+     *     total      10   11   12   14   17      (+1 per line, exactly)
+     *     attribute_values reads
+     *                  1    2    3    5    8
+     *
+     * and 10 flat from one line to eight with the entry below in place. See
+     * docs/q8-cart-eager-loads.md for how those requests were measured — a
+     * warm-up pass, and two memos reset — and for the one artifact of measuring
+     * this in a test process at all.
+     *
+     * Store\CheckoutController::loadCart() has carried
+     * `items.variant.attributeValues` all along — CartService::lineLabel()
+     * refuses to read the relation unless it is loaded, so the checkout had to
+     * — and /checkout measures FLAT at 12 queries from one line to eight. The
+     * cart drew the same label off the same relation with nothing loaded. This
+     * line is that list's entry, spelled exactly as the checkout spells it so
+     * the two screens cannot drift into loading different columns of it.
+     *
+     * CartLineEagerLoadTest is the pin, and it asserts the SHAPE — the cost of
+     * eight lines equals the cost of one — rather than a number, because a
+     * total is a ceiling that a generous budget hides an N+1 inside.
      */
     private function loadCart(Request $request, bool $create = true)
     {
@@ -235,6 +274,11 @@ class CartController extends Controller
             // `sku` added so this set is a superset of the drawer composer's,
             // which now stands down rather than loading its own copy.
             'items.variant:id,product_id,sku,price,sale_price,image,stock_status',
+            // store/cart-inner.blade.php calls $item->variant?->label(), which
+            // reads this. Same three columns as
+            // Store\CheckoutController::loadCart(), which is the list this one
+            // was short of.
+            'items.variant.attributeValues:id,attribute_id,name',
             'coupon:id,code,type,amount',
         ]);
 
