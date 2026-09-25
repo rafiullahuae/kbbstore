@@ -273,10 +273,13 @@ $kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
  * not: `products.price` is NULL on it and the money is on the variations. Once
  * Product::isOnSale() started answering true for a variation markdown, the
  * on-sale branch contributed `(int) null` -- ZERO -- for that line instead of
- * what the shopper is paying, and the struck order value came out UNDERSTATED.
- * Measured on a basket of one simple product marked 200 down to 50 beside one
- * AED 90 variation: the before-price printed AED 200 where it had printed AED
- * 290, which is a saving smaller than the one being given.
+ * what the shopper is paying, and the struck order value came out UNDERSTATED:
+ * a saving smaller than the one being given, on the screen where somebody
+ * decides to pay. Measured on a basket of one simple product marked AED 200
+ * down to AED 50 beside the AED 190 option of a variable product marked to
+ * AED 140 -- subtotal AED 190 -- the row printed **AED 200** where the honest
+ * figure is AED 340. Without the max() below it prints AED 320. Both numbers
+ * are pinned in VariableProductSaleVisibleTest.
  *
  * compareAtPrice() supplies the missing figure, and max() is what makes the
  * sum safe whatever it answers. The parent's compare-at is its FROM-price --
