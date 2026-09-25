@@ -973,6 +973,31 @@ class CatalogProductsApiController extends Controller
             }
         });
 
+        /*
+         * A MASS UPDATE FIRES NO MODEL EVENTS, AND THIS ONE WRITES PRICES.
+         *
+         * App\Services\VariantPricing holds a snapshot of every variable
+         * parent's price range, dropped by Product::booted() and
+         * ProductVariant::booted() on Eloquent's `saved` and `deleted`. A
+         * query-builder update like the one above fires neither, so the
+         * snapshot survives a write to the very columns it is derived from —
+         * the boundary VariantPricing::invalidate() states in its own docblock
+         * ("anything that starts to has to call this itself"). This endpoint is
+         * the first thing in the application that does, so it says so here.
+         *
+         * It cannot go wrong through THIS request today: nothing on this path
+         * asks for a derived price, and invalidate() builds nothing when the
+         * container has never resolved the class — so on every call this is one
+         * array lookup and no work at all. It is here so that the day this
+         * response grows a price, or this method grows a caller, the snapshot
+         * is already right rather than quietly a version behind.
+         *
+         * Pinned by tests/Feature/VariantPriceMemoRawWriteGuardTest.php, which
+         * fails naming the file and line of any new query-builder write to
+         * `products` or `product_variants` that does not do this.
+         */
+        \App\Services\VariantPricing::invalidate();
+
         return response()->json([
             'ok' => true,
             'target' => $target,

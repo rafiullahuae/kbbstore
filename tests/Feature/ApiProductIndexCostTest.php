@@ -14,7 +14,7 @@ declare(strict_types=1);
  * The index selected no columns, so Eloquent hydrated every column of every
  * visible product — including `description`, which the product editor allows up
  * to 200,000 characters of — and then threw all of it away, because
- * Product::toApi() publishes eleven named fields and `description` is not one
+ * Product::toApi() publishes twelve named fields and `description` is not one
  * of them. Measured on 250 products carrying a 20KB description each, the
  * request moved 6MB through memory to emit 54KB of JSON.
  *
@@ -83,8 +83,31 @@ it('still publishes exactly the fields Product::toApi() promises', function () {
 
     expect($row)->not->toBeNull();
 
+    /*
+     * ▲ TWELVE KEYS, NOT ELEVEN, AND THE PIN WAS ADVANCED DELIBERATELY.
+     *
+     * `compare_at_price` was added to Product::toApi() in the same commit as
+     * this line: the figure to strike through, or null when there is nothing to
+     * strike. It exists because a marked-down VARIABLE product published
+     * `price: 9000, sale_price: null` and said nothing at all about the quarter
+     * that was off — `products.sale_price` is NULL on a variable parent, so the
+     * pair those two keys form cannot carry the markdown.
+     *
+     * It is ADDITIVE and that is the whole of why it was a lane's call to make.
+     * No key already on this list changed its value or its meaning: `price` is
+     * still the charged from-price ApiProductTypeNotPublishedTest pins, and
+     * `sale_price` is still the advertised markdown or null. The alternative —
+     * redefining `price` as the compare-at for variable rows — moves a
+     * published number on an unauthenticated feed and is the owner's decision;
+     * ApiCompareAtPriceTest's header states both options and why this one
+     * shipped.
+     *
+     * The list stays EXACT rather than becoming a "contains": the reason this
+     * assertion exists is that a public projection must not grow by accident,
+     * and a twelfth key added on purpose is the only kind that should move it.
+     */
     expect(array_keys($row))->toEqualCanonicalizing([
-        'slug', 'name', 'brand', 'price', 'sale_price', 'image',
+        'slug', 'name', 'brand', 'price', 'sale_price', 'compare_at_price', 'image',
         'images', 'rating', 'review_count', 'stock_status', 'short_description',
     ]);
 
