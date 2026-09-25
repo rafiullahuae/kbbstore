@@ -3,6 +3,111 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.276
+A setting was being printed unescaped on the homepage. Settings stop being
+trusted on the way out of the table. The cart stops paying a query per line.
+And the suite is green on MySQL for the first time.
+
+▲ AN UNESCAPED SETTING ON THE HOMEPAGE, and it was found while driving
+something else. store/home.blade.php builds the promo ticker from three chips and
+prints them through {!! !!}. The two beside it are escaped -- e($homeDeliveryText)
+and a constant carrying its own <b> -- and the third, `home_ticker`, went in RAW.
+A value of `<img src=x onerror=...>` rendered into the homepage verbatim, measured
+in a rendered response. Reachable from Appearance -> Homepage content -> Other
+wording AND from any import path, which is the worse half: an imported value never
+passes a human.
+
+That is CLAUDE.md rule 5 word for word -- "Anything printed unescaped is a
+constant, never a setting." Fixed with e() AT THE PRINT SITE rather than a strip
+in the cast, because escaping belongs where the string is printed and holds for a
+row that never went through a screen. e() over ordinary wording is the identity
+and the shipped default is no chip, so nothing moved.
+
+SETTINGS ARE RE-DERIVED ON READ, not trusted. Two parts of this codebase held
+opposite positions on whether a stored value is trusted on the way out, and the
+disagreement was settled by PLANTING ROWS the way an import, a hand-edit or a
+restored backup does, then reading them back through each module's own public
+reader. Before:
+
+    BuildMyRoutine.steps_mode   select  planted evil-not-an-option  -> verbatim
+    BuildMyRoutine.offer_scope  select  planted <script>alert(1)</script> -> verbatim
+    BuildMyRoutine.offer_coupon text    planted 9,000 chars (cap 5,000) -> 9,000
+    PayShipRules.cod_min        money   planted -50000              -> -50000
+    PayShipRules.cod_max        money   planted '12.50'             -> 12
+
+The first two are rule 5's own sentence failing -- "a select stores one of its own
+options or the default". The last is castInt()'s documented "hundredfold error
+that reads back as a plausible number", refused on the way in and reintroduced on
+the way out. A guarantee that holds only for values that arrived the expected way
+is a habit, not a boundary. Proved idempotent through the REAL write() and read()
+rather than cast() twice in memory, because the tables stringify and that is
+exactly where such a claim breaks: a shop whose values came from its own screens
+is byte-identical, and only rows no screen could have produced move. A read-side
+refusal returns the declared default, never null, because a reader has no
+rejection channel and a page must render.
+
+THE LAST THREE SETTINGS CLASSES are on the schema -- Store -> Reviews -> Review
+Settings, Reviews -> Badge Themes, Reviews -> Rating Capsule, Platform -> Cache.
+345 recorded calls replayed byte-identically, NOT ONE exemption. And round 1's
+corpus could never have caught the stated blocker: its boolean inputs do not
+include the literal string 'null', which is the entire third dialect.
+
+▲ AND THERE WERE TWO NEW DIALECTS, NOT ONE. ReviewBadgeSettings::colour() is a
+third HEX dialect nobody had written down: it requires the '#', EXPANDS #abc to
+#AABBCC, and upper-cases. Folding it into the existing repair arm looks free --
+identical colour to a browser -- and breaks activeTheme() two hundred lines below,
+which decides a shop's badge preset by STRING-COMPARING the stored six digits. A
+shop on Classic would have read back as "Custom" while the badge drew identically.
+
+THE CART STOPS PAYING A QUERY PER LINE. /cart issued 10, 11, 12, 14 and 17
+statements for 1, 2, 3, 5 and 8 variant lines -- one product_variant_attribute_value
+join per line, singular `= ?` not `in (...)`, because ProductVariant::label()
+reads a relation CartController::loadCart() did not eager-load. It is 10 FLAT
+after: slope 1.0 to 0.0, from one entry spelled character for character as the
+checkout already spells it.
+
+Why nothing caught it: StorefrontQueryBudgetTest's cart fixture puts no
+product_variant_id on any line, so label() short-circuits on the null and the
+relation is never touched -- AND A BUDGET CAPS A TOTAL WITHOUT SAYING HOW IT
+GROWS. Nothing a shopper sees moved, proved rather than asserted: /cart from a
+four-line basket with a two-axis variation is byte-identical before and after
+apart from the CSRF token.
+
+BOTH ENGINES GREEN, WHICH HAS NOT BEEN TRUE BEFORE. Tests run on SQLite and the
+live shop runs MySQL, and nine cases failed only on MySQL. All nine were tests
+asserting the ENGINE rather than the property; none was a defect in the shop:
+
+  - carts.token is char(36) and a FIXTURE wrote 40 characters. SQLite's grammar
+    compiles string(), char() and uuid() all to the bare word `varchar`, so the
+    width never reaches the table and the over-long write is silently accepted.
+    Every production writer writes a UUID, exactly 36. No basket was ever lost.
+    That had to be ESTABLISHED rather than assumed, because widening the column
+    would have been the obvious and wrong fix.
+  - One counted `"addresses"` in the query log; MySQL quotes with backticks.
+  - One pinned a statement TOTAL, and Schema::hasColumn() is one
+    information_schema select on MySQL against two pragmas on SQLite -- so the
+    number pinned the driver. It now counts work statements and schema probes
+    separately, which is strictly stronger.
+  - posts.seo is a native JSON column on MySQL 8, which normalises object key
+    order on write, and toBe() is assertSame.
+  - One scanned the payload for the database credentials -- and on SQLite both
+    are empty, so the loop continued and THE SCAN NEVER RAN. Nothing leaked; the
+    single hit is the shop's own name inside its own asset filename.
+
+The standing check outlives the round: the widths do not exist on SQLite to be
+read, so a checked-in fingerprint of all 287 char/varchar columns across 75 tables
+is watched over every statement every Feature test issues. The engine that knows
+the widths verifies the map on the MySQL job, in both directions; the engine that
+does not know them uses it. Measured cost 338.80s with against 342.64s without,
+inside the run-to-run noise, zero false positives across 5,877 cases. Suite-wide
+on purpose, because the defect it was written for was IN A FIXTURE -- which no
+endpoint-shaped guard would ever have been pointed at.
+
+Also: describe() called castBool() with no mode, so it described a stored 'off' as
+"off" for the ten modules whose cast reads it as TRUE.
+
+Files: taken from the built zip, every one diffed byte for byte against the repo.
+
 ## 2.60.275
 A markdown on a variable product stops being invisible to the whole shop. Four
 more modules onto the settings schema, with the rules that are not policy kept as
