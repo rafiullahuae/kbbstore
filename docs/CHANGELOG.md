@@ -3,6 +3,85 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.278
+A mistyped address on Store -> Mail is refused out loud instead of silently kept.
+The homepage stops linking its category tiles at an address that redirects.
+
+A MISTYPED REPLY-TO SAVED "SUCCESSFULLY" AND KEPT THE OLD VALUE. Driven
+first-hand before anything was changed: posting "not an address" answered
+HTTP 200 {"ok":true,"configured":true,"missing":[]}, the stored value was
+unchanged, and the screen said "Mail settings saved" while repainting the box
+with the address that was already there. The only evidence was the box quietly
+reverting, which reads as a redraw rather than a refusal.
+
+▲ AND THE OBVIOUS FIX WOULD HAVE MOVED THE SILENCE RATHER THAN CLOSING IT. The
+proposal was one line: add mail_reply_to to the controller's $checks list. But
+$checks is Laravel's `email` rule and the writer is filter_var
+FILTER_VALIDATE_EMAIL, and over a 22-address corpus SIX spellings pass the rule
+and are refused by the writer -- a@b, a@example, a@127.0.0.1, a quoted local
+part, and two with non-ASCII. So mail_merchant_address had the IDENTICAL silent
+drop for all six, despite being the field that was treated as covered BECAUSE it
+is on that list. The class is fixed rather than the instance.
+
+MailSettings::save() now returns the refusal map, which is the hand-off
+PayShipRules and BuildMyRoutine already make and which this class was the only
+one of the four callers not to make. Store -> Mail answers 422 naming the field:
+"Reply-To address" is not a valid value and was NOT saved -- what was stored
+before is unchanged. Everything else on this screen was saved. The console
+already renders that shape, so the admin bundle did not change. Nothing stored
+moved for any value accepted today, and the refusal is reported rather than made
+atomic -- atomic would stop the siblings of a refused key being written, which is
+what happens today.
+
+Admin path: Store -> Mail -> Other settings -> Reply-To address, and the same
+refusal now also reaches Store -> Mail -> Who the message comes from -> New-order
+alerts to.
+
+THE HOMEPAGE CATEGORY TILES LINKED AT AN ADDRESS THAT 301s. HomeController
+selected id, name and slug for the tiles. `path` was not among them, so
+Category::url() fell through to buildPath(); `parent_id` was not among them
+either, so the walk found no parent, ISSUED NO QUERY, and stopped at the leaf. A
+category nested two deep therefore got a tile linking to a URL that answers 301
+to the real one -- on a link the homepage printed itself.
+
+The same omission caused the speed and the wrongness, which is why no query count
+ever showed it: an instrumented run of the whole suite found 1,821 of the
+application's 2,024 ancestry walks coming from this ONE loop, every one of them
+answering nothing.
+
+Nothing on the shop as shipped was affected -- every seeded category is a root.
+It bites a nested tree, which is exactly what the WooCommerce import produces
+("nested to four levels"), so it would have arrived WITH the migration.
+
+`'path'` added to the select. Zero extra queries: the tiles still cost the same
+number of category statements with a nested tree as with a flat one, which is
+pinned, so a later edit that fixes an href by making the loop walk for real fails
+on it.
+
+AND THE CATEGORY WALK NEEDS NO MIGRATION, which was the open question. categories
+.path already IS the materialised column, recomputed on every structural write by
+five call sites, and read first by both Category::url() and CategoryPath::
+canonicalPath(); buildPath() is the fallback. Measured on a real archive at five
+depths: 4 statements flat when `path` is set, 4/5/6/7/8 when it is NULL -- and
+once per page, not three times, because the first walk loads the chain onto the
+instance the other two call sites get. Production nests four deep, so the worst
+real case is three extra single-row primary-key reads on one page, only on a row
+whose path has not been recomputed. A recursive CTE would buy 3 queries on a page
+that is already 4.
+
+▲ AND THE ORDER-EMAIL N+1 DID NOT EXIST. The brief that sent a lane after it
+misread the lazy-load census: it counts relation READS, not queries, and a lazy
+hasMany is ONE query returning every row. Measured at 1, 2, 5 and 10 lines: 3
+statements for the presenter and 6 for a whole send, FLAT, before and after; an
+order email makes zero `products` queries at all. What changed is that the
+presenter now says loadMissing('items') out loud, so it no longer depends on its
+five callers having remembered, and it survives preventLazyLoading(). The lazy
+recorder printed Order::$items => 2 before and (none) after. The guard asserts
+slope AND total, because a mutation showed slope alone has a hole: a constant
+extra query leaves the slope at 0.00 and only the total catches it.
+
+Files: taken from the built zip, every one diffed byte for byte against the repo.
+
 ## 2.60.277
 You can see the homepage before you publish it. The mail password is unreadable
 by construction. And the recommended rail stops fetching a whole product row per
