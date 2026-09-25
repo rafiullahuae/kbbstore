@@ -286,6 +286,16 @@ overflow anywhere.
 - **Seven schema-carrying services are still on their own `cast()`** — listed in
   §1. Each is a smaller version of this round.
 
+  **Round 2 took five of them and is written up in
+  `docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-2.md`.** Two corrections to what is said
+  above, both found by opening the files rather than by reading this page:
+  `HomepageContent` was never on its own `cast()` — it already read and wrote
+  through ModuleSchema and had simply not been added to the guard; and the last
+  sentence is not true of the three `App\Support\*Settings` classes or of
+  `MailSettings`, which are a different schema shape with a third boolean
+  dialect and two types the schema has never had. Round 2 §4 names the blocker
+  for each.
+
 ---
 
 ## 7 · Screenshots

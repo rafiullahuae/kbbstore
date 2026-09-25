@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\CheckoutPage;
+use App\Services\ModuleSchema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -28,26 +29,17 @@ class CheckoutPageApiController extends Controller
 
     public function show(): JsonResponse
     {
-        $values = $this->page->all();
-        $fields = [];
-
-        foreach (CheckoutPage::SCHEMA as $key => $def) {
-            [$type, $label, $default, $help] = array_pad($def, 4, '');
-
-            $fields[$key] = [
-                'key' => $key, 'type' => $type, 'label' => $label, 'help' => $help,
-                'default' => $default, 'value' => $values[$key], 'options' => $def[4] ?? null,
-            ];
-        }
-
-        $tabs = [];
-
-        foreach (CheckoutPage::TABS as $key => [$label, $description, $keys]) {
-            $tabs[] = [
-                'key' => $key, 'label' => $label, 'description' => $description,
-                'fields' => array_values(array_filter(array_map(fn ($k) => $fields[$k] ?? null, $keys))),
-            ];
-        }
+        // One schema, drawn by one renderer. This was the same fifteen lines
+        // that nine other controllers carried, and the reason the three
+        // constants a screen depends on could disagree without anything saying
+        // so. `POLICY` travels with the schema because ModuleSchema's cast is
+        // strict by default and this screen is not — see CheckoutPage::POLICY.
+        $tabs = ModuleSchema::tabs(
+            CheckoutPage::SCHEMA,
+            CheckoutPage::TABS,
+            $this->page->all(),
+            CheckoutPage::POLICY,
+        );
 
         return response()->json([
             'tabs' => $tabs,

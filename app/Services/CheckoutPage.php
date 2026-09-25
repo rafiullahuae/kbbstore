@@ -1114,59 +1114,103 @@ class CheckoutPage
     }
 
     /**
+     * This screen's point on ModuleSchema's six policy axes.
+     *
+     * `blank` and `max` are declared and unreached: the one text key on this
+     * screen, `rating_text`, is governed by a rule of its own (see overrides())
+     * that answers both questions differently and answers them first. They are
+     * written down anyway, at the values that rule uses, so a second text
+     * control added here behaves like the first rather than like nothing.
+     *
+     * `hex` is likewise unobserved — there is no colour control on this screen.
+     *
+     * ── `invalid => default` IS THE SELECT ARM, AND IT WAS PAID FOR ─────────
+     *
+     * Kept from the arm this constant replaced, because the note on it was the
+     * record of a real defect: there WAS no select arm here until `ph_tone` and
+     * `ph_weight` became the first selects in this schema, so both fell through
+     * to `default => $value` and stored whatever arrived. Both are read back
+     * through OPTION_VARS to build a CSS declaration — a stored value the map
+     * has no key for is a missing-index error at best, and the reason it must
+     * not be reachable at worst. `default` here is what makes an unrecognised
+     * value fall back to the shipped one rather than be stored.
+     */
+    public const POLICY = [
+        'max' => 120,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
+    /**
+     * The real rule this screen keeps, named where the field is.
+     *
+     * The positional SCHEMA has no slot for it, which is what `overrides` is
+     * for — ModuleSchema's header calls it "per-field extras the positional
+     * constant has no slot for".
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function overrides(): array
+    {
+        return ['rating_text' => ['rule' => [self::class, 'ratingTemplate']]];
+    }
+
+    /**
+     * The normalised schema, built once — see CartPage::fields() for why.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function fields(): array
+    {
+        return ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY, self::overrides());
+    }
+
+    /**
      * A stored value, forced back inside its schema.
      *
      * The clamp is here and not only in the browser, because the browser is
      * not the only thing that can POST to the endpoint and a slider that
-     * accepts 9999 is a page with no layout left.
+     * accepts 9999 is a page with no layout left. It — and the select arm that
+     * keeps a stored value inside its own option set — are ModuleSchema::cast()
+     * now, shared with every other module screen. The rule that is this
+     * screen's alone is in overrides() and is not.
      */
     private function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key] ?? null;
+        $field = self::fields()[$key] ?? null;
 
-        if ($def === null) {
-            return $value;
-        }
+        // Unchanged: a key this schema does not know is handed back as it came.
+        // all() and save() both filter on SCHEMA before they get here, so this
+        // arm is reachable only from a direct call.
+        return $field === null ? $value : ModuleSchema::cast($field, $value);
+    }
 
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            'range' => max(
-                (int) $def[4]['min'],
-                min((int) $def[4]['max'], (int) $value),
-            ),
-            /*
-             * A SELECT MAY ONLY EVER HOLD ONE OF ITS OWN OPTIONS.
-             *
-             * This arm was missing until `ph_tone` and `ph_weight` became the
-             * first selects in this schema, so they fell through to
-             * `default => $value` and stored whatever arrived. Both are read
-             * back through OPTION_VARS to build a CSS declaration: a stored
-             * value the map has no key for is a missing-index error at best,
-             * and the reason it must not be reachable at worst.
-             *
-             * Anything unrecognised falls back to the shipped default rather
-             * than being stored, which is the same rule SlimFooter::cast()
-             * states for the same reason.
-             */
-            'select' => isset($def[4][(string) $value]) ? (string) $value : (string) $def[2],
-            /*
-             * A TEMPLATE MAY CARRY NO DIGIT OF ITS OWN.
-             *
-             * `rating_text` is the only text key on this screen and it sits
-             * beside the pay button. Its two tokens are replaced with figures
-             * read from the reviews table; a digit anywhere else in it is a
-             * figure the owner typed, which is precisely the invented number
-             * `reassure_rating_text` was removed for. Refused rather than
-             * stripped: silently deleting the "4.8" somebody typed leaves them
-             * reading a line they did not write and did not agree to.
-             *
-             * Length is bounded too. This is stored, read on every checkout
-             * render and printed; there is no wording for it that needs 200
-             * characters.
-             */
-            'text' => self::cleanTemplate((string) $value, (string) $def[2]),
-            default => $value,
-        };
+    /**
+     * A TEMPLATE MAY CARRY NO DIGIT OF ITS OWN — this screen's real rule.
+     *
+     * `rating_text` is the only text key on this screen and it sits beside the
+     * pay button. Its two tokens are replaced with figures read from the
+     * reviews table; a digit anywhere else in it is a figure the owner typed,
+     * which is precisely the invented number `reassure_rating_text` was removed
+     * for. Refused rather than stripped: silently deleting the "4.8" somebody
+     * typed leaves them reading a line they did not write and did not agree to.
+     *
+     * ── WHY THIS IS A RULE AND NOT THE `max` AXIS ───────────────────────────
+     *
+     * Two reasons, and both are the difference between refusing and repairing.
+     * A shared text cast TRUNCATES at `max`; this REFUSES an over-length value
+     * back to the shipped wording, because half a sentence printed beside the
+     * pay button is its own defect. And no axis can express "no digit outside
+     * the tokens" at all. Flattening either into policy would have been a rule
+     * quietly lost in a migration, which is why this screen was held back from
+     * the first one.
+     */
+    public static function ratingTemplate(mixed $raw, array $field): string
+    {
+        return self::cleanTemplate((string) $raw, (string) $field['default']);
     }
 
     /**

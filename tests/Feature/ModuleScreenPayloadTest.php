@@ -55,6 +55,20 @@ function mScreenUrls(): array
         'newsletter', 'product-labels', 'product-styles', 'dividers',
         'slim-footer', 'cart-page', 'checkout-page', 'pay-ship-rules',
         'marketing-pixels',
+        /*
+         * Lane M2. Of the five screens that round touched, Store → Security was
+         * the only one whose payload nothing here pinned, so its before-state
+         * was recorded off the parent revision and added in the same shape as
+         * the other fourteen.
+         *
+         * ITS FIXTURE ENTRY CARRIES `tabs` AND NOTHING ELSE, deliberately. The
+         * endpoint also answers `report`, which holds the integrity check's
+         * `ran_at` — a wall-clock timestamp that differs between any two runs.
+         * The loop below compares every non-`tabs` key OUTRIGHT, so recording
+         * it would have made this test fail on the clock rather than on a
+         * change, which is the kind of red that gets a test deleted.
+         */
+        'security',
     ];
 }
 
@@ -143,5 +157,6 @@ it('sends every module screen the payload it sent before the shared schema', fun
 
     // A guard on the guard: if the fixture or the URL list is emptied, the loop
     // above passes by doing nothing. It compared 482 fields when written.
-    expect($compared)->toBe(482, 'the number of controls drawn changed');
+    // 482 when written; Store → Security's 18 controls joined in Lane M2.
+    expect($compared)->toBe(500, 'the number of controls drawn changed');
 });

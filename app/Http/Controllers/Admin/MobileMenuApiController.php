@@ -34,21 +34,30 @@ class MobileMenuApiController extends Controller
             ];
         }
 
-        return response()->json([
-            'fields' => $fields,
-            'groups' => [
-                ['key' => 'panel', 'label' => 'Panel', 'description' => 'Size and motion of the sheet.',
-                 'fields' => ['icon_style', 'height', 'radius', 'slide_speed', 'scrim', 'show_grab', 'show_close']],
-                ['key' => 'top', 'label' => 'Top of the sheet', 'description' => 'What sits above the menu itself.',
-                 'fields' => ['show_search', 'search_text', 'show_heading', 'heading_text']],
-                ['key' => 'rows', 'label' => 'Rows', 'description' => 'Density and layout of the items.',
-                 'fields' => ['density', 'child_columns', 'show_counts', 'single_open']],
-                ['key' => 'open', 'label' => 'Open section', 'description' => 'How an expanded parent is marked.',
-                 'fields' => ['card_style', 'rule_position', 'rule_width', 'rule_colour', 'card_bg', 'parent_bg', 'parent_colour']],
-                ['key' => 'foot', 'label' => 'Foot of the sheet', 'description' => 'Support and account links.',
-                 'fields' => ['show_support', 'support_text', 'show_account', 'account_label']],
-            ],
-        ]);
+        /*
+         * THE GROUPS ARE MobileMenu::TABS NOW, not a second list written here.
+         *
+         * They were inline in this method, which is what kept this module out
+         * of ModuleFrameworkGuardTest: with the only copy of the grouping in a
+         * controller there was nothing to check the schema against, so a
+         * setting stored with no control to write it — the exact defect that
+         * guard caught on cart_panel's `accent` — would have gone unnoticed
+         * here. The constant is checked against SCHEMA on every run.
+         *
+         * THE PAYLOAD IS UNCHANGED, deliberately. This screen answers `fields`
+         * + `groups`, where a group names its fields by KEY, rather than the
+         * `tabs` shape ModuleSchema::tabs() builds — that is a different
+         * contract with a different renderer in the console, and swapping it
+         * would move a screen this change is not about. So the constant is read
+         * here in the shape this endpoint has always sent.
+         */
+        $groups = [];
+
+        foreach (MobileMenu::TABS as $key => [$label, $description, $keys]) {
+            $groups[] = ['key' => $key, 'label' => $label, 'description' => $description, 'fields' => $keys];
+        }
+
+        return response()->json(['fields' => $fields, 'groups' => $groups]);
     }
 
     public function save(Request $request): JsonResponse

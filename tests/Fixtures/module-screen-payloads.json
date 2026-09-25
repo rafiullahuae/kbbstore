@@ -6774,5 +6774,260 @@
             }
         ],
         "module_on": false
+    },
+    "security": {
+        "tabs": [
+            {
+                "key": "record",
+                "label": "What is recorded",
+                "description": "Three switches. Turning one off stops new rows of that kind; it never deletes what is already there.",
+                "fields": [
+                    {
+                        "key": "audit_on",
+                        "type": "bool",
+                        "label": "Record administrative changes",
+                        "help": "Settings, back-office accounts and core-update packages: who changed what, from which address, and what it said before. Off, nothing is written and the screen below stays empty from that moment on — the rows already recorded are kept.",
+                        "default": true,
+                        "value": true,
+                        "options": null
+                    },
+                    {
+                        "key": "signin_on",
+                        "type": "bool",
+                        "label": "Record sign-ins and failed sign-ins",
+                        "help": "Every admin sign-in and sign-out, every wrong password, and every time the login throttle turned somebody away. The password itself is never recorded, only the email that was tried.",
+                        "default": true,
+                        "value": true,
+                        "options": null
+                    },
+                    {
+                        "key": "rl_on",
+                        "type": "bool",
+                        "label": "Record rate-limit trips",
+                        "help": "When the shop answers 429 — too many requests — it says so to that visitor and forgets. This remembers it. It does not change who is refused; nothing here refuses anything.",
+                        "default": true,
+                        "value": true,
+                        "options": null
+                    },
+                    {
+                        "key": "rl_window",
+                        "type": "range",
+                        "label": "Collapse repeat trips within",
+                        "help": "Repeat trips from the same address on the same path land on one row with a count, for this many seconds, instead of one row each. A flood is then one row that says 4,000 rather than 4,000 rows.",
+                        "default": 300,
+                        "value": 300,
+                        "options": {
+                            "min": 60,
+                            "max": 3600,
+                            "step": 60,
+                            "unit": "s"
+                        }
+                    }
+                ]
+            },
+            {
+                "key": "verdict",
+                "label": "The verdict line",
+                "description": "The one sentence at the top of this screen, and the two numbers that decide whether it says \"nothing to do\" or \"look at this\".",
+                "fields": [
+                    {
+                        "key": "window_hours",
+                        "type": "range",
+                        "label": "The verdict covers the last",
+                        "help": "The line at the top of the screen counts what happened in this many hours. The lists below it are not limited to it.",
+                        "default": 24,
+                        "value": 24,
+                        "options": {
+                            "min": 1,
+                            "max": 168,
+                            "step": 1,
+                            "unit": "h"
+                        }
+                    },
+                    {
+                        "key": "fail_threshold",
+                        "type": "range",
+                        "label": "Failed sign-ins before it says look",
+                        "help": "Below this the verdict reads \"nothing above the usual\". At or above it, it says so plainly and names the addresses.",
+                        "default": 10,
+                        "value": 10,
+                        "options": {
+                            "min": 1,
+                            "max": 200,
+                            "step": 1,
+                            "unit": ""
+                        }
+                    },
+                    {
+                        "key": "trip_threshold",
+                        "type": "range",
+                        "label": "Rate-limit trips before it says look",
+                        "help": "The same, for requests the shop answered 429. A shop with a busy crawler trips this honestly, which is why it is a number you can move rather than a fixed one.",
+                        "default": 50,
+                        "value": 50,
+                        "options": {
+                            "min": 1,
+                            "max": 2000,
+                            "step": 5,
+                            "unit": ""
+                        }
+                    }
+                ]
+            },
+            {
+                "key": "integrity",
+                "label": "File integrity",
+                "description": "Whether the shop checks that the files its packages installed are still the files those packages contained — and what it does when one is not. It reports; it changes nothing on disk.",
+                "fields": [
+                    {
+                        "key": "integrity_on",
+                        "type": "bool",
+                        "label": "Check that shipped files still match their package",
+                        "help": "Every update package carries a SHA-256 for each file it installs. This hashes those files on the server and reports any that differ, or that are gone. It can only speak about files a package installed — not uploads, not anything hand-created, and not a file somebody ADDED, which has no hash to miss.",
+                        "default": true,
+                        "value": true,
+                        "options": null
+                    },
+                    {
+                        "key": "integrity_hours",
+                        "type": "range",
+                        "label": "Check again at most every",
+                        "help": "Opening this screen runs the check when the last one is older than this. It is a file-by-file hash on shared hosting, so it is throttled rather than run on every refresh; \"Check now\" on the card ignores this.",
+                        "default": 6,
+                        "value": 6,
+                        "options": {
+                            "min": 1,
+                            "max": 168,
+                            "step": 1,
+                            "unit": "h"
+                        }
+                    },
+                    {
+                        "key": "integrity_action",
+                        "type": "select",
+                        "label": "When a file does not match",
+                        "help": "Today there is one answer and it is the recommended one: tell you, and change nothing. Restoring the file from the package that installed it is genuinely possible — the package is still on this server — but it is a WRITE, and it would also silently undo a legitimate hand-edit. That decision is yours to take, and the second option appears here when you have taken it.",
+                        "default": "alert",
+                        "value": "alert",
+                        "options": {
+                            "alert": "Alert me and wait"
+                        }
+                    }
+                ]
+            },
+            {
+                "key": "csp",
+                "label": "Content security policy",
+                "description": "Whether the shop tells browsers what it is allowed to load, and collects what falls outside that. It reports; it refuses nothing, and there is no setting on this screen that can make it refuse.",
+                "fields": [
+                    {
+                        "key": "csp_on",
+                        "type": "bool",
+                        "label": "Send the report-only content-security policy",
+                        "help": "Tells every visitor's browser what this shop is allowed to load — and asks it to REPORT anything outside that rather than block it. Nothing is refused, no page changes, and no shopper sees anything different. While it is on, browsers post a short report for each thing the policy would have stopped, and those land in the list above. Turn it on for a week when you want to know what switching enforcement on would cost; the list fills up in minutes.",
+                        "default": false,
+                        "value": false,
+                        "options": null
+                    },
+                    {
+                        "key": "csp_mode",
+                        "type": "select",
+                        "label": "What the policy does",
+                        "help": "There is one answer today and it is the one the plan calls for: report, and refuse nothing. Enforcing comes after the request gate has watched real traffic, and it comes one rule at a time — a policy switched to enforce in one step is how a working checkout stops taking cards. The second option appears here when that round arrives.",
+                        "default": "report",
+                        "value": "report",
+                        "options": {
+                            "report": "Report only — collect violations, refuse nothing"
+                        }
+                    },
+                    {
+                        "key": "csp_window",
+                        "type": "range",
+                        "label": "Collapse repeat violations within",
+                        "help": "The same violation on the same page lands on one row with a count, for this many seconds, instead of one row per visitor. Without it a single inline script would write one row for every page view on the shop.",
+                        "default": 3600,
+                        "value": 3600,
+                        "options": {
+                            "min": 300,
+                            "max": 86400,
+                            "step": 300,
+                            "unit": "s"
+                        }
+                    },
+                    {
+                        "key": "csp_rows",
+                        "type": "range",
+                        "label": "Never keep more than",
+                        "help": "The ceiling on violation rows, separately from the one on everything else. It matters because this is the only thing in this table a stranger can cause: without a ceiling of its own, enough posted violations would push your sign-ins and setting changes out of the trail to make room. Violations can never take more than this many rows.",
+                        "default": 200,
+                        "value": 200,
+                        "options": {
+                            "min": 20,
+                            "max": 2000,
+                            "step": 10,
+                            "unit": " rows"
+                        }
+                    }
+                ]
+            },
+            {
+                "key": "evidence",
+                "label": "Evidence & retention",
+                "description": "How much of the trail this screen draws, how long any of it is kept, and the ceiling that holds when nobody opens this screen.",
+                "fields": [
+                    {
+                        "key": "list_rows",
+                        "type": "range",
+                        "label": "Rows shown in each list",
+                        "help": "How many of the newest rows each of the three lists draws. It does not affect what is recorded or what the verdict counts.",
+                        "default": 40,
+                        "value": 40,
+                        "options": {
+                            "min": 5,
+                            "max": 200,
+                            "step": 5,
+                            "unit": ""
+                        }
+                    },
+                    {
+                        "key": "keep_days",
+                        "type": "range",
+                        "label": "Keep evidence for",
+                        "help": "Rows older than this are deleted when this screen is opened. Evidence is personal data — an address and an email — and it should expire on a schedule rather than accumulate for ever. There is no scheduler on this host, so \"when this screen is opened\" is the whole of it; the ceiling below is what holds on a shop nobody opens it on.",
+                        "default": 90,
+                        "value": 90,
+                        "options": {
+                            "min": 7,
+                            "max": 730,
+                            "step": 1,
+                            "unit": " days"
+                        }
+                    },
+                    {
+                        "key": "max_rows",
+                        "type": "range",
+                        "label": "Never keep more than",
+                        "help": "The hard ceiling on the whole trail. When it is passed, the oldest rows go until the count is back under it — and that happens as rows are written, not when this screen is opened, so it holds on a shop nobody ever visits this screen on. It is the backstop for \"keep evidence for\" above, not a replacement for it.",
+                        "default": 20000,
+                        "value": 20000,
+                        "options": {
+                            "min": 1000,
+                            "max": 200000,
+                            "step": 1000,
+                            "unit": " rows"
+                        }
+                    },
+                    {
+                        "key": "ip_mask",
+                        "type": "bool",
+                        "label": "Store addresses with the last part masked",
+                        "help": "Records 203.0.113.x instead of the whole address. It costs you the ability to tell two visitors on one network apart, which is usually the thing you wanted the address for — so it ships off, and is here for a shop that would rather not hold the last part at all.",
+                        "default": false,
+                        "value": false,
+                        "options": null
+                    }
+                ]
+            }
+        ]
     }
 }
