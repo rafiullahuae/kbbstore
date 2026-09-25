@@ -86,7 +86,22 @@ php wordpress-plugin/harness/run-export.php --storage=hpos  --out=/tmp/y --db=kb
    `screen-drive.mjs` drives it in Chromium — because everything the last two
    lanes added to that page is JavaScript, which no PHP test can see. It also
    probes the download endpoint's refusals directly (`--probe=download`).
-6. `volume.php` builds every CSV at the **real shop's** row counts — 671
+6. `purge-serve.php` serves the screen **and the real `ajax_purge()`** over
+   HTTP against a real folder, and `purge-drive.mjs` drives the delete in
+   Chromium. Separate from the pair above on purpose: `screen-drive.mjs` answers
+   admin-ajax itself, and a faked endpoint that replies `{"ok":true}` draws the
+   same screen whether the files went or stayed — which is the whole defect the
+   delete exists to close. No MySQL; `docs/GN-EXPORT-SCREEN.md` §10.10 is the
+   account and `docs/gn-purge-shots/` the pictures.
+
+```bash
+KBB_PURGE_UPLOADS=/tmp/kbb-purge-shots \
+  php -S 127.0.0.1:8731 wordpress-plugin/harness/purge-serve.php &
+node wordpress-plugin/harness/purge-drive.mjs \
+    --base=http://127.0.0.1:8731 --shots=docs/gn-purge-shots
+```
+
+7. `volume.php` builds every CSV at the **real shop's** row counts — 671
    products, 4,159 orders, 10,571 line items, 3,712 customers, 2,514 reviews —
    and zips each group through the shipped class, which is how the question "is
    any group's download heavy?" was answered with figures instead of a guess.

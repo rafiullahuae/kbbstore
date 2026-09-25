@@ -711,6 +711,11 @@ it('cannot be shipped in a Core Updates package', function () {
     // splitting. It reads the fixture and writes a temp folder, which is
     // exactly the description of a thing somebody moves into tests/.
     $paths[] = 'wordpress-plugin/harness/volume.php';
+    // Lane U5's: the delete harness. purge-serve.php is a PHP file that serves
+    // the plugin over HTTP and purge-drive.mjs is a browser script, which is
+    // the same "this looks like test tooling" shape as the two above.
+    $paths[] = 'wordpress-plugin/harness/purge-serve.php';
+    $paths[] = 'wordpress-plugin/harness/purge-drive.mjs';
 
     expect(count($paths))->toBeGreaterThan(10);
 

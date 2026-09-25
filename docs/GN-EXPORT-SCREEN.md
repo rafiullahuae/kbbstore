@@ -459,3 +459,127 @@ is explicit that a test asserting the endpoint answered 200 asserts the bug.
 is told. An export folder carries an `index.php` of its own, and measuring one of
 those from `exports()` also starts at depth 0 — so the depth test quietly
 under-counted every export by one file while looking exactly right.
+
+## 10.9 A second pass over the same delete — and one thing it was still doing wrong
+
+The Phase 13 entry was re-read against the code rather than taken on trust, and
+**four of its five claims were already false** by the time it was read. What is
+true today, checked line by line:
+
+| The entry said | The code says |
+|---|---|
+| "There is no control that does it" | There is: **Tools → KBB Export → Delete the export from this server** |
+| "`wp_ajax_kbb_export_reset` is registered and reachable" | True, and still registered — it is `ajax_start()`'s way of beginning at row one |
+| "`KBB_Export_Runner::reset()` only `delete_option()`s the state" | True, and its docblock now says so in the first line so nobody wires it to a button |
+| "wiring the existing endpoint to a button would report success while the hashes stayed on disk" | True, and pinned as a test that calls `reset()` and then asserts the files are **still there** |
+| "Wants a real delete" | `KBB_Export_Runner::purge()`, behind `ajax_purge()`, capability + nonce + typed word |
+
+**And the export folder is already unreachable over HTTP.** `write_index_guard()`
+writes three things on the first batch of every export and they are all still
+there: an `index.php` in the export folder, an `index.php` in `kbb-export/`, and
+a `kbb-export/.htaccess` carrying `Require all denied` for `mod_authz_core` with
+an `Order allow,deny` fallback for older Apache. The export id in the path is
+random on top of that. The delete leaves all three in place on purpose.
+
+**What was still wrong is the one thing this feature exists to prevent.**
+`purge()` computed `ok` from a fresh walk — right — but the walk carried the same
+`PURGE_MAX_DEPTH` ceiling as the delete and called the same `scandir()`, and in
+both of the places where it gave up it returned **zeros**. Zeros read as "there
+is nothing there". So:
+
+```
+ok        true
+remaining []
+note      "Every export file is gone from this server."
+```
+
+…with `customers.csv` and its WordPress password hashes still on the disk and
+the export folder still standing, because `remove()` had stopped at the same
+ceiling and every `rmdir()` on the way back up failed on a non-empty directory.
+Reproduced against real files before it was fixed; the reproduction is now
+`it does not answer ok for a folder it could not finish reading`.
+
+The fix is **not a deeper walk** — a recursive delete with no ceiling is a stack
+overflow away from a half-deleted folder. `measure()` returns `blind`: the
+folders it had to give up on, named by their path under the export root, for the
+two reasons that also stop `remove()` (past the ceiling, and a `scandir()` that
+answers `false` — the shared-hosting folder owned by another UID). `purge()`
+merges them into `remaining` and `ok` is false while any of them exists. **A
+walk that cannot see must say so**, or it is a counter again with a longer walk
+in front of it.
+
+## 10.10 The pictures, taken against real files
+
+`wordpress-plugin/harness/purge-serve.php` serves the plugin's **own**
+`KBB_Export_Admin::screen()` and its **own** `ajax_purge()` over HTTP against a
+real folder, and `purge-drive.mjs` drives it in Chromium.
+
+It is deliberately not `screen.php` + `screen-drive.mjs`. That pair intercepts
+`fetch()` and answers admin-ajax itself, which is right for putting the export
+into "mid-run" and "stalled" — and **wrong here, in the exact direction this
+feature guards against**. A faked endpoint answering `{"ok":true}` draws the same
+screen whether the files went or stayed, which is the `wp_ajax_kbb_export_reset`
+trap rebuilt inside the harness. Every number below is read from `/state`, which
+walks the folder with `RecursiveDirectoryIterator`, not from the page and not
+from the endpoint's reply.
+
+```bash
+KBB_PURGE_UPLOADS=/tmp/kbb-purge-shots \
+  php -S 127.0.0.1:8731 wordpress-plugin/harness/purge-serve.php &
+node wordpress-plugin/harness/purge-drive.mjs \
+    --base=http://127.0.0.1:8731 --shots=docs/gn-purge-shots
+```
+
+No MySQL, on purpose: everything the delete touches is a filesystem, the only
+thing on the page that reads the shop is `KBB_Export_Orders_Source::detect()`'s
+`SHOW TABLES LIKE`, and a harness that can only take its pictures while a
+database happens to be up is a harness whose pictures stop being taken.
+
+Two exports, 16 files, 1.7 MB. `docs/gn-purge-shots/`.
+
+| | 390 px | 1280 px |
+|---|---|---|
+| `document.documentElement.scrollWidth` | 390 | 1280 |
+| `clientWidth` | 390 | 1280 |
+| horizontal overflow | 0 | 0 |
+| exports listed before | 2 | 2 |
+| what the row names | `customers.csv, reviews.csv, orders.csv` | same |
+| button with the box empty | disabled | disabled |
+| button after typing `delete` | **disabled** | **disabled** |
+| button after typing `DELETE` | enabled | enabled |
+| files on disk before | 16 | 16 |
+| files on disk after | **2** (`index.php`, `.htaccess`) | **2** |
+| `customers.csv` after | **gone** | **gone** |
+| media library and `kbb-export-old/` after | untouched | untouched |
+| exports listed after | 0 | 0 |
+
+What the screen says afterwards, at both widths:
+
+> Deleted 16 item(s), 1.7 MB freed. Every export file is gone from this server.
+> The folder guards (index.php and .htaccess) were left in place; they hold
+> nothing.
+
+And the shop manager (`?caps=manage_woocommerce`), 1280 px: **no button at all**,
+the plugin's own sentence in its place — *"Deleting the export needs the
+`kbb_export_delete` capability, which an administrator has and a shop manager
+does not."* — and 16 files still on disk.
+
+| shot | what it is |
+|---|---|
+| `390-1-before.png`, `1280-1-before.png` | the section, two exports listed, button disabled |
+| `390-2-confirm-lowercase.png`, `1280-2-…` | `delete` typed — still disabled |
+| `390-3-confirm-armed.png`, `1280-3-…` | `DELETE` typed — enabled |
+| `390-4-after.png`, `1280-4-after.png` | pressed: empty list, and the count freed |
+| `1280-5-shop-manager-refused.png` | the capability failing closed on the page |
+
+## 10.11 The mutations, run rather than reasoned about
+
+`tests/Feature/GnExportPurgeTest.php`, **11 tests**. Each mutation below was
+applied to the working tree, the file was run, and the tree was restored.
+
+| Mutation | Result |
+|---|---|
+| fold the depth ceiling back into `measure()`'s first guard — `if ( $depth > self::PURGE_MAX_DEPTH \|\| ! is_dir( $path ) …`| 1 failed, 10 passed — *it does not answer ok for a folder it could not finish reading* |
+| `exports_root()` returns `KBB_Export_Wp::uploads_dir()`, one segment wider | 5 failed, 6 passed — including *it leaves everything outside the export folder alone*, which loses the media library |
+| `remove()`'s confinement test drops the separator: `strpos( $real, rtrim( $root, '/' ) )` | 1 failed, 10 passed — *it refuses a path that only looks like it is inside the export folder* |
+| move the `is_link()` branch below the `is_dir()` branch in `remove()` | 1 failed, 10 passed — *it unlinks a symlink instead of following it out of the uploads folder* |

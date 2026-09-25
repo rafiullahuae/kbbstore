@@ -175,6 +175,31 @@ function gpCall(string $action, array $post, array $caps = ['manage_woocommerce'
             echo json_encode(array('ok' => true, 'http' => 200));
         } elseif ('exports' === $action) {
             echo json_encode(array('ok' => true, 'http' => 200, 'exports' => (new KBB_Export_Runner())->exports()));
+        } elseif ('remove_outside' === $action) {
+            /*
+             * THE CONFINEMENT GUARD, ENTERED DIRECTLY. remove() is private and
+             * stays private -- its visibility is a real statement about the
+             * plugin's surface and a test is not a reason to widen it -- so it
+             * is reached by reflection, the way screen.php reaches
+             * settings_from_request(). The path handed to it is one that no
+             * caller could produce and that the guard is the only thing
+             * refusing: a sibling of the export root whose name merely BEGINS
+             * with it.
+             */
+            $runner = new KBB_Export_Runner();
+            $method = new ReflectionMethod('KBB_Export_Runner', 'remove');
+
+            $method->setAccessible(true);
+
+            $target = $_POST['target'];
+            $result = $method->invoke($runner, $target, realpath($runner->exports_root()), 0);
+
+            echo json_encode(array(
+                'ok'      => true,
+                'http'    => 200,
+                'removed' => $result,
+                'exists'  => file_exists($target),
+            ));
         }
     PHP;
 
@@ -420,4 +445,146 @@ it('lists what is really on the server, read off the disk and not out of the opt
             ->and($export['files'])->toBe(7)
             ->and($export['bytes'])->toBeGreaterThan(0);
     }
+});
+
+/* ========================================================================== */
+/*  IT MUST NOT REPORT SUCCESS FOR SOMETHING IT COULD NOT SEE                  */
+/* ========================================================================== */
+
+it('does not answer ok for a folder it could not finish reading', function () {
+    /*
+     * THE DEFECT THIS TEST WAS WRITTEN FOR, and it is the one sentence this
+     * whole feature exists to stop the plugin from saying.
+     *
+     * purge() bounds its recursion at PURGE_MAX_DEPTH, which is right: a
+     * recursive delete with no ceiling is a stack overflow away from a
+     * half-deleted folder. measure() -- the fresh walk `ok` is computed from --
+     * carried the SAME ceiling, and past it it returned zeros. So anything
+     * below the ceiling was not deleted (remove() stopped) and not counted
+     * (measure() stopped), and every rmdir() on the way back up failed on a
+     * non-empty directory.
+     *
+     * On the shop that read, exactly:
+     *
+     *     ok        true
+     *     remaining []
+     *     note      "Every export file is gone from this server."
+     *
+     * with a customers.csv full of WordPress password hashes still on disk and
+     * the export folder still standing. The owner is told the job is done,
+     * which is worse than no button at all -- it is the trap wp_ajax_kbb_export_reset
+     * sets, arrived at from the other direction.
+     *
+     * The fix is not a deeper walk. measure() returns `blind`: the folders it
+     * had to give up on, by path, for the two reasons that also stop remove()
+     * (the ceiling, and a scandir() that answers false). purge() merges them
+     * into `remaining` and `ok` is false while any of them exists.
+     *
+     * MUTATION: in KBB_Export_Runner::measure(), fold the depth ceiling back
+     * into the first guard --
+     *     if ( $depth > self::PURGE_MAX_DEPTH || ! is_dir( $path ) || is_link( $path ) ) {
+     *         return $out;
+     *     }
+     * -- and this goes red on `ok`, on `remaining` and on the note, while the
+     * password hash below is still asserted to be on disk by the same test.
+     */
+    gpSeed();
+
+    $deep = gpRoot().'/3f7a1c22-0001-4000-8000-aaaabbbbcccc';
+
+    for ($i = 0; $i < 12; $i++) {
+        $deep .= '/d'.$i;
+    }
+
+    File::ensureDirectoryExists($deep);
+    file_put_contents($deep.'/customers.csv', "id,password_hash\n1,\$P\$Bxxxxxxxxxxxxxxxxxxxx\n");
+
+    $answer = gpCall('purge', ['nonce' => GP_NONCE, 'confirm' => 'DELETE']);
+
+    // The file really is still there -- this is not a test about a flag.
+    expect(is_file($deep.'/customers.csv'))->toBeTrue();
+
+    expect($answer['ok'])->toBeFalse('purge() reported success with a password hash still on disk')
+        ->and($answer['remaining'])->not->toBe([])
+        ->and(implode(' ', $answer['remaining']))->toContain('3f7a1c22-0001-4000-8000-aaaabbbbcccc/d0')
+        ->and((string) $answer['note'])->toContain('could not be removed');
+
+    // And the screen, which redraws from the same disk, still lists the export
+    // rather than an empty server.
+    expect($answer['exports'])->not->toBe([]);
+});
+
+/* ========================================================================== */
+/*  IT MUST NOT DELETE ANYTHING ELSE                                           */
+/* ========================================================================== */
+
+it('leaves everything outside the export folder alone', function () {
+    /*
+     * The other half of "it must actually delete": it must delete NOTHING
+     * ELSE. The export root is computed (uploads base + the literal
+     * `kbb-export`), never received, so the way this goes wrong is not a
+     * traversal in a request -- it is somebody widening the root by one
+     * segment.
+     *
+     * The neighbours below are the real ones on a WordPress: the media library
+     * that the shop is still serving, another plugin's folder, and a sibling
+     * whose name BEGINS with the export root's, which is the case a string
+     * prefix test gets wrong.
+     *
+     * MUTATION: make KBB_Export_Runner::exports_root() return
+     * `KBB_Export_Wp::uploads_dir()` -- one segment wider, which is exactly
+     * what a careless refactor does -- and this goes red on the media library
+     * while `it really removes every export file from the disk` stays green.
+     */
+    gpSeed();
+
+    $neighbours = [
+        gpUploads().'/2026/09/serum.jpg' => 'not a real jpeg',
+        gpUploads().'/kbb-export-old/customers.csv' => "id,password_hash\n1,keep me\n",
+        gpUploads().'/woocommerce_uploads/invoice.pdf' => '%PDF-1.4',
+        gpUploads().'/index.php' => "<?php\n// Silence is golden.\n",
+    ];
+
+    foreach ($neighbours as $path => $body) {
+        File::ensureDirectoryExists(dirname($path));
+        file_put_contents($path, $body);
+    }
+
+    $answer = gpCall('purge', ['nonce' => GP_NONCE, 'confirm' => 'DELETE']);
+
+    expect($answer['ok'])->toBeTrue();
+
+    foreach (array_keys($neighbours) as $path) {
+        expect(is_file($path))->toBeTrue($path.' was deleted, and it is not part of the export');
+    }
+
+    // ...and the thing it was asked to delete is gone, so this is not passing
+    // by deleting nothing.
+    expect(is_file(gpRoot().'/3f7a1c22-0001-4000-8000-aaaabbbbcccc/customers.csv'))->toBeFalse();
+});
+
+it('refuses a path that only looks like it is inside the export folder', function () {
+    /*
+     * `/uploads/kbb-export-old` is not inside `/uploads/kbb-export`, and a
+     * plain `strpos( $real, $root )` says it is. KBB_Export_Runner::remove()
+     * appends the separator to both sides before comparing, and this enters
+     * that guard directly rather than reading it.
+     *
+     * MUTATION: change the guard in remove() to
+     *     if ( false === $real || 0 !== strpos( $real, rtrim( $root, '/' ) ) ) {
+     * and this goes red -- `removed` becomes 1 and the neighbour's
+     * customers.csv is gone.
+     */
+    gpSeed();
+
+    $sibling = gpUploads().'/kbb-export-old/customers.csv';
+
+    File::ensureDirectoryExists(dirname($sibling));
+    file_put_contents($sibling, "id,password_hash\n1,keep me\n");
+
+    $answer = gpCall('remove_outside', ['target' => $sibling]);
+
+    expect($answer['removed'])->toBe(0)
+        ->and($answer['exists'])->toBeTrue()
+        ->and(is_file($sibling))->toBeTrue('remove() deleted a file outside the export root');
 });
