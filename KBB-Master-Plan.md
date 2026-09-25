@@ -2053,6 +2053,46 @@ a fake success toast and saves nothing).
   "built, never wired up" shape this repo keeps finding — caught this time
   before it set rather than months later.
 
+  ▲ **A variable product was telling Google it was free — CLOSED in 2.60.273,
+  and there were FIVE readers, not four.** PHP and SQL turn the same NULL into
+  two different wrong answers, which is why the count below was low:
+  `Product::effectivePrice()` answered 0 fils; `CollectionSchema::from()`
+  published `"price":"0.00"` to Google on every listing; the price SORT filed
+  NULL first ascending; the price FACET bucketed on it; and `Product::toApi()`
+  published `price: null` on the unauthenticated feed.
+
+  ▲ **And the facet was worse than this entry recorded.** It says variable
+  products "file cheapest-first" in the price filter. They do not — they
+  VANISH, because a comparison against NULL is never true. Touching the price
+  filter made every variable product disappear from the shop. Measured: 17
+  products in "AED 54 – 150" before, 18 after.
+
+  DERIVED, NOT BACKFILLED, and the choice was forced rather than preferred:
+  `VariantPricing::range()` answers only for a parent whose `price` is NULL, so
+  writing a figure into that column would turn every range on the shop
+  ("AED 120 – AED 190") back into a single number — it would have broken the
+  renderer the fix reuses. No schema change and NO `ProductImporter` CHANGE AT
+  ALL. One SQL definition in two shapes: `EffectivePrice::variantChargedSql()`
+  is `ProductVariant::effectivePrice()` in SQL, grouped over a join for the
+  tile's range and COALESCEd inside a correlated MIN for the sort and the facet,
+  so the two cannot drift apart.
+
+  Query cost stays flat — a 24-variable-parent grid costs exactly what a
+  1-parent grid costs, pinned by a test. `/shop/` 4 → 4, `?orderby=plow` 4 → 3,
+  `?price=54-150` 3 → 4, the extra query hydrating the 18 rows that now match
+  where zero matched before.
+
+  RULE 1: the tile, the product-page headline and the Add-to-cart gate were all
+  already correct from an earlier round, so this patch removes no button and the
+  before/after tile screenshots are pixel-identical. And `/api/products` was the
+  last surface left: `INDEX_COLUMNS` did not select `type`, `VariantPricing`
+  fails closed on a row whose shape it cannot confirm, so the feed answered null
+  while the tile printed a range. `type` is selected and is NOT published —
+  `toApi()` is the allowlist and does not carry it, asserted on both the index
+  and the detail route.
+
+  The ORIGINAL entry, for the record:
+
   ▲ **A variable product was telling Google it was free.** WooCommerce keeps no
   price on a variable parent, so `products.price` is genuinely NULL for one and
   `Seo` published `{"@type":"Offer","price":"0.00"}`. It now publishes a real
@@ -2078,12 +2118,55 @@ a fake success toast and saves nothing).
   changes land together, and the verdict is still withheld when the invariant
   fails, because checkpoints written by the old code are in the owner's database
   now
-- [ ] ▲ **Journal images are still hot-linked after an import.** `MediaRewrite`
-  does not know about `posts`: `posts.cover` is a one-line addition, the `<img>`
-  tags inside `posts.body` are not, because that rewriter changes cells and not
-  documents
-- [ ] ▲ **An article at a reserved address cannot be served, and the import now
-  names them.** Articles live at the site root and `RESERVED_SLUGS` owns the
+- [x] ▲ **Journal images are re-pointed after an import** — and this entry was
+  already out of date when it was checked. Lane U3's first act was to read the
+  code rather than rebuild from the entry: `MediaRewrite::COLUMNS` already
+  carried `posts.cover`, and `app/Services/Import/DocumentMediaRewrite.php`
+  already rewrote `<img src>` and `<a href>` inside `posts.body` as a DOCUMENT,
+  idempotently, refusing to re-point anything whose file is not already under
+  the web root. Twenty-five tests, green. **It was not rebuilt.**
+
+  `srcset` was decided explicitly rather than left open: it is not parsed
+  because nothing can get here to parse — `RichText::ALLOWED['img']` has no
+  `srcset`, `source` is in `DROP_WHOLE`, `picture` is not allowed, and both
+  doors into `posts.body` run that one call. `ImportJournalSrcsetTest` is the
+  tripwire and says in its own failure message what to do the day it goes red.
+  The existing comment claiming a stray `srcset` "will read as MISSING on the
+  audit" was WRONG and was corrected: the audit reads through
+  `DocumentMediaRewrite::sources()`, the same list, so such an `<img>` would
+  have its `src` re-pointed, its `srcset` left on the old host, and the
+  migration would report remote → 0 — the exact failure the `<a href>` work
+  closed
+- [x] ▲ **The list of articles this shop cannot serve is a screen** — *2.60.273*.
+  `Store → Import → "Articles this shop cannot serve" → Open the list`. The
+  report itself existed (Lane A), reading `posts.csv` through the importer's own
+  `PostImporter::address()` rather than a second copy of `RESERVED_SLUGS`, and
+  writing nothing. Nothing could REACH it: the owner had to know an admin-api
+  URL and read a JSON body to see a list he has to work through by hand before
+  the old site is switched off.
+
+  ▲ **And it was telling him to write the 301 from the wrong address.** The
+  report offered `/{slug}/` and its own comment called it "spelled the way the
+  old site published it". It is COMPUTED, on the premise that articles live at
+  the site root — true of this shop, true of the old one only if its permalink
+  structure is `/%postname%/`. On `/blog/%postname%/` the row said `/about/`
+  while Google holds `https://kbeautybliss.com/blog/about/`, so the redirect he
+  was told to write would have pointed at an address nobody ever requested,
+  silently, on the one part of a migration that cannot be redone once the old
+  site is off. The indexed URL is now READ from `permalinks.csv` — WordPress's
+  own `get_permalink()` — matched by id then slug, dropped unless http(s) with
+  a host because the page turns it into an `href`, and left EMPTY with the file
+  to upload named rather than guessed. `wanted` and `indexed_at` are separate
+  columns and the CSV column is appended, so nothing already read moves
+- [ ] ▲ **A `<picture>` block loses its `<img>` entirely on import.** libxml's
+  HTML parser is HTML4 and does not know `source` is a void element, so the
+  `<img>` after it is parsed as its CHILD and `RichText::DROP_WHOLE` removes the
+  subtree with it. `<source>` before `<img>` is the only valid ordering, so such
+  a block arrives as nothing and the article silently loses the photograph.
+  Found and pinned by Lane U3 in `ImportJournalSrcsetTest` rather than fixed,
+  because `app/Support/RichText.php` was not that lane's file
+- [x] ▲ **An article at a reserved address cannot be served, and the import now
+  names them.** — the refusal and the list both existed; see the screen above. Articles live at the site root and `RESERVED_SLUGS` owns the
   first segment, so a live article slugged `about`, `wishlist` or `feed` is an
   indexed URL this app can never answer. Refused rather than written, named in
   the discard list with its title and the URL it wanted. **Run a preview** — it
