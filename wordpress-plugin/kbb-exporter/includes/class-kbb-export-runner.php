@@ -1130,6 +1130,17 @@ class KBB_Export_Runner {
 	 * file owned by a different UID than PHP runs as, and the owner has to be
 	 * told its name.
 	 *
+	 * AND A RE-SCAN HAS TO ADMIT WHERE IT COULD NOT LOOK, or it is a counter
+	 * again with a longer walk in front of it. measure() and remove() share the
+	 * depth ceiling and share scandir(), so the two places the walk gives up --
+	 * past PURGE_MAX_DEPTH, and a directory scandir() will not read -- are
+	 * exactly the two places the delete gave up. Those used to measure as zero
+	 * files, `ok` was computed from zero, and the screen said every export file
+	 * was gone with customers.csv still on disk. measure() now returns them in
+	 * `blind`, they are merged into `remaining`, and `ok` is false while any of
+	 * them exists. An answer that cannot see a folder must not be read as an
+	 * answer that the folder is empty.
+	 *
 	 * ==========================================================================
 	 * EVERY DELETE IS INSIDE THE ROOT, PROVED PER ENTRY
 	 * ==========================================================================
@@ -1236,23 +1247,31 @@ class KBB_Export_Runner {
 
 		$after = $this->measure( $root, true );
 
+		/*
+		 * WHAT IS STILL THERE, read off the disk after the fact, AND WHERE THE
+		 * READING ITSELF FAILED. `blind` is the second half and it is not a
+		 * refinement: measure() and remove() carry the same depth ceiling and
+		 * call the same scandir(), so a folder the walk could not enter is a
+		 * folder the delete could not empty. Counting it as nothing made this
+		 * method answer `ok: true` with customers.csv on disk -- which is the
+		 * one thing it was written to never do.
+		 */
+		$remaining = array_merge( $after['names'], $after['blind'] );
+		$clean     = 0 === $after['files'] && 0 === count( $after['blind'] );
+
 		return array(
-			'ok'        => 0 === count( $after['sensitive'] ) && 0 === $after['files'],
+			'ok'        => $clean,
 			'error'     => '',
 			'deleted'   => $deleted,
 			'bytes'     => $before['bytes'] - $after['bytes'],
 			'size'      => self::human( $before['bytes'] - $after['bytes'] ),
-			/*
-			 * WHAT IS STILL THERE, read off the disk after the fact. This is
-			 * the field that makes the answer checkable: `ok` is computed from
-			 * it and not from how many unlink() calls returned true.
-			 */
-			'remaining' => $after['names'],
-			'note'      => 0 === $after['files']
+			'remaining' => $remaining,
+			'note'      => $clean
 				? 'Every export file is gone from this server. The folder guards (index.php and .htaccess) '
 					. 'were left in place; they hold nothing.'
-				: 'Some files could not be removed and are named above. They are usually owned by a different '
-					. 'user than PHP runs as -- your host can delete them.',
+				: 'Some of the export could not be removed and is named above. On shared hosting that is '
+					. 'normally a file or folder owned by a different user than PHP runs as -- your host can '
+					. 'delete it. Treat it as still holding personal data until it is gone.',
 		);
 	}
 
@@ -1313,22 +1332,54 @@ class KBB_Export_Runner {
 	/**
 	 * Walk a folder and say how much is in it, and what of it is sensitive.
 	 *
-	 * @return array{files:int,bytes:int,names:array<int,string>,sensitive:array<int,string>}
+	 * ── AND WHERE IT COULD NOT LOOK, WHICH IS NOT THE SAME AS NOTHING ──────
+	 *
+	 * `blind` names every folder this walk had to give up on. There are exactly
+	 * two ways that happens and both of them ALSO stop remove() -- it carries
+	 * the same ceiling and calls the same scandir() -- so a folder that is
+	 * missing from this answer is a folder that still has whatever was in it.
+	 *
+	 *  1. THE DEPTH CEILING. Past PURGE_MAX_DEPTH the walk stops. remove()
+	 *     stopped at the same place, so everything below is still on disk and
+	 *     every rmdir() on the way back up failed for a non-empty directory.
+	 *  2. AN UNREADABLE DIRECTORY. scandir() answering false is the shared-
+	 *     hosting case this whole feature is written for: a folder owned by a
+	 *     different UID than PHP runs as. It was returning an empty list, which
+	 *     reads as "there is nothing in it".
+	 *
+	 * Either one used to return zeros, purge() computed `ok` from zeros, and the
+	 * screen told the owner every export file was gone while customers.csv was
+	 * still sitting there -- the exact sentence this feature exists to stop the
+	 * plugin from saying. A walk that cannot see must say so.
+	 *
+	 * @return array{files:int,bytes:int,names:array<int,string>,sensitive:array<int,string>,blind:array<int,string>}
 	 */
-	private function measure( $path, $skip_guards = false, $depth = 0 ) {
+	private function measure( $path, $skip_guards = false, $depth = 0, $rel = '' ) {
 		$out = array(
 			'files'     => 0,
 			'bytes'     => 0,
 			'names'     => array(),
 			'sensitive' => array(),
+			'blind'     => array(),
 		);
 
-		if ( $depth > self::PURGE_MAX_DEPTH || ! is_dir( $path ) || is_link( $path ) ) {
+		if ( ! is_dir( $path ) || is_link( $path ) ) {
+			return $out;
+		}
+
+		if ( $depth > self::PURGE_MAX_DEPTH ) {
+			$out['blind'][] = ( '' === $rel ? basename( $path ) : $rel ) . '/ (nested too deeply to read or remove)';
+
 			return $out;
 		}
 
 		$entries = scandir( $path );
-		$entries = ( false === $entries ) ? array() : $entries;
+
+		if ( false === $entries ) {
+			$out['blind'][] = ( '' === $rel ? basename( $path ) : $rel ) . '/ (this folder could not be read)';
+
+			return $out;
+		}
 
 		foreach ( $entries as $entry ) {
 			if ( '.' === $entry || '..' === $entry ) {
@@ -1352,12 +1403,13 @@ class KBB_Export_Runner {
 			$full = $path . '/' . $entry;
 
 			if ( is_dir( $full ) && ! is_link( $full ) ) {
-				$inner = $this->measure( $full, false, $depth + 1 );
+				$inner = $this->measure( $full, false, $depth + 1, ( '' === $rel ? $entry : $rel . '/' . $entry ) );
 
 				$out['files']    += $inner['files'];
 				$out['bytes']    += $inner['bytes'];
 				$out['names']     = array_merge( $out['names'], $inner['names'] );
 				$out['sensitive'] = array_merge( $out['sensitive'], $inner['sensitive'] );
+				$out['blind']     = array_merge( $out['blind'], $inner['blind'] );
 
 				continue;
 			}
