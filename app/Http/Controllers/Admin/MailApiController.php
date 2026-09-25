@@ -194,8 +194,64 @@ class MailApiController extends Controller
             $request->validate($rules);
         }
 
-        $this->settings->save($values);
+        $rejected = $this->settings->save($values);
+
+        // Refreshed either way: a refusal is per-field and the rest of the
+        // payload WAS written, so the transport this request may have changed
+        // has to be rebuilt whether or not one box was refused.
         $this->configurator->refresh();
+
+        /*
+         * ── A REFUSED VALUE IS REPORTED, NOT SWALLOWED — Lane Q11 ───────────
+         *
+         * `$checks` above runs BEFORE anything is written and is unchanged.
+         * This is the second half, and it is the half that was missing: what
+         * MailSettings::save() actually REFUSED to store, reported with the
+         * label the owner is looking at.
+         *
+         * The measured defect it closes: POST {"mail_reply_to":"not an
+         * address"} answered 200 `{"ok":true,"configured":true,"missing":[]}`
+         * and left the previous address in the row. The owner is told the
+         * Reply-To moved; a customer's reply still goes wherever it went
+         * before, and nobody finds out until somebody replies into a void.
+         *
+         * WHY NOT AN `email` ENTRY IN `$checks` INSTEAD, which is what round 4
+         * §11 proposed as "one line": because `$checks` is Laravel's `email`
+         * rule and the writer is `filter_var(FILTER_VALIDATE_EMAIL)`, and they
+         * disagree — measured over a corpus in MailRefusalIsReportedTest. Six
+         * spellings (`a@b`, `a@example`, `a@127.0.0.1`, a quoted local part,
+         * two with non-ASCII) pass `email` and are refused by the writer. So
+         * `mail_merchant_address` had the SAME silent drop despite being in
+         * `$checks`, and the proposed line would have moved the silence from
+         * one address box to the other rather than removed it. Reporting the
+         * writer's own verdict cannot drift from what the writer stores,
+         * because it IS what the writer stored.
+         *
+         * `$checks` IS LEFT EXACTLY AS IT WAS. It refuses before anything is
+         * written, which is a better answer where it fires, and every rule in
+         * it still fires first.
+         *
+         * 422 and `ok: false`, the shape PayShipRulesApiController already
+         * answers with and the shape the console's own save handler already
+         * renders — `toast('Could not save: ' + d.error)`. No console change.
+         *
+         * The other keys in the payload were written, and the sentence says so
+         * rather than leaving the owner to guess whether the whole save was
+         * lost.
+         */
+        if ($rejected !== []) {
+            $labels = '“' . implode('”, “', array_values($rejected)) . '”';
+
+            return response()->json([
+                'ok' => false,
+                'error' => $labels . ' ' . (count($rejected) === 1 ? 'is not a valid value and was' : 'are not valid values and were')
+                    . ' NOT saved — what was stored before is unchanged. Everything else on this screen was saved.',
+                // The keys, so a caller that wants to point at the box can.
+                'rejected' => array_keys($rejected),
+                'configured' => $this->settings->configured(),
+                'missing' => $this->settings->missing(),
+            ], 422);
+        }
 
         // No echo of what was saved. show() is the read side and it is the one
         // place that decides what may be disclosed.
