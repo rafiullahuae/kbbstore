@@ -95,6 +95,29 @@ function mScreenUrls(): array
         'review-settings',
         'review-badges',
         'cache',
+        /*
+         * Lane M4. Store → Mail, which round 3 §5 named as the last screen on
+         * its own hand-written schema and declined to take, because
+         * `MailSettings::all()` hands the `<select>` a display LABEL where every
+         * other reader on this schema hands back the stored key — so migrating
+         * the reader moves what the dropdown is given, on the one screen whose
+         * failure mode is a shop that stops sending order email.
+         *
+         * IT HAS NO `tabs` KEY EITHER, for the same reason the three above do
+         * not: it draws its own four bands from MAIL_SECTIONS in
+         * resources/views/admin/app.blade.php and receives a FLAT `fields` list.
+         * So every recorded key is compared OUTRIGHT — the whole field list,
+         * every `value`, every `has_value`, every `options` array, in order —
+         * which is stricter than the tab walk, not weaker. One moved label, one
+         * reordered option, one `value` that came back as a key instead of a
+         * sentence, and this fails.
+         *
+         * Its before-state was recorded off the parent revision, on a store
+         * that has saved nothing, so `last_test` is null and `configured`,
+         * `missing` and `transport` are the shipped answers. Nothing in this
+         * entry is a wall clock or a machine reading.
+         */
+        'mail',
     ];
 }
 

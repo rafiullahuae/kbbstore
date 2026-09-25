@@ -141,4 +141,139 @@ final class SettingsCorpus
 
         return $rows;
     }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+     * LANE M4 · the MailSettings corpus, and why it is a THIRD instrument
+     *
+     * Rounds 1 and 3 recorded a pure function: `cast($key, $raw)` and
+     * `normalise($key, $value)` both answer from their arguments alone, so a
+     * fixture could be produced with no database and no container.
+     *
+     * MailSettings answers nothing that way. `save()` WRITES — to `settings`
+     * through SettingsService for fifteen keys and to the encrypted
+     * `mail_credentials` row for the sixteenth — and `all()` reads back through
+     * a cache. The behaviour this round is migrating is therefore the ROUND
+     * TRIP, not a cast, and the only honest way to record it is to perform it:
+     * plant, save, read back, and record what the three separate readers
+     * (`all()`, the raw settings row, and the credential store's presence flag)
+     * each say afterwards.
+     *
+     * THE THREE READERS ARE RECORDED SEPARATELY ON PURPOSE. Round 2's named
+     * blocker is that they DISAGREE — `all()` hands back the transport LABEL
+     * where the row holds the key — and a fixture that recorded only one of
+     * them could not see the disagreement move. `raw` is read straight off the
+     * table, past every cache, so "the stored bytes did not change" is a
+     * measurement rather than an inference; that is the assertion the whole
+     * round rests on, because a migration that rewrote a stored transport key
+     * is the shape that stops a shop sending.
+     *
+     * THE PASSWORD IS RECORDED AS A PRESENCE FLAG AND NEVER AS A VALUE. The
+     * fixture is a tracked file in a public repository. `secret` fields record
+     * `has:true` / `has:false`, which is exactly the fact the screen is allowed
+     * to know, and the canary test in MailSecretSurfaceTest proves the fixture
+     * itself carries no password.
+     * ═══════════════════════════════════════════════════════════════════════ */
+
+    /**
+     * What is posted at each type of box on Store → Mail.
+     *
+     * The text arm is round 3's, plus the three inputs that only matter here: a
+     * well-formed address, a malformed one (two fields refuse it), and a string
+     * past every cap this screen declares.
+     *
+     * @return array<string, list<mixed>>
+     */
+    public static function mailCorpus(): array
+    {
+        return [
+            'choice' => ['', null, 'nonsense', ' ', 0, '__KEYS__', '__LABELS__', 'SMTP', ' smtp '],
+            'text' => [
+                'abc', '', '  sp  ', null, '0', "line\nbreak",
+                '<b>x</b>', '<script>alert(1)</script>',
+                'ops@example.com', ' ops@example.com ', 'not-an-address', 'a@b',
+                str_repeat('x', 300), str_repeat('y', 600),
+            ],
+            /*
+             * The write states a `secret` has, and they are FOUR, not two:
+             * absent (never posted — covered by the payload-shaped tests, not
+             * here), blank (the box renders empty and blank means unchanged),
+             * the literal "-" (forget it), and a real value. The padded " - "
+             * is here because trim() runs before the comparison and a future
+             * cast that trims differently would move it.
+             */
+            'secret' => ['s3cret-one', '', '   ', '-', ' - ', '--', null, 'x', str_repeat('p', 300)],
+        ];
+    }
+
+    /**
+     * One line per recorded call:
+     *   key|type|json(input)|all=<var_export>|raw=<var_export>|has=<bool>
+     *
+     * `$save`, `$readAll`, `$readRaw` and `$hasSecret` are passed in rather than
+     * resolved here so this file depends on no container: the test that calls it
+     * owns the app, and this owns the corpus and the line format.
+     *
+     * @param  callable(array<string,mixed>):void  $save     reset, then save this payload
+     * @param  callable():array<string,mixed>      $readAll  MailSettings::all()
+     * @param  callable(string):mixed              $readRaw  the settings row, past every cache
+     * @param  callable():bool                     $hasSecret
+     * @param  array<string, array<int|string, mixed>>  $schema
+     * @return list<string>
+     */
+    public static function mailRows(array $schema, callable $save, callable $readAll, callable $readRaw, callable $hasSecret, array $choices = []): array
+    {
+        $corpus = self::mailCorpus();
+        $rows = [];
+
+        foreach ($schema as $key => $def) {
+            /*
+             * BOTH SHAPES, for round 3's reason. This is recorded against the
+             * parent revision, where MailSettings carries a positional
+             * `[type, label, help]` list — note that `help` is in slot 2 here
+             * and in slot 3 of every other schema in this app, which is exactly
+             * why the constant has to be converted rather than handed to
+             * ModuleSchema::field() positionally — and replayed against this
+             * one, where it carries the associative form.
+             */
+            $type = array_is_list($def) ? (string) ($def[0] ?? '?') : (string) ($def['type'] ?? '?');
+            $type = match ($type) {
+                'select' => 'choice',
+                'textarea' => 'text',
+                default => $type,
+            };
+
+            $inputs = [];
+
+            foreach ($corpus[$type] ?? [null] as $input) {
+                if ($input === '__KEYS__' || $input === '__LABELS__') {
+                    $set = $choices[$key] ?? [];
+                    foreach (($input === '__KEYS__' ? array_keys($set) : array_values($set)) as $one) {
+                        $inputs[] = (string) $one;
+                    }
+
+                    continue;
+                }
+
+                $inputs[] = $input;
+            }
+
+            foreach ($inputs as $input) {
+                $save([$key => $input]);
+
+                $all = $readAll();
+
+                $rows[] = sprintf(
+                    '%s|%s|%s|all=%s|raw=%s|has=%s',
+                    $key,
+                    $type,
+                    json_encode($input),
+                    strtr(var_export($all[$key] ?? '__ABSENT__', true), ["\n" => '\n', "\r" => '\r']),
+                    strtr(var_export($readRaw($key), true), ["\n" => '\n', "\r" => '\r']),
+                    $hasSecret() ? 'true' : 'false',
+                );
+            }
+        }
+
+        return $rows;
+    }
 }

@@ -7146,5 +7146,174 @@
             "asset_max_age_ceiling": 31536000
         },
         "storefront_policy": "private, no-cache, max-age=0, must-revalidate"
+    },
+    "mail": {
+        "fields": [
+            {
+                "key": "mail_transport",
+                "type": "choice",
+                "label": "How this store sends email",
+                "help": "Leave this on \"Use this server's mail\" unless your host has told you otherwise — it needs nothing filled in below. Pick the SMTP option only if you have a mailbox on a dedicated mail server, and then fill in the six boxes under it. The last option sends nothing at all and is for checking a template.",
+                "value": "Use this server's mail (default)",
+                "has_value": true,
+                "options": [
+                    "Use this server's mail (default)",
+                    "Use a dedicated SMTP server",
+                    "Send nothing — write to the log (for testing only)"
+                ]
+            },
+            {
+                "key": "mail_host",
+                "type": "text",
+                "label": "SMTP host",
+                "help": "From the hosting control panel, e.g. smtp.hostinger.com",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_port",
+                "type": "text",
+                "label": "Port",
+                "help": "465 with SSL, or 587 with TLS. Shared hosts commonly block 25.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_encryption",
+                "type": "choice",
+                "label": "Encryption",
+                "help": "ssl for port 465, tls for port 587, none only on a local relay.",
+                "value": "ssl",
+                "has_value": true,
+                "options": [
+                    "ssl",
+                    "tls",
+                    "none"
+                ]
+            },
+            {
+                "key": "mail_username",
+                "type": "text",
+                "label": "Username",
+                "help": "Usually the full mailbox address, e.g. no-reply@kbeautybliss.com",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_password",
+                "type": "secret",
+                "label": "Password",
+                "help": "The mailbox password. Stored encrypted and never shown again once saved.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_from_address",
+                "type": "text",
+                "label": "From address",
+                "help": "What customers see as the sender. On most shared hosts this MUST be a mailbox on this domain or the host rejects the message.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_from_name",
+                "type": "text",
+                "label": "From name",
+                "help": "e.g. K Beauty Bliss",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_merchant_address",
+                "type": "text",
+                "label": "New-order alerts to",
+                "help": "Where you want to be told an order has come in. Leave blank to use the From address above.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_timeout",
+                "type": "text",
+                "label": "Timeout (seconds)",
+                "help": "How long to wait for the mail server before giving up. Blank uses the default. Only used by the dedicated-SMTP option.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_support_whatsapp",
+                "type": "text",
+                "label": "Support WhatsApp number",
+                "help": "Printed in every order confirmation as a \"Chat on WhatsApp\" link. Blank uses the number the storefront footer already shows.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_support_email",
+                "type": "text",
+                "label": "Support email address",
+                "help": "Where a customer should write for help. Blank uses the From address above.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_support_instagram",
+                "type": "text",
+                "label": "Instagram",
+                "help": "Your handle (@kbeauty.bliss) or the full profile link. Blank uses the one saved under Store → Business Details.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_signature",
+                "type": "text",
+                "label": "Signature",
+                "help": "Signed at the foot of every order email, e.g. \"With love, the K Beauty Bliss team\". Type a | where you want a new line. Blank prints the store name.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_cancelled_refund_note",
+                "type": "text",
+                "label": "Cancelled orders: what you tell a paid customer about their money",
+                "help": "Added to the cancellation email ONLY when the order was paid and no refund has been recorded against it yet — e.g. how you send the money back and how long it takes. Leave blank and the email says nothing beyond the amount and that no refund has been recorded.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_shipped_timing_note",
+                "type": "text",
+                "label": "Dispatch email: how long delivery takes AFTER DISPATCH",
+                "help": "Printed after \"Your order has left us and is with the courier.\" on orders going to the UAE. Measured from the moment the parcel leaves you — not from when the order was placed, which is what the delivery line under Place order (Store → Delivery & Shipping) measures, so the two are separate boxes on purpose. Leave blank and the email keeps its current wording. Orders outside the UAE are given no window at all, because none has been measured.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            },
+            {
+                "key": "mail_reply_to",
+                "type": "text",
+                "label": "Reply-To address",
+                "help": "Where a customer's reply to an order email goes. Set this and every order email invites the customer to reply and says the reply reaches you. Leave it blank and no such invitation is printed, because with the From box empty this store sends as no-reply@ and a reply would reach nobody.",
+                "value": "",
+                "has_value": false,
+                "options": null
+            }
+        ],
+        "configured": true,
+        "missing": [],
+        "transport": "smtp",
+        "last_test": null
     }
 }
