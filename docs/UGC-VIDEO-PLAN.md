@@ -1,6 +1,8 @@
 # Shoppable UGC video — the plan, and the previews to choose from
 
-Phase 20. Lane V, round one. **Nothing in this round ships to the shop.**
+Phase 20. Lane V — rounds one, two and three. **Nothing in any of them ships to
+the shop.** Round three (§0b) is the newest: the 2–3 second teaser loop and the
+rating bar on the video, built into every rail rather than into one.
 
 No storefront change, no migration, no admin screen, no setting, no route. The
 owner asked to *"plan it super well and build the previews for now"*, so this
@@ -28,6 +30,13 @@ pills. Pictures of every one at 390px and 1280px are in
 | `v2-player-B2-fanned-*`, `v2-player-B3-revealed-*` | the two variants that have a second state |
 | `v2-rtl-*.png` | the rails and B1, flipped to Arabic and RTL |
 | `measurements-round2.json` | round two's overflow, decoder run and the measured rail heights |
+| `v3-r0/r3/r4/r5-*.png` | round three's rails, teasers running and the rating bar on the video |
+| `v3-no-reviews-*.png` | **the tile whose product has no reviews, beside one that has** — the picture for §10.2 |
+| `v3-contrast-*.png` | the rating bar over white, black and the brightest and darkest real frames, with the measured ratios |
+| `v3-reduced-motion-*.png`, `v3-save-data-390.png`, `v3-teaser-off-390.png` | the three states in which nothing autoplays |
+| `v3-teaser-costs-*.png` | the byte table for the two ways of producing a 2–3 second loop |
+| `v3-rtl-r0-*.png` | the rail, the loop and the rating bar, flipped to Arabic and RTL |
+| `measurements-round3.json` | round three's overflow, the concurrency run, the byte measurement and the contrast ratios |
 
 Captured in Chromium at deviceScaleFactor 2, except the two twelve-tile grids
 (`grid-s3-wall-*`, `grid-s5-two-*`) at 1× — they are judged on density and
@@ -103,6 +112,165 @@ should be chosen by accident.
   stream back at the moment it loses the decoder. Measured over 96 samples of a
   full-page scroll plus five clips stepped through B5's feed:
   **maxDecoding 1, maxMountedVideoElements 1.**
+
+---
+
+## 0b. Round three — the teaser loop and the rating bar
+
+The owner, in his own words: *"I want the videos in ugc section, must be auto
+play the first 2-3 seconds on repeat loop to attract the visitors more. also i
+want the rating + stars inside the product box upon video, just as a small
+bar."*
+
+He has not yet picked a rail, so **both features are built into all seven of
+them** rather than into one. Neither is a reason to prefer a variant; seeing the
+loop run may well be how he picks. `docs/` is on `BuildPackage::NEVER_SHIP`, so
+this round again ships **no package, no migration, no route, no setting and no
+admin control**.
+
+### 0b.1 Where the 2–3 seconds comes from — the one decision that costs money
+
+Two ways to show a three-second loop. They are **identical on screen**. One
+costs twelve times as much, and it was measured rather than reasoned about: a
+rail of eight tiles served over real HTTP in Chromium at 390px, swiped end to
+end, with `Content-Length` summed from the responses the browser actually made.
+
+| | How the loop is made | Video bytes, rail of 8 | Per tile |
+|---|---|---|---|
+| **A** | one full clip, `currentTime = 0` every 2.5 s | **12,786,600 B** | 1.52 MB |
+| **C** | the same clip with `#t=0,2.5` | **12,786,600 B** | 1.52 MB |
+| **B** | a separate 2.5 s teaser file, looped | **1,055,160 B** | 129 KB |
+
+**Seeking back to zero saves nothing, and the media fragment saves nothing
+either.** A plays only the first 2.5 seconds and the browser fetched all
+1,598,325 bytes of every file regardless — eight times the whole clip, to the
+byte. C adds `#t=0,2.5`, which is the obvious clever answer, and the counter
+reads *exactly the same number*: a media fragment tells the player where to
+start, not the network what to fetch.
+
+**Recommendation: B, a separate teaser clip.** The saving is 12.1×, and it is
+not only shorter — it is a *different rendition for a different box*. A rail
+tile is 158 CSS px wide (206 on a desktop), so 316–412 device pixels, and
+360×640 at ~400 kbps is the right encode for it; the full clip has to stay
+720×1280 because the opened player is full screen. **A can never have that
+saving, because it has only one file.**
+
+**What the shop has to do to produce it.** One extra derivative per video, cut
+from the file that was already uploaded — `-ss 0 -t 2.5 -vf scale=360:640
+-b:v 400k`, no audio. That is the same transcode step §3.4 already says the
+upload needs, with one more output, so it costs the pipeline nothing new and
+costs the owner nothing at all: **he is never asked for a second video.** If the
+transcode cannot run — question 4 in §8, *does `ffmpeg` exist on that Cloudways
+box*, is still unanswered — the honest fallback is **not** to fall back to A. It
+is to ship the rail with poster frames only until the teaser exists, which is
+exactly what the previews do under Save-Data, at ~22 KB a tile instead of
+1.52 MB.
+
+### 0b.2 The other four decisions, each with the number behind it
+
+- **Autoplay at all.** `muted`, `playsinline`, `webkit-playsinline`, and the
+  `play()` promise is caught. Every browser refuses an unmuted autoplay and iOS
+  Safari additionally refuses one without `playsinline` — it takes the clip full
+  screen instead, which is worse than not playing. Get this wrong and the rail
+  looks correct in a desktop screenshot and does nothing on half the traffic.
+- **Only what is on screen plays.** One `IntersectionObserver` at threshold 0.6
+  and a hard cap of four. **Measured at 390px, the viewport itself never lets
+  more than two tiles past the threshold**, so the cap does not bind on a phone —
+  it binds on the twelve-tile wall at 1280px, which is what it is for. A tile
+  that leaves drops its `src` and calls `load()`, which is what hands the
+  decoder back; measured over 84 samples of a full-page scroll plus five clips
+  through B5's feed, `maxPlaying 4, maxMounted 4` — mounted never exceeds
+  playing, so nothing is left resident. No scroll handler, no
+  `getBoundingClientRect`.
+- **`prefers-reduced-motion: reduce`.** Nothing autoplays; the poster stands.
+  Read live through `matchMedia`, so changing the OS setting with the page open
+  takes effect without a reload. Verified against the real media query as well
+  as the page's own simulator: 0 mounted, 0 holding a `src`.
+- **`Save-Data`.** Honoured where it is sent, and strictly
+  `navigator.connection.saveData === true`. **Absent means no** — Safari and
+  Firefox do not implement `navigator.connection` at all, so the property is
+  `undefined` on a large share of the traffic, and treating unknown as "save
+  data" would silently turn the feature off for most of the people who can
+  afford it.
+
+**Round two's "exactly one decoding" budget is retired, deliberately.** A rail
+in which only one of the two visible tiles moves looks broken rather than calm,
+and the owner asked for the section to attract the eye. The rule is now
+*everything on screen plays, nothing off screen does, never more than four, and
+an opened player is still exclusive*. The §2 table should be read with that
+substitution.
+
+### 0b.3 The rating bar
+
+Real data: `products.rating` and `products.review_count`, the same denormalised
+pair the shop cards, `?sort=rating`, `?sort=popular`, the `top_rated` shortcode
+and the schema.org aggregateRating already read. Nothing display-only.
+
+- **A product with no reviews gets no bar at all.** An empty five-star row reads
+  as *rated badly* and a zero reads as *rated zero*; a "New" chip in its place is
+  a claim the data does not support, because a product can be three years old
+  and simply unreviewed. The shop already draws this line —
+  `partials/home/grid.blade.php` gates its New badge on `! $p->review_count`, and
+  `2026_11_06_000000_retire_demo_derived_ratings.php` says those products "end at
+  0/0 and their card shows the New badge instead of a star row". The bar is
+  absolutely positioned, so its absence leaves no hole to fill.
+- **It adds 0px.** The bar lives inside `.over`, which is `inset:auto 0 0 0`, so
+  it grows the overlay upward into the scrim that was already there. Every rail
+  height printed in §0 is unchanged, and `scrollWidth` is still 390 and 1280.
+- **Contrast is a correctness problem and was solved by arithmetic, then
+  measured.** A 78% scrim is the lowest alpha at which the score, the filled
+  star and the empty star all clear their thresholds against a *pure white*
+  frame. Read off the rendered PNG at 4×:
+
+  | Frame | Score (needs 4.5:1) | Filled star (3:1) | Empty star (3:1) |
+  |---|---|---|---|
+  | pure white, luminance 255 | **9.69:1** | **6.14:1** | **3.38:1** |
+  | brightest real frame, 185 | 12.90:1 | 8.17:1 | 3.96:1 |
+  | darkest real frame, 59 | 17.89:1 | 11.34:1 | 4.47:1 |
+  | pure black, 0 | 19.51:1 | 12.36:1 | 4.51:1 |
+
+  The proof strip uses the 4.4 product deliberately: five filled stars would
+  hide the empty star, and the empty star is the lowest-contrast thing in the
+  bar.
+- **Arabic and RTL from the start.** The stars are a flex row, which follows
+  `direction`, so the filled ones sit at the inline start in both directions
+  with no `[dir]` rule and no transform to flip. The score and the count are
+  wrapped in `<bdi>` — `(1,284)` without it paints its brackets mirrored inside
+  an Arabic run. **The digits are Western**, because the price two lines below
+  them is: `App\Support\Money` prints `AED 1,199` in Western digits on the
+  Arabic storefront and `App\Support\Bidi` isolates it there, so Arabic-Indic
+  numerals in the rating and Western in the price would be two numbering systems
+  in one tile.
+- **The count is the first thing to go on a narrow tile.** R4's tiles are 132px
+  and `(1,284)` ran off the end of one, clipped mid-number. A container query
+  answers it in CSS and in one place — `.vt{container-type:inline-size}` plus
+  `@container (max-width:150px){.rbar .rc{display:none}}` — which is the
+  rendered-once answer this project prefers to a script that measures. The
+  `aria-label` still carries the count, so nothing is lost to a screen reader.
+- **Where the bar is not.** On the video and nowhere else. It is deliberately
+  not added to the product card under the tile or to the cards inside the
+  player: both of those are in the layout, so a line of stars there is a line of
+  extra height in a box round two already cut back to name, price and Add.
+
+### 0b.4 What R5 is now
+
+R5 was *"the one that autoplays"*. That fork no longer exists — every rail
+autoplays. R5 has been recast as the fork that still costs money: its tiles
+produce the loop by playing the clip and seeking back to zero (approach A above)
+while every other rail loops a short file (approach B). Put them side by side
+and you cannot tell, which is the entire point. Nothing was deleted.
+
+### 0b.5 What the previews fake
+
+The six clips are ~2.46 s VP8 files inlined as data URIs, so they *are* teasers
+and they loop natively — but nothing is fetched over a network, so the byte
+table was measured in a separate harness with real HTTP rather than in the page.
+A real deployment stores **two files per video** under `/uploads/ugc/`: the full
+clip (720×1280 H.264 MP4, ~1.5 MB for 15 s) and the teaser (360×640, 2.5 s,
+~130 KB), plus a ~22 KB WebP poster. The data model in §4 therefore needs one
+more pair of columns beside `file_path` — `teaser_path`, and `teaser_bytes` — and
+publication should not require the teaser: a video with no teaser yet shows its
+poster, which is the Save-Data behaviour and is already drawn.
 
 ---
 
@@ -520,7 +688,12 @@ style selector has to allow for it.
 4. **Does `ffmpeg` exist on the Cloudways server?** `which ffmpeg` over SSH.
    Ten seconds, and it decides whether round 3 can resolve an Instagram URL or
    whether the URL field is attribution only.
-5. **Roughly how many clips, and does he have them yet?** Style 3 wants twelve
+5. **Does he want the teaser loop on, at all, on a phone?** The previews turn
+   it off from the toolbar so he can see the section both ways. The recommended
+   shape is on, at ~129 KB a tile and only while the tile is on screen (§0b.1) —
+   but it is his data bill and his shoppers', and the poster-only rail is not a
+   worse-looking page, only a quieter one.
+6. **Roughly how many clips, and does he have them yet?** Style 3 wants twelve
    or it looks empty; style 1 is fine with four. The right style depends on the
    library he actually has.
 
@@ -528,14 +701,26 @@ style selector has to allow for it.
 
 ## 9. What this round deliberately did not build
 
-No migration, no model, no controller, no route, no Blade view, no setting, no
-admin screen, no test. `docs/` is the only directory touched, so there is no
-production code for the suite to regress and `StorefrontEnglishUnchangedTest`
-cannot move. That is the point of a previews round: the owner picks the shape
-before anybody pours the concrete.
+No migration, no model, no controller, no route, no Blade view, no setting and
+no admin screen — in round one, round two or round three. `docs/` and
+`tests/Feature/UgcPreviewContractTest.php` are the only paths touched, so there
+is no production code for the suite to regress and
+`StorefrontEnglishUnchangedTest` cannot move. That is the point of a previews
+round: the owner picks the shape before anybody pours the concrete.
 
-**Suite, in one invocation: 5548 passed, 40 skipped, 0 failed** (40,468
-assertions, 321 s).
+**Round three does carry one test**, and it is a test of the previews rather
+than of the shop. `UgcPreviewContractTest` pins the handful of things in
+`UGC-VIDEO-PREVIEWS.html` that are invisible when they break — a video created
+without `muted` or `playsinline` autoplays nowhere and looks fine in a
+screenshot; a `preload` that is not `none` turns a rail of posters into a rail
+of clips; a rating bar that stops checking `review_count` draws "0.0 (0)" on
+every unreviewed product. Each assertion carries the mutation that makes it red,
+and all four were run.
+
+**Suite, in one invocation.** Round one: 5548 passed, 40 skipped, 0 failed
+(40,468 assertions, 321 s). Round three, on a tree several lanes further on and
+with this round's six new cases in it: **5967 passed, 22 skipped, 0 failed**
+(50,715 assertions, 378 s).
 
 One thing did have to change on the way, and it is worth recording because it
 will happen to the next lane that inlines media into `docs/`.

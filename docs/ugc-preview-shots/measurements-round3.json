@@ -1,0 +1,194 @@
+[
+  {
+    "at": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "390 RTL",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "1280 RTL",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "invariant": "full-page scroll at 390px, then five clips through B5’s feed",
+    "samples": 84,
+    "maxPlaying": 4,
+    "maxMountedVideoElements": 4,
+    "maxElementsHoldingASrc": 4,
+    "everyVideoMutedAndInline": true,
+    "pageHeight": 24969
+  },
+  {
+    "invariant": "full-page scroll at 1280px, then five clips through B5’s feed",
+    "samples": 60,
+    "maxPlaying": 4,
+    "maxMountedVideoElements": 4,
+    "maxElementsHoldingASrc": 4,
+    "everyVideoMutedAndInline": true,
+    "pageHeight": 17339
+  },
+  {
+    "teaserRun": "R0 parked in view at 390px for 2.5s",
+    "tilesInRail": 6,
+    "tilesPlaying": 2,
+    "tilesShowingPosterOnly": 4,
+    "onScreen": 2,
+    "currentTimes": [
+      0.04,
+      0.01,
+      null,
+      null,
+      null,
+      null
+    ],
+    "loopSet": [
+      true,
+      true,
+      null,
+      null,
+      null,
+      null
+    ],
+    "meter": "playing 2 / 4 · mounted 2"
+  },
+  {
+    "teaserRun": "R0 parked in view at 1280px for 2.5s",
+    "tilesInRail": 6,
+    "tilesPlaying": 4,
+    "tilesShowingPosterOnly": 2,
+    "onScreen": 5,
+    "currentTimes": [
+      0.05,
+      2.42,
+      2.43,
+      2.43,
+      null,
+      null
+    ],
+    "loopSet": [
+      true,
+      true,
+      true,
+      true,
+      null,
+      null
+    ],
+    "meter": "playing 4 / 4 · mounted 4"
+  },
+  {
+    "refusal": "prefers-reduced-motion: reduce (simulated)",
+    "mounted": 0,
+    "decoding": 0,
+    "withSrc": 0,
+    "allMutedInline": true,
+    "stateStrip": "Teasers are off — prefers-reduced-motion: reduce. Every tile is showing its poster frame, which is a real image, not a black box."
+  },
+  {
+    "refusal": "Save-Data (simulated)",
+    "mounted": 0,
+    "decoding": 0,
+    "withSrc": 0,
+    "allMutedInline": true,
+    "stateStrip": "Teasers are off — Save-Data. Every tile is showing its poster frame, which is a real image, not a black box."
+  },
+  {
+    "refusal": "prefers-reduced-motion: reduce — the REAL media query, no simulator",
+    "mounted": 0,
+    "decoding": 0,
+    "withSrc": 0,
+    "allMutedInline": true,
+    "stateStrip": "Teasers are off — prefers-reduced-motion: reduce. Every tile is showing its poster frame, which is a real image, not a black box."
+  },
+  {
+    "railByteCost": {
+      "harness": "a rail of 8 tiles over real HTTP in Chromium at 390px, swiped end to end; Content-Length summed from the responses the browser actually made",
+      "approachA_fullClipSeekBackToZero": {
+        "videoBytes": 12786600,
+        "perTile": 1598325,
+        "posterBytes": 38448
+      },
+      "approachC_mediaFragment_t0to2p5": {
+        "videoBytes": 12786600,
+        "perTile": 1598325,
+        "posterBytes": 38448
+      },
+      "approachB_separateTeaserClip": {
+        "videoBytes": 1055160,
+        "perTile": 131895,
+        "posterBytes": 38448
+      },
+      "ratio": "12.1x",
+      "peakConcurrentVideosAt390px": 2,
+      "encodes": {
+        "full": "15s 720x1280 ~800kbps VP8 = 1,598,325 B",
+        "teaser": "2.5s 360x640 ~400kbps VP8 = 131,895 B"
+      }
+    }
+  },
+  {
+    "ratingBarContrast": {
+      "method": "the rating bar screenshotted at 4x and the ratios read off the rendered PNG; WCAG 2.1 relative luminance; product is the 4.4 one so an empty star is present",
+      "thresholds": {
+        "score": "4.5:1 (text)",
+        "filledStar": "3:1 (non-text)",
+        "emptyStar": "3:1 (non-text)"
+      },
+      "frames": [
+        {
+          "frame": "pure white (luminance 255)",
+          "score": 9.69,
+          "filledStar": 6.14,
+          "emptyStar": 3.38
+        },
+        {
+          "frame": "brightest real frame, the acne clip (185)",
+          "score": 12.9,
+          "filledStar": 8.17,
+          "emptyStar": 3.96
+        },
+        {
+          "frame": "darkest real frame, the night clip (59)",
+          "score": 17.89,
+          "filledStar": 11.34,
+          "emptyStar": 4.47
+        },
+        {
+          "frame": "pure black (0)",
+          "score": 19.51,
+          "filledStar": 12.36,
+          "emptyStar": 4.51
+        }
+      ]
+    }
+  },
+  {
+    "railHeightsAt390px": {
+      "rail0": 440,
+      "rail1": 474,
+      "rail2": 480,
+      "rail3": 295,
+      "rail4": 249,
+      "rail5": 440,
+      "rail6": 458
+    },
+    "note": "unchanged from round two: the rating bar is absolutely positioned inside .over and adds 0px to a tile"
+  }
+]
