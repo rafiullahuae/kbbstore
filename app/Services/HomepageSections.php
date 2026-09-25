@@ -95,7 +95,122 @@ class HomepageSections
      */
     public const NESTED_NOTE = 'Drawn inside the hero band, so it moves with the hero and cannot be placed elsewhere on the page. Its own Desktop and Mobile switches still decide whether it shows.';
 
+    /**
+     * The three controls a section row carries, as ModuleSchema fields.
+     *
+     * ── WHY THE ROW GETS A SCHEMA AT ALL ────────────────────────────────────
+     *
+     * This screen is older than ModuleSchema and grew its own coercion: a pair
+     * of `(bool)` casts in all(), the same pair again in save(), and
+     * `GridSkins::exists($skin) ? $skin : $defaultSkin` written out twice. Four
+     * copies of three rules, which is exactly the arrangement
+     * docs/M-PHASE3-SETTINGS-SCHEMA.md §1 measured the cost of: the isValidHex
+     * defect survived in four modules because there were four copies of the
+     * same three lines and nothing tied them together.
+     *
+     * It matters more here than it did there, because a THIRD reader has just
+     * arrived. `proposing()` below renders the homepage from a configuration
+     * nobody has saved, and the only thing that makes such a preview worth
+     * looking at is that it answers the same way the save would. Two copies of
+     * the rules make that a promise; one cast makes it a fact — the preview and
+     * the save are literally the same three lines of ModuleSchema::cast().
+     *
+     * `order` IS NOT IN HERE, and that is deliberate rather than an omission.
+     * It is not a control: nothing on the screen types it, the console posts a
+     * SEQUENCE and the server numbers it by position, and settle() rewrites it
+     * on every read. A schema field is something an owner sets; a position is
+     * something the list has.
+     */
+    public const SECTION_SCHEMA = [
+        'desktop' => [
+            'type' => 'bool',
+            'label' => 'Show on desktop',
+            'default' => true,
+            'help' => 'Hidden above the mobile breakpoint when off. A section off for both is not rendered at all, so it costs no queries either.',
+        ],
+        'mobile' => [
+            'type' => 'bool',
+            'label' => 'Show on mobile',
+            'default' => true,
+            'help' => 'Hidden at or below the mobile breakpoint when off.',
+        ],
+        'skin' => [
+            'type' => 'skin',
+            'label' => 'Grid style',
+            'default' => '',
+            'help' => 'One of the product-grid card templates. Only the four sections that draw a product grid carry one.',
+        ],
+    ];
+
+    /**
+     * The point this screen has always occupied on the policy axes, declared.
+     *
+     * `bool => cast` is the plain `(bool)` both readers already did — NOT the
+     * word-aware dialect, which would read the string "off" as false where this
+     * screen has always read it as true. `invalid => default` is
+     * `GridSkins::exists($skin) ? $skin : $defaultSkin` restated: an unknown
+     * skin falls back to the section's own default rather than being refused,
+     * because a refusal on a read has no channel to report through and the page
+     * still has to draw a grid.
+     *
+     * Both were established by running the old code over an adversarial corpus
+     * before a line moved, not by reading it — see
+     * tests/Feature/HomepageSectionSchemaTest.php, which keeps the old bodies
+     * as literal expectations and drives several thousand calls through both — the
+     * read case alone asserts it made more than 4,000.
+     */
+    public const SECTION_POLICY = ['bool' => 'cast', 'invalid' => 'default'];
+
+    /**
+     * A configuration this instance answers from INSTEAD of the stored one.
+     *
+     * Null on every instance the storefront and the console build, which is
+     * every instance but the one preview() makes, so the shop reads the
+     * settings table exactly as it did before this existed.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $proposed = null;
+
     public function __construct(private SettingsService $settings) {}
+
+    /**
+     * A reader for an arrangement NOBODY HAS SAVED.
+     *
+     * ── WHAT THIS IS FOR ────────────────────────────────────────────────────
+     *
+     * Both homepage screens publish straight to the live shop: the only way to
+     * see what moving a section does was to save it and then go and look, on
+     * the shop real visitors are on. That is the whole of what "live editing"
+     * was missing here — not a control, a LOOK. This instance is the seam: the
+     * admin posts the arrangement currently on screen, the homepage is rendered
+     * through this reader instead of the stored one, and nothing is written.
+     *
+     * IT ANSWERS THROUGH THE SAME all(), WHICH IS THE POINT AND NOT A SHORTCUT.
+     * The proposal is merged over the registry, cast through the same
+     * SECTION_SCHEMA, sorted and settle()d by the same code the shop reads
+     * through — so a preview cannot show an order the page would not draw
+     * (settle() puts a nested row back behind its host here too) and cannot
+     * show a skin the save would refuse. A second, simpler reader written for
+     * the preview would be a third dialect, and this project has paid for every
+     * dialect it has.
+     *
+     * @param  array<string, mixed>  $proposed  the saved-payload shape:
+     *         key => [desktop, mobile, skin, order]
+     */
+    public static function proposing(SettingsService $settings, array $proposed): self
+    {
+        $reader = new self($settings);
+        $reader->proposed = $proposed;
+
+        return $reader;
+    }
+
+    /** True when this instance is answering from a proposal rather than the shop. */
+    public function isProposal(): bool
+    {
+        return $this->proposed !== null;
+    }
 
     /**
      * The saved configuration, merged over the defaults.
@@ -106,7 +221,7 @@ class HomepageSections
      */
     public function all(): array
     {
-        $saved = $this->settings->get('homepage_sections');
+        $saved = $this->proposed ?? $this->settings->get('homepage_sections');
         $saved = is_array($saved) ? $saved : [];
 
         $out = [];
@@ -114,16 +229,16 @@ class HomepageSections
 
         foreach (self::REGISTRY as $key => [$label, $desc, $hasGrid, $defaultSkin]) {
             $row = is_array($saved[$key] ?? null) ? $saved[$key] : [];
-            $skin = (string) ($row['skin'] ?? '');
+            $cast = self::castRow($key, $row);
 
             $out[$key] = [
                 'key' => $key,
                 'label' => $label,
                 'description' => $desc,
                 'has_grid' => $hasGrid,
-                'skin' => $hasGrid ? (GridSkins::exists($skin) ? $skin : $defaultSkin) : null,
-                'desktop' => (bool) ($row['desktop'] ?? true),
-                'mobile' => (bool) ($row['mobile'] ?? true),
+                'skin' => $cast['skin'],
+                'desktop' => $cast['desktop'],
+                'mobile' => $cast['mobile'],
                 'order' => (int) ($row['order'] ?? $order),
                 // What the console needs to draw the row honestly. Both are
                 // derived from NESTED rather than stored, so a saved payload
@@ -474,9 +589,86 @@ class HomepageSections
         return $this->all()[$key]['skin'] ?? null;
     }
 
-    /** Persist a validated payload. */
+    /**
+     * The fields one section's row is cast through.
+     *
+     * Memoised by the DEFAULT SKIN rather than by the section, because that is
+     * the only thing that differs between them: seventeen sections share five
+     * field sets. The key is this class plus that default, so it cannot collide
+     * with another module's entry in the shared memo.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function fieldsFor(string $key): array
+    {
+        $defaultSkin = (string) (self::REGISTRY[$key][3] ?? '');
+
+        return ModuleSchema::normalised(
+            self::class.':'.$defaultSkin,
+            self::SECTION_SCHEMA,
+            self::SECTION_POLICY,
+            // The option set lives in another registry, which is what the
+            // `overrides` channel is for, and the default is the section's own.
+            ['skin' => ['options' => GridSkins::ALL, 'default' => $defaultSkin]],
+        );
+    }
+
+    /**
+     * One row, re-derived: the single boundary all(), save() and the preview
+     * share.
+     *
+     * A section with no product grid stores `skin => null` — that is the shape
+     * this screen has always written and the console draws no picker for it, so
+     * the cast's answer is discarded rather than stored. Nulling it here rather
+     * than declaring a second schema keeps one schema for seventeen rows.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array{desktop: bool, mobile: bool, skin: string|null}
+     */
+    private static function castRow(string $key, array $row): array
+    {
+        $fields = self::fieldsFor($key);
+        $out = [];
+
+        foreach ($fields as $name => $field) {
+            /*
+             * `??` AND NOT array_key_exists(), AND THE CORPUS IS WHY.
+             *
+             * Both readers this replaces wrote `$row['desktop'] ?? true`, which
+             * treats a row whose value IS NULL exactly like a row that has no
+             * such key — so a stored null has always meant "shown". The obvious
+             * migration, array_key_exists() plus the field default, hands
+             * cast() a literal null instead and `(bool) null` is FALSE: every
+             * section carrying a null would have gone dark on a shop that had
+             * them on. Caught by HomepageSectionSchemaTest's corpus, which is
+             * the only reason it is written this way rather than the other.
+             */
+            $out[$name] = ModuleSchema::cast($field, $row[$name] ?? $field['default']);
+        }
+
+        return [
+            'desktop' => (bool) $out['desktop'],
+            'mobile' => (bool) $out['mobile'],
+            'skin' => self::REGISTRY[$key][2] ? (string) $out['skin'] : null,
+        ];
+    }
+
+    /**
+     * Persist a validated payload.
+     *
+     * REFUSES OUTRIGHT ON A PROPOSAL INSTANCE. proposing() exists so that a
+     * configuration can be RENDERED without being stored; an instance carrying
+     * one that could also write would be a preview that publishes, which is the
+     * one failure this feature must not have. It throws rather than returning
+     * quietly, because a silent no-op here looks to the caller exactly like a
+     * successful save.
+     */
     public function save(array $sections): void
     {
+        if ($this->proposed !== null) {
+            throw new \LogicException('A homepage preview reader may not write. See HomepageSections::proposing().');
+        }
+
         $clean = [];
         $order = 0;
 
@@ -485,15 +677,16 @@ class HomepageSections
                 continue;
             }
 
-            $hasGrid = self::REGISTRY[$key][2];
-            $defaultSkin = self::REGISTRY[$key][3];
-            $skin = (string) ($row['skin'] ?? '');
+            $cast = self::castRow($key, is_array($row) ? $row : []);
 
+            // The key order is the one this screen has always stored. Nothing
+            // reads the blob positionally, but a settings row that rewrites
+            // itself on every save is a diff nobody can review.
             $clean[$key] = [
-                'desktop' => (bool) ($row['desktop'] ?? true),
-                'mobile' => (bool) ($row['mobile'] ?? true),
-                'order' => (int) ($row['order'] ?? $order),
-                'skin' => $hasGrid ? (GridSkins::exists($skin) ? $skin : $defaultSkin) : null,
+                'desktop' => $cast['desktop'],
+                'mobile' => $cast['mobile'],
+                'order' => (int) (is_array($row) ? ($row['order'] ?? $order) : $order),
+                'skin' => $cast['skin'],
             ];
 
             $order++;
