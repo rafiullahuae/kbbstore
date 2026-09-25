@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Shoppable UGC video — the chosen two, and variants of each</title>
+<title>Shoppable UGC video — the teaser loop and the rating bar</title>
 <style>
 :root{
   --bg:#fff; --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8;
@@ -96,6 +96,85 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
                        border-bottom:8px solid transparent;margin-inline-start:4px}
 .vt.playing .pbtn span{opacity:0;transform:scale(.7)}
 .vt .pbtn:hover span{transform:scale(1.08)}
+
+/* ── THE RATING BAR — over the video, and OUT OF THE LAYOUT ──────────────
+   It lives inside .over, which is `inset:auto 0 0 0` and therefore absolute,
+   so the bar grows the overlay UPWARDS and adds exactly zero height to the
+   tile. That is not a nicety: .vt is `aspect-ratio:9/16` and the rail is a
+   flex row, so one pixel of extra height in a tile would retune every rail
+   height printed on this page.
+
+   THE SCRIM IS 78% AND THAT NUMBER WAS CHOSEN BY ARITHMETIC, NOT BY EYE.
+   A rating that cannot be read against a bright frame is not shown, and the
+   frames here run from luminance 59 (the night clip) to 185 (the acne clip)
+   on a 0-255 scale, with a real library able to hand us pure white. Composite
+   #140E12 at alpha a over pure white -- the worst case there is -- and solve
+   for the three things in the bar:
+
+       a = .62   white text 5.15:1   amber stars 3.26:1   empty stars 1.9:1
+       a = .68   white text 6.37:1   amber stars 4.03:1   empty stars 2.1:1
+       a = .78   white text 9.19:1   amber stars 5.82:1   empty stars 3.27:1
+
+   Only .78 carries all three over their thresholds (4.5:1 for the text, 3:1
+   for the glyphs, which WCAG counts as non-text contrast). The measured
+   pixel ratios from the screenshots are in the contrast strip further down
+   the page, and they are read off the rendered PNG rather than computed. */
+/* 6px of padding and 4px gaps, not 8 and 6, AND THAT WAS MEASURED RATHER THAN
+   chosen. At 8/6 the bar's natural width is 145px inside a 158px rail tile that
+   leaves it 138 -- so "(1,284)" wanted 41px, got 40, and ellipsised to
+   "(1,28...)". It looked fine on R0 and visibly wrong on R3, which is the worst
+   kind of bug: present everywhere, obvious in one place. 6/4 brings the natural
+   width to 137 and the count fits with a pixel to spare. */
+.rbar{display:flex;align-items:center;gap:4px;width:max-content;max-width:100%;
+          background:rgba(20,14,18,.78);backdrop-filter:blur(6px);
+          border:1px solid rgba(255,255,255,.18);border-radius:99px;
+          padding:3px 6px;margin-bottom:6px;line-height:1}
+.rbar .sc{font-size:11px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+/* A flex row follows `direction`, so the filled stars sit at the INLINE start
+   in both directions with no [dir] rule and no transform. A bare run of five
+   identical neutral glyphs would be reordered by the bidi algorithm instead,
+   which is a thing you only find out by flipping the page. */
+.rbar .st{display:flex;gap:1px;font-size:10px;line-height:1}
+.rbar .st i{color:rgba(255,255,255,.45);font-style:normal}
+.rbar .st i.on{color:#FFC53D}
+.rbar .rc{font-size:10px;font-weight:600;color:rgba(255,255,255,.82);font-variant-numeric:tabular-nums;
+          min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* THE COUNT IS THE FIRST THING TO GO ON A NARROW TILE. R4's tiles are 132px,
+   and "(1,284)" ran off the end of one -- clipped mid-number, which reads as a
+   bug rather than as a design. A container query answers it in CSS and in one
+   place, which is what this project wants instead of a script that measures:
+   the score and the five stars are a fixed ~78px and always fit, the count is
+   what does not. The aria-label still carries the count, so nothing is lost to
+   a screen reader; the ellipsis above is the backstop for a shop that one day
+   has a six-figure review count on a 158px tile. */
+.vt{container-type:inline-size}
+@container (max-width: 150px){ .rbar .rc{display:none} }
+/* The story strip crops to a 74px circle and hides .over entirely, so the bar
+   goes with it -- there is no honest way to put a rating in a circle that
+   small, and half a rating is worse than none. */
+
+/* ── the contrast proof strip ───────────────────────────────────────────── */
+.cstrip{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+@media(min-width:760px){.cstrip{grid-template-columns:repeat(4,1fr)}}
+.cs{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg)}
+.cs .fr{position:relative;aspect-ratio:9/12;background-size:cover;background-position:center bottom}
+.cs .fr .rbar{position:absolute;inset-inline-start:8px;bottom:8px;margin-bottom:0}
+.cs .lab{padding:7px 9px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line-2)}
+.cs .lab b{display:block;font-size:11.5px;color:var(--ink);font-weight:700}
+.cs .lab .lum{color:var(--muted)}
+.cs .lab .ratios{display:flex;flex-direction:column;gap:2px;margin-top:6px;font-size:10.5px;
+                 font-variant-numeric:tabular-nums}
+.cs .lab .ratios span{color:var(--green);display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.cs .lab .ratios span b{margin-inline-start:auto}
+.cs .lab .ratios span.no{color:var(--sale)}
+.cs .lab .ratios span::before{content:'\2713 \00a0';font-weight:800}
+.cs .lab .ratios span.no::before{content:'\2715 \00a0'}
+
+/* ── the state strip: what the teasers are doing and why ────────────────── */
+.state{background:var(--cream);border-bottom:1px solid var(--line);padding:7px 0;font-size:12px;color:var(--ink-2)}
+.state.off{background:#FFF4E2;border-bottom-color:rgba(190,142,46,.35)}
+.state b{color:var(--pink-deep)}
+.state.off b{color:var(--gold)}
 
 /* ── product card / chip ────────────────────────────────────────────── */
 .pcard{display:flex;gap:9px;align-items:center;background:var(--bg);border:1px solid var(--line);
@@ -406,7 +485,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 <header class="doc-head">
   <div class="wrap">
-    <h1>The two you chose — <span>and variants of each</span></h1>
+    <h1>The teaser loop and the rating bar — <span>in every variant</span></h1>
     <p>You picked <b>the horizontal rail</b> and <b>the card rail over the video</b>. Both are at the top of
        their section, marked <em>chosen</em>, unchanged. Under each sit variants that change exactly
        <em>one</em> decision from the parent — the caption on each says which decision and what it costs, so you
@@ -416,26 +495,197 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
        six, the rest are in between — because a style that only looks good with a 30% pill and exactly three
        products is not a style. Every rail below shows all six, so you are always seeing the thin case next to
        the crowded one.</p>
+    <p><b>New in this round, and in <em>every</em> variant rather than one:</b> the tiles now play a muted
+       2&ndash;3&nbsp;second loop as they come on screen, and a small rating bar sits on the video carrying the
+       stars and the score. Both are built into all seven rails, so you can judge the loop and the bar while you
+       are still deciding which rail you want — they are not a reason to pick one. Two sections below —
+       <a href="#f-teaser">the teaser loop</a> and <a href="#f-rating">the rating bar</a> — say what each one
+       costs and what had to be decided.</p>
+    <p><b>Three switches in the bar above change what you are looking at.</b> <em>Teaser autoplay</em> turns the
+       loops off and leaves the poster frames. <em>Reduced motion</em> and <em>Save-Data</em> simulate the two
+       browser signals that turn the loops off on their own — the strip under the bar always says which state
+       you are in and why.</p>
   </div>
 </header>
 
 <div class="toolbar">
   <div class="wrap">
     <button class="tgl" id="t-dir" aria-pressed="false">&#8644; Arabic / RTL</button>
-    <button class="tgl" id="t-auto" aria-pressed="true">&#9654; Allow autoplay</button>
-    <span class="meter" id="meter">decoding <b>0</b> / 1 &middot; mounted <b>0</b></span>
+    <button class="tgl" id="t-auto" aria-pressed="true">&#9654; Teaser autoplay</button>
+    <button class="tgl" id="t-rm" aria-pressed="false">&#9208; Reduced motion</button>
+    <button class="tgl" id="t-sd" aria-pressed="false">&#9992; Save-Data</button>
+    <span class="meter" id="meter">playing <b>0</b> / 4 &middot; mounted <b>0</b></span>
   </div>
 </div>
+<div class="state" id="state"></div>
 
 <main class="wrap">
+
+<section class="sec" id="f-teaser">
+  <div class="sec-n">The first new thing</div>
+  <h2>The teaser loop — and how the 2&ndash;3 seconds is produced</h2>
+  <p class="lede">Every tile on this page now plays a muted 2&ndash;3 second loop the moment it is more than 60%
+    on screen, and stops the moment it is not. The loop is the easy half. The decisions underneath it are
+    below, each one with the number that decided it.</p>
+
+  <div class="note">
+    <b>The one that costs money: where the 2&ndash;3 seconds comes from.</b>
+    <p>There are two ways to show a three-second loop and they look <em>identical</em> on screen. One of them
+      costs twelve times as much. Both were built and both were measured in Chromium against a real HTTP
+      server, counting the bytes the browser actually asked for — a rail of eight tiles, swiped end to end.</p>
+  </div>
+  <div class="scrollbox">
+  <table class="tbl">
+    <tr><th>How the loop is made</th><th>Second asset?</th><th>Video bytes, rail of 8</th><th>Per tile</th></tr>
+    <tr><td><b>A &mdash; one full clip, seek back to 0 every 2.5&nbsp;s</b><br>
+        <span style="color:var(--muted)">15&nbsp;s, 720&times;1280, ~800&nbsp;kbps</span></td>
+      <td>none</td><td><b style="color:var(--sale)">12,786,600 B &nbsp;(12.19&nbsp;MB)</b></td><td>1.52&nbsp;MB</td></tr>
+    <tr><td><b>C &mdash; the same clip with a media fragment</b> <code>#t=0,2.5</code></td>
+      <td>none</td><td><b style="color:var(--sale)">12,786,600 B &nbsp;(12.19&nbsp;MB)</b></td><td>1.52&nbsp;MB</td></tr>
+    <tr><td><b>B &mdash; a separate 2.5&nbsp;s teaser clip, looped</b><br>
+        <span style="color:var(--muted)">2.5&nbsp;s, 360&times;640, ~400&nbsp;kbps</span></td>
+      <td>one per video</td><td><b style="color:var(--green)">1,055,160 B &nbsp;(1.01&nbsp;MB)</b></td><td>129&nbsp;KB</td></tr>
+  </table>
+  </div>
+  <div class="note">
+    <b>Seeking back to zero does not save one byte, and the media fragment does not either.</b>
+    <p>A tells the element to play only the first 2.5 seconds; the browser fetched <b>all 1,598,325 bytes of
+      every file anyway</b> — 8&nbsp;&times;&nbsp;the whole clip, to the byte. C adds <code>#t=0,2.5</code>, which
+      is the obvious clever answer, and the counter reads <b>exactly the same number</b>. A media fragment tells
+      the player where to start, not the network what to fetch.</p>
+    <p><b>The recommendation is B, a separate teaser clip, and the saving is 12.1&times;.</b> It is not only
+      shorter — it is a <em>different rendition for a different box</em>. A rail tile is 158&nbsp;CSS&nbsp;px
+      wide (206 on a desktop), so 316&ndash;412 device pixels, and 360&times;640 at 400&nbsp;kbps is the right
+      encode for it. The full clip has to stay 720&times;1280 because the opened player is full screen. A can
+      never have that saving, because it has only one file.</p>
+    <p><b>What the shop has to do to produce it.</b> One extra derivative per video, cut from the file that was
+      already uploaded: <code>-ss 0 -t 2.5 -vf scale=360:640 -b:v 400k</code>, no audio. It is the same
+      transcode step §3.4 of the plan already says the upload needs, with one more output — so it costs the
+      pipeline nothing new, and it costs the owner nothing at all: <b>he is never asked for a second video.</b>
+      If the transcode cannot run (no <code>ffmpeg</code> on that host — still unanswered, and it is question 4
+      in the plan), the honest fallback is <b>not</b> to fall back to A. It is to ship the rail with
+      <em>poster frames only</em> until the teaser exists, which is exactly what this page does under
+      Save-Data, and costs 22&nbsp;KB a tile instead of 1.52&nbsp;MB.</p>
+  </div>
+
+  <div class="scrollbox">
+  <table class="tbl">
+    <tr><th>The other decisions</th><th>What was done</th><th>Why, and what it would cost to get wrong</th></tr>
+    <tr><td><b>Autoplay at all</b></td>
+      <td><code>muted</code>, <code>playsinline</code>, <code>webkit-playsinline</code>, and
+        <code>play()</code>'s promise is caught.</td>
+      <td>Every browser refuses an unmuted autoplay and iOS Safari additionally refuses one without
+        <code>playsinline</code> — it takes the video full screen instead, which is worse than nothing. The
+        rejected promise is caught because an autoplay refusal is a normal outcome, not an error: uncaught it
+        is an unhandled rejection in the console on every tile.</td></tr>
+    <tr><td><b>Only what is on screen plays</b></td>
+      <td>One <code>IntersectionObserver</code> at threshold&nbsp;0.6, plus a hard cap of
+        <b>4 at once</b>.</td>
+      <td>Eight clips decoding at once is the real cost on a mid-range phone. Measured on this page at 390px,
+        <b>the viewport itself never lets more than 2 tiles over the threshold</b>, so the cap never binds on a
+        phone — it is there for the 12-tile wall on a desktop, where it does. A tile that leaves does not just
+        pause: it drops its <code>src</code> and calls <code>load()</code>, which is what hands the decoder
+        back. No scroll handler and no <code>getBoundingClientRect</code> anywhere — this project forbids the
+        element-measuring APIs by name in two tests.</td></tr>
+    <tr><td><b><code>prefers-reduced-motion: reduce</code></b></td>
+      <td>Nothing autoplays. The poster frame stands, and the strip under the toolbar says so.</td>
+      <td>An accessibility requirement, not a nicety: motion that starts without being asked for is exactly
+        what the query exists to stop. Read live through <code>matchMedia</code>, so changing the OS setting
+        with the page open takes effect without a reload.</td></tr>
+    <tr><td><b><code>Save-Data</code></b></td>
+      <td>Honoured where it is sent: <code>navigator.connection.saveData === true</code> and nothing plays.</td>
+      <td><b>Absent means no.</b> Safari and Firefox do not implement <code>navigator.connection</code> at all,
+        so the property is <code>undefined</code> on a large share of the traffic — treating unknown as
+        "save data" would silently turn the feature off for most of the people who can afford it. The strict
+        <code>=== true</code> is the whole of the decision.</td></tr>
+    <tr><td><b>The first frame</b></td>
+      <td>A real poster image on every tile, always, under the video.</td>
+      <td>A tile that has not loaded, will not play, or has been told not to play still looks deliberate
+        instead of black. The poster is also what holds the box: <code>aspect-ratio:9/16</code> plus a poster
+        means zero layout shift before any video exists.</td></tr>
+  </table>
+  </div>
+  <div class="note">
+    <b>What this page fakes, and what a real deployment would carry.</b>
+    <p>The six clips here are ~2.46&nbsp;second VP8 files inlined as data URIs, so they <em>are</em> teasers and
+      they loop natively — but nothing is fetched over a network, so the byte table above was measured in a
+      separate harness with real HTTP, not in this page. A real deployment stores two files per video under
+      <code>/uploads/ugc/</code>: <b>the full clip</b> (720&times;1280 H.264 MP4, ~1.5&nbsp;MB for 15&nbsp;s)
+      and <b>the teaser</b> (360&times;640, 2.5&nbsp;s, ~130&nbsp;KB), plus a ~22&nbsp;KB WebP poster.</p>
+  </div>
+</section>
+
+<section class="sec" id="f-rating">
+  <div class="sec-n">The second new thing</div>
+  <h2>The rating bar, on the video</h2>
+  <p class="lede">A small bar on the tile carrying the score, five stars and the review count. It is the real
+    pair — <code>products.rating</code> and <code>products.review_count</code>, the same two columns the shop
+    cards, <code>?sort=rating</code> and the schema.org aggregateRating already read. Nothing here is a
+    display-only number.</p>
+  <div class="scrollbox">
+  <table class="tbl">
+    <tr><th>Decision</th><th>What it does</th><th>Why</th></tr>
+    <tr><td><b>A product with no reviews</b></td>
+      <td><b>No bar at all.</b> Look at the third tile in every rail — <em>The SPF I actually reapply</em>,
+        which sells one product with no reviews yet.</td>
+      <td>An empty five-star row reads as <em>rated badly</em>, and a zero reads as <em>rated zero</em>. A
+        "New" chip in its place is a claim the data does not support — a product can be three years old and
+        simply unreviewed. The shop already draws this line: the card badge is <code>! $p->review_count</code>
+        and the migration that retired the demo ratings says those products "end at 0/0 and their card shows
+        the New badge instead of a star row". The bar is absolutely positioned, so its absence leaves no
+        hole to fill.</td></tr>
+    <tr><td><b>It must not move the tile</b></td>
+      <td>The bar lives inside <code>.over</code>, which is <code>inset:auto 0 0 0</code>.</td>
+      <td>Absolute, so it adds exactly <b>0px</b> to the tile and the overlay grows upward into the scrim
+        that was already there. Every rail height printed on this page is unchanged from round two, and
+        <code>document.documentElement.scrollWidth</code> is still 390 and 1280.</td></tr>
+    <tr><td><b>Reading it against a bright frame</b></td>
+      <td>A 78% scrim, white score text, amber <span style="color:#BE8E2E">&#9733;</span> at
+        <code>#FFC53D</code>, and the empty stars at 45% white.</td>
+      <td>Contrast over video is a correctness problem: a 4.8 nobody can read is not shown. 78% is the lowest
+        alpha at which all three of score, filled star and empty star clear their thresholds against a
+        <em>pure white</em> frame. The strip below shows the same bar over the brightest and darkest frames
+        in this library and over white and black, with the ratios read off the rendered pixels.</td></tr>
+    <tr><td><b>Arabic and RTL</b></td>
+      <td>Flex row for the stars, <code>&lt;bdi&gt;</code> around the score and the count, and
+        <b>Western digits</b>.</td>
+      <td>A flex row follows <code>direction</code>, so the filled stars sit at the inline start in both
+        directions with no <code>[dir]</code> rule and no transform to flip. <code>(1,284)</code> without a
+        <code>&lt;bdi&gt;</code> paints its brackets mirrored inside an Arabic run. The digits are Western
+        because the price two lines below them is: <code>App\Support\Money</code> prints
+        <span dir="ltr">AED&nbsp;1,199</span> in Western digits on the Arabic storefront and
+        <code>App\Support\Bidi</code> isolates it there, so Arabic-Indic numerals in the rating and Western
+        in the price would be two numbering systems in one tile.</td></tr>
+  </table>
+  </div>
+  <div class="note">
+    <b>Where it is <em>not</em>.</b>
+    <p>The bar is on the video and nowhere else. It is deliberately not added to the product card under the
+      tile or to the cards inside the player: both of those are in the layout, so a line of stars there is a
+      line of extra height in a box that is already tight — the rail card was cut back to name, price and Add
+      in round two for exactly that reason.</p>
+  </div>
+  <h3 style="font-size:15px;font-weight:800;margin-top:22px">The same bar, over four frames</h3>
+  <p class="lede" style="margin-top:6px">The ratios under each one are <b>read off the rendered PNG</b>, not
+    computed from the CSS: the bar is screenshotted at 4&times;, the scrim is taken as the modal colour of the
+    image, the filled star as the pixel furthest into red-minus-blue and the empty star as the brightest
+    neutral pixel after it, and WCAG 2.1 relative luminance is computed from those. Thresholds are 4.5:1 for
+    the score, which is text, and 3:1 for the stars, which are not.
+    <b>The product is the 4.4 one, deliberately</b> — five filled stars would hide the empty star, and the
+    empty star is the lowest-contrast thing in the bar.</p>
+  <div id="contrast"></div>
+</section>
 
 <section class="sec">
   <div class="sec-n">Part one</div>
   <h2>The rail, and six variants of it</h2>
   <p class="lede">Every one is the same structure: portrait videos in a row that scrolls sideways, with snap
-    points. What changes between them is <em>how the tagged products appear</em>, <em>where the card sits</em>,
-    and <em>whether video plays in the rail</em>. The measured height of each rail on a 390px phone is printed
-    under it, because the benchmark's rail was tall and pushed the rest of the page down.</p>
+    points. What changes between them is <em>how the tagged products appear</em> and <em>where the card
+    sits</em>. The measured height of each rail on a 390px phone is printed under it, because the benchmark's
+    rail was tall and pushed the rest of the page down.</p>
+  <p class="lede"><b>All seven now carry both new things</b> — the 2&ndash;3 second muted loop and the rating
+    bar — so the loop is not a reason to prefer one rail over another. The heights are unchanged from round
+    two, because the bar is absolutely positioned and adds no height at all.</p>
 </section>
 
 <article class="style parent" id="g-r0">
@@ -446,8 +696,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       so a card never stops half-shown. The next video is signalled by a hard peek at the edge.</p>
     <div class="costs">
       <span class="cost-c warn">sells 1 product per video</span>
-      <span class="cost-c good">0 video bytes until a tap</span>
-      <span class="cost-c good">no motion</span>
+      <span class="cost-c good">~129 KB a tile, and only while it is on screen</span>
+      <span class="cost-c good">2&ndash;3s muted loop</span>
+      <span class="cost-c good">rating bar on the video</span>
     </div>
   </div>
   <div class="style-bd"><div class="s-rail" data-style="rail0"></div>
@@ -519,17 +770,20 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 <article class="style" id="g-r5">
   <div class="style-hd">
-    <span class="tag">Variant 5 &middot; the performance fork</span>
-    <h3>R5 — The rail plays as you scroll</h3>
-    <p class="what">Laid out exactly like R0. The difference is that whichever tile is most in view starts
-      playing muted, and stops the moment it leaves. Scroll the rail and watch the meter at the top of this
-      page — it never reaches two.</p>
-    <div class="changed"><b>Changed from R0:</b> video autoplays in the rail instead of waiting for a tap.
-      <span class="cost">Costs: this is the biggest performance decision on the page. R0 costs
-        <b>0 video bytes</b> to scroll past — twelve posters, about 260&nbsp;KB. R5 costs roughly
-        <b>320&nbsp;KB per clip somebody dwells on</b>, and on a mid-range Android the decoder is doing real
-        work the whole time. It is also the one that most looks like the app he showed you. One decodes at a
-        time, always.</span></div>
+    <span class="tag">Variant 5 &middot; the performance fork, recast</span>
+    <h3>R5 — The same loop, produced from the full clip</h3>
+    <p class="what"><b>R5 used to be "the one that autoplays".</b> That decision has been overtaken: you asked
+      for the loop everywhere, so every rail on this page autoplays now and R5's old fork no longer exists.
+      What is left of it is the fork that still costs money — <em>where the 2&ndash;3 seconds comes from</em>.
+      R5's tiles play the whole clip and seek back to zero; every other rail loops a short teaser file. Look at
+      them side by side: you cannot tell.</p>
+    <div class="changed"><b>Changed from R0:</b> the loop is cut out of the full clip at playback instead of
+      being a separate file.
+      <span class="cost">Costs: <b>12.19&nbsp;MB against 1.01&nbsp;MB</b> for a rail of eight swiped end to
+        end — measured over real HTTP, not estimated, and the table at the top of this page has the run.
+        Nothing is saved by seeking, and nothing is saved by <code>#t=0,2.5</code> either: the browser fetches
+        every byte of every file in both cases. In exchange R5 needs no second asset and no transcode step —
+        which is the only argument for it, and it is not enough.</span></div>
   </div>
   <div class="style-bd"><div class="s-rail" data-style="rail5"></div>
     <div class="hgt">Rail height at 390px: <b id="h-rail5">—</b></div></div>
@@ -673,13 +927,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     are measured in the browser you are reading this in, not estimated.</p>
   <div class="scrollbox">
   <table class="tbl" id="cmp">
-    <tr><th>Variant</th><th>Height at 390px</th><th>Products sold before a tap</th><th>Video bytes to scroll past</th><th>Motion</th></tr>
+    <tr><th>Variant</th><th>Height at 390px</th><th>Products sold before a tap</th><th>Video bytes per tile seen</th><th>Motion</th></tr>
   </table>
   </div>
   <div class="note">
     <b>The meter at the top of this page is real, and this page is long.</b>
-    <p>It counts the video elements mounted and how many are decoding, live. Scroll the whole thing as fast as
-      you like, open and close as many players as you like: decoding never reaches two.</p>
+    <p>It counts what is playing and how many <code>&lt;video&gt;</code> elements are mounted, live. Scroll the
+      whole thing as fast as you like and open as many players as you like: <b>playing tracks what is on
+      screen and never passes 4</b>, mounted never exceeds playing, and an opened player takes the lot back to
+      one. A tile that scrolls away does not merely pause — it drops its <code>src</code>, which is what hands
+      the decoder back.</p>
   </div>
 </section>
 
@@ -730,11 +987,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 </article>
 
 <div class="foot wrap">
-  <b>Round two, previews only.</b> No storefront change, no migration, no admin screen, no setting.
+  <b>Round three, previews only.</b> No storefront change, no migration, no admin screen, no setting, no new
+  control anywhere in the admin.
   The written plan — data model, admin paths, video-source recommendation, performance budget, Arabic and RTL,
   and the security story — is in <b>docs/UGC-VIDEO-PLAN.md</b> beside this file.
   Placeholder clips were generated locally with Chromium&rsquo;s MediaRecorder; they are real VP8 video at a
-  true 9:16, and the base64 is wrapped at 76 columns so it cannot look like a signing key to the package tests.
+  true 9:16, ~2.46&nbsp;s each, so they stand in for the teaser file rather than for a full clip. The base64 is
+  wrapped at 76 columns so it cannot look like a signing key to the package tests.
 </div>
 </main>
 
@@ -766,21 +1025,27 @@ var H = {"rail0":440,"rail1":474,"rail2":480,"rail3":295,"rail4":249,"rail5":440
 /* ── Real catalogue rows. Names and brands from DemoCatalogueSeeder; prices
       are whole dirhams, sale = 70% rounded down the way
       App\Support\WholeDirhams::toward() rounds it. ──────────────────────── */
+/* `r` and `rc` stand in for products.rating and products.review_count -- the
+   denormalised pair the shop cards, ?sort=rating and the schema.org
+   aggregateRating already read. `watery` is deliberately 0/0: it is the only
+   product of the one-product clip, so every rail on this page carries one tile
+   whose product has never been reviewed, which is the case the bar has to get
+   right. Nothing here is a display-only number. */
 var P = {
-  sun:   {b:'Beauty of Joseon', n:'Relief Sun Rice + Probiotics SPF50+', now:89,  was:129},
-  glow:  {b:'Beauty of Joseon', n:'Glow Deep Serum Rice + Alpha Arbutin', now:105, was:150},
-  snail: {b:'COSRX',      n:'Advanced Snail 96 Mucin Power Essence', now:79, was:110},
-  lowph: {b:'COSRX',      n:'Low pH Good Morning Gel Cleanser',      now:45, was:65},
-  heart: {b:'Anua',       n:'Heartleaf 77% Soothing Toner',          now:92, was:132},
-  peach: {b:'Anua',       n:'Peach Niacinamide 30% Serum',           now:118},
-  ager:  {b:'Medicube',   n:'Age-R Booster Pro Device',              now:899, was:1199},
-  wrap:  {b:'Medicube',   n:'Collagen Night Wrapping Mask',          now:135},
-  birch: {b:'Round Lab',  n:'Birch Juice Moisturizing Sunscreen',    now:76, was:109},
-  dokdo: {b:'Round Lab',  n:'1025 Dokdo Toner',                      now:68},
-  dive:  {b:'Torriden',   n:'Dive-In Low Molecular Hyaluronic Acid Serum', now:84, was:120},
-  watery:{b:'Isntree',    n:'Hyaluronic Acid Watery Sun Gel',        now:95},
-  cent:  {b:'SKIN1004',   n:'Madagascar Centella Ampoule',           now:88, was:126},
-  green: {b:'Isntree',    n:'Green Tea Fresh Toner',                 now:72}
+  sun:   {b:'Beauty of Joseon', n:'Relief Sun Rice + Probiotics SPF50+', now:89,  was:129, r:4.7, rc:938},
+  glow:  {b:'Beauty of Joseon', n:'Glow Deep Serum Rice + Alpha Arbutin', now:105, was:150, r:4.7, rc:431},
+  snail: {b:'COSRX',      n:'Advanced Snail 96 Mucin Power Essence', now:79, was:110, r:4.8, rc:1284},
+  lowph: {b:'COSRX',      n:'Low pH Good Morning Gel Cleanser',      now:45, was:65,  r:4.6, rc:843},
+  heart: {b:'Anua',       n:'Heartleaf 77% Soothing Toner',          now:92, was:132, r:4.7, rc:612},
+  peach: {b:'Anua',       n:'Peach Niacinamide 30% Serum',           now:118,          r:4.4, rc:96},
+  ager:  {b:'Medicube',   n:'Age-R Booster Pro Device',              now:899, was:1199, r:4.3, rc:58},
+  wrap:  {b:'Medicube',   n:'Collagen Night Wrapping Mask',          now:135,          r:4.6, rc:141},
+  birch: {b:'Round Lab',  n:'Birch Juice Moisturizing Sunscreen',    now:76, was:109, r:4.8, rc:519},
+  dokdo: {b:'Round Lab',  n:'1025 Dokdo Toner',                      now:68,           r:4.5, rc:377},
+  dive:  {b:'Torriden',   n:'Dive-In Low Molecular Hyaluronic Acid Serum', now:84, was:120, r:4.9, rc:208},
+  watery:{b:'Isntree',    n:'Hyaluronic Acid Watery Sun Gel',        now:95,           r:0,   rc:0},
+  cent:  {b:'SKIN1004',   n:'Madagascar Centella Ampoule',           now:88, was:126, r:4.7, rc:365},
+  green: {b:'Isntree',    n:'Green Tea Fresh Toner',                 now:72,           r:4.2, rc:47}
 };
 
 /* A DELIBERATELY RAGGED LIBRARY. One clip has a single product and no discount
@@ -816,6 +1081,23 @@ function priceHtml(p){
   return '<div class="pr"><span class="now">' + aed(p.now) + '</span>' +
     (p.was ? '<span class="was">' + aed(p.was) + '</span><span class="off"><bdi>-' + off(p) + '%</bdi></span>' : '') + '</div>';
 }
+/* THE RATING BAR. Returns the empty string when there are no reviews -- an
+   empty five-star row reads as "rated badly" and a zero reads as "rated zero",
+   and neither is what 0 reviews means. `.round()` on the score matches
+   partials/home/grid.blade.php's `(int) round((float) $p->rating)` exactly, so
+   a tile and a shop card never disagree about how many stars a 4.6 gets.
+   The glyph row is aria-hidden and the whole bar carries one label, because
+   five star characters read aloud one at a time are noise. */
+function ratingBar(key){
+  var p = P[key];
+  if (!p || !p.rc) return '';
+  var on = Math.round(p.r), st = '';
+  for (var i = 1; i <= 5; i++) st += '<i' + (i <= on ? ' class="on"' : '') + '>&#9733;</i>';
+  return '<div class="rbar" role="img" aria-label="Rated ' + p.r.toFixed(1) + ' out of 5 from ' +
+    p.rc + ' reviews"><span class="sc"><bdi>' + p.r.toFixed(1) + '</bdi></span>' +
+    '<span class="st" aria-hidden="true">' + st + '</span>' +
+    '<span class="rc"><bdi>(' + p.rc.toLocaleString('en-AE') + ')</bdi></span></div>';
+}
 function cardBody(key){
   var p = P[key];
   return '<div class="th">' + initials(p) + '</div>' +
@@ -826,20 +1108,61 @@ function cardHtml(key, cls){
   return '<div class="pcard ' + (cls || '') + '">' + cardBody(key) + '<button class="addb">Add</button></div>';
 }
 
-/* ═══ THE ARBITER — exactly one video decoding, ever. ══════════════════
-   Everything that wants to play asks here. Nothing calls play() itself. */
-var playing = null, mounted = 0;
+/* ═══ THE ARBITER ═════════════════════════════════════════════════════
+   Round two held exactly ONE video decoding at a time. That is no longer the
+   requirement: the owner asked for the tiles to loop so the section attracts
+   the eye, and a rail in which only one of the two visible tiles moves looks
+   broken rather than calm. So the rule changed, deliberately, to:
+
+       everything ON SCREEN plays, nothing off screen does, never more than
+       MAX_TEASERS at once, and an OPENED PLAYER is still exclusive.
+
+   Measured at 390px on this page, the viewport itself never lets more than
+   two tiles past the 0.6 threshold, so the cap does not bind on a phone. It
+   binds on the twelve-tile wall at 1280px, which is what it is for.
+
+   Nothing calls play() itself; everything asks here. */
+var MAX_TEASERS = 4;
+var TEASER_MS   = 2500;   /* "the first 2-3 seconds" */
+var playing = null;       /* the ONE exclusive element: an opened player, or a tapped tile */
+var teasers = [];         /* the muted loops currently mounted */
+var mounted = 0;
 var meter = document.getElementById('meter');
+function liveCount(){ return (playing ? 1 : 0) + teasers.length; }
 function paintMeter(){
-  meter.innerHTML = 'decoding <b>' + (playing ? 1 : 0) + '</b> / 1 &middot; mounted <b>' + mounted + '</b>';
-  meter.className = 'meter' + (playing ? ' hot' : '');
+  meter.innerHTML = 'playing <b>' + liveCount() + '</b> / ' + MAX_TEASERS +
+    ' &middot; mounted <b>' + mounted + '</b>';
+  meter.className = 'meter' + (liveCount() ? ' hot' : '');
 }
+
+/* ── the two browser signals that say "do not autoplay" ─────────────────
+   prefers-reduced-motion is read through matchMedia rather than once at boot,
+   so changing the OS setting with the page open takes effect immediately.
+   Save-Data is `=== true` and nothing looser: navigator.connection does not
+   exist at all in Safari or Firefox, so `undefined` is most of the traffic
+   and treating unknown as "save data" would turn the feature off for the
+   people who can afford it. ABSENT MEANS NO. */
+var RM_SIM = false, SD_SIM = false, teaserOn = true;
+var rmQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+function reducedMotion(){ return RM_SIM || rmQuery.matches; }
+function saveData(){
+  return SD_SIM || !!(navigator.connection && navigator.connection.saveData === true);
+}
+function teasersAllowed(){ return teaserOn && !reducedMotion() && !saveData(); }
+function whyOff(){
+  if (reducedMotion()) return 'prefers-reduced-motion: reduce';
+  if (saveData()) return 'Save-Data';
+  if (!teaserOn) return 'the switch above';
+  return null;
+}
+
 function claim(v){
-  /* The displaced element gives its stream back HERE, not when its own
-     observer eventually reports it off screen. Two rail tiles can both be
-     over the threshold at once, so relying on the exit callback left a window
-     with two elements mounted -- one decoding and one merely resident, which
-     is the kind that accumulates down a long page. */
+  /* Exclusive. Everything else on the page gives its decoder back first --
+     the displaced elements do it HERE rather than waiting for their own
+     observers, because two tiles can be over the threshold at once and
+     relying on the exit callback leaves elements merely resident, which is
+     the kind that accumulates down a long page. */
+  stopAllTeasers();
   if (playing && playing !== v) unmount(playing);
   playing = v;
   var t = v.play(); if (t && t.catch) t.catch(function(){});
@@ -852,6 +1175,7 @@ function release(v){
   var tile = v.closest('.vt'); if (tile) tile.classList.remove('playing');
   v.classList.remove('on');
   if (playing === v) playing = null;
+  var i = teasers.indexOf(v); if (i > -1) teasers.splice(i, 1);
   paintMeter();
 }
 /* Giving the decoder back: dropping the src and calling load() is what frees
@@ -865,12 +1189,72 @@ function unmount(v){
 function mountVideo(host, clipId){
   var ex = host.querySelector('video'); if (ex) return ex;
   var v = document.createElement('video');
+  /* MUTED AND INLINE OR NOTHING HAPPENS. Every browser refuses an unmuted
+     autoplay; iOS Safari additionally refuses one without playsinline and
+     takes the clip full screen instead, which is worse than not playing. The
+     property AND the attribute, because the property is what the element
+     honours and the attribute is what the older WebKit reads. */
   v.muted = true; v.playsInline = true; v.setAttribute('playsinline','');
-  v.setAttribute('webkit-playsinline',''); v.loop = true;
+  v.setAttribute('webkit-playsinline',''); v.setAttribute('muted','');
+  v.loop = true;
   v.preload = 'none'; v.disableRemotePlayback = true;
   v.src = MEDIA[clipId].v;
   host.appendChild(v); mounted++; paintMeter();
   return v;
+}
+
+/* ── the teaser loop itself ─────────────────────────────────────────────
+   R5 is the one variant that produces its loop the OTHER way: it plays the
+   clip and seeks back to zero at TEASER_MS instead of looping a clip that is
+   already that long. It looks identical, which is the point -- the difference
+   is 12.19 MB against 1.01 MB for a rail of eight, measured over real HTTP
+   and printed in the table at the top of this page. */
+function playTeaser(tile){
+  if (!teasersAllowed() || playing) return false;
+  if (teasers.length >= MAX_TEASERS) return false;
+  if (tile.querySelector('video')) return false;
+  var v = mountVideo(tile, tile.dataset.clip);
+  teasers.push(v);
+  if (tile.dataset.seek === '1') {
+    v.loop = false;
+    v.addEventListener('timeupdate', function(){
+      if (v.currentTime * 1000 >= TEASER_MS || v.currentTime >= (v.duration || 1e9)) v.currentTime = 0;
+    });
+    v.addEventListener('ended', function(){ v.currentTime = 0; var q = v.play(); if (q && q.catch) q.catch(function(){}); });
+  }
+  tile.classList.add('playing'); v.classList.add('on');
+  var t = v.play(); if (t && t.catch) t.catch(function(){});
+  paintMeter();
+  return true;
+}
+function stopTeaser(tile){
+  var v = tile.querySelector('video');
+  if (!v || v === playing) return;
+  unmount(v);
+}
+function stopAllTeasers(){
+  teasers.slice().forEach(function(v){ unmount(v); });
+  teasers.length = 0;
+}
+/* Called whenever the set of on-screen tiles changes, or a switch moves.
+   It stops what should not be running and then promotes waiting tiles in
+   document order until the cap is reached -- so a tile that was refused
+   because the cap was full starts as soon as a neighbour leaves. */
+function rebalance(){
+  var tiles = document.querySelectorAll('.vt[data-teaser]');
+  tiles.forEach(function(t){ if (t.dataset.vis !== '1') stopTeaser(t); });
+  if (!teasersAllowed() || playing) { tiles.forEach(stopTeaser); paintState(); return; }
+  tiles.forEach(function(t){ if (t.dataset.vis === '1') playTeaser(t); });
+  paintState();
+}
+var stateEl = document.getElementById('state');
+function paintState(){
+  var why = whyOff();
+  stateEl.className = 'state' + (why ? ' off' : '');
+  stateEl.innerHTML = '<div class="wrap">' + (why
+    ? 'Teasers are <b>off</b> &mdash; ' + why + '. Every tile is showing its <b>poster frame</b>, which is a real image, not a black box.'
+    : 'Teasers are <b>on</b>. A tile plays only while it is more than 60% on screen, muted and inline, and gives its decoder back the moment it leaves. Never more than <b>' + MAX_TEASERS + '</b> at once.') +
+    '</div>';
 }
 
 function overlayBody(key){
@@ -882,10 +1266,11 @@ function overlayBody(key){
 function tileHtml(c, opts){
   opts = opts || {};
   return '<div class="vt ' + (opts.cls || '') + '" data-clip="' + c.id + '"' +
-    (opts.auto ? ' data-auto="1"' : '') + ' role="button" tabindex="0">' +
+    (opts.seek ? ' data-seek="1"' : '') + ' role="button" tabindex="0">' +
     '<img class="poster" alt="" src="' + MEDIA[c.id].p + '" decoding="async" loading="lazy">' +
     (opts.badge ? '<span class="nprod"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/></svg>' + c.p.length + '</span>' : '') +
-    '<div class="over"><div class="handle"><i></i>' + bdi(c.h) + '</div>' +
+    '<div class="over">' + (opts.norate ? '' : ratingBar(c.p[0])) +
+      '<div class="handle"><i></i>' + bdi(c.h) + '</div>' +
       '<div class="cap">' + esc(capOf(c)) + '</div></div>' +
     (opts.overlay ? '<div class="ov-card">' + overlayBody(c.p[0]) + '</div>' : '') +
     '<button class="pbtn" aria-label="Play"><span></span></button></div>';
@@ -894,17 +1279,15 @@ function tileHtml(c, opts){
 /* ═══ Viewport awareness. ONE IntersectionObserver for mounting video and one
    for marking which cycling cards are on screen. No scroll handler anywhere,
    no getBoundingClientRect, no resize listener. ═════════════════════════ */
-var autoplay = true;
 var ioPlay = new IntersectionObserver(function(entries){
+  /* The observer's only job is to record WHICH tiles are on screen. What
+     actually plays is decided in one place afterwards, because the decision
+     depends on the whole set (the cap, and whether a player is open) and not
+     on the tile that happened to cross the line. */
   entries.forEach(function(e){
-    var tile = e.target;
-    if (e.isIntersecting && e.intersectionRatio > 0.6) {
-      if (!autoplay) return;
-      claim(mountVideo(tile, tile.dataset.clip));
-    } else {
-      var v = tile.querySelector('video'); if (v) unmount(v);
-    }
+    e.target.dataset.vis = (e.isIntersecting && e.intersectionRatio > 0.6) ? '1' : '0';
   });
+  rebalance();
 }, { threshold: [0, 0.6] });
 
 /* R1's cards only advance while they are actually on screen -- a rail that is
@@ -915,13 +1298,18 @@ var ioCyc = new IntersectionObserver(function(entries){
 
 function wireTiles(root){
   root.querySelectorAll('.vt').forEach(function(tile){
-    if (tile.dataset.auto === '1') ioPlay.observe(tile);
+    /* EVERY tile, in every variant -- the loop is not a property of one rail. */
+    tile.dataset.teaser = '1';
+    ioPlay.observe(tile);
     tile.addEventListener('click', function(ev){
       if (ev.target.closest('.addb')) { ev.stopPropagation(); flash(ev.target); return; }
       if (ev.target.closest('.pbtn')) {
         ev.stopPropagation();
         var v = tile.querySelector('video');
-        if (v && playing === v) release(v); else claim(mountVideo(tile, tile.dataset.clip));
+        /* A tap is intent, so it overrides both switches and the cap -- but it
+           is still muted and inline, and it is still exclusive. */
+        if (v && (playing === v || teasers.indexOf(v) > -1)) unmount(v);
+        else claim(mountVideo(tile, tile.dataset.clip));
         return;
       }
       openPlayer(STYLE_FOR_GRID, tile.dataset.clip);
@@ -972,8 +1360,11 @@ var R = {
   rail4: function(el){ el.innerHTML = CLIPS.map(function(c){
     return '<div>' + tileHtml(c, { badge:true }) + '</div>'; }).join(''); },
 
+  /* R5's tiles carry data-seek, so they produce the loop by playing the clip
+     and seeking back to zero rather than by looping a clip that is already
+     2-3 seconds long. Identical on screen; 12.1x the bytes. */
   rail5: function(el){ el.innerHTML = CLIPS.map(function(c){
-    return '<div>' + tileHtml(c, { auto:true }) + cardHtml(c.p[0]) + '</div>'; }).join(''); },
+    return '<div>' + tileHtml(c, { seek:true }) + cardHtml(c.p[0]) + '</div>'; }).join(''); },
 
   rail6: function(el){ el.innerHTML = CLIPS.map(function(c){
     var rest = c.p.slice(1);
@@ -992,7 +1383,7 @@ var R = {
     for (var i = 0; i < 12; i++) o.push(tileHtml(CLIPS[(i*5) % CLIPS.length], { cls:sh[i], badge:true }));
     el.innerHTML = o.join(''); },
   hero: function(el){ var big = CLIPS[1], sats = [CLIPS[0], CLIPS[2], CLIPS[4], CLIPS[5]];
-    el.innerHTML = '<div class="big">' + tileHtml(big, { badge:true, auto:true }) + cardHtml(big.p[0]) + '</div>' +
+    el.innerHTML = '<div class="big">' + tileHtml(big, { badge:true }) + cardHtml(big.p[0]) + '</div>' +
       '<div class="sats">' + sats.map(function(c){ return tileHtml(c, { badge:true }); }).join('') + '</div>'; },
   two: function(el){ var o = [];
     for (var i = 0; i < 12; i++) { var c = CLIPS[(i*5) % CLIPS.length], p = P[c.p[0]];
@@ -1232,12 +1623,14 @@ function closePlayer(){
   var v = ov.querySelector('video'); if (v) unmount(v);
   ov.classList.remove('on'); ov.innerHTML = '';
   document.body.style.overflow = '';
-  /* The autoplaying rail gave up its video when the player opened, and its
-     intersection state has not changed since, so the observer will not fire
-     again on its own. Re-observing asks it fresh. */
-  document.querySelectorAll('.vt[data-auto="1"]').forEach(function(t){
+  playing = null;
+  /* Every tile gave up its video when the player opened and no intersection
+     has changed since, so the observer will not fire again on its own.
+     Re-observing asks it fresh; rebalance() then restarts what is on screen. */
+  document.querySelectorAll('.vt[data-teaser]').forEach(function(t){
     ioPlay.unobserve(t); ioPlay.observe(t);
   });
+  rebalance();
 }
 ov.addEventListener('click', function(e){ if (e.target === ov) closePlayer(); });
 document.addEventListener('keydown', function(e){
@@ -1251,13 +1644,13 @@ document.querySelectorAll('[data-open]').forEach(function(b){
 
 /* ═══ The comparison table, from measured heights baked in at build time ═ */
 var CMP = [
-  ['R0 — rail (chosen)',        'rail0', '1',        '0',                 'none'],
-  ['R1 — cycling card',         'rail1', 'all',      '0',                 'card cycles every 3s'],
-  ['R2 — card + chip row',      'rail2', 'all',      '0',                 'none'],
-  ['R3 — card on the poster',   'rail3', '1',        '0',                 'none'],
-  ['R4 — badge only',           'rail4', '0',        '0',                 'none'],
-  ['R5 — plays in the rail',    'rail5', '1',        '~320 KB per dwell', 'video plays'],
-  ['R6 — card expands',         'rail6', 'all, on tap', '0',              'card opens on tap']
+  ['R0 — rail (chosen)',          'rail0', '1',           '129 KB teaser',       '2–3s loop'],
+  ['R1 — cycling card',           'rail1', 'all',         '129 KB teaser',       '2–3s loop, card cycles every 3s'],
+  ['R2 — card + chip row',        'rail2', 'all',         '129 KB teaser',       '2–3s loop'],
+  ['R3 — card on the poster',     'rail3', '1',           '129 KB teaser',       '2–3s loop'],
+  ['R4 — badge only',             'rail4', '0',           '129 KB teaser',       '2–3s loop'],
+  ['R5 — loop from the full clip','rail5', '1',           '1.52 MB full clip',   '2–3s loop, same to look at'],
+  ['R6 — card expands',           'rail6', 'all, on tap', '129 KB teaser',       '2–3s loop, card opens on tap']
 ];
 (function(){
   var t = document.getElementById('cmp');
@@ -1288,20 +1681,72 @@ function renderAll(){
 }
 renderAll();
 
+/* ═══ The contrast proof strip. The SAME .rbar markup, over the two extremes
+   of this library and over pure white and pure black -- because a rating that
+   cannot be read against a bright frame is not shown, and "it looked fine"
+   is not a measurement. The luminance under each is the mean of the bottom
+   28% of that frame, where the bar actually sits, on a 0-255 scale; the
+   ratios are read off the rendered PNG in docs/ugc-preview-shots/. ═══════ */
+var CFRAMES = [
+  ['#ffffff',     'Pure white',           'luminance 255 — the worst case a real library can hand us', [9.69, 6.14, 3.38]],
+  ['poster:acne', 'Brightest real frame', 'the acne clip — luminance 185 under the bar',               [12.9, 8.17, 3.96]],
+  ['poster:night','Darkest real frame',   'the night clip — luminance 59 under the bar',               [17.89, 11.34, 4.47]],
+  ['#000000',     'Pure black',           'luminance 0',                                               [19.51, 12.36, 4.51]]
+];
+function paintContrast(){
+  var host = document.getElementById('contrast');
+  host.innerHTML = '<div class="cstrip">' + CFRAMES.map(function(f){
+    var bg = f[0].indexOf('poster:') === 0
+      ? 'background-image:url(' + MEDIA[f[0].slice(7)].p + ')'
+      : 'background-color:' + f[0];
+    /* peach, 4.4, because round() gives it FOUR filled stars and one empty
+       one -- and the empty star is the lowest-contrast thing in the bar, so a
+       proof strip built on a 5-star product would not be proving anything. */
+    return '<div class="cs"><div class="fr" style="' + bg + '">' + ratingBar('peach') +
+      '</div><div class="lab"><b>' + f[1] + '</b><span class="lum">' + f[2] + '</span>' +
+      '<div class="ratios"><span class="' + (f[3][0] >= 4.5 ? 'ok' : 'no') + '">score <b>' + f[3][0].toFixed(2) + ':1</b></span>' +
+      '<span class="' + (f[3][1] >= 3 ? 'ok' : 'no') + '">filled star <b>' + f[3][1].toFixed(2) + ':1</b></span>' +
+      '<span class="' + (f[3][2] >= 3 ? 'ok' : 'no') + '">empty star <b>' + f[3][2].toFixed(2) + ':1</b></span></div>' +
+      '</div></div>';
+  }).join('') + '</div>';
+}
+paintContrast();
+
 document.getElementById('t-dir').addEventListener('click', function(){
   AR = !AR;
   document.documentElement.dir = AR ? 'rtl' : 'ltr';
   document.documentElement.lang = AR ? 'ar' : 'en';
   this.setAttribute('aria-pressed', String(AR));
-  if (playing) release(playing);
+  stopAllTeasers();
+  if (playing) unmount(playing);
   renderAll();
+  paintContrast();
 });
-document.getElementById('t-auto').addEventListener('click', function(){
-  autoplay = !autoplay;
-  this.setAttribute('aria-pressed', String(autoplay));
-  if (!autoplay && playing) release(playing);
-});
-paintMeter();
+function flip(id, set){
+  document.getElementById(id).addEventListener('click', function(){
+    var on = this.getAttribute('aria-pressed') !== 'true';
+    this.setAttribute('aria-pressed', String(on));
+    set(on);
+    rebalance();
+  });
+}
+flip('t-auto', function(on){ teaserOn = on; });
+flip('t-rm',   function(on){ RM_SIM = on; });
+flip('t-sd',   function(on){ SD_SIM = on; });
+document.getElementById('t-auto').setAttribute('aria-pressed', 'true');
+/* If the machine reading this page really does ask for reduced motion, say so
+   on the switch and take the switch away -- a demo page cannot un-reduce
+   somebody's operating system, and a button that looks like it could is worse
+   than no button. */
+if (rmQuery.matches) {
+  var rmBtn = document.getElementById('t-rm');
+  rmBtn.setAttribute('aria-pressed', 'true');
+  rmBtn.disabled = true;
+  rmBtn.title = 'Your system is asking for reduced motion.';
+}
+/* A real OS-level change, not only the simulator. */
+if (rmQuery.addEventListener) rmQuery.addEventListener('change', rebalance);
+paintMeter(); paintState();
 })();
 </script>
 </body>
