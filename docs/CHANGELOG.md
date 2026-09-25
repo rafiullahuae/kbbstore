@@ -3,6 +3,117 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.275
+A markdown on a variable product stops being invisible to the whole shop. Four
+more modules onto the settings schema, with the rules that are not policy kept as
+rules. And the owner can delete the export folder -- that half travels as a
+WordPress plugin, not in this package.
+
+A MARKDOWN NOBODY COULD SEE. A variable product with a live variation markdown
+showed NO Sale badge, NO struck price, and never appeared under "On sale", while
+its own per-option chips already read "Save 25%". The shop knew about the
+markdown one level down and could not say it about the product.
+
+The shop was not disagreeing with itself here -- it was uniformly, silently
+wrong. That is why nothing caught it: the instrument this codebase uses for
+pricing defects is "do two surfaces disagree", and none did.
+
+Measured at the parent revision against a real product (options AED 120 and
+AED 190, marked down to AED 90 and AED 140, window open): price cell
+"AED 90 - AED 140", badge cell EMPTY, and /shop?sale=1 listed 6 products without
+it. The product page's AggregateOffer was already right -- lowPrice and highPrice
+come from the variations -- with one hole: priceValidUntil is emitted only when
+isOnSale(), so a genuinely marked-down variable product told Google nothing about
+when the price stops applying.
+
+"A PARENT HAS NO COMPARE-AT PRICE" IS TRUE OF THE ROW AND FALSE OF THE PRODUCT.
+The figure a variation's sale_price is a markdown FROM is that variation's own
+price. Every surface collapses the product to one number, the from-price
+MIN(charged), so the figure to compare it against is MIN(regular) -- literally
+what the tile printed the day before the markdown started. NOT "the regular price
+of whichever option is cheapest now": on options at (regular 100, sale 40) and
+(regular 50, no sale) that rule advertises 60% off a saving of 20%. There is a
+test for exactly that pair.
+
+NOTHING CAN LOSE A BADGE, by case analysis rather than by hope: where `price` is
+non-null the expression is identical, and where it is null the old test was
+effectivePrice() < 0, always false. Additive on both the PHP and the SQL side.
+
+▲ THREE STRIKETHROUGHS WOULD HAVE PRINTED "AED 0". Turning isOnSale() true
+switches on three <del> sites that all read the NULL parent column -- the product
+page, the quick-view modal and the checkout "you were looking at" strip. Measured
+before fixing them, the product page rendered "AED 90 - AED 140 AED 0 -25%".
+
+▲ AND A FOURTH, FOUND BY WORKING THROUGH THE CONSEQUENCES RATHER THAN BY A
+FAILURE. The cart's struck order value contributed (int) null -- zero -- for a
+variable line, so the before-price came out UNDERSTATED: a saving smaller than
+the one being given, on the screen where somebody decides to pay. On a basket of
+one simple product marked AED 200->50 beside the AED 190 option of a product
+marked to AED 140, the row printed AED 200 where the honest figure is AED 340.
+
+▲ MONEY, AND THIS IS THE ONE TO READ TWICE. A coupon with `exclude_sale_items`
+now EXCLUDES these products. That closes a stacking hole rather than opening one
+-- the discount was previously stacking on top of a variation markdown -- but it
+is a real change to what a coupon pays out.
+
+NO PAGE GAINED A STATEMENT: /shop 5 -> 5, /shop?sale=1 5 -> 5, the variable
+product page 12 -> 12, a simple on-sale product page 8 -> 8.
+
+AND THE DERIVED PRICE STOPS GOING STALE, latently rather than live. No queued
+job, console command or importer reaches effectivePrice() today -- the importer
+writes the columns and never reads a derived figure back -- so nothing is writing
+a wrong price into an order line or a feed. That is the argument for fixing the
+mechanism rather than telling a caller: the caller that would need telling does
+not exist to be told. The scoped binding stays (un-scoping it in the console
+reintroduces the N+1); invalidation happens at the write, on Eloquent
+saved/deleted.
+
+FOUR MORE MODULES ONTO THE SETTINGS SCHEMA -- CartPage, CheckoutPage,
+SecurityModule, HomepageContent -- and the job was the SORT, not the migration.
+Every cast() split into policy, which moves onto the shared cast and is declared,
+and real rules, which survive as their own validators:
+
+  - Store -> Checkout page -> Trust & reviews: the review wording may carry NO
+    DIGIT of its own, and an over-length value is REFUSED to the shipped wording
+    rather than truncated. That second half is exactly what a shared `max` would
+    have broken silently, because the shared text arm CUTS.
+  - Appearance -> Cart page -> Summary & trust: Express delivery charge and
+    Service fee CLAMP at zero rather than refusing.
+  - The recommended rail's cap now follows MAX_REC, where it had agreed with the
+    shared default of 24 by coincidence.
+
+The new channel REPLACES the type arm, because the template check must see the
+untruncated value -- so it is the boundary for that field, and the two arms rule
+5 names by hand are closed to it: a rule declared on a colour or a select throws.
+SecurityModule had nothing in the second pile at all: three arms, all shared,
+which is the shared cast's own argument measured rather than asserted.
+
+APPEARANCE -> MOBILE MENU JOINS THE FRAMEWORK GUARD. Its groups lived inline in
+its controller, so it was the one module outside the check that catches a module
+storing a setting with NO CONTROL TO WRITE IT. The mutation proves it: an orphan
+field now says "mobile_menu stores these with no control to write them:
+m2_orphan" -- a sentence that could not have been said about that module before.
+
+RULE 1: not one new exemption, and no control added, removed, renamed or moved.
+Cart page, Checkout page and Security answer all 4,653 recorded casts
+byte-identically; control counts per tab are identical at 390 and 1280 (Cart page
+104, Checkout page 104, Security 18, Homepage content 32, Mobile menu 26); and
+nine of the ten screenshots are byte-identical by md5, the tenth differing only
+because the audit trail above the settings gained a "Signed in" row between runs.
+
+▲ NOT IN THIS PACKAGE: THE EXPORT-FOLDER DELETE. WordPress admin -> Tools -> KBB
+Export -> "Delete the export from this server". wordpress-plugin/ is on
+BuildPackage::NEVER_SHIP and outside UpdateGuard's allow-list, both asserted per
+path, so it reaches the OLD kbeautybliss.com WordPress as a plugin zip and
+nothing about this shop changes. What it fixes: the re-scan that decides whether
+the delete worked carried the same depth ceiling as the delete itself, and where
+either gave up it returned ZEROS -- which read as "nothing there". Reproduced
+against real files: ok true, remaining [], "Every export file is gone from this
+server", with a customers.csv of WordPress password hashes still on disk.
+
+Files: taken from the built zip, and every one diffed byte for byte against the
+repo before shipping.
+
 ## 2.60.274
 Phase 3 closed: one settings schema the module screens read. An imported article
 stops losing its photograph. And a colour the shop never actually used.
