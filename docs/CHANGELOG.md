@@ -3,6 +3,84 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.279
+Shoppable video gets its storage side: Content -> Shoppable video. It ships OFF
+and adds nothing to any page until the rail is built.
+
+WHAT THE OWNER DOES PER VIDEO, and the screen ASKS THE SERVER which world he is
+in before he uploads anything.
+
+  With ffmpeg on the box -- HE UPLOADS ONE FILE. New video, a title, choose the
+  MP4. The poster frame and a 2.5-second silent 360x640 loop are cut from it on
+  that same request. Then the creator's handle and link, Permission -> granted,
+  search and add the products in the order he wants, Status -> published, Save.
+
+  Without ffmpeg -- one file and one picture. The same steps, plus choosing a
+  poster from the Media Library.
+
+He is never asked for a second video either way. `which ffmpeg` in Servers ->
+Launch SSH Terminal is ten seconds and settles it; if it is absent but
+installable anywhere on the box, KBB_FFMPEG in .env points at it.
+
+A VIDEO IS THREE FILES, which the previous round's measurement decided: the full
+clip at 720x1280 for the player, a 2.5s 360x640 teaser for the rail, and a
+poster. `poster_only` is a FIRST-CLASS PUBLISHABLE STATE rather than an error --
+the teaser is deliberately absent from the publish gate, and adding it reddens
+two tests. The poster IS required, because the tile reserves its box from the
+poster's own width and height, read with getimagesize(), so layout shift stays at
+zero even on a box with no ffprobe.
+
+▲ THE UPLOAD IS THE MOST DANGEROUS INPUT THIS SHOP TAKES, and it is checked in
+five steps, in this order: (1) size BEFORE the file is opened -- a refusal, not a
+truncation; (2) finfo over the bytes on disk, never the claimed type; (3) our own
+magic-byte read, with ISO-BMFF's major brand checked; (4) the two readers must
+AGREE on the same stored extension; (5) a last look for a PHP open tag in the
+first 512 bytes. Then a GENERATED filename with the extension the bytes earned.
+
+A PHP script named clip.mp4 is refused with nothing written to disk, and the
+owner is told: "That file is text/x-php and a clip has to be MP4 or WebM. The
+check reads the file itself, not its name -- renaming it will not help." Also
+refused and pinned: a real MP4 with <?php stuffed into its header, an Ogg file
+finfo is perfectly happy with, a QuickTime-branded ftyp, an 11-byte "JPEG", a
+64 MB+1 clip, and a name carrying ../ and a shell metacharacter.
+
+Files land in public/uploads/ugc/ and NOT the storage symlink, which this
+zip-deployed app never creates -- the reviews module paid for that lesson once.
+
+▲ AND THE POSTER HAS NO FILE INPUT AT ALL. The shop's own guard caught the first
+draft: the Media Library must be offered for any media upload in the back office.
+It is now the poster's only way in, the picture is COPIED into /uploads/ugc/
+rather than referenced (a poster is deleted with its video) and re-checked byte
+by byte.
+
+Its own capabilities, ugc.view and ugc.manage, rather than reusing content.manage
+-- an operator who may write an article is not thereby someone who may publish a
+customer's face on the shop, and the rights fields on this screen are why. Writes
+above reads, first match wins.
+
+SHIPS OFF, asserted harder than a picture can: five storefront pages render
+byte-for-byte identically with the table empty and with a published video in it
+-- granted rights, a poster, a clip, three tagged products. Zero <video>
+elements, no mention of the clip anywhere in the HTML. No ModuleRegistry row,
+deliberately: the master switch belongs beside a storefront section that does not
+exist yet, and the framework guard fails a `live` row with no reader. No public
+/api endpoint either -- the allowlist is written and pinned so the rail round has
+one to reach for, but an unauthenticated endpoint shipped ahead of its consumer
+is a surface nobody is watching.
+
+FIFTY MUTATIONS RUN, FORTY-THREE RED AND SEVEN GREEN, and the green ones earned
+the round: four were redundant-by-design and are now documented as second locks
+rather than presented as the guard; two did not reproduce a defect at all and
+were replaced with ones that do. The green run found four real test gaps and ONE
+REAL BUG THE REFACTOR HAD INTRODUCED -- getSize() read AFTER move() throws "stat
+failed", a 500 on a SUCCESSFUL upload.
+
+Also in this package: the storefront's own product card and grid now carry a
+declaration of the relations they read, the cost, and every caller -- the
+component-contract work from the previous round.
+
+Files: taken from the built zip, every one diffed byte for byte against the repo.
+
 ## 2.60.278
 A mistyped address on Store -> Mail is refused out loud instead of silently kept.
 The homepage stops linking its category tiles at an address that redirects.
