@@ -172,7 +172,14 @@ it('never lets a forged Host header into an email', function () {
      * and the link in the message must say real-shop.test.
      *
      * MUTATION: change CustomerPasswordReset::url() to build with
-     * url()->to(...) or Url::to(...) instead of Url::redirect(). Red.
+     * url()->to(...) or Url::to(...) instead of Url::external(). Red.
+     *
+     * ▲ THE CORRECT CALL IS NOW Url::external(), NOT Url::redirect(). Lane U2
+     * split the helper in two: redirect() is the IN-BAND one and builds on the
+     * REQUEST's host, which is right for a Location and would be this exact
+     * account takeover in an email. This note used to name redirect() as the
+     * safe call, and following it today would reintroduce the bug the test
+     * below is guarding.
      */
     $customer = Customer::create([
         'email' => 'reset-'.uniqid().'@example.test',

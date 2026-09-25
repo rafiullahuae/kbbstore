@@ -97,8 +97,14 @@ it('sends a shopper on a new domain to that domain and not to APP_URL', function
 
     $response->assertRedirect('https://new-shop.test/cart/');
 
-    expect($response->headers->get('Location'))
-        ->not->toContain('old-shop.test', 'the visitor must not be thrown onto the configured host');
+    /*
+     * str_contains() and not ->not->toContain(), because toContain() is
+     * VARIADIC: a second argument is read as another needle, not as a failure
+     * message, and the expectation silently stops being able to fail.
+     * ExpectationsThatCannotFailTest caught exactly that here.
+     */
+    expect(str_contains((string) $response->headers->get('Location'), 'old-shop.test'))
+        ->toBeFalse('the visitor must not be thrown onto the configured host');
 });
 
 it('leaves a redirect alone on a shop served from the address it is configured with', function () {
@@ -158,11 +164,20 @@ it('never lets a forged X-Forwarded-Host into a password-reset email', function 
      * all reads THIS. The reset link is a credential. A reset link naming a
      * domain the attacker owns, mailed by the shop itself, is the account.
      *
-     * MUTATION, RUN: change CustomerPasswordReset::url() back to
-     * Url::redirect(...) and this goes red — the link comes out on
-     * attacker.test, because redirect() is now (correctly) request-derived.
-     * That is precisely why the two helpers had to be separated instead of one
-     * being quietly pointed at the request.
+     * MUTATION, RUN: build the link the request-derived way —
+     * `url(Url::to('/my-account/reset/'...))` in CustomerPasswordReset::url().
+     * RED: the link comes out on attacker.test.
+     *
+     * ▲ AND A MUTATION THAT DOES *NOT* GO RED, SAID OUT LOUD BECAUSE IT WOULD
+     * OTHERWISE LOOK LIKE THIS TEST COVERS MORE THAN IT DOES. Swapping
+     * Url::external() for Url::redirect() here leaves this GREEN, and that is
+     * not because the two are equivalent — it is because SiteUrl::origin()
+     * refuses to reach for a bound request when app()->runningInConsole(), and
+     * that is TRUE UNDER PHPUNIT. In production, under PHP-FPM, that same
+     * substitution is request-derived and is the account takeover above. The
+     * suite cannot see it, so `url(Url::to(...))` is used as the stand-in: it
+     * reads the request in both worlds and so puts the assertion under load.
+     * The same caveat applies to the webhook and alias tests below.
      */
     config(['app.url' => 'https://real-shop.test']);
 
@@ -204,8 +219,10 @@ it('never lets a forged host into a payment webhook URL', function () {
      * capability does not make a header trustworthy, and an admin session is
      * exactly as forgeable a `Host:` as an anonymous one.
      *
-     * MUTATION, RUN: change PaymentsApiController::webhookUrl() back to
-     * Url::redirect() and this goes red on attacker.test.
+     * MUTATION, RUN: `url(Url::to('/api/payments/webhook/'...))` in
+     * PaymentsApiController::webhookUrl(), which is the request-derived
+     * spelling. RED, on attacker.test. (Url::redirect() in its place stays
+     * green under PHPUnit only — see the caveat on the password-reset test.)
      */
     config(['app.url' => 'https://real-shop.test']);
 
@@ -297,9 +314,11 @@ it('still forwards an alias host to the canonical one when the path also has a r
      *
      * That line is Url::external() now. This test is what holds it there.
      *
-     * MUTATION, RUN: change CanonicalHost's `Url::external($mapped->target)`
-     * back to `Url::redirect($mapped->target)` and this goes red with a
-     * Location on old-shop.test.
+     * MUTATION, RUN: `Url::redirect($mapped->target, $request)` — which is
+     * exactly what the bare `Url::redirect($mapped->target)` resolves to in
+     * production, where SiteUrl::origin() picks the bound request up for
+     * itself. RED: `Location: https://old-shop.test/u2-new-path/`, the visitor
+     * told to stay on the domain they were being moved off.
      */
     config(['app.url' => 'https://real-shop.test']);
 
@@ -462,8 +481,11 @@ it('absolutises the quiz plan email links without doubling the base path', funct
      * through to() a second time — so the two are not interchangeable and this
      * asserts the difference rather than assuming it.
      *
-     * MUTATION, RUN: swap Url::externalise( for Url::external( in
-     * QuizController and this goes red with a doubled /kbb-upgrade.
+     * MUTATION, RUN: give Url::externalise() external()'s body —
+     * `SiteUrl::externalOrigin() . self::to($url)`. RED, with the base path
+     * spelled twice. The assertion below shows that doubling directly rather
+     * than only asserting the good case, so the two helpers are held apart by
+     * something a reader can see.
      */
     config(['app.url' => 'https://shop.example/kbb-upgrade', 'kbb.base_path' => '/kbb-upgrade']);
     Url::forgetBase();
@@ -473,6 +495,10 @@ it('absolutises the quiz plan email links without doubling the base path', funct
 
     expect(Url::externalise($built))->toBe('https://shop.example/kbb-upgrade/routines/acne/')
         ->and(substr_count(Url::externalise($built), '/kbb-upgrade'))->toBe(1);
+
+    // And this is what external() would have done with the same input, which is
+    // why QuizController may not use it here.
+    expect(substr_count(Url::external($built), '/kbb-upgrade'))->toBe(2);
 
     // And it leaves an already-absolute URL alone rather than prefixing it.
     expect(Url::externalise('https://other.test/x/'))->toBe('https://other.test/x/')
@@ -490,8 +516,15 @@ it('refuses to fall back to the request when APP_URL is unusable', function () {
      * and the safe direction to fail in — and must NEVER quietly become the
      * request's host, which is the failure mode this whole split exists to stop.
      *
-     * MUTATION, RUN: give SiteUrl::externalOrigin() a `?: SiteUrl::origin()`
-     * tail and this goes red.
+     * MUTATION, RUN: `(SiteUrl::externalOrigin() ?: SiteUrl::origin(request()))`
+     * in Url::external() — the "helpful" edit somebody makes when a blank
+     * APP_URL produces relative links and the request is right there. RED.
+     *
+     * Note the explicit `request()`: written as a bare `SiteUrl::origin()` the
+     * same edit stays GREEN under PHPUnit, because origin() will not reach for
+     * a request while runningInConsole() is true. It is a live hole in
+     * production either way, which is why the mutation is spelled the way that
+     * makes the suite able to see it.
      */
     config(['app.url' => '']);
 
