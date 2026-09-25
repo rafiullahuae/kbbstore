@@ -471,11 +471,27 @@ it('never understates the struck order value on the cart', function () {
      *
      * The basket here is the minimal one that shows it: a simple product marked
      * AED 200 down to AED 50, beside the AED 190 option of a variable product
-     * marked down to AED 140. Subtotal AED 190. The honest before-price is
-     * AED 200 + AED 140 = AED 340 — the second line is not discounted in a way
-     * this row can state, so it contributes what it costs.
+     * marked down to AED 140. Subtotal AED 190.
      *
-     * MUTATIONS, both run — see below the expectation for the numbers.
+     * ▲ THE PIN MOVED, FROM AED 340 TO AED 390, AND ONLY FOR THIS CASE.
+     *
+     * When this case was written the only compare-at a variable line had was
+     * its PARENT's from-price — AED 120 here, below the AED 140 this line is
+     * charged — so max() took the line and it contributed AED 140: AED 200 +
+     * AED 140 = AED 340. That was the honest answer available then, and it was
+     * silent about a real saving: the line is the AED 190 option, and the
+     * shopper is getting AED 50 off it.
+     *
+     * store/cart-inner.blade.php now reads the VARIATION's own regular price
+     * (ProductVariant::compareAtPrice()), so the line contributes AED 190 and
+     * the row prints AED 390 — which is what the two lines cost undiscounted,
+     * and the sum of exactly the figures now struck on the lines above it.
+     * CartVariantWasPriceTest is where that change is argued and pinned; this
+     * case keeps asserting what it always asserted, which is that the
+     * before-price is never BELOW the subtotal beside it and never drops a
+     * line.
+     *
+     * MUTATIONS, all run — see below the expectation for the numbers.
      */
     // The struck order value lives in the squeeze layout's summary; the
     // default layout prints a plain Subtotal with no before-price beside it.
@@ -523,16 +539,19 @@ it('never understates the struck order value on the cart', function () {
      * asserting the whole row is what proves the before-price is the HIGHER of
      * the pair rather than just present.
      *
-     * MUTATION A: drop the max() from $kbbWasTotal in cart-inner.blade.php,
-     * leaving the compareAtPrice() arm alone. RUN: 1 failed, 'AED 320AED 190'
-     * — the parent's compare-at is its FROM-price (AED 120) and this line holds
-     * the AED 190 option, so the line is undercounted by AED 20.
-     * MUTATION B: put the whole expression back to `(int) $kbbWasP->price *
+     * MUTATION A: point $kbbLineWas()'s variant arm back at the parent, so a
+     * variable line offers the parent's from-price again. RUN: 1 failed,
+     * 'AED 340AED 190' — the figure this case pinned before the line learnt to
+     * read its own option, undercounting that line by AED 50.
+     * MUTATION B: drop the max() from $kbbLineWas() as well. RUN: 1 failed,
+     * 'AED 320AED 190' — the parent's compare-at (AED 120) is now ADDED for a
+     * line charged AED 140, which is the understatement max() exists to stop.
+     * MUTATION C: put the whole expression back to `(int) $kbbWasP->price *
      * quantity` with no max(). RUN: 1 failed, 'AED 200AED 190' — the variable
-     * line contributes nothing at all, which is the figure this change would
-     * have shipped.
+     * line contributes nothing at all, which is the figure the previous round
+     * would have shipped.
      */
-    expect($was)->toBe('AED 340AED 190');
+    expect($was)->toBe('AED 390AED 190');
 });
 
 /* ──────────────────────────────── rule 4 ─────────────────────────────────── */

@@ -166,8 +166,14 @@ class Product extends Model
      * 2.60.105 turned that into a 500 on every /api/products request.
      *
      * `sale_price` IS THE ADVERTISED SALE, NOT THE STORED COLUMN. See
-     * advertisedSalePrice() below. The shape is unchanged — the same eleven
-     * keys, pinned by ApiProductIndexCostTest — only the lying stopped.
+     * advertisedSalePrice() below. That change kept the shape — the same eleven
+     * keys, pinned by ApiProductIndexCostTest — and only stopped the lying.
+     *
+     * `compare_at_price` IS THE TWELFTH KEY AND THE ONLY ONE EVER ADDED. It is
+     * additive: no key already published changed its meaning or its value, and
+     * the pin in ApiProductIndexCostTest was advanced deliberately, in the same
+     * commit, for that one key. The argument for a third key rather than a new
+     * meaning for `price` is written out where it is returned.
      */
     public function toApi(): array
     {
@@ -205,6 +211,76 @@ class Product extends Model
              */
             'price'             => $this->price ?? ($this->effectivePrice() ?: null),
             'sale_price'        => $this->advertisedSalePrice(),
+            /*
+             * THE FIGURE TO STRIKE THROUGH, OR null WHEN THERE IS NOTHING TO
+             * STRIKE — and the one key on this feed that means the same thing
+             * for every kind of product.
+             *
+             * ── WHY A THIRD KEY AND NOT A NEW MEANING FOR AN OLD ONE ────────
+             *
+             * On a SIMPLE product `price` is the regular price and `sale_price`
+             * is what is charged while a markdown runs, so the pair carries the
+             * whole story. On a VARIABLE one it cannot: WooCommerce keeps the
+             * money on the variations, `products.sale_price` is NULL on the
+             * parent (ProductImporter refuses a row that carries one without a
+             * regular price), and advertisedSalePrice() therefore answers null
+             * for every marked-down variable product in the catalogue. `price`
+             * meanwhile publishes the CHARGED from-price, which is right and is
+             * pinned — ApiProductTypeNotPublishedTest exists because this feed
+             * once said `null` where the tile said "AED 120 – AED 190".
+             *
+             * So a variable product on sale published AED 90 and nothing else:
+             * not a lie, and silent about a quarter off. A consumer could not
+             * draw the badge the shop's own tile draws.
+             *
+             * The two ways to say it are a CHOICE OF CONTRACT, not a detail:
+             *
+             *   A. move `price` to the compare-at for variable rows and publish
+             *      the charged figure as `sale_price`, making the pair mean the
+             *      same thing for every product. Every consumer that already
+             *      computes `sale_price ?? price` renders the markdown with no
+             *      change at all — and every consumer that reads `price` alone
+             *      silently starts quoting AED 120 where it quoted AED 90.
+             *   B. leave both keys exactly as they are and add this one.
+             *      Nothing already published moves; a consumer that wants to
+             *      draw the markdown reads one new key.
+             *
+             * B is what ships, because A changes a published number on an
+             * unauthenticated feed and that is the owner's call rather than
+             * this lane's. B does not foreclose it: under A this key would
+             * equal `price` on every row and still be correct.
+             *
+             * ── WHAT A CONSUMER DOES WITH IT ────────────────────────────────
+             *
+             *     charged = sale_price ?? price          (unchanged, and this
+             *                                             is what the checkout
+             *                                             will take)
+             *     was     = compare_at_price             (strike it; null means
+             *                                             draw no strike)
+             *     percent = 1 - charged / compare_at_price
+             *
+             * One rule for both kinds of product. `compare_at_price !== null`
+             * is also the on-sale test that works for both, which `sale_price
+             * !== null` never did.
+             *
+             * ── NULL RATHER THAN THE REGULAR PRICE WHEN NOTHING IS OFF ──────
+             *
+             * isOnSale() first, so this is the figure a strikethrough may use
+             * and not merely "the regular price". Publishing a compare-at equal
+             * to the charged price invites exactly the strikethrough that reads
+             * as a lie, and this endpoint already refuses to advertise a sale it
+             * cannot vouch for (see advertisedSalePrice()). Both methods fail
+             * closed on a narrowed SELECT — compareAtPrice() answers null
+             * without `price`, isOnSale() answers false on a null compare-at —
+             * so a row whose shape cannot be confirmed publishes null here
+             * rather than a guess.
+             *
+             * NO SECOND QUERY. compareAtPrice() and isOnSale() read the same
+             * grouped row App\Services\VariantPricing already holds for the
+             * from-price, so this key costs nothing on a hundred-row page. That
+             * is measured in ApiCompareAtPriceTest, not asserted.
+             */
+            'compare_at_price'  => $this->isOnSale() ? $this->compareAtPrice() : null,
             'image'             => $this->image,
             'images'            => $this->images,
             'rating'            => $this->rating,

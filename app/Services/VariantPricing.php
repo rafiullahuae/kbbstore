@@ -183,10 +183,23 @@ class VariantPricing
      * thousand array lookups and builds nothing.
      *
      * A BOUNDARY, STATED. This is an Eloquent event, so a mass delete through
-     * the query builder (`$product->variants()->delete()`) and a raw
-     * DB::table() write fire nothing and do not invalidate. Nothing in this
-     * application writes either table that way today; anything that starts to
-     * has to call this itself.
+     * the query builder (`$product->variants()->delete()`), a mass update
+     * (`Product::query()->whereIn(...)->update([...])`) and a raw DB::table()
+     * write all fire nothing and do not invalidate. Anything that writes either
+     * table that way has to call this itself.
+     *
+     * ▲ ONE THING NOW DOES, and the note that stood here said nothing did.
+     * Admin\CatalogProductsApiController::bulkPrice() writes `products.price`
+     * and `products.sale_price` for up to BULK_MAX rows through the query
+     * builder, one statement per distinct resulting value, and it calls this
+     * afterwards. It is the only such write in the application that touches a
+     * column this snapshot is derived from: every other query-builder write to
+     * `products` sets `status`, `brand_id`, `category_id`, `position`,
+     * `routine_role`, `routine_concerns`, `rating`/`review_count` or `seo`, and
+     * load() reads none of them. Nothing at all writes `product_variants` that
+     * way. tests/Feature/VariantPriceMemoRawWriteGuardTest.php is what keeps
+     * that list honest — it fails, naming the file and line, the day another
+     * one appears.
      */
     public static function invalidate(): void
     {

@@ -208,6 +208,16 @@ it('forgets a variation that has been deleted', function () {
      * that way today; if something starts to, it has to call
      * VariantPricing::invalidate() itself, and that is written down on
      * Product::booted() as well as here.
+     *
+     * ▲ AND ONE THING HAS SINCE STARTED, on the `products` side rather than
+     * this one: Admin\CatalogProductsApiController::bulkPrice() mass-updates
+     * `products.price` and `products.sale_price` through the query builder. It
+     * calls invalidate() after the write, and
+     * tests/Feature/VariantPriceMemoRawWriteGuardTest.php is what makes the
+     * next one impossible to add silently -- it scans app/ and database/ and
+     * fails naming the file and the line. A sentence in a docblock could not
+     * notice that arrival, which is why that file exists and this paragraph is
+     * not the guard.
      */
     $parent = fmParent('fm-gone');
     $cheap = fmVariant($parent, 4000);
