@@ -148,22 +148,27 @@ class VariantPricing
     private function load(): array
     {
         /*
-         * ProductVariant::effectivePrice() in SQL. The window columns are the
-         * PARENT's, because `product_variants` has none — a variable product's
-         * markdown is scheduled once, on its `products` row, for every variant
-         * under it.
+         * ProductVariant::effectivePrice() in SQL — TAKEN FROM
+         * App\Support\EffectivePrice RATHER THAN SPELT OUT HERE.
          *
-         * The instant is a BOUND PARAMETER and not NOW(), for both of the
-         * reasons App\Support\EffectivePrice gives: SQLite has no NOW() and
-         * this suite runs on SQLite while production runs MySQL, and one bound
-         * value cannot drift between the two places this expression appears.
+         * It used to be written out in this method, and that was fine while
+         * this class was the only place that needed it. It is not any more:
+         * EffectivePrice::sql() now COALESCEs a variable parent's NULL `price`
+         * with the cheapest figure its variations charge, so the price SORT and
+         * the price FACET evaluate this same expression, inside a correlated
+         * MIN instead of a GROUP BY. Two copies of it is how the tile and the
+         * sort would come to disagree about what a product costs — which is the
+         * disagreement this whole area of the codebase has already paid for
+         * twice. One definition, two shapes; see variantChargedSql().
+         *
+         * The instant is still a BOUND PARAMETER and not NOW(), for both of the
+         * reasons EffectivePrice gives: SQLite has no NOW() and this suite runs
+         * on SQLite while production runs MySQL, and one bound value cannot
+         * drift between the places this expression appears.
          */
-        $charged = 'CASE WHEN v.sale_price IS NOT NULL'
-            . ' AND (p.sale_starts_at IS NULL OR p.sale_starts_at <= ?)'
-            . ' AND (p.sale_ends_at IS NULL OR p.sale_ends_at >= ?)'
-            . ' THEN v.sale_price ELSE v.price END';
+        $charged = EffectivePrice::variantChargedSql('v', 'p');
 
-        $window = EffectivePrice::bindings();
+        $window = EffectivePrice::window();
 
         $rows = DB::table('product_variants as v')
             ->join('products as p', 'p.id', '=', 'v.product_id')

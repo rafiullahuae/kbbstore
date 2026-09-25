@@ -28,16 +28,23 @@ use Illuminate\Support\Facades\DB;
  * the tile was the wrong one. The price sort filed the product first under
  * "Price: low to high" as the cheapest thing in the shop.
  *
- * ── WHAT THIS FIXES AND WHAT IT DELIBERATELY DOES NOT ───────────────────────
+ * ── WHAT THIS FIXES, AND WHAT FINISHED IT ───────────────────────────────────
  *
- * Only the tile. `Product::effectivePrice()` still answers 0 for these rows, so
- * the price SORT and the price FACET are still wrong about them — the last case
- * in this file asserts that in as many words, so nobody reads this lane as
- * having fixed it. Correcting the method means backfilling `products.price` or
- * changing Services\Import\Entities\ProductImporter, which is another lane's
- * file and a decision for the owner. A tile that states a range it can prove is
- * strictly better than a tile that states a price it cannot, and it needed no
- * schema change and no importer change to get there.
+ * This file covers THE TILE: it stops stating a price it has no basis for and
+ * states the range the variations actually carry instead. When it was written
+ * that was all that was fixed — `Product::effectivePrice()` still answered 0,
+ * so the price SORT and the price FACET were still wrong about these rows, and
+ * the last case here asserted that in as many words so nobody could read the
+ * lane as having fixed more than it had.
+ *
+ * Lane Q5 then fixed the rest, by DERIVING rather than backfilling: the same
+ * SQL that builds this range now also feeds App\Support\EffectivePrice, so the
+ * sort and the facet evaluate it too, and Product::effectivePrice() answers the
+ * low end of it. No schema change and no importer change were needed after all
+ * — a backfill would additionally have broken this file, because
+ * VariantPricing::range() answers only for a parent whose `price` is NULL, so
+ * writing a figure into that column would have turned every range on the shop
+ * back into a single number. See VariableProductPriceAgreesTest.
  *
  * ── MUTATION NOTE ───────────────────────────────────────────────────────────
  *
@@ -336,21 +343,23 @@ it('costs nothing at all on a page with no unpriced variable product', function 
     expect($queries)->toBe(1);
 });
 
-/* ─────────────────── what is NOT fixed, stated out loud ──────────────────── */
+/* ────────────────────── and the rest of it, since ────────────────────────── */
 
-it('leaves Product::effectivePrice() answering zero, deliberately', function () {
+it('now has the model agreeing with the tile as well', function () {
     /*
-     * THIS CASE EXISTS TO STOP THE FIX BEING OVERSTATED. The tile no longer
-     * lies; the model still does, and so do the price sort and the price facet
-     * that read it in SQL through App\Support\EffectivePrice. Changing that is
-     * a backfill of `products.price` or a change to ProductImporter — another
-     * lane's file, and a decision with money on the other side of it.
+     * THIS CASE USED TO ASSERT THE OPPOSITE, and said so: while only the tile
+     * was fixed, `Product::effectivePrice()` still answered 0 for a variable
+     * parent and the price sort and the price facet were still wrong about it.
+     * It carried the instruction that a later lane fixing it properly would
+     * turn THIS case red, and that going red was the signal rather than a
+     * regression. Lane Q5 did that, so the assertion is inverted rather than
+     * deleted — the row it names is the shortest statement of what changed.
      *
-     * If a later lane fixes it properly, THIS case is the one that goes red,
-     * and that is the signal to delete it rather than a regression.
+     * The rest of the property — the sort, the facet, the listing JSON-LD, the
+     * basket and the query cost — is pinned in VariableProductPriceAgreesTest.
      */
     $parent = vptParent('vpt-still-zero');
     vptVariant($parent, 3500);
 
-    expect($parent->fresh()->effectivePrice())->toBe(0);
+    expect($parent->fresh()->effectivePrice())->toBe(3500);
 });
