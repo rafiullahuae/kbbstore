@@ -252,10 +252,28 @@
              inside the <s> beside it. See Money::decimalsToDistinguish(): it
              answers 0 — no change at all — for every markdown the rounded form
              can already tell apart. --}}
-        @php $kbbSaleDp = $onSale ? Money::decimalsToDistinguish((int) $product->price, $price) : null; @endphp
+        @php
+        /* $kbbWas, NOT `(int) $product->price`. A variable product's markdown
+           lives on its VARIATIONS and `products.price` is NULL on the parent,
+           so the moment Product::isOnSale() started telling the truth about one
+           of them, the <s> below would have printed `AED 0` beside a real
+           from-price. Product::compareAtPrice() is what this page advertised
+           the day before the sale opened -- the lowest REGULAR price across the
+           options -- and it is the same figure the tile's badge and the "On
+           sale" facet compare against. For every product that carries a price
+           of its own it IS `(int) $product->price`, unchanged.
+
+           BOTH STATEMENTS IN THE ONE @php REGION, and that is not tidiness. A
+           second `@php` line of its own contributes its indentation to the
+           rendered page and StorefrontEnglishUnchangedTest compares BYTES --
+           the same trap components/product-card.blade.php records for computing
+           the range beside the markup instead of up here. */
+        $kbbWas = (int) $product->compareAtPrice();
+        $kbbSaleDp = $onSale ? Money::decimalsToDistinguish($kbbWas, $price) : null;
+        @endphp
         <span class="now">@if ($kbbHeadline !== null){!! $kbbHeadline !!}@else{!! Money::format($price, $kbbSaleDp) !!}@endif</span>
         @if ($onSale)
-            <s>{!! Money::format((int) $product->price, $kbbSaleDp) !!}</s>
+            <s>{!! Money::format($kbbWas, $kbbSaleDp) !!}</s>
             @if ($off)<span class="off">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
         @endif
       </div>

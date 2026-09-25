@@ -196,21 +196,73 @@ final class EffectivePrice
     }
 
     /**
+     * The row's REGULAR price — what it costs with no sale running — with NO
+     * placeholders at all.
+     *
+     * Product::compareAtPrice() in SQL, and the exact counterpart of sql()
+     * above: the row's own `price` COALESCEd with the cheapest REGULAR price
+     * its variations carry, for the variable parent whose own column is NULL.
+     *
+     * WHY IT TAKES NO WINDOW. A sale window only ever decides whether a
+     * `sale_price` counts. This expression never looks at one: `products.price`
+     * and `kbbr.price` are the columns a markdown is a markdown FROM, and they
+     * are the same number inside the window and outside it. So this is the one
+     * piece of the family with no `?` in it, and whereOnSale() below still
+     * binds exactly the four sql() asks for.
+     *
+     * THE ALIAS IS `kbbr`, not `kbbv`. The two subqueries appear either side of
+     * one comparison and, while SQL scopes them separately, a repeated alias in
+     * an expression a reader has to hold in their head is how the collision
+     * variantSql()'s own note warns about starts.
+     *
+     * NULL FOR A PARENT WHOSE VARIATIONS CARRY NO REGULAR PRICE, because MIN()
+     * ignores NULLs and answers NULL over an empty set — and every comparison
+     * against NULL is NULL, which is not true. Such a row is therefore absent
+     * from "On sale" rather than present at an invented discount, which is the
+     * conservative direction and the same one VariantPricing::regularLow()
+     * takes for the identical data.
+     */
+    public static function regularSql(string $table = 'products'): string
+    {
+        $parent = $table === '' ? 'products' : $table;
+        $own = $table === '' ? 'price' : $table . '.price';
+
+        return 'COALESCE(' . $own . ', (SELECT MIN(kbbr.price) FROM product_variants kbbr'
+            . ' WHERE kbbr.product_id = ' . $parent . '.id))';
+    }
+
+    /**
      * Keep only rows that are ON SALE RIGHT NOW — Product::isOnSale() in SQL.
      *
-     * isOnSale() is `effectivePrice() < price`, so it is false for a sale whose
-     * window has not opened and for one that has closed. The shop's "On sale"
-     * facet asked the raw columns instead — `sale_price IS NOT NULL AND
-     * sale_price < price` — which is true from the moment a markdown is
+     * isOnSale() is `effectivePrice() < compareAtPrice()`, so it is false for a
+     * sale whose window has not opened and for one that has closed. The shop's
+     * "On sale" facet asked the raw columns instead — `sale_price IS NOT NULL
+     * AND sale_price < price` — which is true from the moment a markdown is
      * scheduled. A sale set up for next week therefore listed today, at full
      * price, with no Sale badge on the card, because ProductLabels draws that
      * badge from isOnSale() and the two did not agree.
+     *
+     * ── AND THE RIGHT-HAND SIDE USED TO BE THE BARE `price` COLUMN ──────────
+     *
+     * Which is NULL on a variable parent, and every comparison against NULL is
+     * NULL. So a markdown scheduled on a variable product — which is the only
+     * place a variable product's markdown can live, on its variations, under
+     * the parent's window — put it in NO "On sale" listing, while
+     * Product::isOnSale() said the same thing for the same reason (`(int) null`
+     * is 0 and nothing is cheaper than nothing). The shop was consistent and
+     * consistently silent: the price on the tile dropped and not one surface
+     * said why.
+     *
+     * regularSql() is the fix and it is the SAME SHAPE as the left-hand side —
+     * the from-price against the from-price it would have with no sale on. For
+     * a simple product COALESCE short-circuits to `products.price` and this
+     * expression is byte-for-byte the one it replaces, so nothing that was in
+     * this facet before is affected. What is new is the variable parent whose
+     * variations are marked down TODAY.
      */
     public static function whereOnSale(mixed $query, string $table = 'products'): mixed
     {
-        $price = $table === '' ? 'price' : $table . '.price';
-
-        return $query->whereRaw(self::sql($table) . ' < ' . $price, self::bindings());
+        return $query->whereRaw(self::sql($table) . ' < ' . self::regularSql($table), self::bindings());
     }
 
     /**

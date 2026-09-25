@@ -11,6 +11,26 @@ class ProductVariant extends Model
 
     protected $guarded = [];
 
+    /**
+     * Every write to this table drops App\Services\VariantPricing's snapshot.
+     *
+     * The same hook Product::booted() carries, for the other half of the same
+     * query: that snapshot is a GROUP BY over `product_variants`, so adding a
+     * variation, repricing one or marking one down invalidates it just as
+     * surely as inserting the parent does. Without this, a console process that
+     * imported a parent and then priced its variations would read the range it
+     * had before they existed — and range() answering null is effectivePrice()
+     * answering 0 fils, which is the AED 0 that class exists to remove.
+     *
+     * See the note on Product::booted() for why the signal is taken here, and
+     * VariantPricing::invalidate() for what it costs and where it stops.
+     */
+    protected static function booted(): void
+    {
+        static::saved(static fn () => \App\Services\VariantPricing::invalidate());
+        static::deleted(static fn () => \App\Services\VariantPricing::invalidate());
+    }
+
     protected function casts(): array
     {
         return ['manage_stock' => 'bool', 'price' => 'int', 'sale_price' => 'int'];

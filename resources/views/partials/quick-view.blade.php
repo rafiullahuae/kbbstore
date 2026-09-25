@@ -49,7 +49,12 @@
     <div class="qv-price">
       @if ($product->isOnSale())
         @php
-          $kbbQvWas = (int) $product->price;
+          // Product::compareAtPrice(), not the `price` column: it is NULL on a
+          // variable parent (the money is on the variations), so a marked-down
+          // variable product printed `<del>AED 0</del>` here the moment
+          // isOnSale() started answering true for one. Identical to
+          // `(int) $product->price` for everything that has a price of its own.
+          $kbbQvWas = (int) $product->compareAtPrice();
           $kbbQvNow = $product->effectivePrice();
           $kbbQvDp = \App\Support\Money::decimalsToDistinguish($kbbQvWas, $kbbQvNow);
           $kbbQvOff = $product->discountPercent();
