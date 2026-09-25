@@ -721,50 +721,111 @@ class CartPage
     }
 
     /**
-     * Cast and clamp on the way in, so a bad value is refused once at save
-     * rather than defended against on every render. Same shape as CartPanel.
+     * This screen's point on ModuleSchema's six policy axes.
+     *
+     * `max` is 160 because that is the cap this file's own text arm has always
+     * applied, and the strings under it are a heading, a label and a help line
+     * rather than a paragraph. `blank` is `keep`: every text control here is
+     * optional wording, and an emptied box means the shop wants nothing there
+     * — `sum_express_help` cleared has to stay cleared.
+     *
+     * `hex` is declared and unobserved: this screen has no colour control. It
+     * is written down rather than left to the default so that adding one later
+     * is a decision somebody makes rather than one they inherit.
      */
-    private function cast(string $key, mixed $value): mixed
-    {
-        $def = self::SCHEMA[$key];
+    public const POLICY = [
+        'max' => 160,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
 
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            'money' => max(0, (int) $value),
-            'select' => isset($def[4][(string) $value]) ? (string) $value : (string) $def[2],
-            'ids' => $this->castIds($value),
-            default => mb_substr(trim((string) $value), 0, 160),
-        };
+    /**
+     * The two things the positional SCHEMA has no slot for.
+     *
+     * ── THE REAL RULE THIS SCREEN KEEPS ─────────────────────────────────────
+     *
+     * `money` here CLAMPS AT ZERO; the shared `money` arm REFUSES anything that
+     * is not a plain run of digits. That is not a policy point — it is what
+     * these two fields have always done, and every figure a shop has saved in
+     * them came through it — so it survives as its own validator rather than
+     * being flattened into an axis. ModuleSchema::rule() is the channel for
+     * exactly that, and moneyFloor() below is the rule.
+     *
+     * `rec_ids` needs its cap named. ModuleSchema::castIds() defaults to 24 and
+     * MAX_REC is 24, so the two agreed by coincidence; saying it here means
+     * moving MAX_REC moves the cast with it instead of silently not doing so.
+     *
+     * The rest of what castIds() did is what ModuleSchema::castIds() does, and
+     * the reasoning behind it is kept here rather than deleted with the method:
+     * the value is a comma-separated STRING and not JSON because `settings`
+     * holds strings and every other text field in this schema round-trips as
+     * one — a JSON column here would be the only value in the file needing its
+     * own decode on read. The order is the owner's and is preserved. Duplicates
+     * are dropped, because a rail that shows one product twice is a mistake
+     * nobody makes on purpose. And the list is capped so a paste of the whole
+     * catalogue cannot put four hundred cards in a horizontal scroller.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function overrides(): array
+    {
+        return [
+            'sum_express' => ['rule' => [self::class, 'moneyFloor']],
+            'sum_service' => ['rule' => [self::class, 'moneyFloor']],
+            'rec_ids' => ['options' => ['cap' => self::MAX_REC]],
+        ];
     }
 
     /**
-     * The rail's product ids, as a comma-separated string.
+     * A fils figure that cannot go below zero, and is never refused.
      *
-     * Kept as a string and not JSON because `settings` holds strings and every
-     * other text field in this schema round-trips as one; a JSON column here
-     * would be the only value in the file needing its own decode on read.
+     * ── WHY THIS IS NOT `money` ─────────────────────────────────────────────
      *
-     * Order is the owner's and is preserved. Duplicates are dropped, because a
-     * rail that shows one product twice is a mistake nobody makes on purpose,
-     * and the list is capped so a paste of the whole catalogue cannot put four
-     * hundred cards in a horizontal scroller.
+     * ModuleSchema's money arm refuses "12.50" rather than storing 12, because
+     * for PayShipRules' Cash-on-delivery bounds a hundredfold error that reads
+     * back as a plausible number is the worse answer. This screen has never
+     * done that: both figures are quoted-not-charged amounts typed into a plain
+     * number box, the box has always answered `max(0, (int) $value)`, and a
+     * refusal where the shop previously stored something is a behaviour change
+     * on a control an owner has already used. Preserved exactly, and named.
      */
-    private function castIds(mixed $value): string
+    public static function moneyFloor(mixed $raw, array $field): int
     {
-        $raw = is_array($value) ? $value : explode(',', (string) $value);
+        return max(0, (int) $raw);
+    }
 
-        $ids = [];
+    /**
+     * The normalised schema, built once per process.
+     *
+     * all() casts 106 keys and each cast needs the field, so normalising the
+     * whole schema per key would be 11,236 field() calls for one cart render.
+     * The memo lives in ModuleSchema rather than in a `static` here, so there
+     * is ONE piece of process-level state with ONE registered reset instead of
+     * three classes each asking StaticMemoIsolationTest to take an exemption on
+     * trust — see ModuleSchema::normalised().
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function fields(): array
+    {
+        return ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY, self::overrides());
+    }
 
-        foreach ($raw as $one) {
-            $id = (int) trim((string) $one);
-
-            if ($id > 0 && ! in_array($id, $ids, true)) {
-                $ids[] = $id;
-            }
-        }
-
-        return implode(',', array_slice($ids, 0, self::MAX_REC));
+    /**
+     * Cast and clamp on the way in, so a bad value is refused once at save
+     * rather than defended against on every render. Same shape as CartPanel.
+     *
+     * ONE LINE, for the reason CartPanel's own copy of this gives: these arms
+     * agreed with thirteen other copies of the same arms until they did not.
+     * The two that are genuinely this screen's own — the money floor and the
+     * rail's cap — are declared in overrides() above rather than lost.
+     */
+    private function cast(string $key, mixed $value): mixed
+    {
+        return ModuleSchema::cast(self::fields()[$key], $value);
     }
 
     /** @return list<int> */

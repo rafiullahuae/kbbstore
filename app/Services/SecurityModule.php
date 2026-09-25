@@ -434,27 +434,57 @@ class SecurityModule
         }
     }
 
+    /**
+     * This screen's point on ModuleSchema's six policy axes.
+     *
+     * Three of the six are unobserved here and are written down rather than
+     * inherited: there is no text, no colour and nothing on this screen that
+     * stores a string an owner types. Every control is a switch, a slider or a
+     * two-option picker.
+     *
+     * `clamp` is the axis that matters, and it is the one this screen's own
+     * comment has always argued for, kept here word for word because it is the
+     * reason the arm exists: "a number that arrives from anywhere but the
+     * slider — a hand-rolled POST — is pulled back inside them rather than
+     * stored, which is what keeps `keep_days` from being set to 0 and turning
+     * 'open the screen' into 'delete the whole trail'." `invalid => default` is
+     * the other: an unrecognised `csp_mode` falls back to `report`, never to
+     * nothing.
+     */
+    public const POLICY = [
+        'max' => 5000,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
+    /**
+     * The normalised schema, built once — see CartPage::fields() for why.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function fields(): array
+    {
+        return ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY);
+    }
+
+    /**
+     * Cast by declared type, in the one place every module now casts.
+     *
+     * NOTHING PECULIAR TO THIS SCREEN SURVIVED THE SORT. Its three arms were
+     * the plain bool, the clamped range and the option-set select, byte for
+     * byte the same three that thirteen other modules carried — which is the
+     * whole argument for the shared cast, and the reason this module was the
+     * cheapest of the eight to move.
+     */
     private function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key] ?? null;
+        $field = self::fields()[$key] ?? null;
 
-        if ($def === null) {
-            return $value;
-        }
-
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            /*
-             * Clamped to the slider's own bounds. A number that arrives from
-             * anywhere but the slider — a hand-rolled POST — is pulled back
-             * inside them rather than stored, which is what keeps `keep_days`
-             * from being set to 0 and turning "open the screen" into "delete
-             * the whole trail".
-             */
-            'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            'select' => isset($def[4][(string) $value]) ? (string) $value : (string) $def[2],
-            default => $value,
-        };
+        // Unchanged: a key this schema does not know is handed back as it came.
+        return $field === null ? $value : ModuleSchema::cast($field, $value);
     }
 
     /* ═════════════════════════════════════════════════ the recording half ═══ */

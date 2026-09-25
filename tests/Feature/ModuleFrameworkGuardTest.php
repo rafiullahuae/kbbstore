@@ -55,13 +55,18 @@ use App\Http\Controllers\Admin\SiteSearchApiController;
 use App\Models\AdminUser;
 use App\Services\AccountPanel;
 use App\Services\BuildMyRoutine;
+use App\Services\CartPage;
 use App\Services\CartPanel;
+use App\Services\CheckoutPage;
 use App\Services\HeaderSettings;
+use App\Services\HomepageContent;
 use App\Services\MobileHeader;
+use App\Services\MobileMenu;
 use App\Services\NewsletterSettings;
 use App\Services\ProductLabels;
 use App\Services\ProductStyles;
 use App\Services\SectionDividers;
+use App\Services\SecurityModule;
 use App\Services\SlimFooter;
 use App\Services\MarketingPixels;
 use App\Services\ModuleRegistry;
@@ -440,12 +445,27 @@ function ehSchemaModules(): array
          * it normalise() refuses both, correctly — a control that picks from a
          * set has to carry the set for rule 5 to be checkable at all.
          *
-         * MobileMenu is NOT here and is the one module with a SCHEMA that
-         * cannot be: it has no TABS constant. Its groups are written inline in
-         * MobileMenuApiController and its endpoint answers `fields` + `groups`
-         * rather than `tabs`, so there is no second list to check the first
-         * against. Giving it one is a change to that screen's payload and
-         * belongs to whoever opens it next.
+         * ── LANE M2: the five that were still outside ───────────────────────
+         *
+         * MobileMenu used to be excluded here, with the note "it has no TABS
+         * constant — its groups are written inline in MobileMenuApiController".
+         * It has one now (MobileMenu::TABS), lifted out of that controller
+         * verbatim; the endpoint still answers `fields` + `groups` and
+         * ModuleScreenPayloadTest compares both of those outright, so the
+         * screen did not move to buy this line.
+         *
+         * CartPage and CheckoutPage were held back from the first migration
+         * because each carries a constraint that is NOT one of the six policy
+         * axes — CheckoutPage's rating_text refuses a digit, CartPage's money
+         * clamps at zero rather than refusing. Those are declared as rules on
+         * the fields themselves (ModuleSchema::rule(), and each module's own
+         * overrides()) rather than flattened into policy, and the recorded-cast
+         * fixture is what proves the flattening did not happen by accident.
+         *
+         * SecurityModule had nothing peculiar at all: three arms, all shared.
+         * HomepageContent was already reading and writing through ModuleSchema
+         * — it had simply never been added here, which is the whole difference
+         * between "uses the schema" and "is checked by it".
          */
         'cart_panel' => ['schema' => CartPanel::SCHEMA, 'tabs' => CartPanel::TABS, 'policy' => CartPanel::POLICY],
         'mobile_header' => ['schema' => MobileHeader::SCHEMA, 'tabs' => MobileHeader::TABS, 'policy' => MobileHeader::POLICY],
@@ -471,8 +491,77 @@ function ehSchemaModules(): array
         'slim_footer' => ['schema' => SlimFooter::SCHEMA, 'tabs' => SlimFooter::TABS, 'policy' => SlimFooter::POLICY],
         'product_styles' => ['schema' => ProductStyles::SCHEMA, 'tabs' => ProductStyles::TABS, 'policy' => ProductStyles::POLICY, 'overrides' => ProductStyles::overrides()],
         'section_dividers' => ['schema' => SectionDividers::SCHEMA, 'tabs' => SectionDividers::TABS, 'policy' => SectionDividers::POLICY, 'overrides' => SectionDividers::overrides()],
+
+        // Lane M2.
+        'cart_page' => ['schema' => CartPage::SCHEMA, 'tabs' => CartPage::TABS, 'policy' => CartPage::POLICY, 'overrides' => CartPage::overrides()],
+        'checkout_page' => ['schema' => CheckoutPage::SCHEMA, 'tabs' => CheckoutPage::TABS, 'policy' => CheckoutPage::POLICY, 'overrides' => CheckoutPage::overrides()],
+        'security' => ['schema' => SecurityModule::SCHEMA, 'tabs' => SecurityModule::TABS, 'policy' => SecurityModule::POLICY],
+        'mobile_menu' => ['schema' => MobileMenu::SCHEMA, 'tabs' => MobileMenu::TABS, 'policy' => MobileMenu::POLICY],
+        /*
+         * The FLAT copy only. HomepageContent also carries SLIDE_SCHEMA, which
+         * is drawn once per slide out of `slide_fields` rather than from TABS —
+         * a slide's fields belong to the slide, not to the screen, and that
+         * class's own comment says why a tab declaring them would be the screen
+         * stating something untrue about itself.
+         */
+        'homepage_content' => ['schema' => HomepageContent::SCHEMA, 'tabs' => HomepageContent::TABS],
     ];
 }
+
+/**
+ * Settings whose control is real but is NOT a field in a TABS constant.
+ *
+ * module => key => the console file that posts it.
+ *
+ * ── WHY THIS EXISTS, AND WHY IT IS NOT A HOLE ───────────────────────────────
+ *
+ * The check below asks "does every stored value have a control", and it reads
+ * TABS to answer. TABS lists the values the GENERIC field renderer draws. One
+ * setting in this app is written by a bespoke control instead: CartPage's
+ * `rec_ids` is the recommended rail, and the screen draws a product picker for
+ * it — search, a chosen list, and arrows to reorder — because an id is not
+ * something an owner can check by reading it. The payload hands that picker the
+ * PRODUCTS (`chosen`), not the ids, and the screen posts `rec_ids` itself.
+ *
+ * Putting the key in TABS instead would draw a second, generic text box for the
+ * same value beside the picker, which is the "same control twice" defect three
+ * lines further down.
+ *
+ * SO THE EXEMPTION PROVES ITSELF rather than being taken on trust: the test
+ * under this one reads the named file and requires that it really does post the
+ * key. An entry added here for a setting nothing writes fails there, which is
+ * the same failure the exemption would otherwise have hidden.
+ *
+ * @return array<string, array<string, string>>
+ */
+function ehBespokeControls(): array
+{
+    return [
+        'cart_page' => ['rec_ids' => 'resources/views/admin/partials/cart-page-screen.blade.php'],
+    ];
+}
+
+it('has a real console control behind every bespoke-control exemption', function () {
+    /*
+     * The guard on the exemption. `rec_ids` was exempted because the Cart page
+     * screen posts it from its product picker; if that picker is ever removed
+     * or renamed, the exemption silently becomes "this value has no control",
+     * which is exactly what the list above is meant to make impossible.
+     */
+    foreach (ehBespokeControls() as $module => $keys) {
+        foreach ($keys as $key => $file) {
+            $path = base_path($file);
+
+            expect(file_exists($path))->toBeTrue("{$module}.{$key} names a console file that does not exist: {$file}");
+
+            // The screen has to WRITE it, not merely mention it: the payload it
+            // posts is the thing that makes this a control.
+            expect(str_contains(file_get_contents($path), "payload.{$key} ="))->toBeTrue(
+                "{$file} does not post {$key}, so {$module}.{$key} has no control after all"
+            );
+        }
+    }
+});
 
 it('normalises and describes every field of every schema on the shared shape', function () {
     // normalise() throws on an unknown type, an unknown store, or a select with
@@ -508,7 +597,7 @@ it('gives every module setting a control, and every control a setting', function
             }
         }
 
-        $noControl = array_values(array_diff($keys, $placed));
+        $noControl = array_values(array_diff($keys, $placed, array_keys(ehBespokeControls()[$module] ?? [])));
         $noSetting = array_values(array_diff($placed, $keys));
 
         expect($noControl)->toBe([], "{$module} stores these with no control to write them: ".implode(', ', $noControl));

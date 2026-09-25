@@ -56,6 +56,43 @@ class MobileMenu
         'account_label' => ['text',   'Account heading',   'Account', ''],
     ];
 
+    /**
+     * tab => [label, description, keys] — the shape ModuleSchema::tabs() reads.
+     *
+     * ── WHY THIS CONSTANT EXISTS AT ALL ─────────────────────────────────────
+     *
+     * These five groups were written inline in MobileMenuApiController::show(),
+     * which made this the one module with a SCHEMA that could not join
+     * ModuleFrameworkGuardTest — the guard's own note said so by name: "there is
+     * no second list to check the first against."
+     *
+     * That guard is not a tidiness check. It went red once with
+     * "cart_panel stores these with no control to write them: accent", a
+     * setting the shop read and no screen could write, and it had been that way
+     * silently. A module outside it is a module where the same thing happens
+     * and nobody finds out. Moved here, the list is checked against the schema
+     * on every run: a key added to SCHEMA and forgotten here fails, and a key
+     * here that SCHEMA does not carry fails.
+     *
+     * CARRIED ACROSS VERBATIM — same five groups, same order, same labels, same
+     * descriptions, same key order within each. The controller builds its
+     * `groups` payload out of this constant and answers exactly the JSON it
+     * answered before; ModuleScreenPayloadTest compares mobile-menu's `fields`
+     * and `groups` outright, not loosely, so a single reordered key fails it.
+     */
+    public const TABS = [
+        'panel' => ['Panel', 'Size and motion of the sheet.',
+                    ['icon_style', 'height', 'radius', 'slide_speed', 'scrim', 'show_grab', 'show_close']],
+        'top' => ['Top of the sheet', 'What sits above the menu itself.',
+                  ['show_search', 'search_text', 'show_heading', 'heading_text']],
+        'rows' => ['Rows', 'Density and layout of the items.',
+                   ['density', 'child_columns', 'show_counts', 'single_open']],
+        'open' => ['Open section', 'How an expanded parent is marked.',
+                   ['card_style', 'rule_position', 'rule_width', 'rule_colour', 'card_bg', 'parent_bg', 'parent_colour']],
+        'foot' => ['Foot of the sheet', 'Support and account links.',
+                   ['show_support', 'support_text', 'show_account', 'account_label']],
+    ];
+
     public function __construct(private SettingsService $settings) {}
 
     /** Saved values merged over the defaults. */

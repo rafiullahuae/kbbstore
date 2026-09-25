@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Services\AdminPathService;
 use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\ServerMailTransport;
+use App\Services\ModuleSchema;
 use App\Services\Seo\IndexNow;
 use App\Services\SettingsService;
 use App\Services\Translation\TranslationStore;
@@ -95,6 +96,17 @@ final class StaticMemos
              * from a file it has nothing to do with.
              */
             SiteHost::class => static fn () => SiteHost::forget(),
+            /*
+             * The per-module normalised schemas (Lane M2).
+             *
+             * Built from class CONSTANTS, so unlike every entry above it this
+             * one cannot carry a seeded value across a test — which is exactly
+             * the argument for an exemption, and the reason it is a reset
+             * instead. An exemption is a claim somebody has to believe; a reset
+             * costs one array assignment and is a fact. Three modules memoised
+             * this in a `static` of their own until this test refused them.
+             */
+            ModuleSchema::class => static fn () => ModuleSchema::forgetNormalised(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\IntegrityChecker;
+use App\Services\ModuleSchema;
 use App\Services\SecurityModule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,26 +76,17 @@ class SecurityController extends Controller
          */
         $this->integrity->scanIfDue();
 
-        $values = $this->security->all();
-        $fields = [];
-
-        foreach (SecurityModule::SCHEMA as $key => $def) {
-            [$type, $label, $default, $help] = array_pad($def, 4, '');
-
-            $fields[$key] = [
-                'key' => $key, 'type' => $type, 'label' => $label, 'help' => $help,
-                'default' => $default, 'value' => $values[$key], 'options' => $def[4] ?? null,
-            ];
-        }
-
-        $tabs = [];
-
-        foreach (SecurityModule::TABS as $key => [$label, $description, $keys]) {
-            $tabs[] = [
-                'key' => $key, 'label' => $label, 'description' => $description,
-                'fields' => array_values(array_filter(array_map(fn ($k) => $fields[$k] ?? null, $keys))),
-            ];
-        }
+        // One schema, drawn by one renderer. This was the same fifteen lines
+        // that nine other controllers carried, and the reason the three
+        // constants a screen depends on could disagree without anything saying
+        // so. `POLICY` travels with the schema because ModuleSchema's cast is
+        // strict by default and this screen is not — see SecurityModule::POLICY.
+        $tabs = ModuleSchema::tabs(
+            SecurityModule::SCHEMA,
+            SecurityModule::TABS,
+            $this->security->all(),
+            SecurityModule::POLICY,
+        );
 
         return response()->json([
             'tabs' => $tabs,

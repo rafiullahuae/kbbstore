@@ -312,6 +312,8 @@ final class ModuleSchema
             $resolved[$k] = $def[$k] ?? $policy[$k] ?? self::DEFAULT_POLICY[$k];
         }
 
+        $rule = self::rule($key, $type, $def['rule'] ?? null);
+
         return [
             'key' => $key,
             'type' => $type,
@@ -329,8 +331,116 @@ final class ModuleSchema
             'clamp' => (bool) $resolved['clamp'],
             'hex' => (string) $resolved['hex'],
             'bool' => (string) $resolved['bool'],
+            // A constraint peculiar to this one setting, which no policy axis
+            // can carry. Null for all but a handful of fields. See rule().
+            'rule' => $rule,
         ];
     }
+
+    /**
+     * ── `rule`: A CONSTRAINT THAT IS NOT A POLICY POINT ─────────────────────
+     *
+     * The six axes above exist because seventeen modules DISAGREED about the
+     * same question — how long is too long, what does an emptied box mean —
+     * and every one of those answers was defensible. A rule is the other kind
+     * of difference: a constraint that belongs to one setting and would be
+     * wrong applied to any other. Two of them were the stated reason CartPage
+     * and CheckoutPage were held back from the first migration, and flattening
+     * either into a policy would have been the quiet loss that a migration is
+     * dangerous for:
+     *
+     *   CheckoutPage `rating_text` — a wording template that may carry NO DIGIT
+     *   of its own, because its two tokens are replaced with figures read from
+     *   the reviews table and a digit anywhere else is a rating the owner
+     *   invented. Over-length is REFUSED to the shipped wording, not truncated,
+     *   which is why it cannot be `max` either: `max` cuts, and half a sentence
+     *   beside the pay button is its own defect.
+     *
+     *   CartPage `sum_express` / `sum_service` — money that CLAMPS AT ZERO
+     *   rather than refusing. The shared `money` arm refuses anything that is
+     *   not a plain run of digits, on purpose (see castInt); this screen has
+     *   always stored `max(0, (int) $value)`, so a refusal here would reject a
+     *   save that has always worked.
+     *
+     * A rule REPLACES the type arm — it does not run after it, because
+     * cleanTemplate has to see the untruncated value to refuse it. That makes
+     * the rule itself the boundary for that field, so the two arms rule 5 of
+     * the project notes names by hand are closed to rules: a `colour` must
+     * reach a stylesheet as `#` + six digits and a `select`/`skin`/`sections`
+     * must hold one of its own options, and neither guarantee may be handed to
+     * a module-local function. Declaring one there throws here rather than at
+     * render time.
+     *
+     * The rule lives in the module it belongs to, as a public static method
+     * named in that module's own SCHEMA, so reading the field tells you the
+     * constraint exists and where it is.
+     */
+    private static function rule(string $key, string $type, mixed $rule): ?callable
+    {
+        if ($rule === null) {
+            return null;
+        }
+
+        if (in_array($type, [...self::OPTION_TYPES, 'colour'], true)) {
+            throw new \InvalidArgumentException(
+                "Module setting “{$key}” is a {$type}, whose validation may not be replaced by a rule."
+            );
+        }
+
+        if (! is_callable($rule)) {
+            throw new \InvalidArgumentException("Module setting “{$key}” names a rule that cannot be called.");
+        }
+
+        return $rule;
+    }
+
+    /**
+     * The normalised schema for one module, built once per process.
+     *
+     * ── WHY THIS IS HERE AND NOT IN EACH MODULE ─────────────────────────────
+     *
+     * A module's cast() needs one field and normalise() builds them all, so a
+     * screen with 106 keys pays 11,236 field() calls for one all() — which is
+     * what CartPage does on a cart render. The obvious fix is a `static $fields`
+     * in each module, and three of them had one.
+     *
+     * StaticMemoIsolationTest failed on exactly that, correctly and by design:
+     * "these classes hold process-level state that survives a test and are
+     * neither reset nor exempt". Three statics would have meant three
+     * exemptions, each a separate claim to be believed. One memo means one
+     * registered RESET — Tests\Support\StaticMemos calls forgetNormalised()
+     * before every test — which is a fact rather than a claim, and every module
+     * gets the saving instead of the three that happened to ask.
+     *
+     * `$key` IDENTIFIES THE SCHEMA, so callers pass `self::class`. Two callers
+     * sharing a key would share an answer; the class name cannot collide, and
+     * nothing else is an acceptable key.
+     *
+     * @param  array<string, array<int|string, mixed>>  $schema
+     * @param  array<string, mixed>  $policy
+     * @param  array<string, array<string, mixed>>  $overrides
+     * @return array<string, array<string, mixed>>
+     */
+    public static function normalised(string $key, array $schema, array $policy = [], array $overrides = []): array
+    {
+        return self::$normalised[$key] ??= self::normalise($schema, $policy, $overrides);
+    }
+
+    /**
+     * Drop every memoised schema.
+     *
+     * Registered in Tests\Support\StaticMemos. Nothing in the application
+     * calls it: the memo is built from class constants, which cannot change
+     * inside a process — this exists so the isolation guard has a reset to run
+     * rather than an exemption to take on trust.
+     */
+    public static function forgetNormalised(): void
+    {
+        self::$normalised = [];
+    }
+
+    /** @var array<string, array<string, array<string, mixed>>> */
+    private static array $normalised = [];
 
     /**
      * @param  array<string, array<int|string, mixed>>  $schema
@@ -534,6 +644,16 @@ final class ModuleSchema
     public static function cast(array $field, mixed $raw): mixed
     {
         $refuse = $field['invalid'] === 'reject' ? null : $field['default'];
+
+        /*
+         * The field's own rule, where it has one, INSTEAD of the type arm — see
+         * rule(). It is reached before every arm because a rule that only got
+         * the already-capped value could not refuse an over-length one, which
+         * is exactly what CheckoutPage's rating_text does.
+         */
+        if (($field['rule'] ?? null) !== null) {
+            return ($field['rule'])($raw, $field);
+        }
 
         return match ($field['type']) {
             'bool' => $field['bool'] === 'cast' ? (bool) $raw : self::castBool($raw),
