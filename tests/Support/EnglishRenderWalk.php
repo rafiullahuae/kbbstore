@@ -1138,37 +1138,36 @@ final class EnglishRenderWalk
                 'hits' => 1,
             ],
             /*
-             * emails/cart-recovery.blade.php — THE PER-ITEM LINK, AND THIS ONE
-             * IS A BUG FIX RATHER THAN A REWRAP. Lane U2.
+             * RETIRED: 'cart recovery: item link is absolute'.
              *
-             * Every other rule above straightens whitespace that Blade folded
-             * differently; this one records that the BEFORE side was WRONG. The
-             * item link was built with Url::to(), which returns a root-relative
-             * path, so every basket reminder this shop has ever sent carried
+             * It recorded a BUG FIX rather than a rewrap. Lane U2 found that
+             * emails/cart-recovery.blade.php built its per-item link with
+             * Url::to(), which returns a root-relative path, so every basket
+             * reminder this shop has ever sent carried
              *
              *     <a href="/product/rice-toner/">
              *
-             * An inbox has no origin to resolve that against — the link is dead
-             * in every mail client, and has been since the message was written.
-             * It is now Url::external(), the out-of-band builder, which puts
-             * APP_URL's origin in front of it and never the request's.
+             * An inbox has no origin to resolve that against, so the link was
+             * dead in every mail client and had been since the message was
+             * written. It is Url::external() now -- the out-of-band builder,
+             * which puts APP_URL's origin in front of it and never the
+             * request's.
              *
-             * The other two links in this message ($cartUrl, $unsubscribeUrl)
-             * arrive from OutboundSender already absolute, which is why only
-             * this one moved and why the hit count is 1. The plain-text twin
-             * prints the item name and quantity with no link at all, so it does
-             * not appear here.
+             * THE RULE IS GONE BECAUSE BASE_COMMIT MOVED PAST THE FIX, not
+             * because the fix was reverted. These rules patch the BEFORE side,
+             * which is rendered from BASE_COMMIT's views; the pin now sits at
+             * e7645c8, where cart-recovery.blade.php already calls external(),
+             * so the pattern matched nothing and applyApproved() failed it as a
+             * rule that has stopped excusing anything. That failure is the
+             * mechanism working -- a stale rule silently excusing nothing is
+             * exactly what it exists to refuse -- and deleting the rule is the
+             * correct answer, not weakening it.
              *
-             * `http://localhost` and not a real host because that is APP_URL in
-             * the suite (.env, and config/app.php's own default). The rule is
-             * anchored on the fixture's slug so that it cannot quietly start
-             * excusing some other document's links.
+             * The behaviour itself is still pinned, and by a test rather than
+             * by an exemption: tests/Feature/UrlInBandOutOfBandTest.php holds
+             * every mail template to the invariant that a link it prints is
+             * absolute.
              */
-            'cart recovery: item link is absolute' => [
-                'pattern' => '#<a href="/product/rice-toner/"#',
-                'with' => '<a href="http://localhost/product/rice-toner/"',
-                'hits' => 1,
-            ],
         ];
     }
 
