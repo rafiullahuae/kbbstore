@@ -5,6 +5,30 @@
     .cprice / .addbtn. My earlier version invented .pb / .pbrand / .pname /
     .prate / .pprice, so almost none of the card CSS matched and every grid on
     the site rendered unstyled.
+
+    -- WHAT THIS COMPONENT NEEDS ALREADY LOADED ----------------------------
+
+        brand   `$product->brand?->t('name')` and the placeholder's seed
+
+    AND NOTHING ELSE, which is worth stating rather than leaving to be
+    rediscovered: this card does NOT read `categories` -- the skinned grid in
+    components/product-grid.blade.php does -- and it does not touch `variants`
+    either. App\Services\VariantPricing answers the range for a variable
+    parent from one grouped query per request, taken only when a tile like this
+    is on the page, so a catalogue of simple products costs nothing for it.
+
+    `brand` has to arrive loaded. A `loadMissing` here would be WORSE than the
+    lazy load it replaces: this component is handed ONE model, so it would be
+    one query per card either way, written where no caller could eager-load it
+    away. So a caller's query says:
+
+        ->with('brand:id,name,slug')
+
+    THREE CALLERS TODAY: store/shop.blade.php, the related rail in
+    store/product.blade.php, and store/routines.blade.php. All three are named
+    in tests/Feature/ComponentLoadContractTest.php, which renders each of them
+    with `Model::preventLazyLoading()` on; a fourth caller reddens that file
+    until it is named there too.
 --}}
 @props(['product', 'eager' => false])
 
