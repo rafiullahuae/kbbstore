@@ -104,6 +104,17 @@ Three of the eight, named rather than quietly skipped:
   to them and true to `ModuleSchema::castBool()`. Migrating them means rewriting
   three schema constants and moving three screens' payloads. Each is its own
   round, and none of them is a smaller version of this one.
+
+  **Taken in round 3 — `docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-3.md`. Two
+  corrections to the paragraph above, both from measurement:** there is a third
+  dialect on a SECOND axis that this note does not mention —
+  `ReviewBadgeSettings::colour()` requires the `#`, expands `#abc` to `#AABBCC`
+  and upper-cases, which is none of `strict` or `repair` — and it is the one
+  that would have cost something, because `activeTheme()` string-compares the
+  stored six digits. And **the payloads did not move**: none of these three
+  screens is rendered from a schema payload at all, so rewriting the constants
+  changed nothing the screens receive. 345 recorded calls, 345 byte-identical,
+  no exemption.
 - **`MailSettings`** — two types the schema has never had (`secret`, routed to
   an encrypted credential store, and `choice`, which stores a key and returns a
   label), per-key `MAX_LENGTHS`, a merchant-address format check, and the
@@ -173,7 +184,11 @@ somebody has to believe every time they read the list; a reset costs an array
 assignment and is a fact. Every module gets the saving now, not the three that
 happened to ask for it.
 
-**One thing found and not fixed**, named here rather than buried:
+**One thing found and not fixed** — *settled in round 3, which re-derives on
+read; see `docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-3.md` §2 for what each of the
+declared types actually answered when a hostile row was planted in the table,
+and §4 for the unescaped setting that driving the same question through the
+storefront turned up.* Named here rather than buried:
 `ModuleSchema::coerceRead()` does not re-derive on the way out — it casts a
 stored value to its PHP type and trusts it. Every migrated module happens to be
 safe, because each one's `all()` runs the value back through `cast()`; but the
