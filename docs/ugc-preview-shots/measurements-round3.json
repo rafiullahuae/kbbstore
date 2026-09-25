@@ -52,8 +52,8 @@
     "tilesShowingPosterOnly": 4,
     "onScreen": 2,
     "currentTimes": [
-      0.04,
-      0.01,
+      2.46,
+      0.02,
       null,
       null,
       null,
@@ -76,10 +76,10 @@
     "tilesShowingPosterOnly": 2,
     "onScreen": 5,
     "currentTimes": [
-      0.05,
+      0.01,
+      2.43,
+      2.44,
       2.42,
-      2.43,
-      2.43,
       null,
       null
     ],
@@ -145,7 +145,7 @@
   },
   {
     "ratingBarContrast": {
-      "method": "the rating bar screenshotted at 4x and the ratios read off the rendered PNG; WCAG 2.1 relative luminance; product is the 4.4 one so an empty star is present",
+      "method": "the rating bar screenshotted at 4x and the ratios read off the rendered PNG; WCAG 2.1 relative luminance; the product is the 4.4 one so an empty star is present",
       "thresholds": {
         "score": "4.5:1 (text)",
         "filledStar": "3:1 (non-text)",
@@ -177,6 +177,16 @@
           "emptyStar": 4.51
         }
       ]
+    }
+  },
+  {
+    "ratingBarFit": {
+      "ratingBarFit": "every .rbar on the page, both widths",
+      "bars": 67,
+      "clippedCountsOrBars": 0,
+      "widestBarPx": 131,
+      "narrowestSlotPx": 138,
+      "note": "at 8px padding / 6px gaps the bar was 145px in a 138px slot and (1,284) ellipsised on every 158px rail tile -- visible on R3, invisible on R0. 6/4 brings it to 131."
     }
   },
   {

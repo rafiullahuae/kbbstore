@@ -241,8 +241,15 @@ and the schema.org aggregateRating already read. Nothing display-only.
   Arabic storefront and `App\Support\Bidi` isolates it there, so Arabic-Indic
   numerals in the rating and Western in the price would be two numbering systems
   in one tile.
-- **The count is the first thing to go on a narrow tile.** R4's tiles are 132px
-  and `(1,284)` ran off the end of one, clipped mid-number. A container query
+- **The bar was 145px wide in a 138px slot, and it was measured rather than
+  looked at.** At 8px padding and 6px gaps `(1,284)` wanted 41px and got 40, so
+  it ellipsised to `(1,28…)` on *every* 158px rail tile at 390px — and it looked
+  fine on R0 while being obviously wrong on R3, which is the worst kind of
+  defect: present everywhere, visible in one place. 6px padding and 4px gaps
+  bring the natural width to 131px. Checked across all 67 bars on the page at
+  both widths: **0 clipped**.
+- **The count is the first thing to go on a genuinely narrow tile.** R4's tiles
+  are 132px and even a 131px bar does not fit them. A container query
   answers it in CSS and in one place — `.vt{container-type:inline-size}` plus
   `@container (max-width:150px){.rbar .rc{display:none}}` — which is the
   rendered-once answer this project prefers to a script that measures. The
@@ -720,7 +727,7 @@ and all four were run.
 **Suite, in one invocation.** Round one: 5548 passed, 40 skipped, 0 failed
 (40,468 assertions, 321 s). Round three, on a tree several lanes further on and
 with this round's six new cases in it: **5967 passed, 22 skipped, 0 failed**
-(50,715 assertions, 378 s).
+(50,715 assertions, 376 s).
 
 One thing did have to change on the way, and it is worth recording because it
 will happen to the next lane that inlines media into `docs/`.

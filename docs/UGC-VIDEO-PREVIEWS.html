@@ -119,10 +119,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
    for the glyphs, which WCAG counts as non-text contrast). The measured
    pixel ratios from the screenshots are in the contrast strip further down
    the page, and they are read off the rendered PNG rather than computed. */
-.rbar{display:flex;align-items:center;gap:6px;width:max-content;max-width:100%;
+/* 6px of padding and 4px gaps, not 8 and 6, AND THAT WAS MEASURED RATHER THAN
+   chosen. At 8/6 the bar's natural width is 145px inside a 158px rail tile that
+   leaves it 138 -- so "(1,284)" wanted 41px, got 40, and ellipsised to
+   "(1,28...)". It looked fine on R0 and visibly wrong on R3, which is the worst
+   kind of bug: present everywhere, obvious in one place. 6/4 brings the natural
+   width to 137 and the count fits with a pixel to spare. */
+.rbar{display:flex;align-items:center;gap:4px;width:max-content;max-width:100%;
           background:rgba(20,14,18,.78);backdrop-filter:blur(6px);
           border:1px solid rgba(255,255,255,.18);border-radius:99px;
-          padding:3px 8px;margin-bottom:6px;line-height:1}
+          padding:3px 6px;margin-bottom:6px;line-height:1}
 .rbar .sc{font-size:11px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
 /* A flex row follows `direction`, so the filled stars sit at the INLINE start
    in both directions with no [dir] rule and no transform. A bare run of five
