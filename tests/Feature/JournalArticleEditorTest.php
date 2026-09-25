@@ -391,8 +391,23 @@ it('stores only the SEO keys this screen offers', function () {
     // `noindex: false` is absent rather than stored false: PageController::post()
     // branches on !empty(), so a key that is there and falsey is a key somebody
     // later mistakes for a setting.
-    expect(Post::query()->firstOrFail()->seo)
-        ->toBe(['title' => 'Heartleaf explained', 'desc' => 'What it does.']);
+    //
+    // KEY ORDER IS THE COLUMN'S, NOT THE SCREEN'S, so it is sorted away before
+    // the compare. `posts.seo` is declared `json()`, which is `text` on SQLite
+    // and a native JSON column on MySQL 8 -- and MySQL normalises a JSON object
+    // on write, storing its keys sorted by length and then by value. So the
+    // round trip comes back ['desc' => ..., 'title' => ...] there and
+    // ['title' => ..., 'desc' => ...] here, and toBe() (assertSame) reads that
+    // reordering as a failure. Nothing in the app depends on the order of these
+    // keys; what this case is for is WHICH keys survive seo()'s allowlist.
+    // ksort() on both sides keeps the strict value compare and drops only the
+    // one thing the storage engine owns -- so `canonical` or `og_image`
+    // appearing still fails, on either engine.
+    $stored = Post::query()->firstOrFail()->seo;
+    ksort($stored);
+
+    expect($stored)
+        ->toBe(['desc' => 'What it does.', 'title' => 'Heartleaf explained']);
 });
 
 it('stores one of the status select\'s own options and nothing else', function () {

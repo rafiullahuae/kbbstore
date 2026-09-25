@@ -426,18 +426,55 @@ it('puts nothing on the screen that belongs in the env file', function () {
 
     expect(array_keys($body['store']))->toBe(['store', 'driver']);
 
-    $raw = $response->getContent();
+    /*
+     * AND NOW THE CREDENTIALS, IN TWO PASSES RATHER THAN ONE SUBSTRING SCAN.
+     *
+     * The key list above is what actually catches the mutation this case was
+     * written for -- a later `'config' => config('cache')` or
+     * `'stores' => config('cache.stores')` changes array_keys($body) and fails
+     * before it gets here. This is the backstop for a credential arriving
+     * inside a VALUE, where the key list would not see it.
+     *
+     * A BARE str_contains() OF EVERY CREDENTIAL IS NOT THAT BACKSTOP, and the
+     * MySQL config proved it: phpunit-mysql.xml runs as DB_USERNAME=kbb,
+     * DB_PASSWORD=kbb, and the payload legitimately carries
+     * `"sample_url":"/build/assets/kbb-account-Ck4TS5ez.css"` -- the shop's own
+     * name in its own asset filename. The case failed against a real server
+     * with "the Cache screen echoed a credential back to the browser" and
+     * nothing had leaked. Worse, on the SQLite config both DB values are the
+     * empty string, so the loop `continue`d past them and the scan this case
+     * is named for never ran at all.
+     *
+     * So: (a) no LEAF VALUE of the payload IS a credential, which is the shape
+     * an actual leak takes and which runs for every credential on every engine;
+     * and (b) no credential long enough for a coincidence to be implausible
+     * appears anywhere in the raw body. Eight characters is the line -- APP_KEY
+     * and any real password clear it, a three-letter harness login does not,
+     * and a three-letter login is not evidence either way.
+     */
+    $raw = (string) $response->getContent();
 
-    foreach ([
+    $secrets = array_values(array_filter([
         (string) config('app.key'),
         (string) config('database.connections.' . config('database.default') . '.password'),
         (string) config('database.connections.' . config('database.default') . '.username'),
-    ] as $secret) {
-        if ($secret === '') {
+    ], static fn (string $secret): bool => $secret !== ''));
+
+    $leaves = [];
+    array_walk_recursive($body, static function ($value) use (&$leaves): void {
+        if (is_scalar($value)) {
+            $leaves[] = (string) $value;
+        }
+    });
+
+    foreach ($secrets as $secret) {
+        expect(in_array($secret, $leaves, true))->toBeFalse('the Cache screen printed a credential as a value');
+
+        if (strlen($secret) < 8) {
             continue;
         }
 
-        expect(str_contains((string) $raw, $secret))->toBeFalse('the Cache screen echoed a credential back to the browser');
+        expect(str_contains($raw, $secret))->toBeFalse('the Cache screen echoed a credential back to the browser');
     }
 });
 

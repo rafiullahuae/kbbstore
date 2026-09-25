@@ -2005,8 +2005,19 @@ it('writes nothing for a shopper who signs in with no session addresses', functi
      * adopt. adopt() therefore returns before it reads the address book when
      * the session list is empty -- so the ONE query against `addresses` here
      * is all()'s own listing and not a second one adoption paid for.
+     *
+     * MATCHED ON EITHER QUOTING STYLE, and not on SQLite's. The grammar that
+     * writes the identifier is chosen per driver: SQLite emits "addresses",
+     * MySQL emits `addresses`. Looking for the double-quoted form counted ZERO
+     * touches against a real server, so this case failed on MySQL reading 0
+     * where it wanted 1 -- a green-on-SQLite test that asserted the engine
+     * rather than the property. The property is "exactly one statement goes to
+     * the addresses table", and it holds however that table's name is spelled.
      */
-    $touches = count(array_filter($sql, fn (string $q) => str_contains($q, '"addresses"')));
+    $touches = count(array_filter(
+        $sql,
+        fn (string $q) => preg_match('/[`"]addresses[`"]/i', $q) === 1
+    ));
 
     expect($touches)->toBe(1);
 });

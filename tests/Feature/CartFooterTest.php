@@ -52,7 +52,24 @@ function cartFooterProduct(): Product
 
 function cartFooterCart(): Cart
 {
-    $cart = Cart::create(['token' => Str::random(40), 'currency' => 'AED']);
+    /*
+     * A UUID, because `carts.token` is a `uuid()` column -- char(36) on MySQL,
+     * and MySQL ENFORCES that width. This helper used to fabricate
+     * Str::random(40), which SQLite stores whole (it does not enforce VARCHAR
+     * or CHAR length at all) and MySQL refuses outright:
+     *
+     *   SQLSTATE[22001] 1406 Data too long for column 'token' at row 1
+     *
+     * Five cases in this file, green on SQLite and red on a real server. The
+     * shop itself was never at risk -- every production write of this column
+     * (CartService::create(), ManualOrderBuilder::buildDraftCart(),
+     * PageCostDataset) is `(string) Str::uuid()`, exactly 36 characters, and
+     * the cookie token is only ever read back as a WHERE value -- so no
+     * shopper has lost a basket to this. It was the fixture that was wrong.
+     * Writing what production writes is also what every other cart fixture in
+     * the suite does.
+     */
+    $cart = Cart::create(['token' => (string) Str::uuid(), 'currency' => 'AED']);
 
     $cart->items()->create([
         'product_id' => cartFooterProduct()->id,
