@@ -89,22 +89,39 @@ class SectionDividers
         }
     }
 
+    /** This screen's point on ModuleSchema's four policy axes. Its one colour
+     *  field stored a hex with no `#` until this moved to the shared cast —
+     *  cssVariables() emitted `--dv-col:E23A4E`, which is not a colour. */
+    public const POLICY = [
+        'max' => 200,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
+    /**
+     * The option set the positional SCHEMA has no slot for.
+     *
+     * `sections` is a picker over the homepage sections that actually exist, and
+     * that set lives in another registry. Naming it here is what lets
+     * ModuleSchema check it — rule 5's "a select stores one of its own options"
+     * applied to a multi-valued control.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function overrides(): array
+    {
+        return ['sections' => ['options' => HomepageSections::REGISTRY]];
+    }
+
     private function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key];
-
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            'colour' => \App\Support\Color::isValidHex((string) $value) ? strtoupper((string) $value) : $def[2],
-            'select' => isset($def[4][$value]) ? (string) $value : $def[2],
-            // A comma list of section keys, filtered to ones that exist.
-            'sections' => implode(',', array_values(array_intersect(
-                array_filter(array_map('trim', explode(',', (string) $value))),
-                array_keys(HomepageSections::REGISTRY),
-            ))),
-            default => mb_substr(trim((string) $value), 0, 200),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::normalise(self::SCHEMA, self::POLICY, self::overrides())[$key],
+            $value,
+        );
     }
 
     /**

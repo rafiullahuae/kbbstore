@@ -94,24 +94,41 @@ class ProductStyles
         return $this->all()[$key] ?? null;
     }
 
+    /** This screen's point on ModuleSchema's four policy axes. */
+    public const POLICY = [
+        'max' => 60,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'strict',
+        'bool' => 'cast',
+    ];
+
+    /**
+     * The option set the positional SCHEMA has no slot for.
+     *
+     * `grid_skin` is a select in everything but name: it stores one of
+     * GridSkins::ALL or the default. That set lived in another class and the
+     * SCHEMA never named it, so nothing checking schemas could check this
+     * control. Naming it here is what puts it under rule 5 with the rest.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function overrides(): array
+    {
+        return ['grid_skin' => ['options' => GridSkins::ALL]];
+    }
+
     public function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key] ?? null;
-
-        if ($def === null) {
+        if (! isset(self::SCHEMA[$key])) {
             return null;
         }
 
-        [$type, , $default] = $def;
-
-        return match ($type) {
-            'bool' => (bool) $value,
-            'range' => max($def[4]['min'], min($def[4]['max'], (int) $value)),
-            'colour' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $value) ? (string) $value : $default,
-            'select' => isset($def[4][(string) $value]) ? (string) $value : $default,
-            'skin' => array_key_exists((string) $value, GridSkins::ALL) ? (string) $value : $default,
-            default => trim((string) $value) === '' ? $default : mb_substr(trim((string) $value), 0, 60),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::normalise(self::SCHEMA, self::POLICY, self::overrides())[$key],
+            $value,
+        );
     }
 
     /**

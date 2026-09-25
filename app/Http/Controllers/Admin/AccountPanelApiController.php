@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ModuleSchema;
 use App\Services\AccountPanel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,26 +18,14 @@ class AccountPanelApiController extends Controller
 
     public function show(): JsonResponse
     {
-        $values = $this->panel->all();
-        $fields = [];
-
-        foreach (AccountPanel::SCHEMA as $key => $def) {
-            [$type, $label, $default, $help] = array_pad($def, 4, '');
-
-            $fields[$key] = [
-                'key' => $key, 'type' => $type, 'label' => $label, 'help' => $help,
-                'default' => $default, 'value' => $values[$key], 'options' => $def[4] ?? null,
-            ];
-        }
-
-        $tabs = [];
-
-        foreach (AccountPanel::TABS as $key => [$label, $description, $keys]) {
-            $tabs[] = [
-                'key' => $key, 'label' => $label, 'description' => $description,
-                'fields' => array_values(array_filter(array_map(fn ($k) => $fields[$k] ?? null, $keys))),
-            ];
-        }
+        // One schema, drawn by one renderer. This loop used to be copied
+        // into nine controllers that had to agree by hand.
+        $tabs = ModuleSchema::tabs(
+            AccountPanel::SCHEMA,
+            AccountPanel::TABS,
+            $this->panel->all(),
+            AccountPanel::POLICY,
+        );
 
         // The preview needs the real stacks, so it cannot drift from the storefront.
         $fonts = [];

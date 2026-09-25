@@ -193,17 +193,22 @@ class MobileHeader
         }
     }
 
+    /** This screen's point on ModuleSchema's four policy axes. Seven colour fields here stored a hex with no `#` until this moved to the shared cast; see ModuleSchema::cast(). */
+    public const POLICY = [
+        'max' => 120,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
     private function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key];
-
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            'select' => isset($def[4][$value]) ? (string) $value : $def[2],
-            'colour' => \App\Support\Color::isValidHex((string) $value) ? strtoupper((string) $value) : $def[2],
-            default => mb_substr(trim((string) $value), 0, 120),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     /**

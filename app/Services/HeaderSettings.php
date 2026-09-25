@@ -165,24 +165,26 @@ class HeaderSettings
         return $this->all()[$key] ?? null;
     }
 
+    /** This screen's point on ModuleSchema's four policy axes. */
+    public const POLICY = [
+        'max' => 120,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'strict',
+        'bool' => 'cast',
+    ];
+
     public function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key] ?? null;
-
-        if ($def === null) {
+        if (! isset(self::SCHEMA[$key])) {
             return null;
         }
 
-        [$type, , $default] = $def;
-
-        return match ($type) {
-            'bool' => (bool) $value,
-            'range' => max($def[4]['min'], min($def[4]['max'], (int) $value)),
-            'colour' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $value) ? (string) $value : $default,
-            'select' => isset($def[4][(string) $value]) ? (string) $value : $default,
-            'tags' => $this->tags($value, $default),
-            default => trim((string) $value) === '' ? $default : mb_substr(trim((string) $value), 0, 120),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     /**

@@ -29,7 +29,13 @@ class ModuleSeeder extends Seeder
             ['module' => 'legal_notice', 'enabled' => true],
             ['module' => 'reassurance', 'enabled' => true],
             ['module' => 'checkout_thumbs', 'enabled' => true],
-            ['module' => 'address_autocomplete', 'enabled' => true],
+            /*
+             * FALSE since Lane M ported it. It was `true` here, copied from the
+             * plugin, for as long as nothing read the key — see the long note on
+             * the registry row and 2027_01_05_000001, which turns off the rows
+             * this line has already written on existing installs.
+             */
+            ['module' => 'address_autocomplete', 'enabled' => false],
             // inline_validation — off, unlike the plugin, and for the mirror
             // of the mega_menu reason below. Until Lane FI nothing read this
             // key: the row said "Not ported yet" and the checkout marked

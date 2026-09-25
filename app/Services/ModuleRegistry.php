@@ -75,6 +75,12 @@ class ModuleRegistry
      *   screen    — not a switch at all. A built admin screen that this page
      *               lists so the owner can see it exists and open it. Always
      *               on; there is nothing to turn off.
+     *   inherent   — the work this module describes is already done, for every
+     *               page, with no switch — and a switch could only make the
+     *               shop worse. Listed so the row is not silently deleted from
+     *               a page the owner reads as a catalogue, and so the answer to
+     *               "what happened to Performance?" is on the screen rather
+     *               than in a document.
      *
      * It is maintained by hand as each module is wired, and the alternative — a
      * toggle that silently does nothing — is exactly the fault this project has
@@ -141,7 +147,33 @@ class ModuleRegistry
         'legal_notice' => ['checkout', 'Checkout legal notice', 'An editable notice above the Place order button, with links to your terms and privacy pages. On by default, and shows nothing until you write it.', true, 'Store → Ecommerce → Checkout', 'ecommerce:checkout', 'checkout', 'bottom', 'The privacy and terms notice above the place-order button.', 'live'],
         'reassurance' => ['checkout', 'Reassurance block', 'Rating + authenticity block above the order summary.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'aside', 'The rating and authenticity block above the order summary.', 'live'],
         'checkout_thumbs' => ['checkout', 'Mobile order thumbnails', 'Circular product thumbnails on the mobile place-order box.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'bottom', 'Round product thumbnails on the mobile place-order box.', 'live'],
-        'address_autocomplete' => ['checkout', 'Address autocomplete', 'Google Places suggestions on the address field (needs a key).', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'mid', 'Suggestions as the shopper types the address field.', 'todo'],
+        /*
+         * PORTED IN LANE M, and previously `todo` with default `true`.
+         *
+         * BOTH OF THOSE CHANGED, and the default is the one that mattered.
+         * ModuleSeeder has always seeded this key `true`, copied from the
+         * plugin with the rest of the checkout group, while nothing read it —
+         * so adding the reader without 2027_01_05_000001 would have switched
+         * address autocomplete ON, on the form the shop is paid through, for
+         * every install the seeder has ever run against, at the moment the
+         * package applied. That is the landmine Lane FI defused for
+         * `inline_validation` and flagged in docs/FI-PHASE3-MODULE-INVENTORY.md
+         * as still armed for this key. It is now defused the same way.
+         *
+         * It is `false` here for the reason the rest of this file uses: the
+         * default is measured against what the store does WITHOUT the switch,
+         * and without it the address box has no suggestions at all.
+         *
+         * NOT FINISHED, and the row does not claim it is. The module is `live`
+         * because the storefront genuinely reads the switch and the settings
+         * genuinely change the page — that is what `live` means here. But it
+         * cannot DO anything until somebody supplies a Google Places API key
+         * and answers the privacy question on Store → Ecommerce → Checkout,
+         * and with either missing it renders nothing and sends nothing. The
+         * description says so rather than leaving the owner to switch it on and
+         * wonder why the box looks the same.
+         */
+        'address_autocomplete' => ['checkout', 'Address autocomplete', 'Google suggests a full address as the shopper types. Needs a Google Places API key of your own, and needs you to agree that what shoppers type is sent to Google — both are on Store → Ecommerce → Checkout. Off by default, and sends nothing until all three are set.', false, 'Store → Ecommerce → Checkout', 'ecommerce:checkout', 'checkout', 'mid', 'Suggestions as the shopper types the address field.', 'live'],
         /*
          * PORTED IN LANE FI, and previously `todo` with no settings screen at
          * all — the row the console renders as "Not ported yet".
@@ -470,7 +502,42 @@ class ModuleRegistry
         'back_in_stock' => ['marketing', 'Back-in-Stock Alerts', 'A “notify me” form under Add to cart on sold-out products; emails everyone who asked, once each, when the shop is next visited after it restocks. Doubles as a demand list for what to reorder. Off by default, and sends nothing until you write the message.', false, 'Store → Ecommerce → Product page', 'ecommerce', 'product', 'mid', 'A notify-me form under Add to cart when sold out.', 'live'],
         'newsletter' => ['marketing', 'Email Capture', 'A signup form ([kbb_signup]) with an optional timed popup. Stores subscribers locally with one-click CSV export for any email tool. No API key. Off by default.', false, 'Appearance → Homepage', 'newsletter', 'home', 'bottom', 'The signup panel near the foot of the homepage.', 'elsewhere'],
         // ── Performance ──
-        'performance' => ['performance', 'Performance & Speed', 'Core Web Vitals wins: strips WordPress bloat, lazy-loads iframes, throttles heartbeat, and adds preconnect/preload. Every tweak is individually toggleable. Off by default.', false, 'Its own screen', '', 'site', 'all', 'Lazy loading and asset trimming. Nothing visible.', 'todo'],
+        /*
+         * RETIRED, NOT PORTED — and deliberately still here.
+         *
+         * The plugin's version does two things: it throttles the WordPress
+         * heartbeat API and it dequeues WordPress asset bloat. This app is not
+         * WordPress. There is no heartbeat to throttle and no plugin stylesheet
+         * queue to dequeue, so there is nothing for the switch to switch.
+         *
+         * What the row's own description promises IS done, and done for every
+         * page rather than behind a toggle — re-verified by running, not by
+         * reading the row:
+         *
+         *   - `loading="lazy"` on every storefront image template, counted with
+         *     `grep -rl 'loading="lazy"' resources/views` → 7 files.
+         *   - three `preconnect` / `dns-prefetch` hints in
+         *     resources/views/layouts/store.blade.php.
+         *
+         * A switch here could therefore only turn those OFF, which is not a
+         * feature. So the honest row is one that says the work is already done
+         * and offers no control, which is what `inherent` renders as.
+         *
+         * WHY THE ROW STAYS. `module_toggles` carries a `performance` row on
+         * every install the seeder has ever run against, and this REGISTRY is
+         * the only thing the Modules screen iterates — delete the row and that
+         * stored value becomes something nobody can see or explain. It also
+         * leaves the screen silently shorter, so the reader who remembers a
+         * Performance module concludes it was lost rather than answered.
+         *
+         * It said `todo` until this lane, which the screen drew as "Not ported
+         * yet" — a promise of unbuilt work — and it named `'Its own screen'`
+         * with no console route, which drew as "screen not built yet". Both
+         * told the owner something false about a module that is never going to
+         * exist. Same pair of faults the `brands` and `product_sorting` rows
+         * carried until they were corrected.
+         */
+        'performance' => ['performance', 'Performance & Speed', 'Lazy-loaded images and early connection hints, already applied to every page of this shop. The plugin version of this module also stripped WordPress bloat and throttled the WordPress heartbeat; neither exists here, so there is nothing left for a switch to do.', false, '', '', 'site', 'all', 'Lazy loading and connection hints, on every page. Nothing visible.', 'inherent'],
         // ── This app only ──
         // Not in the plugin. They are real module_toggles keys the storefront
         // already reads, so leaving them off this screen would make them the one
