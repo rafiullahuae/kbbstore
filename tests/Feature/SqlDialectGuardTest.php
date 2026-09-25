@@ -666,6 +666,37 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'status' => 'published',
     ]);
 
+    /*
+     * One article for the Journal editor's read route below, with an Arabic
+     * translation row attached.
+     *
+     * The translation is the point of the fixture rather than decoration:
+     * projection() ends in translationsForEditor(), which issues a second query
+     * against `translations` and then walks its rows. An article with no
+     * translations returns the empty shape from the early return and the loop
+     * body never runs, so driving it against an untranslated article would
+     * exercise the half that cannot fail -- the same reasoning the media row
+     * above records for attaching its image to a product.
+     */
+    $post = \App\Models\Post::create([
+        'slug' => 'guard-article-' . uniqid(),
+        'title' => 'Guard Article',
+        'excerpt' => 'Guard excerpt',
+        'body' => '<p>Guard body</p>',
+        'status' => 'published',
+        'published_at' => now()->subDay(),
+    ]);
+
+    \App\Models\Translation::create([
+        'locale' => 'ar',
+        'group' => 'posts',
+        'item_id' => $post->id,
+        'field' => 'title',
+        'value' => 'مقال الحارس',
+        'status' => 'draft',
+        'source' => 'machine',
+    ]);
+
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
         'type' => 'percent',
@@ -738,6 +769,21 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * skips this walk unexamined.
          */
         'admin-api/blocks/{block}' => '/admin-api/blocks/' . $block->id,
+        /*
+         * The Journal editor's read of one article (Lane J). Reads the row and
+         * then its translations, and it is listed here because this test caught
+         * it: the route landed with no entry on either list and this file went
+         * red on the walk below, which is exactly what the walk is for.
+         *
+         * Driven rather than excused as "the same shape as
+         * product-editor-load": the list above already records why that excuse
+         * is not accepted here -- a route excused because a sibling is covered
+         * is a route nobody drives -- and the two do not in fact issue the same
+         * SQL. The product editor reads a brand, a categories pivot, a gallery
+         * and a json column; this one reads `translations` filtered by group and
+         * item id, which no other route on this list touches.
+         */
+        'admin-api/post-editor-load/{id}' => '/admin-api/post-editor-load/' . $post->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */
