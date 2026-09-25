@@ -230,6 +230,6 @@ abstract class RemoteGateway implements PaymentGateway
             ? '/checkout/success'
             : '/checkout/pending';
 
-        return url(\App\Support\Url::redirect($path)) . '?order=' . urlencode($this->reference($order));
+        return url(\App\Support\Url::external($path)) . '?order=' . urlencode($this->reference($order));
     }
 }

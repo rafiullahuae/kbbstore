@@ -225,7 +225,7 @@ final class Url
     }
 
     /**
-     * A URL safe to hand to redirect().
+     * A URL safe to hand to redirect() — IN-BAND, for the visitor being answered.
      *
      * to() returns a root-relative path with the base prefix, which is right for
      * an href — the browser resolves it against the host. redirect() is
@@ -235,21 +235,106 @@ final class Url
      *
      * This returns an absolute URL, which Laravel passes through untouched, so
      * the base appears exactly once however APP_URL is written.
+     *
+     * ── WHY THE ORIGIN IS THE REQUEST'S AND NOT APP_URL ───────────────────────
+     *
+     * It used to be `config('app.url')`, and that is the defect Lane N measured:
+     * with APP_URL still at the old domain, `GET https://new-shop.test/checkout`
+     * answered `302 Location: https://old-shop.test/cart/`. The shopper is on
+     * new-shop.test, their session cookie is scoped to new-shop.test, and they
+     * have just been thrown onto a host that cannot see their basket — on the
+     * way to paying. Once the old domain stops resolving it is a dead end.
+     *
+     * A redirect Location is IN-BAND: the visitor is already on this host, so
+     * answering with it is both correct and harmless. A forged `Host:` redirects
+     * the forger to their own domain and nobody else's.
+     *
+     * THAT ARGUMENT DEPENDS ON ONE VISITOR'S Location NEVER REACHING ANOTHER,
+     * and that was checked rather than assumed. App\Http\Middleware\CacheHeaders
+     * ships switched off (CacheSettings::enabled() is false until the owner turns
+     * it on at Platform → Cache); when it IS on, it returns early on any response
+     * whose status is not 200, so a 302 keeps Symfony's computed `no-cache,
+     * private`; the storefront knob it does set cannot reach `public` at any
+     * value — CacheSettings::storefrontHeader() emits `private` on both branches;
+     * and /cart, /checkout and /my-account are `no-store` before the status test
+     * is even reached. There is no path by which a 302 leaves here cacheable by
+     * a shared cache.
+     *
+     * OUT-OF-BAND CALLERS MUST USE external() INSTEAD — see it below.
+     *
+     * ── WHY THE REQUEST IS A PARAMETER ────────────────────────────────────────
+     *
+     * SiteUrl::origin() takes the request rather than reaching for it, because
+     * `app()->runningInConsole()` is true under PHPUnit as well as under artisan.
+     * Passing null is safe and correct — under PHP-FPM origin() picks the bound
+     * request up itself, so every call site is fixed in production whether or not
+     * it threads one — but it is also INVISIBLE TO THIS SUITE, where the console
+     * branch always answers APP_URL. Measured, not reasoned about: inside a
+     * feature request to http://new-shop.test, SiteUrl::origin() returns
+     * `http://localhost` and SiteUrl::origin($request) returns
+     * `http://new-shop.test`.
+     *
+     * So a caller that HOLDS a request hands it over, and the behaviour it is
+     * relying on is then the behaviour its test exercises. A caller that does not
+     * hold one passes nothing and keeps exactly what it emits today.
      */
-    public static function redirect(string $path = '/'): string
+    public static function redirect(string $path = '/', ?\Illuminate\Http\Request $request = null): string
     {
         if (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path)) {
             return $path;
         }
 
-        $appUrl = rtrim((string) config('app.url'), '/');
-        $base = self::base();
+        return SiteUrl::origin($request) . self::to($path);
+    }
 
-        // Strip the base off APP_URL if it is already there, then add it once.
-        if ($base !== '' && str_ends_with($appUrl, $base)) {
-            $appUrl = substr($appUrl, 0, -strlen($base));
+    /**
+     * An absolute URL for somebody who is NOT the person who made the request.
+     *
+     * OUT-OF-BAND: an email, a webhook callback registered at a payment provider,
+     * a link a mail client has no origin to resolve. The reader is not the
+     * sender, so a `Host:` header has no standing here and there is deliberately
+     * no request fallback — a `Host:` a visitor chose, written into a
+     * password-reset email, is account takeover, not a cosmetic bug.
+     *
+     * This is byte-for-byte what redirect() used to return: SiteUrl::
+     * externalOrigin() is APP_URL with its path taken off, which is the same
+     * string the old body built by stripping the base path off the end of
+     * APP_URL. Every consumer moved here therefore emits exactly what it emitted
+     * before, on a shop served from the address it is configured with and on one
+     * that is not.
+     *
+     * Empty string when APP_URL is unusable, which yields a root-relative path —
+     * the same thing the old body returned for an empty APP_URL, and the safe
+     * direction to fail in. It must never reach for the request instead.
+     */
+    public static function external(string $path = '/'): string
+    {
+        if (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path)) {
+            return $path;
         }
 
-        return rtrim($appUrl, '/') . self::to($path);
+        return SiteUrl::externalOrigin() . self::to($path);
+    }
+
+    /**
+     * The same, for a root-relative URL this application has ALREADY built.
+     *
+     * external() takes a bare storefront path and runs it through to(), which
+     * adds the base path and the locale segment. A URL that has been through
+     * to() once already must not go through it twice — that is the
+     * `/kbb-upgrade/kbb-upgrade/…` trap redirect()'s own history records — so
+     * this one only prefixes the confirmed origin.
+     *
+     * For the case where a path is built for the storefront and ALSO needed in
+     * an email: QuizRoutineLink::map() is read by the quiz page, where a
+     * root-relative link is right, and by the plan email, where it is dead.
+     */
+    public static function externalise(string $url): string
+    {
+        if ($url === '' || preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $url)) {
+            return $url;
+        }
+
+        return SiteUrl::externalOrigin() . '/' . ltrim($url, '/');
     }
 }

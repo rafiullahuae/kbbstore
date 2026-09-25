@@ -296,7 +296,7 @@ class NewsletterList
     {
         $signature = CustomerLinkSigner::sign($purpose, $this->claims($id, $email), $expiresAt);
 
-        return Url::redirect(sprintf(
+        return Url::external(sprintf(
             '%s/%d/?expires=%d&signature=%s',
             $path,
             $id,

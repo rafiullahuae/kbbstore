@@ -291,6 +291,6 @@ final class GatewayPreflight
             return null;
         }
 
-        return url(\App\Support\Url::redirect('/api/payments/webhook/' . $gateway->id() . '/')) . $secret;
+        return url(\App\Support\Url::external('/api/payments/webhook/' . $gateway->id() . '/')) . $secret;
     }
 }

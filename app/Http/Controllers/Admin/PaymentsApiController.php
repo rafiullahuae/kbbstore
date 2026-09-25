@@ -190,6 +190,15 @@ class PaymentsApiController extends Controller
      * The URL to paste into the provider's dashboard.
      *
      * Matches routes/payments-webhooks.php mounted inside routes/api.php.
+     *
+     * external(), not redirect(): the reader is the PROVIDER, not the admin
+     * looking at this screen, and what they paste has to be the address the
+     * shop is configured at rather than whatever host this admin session
+     * happens to be on. StripeConnect::webhookUrl() builds the same string and
+     * compares against it exactly when it adopts or deletes an endpoint inside
+     * the Stripe account; if one of the two read the request and the other read
+     * APP_URL they would stop matching, and an endpoint the shop owns would
+     * read as somebody else's.
      */
     private function webhookUrl(PaymentGateway $gateway): ?string
     {
@@ -203,6 +212,6 @@ class PaymentsApiController extends Controller
             return null;
         }
 
-        return url(\App\Support\Url::redirect('/api/payments/webhook/' . $gateway->id() . '/')) . $secret;
+        return url(\App\Support\Url::external('/api/payments/webhook/' . $gateway->id() . '/')) . $secret;
     }
 }

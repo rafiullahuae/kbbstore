@@ -16,6 +16,20 @@
     wrongness that loses the sale it was sent to save. And there is no automatic
     discount code, because a shop that reliably discounts abandoned baskets has
     taught its customers to abandon baskets.
+
+    THE ITEM LINK IS Url::external() AND NOT Url::to(), AND THAT WAS A LIVE BUG.
+
+    Url::to() returns a ROOT-RELATIVE path. The two links this message is HANDED
+    -- $cartUrl and $unsubscribeUrl, both built in OutboundSender -- have always
+    been absolute; the per-item link is the one the view builds for itself, and
+    it was the one that was missed. So every basket reminder this shop has ever
+    sent named its products with href="/product/foo/", which an inbox has no
+    origin to resolve and cannot follow. Nothing to do with moving domain: it
+    has been dead in every mail client since the message was written.
+
+    external() and not redirect(): this is rendered by the scheduled sender,
+    which has no visitor to be in band with, and the reader of an email is never
+    the person who made a request in any case.
 --}}
 <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1d1d1f;">
     <p>{{ __('email.greeting.hello') }}</p>
@@ -29,7 +43,7 @@
                 <tr>
                     <td style="padding:8px 0;border-bottom:1px solid #eee;font-size:14px;">
                         @if ($item['slug'] !== '')
-                            <a href="{{ \App\Support\Url::to('/product/' . $item['slug'] . '/') }}" style="color:#1d1d1f;text-decoration:none;">{{ $item['name'] }}</a>
+                            <a href="{{ \App\Support\Url::external('/product/' . $item['slug'] . '/') }}" style="color:#1d1d1f;text-decoration:none;">{{ $item['name'] }}</a>
                         @else
                             {{ $item['name'] }}
                         @endif

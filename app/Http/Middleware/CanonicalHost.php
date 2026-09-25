@@ -188,10 +188,26 @@ final class CanonicalHost
         $mapped = CheckRedirects::lookup($path);
 
         if ($mapped !== null) {
-            // Url::redirect() returns an absolute URL on APP_URL, already
-            // carrying the base path. Send it unchanged; it is the same string
-            // CheckRedirects would have produced on the canonical host.
-            return Url::redirect($mapped->target);
+            /*
+             * external(), NOT redirect(), AND THE DIFFERENCE IS THE WHOLE
+             * POINT OF THIS MIDDLEWARE.
+             *
+             * This line is only ever reached when the request arrived on an
+             * ALIAS host — targetFor() returns null the moment the request host
+             * IS the canonical one. redirect() now builds on the request's own
+             * origin, so using it here would answer the alias with a Location
+             * back on the alias: the forwarding this class exists to perform
+             * would silently stop happening for exactly those paths that also
+             * have a redirects row, and only for those. A visitor on the old
+             * domain would be told to stay on it.
+             *
+             * external() is APP_URL with its path removed, which is byte for
+             * byte what this line returned before redirect() changed, so the
+             * hop lands where it has always landed. It is also the same string
+             * CheckRedirects would have produced on the canonical host, which
+             * is the property RedirectMiddlewareTest holds the two to.
+             */
+            return Url::external($mapped->target);
         }
 
         $url = $request->getScheme().'://'.$canonical.Url::raw($path);

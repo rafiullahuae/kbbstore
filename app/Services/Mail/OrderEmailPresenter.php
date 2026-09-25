@@ -79,7 +79,7 @@ class OrderEmailPresenter
             'email' => (string) $order->email,
             'phone' => trim((string) $order->phone),
             'trackUrl' => self::trackUrl($order),
-            'accountUrl' => Url::redirect('/my-account/orders'),
+            'accountUrl' => Url::external('/my-account/orders'),
         ];
     }
 
@@ -102,7 +102,7 @@ class OrderEmailPresenter
      */
     public static function trackUrl(Order $order): string
     {
-        return Url::redirect('/checkout/success') . '?order=' . rawurlencode((string) $order->order_number);
+        return Url::external('/checkout/success') . '?order=' . rawurlencode((string) $order->order_number);
     }
 
     /** The name to greet, from the order's own address snapshot. */
