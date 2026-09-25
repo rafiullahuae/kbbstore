@@ -150,6 +150,33 @@ final class AdminCapabilities
         'catalog.export' => ['owner', 'manager', 'editor'],
         'content.manage' => ['owner', 'manager', 'editor'],
 
+        /*
+         * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
+         * clips, who made them, whether they said yes, and which products are
+         * tagged on each.
+         *
+         * TWO CAPABILITIES AND NEITHER IS content.manage, although all three
+         * hold the same three roles as this ships. docs/UGC-VIDEO-PLAN.md §7
+         * asks for a capability of its own by name, and the reason is the point
+         * of having any of them: granting somebody the video library must not
+         * hand them the media library, the mega menu, the homepage and every
+         * other thing content.manage reaches — and the day somebody narrows
+         * content.manage, which is a reasonable thing to want, this must not
+         * narrow with it from another file with nothing to notice.
+         *
+         * SPLIT IN TWO for the reason reviews.view is split from
+         * reviews.manage: reading which clips are live, and replacing the file
+         * a clip serves, are different acts. `ugc.manage` is the one that moves
+         * up to 64 MB onto the web root and, where ffmpeg exists, runs two
+         * transcodes on the request.
+         *
+         * `rights_evidence` — a creator's DM, an email, a signed release — is
+         * behind `ugc.view`, and is never returned by any public endpoint: see
+         * UgcVideo::toApi(), which is an allowlist rather than a model.
+         */
+        'ugc.view' => ['owner', 'manager', 'editor'],
+        'ugc.manage' => ['owner', 'manager', 'editor'],
+
         // Writing an article into the Journal (Lane J). The same three roles
         // content.manage carries, and its own capability for the reason the
         // three below give: an article is published at the SITE ROOT of this
@@ -679,6 +706,37 @@ final class AdminCapabilities
         ['*', 'admin-api/bundles', 'catalog.manage'],
 
         // ----------------------------------------------------- content & appearance
+        /*
+         * Content -> Shoppable video (routes/ugc-admin.php).
+         *
+         * WRITES FIRST, READS SECOND, and RULES is first-match-wins. The two
+         * '**' lines below cover different verbs over the SAME paths, so the
+         * order between them is the whole of the access control: put the GET
+         * line above the write lines and POST /ugc-videos/{id}/media — a 64 MB
+         * upload into the web root — resolves to `ugc.view`. That is exactly
+         * the quiz-leads and coupons/manage shape this file names elsewhere,
+         * and it is written out rather than relied on because both of those
+         * were found by a test and not by a reader.
+         *
+         * The exact 'admin-api/ugc-videos' lines are SIBLINGS of the '/**'
+         * ones and neither shadows the other: 'admin-api/ugc-videos' does not
+         * match 'admin-api/ugc-videos/7', and '/**' does not match the bare
+         * path.
+         *
+         * GET admin-api/ugc-videos/products is a READ and correctly falls to
+         * the read rule: it returns a name and an id per product and nothing
+         * else. It is listed by name below its wildcard only for a reader's
+         * benefit — it would resolve the same way without the line, and
+         * AdminCapabilityMapTest pins that it resolves to ugc.view.
+         */
+        ['POST', 'admin-api/ugc-videos', 'ugc.manage'],
+        ['POST', 'admin-api/ugc-videos/**', 'ugc.manage'],
+        ['PUT', 'admin-api/ugc-videos/**', 'ugc.manage'],
+        ['PATCH', 'admin-api/ugc-videos/**', 'ugc.manage'],
+        ['DELETE', 'admin-api/ugc-videos/**', 'ugc.manage'],
+        ['GET', 'admin-api/ugc-videos', 'ugc.view'],
+        ['GET', 'admin-api/ugc-videos/**', 'ugc.view'],
+
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],
