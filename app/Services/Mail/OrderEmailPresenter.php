@@ -48,6 +48,33 @@ class OrderEmailPresenter
     public function present(Order $order): array
     {
         /*
+         * ── THE LINES, ASKED FOR ONCE AND OUT LOUD — Lane Q11 ──────────────
+         *
+         * This method reads `$order->items` twice: here, through items(), and
+         * again in ledgerWidth() below. Both were bare lazy reads, which the
+         * suite-wide census counted 14 times at OrderEmailPresenter:460 — and
+         * which is where the brief for this lane started, as "the order email
+         * loads its own lines one at a time".
+         *
+         * IT DOES NOT, AND THAT WAS MEASURED BEFORE ANYTHING WAS CHANGED. A
+         * lazy hasMany read is ONE query returning every row, not one per row.
+         * Rendered at 1, 2, 5 and 10 lines the whole send cost 6 statements
+         * every time, slope 0.00 — OrderEmailQuerySlopeTest has the table. The
+         * census was counting relation READS, and 14 reads is 14 orders, each
+         * asking once.
+         *
+         * So this is not a fix for an N+1; there is no N+1 here. It is the read
+         * made explicit, and it costs nothing either way: loadMissing() is a
+         * no-op when the caller already loaded them (OrderMailer does, on all
+         * five of its send paths) and is the same single query when it did not.
+         * What it buys is that the presenter no longer depends on its caller
+         * having remembered, and that it survives a `preventLazyLoading()` run
+         * — which is the switch docs/q10-component-load-contract.md priced and
+         * declined, and which this removes one of the six obstacles to.
+         */
+        $order->loadMissing('items');
+
+        /*
          * ONE WIDTH FOR THE WHOLE RECEIPT, decided once and handed to every
          * figure below. See ledgerWidth(). Computed here rather than inside
          * each helper so that a row added later cannot quietly print at a
@@ -456,6 +483,15 @@ class OrderEmailPresenter
         if ($record !== null) {
             $amounts[] = (int) $record['fils'];
         }
+
+        /*
+         * PUBLIC STATIC, so this is an entry point in its own right —
+         * InvoiceDocument::present() calls it directly — and it may not assume
+         * present() ran first. One query when the caller did not load them,
+         * nothing when it did. See present()'s note: this is the explicit read,
+         * not a fix for a cost that never existed.
+         */
+        $order->loadMissing('items');
 
         foreach ($order->items as $item) {
             $amounts[] = (int) $item->unit_price;

@@ -158,7 +158,11 @@ class MailSettings
          * Validated in save() below rather than in MailApiController's rule
          * list, which is another lane's hardcoded array — see
          * `mail_merchant_address`. An unvalidated address here is a customer
-         * reply that bounces.
+         * reply that bounces. A malformed one is REFUSED and the previous
+         * address kept, and since Lane Q11 the refusal is reported to the
+         * screen instead of being dropped — addressOrDrop() has the argument
+         * for why that is done by returning the writer's own report rather than
+         * by adding an `email` rule to that controller's list.
          */
         'mail_reply_to' => ['text', 'Reply-To address', 'Where a customer\'s reply to an order email goes. Set this and every order email invites the customer to reply and says the reply reaches you. Leave it blank and no such invitation is printed, because with the From box empty this store sends as no-reply@ and a reply would reach nobody.'],
     ];
@@ -408,13 +412,17 @@ class MailSettings
      * address is truncated to 255 and THEN found to be malformed.
      *
      * Returns null to REFUSE, which ModuleSchema::write() reports to the caller
-     * and does not store. save() below ignores that report, which is what this
-     * class has always done: the bad value is dropped and the previous address
-     * — a mailbox that works — is left alone. MailApiController's `$checks`
-     * makes the SCREEN say so for `mail_merchant_address`; it has no entry for
-     * `mail_reply_to`, so that one is still dropped in silence. Named in
-     * docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-4.md as found and not fixed, because
-     * fixing it means editing that controller's hardcoded list.
+     * and does not store. The bad value is dropped and the previous address —
+     * a mailbox that works — is left alone, which is the behaviour this rule
+     * exists for and is unchanged.
+     *
+     * WHAT CHANGED IS THAT THE REFUSAL IS NOW SAID OUT LOUD. save() used to
+     * throw the report away for both keys; it returns it now, and
+     * MailApiController::save() answers 422 naming the label. That covers
+     * `mail_reply_to`, which had no `$checks` entry at all, AND the six address
+     * spellings Laravel's `email` rule accepts and filter_var refuses, for
+     * which `mail_merchant_address` had the identical silence despite being in
+     * `$checks` — see save()'s note and MailRefusalIsReportedTest.
      *
      * @param  array<string, mixed>  $field  a normalise()d field
      */
@@ -710,15 +718,55 @@ class MailSettings
      * sentence, which is what lets a label be reworded without invalidating a
      * single install's saved choice.
      *
-     * The `rejected` report is DROPPED, which is what this method has always
-     * done with a malformed address: `continue`. Surfacing it would put a new
-     * error on the screen for `mail_reply_to`, which today saves silently and
-     * keeps the old value — a screen change, not a schema migration. Named in
-     * this round's write-up rather than made quietly.
+     * ── THE `rejected` REPORT IS RETURNED NOW, AND IT USED TO BE DROPPED ───
+     *
+     * Round 4 left this method ending in a bare `ModuleSchema::write(...)`,
+     * throwing the report away, and named the consequence in its own write-up
+     * (§11): a mistyped `mail_reply_to` answered `{"ok":true}` and kept the
+     * previous address. Lane Q11 drove it and measured exactly that — HTTP 200,
+     * `ok: true`, and `good@example.com` still in the row after saving
+     * `not an address` over it. The shop owner who thinks he has moved where
+     * customer replies land finds out from a customer who replied into a void.
+     *
+     * THE REPORT AND NOT A SECOND VALIDATOR, and that is the whole point of
+     * returning it rather than adding an `email` rule to
+     * MailApiController::$checks, which is what round 4 proposed as "one line".
+     * `$checks` is Laravel's `email` rule; addressOrDrop() is
+     * `filter_var(FILTER_VALIDATE_EMAIL)`; the two disagree, measured over a
+     * 22-address corpus in MailRefusalIsReportedTest:
+     *
+     *   Laravel accepts, filter_var drops   a@b · a@example · a@127.0.0.1 ·
+     *                                       "quoted local"@… · ünïcode@… ·
+     *                                       a@exämple.com
+     *
+     * So `mail_merchant_address`, which round 4 believed was covered BECAUSE it
+     * is in `$checks`, had the identical silent drop for all six — the same
+     * defect, in the field that was supposed to be the one without it. Adding
+     * the rule to `mail_reply_to` would have moved the silence, not removed it.
+     *
+     * Reporting what the writer actually refused makes the screen's verdict and
+     * the stored row the same function by construction. There is no second list
+     * to drift.
+     *
+     * ▲ THE DISAGREEMENT RUNS THE OTHER WAY TOO, AND THAT HALF IS UNREACHABLE.
+     * `'a@b.co '`, `' a@b.co'` and `"a@b.co\n"` are refused by Laravel's rule
+     * and trimmed-and-stored by this class — so the rule looks, on the two
+     * functions alone, as though it would also have refused a save that works.
+     * It would not: Laravel's TrimStrings middleware runs before the controller
+     * and every one of those three arrives already trimmed. Measured through
+     * the endpoint, not reasoned: all three answer 200 and store `a@b.co` with
+     * or without the rule. Recorded because it is the obvious second argument
+     * and it is wrong.
+     *
+     * NOT ATOMIC, deliberately. The other keys in the payload are still
+     * written, exactly as they are today — this changes what the caller is
+     * TOLD, never what is stored for a value the schema accepts.
      *
      * @param array<string, mixed> $values
+     * @return array<string, string> the keys the schema refused, key => label,
+     *                               for the caller to put on the screen
      */
-    public function save(array $values): void
+    public function save(array $values): array
     {
         /*
          * The screen posts the label it displayed; a test, a console command or
@@ -733,7 +781,13 @@ class MailSettings
             $values['mail_transport'] = self::canonicalTransport(is_scalar($value) ? (string) $value : '');
         }
 
-        ModuleSchema::write($this->settings, self::MODULE, self::schema(), $values, $this->credentials);
+        $result = ModuleSchema::write($this->settings, self::MODULE, self::schema(), $values, $this->credentials);
+
+        // Same hand-off PayShipRules::save() and BuildMyRoutine::save() already
+        // make. This class was the only ModuleSchema::write() caller in the
+        // application that did not, which MailRefusalIsReportedTest now pins
+        // for EVERY caller rather than for this one.
+        return $result['rejected'];
     }
 
     /**
