@@ -2112,10 +2112,26 @@ a fake success toast and saves nothing).
   run did — it survives the next run and it survives Reset, and there is a page
   at Store → Import. 47 tests, 28 mutations, driven end to end in a browser at
   4,042 rows — see `docs/GF-IMPORT-REFINEMENT.md`
-- [ ] ▲ **Fetching does not re-point the rows.** Two steps, and between them the
-  picture is on disk while the product still names the old host. **The old site
-  must not be switched off between them.** The rewrite is Store → Import →
-  Addresses & pictures → apply
+- [x] ▲ **Fetching DOES re-point the rows — this entry was out of date and
+  nothing needed building.** Lane U4 checked it rather than starting work:
+  `MediaSideloader::runBatch()` collects what it landed and calls `repoint()`
+  BEFORE `plan()`, in the same request, filtering both `MediaRewrite::propose()`
+  and `DocumentMediaRewrite::propose()` down to the addresses that batch actually
+  wrote — deliberately, since re-pointing FTP-copied files as a side effect of
+  Fetch would be the button doing something nobody asked for. Both shapes are
+  covered: cells through `MediaRewrite`, `posts.body` through
+  `DocumentMediaRewrite`. `MigrationProgress` already says so on screen and
+  `ImportRepointsWhatItFetchesTest` pins it.
+
+  Nor is there a stale-proposal window: both `MediaRewrite::apply()` and
+  `DocumentMediaRewrite::groupByRow()` skip anything whose decision is not
+  REWRITE, and the decision IS `is_file(public_path($relative))`, recomputed in
+  the request that applies it. A row is never re-pointed at a file that is not
+  on disk.
+
+  **What remains is documentation, not a defect**: files that arrived by FTP,
+  and references whose fetch failed and were repaired by hand, still want the
+  manual **Store → Import → Addresses & pictures → apply**
 - [x] **Everything the exporter writes now has an importer** — *2.60.222*.
   Variations, attributes and tags (Lane GH), refunds and order notes (Lane GI),
   posts (Lane GJ). Fifteen entities, all fifteen driven one per request from
@@ -2228,13 +2244,39 @@ a fake success toast and saves nothing).
   a host because the page turns it into an `href`, and left EMPTY with the file
   to upload named rather than guessed. `wanted` and `indexed_at` are separate
   columns and the CSV column is appended, so nothing already read moves
-- [ ] ▲ **A `<picture>` block loses its `<img>` entirely on import.** libxml's
-  HTML parser is HTML4 and does not know `source` is a void element, so the
-  `<img>` after it is parsed as its CHILD and `RichText::DROP_WHOLE` removes the
-  subtree with it. `<source>` before `<img>` is the only valid ordering, so such
-  a block arrives as nothing and the article silently loses the photograph.
-  Found and pinned by Lane U3 in `ImportJournalSrcsetTest` rather than fixed,
-  because `app/Support/RichText.php` was not that lane's file
+- [x] ▲ **An imported article stops losing its photograph** — *2.60.274*, and
+  the defect was WIDER than the entry that carried it. Lane U4 reproduced it
+  before trusting the diagnosis and then enumerated every tag on `DROP_WHOLE`
+  against the parser instead of stopping at `source`: libxml's void set is
+  exactly HTML4's, so **three** entries are HTML5-void and mis-read as
+  containers — `source`, `track` and `embed`. An `<embed>` or a `<track>`
+  anywhere in a body deleted everything after it to the close of its parent.
+  Same silent loss, not limited to `<picture>`.
+
+  The fix is a third disposal, `DROP_TAG_KEEP_CHILDREN`: the tag and every
+  attribute on it still go, and the children the parser misfiled underneath are
+  promoted and then sanitised like any other node. **`ALLOWED` was not touched**,
+  so nothing new can be printed, which is the only test a change to a sanitiser
+  has to pass. The rule separating the two lists is not "hostile or not" but
+  *does this element legally have children* — `script` and `style` are real
+  containers whose child text IS the payload, and they stay where they are.
+  Pre-normalising with a regex was rejected on the merits: it means
+  pattern-matching untrusted HTML to decide what the parser then sees, which is
+  the denylist that file exists to refuse. The new branch is checked BEFORE
+  `DROP_WHOLE`, so a later "`source` is a media tag, put it back on the drop
+  list" tidy-up cannot restore the loss.
+
+  ▲ **And the page had no rule for a body photograph at all.** A plain `<img>`
+  — one `RichText::clean()` passes through byte-identically before and after the
+  sanitiser change, so a pre-existing defect and not a consequence of it — took
+  the article page's `scrollWidth` to **1220 at a 390px viewport and 1500 at
+  1280**: a sideways scrollbar on every article carrying a picture, at every
+  width. Invisible until now because `posts` was empty on a fresh shop and the
+  import that fills it was itself removing every `<picture>` before it reached
+  the column. Both halves changed in one release, so the first article with a
+  photograph would have been the first to overflow.
+  `.abody img{max-width:100%;height:auto}`, and the English pin was advanced for
+  that one page and that one declaration with the diff written into its docblock
 - [x] ▲ **An article at a reserved address cannot be served, and the import now
   names them.** — the refusal and the list both existed; see the screen above. Articles live at the site root and `RESERVED_SLUGS` owns the
   first segment, so a live article slugged `about`, `wishlist` or `feed` is an
