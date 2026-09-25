@@ -101,3 +101,27 @@ carries no bindings and lives inside the one WHERE that was already there.
 The tile pages do not change height at all, which is the thing to check: the
 badge is absolutely positioned inside the photograph frame, and that frame is a
 fixed CSS box, so adding one moves nothing around it.
+
+## The cart, and why there is no shot of it
+
+The second commit on this branch changes `store/cart-inner.blade.php`, and it is
+a regression avoided rather than a change shipped: against the shop as it stands
+today the struck order-value row is **identical for every basket that exists**,
+because a simple product on sale has a compare-at above its line by definition
+and one that is not on sale takes the line. What the commit prevents is the row
+silently dropping a marked-down variable line to zero once `isOnSale()` started
+answering true for one — measured at `AED 200` where the honest figure is
+`AED 340`.
+
+An arithmetic figure is pinned better by a number than by a picture, so the
+proof is the test and its two mutations, both run:
+
+| | order-value row |
+|---|---|
+| this branch | `AED 340` beside a subtotal of `AED 190` |
+| without the `max()` | `AED 320` — the line undercounted by the parent's from-price |
+| with the original `(int) $p->price` | `AED 200` — the variable line contributing nothing |
+
+The one genuinely new pixel on that page is the recommendation tile's struck
+price for a marked-down variable product, which is the same `AED 120` / `AED 90`
+/ `-25%` pair the `/shop` shots above already show at both widths.
