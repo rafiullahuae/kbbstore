@@ -535,6 +535,16 @@ class SlimFooter
         }
     }
 
+    /** This screen's point on ModuleSchema's four policy axes. */
+    public const POLICY = [
+        'max' => 160,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
     private function cast(string $key, mixed $value): mixed
     {
         $def = self::SCHEMA[$key] ?? null;
@@ -543,25 +553,18 @@ class SlimFooter
             return $value;
         }
 
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            /*
-             * A SELECT MAY ONLY EVER HOLD ONE OF ITS OWN OPTIONS. Both of them
-             * are printed into a class name, so a value from anywhere else
-             * would be a class this stylesheet has never heard of at best.
-             * Anything unrecognised falls back to the shipped default rather
-             * than being stored.
-             */
-            'select' => isset($def[4][(string) $value]) ? (string) $value : (string) $def[2],
-            /*
-             * Trimmed and capped. These are printed into the page, escaped at
-             * the point of use; the cap is so a paste accident cannot put a
-             * novel in the footer of every order.
-             */
-            'text' => mb_substr(trim((string) $value), 0, 160),
-            default => $value,
-        };
+        /*
+         * A SELECT MAY ONLY EVER HOLD ONE OF ITS OWN OPTIONS — both of this
+         * screen's are printed into a class name, so a value from anywhere else
+         * would be a class this stylesheet has never heard of at best. Text is
+         * trimmed and capped so a paste accident cannot put a novel in the
+         * footer of every order. Both rules now come from ModuleSchema::cast(),
+         * which is the one place they are written for every module.
+         */
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, $def, self::POLICY),
+            $value,
+        );
     }
 
     /**

@@ -92,15 +92,25 @@ class NewsletterSettings
      * colour is rejected once at save rather than defended against on every
      * page render.
      */
+    /** This screen's point on ModuleSchema's four policy axes. Five colour
+     *  fields here stored a hex with no `#` until this moved to the shared
+     *  cast; see ModuleSchema::cast(). No range control on this screen, so
+     *  clamping never applies. */
+    public const POLICY = [
+        'max' => 240,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
     private function cast(string $key, mixed $value): mixed
     {
-        return match (self::SCHEMA[$key][0]) {
-            'bool' => (bool) $value,
-            'colour' => \App\Support\Color::isValidHex((string) $value)
-                ? strtoupper((string) $value)
-                : self::SCHEMA[$key][2],
-            default => mb_substr(trim((string) $value), 0, 240),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     /** Inline custom properties for the panel, in the shape the other services use. */

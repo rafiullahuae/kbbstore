@@ -4390,6 +4390,11 @@ function mdRow(m){
   const note = m.status === 'elsewhere'
       ? `<i class="mdstat where">Switched in ${escHtml(m.screen)}</i>`
       : m.status === 'screen' ? '<i class="mdstat where">Always on — a screen, not a switch</i>'
+      /* 'inherent': the work is already done on every page and a switch could
+         only turn it off. Worded as an answer, not as a promise — this row read
+         "Not ported yet" for as long as the thing it describes had been
+         shipped. See the note on the `performance` row in ModuleRegistry. */
+      : m.status === 'inherent' ? '<i class="mdstat where">Already applied to every page — nothing to switch</i>'
       : m.status === 'todo' ? '<i class="mdstat todo">Not ported yet</i>' : '';
 
   /* A `screen` row shows NO switch. The inert switch the other two non-live
@@ -4397,7 +4402,7 @@ function mdRow(m){
      beside the words "Always on" is a straight contradiction — the owner reads
      a control that looks switched off on a screen that is always there.
      Hidden rather than removed so the row still lines up with its neighbours. */
-  const sw = m.status === 'screen'
+  const sw = (m.status === 'screen' || m.status === 'inherent')
     ? '<span class="ectog off" style="visibility:hidden" aria-hidden="true"></span>'
     : `<span class="ectog${m.on?' on':''}${live?'':' off'}"${live?` data-md="${escAttr(m.key)}" role="switch" aria-checked="${m.on}" tabindex="0"`:' aria-disabled="true"'}></span>`;
 
@@ -4412,7 +4417,7 @@ function mdRow(m){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
       ${mdCard(m)}
     </span>
-    <select class="mddev" data-mddev="${escAttr(m.key)}"${(m.on && m.status!=='screen')?'':' disabled'}>${devs}</select>
+    <select class="mddev" data-mddev="${escAttr(m.key)}"${(m.on && m.status!=='screen' && m.status!=='inherent')?'':' disabled'}>${devs}</select>
   </div>`;
 }
 

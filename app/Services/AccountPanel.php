@@ -110,22 +110,28 @@ class AccountPanel
         return $this->all()[$key] ?? null;
     }
 
+    /** This screen's point on ModuleSchema's four policy axes. An emptied
+     *  wording box puts the shipped wording back (`blank => default`): these
+     *  strings are the panel's own labels and it cannot render without them. */
+    public const POLICY = [
+        'max' => 60,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
     public function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key] ?? null;
-
-        if ($def === null) {
+        if (! isset(self::SCHEMA[$key])) {
             return null;
         }
 
-        [$type, , $default] = $def;
-
-        return match ($type) {
-            'bool' => (bool) $value,
-            'range' => max($def[4]['min'], min($def[4]['max'], (int) $value)),
-            'select' => isset($def[4][(string) $value]) ? (string) $value : $default,
-            default => trim((string) $value) === '' ? $default : mb_substr(trim((string) $value), 0, 60),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     public function save(array $values): void

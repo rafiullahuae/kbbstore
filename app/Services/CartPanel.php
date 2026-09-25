@@ -111,21 +111,43 @@ class CartPanel
     }
 
     /**
+     * This screen's point on ModuleSchema's four policy axes.
+     *
+     * A cleared wording box stores the empty string here (`blank => keep`) —
+     * the panel renders without it. A slider outside its bounds is pulled back
+     * rather than refused, and anything else unusable falls back to the shipped
+     * default, which is what this screen has always done.
+     */
+    public const POLICY = [
+        'max' => 120,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
+    /**
      * Cast and clamp on the way in, so a bad value is rejected once at save
      * rather than defended against on every page render.
+     *
+     * ONE LINE, AND THE REASON IT IS ONE LINE. This was three arms that agreed
+     * with thirteen other copies of the same three arms in this app until they
+     * did not: the `colour` arm tested with Color::isValidHex(), which accepts
+     * a hex with OR without a leading `#`, and then stored what arrived. A
+     * value posted as `e23a4e` was kept as `E23A4E` and written into
+     * `background:` by cssVariables(), where it is not a colour and the
+     * declaration is dropped — the accent moved in the admin and not on the
+     * shop. ProductLabels found and fixed this in its own copy; the fix never
+     * reached this one, because there was no one place to put it.
+     * ModuleSchema::cast() is now that place.
      */
     private function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key];
-
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            'colour' => \App\Support\Color::isValidHex((string) $value)
-                ? strtoupper((string) $value)
-                : $def[2],
-            default => mb_substr(trim((string) $value), 0, 120),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     /** Inline custom properties for the panel element. */

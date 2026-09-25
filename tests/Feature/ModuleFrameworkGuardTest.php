@@ -51,8 +51,18 @@
  */
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\SiteSearchApiController;
 use App\Models\AdminUser;
+use App\Services\AccountPanel;
 use App\Services\BuildMyRoutine;
+use App\Services\CartPanel;
+use App\Services\HeaderSettings;
+use App\Services\MobileHeader;
+use App\Services\NewsletterSettings;
+use App\Services\ProductLabels;
+use App\Services\ProductStyles;
+use App\Services\SectionDividers;
+use App\Services\SlimFooter;
 use App\Services\MarketingPixels;
 use App\Services\ModuleRegistry;
 use App\Services\ModuleSchema;
@@ -409,6 +419,58 @@ function ehSchemaModules(): array
         // Lane FM. Adopting the schema is what buys the checks below, and
         // this line is the whole cost of it — the header above says so.
         'build_my_routine' => ['schema' => BuildMyRoutine::SCHEMA, 'tabs' => BuildMyRoutine::TABS],
+
+        /*
+         * ── LANE M: the nine the schema could not previously take ───────────
+         *
+         * This is step 4 of the migration path in ModuleSchema's own header,
+         * and its point: "a module with a SCHEMA that is not on this list is
+         * not checked, and a module on it cannot ship a control that saves
+         * nothing." Each of these now cannot ship a value with no control, a
+         * control with no value, the same control twice, or a field the generic
+         * settings endpoint would drop in silence.
+         *
+         * `policy` travels with the schema because these modules do not agree
+         * about what an unusable value becomes — see ModuleSchema::POLICY_KEYS,
+         * where the six axes and who sits where on them are set out.
+         *
+         * `overrides` is how two of them name an option set that lives in
+         * another registry: ProductStyles' card style is one of GridSkins,
+         * SectionDividers' picker is a subset of the homepage sections. Without
+         * it normalise() refuses both, correctly — a control that picks from a
+         * set has to carry the set for rule 5 to be checkable at all.
+         *
+         * MobileMenu is NOT here and is the one module with a SCHEMA that
+         * cannot be: it has no TABS constant. Its groups are written inline in
+         * MobileMenuApiController and its endpoint answers `fields` + `groups`
+         * rather than `tabs`, so there is no second list to check the first
+         * against. Giving it one is a change to that screen's payload and
+         * belongs to whoever opens it next.
+         */
+        'cart_panel' => ['schema' => CartPanel::SCHEMA, 'tabs' => CartPanel::TABS, 'policy' => CartPanel::POLICY],
+        'mobile_header' => ['schema' => MobileHeader::SCHEMA, 'tabs' => MobileHeader::TABS, 'policy' => MobileHeader::POLICY],
+        'newsletter_settings' => ['schema' => NewsletterSettings::SCHEMA, 'tabs' => NewsletterSettings::TABS, 'policy' => NewsletterSettings::POLICY],
+        'product_labels' => ['schema' => ProductLabels::SCHEMA, 'tabs' => ProductLabels::TABS, 'policy' => ProductLabels::POLICY],
+        'account_panel' => ['schema' => AccountPanel::SCHEMA, 'tabs' => AccountPanel::TABS, 'policy' => AccountPanel::POLICY],
+        /*
+         * TWO TAB SOURCES, and the only module that needs them.
+         *
+         * HeaderSettings::SCHEMA is drawn across two screens: Appearance →
+         * Header, and Store → Site Search, which holds the 28 search and
+         * trending keys. Checked against HeaderSettings::TABS alone this module
+         * reports 28 values stored with no control to write them, which is
+         * false — and would have been a false alarm loud enough to get the
+         * module dropped from this list rather than checked. Unioned, the
+         * guarantee is real for all 70 of its fields.
+         */
+        'header_settings' => [
+            'schema' => HeaderSettings::SCHEMA,
+            'tabs' => HeaderSettings::TABS + SiteSearchApiController::TABS,
+            'policy' => HeaderSettings::POLICY,
+        ],
+        'slim_footer' => ['schema' => SlimFooter::SCHEMA, 'tabs' => SlimFooter::TABS, 'policy' => SlimFooter::POLICY],
+        'product_styles' => ['schema' => ProductStyles::SCHEMA, 'tabs' => ProductStyles::TABS, 'policy' => ProductStyles::POLICY, 'overrides' => ProductStyles::overrides()],
+        'section_dividers' => ['schema' => SectionDividers::SCHEMA, 'tabs' => SectionDividers::TABS, 'policy' => SectionDividers::POLICY, 'overrides' => SectionDividers::overrides()],
     ];
 }
 
@@ -416,7 +478,7 @@ it('normalises and describes every field of every schema on the shared shape', f
     // normalise() throws on an unknown type, an unknown store, or a select with
     // no options — a field the renderer would draw as an empty box.
     foreach (ehSchemaModules() as $module => $parts) {
-        $fields = ModuleSchema::normalise($parts['schema']);
+        $fields = ModuleSchema::normalise($parts['schema'], $parts['policy'] ?? [], $parts['overrides'] ?? []);
 
         expect($fields)->not->toBeEmpty();
 
@@ -437,7 +499,7 @@ it('gives every module setting a control, and every control a setting', function
      * failure and is worse, because it reports "Saved".
      */
     foreach (ehSchemaModules() as $module => $parts) {
-        $keys = array_keys(ModuleSchema::normalise($parts['schema']));
+        $keys = array_keys(ModuleSchema::normalise($parts['schema'], $parts['policy'] ?? [], $parts['overrides'] ?? []));
         $placed = [];
 
         foreach ($parts['tabs'] as $tab => [$label, $description, $tabKeys]) {
@@ -469,7 +531,7 @@ it('gives every schema field saved through the generic endpoint a validation rul
      * every migrated module at once, so the rule cannot be forgotten later.
      */
     foreach (ehSchemaModules() as $module => $parts) {
-        $missing = ModuleSchema::missingRules($parts['schema']);
+        $missing = ModuleSchema::missingRules($parts['schema'], $parts['policy'] ?? [], $parts['overrides'] ?? []);
 
         expect($missing)->toBe([], "{$module} would have these dropped in silence by the settings endpoint: ".implode(', ', $missing));
     }
@@ -544,7 +606,8 @@ it('renders a real control for every field of every migrated schema', function (
             }
         }
 
-        $expected = array_keys(ModuleSchema::normalise(ehSchemaModules()[$module]['schema']));
+        $parts = ehSchemaModules()[$module];
+        $expected = array_keys(ModuleSchema::normalise($parts['schema'], $parts['policy'] ?? [], $parts['overrides'] ?? []));
 
         sort($drawn);
         sort($expected);
