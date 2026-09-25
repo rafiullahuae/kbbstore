@@ -287,7 +287,9 @@ overflow anywhere.
   §1. Each is a smaller version of this round.
 
   **Round 2 took five of them and is written up in
-  `docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-2.md`.** Two corrections to what is said
+  `docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-2.md`; round 3 took the last three of the
+  eight — `docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-3.md` — so this count is now ONE,
+  `MailSettings`, and that round's §5 is the specification for it.** Two corrections to what is said
   above, both found by opening the files rather than by reading this page:
   `HomepageContent` was never on its own `cast()` — it already read and wrote
   through ModuleSchema and had simply not been added to the guard; and the last

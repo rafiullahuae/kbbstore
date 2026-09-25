@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Http\Middleware\CacheHeaders;
+use App\Services\ModuleSchema;
 use App\Services\SettingsService;
 
 /**
@@ -103,11 +104,52 @@ final class CacheSettings
      */
     public const ASSET_EXTENSIONS = 'css|js|mjs|map|jpe?g|png|webp|gif|svg|ico|woff2?';
 
-    /** key => [type, default, min, max]. */
+    /**
+     * The three settings, in App\Services\ModuleSchema's shape — Lane M3.
+     *
+     * It was `key => [type, default, min, max]`, a positional list of this
+     * class's own that agrees with ModuleSchema's `[type, label, default, help,
+     * options]` on position 0 and on nothing after it. Written out
+     * associatively, where there are no positions to confuse, with the same
+     * three keys in the same order, the same defaults and the same bounds —
+     * CacheControlScreenTest asserts that order and that count directly, and is
+     * untouched by this round.
+     *
+     * The clamp moves into `options`, which is where ModuleSchema's int arm
+     * reads a bound from. Every answer is pinned against the calls recorded off
+     * the parent revision in tests/Fixtures/module-settings-baseline.txt.
+     */
     public const SCHEMA = [
-        self::ENABLED => ['bool', false, 0, 1],
-        self::HTML_MAX_AGE => ['int', 0, 0, self::HTML_MAX_AGE_CEILING],
-        self::ASSET_MAX_AGE => ['int', self::ASSET_MAX_AGE_CEILING, 0, self::ASSET_MAX_AGE_CEILING],
+        self::ENABLED => ['type' => 'bool', 'default' => false, 'store' => ModuleSchema::STORE_SETTING],
+        self::HTML_MAX_AGE => ['type' => 'int', 'default' => 0, 'options' => ['min' => 0, 'max' => self::HTML_MAX_AGE_CEILING], 'store' => ModuleSchema::STORE_SETTING],
+        self::ASSET_MAX_AGE => ['type' => 'int', 'default' => self::ASSET_MAX_AGE_CEILING, 'options' => ['min' => 0, 'max' => self::ASSET_MAX_AGE_CEILING], 'store' => ModuleSchema::STORE_SETTING],
+    ];
+
+    /**
+     * This screen's point on ModuleSchema's seven policy axes.
+     *
+     * `bool => 'words+null'` is the dialect this class copied from
+     * ReviewSettings "in spirit" and then wrote out a second time, `null`
+     * included. It is the ONE switch on this screen, and it decides whether a
+     * live shop's Cache-Control header changes — a fold that read the stored
+     * word `null` as true would switch caching ON, on a shop taking real
+     * orders, with nobody having asked. That is the whole argument for
+     * declaring a dialect rather than defaulting one, in one setting.
+     *
+     * `clamp => true` is `max($min, min($max, (int) $value))`, which this class
+     * has to keep doing: it reads a longText column, and its own header records
+     * that the ceiling is enforced here as well as in the validator.
+     * `markup`/`hex` are the shipped defaults and carry no field of this
+     * screen — there is no text and no colour among the three.
+     */
+    public const POLICY = [
+        'max' => 5000,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'words+null',
+        'markup' => 'keep',
     ];
 
     /**
@@ -143,11 +185,10 @@ final class CacheSettings
     public static function all(SettingsService $settings): array
     {
         $out = [];
+        $fields = ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY);
 
         foreach (self::FIELDS as $field => $key) {
-            [, $default] = self::SCHEMA[$key];
-
-            $out[$field] = self::normalise($key, $settings->get($key, $default));
+            $out[$field] = self::normalise($key, $settings->get($key, $fields[$key]['default']));
         }
 
         return $out;
@@ -184,23 +225,34 @@ final class CacheSettings
         }
     }
 
+    /**
+     * Fold any stored value onto the schema.
+     *
+     * ── ONE CAST, NOT A THIRD COPY OF ONE (Lane M3) ─────────────────────────
+     *
+     * The bool arm's own comment said it was "copied in spirit from
+     * ReviewSettings::normalise()" — which is the defect the shared cast exists
+     * to end, written down by the person committing it. Three copies of one
+     * word list is how four modules kept a colour bug ProductLabels had already
+     * fixed in its own copy. It is App\Services\ModuleSchema's `words+null`
+     * dialect now, declared in POLICY above, and the answers are pinned call by
+     * call against the parent revision.
+     *
+     * The return type is unchanged and stays narrow: this class's three fields
+     * are one bool and two ints, and `invalid => 'default'` means cast() cannot
+     * answer null for any of them. The fallback is written out anyway, because
+     * a signature that depends on a policy constant three lines up should not
+     * depend on it silently.
+     */
     public static function normalise(string $key, mixed $value): bool|int
     {
-        [$type, $default, $min, $max] = self::SCHEMA[$key]
+        $field = ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY)[$key]
             ?? throw new \InvalidArgumentException("Unknown cache setting [{$key}].");
 
-        return match ($type) {
-            // The shapes a false comes back as from a longText column. Copied
-            // in spirit from ReviewSettings::normalise(), which learned them
-            // from an actual WordPress export: PHP's own (bool) reads '' and
-            // '0' as false but reads the word 'false' as TRUE.
-            'bool' => ! in_array(
-                mb_strtolower(trim((string) (is_bool($value) ? ($value ? '1' : '0') : $value))),
-                ['', '0', 'false', 'off', 'no', 'null'],
-                true
-            ),
-            default => max((int) $min, min((int) $max, (int) $value)),
-        };
+        $cast = ModuleSchema::cast($field, $value);
+
+        /** @var bool|int */
+        return $cast === null ? $field['default'] : $cast;
     }
 
     /**

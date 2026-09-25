@@ -69,6 +69,32 @@ function mScreenUrls(): array
          * change, which is the kind of red that gets a test deleted.
          */
         'security',
+        /*
+         * Lane M3. The three App\Support\*Settings screens, whose payloads
+         * round 2 named as the other half of the blocker — "migrating them
+         * rewrites three constants and moves three screens' payloads".
+         *
+         * THEY HAVE NO `tabs` KEY, and that is not an omission. None of the
+         * three draws its controls out of a schema payload: Review Settings and
+         * the two badge screens draw their own controls in their own partials
+         * and receive a FLAT `settings` map, and Cache receives a reading of the
+         * shop rather than a form. So the loop below compares their recorded
+         * keys OUTRIGHT — the whole settings map, the whole option lists, the
+         * whole theme table — which is a stricter comparison than the tab walk,
+         * not a weaker one: a single moved default fails it.
+         *
+         * Their fixture entries carry the DETERMINISTIC keys only, the way
+         * Security's carries `tabs` and not `report`. What is left out, and why:
+         * review-badges' `sample` is the most-reviewed product read out of the
+         * database; cache's `live` is a sub-request through the kernel,
+         * `compiled` is a directory listing, `store` is the configured cache
+         * driver and `assets` holds a URL built from the build manifest. Every
+         * one of those differs between two runs of the same code, and recording
+         * it would make this test fail on the machine rather than on a change.
+         */
+        'review-settings',
+        'review-badges',
+        'cache',
     ];
 }
 
@@ -158,5 +184,16 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // A guard on the guard: if the fixture or the URL list is emptied, the loop
     // above passes by doing nothing. It compared 482 fields when written.
     // 482 when written; Store → Security's 18 controls joined in Lane M2.
+    //
+    // STILL 500 AFTER LANE M3, and that is the right number rather than a
+    // stale one: the three screens it added carry no `tabs`, so they are
+    // compared key by key above and contribute no tab-walked control. The
+    // count below would not notice them going missing, so a second guard does:
     expect($compared)->toBe(500, 'the number of controls drawn changed');
+
+    foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
+        expect($expected[$flat]['settings'] ?? null)
+            ->toBeArray()
+            ->not->toBeEmpty("the recorded {$flat} settings map is empty — the outright comparison above would pass by doing nothing");
+    }
 });

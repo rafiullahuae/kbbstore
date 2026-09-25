@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Services\ModuleSchema;
 use App\Services\SettingsService;
 
 /**
@@ -62,23 +63,58 @@ final class ReviewBadgeSettings
     public const LABEL_MAX = 60;
 
     /**
-     * key => [type, default]
+     * The seven settings, in App\Services\ModuleSchema's shape — Lane M3.
      *
      * Every default is the literal resources/views/store/product.blade.php
      * already passes as the second argument to $settings->get(), so a store
      * that has never opened either screen behaves exactly as it does today and
      * these packages are a no-op until somebody changes something on purpose.
      * ReviewBadgeScreenTest pins that agreement against the RENDERED PAGE
-     * rather than against this comment.
+     * rather than against this comment, and pins the key count, and both are
+     * untouched by this round.
+     *
+     * ── THE COLOUR IS WHY THIS ONE NEEDED A NEW AXIS ────────────────────────
+     *
+     * `hex => 'expand'` is a THIRD hex dialect, and round 2's note named only
+     * a third BOOLEAN one, so this was found by driving the corpus rather than
+     * by reading. This class requires the `#`, expands `#abc` to `#AABBCC` and
+     * upper-cases; ModuleSchema's `repair` accepts a hash-less `e23a4e` and
+     * stores `#ABC` for `#abc`, and its `strict` refuses `#abc` outright and
+     * keeps whatever case arrived.
+     *
+     * The expansion is the half that looks free and is not. `#ABC` and
+     * `#AABBCC` are the same colour to a browser — and activeTheme() below
+     * decides which preset a shop is on by comparing the STORED SIX DIGITS
+     * against each theme's, so folding this onto `repair` would have read a
+     * shop on Classic back as "Custom" while the badge drew identically.
      */
     public const SCHEMA = [
-        'review_capsule_style' => ['enum', 'capsule'],
-        'review_badge_heart' => ['bool', true],
-        'review_badge_avg' => ['bool', true],
-        'review_badge_count' => ['bool', true],
-        'review_badge_label' => ['text', '{n} reviews'],
-        'review_badge_sold' => ['bool', true],
-        'review_badge_colour' => ['colour', '#E8A33D'],
+        'review_capsule_style' => ['type' => 'select', 'default' => 'capsule', 'options' => self::STYLES, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_heart' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_avg' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_count' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_label' => ['type' => 'text', 'default' => '{n} reviews', 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_sold' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_colour' => ['type' => 'colour', 'default' => '#E8A33D', 'store' => ModuleSchema::STORE_SETTING],
+    ];
+
+    /**
+     * This screen's point on ModuleSchema's seven policy axes.
+     *
+     * `blank => 'default'` is the reason label() had a fallback: an empty label
+     * is not "hide the count" — the count has its own switch — it is a blank
+     * gap next to the stars. `markup => 'strip'` is the strip_tags() that
+     * label() has always run; it is a wording rule and NOT what makes the
+     * string safe to print, which is Blade's escaping in product.blade.php.
+     */
+    public const POLICY = [
+        'max' => self::LABEL_MAX,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'expand',
+        'bool' => 'words+null',
+        'markup' => 'strip',
     ];
 
     /**
@@ -169,8 +205,8 @@ final class ReviewBadgeSettings
     {
         $out = [];
 
-        foreach (self::SCHEMA as $key => [, $default]) {
-            $out[$key] = self::normalise($key, $settings->get($key, $default));
+        foreach (ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY) as $key => $f) {
+            $out[$key] = self::normalise($key, $settings->get($key, $f['default']));
         }
 
         return $out;
@@ -185,74 +221,39 @@ final class ReviewBadgeSettings
      */
     public static function normalise(string $key, mixed $value): bool|string
     {
-        [$type, $default] = self::SCHEMA[$key]
+        $field = ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY)[$key]
             ?? throw new \InvalidArgumentException("Unknown review badge setting [{$key}].");
 
-        return match ($type) {
-            // The same fold ReviewSettings uses, and for the same reason: '0'
-            // and '' are what a false becomes through a text column, but an
-            // older build wrote words, and (bool) reads 'false' as true.
-            'bool' => ! in_array(
-                mb_strtolower(trim((string) (is_bool($value) ? ($value ? '1' : '0') : $value))),
-                ['', '0', 'false', 'off', 'no', 'null'],
-                true
-            ),
-            'enum' => isset(self::STYLES[(string) $value]) ? (string) $value : (string) $default,
-            'colour' => self::colour((string) $value, (string) $default),
-            default => self::label((string) $value, (string) $default),
-        };
+        $cast = ModuleSchema::cast($field, $value);
+
+        /** @var bool|string */
+        return $cast === null ? $field['default'] : $cast;
     }
 
-    /**
-     * A strict hex colour, or the default.
+    /*
+     * colour() and label() USED TO LIVE HERE, and what each of them guaranteed
+     * is now a declared point on a policy axis rather than a private method:
      *
-     * NOT COSMETIC VALIDATION. product.blade.php interpolates this value
-     * straight into a style attribute:
+     *   colour()  NOT COSMETIC VALIDATION. product.blade.php interpolates this
+     *      value straight into a style attribute:
      *
-     *     <span class="sr-cap-stars" style="color:{{ $badgeColour }}">
+     *          <span class="sr-cap-stars" style="color:{{ $badgeColour }}">
      *
-     * Blade escapes the quotes, so the attribute cannot be broken out of — but
-     * the value is still inside a style attribute, and `red;position:fixed;
-     * inset:0;z-index:9999` is a perfectly good CSS payload that never needs a
-     * quote. Anything that is not #rgb or #rrggbb is refused here and the
-     * default stands, so nothing but a colour can reach that attribute.
+     *      Blade escapes the quotes, so the attribute cannot be broken out of —
+     *      but the value is still inside a style attribute, and
+     *      `red;position:fixed;inset:0;z-index:9999` is a perfectly good CSS
+     *      payload that never needs a quote. `hex => 'expand'` refuses anything
+     *      that is not #rgb or #rrggbb and the default stands, so nothing but a
+     *      colour can reach that attribute — and ModuleSchema::rule() REFUSES to
+     *      let a colour's validation be replaced by a module-local function at
+     *      all, which is a stronger statement about this field than a private
+     *      method here could make.
      *
-     * Three-digit shorthand is expanded rather than refused: it is valid CSS, a
-     * colour picker may well emit it, and storing one canonical form means the
-     * theme comparison in activeTheme() is a string compare.
+     *   label()  Trimmed, de-tagged, bounded, never empty: `markup => 'strip'`,
+     *      `max => LABEL_MAX`, `blank => 'default'`. An empty label is not "hide
+     *      the count" — the count has its own switch — it is a blank gap next to
+     *      the stars.
      */
-    private static function colour(string $value, string $default): string
-    {
-        $clean = strtoupper(trim($value));
-
-        if (preg_match('/^#([0-9A-F]{3})$/', $clean, $m) === 1) {
-            return '#' . $m[1][0] . $m[1][0] . $m[1][1] . $m[1][1] . $m[1][2] . $m[1][2];
-        }
-
-        if (preg_match('/^#[0-9A-F]{6}$/', $clean) === 1) {
-            return $clean;
-        }
-
-        return strtoupper($default);
-    }
-
-    /**
-     * The count wording. Trimmed, de-tagged, bounded, never empty.
-     *
-     * An empty label is not "hide the count" — the count has its own switch —
-     * it is a blank gap next to the stars, so an empty value falls back to the
-     * default the storefront already ships.
-     */
-    private static function label(string $value, string $default): string
-    {
-        $clean = trim(strip_tags($value));
-
-        if ($clean === '') {
-            return $default;
-        }
-
-        return mb_substr($clean, 0, self::LABEL_MAX);
-    }
 
     /**
      * Which preset the stored values correspond to, or 'custom'.
