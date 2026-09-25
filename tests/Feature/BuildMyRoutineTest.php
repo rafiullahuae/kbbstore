@@ -493,15 +493,25 @@ it('registers every endpoint behind the admin guard, and neither storefront page
     }
 
     /*
-     * SIX SINCE LANE Q ROUND 3, not five: POST /admin-api/routines-module joins
-     * the five Lane FM registered. It is the switch that publishes the two
-     * storefront pages, surfaced on the screen where the tagging happens, and
-     * it is the one endpoint in this file that is store.settings rather than
-     * catalog.* — AdminCapabilityMapTest and RoutineSearchAndDemoTest pin that
-     * separately. The count is here so a route added without a capability rule
-     * cannot slip in unnoticed; the loop below is what actually guards them.
+     * SEVEN SINCE LANE Q4, and the count is advanced deliberately rather than
+     * loosened. The history, so the number means something:
+     *
+     *   5  Lane FM, the original set.
+     *   6  Lane Q round 3 — POST /admin-api/routines-module, the switch that
+     *      publishes the two storefront pages. The one endpoint in this file
+     *      that is store.settings rather than catalog.*.
+     *   7  Lane Q4 — POST /admin-api/routine-products-bulk, tagging several
+     *      products in one press. catalog.manage, the same capability as the
+     *      single-product write it generalises, with its own rule ABOVE the
+     *      reads in AdminCapabilities::RULES. RoutineTaggingBulkTest pins the
+     *      capability, the ordering and the refusal for a role that may read
+     *      the catalogue but not change it.
+     *
+     * THIS ASSERTION CAUGHT THE NEW ROUTE, which is what it is for: the count
+     * exists so a route added without a capability rule cannot slip in
+     * unnoticed, and the loop below is what actually guards them.
      */
-    expect($admin)->toHaveCount(6);
+    expect($admin)->toHaveCount(7);
     expect($store)->toHaveCount(2);
 
     foreach ($admin as $route) {

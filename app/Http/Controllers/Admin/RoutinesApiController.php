@@ -46,6 +46,36 @@ class RoutinesApiController extends Controller
 
     private const LIKE_ESCAPE_SQL = "'!'";
 
+    /**
+     * The most rows one bulk write may carry.
+     *
+     * Four pages of PER_PAGE, and the screen can only ever select ONE — the
+     * headroom is for a caller that pages through a selection, not for a
+     * caller that means the whole catalogue. A cap rather than no cap because
+     * this endpoint's cost is linear in the ids it is handed and an
+     * unbounded admin write is how a shared host gets a request killed halfway.
+     */
+    private const BULK_MAX = 4 * self::PER_PAGE;
+
+    /**
+     * Ids per UPDATE statement. See bulk().
+     *
+     * One bound variable per id plus one for the value, so 200 is 201
+     * placeholders — far inside SQLite's 32,766 and MySQL's 65,535. BULK_MAX is
+     * smaller than this today, which makes the chunking a no-op and is exactly
+     * why it is written: raising BULK_MAX later must not quietly become the
+     * first statement that sails past a ceiling.
+     */
+    private const CHUNK = 200;
+
+    /**
+     * Array keys standing in for NULL, because PHP array keys cannot be null
+     * and `''` is a role this vocabulary could one day have.
+     */
+    private const NO_ROLE = "\0no-role";
+
+    private const NO_CONCERNS = "\0no-concerns";
+
     public function __construct(
         private BuildMyRoutine $routines,
         private SettingsService $settings,
@@ -594,6 +624,258 @@ class RoutinesApiController extends Controller
             ],
             // The counts move on every save and the header prints them, so they
             // ride back with the write rather than costing a second request.
+            'coverage' => $this->routines->coverage(),
+        ]);
+    }
+
+    /**
+     * POST /admin-api/routine-products-bulk — tag several products in one press.
+     *
+     * ══ WHY THIS ENDPOINT EXISTS ═══════════════════════════════════════════
+     *
+     * docs/SEO-FEATURE-MATRIX.md §2 ranks concern-led landing pages as the
+     * largest gap against the competitor, and §3 item 1 sizes the work behind
+     * them as "tag 30-45 products" on this screen. docs/SEO-CONCERN-MAPPING.md
+     * §1 then recorded the friction, in as many words:
+     *
+     *     "There is no bulk-tagging endpoint. Tagging is per product, which is
+     *      why §3 is organised to make each search return a group that all gets
+     *      the same chip."
+     *
+     * Read that sentence twice, because it contains the design. The worksheet
+     * is organised BY CONCERN: he types `centella`, and what comes back is a
+     * cleanser, two toners, a serum and a cream — five different STEPS and one
+     * shared CONCERN. So the operation that collapses that search into one
+     * press is "give all of these the sensitivity chip", and a bulk control
+     * that only set steps would miss the job it was built for.
+     *
+     * Both are here. Steps too, because the step-shaped searches are real —
+     * `cleansing foam`, `sunscreen`, `SPF` — and there the answer is one step
+     * for the whole result set.
+     *
+     * ══ THE FOUR DECISIONS, STATED ═════════════════════════════════════════
+     *
+     * ── 1. WHAT A BULK WRITE IS, AND WHY IT IS PER-ROW VALUES ──────────────
+     *
+     * The obvious shape is a verb: `{ids: [...], add_concern: 'sensitivity'}`.
+     * It is the wrong one, and the reason is undo.
+     *
+     * "Add sensitivity to twelve products" does not invert to "remove
+     * sensitivity from twelve products": three of them may have carried it
+     * already, and undoing by subtraction would strip a tag the operator set
+     * last week and never touched today. The only honest inverse of a write is
+     * the state that was there before it.
+     *
+     * So this endpoint takes per-row TARGET values — exactly the shape
+     * tag() takes, one row at a time — and every response carries each row's
+     * `before`. Undo is then this same endpoint, posting those `before` values
+     * back: ONE writer, ONE validation path, and an undo that is correct by
+     * construction rather than by a second implementation agreeing with the
+     * first.
+     *
+     * The client computes the target list (it holds every visible row's
+     * concerns and already does this for the single-row chips). The server
+     * cleans it through RoutineConcerns::clean() regardless, so a client that
+     * computes badly still cannot write a slug that is not in the vocabulary.
+     *
+     * ── 2. AN UNCHANGED ROW IS NOT WRITTEN ─────────────────────────────────
+     *
+     * A row whose target equals its current value is left alone: it is not in
+     * any UPDATE, and its `before` equals its `after`, so undoing a bulk that
+     * was a no-op for it is also a no-op for it. This is what makes "add a chip
+     * to twelve products, three of which already had it" reversible without
+     * remembering which three.
+     *
+     * ── 3. WHAT IT COSTS ───────────────────────────────────────────────────
+     *
+     * One SELECT for the rows, then updates GROUPED BY THE VALUE BEING
+     * WRITTEN — not one per row. Forty products set to `treat` is ONE
+     * statement. Forty products given a concern is one statement per distinct
+     * resulting list, which on a real search is one or two: the rows that had
+     * nothing become ["sensitivity"] together, the rows that already carried
+     * `acne` become ["acne","sensitivity"] together.
+     *
+     * The worst case is one statement per row, and it is reached only by a
+     * selection in which every row ends up with a different concern list —
+     * which this screen's controls cannot produce, since they apply one chip to
+     * the whole selection. RoutineTaggingBulkTest measures the real shapes.
+     *
+     * Chunked at CHUNK ids per statement, the way
+     * App\Services\Import\RedirectDecisions does and for its reason: the bound
+     * variables are the ids, and a limit raised here later must not quietly
+     * sail past SQLite's 32,766-placeholder ceiling.
+     *
+     * ── 4. A CONCERN DOES NOT REQUIRE A STEP, AND THAT IS DELIBERATE ───────
+     *
+     * The per-row concern chips on the screen are disabled until the product
+     * has a step, on the grounds that a product with no step is never offered
+     * in a routine. That is right for the routine builder and WRONG for the
+     * thing this lane exists to unblock: App\Support\ConcernCollections::
+     * query() selects `routine_concerns LIKE …` and NEVER READS
+     * `routine_role`, and BuildMyRoutine::coverage() counts the concern-page
+     * countdown from the same explicit tags, role or no role. A concern tag on
+     * a product with no step is exactly what /concern/{slug}/ needs.
+     *
+     * So this endpoint does not refuse one, and it does not silently skip the
+     * row either — it reports `without_step`, the count of rows it wrote a
+     * concern onto that carry no step, so the screen can say so on the way out.
+     * Neither the per-row chips nor their disabled state is changed by this
+     * lane; this is a different control with a different job, and the number it
+     * returns is how it stays honest about the difference.
+     *
+     * ══ WHAT IT IS NOT ═════════════════════════════════════════════════════
+     *
+     * It is not "apply to everything matching this search". It takes explicit
+     * ids and no query at all, so nothing it can be handed reaches a row the
+     * operator was not looking at. The selection scope is argued at the
+     * checkbox, in the screen; this endpoint could not widen it if it wanted
+     * to. BULK_MAX caps it at four pages' worth, and the screen can only ever
+     * select one page.
+     */
+    public function bulk(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'rows' => ['required', 'array', 'min:1', 'max:'.self::BULK_MAX],
+            'rows.*.id' => ['required', 'integer', 'min:1'],
+            'rows.*.role' => ['sometimes', 'nullable', 'string', 'in:'.implode(',', RoutineRoles::ORDER)],
+            'rows.*.concerns' => ['sometimes', 'nullable', 'array', 'max:'.count(RoutineConcerns::LIST)],
+            'rows.*.concerns.*' => ['string', 'in:'.implode(',', RoutineConcerns::slugs())],
+        ]);
+
+        /*
+         * THE SAME PRODUCT TWICE IS REFUSED, NOT RESOLVED. Two instructions for
+         * one row is an ambiguous request, and the two ways to resolve it
+         * (first wins, last wins) are both a guess at what was meant. Guessing
+         * is how a bulk control writes something nobody asked for. The screen
+         * cannot produce this — a selection is a set — so refusing costs the
+         * operator nothing and closes the door on a caller that is not the
+         * screen.
+         */
+        $wanted = [];
+
+        foreach ($data['rows'] as $row) {
+            $id = (int) $row['id'];
+
+            if (array_key_exists($id, $wanted)) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'The same product was sent twice.',
+                ], 422);
+            }
+
+            $wanted[$id] = $row;
+        }
+
+        $products = Product::query()
+            ->whereIn('id', array_keys($wanted))
+            ->get(['id', 'routine_role', 'routine_concerns']);
+
+        /*
+         * An id that no longer exists is NAMED, not silently dropped and not
+         * fatal to the rest. The ids come off a page the operator is looking
+         * at; one of them missing means the product was deleted under him,
+         * which he should be told about — while the other thirty-nine are
+         * exactly what he asked for and refusing them all would cost him the
+         * selection as well.
+         */
+        $found = [];
+        foreach ($products as $p) {
+            $found[(int) $p->id] = true;
+        }
+
+        $missing = array_values(array_diff(array_keys($wanted), array_keys($found)));
+
+        /** @var array<string, list<int>> $roleGroups value => ids */
+        $roleGroups = [];
+        /** @var array<string, list<int>> $concernGroups encoded list => ids */
+        $concernGroups = [];
+
+        $rows = [];
+        $changed = 0;
+        $withoutStep = 0;
+
+        foreach ($products as $product) {
+            $id = (int) $product->id;
+            $ask = $wanted[$id];
+
+            $wasRole = RoutineRoles::normalise($product->routine_role);
+            $wasConcerns = RoutineConcerns::clean($product->routine_concerns);
+
+            $role = $wasRole;
+            $concerns = $wasConcerns;
+
+            if (array_key_exists('role', $ask)) {
+                $role = RoutineRoles::normalise($ask['role']);
+            }
+
+            if (array_key_exists('concerns', $ask)) {
+                $concerns = RoutineConcerns::clean($ask['concerns']);
+            }
+
+            $moved = false;
+
+            if ($role !== $wasRole) {
+                $roleGroups[$role ?? self::NO_ROLE][] = $id;
+                $moved = true;
+            }
+
+            if ($concerns !== $wasConcerns) {
+                // NULL and [] mean the same thing to the engine — "suits any
+                // routine" — and NULL is what an untouched row holds, so
+                // clearing puts the row back into that state rather than beside
+                // it. Same rule as tag(), written once more because the writer
+                // here is a grouped UPDATE rather than a model save.
+                $concernGroups[$concerns === [] ? self::NO_CONCERNS : json_encode($concerns)][] = $id;
+                $moved = true;
+
+                if ($concerns !== [] && $role === null) {
+                    $withoutStep++;
+                }
+            }
+
+            if ($moved) {
+                $changed++;
+            }
+
+            $rows[] = [
+                'id' => $id,
+                'role' => $role,
+                'concerns' => $concerns,
+                // What undo posts back. Read from the ROW, not from what the
+                // client believed the row held.
+                'before' => ['role' => $wasRole, 'concerns' => $wasConcerns],
+            ];
+        }
+
+        DB::transaction(function () use ($roleGroups, $concernGroups): void {
+            foreach ($roleGroups as $value => $ids) {
+                $role = $value === self::NO_ROLE ? null : (string) $value;
+
+                foreach (array_chunk($ids, self::CHUNK) as $chunk) {
+                    Product::query()->whereIn('id', $chunk)->update(['routine_role' => $role]);
+                }
+            }
+
+            foreach ($concernGroups as $value => $ids) {
+                $json = $value === self::NO_CONCERNS ? null : (string) $value;
+
+                foreach (array_chunk($ids, self::CHUNK) as $chunk) {
+                    Product::query()->whereIn('id', $chunk)->update(['routine_concerns' => $json]);
+                }
+            }
+        });
+
+        return response()->json([
+            'ok' => true,
+            // How many rows this write actually moved, which is not how many
+            // were sent: a chip applied to a selection that mostly carried it
+            // already moves three of twelve, and saying "12 saved" over that
+            // would be a number the screen made up.
+            'changed' => $changed,
+            'sent' => count($wanted),
+            'without_step' => $withoutStep,
+            'missing' => $missing,
+            'rows' => $rows,
             'coverage' => $this->routines->coverage(),
         ]);
     }
