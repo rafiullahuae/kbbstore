@@ -660,6 +660,69 @@ class CartPage
     ];
 
     /** How many products the rail will hold. A cap, not a paging window. */
+    /**
+     * What a rail card SELECTs, rather than `select *`.
+     *
+     * ── TWO COSTS, ONE OF THEM UNBOUNDED ────────────────────────────────────
+     *
+     * This query used to be `Product::query()->whereIn('id', $ids)->get()`,
+     * with no column list and no eager load, and the card in
+     * store/cart-inner.blade.php reads `$recProduct->brand?->name` twice. So
+     * every card cost ONE MORE `select * from brands where id = ?`. Measured on
+     * /cart against a one-line basket: 11, 12, 15 and 20 statements for 1, 2, 5
+     * and 10 cards, of which 3, 4, 7 and 12 were reads of `brands`. Slope
+     * exactly 1.0, and MAX_REC lets the owner put 24 cards on the rail.
+     *
+     * `select *` was the other half and it is the half that does not show up in
+     * a statement count. `products.description` is a longText, and `seo`,
+     * `meta_feed` and `custom_tabs` are json blobs the rail never opens; a
+     * 24-card rail dragged all four back for every card, on the page a shopper
+     * is on when they are deciding whether to pay.
+     *
+     * ── THE LIST IS THE ONE THE COLLECTION PAGES ALREADY USE ────────────────
+     *
+     * Character for character what Store\CollectionController::CARD_COLUMNS
+     * holds, for the reason Lane Q8 gave for spelling the cart's eager load
+     * exactly as the checkout's: a rail card and a grid tile print the same
+     * figures from the same accessors, and two lists that differ by a column
+     * are how one surface quietly stops being able to answer something the
+     * other can.
+     *
+     * Store\ShopController::CARD_COLUMNS is this list PLUS `created_at`, and
+     * the difference is real rather than drift: `<x-product-grid>` and
+     * App\Services\ProductLabels both date a product to decide whether it is
+     * New. THIS RAIL DRAWS NO SUCH BADGE — its card is hand-written markup in
+     * store/cart-inner.blade.php and goes through neither — so the column would
+     * be fetched for every card and read by nothing.
+     *
+     * ▲ FOUR OF THESE ARE LOAD-BEARING AND LOOK OPTIONAL, all four for the same
+     * reason — an accessor reading a column that was never SELECTed gets null
+     * and cannot tell that from a NULL column:
+     *
+     *   `type` and `price`   App\Services\VariantPricing::entry() answers null
+     *                        for a product whose `price` key is absent, so a
+     *                        VARIABLE parent would fall through to
+     *                        effectivePrice()'s 0 and the rail would print
+     *                        AED 0 — the exact defect that class exists to
+     *                        remove, re-entering through a narrowed select.
+     *   `sale_starts_at`     Product::advertisedSalePrice() says it in its own
+     *   `sale_ends_at`       docblock: two absent dates read as "no start
+     *                        bound, no end bound", i.e. a sale that is always
+     *                        on. That FAILS OPEN — an expired markdown keeps
+     *                        being advertised — so the window is selected here
+     *                        rather than inferred.
+     *
+     * `brand_id` is on the list because the `brand` eager load below is a
+     * belongsTo and has nothing to match on without it.
+     *
+     * @var list<string>
+     */
+    public const CARD_COLUMNS = [
+        'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
+        'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
+        'rating', 'review_count', 'featured', 'position', 'type', 'total_sales',
+    ];
+
     public const MAX_REC = 24;
 
     private const PREFIX = 'cartpage_';
@@ -855,9 +918,11 @@ class CartPage
         }
 
         $found = Product::query()
+            ->select(self::CARD_COLUMNS)
             ->whereIn('id', $ids)
             ->where('status', 'publish')
             ->where('is_visible', true)
+            ->with('brand:id,name,slug')
             ->get()
             ->keyBy('id');
 
