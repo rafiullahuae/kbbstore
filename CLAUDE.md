@@ -116,6 +116,28 @@ by luck:
   costs a rewrite of somebody else's merge commits.
 - Stay inside the directories your lane owns. If a change needs a file another
   lane owns, say so rather than editing it.
+- **Do not pin that your own work is NOT wired up yet.** A lane that cannot edit
+  `routes/web.php` or `resources/views/admin/app.blade.php` reasonably wants to
+  prove it did not quietly wire itself up, and the obvious way is an assertion
+  like `expect($web)->not->toContain('my-routes.php')`. That assertion is
+  correct in the lane's worktree and **goes red the moment the integrator does
+  the one thing the lane asked for**, and the only way to green it as written is
+  to UNMOUNT the feature. It happened three times in one day — the article
+  editor, the homepage preview and the shoppable-video screen — and each cost a
+  round trip.
+
+  Pin the FINISHED state instead, which is also the thing that can actually
+  regress: `substr_count($web, "require __DIR__.'/my-routes.php';")` is **1**,
+  or the screen partial is included **exactly once**. Zero is the "built, never
+  wired up" shape this repo keeps finding; two registers a sidebar entry twice
+  and wraps `window.go` around its own wrapper. Both are real failures, and the
+  assertion that catches them is green in the lane's worktree the day it is
+  written **and** after the integrator wires it.
+
+  A lane that genuinely needs its routes registered before they are mounted
+  should do it the way `tests/Support/UgcAdminRoutes.php` and
+  `HomepagePreviewRoutes` do — register the group in the test — rather than by
+  asserting the absence of the require.
 
 ## What every lane owes, every time
 

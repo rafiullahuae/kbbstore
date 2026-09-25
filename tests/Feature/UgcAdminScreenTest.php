@@ -535,13 +535,28 @@ it('stores the Arabic title beside the English one', function () {
 
 /* ══════════════════════════════════════════════════════════ the screen ══ */
 
-it('is included from nowhere, so the integrator has one line to add', function () {
+it('is included exactly once from the admin bundle', function () {
     /*
-     * This lane may not edit resources/views/admin/app.blade.php. The screen is
-     * therefore a partial that registers its own sidebar entry and wraps
-     * window.go, exactly as the nine partials beside it do, so ONE @include is
-     * the whole of the change to that file. This asserts the partial exists and
-     * that nothing in this lane's diff has quietly wired it up.
+     * ▲ FLIPPED WHEN THE INTEGRATOR WIRED IT, and the original is quoted
+     * because the flip has to be checkable. It read:
+     *
+     *     expect($app)->not->toContain('ugc-library-screen');
+     *
+     * under the name 'it is included from nowhere, so the integrator has one
+     * line to add'. That is the right assertion for a lane that may not edit
+     * app.blade.php -- it proves the lane did not quietly wire itself up -- and
+     * it is the wrong one the moment the integrator does. Left as written it
+     * goes red on the merge, and the only way to green it would be to unmount
+     * the screen.
+     *
+     * So it pins the finished state, which is the thing that can actually
+     * regress: EXACTLY ONCE. A partial included twice registers its sidebar
+     * entry twice and wraps window.go twice, and the second wrap calls the
+     * first -- which is how a screen ends up painting itself two deep. A
+     * partial included zero times is the "built, never wired up" shape this
+     * repository keeps finding: the fallback update page that 500'd for its
+     * whole life, the crawl files mounted with no walk entry, the exporter's
+     * seven files nothing read.
      */
     $partial = resource_path('views/admin/partials/ugc-library-screen.blade.php');
 
@@ -549,7 +564,12 @@ it('is included from nowhere, so the integrator has one line to add', function (
 
     $app = file_get_contents(resource_path('views/admin/app.blade.php'));
 
-    expect($app)->not->toContain('ugc-library-screen');
+    expect(substr_count($app, "@include('admin.partials.ugc-library-screen')"))->toBe(
+        1,
+        'the shoppable-video screen is included '
+        .substr_count($app, "@include('admin.partials.ugc-library-screen')")
+        .' times from app.blade.php; it must be exactly one'
+    );
 });
 
 it('escapes every operator string it prints, and prefixes every class it invents', function () {
