@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\MailSettings;
 use App\Services\Mail\MailTester;
+use App\Services\ModuleSchema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -43,27 +44,70 @@ class MailApiController extends Controller
         private MailTester $tester,
     ) {}
 
+    /**
+     * ── THE DISPLAY BOUNDARY — Lane M4 ──────────────────────────────────────
+     *
+     * This method is where a stored KEY becomes a sentence the owner reads, and
+     * it is the only place in the application that does so. `MailSettings::all()`
+     * used to do it instead, which is what round 3 §5 named as the blocker to
+     * migrating this screen: a reader that hands back a label cannot be
+     * compared against TRANSPORT_KEYS, against transport(), or against what any
+     * other module's reader answers.
+     *
+     * Three things are derived here and nowhere else, all three from the one
+     * schema declaration rather than from a second list:
+     *
+     *   type     `select` is what the rest of the application calls a control
+     *            that picks from a set; `choice` is what this screen's renderer
+     *            has always been sent, and the console's mailControl() branches
+     *            on `f.options` before it looks at the type at all.
+     *   options  the option LABELS, in declared order — `array_values()` over
+     *            the schema's `value => label` map, which is TRANSPORTS and
+     *            ENCRYPTIONS exactly, because those constants are what the
+     *            schema is built from.
+     *   value    for a select, the label of the stored key. The console's
+     *            mailField() prints each option string as BOTH the value and
+     *            the visible text, so the sentence is what has to come back or
+     *            the wrong option is preselected. That requirement is real and
+     *            it is met HERE, three lines from where the sentence is drawn.
+     *
+     * A `secret` never has a `value` to map: ModuleSchema::fields() emits it
+     * with no `value` key at all, so the empty string below is written by this
+     * method and cannot be a stored credential that leaked through.
+     */
     public function show(): JsonResponse
     {
-        $values = $this->settings->all();
+        $schema = MailSettings::schema();
+
+        $rendered = ModuleSchema::fields(
+            $schema,
+            $this->settings->all(),
+            [],
+            [],
+            $this->settings->secretsPresent(),
+        );
+
         $fields = [];
 
-        foreach (MailSettings::SCHEMA as $key => $def) {
-            [$type, $label, $help] = array_pad($def, 3, '');
-
-            $secret = $type === 'secret';
+        foreach ($rendered as $key => $f) {
+            $options = $schema[$key]['options'] ?? null;
+            $secret = $f['type'] === 'secret';
 
             $fields[] = [
                 'key' => $key,
-                'type' => $type,
-                'label' => $label,
-                'help' => $help,
-                // A secret is NEVER sent back.
-                'value' => $secret ? '' : ($values[$key] ?? ''),
-                'has_value' => $secret
-                    ? $this->settings->hasPassword()
-                    : (($values[$key] ?? '') !== ''),
-                'options' => $this->optionsFor($key),
+                'type' => $f['type'] === 'select' ? 'choice' : $f['type'],
+                'label' => $f['label'],
+                'help' => $f['help'],
+                /*
+                 * A secret is NEVER sent back, and `$f` does not even carry a
+                 * `value` key for one — see ModuleSchema::fields(). Empty, not
+                 * masked: a row of asterisks still discloses the length.
+                 */
+                'value' => $secret
+                    ? ''
+                    : (is_array($options) ? (string) ($options[$f['value']] ?? '') : $f['value']),
+                'has_value' => $secret ? $f['has_value'] : ($f['value'] !== ''),
+                'options' => is_array($options) ? array_values($options) : null,
             ];
         }
 
@@ -187,13 +231,11 @@ class MailApiController extends Controller
         return response()->json($result);
     }
 
-    /** @return array<int, string>|null */
-    private function optionsFor(string $key): ?array
-    {
-        return match ($key) {
-            'mail_transport' => MailSettings::TRANSPORTS,
-            'mail_encryption' => MailSettings::ENCRYPTIONS,
-            default => null,
-        };
-    }
+    /*
+     * optionsFor() lived here and named the two option sets a third time — once
+     * in TRANSPORT_LABELS, once in TRANSPORTS, once here. show() now reads them
+     * off the schema, which is built from those constants, so the screen cannot
+     * offer an option the cast would refuse. TRANSPORTS and ENCRYPTIONS stay
+     * because $checks above validates against them by name.
+     */
 }

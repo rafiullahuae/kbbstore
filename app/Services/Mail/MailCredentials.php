@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Mail;
 
 use App\Models\MailCredential;
+use App\Services\SecretStore;
 
 /**
  * The SMTP password, and nothing else.
@@ -19,8 +20,20 @@ use App\Models\MailCredential;
  * Nothing here returns the password to a caller that only wanted to know
  * whether one is set -- use filled() for that, and note that the admin API
  * never calls get() at all.
+ *
+ * ── AND IT IS THE VAULT ModuleSchema WRITES A `secret` INTO (Lane M4) ───────
+ *
+ * App\Services\SecretStore is `put()` and `has()` and NO GETTER. That is the
+ * whole point of the interface: ModuleSchema::write() types its parameter as
+ * SecretStore, so the schema physically cannot read a credential back, however
+ * the render loop is later rewritten. This class keeps get() for
+ * MailConfigurator, which has to build a transport out of it -- the narrowing
+ * is at the SEAM, not at the store.
+ *
+ * put() and has() are one line each on top of save() and filled(), which have
+ * always had these semantics; the interface names them rather than adding them.
  */
-class MailCredentials
+class MailCredentials implements SecretStore
 {
     public const MAILER = 'smtp';
 
@@ -117,5 +130,25 @@ class MailCredentials
     public function forget(): void
     {
         $this->memo = null;
+    }
+
+    /**
+     * SecretStore. `null` forgets the key; anything else is stored verbatim.
+     *
+     * A blank value never arrives here from ModuleSchema::write() -- a blank
+     * secret box means "unchanged" and write() returns before calling this --
+     * but save() below treats one as "unchanged" anyway, which is the behaviour
+     * the admin screen has always had and the one that keeps a save of the SMTP
+     * host from wiping the password.
+     */
+    public function put(string $key, ?string $value): void
+    {
+        $this->save([$key => $value]);
+    }
+
+    /** SecretStore. The one fact a screen may learn about a stored credential. */
+    public function has(string $key): bool
+    {
+        return $this->filled($key);
     }
 }

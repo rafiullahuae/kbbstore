@@ -223,11 +223,53 @@ it('reads a key written by an older release as the same choice', function () {
     app(SettingsService::class)->set('mail_transport', 'log');
     Setting::flushMap();
 
-    expect(app(MailSettings::class)->transport())->toBe(MailSettings::TRANSPORT_LOG)
-        // ...and the screen shows the matching sentence, so the right option is
-        // preselected instead of the dropdown silently reading as the default.
-        ->and(app(MailSettings::class)->get('mail_transport'))
-        ->toBe('Send nothing — write to the log (for testing only)');
+    expect(app(MailSettings::class)->transport())->toBe(MailSettings::TRANSPORT_LOG);
+
+    /*
+     * ...and the screen shows the matching sentence, so the right option is
+     * preselected instead of the dropdown silently reading as the default.
+     *
+     * ── WHY THIS ASSERTION MOVED — Lane M4 ──────────────────────────────────
+     *
+     * It used to read `MailSettings::get('mail_transport')` and expect the
+     * sentence, because all() mapped the stored key to its label on the way
+     * out. Round 3 §5 named that as the concrete blocker to putting this screen
+     * on the shared schema: a reader that answers a display string cannot be
+     * compared against TRANSPORT_KEYS or against transport(), and nothing else
+     * in this application answers that way.
+     *
+     * THE REQUIREMENT IS UNCHANGED AND IS STILL PINNED — it is pinned at the
+     * boundary that actually has it. The console's mailField() prints each
+     * option string as both the value and the visible text, so what has to
+     * carry the sentence is the PAYLOAD, and that is what is asserted here.
+     * MailApiController::show() derives it, three lines from where it is drawn.
+     *
+     * MUTATION ACTUALLY RUN: delete the `is_array($options)` arm from show()'s
+     * `value`. This case goes red, and so does `it offers the choice in plain
+     * words rather than transport names` two tests above it, with
+     *   Failed asserting that two strings are identical.
+     *   -'Use this server's mail (default)'
+     *   +'server'
+     * and ModuleScreenPayloadTest goes red on the recorded `mail` payload. The
+     * console's <option> values are the sentences, so a payload carrying the
+     * key matches no option: the dropdown paints on its first entry and an
+     * owner who saves the screen without touching it changes their transport.
+     */
+    $field = collect(app(MailApiController::class)->show()->getData(true)['fields'])
+        ->firstWhere('key', 'mail_transport');
+
+    expect($field['value'])->toBe('Send nothing — write to the log (for testing only)')
+        ->and($field['options'])->toContain($field['value']);
+
+    /*
+     * And the three readers that disagreed now agree, which is the whole of
+     * this round's Task 2. Before it, get() answered a sentence, transport()
+     * answered a key, and neither could be compared with the other.
+     */
+    expect(app(MailSettings::class)->get('mail_transport'))
+        ->toBe(MailSettings::TRANSPORT_LOG)
+        ->and(app(MailSettings::class)->all()['mail_transport'])
+        ->toBe(app(MailSettings::class)->transport());
 });
 
 /* ----------------------------------------------------------- the From -- */

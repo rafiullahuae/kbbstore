@@ -114,19 +114,53 @@ it('answers every recorded mail call exactly as it did before the shared schema'
     }
 
     /*
-     * THE ONLY EXEMPTION, and it is narrower than a field: `all=` on
-     * `mail_transport`, and nothing else on that line. `raw=` is compared on
-     * every line including this one, so the exemption cannot widen to cover a
-     * stored value that moved.
+     * ── THE TWO EXEMPTIONS, EACH NARROWER THAN A FIELD ─────────────────────
+     *
+     * Round 3 took none and said why: "an exemption with no defect behind it is
+     * a blank cheque." Each of these names its defect, and each is checked so
+     * that it cannot widen to cover anything else on the same line.
+     *
+     * 1 · `mail_transport`, `all=` ONLY. This is Task 2 — all() handed back a
+     *     display sentence where every other reader hands back the stored key.
+     *     `raw=` and `has=` are compared on the same line, so the exemption
+     *     cannot cover a stored value that moved, which is the thing that would
+     *     stop a shop sending.
+     *
+     * 2 · `mail_encryption`, `raw=` ONLY, and only where the new value is one
+     *     of the field's own three options. THE DEFECT: `save()` stored
+     *     whatever was posted, so the settings row could hold `SMTP`, `0` or
+     *     `nonsense` as an encryption — rule 5 of the project notes in as many
+     *     words, "a select stores one of its own options or the default". It
+     *     was never visible on the shop, because all() re-derived to `ssl` on
+     *     the way out and MailConfigurator reads all(); what was wrong was the
+     *     row, and a row that is a lie about the shop is one reader away from
+     *     being handed to Symfony as a DSN scheme.
+     *
+     *     `all=` IS COMPARED ON THOSE LINES and is identical on every one of
+     *     them — 'ssl' before, 'ssl' after — which is the whole argument that
+     *     the fix moved a row nothing read and nothing else.
      */
     $unexpected = [];
 
     foreach ($moved as $line) {
         [$before, $after] = explode('   ==>   ', $line, 2);
 
-        $exempt = str_starts_with($before, 'mail_transport|')
-            && m4Part($before, 'raw=') === m4Part($after, 'raw=')
-            && m4Part($before, 'has=') === m4Part($after, 'has=');
+        $exempt = false;
+
+        if (str_starts_with($before, 'mail_transport|')) {
+            $exempt = m4Part($before, 'raw=') === m4Part($after, 'raw=')
+                && m4Part($before, 'has=') === m4Part($after, 'has=');
+        }
+
+        if (str_starts_with($before, 'mail_encryption|')) {
+            $exempt = m4Part($before, 'all=') === m4Part($after, 'all=')
+                && m4Part($before, 'has=') === m4Part($after, 'has=')
+                && in_array(
+                    trim(substr(m4Part($after, 'raw='), 5), "'"),
+                    MailSettings::ENCRYPTIONS,
+                    true,
+                );
+        }
 
         if (! $exempt) {
             $unexpected[] = $line;
@@ -134,6 +168,14 @@ it('answers every recorded mail call exactly as it did before the shared schema'
     }
 
     expect($unexpected)->toBe([], "These mail settings would store or read a different value than they did before:\n".implode("\n", $unexpected));
+
+    /*
+     * AND THE EXEMPTIONS HAVE TO HAVE FIRED. An exemption that covers nothing
+     * is a claim nobody is checking any more: if the transport label comes back
+     * or the encryption row stops being repaired, this says so rather than
+     * passing quietly.
+     */
+    expect(count($moved))->toBe(20, 'the exempted differences changed in number — read them before touching this figure');
 
     // A guard on the guard: an emptied fixture makes the loop pass by doing
     // nothing. 231 when recorded, across sixteen keys.

@@ -114,7 +114,38 @@ final class ModuleSchema
 
     public const STORE_ADMIN = 'admin';
 
-    public const STORES = [self::STORE_MODULE, self::STORE_SETTING, self::STORE_ADMIN];
+    /**
+     * Not a table. A `secret` field's value goes to a SecretStore — an
+     * encrypted credential row — and this store value is what says so.
+     *
+     * It is checked against the type in both directions in field(): a `secret`
+     * that is not `vault` throws, and a non-secret that IS `vault` throws. The
+     * second half is the one that matters, because it is the way a credential
+     * would otherwise come to be declared with a type the render loop prints.
+     */
+    public const STORE_VAULT = 'vault';
+
+    public const STORES = [self::STORE_MODULE, self::STORE_SETTING, self::STORE_ADMIN, self::STORE_VAULT];
+
+    /**
+     * The third state a `secret` can be written in.
+     *
+     * A secret box renders EMPTY — there is nothing to render, the stored value
+     * never leaves the server — so blank already means "leave the stored one
+     * alone". "Remove the stored password" therefore cannot be expressed as a
+     * value, and this literal carries it instead. It is Store → Mail's own
+     * sentinel, lifted verbatim rather than reinvented, because an install that
+     * has been told "type a - to forget it" must keep working.
+     *
+     * IT IS COMPARED BEFORE ANY CAST RUNS, and that is not an implementation
+     * detail. A `-` handed to castText() with `blank => 'default'` comes back as
+     * the shipped default; handed to one with a `markup => 'strip'` it survives
+     * today and would not if the strip ever grew a punctuation rule. So
+     * cast() REFUSES a secret outright (it throws), and write() compares the
+     * trimmed literal itself. MailSecretTypeTest is the test that goes red if a
+     * future cast is ever put back in front of it.
+     */
+    public const SECRET_FORGET = '-';
 
     /**
      * The field types, and the SETTING_RULES type each one maps to.
@@ -158,6 +189,33 @@ final class ModuleSchema
         'ids'      => 'text',
         'skin'     => 'text',
         'sections' => 'text',
+        /*
+         * ── `secret`: THE FIRST TYPE WHOSE CONTRACT IS WHAT MAY NOT COME BACK ─
+         *
+         * Every other type here answers "what may be stored". This one answers
+         * "what may be READ", and the answer is nothing. It is mapped to `text`
+         * only because SETTING_RULES needs a word; a secret can never be a
+         * `store: admin` field — field() refuses it — so settingRules() never
+         * emits one and that mapping is never used.
+         *
+         * The three methods every migrated module goes through each grew a
+         * branch for it, and each branch is the absence of something:
+         *
+         *   read()    does not emit the key AT ALL. Not '' — absent. An empty
+         *             string is a value a caller can carry around, log, and
+         *             eventually render; a missing key is one that fails where
+         *             somebody reaches for it.
+         *   fields()  emits the field with no `value` and no `default`, and a
+         *             `has_value` boolean instead. `fields()` used to emit
+         *             `'value' => $values[$key] ?? $f['default']` for EVERY
+         *             field unconditionally, which round 3 §5 named as the
+         *             reason this type could not exist yet.
+         *   write()   routes to a SecretStore and never to `settings` or
+         *             `module_settings`, both of which are plain text and both
+         *             of which `GET /admin-api/settings` returns wholesale.
+         *   cast()    throws. A secret has no cast; see SECRET_FORGET.
+         */
+        'secret'   => 'text',
     ];
 
     /** The types whose stored value must be one of a supplied option set. */
@@ -336,10 +394,36 @@ final class ModuleSchema
             throw new \InvalidArgumentException("Module setting “{$key}” has unknown type “{$type}”.");
         }
 
-        $store = (string) ($def['store'] ?? self::STORE_MODULE);
+        $store = (string) ($def['store'] ?? ($type === 'secret' ? self::STORE_VAULT : self::STORE_MODULE));
 
         if (! in_array($store, self::STORES, true)) {
             throw new \InvalidArgumentException("Module setting “{$key}” has unknown store “{$store}”.");
+        }
+
+        /*
+         * A SECRET AND A VAULT ARE THE SAME DECLARATION, CHECKED BOTH WAYS.
+         *
+         * Forwards: a `secret` that is not stored in a vault would be written
+         * into `settings` or `module_settings` by write()'s ordinary arms, and
+         * `GET /admin-api/settings` returns `Setting::map()` entire, with no
+         * allowlist — so a credential put there is a credential handed to the
+         * admin bundle on every page load and to every database backup. That is
+         * the exact trap MailSecretsTest was written for and the reason the SMTP
+         * password lives in `mail_credentials`.
+         *
+         * Backwards, and this is the half that catches the likelier mistake: a
+         * `text` field declared `store: vault` would be routed to the credential
+         * store by write() and then emitted WITH ITS VALUE by fields(), because
+         * fields() only withholds a value from a `secret`. The two halves of the
+         * contract have to travel together or each one is a way to lose the
+         * other.
+         */
+        if (($type === 'secret') !== ($store === self::STORE_VAULT)) {
+            throw new \InvalidArgumentException(
+                $type === 'secret'
+                    ? "Module setting “{$key}” is a secret and must be stored in the “".self::STORE_VAULT."” store, not “{$store}”."
+                    : "Module setting “{$key}” is a {$type} and may not be stored in the “".self::STORE_VAULT."” store; only a secret may."
+            );
         }
 
         /*
@@ -445,7 +529,7 @@ final class ModuleSchema
             return null;
         }
 
-        if (in_array($type, [...self::OPTION_TYPES, 'colour'], true)) {
+        if (in_array($type, [...self::OPTION_TYPES, 'colour', 'secret'], true)) {
             throw new \InvalidArgumentException(
                 "Module setting “{$key}” is a {$type}, whose validation may not be replaced by a rule."
             );
@@ -564,6 +648,23 @@ final class ModuleSchema
         $out = [];
 
         foreach (self::normalise($schema) as $key => $f) {
+            /*
+             * A SECRET IS NOT READ. Not as '', not as the default — the key is
+             * ABSENT from the map this returns.
+             *
+             * An empty string is a value: a caller can carry it, put it in a
+             * payload, log it, and eventually render it, and the day the store
+             * behind it starts answering something other than '' none of those
+             * call sites changes. A missing key fails at the place somebody
+             * reaches for it, which is the only place a mistake here can be
+             * fixed. It is also exactly what MailSettings::all() already did —
+             * `if ($type === 'secret') { continue; }` — so this arm is that
+             * class's behaviour lifted into the schema rather than a new rule.
+             */
+            if ($f['type'] === 'secret') {
+                continue;
+            }
+
             $raw = $f['store'] === self::STORE_MODULE
                 ? $settings->moduleSetting($module, $f['alias'], $f['default'])
                 : $settings->get($f['alias'], $f['default']);
@@ -585,17 +686,62 @@ final class ModuleSchema
      * quietly dropped a bad value would be the same silence this class exists
      * to remove.
      *
+     * ── THE THIRD WRITE STATE, WHICH ONLY A SECRET HAS ─────────────────────
+     *
+     * Every other field has two: the key is in the payload (write it) or it is
+     * not (leave it). A secret has FOUR, because its box is rendered empty and
+     * therefore posts back empty on every save of the screen:
+     *
+     *   absent          leave the stored credential alone
+     *   ''  (or blank)  leave it alone — the box was rendered empty and the
+     *                   owner edited the SMTP host, not the password
+     *   SECRET_FORGET   remove it. The one thing the empty box cannot say.
+     *   anything else   store it, verbatim, bytes and all
+     *
+     * The `array_key_exists` / `cast() === null` pair the other arms use has no
+     * room for the middle two, which is why this branch is before the cast and
+     * not inside it.
+     *
      * @param  array<string, array<int|string, mixed>>  $schema
      * @param  array<string, mixed>  $values
+     * @param  SecretStore|null  $vault  required if the schema declares a secret
      * @return array{written: list<string>, rejected: array<string, string>}
      */
-    public static function write(SettingsService $settings, string $module, array $schema, array $values): array
+    public static function write(SettingsService $settings, string $module, array $schema, array $values, ?SecretStore $vault = null): array
     {
         $written = [];
         $rejected = [];
 
         foreach (self::normalise($schema) as $key => $f) {
             if (! array_key_exists($key, $values)) {
+                continue;
+            }
+
+            if ($f['type'] === 'secret') {
+                /*
+                 * FAILS CLOSED. A schema that declares a credential and a
+                 * caller that forgot to hand over the store is a save that
+                 * would otherwise report success and write the password
+                 * nowhere — or, worse under a later refactor, into `settings`.
+                 * An exception at the call site is the cheap version of finding
+                 * that out.
+                 */
+                if ($vault === null) {
+                    throw new \LogicException(
+                        "Module setting “{$key}” is a secret and this write was given no SecretStore to put it in."
+                    );
+                }
+
+                $posted = is_string($values[$key]) ? trim($values[$key]) : '';
+
+                if ($posted === '') {
+                    continue;   // blank box = unchanged, and nothing is written
+                }
+
+                $vault->put($f['alias'], $posted === self::SECRET_FORGET ? null : $posted);
+
+                $written[] = $key;
+
                 continue;
             }
 
@@ -717,6 +863,31 @@ final class ModuleSchema
          */
         if (($field['rule'] ?? null) !== null) {
             return ($field['rule'])($raw, $field);
+        }
+
+        /*
+         * A SECRET HAS NO CAST, AND THE THROW IS THE POINT.
+         *
+         * Every arm below normalises: it trims, it caps, it substitutes a
+         * default for something it will not store. All three are wrong for a
+         * credential. A password is bytes the owner was given by a mail host
+         * and `  hunter2  ` may genuinely be the password; a cap silently
+         * stores a prefix that will never authenticate; and `blank =>
+         * 'default'` would turn SECRET_FORGET's `-` into the shipped default
+         * rather than forgetting anything.
+         *
+         * That last one is the failure this throw exists for. `-` is a
+         * SENTINEL, not a value, and a sentinel is exactly what a normalising
+         * layer swallows — silently, and on the one screen whose failure mode
+         * is a shop that stops sending order email. So write() compares the
+         * literal itself, before any of this, and anything that routes a secret
+         * through here instead gets an exception rather than a quietly
+         * different password. ModuleSecretTypeTest names the mutations.
+         */
+        if ($field['type'] === 'secret') {
+            throw new \LogicException(
+                "Module setting “{$field['key']}” is a secret; it is written to a SecretStore and never cast."
+            );
         }
 
         return match ($field['type']) {
@@ -1042,13 +1213,49 @@ final class ModuleSchema
      *
      * @param  array<string, array<int|string, mixed>>  $schema
      * @param  array<string, mixed>  $values
+     * @param  array<string, bool>  $secrets  presence flags for `secret` fields, and
+     *         nothing else — see the secret arm below for why it is its own
+     *         parameter rather than another entry in $values.
      * @return array<string, array<string, mixed>>
      */
-    public static function fields(array $schema, array $values, array $policy = [], array $overrides = []): array
+    public static function fields(array $schema, array $values, array $policy = [], array $overrides = [], array $secrets = []): array
     {
         $out = [];
 
         foreach (self::normalise($schema, $policy, $overrides) as $key => $f) {
+            /*
+             * A SECRET IS EMITTED WITHOUT A `value` KEY AT ALL.
+             *
+             * Not `'value' => ''`. The loop below ends in
+             * `'value' => $values[$key] ?? $f['default']`, and round 3 §5 named
+             * that line as the reason this type could not exist: a schema that
+             * can express "encrypted credential" and still runs every field
+             * through it has been asked to print one and has answered.
+             *
+             * `has_value` is the only fact a screen may learn, and it arrives
+             * through its own parameter rather than through `$values` — so
+             * there is no path by which a stored credential is a candidate for
+             * this key. The `(bool)` is not decoration: an implementation that
+             * answered the password itself would emit `true`.
+             *
+             * No `default` either. A secret has no shipped value to fall back
+             * to, and a `default` on the payload is a string the console would
+             * be entitled to prefill the box with.
+             */
+            if ($f['type'] === 'secret') {
+                $out[$key] = [
+                    'key' => $key,
+                    'name' => $key,
+                    'type' => $f['type'],
+                    'label' => $f['label'],
+                    'help' => $f['help'],
+                    'options' => null,
+                    'has_value' => (bool) ($secrets[$key] ?? false),
+                ];
+
+                continue;
+            }
+
             $out[$key] = [
                 'key' => $key,
                 'name' => $key,
@@ -1105,9 +1312,9 @@ final class ModuleSchema
      * @param  array<string, mixed>  $values
      * @return list<array<string, mixed>>
      */
-    public static function tabs(array $schema, array $tabs, array $values, array $policy = [], array $overrides = []): array
+    public static function tabs(array $schema, array $tabs, array $values, array $policy = [], array $overrides = [], array $secrets = []): array
     {
-        $fields = self::fields($schema, $values, $policy, $overrides);
+        $fields = self::fields($schema, $values, $policy, $overrides, $secrets);
         $out = [];
 
         foreach ($tabs as $key => [$label, $description, $keys]) {
@@ -1137,6 +1344,17 @@ final class ModuleSchema
     public static function describe(array $field, mixed $value): string
     {
         return match ($field['type']) {
+            /*
+             * A CONSTANT, AND IT DOES NOT LOOK AT $value.
+             *
+             * describe()'s whole job is to say what a module is currently
+             * doing, in words an owner reads, and every other arm answers from
+             * the value it was handed. For a credential the honest answer that
+             * is also a safe one is a fixed string: the value is not this
+             * helper's to quote, and the `default` arm below would have printed
+             * it in quotes.
+             */
+            'secret' => 'stored, and not shown',
             /*
              * THROUGH THE MODULE'S OWN BOOL DIALECT, not through `words` for
              * everybody (Lane M3). This used to call castBool($value) flat,

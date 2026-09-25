@@ -266,7 +266,7 @@ final class SettingsCorpus
                     '%s|%s|%s|all=%s|raw=%s|has=%s',
                     $key,
                     $type,
-                    json_encode($input),
+                    self::mailInput($type, $input),
                     strtr(var_export($all[$key] ?? '__ABSENT__', true), ["\n" => '\n', "\r" => '\r']),
                     strtr(var_export($readRaw($key), true), ["\n" => '\n', "\r" => '\r']),
                     $hasSecret() ? 'true' : 'false',
@@ -275,5 +275,42 @@ final class SettingsCorpus
         }
 
         return $rows;
+    }
+
+    /**
+     * How an input is written into the fixture line.
+     *
+     * ── A SECRET'S INPUT IS DESCRIBED, NOT QUOTED ───────────────────────────
+     *
+     * This fixture is a tracked file in a public repository, and the first
+     * version of this recorder wrote `json_encode($input)` for every type — so
+     * the password corpus went into git verbatim. They were invented strings
+     * and nothing was disclosed, but the shape is a recorder that commits
+     * whatever it is driven with, and the day somebody re-records it against a
+     * value copied off a real screen the fix is rewriting history.
+     *
+     * MailSecretSurfaceTest is what found it, by scanning the fixture for the
+     * corpus's own password inputs — a test written to check that this could
+     * not happen, run against a file where it had.
+     *
+     * The label has to keep one call distinguishable from another, because the
+     * identity of a recorded line is key|type|input and two lines sharing one
+     * would compare against each other. Length plus a short digest does that
+     * without carrying a byte of the value: `-` and `x` are both one character
+     * and get different digests.
+     */
+    private static function mailInput(string $type, mixed $input): string
+    {
+        if ($type !== 'secret') {
+            return (string) json_encode($input);
+        }
+
+        if ($input === null) {
+            return '<secret:null>';
+        }
+
+        $value = (string) $input;
+
+        return sprintf('<secret:len=%d:%s>', mb_strlen($value), substr(sha1($value), 0, 8));
     }
 }
