@@ -363,10 +363,80 @@ something half-right.
   migration that stops the seeder's stale `true` switching it on by itself — *2.60.205*
 - [x] **The remaining `todo` list re-verified by running it** — seven of the old ten were
   already built and gated; see the corrected inventory above — *2.60.205*
-- [ ] Port the last 2 `todo` modules: `address_autocomplete` (needs a Google Places key
-  and an owner decision about sending partial addresses to Google) and `performance`
-  (does not port — the work it describes is already done unconditionally)
-- [ ] Per-module settings schema shared with the admin renderer, for the modules that own theirs
+- [x] **The last 2 `todo` modules settled** — *2.60.274*. `performance` does not
+  port and now says so on the screen instead of drawing an inert switch beside
+  "Not ported yet": the row reads **"Already applied to every page — nothing to
+  switch"**, because a switch for work that is unconditional is a control that
+  lies. `address_autocomplete` is built as far as it honestly can be — the gate,
+  the key setting, the consent question and the checkout integration, with the
+  network call behind one seam a test stands in for. **Egress is blocked here, so
+  no request was ever made to Google**, and it ships OFF.
+
+  ▲ **AND THE OWNER DECISION IS A PRIVACY ONE, asked in the admin rather than
+  buried in a doc**: *"Address autocomplete suggests a full address as your
+  shopper types — but to do it, every character they type into the address box
+  is sent to Google, before they place the order and even if they never do. Do
+  you want that on your checkout: yes or no?"* It ships **"Not decided yet —
+  nothing is sent"**, which behaves as *no*, and it is the FIRST control in the
+  card, above the key, because pasting a key and agreeing to share a customer's
+  half-typed home address are different acts. Three independent locks — switch,
+  key, consent — and with any one shut the checkout is byte-identical and
+  nothing leaves the browser, asserted by fetching the page rather than by
+  reading a comment. **Still needs the owner**: his answer, and a real Places key
+  with billing. Worth trialling against UAE addresses specifically first —
+  Places' coverage of villa numbers and area names like "Al Reem Island" is thin
+- [x] **Per-module settings schema shared with the admin renderer** — *2.60.274*,
+  and neither blocker was visible from reading. `ModuleSchema` already existed
+  with three modules on it; what stopped the other fourteen was that **the schema
+  could not express four controls the console actually draws** (`normalise()`
+  throws on an unknown type and `TYPES` was missing `tags`, `ids`, `skin`,
+  `sections`, so `ModuleSchema::normalise(HeaderSettings::SCHEMA)` was a fatal
+  error — the header claimed the vocabulary was counted off the existing
+  schemas, and it had been counted off the two migrated ones), and that **the
+  seventeen modules did not merely describe settings differently, they ANSWERED
+  differently.**
+
+  That second finding is the design. Driving every module's own `cast()` over an
+  adversarial corpus — **4,653 calls, recorded before anything was touched** —
+  splits behaviour on **six axes with no two modules alike**: text cap
+  (40/60/120/160/240), what an emptied box means, fall-back vs refuse, clamp vs
+  refuse, two hex dialects, two boolean dialects. A single shared cast would have
+  re-cased every stored colour on three screens, started accepting `#abc` where
+  it is refused, and flipped `"off"` from true to false on ten. **So policy is
+  declared per module, not defaulted**, and the defaults are the strict end. The
+  last two axes were found BY MEASUREMENT — the first draft folded colour and
+  bool together and 322 answers moved.
+
+  ▲ **A colour a shopper never saw.** `Color::isValidHex()` accepts a hex with
+  or without `#`; four modules tested with it and then stored
+  `strtoupper($value)` unchanged, so `e23a4e` was stored as `E23A4E`, which is
+  not a CSS colour. `SectionDividers::cssVariables()` emitted `--dv-col:E23A4E`
+  and CartPanel wrote its accent into a `background:`. The browser drops the
+  declaration: **the value saves, the admin redraws with it, and the shop does
+  not change.** Sixteen fields across CartPanel, MobileHeader, NewsletterSettings
+  and SectionDividers. ProductLabels hit this, diagnosed it in a comment still in
+  that file, and fixed ITS OWN COPY — the other four never got it, because there
+  were four more copies of the same three lines.
+
+  Rule 1 proved rather than asserted: 4,621 of the 4,653 recorded casts came back
+  byte-identical, and the 32 that moved are exactly those sixteen fields on the
+  two inputs with no `#`. A second test requires each exempted call to have
+  stored something no browser accepts and now to store the same digits as a valid
+  colour, so the exemption cannot widen. `ModuleScreenPayloadTest` replays all
+  fourteen module endpoints (482 fields) and **caught a real mistake** — passing
+  validation `overrides()` into the render call put GridSkins and the
+  homepage-section registry into `options`, where two screens had always had
+  `null`
+- [ ] **Eight modules still carry hand-written `cast()`s** — `CartPage`,
+  `CheckoutPage`, `SecurityModule`, `HomepageContent`, `MailSettings`,
+  `ReviewSettings`, `CacheSettings`, `ReviewBadgeSettings`. Deliberately not
+  taken in the same round, and the reason is the work: CheckoutPage's refuses a
+  digit in `rating_text` and CartPage's money clamps at zero rather than
+  refusing, which are **real rules, not policy points**. Each needs sorting into
+  what the schema can declare and what must survive as its own validator.
+  `MobileMenu` cannot join `ModuleFrameworkGuardTest` at all until its groups
+  come out of its controller into a `TABS` constant — and that guard is what
+  caught a module storing a setting with no control to write it
 
 ## Phase 4 — Search
 
