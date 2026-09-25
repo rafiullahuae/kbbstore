@@ -26,7 +26,9 @@ declare(strict_types=1);
  *
  * WHY IT CANNOT ARISE. `RichText::ALLOWED['img']` does not include `srcset`,
  * and `RichText::attributes()` removes every attribute not on the tag's list.
- * `picture` and `source` are not allowed elements at all. Both doors into
+ * `picture` and `source` are not allowed elements either — `source` now loses
+ * its tag and keeps its mis-parsed children (see DROP_TAG_KEEP_CHILDREN), so
+ * the candidate list dies with the attribute either way. Both doors into
  * `posts.body` run that one call. So the attribute is destroyed at the door
  * and there is nothing left for a rewriter to miss.
  *
@@ -135,38 +137,23 @@ it('lands an imported article body with no srcset in it', function () {
         ->toBe(['https://kbeautybliss.com/wp-content/uploads/2021/05/a.jpg']);
 });
 
-it('drops picture and source elements whole, so there is no second srcset door', function () {
+it('strips the srcset from a <picture> while keeping the photograph', function () {
     /*
      * `<source srcset>` is the other shape the attribute arrives in, and it is
-     * closed one level higher: `source` is in `RichText::DROP_WHOLE`, so the
-     * element and its subtree go before any attribute is looked at, and
-     * `picture` is not an allowed element either (it is unwrapped).
+     * closed one level higher — but NOT by dropping the subtree any more.
+     * `source` is an HTML5 void element libxml's HTML4 parser does not know, so
+     * it swallows the `<img>` that follows it; when `source` sat in
+     * `RichText::DROP_WHOLE` the photograph went with it. It is now in
+     * `DROP_TAG_KEEP_CHILDREN`: the tag and every attribute on it, `srcset`
+     * included, are removed, and the `<img>` the parser misfiled underneath it
+     * is promoted. `tests/Feature/ImportJournalPictureTest.php` is the file
+     * that owns that defect; this one asserts only what it means for srcset.
      *
-     * MUTATION: move 'source' out of RichText::DROP_WHOLE and add
-     * 'source' => ['srcset', 'type'] to ALLOWED, and the first assertion here
-     * goes red — a srcset survives into an article body that nothing in this
-     * application can re-point.
-     *
-     * ─────────────────────────────────────────────────────────────────────────
-     * A FINDING THIS LANE IS PINNING RATHER THAN FIXING, because
-     * `app/Support/RichText.php` is not this lane's file:
-     *
-     * THE `<img>` INSIDE THE `<picture>` GOES TOO, and it should not. libxml's
-     * HTML parser is HTML4 and does not know `source` is a void element, so
-     * everything after `<source …>` is parsed as its CHILD — and DROP_WHOLE
-     * then removes the subtree with the `<img>` in it. A `<picture>` block
-     * (whose only valid ordering is `<source>` before `<img>`) therefore
-     * arrives as nothing at all, and the article loses the photograph rather
-     * than the candidate list.
-     *
-     * Asserted below as it behaves today, deliberately, so the note is attached
-     * to something that runs. It does not affect the srcset argument in either
-     * direction — no address survives either way, which is the safe direction —
-     * but it is silent media loss on import and belongs to whoever owns
-     * RichText. `<picture>` with no `<source>` keeps its `<img>`, which is the
-     * second assertion and is what isolates the cause to the void-element
-     * parse rather than to `picture` being unknown.
-     * ─────────────────────────────────────────────────────────────────────────
+     * MUTATION, RUN: move 'source' back into RichText::DROP_WHOLE and the
+     * last assertion here goes red — the photograph disappears again.
+     * MUTATION, RUN: add 'source' => ['srcset', 'type'] to ALLOWED and the
+     * first assertion goes red — a srcset survives into an article body that
+     * nothing in this application can re-point.
      */
     $clean = RichText::clean(
         '<picture><source srcset="https://kbeautybliss.com/wp-content/uploads/2021/05/a-600.webp 600w" '
@@ -182,11 +169,18 @@ it('drops picture and source elements whole, so there is no second srcset door',
 
     expect(str_contains($clean, '<source'))->toBeFalse()
         ->and(str_contains($clean, 'a-600.webp'))->toBeFalse()
-        // The finding: the <img> is taken with the subtree, so nothing is left.
-        ->and(DocumentMediaRewrite::sources($clean))->toBe([]);
+        /*
+         * AND THE PHOTOGRAPH IS STILL THERE, which is the half that used to be
+         * a pinned finding on this test rather than an assertion. The address
+         * the rewrite will re-point is the `<img src>`, and it is exactly one:
+         * the candidate list was destroyed with the tag that carried it, so
+         * there is still nothing here `sources()` is blind to.
+         */
+        ->and(DocumentMediaRewrite::sources($clean))
+        ->toBe(['https://kbeautybliss.com/wp-content/uploads/2021/05/a.jpg']);
 
     // And with no <source> in it the picture's own <img> survives untouched,
-    // which is what places the cause on the void-element parse above.
+    // which is the control on the void-element parse above.
     expect(DocumentMediaRewrite::sources(RichText::clean(
         '<picture><img src="https://kbeautybliss.com/wp-content/uploads/2021/05/a.jpg" alt="a"></picture>'
     )))->toBe(['https://kbeautybliss.com/wp-content/uploads/2021/05/a.jpg']);
