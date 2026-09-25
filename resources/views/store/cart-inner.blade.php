@@ -108,7 +108,14 @@ $kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
                         $thumb = $img ? "background-image:url('" . e($img) . "')" : 'background:' . Gradient::for($seed);
                         $attrs = $item->variant?->label();
                         $line  = $item->lineTotal();
-                        $was   = ($p && $p->isOnSale()) ? (int) $p->price * $item->quantity : 0;
+                        // compareAtPrice(), not the `price` column, which is
+                        // NULL on a variable parent: with isOnSale() now telling
+                        // the truth about a variation markdown, `(int) null` put
+                        // a zero here. It never PRINTED one -- the guard below
+                        // is `$was > $line` -- but see the order-value total
+                        // further down, where a zero is added rather than
+                        // dropped and does real harm.
+                        $was   = ($p && $p->isOnSale()) ? (int) $p->compareAtPrice() * $item->quantity : 0;
                         // The struck "was" and the line total are two figures
                         // off one basket line, so they are quoted at one width
                         // and at a width that separates them: whole dirhams
@@ -171,7 +178,11 @@ $kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
                         $recStyle = $recImg
                             ? "background-image:url('" . e($recImg) . "')"
                             : 'background:' . Gradient::for($recSeed);
-                        $recWas   = $recProduct->isOnSale() ? (int) $recProduct->price : 0;
+                        // Same substitution as the basket line above, and here
+                        // it does print: a recommended variable product that is
+                        // marked down now shows the figure it was marked down
+                        // from, exactly as the tiles on /shop do.
+                        $recWas   = $recProduct->isOnSale() ? (int) $recProduct->compareAtPrice() : 0;
                         $recNow   = (int) $recProduct->effectivePrice();
                     @endphp
                     {{-- The card is a link and the + is a button BESIDE it, not
@@ -253,12 +264,44 @@ $kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
  * It prints only when it is genuinely higher. A "was" equal to the "now" is
  * either noise or a lie, and both read as a lie.
  */
+/*
+ * ▲ max(), AND IT IS LOAD-BEARING RATHER THAN DEFENSIVE.
+ *
+ * The rule above -- "the regular price where the line is on sale, its own price
+ * where it is not" -- was spelt as an either/or, and that is safe only while
+ * every on-sale product HAS a regular price to offer. A variable parent does
+ * not: `products.price` is NULL on it and the money is on the variations. Once
+ * Product::isOnSale() started answering true for a variation markdown, the
+ * on-sale branch contributed `(int) null` -- ZERO -- for that line instead of
+ * what the shopper is paying, and the struck order value came out UNDERSTATED:
+ * a saving smaller than the one being given, on the screen where somebody
+ * decides to pay. Measured on a basket of one simple product marked AED 200
+ * down to AED 50 beside the AED 190 option of a variable product marked to
+ * AED 140 -- subtotal AED 190 -- the row printed **AED 200** where the honest
+ * figure is AED 340. Without the max() below it prints AED 320. Both numbers
+ * are pinned in VariableProductSaleVisibleTest.
+ *
+ * compareAtPrice() supplies the missing figure, and max() is what makes the
+ * sum safe whatever it answers. The parent's compare-at is its FROM-price --
+ * the cheapest option's regular price -- so for a basket line holding a dearer
+ * option it is lower than the line itself, and adding it would understate the
+ * total in exactly the same way a zero does. max() takes the line in that case,
+ * which is the "its own price" arm of the original rule, so this can never
+ * print a before-price below the figure beside it.
+ *
+ * It is the same number as before for every basket that exists today: a simple
+ * product on sale has a compare-at above its line by definition, and one that
+ * is not on sale takes the line.
+ */
 $kbbWasTotal = 0;
 foreach ($items as $kbbWasItem) {
     $kbbWasP = $kbbWasItem->product;
-    $kbbWasTotal += ($kbbWasP && $kbbWasP->isOnSale())
-        ? (int) $kbbWasP->price * $kbbWasItem->quantity
-        : $kbbWasItem->lineTotal();
+    $kbbWasTotal += max(
+        ($kbbWasP && $kbbWasP->isOnSale())
+            ? (int) $kbbWasP->compareAtPrice() * $kbbWasItem->quantity
+            : 0,
+        $kbbWasItem->lineTotal(),
+    );
 }
 /*
  * THE TOTAL IS THE SUM OF EXACTLY WHAT IS PRINTED ABOVE IT, with one stated

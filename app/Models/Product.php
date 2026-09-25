@@ -18,6 +18,36 @@ class Product extends Model
     protected $guarded = [];
 
     /**
+     * Every write to this table drops App\Services\VariantPricing's snapshot.
+     *
+     * That class memoises the price range of EVERY variable, un-priced parent
+     * in one grouped query and then trusts it. Inside a web request that is
+     * right — the catalogue cannot change mid-render — and outside one it is
+     * not: a Product inserted after the first lookup was absent from the
+     * snapshot, range() answered null, and effectivePrice() therefore answered
+     * **0 fils** for it until the container was thrown away. In `artisan` it
+     * never is: `scoped` is reset by the queue worker and by Octane, and by
+     * nothing at all in a console process.
+     *
+     * So the signal is taken where the snapshot's inputs actually change rather
+     * than at a seam somebody has to remember. invalidate() clears the snapshot the
+     * container is already holding and builds nothing when there is none, so an
+     * import saving ten thousand rows before anything asks for a price pays ten
+     * thousand array lookups, and a page render, which saves no product, pays
+     * nothing and reloads nothing.
+     *
+     * `saved` covers insert and update both; `deleted` covers the soft delete
+     * this model uses (SoftDeletes fires `deleted`, not only `forceDeleted`).
+     * A raw DB::table() write is not covered and cannot be — see
+     * VariantPricing::invalidate() for the boundary.
+     */
+    protected static function booted(): void
+    {
+        static::saved(static fn () => \App\Services\VariantPricing::invalidate());
+        static::deleted(static fn () => \App\Services\VariantPricing::invalidate());
+    }
+
+    /**
      * The columns that may carry an Arabic version, and NOTHING ELSE.
      *
      * An allowlist rather than a denylist, because the interesting question is
@@ -524,18 +554,106 @@ class Product extends Model
         return $this->stock_status === 'instock' && ! $this->requiresVariant();
     }
 
-    public function isOnSale(): bool
+    /**
+     * The price to STRIKE THROUGH — what this product costs with no sale
+     * running — or null when there is no such figure to vouch for.
+     *
+     * ── A MARKDOWN ON A VARIABLE PRODUCT WAS INVISIBLE TO THE WHOLE SHOP ────
+     *
+     * isOnSale() below was `effectivePrice() < (int) $this->price`, and
+     * `products.price` is NULL on a variable parent — WooCommerce keeps the
+     * money on the variations, which is the fact effectivePrice() above is
+     * about. `(int) null` is 0, nothing is cheaper than nothing, so isOnSale()
+     * answered FALSE for every variable product in the catalogue, whatever its
+     * variations were charging.
+     *
+     * A variable product's markdown has exactly one place it can live and it is
+     * not that column: `product_variants.sale_price`, one figure per variation,
+     * scheduled once by the PARENT's `sale_starts_at`/`sale_ends_at` (the
+     * variations table has no date columns — ProductVariant::effectivePrice()
+     * and Import\Entities\VariationImporter::reportSaleWindow() both say so).
+     * The parent cannot even carry one: ProductImporter REJECTS a row with a
+     * `sale_price` and an empty `regular_price`.
+     *
+     * So the markdown was real, effectivePrice() honoured it — the tile's
+     * "from" figure and the product page headline both dropped — and NOTHING
+     * ELSE did. No Sale badge, no strikethrough, no percentage, and no entry in
+     * the "On sale" listing, which is the listing the owner points at the stock
+     * they most want to move. Every surface agreed, and every surface was
+     * silent about a price that had just changed.
+     *
+     * ── "A PARENT HAS NO COMPARE-AT PRICE" IS TRUE OF THE ROW, NOT THE PRODUCT
+     *
+     * The previous round left this alone on that reasoning and said so. The row
+     * really has nothing; the PRODUCT has a compare-at one level down, in the
+     * `price` column of each variation, which is the column a variation's
+     * `sale_price` is a markdown from. VariantPricing::regularLow() returns the
+     * lowest of them — the from-price this product advertised the day before
+     * the sale started — and that is the figure a saving is a saving against.
+     * Its docblock carries the worked example for why it is MIN(regular) and
+     * not "the regular price of whichever option is cheapest now".
+     *
+     * ── NULL, NEVER ZERO ────────────────────────────────────────────────────
+     *
+     * Three rows answer null and all three must: a product loaded by a narrowed
+     * SELECT that never fetched `price` (Api\ProductController::INDEX_COLUMNS
+     * is the standing example), a variable parent whose variations carry no
+     * regular price at all, and a simple product whose `price` column is NULL.
+     * isOnSale() reads null as "no compare-at I can vouch for" and answers
+     * false, which is what all three did before — the same fail-closed rule
+     * advertisedSalePrice() applies to an unselected sale window.
+     *
+     * NOTHING WITH A PRICE OF ITS OWN CHANGES. `$this->price` is returned
+     * unconditionally when it is there, so every simple product and every
+     * variable parent WooCommerce did put a figure on takes exactly the path it
+     * took before, and `(int) $this->price` and this method are the same
+     * expression for them.
+     */
+    public function compareAtPrice(): ?int
     {
-        return $this->effectivePrice() < (int) $this->price;
+        if ($this->price !== null) {
+            return (int) $this->price;
+        }
+
+        return app(\App\Services\VariantPricing::class)->regularLow($this);
     }
 
+    /**
+     * Is this product cheaper right now than it normally is?
+     *
+     * `compareAtPrice()` rather than `(int) $this->price`, which is the whole
+     * of the variable-product fix; read its note. The null test is not a
+     * nicety — without it a product with no compare-at would ask
+     * `effectivePrice() < 0`, which is the false-by-accident this method
+     * answered before, and a product marked down to free would start answering
+     * true against a figure that does not exist.
+     *
+     * App\Support\EffectivePrice::whereOnSale() is this method in SQL and
+     * mirrors it term for term, the price facet against the badge, because the
+     * two disagreeing is the defect this area of the codebase has already been
+     * repaired for three times.
+     */
+    public function isOnSale(): bool
+    {
+        $compare = $this->compareAtPrice();
+
+        return $compare !== null && $this->effectivePrice() < $compare;
+    }
+
+    /**
+     * How much off, as a whole percent — of the compare-at price, not of the
+     * `price` column, so the badge on a variable product states the saving
+     * against the figure its tile used to print.
+     */
     public function discountPercent(): int
     {
-        if (! $this->isOnSale() || ! $this->price) {
+        $compare = $this->compareAtPrice();
+
+        if (! $this->isOnSale() || ! $compare) {
             return 0;
         }
 
-        return (int) round((1 - $this->effectivePrice() / $this->price) * 100);
+        return (int) round((1 - $this->effectivePrice() / $compare) * 100);
     }
 
     /** URL contract U-01: /product/{slug}/ with a trailing slash. */
