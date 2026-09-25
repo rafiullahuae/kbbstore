@@ -453,7 +453,57 @@ require_once __DIR__.'/../vendor/autoload.php';
      * Set here rather than exported by the caller so that a lane which simply
      * runs `vendor/bin/pest` is isolated without having to know any of this.
      */
-    $temp = $root.'/tmp';
+    /*
+     * ── AND IT IS OUTSIDE THE REPOSITORY, WHICH IS NOT A TIDINESS CHOICE ──
+     *
+     * This was `$root.'/tmp'` -- inside storage/framework/testing, beside
+     * everything else this process gets a private copy of. That is the obvious
+     * place for it and it silently disabled every browser test in the suite.
+     *
+     * CHROMIUM CANNOT RUN WITH ITS PROFILE UNDER THE WORKING DIRECTORY. Playwright
+     * puts `--user-data-dir` under TMPDIR, the browser launches, and dies at once
+     * with "Target page, context or browser has been closed". Measured, three
+     * temp locations, same page, same script, same binary:
+     *
+     *     TMPDIR=/tmp/kbb-probe-sys                          -> exit 0
+     *     TMPDIR=<repo>/storage/framework/testing/.../tmp     -> exit 1
+     *     TMPDIR=<repo>/../kbb-probe-outside                 -> exit 0
+     *
+     * So it is the repository path specifically, not the system temp and not
+     * permissions -- a directory one level ABOVE the checkout works. The sandbox
+     * this container mounts over the working directory is the likeliest reason;
+     * the reason does not change the fix.
+     *
+     * WHAT IT COST. Eight test files drive a real browser, and their exec()s
+     * were failing with their output sent to /dev/null, so the only signal was
+     * `expect($status)->toBe(0)` with an empty message. They had been SKIPPING
+     * on `is_dir(node_modules/playwright)` for most of this project's life, so
+     * nobody saw it; the day playwright was installed in a checkout they started
+     * running and failing instead, and it read exactly like a regression from
+     * whatever had merged that day. It is not one -- the same four cases fail
+     * identically on a worktree checked out at the previous release.
+     *
+     * PER-PROCESS ISOLATION IS PRESERVED, which is the whole point of the block
+     * above: the directory is still named for this process and swept at the end
+     * of it, so the incident that put it here -- one lane's `glob(sys_get_temp_dir
+     * ().'/kbb-gm-*')` unlinking another lane's in-flight fixture -- cannot come
+     * back. `sys_get_temp_dir()` inside the suite still answers THIS directory,
+     * because ini_set('sys_temp_dir') below points at it, so a test globbing the
+     * temp root globs its own.
+     *
+     * Read BEFORE the ini_set below, so it is the real system temp and not a
+     * previous call's answer.
+     */
+    $temp = sys_get_temp_dir().'/kbb-run-'.getmypid().'-'.bin2hex(random_bytes(4));
+
+    // Whatever a SIGKILLed run left behind, on the same day-old rule as the
+    // testing roots above -- these live outside the checkout now, so nothing
+    // else will ever sweep them.
+    foreach (glob(sys_get_temp_dir().'/kbb-run-*') ?: [] as $stale) {
+        if (is_dir($stale) && ! is_link($stale) && filemtime($stale) < time() - 86400) {
+            $sweepTree($stale);
+        }
+    }
 
     if (! is_dir($temp)) {
         @mkdir($temp, 0o755, true);
@@ -546,6 +596,12 @@ require_once __DIR__.'/../vendor/autoload.php';
      * which is the only thing that makes them worth committing.
      */
     $put('APP_URL', 'http://localhost');
+
+    register_shutdown_function(static function () use ($temp, $sweepTree): void {
+        // The temp tree lives outside the checkout now, so this is the only
+        // thing that will ever remove it.
+        $sweepTree($temp);
+    });
 
     register_shutdown_function(static function () use ($root, $sweepTree): void {
         $sweepTree($root);
