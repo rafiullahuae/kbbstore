@@ -75,15 +75,187 @@ use App\Services\ImportConsole\ImportWorkspace;
  *
  * Reported apart because the action differs. Summing them into "12 problems"
  * would be a number with no remedy attached to it.
+ *
+ * =============================================================================
+ * TWO ADDRESSES PER ROW, AND CONFLATING THEM WOULD BE THE EXPENSIVE MISTAKE
+ * =============================================================================
+ *
+ *   wanted       the address the article asks for ON THIS SHOP. Articles here
+ *                live at the site root, so it is `/{slug}/`, and it is
+ *                computed. It is what makes the row a collision.
+ *
+ *   indexed_at   the address the OLD SITE published, read out of
+ *                `permalinks.csv` — WordPress's own `get_permalink()` — and
+ *                never derived. It is what the 301 is written FROM.
+ *
+ * They are the same string only when the old site's permalink structure is
+ * `/%postname%/`. This application cannot see that setting, so it does not
+ * assume it: when the permalink export has not been uploaded the column is
+ * EMPTY and `permalinks_note` says which file fills it. Every row here is an
+ * indexed URL the owner is about to move by hand, and a redirect written from
+ * a plausible address the old site never published is worse than no row at all.
+ *
+ * `permalinks()` has the reasoning and the scheme check in full.
  */
 final class ReservedArticleReport
 {
     /** The entity whose file this reads. `ImportWorkspace` owns where it is. */
     public const ENTITY = 'posts';
 
+    /**
+     * The companion file that knows the address the old site actually published.
+     *
+     * `ImportWorkspace::COMPANIONS['permalinks']` — `permalinks.csv`, from the
+     * export's "Addresses and pictures" group.
+     */
+    public const PERMALINKS = 'permalinks';
+
+    /** What a permalink may be before this report will print it as a link. */
+    private const LINKABLE_SCHEMES = ['http', 'https'];
+
     public function __construct(
         private readonly ImportWorkspace $workspace = new ImportWorkspace,
     ) {}
+
+    /**
+     * The address the OLD SITE published for each article, keyed two ways.
+     *
+     * =========================================================================
+     * WHY THIS IS NOT `'/'.$slug.'/'` AND WHY THAT DISTINCTION IS THE DELIVERABLE
+     * =========================================================================
+     *
+     * `wanted` below is the address the article asks for ON THIS SHOP: articles
+     * here live at the site root, so it is `/{slug}/` and it is computed. That
+     * is the right thing to print beside "the storefront already owns this
+     * address", because it is the collision.
+     *
+     * It is NOT the URL Google is holding, and the two are only the same when
+     * the old site's permalink structure happens to be `/%postname%/`. On a
+     * WordPress with `/blog/%postname%/`, or `/%year%/%monthnum%/%postname%/`,
+     * the indexed address of the article slugged `about` is
+     * `https://old/2021/05/about/` — and a 301 written from `/about/` because
+     * this report said so is a redirect from an address nobody ever requested.
+     * Every row of this list is an SEO asset the owner is about to move by hand;
+     * handing him a plausible-looking URL that the old site never published is
+     * the one failure that costs more than saying nothing.
+     *
+     * So the indexed address is READ, never derived. `permalinks.csv` is
+     * WordPress's own `get_permalink()` for every row of the site, which
+     * `RedirectMap` already calls "the only source that can be right about a
+     * site whose permalink structure this application cannot see". When the
+     * file has not been uploaded the field is EMPTY and the screen says which
+     * file to upload — not a guess with a footnote.
+     *
+     * KEYED BY ID FIRST, SLUG SECOND. `wc_id` is what the exporter writes for a
+     * post and is unambiguous; the slug is the fallback for a hand-made file,
+     * and is matched on the raw cell AND on the percent-decoded one, because
+     * WordPress writes `%d8%a7…` for an Arabic slug in one file and not always
+     * in the other.
+     *
+     * A permalink that is not `http`/`https` is DROPPED rather than carried.
+     * The file is an upload, the screen turns this value into an `href`, and
+     * CLAUDE.md's rule is that a URL from data is scheme-checked before it
+     * becomes one. Dropping it reads as "not known", which is the truth.
+     *
+     * @return array{present: bool, by_id: array<string, string>, by_slug: array<string, string>}
+     */
+    private function permalinks(): array
+    {
+        if (! $this->workspace->hasCompanion(self::PERMALINKS)) {
+            return ['present' => false, 'by_id' => [], 'by_slug' => []];
+        }
+
+        $byId = [];
+        $bySlug = [];
+
+        foreach ($this->workspace->companionRows(self::PERMALINKS) as $cells) {
+            $row = new Row(0, $cells);
+
+            if (mb_strtolower($row->text('type') ?? '') !== PostImporter::ARTICLE_TYPE) {
+                continue;
+            }
+
+            $url = $this->linkable($row->text('permalink', 'url', 'old_url'));
+
+            if ($url === '') {
+                continue;
+            }
+
+            $id = $row->text('wc_id', 'id');
+
+            if ($id !== null && $id !== '') {
+                $byId[$id] = $url;
+            }
+
+            $slug = $row->text('slug', 'post_name');
+
+            if ($slug !== null && $slug !== '') {
+                $bySlug[mb_strtolower($slug)] = $url;
+                $bySlug[mb_strtolower(rawurldecode($slug))] = $url;
+            }
+        }
+
+        return ['present' => true, 'by_id' => $byId, 'by_slug' => $bySlug];
+    }
+
+    /**
+     * The old site's address for one article, or '' when it is not known.
+     *
+     * Three keys tried in the order of how much they can be trusted: the
+     * WordPress id, the slug exactly as `posts.csv` spells it, and the slug
+     * percent-decoded. Nothing is derived — a miss on all three is '', and the
+     * screen prints "not in permalinks.csv" rather than an address.
+     *
+     * @param  array{present: bool, by_id: array<string, string>, by_slug: array<string, string>}  $permalinks
+     */
+    private function indexedAt(array $permalinks, Row $row, ?string $given, string $decoded): string
+    {
+        if (! $permalinks['present']) {
+            return '';
+        }
+
+        $id = $row->text('id', 'post_id', 'ID');
+
+        if ($id !== null && $id !== '' && isset($permalinks['by_id'][$id])) {
+            return $permalinks['by_id'][$id];
+        }
+
+        foreach ([$given, $decoded] as $key) {
+            $key = mb_strtolower(trim((string) $key));
+
+            if ($key !== '' && isset($permalinks['by_slug'][$key])) {
+                return $permalinks['by_slug'][$key];
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * An absolute http(s) URL, or '' — the only two things this will hand on.
+     *
+     * Fails closed on everything else: a relative address (which cannot be the
+     * indexed URL of a site this shop is not served from), a `javascript:` or
+     * `data:` scheme, and a value with no host. The screen prints what comes
+     * back from here inside an `href`, so this is the gate, not the template.
+     */
+    private function linkable(?string $url): string
+    {
+        $url = trim((string) $url);
+
+        if ($url === '') {
+            return '';
+        }
+
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        $host = parse_url($url, PHP_URL_HOST);
+
+        if (! is_string($scheme) || ! in_array(strtolower($scheme), self::LINKABLE_SCHEMES, true)) {
+            return '';
+        }
+
+        return is_string($host) && $host !== '' ? $url : '';
+    }
 
     /**
      * Read `posts.csv` and say what the import will do with each address.
@@ -93,6 +265,8 @@ final class ReservedArticleReport
      *     present: bool,
      *     file: string,
      *     note: string,
+     *     permalinks: bool,
+     *     permalinks_note: string,
      *     articles: int,
      *     counts: array{reserved: int, adjusted: int, no_address: int},
      *     reserved: list<array<string, string>>,
@@ -112,6 +286,8 @@ final class ReservedArticleReport
                 'file' => $file,
                 'note' => 'No '.$file.' has been uploaded. Upload the Journal group from the WordPress export '
                     .'and ask again; this reads that file and writes nothing.',
+                'permalinks' => false,
+                'permalinks_note' => '',
                 'articles' => 0,
                 'counts' => ['reserved' => 0, 'adjusted' => 0, 'no_address' => 0],
                 'reserved' => [],
@@ -124,6 +300,7 @@ final class ReservedArticleReport
         $reserved = [];
         $adjusted = [];
         $noAddress = [];
+        $permalinks = $this->permalinks();
 
         /*
          * `CsvRowSource` yields raw cell arrays keyed by normalised header, so
@@ -168,6 +345,14 @@ final class ReservedArticleReport
                  */
                 'wanted' => '/'.trim($address['given'], '/').'/',
                 'slug' => (string) ($given ?? ''),
+                /*
+                 * THE URL GOOGLE IS ACTUALLY HOLDING, read from the old site's
+                 * own permalink export rather than derived from the slug. '' is
+                 * "permalinks.csv has not been uploaded, or does not cover this
+                 * row" — never a guess. See permalinks() for why the difference
+                 * between this and `wanted` is the whole point of the column.
+                 */
+                'indexed_at' => $this->indexedAt($permalinks, $row, $given, $address['given']),
             ];
 
             if ($address['slug'] === null) {
@@ -183,10 +368,24 @@ final class ReservedArticleReport
             if ($address['reserved']) {
                 $reserved[] = $common + [
                     'served_by' => 'the storefront itself answers /'.$address['slug'].'/',
+                    /*
+                     * THE ADDRESS THE REDIRECT IS WRITTEN FROM IS THE INDEXED
+                     * ONE, when the permalink export says what it is. `wanted`
+                     * is the collision on THIS shop and is always named because
+                     * that is what makes the row a refusal; the live URL is
+                     * named as well, and separately, because a 301 written from
+                     * a derived `/slug/` on a site whose permalinks are
+                     * `/blog/%postname%/` redirects an address nobody holds.
+                     */
                     'what_to_do' => 'Rename this article in WordPress and add a redirect there from '
-                        .$common['wanted'].' to the new address, then re-export. The alternative — making this '
-                        .'shop serve the article at '.$common['wanted'].' instead of its own page — is a routing '
-                        .'change and a decision only you can make.',
+                        .($common['indexed_at'] !== '' ? $common['indexed_at'] : $common['wanted'])
+                        .' to the new address, then re-export. '
+                        .($common['indexed_at'] !== ''
+                            ? 'That is the address permalinks.csv says the old site published, so it is the one '
+                                .'Google holds; this shop would have served the article at '.$common['wanted'].'. '
+                            : '')
+                        .'The alternative — making this shop serve the article at '.$common['wanted']
+                        .' instead of its own page — is a routing change and a decision only you can make.',
                 ];
 
                 continue;
@@ -196,7 +395,9 @@ final class ReservedArticleReport
                 $adjusted[] = $common + [
                     'imported_at' => '/'.$address['slug'].'/',
                     'what_to_do' => 'This article IS imported, at /'.$address['slug'].'/. Its old address will '
-                        .'404 until a redirect row points '.$common['wanted'].' at the new one.',
+                        .'404 until a redirect row points '
+                        .($common['indexed_at'] !== '' ? $common['indexed_at'] : $common['wanted'])
+                        .' at the new one.',
                 ];
             }
         }
@@ -207,6 +408,20 @@ final class ReservedArticleReport
             'file' => $file,
             'note' => $articles.' article(s) read from '.$file.'. Nothing was written: this is a preview of what '
                 .'the import will decide about each address, taken from the importer\'s own rule.',
+            'permalinks' => $permalinks['present'],
+            /*
+             * SAID ON THE SCREEN RATHER THAN LEFT AS AN EMPTY COLUMN. A blank
+             * "indexed at" reads as "this article is not indexed", which is the
+             * opposite of what it means. It means nobody has uploaded the file
+             * that knows.
+             */
+            'permalinks_note' => $permalinks['present']
+                ? 'The live addresses below are read from permalinks.csv — WordPress\'s own answer for each row, '
+                    .'so they are right whatever the old site\'s permalink structure is.'
+                : 'permalinks.csv has not been uploaded, so the live address of each article is not known and the '
+                    .'column is empty. Upload the "Addresses and pictures" group from the WordPress export to fill '
+                    .'it. Until then the only address shown is the one this shop would have served the article at, '
+                    .'which is the same thing ONLY if the old site publishes articles at /slug/.',
             'articles' => $articles,
             'counts' => [
                 'reserved' => count($reserved),
@@ -232,26 +447,34 @@ final class ReservedArticleReport
         $report = $this->run();
         $handle = fopen('php://temp', 'w+b');
 
-        fputcsv($handle, ['decision', 'line', 'wordpress id', 'title', 'status', 'url it wanted', 'result', 'what to do']);
+        /*
+         * THE NEW COLUMN IS APPENDED, NOT INSERTED. `live url (from
+         * permalinks.csv)` is the address the redirect is written FROM, and it
+         * goes last so every column an owner or a script already reads keeps
+         * its position. It is empty on every row when permalinks.csv has not
+         * been uploaded — see `permalinks_note`, which the screen prints above
+         * the table so an empty column is never read as "not indexed".
+         */
+        fputcsv($handle, ['decision', 'line', 'wordpress id', 'title', 'status', 'url it wanted', 'result', 'what to do', 'live url (from permalinks.csv)']);
 
         foreach ($report['reserved'] as $row) {
             fputcsv($handle, [
                 'reserved — NOT imported', $row['line'], $row['id'], $row['title'], $row['status'],
-                $row['wanted'], $row['served_by'], $row['what_to_do'],
+                $row['wanted'], $row['served_by'], $row['what_to_do'], $row['indexed_at'],
             ]);
         }
 
         foreach ($report['adjusted'] as $row) {
             fputcsv($handle, [
                 'address changed — imported', $row['line'], $row['id'], $row['title'], $row['status'],
-                $row['wanted'], 'imported at '.$row['imported_at'], $row['what_to_do'],
+                $row['wanted'], 'imported at '.$row['imported_at'], $row['what_to_do'], $row['indexed_at'],
             ]);
         }
 
         foreach ($report['no_address'] as $row) {
             fputcsv($handle, [
                 'no address — NOT imported', $row['line'], $row['id'], $row['title'], $row['status'],
-                $row['wanted'], 'nothing a URL can carry', $row['what_to_do'],
+                $row['wanted'], 'nothing a URL can carry', $row['what_to_do'], $row['indexed_at'],
             ]);
         }
 

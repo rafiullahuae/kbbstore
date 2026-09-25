@@ -117,14 +117,45 @@ final class DocumentMediaRewrite
      * whole definition of "an address in a document" for this application, and
      * `MediaAudit` reaches it through `sources()` rather than keeping its own.
      *
-     * `<source srcset>` and `<img srcset>` ARE NOT HERE, and are a real gap
-     * rather than an oversight: a `srcset` is a comma-separated list of an
-     * address and a descriptor, so re-pointing one is a different edit from
-     * replacing an attribute's whole value and would need its own parser and
-     * its own idempotency argument. `RichText::clean()` does not produce them
-     * and no imported body in this shop's export carries one; if one ever
-     * arrives it will read as MISSING on the audit rather than being silently
-     * rewritten, which is the safe direction.
+     * =========================================================================
+     * `srcset` IS NOT HERE, AND THE REASON IS NOT "WE DID NOT GET TO IT"
+     * =========================================================================
+     *
+     * `<img srcset>` and `<source srcset>` are deliberately absent, and Lane U3
+     * went and checked the claim this comment used to make rather than
+     * repeating it, because it was wrong in a way that mattered.
+     *
+     * The edit is genuinely different in kind. A `srcset` is a COMMA-SEPARATED
+     * LIST of an address plus a descriptor — `a-300.jpg 300w, a-600.jpg 2x` —
+     * so re-pointing one is not replacing an attribute's whole value. It needs
+     * its own parser, and its own idempotency argument, because the two
+     * properties that make this class safe do not carry over unexamined: the
+     * whole-value match becomes a per-candidate match, and a candidate address
+     * may legally contain a comma, which is the classic way a naive split
+     * corrupts the list. `ImageVariants` makes the same observation about
+     * commas from the other side.
+     *
+     * WHAT WOULD MAKE IT A REAL GAP IS AN `<img>` CARRYING BOTH. The `src`
+     * would be re-pointed, the `srcset` left naming the old host, and the audit
+     * — which reads through `sources()`, this same list — would report REMOTE
+     * as zero while every retina reader still loaded the pictures from a site
+     * about to be switched off. That is precisely the failure the `<a href>`
+     * work above was done to close, so "we simply do not handle it" would not
+     * be an answer.
+     *
+     * IT CANNOT ARISE, BECAUSE THE ATTRIBUTE NEVER REACHES THE COLUMN.
+     * `RichText::ALLOWED['img']` is `src, alt, width, height, class, loading`,
+     * and `attributes()` REMOVES every attribute not on that list. `picture`
+     * and `source` are not allowed elements at all. Both doors into
+     * `posts.body` go through that one call — `PostImporter::settleBody()` on
+     * import, `PostEditorApiController` on a hand-written or edited article —
+     * so a body in this database cannot carry a `srcset` to leave behind.
+     *
+     * So the decision is: not parsed, because nothing gets here to parse. If
+     * `RichText` ever allows the attribute, this stops being true the same day
+     * and this class has a real gap again — which is why
+     * `tests/Feature/ImportJournalSrcsetTest.php` asserts the stripping at both
+     * doors and names this comment. That test failing IS the notice.
      *
      * @var array<string, string>
      */
