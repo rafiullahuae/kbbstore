@@ -450,8 +450,42 @@ final class EnglishRenderWalk
      * tests/Feature/QuizConcernHandoffTest.php's first case fetches all of it.
      *
      * No other page in the walk moved a byte.
+     *
+     * ── ADVANCED AGAIN, FOR ONE PAGE AND ONE DECLARATION ──────────────────
+     *
+     * `{slug}`, the article page, and the whole of the change is this, in its
+     * inline stylesheet:
+     *
+     *     .abody img{max-width:100%;height:auto}
+     *
+     * plus the CSS comment above it explaining why. Nothing else in the walk
+     * moved a byte, and the failure message named exactly this one page and this
+     * one byte offset before the pin was touched.
+     *
+     * THE RULE DID NOT EXIST AT ALL, and a plain `<img>` in an article body
+     * therefore ran off the page: measured at scrollWidth 1220 against a 390px
+     * viewport and 1500 against 1280 -- a sideways scrollbar on every article
+     * carrying a photograph, at every width. With the declaration: 390 and 1280,
+     * the image rendering 350x233 and 680x453.
+     *
+     * The image used for that measurement is one `RichText::clean()` passes
+     * through BYTE-IDENTICALLY before and after Lane U4's sanitiser change, so
+     * the overflow is a pre-existing defect on this page and not a consequence
+     * of that lane's work.
+     *
+     * WHY IT WAS NEVER SEEN. `posts` is empty on a fresh shop, and the one thing
+     * that fills it -- the import -- was itself removing every `<picture>` block
+     * before it reached the column, because libxml parses `<source>` as a
+     * container and DROP_WHOLE took the subtree with it. Both halves changed in
+     * the same release, so the first article to arrive with a photograph in it
+     * would have been the first one to overflow.
+     *
+     * `height:auto` is half the declaration and not decoration: WordPress writes
+     * `width=` and `height=` attributes on an imported `<img>`, and constraining
+     * the width alone against a fixed height attribute squashes the picture
+     * rather than scaling it.
      */
-    public const BASE_COMMIT = '6f5c54386eb4f45b4d5e7a68f46edff426cc72b8';
+    public const BASE_COMMIT = 'e7645c8e201ce53ff187178f9f558e4f18ec0374';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
