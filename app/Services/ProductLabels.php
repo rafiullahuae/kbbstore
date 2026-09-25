@@ -86,24 +86,33 @@ class ProductLabels
         $this->cache = null;
     }
 
+    /**
+     * This screen's point on ModuleSchema's four policy axes.
+     *
+     * THE COLOUR ARM THAT USED TO BE HERE IS NOW THE SHARED ONE, and it is the
+     * same arm: this module is where the `#` repair was first written, after a
+     * stored "e23a4e" came back out as "E23A4E", went into
+     * style="background:E23A4E" — not a colour — and the badge drew with no
+     * background while its white text vanished. Four other modules had the
+     * unrepaired copy. Moving this one onto ModuleSchema::cast() is what makes
+     * the fix reach them, and the equivalence fixture proves this module's own
+     * answers did not move an inch in the process.
+     */
+    public const POLICY = [
+        'max' => 40,
+        'blank' => 'keep',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'cast',
+    ];
+
     private function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key];
-
-        return match ($def[0]) {
-            'bool' => (bool) $value,
-            'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            // isValidHex() accepts a hex with OR without the leading '#', so a
-            // stored "e23a4e" came back out as "E23A4E" and went into
-            // style="background:E23A4E" — not a colour, so the badge drew with
-            // no background and its white text vanished. The '#' is put back on
-            // rather than trusting every caller to have sent one; the colour
-            // picker on the screen always does, a POST to the endpoint need not.
-            'colour' => \App\Support\Color::isValidHex((string) $value)
-                ? '#' . strtoupper(ltrim((string) $value, '#'))
-                : $def[2],
-            default => mb_substr(trim((string) $value), 0, 40),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     /**

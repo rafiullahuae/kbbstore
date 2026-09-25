@@ -450,8 +450,42 @@ final class EnglishRenderWalk
      * tests/Feature/QuizConcernHandoffTest.php's first case fetches all of it.
      *
      * No other page in the walk moved a byte.
+     *
+     * ── ADVANCED AGAIN, FOR ONE PAGE AND ONE DECLARATION ──────────────────
+     *
+     * `{slug}`, the article page, and the whole of the change is this, in its
+     * inline stylesheet:
+     *
+     *     .abody img{max-width:100%;height:auto}
+     *
+     * plus the CSS comment above it explaining why. Nothing else in the walk
+     * moved a byte, and the failure message named exactly this one page and this
+     * one byte offset before the pin was touched.
+     *
+     * THE RULE DID NOT EXIST AT ALL, and a plain `<img>` in an article body
+     * therefore ran off the page: measured at scrollWidth 1220 against a 390px
+     * viewport and 1500 against 1280 -- a sideways scrollbar on every article
+     * carrying a photograph, at every width. With the declaration: 390 and 1280,
+     * the image rendering 350x233 and 680x453.
+     *
+     * The image used for that measurement is one `RichText::clean()` passes
+     * through BYTE-IDENTICALLY before and after Lane U4's sanitiser change, so
+     * the overflow is a pre-existing defect on this page and not a consequence
+     * of that lane's work.
+     *
+     * WHY IT WAS NEVER SEEN. `posts` is empty on a fresh shop, and the one thing
+     * that fills it -- the import -- was itself removing every `<picture>` block
+     * before it reached the column, because libxml parses `<source>` as a
+     * container and DROP_WHOLE took the subtree with it. Both halves changed in
+     * the same release, so the first article to arrive with a photograph in it
+     * would have been the first one to overflow.
+     *
+     * `height:auto` is half the declaration and not decoration: WordPress writes
+     * `width=` and `height=` attributes on an imported `<img>`, and constraining
+     * the width alone against a fixed height attribute squashes the picture
+     * rather than scaling it.
      */
-    public const BASE_COMMIT = '6f5c54386eb4f45b4d5e7a68f46edff426cc72b8';
+    public const BASE_COMMIT = 'e7645c8e201ce53ff187178f9f558e4f18ec0374';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
@@ -1104,37 +1138,36 @@ final class EnglishRenderWalk
                 'hits' => 1,
             ],
             /*
-             * emails/cart-recovery.blade.php — THE PER-ITEM LINK, AND THIS ONE
-             * IS A BUG FIX RATHER THAN A REWRAP. Lane U2.
+             * RETIRED: 'cart recovery: item link is absolute'.
              *
-             * Every other rule above straightens whitespace that Blade folded
-             * differently; this one records that the BEFORE side was WRONG. The
-             * item link was built with Url::to(), which returns a root-relative
-             * path, so every basket reminder this shop has ever sent carried
+             * It recorded a BUG FIX rather than a rewrap. Lane U2 found that
+             * emails/cart-recovery.blade.php built its per-item link with
+             * Url::to(), which returns a root-relative path, so every basket
+             * reminder this shop has ever sent carried
              *
              *     <a href="/product/rice-toner/">
              *
-             * An inbox has no origin to resolve that against — the link is dead
-             * in every mail client, and has been since the message was written.
-             * It is now Url::external(), the out-of-band builder, which puts
-             * APP_URL's origin in front of it and never the request's.
+             * An inbox has no origin to resolve that against, so the link was
+             * dead in every mail client and had been since the message was
+             * written. It is Url::external() now -- the out-of-band builder,
+             * which puts APP_URL's origin in front of it and never the
+             * request's.
              *
-             * The other two links in this message ($cartUrl, $unsubscribeUrl)
-             * arrive from OutboundSender already absolute, which is why only
-             * this one moved and why the hit count is 1. The plain-text twin
-             * prints the item name and quantity with no link at all, so it does
-             * not appear here.
+             * THE RULE IS GONE BECAUSE BASE_COMMIT MOVED PAST THE FIX, not
+             * because the fix was reverted. These rules patch the BEFORE side,
+             * which is rendered from BASE_COMMIT's views; the pin now sits at
+             * e7645c8, where cart-recovery.blade.php already calls external(),
+             * so the pattern matched nothing and applyApproved() failed it as a
+             * rule that has stopped excusing anything. That failure is the
+             * mechanism working -- a stale rule silently excusing nothing is
+             * exactly what it exists to refuse -- and deleting the rule is the
+             * correct answer, not weakening it.
              *
-             * `http://localhost` and not a real host because that is APP_URL in
-             * the suite (.env, and config/app.php's own default). The rule is
-             * anchored on the fixture's slug so that it cannot quietly start
-             * excusing some other document's links.
+             * The behaviour itself is still pinned, and by a test rather than
+             * by an exemption: tests/Feature/UrlInBandOutOfBandTest.php holds
+             * every mail template to the invariant that a link it prints is
+             * absolute.
              */
-            'cart recovery: item link is absolute' => [
-                'pattern' => '#<a href="/product/rice-toner/"#',
-                'with' => '<a href="http://localhost/product/rice-toner/"',
-                'hits' => 1,
-            ],
         ];
     }
 

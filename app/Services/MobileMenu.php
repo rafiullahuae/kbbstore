@@ -81,23 +81,28 @@ class MobileMenu
     }
 
     /** Validate by declared type, so a bad value can never reach the storefront. */
+    /** This screen's point on ModuleSchema's four policy axes. Its colour arm
+     *  already refused a hex with no `#` rather than storing one, so the shared
+     *  cast changes nothing here except where the code lives. */
+    public const POLICY = [
+        'max' => 120,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'strict',
+        'bool' => 'cast',
+    ];
+
     public function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key] ?? null;
-
-        if ($def === null) {
+        if (! isset(self::SCHEMA[$key])) {
             return null;
         }
 
-        [$type, , $default] = $def;
-
-        return match ($type) {
-            'bool' => (bool) $value,
-            'range' => max($def[4]['min'], min($def[4]['max'], (int) $value)),
-            'colour' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $value) ? (string) $value : $default,
-            'select' => isset($def[4][(string) $value]) ? (string) $value : $default,
-            default => trim((string) $value) === '' ? $default : mb_substr(trim((string) $value), 0, 120),
-        };
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     public function save(array $values): void

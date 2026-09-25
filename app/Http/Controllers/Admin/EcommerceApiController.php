@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Store\ShopController;
 use App\Models\PaymentProvider;
 use App\Services\SettingsService;
+use App\Support\AddressAutocomplete;
 use App\Support\InlineValidation;
 use App\Support\Money;
 use App\Support\Shortcodes;
@@ -149,6 +150,23 @@ class EcommerceApiController extends Controller
                      * than leaving the owner to find out.
                      */
                     'validation' => ['Live field validation', 'How the checkout marks a field as the shopper fills it in. Nothing appears until Live field validation is switched on under Store → Modules.', 'card', ['checkout_validate_when', 'checkout_validate_ok', 'checkout_validate_hint']],
+                    /*
+                     * THE CONSENT QUESTION IS THE FIRST FIELD IN THIS SECTION,
+                     * before the key, and that order is the point.
+                     *
+                     * Address autocomplete sends every character the shopper
+                     * types into the address box to Google, as they type,
+                     * before the form is submitted and whether or not an order
+                     * is ever placed. That is a privacy decision about the
+                     * shop's customers and it belongs to the owner, so it is
+                     * asked here as a question with an answer he chooses —
+                     * not buried in a document, and not implied by whoever
+                     * happens to paste a key in.
+                     *
+                     * See App\Support\AddressAutocomplete for why "not decided
+                     * yet" is its own value rather than defaulting to "no".
+                     */
+                    'address' => ['Address autocomplete', 'Google suggests an address as the shopper types. It needs a Google Places API key, and it sends what they type to Google. Nothing is sent until you answer the question below with Yes AND store a key; both, not either. The module also has to be switched on under Store → Modules.', 'card', ['checkout_address_consent', 'checkout_address_key']],
                 ],
                 'fields' => [
                     'checkout_single_name'  => ['bool', 'Single full-name field', true, 'Off splits it into first and last name.'],
@@ -176,6 +194,18 @@ class EcommerceApiController extends Controller
                     'checkout_validate_when' => ['select', 'When to mark a field', InlineValidation::DEFAULT_WHEN, 'Leaving it until they move on avoids marking a half-typed email address as wrong. Either way, a field already marked updates live as it is corrected.', InlineValidation::WHEN],
                     'checkout_validate_ok'   => ['bool', 'Mark correct fields too', true, 'Off, only fields that need attention are marked.'],
                     'checkout_validate_hint' => ['bool', 'Say what is wrong', true, 'A short line under a field that needs attention. Off, it is marked but not explained.'],
+                    /*
+                     * Read by App\Support\AddressAutocomplete, which is read by
+                     * partials/checkout/address-autocomplete.blade.php. Both
+                     * halves, and ModuleFrameworkGuardTest fails if either goes
+                     * missing.
+                     *
+                     * The options are AddressAutocomplete::CONSENT so the three
+                     * values the code actually compares against and the three
+                     * the owner can choose between are one list.
+                     */
+                    'checkout_address_consent' => ['select', 'Send what shoppers type to Google?', AddressAutocomplete::DEFAULT_CONSENT, 'The suggestions come from Google, so the characters typed into the address box are sent there as they are typed — before the order is placed, and even if it never is. Until this says Yes, nothing is sent and the checkout behaves exactly as it does now.', AddressAutocomplete::CONSENT],
+                    'checkout_address_key'     => ['text', 'Google Places API key', '', 'From a Google Cloud project with the Places API enabled and billing set up; Places Autocomplete is charged per session. Restrict the key to this shop\'s domain in the Google console. Leave blank and the module stays off however the question above is answered.'],
                     /*
                      * Read by App\Support\CheckoutLegalNotice, which is read by
                      * partials/checkout/legal-notice.blade.php. Both halves, and

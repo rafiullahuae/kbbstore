@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ModuleSchema;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Services\ProductStyles;
@@ -20,26 +21,14 @@ class ProductStylesApiController extends Controller
 
     public function show(): JsonResponse
     {
-        $values = $this->styles->all();
-        $fields = [];
-
-        foreach (ProductStyles::SCHEMA as $key => $def) {
-            [$type, $label, $default, $help] = array_pad($def, 4, '');
-
-            $fields[$key] = [
-                'key' => $key, 'type' => $type, 'label' => $label, 'help' => $help,
-                'default' => $default, 'value' => $values[$key], 'options' => $def[4] ?? null,
-            ];
-        }
-
-        $tabs = [];
-
-        foreach (ProductStyles::TABS as $key => [$label, $description, $keys]) {
-            $tabs[] = [
-                'key' => $key, 'label' => $label, 'description' => $description,
-                'fields' => array_values(array_filter(array_map(fn ($k) => $fields[$k] ?? null, $keys))),
-            ];
-        }
+        // One schema, drawn by one renderer. This loop used to be copied
+        // into nine controllers that had to agree by hand.
+        $tabs = ModuleSchema::tabs(
+            ProductStyles::SCHEMA,
+            ProductStyles::TABS,
+            $this->styles->all(),
+            ProductStyles::POLICY, ProductStyles::overrides(),
+        );
 
         return response()->json([
             'tabs' => $tabs,

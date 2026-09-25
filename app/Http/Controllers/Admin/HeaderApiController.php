@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ModuleSchema;
 use App\Services\HeaderSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,26 +18,14 @@ class HeaderApiController extends Controller
 
     public function show(): JsonResponse
     {
-        $values = $this->header->all();
-        $fields = [];
-
-        foreach (HeaderSettings::SCHEMA as $key => $def) {
-            [$type, $label, $default, $help] = array_pad($def, 4, '');
-
-            $fields[$key] = [
-                'key' => $key, 'type' => $type, 'label' => $label, 'help' => $help,
-                'default' => $default, 'value' => $values[$key], 'options' => $def[4] ?? null,
-            ];
-        }
-
-        $tabs = [];
-
-        foreach (HeaderSettings::TABS as $key => [$label, $description, $keys]) {
-            $tabs[] = [
-                'key' => $key, 'label' => $label, 'description' => $description,
-                'fields' => array_values(array_filter(array_map(fn ($k) => $fields[$k] ?? null, $keys))),
-            ];
-        }
+        // One schema, drawn by one renderer. This loop used to be copied
+        // into nine controllers that had to agree by hand.
+        $tabs = ModuleSchema::tabs(
+            HeaderSettings::SCHEMA,
+            HeaderSettings::TABS,
+            $this->header->all(),
+            HeaderSettings::POLICY,
+        );
 
         // Real brands and categories, so a word can be picked rather than typed.
         $suggestions = Cache::remember('kbb.admin.trending', 600, fn () => array_values(array_unique(array_merge(

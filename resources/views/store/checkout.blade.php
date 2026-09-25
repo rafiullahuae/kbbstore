@@ -469,7 +469,7 @@
     This comment's closing marker is glued to @push for the first reason above:
     Blade strips the comment and leaves the newline that followed it.
 --}}@push('scripts')
-@include('partials.checkout.inline-validation', ['validation' => \App\Support\InlineValidation::config(app(\App\Services\SettingsService::class))]){!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
+@include('partials.checkout.address-autocomplete', ['autocomplete' => \App\Support\AddressAutocomplete::config(app(\App\Services\SettingsService::class))])@include('partials.checkout.inline-validation', ['validation' => \App\Support\InlineValidation::config(app(\App\Services\SettingsService::class))]){!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
 @include('partials.checkout.stripe-elements')
 @endpush
 

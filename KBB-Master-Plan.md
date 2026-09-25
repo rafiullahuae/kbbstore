@@ -363,10 +363,80 @@ something half-right.
   migration that stops the seeder's stale `true` switching it on by itself — *2.60.205*
 - [x] **The remaining `todo` list re-verified by running it** — seven of the old ten were
   already built and gated; see the corrected inventory above — *2.60.205*
-- [ ] Port the last 2 `todo` modules: `address_autocomplete` (needs a Google Places key
-  and an owner decision about sending partial addresses to Google) and `performance`
-  (does not port — the work it describes is already done unconditionally)
-- [ ] Per-module settings schema shared with the admin renderer, for the modules that own theirs
+- [x] **The last 2 `todo` modules settled** — *2.60.274*. `performance` does not
+  port and now says so on the screen instead of drawing an inert switch beside
+  "Not ported yet": the row reads **"Already applied to every page — nothing to
+  switch"**, because a switch for work that is unconditional is a control that
+  lies. `address_autocomplete` is built as far as it honestly can be — the gate,
+  the key setting, the consent question and the checkout integration, with the
+  network call behind one seam a test stands in for. **Egress is blocked here, so
+  no request was ever made to Google**, and it ships OFF.
+
+  ▲ **AND THE OWNER DECISION IS A PRIVACY ONE, asked in the admin rather than
+  buried in a doc**: *"Address autocomplete suggests a full address as your
+  shopper types — but to do it, every character they type into the address box
+  is sent to Google, before they place the order and even if they never do. Do
+  you want that on your checkout: yes or no?"* It ships **"Not decided yet —
+  nothing is sent"**, which behaves as *no*, and it is the FIRST control in the
+  card, above the key, because pasting a key and agreeing to share a customer's
+  half-typed home address are different acts. Three independent locks — switch,
+  key, consent — and with any one shut the checkout is byte-identical and
+  nothing leaves the browser, asserted by fetching the page rather than by
+  reading a comment. **Still needs the owner**: his answer, and a real Places key
+  with billing. Worth trialling against UAE addresses specifically first —
+  Places' coverage of villa numbers and area names like "Al Reem Island" is thin
+- [x] **Per-module settings schema shared with the admin renderer** — *2.60.274*,
+  and neither blocker was visible from reading. `ModuleSchema` already existed
+  with three modules on it; what stopped the other fourteen was that **the schema
+  could not express four controls the console actually draws** (`normalise()`
+  throws on an unknown type and `TYPES` was missing `tags`, `ids`, `skin`,
+  `sections`, so `ModuleSchema::normalise(HeaderSettings::SCHEMA)` was a fatal
+  error — the header claimed the vocabulary was counted off the existing
+  schemas, and it had been counted off the two migrated ones), and that **the
+  seventeen modules did not merely describe settings differently, they ANSWERED
+  differently.**
+
+  That second finding is the design. Driving every module's own `cast()` over an
+  adversarial corpus — **4,653 calls, recorded before anything was touched** —
+  splits behaviour on **six axes with no two modules alike**: text cap
+  (40/60/120/160/240), what an emptied box means, fall-back vs refuse, clamp vs
+  refuse, two hex dialects, two boolean dialects. A single shared cast would have
+  re-cased every stored colour on three screens, started accepting `#abc` where
+  it is refused, and flipped `"off"` from true to false on ten. **So policy is
+  declared per module, not defaulted**, and the defaults are the strict end. The
+  last two axes were found BY MEASUREMENT — the first draft folded colour and
+  bool together and 322 answers moved.
+
+  ▲ **A colour a shopper never saw.** `Color::isValidHex()` accepts a hex with
+  or without `#`; four modules tested with it and then stored
+  `strtoupper($value)` unchanged, so `e23a4e` was stored as `E23A4E`, which is
+  not a CSS colour. `SectionDividers::cssVariables()` emitted `--dv-col:E23A4E`
+  and CartPanel wrote its accent into a `background:`. The browser drops the
+  declaration: **the value saves, the admin redraws with it, and the shop does
+  not change.** Sixteen fields across CartPanel, MobileHeader, NewsletterSettings
+  and SectionDividers. ProductLabels hit this, diagnosed it in a comment still in
+  that file, and fixed ITS OWN COPY — the other four never got it, because there
+  were four more copies of the same three lines.
+
+  Rule 1 proved rather than asserted: 4,621 of the 4,653 recorded casts came back
+  byte-identical, and the 32 that moved are exactly those sixteen fields on the
+  two inputs with no `#`. A second test requires each exempted call to have
+  stored something no browser accepts and now to store the same digits as a valid
+  colour, so the exemption cannot widen. `ModuleScreenPayloadTest` replays all
+  fourteen module endpoints (482 fields) and **caught a real mistake** — passing
+  validation `overrides()` into the render call put GridSkins and the
+  homepage-section registry into `options`, where two screens had always had
+  `null`
+- [ ] **Eight modules still carry hand-written `cast()`s** — `CartPage`,
+  `CheckoutPage`, `SecurityModule`, `HomepageContent`, `MailSettings`,
+  `ReviewSettings`, `CacheSettings`, `ReviewBadgeSettings`. Deliberately not
+  taken in the same round, and the reason is the work: CheckoutPage's refuses a
+  digit in `rating_text` and CartPage's money clamps at zero rather than
+  refusing, which are **real rules, not policy points**. Each needs sorting into
+  what the schema can declare and what must survive as its own validator.
+  `MobileMenu` cannot join `ModuleFrameworkGuardTest` at all until its groups
+  come out of its controller into a `TABS` constant — and that guard is what
+  caught a module storing a setting with no control to write it
 
 ## Phase 4 — Search
 
@@ -2042,16 +2112,72 @@ a fake success toast and saves nothing).
   run did — it survives the next run and it survives Reset, and there is a page
   at Store → Import. 47 tests, 28 mutations, driven end to end in a browser at
   4,042 rows — see `docs/GF-IMPORT-REFINEMENT.md`
-- [ ] ▲ **Fetching does not re-point the rows.** Two steps, and between them the
-  picture is on disk while the product still names the old host. **The old site
-  must not be switched off between them.** The rewrite is Store → Import →
-  Addresses & pictures → apply
+- [x] ▲ **Fetching DOES re-point the rows — this entry was out of date and
+  nothing needed building.** Lane U4 checked it rather than starting work:
+  `MediaSideloader::runBatch()` collects what it landed and calls `repoint()`
+  BEFORE `plan()`, in the same request, filtering both `MediaRewrite::propose()`
+  and `DocumentMediaRewrite::propose()` down to the addresses that batch actually
+  wrote — deliberately, since re-pointing FTP-copied files as a side effect of
+  Fetch would be the button doing something nobody asked for. Both shapes are
+  covered: cells through `MediaRewrite`, `posts.body` through
+  `DocumentMediaRewrite`. `MigrationProgress` already says so on screen and
+  `ImportRepointsWhatItFetchesTest` pins it.
+
+  Nor is there a stale-proposal window: both `MediaRewrite::apply()` and
+  `DocumentMediaRewrite::groupByRow()` skip anything whose decision is not
+  REWRITE, and the decision IS `is_file(public_path($relative))`, recomputed in
+  the request that applies it. A row is never re-pointed at a file that is not
+  on disk.
+
+  **What remains is documentation, not a defect**: files that arrived by FTP,
+  and references whose fetch failed and were repaired by hand, still want the
+  manual **Store → Import → Addresses & pictures → apply**
 - [x] **Everything the exporter writes now has an importer** — *2.60.222*.
   Variations, attributes and tags (Lane GH), refunds and order notes (Lane GI),
   posts (Lane GJ). Fifteen entities, all fifteen driven one per request from
   Store → Import. The plugin was writing seven files nothing read, which is the
   "built, never wired up" shape this repo keeps finding — caught this time
   before it set rather than months later.
+
+  ▲ **A variable product was telling Google it was free — CLOSED in 2.60.273,
+  and there were FIVE readers, not four.** PHP and SQL turn the same NULL into
+  two different wrong answers, which is why the count below was low:
+  `Product::effectivePrice()` answered 0 fils; `CollectionSchema::from()`
+  published `"price":"0.00"` to Google on every listing; the price SORT filed
+  NULL first ascending; the price FACET bucketed on it; and `Product::toApi()`
+  published `price: null` on the unauthenticated feed.
+
+  ▲ **And the facet was worse than this entry recorded.** It says variable
+  products "file cheapest-first" in the price filter. They do not — they
+  VANISH, because a comparison against NULL is never true. Touching the price
+  filter made every variable product disappear from the shop. Measured: 17
+  products in "AED 54 – 150" before, 18 after.
+
+  DERIVED, NOT BACKFILLED, and the choice was forced rather than preferred:
+  `VariantPricing::range()` answers only for a parent whose `price` is NULL, so
+  writing a figure into that column would turn every range on the shop
+  ("AED 120 – AED 190") back into a single number — it would have broken the
+  renderer the fix reuses. No schema change and NO `ProductImporter` CHANGE AT
+  ALL. One SQL definition in two shapes: `EffectivePrice::variantChargedSql()`
+  is `ProductVariant::effectivePrice()` in SQL, grouped over a join for the
+  tile's range and COALESCEd inside a correlated MIN for the sort and the facet,
+  so the two cannot drift apart.
+
+  Query cost stays flat — a 24-variable-parent grid costs exactly what a
+  1-parent grid costs, pinned by a test. `/shop/` 4 → 4, `?orderby=plow` 4 → 3,
+  `?price=54-150` 3 → 4, the extra query hydrating the 18 rows that now match
+  where zero matched before.
+
+  RULE 1: the tile, the product-page headline and the Add-to-cart gate were all
+  already correct from an earlier round, so this patch removes no button and the
+  before/after tile screenshots are pixel-identical. And `/api/products` was the
+  last surface left: `INDEX_COLUMNS` did not select `type`, `VariantPricing`
+  fails closed on a row whose shape it cannot confirm, so the feed answered null
+  while the tile printed a range. `type` is selected and is NOT published —
+  `toApi()` is the allowlist and does not carry it, asserted on both the index
+  and the detail route.
+
+  The ORIGINAL entry, for the record:
 
   ▲ **A variable product was telling Google it was free.** WooCommerce keeps no
   price on a variable parent, so `products.price` is genuinely NULL for one and
@@ -2078,12 +2204,81 @@ a fake success toast and saves nothing).
   changes land together, and the verdict is still withheld when the invariant
   fails, because checkpoints written by the old code are in the owner's database
   now
-- [ ] ▲ **Journal images are still hot-linked after an import.** `MediaRewrite`
-  does not know about `posts`: `posts.cover` is a one-line addition, the `<img>`
-  tags inside `posts.body` are not, because that rewriter changes cells and not
-  documents
-- [ ] ▲ **An article at a reserved address cannot be served, and the import now
-  names them.** Articles live at the site root and `RESERVED_SLUGS` owns the
+- [x] ▲ **Journal images are re-pointed after an import** — and this entry was
+  already out of date when it was checked. Lane U3's first act was to read the
+  code rather than rebuild from the entry: `MediaRewrite::COLUMNS` already
+  carried `posts.cover`, and `app/Services/Import/DocumentMediaRewrite.php`
+  already rewrote `<img src>` and `<a href>` inside `posts.body` as a DOCUMENT,
+  idempotently, refusing to re-point anything whose file is not already under
+  the web root. Twenty-five tests, green. **It was not rebuilt.**
+
+  `srcset` was decided explicitly rather than left open: it is not parsed
+  because nothing can get here to parse — `RichText::ALLOWED['img']` has no
+  `srcset`, `source` is in `DROP_WHOLE`, `picture` is not allowed, and both
+  doors into `posts.body` run that one call. `ImportJournalSrcsetTest` is the
+  tripwire and says in its own failure message what to do the day it goes red.
+  The existing comment claiming a stray `srcset` "will read as MISSING on the
+  audit" was WRONG and was corrected: the audit reads through
+  `DocumentMediaRewrite::sources()`, the same list, so such an `<img>` would
+  have its `src` re-pointed, its `srcset` left on the old host, and the
+  migration would report remote → 0 — the exact failure the `<a href>` work
+  closed
+- [x] ▲ **The list of articles this shop cannot serve is a screen** — *2.60.273*.
+  `Store → Import → "Articles this shop cannot serve" → Open the list`. The
+  report itself existed (Lane A), reading `posts.csv` through the importer's own
+  `PostImporter::address()` rather than a second copy of `RESERVED_SLUGS`, and
+  writing nothing. Nothing could REACH it: the owner had to know an admin-api
+  URL and read a JSON body to see a list he has to work through by hand before
+  the old site is switched off.
+
+  ▲ **And it was telling him to write the 301 from the wrong address.** The
+  report offered `/{slug}/` and its own comment called it "spelled the way the
+  old site published it". It is COMPUTED, on the premise that articles live at
+  the site root — true of this shop, true of the old one only if its permalink
+  structure is `/%postname%/`. On `/blog/%postname%/` the row said `/about/`
+  while Google holds `https://kbeautybliss.com/blog/about/`, so the redirect he
+  was told to write would have pointed at an address nobody ever requested,
+  silently, on the one part of a migration that cannot be redone once the old
+  site is off. The indexed URL is now READ from `permalinks.csv` — WordPress's
+  own `get_permalink()` — matched by id then slug, dropped unless http(s) with
+  a host because the page turns it into an `href`, and left EMPTY with the file
+  to upload named rather than guessed. `wanted` and `indexed_at` are separate
+  columns and the CSV column is appended, so nothing already read moves
+- [x] ▲ **An imported article stops losing its photograph** — *2.60.274*, and
+  the defect was WIDER than the entry that carried it. Lane U4 reproduced it
+  before trusting the diagnosis and then enumerated every tag on `DROP_WHOLE`
+  against the parser instead of stopping at `source`: libxml's void set is
+  exactly HTML4's, so **three** entries are HTML5-void and mis-read as
+  containers — `source`, `track` and `embed`. An `<embed>` or a `<track>`
+  anywhere in a body deleted everything after it to the close of its parent.
+  Same silent loss, not limited to `<picture>`.
+
+  The fix is a third disposal, `DROP_TAG_KEEP_CHILDREN`: the tag and every
+  attribute on it still go, and the children the parser misfiled underneath are
+  promoted and then sanitised like any other node. **`ALLOWED` was not touched**,
+  so nothing new can be printed, which is the only test a change to a sanitiser
+  has to pass. The rule separating the two lists is not "hostile or not" but
+  *does this element legally have children* — `script` and `style` are real
+  containers whose child text IS the payload, and they stay where they are.
+  Pre-normalising with a regex was rejected on the merits: it means
+  pattern-matching untrusted HTML to decide what the parser then sees, which is
+  the denylist that file exists to refuse. The new branch is checked BEFORE
+  `DROP_WHOLE`, so a later "`source` is a media tag, put it back on the drop
+  list" tidy-up cannot restore the loss.
+
+  ▲ **And the page had no rule for a body photograph at all.** A plain `<img>`
+  — one `RichText::clean()` passes through byte-identically before and after the
+  sanitiser change, so a pre-existing defect and not a consequence of it — took
+  the article page's `scrollWidth` to **1220 at a 390px viewport and 1500 at
+  1280**: a sideways scrollbar on every article carrying a picture, at every
+  width. Invisible until now because `posts` was empty on a fresh shop and the
+  import that fills it was itself removing every `<picture>` before it reached
+  the column. Both halves changed in one release, so the first article with a
+  photograph would have been the first to overflow.
+  `.abody img{max-width:100%;height:auto}`, and the English pin was advanced for
+  that one page and that one declaration with the diff written into its docblock
+- [x] ▲ **An article at a reserved address cannot be served, and the import now
+  names them.** — the refusal and the list both existed; see the screen above. Articles live at the site root and `RESERVED_SLUGS` owns the
   first segment, so a live article slugged `about`, `wishlist` or `feed` is an
   indexed URL this app can never answer. Refused rather than written, named in
   the discard list with its title and the URL it wanted. **Run a preview** — it

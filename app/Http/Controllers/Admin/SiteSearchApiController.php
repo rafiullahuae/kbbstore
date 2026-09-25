@@ -22,7 +22,23 @@ use Illuminate\Http\Request;
 class SiteSearchApiController extends Controller
 {
     /** tab key => [label, description, field keys] */
-    private const TABS = [
+    /*
+     * PUBLIC so the module framework guard can see it — Lane M.
+     *
+     * HeaderSettings::SCHEMA is drawn across TWO screens: Appearance → Header
+     * uses HeaderSettings::TABS, and these 28 search and trending keys are
+     * drawn here, on Store → Site Search. That is a deliberate split (the
+     * owner looks for search settings under Search), but it means the guard's
+     * "every setting this module stores has a control somewhere" cannot be
+     * answered from HeaderSettings::TABS alone — read on its own it says 28
+     * values are stored with nothing to write them, which is false.
+     *
+     * tests/Feature/ModuleFrameworkGuardTest.php unions the two lists. Private
+     * kept it from being able to, and being unreadable is not the same as being
+     * internal: nothing writes to this, it is a list of which control goes on
+     * which tab.
+     */
+    public const TABS = [
         'search' => ['Search', 'What triggers a suggestion, and what the panel shows.',
             ['search_show', 'search_text', 'search_min_chars', 'search_panel', 'search_results_max',
                 'search_limit_categories', 'search_limit_brands', 'search_row_size', 'search_group_rule',

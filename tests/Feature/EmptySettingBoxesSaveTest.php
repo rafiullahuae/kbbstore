@@ -93,7 +93,19 @@ it('has text boxes on the Ecommerce screen and most of them ship empty', functio
     // their loops would pass by running nothing at all.
     $fields = ecommerceTextFields();
 
-    expect($fields)->toHaveCount(16);
+    /*
+     * 16 until Lane M. `checkout_address_key` — the Google Places API key on
+     * Store → Ecommerce → Checkout → Address autocomplete — is the seventeenth,
+     * and it ships empty like most of them, which is what the rest of this file
+     * then exercises against it: an empty key must SAVE rather than 422, or the
+     * owner cannot clear a key once pasted. That is the very bug this file was
+     * written for, so the new box is covered by it rather than exempt from it.
+     *
+     * The pin is advanced for that one addition and nothing else; the
+     * `blankByDefault` count below is unchanged, because the new field is on
+     * the Checkout tab and that count is the Cart tab's.
+     */
+    expect($fields)->toHaveCount(17);
 
     $blankByDefault = array_filter(
         ecommerceSchema()['cart']['fields'],

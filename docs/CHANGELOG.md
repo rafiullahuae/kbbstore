@@ -3,6 +3,126 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.273
+A variable product stops costing AED nothing on every surface at once, and the
+list of articles this shop cannot serve becomes a screen.
+
+A VARIABLE PRODUCT WAS TELLING GOOGLE, THE SORT, THE FILTER AND THE FEED IT WAS
+FREE -- FIVE READERS, NOT THE FOUR ON RECORD. WooCommerce keeps no price on a
+variable parent; the money is on the variations. So products.price is genuinely
+NULL for one, and PHP and SQL turned that same NULL into two different wrong
+answers, which is why the count was low:
+
+  1. Product::effectivePrice() answered 0 fils.
+  2. CollectionSchema::from() published "price":"0.00" to Google on the listing
+     JSON-LD of every /shop, category and brand page -- while the product page
+     beside it published a correct AggregateOffer from the same variations. Two
+     documents on one site contradicting each other about money.
+  3. The price SORT ordered on the raw column. NULL sorts FIRST ascending on both
+     SQLite and MySQL, so "Price: low to high" opened with every variable product
+     in the shop, ahead of genuinely cheap stock. Measured: a parent whose options
+     run AED 120-190 sorted ahead of an AED 30 toner.
+  4. The price FACET bucketed on it.
+  5. Product::toApi() published price: null on the unauthenticated feed.
+
+AND THE FACET WAS WORSE THAN RECORDED. The note said variable products "file
+cheapest-first" in the price filter. They do not -- THEY VANISH, because every
+comparison against NULL is NULL, which is not true. Touching the price filter
+made every variable product disappear from the shop: that same parent was absent
+from "Under AED 54", "AED 54 - 150", "AED 150 - 300" AND "AED 300+". Measured: 17
+products in "AED 54 - 150" before, 18 after.
+
+DERIVED, NOT BACKFILLED, AND THE CHOICE WAS FORCED RATHER THAN PREFERRED.
+VariantPricing::range() answers ONLY for a parent whose price is NULL, so writing
+a figure into that column would turn every range on the shop ("AED 120 - AED
+190") back into a single number -- it would have broken the very renderer the fix
+reuses. Deriving needs no schema change, no ProductImporter change at all, and
+cannot go stale. One SQL definition in two shapes:
+EffectivePrice::variantChargedSql() is ProductVariant::effectivePrice() in SQL,
+grouped over a join for the tile's range and COALESCEd inside a correlated MIN
+for the sort and facet, so the two cannot drift apart -- which is the
+disagreement this area has already paid for twice.
+
+QUERY COST STAYS FLAT, pinned by a test: a 24-variable-parent grid costs exactly
+what a 1-parent grid costs. /shop/ 4 -> 4; ?orderby=plow 4 -> 3; ?price=54-150
+3 -> 4, the extra query hydrating the 18 rows that now match where zero matched
+before. Wall ~20ms both.
+
+AND /api/products WAS THE LAST SURFACE. INDEX_COLUMNS did not select `type`, and
+VariantPricing fails closed -- it declines to derive a price for a row whose
+shape it cannot confirm rather than guessing from a narrowed SELECT -- so the
+feed answered null while the tile printed a range. `type` is now selected and is
+NOT PUBLISHED: toApi() is the allowlist and does not carry it. Asserted on the
+detail route as well as the index, because there the whole row is loaded and only
+the allowlist stands between the model and the response. Cost measured: one extra
+statement when the page holds any variable product, and the same one statement
+for twenty-four as for one.
+
+RULE 1: NO BUTTON IS REMOVED. The tile, the product-page headline and the
+Add-to-cart gate (isDirectlyBuyable()) were all already correct from an earlier
+round, and CartService::add() already threw VariantRequired. The before and after
+tile screenshots are pixel-identical. What moves is which products appear in a
+price bucket and in what order the cheapest-first list opens.
+
+THE ARTICLES THIS SHOP CANNOT SERVE, at Store -> Import -> "Articles this shop
+cannot serve" -> Open the list. Articles live at the site root and RESERVED_SLUGS
+owns the first segment, so a live article slugged about, wishlist or feed is an
+indexed URL this app can never answer. The report existed and read posts.csv
+through the importer's OWN PostImporter::address() rather than a second copy of
+RESERVED_SLUGS, writing nothing -- but nothing could reach it: the owner had to
+know an admin-api URL and read a JSON body to see a list he has to work through
+by hand, one article at a time, before the old site is switched off. Three groups
+kept apart because the action differs, every row with the title, the WordPress
+slug, the live URL, the address it wanted here, and what to do. Opening it writes
+nothing.
+
+▲ AND IT WAS TELLING HIM TO WRITE THE 301 FROM THE WRONG ADDRESS. The report
+offered /{slug}/ and its own comment called it "spelled the way the old site
+published it". It is COMPUTED, on the premise that articles live at the site root
+-- true of this shop, true of the old one only if its permalink structure is
+/%postname%/. On /blog/%postname%/ the row said /about/ while Google holds
+https://kbeautybliss.com/blog/about/, so the redirect he was told to write would
+have pointed at an address nobody ever requested, silently, on the one part of a
+migration that cannot be redone once the old site is switched off. The indexed
+URL is now READ from permalinks.csv -- WordPress's own get_permalink(), already
+accepted as a companion file -- matched by id then slug, DROPPED unless http(s)
+with a host because the page turns it into an href, and left EMPTY with the file
+to upload named rather than guessed. `wanted` and `indexed_at` stay separate
+columns; the CSV column is appended so nothing already read moves position.
+
+The page is server-rendered and standalone, for the reason the other two
+standalone admin pages give: no asset build step exists in this project, and a
+page read when a migration is going wrong must not depend on the console bundle.
+Measured at 390 and 1280: scrollWidth exactly 390 and 1280, no element
+overflowing its box. It first read 543 at 390px with no bounding rect over 391 --
+one unbreakable percent-encoded Arabic permalink inside a correctly sized
+paragraph, fixed in CSS. Under 720px the table becomes labelled cards by media
+query alone; nothing measures layout in JavaScript.
+
+WHAT WAS ALREADY BUILT AND WAS NOT REBUILT: MediaRewrite already carried
+posts.cover, and DocumentMediaRewrite already rewrote <img src> and <a href>
+inside posts.body as a DOCUMENT, idempotently, refusing to re-point anything
+whose file is not already under the web root.
+
+▲ FOUND, PINNED AND NOT YET FIXED: a <picture> block loses its <img> entirely on
+import. libxml's HTML parser is HTML4 and does not know <source> is a void
+element, so the <img> after it is parsed as its CHILD and RichText::DROP_WHOLE
+removes the subtree with it -- and <source> before <img> is the only valid
+ordering, so such a block arrives as nothing and the article silently loses the
+photograph. In hand for the next round.
+
+Files: app/Http/Controllers/Admin/ArticleAddressesPageController.php,
+app/Http/Controllers/Api/ProductController.php, app/Models/Product.php,
+app/Services/Import/DocumentMediaRewrite.php,
+app/Services/Import/ReservedArticleReport.php, app/Services/VariantPricing.php,
+app/Support/EffectivePrice.php, resources/views/admin/app.blade.php,
+resources/views/admin/article-addresses.blade.php,
+routes/import-articles-page.php, routes/web.php,
+database/migrations/2027_01_03_000000_clear_caches_article_addresses_page.php
+
+Taken from the built zip and every file diffed byte for byte against the repo
+before shipping.
+
 ## 2.60.272
 The Journal can be written to, bulk tagging on Build my routine, and a redirect
 that no longer throws a shopper onto the old domain mid-checkout.

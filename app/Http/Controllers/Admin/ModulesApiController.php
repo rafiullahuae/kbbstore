@@ -39,8 +39,9 @@ class ModulesApiController extends Controller
                 'surface' => $surface,
                 'band' => $band,
                 'where' => $where,
-                // live | elsewhere | todo — see ModuleRegistry. The screen only
-                // offers a working toggle for the live ones.
+                // live | elsewhere | todo | screen | inherent — see
+                // ModuleRegistry. The screen only offers a working toggle for
+                // the live ones; `screen` and `inherent` draw no switch at all.
                 'status' => $status,
                 'on' => $state[$key]['on'],
                 'device' => $state[$key]['device'],

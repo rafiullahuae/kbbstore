@@ -165,52 +165,26 @@ class HeaderSettings
         return $this->all()[$key] ?? null;
     }
 
+    /** This screen's point on ModuleSchema's four policy axes. */
+    public const POLICY = [
+        'max' => 120,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'strict',
+        'bool' => 'cast',
+    ];
+
     public function cast(string $key, mixed $value): mixed
     {
-        $def = self::SCHEMA[$key] ?? null;
-
-        if ($def === null) {
+        if (! isset(self::SCHEMA[$key])) {
             return null;
         }
 
-        [$type, , $default] = $def;
-
-        return match ($type) {
-            'bool' => (bool) $value,
-            'range' => max($def[4]['min'], min($def[4]['max'], (int) $value)),
-            'colour' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $value) ? (string) $value : $default,
-            'select' => isset($def[4][(string) $value]) ? (string) $value : $default,
-            'tags' => $this->tags($value, $default),
-            default => trim((string) $value) === '' ? $default : mb_substr(trim((string) $value), 0, 120),
-        };
-    }
-
-    /**
-     * Trending words as a tidy comma list.
-     *
-     * Accepts either an array from the picker or a typed string, so pasting a
-     * list works as well as clicking suggestions.
-     */
-    private function tags(mixed $value, string $default): string
-    {
-        $items = is_array($value) ? $value : explode(',', (string) $value);
-
-        $clean = [];
-
-        foreach ($items as $item) {
-            $item = trim(preg_replace('/\s+/', ' ', (string) $item));
-
-            if ($item === '' || mb_strlen($item) > 40) {
-                continue;
-            }
-
-            // Case-insensitive de-duplication, keeping the first spelling.
-            if (! in_array(mb_strtolower($item), array_map('mb_strtolower', $clean), true)) {
-                $clean[] = $item;
-            }
-        }
-
-        return $clean === [] ? $default : implode(', ', array_slice($clean, 0, 20));
+        return ModuleSchema::cast(
+            ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
+            $value,
+        );
     }
 
     /** @return string[] */
