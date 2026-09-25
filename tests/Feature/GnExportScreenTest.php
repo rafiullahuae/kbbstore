@@ -97,6 +97,49 @@ function gnSettingsFromRequest(array $post): array
     return $decoded;
 }
 
+/**
+ * Where the browser writes this test's screenshots.
+ *
+ * ── WHY THIS IS NOT docs/gn-screen-shots BY DEFAULT ─────────────────────
+ *
+ * It was, and it meant every green run left tracked PNGs modified in the working
+ * tree. That cost nothing while the browser was dying at launch and writing
+ * nothing; the moment the harness was repaired -- see tests/bootstrap.php on
+ * Chromium and the working directory -- every suite run started dirtying the
+ * checkout. That is the "tracked preview files rewritten under you by a green
+ * run" incident bootstrap.php already records, arriving again through a new
+ * door.
+ *
+ * A screenshot is not deterministic: the same page re-rendered differs by
+ * kilobytes. So there is no version of this that churns only when the screen
+ * actually changes.
+ *
+ * The run therefore writes into its own temp directory, and the committed
+ * pictures are refreshed deliberately with KBB_REFRESH_SHOTS=1 -- which is what
+ * a lane taking pictures for a patch wants, and what an ordinary verification
+ * run does not.
+ *
+ * THE ASSERTIONS GOT STRICTER FOR IT, which is the part worth keeping: the fresh
+ * shot must exist because the browser really rendered, AND the committed one
+ * must exist because the document beside it makes a claim about a screen.
+ * Before, one committed file satisfied both -- which is exactly how a browser
+ * that never launched went unnoticed.
+ */
+function gnShotsDir(string $out): string
+{
+    if (getenv('KBB_REFRESH_SHOTS')) {
+        return base_path('docs/gn-screen-shots');
+    }
+
+    $dir = $out.'/shots';
+
+    if (! is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    return $dir;
+}
+
 it('still hands the batch size to the runner unchanged, clamped at both ends and defaulted', function () {
     /*
      * THE MOVE MUST NOT HAVE CHANGED ANY OF THIS. A disclosure that quietly
@@ -220,7 +263,7 @@ it('moves the batch setting behind a disclosure that starts shut, and still post
             .escapeshellarg(base_path('wordpress-plugin/harness/screen-drive.mjs'))
             .' --page='.escapeshellarg($out.'/screen.html')
             .' --plumbing'
-            .' --shots='.escapeshellarg(base_path('docs/gn-screen-shots'))
+            .' --shots='.escapeshellarg(gnShotsDir($out))
             .' --out='.escapeshellarg($out.'/findings.json')
             .' --chrome='.escapeshellarg($chrome)
             .' > /dev/null 2>&1',
@@ -233,6 +276,22 @@ it('moves the batch setting behind a disclosure that starts shut, and still post
     }
 
     expect($status)->toBe(0, 'the browser run failed: '.implode("\n", $lines));
+
+    /*
+     * THE BROWSER REALLY RENDERED, asserted here because this is where $out is.
+     *
+     * This is the check that was missing when Chromium was dying at launch: the
+     * run's output goes to /dev/null, so the only signal was the exec() status,
+     * and the committed pictures in docs/ satisfied the file-exists case further
+     * down on their own. A shot taken THIS RUN cannot be satisfied by a file
+     * somebody committed last year.
+     */
+    foreach (['01-at-rest-collapsed.png', '02-disclosure-opened.png'] as $shot) {
+        $fresh = gnShotsDir($out).'/'.$shot;
+
+        expect(is_file($fresh))->toBeTrue("the browser run produced no {$shot}");
+        expect(filesize($fresh))->toBeGreaterThan(1000, "the browser run produced an empty {$shot}");
+    }
 
     $found = json_decode((string) file_get_contents($out.'/findings.json'), true);
 

@@ -214,6 +214,34 @@ function geUnexpectedRejections(App\Services\Import\ImportReport $report): array
     ));
 }
 
+/**
+ * Where the browser writes this file's screenshot.
+ *
+ * Same reasoning as gnShotsDir() in tests/Feature/GnExportScreenTest.php, and
+ * for the same reason: pointing --shots straight at the tracked docs/ directory
+ * left a modified PNG in the working tree after every green run, which is the
+ * "tracked preview files rewritten under you by a green run" incident
+ * tests/bootstrap.php already records. A screenshot is not deterministic, so
+ * there is no version of this that churns only when the screen changes.
+ *
+ * KBB_REFRESH_SHOTS=1 writes into docs/ instead -- what a lane taking pictures
+ * for a patch wants, and what an ordinary verification run does not.
+ */
+function glShotsDir(string $out): string
+{
+    if (getenv('KBB_REFRESH_SHOTS')) {
+        return base_path('docs/gl-download-shots');
+    }
+
+    $dir = $out.'/shots';
+
+    if (! is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    return $dir;
+}
+
 it('imports the plugin export cleanly, with nothing refused that should not be', function () {
     $report = geImport();
 
@@ -2653,7 +2681,7 @@ it('draws a download button per group, and says so rather than 404ing when a gro
             .' --page='.escapeshellarg($out.'/screen.html')
             .' --static=1'
             .' --out='.escapeshellarg($out.'/findings.json')
-            .' --shots='.escapeshellarg(base_path('docs/gl-download-shots'))
+            .' --shots='.escapeshellarg(glShotsDir($out))
             .' --shotname=02-after-a-run.png'
             .' --chrome='.escapeshellarg($chrome)
             .' > /dev/null 2>&1',
@@ -2670,6 +2698,21 @@ it('draws a download button per group, and says so rather than 404ing when a gro
     $found = json_decode((string) file_get_contents($out.'/findings.json'), true);
 
     expect($found['errors'])->toBe([], 'the screen threw in the browser: '.implode(' | ', $found['errors']));
+
+    /*
+     * AND THE BROWSER REALLY RENDERED, which nothing here checked before.
+     *
+     * The run's output goes to /dev/null, so the only signal was the exec()
+     * status -- and for most of this project's life Chromium was dying at launch
+     * (tests/bootstrap.php has the measurement: it cannot use a profile
+     * directory inside the working directory) while this file reported nothing
+     * beyond a status code. A shot taken THIS RUN is the cheapest thing that
+     * cannot be satisfied by a file somebody committed last year.
+     */
+    $fresh = glShotsDir($out).'/02-after-a-run.png';
+
+    expect(is_file($fresh))->toBeTrue('the browser run produced no 02-after-a-run.png');
+    expect(filesize($fresh))->toBeGreaterThan(1000, 'the browser run produced an empty 02-after-a-run.png');
 
     $rows = [];
 
