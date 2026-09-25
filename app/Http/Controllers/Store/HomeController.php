@@ -130,9 +130,41 @@ class HomeController extends Controller
 
         // Category tiles, cached alongside the rails.
         $categories = Cache::remember('kbb.home.cats', 900, fn () => Category::query()
-            ->select('id', 'name', 'slug')
+            /*
+             * ▲ `path` IS SELECTED, AND IT COSTS NOTHING TO SELECT IT.
+             *
+             * Without it Category::url() falls through to buildPath(), and
+             * because `parent_id` is not selected either the walk finds no
+             * parent, ISSUES NO QUERY, and stops at the leaf -- so the tile for
+             * a nested category linked to an address that answers 301 to the
+             * real one. The same omission caused the speed and the wrongness,
+             * which is why no query count ever showed it: an instrumented run
+             * found 1,821 of the application's 2,024 ancestry walks coming from
+             * this one loop, every one of them answering nothing.
+             *
+             * Nothing on the shop as shipped was affected -- every seeded
+             * category is a root. It bites a nested tree, which is exactly what
+             * the WooCommerce import produces.
+             *
+             * `path` is in the GROUP BY for consistency with the two columns
+             * already listed beside it -- NOT because leaving it out would
+             * break. I expected it to and checked rather than asserting it:
+             * with the column selected and NOT grouped, both engines pass.
+             * ONLY_FULL_GROUP_BY is on here (MySQL 8.0.46, mode confirmed), and
+             * it permits this because `categories.id` IS IN THE GROUP BY and it
+             * is the primary key, so every other column of that table is
+             * functionally dependent on it.
+             *
+             * Worth knowing precisely, because this repository HAS paid twice
+             * for the aggregate-plus-row shape that ONLY_FULL_GROUP_BY does
+             * reject -- it is why SqlDialectGuardTest exists. The rule is not
+             * "every selected column must be grouped"; it is that one must be
+             * grouped or functionally dependent on something that is. Group by
+             * a non-key column and add a select, and the 1140 is real.
+             */
+            ->select('id', 'name', 'slug', 'path')
             ->withCount(['products' => fn ($q) => $q->visible()])
-            ->groupBy('categories.id', 'categories.name', 'categories.slug')
+            ->groupBy('categories.id', 'categories.name', 'categories.slug', 'categories.path')
             ->having('products_count', '>', 0)
             // Same as the brand strip: a tie on the count at the tenth place
             // decides which tile the homepage shows.

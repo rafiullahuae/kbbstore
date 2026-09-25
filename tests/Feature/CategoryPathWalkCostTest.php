@@ -227,26 +227,40 @@ it('walks the ancestry once per archive page, and not at all when the path colum
    2 · THE LOOP — 90% of the census, and it costs nothing
    ═════════════════════════════════════════════════════════════════════════ */
 
-it('pins the homepage category tile linking at the leaf instead of the full path', function () {
+it('links the homepage category tile at the full path, and still walks nothing', function () {
     /*
-     * ── A DEFECT PINNED AS IT IS, NOT A GUARANTEE ──────────────────────────
+     * ── THE DEFECT THIS PINNED IS CLOSED, AND THE OLD ASSERTION IS QUOTED ──
      *
-     * `HomeController` selects id, name and slug for the tiles. `path` is not
-     * among them, so Category::url() falls through to buildPath(); `parent_id`
-     * is not among them either, so the walk finds no parent, answers no query
-     * and stops at the leaf. The tile for a nested category therefore links to
-     * an address that 301s to the real one.
+     * This case was written as a PIN rather than a guarantee, and it carried
+     * its own advance instruction. It has now fired, so here is what it held
+     * and what replaced it.
      *
-     * Nothing on the shop as shipped is affected — every seeded category is a
-     * root. It bites a shop whose tree is nested, which is what the WooCommerce
+     * WHAT IT HELD. `HomeController` selected id, name and slug for the tiles.
+     * `path` was not among them, so Category::url() fell through to
+     * buildPath(); `parent_id` was not among them either, so the walk found no
+     * parent, ANSWERED NO QUERY and stopped at the leaf. The tile for a nested
+     * category therefore linked to an address that 301s to the real one. The
+     * old assertions, verbatim:
+     *
+     *     expect($verdict['status'])->toBe('redirect', …);
+     *     expect($href)->toContain('/product-category/'.$leaf->slug.'/');
+     *     expect($href)->not->toContain($root->slug);
+     *
+     * Nothing on the shop as shipped was affected — every seeded category is a
+     * root. It bit a shop whose tree is nested, which is what the WooCommerce
      * import produces ("nested to four levels", PagesApiController).
      *
-     * THE FIX IS ONE LINE and it is in another lane's file:
-     *     app/Http/Controllers/Store/HomeController.php:133
-     *     ->select('id', 'name', 'slug')   →   ->select('id', 'name', 'slug', 'path')
-     * Zero extra queries; ten 301s become ten 200s. When that lands this case
-     * goes red on the `redirect` expectation, and it is advanced to `ok` with
-     * the old assertion quoted — never deleted.
+     * WHAT CLOSED IT. `'path'` added to that select — and to the GROUP BY
+     * beside it, which is not tidiness: this is the aggregate-plus-row shape
+     * MySQL's ONLY_FULL_GROUP_BY rejects and SQLite accepts, the difference
+     * SqlDialectGuardTest exists for. A column added to one and not the other
+     * passes the whole suite on SQLite and 1140s the homepage on the live shop.
+     *
+     * The second half of the case is UNCHANGED and is the half that matters
+     * now: the tiles still cost the same number of category queries with a
+     * nested tree as with a flat one. The link is correct AND the walk is still
+     * free — if a later edit fixed the href by making the loop walk for real,
+     * that is one query per ancestor per tile and this case fails on it.
      */
     Cache::flush();
 
@@ -308,23 +322,22 @@ it('pins the homepage category tile linking at the leaf instead of the full path
     $href = $ours[0];
 
     /*
-     * ▲ THE PIN. The leaf slug alone, with no ancestor — and resolve() answers
-     * `redirect`, which is a 301 on a link the homepage printed itself.
+     * ▲ THE FULL PATH, RESOLVING STRAIGHT THROUGH. `ok` and not `redirect`:
+     * the homepage no longer prints a link to an address it will then bounce
+     * the visitor off. Asserted through CategoryPath::resolve() rather than by
+     * string-matching the href, because what matters is what the router does
+     * with it, not how it is spelt.
      */
     $verdict = CategoryPath::resolve(trim(str_replace('/product-category/', '', $href), '/'));
 
-    // FIRST, so that the run which closes this defect prints the sentence that
-    // says what to do rather than a string comparison nobody can read.
     expect($verdict['status'])->toBe(
-        'redirect',
-        "the homepage category tile now links at {$href}, which resolves straight through — "
-        . "HomeController's select has gained `path` and this defect is closed. "
-        . "Advance this pin: expect 'ok', and quote the old assertion in the comment above."
+        'ok',
+        "the homepage category tile links at {$href}, which does not resolve straight through — "
+        . "HomeController's select has lost `path` again, and every nested category tile is a 301"
     );
 
-    expect($verdict['to_path'])->toBe($root->slug . '/' . $leaf->slug);
-    expect($href)->toContain('/product-category/' . $leaf->slug . '/');
-    expect($href)->not->toContain($root->slug);
+    // The ancestor really is in the href, which is the thing `path` buys.
+    expect($href)->toContain('/product-category/' . $root->slug . '/' . $leaf->slug . '/');
 
     /*
      * And the reason nobody noticed: the ten walks are FREE. `parent_id` is not
