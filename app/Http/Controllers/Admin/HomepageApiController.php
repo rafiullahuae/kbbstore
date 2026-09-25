@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Store\HomeController;
 use App\Http\Controllers\Store\ShopController;
 use App\Services\HomepageContent;
 use App\Services\HomepageLayouts;
 use App\Services\HomepageSections;
+use App\Services\SettingsService;
 use App\Support\GridSkins;
 use App\Support\Shortcodes;
+use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -41,22 +44,48 @@ class HomepageApiController extends Controller
         ]);
     }
 
-    public function save(Request $request): JsonResponse
+    /**
+     * The validation rules the console's section list is read through.
+     *
+     * ONE COPY, because save() and preview() must not disagree about what a
+     * posted arrangement is. A preview that accepted a shape the save refuses
+     * would show the owner a page they cannot have; a preview that refused one
+     * the save accepts would send them looking for a fault that is not there.
+     *
+     * @return array<string, list<string>>
+     */
+    private static function sectionRules(): array
     {
-        $data = $request->validate([
+        return [
             'sections' => ['required', 'array', 'min:1'],
             'sections.*.key' => ['required', 'string', 'max:40'],
             'sections.*.desktop' => ['required', 'boolean'],
             'sections.*.mobile' => ['required', 'boolean'],
             'sections.*.skin' => ['nullable', 'string', 'max:40'],
-        ]);
+        ];
+    }
 
+    /**
+     * The console's list of rows as the saved payload shape, numbered by
+     * position — or a 422 naming the section it could not place.
+     *
+     * The keys are checked against REGISTRY here and the VALUES are not: every
+     * value goes through HomepageSections::SECTION_SCHEMA on the way in, which
+     * is the one place a skin is checked against GridSkins and a switch is
+     * cast. Checking either twice, in two vocabularies, is how the two come to
+     * disagree.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array{0: array<string, mixed>|null, 1: JsonResponse|null}
+     */
+    private static function payloadFor(array $rows): array
+    {
         $payload = [];
         $order = 0;
 
-        foreach ($data['sections'] as $row) {
+        foreach ($rows as $row) {
             if (! isset(HomepageSections::REGISTRY[$row['key']])) {
-                return response()->json(['ok' => false, 'error' => "Unknown section: {$row['key']}."], 422);
+                return [null, response()->json(['ok' => false, 'error' => "Unknown section: {$row['key']}."], 422)];
             }
 
             $payload[$row['key']] = [
@@ -65,6 +94,19 @@ class HomepageApiController extends Controller
                 'skin' => $row['skin'] ?? null,
                 'order' => $order++,
             ];
+        }
+
+        return [$payload, null];
+    }
+
+    public function save(Request $request): JsonResponse
+    {
+        $data = $request->validate(self::sectionRules());
+
+        [$payload, $error] = self::payloadFor($data['sections']);
+
+        if ($error !== null) {
+            return $error;
         }
 
         $this->sections->save($payload);
@@ -81,6 +123,120 @@ class HomepageApiController extends Controller
             'saved' => count($payload),
             'sections' => array_values($this->sections->all()),
         ]);
+    }
+
+    /**
+     * Appearance → Homepage → Preview: THE REAL HOMEPAGE, from an arrangement
+     * nobody has saved.
+     *
+     * ── THE GAP THIS CLOSES ─────────────────────────────────────────────────
+     *
+     * Both homepage screens publish straight to the live shop. The section list
+     * has arrows, two switches a row and a skin picker, and no way whatsoever
+     * to see what any of them does short of pressing Save and opening the shop
+     * — on the shop real visitors are on. Phase 15 calls the missing half "live
+     * editing"; the controls were never what was missing, the LOOK was.
+     *
+     * ── WHY IT RENDERS THE PAGE AND NOT A DIAGRAM ──────────────────────────
+     *
+     * A wire-frame of the order is a fourth thing that can go stale — this
+     * console has already had one, `hpWire()`, drawing each preset's stored
+     * sequence rather than the one applying it produces, which is the fault
+     * docs/FR-HOMEPAGE-ORDER.md named and Lane FW fixed. So this renders the
+     * homepage itself, through HomeController, through store/home.blade.php,
+     * with the same CSS the shop serves. There is nothing here that can
+     * disagree with the shop, because there is no second drawing of it.
+     *
+     * ── AND IT WRITES NOTHING ───────────────────────────────────────────────
+     *
+     * The proposal reaches the page as a HomepageSections instance built by
+     * proposing(), bound for the length of one render and dropped. That
+     * instance refuses save() outright rather than merely not being asked to,
+     * and none of the four cache keys the two writing endpoints forget is
+     * touched here: a preview that evicted the homepage's rails would be a
+     * read that costs every shopper a cold page.
+     */
+    public function preview(Request $request): JsonResponse
+    {
+        $data = $request->validate(self::sectionRules());
+
+        [$payload, $error] = self::payloadFor($data['sections']);
+
+        if ($error !== null) {
+            return $error;
+        }
+
+        $reader = HomepageSections::proposing(app(SettingsService::class), $payload);
+
+        return response()->json([
+            'ok' => true,
+            'html' => $this->renderHome($reader),
+            // What the proposal really produces once settle() has put every
+            // nested row back behind its host — the same list the save would
+            // hand back, so the screen can repaint from it and show the order
+            // the picture above it is of.
+            'sections' => array_values($reader->all()),
+        ]);
+    }
+
+    /**
+     * store/home.blade.php, rendered through the storefront's own controller.
+     *
+     * ── THE REQUEST IS SWAPPED, AND THAT IS THE WHOLE TRICK ─────────────────
+     *
+     * layouts/store.blade.php reads `request()->getPathInfo()` to decide
+     * whether it is on the home page: the canonical URL, the SEO type and the
+     * noindex decision all hang off it, and partials/mobile-chrome marks its
+     * home tab from `request()->path()`. Rendered from an admin-api URL without
+     * this, the preview would differ from the shop in its <head> and in one
+     * highlighted tab on the phone bar — small, invisible in a picture, and
+     * exactly the kind of drift that makes a preview not worth trusting.
+     *
+     * Swapped rather than patched, so the difference cannot exist rather than
+     * being enumerated. The session and the user resolver are carried across
+     * (the storefront layout reads both), the container's rebinding on
+     * `request` re-points the URL generator by itself, and both are put back in
+     * a finally — an admin request that rendered a preview and then answered
+     * from the wrong Request object would be a defect in every other endpoint
+     * on this controller.
+     *
+     * HomepagePreviewTest pins the outcome rather than the mechanism: a
+     * preview of the CURRENT configuration is byte-identical to GET /, CSRF
+     * token aside. If the swap ever stops being right, that is what goes red.
+     */
+    private function renderHome(HomepageSections $reader): string
+    {
+        $app = app();
+        $live = $app->make('request');
+
+        /*
+         * THE SCHEME AND HOST ARE CARRIED ACROSS, AND THE DEFECT THAT MADE
+         * THAT A LINE OF ITS OWN IS WORTH RECORDING.
+         *
+         * Url::to('/') answers a ROOT-RELATIVE url — that is what it is for,
+         * and every internal link on the storefront uses it. Handed to
+         * Request::create() on its own it produces a request for
+         * `http://localhost/`, whatever host the console is really being served
+         * from, and @vite then writes its <link> and <script> tags against THAT
+         * root. Measured in Chromium against a shop on 127.0.0.1:8977: three
+         * ERR_CONNECTION_REFUSED, `document.styleSheets` three short, and the
+         * preview drew the homepage in Times New Roman on a white page. It is
+         * invisible to a suite whose APP_URL and request host are both
+         * `localhost`, which is why the test for it names a host of its own.
+         */
+        $asHome = Request::create($live->getSchemeAndHttpHost().Url::to('/'), 'GET');
+        $asHome->setLaravelSession($live->session());
+        $asHome->setUserResolver($live->getUserResolver());
+
+        $app->instance(HomepageSections::class, $reader);
+        $app->instance('request', $asHome);
+
+        try {
+            return $app->make(HomeController::class)()->render();
+        } finally {
+            $app->instance('request', $live);
+            $app->forgetInstance(HomepageSections::class);
+        }
     }
 
     /** Apply a layout preset, then hand back the resulting sections. */

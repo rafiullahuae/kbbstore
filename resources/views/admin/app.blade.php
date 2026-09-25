@@ -868,6 +868,48 @@ tr.invdirty{background:var(--accent-soft)}
 @media(max-width:1100px){.hplayouts{grid-template-columns:1fr 1fr}}
 @media(max-width:620px){.hplayouts{grid-template-columns:1fr}}
 
+/* ── Appearance · Homepage · Preview (Lane P1, Phase 15) ────────────────────
+   The real storefront homepage, rendered from the arrangement on screen and
+   not from anything saved. Everything is prefixed hppv- so it cannot reach
+   another screen in this one-document console.
+
+   SIZED WITH calc() AND A DECLARED SCALE, NOT BY MEASURING. Rule 4 of the
+   project notes forbids JavaScript that measures layout, and two tests sweep
+   for the element-measuring APIs by name, so nothing here asks how wide the
+   column is. `--hppv-s` is a literal per breakpoint; the frame's height is
+   calc()'d FROM it, so the stage and the page inside it cannot come to
+   disagree the way two hand-kept numbers would. The steps are chosen to leave
+   the frame narrower than the console column at every width; overflow:hidden
+   is the guard, not the plan.
+
+   The page inside is laid out at 1280px in Desktop and at 390px in Mobile,
+   which is the point: `d-off` and `m-off` are media queries on the STOREFRONT's
+   own breakpoint, so the only honest way to show what a Desktop/Mobile switch
+   does is to give the document a viewport of that width and let its own CSS
+   decide. */
+.hppv{border:1px solid #e9edf3;border-radius:14px;background:#fff;padding:14px 16px;margin-bottom:18px;min-width:0}
+.hppv-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.hppv-hd b{font-size:14px;font-weight:700;margin-inline-end:auto}
+.hppv-dev{display:inline-flex;border:1px solid #e9edf3;border-radius:10px;overflow:hidden}
+.hppv-dev button{border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;
+  padding:7px 12px;cursor:pointer;color:#3c4655}
+.hppv-dev button.on{background:#FFF1F5;color:#C13E63}
+.hppv-note{font-size:12px;color:#7b8697;line-height:1.5;margin:9px 0 0}
+.hppv-note.is-bad{color:#8f332d}
+.hppv-stage{--hppv-s:.24;position:relative;overflow:hidden;height:540px;border:1px solid #e9edf3;
+  border-radius:12px;background:#fff;min-width:0}
+.hppv-frame{width:1280px;height:calc(540px / var(--hppv-s));border:0;display:block;
+  transform:scale(var(--hppv-s));transform-origin:top left}
+@media(min-width:760px){.hppv-stage{--hppv-s:.44}}
+@media(min-width:1040px){.hppv-stage{--hppv-s:.52}}
+@media(min-width:1280px){.hppv-stage{--hppv-s:.70}}
+@media(min-width:1440px){.hppv-stage{--hppv-s:.82}}
+/* Mobile is drawn at its true size — 390px needs no reduction at any console
+   width, so the one view an owner reviews on a phone is the one that is exact. */
+.hppv-stage.is-mob{--hppv-s:1}
+.hppv-stage.is-mob .hppv-frame{width:390px;margin:0 auto}
+.hppv-empty{display:grid;place-items:center;height:100%;font-size:12.5px;color:#7b8697;text-align:center;padding:0 18px}
+
 /* demo content row + confirmation dialog */
 .demorow{display:flex;align-items:center;gap:14px;border:1px solid #e9edf3;border-radius:14px;
   padding:14px 16px;background:#fff;margin-bottom:18px}
@@ -3624,6 +3666,7 @@ document.addEventListener('click', e=>{
       if(btn) btn.firstChild.textContent=(HP.skins.find(s=>s.key===key)||{}).label||key;
       pick.closest('.skinpop').querySelectorAll('.skinopt').forEach(o=>o.classList.toggle('on',o===pick));
       pick.closest('.skinpop').classList.remove('on');
+      hpPreviewStale();
       const d=$('#hpDirty'); if(d){d.style.visibility='visible';d.classList.remove('ok');d.textContent='Unsaved changes';}
     }
     return;
@@ -3639,6 +3682,156 @@ function hpWire(L){
   const ACC={'Hero slider':'#E0567B','Skin quiz':'#3c4655','Flash sale':'#E23B57','Newsletter':'#1F7D52'};
   return `<div class="wire">${L.order.map(n=>
     `<i style="height:${BAR[n]||11}px;background:${ACC[n]||'#E9DDE3'}" title="${n}"></i>`).join('')}</div>`;
+}
+
+/* ── THE PREVIEW (Lane P1, Phase 15) ────────────────────────────────────────
+
+   Appearance → Homepage published straight to the live shop: seventeen rows of
+   switches, arrows and skin pickers, and no way to see any of it short of
+   pressing Save and opening the storefront real visitors are on. This is that
+   missing half — the REAL homepage, rendered from the arrangement currently on
+   screen, by the storefront's own controller and template, with nothing saved.
+
+   THE PICTURE SURVIVES AN ARROW PRESS. paintHomepage() repaints #content
+   whole, so the last rendered document is kept here and re-emitted; what
+   changes on an edit is the LINE UNDER IT, which stops claiming the picture is
+   of the arrangement on screen the moment the two differ. A stale picture that
+   says it is stale is useful; one that quietly is not is the fault this whole
+   screen has been repairing for three rounds.
+
+   IT IS NOT REFRESHED ON EVERY KEYSTROKE. Each preview is a full homepage
+   render on the server; firing one per arrow press would make a page an owner
+   is editing the most expensive thing on the host. The button is the trigger,
+   and the note says when it is worth pressing again.
+
+   THE FRAME IS SANDBOXED WITHOUT allow-scripts, DELIBERATELY. The storefront's
+   own JavaScript has no business running inside the console, and this is a
+   preview of LAYOUT: what renders, in what order, at which width. `sandbox`
+   with only allow-same-origin lets the document load the shop's stylesheets,
+   fonts and images and run not one line of script. The two flags that together
+   defeat a sandbox — allow-scripts AND allow-same-origin — are never both set.
+
+   AND THE PAGE INSIDE IS AT A REAL DEVICE WIDTH. `d-off` and `m-off` are media
+   queries in the storefront's own stylesheet, so the only honest way to show
+   what a Desktop or Mobile switch does is to hand the document a viewport of
+   that width and let its CSS answer. Mobile is 390px, drawn at its true size;
+   Desktop is 1280px, drawn reduced to fit the column by a declared scale. */
+let HPPV = {html:'', dev:'desk', of:'', busy:false, err:''};
+
+/*
+ * WHAT THE PICTURE IS A PICTURE OF, as a string.
+ *
+ * Freshness is DERIVED and not flagged, and that is the difference between a
+ * note that is right and a note that is right until somebody adds a fourth way
+ * to edit a row. A flag has to be set by every edit handler on this screen —
+ * the two device switches, the skin picker, the arrows, Apply layout, and
+ * whatever the next lane adds — and the one that forgets leaves the screen
+ * claiming a stale picture is current, which is the exact class of fault this
+ * screen has spent three rounds removing. Comparing what was rendered with what
+ * is on screen cannot be forgotten, and it gets "moved it and moved it back"
+ * right for free.
+ */
+function hppvOf(){
+  return HP ? JSON.stringify(HP.sections.map(s=>[s.key, !!s.desktop, !!s.mobile, s.skin||''])) : '';
+}
+
+function hppvFresh(){ return !!HPPV.html && HPPV.of === hppvOf(); }
+
+function hpPreviewCard(){
+  /* THE DOCUMENT IS ASSIGNED, NEVER INTERPOLATED. Eighty-odd kilobytes of the
+     shop's own HTML inside a template literal is one backtick or one `${` away
+     from terminating the literal and taking the whole screen's paint with it,
+     and neither character is escaped by an attribute escaper. paintHomepage()
+     sets .srcdoc on the element after the paint instead, where the value is a
+     string and not source. */
+  const stage = HPPV.html
+    ? `<iframe class="hppv-frame" title="Homepage preview" sandbox="allow-same-origin"></iframe>`
+    : `<div class="hppv-empty">Nothing rendered yet. Press <b>&nbsp;Preview this arrangement&nbsp;</b> to draw the homepage as the rows below it are now — the shop is not changed either way.</div>`;
+
+  const note = HPPV.err
+    ? `<p class="hppv-note is-bad">${escHtml(HPPV.err)}</p>`
+    : `<p class="hppv-note" id="hppvNote">${escHtml(hppvNoteText())}</p>`;
+
+  return `<div class="hppv">
+    <div class="hppv-hd"><b>Preview</b>
+      <span class="hppv-dev">
+        <button type="button" data-hppv-dev="desk" class="${HPPV.dev==='desk'?'on':''}">Desktop · 1280</button>
+        <button type="button" data-hppv-dev="mob" class="${HPPV.dev==='mob'?'on':''}">Mobile · 390</button>
+      </span>
+      <button class="btn small" id="hppvGo" ${HPPV.busy?'disabled':''}>${HPPV.busy?'Rendering…':'Preview this arrangement'}</button>
+    </div>
+    <div class="hppv-stage${HPPV.dev==='mob'?' is-mob':''}">${stage}</div>
+    ${note}
+  </div>`;
+}
+
+/** Ask the server to draw the rows as they stand. Writes nothing, saves nothing. */
+async function hpPreviewNow(base){
+  HPPV.busy = true; HPPV.err = '';
+  paintHomepage(base);
+
+  try{
+    const r = await fetch(base+'/preview',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+      body:JSON.stringify({sections:HP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile,skin:s.skin}))})});
+
+    if(!r.ok && r.status===404){
+      /* Name the failure rather than saying "could not render". On this host a
+         package that adds a route is inert until its cache-clearing migration
+         runs, and that is by far the likeliest reason this one 404s. */
+      HPPV.busy=false;
+      HPPV.err='The preview route is not registered. The cache-clearing migration for this release may not have run — check Store → Core Updates.';
+      paintHomepage(base); return;
+    }
+
+    const j = await r.json();
+    HPPV.busy = false;
+
+    if(j.ok){
+      HPPV.html = j.html;
+      /* The order the server SETTLED, not the order that was posted: a nested
+         row is put back behind its host on read, so adopting the answer keeps
+         the list under the picture agreeing with the picture. */
+      if(j.sections) HP.sections = j.sections;
+      // Recorded AFTER adopting the settled list, so a proposal the server
+      // normalised does not read as stale the instant it is drawn.
+      HPPV.of = hppvOf();
+    }else{
+      HPPV.err = j.error || 'The server refused to render that arrangement.';
+    }
+  }catch(e){
+    HPPV.busy=false;
+    HPPV.err='The preview did not complete: '+String(e && e.message || e);
+  }
+
+  paintHomepage(base);
+}
+
+/** What the line under the picture is entitled to say about it. */
+function hppvNoteText(){
+  const where = HPPV.dev==='mob'
+    ? 'Drawn at 390px, its true size.'
+    : 'Laid out at 1280px and drawn reduced to fit this column.';
+
+  if (!HPPV.html) return 'Nothing is saved by previewing, and nothing on the shop moves until you press Save changes. ' + where;
+
+  return (hppvFresh()
+    ? 'This is the arrangement below, rendered by the storefront itself — not a diagram of it. Nothing is saved; the shop still shows what it showed before.'
+    : 'The rows below have changed since this picture was drawn. Press Preview again to catch it up.') + ' ' + where;
+}
+
+/*
+ * Repaint the LINE and nothing else.
+ *
+ * The arrows and Apply layout both repaint #content, which redraws the note
+ * from hppvNoteText() anyway. The two device switches and the grid-skin picker
+ * deliberately do NOT — repainting under a control somebody just used loses
+ * their place — so those three patch the sentence in place, exactly the way
+ * hpDirty() patches the save bar's own word two functions down.
+ */
+function hpPreviewStale(){
+  const n = $('#hppvNote');
+  if (n) n.textContent = hppvNoteText();
 }
 
 function paintHomepage(base){
@@ -3701,6 +3894,8 @@ function paintHomepage(base){
         <button class="btn small hpl-b">${L.key===HP.layout?'Re-apply':'Apply layout'}</button>
       </div>`).join('')}</div>
 
+    ${hpPreviewCard()}
+
     <div class="hpsec-h" style="margin-top:22px">
       <div><b>Sections</b><span>Switch any section off, per device. A section off for both is not rendered at all.</span></div>
     </div>
@@ -3713,6 +3908,12 @@ function paintHomepage(base){
       <button class="btn primary" id="hpSave">Save changes</button>
     </div>
   </div>`;
+
+  // The preview document, assigned rather than interpolated — see the note in
+  // hpPreviewCard(). Assigning it here rather than fetching again is what lets
+  // the picture survive an arrow press.
+  const hppvFrame = $('.hppv-frame');
+  if (hppvFrame && HPPV.html) hppvFrame.srcdoc = HPPV.html;
 }
 
 function hpDirty(){ const d=$('#hpDirty'); if(d){d.style.visibility='visible';d.classList.remove('ok');d.textContent='Unsaved changes';} }
@@ -3738,6 +3939,10 @@ document.addEventListener('click', e=>{
   if(!HP) return;
   const base = window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/homepage';
 
+  const pvd=e.target.closest('[data-hppv-dev]');
+  if(pvd){ HPPV.dev = pvd.dataset.hppvDev; paintHomepage(base); return; }
+  if(e.target.id==='hppvGo'){ hpPreviewNow(base); return; }
+
   const tg=e.target.closest('[data-tg]');
   if(tg){
     const s=HP.sections[+tg.dataset.tg];
@@ -3745,7 +3950,7 @@ document.addEventListener('click', e=>{
     tg.classList.toggle('on', s[tg.dataset.k]);
     tg.setAttribute('aria-checked', s[tg.dataset.k]);
     tg.closest('.hprow').classList.toggle('alloff', !s.desktop && !s.mobile);
-    hpDirty(); return;
+    hpPreviewStale(); hpDirty(); return;
   }
   const mv=e.target.closest('[data-mv]');
   if(mv){
