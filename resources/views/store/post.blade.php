@@ -105,6 +105,15 @@
   .abody h3{font-size:20px;font-weight:600;margin:28px 0 10px;letter-spacing:-.01em}
   .abody b{font-weight:600}
   .abody i{color:var(--ink-2)}
+  /* There was no rule for a body photograph here at all, and one plain <img>
+     took this page's scrollWidth to 1220 at 390px and 1500 at 1280 -- a
+     sideways scrollbar on every article carrying a picture. It had been
+     invisible because `posts` was empty on a fresh shop and the import that
+     fills it was itself removing every <picture> before it reached the column;
+     both halves changed in one release. `height:auto` is half the rule:
+     WordPress writes width= and height= attributes, and constraining the width
+     alone against a fixed height squashes the picture instead of scaling it. */
+  .abody img{max-width:100%;height:auto}
   .backrow{max-width:720px;margin:10px auto 0;padding:0 20px}
   .backrow a{font-size:13px;font-weight:600;color:var(--pink-deep);text-decoration:none}
   .more{border-top:1px solid var(--line-2);margin-top:40px;padding-top:30px}
