@@ -3,6 +3,129 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.272
+Bulk tagging on Build my routine, and a redirect that no longer throws a shopper
+onto the old domain mid-checkout.
+
+BULK TAGGING, MEASURED RATHER THAN ASSERTED. Catalog -> Build my routine -> any
+step tab -> "Select all N on this page", then "Use all N for <step>" or "Tag all
+N for a concern". A 40-product session over the four worksheet terms centella,
+niacinamide, salicylic and heartleaf, driven in a browser against a 65-product
+catalogue: 124 presses on the screen as it shipped, 12 with the bulk bar, both
+paths finishing with the same 40 products tagged (sensitivity 20, dark-spots 10,
+acne 10, verified in the database). Presses counted identically on both paths --
+a click 1, a native select 2, a typed term 1.
+
+The 124 is not clumsiness. The per-row concern chips are DISABLED until a product
+has a step, so the concern job forces the step job: 2 presses for the step select
+plus 1 for the chip, 40 times, plus 4 searches. The 12 is three presses per term
+however many rows come back.
+
+SELECT ALL SELECTS THE VISIBLE PAGE, not the search and not the catalogue. He can
+see 25 rows; a control that writes to 300 he has not seen is one press from a
+mis-tag he cannot inspect. The endpoint takes explicit ids and NO QUERY PARAMETER
+OF ANY KIND, so the dangerous scope is unreachable rather than merely unoffered.
+The checkbox carries the row count and the line beside it names the other pages.
+
+UNDO IS A BAR, NOT A TOAST, AND IT RESTORES PER-ROW STATE. "Add sensitivity to
+twelve" does not invert to "remove sensitivity from twelve" when three already
+carried it -- that strips a tag set on another day. Every response carries each
+row's prior value AS THE SERVER READ IT, and undo replays those through the same
+endpoint, so there is one writer and one validation path. It is a stack, it
+survives searching, paging and tab switches, and it lasts until the screen is
+reloaded, which the bar says in words.
+
+A CONCERN DOES NOT REQUIRE A STEP. The worksheet is organised by CONCERN while
+the screen is organised by STEP -- "centella" returns a cleanser, two toners and
+a cream. ConcernCollections::query() selects on routine_concerns and never reads
+routine_role, and coverage() counts the same way, so tagging a stepless row is
+correct; the bar reports how many it did rather than hiding it. The per-row chips
+and their disabled state are unchanged.
+
+▲ A DEFECT THIS ROUND SHIPPED AND CAUGHT BY DRIVING IT. The bulk chip flips to a
+REMOVE when every picked row already carries the concern, and it was first drawn
+"✓ Redness & sensitivity" -- which reads as a STATUS and is a BUTTON THAT UNTAGS.
+The real session walked into it: centella also matched the heartleaf group, so by
+the fourth term all ten already carried the tag, one press removed it from all
+ten, and the session ended with 10 sensitivity products instead of 20 with
+nothing on screen saying so. It now reads "✓ Remove Redness & sensitivity", with
+the consequence in the title attribute, a test and a mutation.
+
+QUERY COST: GROUPED, NOT PER ROW. One SELECT, then one UPDATE per distinct value
+written -- 5 queries for 40 rows into one step, against 44 for a save-per-row
+loop. Chunked at 200 ids a statement.
+
+Its own capability rule, catalog.manage, written ABOVE the reads: a read rule
+reached first would let an editor holding catalog.view alone retag the catalogue
+25 rows at a time. Verified fails-closed. No modal confirm, deliberately -- the
+blast radius is one visible page, the button names the count and the target
+before it is pressed, and undo is one press.
+
+IN-BAND AND OUT-OF-BAND URLS, SPLIT. Url::redirect() built every absolute URL on
+APP_URL, which is one setting doing two jobs that want opposite answers.
+Measured with APP_URL still on the old domain: GET https://new-shop.test/checkout
+answered 302 Location: https://old-shop.test/cart/. The shopper is on the new
+host, their session cookie is scoped to the new host, and they have just been
+thrown onto a domain that cannot see their basket -- on the way to paying. Once
+the old domain stops resolving it is a dead end.
+
+A redirect Location, and a link on the page being served, is IN-BAND: the visitor
+is already on this host, so answering with it is correct and harmless, and a
+forged Host: redirects the forger to their own domain and nobody else's. An
+email, a webhook callback, a canonical or a sitemap entry is OUT-OF-BAND: built
+on APP_URL, never on a header a visitor chose, because a Host: written into a
+password-reset email is account takeover. Url::external() is byte-for-byte what
+redirect() used to return, so every caller moved onto it emits exactly what it
+emitted before, on a shop served from the address it is configured with and on
+one that is not.
+
+That the in-band argument holds was CHECKED rather than assumed: CacheHeaders
+ships switched off; when on it returns early on any non-200, so a 302 keeps
+Symfony's "no-cache, private"; its storefront knob cannot reach "public" at any
+value; and /cart, /checkout and /my-account are no-store before the status test
+is reached. There is no path by which a 302 leaves here cacheable by a shared
+cache.
+
+▲ TWO CALL SITES THE PREVIOUS ROUND'S AUDIT MISSED. CanonicalHost::targetFor()
+is the INVERSE of the original bug -- it is only ever reached on an alias host,
+so building on the request would have answered the alias with a Location back on
+the alias, and the forwarding that class exists to perform would have silently
+stopped for exactly those paths that also have a redirects row. And
+PaymentsApiController::webhookUrl(), which registers an address at a payment
+provider and is out-of-band by definition. A SECOND MAIL DEFECT was found in the
+same sweep: QuizController emitted a root-relative link into the plan email, the
+same shape as the one already fixed in cart-recovery. A suite-wide invariant test
+now holds every mail template to it.
+
+▲ AND THE SHAPE THE AUDIT PROPOSED WOULD HAVE BEEN INVISIBLE TO THE SUITE.
+SiteUrl::origin() refuses a bound request under runningInConsole(), which is true
+under PHPUnit as well as artisan -- so the un-threaded call is right in
+production and always answers APP_URL in a test. The request is now a parameter,
+threaded at CheckoutController, CheckRedirects and the 404 handler, so the
+behaviour each relies on is the behaviour its own test exercises. Measured:
+inside a feature request to http://new-shop.test, SiteUrl::origin() returns
+http://localhost and SiteUrl::origin($request) returns http://new-shop.test.
+
+Files: app/Http/Controllers/Admin/RoutinesApiController.php,
+app/Http/Controllers/Admin/PaymentsApiController.php,
+app/Http/Controllers/Api/QuizController.php,
+app/Http/Controllers/Store/CheckoutController.php,
+app/Http/Controllers/Store/SeoFilesController.php,
+app/Http/Middleware/CanonicalHost.php, app/Http/Middleware/CheckRedirects.php,
+app/Notifications/CustomerEmailVerification.php,
+app/Notifications/CustomerPasswordReset.php, app/Providers/AppServiceProvider.php,
+app/Services/Mail/EmailBranding.php, app/Services/Mail/OrderEmailPresenter.php,
+app/Services/NewsletterList.php, app/Services/OutboundSender.php,
+app/Services/Payments/GatewayPreflight.php,
+app/Services/Payments/Gateways/RemoteGateway.php,
+app/Services/Payments/Gateways/TamaraGateway.php,
+app/Services/Payments/StripeConnect.php, app/Support/AdminCapabilities.php,
+app/Support/OutboundOptOut.php, app/Support/SiteUrl.php, app/Support/Url.php,
+resources/views/admin/partials/routines-screen.blade.php,
+resources/views/emails/cart-recovery.blade.php,
+routes/build-my-routine-admin.php,
+database/migrations/2027_01_02_000000_clear_caches_routine_bulk_tagging.php
+
 ## 2.60.271
 The routine search, actually fixed — and the previous diagnosis was wrong.
 
