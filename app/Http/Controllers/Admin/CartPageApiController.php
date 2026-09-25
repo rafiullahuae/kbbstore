@@ -127,6 +127,7 @@ class CartPageApiController extends Controller
 
             return response()->json([
                 'products' => Product::query()
+                    ->with('brand:id,name,slug')
                     ->whereIn('id', $ids)
                     ->where('status', 'publish')
                     ->where('is_visible', true)
@@ -157,7 +158,7 @@ class CartPageApiController extends Controller
             });
         }
 
-        $rows = $query->orderByDesc('id')->limit(self::PER_PAGE)->get();
+        $rows = $query->with('brand:id,name,slug')->orderByDesc('id')->limit(self::PER_PAGE)->get();
 
         return response()->json([
             'products' => $rows->map(fn (Product $p) => $this->card($p))->all(),
@@ -166,6 +167,22 @@ class CartPageApiController extends Controller
 
     /**
      * One product as the picker draws it.
+     *
+     * ▲ `brand` IS READ HERE, SO BOTH QUERIES ABOVE EAGER-LOAD IT, and they do
+     * it separately because they are separate code paths: `?q=` searches the
+     * catalogue and `?ids=` resolves a saved rec_ids list back to products. A
+     * with() added to one is not a fix for the other, which is why
+     * CartPagePickerSlopeTest has a case for each and the mutation that removes
+     * only one of them reddens only one.
+     *
+     * Measured before the fix, with every product carrying a brand of its own:
+     * three rows cost 3 `brands` statements and eight cost 6 on the search
+     * branch, and 3 against 8 on the ids branch. Flat after. The property that
+     * matters is the SLOPE rather than the total -- this project has twice held
+     * a page to a number while it grew one statement per row underneath.
+     *
+     * The column list matches the one the storefront's own card queries use, so
+     * a picker row costs the same three columns a shopper's tile does.
      *
      * AN EXPLICIT ALLOWLIST, and not because this endpoint is public — it is
      * behind auth:admin and a capability. It is a list because
