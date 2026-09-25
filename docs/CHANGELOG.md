@@ -3,6 +3,120 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.274
+Phase 3 closed: one settings schema the module screens read. An imported article
+stops losing its photograph. And a colour the shop never actually used.
+
+A COLOUR THAT SAVED, REDREW, AND CHANGED NOTHING. Color::isValidHex() accepts a
+hex WITH OR WITHOUT the leading '#'. Four modules tested a value with it and then
+stored strtoupper($value) unchanged -- so typing e23a4e stored E23A4E, which is
+not a CSS colour. SectionDividers::cssVariables() emitted --dv-col:E23A4E;
+CartPanel wrote its accent into a background:. The browser drops the declaration
+entirely: the value saves, the admin redraws with it, and THE SHOP DOES NOT
+CHANGE. Sixteen fields across Appearance -> Cart panel, Mobile Header, Section
+dividers and Content -> Newsletter. ProductLabels hit this once, diagnosed it in
+a comment that is still in that file, and fixed ITS OWN COPY -- the other four
+never got the fix, because there were four more copies of the same three lines.
+
+PHASE 3, AND NEITHER BLOCKER WAS VISIBLE FROM READING. ModuleSchema already
+existed with three modules on it. What stopped the other fourteen was that the
+schema COULD NOT EXPRESS four controls the console actually draws -- normalise()
+throws on an unknown type and TYPES was missing tags, ids, skin and sections, so
+ModuleSchema::normalise(HeaderSettings::SCHEMA) was a fatal error; the header
+claimed the vocabulary had been counted off the existing schemas and it had been
+counted off the two already migrated. And the seventeen modules did not merely
+DESCRIBE their settings differently, THEY ANSWERED DIFFERENTLY.
+
+That second finding is the design. Every module's own cast() was driven over an
+adversarial corpus -- 4,653 calls, recorded BEFORE anything was touched -- and
+behaviour splits on SIX AXES with no two modules alike: text cap
+(40/60/120/160/240), what an emptied box means, fall back vs refuse, clamp vs
+refuse, two hex dialects, two boolean dialects. A single shared cast would have
+re-cased every stored colour on three screens, started accepting #abc where it is
+refused, and flipped "off" from true to false on ten. So POLICY IS DECLARED PER
+MODULE, NOT DEFAULTED, and the defaults are the strict end. The last two axes
+were found by measurement: a first draft folded colour and bool together and 322
+answers moved.
+
+RULE 1, PROVED RATHER THAN ASSERTED. 4,621 of the 4,653 recorded casts came back
+byte-identical. The 32 that moved are exactly those sixteen colour fields on the
+two inputs written without a '#', and a second test requires each exempted call
+to have stored something no browser accepts and now to store the same digits as a
+valid colour -- so the exemption cannot widen. ModuleScreenPayloadTest replays
+all fourteen module endpoints (482 fields) and CAUGHT A REAL MISTAKE: passing
+validation overrides() into the render call put GridSkins and the homepage-section
+registry into `options`, where two screens had always had null. Control counts are
+identical on every migrated screen; only Ecommerce -> Checkout moves, 14 -> 16,
+for the two new controls.
+
+THE PERFORMANCE MODULE ROW now reads "Already applied to every page - nothing to
+switch" instead of drawing an inert switch beside "Not ported yet". A switch for
+work that is unconditional is a control that lies.
+
+ADDRESS AUTOCOMPLETE IS BUILT AS FAR AS IT HONESTLY CAN BE, and it ships OFF.
+Store -> Ecommerce -> Checkout -> Address autocomplete. The owner decision is a
+PRIVACY one and it is asked in the admin rather than buried in a doc: "Address
+autocomplete suggests a full address as your shopper types - but to do it, every
+character they type into the address box is sent to Google, before they place the
+order and even if they never do. Do you want that on your checkout: yes or no?"
+It ships "Not decided yet - nothing is sent", which behaves as no, and it is the
+FIRST control in the card, ABOVE the key, because pasting a key and agreeing to
+share a customer's half-typed home address are different acts. Three independent
+locks - switch, key, consent - and with any one shut the checkout is
+byte-identical and nothing leaves the browser, asserted by fetching the page
+rather than by reading a comment. Still needs the owner: his answer, and a real
+Places key with billing. Worth trialling against UAE addresses specifically first
+- Places' coverage of villa numbers and area names like "Al Reem Island" is thin.
+
+AN IMPORTED ARTICLE STOPS LOSING ITS PHOTOGRAPH, and the defect was three tags
+rather than one. libxml's HTML parser is HTML4 and its void set is exactly
+HTML4's, so source, track and embed are all mis-read as CONTAINERS: everything
+after one of them, to the close of its parent, is parsed as its CHILD.
+RichText::DROP_WHOLE then removed that subtree. <source> before <img> is the only
+valid ordering inside a <picture>, so every such block arrived as nothing and the
+article lost the photograph silently -- and an <embed> or a <track> anywhere in a
+body did the same to every paragraph after it.
+
+The fix is a third disposal, DROP_TAG_KEEP_CHILDREN: the tag and every attribute
+on it still go, and the children the parser misfiled underneath are promoted and
+then sanitised like any other node. ALLOWED WAS NOT TOUCHED, so nothing new can
+be printed -- the only test a change to a sanitiser has to pass. The rule
+separating the two lists is not "hostile or not" but DOES THIS ELEMENT LEGALLY
+HAVE CHILDREN: script and style are real containers whose child text IS the
+payload, and they stay. Pre-normalising with a regex was rejected on the merits:
+it means pattern-matching untrusted HTML to decide what the parser then sees,
+which is the denylist that file exists to refuse. The new branch is checked
+BEFORE DROP_WHOLE so a later "source is a media tag, put it back on the drop
+list" tidy-up cannot restore the loss. Tested, not asserted: script, style, svg
+onload, iframe and form/input filed under a <source> all come back as nothing,
+and a promoted <img> has onerror and srcset stripped and javascript: refused.
+
+▲ AND THE ARTICLE PAGE HAD NO RULE FOR A BODY PHOTOGRAPH AT ALL. A plain <img> --
+one RichText::clean() passes through byte-identically before and after the
+sanitiser change, so a pre-existing defect and not a consequence of it -- took the
+page's scrollWidth to 1220 at a 390px viewport and 1500 at 1280: a sideways
+scrollbar on every article carrying a picture, at every width. Invisible until now
+because `posts` was empty on a fresh shop and the import that fills it was itself
+removing every <picture> before it reached the column. Both halves changed in one
+release, so the first article to arrive with a photograph would have been the
+first to overflow. .abody img{max-width:100%;height:auto} -- and height:auto is
+half the rule, because WordPress writes width= and height= attributes and
+constraining the width alone against a fixed height squashes the picture instead
+of scaling it.
+
+Files: app/Services/ModuleSchema.php, app/Services/NewsletterSettings.php,
+app/Services/ProductLabels.php, app/Services/ProductStyles.php,
+app/Services/SectionDividers.php, app/Services/SlimFooter.php,
+app/Support/AddressAutocomplete.php, app/Support/RichText.php,
+database/seeders/ModuleSeeder.php,
+database/migrations/2027_01_05_000000_clear_caches_address_autocomplete.php,
+database/migrations/2027_01_05_000001_align_address_autocomplete_module_toggle.php,
+resources/views/admin/app.blade.php,
+resources/views/partials/checkout/address-autocomplete.blade.php,
+resources/views/store/checkout.blade.php, resources/views/store/post.blade.php
+(plus whatever else the built zip lists -- taken from the zip, not from this note,
+and every file diffed byte for byte against the repo before shipping)
+
 ## 2.60.273
 A variable product stops costing AED nothing on every surface at once, and the
 list of articles this shop cannot serve becomes a screen.
