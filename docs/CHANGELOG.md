@@ -3,6 +3,107 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.277
+You can see the homepage before you publish it. The mail password is unreadable
+by construction. And the recommended rail stops fetching a whole product row per
+card.
+
+APPEARANCE -> HOMEPAGE -> PREVIEW, between Layouts and Sections. Desktop 1280 and
+Mobile 390, drawn from the arrangement currently on screen, saving nothing.
+
+Most of this was already built and the lane said so rather than rebuilding it:
+the 17-section registry in template order, the device flags, the grid skins, the
+ordering (a shop on the template's own order emits no style element and no class
+at all), and HomepageContent has been on ModuleSchema for several rounds. The gap
+was never the controls. BOTH SCREENS PUBLISHED STRAIGHT TO THE LIVE SHOP and
+neither could show you the page -- the only way to see what an arrow or a device
+switch did was to press Save, on the live shop, and open the storefront in
+another tab.
+
+Three properties pinned rather than promised: a preview of the configuration the
+shop is already on is BYTE-IDENTICAL to GET /; a preview of an UNSAVED
+arrangement equals what the shop serves once it is saved, proved by two requests
+through two code paths; and it writes nothing -- the settings row is untouched,
+no cache key is evicted, and the reader handed to the renderer THROWS on save().
+
+▲ TWO OF ITS ELEVEN MUTATIONS WERE LIVE DEFECTS RATHER THAN CONFIRMATIONS. A
+stored null has always meant SHOWN, and the obvious migration turns it into
+(bool) null -- 34 rows went dark in the corpus. And the preview first wrote its
+stylesheet tags against http://localhost, because Url::to('/') is root-relative:
+three ERR_CONNECTION_REFUSED and the homepage drawn in Times New Roman. Invisible
+to a suite whose APP_URL and request host are both localhost, so its test names a
+host of its own.
+
+▲ ONE THING TO KNOW BEFORE TRUSTING IT: the preview renders in the admin's own
+session, so the storefront header draws the signed-in account panel. It is what
+the operator sees in the next tab, not what a stranger gets, and it is always
+English. Both are named for a second round rather than quietly left.
+
+The shop did not move: / fetched with and without the change is 88,667 bytes both
+times, differing by the CSRF field alone.
+
+STORE -> MAIL ONTO THE SHARED SCHEMA, and the headline is a NEGATIVE RESULT
+established before a line of the migration existed: NOTHING LEAKS TODAY. A real
+password was planted through the screen's own save, the transport pointed at a
+host that refuses so a genuine SMTP failure was produced, and its literal,
+URL-encoded and base64 spellings looked for across ALL 178 parameterless GET
+routes with an owner session, plus all(), lastTest(), the settings table,
+Setting::map(), mail_deliveries, laravel.log, the failing test-send's own result,
+and the credential column past the model's cast. Not found anywhere. The test
+kept from it has no list to extend, so the next endpoint added is walked on the
+day it is added.
+
+The `secret` type is enforced by a TYPE SIGNATURE rather than a convention:
+SecretStore is put() + has() and NO GETTER, and ModuleSchema::write() types its
+parameter as that interface -- so the schema physically cannot read a credential
+back. read() omits the key entirely, fields() emits it with no value and no
+default, and cast() THROWS on a secret, which is what stops a future normaliser
+swallowing the "-" sentinel that means "forget the password".
+
+▲ AND A MUTATION THAT PASSED IS WHAT FOUND THE REAL RISK. Dropping
+canonicalTransport() from save() left both smtp and log falling back to the
+server transport, with the shop STILL SENDING and no error anywhere -- exactly
+the failure the previous round declined this screen over. It passed first time
+because the test posted the canonical key while the console posts the sentence;
+the test now posts what the screen posts. A delivery proof runs a real message
+through each transport and reads back the transport class the mail manager built
+and the row the shop's own log wrote: identical on both revisions.
+
+No control was added, removed, renamed or moved on Store -> Mail, and all four
+screenshot pairs are byte-identical.
+
+THE RECOMMENDED RAIL STOPS FETCHING A WHOLE PRODUCT ROW PER CARD. Appearance ->
+Cart page -> Recommended rail ran one `select * from brands` per card -- 11, 12,
+15, 20 statements for 1, 2, 5 and 10 cards, with the cap at 24 -- and the
+`select *` was the other half that no statement count sees: a longText
+description plus three json columns fetched for every card, to draw a name and a
+price. Now flat at 11.
+
+Latent on this shop today: the rail renders only on the squeeze layout, and
+layout ships as classic with no products picked. It fires the moment both change.
+
+AND TEN OTHER PAGES WERE MEASURED AND ARE FLAT -- /shop, category, brand and
+concern pages, the product page across variations AND gallery images AND reviews,
+the Journal index, an article's body images, the drawer, and /ar/shop -- each
+varied at 1, 2, 5 and 10 with every fixture PROVEN to render what it varied
+before a count was compared.
+
+▲ TWO MUTATIONS CAME BACK GREEN, AND THAT IS WHAT FOUND TWO BROKEN TESTS rather
+than review. Dropping the column list passed because /cart issues three products
+statements and the matcher kept the wrong one. Dropping brand_id passed because
+the case asserted the page contained the brand's initials -- and initials() caps
+at the first letter of each word, so for a one-word brand it was asserting that an
+HTML page contains the letter "B".
+
+A measurement trap now written down: A FRESH FIXTURE PER SIZE CAN MEASURE NOTHING
+AT ALL. Rebuilding the cart per size left the route-cached controller answering
+out of a service bound to the row just deleted, so the page rendered an EMPTY
+basket -- 7 statements, no rail, and a perfectly flat line across every size. It
+looks exactly like a page that is already fine. Three of ten fixtures rendered
+zero of what they varied on the first attempt.
+
+Files: taken from the built zip, every one diffed byte for byte against the repo.
+
 ## 2.60.276
 A setting was being printed unescaped on the homepage. Settings stop being
 trusted on the way out of the table. The cart stops paying a query per line.
