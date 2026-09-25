@@ -107,9 +107,54 @@ it('has no storefront route of its own', function () {
      */
     expect(is_file(base_path('routes/ugc.php')))->toBeFalse();
 
+    /*
+     * ▲ NARROWED WHEN THE INTEGRATOR WIRED THE ADMIN ROUTES, and the original
+     * is quoted because the narrowing has to be checkable.
+     *
+     * It read:
+     *
+     *     foreach (Route::getRoutes() as $route) {
+     *         expect(str_contains($route->uri(), 'ugc'))->toBeFalse(...);
+     *     }
+     *
+     * which forbids EVERY route carrying `ugc`, including the six admin-api
+     * ones this lane ships. It passed in the lane's own worktree only because
+     * routes/web.php did not require ugc-admin.php there -- the lane could not
+     * edit that file -- so its routes were registered by a test harness and
+     * never at boot. The moment the require landed, the case failed on the very
+     * routes the lane built, and the only way to green it as written would have
+     * been to unmount the feature.
+     *
+     * The claim it is making is "no STOREFRONT route", so that is what it
+     * asserts now: any ugc route must be inside the admin-api group. That is
+     * strictly stronger than deleting the case, and stronger than a
+     * `hasNamedRoute` check would be -- it fails on a public route added later
+     * under any name, which is the thing that would actually put this module in
+     * front of a shopper before the owner has switched it on.
+     */
+    $public = [];
+
     foreach (\Illuminate\Support\Facades\Route::getRoutes() as $route) {
-        expect(str_contains($route->uri(), 'ugc'))->toBeFalse($route->uri().' is a live ugc route');
+        if (! str_contains($route->uri(), 'ugc')) {
+            continue;
+        }
+
+        if (! str_starts_with($route->uri(), 'admin-api/')) {
+            $public[] = implode('|', $route->methods()).' '.$route->uri();
+        }
     }
+
+    expect($public)->toBe(
+        [],
+        'these ugc routes are outside the admin-api group, so a shopper can reach them: '
+        .implode(', ', $public)
+    );
+
+    // And the admin ones really are mounted -- a route file required by nothing
+    // is the "built, never wired up" shape this repository keeps finding.
+    expect(collect(\Illuminate\Support\Facades\Route::getRoutes()->getRoutes())
+        ->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/ugc-videos'))
+        ->count())->toBeGreaterThan(0, 'routes/ugc-admin.php is required by nothing');
 });
 
 it('reads the ugc tables from no storefront code at all', function () {

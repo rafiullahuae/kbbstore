@@ -21688,6 +21688,7 @@ buildNav();
      from the request being answered rather than from the browser, and why an
      authenticated owner's click is a different thing from a Host header. --}}
 @include('admin.partials.site-url-banner')
+@include('admin.partials.ugc-library-screen')
 
 @verbatim
 <script>

@@ -623,6 +623,24 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // admin, its search, and what each image is used by before deleting it.
         require __DIR__.'/media-library-admin.php';
 
+        /*
+         * Content -> Shoppable video (Lane V2). Beside the Media Library
+         * because that is where its poster comes from: the poster has no file
+         * input of its own, by AdminMediaPickerEverywhereTest's rule, so a
+         * picture reaches a video only through the library's own picker.
+         *
+         * Its own capabilities, ugc.view and ugc.manage, rather than reusing
+         * content.manage -- an operator who may write an article is not
+         * thereby someone who may publish a customer's face on the shop, and
+         * the rights fields on this screen are why. AdminCapabilityMapTest
+         * fails a route that falls through to the owner-only default.
+         *
+         * Nothing here reaches the storefront: no route, no section, no query
+         * on any page that exists today, asserted by rendering five storefront
+         * pages byte-for-byte identically with a published video in the table.
+         */
+        require __DIR__.'/ugc-admin.php';
+
         // Content → Media Library → "Make phone-sized copies": the tally, and
         // the bounded batch that walks the existing catalogue making the
         // smaller copies a phone actually downloads. Same group and the same

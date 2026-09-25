@@ -697,6 +697,31 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'source' => 'machine',
     ]);
 
+    /*
+     * One shoppable video with a product tagged on it, for the read route
+     * below. The product matters: show() loads `products.brand`, which is the
+     * many-to-many through a pivot plus a belongsTo on the far side -- a join
+     * over a pivot beside a per-row relation is the shape that has produced a
+     * dialect failure in this repository twice, and a video with no products
+     * would exercise the empty branch and prove the least interesting half.
+     */
+    $ugcVideo = \App\Models\UgcVideo::create([
+        'slug' => 'guard-clip-'.uniqid(),
+        'title' => 'Guard Clip',
+        'caption' => 'Guard caption',
+        'status' => 'publish',
+        'rights_status' => 'granted',
+        'rights_granted_at' => now(),
+        'file_path' => '/uploads/ugc/clip-guard.mp4',
+        'poster_path' => '/uploads/ugc/poster-guard.jpg',
+        'creator_handle' => '@guard',
+        'published_at' => now()->subDay(),
+        'width' => 360,
+        'height' => 640,
+    ]);
+
+    $ugcVideo->products()->attach($product->id, ['position' => 0]);
+
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
         'type' => 'percent',
@@ -769,6 +794,17 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * skips this walk unexamined.
          */
         'admin-api/blocks/{block}' => '/admin-api/blocks/' . $block->id,
+        /*
+         * Content -> Shoppable video -> Edit (Lane V2). Listed here because
+         * this walk caught it: the route landed with no entry on either list
+         * and this file went red, which is exactly what the walk is for.
+         *
+         * Driven rather than excused. show() loads `products.brand` -- a
+         * belongsToMany through a pivot with a belongsTo resolved on the far
+         * side -- and then reads the translations for the two translatable
+         * columns. No other route on this list touches that combination.
+         */
+        'admin-api/ugc-videos/{id}' => '/admin-api/ugc-videos/' . $ugcVideo->id,
         /*
          * The Journal editor's read of one article (Lane J). Reads the row and
          * then its translations, and it is listed here because this test caught
