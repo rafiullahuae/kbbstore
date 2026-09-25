@@ -2443,16 +2443,57 @@ a fake success toast and saves nothing).
   documents, whose only procedure is *lower it and press Resume* — on the one
   host where finishing is already the problem. Verified in the code before
   accepting the correction
-- [ ] ▲ **The export screen tells the owner to delete a folder he cannot reach,
-  and it holds every shopper's password hash.** The instruction is correct —
-  `customers.csv` carries addresses and password hashes, `reviews.csv` carries
-  emails and IPs — but he has no shell and no FTP, which the paragraph two lines
-  above says itself. There is no control that does it. `wp_ajax_kbb_export_reset`
-  **is registered and reachable**, and `KBB_Export_Runner::reset()` only
-  `delete_option()`s the state: wiring the existing endpoint to a button would
-  report success while the hashes stayed on disk, now unreferenced and
-  un-downloadable. Wants a real delete, which is a new destructive path and not
-  plumbing
+- [x] ▲ **The owner can delete the export, and it no longer lies about having
+  done so.** WordPress admin → **Tools → KBB Export → "Delete the export from
+  this server"**. Four of this entry's five claims were already false when Lane
+  U5 checked them sentence by sentence, and it said so rather than rebuilding:
+  the control exists, the folder already carries an `index.php` and a deny-all
+  `.htaccess` written on the first batch of every export, and `reset()` was
+  correctly NOT wired to the button — precisely because it only
+  `delete_option()`s the state, which is pinned by a test that calls it and
+  asserts the files are still there.
+
+  ▲ **But one thing was still wrong, and it was the exact failure the feature
+  exists to prevent.** `purge()` computes `ok` from a fresh walk rather than
+  from a count of `unlink()` calls — right — except `measure()`, the walk,
+  carried the SAME depth ceiling as `remove()` and called the same `scandir()`,
+  and where either gave up it returned ZEROS. Zeros read as "nothing there".
+  Reproduced against real files: `ok true`, `remaining []`, *"Every export file
+  is gone from this server."* — with a `customers.csv` full of WordPress
+  password hashes still on disk and the export folder still standing. That is
+  `reset()`'s trap reached from the other side: the owner is told the job is
+  done and it is not.
+
+  The fix is NOT a deeper walk — an unbounded recursive delete is one stack
+  overflow away from a half-deleted folder. `measure()` now returns `blind`, the
+  folders it had to give up on, for both reasons that stop `remove()`: past the
+  ceiling, and a `scandir()` answering false, which is the shared-hosting folder
+  owned by another UID and was previously read as empty. `ok` is false while any
+  remains, and the note names them as still holding personal data.
+
+  Guarded three ways and fails closed: capability `kbb_export_delete` (falling
+  back to `delete_users`, administrator-only in core, deliberately NOT
+  `manage_options`), its own nonce, and the word `DELETE` typed and compared
+  case-sensitively ON THE SERVER — a 403 from the endpoint, not a hidden button.
+  Measured: 16 files before, 2 after (`index.php` and `.htaccess`, which hold
+  nothing), `customers.csv` gone, media library and a sibling `kbb-export-old/`
+  untouched. The confinement mutation is the one worth keeping: widening
+  `exports_root()` by a single segment reddens five cases, including the one
+  that loses the media library.
+
+  ▲ **IT DOES NOT TRAVEL IN A CORE UPDATES PACKAGE.** `wordpress-plugin/` is on
+  `BuildPackage::NEVER_SHIP` and outside `UpdateGuard`'s allow-list, both
+  asserted per path. The owner gets it by zipping `wordpress-plugin/kbb-exporter`
+  and uploading it on the OLD kbeautybliss.com WordPress under **Plugins → Add
+  New → Upload Plugin**. Nothing about the Laravel shop or extrabeauty.ae
+  changes.
+
+  Two smaller things named and left: the folder's HTTP guard leans on
+  `.htaccess`, which does nothing on nginx — fine for the shared host the
+  exporter runs on, but the delete button is the real answer rather than the
+  guard; and an export directory that survives `rmdir()` while empty still shows
+  in the table with 0 files while the note says every file is gone. Both true,
+  nothing leaks
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and
