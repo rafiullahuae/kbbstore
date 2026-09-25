@@ -34,14 +34,20 @@ use DOMNode;
  * attribute that is not named below does not survive, including every `on*`
  * handler in one stroke rather than one at a time.
  *
- * TWO DISPOSALS, AND THE DIFFERENCE MATTERS. A tag that is merely not on the
+ * THREE DISPOSALS, AND THE DIFFERENCES MATTER. A tag that is merely not on the
  * list — `<div>`, `<span>`, `<font>` — is UNWRAPPED: the tag goes, its text
  * stays, because an operator who pasted from Word should not silently lose a
- * paragraph. A tag from the hostile set — script, style, iframe, object, embed,
- * form, svg, math, and friends — is DROPPED WHOLE, children included, because
- * the payload IS the child text: unwrapping `<script>alert(1)</script>` would
- * leave `alert(1)` as visible copy, and unwrapping `<style>` would leave CSS
- * on the page as prose.
+ * paragraph. A tag from the hostile set — script, style, iframe, object, form,
+ * svg, math, and friends — is DROPPED WHOLE, children included, because the
+ * payload IS the child text: unwrapping `<script>alert(1)</script>` would leave
+ * `alert(1)` as visible copy, and unwrapping `<style>` would leave CSS on the
+ * page as prose.
+ *
+ * The third is DROP_TAG_KEEP_CHILDREN, and it is there because the parser is
+ * HTML4: `source`, `track` and `embed` are HTML5 void elements libxml does not
+ * know, so it files everything after one of them as its CHILD. Dropping such a
+ * subtree whole deleted the rest of the article. Its own docblock has the
+ * measurement and the argument.
  *
  * URLs ARE RE-PARSED, NOT PATTERN-MATCHED. An href is accepted only if, after
  * HTML entities are decoded and whitespace and control characters are removed,
@@ -122,11 +128,60 @@ final class RichText
      * an h1 pasted in from elsewhere loses its tag while keeping its words.
      */
     private const DROP_WHOLE = [
-        'script', 'style', 'iframe', 'frame', 'frameset', 'object', 'embed',
+        'script', 'style', 'iframe', 'frame', 'frameset', 'object',
         'applet', 'form', 'input', 'button', 'select', 'option', 'textarea',
         'svg', 'math', 'link', 'meta', 'base', 'template', 'noscript',
-        'audio', 'video', 'source', 'track', 'canvas', 'portal',
+        'audio', 'video', 'canvas', 'portal',
     ];
+
+    /**
+     * Unwanted tags that must NOT take their parsed children with them.
+     *
+     * THE PARSER IS HTML4 AND THESE THREE ARE HTML5 VOID ELEMENTS. libxml 2.9's
+     * HTML parser knows exactly one void set — the HTML4 one: area, base, br,
+     * col, frame, hr, img, input, link, meta, param. `source`, `track` and
+     * `embed` are not in it, so an unclosed `<source …>` is opened as a
+     * CONTAINER and everything that follows it, up to the close of its parent,
+     * is parsed as its CHILD rather than as its sibling. Measured here, not
+     * assumed: `<picture><source srcset=…><img src=…></picture>` parses to
+     * picture > source > img.
+     *
+     * WHAT THAT COST ON THE SHOP. These three used to sit in DROP_WHOLE, and
+     * DROP_WHOLE removes the subtree. `<source>` before `<img>` is the ONLY
+     * valid ordering inside a `<picture>`, so every `<picture>` block in an
+     * imported article was removed in full — the photograph with it — and the
+     * article arrived with a hole where a picture had been. Nothing said so.
+     * An `<embed>` or a `<track>` did the same to every paragraph that followed
+     * it to the end of its parent.
+     *
+     * WHY UNWRAPPING IS THE RIGHT DISPOSAL AND NOT A WIDENED ALLOWLIST. None of
+     * these three may legally hold children, so a child of one is never
+     * content the author put inside it — it is the next sibling, misfiled by
+     * the parser. Promoting it is what the document said. And the tag itself
+     * still does not survive: it is in neither ALLOWED nor any exception here,
+     * so the element goes and every attribute on it goes with it — `srcset`,
+     * `type` and `src` included. Nothing new can be printed, which is the test
+     * a change to a sanitiser has to pass. The alternative — rewriting the
+     * markup with a regex before it reaches the parser — would mean pattern
+     * matching untrusted HTML to decide what the parser then sees, which is the
+     * denylist this file exists to refuse.
+     *
+     * DROP_WHOLE IS STILL RIGHT FOR THE REST. `<script>`, `<style>` and friends
+     * are real containers whose child text IS the payload; unwrapping one would
+     * print it as copy. The rule that separates the two lists is not "hostile
+     * or not", it is: does this element legally have children? These three do
+     * not, so there is nothing of theirs to drop.
+     *
+     * WHAT THIS BRANCH IS ACTUALLY FOR. Removing the three names from
+     * DROP_WHOLE is what saves the pictures: with no entry on either list they
+     * would fall through to the ordinary unwrap path and behave identically.
+     * This list exists to be checked BEFORE DROP_WHOLE, so that putting one of
+     * them back on it — the obvious tidy-up for someone who reads `source` as a
+     * media tag — cannot quietly restore the loss. It is a guard on the
+     * invariant rather than the mechanism, and the mutation notes in
+     * tests/Feature/ImportJournalPictureTest.php say so with the measurements.
+     */
+    private const DROP_TAG_KEEP_CHILDREN = ['source', 'track', 'embed'];
 
     /** Schemes an href or src may carry once decoded. */
     private const SAFE_SCHEMES = ['http', 'https', 'mailto'];
@@ -251,6 +306,16 @@ final class RichText
     private static function element(DOMElement $element): void
     {
         $tag = strtolower($element->nodeName);
+
+        if (in_array($tag, self::DROP_TAG_KEEP_CHILDREN, true)) {
+            // A void element the parser mis-read as a container. The tag and
+            // every attribute on it go; what it "contains" is really what came
+            // after it, and that stays. See the const's docblock.
+            self::walk($element);
+            self::unwrap($element);
+
+            return;
+        }
 
         if (in_array($tag, self::DROP_WHOLE, true)) {
             $element->parentNode?->removeChild($element);

@@ -1160,7 +1160,29 @@ it('keeps script and style contents out, by both of the layers that stop them', 
     $reflection = new ReflectionClass(RichText::class);
     $dropWhole = $reflection->getConstant('DROP_WHOLE');
 
-    expect($dropWhole)->toContain('script', 'style', 'iframe', 'object', 'embed', 'form', 'svg');
+    /*
+     * LANE U4 TOOK 'embed' OFF THIS LIST, and this is the note that says why so
+     * the next reader does not put it back.
+     *
+     * `embed` is an HTML5 VOID element and libxml's HTML parser is HTML4, so it
+     * does not know that — it opens `<embed …>` as a container and files
+     * everything after it, to the close of its parent, as its child. DROP_WHOLE
+     * then deleted that subtree, which meant one `<embed>` early in a
+     * description or an article removed the rest of it, silently. It is in
+     * RichText::DROP_TAG_KEEP_CHILDREN now: the tag and every attribute on it
+     * still go, and what the parser misfiled underneath is promoted and
+     * sanitised like any other node.
+     *
+     * Nothing about the layer this test names has moved — `<embed>` still does
+     * not survive, and the test below in this file that sends
+     * `<embed src="https://evil.test">` still gets the empty string back. The
+     * sibling case is tests/Feature/ImportJournalPictureTest.php.
+     */
+    expect($dropWhole)->toContain('script', 'style', 'iframe', 'object', 'form', 'svg')
+        ->and($dropWhole)->not->toContain('embed')
+        ->and($reflection->getConstant('DROP_TAG_KEEP_CHILDREN'))->toContain('embed')
+        // And the disposal it moved to still leaves nothing of the element.
+        ->and(RichText::clean('<embed src="https://evil.test">'))->toBe('');
 
     // Layer 2: whatever the parser calls the contents, only elements and text
     // survive the walk — and libxml calls a script body a CDATA section.
