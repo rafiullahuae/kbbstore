@@ -4,8 +4,25 @@ Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
 ## 2.60.272
-Bulk tagging on Build my routine, and a redirect that no longer throws a shopper
-onto the old domain mid-checkout.
+The Journal can be written to, bulk tagging on Build my routine, and a redirect
+that no longer throws a shopper onto the old domain mid-checkout.
+
+THE JOURNAL EDITOR, at Content -> Blog Posts -> New article (and Edit on any
+row). The screen was read-only by its own comment and `posts` could only be
+filled by an import, so the permalink structure built in 2.60.217 was finished
+and serving nothing anybody here could write to. New article, Edit, the Arabic
+boxes beside every field, and an address checked against the storefront's OWN
+ROUTES as you type -- not against a second copy of RESERVED_SLUGS, so a segment
+reserved tomorrow moves the warning with it.
+
+Deliberately NOT built, so nobody fills them in quietly: no delete route (taking
+an article down is status: draft, which keeps the row and therefore the address
+-- a delete frees a slug Google is holding); no slug field on save (moving an
+address is Store -> SEO & Meta -> Redirects, which writes the 301); and no
+canonical or og:image override, those two being the SEO Audit screen's own list
+of unsafe overrides.
+
+Applying this creates no article. The screen is empty until he writes one.
 
 BULK TAGGING, MEASURED RATHER THAN ASSERTED. Catalog -> Build my routine -> any
 step tab -> "Select all N on this page", then "Use all N for <step>" or "Tag all
@@ -106,10 +123,12 @@ behaviour each relies on is the behaviour its own test exercises. Measured:
 inside a feature request to http://new-shop.test, SiteUrl::origin() returns
 http://localhost and SiteUrl::origin($request) returns http://new-shop.test.
 
-Files: app/Http/Controllers/Admin/RoutinesApiController.php,
-app/Http/Controllers/Admin/PaymentsApiController.php,
+Files: app/Http/Controllers/Admin/PaymentsApiController.php,
+app/Http/Controllers/Admin/PostEditorApiController.php,
+app/Http/Controllers/Admin/RoutinesApiController.php,
 app/Http/Controllers/Api/QuizController.php,
 app/Http/Controllers/Store/CheckoutController.php,
+app/Http/Controllers/Store/PageController.php,
 app/Http/Controllers/Store/SeoFilesController.php,
 app/Http/Middleware/CanonicalHost.php, app/Http/Middleware/CheckRedirects.php,
 app/Notifications/CustomerEmailVerification.php,
@@ -120,11 +139,18 @@ app/Services/Payments/GatewayPreflight.php,
 app/Services/Payments/Gateways/RemoteGateway.php,
 app/Services/Payments/Gateways/TamaraGateway.php,
 app/Services/Payments/StripeConnect.php, app/Support/AdminCapabilities.php,
-app/Support/OutboundOptOut.php, app/Support/SiteUrl.php, app/Support/Url.php,
+app/Support/OutboundOptOut.php, app/Support/Url.php,
+database/migrations/2026_12_28_000000_clear_caches_journal_editor.php,
+database/migrations/2027_01_02_000000_clear_caches_routine_bulk_tagging.php,
+resources/views/admin/app.blade.php,
+resources/views/admin/partials/post-editor-screen.blade.php,
 resources/views/admin/partials/routines-screen.blade.php,
 resources/views/emails/cart-recovery.blade.php,
-routes/build-my-routine-admin.php,
-database/migrations/2027_01_02_000000_clear_caches_routine_bulk_tagging.php
+routes/build-my-routine-admin.php, routes/post-editor-admin.php, routes/web.php
+
+Thirty-two files, taken from the built zip rather than from a lane's report, and
+every one diffed byte for byte against the repo before shipping -- the check
+2.60.102-.106 exist to enforce.
 
 ## 2.60.271
 The routine search, actually fixed — and the previous diagnosis was wrong.
