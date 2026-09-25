@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mail;
 
+use App\Services\ModuleSchema;
 use App\Services\SettingsService;
 
 /**
@@ -245,6 +246,43 @@ class MailSettings
         'mail_reply_to' => 255,
     ];
 
+    /**
+     * The cap the other nine boxes DO NOT HAVE, written down as a number.
+     *
+     * ── WHY THIS IS NOT SIMPLY 5000 ─────────────────────────────────────────
+     *
+     * ModuleSchema's `max` axis is a cut, and every value it can take is a
+     * length. There is no value on that axis meaning "this class does not cap
+     * this field", and that is exactly what save() has always done with the
+     * nine keys MAX_LENGTHS does not name: trim, and store. What bounds them in
+     * practice is MailApiController's `$checks` array — `max:255` on the host,
+     * `max:120` on the From name — and that file belongs to another lane, which
+     * is the reason MAX_LENGTHS exists at all for the other seven.
+     *
+     * So the sort round 2 and round 3 did — policy over here, real rules over
+     * there — puts MAX_LENGTHS on the `max` axis per field, and puts the
+     * ABSENCE of a cap on the same axis as a number that cannot be reached.
+     * Writing `5000` instead would have been a NEW bound on nine live fields,
+     * which rule 1 does not allow and which the recorded corpus would have
+     * caught: it drives a 600-character value at every text box.
+     *
+     * That the number is silly is the point. A cap this class does not have is
+     * better stated as an unreachable number with this comment beside it than
+     * as a plausible one a reader would take for a decision.
+     */
+    public const UNCAPPED = PHP_INT_MAX;
+
+    /**
+     * The module name ModuleSchema::read()/write() are given.
+     *
+     * Every field of this screen is `store: setting` — these are rows in
+     * `settings`, the way they have always been, not `module_settings` — except
+     * the password, which is `store: vault`. So the module name is never used
+     * as a table prefix here; it is carried because the schema's signature asks
+     * for one and a blank string would read as an oversight.
+     */
+    public const MODULE = 'mail';
+
     /** Where the last test-send outcome is kept. Not a credential; a plain setting. */
     public const LAST_TEST_KEY = 'mail_last_test';
 
@@ -253,35 +291,206 @@ class MailSettings
         private MailCredentials $credentials,
     ) {}
 
+    /* ═══════════════════════════════════════════════════════════════════════
+     * THE SCHEMA, WIDENED — Lane M4
+     *
+     * SCHEMA above is UNCHANGED and stays positional, deliberately. Six tests
+     * and one controller read it as `[type, label, help]`, three of them
+     * destructuring it, and two of those files belong to other lanes. Rewriting
+     * a constant that other people read is not a migration, it is a rename with
+     * a migration attached.
+     *
+     * ── THE SLOT-ORDER TRAP, WHICH IS WHY THIS METHOD EXISTS AT ALL ─────────
+     *
+     * Every other schema in this application is
+     * `[type, label, DEFAULT, help, options]`. This one is
+     * `[type, label, HELP]` — help in slot 2, where everybody else keeps the
+     * shipped default. Handing MailSettings::SCHEMA to ModuleSchema::field()
+     * positionally would therefore read four paragraphs of help as the default
+     * value of the box, and the screen would draw every field prefilled with
+     * its own instructions. The conversion is one place, here, and it is
+     * explicit about which slot is which.
+     *
+     * ── TASK 3's SORT: WHAT IS POLICY AND WHAT IS A RULE ────────────────────
+     *
+     * Policy — expressible on the axes ModuleSchema::POLICY_KEYS already
+     * carries, so it moves onto the shared cast:
+     *
+     *   max      MAX_LENGTHS per field, UNCAPPED for the nine it does not name
+     *   blank    `keep`. An emptied box on this screen means "there is no such
+     *            address / no such wording", and every reader downstream falls
+     *            back for itself: EmailBranding uses the storefront's own
+     *            details, merchantAddress() uses the From address,
+     *            replyToAddress() prints no invitation. Putting a shipped
+     *            default back would be the shop inventing a support number.
+     *   invalid  `default`, which for every field here is the empty string —
+     *            what save() has always stored for a non-scalar.
+     *   markup   `keep`. These strings are printed into an email template that
+     *            escapes them; stripping tags here would silently rewrite a
+     *            signature containing a `<`.
+     *
+     * A real rule — a constraint peculiar to one setting that would be wrong
+     * applied to any other, kept AS a rule the way round 2 kept CheckoutPage's
+     * no-digit template and CartPage's floor-at-zero money:
+     *
+     *   addressOrDrop   `mail_merchant_address` and `mail_reply_to` are the two
+     *   keys on this screen that must be a real address or not be stored at
+     *   all. It is not `max` and not `invalid`: a malformed address is DROPPED,
+     *   leaving whatever was there before, because the previous address is a
+     *   working mailbox and "not an address" is a header the transport refuses.
+     *   Their own SCHEMA comments say why the check is in this class and not in
+     *   MailApiController's rule list.
+     *
+     * @return array<string, array<string, mixed>>
+     * ═══════════════════════════════════════════════════════════════════════ */
+    public static function schema(): array
+    {
+        $out = [];
+
+        foreach (self::SCHEMA as $key => [$type, $label, $help]) {
+            $field = [
+                // `choice` is this screen's word for what the rest of the app
+                // calls a select; `secret` is the schema's own new type.
+                'type' => match ($type) {
+                    'choice' => 'select',
+                    default => $type,
+                },
+                'label' => $label,
+                'help' => $help,
+                'default' => '',
+                'max' => self::MAX_LENGTHS[$key] ?? self::UNCAPPED,
+                'blank' => 'keep',
+                'invalid' => 'default',
+                'markup' => 'keep',
+                // Rows in `settings`, which is where they have always been.
+                'store' => ModuleSchema::STORE_SETTING,
+            ];
+
+            if ($key === 'mail_transport') {
+                $field['options'] = self::TRANSPORT_LABELS;
+                $field['default'] = self::DEFAULT_TRANSPORT;
+            }
+
+            if ($key === 'mail_encryption') {
+                $field['options'] = array_combine(self::ENCRYPTIONS, self::ENCRYPTIONS);
+                // What all() has always answered for a blank or unusable row.
+                $field['default'] = 'ssl';
+            }
+
+            if ($type === 'secret') {
+                /*
+                 * The one field that is not a row in `settings`. `alias` is the
+                 * key INSIDE the credential store, which has always been
+                 * `password` rather than `mail_password` — MailCredentials
+                 * holds one row per mailer and namespaces by row, not by key.
+                 */
+                $field['store'] = ModuleSchema::STORE_VAULT;
+                $field['alias'] = 'password';
+                unset($field['max'], $field['blank'], $field['invalid'], $field['markup']);
+            }
+
+            if (in_array($key, ['mail_merchant_address', 'mail_reply_to'], true)) {
+                $field['rule'] = [self::class, 'addressOrDrop'];
+            }
+
+            $out[$key] = $field;
+        }
+
+        return $out;
+    }
+
+    /**
+     * The rule on the two address boxes: a real address, or nothing is stored.
+     *
+     * REPLACES the type arm, which is what ModuleSchema::rule() means by a
+     * rule, so it does the trim and the cap itself — in that order, because
+     * that is the order save() has always done them in and a 260-character
+     * address is truncated to 255 and THEN found to be malformed.
+     *
+     * Returns null to REFUSE, which ModuleSchema::write() reports to the caller
+     * and does not store. save() below ignores that report, which is what this
+     * class has always done: the bad value is dropped and the previous address
+     * — a mailbox that works — is left alone. MailApiController's `$checks`
+     * makes the SCREEN say so for `mail_merchant_address`; it has no entry for
+     * `mail_reply_to`, so that one is still dropped in silence. Named in
+     * docs/M-PHASE3-SETTINGS-SCHEMA-ROUND-4.md as found and not fixed, because
+     * fixing it means editing that controller's hardcoded list.
+     *
+     * @param  array<string, mixed>  $field  a normalise()d field
+     */
+    public static function addressOrDrop(mixed $raw, array $field): mixed
+    {
+        $value = is_scalar($raw) ? trim((string) $raw) : '';
+        $value = mb_substr($value, 0, (int) $field['max']);
+
+        if ($value !== '' && filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+            return null;
+        }
+
+        return $value;
+    }
+
     /**
      * Non-secret values only, defaults filled in. Safe to return from an API.
+     *
+     * ── THE KEY, NOT THE LABEL — Lane M4, and it is this round's Task 2 ─────
+     *
+     * This method used to end with
+     *
+     *     $out['mail_transport'] = self::TRANSPORT_LABELS[self::canonicalTransport(...)];
+     *
+     * — the display SENTENCE, where every other reader on this schema, and
+     * every other key in this very array, answers the stored value. Round 3 §5
+     * named that as the concrete blocker to migrating this screen and declined
+     * the round for it:
+     *
+     *   > MailSettings::all() returns the LABEL where every other reader on
+     *   > this schema returns the stored key … Migrating all() therefore moves
+     *   > what the Mail screen's <select> is given and what transport() is
+     *   > compared against.
+     *
+     * The requirement behind it is real: the console's mailField() prints each
+     * option string as BOTH the value and the visible text, so the sentence has
+     * to be what the payload carries or the wrong option comes back selected.
+     * It is a DISPLAY requirement, and it is now met at the display boundary —
+     * MailApiController::show(), one map from key to label, beside the `choice`
+     * type and the option list it already derives there. Nothing stored moved:
+     * the recorded corpus compares the raw settings row on all 231 calls and
+     * every one is byte-identical.
+     *
+     * What is gained is that `all()['mail_transport']`, `get('mail_transport')`
+     * and `transport()` are now the same string, so a caller can compare one
+     * against TRANSPORT_KEYS without knowing which of the three it happened to
+     * call. They are the same string BY CONSTRUCTION and not by agreement:
+     * transport() is the one derivation and this method calls it.
      *
      * @return array<string, string>
      */
     public function all(): array
     {
-        $out = [];
-
-        foreach (self::SCHEMA as $key => [$type]) {
-            if ($type === 'secret') {
-                continue;
-            }
-
-            $out[$key] = trim((string) ($this->settings->get($key, '') ?? ''));
-        }
+        /*
+         * `read()` omits the secret outright — the key is not in this array at
+         * all, which is what it has always been, expressed by the schema rather
+         * than by a `continue` in a loop here. It also re-derives every value
+         * on the way out (round 3 §2), so a row planted by a hand-edit, an
+         * older build or a WordPress import cannot put a non-option into
+         * `mail_encryption` on its way to MailConfigurator.
+         */
+        $out = ModuleSchema::read($this->settings, self::MODULE, self::schema());
 
         /*
-         * The stored value is a canonical key; the screen wants the label, both
-         * for the visible text and so the right option comes back selected.
-         * Anything unrecognised -- blank, or a value from an older release --
-         * lands on the default, which is now the server's own mail rather than
-         * a half-configured SMTP that silently became `log`.
+         * ONE DERIVATION FOR THE TRANSPORT, AND IT IS transport().
+         *
+         * Not because read() gets it wrong — the select arm answers the same
+         * key for every value save() can store — but because canonicalTransport()
+         * also reduces a stored LABEL, which the select arm cannot see (it
+         * compares against its own option KEYS). No release of this application
+         * has ever written a sentence into that row, so the two agree today;
+         * calling transport() means they cannot stop agreeing tomorrow, on the
+         * one setting whose two readings disagreeing is a shop sending through
+         * the wrong transport.
          */
-        $out['mail_transport'] = self::TRANSPORT_LABELS[self::canonicalTransport($out['mail_transport'])];
-
-        if ($out['mail_encryption'] === '' || ! in_array($out['mail_encryption'], self::ENCRYPTIONS, true)) {
-            $out['mail_encryption'] = 'ssl';
-        }
+        $out['mail_transport'] = $this->transport();
 
         return $out;
     }
@@ -303,10 +512,36 @@ class MailSettings
     }
 
     /**
+     * Which `secret` fields have something stored — `key => bool`, and never a
+     * value.
+     *
+     * This is the only thing ModuleSchema::fields() is given about a credential,
+     * and it is built by walking the schema rather than by naming
+     * `mail_password`, so a second secret added to SCHEMA is answered for
+     * without the render path being edited. `has()` is App\Services\SecretStore,
+     * which has no getter; the booleans here cannot accidentally be the bytes.
+     *
+     * @return array<string, bool>
+     */
+    public function secretsPresent(): array
+    {
+        $out = [];
+
+        foreach (self::schema() as $key => $field) {
+            if (($field['type'] ?? '') === 'secret') {
+                $out[$key] = $this->credentials->has((string) ($field['alias'] ?? $key));
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * The canonical transport key: `server`, `smtp` or `log`. Never a label.
      *
-     * Read straight from the settings row rather than through all(), which
-     * deliberately hands back the human label for the screen.
+     * Read straight from the settings row, and all() now calls THIS rather than
+     * deriving a second answer of its own — see all(), where the label that
+     * used to be derived here moved to the display boundary.
      */
     public function transport(): string
     {
@@ -449,75 +684,56 @@ class MailSettings
     /**
      * Write the form back.
      *
-     * `mail_password` is routed to the encrypted store and a blank one means
-     * unchanged; the literal string "-" clears it, which is the only way the
-     * screen can offer "forget the stored password" while still rendering the
-     * box empty.
+     * ── ONE WRITER — Lane M4 ────────────────────────────────────────────────
+     *
+     * This was sixteen lines of trim, cap, canonicalise and validate written
+     * out here, which is the shape round 1 measured across seventeen modules
+     * and found no two of them agreeing. It is ModuleSchema::write() now, over
+     * the widened schema above, and the three behaviours that are peculiar to
+     * this screen are declared rather than coded:
+     *
+     *   the caps          `max` per field, from MAX_LENGTHS (see UNCAPPED)
+     *   the two addresses `rule => addressOrDrop`, which refuses and therefore
+     *                     leaves the previous working mailbox alone
+     *   the password      `type: secret`, `store: vault` — routed to
+     *                     MailCredentials through App\Services\SecretStore,
+     *                     which has no getter, so the schema cannot read it
+     *                     back however the render loop is later rewritten
+     *
+     * ── THE TWO THINGS THAT ARE STILL DONE HERE, AND WHY ────────────────────
+     *
+     * `mail_transport` is canonicalised BEFORE the schema sees it. The console
+     * posts the sentence it displayed, and a `select` stores one of its own
+     * option KEYS or its default — that guarantee is closed to rules on purpose
+     * (round 2), so the sentence has to stop before it reaches the cast rather
+     * than inside it. Reducing it here means the settings row never holds a
+     * sentence, which is what lets a label be reworded without invalidating a
+     * single install's saved choice.
+     *
+     * The `rejected` report is DROPPED, which is what this method has always
+     * done with a malformed address: `continue`. Surfacing it would put a new
+     * error on the screen for `mail_reply_to`, which today saves silently and
+     * keeps the old value — a screen change, not a schema migration. Named in
+     * this round's write-up rather than made quietly.
      *
      * @param array<string, mixed> $values
      */
     public function save(array $values): void
     {
-        foreach ($values as $key => $value) {
-            if (! array_key_exists($key, self::SCHEMA)) {
-                continue;   // callers validate first; this is belt and braces
-            }
-
-            if ($key === 'mail_password') {
-                $value = is_string($value) ? trim($value) : '';
-
-                $this->credentials->save(['password' => $value === '-' ? null : $value]);
-
-                continue;
-            }
-
-            $value = is_scalar($value) ? trim((string) $value) : '';
-
-            /*
-             * A length cap this class applies itself, for the same reason the
-             * merchant-address format check below is here: MailApiController's
-             * rule list is a hardcoded array in another lane's file and has no
-             * entry for these keys, so nothing else bounds them. The signature
-             * is rendered into every order email and the rest are single-line
-             * facts; neither has any business being a novel.
-             */
-            if (isset(self::MAX_LENGTHS[$key])) {
-                $value = mb_substr($value, 0, self::MAX_LENGTHS[$key]);
-            }
-
-            /*
-             * The screen posts the label it displayed; a test, a console command
-             * or a future caller posts the key. Both end up as the key, so the
-             * settings row never holds a sentence and a reworded label does not
-             * invalidate a single install's saved choice.
-             */
-            if ($key === 'mail_transport') {
-                $this->settings->set($key, self::canonicalTransport($value));
-
-                continue;
-            }
-
-            /*
-             * The two fields this class validates itself. See their SCHEMA
-             * entries: MailApiController's rule list is in another lane's file
-             * and has no entry for either, and an unvalidated address here is an
-             * alert nobody ever receives or a customer reply that bounces.
-             * Blank is allowed in both cases and means "there is no such
-             * address" — for the merchant alert, fall back to From; for
-             * Reply-To, set no header and print no invitation to reply.
-             *
-             * The bad value is DROPPED rather than written: keeping the previous
-             * address is a working mailbox, and storing "not an address" is a
-             * header the transport refuses.
-             */
-            if (in_array($key, ['mail_merchant_address', 'mail_reply_to'], true)
-                && $value !== ''
-                && filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
-                continue;
-            }
-
-            $this->settings->set($key, $value);
+        /*
+         * The screen posts the label it displayed; a test, a console command or
+         * a future caller posts the key. Both end up as the key. Unrecognised
+         * — including the empty string an unconfigured install carries — lands
+         * on TRANSPORT_SERVER, which is the default this class exists to
+         * correct to and never the `log` transport that used to be fallen back
+         * into.
+         */
+        if (array_key_exists('mail_transport', $values)) {
+            $value = $values['mail_transport'];
+            $values['mail_transport'] = self::canonicalTransport(is_scalar($value) ? (string) $value : '');
         }
+
+        ModuleSchema::write($this->settings, self::MODULE, self::schema(), $values, $this->credentials);
     }
 
     /**
