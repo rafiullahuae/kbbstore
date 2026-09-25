@@ -42,11 +42,37 @@ class ProductController extends Controller
      *
      * Two datetimes are the cheapest columns on this table; the cost argument
      * above is about `description` and the SEO blob, which stay out.
+     *
+     * `type` IS SELECTED AND IS NOT PUBLISHED, for the same shape of reason as
+     * the two datetimes above, and it is the last surface on which a variable
+     * product still cost AED nothing.
+     *
+     * A variable parent keeps no price -- WooCommerce holds the figures on the
+     * variations -- so `price` is genuinely NULL for one, and this feed
+     * published `price: null` for every variable product while the tile beside
+     * it printed "AED 120 - AED 190". Product::toApi() now derives the low end
+     * of that range through App\Services\VariantPricing, which FAILS CLOSED:
+     * it answers null for a row whose shape it cannot confirm rather than
+     * guessing from a narrowed SELECT. Without `type` the row's shape cannot be
+     * confirmed, so the fix that corrected the tile, the price sort, the price
+     * facet and the listing JSON-LD stopped at this one endpoint.
+     *
+     * NOTHING NEW IS PUBLISHED BY ADDING IT. toApi() is an allowlist and does
+     * not return `type`; selecting a column and returning one are different
+     * acts, which is the distinction /api/* exists to keep -- see the header of
+     * tests/Feature/ApiSecurityTest.php. ApiProductTypeNotPublishedTest pins
+     * both halves: that the price is now derived, and that `type` itself never
+     * reaches the response.
+     *
+     * AND IT IS ONE QUERY, NOT N. VariantPricing::load() reads every variable
+     * parent's range in a single grouped statement and memoises it for the
+     * request, so a hundred-row page pays for it once. StorefrontQueryBudget-
+     * Test's argument applies here too and was measured rather than assumed.
      */
     private const INDEX_COLUMNS = [
         'id', 'slug', 'name', 'price', 'sale_price', 'image', 'images',
         'rating', 'review_count', 'stock_status', 'short_description',
-        'sale_starts_at', 'sale_ends_at',
+        'sale_starts_at', 'sale_ends_at', 'type',
     ];
 
     /**
