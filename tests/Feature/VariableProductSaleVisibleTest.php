@@ -452,6 +452,89 @@ it('tells Google when the discounted price stops applying', function () {
         ->toBe($parent->sale_ends_at->toDateString());
 });
 
+/* ─────────────────────────── the basket total ────────────────────────────── */
+
+it('never understates the struck order value on the cart', function () {
+    /*
+     * THE SECOND REGRESSION THIS CHANGE WOULD HAVE SHIPPED, and unlike the
+     * three strikethroughs it does not print AED 0 — it prints a WRONG TOTAL,
+     * which is harder to notice and worse.
+     *
+     * store/cart-inner.blade.php builds the struck "before" figure beside Order
+     * value from the lines: "the regular price where the line is on sale, its
+     * own price where it is not". That either/or is safe only while every
+     * on-sale product HAS a regular price. A variable parent does not — the
+     * column is NULL — so once isOnSale() started answering true for a
+     * variation markdown, the on-sale arm contributed `(int) null`, i.e. ZERO,
+     * for that line rather than what the shopper is paying, and the before-price
+     * came out LOWER than the truth: a saving smaller than the one being given.
+     *
+     * The basket here is the minimal one that shows it: a simple product marked
+     * AED 200 down to AED 50, beside the AED 190 option of a variable product
+     * marked down to AED 140. Subtotal AED 190. The honest before-price is
+     * AED 200 + AED 140 = AED 340 — the second line is not discounted in a way
+     * this row can state, so it contributes what it costs.
+     *
+     * MUTATIONS, both run — see below the expectation for the numbers.
+     */
+    // The struck order value lives in the squeeze layout's summary; the
+    // default layout prints a plain Subtotal with no before-price beside it.
+    app(\App\Services\CartPage::class)->save(['layout' => 'squeeze']);
+
+    $simple = svSimple('sv-cart-simple', 20000, 5000);
+
+    $parent = svParent('sv-cart-parent', ['sale_starts_at' => now()->subDay()]);
+    svVariant($parent, 12000, 9000);
+    $dearer = svVariant($parent, 19000, 14000);
+
+    $cart = \App\Models\Cart::create([
+        'token' => (string) \Illuminate\Support\Str::uuid(),
+        'currency' => 'AED',
+        'status' => 'active',
+        'shipping_country' => 'AE',
+        'last_activity_at' => now(),
+    ]);
+
+    $cart->items()->create(['product_id' => $simple->id, 'quantity' => 1, 'unit_price' => 5000]);
+    $cart->items()->create([
+        'product_id' => $parent->id,
+        'product_variant_id' => $dearer->id,
+        'quantity' => 1,
+        'unit_price' => 14000,
+    ]);
+
+    $html = test()
+        ->withCredentials()
+        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
+        ->withUnencryptedCookie(\App\Services\CartService::COOKIE, $cart->token)
+        ->get('/cart')
+        ->assertOk()
+        ->getContent();
+
+    // The figure is wrapped in its own markup inside the span, so the capture
+    // runs to the END of the summary row and the tags come off afterwards.
+    preg_match('#<span class="cpg-was">(.*?)</div>#s', $html, $m);
+
+    $was = trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags($m[1] ?? ''), ENT_QUOTES, 'UTF-8')));
+
+    /*
+     * "AED 340" is the struck before-price and "AED 190" the subtotal beside
+     * it; the row prints the two adjacent with no separator of its own, and
+     * asserting the whole row is what proves the before-price is the HIGHER of
+     * the pair rather than just present.
+     *
+     * MUTATION A: drop the max() from $kbbWasTotal in cart-inner.blade.php,
+     * leaving the compareAtPrice() arm alone. RUN: 1 failed, 'AED 320AED 190'
+     * — the parent's compare-at is its FROM-price (AED 120) and this line holds
+     * the AED 190 option, so the line is undercounted by AED 20.
+     * MUTATION B: put the whole expression back to `(int) $kbbWasP->price *
+     * quantity` with no max(). RUN: 1 failed, 'AED 200AED 190' — the variable
+     * line contributes nothing at all, which is the figure this change would
+     * have shipped.
+     */
+    expect($was)->toBe('AED 340AED 190');
+});
+
 /* ──────────────────────────────── rule 4 ─────────────────────────────────── */
 
 it('costs no extra statement for knowing a variable product is on sale', function () {
