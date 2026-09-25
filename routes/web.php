@@ -733,6 +733,24 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // storefront reads for the hero, the About paragraph and the ticker.
         require __DIR__.'/homepage-content-admin.php';
 
+        /*
+         * Appearance -> Homepage -> Preview (Lane P1). The only route in this
+         * group that RENDERS THE STOREFRONT rather than answering about it: it
+         * runs HomeController and store/home.blade.php against the arrangement
+         * currently on the operator's screen, and writes nothing -- the reader
+         * it hands the renderer throws on save(), which is asserted rather than
+         * intended.
+         *
+         * Mounted here for the reason the block above gives: the /homepage/
+         * prefix is what the existing ['*','admin-api/homepage/**',
+         * 'content.manage'] rule covers, and AdminCapabilityMapTest fails a
+         * route that falls through to the closed owner-only default.
+         *
+         * A POST because the arrangement travels in the body and can be large,
+         * not because it changes anything.
+         */
+        require __DIR__.'/homepage-preview-admin.php';
+
         // Storefront settings, grouped into tabs.
         Route::get('/ecommerce',  [\App\Http\Controllers\Admin\EcommerceApiController::class, 'show']);
         Route::post('/ecommerce', [\App\Http\Controllers\Admin\EcommerceApiController::class, 'save']);

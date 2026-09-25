@@ -421,15 +421,37 @@ it('derives whether the picture is current rather than being told', function () 
     expect(substr_count($console, 'hpPreviewStale();'))->toBe(2);
 });
 
-it('keeps the route file’s require line where the integrator will find it', function () {
+it('is wired into routes/web.php, inside the group whose capability covers it', function () {
+    /*
+     * THIS CASE USED TO ASSERT THE OPPOSITE, and the change is the point.
+     *
+     * The lane that wrote this file could not edit routes/web.php -- CLAUDE.md
+     * makes it the integrator's -- so it shipped the route in its own file with
+     * the require line in the header, and pinned that the line was NOT yet
+     * there. That is the right assertion for a lane and the wrong one the
+     * moment the integrator wires it: left as it was, this case would have gone
+     * red on the merge and the only way to green it would have been to UNWIRE
+     * the feature.
+     *
+     * So it now pins the finished state instead, which is the thing that can
+     * actually regress: a route file that exists and is required by nothing is
+     * the "built, never wired up" shape this repository keeps finding -- the
+     * fallback update page that 500'd for its entire life, the crawl files
+     * mounted with no walk entry, the exporter's seven files nothing read.
+     */
     $file = (string) file_get_contents(base_path('routes/homepage-preview-admin.php'));
 
-    expect($file)->toContain("require __DIR__.'/homepage-preview-admin.php';")
-        ->and($file)->toContain("Route::post('/homepage/preview'");
+    expect($file)->toContain("Route::post('/homepage/preview'");
 
-    // And it really is not wired yet, which is what the harness above is for.
-    expect((string) file_get_contents(base_path('routes/web.php')))
-        ->not->toContain('homepage-preview-admin');
+    // Required exactly once, from the admin-api group, and not left in a
+    // comment somewhere: the require is matched with its own semicolon.
+    $web = (string) file_get_contents(base_path('routes/web.php'));
+
+    expect(substr_count($web, "require __DIR__.'/homepage-preview-admin.php';"))->toBe(
+        1,
+        'routes/web.php does not require homepage-preview-admin.php exactly once, so the '
+        .'Preview card either has no endpoint or has two'
+    );
 });
 
 it('is reachable under the prefix the capability map already covers', function () {
