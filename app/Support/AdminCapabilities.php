@@ -612,6 +612,21 @@ final class AdminCapabilities
          */
         ['POST', 'admin-api/routines-module', 'store.settings'],
         ['POST', 'admin-api/routines-settings', 'catalog.manage'],
+        /*
+         * Lane Q4 — bulk tagging. ABOVE the reads below it, which is the whole
+         * of this block's stated ordering rule: `admin-api/routine-products`
+         * (GET, catalog.view) and `admin-api/routine-products-bulk` are
+         * different patterns, but a lane tidying this list into alphabetical
+         * order would put the read first and hand an `editor` on catalog.view
+         * a twenty-five-row retag of the catalogue. It is a write, and it sits
+         * with the writes.
+         *
+         * catalog.manage, the same as the single-product POST above it, because
+         * it is that endpoint applied to a set: the same two columns, the same
+         * vocabulary, no new reach. AdminCapabilityMapTest pins the ordering
+         * and RoutineTaggingBulkTest pins the refusal.
+         */
+        ['POST', 'admin-api/routine-products-bulk', 'catalog.manage'],
         ['POST', 'admin-api/routine-products/*', 'catalog.manage'],
         ['POST', 'admin-api/routines/*', 'catalog.manage'],
         ['GET', 'admin-api/routine-products', 'catalog.view'],

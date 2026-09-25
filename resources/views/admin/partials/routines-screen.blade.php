@@ -201,6 +201,46 @@
 .rtn-banner{border:1px solid #b4443c;color:#b4443c;border-radius:var(--r,12px);padding:12px 14px;font-size:13px}
 .rtn-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;font-size:12.5px;
           color:var(--ink-soft,#6b7280);line-height:1.55}
+/* ── BULK TAGGING (Lane Q4) ─────────────────────────────────────────────────
+   Sized entirely with grid, flex and calc(). Nothing below is measured in
+   script -- two tests forbid the element-measuring APIs by name, and this
+   screen's header states the 390px rule the whole file is built to.
+
+   THE ROW BECOMES A TWO-COLUMN GRID: a fixed tick column and everything else.
+   `minmax(0,1fr)` on the second track and min-width:0 on its children, because
+   a grid item's default min-width is auto and that exact defect shipped on the
+   Coupons screen -- a long product name would otherwise push the row wider than
+   the phone instead of wrapping inside it. */
+.rtn-row.is-pickable{grid-template-columns:20px minmax(0,1fr);column-gap:10px}
+.rtn-row.is-pickable > *{grid-column:2}
+.rtn-row.is-pickable > .rtn-pick{grid-column:1;grid-row:1;align-self:start;margin:1px 0 0}
+.rtn-row.is-picked{border-color:var(--accent,#15a85a);box-shadow:inset 0 0 0 1px var(--accent,#15a85a)}
+.rtn-pick{width:17px;height:17px;accent-color:var(--accent,#15a85a);cursor:pointer}
+.rtn-bulkhead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;
+              margin:2px 0 10px;font-size:12.5px;min-width:0}
+.rtn-pickall{display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600}
+.rtn-bulkscope{color:var(--ink-soft,#6b7280);line-height:1.5;min-width:0}
+/* The bar itself. STICKY, so a selection made at the top of twenty-five rows is
+   still actionable at the bottom of them without scrolling back -- the admin
+   scrolls inside #content, so `top:0` sticks to that scroller. */
+.rtn-bulkbar{position:sticky;top:0;z-index:3;display:grid;gap:9px;min-width:0;
+             border:1px solid var(--accent,#15a85a);border-radius:10px;padding:11px 12px;
+             margin-bottom:10px;background:var(--surface,#fff)}
+.rtn-bulkbar > *{min-width:0}
+.rtn-bulktop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.rtn-bulkcount{font-size:13px;font-weight:650}
+.rtn-bulkacts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rtn-bulklabel{font-size:11.5px;font-weight:650;color:var(--ink-soft,#6b7280);
+               text-transform:uppercase;letter-spacing:.04em}
+.rtn-bulkbar[aria-busy=true]{opacity:.6}
+.rtn-bulkbar[aria-busy=true] button{cursor:default}
+/* The undo bar. Not a toast: a toast for a twenty-five-row write is a three
+   second window on the only control that can take it back. */
+.rtn-undo{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;min-width:0;
+          border:1px solid var(--border,#e6e6e6);border-left:3px solid var(--accent,#15a85a);
+          border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px}
+.rtn-undo .rtn-undowhat{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.rtn-undonote{color:var(--ink-soft,#6b7280);font-size:11.5px;line-height:1.5}
 @media (max-width:640px){ .rtn-card{padding:13px} }
 </style>
 
@@ -240,6 +280,31 @@
   var busy = false;
   var seq = 0;
   var pseq = 0;
+
+  /* ── BULK TAGGING STATE (Lane Q4) ────────────────────────────────────────
+
+     `picked` is the selection, and it is an id set rather than a list of rows
+     because render() rebuilds every row on every repaint: a selection held on
+     the DOM would be lost by the first keystroke in the search box.
+
+     WHAT A SELECTION MEANS, AND IT IS THE DECISION THIS CONTROL TURNS ON.
+     It is THE ROWS ON THIS PAGE. Not "everything matching the search" and not
+     "the catalogue". Two of those three are dangerous in the same way: he can
+     see twenty-five rows, and a control that acts on three hundred he has not
+     seen is one press away from a mis-tag he cannot even inspect. The one
+     scope where what he presses and what he is looking at are the same thing
+     is this one, and pickedIds() derives from the VISIBLE rows, so an id left
+     in here by a list that has since changed under it cannot be written to.
+
+     `undo` is a stack of writes, most recent last. Each entry holds the state
+     every changed row was in BEFORE the write, as the SERVER read it -- not as
+     this screen guessed it. See bulkApply(). It lasts until the screen is
+     reloaded, which the bar says out loud; it deliberately survives searching,
+     paging and switching tab, because a write that happened is not undone by
+     looking somewhere else. */
+  var picked = {};
+  var undo = [];
+  var bulking = false;
 
   /* ------------------------------------------------------------- plumbing */
   function cookie(n){
@@ -296,6 +361,31 @@
     var found = (data && data.roles || []).filter(function(r){ return r.key === key; })[0];
     return found ? found.label : key;
   }
+
+  /* ── THE SELECTION, DERIVED FROM WHAT IS ON SCREEN ───────────────────────
+     Never read straight out of `picked`. A tick survives a repaint, and it must
+     — but a tick must NOT survive the list changing under it into a write on a
+     row he can no longer see. loadProducts() clears the set on every fetch, and
+     this is the second half of the same guarantee: even if something left an id
+     behind, it is not in this list unless its row is drawn. */
+  function pickedIds(){
+    var out = [];
+
+    (products && products.products || []).forEach(function(p){
+      if (picked[p.id]) out.push(p.id);
+    });
+
+    return out;
+  }
+
+  function pickedRows(){
+    var want = {};
+    pickedIds().forEach(function(id){ want[id] = true; });
+
+    return (products && products.products || []).filter(function(p){ return want[p.id]; });
+  }
+
+  function plural(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
 
   /* -------------------------------------------------------- sidebar entry
      INTEGRATOR: this was a hand-rolled copy and two live guards in
@@ -431,6 +521,16 @@
       if (mine !== pseq) return;
       products = body;
       banner = null;
+
+      /* THE SELECTION DOES NOT SURVIVE A NEW LIST — Lane Q4. Every fetch is a
+         different question: a new search term, a different scope, the next
+         page. Carrying ticks across one would leave him one press from writing
+         to rows that scrolled out of existence, and the bar's count would be
+         describing a page he is no longer looking at. It survives a bulk write
+         (which repaints from the response and does not refetch), because
+         applying a step and then a concern to the same twenty-five rows is two
+         presses and should stay two. */
+      picked = {};
     } catch (e) {
       if (mine !== pseq) return;
       banner = explain(e, 'Could not load the product list.');
@@ -752,6 +852,11 @@
         + '</div>';
     }
 
+    /* ABOVE THE LIST AND OUTSIDE THE CHAIN BELOW, so it is still reachable
+       after a search that returns nothing: he bulk-tags a page, types the next
+       worksheet term, gets no rows — and can still take the last write back. */
+    body += undoView();
+
     if (!products && !searching) {
       body += '<div class="rtn-empty">Nothing loaded.</div>';
     } else if (!products) {
@@ -772,7 +877,8 @@
                    : 'Nothing matches that filter.'))
            + '</div>';
     } else {
-      body += '<div class="rtn-list">' + products.products.map(productRow).join('') + '</div>' + pagerView();
+      body += bulkHeadView() + bulkBarView()
+           + '<div class="rtn-list">' + products.products.map(productRow).join('') + '</div>' + pagerView();
     }
 
     return '<div class="rtn-card">'
@@ -791,6 +897,157 @@
       + '</div>';
   }
 
+  /* ── THE UNDO BAR ────────────────────────────────────────────────────────
+     A BAR, NOT A TOAST, and that is the whole argument. The brief for this
+     control put it plainly: a bulk action that mis-tags twenty products and
+     cannot be reversed is worse than twenty single presses. A toast gives him
+     three seconds to notice and decide; this stays until he does something
+     else with it.
+
+     WHAT UNDO MEANS HERE. Not "take the chip off again" — that is wrong, and
+     wrong in a way that destroys work: tag twelve products for sensitivity when
+     three of them already carried it, and removing the chip from twelve strips
+     a tag set last week. It means PUT EVERY ROW BACK THE WAY IT WAS, row by
+     row, from the values the server read before it wrote. Rows the write did
+     not change are not in the entry at all, so undoing a no-op is a no-op.
+
+     HOW LONG IT LASTS, said on the bar itself: until this screen is reloaded.
+     It survives searching, paging and switching tab. It is a stack, so several
+     bulk writes undo in reverse order, one press each — the bar shows the most
+     recent, and undoing it reveals the one before. It is NOT stored on the
+     server: that would be a table, a migration and a retention question, for a
+     control whose mistakes are noticed within seconds of making them. What it
+     costs to be wrong about that is one more bulk press in the other direction,
+     which is the control he is already standing in front of. */
+  function undoView(){
+    if (!undo.length) return '';
+
+    var top = undo[undo.length - 1];
+    var more = undo.length > 1 ? ' (' + (undo.length - 1) + ' more behind it)' : '';
+
+    return '<div class="rtn-undo">'
+      + '<span class="rtn-undowhat">' + esc(top.what) + '</span>'
+      + '<button type="button" class="rtn-btn is-primary" id="rtn-undo"' + (bulking ? ' disabled' : '') + '>'
+        + 'Undo</button>'
+      + '<span class="rtn-undonote">Puts all ' + plural(top.rows.length, 'row', 'rows')
+        + ' back exactly as they were' + esc(more) + '. Lasts until you reload this screen.</span>'
+      + '</div>';
+  }
+
+  /* ── THE SELECT-ALL LINE, WHICH IS WHERE THE SCOPE IS ARGUED ─────────────
+     It says how many rows it will tick and it says so in the label, because
+     "Select all" on a list with a pager is the oldest trap in this shape of
+     screen: the operator reads it as "all 342 matches" and it means "the 25 you
+     can see". Writing the number into the label removes the ambiguity without
+     a tooltip.
+
+     And when the search HAS more pages, the line beside it says so — not as a
+     warning but as a fact, with the honest next step. The alternative designs
+     ("apply to all 342") were rejected in the endpoint's own docblock: it takes
+     explicit ids and no query at all, so the dangerous scope is not reachable
+     from anywhere, not merely unoffered here. */
+  function bulkHeadView(){
+    var rows = (products && products.products || []);
+    var ids = pickedIds();
+    var allOn = rows.length > 0 && ids.length === rows.length;
+    var pages = Math.max(1, Math.ceil(products.total / products.per_page));
+
+    return '<div class="rtn-bulkhead">'
+      + '<label class="rtn-pickall"><input type="checkbox" id="rtn-pickall"'
+        + (allOn ? ' checked' : '') + '>'
+        + 'Select all ' + rows.length + ' on this page</label>'
+      + '<span class="rtn-bulkscope">'
+        + (pages > 1
+            ? 'A selection is this page only, never the other ' + plural(pages - 1, 'page', 'pages')
+              + ' — ' + products.total + ' match in all. Tag this page, press Next, tag that one.'
+            : 'Every row that matches is on this page.')
+      + '</span>'
+      + '</div>';
+  }
+
+  /* ── THE BAR: ONE PRESS FOR THE STEP, ONE PRESS FOR THE CONCERN ──────────
+     THE TWO ARE SEPARATE BUTTONS BECAUSE THEY ARE SEPARATE FIELDS, and the
+     worksheet in docs/SEO-CONCERN-MAPPING.md §3 is organised by CONCERN while
+     this screen is organised by STEP. Type `centella` and what comes back is a
+     cleanser, two toners and a cream: one concern, four steps. So the concern
+     row is the one that collapses a search into a single press, and it is drawn
+     wider and labelled for the job.
+
+     THE CONCERN CHIP KNOWS WHAT THE SELECTION ALREADY HOLDS. When every picked
+     row already carries a concern the chip offers to REMOVE it instead, so the
+     bar can take back a chip as cheaply as it applied one. Any other mix adds.
+
+     A CONCERN DOES NOT NEED A STEP HERE, and the note says so when it matters.
+     The per-row chips are disabled until a product has a step — right for the
+     routine builder, which never offers a stepless product. A CONCERN PAGE is
+     not the routine builder: App\Support\ConcernCollections::query() selects on
+     routine_concerns and never reads routine_role, and the countdown on the
+     Concern pages tab counts the same explicit tags. Tagging a stepless product
+     for `sensitivity` is exactly what /concern/sensitivity/ needs, so the bar
+     allows it and says how many rows it applies to. */
+  function bulkBarView(){
+    var rows = pickedRows();
+    if (!rows.length) return '';
+
+    var role = roleFor(open);
+    var n = rows.length;
+
+    var notInStep = rows.filter(function(p){ return p.role !== open; }).length;
+    var stepless = rows.filter(function(p){ return !p.role; }).length;
+
+    var stepBtn = (role && notInStep > 0)
+      ? '<button type="button" class="rtn-btn is-primary" id="rtn-bulk-role"' + (bulking ? ' disabled' : '') + '>'
+        + 'Use all ' + n + ' for ' + esc(role.label) + '</button>'
+      : '<span class="rtn-bulkscope">'
+        + (role ? 'All ' + n + ' are already in ' + esc(role.label) + '.' : '')
+        + '</span>';
+
+    var chips = (data.concerns || []).map(function(c){
+      var have = rows.filter(function(p){ return (p.concerns || []).indexOf(c.key) > -1; }).length;
+      var off = have === n;
+
+      /* ── IT SAYS "REMOVE" IN WORDS, AND THAT IS A DEFECT THIS LANE SHIPPED
+             AND THEN CAUGHT BY DRIVING IT ────────────────────────────────
+         The first build drew this chip as '\u2713 Redness & sensitivity' when
+         every picked row already carried the concern. That reads as a STATUS —
+         "these are tagged" — and it is a BUTTON that takes the tag off. Driving
+         a real four-term worksheet session in Chromium walked straight into it:
+         `centella` matched twenty rows, ten of which were also the `heartleaf`
+         group, so by the time the `heartleaf` term was typed all ten already
+         carried `sensitivity`, the chip had silently become a remove, and one
+         press UNTAGGED ten products that had just been tagged. The session
+         finished with 10 sensitivity products instead of 20 and nothing on
+         screen had said a word about it.
+         The tick is kept, because the state is worth showing. The verb is now
+         written out. */
+      return '<button type="button" class="rtn-chip' + (off ? ' on' : '') + '"'
+        + ' data-rtn-bulkconcern="' + esc(c.key) + '" data-rtn-bulkoff="' + (off ? '1' : '0') + '"'
+        + (bulking ? ' disabled' : '')
+        + ' title="' + (off ? 'All ' + n + ' already carry this — press to take it off them'
+                            : 'Tag all ' + n + ' for this concern') + '">'
+        + (off ? '\u2713 Remove ' : '+ ') + esc(c.label) + '</button>';
+    }).join('');
+
+    return '<div class="rtn-bulkbar" aria-busy="' + (bulking ? 'true' : 'false') + '"'
+      + ' role="group" aria-label="Apply to the selected products">'
+      + '<div class="rtn-bulktop">'
+        + '<span class="rtn-bulkcount">' + plural(n, 'product selected', 'products selected') + '</span>'
+        + '<div class="rtn-bulkacts">' + stepBtn
+          + '<button type="button" class="rtn-btn" id="rtn-pickclear"' + (bulking ? ' disabled' : '') + '>'
+          + 'Clear selection</button></div>'
+      + '</div>'
+      + '<div>'
+        + '<div class="rtn-bulklabel">Tag all ' + n + ' for a concern</div>'
+        + '<div class="rtn-chips" style="margin-top:7px">' + chips + '</div>'
+      + '</div>'
+      + (stepless > 0
+          ? '<div class="rtn-bulkscope">' + plural(stepless, 'of these has', 'of these have')
+            + ' no step yet. A concern still counts towards its page — the concern pages read the chips, '
+            + 'not the steps — but a product with no step is never offered inside a routine.</div>'
+          : '')
+      + '</div>';
+  }
+
   function productRow(p){
     var roleOpts = '<option value="">— no step —</option>'
       + (data.roles || []).map(function(r){
@@ -806,7 +1063,16 @@
            + esc(c.label) + '</button>';
     }).join('');
 
-    return '<div class="rtn-row' + (p.role ? '' : ' is-untagged') + '" data-rtn-row="' + p.id + '">'
+    var on = !!picked[p.id];
+
+    /* THE TICK IS A REAL CHECKBOX, labelled with the product's own name. A
+       styled <div> here would cost the keyboard and the screen reader the one
+       control the whole bar depends on, and aria-label carries the name so
+       twenty-five ticks are not twenty-five identical "checkbox"es. */
+    return '<div class="rtn-row is-pickable' + (p.role ? '' : ' is-untagged')
+      + (on ? ' is-picked' : '') + '" data-rtn-row="' + p.id + '">'
+      + '<input type="checkbox" class="rtn-pick" data-rtn-pick="' + p.id + '"'
+        + (on ? ' checked' : '') + ' aria-label="Select ' + esc(p.name) + '">'
       + '<div class="rtn-name">' + esc(p.name) + '</div>'
       + '<div class="rtn-meta">' + esc(p.brand || '—')
         + (p.sku ? ' · ' + esc(p.sku) : '')
@@ -1131,6 +1397,89 @@
     }
   }
 
+  /* ── ONE WRITE, SEVERAL ROWS ─────────────────────────────────────────────
+     `rows` is a list of {id, role?, concerns?} — per-row TARGET values, which
+     is the shape the endpoint takes and the reason undo can be exact. `what` is
+     the sentence the undo bar will carry.
+
+     THE UNDO ENTRY IS BUILT FROM THE RESPONSE, NOT FROM WHAT WAS SENT. The
+     server returns every row's `before` as it read it off the column a moment
+     before writing, so the entry is right even if this screen's copy of a row
+     was stale — which it can be: the list is a snapshot, and another admin, or
+     the product editor in another tab, may have moved a row since it was drawn.
+     Rows the write did not actually change are filtered out, so the bar's count
+     is the number of products that moved rather than the number ticked.
+
+     `again` is false for a real write and true for the undo of one. An undo
+     must not push an undo entry of its own: it pops. */
+  async function bulkApply(rows, what, done, again){
+    if (!rows.length || bulking) return;
+
+    bulking = true;
+    render();
+
+    try {
+      var body = await api('/routine-products-bulk', {rows: rows});
+
+      if (data && body.coverage) data.coverage = body.coverage;
+
+      // Every visible row updated from the RESPONSE, the same rule tag()
+      // follows: the server cleans the concern list and normalises the role,
+      // and a screen painting its own guess would drift from the column.
+      var byId = {};
+      (body.rows || []).forEach(function(r){ byId[r.id] = r; });
+
+      (products && products.products || []).forEach(function(p){
+        var r = byId[p.id];
+        if (r) { p.role = r.role; p.concerns = r.concerns; }
+      });
+
+      if (!again) {
+        var before = (body.rows || []).filter(function(r){
+          return r.before.role !== r.role
+            || (r.before.concerns || []).join(',') !== (r.concerns || []).join(',');
+        }).map(function(r){
+          return {id: r.id, role: r.before.role, concerns: r.before.concerns};
+        });
+
+        if (before.length) undo.push({what: what, rows: before});
+      }
+
+      var msg = done(body);
+
+      if (body.missing && body.missing.length) {
+        msg += ' ' + plural(body.missing.length, 'product was', 'products were')
+             + ' no longer in the catalogue and could not be changed.';
+      }
+
+      say(msg);
+    } catch (e) {
+      say(explain(e, 'Could not save those products.'));
+    } finally {
+      bulking = false;
+      render();
+    }
+  }
+
+  function bulkUndo(){
+    var top = undo[undo.length - 1];
+    if (!top || bulking) return;
+
+    // Popped BEFORE the write rather than after it, so a failed undo cannot be
+    // pressed into a loop against rows that have already moved back. If it
+    // fails the toast says so and the entry is gone -- which is honest: this
+    // screen no longer knows what the column holds.
+    undo.pop();
+
+    bulkApply(top.rows, '', function (body) {
+      return body.changed === 0
+        ? 'Nothing to put back — those rows already held those values.'
+        : (body.changed === 1
+            ? '1 product put back as it was.'
+            : body.changed + ' products put back as they were.');
+    }, true);
+  }
+
   /* ── SWITCHING TAB ────────────────────────────────────────────────────────
      A step tab reloads the list; the other three are already in `data` and
      reload nothing at all, so moving between Concern pages, Wording and
@@ -1269,6 +1618,123 @@
         tag(btn.dataset.rtnUse, {role: open}, 'Step set to ' + role.label + '.');
       };
     });
+
+    /* ── THE SELECTION ───────────────────────────────────────────────────
+       Bound per render like everything else on this screen, for this file's
+       stated reason: app.blade.php delegates around a dozen listeners on
+       `document` claiming bare attribute names, and a click on an element
+       carrying one is handled by that listener whichever screen drew it.
+
+       A tick does NOT save anything. It is the only control on this screen that
+       does not write, and that is deliberate -- selecting is how he says what he
+       means before he says what to do with it, and a tick that wrote would be a
+       bulk control with no confirm step at all. */
+    document.querySelectorAll('[data-rtn-pick]').forEach(function(box){
+      box.onchange = function(){
+        var id = Number(box.dataset.rtnPick);
+
+        if (box.checked) picked[id] = true; else delete picked[id];
+
+        render();
+      };
+    });
+
+    var pickAll = document.querySelector('#rtn-pickall');
+
+    if (pickAll) pickAll.onchange = function(){
+      /* THIS PAGE. The rows drawn, and nothing else -- see `picked`'s note and
+         the label on the box itself, which carries the count so the scope is
+         read rather than assumed. */
+      picked = {};
+
+      if (pickAll.checked) {
+        (products && products.products || []).forEach(function(p){ picked[p.id] = true; });
+      }
+
+      render();
+    };
+
+    var pickClear = document.querySelector('#rtn-pickclear');
+    if (pickClear) pickClear.onclick = function(){ picked = {}; render(); };
+
+    /* ── ONE PRESS, THE WHOLE SELECTION, INTO THE OPEN STEP ──────────────
+       `open` is read HERE, at the moment of the press, exactly as the per-row
+       button does it: the checkout screen already paid for the other way round
+       ("when i click squeezed, it applies on all tabs"), and a bulk version of
+       that mistake is twenty-five rows wrong instead of one. */
+    var bulkRole = document.querySelector('#rtn-bulk-role');
+
+    if (bulkRole) bulkRole.onclick = function(){
+      var role = roleFor(open);
+      if (!role) return;
+
+      var rows = pickedRows().filter(function(p){ return p.role !== open; });
+      if (!rows.length) return;
+
+      bulkApply(
+        rows.map(function(p){ return {id: p.id, role: open}; }),
+        plural(rows.length, 'product', 'products') + ' put in ' + role.label + '.',
+        function (body) { return plural(body.changed, 'product', 'products') + ' now in ' + role.label + '.'; },
+        false
+      );
+    };
+
+    /* ── ONE PRESS, THE WHOLE SELECTION, ONE CONCERN ─────────────────────
+       THE TARGET LIST IS COMPUTED PER ROW, not sent as a verb, and the reason
+       is in the endpoint's docblock: "add sensitivity to twelve" does not
+       invert to "remove sensitivity from twelve" when three of them already had
+       it. Each row gets the list it should end with, the server records what it
+       had, and undo posts that back.
+
+       Rows that already agree are left out of the payload entirely, so pressing
+       a chip twice by accident is one write and then nothing. */
+    document.querySelectorAll('[data-rtn-bulkconcern]').forEach(function(btn){
+      btn.onclick = function(){
+        var key = btn.dataset.rtnBulkconcern;
+        var off = btn.dataset.rtnBulkoff === '1';
+        var label = (data.concerns || []).filter(function(c){ return c.key === key; })[0];
+        label = label ? label.label : key;
+
+        var rows = [];
+
+        pickedRows().forEach(function(p){
+          var have = (p.concerns || []).slice();
+          var at = have.indexOf(key);
+
+          if (off) {
+            if (at === -1) return;      // nothing to take off this one
+            have.splice(at, 1);
+          } else {
+            if (at > -1) return;        // already carries it
+            have.push(key);
+          }
+
+          rows.push({id: p.id, concerns: have});
+        });
+
+        if (!rows.length) return;
+
+        bulkApply(
+          rows,
+          plural(rows.length, 'product', 'products') + (off ? ' untagged from ' : ' tagged for ') + label + '.',
+          function (body) {
+            var msg = plural(body.changed, 'product', 'products')
+                    + (off ? ' no longer tagged for ' : ' tagged for ') + label + '.';
+
+            if (!off && body.without_step > 0) {
+              msg += ' ' + plural(body.without_step, 'of them has', 'of them have')
+                   + ' no step yet — it counts towards the concern page either way.';
+            }
+
+            return msg;
+          },
+          false
+        );
+      };
+    });
+
+    var undoBtn = document.querySelector('#rtn-undo');
+    if (undoBtn) undoBtn.onclick = function(){ bulkUndo(); };
 
     var prev = document.querySelector('#rtn-prev');
     if (prev) prev.onclick = function(){ if (page > 1) { page--; loadProducts(); } };

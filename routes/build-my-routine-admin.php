@@ -83,5 +83,50 @@ Route::get('/routine-products', [RoutinesApiController::class, 'products']);
 Route::post('/routine-products/{id}', [RoutinesApiController::class, 'tag'])
     ->where('id', '[0-9]+');
 
+/*
+ * ── BULK TAGGING — Lane Q4 ───────────────────────────────────────────────────
+ *
+ * INTEGRATOR: this is the ONE new route in this round. It is inside the file
+ * you already require, so there is NO new line in routes/web.php — the require
+ * named in this file's header covers it. The exact line, unchanged:
+ *
+ *     require __DIR__.'/build-my-routine-admin.php';
+ *
+ * Resulting path:
+ *
+ *     POST /admin-api/routine-products-bulk    tag several products at once
+ *
+ * A SIBLING PATH, NOT `routine-products/bulk`, and the reason is this file's
+ * own header: `routine-products/{id}` is constrained to `[0-9]+` so a literal
+ * `bulk` segment could not be captured by it today — but a later lane relaxing
+ * that constraint would silently turn this endpoint into a product id, and the
+ * `routines-settings` / `routines-module` naming above exists so that ordering
+ * can never be load-bearing. Same shape, same reason.
+ *
+ * CAPABILITY. Its own row in App\Support\AdminCapabilities::RULES, written
+ * ABOVE the `routine-products/*` row that precedes it there:
+ *
+ *     ['POST', 'admin-api/routine-products-bulk', 'catalog.manage'],
+ *
+ * catalog.manage and not something new, because this is not a new power: it is
+ * `POST /admin-api/routine-products/{id}` applied to a set, writing the same
+ * two columns through the same vocabulary, and a role that may retag one
+ * product may retag twenty. It does NOT get catalog.view — the wildcard read
+ * below it would otherwise be reachable and an `editor` on view alone could
+ * retag the catalogue twenty-five rows at a time, which is the exact hazard
+ * the block's "writes above reads" note was written for.
+ *
+ * With that row missing the endpoint is OWNER-ONLY, not open —
+ * AdminCapabilities::for() returns null for a route it does not recognise and
+ * EnforceAdminCapability turns null into a 403. RoutineTaggingBulkTest pins
+ * both halves.
+ *
+ * THE CACHE. database/migrations/2027_01_02_000000_clear_caches_routine_bulk_tagging.php
+ * ships with the package: on this host a route missing from the compiled table
+ * does not exist, and the screen would paint a selection bar whose first press
+ * 404s.
+ */
+Route::post('/routine-products-bulk', [RoutinesApiController::class, 'bulk']);
+
 Route::post('/routines/{concern}', [RoutinesApiController::class, 'saveRoutine'])
     ->where('concern', '[a-z0-9-]+');
