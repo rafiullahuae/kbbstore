@@ -1103,6 +1103,38 @@ final class EnglishRenderWalk
                 'with' => 'so we will arrange the money with you directly. If you have not heard from us, reply to this message and we will sort it out.',
                 'hits' => 1,
             ],
+            /*
+             * emails/cart-recovery.blade.php — THE PER-ITEM LINK, AND THIS ONE
+             * IS A BUG FIX RATHER THAN A REWRAP. Lane U2.
+             *
+             * Every other rule above straightens whitespace that Blade folded
+             * differently; this one records that the BEFORE side was WRONG. The
+             * item link was built with Url::to(), which returns a root-relative
+             * path, so every basket reminder this shop has ever sent carried
+             *
+             *     <a href="/product/rice-toner/">
+             *
+             * An inbox has no origin to resolve that against — the link is dead
+             * in every mail client, and has been since the message was written.
+             * It is now Url::external(), the out-of-band builder, which puts
+             * APP_URL's origin in front of it and never the request's.
+             *
+             * The other two links in this message ($cartUrl, $unsubscribeUrl)
+             * arrive from OutboundSender already absolute, which is why only
+             * this one moved and why the hit count is 1. The plain-text twin
+             * prints the item name and quantity with no link at all, so it does
+             * not appear here.
+             *
+             * `http://localhost` and not a real host because that is APP_URL in
+             * the suite (.env, and config/app.php's own default). The rule is
+             * anchored on the fixture's slug so that it cannot quietly start
+             * excusing some other document's links.
+             */
+            'cart recovery: item link is absolute' => [
+                'pattern' => '#<a href="/product/rice-toner/"#',
+                'with' => '<a href="http://localhost/product/rice-toner/"',
+                'hits' => 1,
+            ],
         ];
     }
 

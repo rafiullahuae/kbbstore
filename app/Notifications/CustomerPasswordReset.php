@@ -60,8 +60,13 @@ class CustomerPasswordReset extends Notification
     /**
      * An absolute URL, because it is going into an inbox.
      *
-     * Url::redirect() is the helper that prefixes the base path exactly once
-     * however APP_URL is written — the same one the checkout redirects use.
+     * Url::external() is the helper that prefixes the base path exactly once
+     * however APP_URL is written, from APP_URL AND NEVER FROM THE REQUEST. The
+     * checkout redirects use Url::redirect(), which is the in-band twin and
+     * does read the request host: correct there, because the visitor is already
+     * on it, and account takeover here, because a `Host:` a stranger chose
+     * would become the address this customer is asked to type a new password
+     * into.
      *
      * The customer ID, not the email address. Laravel's own reset link carries
      * `?email=` in the query string, and a query string is the part of a URL
@@ -75,6 +80,6 @@ class CustomerPasswordReset extends Notification
     {
         $id = $this->customerId ?? (int) ($notifiable->getKey() ?? 0);
 
-        return Url::redirect('/my-account/reset/' . $id . '/' . rawurlencode($this->token) . '/');
+        return Url::external('/my-account/reset/' . $id . '/' . rawurlencode($this->token) . '/');
     }
 }

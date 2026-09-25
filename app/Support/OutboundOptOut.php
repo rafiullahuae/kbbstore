@@ -133,7 +133,7 @@ final class OutboundOptOut
         $purpose = self::KINDS[$kind][1] ?? '';
         $expiresAt ??= time() + self::TTL;
 
-        return Url::redirect(sprintf(
+        return Url::external(sprintf(
             '/mail-preferences/%s/%d/?expires=%d&signature=%s',
             $kind,
             $id,

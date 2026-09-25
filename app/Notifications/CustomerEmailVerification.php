@@ -63,7 +63,7 @@ class CustomerEmailVerification extends Notification
 
         $signature = CustomerLinkSigner::sign(self::PURPOSE, self::claims($customer), $expiresAt);
 
-        return Url::redirect(sprintf(
+        return Url::external(sprintf(
             '/my-account/verify/%d/%s/?expires=%d&signature=%s',
             $customer->getKey(),
             $customer->verificationHash(),

@@ -550,7 +550,7 @@ final class StripeConnect
             return null;
         }
 
-        return url(Url::redirect('/api/payments/webhook/' . self::GATEWAY . '/')) . $secret;
+        return url(Url::external('/api/payments/webhook/' . self::GATEWAY . '/')) . $secret;
     }
 
     /* ====================================================================== */
@@ -745,7 +745,7 @@ final class StripeConnect
     /** The URL that must be whitelisted in the Connect application's settings. */
     public function redirectUri(): string
     {
-        return url(Url::redirect('/admin-api/payments/stripe/connect/callback'));
+        return url(Url::external('/admin-api/payments/stripe/connect/callback'));
     }
 
     /**

@@ -775,7 +775,7 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      */
     private function webhookUrl(): string
     {
-        return url(\App\Support\Url::redirect('/api/payments/webhook/tamara/'))
+        return url(\App\Support\Url::external('/api/payments/webhook/tamara/'))
             . $this->credentials->get($this->id(), 'webhook_secret');
     }
 }

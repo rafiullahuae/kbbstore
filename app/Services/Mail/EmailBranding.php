@@ -259,7 +259,7 @@ class EmailBranding
         // A site path, the shape the media library stores. Anything else — a
         // scheme we did not name, a bare word — is not a logo.
         if (str_starts_with($raw, '/')) {
-            return Url::redirect($raw);
+            return Url::external($raw);
         }
 
         return null;

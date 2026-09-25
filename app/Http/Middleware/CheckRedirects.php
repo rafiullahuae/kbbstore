@@ -147,14 +147,20 @@ class CheckRedirects
          * producer of a 301 in this application that still did it the other
          * way. See docs/GP-ADDRESSES-LAND.md for the before/after fetches.
          *
-         * THE COST, stated because it is real: Url::redirect() builds on
-         * APP_URL rather than on the request's host, so a wrong APP_URL sends
-         * every redirect to the wrong host. That is already true of password
-         * resets, payment webhooks and Stripe's callback, all of which go
-         * through the same helper, so it is a precondition this shop already
-         * has rather than a new one.
+         * THE COST THAT USED TO BE STATED HERE HAS BEEN PAID OFF. This comment
+         * read: "Url::redirect() builds on APP_URL rather than on the request's
+         * host, so a wrong APP_URL sends every redirect to the wrong host ...
+         * a precondition this shop already has rather than a new one." It no
+         * longer does. Url::redirect() is IN-BAND now and builds on the host the
+         * visitor is already on, and $request is passed so that this is the
+         * behaviour the suite exercises rather than one only production sees.
+         *
+         * Password resets, payment webhooks and Stripe's callback — the three
+         * things that sentence pointed at as fellow sufferers — have gone the
+         * other way, to Url::external(), because their reader is not the person
+         * who made the request and a `Host:` header has no standing with them.
          */
-        return redirect(\App\Support\Url::redirect($redirect->target), $redirect->code);
+        return redirect(\App\Support\Url::redirect($redirect->target, $request), $redirect->code);
     }
 
     /**

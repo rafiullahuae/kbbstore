@@ -371,7 +371,18 @@ class QuizController extends Controller
             static fn (string $c): bool => $c !== ''
         ));
 
-        $shopUrl = Url::to('/shop/');
+        /*
+         * Url::external(), NOT Url::to() — THE SAME DEFECT AS
+         * emails/cart-recovery.blade.php, in the second of the two mail views
+         * that built a link itself instead of being handed one.
+         *
+         * to() returns a root-relative path. This one is the plan email's call
+         * to action, printed as an href AND spelled out in full in the plain
+         * text part, so every plan email this shop has sent has offered its
+         * reader "/shop/" to click and to read. external() and not redirect():
+         * an inbox is not in band with anybody's request.
+         */
+        $shopUrl = Url::external('/shop/');
 
         defer(function () use ($id, $email, $locale, $name, $skinType, $concerns, $routines, $shopUrl): void {
             try {
@@ -384,7 +395,17 @@ class QuizController extends Controller
                  * when this shop stocks nothing for that concern — in which
                  * case the message links to the shop, which always exists.
                  */
-                $routineUrl = QuizRoutineLink::forConcerns($concerns);
+                /*
+                 * Absolute for the same reason $shopUrl is, and through
+                 * externalise() rather than external() because QuizRoutineLink
+                 * has already run these through Url::to(): it is read by the
+                 * quiz PAGE as well, where a root-relative link is the right
+                 * answer, so the absolute form is applied here at the boundary
+                 * into the email rather than in the shared builder. Passing an
+                 * already-prefixed path back through to() would spell the base
+                 * path twice.
+                 */
+                $routineUrl = Url::externalise((string) QuizRoutineLink::forConcerns($concerns)) ?: null;
 
                 /*
                  * And the fall-back destination that does NOT need the module —
@@ -396,7 +417,7 @@ class QuizController extends Controller
                  * link to /shop/ it has always had.
                  */
                 $concernUrl = $routineUrl === null
-                    ? QuizRoutineLink::concernUrlForConcerns($concerns)
+                    ? (Url::externalise((string) QuizRoutineLink::concernUrlForConcerns($concerns)) ?: null)
                     : null;
 
                 app(MailLog::class)->labelNext('quiz.plan');

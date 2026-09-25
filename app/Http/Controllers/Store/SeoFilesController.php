@@ -172,6 +172,33 @@ class SeoFilesController extends Controller
      * Search Console) and a robots.txt advertising "Sitemap: /sitemap.xml".
      * SeoSettings::firstFilled() takes the first candidate that is usable
      * rather than the first that exists.
+     *
+     * ── AND url('/') HAS NOW GONE, WHICH IS THE POINT OF THIS COMMENT ────────
+     *
+     * The third candidate was `url('/')`, which is REQUEST-DERIVED: Laravel
+     * builds it from the `Host:` header, and behind a trusted proxy from
+     * `X-Forwarded-Host`. Both are chosen by whoever sent the request.
+     *
+     * A sitemap and a robots.txt are the definition of OUT-OF-BAND — the reader
+     * is Googlebot, or Bing, or an IndexNow endpoint, and never the person whose
+     * request produced the bytes. A `<loc>` built from a stranger's `Host:` asks
+     * a search engine to index this shop's catalogue under that stranger's
+     * domain, and `Sitemap: https://attacker.example/sitemap.xml` in robots.txt
+     * asks it to go and fetch the next instruction from them.
+     *
+     * It was unreachable, and only by accident: config/app.php spells
+     * `env('APP_URL', 'http://localhost')`, so the second candidate is never
+     * blank unless somebody writes a bare `APP_URL=` into .env — one keystroke
+     * in a file this project's own installer and Platform → Site address both
+     * write. A Host-header path into sitemap.xml that is closed by a default in
+     * an unrelated file is not closed.
+     *
+     * What is lost by removing it: with BOTH site_url and APP_URL blank the
+     * base is now '' and these files carry root-relative addresses, which is the
+     * misconfiguration the paragraph above describes and Search Console rejects
+     * outright. Visibly broken and harmless beats plausible and attacker-chosen.
+     * Every other base chain in the SEO layer (Support\Seo::canonical() and
+     * friends) already stops at APP_URL; this was the last one that did not.
      */
     private function base(): string
     {
@@ -180,7 +207,6 @@ class SeoFilesController extends Controller
         return rtrim(SeoSettings::firstFilled(
             $s['site_url'] ?? null,
             (string) config('app.url'),
-            url('/')
         ), '/');
     }
 

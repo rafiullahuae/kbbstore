@@ -431,7 +431,12 @@ class AppServiceProvider extends ServiceProvider
                      * docs/GB-MEDIA-AND-REDIRECTS.md §6.4; the other two were
                      * not. This is the copy that actually runs.
                      */
-                    return redirect(\App\Support\Url::redirect($redirect->target), $redirect->code);
+                    // IN-BAND, and $request is handed over: the reader of this
+                    // Location is the visitor who just hit a 404 on this host,
+                    // so their own host is the right one to send them back to.
+                    // The argument is what makes that testable — see
+                    // Url::redirect()'s note on runningInConsole().
+                    return redirect(\App\Support\Url::redirect($redirect->target, $request), $redirect->code);
                 }
 
                 if ($request->isMethod('GET') && !$request->is('admin*', 'admin-api*', 'api*')) {

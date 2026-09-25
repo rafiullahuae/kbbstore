@@ -95,7 +95,7 @@ class OutboundSender
                     $wording['subject'],
                     $wording['body'],
                     (string) $row->product_name,
-                    Url::redirect('/product/' . (string) $row->product_slug . '/'),
+                    Url::external('/product/' . (string) $row->product_slug . '/'),
                     OutboundOptOut::link('stock', (int) $row->id, (string) $row->email),
                 );
 
@@ -146,7 +146,7 @@ class OutboundSender
                     $wording['subject'],
                     $wording['body'],
                     $this->recovery->basket((int) $row->cart_id),
-                    Url::redirect('/cart'),
+                    Url::external('/cart'),
                     OutboundOptOut::link('cart', $id, (string) $row->email),
                 );
 

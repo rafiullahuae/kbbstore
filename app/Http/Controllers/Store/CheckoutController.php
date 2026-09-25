@@ -87,7 +87,24 @@ class CheckoutController extends Controller
         $cart = $this->loadCart($request);
 
         if (! $cart || $cart->items->isEmpty()) {
-            return redirect(Url::redirect('/cart/'));
+            /*
+             * THE REQUEST IS HANDED OVER, AND THIS IS THE LINE LANE N MEASURED.
+             *
+             * With APP_URL still naming the old domain, this answered
+             * `GET https://new-shop.test/checkout` with
+             * `302 Location: https://old-shop.test/cart/` — a shopper on the way
+             * to paying, thrown onto a host their session cookie cannot be sent
+             * to, so their basket is invisible when they arrive.
+             *
+             * Url::redirect() reads the bound request by itself under PHP-FPM,
+             * so passing $request changes nothing in production. It changes
+             * everything in the SUITE, where app()->runningInConsole() is true
+             * and SiteUrl::origin() therefore refuses to reach for a request it
+             * cannot tell apart from artisan's. Without this argument the fix is
+             * real and untestable; with it, StorefrontUrlInBandTest can drive a
+             * request to one host and read the Location.
+             */
+            return redirect(Url::redirect('/cart/', $request));
         }
 
         $customer = $request->user('customer');
@@ -269,7 +286,7 @@ class CheckoutController extends Controller
         if (! $cart || $cart->items->isEmpty()) {
             return $request->expectsJson()
                 ? $this->refused($request, 'Your bag is empty.')
-                : redirect(Url::redirect('/cart/'))->withErrors('Your bag is empty.');
+                : redirect(Url::redirect('/cart/', $request))->withErrors('Your bag is empty.');
         }
 
         /*
@@ -845,8 +862,8 @@ class CheckoutController extends Controller
                  * appends its own query parameters to it; the success page
                  * reads `order` and ignores the rest.
                  */
-                'return_url' => url(Url::redirect('/checkout/success')) . '?order=' . urlencode((string) $order->order_number),
-                'success_url' => Url::redirect('/checkout/success') . '?order=' . urlencode((string) $order->order_number),
+                'return_url' => url(Url::redirect('/checkout/success', $request)) . '?order=' . urlencode((string) $order->order_number),
+                'success_url' => Url::redirect('/checkout/success', $request) . '?order=' . urlencode((string) $order->order_number),
             ]);
         }
 
@@ -855,9 +872,9 @@ class CheckoutController extends Controller
                 'ok' => true,
                 'action' => 'placed',
                 'order' => $order->order_number,
-                'success_url' => Url::redirect('/checkout/success') . '?order=' . urlencode((string) $order->order_number),
+                'success_url' => Url::redirect('/checkout/success', $request) . '?order=' . urlencode((string) $order->order_number),
             ])
-            : redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number);
+            : redirect(Url::redirect('/checkout/success', $request) . '?order=' . $order->order_number);
     }
 
     /**
@@ -1147,7 +1164,7 @@ class CheckoutController extends Controller
             abort(404);
         }
 
-        $back = redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number)
+        $back = redirect(Url::redirect('/checkout/success', $request) . '?order=' . $order->order_number)
             ->with('kbb_account_done', '1');
 
         if ($request->user('customer') || $order->customer_id === null) {
