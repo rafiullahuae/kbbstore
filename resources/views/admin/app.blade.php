@@ -11966,36 +11966,30 @@ buildNav();
     return '<span class="pill '+m+'"><span class="d"></span>'+s+'</span>';
   }
   /**
-   * Replaces the sidebar's "Blog" and "Posts" links, which previously
-   * loaded an iframe pointing at a standalone file that was never built.
-   * Read-only for now — listing and a real preview link on the live site
-   * is what was actually missing; a full editor is separate, larger scope.
+   * Content -> Blog Posts.
+   *
+   * WHAT WAS HERE. This function drew the whole screen: a read-only table whose
+   * own subtitle said "Editing happens on the real page for now", over a "real
+   * page" that did not exist. POST /admin-api/posts answered 405 and no
+   * endpoint in this application wrote posts.body at all, so an owner who had
+   * written an article had nowhere to put it and the Journal served only what
+   * the WordPress import or the demo seeder had left behind.
+   *
+   * The list and the article editor behind it now live together in
+   * admin/partials/post-editor-screen.blade.php (Lane J), included at the foot
+   * of this file. This stays as the entry point, because the interception above
+   * calls it by name for both 'blog' and 'posts', and it delegates rather than
+   * drawing a second table that would have to be kept in step with the first.
    */
-  function appRoot(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,''); }
-  async function renderPosts(){
-    var posts;
-    try{ posts = (await api('/admin-api/posts')).posts; }catch(e){ posts = null; }
+  function renderPosts(){
+    if (window.KBBPostEditor) return KBBPostEditor.list();
 
-    if(posts === null){
-      document.querySelector('#content').innerHTML = '<div class="wrap"><div class="page-head"><h2>Blog Posts</h2></div>'+
-        '<p style="padding:24px;color:var(--sale,#c0392b)">Could not load posts.</p></div>';
-      return;
-    }
-
-    var statusColor = function(s){ return s==='published' ? 'green' : 'grey'; };
-
+    /* The partial is included at the very end of this file, so it is defined
+       long before any click can reach here. If it somehow is not, say so
+       rather than drawing a silent blank screen. */
     document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Blog Posts</h2><p>Every article on the Journal blog. Editing happens on the real page for now — click Preview to open it.</p></div>'+
-      '<div class="card" style="overflow:auto"><table><thead><tr><th>Title</th><th>Tag</th><th>Author</th><th>Status</th><th>Published</th><th></th></tr></thead><tbody>'+
-      (posts.length ? posts.map(function(p){
-        return '<tr><td><b>'+sesc(p.title)+'</b></td>'+
-          '<td>'+(p.tag?sesc(p.tag):'<span style="color:var(--ink-faint)">\u2014</span>')+'</td>'+
-          '<td>'+sesc(p.author||'')+'</td>'+
-          '<td><span class="pill '+statusColor(p.status)+'"><span class="d"></span>'+sesc(p.status)+'</span></td>'+
-          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(p.published_at?p.published_at.slice(0,10):'\u2014')+'</td>'+
-          '<td><a class="btn ghost sm" href="'+appRoot()+'/'+encodeURIComponent(p.slug)+'/'+'" target="_blank" rel="noopener">Preview</a></td></tr>';
-      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No posts yet.</td></tr>')+
-      '</tbody></table></div></div>';
+      '<div class="wrap"><div class="page-head"><h2>Blog Posts</h2></div>'
+      + '<p style="padding:24px;color:var(--sale,#c0392b)">The Blog Posts screen did not load.</p></div>';
   }
 
   /* ===== LANE V · Store · Orders — BEGIN =====================================
@@ -21262,6 +21256,18 @@ buildNav();
      Paired with the 'htmlblocks' addition to LIVE_RENDERED further up, without
      which mountFrame would still probe for that missing file on every visit. --}}
 @include('admin.partials.html-blocks-screen')
+
+{{-- Content -> Blog Posts, both halves (Lane J).
+
+     renderPosts() above now delegates into this file, so the list and the
+     article editor behind it are one screen rather than two, and there is only
+     one place that draws the table.
+
+     Like the HTML Blocks screen and unlike the four below it, this partial adds
+     NO sidebar entry and no screen id of its own: 'posts' and 'blog' are
+     already in NAV and in TITLES, and the editor is opened from a row on the
+     list rather than from the sidebar. --}}
+@include('admin.partials.post-editor-screen')
 
 {{-- Reviews -> Bulk Add and Reviews -> Bulk Likes (Lane BD). Same arrangement
      as the screens above: its own file, its own wrapper around window.go.

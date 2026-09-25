@@ -350,8 +350,32 @@ class PageController extends Controller
             ->get(['id', 'slug', 'title', 'excerpt', 'tag', 'cover', 'published_at']);
 
         $base = self::siteBase();
+        /*
+         * `collection`, not `website` — docs/SEO-MODULE-ROUND-4.md §5.
+         *
+         * Lane S4 found this and could not make the edit: /skincare-guide/ is a
+         * listing of articles and said NOTHING ABOUT ITSELF in the graph, in
+         * either language, because `type: website` emits the site-wide WebSite
+         * node and no node for this document. Every category archive in this
+         * shop publishes a CollectionPage; the Journal index, which is the same
+         * shape of page, published none.
+         *
+         * Seo::jsonLd()'s `collection` branch emits CollectionPage with this
+         * page's own `url` and `inLanguage`, which is what makes the Arabic
+         * index say it is Arabic rather than inheriting the English one's
+         * claim. `collection.items` is deliberately NOT passed: that branch
+         * only accepts a list when the canonical is self-referencing, and a
+         * list of articles here is a later decision rather than part of
+         * naming the page.
+         *
+         * `name` is the listing's own name and not the page title, for the
+         * reason the branch's header gives: seo_title_template appends the site
+         * name to every <title>, so passing the title would name the shop twice
+         * in one node — once here and once in the Organization beside it.
+         */
         $seo = Seo::render([
-            'type' => 'website',
+            'type' => 'collection',
+            'collection' => ['name' => 'The Glow Journal'],
             'title' => 'The Glow Journal',
             'description' => 'Skincare tips and the K-beauty edit — honest guides on routines, ingredients and sun care, written for the UAE.',
             'url' => $base . '/skincare-guide/',

@@ -150,6 +150,18 @@ final class AdminCapabilities
         'catalog.export' => ['owner', 'manager', 'editor'],
         'content.manage' => ['owner', 'manager', 'editor'],
 
+        // Writing an article into the Journal (Lane J). The same three roles
+        // content.manage carries, and its own capability for the reason the
+        // three below give: an article is published at the SITE ROOT of this
+        // shop, /{slug}/, which is a stronger thing to hand out than the mega
+        // menu and the media library. Narrowing who may publish under the
+        // shop's own name must not have to narrow those with it.
+        //
+        // READING the list of articles stays on content.manage: GET
+        // admin-api/posts is a table of titles, and an editor who may not write
+        // one can still be shown what exists.
+        'posts.manage' => ['owner', 'manager', 'editor'],
+
         // The cart page's own appearance — row density, the recommended rail
         // and which products fill it, the summary wording and the two docked
         // bars. Storefront appearance, so the same three roles as
@@ -658,6 +670,24 @@ final class AdminCapabilities
         ['*', 'admin-api/blocks/*', 'content.manage'],
         ['GET', 'admin-api/pages/*', 'content.manage'],
         ['GET', 'admin-api/posts', 'content.manage'],
+        /*
+         * The article editor (Lane J, routes/post-editor-admin.php).
+         *
+         * BEFORE the `admin-api/posts` line above would be pointless — that
+         * pattern has no wildcard and matches nothing here — but these sit
+         * beside it so the Journal's read half and write half are read
+         * together, and so nobody adds `admin-api/posts/**` above them one day
+         * without seeing that the write side is a different capability.
+         *
+         * Flat paths rather than /posts/{id}: see the header of
+         * routes/post-editor-admin.php for why an existing wildcard must not be
+         * able to decide which controller a new path reaches.
+         */
+        ['GET', 'admin-api/post-editor-bootstrap', 'posts.manage'],
+        ['GET', 'admin-api/post-editor-load/*', 'posts.manage'],
+        ['POST', 'admin-api/post-editor-slug', 'posts.manage'],
+        ['POST', 'admin-api/post-editor-create', 'posts.manage'],
+        ['POST', 'admin-api/post-editor-save/*', 'posts.manage'],
         ['*', 'admin-api/redirects', 'content.manage'],
         ['*', 'admin-api/redirects/**', 'content.manage'],
         ['*', 'admin-api/mega-menu', 'content.manage'],
