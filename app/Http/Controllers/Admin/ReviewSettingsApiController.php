@@ -60,11 +60,22 @@ class ReviewSettingsApiController extends Controller
          */
         $rules = [];
 
-        foreach (ReviewSettings::SCHEMA as $key => [$type, $default, $min, $max]) {
+        /*
+         * READ OFF THE SCHEMA, not off a second copy of the bounds — and the
+         * schema is App\Services\ModuleSchema's shape as of Lane M3, so the
+         * clamp lives in `options` and the type of a picker is `select` rather
+         * than `enum`. The rules built here are unchanged: same keys, same
+         * bounds, same messages. Only where the numbers are read from moved.
+         */
+        foreach (ReviewSettings::SCHEMA as $key => $def) {
+            $type = $def['type'];
+            $min = $def['options']['min'] ?? null;
+            $max = $def['options']['max'] ?? null;
+
             $rules[$key] = match ($type) {
                 'bool' => ['sometimes', 'boolean'],
                 'int' => ['sometimes', 'integer', 'min:' . $min, 'max:' . $max],
-                'enum' => ['sometimes', 'string', Rule::in(array_keys(ReviewSettings::SORTS))],
+                'select' => ['sometimes', 'string', Rule::in(array_keys(ReviewSettings::SORTS))],
                 /*
                  * `nullable`, and that is not defensive padding. Laravel's
                  * global TrimStrings and ConvertEmptyStringsToNull middleware

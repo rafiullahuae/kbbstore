@@ -7029,5 +7029,122 @@
                 ]
             }
         ]
+    },
+    "review-settings": {
+        "settings": {
+            "sr_show_stars": true,
+            "sr_show_tabs": true,
+            "sr_show_date": true,
+            "sr_grid_cols": 4,
+            "sr_sort": "newest",
+            "sr_max_reviews": 200,
+            "sr_empty_text": "Be the first to share your thoughts ♡",
+            "sr_allow_submit": true,
+            "sr_allow_photos": true,
+            "sr_max_photos": 4,
+            "sr_rate_limit": 5
+        },
+        "sorts": {
+            "newest": "Newest first",
+            "oldest": "Oldest first",
+            "highest": "Highest rated first",
+            "lowest": "Lowest rated first",
+            "helpful": "Most helpful first"
+        },
+        "photo_ceiling": 6,
+        "text_max": 200
+    },
+    "review-badges": {
+        "settings": {
+            "review_capsule_style": "capsule",
+            "review_badge_heart": true,
+            "review_badge_avg": true,
+            "review_badge_count": true,
+            "review_badge_label": "{n} reviews",
+            "review_badge_sold": true,
+            "review_badge_colour": "#E8A33D"
+        },
+        "styles": {
+            "capsule": "Capsule only",
+            "inline": "Inline only",
+            "both": "Capsule and inline",
+            "off": "Hidden"
+        },
+        "themes": {
+            "classic": {
+                "label": "Classic gold",
+                "note": "The badge this store ships with — gold stars, the heart, the count and the sold note.",
+                "values": {
+                    "review_badge_heart": true,
+                    "review_badge_avg": true,
+                    "review_badge_count": true,
+                    "review_badge_label": "{n} reviews",
+                    "review_badge_sold": true,
+                    "review_badge_colour": "#E8A33D"
+                }
+            },
+            "minimal": {
+                "label": "Minimal",
+                "note": "Stars and the score, nothing else. The quietest option on a busy product page.",
+                "values": {
+                    "review_badge_heart": false,
+                    "review_badge_avg": true,
+                    "review_badge_count": false,
+                    "review_badge_label": "{n} reviews",
+                    "review_badge_sold": false,
+                    "review_badge_colour": "#111111"
+                }
+            },
+            "trust": {
+                "label": "Trust green",
+                "note": "Leads with the number of shoppers rather than with the score.",
+                "values": {
+                    "review_badge_heart": true,
+                    "review_badge_avg": true,
+                    "review_badge_count": true,
+                    "review_badge_label": "Loved by {n} shoppers",
+                    "review_badge_sold": true,
+                    "review_badge_colour": "#15A85A"
+                }
+            },
+            "blush": {
+                "label": "Blush",
+                "note": "K-beauty pink. The same information as Classic, a softer colour.",
+                "values": {
+                    "review_badge_heart": true,
+                    "review_badge_avg": true,
+                    "review_badge_count": true,
+                    "review_badge_label": "{n} reviews",
+                    "review_badge_sold": false,
+                    "review_badge_colour": "#E86A9A"
+                }
+            },
+            "mono": {
+                "label": "Mono",
+                "note": "Grey stars, no heart, no sold note — for a monochrome theme.",
+                "values": {
+                    "review_badge_heart": false,
+                    "review_badge_avg": true,
+                    "review_badge_count": true,
+                    "review_badge_label": "{n} reviews",
+                    "review_badge_sold": false,
+                    "review_badge_colour": "#6B7280"
+                }
+            }
+        },
+        "active_theme": "classic",
+        "label_max": 60
+    },
+    "cache": {
+        "settings": {
+            "headers_enabled": false,
+            "html_max_age": 0,
+            "asset_max_age": 31536000
+        },
+        "limits": {
+            "html_max_age_ceiling": 3600,
+            "asset_max_age_ceiling": 31536000
+        },
+        "storefront_policy": "private, no-cache, max-age=0, must-revalidate"
     }
 }

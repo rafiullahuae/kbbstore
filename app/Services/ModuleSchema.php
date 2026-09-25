@@ -204,7 +204,7 @@ final class ModuleSchema
      * leniency in writing, and the fourteen that need it say so at the call
      * site where the reason is visible.
      */
-    public const POLICY_KEYS = ['max', 'blank', 'invalid', 'clamp', 'hex', 'bool'];
+    public const POLICY_KEYS = ['max', 'blank', 'invalid', 'clamp', 'hex', 'bool', 'markup'];
 
     public const DEFAULT_POLICY = [
         'max' => 5000,
@@ -213,6 +213,30 @@ final class ModuleSchema
         'clamp' => false,
         'hex' => 'repair',
         'bool' => 'words',
+        'markup' => 'keep',
+    ];
+
+    /**
+     * The values each axis may take — and why a typo here had to start failing.
+     *
+     * Every axis but `max` and `clamp` is compared with `===` against a literal
+     * inside cast(), and every comparison has an `else`. So `'bool' => 'Cast'`
+     * did not fail: it missed `=== 'cast'` and fell through to the word-aware
+     * arm, which is a module silently getting the OTHER dialect. That is the
+     * same shape as rule 5's "a select stores one of its own options or the
+     * default", pointed at the policy rather than at the value, and it stopped
+     * being theoretical the moment this class grew a THIRD value on two of the
+     * axes: with two values a typo lands on the one you did not want, with
+     * three it lands on one of two and the reader cannot tell which by reading.
+     *
+     * Checked in field(), so a bad policy throws where the module declares it.
+     */
+    public const POLICY_VALUES = [
+        'blank' => ['keep', 'default'],
+        'invalid' => ['reject', 'default'],
+        'hex' => ['strict', 'repair', 'expand'],
+        'bool' => ['cast', 'words', 'words+null'],
+        'markup' => ['keep', 'strip'],
     ];
 
     /*
@@ -243,6 +267,36 @@ final class ModuleSchema
      * Neither cluster is a bug being fixed here, so neither is folded. The
      * modules keep what they had and say which in their own POLICY, and the
      * equivalence fixture is the proof that saying so was enough.
+     *
+     * ── AND A THIRD VALUE ON EACH OF THOSE TWO AXES, LANE M3 ───────────────
+     *
+     * The three App\Support\*Settings classes were held back by round 2 for a
+     * "third boolean dialect". Driven over their own corpus
+     * (tests/Fixtures/module-settings-baseline.txt, 347 calls recorded off the
+     * parent revision) there turned out to be a third value on TWO axes, not
+     * one, and the second was not in anybody's notes:
+     *
+     *   `bool` => 'words+null'   the word-aware list plus the literal four
+     *           letters `null`. That string is what a value that was SQL NULL,
+     *           or PHP null, comes back as once something has exported it —
+     *           json_encode(null) is "null" — and all three classes fold it to
+     *           false where `words` answers true. It is one word of difference
+     *           and it is the difference between a review screen's switches
+     *           reading off and reading on after an import.
+     *
+     *   `hex` => 'expand'   ReviewBadgeSettings requires the `#` (so `e23a4e`
+     *           is refused, which `repair` accepts), EXPANDS `#abc` to
+     *           `#AABBCC` (which neither other arm does), and upper-cases
+     *           (which `strict` does not). Folding it into `repair` would have
+     *           stored `#ABC` where `#AABBCC` was stored before — the same
+     *           colour to a browser and a DIFFERENT STRING to
+     *           ReviewBadgeSettings::activeTheme(), which compares the stored
+     *           six digits against each preset's. A shop on the Classic theme
+     *           would have read back as "Custom".
+     *
+     * That second one is the argument for measuring restated: `#ABC` and
+     * `#AABBCC` are the same colour, the fold looks free, and it breaks a
+     * screen two files away.
      */
 
     /**
@@ -310,6 +364,15 @@ final class ModuleSchema
 
         foreach (self::POLICY_KEYS as $k) {
             $resolved[$k] = $def[$k] ?? $policy[$k] ?? self::DEFAULT_POLICY[$k];
+
+            // A policy value cast() would not recognise is a module getting the
+            // other dialect in silence. See POLICY_VALUES.
+            if (isset(self::POLICY_VALUES[$k]) && ! in_array($resolved[$k], self::POLICY_VALUES[$k], true)) {
+                throw new \InvalidArgumentException(
+                    "Module setting “{$key}” declares {$k} “".(is_scalar($resolved[$k]) ? (string) $resolved[$k] : gettype($resolved[$k]))
+                    ."”, which is not one of: ".implode(', ', self::POLICY_VALUES[$k]).'.'
+                );
+            }
         }
 
         $rule = self::rule($key, $type, $def['rule'] ?? null);
@@ -331,6 +394,7 @@ final class ModuleSchema
             'clamp' => (bool) $resolved['clamp'],
             'hex' => (string) $resolved['hex'],
             'bool' => (string) $resolved['bool'],
+            'markup' => (string) $resolved['markup'],
             // A constraint peculiar to this one setting, which no policy axis
             // can carry. Null for all but a handful of fields. See rule().
             'rule' => $rule,
@@ -656,7 +720,7 @@ final class ModuleSchema
         }
 
         return match ($field['type']) {
-            'bool' => $field['bool'] === 'cast' ? (bool) $raw : self::castBool($raw),
+            'bool' => $field['bool'] === 'cast' ? (bool) $raw : self::castBool($raw, $field['bool']),
             'money' => self::castInt($raw, $field, false),
             'int', 'range' => self::castInt($raw, $field, (bool) $field['clamp']),
             'select', 'skin' => is_array($field['options']) && array_key_exists((string) $raw, $field['options'])
@@ -686,6 +750,32 @@ final class ModuleSchema
             // Six digits and a hash, stored exactly as it arrived — including
             // its case, which three screens' stored colours are already in.
             return preg_match('/^#[0-9a-fA-F]{6}$/', $value) === 1 ? $value : $refuse;
+        }
+
+        if ($mode === 'expand') {
+            /*
+             * ReviewBadgeSettings' dialect, and it is a third one rather than a
+             * corner of the other two. The `#` is REQUIRED (so `e23a4e` is
+             * refused, where `repair` accepts it), three-digit shorthand is
+             * EXPANDED rather than kept (so `#abc` stores `#AABBCC`, where
+             * `repair` stores `#ABC`), and the result is upper case (where
+             * `strict` keeps whatever case arrived).
+             *
+             * The expansion is the half that cannot be folded away. `#ABC` and
+             * `#AABBCC` are the same colour to a browser, so dropping it looks
+             * free — and ReviewBadgeSettings::activeTheme() decides which
+             * preset a shop is on by comparing the STORED SIX DIGITS against
+             * each theme's, so a shop on Classic would have started reading
+             * back as "Custom". One canonical form is what makes that a string
+             * compare, which is what that constant's own note says.
+             */
+            $clean = strtoupper(trim($value));
+
+            if (preg_match('/^#([0-9A-F]{3})$/', $clean, $m) === 1) {
+                return '#'.$m[1][0].$m[1][0].$m[1][1].$m[1][1].$m[1][2].$m[1][2];
+            }
+
+            return preg_match('/^#[0-9A-F]{6}$/', $clean) === 1 ? $clean : $refuse;
         }
 
         if (preg_match('/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i', trim($value)) !== 1) {
@@ -721,7 +811,36 @@ final class ModuleSchema
             return $field['invalid'] === 'reject' ? null : $field['default'];
         }
 
-        $value = mb_substr(trim((string) $raw), 0, $field['max']);
+        $value = (string) $raw;
+
+        /*
+         * ── `markup`: whether tags are text or are removed ──────────────────
+         *
+         * The seventh axis, and like the other six it exists because the
+         * modules ANSWER differently rather than because somebody preferred
+         * one. Thirteen migrated modules store what was typed; the two text
+         * fields in App\Support (ReviewSettings' empty-state line,
+         * ReviewBadgeSettings' count wording) have always run strip_tags first,
+         * and both are printed into a page where a tag would be furniture
+         * rather than wording.
+         *
+         * STRIPPING IS NOT WHAT MAKES A VALUE SAFE TO PRINT and must never be
+         * read as though it were: every one of these strings reaches the page
+         * through Blade's escaping, which is what makes it safe, and a field
+         * that is printed unescaped is a defect at the print site whatever this
+         * axis says (rule 5 — anything printed unescaped is a constant, never a
+         * setting). This is a wording rule, kept because it is the behaviour
+         * those two fields already had.
+         *
+         * Before the trim and the cap, so an input that is nothing but tags
+         * empties and then meets the `blank` policy — which is the order both
+         * classes already used.
+         */
+        if ($field['markup'] === 'strip') {
+            $value = strip_tags($value);
+        }
+
+        $value = mb_substr(trim($value), 0, $field['max']);
 
         // An emptied box either means the empty string or means "put the
         // shipped wording back" — see POLICY_KEYS. Both are real answers; the
@@ -734,13 +853,36 @@ final class ModuleSchema
         return $value;
     }
 
-    /** A checkbox posts many things and means two. Never null. */
-    private static function castBool(mixed $raw): bool
+    /**
+     * A checkbox posts many things and means two. Never null.
+     *
+     * `words` is the list the three modules migrated first already used.
+     * `words+null` is the same list plus the literal four letters `null`, which
+     * is what a value that was NULL comes back as once anything has exported
+     * it — json_encode(null) is the string "null" — and is the dialect the
+     * three App\Support\*Settings classes have always spoken. One word apart,
+     * and the word decides whether a switch reads on or off after an import,
+     * so the module says which rather than this method guessing.
+     */
+    private static function castBool(mixed $raw, string $mode = 'words'): bool
     {
         if (is_string($raw)) {
-            return ! in_array(strtolower(trim($raw)), ['', '0', 'false', 'off', 'no'], true);
+            $words = $mode === 'words+null'
+                ? ['', '0', 'false', 'off', 'no', 'null']
+                : ['', '0', 'false', 'off', 'no'];
+
+            return ! in_array(mb_strtolower(trim($raw)), $words, true);
         }
 
+        /*
+         * A bool arrives as a bool from a checkbox and as a string from a
+         * column, and the three *Settings classes stringify FIRST — `(string)
+         * (is_bool($v) ? ($v ? '1' : '0') : $v)` — so an INT 0 and a FLOAT 0.0
+         * reach their word list as "0" and are false there, exactly as (bool)
+         * makes them false here. Measured over the recorded corpus: every
+         * non-string input answers identically under both, which is why this
+         * arm needs no mode.
+         */
         return (bool) $raw;
     }
 
@@ -834,14 +976,64 @@ final class ModuleSchema
         )));
     }
 
-    /** Stored values come back as strings from both tables; give them their type back. */
+    /**
+     * A stored value, re-derived through the same cast() that let it be stored.
+     *
+     * ── WHAT THIS USED TO DO, AND WHY IT WAS CHANGED (Lane M3, task 2) ──────
+     *
+     * It used to hand the value its PHP type back and TRUST IT — `(int) $raw`
+     * for a number, `(string) $raw` for everything else — on the reasoning that
+     * a value in the table got there through write(), which had already cast
+     * it. Round 2 left that standing as "a decision, not a cleanup", and named
+     * the disagreement it created: App\Support\ReviewSettings' own docblock
+     * says the opposite in as many words — the clamp is "applied on READ as
+     * well as on write, so a row hand-edited in the database … cannot put the
+     * storefront outside the range the screen would allow".
+     *
+     * Two files, one schema, two policies. This settles it by re-deriving, and
+     * the argument is not symmetry — it is what was measured. Rows planted
+     * straight into the two tables, by the path a WordPress import, a restored
+     * backup, an older build or a hand-edit takes, and read back through each
+     * module's own public reader:
+     *
+     *   BuildMyRoutine  steps_mode  'evil-not-an-option' READ BACK VERBATIM
+     *                   offer_scope '<script>alert(1)</script>' read back
+     *                               verbatim — neither is one of its options
+     *                   offer_coupon 9,000 characters, past a 5,000 cap
+     *   PayShipRules    cod_min    -50000 — negative money
+     *                   cod_max    '12.50' read back as 12, which is the
+     *                              hundredfold error castInt() was written to
+     *                              REFUSE, reintroduced on the way out
+     *
+     * Every one of those is a line of rule 5 of the project notes, failing:
+     * "a select stores one of its own options or the default". The old
+     * coerceRead could not deliver that guarantee for any row it had not
+     * itself seen written, and a guarantee that holds only for values that
+     * arrived the expected way is not a boundary, it is a habit.
+     *
+     * ── WHAT THIS COSTS, AND WHY IT IS NOT A BEHAVIOUR CHANGE FOR A SHOP ────
+     *
+     * cast() is idempotent on everything it will store: for every field of
+     * every module on this schema, over the whole adversarial corpus, casting
+     * the stored value again returns it unchanged — proved by round-tripping
+     * each field through the real write() and read() rather than asserted
+     * (ModuleReadDerivationTest). So a shop whose values were saved from its
+     * own screens reads back byte-identical, and the only rows that move are
+     * the ones that could not have been saved from a screen at all.
+     *
+     * ── NULL IS THE DEFAULT HERE, NOT A REFUSAL ─────────────────────────────
+     *
+     * cast() answers null for "will not store this", which write() turns into a
+     * reported rejection. A reader has no such channel and a page must render,
+     * so a refusal on the way out is the module's declared default — the same
+     * value a shop that has saved nothing already gets, which is the one answer
+     * that cannot itself be a surprise.
+     */
     private static function coerceRead(array $field, mixed $raw): mixed
     {
-        return match ($field['type']) {
-            'bool' => self::castBool($raw),
-            'money', 'int', 'range' => (int) $raw,
-            default => is_scalar($raw) ? (string) $raw : $field['default'],
-        };
+        $value = self::cast($field, $raw);
+
+        return $value === null ? $field['default'] : $value;
     }
 
     /**
@@ -945,7 +1137,17 @@ final class ModuleSchema
     public static function describe(array $field, mixed $value): string
     {
         return match ($field['type']) {
-            'bool' => self::castBool($value) ? 'on' : 'off',
+            /*
+             * THROUGH THE MODULE'S OWN BOOL DIALECT, not through `words` for
+             * everybody (Lane M3). This used to call castBool($value) flat,
+             * which described a stored 'off' as "off" for the ten modules whose
+             * cast reads it as TRUE, and — once `words+null` existed — would
+             * have described a stored 'null' as "on" for the three whose cast
+             * reads it as false. A helper whose whole job is to say what a
+             * module is currently doing must answer in that module's language
+             * or it is a second opinion about the same row.
+             */
+            'bool' => ($field['bool'] === 'cast' ? (bool) $value : self::castBool($value, $field['bool'])) ? 'on' : 'off',
             'select' => (string) (($field['options'][(string) $value] ?? null) ?? 'not set'),
             'money' => ((int) $value) === 0 ? 'no limit' : \App\Support\Money::format((int) $value),
             'int', 'range' => (string) (int) $value,

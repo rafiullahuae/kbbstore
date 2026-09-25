@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Services\ModuleSchema;
 use App\Services\SettingsService;
 
 /**
@@ -59,29 +60,92 @@ final class ReviewSettings
     public const PHOTO_CEILING = 6;
 
     /**
-     * key => [type, default, min, max]
+     * The eleven settings, in App\Services\ModuleSchema's shape — Lane M3.
      *
-     * `min`/`max` are the clamp for int fields and are ignored otherwise. They
-     * are applied on READ as well as on write, so a row hand-edited in the
-     * database — or left behind by an older build — cannot put the storefront
-     * outside the range the screen would allow.
+     * ── WHAT MOVED, AND WHAT DID NOT ────────────────────────────────────────
+     *
+     * This constant used to be `key => [type, default, min, max]`: its own
+     * positional shape, with no label, no help, `enum` where the schema says
+     * `select` and the bounds in the slots the schema reads as `label` and
+     * `default`. Round 2 named that as the blocker and it was a real one —
+     * ModuleSchema's positional form is `[type, label, default, help,
+     * options]`, so the two lists agree on position 0 and on nothing else, and
+     * a schema read as if it were the other is a silent mis-reading rather than
+     * an error. So the constant is written out in the ASSOCIATIVE form, which
+     * has no positions to confuse.
+     *
+     * The VALUES are the same eleven, with the same defaults and the same
+     * bounds, and the answers are pinned call by call against 347 calls
+     * recorded off the parent revision
+     * (tests/Fixtures/module-settings-baseline.txt, replayed by
+     * ModuleSettingsEquivalenceTest). No label or help is invented: this
+     * screen draws its own controls in its own partial and has never read a
+     * label off here, and inventing eleven would be eleven strings nothing
+     * displays that the next reader would take for the wording on the page.
+     *
+     * ── THE THREE THINGS THIS SCREEN ASKS OF THE SCHEMA ─────────────────────
+     *
+     *   bool => 'words+null'  These settings have always folded the literal
+     *       string `null` to false, where ModuleSchema's `words` reads it as
+     *       true. It is the third boolean dialect round 2 could not migrate
+     *       past. It is DECLARED rather than flattened, because five of the
+     *       eleven keys are switches on a live screen and a fold that moved
+     *       `null` would turn five off controls on.
+     *   blank => 'default'    An emptied empty-state line is a blank gap where
+     *       the page should say something — the reason text() had a fallback.
+     *   markup => 'strip'     strip_tags, which this class has always run on
+     *       that one string. A wording rule, not a safety one: the escaping
+     *       that makes it safe to print is Blade's, at the print site.
+     *
+     * `min`/`max` are the int clamp, in `options` where ModuleSchema's clamped
+     * int arm reads them. Applied on READ as well as on write — see
+     * ModuleSchema::coerceRead(), which as of this round re-derives every
+     * stored value rather than trusting it, so the sentence this docblock has
+     * always carried is now true of the whole schema instead of only here.
      */
     public const SCHEMA = [
-        'sr_show_stars' => ['bool', true, null, null],
-        'sr_show_tabs' => ['bool', true, null, null],
-        'sr_show_date' => ['bool', true, null, null],
-        'sr_grid_cols' => ['int', 4, 1, 6],
-        'sr_sort' => ['enum', 'newest', null, null],
-        'sr_max_reviews' => ['int', 200, 4, 500],
-        'sr_empty_text' => ['text', 'Be the first to share your thoughts ♡', null, null],
-        'sr_allow_submit' => ['bool', true, null, null],
-        'sr_allow_photos' => ['bool', true, null, null],
-        'sr_max_photos' => ['int', 4, 1, self::PHOTO_CEILING],
-        'sr_rate_limit' => ['int', 5, 1, 50],
+        'sr_show_stars' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_show_tabs' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_show_date' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_grid_cols' => ['type' => 'int', 'default' => 4, 'options' => ['min' => 1, 'max' => 6], 'store' => ModuleSchema::STORE_SETTING],
+        'sr_sort' => ['type' => 'select', 'default' => 'newest', 'options' => self::SORTS, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_max_reviews' => ['type' => 'int', 'default' => 200, 'options' => ['min' => 4, 'max' => 500], 'store' => ModuleSchema::STORE_SETTING],
+        'sr_empty_text' => ['type' => 'text', 'default' => 'Be the first to share your thoughts ♡', 'store' => ModuleSchema::STORE_SETTING],
+        'sr_allow_submit' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_allow_photos' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_max_photos' => ['type' => 'int', 'default' => 4, 'options' => ['min' => 1, 'max' => self::PHOTO_CEILING], 'store' => ModuleSchema::STORE_SETTING],
+        'sr_rate_limit' => ['type' => 'int', 'default' => 5, 'options' => ['min' => 1, 'max' => 50], 'store' => ModuleSchema::STORE_SETTING],
+    ];
+
+    /**
+     * This screen's point on ModuleSchema's seven policy axes.
+     *
+     * `invalid => 'default'` is what every arm of the old normalise() did: an
+     * unusable value fell back, none of them refused. `clamp => true` is the
+     * int arm's `max($min, min($max, (int) $value))`. The other four are the
+     * defaults and are written out anyway, because a reader of this constant
+     * should not have to hold DEFAULT_POLICY in their head to know what an
+     * over-long paste does here.
+     */
+    public const POLICY = [
+        'max' => self::TEXT_MAX,
+        'blank' => 'default',
+        'invalid' => 'default',
+        'clamp' => true,
+        'hex' => 'repair',
+        'bool' => 'words+null',
+        'markup' => 'strip',
     ];
 
     /** The longest `sr_empty_text` that may be stored. */
     public const TEXT_MAX = 200;
+
+    /** One normalised field of the schema, memoised by ModuleSchema. */
+    private static function field(string $key): array
+    {
+        return ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY)[$key]
+            ?? throw new \InvalidArgumentException("Unknown review setting [{$key}].");
+    }
 
     /**
      * Every setting, normalised, ready for a view or a controller.
@@ -92,8 +156,8 @@ final class ReviewSettings
     {
         $out = [];
 
-        foreach (self::SCHEMA as $key => [$type, $default, $min, $max]) {
-            $out[$key] = self::normalise($key, $settings->get($key, $default));
+        foreach (ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY) as $key => $f) {
+            $out[$key] = self::normalise($key, $settings->get($key, $f['default']));
         }
 
         return $out;
@@ -102,13 +166,7 @@ final class ReviewSettings
     /** One setting, normalised. */
     public static function get(SettingsService $settings, string $key): bool|int|string
     {
-        $spec = self::SCHEMA[$key] ?? null;
-
-        if ($spec === null) {
-            throw new \InvalidArgumentException("Unknown review setting [{$key}].");
-        }
-
-        return self::normalise($key, $settings->get($key, $spec[1]));
+        return self::normalise($key, $settings->get($key, self::field($key)['default']));
     }
 
     /**
@@ -117,39 +175,29 @@ final class ReviewSettings
      * Values arrive from a longText column that has held whatever a WordPress
      * export, a hand-edited row or an older build put there, so nothing here
      * trusts the type it is handed.
+     *
+     * ── ONE CAST, NOT A TWELFTH COPY OF ONE (Lane M3) ───────────────────────
+     *
+     * The body used to be four arms of its own. Every one of them is now a
+     * point on App\Services\ModuleSchema's policy axes — see POLICY — which
+     * means this screen's rules are the rules the other sixteen modules are
+     * checked against rather than a lookalike beside them. The two axis values
+     * that did not exist before this round, `bool => 'words+null'` and
+     * `markup => 'strip'`, were added for exactly this: to move the code and
+     * not the answers.
+     *
+     * `cast()` answers null for "will not store this", which cannot happen here
+     * — `invalid => 'default'` is declared, so every arm substitutes — but the
+     * fallback is written out rather than assumed, because the day somebody
+     * changes that policy this method's signature stops being honest.
      */
     public static function normalise(string $key, mixed $value): bool|int|string
     {
-        [$type, $default, $min, $max] = self::SCHEMA[$key]
-            ?? throw new \InvalidArgumentException("Unknown review setting [{$key}].");
+        $field = self::field($key);
+        $cast = ModuleSchema::cast($field, $value);
 
-        return match ($type) {
-            // '0' and '' are the two shapes a false reaches us as once it has
-            // been round-tripped through a text column, and PHP's own (bool)
-            // already reads both as false -- but 'false' and 'off' are not,
-            // and an older build wrote words.
-            'bool' => ! in_array(
-                mb_strtolower(trim((string) (is_bool($value) ? ($value ? '1' : '0') : $value))),
-                ['', '0', 'false', 'off', 'no', 'null'],
-                true
-            ),
-            'int' => max((int) $min, min((int) $max, (int) $value)),
-            'enum' => isset(self::SORTS[(string) $value]) ? (string) $value : (string) $default,
-            // Trimmed and bounded, never empty: an empty empty-state is a blank
-            // gap where the page should say something.
-            default => self::text((string) $value, (string) $default),
-        };
-    }
-
-    private static function text(string $value, string $default): string
-    {
-        $clean = trim(strip_tags($value));
-
-        if ($clean === '') {
-            return $default;
-        }
-
-        return mb_substr($clean, 0, self::TEXT_MAX);
+        /** @var bool|int|string */
+        return $cast === null ? $field['default'] : $cast;
     }
 
     /**

@@ -337,8 +337,26 @@
   @php
     $tickerChips = [];
 
+    /* ESCAPED, AND THE ONLY CHIP HERE THAT WAS NOT (Lane M3).
+
+         The strip below prints with {!! !!}, because the free-delivery chip
+         carries a <b> of its own that has to render, and the delivery chip
+         beside it already calls e() for exactly that reason. This one did not:
+         `home_ticker` is a SETTING, it went into the array raw, and a value of
+         `<img src=x onerror=alert(1)>` was measured rendering unescaped on the
+         storefront homepage. Rule 5 of the project notes states the rule this
+         broke in one line -- anything printed unescaped is a constant, never a
+         setting -- and the cast is no defence here: ModuleSchema's text arm
+         trims and caps, it does not escape, so the value the Homepage content
+         screen saves is the value that reached the page.
+
+         e() and not strip_tags(): escaping is what makes a string safe to
+         print, and it is applied where the printing happens rather than where
+         the value is stored, so it holds for a row that never went through the
+         screen. A chip of plain wording -- which is every chip any shop has,
+         the shipped default being no chip at all -- is byte-identical. */
     if (($ownTicker = trim((string) $settings->get('home_ticker', ''))) !== '') {
-        $tickerChips[] = '🎁 ' . $ownTicker;
+        $tickerChips[] = '🎁 ' . e($ownTicker);
     }
 
     if ($homeFreeShip !== null) {
