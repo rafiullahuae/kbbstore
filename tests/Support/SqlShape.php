@@ -102,6 +102,28 @@ final class SqlShape
             return false;
         }
 
+        return self::fromSchemaBuilder();
+    }
+
+    /**
+     * Is the statement being logged RIGHT NOW one the framework's own schema
+     * builder issued?
+     *
+     * Call it from inside a DB::listen closure: the listener runs on the same
+     * stack as the query, so the schema builder's frames are still below it.
+     *
+     * This is the portable way to tell an introspection statement from a
+     * statement the application wrote, and it is portable precisely because it
+     * does not read the SQL. Schema::hasColumn() is ONE statement against
+     * information_schema on MySQL and TWO pragmas on SQLite, and the text of
+     * neither resembles the text of the other. A test that counts "how many
+     * queries did this endpoint issue" and hard-codes a number has therefore
+     * pinned the driver, not the endpoint -- which is how
+     * RoutineTaggingJobTest read 4 on SQLite and 3 against a real server.
+     * Counting work statements and probes separately says what was meant.
+     */
+    public static function fromSchemaBuilder(): bool
+    {
         foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 40) as $frame) {
             $class = $frame['class'] ?? '';
 

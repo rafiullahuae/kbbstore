@@ -132,6 +132,32 @@ no-op, so the migration records as run having changed nothing. Already pinned by
 `tests/Feature/MigrationConventionTest.php`; column order is cosmetic and new
 migrations do not get to use it.
 
+### 6. A column width SQLite was never told — `SQLSTATE[22001]` / `1406`
+
+> Data too long for column 'token' at row 1
+
+SQLite does not enforce `VARCHAR` or `CHAR` length **at all**, and not because
+it is lenient at write time: Illuminate's `SQLiteGrammar` compiles `string()`,
+`char()` **and** `uuid()` to the bare word `varchar`, with no length on it, so
+the width never reaches the table. MySQL compiles the same three to
+`varchar(n)` / `char(n)` and, under `STRICT_TRANS_TABLES`, refuses an over-long
+value outright.
+
+`carts.token` is `uuid()`, therefore `char(36)`. Five `CartFooterTest` cases
+fabricated `Str::random(40)` for it — green on SQLite, red on all five here.
+
+**The shop itself was never at risk, and that had to be established rather than
+assumed.** Every production write of that column is `(string) Str::uuid()`,
+exactly 36 characters — `CartService::create()`,
+`ManualOrderBuilder::buildDraftCart()`, `PageCostDataset`. The cookie token is
+only ever read back as a `WHERE` value, never written. So no shopper has lost a
+basket to this and no row is short. It was the fixture that was wrong, and the
+fix was to write what production writes.
+
+**Rule:** a `uuid()` column holds a UUID. Nothing else is 36 characters by
+accident, and everything people reach for instead — `Str::random(40)`,
+`bin2hex(random_bytes(20))` — is longer.
+
 ## The structural guard
 
 `Tests\Support\SqlShape` judges the SQL a request **issues** rather than the
@@ -159,6 +185,71 @@ It reports:
 the admin screens that aggregate, and asserts the rules fire on the exact
 statements that took the store down. **Adding a screen to those lists costs two
 lines and is the cheapest insurance in the repo.**
+
+## The width guard
+
+The structural guard above judges the SHAPE of a statement. It cannot judge a
+width, because on SQLite there is no width to read: the test database genuinely
+does not know that `carts.token` is 36.
+
+So `Tests\Support\ColumnWidths` carries a **checked-in fingerprint of the MySQL
+schema** — every `char`/`varchar` column of a freshly migrated database, as
+`information_schema` reports it — and `tests/Pest.php` runs it over every
+statement every Feature test issues, in the `beforeEach` they already share.
+An over-wide write is reported with the column, its width, the length it was
+given, and the MySQL error it would have produced.
+
+It is installed suite-wide rather than pointed at a list of endpoints, and that
+is deliberate: **the defect it was written for was in a fixture**, which no
+endpoint-shaped guard would ever have been aimed at. The cost is one
+`str_starts_with()` on a statement that is not an `INSERT` or an `UPDATE`, which
+is nearly all of them. MEASURED, not assumed: see the figure in the head of
+tests/Feature/ColumnWidthGuardTest.php.
+
+A checked-in fingerprint rots, so this one is pinned from the other side:
+`tests/Feature/ColumnWidthGuardTest.php` compares it against the live
+`information_schema` **whenever the suite runs on MySQL**, in both directions. A
+migration that widens a column, narrows one, adds one or drops one fails that
+case on the MySQL config — which is a required CI job. The engine that knows the
+widths checks the map; the engine that does not know them uses it.
+
+It bails rather than guesses. An upsert, an `INSERT` whose placeholder count is
+not a whole multiple of its column count, an `UPDATE` whose `SET` segment holds a
+placeholder outside a plain `` `col` = ? `` assignment — all are skipped. A
+skipped statement is a missed check; a mis-parsed one fails somebody else's test
+for a reason that is not true.
+
+## Two more shapes that are the engine, not the code
+
+Neither is a defect in the shop. Both are tests that asserted the driver and
+were rewritten to assert the property, and both were red on this config while
+green on SQLite.
+
+### An identifier's quoting
+
+The schema grammar is chosen per driver: SQLite writes `"addresses"`, MySQL
+writes `` `addresses` ``. A test that greps a captured query log for the
+double-quoted form counts **zero** against a real server.
+`CartPageSqueezeTest` did, and failed reading 0 where it wanted 1. Match either
+form.
+
+### A query count that includes a schema probe
+
+`Schema::hasColumn()` is **one** select against `information_schema` on MySQL
+and **two** pragmas on SQLite. A budget that asserts a single total has pinned
+the driver, not the query plan — `RoutineTaggingJobTest` asserted 4 and read 3
+here. Count work statements and schema probes separately;
+`SqlShape::fromSchemaBuilder()` tells them apart from the call stack rather than
+from the text, so it is right on both engines.
+
+### And one that is neither: JSON key order
+
+MySQL 8 stores a native `JSON` column **normalised** — object keys sorted by
+length and then by value. SQLite stores the text it was handed. So
+`['title' => ..., 'desc' => ...]` round-trips through `posts.seo` in the other
+order on a real server, and `toBe()` (`assertSame`) reads that as a failure.
+Nothing in the app depends on the order of those keys. Sort before comparing;
+keep the strict value compare.
 
 ## Still unverified
 

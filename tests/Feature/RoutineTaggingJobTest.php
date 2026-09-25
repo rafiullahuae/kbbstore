@@ -11,6 +11,7 @@ use App\Support\RoutineConcerns;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\BuildMyRoutineRoutes;
+use Tests\Support\SqlShape;
 
 /**
  * Lane Q — making the tagging job smaller, and showing the owner where he is.
@@ -190,13 +191,37 @@ it('does not cost the tagging table another query', function () {
 
     $admin = rtjAdmin();
 
-    $count = static function (string $url) use ($admin): int {
-        $log = [];
-        DB::listen(function ($q) use (&$log) { $log[] = $q->sql; });
+    /*
+     * WORK STATEMENTS AND SCHEMA PROBES COUNTED SEPARATELY, because only the
+     * first of the two is a number this endpoint owns.
+     *
+     * Schema::hasColumn() is ONE select against information_schema on MySQL and
+     * TWO pragmas on SQLite. A single total therefore reads 4 here and 3
+     * against a real server, and the old form of this case asserted 4 -- a
+     * budget that pinned the driver rather than the query plan, and one of nine
+     * cases that were green on SQLite and red on the MySQL config. Splitting
+     * the two says what was actually meant: the term adds NO query against the
+     * catalogue, and it does add the probe.
+     *
+     * SqlShape::fromSchemaBuilder() decides that from the call stack rather
+     * than from the text of the statement, so it is right on both engines and
+     * cannot be fooled by an application query that happens to mention
+     * information_schema.
+     *
+     * @return array{work: int, probes: int}
+     */
+    $count = static function (string $url) use ($admin): array {
+        $work = 0;
+        $probes = 0;
+
+        DB::listen(function ($q) use (&$work, &$probes) {
+            SqlShape::fromSchemaBuilder() ? $probes++ : $work++;
+        });
+
         test()->actingAs($admin, 'admin')->getJson($url)->assertOk();
         DB::getEventDispatcher()->forget(\Illuminate\Database\Events\QueryExecuted::class);
 
-        return count($log);
+        return ['work' => $work, 'probes' => $probes];
     };
 
     /*
@@ -212,9 +237,9 @@ it('does not cost the tagging table another query', function () {
     $searched = $count('/admin-api/routine-products?q=centella');
 
     /*
-     * TWO WITHOUT A TERM — the count and the page — and FOUR with one. Raised
-     * deliberately in round 3 rather than quietly, and this is the whole of the
-     * reason:
+     * TWO WITHOUT A TERM — the count and the page — and TWO WITH ONE, plus a
+     * schema probe that the driver prices for itself. Raised deliberately in
+     * round 3 rather than quietly, and this is the whole of the reason:
      *
      * Round 1 added `ingredients` to the search's WHERE. That column is created
      * by a migration which guards every column with Schema::hasColumn, so on a
@@ -229,12 +254,14 @@ it('does not cost the tagging table another query', function () {
      * WITH the probe, against a 250ms debounce — the operator feels the
      * debounce, not this.
      *
-     * MUTATION NOTE: remove the probe and this reads 2 again, and
-     * RoutineSearchAndDemoTest's "still searches when the server has no
+     * MUTATION NOTE: remove the probe and `probes` reads 0 on both engines,
+     * and RoutineSearchAndDemoTest's "still searches when the server has no
      * ingredients column" goes red with a 500.
      */
-    expect($plain)->toBe(2)
-        ->and($searched)->toBe(4);
+    expect($plain['work'])->toBe(2)
+        ->and($plain['probes'])->toBe(0)
+        ->and($searched['work'])->toBe(2)
+        ->and($searched['probes'])->toBeGreaterThanOrEqual(1);
 });
 
 /* ────────────────────── 2. the concern-page countdown ────────────────────── */

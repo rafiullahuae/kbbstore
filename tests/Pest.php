@@ -4,6 +4,7 @@ use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Facade;
+use Tests\Support\ColumnWidths;
 use Tests\Support\StaticMemos;
 
 pest()->extend(Tests\TestCase::class)
@@ -88,5 +89,34 @@ pest()->extend(Tests\TestCase::class)
          * (Lane EP)
          */
         @set_time_limit(0);
+
+        /*
+         * And the fourth: a column width nothing here enforces.
+         *
+         * SQLite discards the declared length of string(), char() and uuid()
+         * before the table exists — the grammar compiles all three to the bare
+         * word `varchar`. MySQL keeps it and, under STRICT_TRANS_TABLES,
+         * refuses an over-long value with SQLSTATE[22001] 1406. So a write that
+         * is fatal on the live shop is invisible to every test in this suite.
+         *
+         * Five CartFooterTest cases wrote Str::random(40) into `carts.token`,
+         * which is uuid() and so char(36). Green here, red on the MySQL config,
+         * and nothing in between could have told anyone. Tests\Support\
+         * ColumnWidths carries a checked-in fingerprint of the MySQL schema
+         * and reports a write that would not fit; ColumnWidthGuardTest keeps
+         * that fingerprint honest against a real information_schema.
+         *
+         * Here rather than in one guard test, because the defect it was
+         * written for was in a FIXTURE — no endpoint-shaped guard would ever
+         * have been pointed at it. It costs one str_starts_with() on a
+         * statement that is not an INSERT or an UPDATE.
+         */
+        ColumnWidths::watch();
+    })
+    ->afterEach(function () {
+        $overWide = ColumnWidths::violations();
+        ColumnWidths::reset();
+
+        expect($overWide)->toBe([], 'a value was written wider than its column');
     })
     ->in('Feature');
