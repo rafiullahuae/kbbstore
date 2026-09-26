@@ -384,6 +384,22 @@ it('draws the new card last, so every card already on the screen keeps its place
      */
     $keys = array_keys(laaScan()['findings']);
 
+    /*
+     * ▲ PIN ADVANCED BY LANE S5, DELIBERATELY AND FOR THE CHANGE IT MEANT.
+     *
+     * 'business_type_mismatch' was added to emptyFindings() AFTER
+     * 'legacy_url_no_redirect', obeying this test's own rule rather than breaking
+     * it — no card already on the screen moved, and the new one is drawn last.
+     * That is exactly what this assertion exists to protect, so the pin follows
+     * the list rather than the list following the pin. CLAUDE.md rule 1: read the
+     * diff, then either revert the accident or advance the pin for the change you
+     * meant. This is the second.
+     *
+     * The property is still asserted the same way — the newest key is last and
+     * every older key is in its original position — so a future lane inserting a
+     * card in the middle is still red.
+     */
+    expect(array_pop($keys))->toBe('business_type_mismatch');
     expect(array_pop($keys))->toBe('legacy_url_no_redirect');
     expect($keys)->toBe([
         'duplicate_title',

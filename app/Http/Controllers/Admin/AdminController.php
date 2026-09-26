@@ -1960,6 +1960,27 @@ class AdminController extends Controller
          * the table" failure SeoVerificationTagsTest was written after.
          */
         'sitemap_images' => ['flag', 'Product images in sitemap'],
+
+        /*
+         * ── ARABIC ADDRESSES — Lane S5 ──────────────────────────────────────
+         *
+         * `shared` is today: one slug per row, the language carried by the /ar
+         * prefix. `translated` serves the Arabic slug an operator has filled in
+         * per row. It ships at neither — no row is seeded, so
+         * App\Support\LocaleSlugs::policy() reads its own default, `shared`, and
+         * applying the package moves no address on the shop.
+         *
+         * DO NOT POST THIS KEY FROM THE SEO SCREEN'S ORDINARY SAVE. Changing it
+         * is a change of ADDRESS, not of a setting: the redirects for every row
+         * that moves have to be written in the same transaction, or a shopper's
+         * saved Arabic link 404s for as long as the gap lasts.
+         * App\Services\Seo\ArabicSlugRetrofit::apply() is the writer, and it
+         * writes this row itself. It is listed here so that a value already in
+         * the table survives a Save of the SEO tab rather than being dropped as
+         * an unknown key — which is the "Saved on screen, no row in the table"
+         * failure this constant's own warning is about, in reverse.
+         */
+        'seo_arabic_slugs' => ['enum', 'Arabic addresses', \App\Support\LocaleSlugs::POLICIES],
         'robots_txt' => ['text', 'robots.txt'],
 
         // Gift wrapping (Store -> Delivery & Shipping -> Gift wrapping).
@@ -2023,6 +2044,32 @@ class AdminController extends Controller
          * Nothing is guessed at by accepting the blank.
          */
         'merchant_return_days' => ['optint', 'Return window', [0, 3650]],
+
+        /*
+         * ── WHETHER THIS SHOP TAKES RETURNS AT ALL — Lane S5 ────────────────
+         *
+         * The owner's answer to the returns question was "at the moment we
+         * don't offer returns", and there was no value anywhere in this
+         * application that could say it. `merchant_return_days` at 0 means
+         * "publish no return policy", which is silence, not a refusal — see
+         * App\Support\Seo::returnPolicy() for the measurement and for what each
+         * of the three states now emits.
+         *
+         * BLANK IS AN OPTION OF ITS OWN and is the shipped value: no row is
+         * seeded, so every shop stays on the days box alone and applying the
+         * package moves no markup. It is IN the list rather than accepted as a
+         * special case because this is an `enum` — a select whose blank was not
+         * an option would refuse the whole SEO tab the moment the owner chose
+         * "Not stated" again after choosing something else, which is the
+         * standing failure of this screen.
+         *
+         * The list is literal because a class constant cannot call
+         * array_merge(); SeoMerchantReturnsTest asserts it against
+         * Seo::RETURN_CATEGORIES so the two cannot drift.
+         */
+        'merchant_returns' => ['enum', 'Returns policy', [
+            '', 'MerchantReturnNotPermitted', 'MerchantReturnFiniteReturnWindow',
+        ]],
 
         /*
          * ── WHO IS ISSUING THE INVOICE — Lane DG ────────────────────────────
