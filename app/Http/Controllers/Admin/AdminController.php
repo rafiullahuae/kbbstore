@@ -1962,6 +1962,15 @@ class AdminController extends Controller
         'sitemap_images' => ['flag', 'Product images in sitemap'],
 
         /*
+         * FAQPage markup on content pages (Lane S6). A flag, shipping at '0',
+         * for the same reason sitemap_images does: applying the package must not
+         * add a schema.org node to seven pages Search Console has already
+         * fetched. Services\Seo\FaqSchema decides WHAT is a question (a heading
+         * that ends in '?'); this decides only WHETHER.
+         */
+        'faq_schema' => ['flag', 'FAQ markup on content pages'],
+
+        /*
          * ── ARABIC ADDRESSES — Lane S5 ──────────────────────────────────────
          *
          * `shared` is today: one slug per row, the language carried by the /ar

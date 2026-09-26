@@ -143,7 +143,25 @@ final class Url
          * honest reason it is.
          */
         if (Locale::segment() !== '') {
-            $path = Locale::withSegment($path);
+            /*
+             * Lane S5, docs/SEO-ARABIC-SLUGS.md section 5. With the Arabic-slug
+             * policy on, an internal link built here still pointed at the shared
+             * address, so every Arabic product card cost the shopper one extra
+             * 301 hop through ResolveLocaleSlugs. Correct and indexed correctly
+             * -- just a hop more than needed.
+             *
+             * INSIDE this branch deliberately, not above it. The guard is the
+             * fast path the comment above describes, and it is empty on every
+             * English page, which is every page this shop serves today: so an
+             * English render does not pay for this at all, not even the cached
+             * settings read that LocaleSlugs::translating() would cost. An
+             * Arabic render pays one array lookup, and only answers differently
+             * once a policy of `translated` and a filled-in Arabic slug both
+             * exist.
+             */
+            $display = \App\Support\LocaleSlugs::toDisplayPath($path, Locale::current());
+
+            $path = Locale::withSegment($display ?? $path);
         }
 
         return self::raw($path);

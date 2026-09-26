@@ -196,6 +196,30 @@ class AppServiceProvider extends ServiceProvider
             $kernel->prependMiddleware(\App\Http\Middleware\SetLocaleFromPath::class);
 
             /*
+             * ── THE ARABIC ADDRESS, TURNED INTO THE ONE THE ROUTER SERVES ────
+             *
+             * Lane S5. With the Arabic-slug policy on, a reader may arrive at an
+             * address no route matches; this rewrites it to the English slug
+             * before the router looks, so no route, controller or query knows a
+             * second address exists. The same trick SetLocaleFromPath plays with
+             * the /ar segment.
+             *
+             * pushMiddleware AND NOT prepend, and the order is the whole point:
+             * prependMiddleware() puts a class FIRST, so a prepended
+             * ResolveLocaleSlugs would run BEFORE CheckRedirects. The retrofit
+             * writes a redirect from the English address to the Arabic one; if
+             * the rewrite ran first it would turn the Arabic address back into
+             * the English one, CheckRedirects would forward that to the Arabic
+             * one, and a visitor would bounce between the two for ever.
+             * ArabicTranslatedSlugsTest asserts this order.
+             *
+             * Inert today: the class returns immediately while the policy is
+             * `shared`, which is what no seeded row means, at a cost of one
+             * cached settings read.
+             */
+            $kernel->pushMiddleware(\App\Http\Middleware\ResolveLocaleSlugs::class);
+
+            /*
              * CanonicalHost — forwards a listed alias to the real address and
              * marks anything private noindex. Registered HERE, and not in
              * bootstrap/app.php, for the reason the block above exists:

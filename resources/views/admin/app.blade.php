@@ -17624,10 +17624,26 @@ buildNav();
             '<input id="seo_merch_freeover" type="number" step="1" value="'+sesc(S.merchant_ship_free_over||'0')+'">',
             '0 means delivery is never free.')+
         '</div>'+
+        /* Lane S5. The owner's answer to the returns question was "at the
+           moment we don't offer returns", and until this row existed there was
+           no value in the application that could SAY it: the days box at 0
+           published no return policy at all, which is silence, not a refusal.
+           Blank is a real option here and is the shipped value, so applying the
+           package moves no markup. Above the days box because it decides
+           whether the days box means anything. */
+        '<div class="sm-grid is-solo">'+
+          smField('seo_merch_returns','Returns policy',
+            seoSel('seo_merch_returns',S.merchant_returns,[
+              ['','Not stated'],
+              ['MerchantReturnNotPermitted','We do not accept returns'],
+              ['MerchantReturnFiniteReturnWindow','We accept returns within the window below'],
+            ],''),
+            'Not stated publishes nothing. "We do not accept returns" publishes a refusal with no window, method or fee beside it.')+
+        '</div>'+
         '<div class="sm-grid is-solo">'+
           smField('seo_merch_returndays','Return window (days)',
             '<input id="seo_merch_returndays" type="number" value="'+sesc(S.merchant_return_days||'0')+'">',
-            '0 publishes no return policy at all.')+
+            'Only read when the policy above is "We accept returns within the window below".')+
         '</div>')+
 
       smSec('Sitemap & robots',
@@ -17642,6 +17658,15 @@ buildNav();
           smField('seo_sitemap_images','Product images in sitemap',
             seoSel('seo_sitemap_images',S.sitemap_images,[['1','Included'],['0','Not included']],'0'),
             'Lists every gallery photo under its product, so Google Images can tie the pictures to the page. Adds bytes to sitemap.xml.')+
+          /* Lane S6. Off by default, same reason as the switch above it: turning
+             it on adds a schema.org node to seven pages Search Console has
+             already fetched. The help line says what it does and does not buy,
+             rather than praising it -- Google retired the FAQ drop-down in
+             search results, so the value now is that an answer engine can read
+             the pairs. */
+          smField('seo_faq_schema','FAQ markup on content pages',
+            seoSel('seo_faq_schema',S.faq_schema,[['1','Published'],['0','Not published']],'0'),
+            'Publishes the questions and answers on a page written as questions, so an answer engine can read them as pairs. A heading counts as a question only when it ends in a question mark. Google no longer shows an FAQ drop-down in search results.')+
           /* The setting and the way to check it, on one row: the pair is the
              point, and it keeps a two-option select off a 957px line. */
           '<div class="sm-field"><span class="sm-label">Check what is being served</span>'+
@@ -17740,7 +17765,9 @@ buildNav();
         enable_merchant:document.getElementById('seo_merchant_cbx').classList.contains('on')?'1':'0',
         merchant_condition:sval('seo_merch_cond'), merchant_ship_country:sval('seo_merch_country'),
         merchant_ship_cost:sval('seo_merch_cost'), merchant_ship_free_over:sval('seo_merch_freeover'),
-        merchant_return_days:sval('seo_merch_returndays')
+        merchant_return_days:sval('seo_merch_returndays'),
+        merchant_returns:sval('seo_merch_returns'),
+        faq_schema:sval('seo_faq_schema')
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('SEO settings saved'); }
       catch(e){ toast('Save failed \u2014 check connection'); }

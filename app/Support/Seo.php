@@ -968,7 +968,21 @@ class Seo
 
         $basePath = $base === '' ? '' : rtrim((string) parse_url($base, PHP_URL_PATH), '/');
 
-        if (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $url) === 1) {
+        /*
+         * A scheme this shop will not publish. The per-row canonical override is
+         * a setting-shaped value that becomes an href, an og:url and a node
+         * identifier, so the scheme is checked here rather than trusted -- the
+         * same rule SeoAudit::canonicalIsSafe() already applies when it REPORTS
+         * one. Anything that is not http, https or protocol-relative falls
+         * through to the path branch below, which produces an address on this
+         * site instead of the operator's string.
+         *
+         * Integrator, from Lane S6 docs/SEO-ROUND-5-VERIFICATION.md section 5.2.
+         * Narrow the regex back and a product whose canonical override reads
+         * javascript:alert(1) publishes that string in <link rel=canonical>,
+         * og:url, Product.url and every hreflang href.
+         */
+        if (preg_match('#^(//|https?://)#i', $url) === 1) {
             // Several callers build their own absolute URL as
             // site_url . $model->url(), and $model->url() already carries the
             // base path — so under KBB_BASE_PATH they produce
@@ -1413,7 +1427,9 @@ class Seo
                 '@context' => 'https://schema.org', '@type' => 'Article',
                 'headline' => $a['title'] ?? $title,
                 'image' => $image ?: null,
+                'url' => $url,
                 'datePublished' => $a['published_at'] ?? null,
+                'dateModified' => $a['updated_at'] ?? null,
                 /*
                  * THE LANGUAGE THIS DOCUMENT IS WRITTEN IN.
                  *
@@ -1605,6 +1621,23 @@ class Seo
             }
 
             $nodes[] = $node;
+        }
+
+        /*
+         * FAQPage, from the questions a content page already answers.
+         *
+         * Off unless Store -> SEO & Meta -> "FAQ markup on content pages" is on,
+         * and null unless the page is genuinely written as questions -- see
+         * Services\Seo\FaqSchema for why the question mark is the whole
+         * selection rule, and why no page slug is named anywhere. Merged into
+         * THIS graph rather than emitted by a second class, for the reason
+         * SEO-BUILD-PLAN item 3 refuses a SeoGraph: two emitters is two
+         * Organization nodes on every page.
+         */
+        if (($ctx['type'] ?? '') === 'page'
+            && \App\Services\Seo\FaqSchema::enabled($s)
+            && ($faq = \App\Services\Seo\FaqSchema::node((string) ($ctx['page_body'] ?? ''), $url)) !== null) {
+            $nodes[] = $faq;
         }
 
         // Breadcrumbs

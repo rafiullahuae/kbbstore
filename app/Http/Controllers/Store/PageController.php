@@ -246,6 +246,16 @@ class PageController extends Controller
             $seoCtx['noindex'] = true;
         }
 
+        /*
+         * The two keys Services\Seo\FaqSchema reads. Both halves land together:
+         * an unread `type` would be inert, but an unread `page_body` on a shop
+         * whose FAQ flag is on is a promise the graph does not keep. The flag
+         * ships off, so this publishes nothing until somebody turns it on at
+         * Store -> SEO & Meta -> Sitemap & robots.
+         */
+        $seoCtx['type'] = 'page';
+        $seoCtx['page_body'] = (string) $page->content;
+
         return view('store.page', [
             'page' => $page,
             'settings' => $this->settings,
@@ -572,6 +582,14 @@ class PageController extends Controller
             'article' => [
                 'title' => $post->t('title'),
                 'published_at' => optional($post->published_at)->toAtomString(),
+                /*
+                 * dateModified is on Google's recommended list for Article and
+                 * posts.updated_at was already there. Seo::jsonLd() wraps the
+                 * node in array_filter(), so a post with no updated_at emits
+                 * neither key and nothing moves -- which is why this is the
+                 * caller half of a change that is inert without it.
+                 */
+                'updated_at' => optional($post->updated_at)->toAtomString(),
             ],
             // 'Home' and 'Journal' are the English defaults of these two keys,
             // which is what these literals were. The visible crumb on this page

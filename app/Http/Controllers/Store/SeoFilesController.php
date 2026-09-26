@@ -994,7 +994,20 @@ class SeoFilesController extends Controller
             $path = $path === '' ? '/' : $path;
         }
 
-        $alternates = Locale::alternatePaths($path);
+        /*
+         * Seo::readerAlternatePaths(), NOT Locale::alternatePaths(). Lane S5,
+         * docs/SEO-ARABIC-SLUGS.md section 7.3: Locale takes a path and no row,
+         * so with the Arabic-slug policy on it answers the SHARED address under
+         * /ar while the page itself canonicalises to the Arabic one. A cluster
+         * that disagrees with itself about what page this is gets dropped, and
+         * the sitemap is the half Google reads first. Byte-identical while the
+         * policy is `shared`, which is today.
+         *
+         * (Correcting the lane's own note: this is the ONE live call site
+         * outside Support\Seo. The other mentions of Locale::alternatePaths in
+         * SeoFilesController and BrandController are comments.)
+         */
+        $alternates = \App\Support\Seo::readerAlternatePaths($path);
 
         if ($alternates === []) {
             return $plain;
