@@ -800,6 +800,17 @@
         + '<p class="bz-note">Shown under the heading on the brand’s page.</p>'
         + arabicBox(brand, 'description', 'Description', '#bz-desc', 5000, 'textarea')
         + '</div>'
+      /* LANE S7 — WHAT GOOGLE WILL ACTUALLY SHOW, above the two boxes that
+         decide it. A mount point and nothing else: no control, no stored value,
+         nothing added to the save payload below.
+
+         Same argument as the category editor, and it bites harder here: a brand
+         archive's title is the one the shop competes for on "cosrx uae", and an
+         empty box publishes the brand's own name through `seo_title_template`
+         while a filled one replaces the lot. Those are different lengths and
+         neither was visible on this screen. See
+         resources/views/admin/partials/seo-back-office.blade.php. */
+      + '<div class="bz-fld" id="bz-seoprev"></div>'
       + '<div class="bz-fld"><label for="bz-seotitle">SEO title</label>'
         + '<input type="text" id="bz-seotitle" maxlength="255" value="' + esc(seo.title || '') + '" placeholder="Defaults to the brand name"></div>'
       + '<div class="bz-fld"><label for="bz-seodesc">SEO description</label>'
@@ -840,6 +851,25 @@
 
     var nameEl = document.getElementById('bz-name');
     if (nameEl) nameEl.oninput = function(){ drawPreview(nameEl.value); };
+
+    /* LANE S7 — the Google-result preview. `id` is null while creating, which
+       is a supported state: the preview then reads the Name and URL slug boxes
+       on this form. Guarded the way wireLibrary's picker is, so a package
+       without the preview partial draws the dialog it drew before. */
+    if (typeof window.kbbSeoPreview === 'function') {
+      window.kbbSeoPreview({
+        mount: '#bz-seoprev',
+        kind: 'brand',
+        id: isNew ? null : brand.id,
+        title: '#bz-seotitle',
+        description: '#bz-seodesc',
+        name: '#bz-name',
+        slug: '#bz-slug',
+        /* The brand's own Description, which is what an empty SEO description
+           box publishes. A box on this same form. */
+        fallback: '#bz-desc'
+      });
+    }
 
     /* Attaches the Translate buttons and reveals them only if an API key is
        configured. With no key they stay hidden and every manual path here

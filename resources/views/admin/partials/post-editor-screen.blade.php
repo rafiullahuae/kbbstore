@@ -409,6 +409,19 @@ textarea.pj-ctl{resize:vertical;line-height:1.6}
 
       +   '<div class="pj-card">'
       +     '<h3>Search engines</h3>'
+      /* LANE S7 — WHAT GOOGLE WILL ACTUALLY SHOW, above the two boxes that
+         decide it. A mount point and nothing else: no control, no stored value,
+         nothing added to the save payload below.
+
+         The hints under the two boxes say "empty means the article's own title"
+         and "empty means the excerpt above", which is true and still leaves the
+         editor unable to see the RESULT — an empty title box publishes the
+         headline through `seo_title_template`, so the tag is the headline plus
+         " | K-Beauty Bliss" and the 200-character box says nothing about that.
+         window.kbbSeoPreview() is defined by
+         resources/views/admin/partials/seo-back-office.blade.php and asks the
+         server for the real emitted tag. */
+      +     '<div class="pj-f" id="pj-seo-prev"></div>'
       +     '<div class="pj-f"><label for="pj-seo-title">Page title</label>'
       +       '<input id="pj-seo-title" class="pj-ctl" maxlength="200" value="'
       +         esc((model.seo || {}).title || '') + '">'
@@ -463,6 +476,26 @@ textarea.pj-ctl{resize:vertical;line-height:1.6}
     };
 
     bindRte($('#pj-body'));
+
+    /* LANE S7 — the Google-result preview. `id` is null on a new article, which
+       is a supported state: the preview then reads the Title and Address boxes
+       on this form. Guarded, so a package shipped without the preview partial
+       draws the editor it drew before rather than throwing on open. */
+    if (typeof window.kbbSeoPreview === 'function') {
+      window.kbbSeoPreview({
+        mount: '#pj-seo-prev',
+        kind: 'article',
+        id: model.id || null,
+        title: '#pj-seo-title',
+        description: '#pj-seo-desc',
+        name: '#pj-title',
+        slug: '#pj-slug',
+        /* The excerpt, which is what the hint under the SEO description box
+           already promises ("Empty means the excerpt above") and what
+           Store\PageController::post() really passes. A box on this form. */
+        fallback: '#pj-excerpt'
+      });
+    }
 
     ['excerpt','tag','author','cover'].forEach(function(f){
       var el = $('#pj-' + f);

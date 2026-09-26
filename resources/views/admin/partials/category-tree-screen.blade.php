@@ -730,6 +730,24 @@
         + '<p class="ct-note">Shown under the heading on the category page.</p>'
         + arabicBox(cat, 'description', 'Description', '#ct-desc', 5000, 'textarea')
         + '</div>'
+      /* LANE S7 — WHAT GOOGLE WILL ACTUALLY SHOW, above the two boxes that
+         decide it. A mount point and nothing else: no control, no stored value,
+         nothing added to the save payload below.
+
+         The two boxes under it collected a title and a description and showed
+         no consequence, which is why they get filled in badly. An empty title
+         box does not publish an empty title — it publishes the category's own
+         name through `seo_title_template`, which appends " | K-Beauty Bliss" on
+         this store; a filled one is the WHOLE title with no site name added.
+         Those are opposite answers to "how long is my title" and neither is
+         visible on this screen.
+
+         window.kbbSeoPreview() is defined by
+         resources/views/admin/partials/seo-back-office.blade.php and asks the
+         server for the real emitted tag — App\Support\Seo, the class the
+         category page itself renders with. Guarded below rather than assumed,
+         the same way this file guards window.kbbPickMedia. */
+      + '<div class="ct-fld" id="ct-seoprev"></div>'
       + '<div class="ct-fld"><label for="ct-seotitle">SEO title</label>'
         + '<input id="ct-seotitle" value="' + esc(seo.title || '') + '" maxlength="255" placeholder="Defaults to the category name">'
         + '</div>'
@@ -802,6 +820,27 @@
        never showing. */
     var imgBox = document.getElementById('ct-image');
     if (imgBox) imgBox.oninput = function(){ applyImage(imgBox.value); };
+
+    /* LANE S7 — the Google-result preview. `id` is null while creating, which
+       is a supported state and not a gap: the preview then reads the Name and
+       Address boxes on this very form, which is the moment the wording matters
+       most. Guarded the way kbbPickMedia is above — a package that shipped this
+       screen without the preview partial draws the dialog it drew before rather
+       than throwing on open. */
+    if (typeof window.kbbSeoPreview === 'function') {
+      window.kbbSeoPreview({
+        mount: '#ct-seoprev',
+        kind: 'category',
+        id: isNew ? null : cat.id,
+        title: '#ct-seotitle',
+        description: '#ct-seodesc',
+        name: '#ct-name',
+        slug: '#ct-slug',
+        /* What an empty SEO description box falls back to on a category: the
+           category's own Description, which is a box on this same form. */
+        fallback: '#ct-desc'
+      });
+    }
 
     /* Attaches the Translate buttons and reveals them only if an API key is
        configured. With no key they stay hidden and every manual path here works

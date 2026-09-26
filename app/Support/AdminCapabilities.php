@@ -445,6 +445,24 @@ final class AdminCapabilities
         ['*', 'admin-api/cache/**', 'cache.manage'],
 
         ['*', 'admin-api/settings', 'store.settings'],
+        /*
+         * The SEO result preview — routes/seo-back-office.php, Lane S7.
+         *
+         * THE SAME CAPABILITY AS THE ENDPOINT ABOVE IT, and that pairing is the
+         * argument. `admin-api/settings` is what SAVES every value this
+         * previews; a role that may change a published title may see what that
+         * title will look like, and a role that may not, may not. Looser would
+         * hand out the shop's resolved titles and descriptions without the
+         * screen that edits them; tighter would mean the Save button worked and
+         * the preview beside it did not, on the same screen, for the same
+         * person.
+         *
+         * It is a POST because the candidate values travel in the body — it is
+         * shown BEFORE Save, so the values are not in the table yet. It writes
+         * nothing: see Admin\SeoPreviewApiController, and SeoRowPreviewTest,
+         * which asserts the stored `seo` blob is byte-identical afterwards.
+         */
+        ['POST', 'admin-api/seo-preview', 'store.settings'],
         ['*', 'admin-api/ecommerce', 'store.settings'],
         ['*', 'admin-api/modules', 'store.settings'],
         ['*', 'admin-api/mail', 'store.settings'],
@@ -498,6 +516,19 @@ final class AdminCapabilities
          * and what an editor account has no need for.
          */
         ['GET', 'admin-api/seo-audit', 'system.diagnostics'],
+        /*
+         * The SEO Overview — routes/seo-back-office.php, Lane S7.
+         *
+         * The same capability as the audit one row up, because it IS the audit
+         * plus a rank: it calls SeoAudit::run() and re-presents every finding,
+         * so anything the audit reveals this reveals as well. It adds a second
+         * reading of the same kind — which built features are still waiting on
+         * the owner, which is a list of where this shop is unfinished.
+         *
+         * A read. Nothing under this prefix writes, so there is no write rule
+         * that has to sort above it.
+         */
+        ['GET', 'admin-api/seo-tasks', 'system.diagnostics'],
         /*
          * The storefront health check — routes/health-admin.php.
          *
