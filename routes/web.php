@@ -506,6 +506,16 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/seo-audit-admin.php';
 
+        /*
+         * Store → SEO & Meta → Overview, and the live Google preview that now
+         * sits above the SEO boxes on four editors. Lane S7. Same group, same
+         * reason: POST /admin-api/seo-preview renders through the real
+         * Support\Seo rather than reproducing its rules in JavaScript -- which
+         * would have been a FIFTH dialect of rules this project has already paid
+         * for four times, and which the lane's own test caught it getting wrong.
+         */
+        require __DIR__.'/seo-back-office.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';

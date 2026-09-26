@@ -124,6 +124,54 @@ final class FaqSchema
     }
 
     /**
+     * How many published content pages would emit a FAQPage node, and how many
+     * question/answer pairs they hold between them.
+     *
+     * READ-ONLY AND SIDE-EFFECT FREE, at Lane S7's request. Store -> SEO & Meta
+     * -> Overview needs to tell the owner one of two true things, and neither
+     * has any other symptom on the shop:
+     *
+     *   - the flag is OFF and his pages ARE written as questions, so answer
+     *     engines are being shown none of them; or
+     *   - the flag is ON and NO page is written as questions, so the switch he
+     *     ticked publishes nothing and he is entitled to know that rather than
+     *     assume it worked.
+     *
+     * It applies the SAME rule the node does -- self::pairs(), and the same
+     * MIN_QUESTIONS floor -- rather than a second count that could disagree with
+     * what is actually published. A page with one question is deliberately NOT
+     * counted, because one question is a heading, not an FAQ.
+     *
+     * Cost: one query over the seven published content pages, on one admin
+     * screen. It is not called from the storefront.
+     *
+     * @return array{pages: int, questions: int}
+     */
+    public static function census(): array
+    {
+        $pages = 0;
+        $questions = 0;
+
+        $rows = \App\Models\Page::query()
+            ->where('status', 'published')
+            ->select('content')
+            ->get();
+
+        foreach ($rows as $row) {
+            $pairs = self::pairs((string) $row->content);
+
+            if (count($pairs) < self::MIN_QUESTIONS) {
+                continue;
+            }
+
+            $pages++;
+            $questions += count($pairs);
+        }
+
+        return ['pages' => $pages, 'questions' => $questions];
+    }
+
+    /**
      * The FAQPage node for a page body, or null.
      *
      * @param  string  $html  the page's own content, as the page prints it

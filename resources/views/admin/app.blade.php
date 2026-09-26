@@ -17443,7 +17443,18 @@ buildNav();
   async function renderSeo(){
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>SEO &amp; Meta</h2><p>Site-wide search-engine settings. These render into every storefront page\u2019s &lt;head&gt; and power the sitemap, robots.txt and structured data.</p></div>'+
-      '<div class="subtabs"><button class="subtab'+(seoTab==='settings'?' on':'')+'" data-st="settings">Settings</button><button class="subtab'+(seoTab==='redirects'?' on':'')+'" data-st="redirects">Redirects &amp; 404s</button><button class="subtab'+(seoTab==='schema'?' on':'')+'" data-st="schema">Schema Inspector</button><button class="subtab'+(seoTab==='audit'?' on':'')+'" data-st="audit">Catalogue Audit</button><button class="subtab'+(seoTab==='seoaudit'?' on':'')+'" data-st="seoaudit">SEO Audit</button></div>'+
+      /* LANE S7 — the Overview tab, FIRST in the strip and not the DEFAULT one.
+         Both halves are deliberate.
+
+         First, because it is the tab that answers "where do I even start" and a
+         tab strip is read left to right (start to end, in Arabic).
+
+         Not the default, because `seoTab` still opens on 'settings' and rule 1
+         of the project notes is absolute: the screen an owner lands on when he
+         clicks SEO & Meta is the screen he landed on yesterday. Making Overview
+         the landing tab is a one-word change (`let seoTab='overview'`) and it is
+         the owner's to ask for, not a lane's to slip in. */
+      '<div class="subtabs"><button class="subtab'+(seoTab==='overview'?' on':'')+'" data-st="overview">Overview</button><button class="subtab'+(seoTab==='settings'?' on':'')+'" data-st="settings">Settings</button><button class="subtab'+(seoTab==='redirects'?' on':'')+'" data-st="redirects">Redirects &amp; 404s</button><button class="subtab'+(seoTab==='schema'?' on':'')+'" data-st="schema">Schema Inspector</button><button class="subtab'+(seoTab==='audit'?' on':'')+'" data-st="audit">Catalogue Audit</button><button class="subtab'+(seoTab==='seoaudit'?' on':'')+'" data-st="seoaudit">SEO Audit</button></div>'+
       /* What the five tabs are and why they are one screen. The owner asked
          this of Catalog and it is the same question here: a tab strip that only
          names itself leaves you clicking each one to find out.
@@ -17455,9 +17466,15 @@ buildNav();
          brands, articles and pages as well — and asks the two that no per-row
          check can answer: which titles collide with each other, and which rows
          carry a canonical pointing off this site. */
-      '<p class="ectabs-hint">Five views of the same thing — how this shop looks to Google. <b>Settings</b> is what you write; <b>Redirects &amp; 404s</b> catches old WooCommerce addresses so a link from Google still lands somewhere; <b>Schema Inspector</b>, <b>Catalogue Audit</b> and <b>SEO Audit</b> only read. Catalogue Audit checks products for a missing description, image or thin copy; SEO Audit covers categories, brands, articles and pages too, and finds the things only a whole-shop scan can see — two pages claiming the same title, or a canonical pointing at somebody else’s site.</p>'+
+      '<p class="ectabs-hint">Six views of the same thing — how this shop looks to Google. <b>Overview</b> is the one to open first: what is wrong ranked by what it costs you, and what is still waiting on you. <b>Settings</b> is what you write; <b>Redirects &amp; 404s</b> catches old WooCommerce addresses so a link from Google still lands somewhere; <b>Schema Inspector</b>, <b>Catalogue Audit</b> and <b>SEO Audit</b> only read. Catalogue Audit checks products for a missing description, image or thin copy; SEO Audit covers categories, brands, articles and pages too, and finds the things only a whole-shop scan can see — two pages claiming the same title, or a canonical pointing at somebody else’s site.</p>'+
       '<div id="seoTabBody"></div></div>';
     $$('#content .subtab').forEach(function(b){ b.onclick=function(){ seoTab=b.dataset.st; renderSeo(); }; });
+    /* LANE S7. resources/views/admin/partials/seo-back-office.blade.php draws
+       it, and it is a plain function call rather than a window.go wrapper
+       because this is a SUBTAB of a screen that already exists — there is no
+       new screen id, no sidebar row and nothing for a deep link to address that
+       #seo did not already address. */
+    if(seoTab==='overview') return window.kbbSeoOverview();
     if(seoTab==='redirects') return renderSeoRedirects();
     if(seoTab==='schema') return renderSchemaInspector();
     if(seoTab==='audit') return renderCatalogueAudit();
@@ -17540,6 +17557,23 @@ buildNav();
         (TITLE_BASIS.tokens_note
           ? '<div class="sm-help" style="margin:-2px 0 14px">'+sesc(TITLE_BASIS.tokens_note)+'</div>'
           : '')+
+        /* LANE S7 — the homepage's Google result, live, above the two boxes that
+           decide it.
+
+           These two boxes had no consequence on screen anywhere in this console.
+           The homepage title is the single most-read string this shop publishes
+           and an owner typing into it was working blind: an empty box does NOT
+           publish an empty title (it publishes the site name), a `{sitename}`
+           typed into it is substituted server-side, and 155 characters of
+           description is a number nobody can count by eye.
+
+           A MOUNT POINT AND NOTHING ELSE. It draws no control, stores nothing
+           and posts nothing — the Save button below still posts the same
+           thirty-eight keys it posted before, from the same ids. The preview is
+           filled in by window.kbbSeoPreview() at the foot of this function,
+           which asks the server for the real emitted tag rather than guessing
+           at it here. */
+        '<div id="seo_home_prev"></div>'+
         '<div class="sm-grid">'+
           smField('seo_home_t','Homepage title',
             '<input id="seo_home_t" value="'+sesc(S.seo_home_title)+'" placeholder="K-Beauty Bliss — Korean skincare for the UAE">',
@@ -17738,6 +17772,19 @@ buildNav();
     document.getElementById('seo_home_d').value = S.seo_home_description || '';
     document.getElementById('seo_def_d').value = S.seo_default_description || '';
     document.getElementById('seo_robots_txt').value = S.robots_txt || '';
+
+    /* LANE S7 — wire the homepage preview, AFTER the two textareas have had
+       their values set by property above. Wired before them it would draw the
+       empty boxes and then not repaint, because the preview listens for `input`
+       and setting `.value` from script fires nothing. */
+    if (typeof window.kbbSeoPreview === 'function') {
+      window.kbbSeoPreview({
+        mount: '#seo_home_prev',
+        kind: 'home',
+        title: '#seo_home_t',
+        description: '#seo_home_d'
+      });
+    }
 
     document.getElementById('seo_indexnow_cbx').onclick=function(){ this.classList.toggle('on'); };
     document.getElementById('seo_llms_cbx').onclick=function(){ this.classList.toggle('on'); };
@@ -21716,6 +21763,17 @@ buildNav();
      authenticated owner's click is a different thing from a Host header. --}}
 @include('admin.partials.site-url-banner')
 @include('admin.partials.ugc-library-screen')
+{{-- LANE S7 · the SEO back office.
+
+     One include, and — with the subtab button and the dispatch line a few
+     thousand lines up — the whole of this lane's change to this file. It
+     registers NO sidebar entry and wraps window.go for nothing: everything in
+     it hangs off Store → SEO & Meta, which already exists.
+
+     It defines window.kbbSeoPreview(), the Google-result preview four screens
+     in this console needed and only the product editor had, and
+     window.kbbSeoOverview(), the Overview subtab. --}}
+@include('admin.partials.seo-back-office')
 
 @verbatim
 <script>

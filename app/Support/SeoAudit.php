@@ -106,7 +106,15 @@ final class SeoAudit
      * Findings that describe an opportunity rather than a fault, and so are
      * left out of the one-line verdict. See verdict() for the argument.
      */
-    private const ADVISORY = ['product_no_image_alt', 'legacy_url_no_redirect'];
+    /*
+     * PUBLIC, at Lane S7's request and for its reason. The Overview screen ranks
+     * findings by what each one costs the owner, and its "opportunity" band is
+     * this same judgement made a second time. With the constant private, the
+     * only thing keeping the two lists equal was a comment asking a future
+     * reader not to let them drift; SeoOverviewScreenTest now pins them equal.
+     * Read-only from outside -- nothing assigns to it.
+     */
+    public const ADVISORY = ['product_no_image_alt', 'legacy_url_no_redirect'];
 
     public static function run(): array
     {

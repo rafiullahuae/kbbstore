@@ -1,0 +1,484 @@
+{
+    "settings": {
+        "settings": {
+            "seo_default_description": "Shop Korean skincare in the UAE \u2014 serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+            "gift_enabled": "1",
+            "gift_fee": "1500",
+            "canonical_host": "",
+            "host_aliases": "",
+            "host_redirect_enabled": "0",
+            "search_visibility": "public",
+            "ga": "",
+            "meta_pixel": "",
+            "trust_authentic_title": "100% original",
+            "trust_authentic_text": "Direct from brands and trusted suppliers",
+            "trust_support_title": "24/7 support",
+            "home_brands_note": "Korean brands, all sourced direct.",
+            "checkout_authentic_text": "100% authentic",
+            "product_authentic_text": "100% authentic",
+            "reassure_auth_text": "100% authentic K-beauty",
+            "anno_authentic_text": "100% authentic K-beauty"
+        },
+        "title_template_basis": {
+            "label": "Title template",
+            "note": "Sets the browser tab and the Google result title for every page except the home page, which uses the Home title box below instead. Text you add around {title} appears on all of them.",
+            "tokens_note": "{sitename} and the separator only change pages that do not already end in your site name. Product, shop, category, cart, checkout, wishlist, order and content pages build their own title ending in the site name, so the engine drops {sitename} there rather than print your shop name twice \u2014 moving it in this box will not move it on those pages. The brand directory, the account pages and the newsletter pages have no such suffix, and there both tokens work as written."
+        }
+    },
+    "categories": {
+        "ok": true,
+        "categories": [
+            {
+                "id": 1,
+                "slug": "cleansers",
+                "name": "Cleansers",
+                "parent_id": null,
+                "description": null,
+                "image": null,
+                "position": 0,
+                "depth": 0,
+                "path": "cleansers",
+                "seo": null,
+                "banner": null,
+                "products_count": 4,
+                "filed_count": 4,
+                "primary_count": 4,
+                "children_count": 0,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 2,
+                "slug": "toners",
+                "name": "Toners",
+                "parent_id": null,
+                "description": null,
+                "image": null,
+                "position": 1,
+                "depth": 0,
+                "path": "toners",
+                "seo": null,
+                "banner": null,
+                "products_count": 4,
+                "filed_count": 4,
+                "primary_count": 4,
+                "children_count": 0,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 3,
+                "slug": "serums",
+                "name": "Serums",
+                "parent_id": null,
+                "description": null,
+                "image": null,
+                "position": 2,
+                "depth": 0,
+                "path": "serums",
+                "seo": null,
+                "banner": null,
+                "products_count": 4,
+                "filed_count": 4,
+                "primary_count": 4,
+                "children_count": 0,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 4,
+                "slug": "moisturisers",
+                "name": "Moisturisers",
+                "parent_id": null,
+                "description": null,
+                "image": null,
+                "position": 3,
+                "depth": 0,
+                "path": "moisturisers",
+                "seo": null,
+                "banner": null,
+                "products_count": 4,
+                "filed_count": 4,
+                "primary_count": 4,
+                "children_count": 0,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 5,
+                "slug": "sunscreens",
+                "name": "Sunscreens",
+                "parent_id": null,
+                "description": null,
+                "image": null,
+                "position": 4,
+                "depth": 0,
+                "path": "sunscreens",
+                "seo": null,
+                "banner": null,
+                "products_count": 4,
+                "filed_count": 4,
+                "primary_count": 4,
+                "children_count": 0,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 6,
+                "slug": "masks",
+                "name": "Masks",
+                "parent_id": null,
+                "description": null,
+                "image": null,
+                "position": 5,
+                "depth": 0,
+                "path": "masks",
+                "seo": null,
+                "banner": null,
+                "products_count": 4,
+                "filed_count": 4,
+                "primary_count": 4,
+                "children_count": 0,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            }
+        ],
+        "translatable": {
+            "ar": {
+                "name": {
+                    "value": "",
+                    "status": "",
+                    "source": "",
+                    "stale": false
+                },
+                "description": {
+                    "value": "",
+                    "status": "",
+                    "source": "",
+                    "stale": false
+                }
+            }
+        }
+    },
+    "brands": {
+        "ok": true,
+        "brands": [
+            {
+                "id": 1,
+                "slug": "beauty-of-joseon",
+                "name": "Beauty of Joseon",
+                "logo": null,
+                "description": null,
+                "position": 0,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 2,
+                "slug": "cosrx",
+                "name": "COSRX",
+                "logo": null,
+                "description": null,
+                "position": 1,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 3,
+                "slug": "anua",
+                "name": "Anua",
+                "logo": null,
+                "description": null,
+                "position": 2,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 4,
+                "slug": "medicube",
+                "name": "Medicube",
+                "logo": null,
+                "description": null,
+                "position": 3,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 5,
+                "slug": "round-lab",
+                "name": "Round Lab",
+                "logo": null,
+                "description": null,
+                "position": 4,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 6,
+                "slug": "torriden",
+                "name": "Torriden",
+                "logo": null,
+                "description": null,
+                "position": 5,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 7,
+                "slug": "isntree",
+                "name": "Isntree",
+                "logo": null,
+                "description": null,
+                "position": 6,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            },
+            {
+                "id": 8,
+                "slug": "skin1004",
+                "name": "SKIN1004",
+                "logo": null,
+                "description": null,
+                "position": 7,
+                "seo": null,
+                "banner": null,
+                "products_count": 3,
+                "translations": {
+                    "ar": {
+                        "name": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        },
+                        "description": {
+                            "value": "",
+                            "status": "",
+                            "source": "",
+                            "stale": false
+                        }
+                    }
+                }
+            }
+        ],
+        "translatable": {
+            "ar": {
+                "name": {
+                    "value": "",
+                    "status": "",
+                    "source": "",
+                    "stale": false
+                },
+                "description": {
+                    "value": "",
+                    "status": "",
+                    "source": "",
+                    "stale": false
+                }
+            }
+        }
+    }
+}

@@ -439,7 +439,25 @@ class Seo
         $rawTitle = trim((string) ($ctx['title'] ?? ''));
 
         if (($ctx['type'] ?? 'website') === 'home') {
-            $homeTitle = SeoSettings::from($s, 'seo_home_title', '');
+            /*
+             * A CANDIDATE home title, for the live preview above the box.
+             *
+             * Lane S7 needed to show what Google would print for a title the
+             * owner is typing and has not saved, and this branch read
+             * seo_home_title out of the settings table first -- so the preview
+             * could only ever show the SAVED value. It worked around that by
+             * reaching the `title_is_final` arm through `title_token`, which is
+             * two paragraphs of justification where one key will do.
+             *
+             * INERT EVERYWHERE TODAY: array_key_exists, not a truthiness test,
+             * so only a caller that deliberately passes the key takes this path,
+             * and nothing on the storefront passes it. An empty string passed
+             * deliberately still means "no title", which falls through to the
+             * same place it always did.
+             */
+            $homeTitle = array_key_exists('home_title', $ctx)
+                ? trim((string) $ctx['home_title'])
+                : SeoSettings::from($s, 'seo_home_title', '');
             $title = TitleTemplate::render(
                 $homeTitle !== '' ? $homeTitle : ($rawTitle !== '' ? $rawTitle : $siteName),
                 $tokens,
