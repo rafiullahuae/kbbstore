@@ -1,0 +1,193 @@
+{
+  "widths": {
+    "390": {
+      "compared": 21,
+      "properties": 45,
+      "deltas": [
+        {
+          "element": "overlay",
+          "prop": "height",
+          "r3": "83.25px",
+          "shop": "58.25px"
+        },
+        {
+          "element": "overlay",
+          "prop": "top",
+          "r3": "117.625px",
+          "shop": "142.625px"
+        },
+        {
+          "element": "brand line",
+          "prop": "display",
+          "r3": "block",
+          "shop": "flex"
+        },
+        {
+          "element": "brand line",
+          "prop": "alignItems",
+          "r3": "normal",
+          "shop": "center"
+        },
+        {
+          "element": "brand line",
+          "prop": "columnGap",
+          "r3": "normal",
+          "shop": "6px"
+        },
+        {
+          "element": "brand line",
+          "prop": "rowGap",
+          "r3": "normal",
+          "shop": "6px"
+        },
+        {
+          "element": "now",
+          "prop": "width",
+          "r3": "44.2969px",
+          "shop": "44.3125px"
+        },
+        {
+          "element": "was",
+          "prop": "width",
+          "r3": "38.8125px",
+          "shop": "38.8281px"
+        }
+      ]
+    },
+    "1280": {
+      "compared": 21,
+      "properties": 45,
+      "deltas": [
+        {
+          "element": "overlay",
+          "prop": "height",
+          "r3": "83.25px",
+          "shop": "58.25px"
+        },
+        {
+          "element": "overlay",
+          "prop": "top",
+          "r3": "202.969px",
+          "shop": "227.969px"
+        },
+        {
+          "element": "brand line",
+          "prop": "display",
+          "r3": "block",
+          "shop": "flex"
+        },
+        {
+          "element": "brand line",
+          "prop": "alignItems",
+          "r3": "normal",
+          "shop": "center"
+        },
+        {
+          "element": "brand line",
+          "prop": "columnGap",
+          "r3": "normal",
+          "shop": "6px"
+        },
+        {
+          "element": "brand line",
+          "prop": "rowGap",
+          "r3": "normal",
+          "shop": "6px"
+        },
+        {
+          "element": "now",
+          "prop": "width",
+          "r3": "44.2969px",
+          "shop": "44.3125px"
+        },
+        {
+          "element": "was",
+          "prop": "width",
+          "r3": "38.8125px",
+          "shop": "38.8281px"
+        }
+      ]
+    }
+  },
+  "rating": {
+    "390": {
+      "withBar": 78.25,
+      "withoutBar": 78.25,
+      "delta": 0,
+      "hadBar": true
+    },
+    "1280": {
+      "withBar": 62,
+      "withoutBar": 62,
+      "delta": 0,
+      "hadBar": true
+    }
+  },
+  "contrast": {
+    "390": {
+      "card_bg": "rgba(255, 255, 255, 0.96)",
+      "score": {
+        "colour": "rgb(42, 34, 40)",
+        "vs_white": 15.47,
+        "needs": 4.5
+      },
+      "star": {
+        "colour": "rgb(168, 118, 15)",
+        "vs_white": 3.99,
+        "needs": 3
+      },
+      "count": {
+        "colour": "rgb(94, 84, 90)",
+        "vs_white": 7.26,
+        "needs": 4.5
+      }
+    },
+    "1280": {
+      "card_bg": "rgba(255, 255, 255, 0.96)",
+      "score": {
+        "colour": "rgb(42, 34, 40)",
+        "vs_white": 15.47,
+        "needs": 4.5
+      },
+      "star": {
+        "colour": "rgb(168, 118, 15)",
+        "vs_white": 3.99,
+        "needs": 3
+      },
+      "count": {
+        "colour": "rgb(94, 84, 90)",
+        "vs_white": 7.26,
+        "needs": 4.5
+      }
+    }
+  },
+  "overflow": {
+    "390": {
+      "preview": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": 0
+      },
+      "shop": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": 0
+      }
+    },
+    "1280": {
+      "preview": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "overflow": 0
+      },
+      "shop": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "overflow": 0
+      }
+    }
+  },
+  "errors": [
+    "preview 390: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

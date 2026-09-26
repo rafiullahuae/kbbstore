@@ -96,16 +96,45 @@ it('renders every storefront page identically with and without a published video
      */
 });
 
-it('has no storefront route of its own', function () {
+it('has no storefront route a stranger can reach with the module off', function () {
     /*
-     * A route is the other way a module reaches a shopper. routes/ugc-admin.php
-     * is the only file this lane adds, it is required inside the admin-api
-     * group, and there is no public counterpart at all this round — §7's
-     * /api/ugc-videos belongs with the rail that needs it, and an
-     * unauthenticated endpoint shipped ahead of its consumer is a surface
-     * nobody is looking at.
+     * ▲ ADVANCED BY LANE V3, AND THE ORIGINAL IS QUOTED BECAUSE THE CHANGE HAS TO
+     * BE CHECKABLE. It read:
+     *
+     *     expect(is_file(base_path('routes/ugc.php')))->toBeFalse();
+     *
+     * under the name 'it has no storefront route of its own', and it was right for
+     * the round that shipped the library: §7's public endpoint belongs with the rail
+     * that needs it, and an unauthenticated endpoint shipped ahead of its consumer
+     * is a surface nobody is looking at.
+     *
+     * THIS IS THE ROUND THAT ADDS THE RAIL, so that file now exists — and left as
+     * written this case would go red on the very thing the round was asked for, with
+     * the only way to green it being to delete the feature. That is the shape
+     * CLAUDE.md names, and the answer it gives is to pin the FINISHED state instead.
+     *
+     * The finished state is not "no public route". It is "no public route a stranger
+     * can reach while the module is off", which is strictly stronger than the old
+     * assertion in the direction that matters and is checked below by dispatching
+     * against them rather than by looking at a filename.
      */
-    expect(is_file(base_path('routes/ugc.php')))->toBeFalse();
+    expect(is_file(base_path('routes/ugc.php')))->toBeTrue();
+
+    // Required exactly ONCE. Zero is the "built, never wired up" shape this
+    // repository keeps finding; two registers both routes twice and makes route()
+    // ambiguous by name.
+    expect(substr_count((string) file_get_contents(base_path('routes/api.php')), "require __DIR__.'/ugc.php';"))->toBe(1);
+
+    /*
+     * AND BOTH OF THEM 404 ON THE SHIPPED SETTINGS. The module's default is false
+     * and Api\UgcController checks it before anything else, so applying this
+     * package adds two routes that answer 404 to everybody.
+     *
+     * MUTATION NOTE. Remove the enabled() check from either action and this is red
+     * with a 200. RUN: red.
+     */
+    test()->getJson('/api/ugc/anything')->assertStatus(404);
+    test()->postJson('/api/ugc/anything/like')->assertStatus(404);
 
     /*
      * ▲ NARROWED WHEN THE INTEGRATOR WIRED THE ADMIN ROUTES, and the original
@@ -139,14 +168,21 @@ it('has no storefront route of its own', function () {
             continue;
         }
 
-        if (! str_starts_with($route->uri(), 'admin-api/')) {
+        /*
+         * The two public ones are NAMED, individually, rather than covered by a
+         * pattern — so a third public route added later under any name fails here,
+         * which is the thing that would actually put this module in front of a
+         * shopper before the owner has switched it on.
+         */
+        if (! str_starts_with($route->uri(), 'admin-api/')
+            && ! in_array($route->uri(), ['api/ugc/{section}', 'api/ugc/{slug}/like'], true)) {
             $public[] = implode('|', $route->methods()).' '.$route->uri();
         }
     }
 
     expect($public)->toBe(
         [],
-        'these ugc routes are outside the admin-api group, so a shopper can reach them: '
+        'these ugc routes are neither in the admin-api group nor one of the two known public ones: '
         .implode(', ', $public)
     );
 
@@ -202,21 +238,66 @@ it('reads the ugc tables from no storefront code at all', function () {
     expect($hits)->toBe([], 'these storefront files read the shoppable-video model');
 });
 
-it('adds no module switch, because there is nothing for one to switch', function () {
+it('adds exactly one module switch, live, and shipped off', function () {
     /*
-     * §6 puts the master on/off beside the storefront section, and the section
-     * does not exist yet. ModuleRegistry's own status vocabulary exists exactly
-     * to stop a switch being drawn for something nothing reads — `live` means
-     * "the storefront reads moduleEnabled() for this key", and
-     * ModuleFrameworkGuardTest fails a `live` row with no reader AND a `todo`
-     * row that something already gates on.
+     * ▲ ADVANCED BY LANE V3, AND THE ORIGINAL IS QUOTED. It read:
      *
-     * A row here now could only be a lie in one of those two directions. The
-     * round that draws a rail adds it, as `live`, with a reader.
+     *     foreach (array_keys(ModuleRegistry::REGISTRY) as $key) {
+     *         expect(str_contains($key, 'ugc') || str_contains($key, 'shoppable'))->toBeFalse();
+     *     }
+     *
+     * under the name 'it adds no module switch, because there is nothing for one to
+     * switch', and it was right: §6 puts the master on/off beside the storefront
+     * section, the section did not exist, and ModuleRegistry's status vocabulary
+     * exists precisely to stop a switch being drawn for something nothing reads.
+     * Its own closing sentence said "the round that draws a rail adds it, as `live`,
+     * with a reader." This is that round, so the case now asserts all three of
+     * those rather than the absence.
+     *
+     * Left as written it would go red on the row the round was asked for, and the
+     * only way to green it would be to unmount the module.
+     *
+     * MUTATION NOTE. Change the row's default from false to true and this is red —
+     * and so is StorefrontEnglishUnchangedTest, because the rail would then render
+     * on any page already carrying the shortcode. Change its status from 'live' to
+     * 'todo' and ModuleFrameworkGuardTest is red, because something already reads
+     * the switch. RUN: both.
      */
-    foreach (array_keys(ModuleRegistry::REGISTRY) as $key) {
-        expect(str_contains($key, 'ugc') || str_contains($key, 'shoppable'))->toBeFalse();
-    }
+    $keys = array_values(array_filter(
+        array_keys(ModuleRegistry::REGISTRY),
+        fn ($key) => str_contains($key, 'ugc') || str_contains($key, 'shoppable')
+    ));
+
+    expect($keys)->toBe(['shoppable_video']);
+
+    [$group, $name, , $default, $screen, $route, , , , $status] = ModuleRegistry::REGISTRY['shoppable_video'];
+
+    expect($default)->toBeFalse()                              // ships OFF: rule 1
+        ->and($status)->toBe('live')                           // something reads it
+        /*
+         * 'Appearance → Video rail' and NOT 'Appearance → Shoppable video'.
+         * AdminNavAndIdsTest refuses two sidebar entries with the same label, and
+         * Content → Shoppable video is the clip library's row. So the three rows
+         * read: the clips, the rails (Content → Video sections), and what a rail
+         * looks like (Appearance → Video rail).
+         */
+        ->and($screen)->toBe('Appearance → Video rail')
+        ->and($route)->toBe('ugcstyle')
+        ->and($group)->toBe('store')
+        ->and($name)->toBe('Shoppable video');
+
+    // `live` is only true if a reader exists, and the reader is the ONE call.
+    $reader = (string) file_get_contents(app_path('Services/UgcSettings.php'));
+
+    /*
+     * A LITERAL first argument, because ModuleFrameworkGuardTest tokenises for one:
+     * `moduleEnabled(self::MODULE, false)` is invisible to that scan and reported
+     * this module as live with no reader.
+     */
+    expect($reader)->toContain("moduleEnabled('shoppable_video', false)");
+
+    // And with nothing saved, that is what it answers.
+    expect(app(\App\Services\UgcSettings::class)->enabled())->toBeFalse();
 });
 
 it('adds no row to any table that already had one', function () {
@@ -226,5 +307,10 @@ it('adds no row to any table that already had one', function () {
      * package moves nothing" stops being true.
      */
     expect(DB::table('ugc_videos')->count())->toBe(0)
-        ->and(DB::table('ugc_video_product')->count())->toBe(0);
+        ->and(DB::table('ugc_video_product')->count())->toBe(0)
+        // Lane V3's three. `ugc_video_likes` especially: a like is a PUBLIC write,
+        // and a seeded row would be a like nobody made.
+        ->and(DB::table('ugc_sections')->count())->toBe(0)
+        ->and(DB::table('ugc_section_video')->count())->toBe(0)
+        ->and(DB::table('ugc_video_likes')->count())->toBe(0);
 });

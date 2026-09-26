@@ -922,6 +922,13 @@ final class EnglishRenderWalk
             'api/posts/{slug}' => ['params' => ['slug' => 'walk-article']] + $json,
             'api/reviews' => $json,
             'api/settings' => $json,
+            /*
+             * Shoppable video, Phase 20. JSON, and a 404 on every install until
+             * somebody switches the module on — so there is no body for a
+             * storefront string to appear in either way. The POST sibling
+             * (api/ugc/{slug}/like) is not here because this walk lists GET routes.
+             */
+            'api/ugc/{section}' => ['params' => ['section' => 'not-a-section']] + $json,
 
             // --- catch-all --------------------------------------------------------
             '{fallbackPlaceholder}' => [

@@ -376,6 +376,15 @@ function walkExpectations(array $seed): array
         'api/posts/{slug}'              => ['params' => ['slug' => 'walk-article'], 'status' => 200],
         'api/reviews'                   => ['status' => 200],
         'api/settings'                  => ['status' => 200],
+        /*
+         * Shoppable video, Phase 20 (Lane V3). 404 IS THE CORRECT ANSWER on every
+         * install: `shoppable_video` ships off, Api\UgcController checks the switch
+         * before anything else, and the handle below is one nothing has created —
+         * so both halves of the refusal are exercised. Walked so that the day
+         * somebody turns the module on and this starts answering 200, the change is
+         * visible here rather than only on the shop.
+         */
+        'api/ugc/{section}'             => ['params' => ['section' => 'not-a-section'], 'status' => 404],
 
         // --- Catch-all --------------------------------------------------
         '{fallbackPlaceholder}'    => ['params' => ['fallbackPlaceholder' => 'no-such-page-at-all'], 'status' => 404],

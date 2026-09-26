@@ -73,7 +73,29 @@ it('returns exactly the keys §7 names and no others', function () {
 
     expect(array_keys($api))->toBe([
         'slug', 'title', 'caption', 'poster', 'src', 'teaser', 'width', 'height',
-        'duration_ms', 'creator_handle', 'creator_url', 'source_url', 'published_at', 'products',
+        'duration_ms', 'creator_handle', 'creator_url', 'source_url',
+        /*
+         * ── TWO KEYS ADDED BY LANE V3, AND WHY EACH IS SAFE ─────────────────
+         *
+         * `platform` — one of UgcVideo::PLATFORMS and nothing else, because a
+         * select stores one of its own options or the default. It is here because a
+         * consumer has to know whether a clip is an upload or a link-back, and
+         * because the storefront is not allowed to guess that from the URL.
+         *
+         * `likes` — OUR OWN count of clicks on this shop. Publishable because we
+         * computed it: `likes` is maintained by one UPDATE in
+         * Api\UgcController::like() and 0 genuinely means nobody has pressed it.
+         *
+         * WHAT IS NOT HERE, AND WAS BRIEFLY GOING TO BE: a source's like, comment
+         * or view count. The owner cut that mid-round — "leave the counts for now,
+         * just get the videos from there" — and the columns, the credentials and the
+         * three fetchers went with it rather than shipping nullable and unwritten.
+         * docs/UGC-ENGAGEMENT.md records what each platform would have cost.
+         *
+         * THE LEDGER IS NEVER HERE EITHER. ugc_video_likes has no endpoint and no
+         * key on this feed: its one column is the SHA-256 of a live bearer cookie.
+         */
+        'platform', 'published_at', 'likes', 'products',
     ]);
 });
 

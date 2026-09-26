@@ -108,6 +108,7 @@ final class InterfaceStrings
                 self::storeTrack(),
                 self::storeQuiz(),
                 self::storeRoutines(),
+                self::storeUgc(),
                 self::storeNewsletter(),
                 self::storeJs(),
             ),
@@ -1373,6 +1374,48 @@ final class InterfaceStrings
      * somebody creates the coupon — which is the whole lesson of the "15% bundle
      * saving" the previous lane deleted from the quiz.
      */
+    /**
+     * Shoppable video — the rail and its player (Phase 20, Lane V3).
+     *
+     * Short, because R3 is a design with almost no words in it: a play label, an
+     * Add, a rating read aloud, and the player's own chrome. Everything else a
+     * shopper reads on a tile is CONTENT — the creator's caption, the product's
+     * name and its price — and none of that belongs in an interface string.
+     *
+     * `ugc.add` is 'Add' and NOT product_card.add_to_cart, which is 'Add to
+     * cart'. R3's button is 9px inside a 158px card beside a struck price and a
+     * discount pill; "Add to cart" does not fit it, and the existing key is the
+     * right words for a card that has room. Two keys because they are two
+     * strings, not because one was forgotten.
+     *
+     * `ugc.rating_aria` is the WHOLE bar's label. The bar draws a numeral and one
+     * star glyph, and a star character read aloud is noise, so the glyph is
+     * aria-hidden and this sentence carries both the score and the count —
+     * including on the narrow tile where a container query hides the count
+     * visually. Nothing is lost to a screen reader that a sighted shopper can see.
+     *
+     * @return array<string, string>
+     */
+    private static function storeUgc(): array
+    {
+        return [
+            'ugc.play' => 'Play this video',
+            'ugc.pause' => 'Pause',
+            'ugc.add' => 'Add',
+            'ugc.rating_aria' => 'Rated :rating out of 5 from :count reviews',
+            'ugc.close' => 'Close',
+            'ugc.products_heading' => 'In this video',
+            'ugc.view_original' => 'See the original post',
+            'ugc.like' => 'Like this video',
+            'ugc.liked' => 'You liked this',
+            'ugc.likes_label' => 'likes',
+            'ugc.comments_label' => 'comments',
+            'ugc.views_label' => 'views',
+            'ugc.next' => 'Next video',
+            'ugc.previous' => 'Previous video',
+        ];
+    }
+
     private static function storeRoutines(): array
     {
         return [

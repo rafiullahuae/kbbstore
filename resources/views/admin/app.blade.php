@@ -21792,6 +21792,16 @@ buildNav();
      window.kbbSeoOverview(), the Overview subtab. --}}
 @include('admin.partials.seo-back-office')
 
+{{-- LANE V3 · the shoppable-video rail.
+
+     Both sides of this conflict were pure additions at the end of the file, so
+     both are kept — S7 and V3 wrote here in the same round and neither knew of
+     the other. Order is not load-bearing: each include defines its own window.*
+     entry point and registers its own sidebar row, and AdminNavAndIdsTest
+     refuses a duplicate id or label across all of them. --}}
+@include('admin.partials.ugc-sections-screen')
+@include('admin.partials.ugc-appearance-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------
