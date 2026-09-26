@@ -37,9 +37,10 @@ namespace App\Services;
  * The other sixty-one element widths are MEASURES and are not on this screen:
  * a 720px article column, a 440px form, a 340px card, 62ch of prose. A measure
  * is not a site width. Widening a paragraph to 1680px does not make the shop
- * wider, it makes it unreadable, so those keep their own names in kbb.css
- * (--measure-prose, --measure-article and the rest) and nothing here touches
- * them. THAT DISTINCTION IS THE POINT OF THIS CLASS, more than the number is.
+ * wider, it makes it unreadable, so those keep the literal values they have
+ * always had and nothing here touches them — see the note in kbb.css's :root for
+ * why they are documented there rather than turned into tokens nothing reads.
+ * THAT DISTINCTION IS THE POINT OF THIS CLASS, more than the number is.
  *
  * ── WHAT THIS SCREEN DOES NOT GOVERN, AND WHY NOT ───────────────────────────
  *

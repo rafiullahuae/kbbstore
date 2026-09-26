@@ -51,11 +51,18 @@ measures**.
 A 720px article column, a 440px form, a 340px card, `62ch` of prose, `44ch` of
 banner copy, `50ch` of section sub-heading, `85vw` of mobile drawer. **A measure
 is not a site width.** Widening a paragraph to 1680px does not make the shop
-wider, it makes it unreadable. They keep their own names in `kbb.css`
-(`--measure-prose`, `--measure-article`, `--measure-form`, `--measure-card`,
-`--measure-lede`) and nothing in this lane touches them.
-`SiteWidthSystemTest > it keeps the reading and form widths off the site width`
-is what stops the next sweep catching them.
+wider, it makes it unreadable. They keep the literal values they have always had,
+and `SiteWidthSystemTest > it keeps the reading and form widths off the site
+width` is what stops the next sweep catching them.
+
+**They are not tokens, and that changed during the lane.** The first draft
+declared five `--measure-*` custom properties in `:root` to name them. A mutation
+run deleted one and every test stayed green — because nothing referenced them.
+Five dead declarations naming a distinction is the same shape as the four
+ProductStyles settings this document complains about in §7, and wiring them would
+have moved the English pin on pages with no other reason to move, for no rendered
+change. So they were removed and the distinction is documented in the sheet
+instead.
 
 ### Where the product grid column count was decided — and it was SIX places, not four
 
@@ -582,3 +589,52 @@ row reading `1636px · 5 · 5`.
 3. `@container` on the card itself, if a skin should change its internal layout
    by the space that card has.
 4. Unpick the duplicated 180 rules in `kbb.css`.
+
+---
+
+## 9 · The mutations, and the thirteen that came back green
+
+Sixty-three runs. Each one edits a line, runs the lane's four test files, reports,
+and reverts (rebuilding the CSS bundle where a stylesheet was touched). **Fifty
+came back red, which is what a mutation is for. Thirteen came back GREEN, and
+every one of them was a real gap** — five were defects in the lane's own code, not
+just missing assertions.
+
+| # | mutation | what it exposed | what was done |
+| --- | --- | --- | --- |
+| M4 | `article{max-width:720px}` → `var(--site-max)` in `store/post` | **the assertion matched the lane's OWN comment.** That file's inline stylesheet quotes the rule in prose to explain why an article is not on the site width, so the test was reading the explanation. The same trap `PhoneShopperLayoutTest` records from the other direction. | a `w1ViewRules()` helper that strips Blade and CSS comments; every container and measure assertion moved onto it |
+| M29 | delete the **floor term** from the track in `kbb.css` | one full-width card per row on a 320px phone. The declaration's *shape* still matched, and the PHP copy tests its own arithmetic rather than the sheet's. | all three terms pinned by their text |
+| M32 | delete the bare `100%` from the track | a container narrower than the tile overflows — only once "Never fewer than" is set to 1, which makes it narrow but real | pinned |
+| M34 | emit `data-cols` on `/shop` unconditionally | **the change the owner asked for was pinned only by a byte comparison.** A behaviour visible only to `StorefrontEnglishUnchangedTest` is a behaviour nobody reading the lane's tests can see. | a rendered case requesting `/shop/`, `?cols=3` and `?cols=99` |
+| — | *(found while writing that case)* | **a defect:** `?cols=99` fell back to `'4'` through `Facets::columns()` and **pinned four columns**, so a bogus URL was indistinguishable from a deliberate choice | the raw query value is checked against the allowlist |
+| M37 | remove the clamp on `<x-product-grid columns="…">` | `[kbb_products columns="999999"]` emits `repeat(999999,minmax(0,1fr))` | bounded, and a case over four values |
+| — | *(found while writing that case)* | **a defect:** `columns="-4"` became a pin of **one** full-width column — neither what the page asked for nor the automatic answer | anything below 1 is no pin at all |
+| M39 | remove the clamp on `columnsMobile` | five cards across a 390px phone, 62px each | bounded, asserted separately |
+| M40 | widen the caller pin's query to `min-width:1px` | a shortcode's desktop count applying to a phone | the 900px split pinned, both directions |
+| M42 | delete `--measure-prose` from `:root` | **five dead declarations.** Nothing referenced any of the five `--measure-*` tokens. | removed rather than pinned — see §1 |
+| M46 | `--hd-max:var(--site-max)` → `--hd-max:1680px` | the header would **freeze**: move Site width to 1800 and the header silently stays at 1680, with no error anywhere | the token pinned, and a literal refused |
+| M54 | drop 1680 from the admin table's width list | the row the owner will look for first, gone from the deliverable | the whole list pinned, and the marked row |
+| M56 | rename a route | nothing read the names | both pinned |
+| M57 | remove the `routes-*.php` glob from the migration | **CLAUDE.md's landmine.** The screen draws and both requests answer 404 on the live shop. | all five globs pinned, plus "writes no setting row" |
+| M59 | widen the shop pin's query to `min-width:1px` | the assertion matched a **second** `@media(min-width:901px)` block further down the same sheet, so a shopper's desktop choice of four columns would apply to a 390px phone — 88px a card | the pin and its query asserted together as one string |
+
+### A sample of the fifty that came back red, as evidence the tests assert something
+
+`--site-max` 1680→1400 in the sheet · the schema default 1680→1400 · `.wrap` back
+to 1240px on `/shop` · the article measure onto `--site-max` · the checkout onto
+`--site-max` · the dead duplicate `.wrap` restored · a count ladder reintroduced
+in `kbb-grid-skins.css` · the pin emitted as a custom property · a plain `gap` on
+`#grid` · `.pdp` back to `1fr` · the gutter default 22→24 · the tile 260→230 · the
+shop tile 220→260 · `header_follows` shipping ON · the `isDefault()` early return
+deleted · `all()` back to `ModuleSchema::read()` · `invalid` reject→default ·
+`clamp` true→false · the controller's unknown-key check disabled · its rejected
+report disabled · `support` added to the capability · the capability rule removed
+from the map · the screen measuring layout · the `sls-` prefix dropped from one
+hook · the screen's `floor`→`ceil` · its rail 250→240 · its container formula
+without the gutter · the blog fallback 1680→1400 · the screen included twice · a
+setting interpolated into a property name · the cap term deleted · the brand page
+back to 1180 · the base rule losing `.rel` · the base rule losing `#grid` · the
+blog gutter clamp dropped · `cols_cap` 8→4 · `cols_floor` 2→1 · `gap` 16→20 ·
+`pin` auto→4 · a field dropped from a tab · the arithmetic table claiming 4 at
+1680 · the arithmetic table claiming 3 at 390 · the 1680 row unmarked · the
+service's pin query widened.

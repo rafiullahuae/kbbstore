@@ -47,17 +47,24 @@
     --site-gutter-max:22px;
     --site-gutter:clamp(var(--site-gutter-min),2.2vw,var(--site-gutter-max));
 
-    /* ── THE MEASURES, named for what they are ──────────────────────────────
-       These are NOT the site width and must never be put on --site-max. They
-       are declared here so that the next person looking for "the width" finds
-       the distinction at the same place as the width itself, rather than
-       finding 29 numbers and guessing. Each ships at the value its own
-       surface already used. */
-    --measure-prose:62ch;      /* a paragraph. 62ch is ~10 words a line. */
-    --measure-lede:42ch;       /* a hero sub-line. */
-    --measure-form:440px;      /* a single-column form. */
-    --measure-card:340px;      /* one card on its own. */
-    --measure-article:720px;   /* an article body: store/post.blade.php. */
+    /* ── THE MEASURES ARE NOT TOKENS HERE, AND THAT IS DELIBERATE ────────────
+       Sixty-one of the 75 element widths on this shop are MEASURES rather than
+       widths — a 720px article column (store/post), 62ch of prose
+       (store/brands), 44ch of banner copy (kbb-banner), 50ch of section
+       sub-heading, a 440px form, a 340px card, 85vw of mobile drawer. They must
+       NEVER be put on --site-max: a 1680px paragraph is unreadable, and the
+       owner asking for a wider SITE is not asking for wider PROSE.
+
+       The first draft declared five --measure-* tokens here to name them. They
+       were removed, because nothing referenced them: five dead declarations
+       naming a distinction is the same shape as ProductStyles' four settings
+       that reach no stylesheet, which this lane spends a section of
+       docs/W1-SITE-WIDTH.md complaining about. Wiring them would move the
+       English pin on pages with no other reason to move, for no rendered change.
+       So the distinction is documented here and the measures keep the literal
+       values they have always had; SiteWidthSystemTest > "it keeps the reading
+       and form widths off the site width" pins the four a careless sweep would
+       have caught, by their own rules rather than through a token. */
 
     /* ── THE PRODUCT GRID, and the four numbers that decide a column count ──
        See the one grid rule below. --kbb-gap is ProductStyles' `grid_gap` default,

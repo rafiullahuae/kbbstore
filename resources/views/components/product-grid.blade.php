@@ -81,8 +81,18 @@
      * emitted as a grid-template-columns override rather than as a custom
      * property -- kbb.css records why a pin may not be a custom property here.
      */
-    $pinCols = $columns ? max(1, min(8, (int) $columns)) : null;
-    $pinMobile = $columnsMobile ? max(1, min(2, (int) $columnsMobile)) : null;
+    /*
+     * A CALLER'S COUNT IS BOUNDED AND A NON-POSITIVE ONE IS NOT A COUNT.
+     *
+     * These reach `grid-template-columns:repeat(N,…)` in a <style> element, so an
+     * unbounded N is a shortcode that can emit `repeat(999999,minmax(0,1fr))` and
+     * stop the page laying out. `max(1, min(8, …))` was the first draft and it
+     * turned `columns="-4"` into a pin of ONE full-width column, which is neither
+     * what the page asked for nor the automatic answer — so anything below 1 is
+     * no pin at all and the grid decides for itself.
+     */
+    $pinCols = ($columns !== null && (int) $columns >= 1) ? min(8, (int) $columns) : null;
+    $pinMobile = ($columnsMobile !== null && (int) $columnsMobile >= 1) ? min(2, (int) $columnsMobile) : null;
 @endphp
 
 @if ($heading || $moreUrl)

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Product;
 use App\Services\ModuleSchema;
 use App\Services\SiteLayout;
 use App\Services\SettingsService;
@@ -73,6 +74,29 @@ function w1View(string $path): string
     return (string) file_get_contents($file);
 }
 
+/**
+ * A view with its Blade and CSS comments removed, so a rule cannot be matched in
+ * prose.
+ *
+ * ▲ THIS EXISTS BECAUSE A MUTATION RUN CAUGHT IT. The measures case below
+ * asserted `toContain('article{max-width:720px')` against the raw file, and
+ * store/post.blade.php's inline stylesheet now carries a COMMENT that quotes
+ * `article{max-width:720px}` in order to explain why an article is not on the
+ * site width. So the assertion matched the explanation: changing the real rule to
+ * `var(--site-max)` left the test GREEN, which is the one outcome a mutation run
+ * exists to find. PhoneShopperLayoutTest's header records the same trap from the
+ * other direction — a bare class-name search matching an inline stylesheet — and
+ * this is that trap with the lane's own comment as the decoy.
+ */
+function w1ViewRules(string $path): string
+{
+    return (string) preg_replace(
+        ['/\{\{--.*?--\}\}/s', '#/\*.*?\*/#s'],
+        '',
+        w1View($path)
+    );
+}
+
 /* ══════════════════════════════════════════ one width, in one place ═══ */
 
 it('declares the site width exactly once, as a token, at the value the owner asked for', function () {
@@ -113,9 +137,9 @@ it('points every page container at the token instead of its own number', functio
     }
 
     // The three page containers that live in a view rather than a sheet.
-    expect(w1View('store/brands.blade.php'))->toContain('.brw{max-width:var(--site-max)');
-    expect(w1View('store/blog.blade.php'))->toContain('.wrap{max-width:var(--site-max,1680px)');
-    expect(w1View('store/post.blade.php'))->toContain('.wrap{max-width:var(--site-max,1680px)');
+    expect(w1ViewRules('store/brands.blade.php'))->toContain('.brw{max-width:var(--site-max)');
+    expect(w1ViewRules('store/blog.blade.php'))->toContain('.wrap{max-width:var(--site-max,1680px)');
+    expect(w1ViewRules('store/post.blade.php'))->toContain('.wrap{max-width:var(--site-max,1680px)');
 });
 
 it('leaves the dead duplicate .wrap rule gone rather than leaving two', function () {
@@ -153,9 +177,9 @@ it('keeps the reading and form widths off the site width', function () {
      * store/post.blade.php and this is red — which is exactly the regression
      * this case exists to make impossible to ship quietly.
      */
-    expect(w1View('store/post.blade.php'))->toContain('article{max-width:720px');
-    expect(w1View('store/skin-quiz.blade.php'))->toContain('.shell{position:relative;z-index:1;max-width:720px');
-    expect(w1View('store/review-wall.blade.php'))->toContain('.page{max-width:1080px');
+    expect(w1ViewRules('store/post.blade.php'))->toContain('article{max-width:720px');
+    expect(w1ViewRules('store/skin-quiz.blade.php'))->toContain('.shell{position:relative;z-index:1;max-width:720px');
+    expect(w1ViewRules('store/review-wall.blade.php'))->toContain('.page{max-width:1080px');
 
     // And the `ch` measures, which are measures by construction.
     expect(w1CssRules('kbb-banner.css'))->toContain('max-width:44ch');
@@ -171,8 +195,8 @@ it('leaves the cart, the checkout and the slim footer on their own width setting
      * MUTATION: point `.kbb-checkout .co-grid` at --site-max and this is red.
      */
     expect(w1CssRules('kbb-checkout.css'))->toContain('max-width:var(--cop-d-max,1040px)');
-    expect(w1View('store/cart-squeeze.blade.php'))->toContain('max-width:var(--cpg-d-max,1200px)');
-    expect(w1View('partials/slim-footer.blade.php'))->toContain('max-width:var(--sf-max)');
+    expect(w1ViewRules('store/cart-squeeze.blade.php'))->toContain('max-width:var(--cpg-d-max,1200px)');
+    expect(w1ViewRules('partials/slim-footer.blade.php'))->toContain('max-width:var(--sf-max)');
 
     // Their own keys, not this screen's.
     expect(array_keys(SiteLayout::SCHEMA))->not->toContain('cop_d_max');
@@ -201,6 +225,31 @@ it('declares the auto-fill track exactly once and on the grid rather than on :ro
     expect($rules)->not->toContain('--kbb-track:');
     expect(substr_count($rules, 'grid-template-columns:repeat(auto-fill,minmax(min('))->toBe(1);
     expect($rules)->toContain('.kbb-pgrid,.rel,#grid{');
+
+    /*
+     * ▲ AND ALL THREE TERMS BY THEIR TEXT, which a mutation run is the reason
+     * for. Counting the declaration was not enough: deleting the FLOOR term
+     * outright left every case in this lane green, because the shape still
+     * matched and the PHP copy in SiteLayoutColumnArithmeticTest tests its own
+     * arithmetic rather than the sheet's. On the shop that deletion is one
+     * full-width card per row on a 320px phone, where two have always been
+     * shown.
+     *
+     * The bare `100%` is pinned too, and it is NOT redundant even though the
+     * floor term is always smaller: it stops being smaller the moment the owner
+     * sets "Never fewer than" to 1, and then `100%` is the only thing keeping a
+     * container narrower than the tile from overflowing. A mutation run found
+     * this one as well.
+     *
+     * MUTATION: delete any one of the four lines below from kbb.css and this is
+     * red, naming which.
+     */
+    expect($rules)->toContain('minmax(min(
+        100%,');
+    expect($rules)->toContain('calc((100% - (var(--kbb-cols-floor) - 1) * var(--kbb-gap)) / var(--kbb-cols-floor))');
+    expect($rules)->toContain('max(
+            var(--kbb-tile),');
+    expect($rules)->toContain('calc((100% - (var(--kbb-cols-cap) - 1) * var(--kbb-gap)) / var(--kbb-cols-cap))');
 });
 
 it('leaves no viewport breakpoint setting a product column count anywhere', function () {
@@ -248,8 +297,19 @@ it('pins an exact count with a rule, never with a custom property', function () 
      */
     $shop = w1CssRules('kbb-shop.css');
 
-    expect($shop)->toContain('@media(min-width:901px){');
-    expect($shop)->toContain('#grid[data-cols="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}');
+    /*
+     * The pin and its media query TOGETHER, as one string. Asserting the query
+     * on its own proved nothing: kbb-shop.css already carries a second
+     * `@media(min-width:901px)` block further down, so widening THIS one to
+     * `min-width:1px` left the case green — and on the shop that means a
+     * shopper's desktop choice of four columns applying to a 390px phone, 88px a
+     * card. A mutation run found it.
+     */
+    expect($shop)->toContain('@media(min-width:901px){
+  #grid[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #grid[data-cols="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #grid[data-cols="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+}');
     expect($shop)->not->toContain('--kbb-count');
 
     app(SettingsService::class)->set('layout_pin', '6');
@@ -307,6 +367,149 @@ it('fixes the product page overflow that made every phone scroll sideways', func
      */
     expect(w1CssRules('kbb-product.css'))
         ->toContain('@media(max-width:880px){.pdp{grid-template-columns:minmax(0,1fr);gap:26px}}');
+});
+
+it('leaves /shop automatic until the shopper picks a column count', function () {
+    /*
+     * THE DEFECT ON THE SHOP, and the half of the owner's sentence this serves.
+     *
+     * `Facets::columns()` answers '4' whether or not `?cols` is in the URL, and
+     * `data-cols` is a PIN (kbb-shop.css turns it into
+     * `grid-template-columns:repeat(N,minmax(0,1fr))` above 900px). So the
+     * listing was pinned at four columns for every visitor at every screen size
+     * — measured: four at 1280, four at 1680, four at 2560 — while the owner had
+     * asked for "on 1680px the grid products will show 1 column extra". The
+     * default and the only setting were indistinguishable, and the default won.
+     *
+     * The attribute is emitted only when the shopper has chosen, and the button
+     * highlight follows the same fact, because a highlighted "4" above a
+     * five-column grid is the control lying about the page.
+     *
+     * A MUTATION RUN IS WHY THIS CASE EXISTS. Putting `data-cols="{{ $cols }}"`
+     * back unconditionally left every structural case in this lane green; only
+     * StorefrontEnglishUnchangedTest caught it, and a behaviour that is pinned
+     * only by a byte comparison is a behaviour nobody reading this file can see.
+     *
+     * MUTATION: drop the `@if ($colsChosen)` guard and the first two
+     * expectations are red.
+     */
+    foreach (range(1, 3) as $n) {
+        Product::create([
+            'slug' => 'w1-tile-'.$n.'-'.uniqid(),
+            'name' => 'W1 tile '.$n,
+            'status' => 'publish',
+            'is_visible' => true,
+            'price' => 4500,
+            'stock_status' => 'instock',
+        ]);
+    }
+
+    $auto = $this->get('/shop/')->assertOk()->getContent();
+
+    expect($auto)->toContain('<div class="grid" id="grid">');
+    expect($auto)->not->toContain('data-cols');
+
+    // And no button claims to be the current choice.
+    expect($auto)->not->toContain('data-c="4" class="on"');
+
+    $picked = $this->get('/shop/?cols=3')->assertOk()->getContent();
+
+    expect($picked)->toContain('id="grid" data-cols="3"');
+    expect($picked)->toContain('data-c="3" class="on"');
+
+    // A value outside the allowlist is not a choice, so the grid stays automatic.
+    $bogus = $this->get('/shop/?cols=99')->assertOk()->getContent();
+
+    expect($bogus)->not->toContain('data-cols');
+});
+
+it('bounds a column count a caller asks for, however absurd', function () {
+    /*
+     * RULE 5, on the one number in this system that comes from OUTSIDE the
+     * settings screen. `[kbb_products columns="3"]` is somebody writing 3 into a
+     * page, so the component honours it — as a pin, which means it reaches
+     * `grid-template-columns:repeat(N,…)` in a <style> element. An unbounded N is
+     * a shortcode that can emit `repeat(999999,minmax(0,1fr))`, which is a page
+     * that stops laying out.
+     *
+     * A MUTATION RUN IS WHY THIS CASE EXISTS: removing the clamp left every other
+     * case in this lane green.
+     *
+     * MUTATION: change `max(1, min(8, (int) $columns))` to `(int) $columns` in
+     * components/product-grid.blade.php and this is red.
+     */
+    $product = Product::create([
+        'slug' => 'w1-pin-'.uniqid(),
+        'name' => 'W1 pin',
+        'status' => 'publish',
+        'is_visible' => true,
+        'price' => 4500,
+        'stock_status' => 'instock',
+    ]);
+
+    $products = Product::query()->with(['brand:id,name,slug', 'categories:id,name'])
+        ->whereKey($product->id)->get();
+
+    $render = function (array $props) use ($products) {
+        return view('components.product-grid', array_merge([
+            'products' => $products,
+            'skin' => null, 'columns' => null, 'columnsMobile' => null,
+            'heading' => null, 'subheading' => null, 'moreUrl' => null, 'moreLabel' => null,
+        ], $props))->render();
+    };
+
+    foreach ([['999999', 8], ['0', null], ['-4', null], ['3', 3]] as [$asked, $expected]) {
+        $html = $render(['columns' => $asked]);
+
+        if ($expected === null) {
+            // Nothing was asked for that the component can honour, so no pin.
+            expect($html)->not->toContain('grid-template-columns:repeat(');
+
+            continue;
+        }
+
+        expect($html)->toContain('grid-template-columns:repeat('.$expected.',minmax(0,1fr))');
+    }
+
+    /*
+     * THE PHONE COUNT IS BOUNDED AT TWO, separately, and a mutation run is why
+     * it is asserted separately: removing its clamp left every other case green.
+     * Two is the most a 390px screen holds comfortably — the note that has been
+     * in kbb-grid-skins.css since the ladder was written, and the reason
+     * --kbb-cols-floor exists.
+     */
+    foreach ([['9', 2], ['1', 1], ['0', null], ['-2', null]] as [$asked, $expected]) {
+        $html = $render(['columnsMobile' => $asked]);
+
+        if ($expected === null) {
+            expect($html)->not->toContain('grid-template-columns:repeat(');
+
+            continue;
+        }
+
+        expect($html)->toContain('grid-template-columns:repeat('.$expected.',minmax(0,1fr))');
+    }
+
+    /*
+     * AND A CALLER'S DESKTOP COUNT IS SPLIT AT 900px, which is the same split
+     * every other pin in this system takes. Without it, `[kbb_products
+     * columns="5"]` puts five cards across a 390px phone — 62px each, narrower
+     * than the price line. A mutation run found this one too: widening the query
+     * to `min-width:1px` left every other case green.
+     */
+    $desktopPin = $render(['columns' => '5']);
+
+    expect($desktopPin)->toContain('@media(min-width:901px){');
+
+    $phonePin = $render(['columnsMobile' => '1']);
+
+    expect($phonePin)->toContain('@media(max-width:900px){');
+
+    /*
+     * The two are scoped by an id, so one grid on a page can be pinned without
+     * pinning the rest — a shortcode is not the only grid on the page it sits on.
+     */
+    expect($desktopPin)->toMatch('/<style>@media\(min-width:901px\)\{#kbbg[0-9a-f]{8}\{/');
 });
 
 /* ══════════════════════════════ the schema, and rule 1 ═══ */
@@ -441,6 +644,38 @@ it('clamps a number outside its slider and refuses a select that is not one of i
 
     expect(array_keys($refused['rejected']))->toBe(['pin']);
     expect($refused['written'])->toBe([]);
+});
+
+it('makes the header FOLLOW the site width rather than copying its number', function () {
+    /*
+     * THE ONE WIDTH ON THIS SCREEN THAT ANOTHER SCREEN ALREADY OWNS.
+     * Appearance → Header's `max_width` writes --hd-max, and its slider stops at
+     * 1600px — below the 1680 asked for here — so a shop that wants one width
+     * everywhere cannot say so there. This switch says "use the page width".
+     *
+     * IT MUST EMIT THE TOKEN, NOT THE NUMBER. Writing `--hd-max:1680px` looks
+     * identical the day it is saved and freezes: the owner moves Site width to
+     * 1800 and the header silently stays at 1680, which is the shop disagreeing
+     * with its own setting and no error anywhere. A mutation run found that the
+     * literal passed every other case in this lane.
+     *
+     * MUTATION: change the emission to `'--hd-max:1680px'` and this is red.
+     */
+    $settings = app(SettingsService::class);
+
+    // Off by default: the header keeps its own 1280px until somebody says so.
+    expect(app(SiteLayout::class)->css())->toBe('');
+
+    $settings->set('layout_header_follows', '1');
+    SettingsService::forgetMemo();
+
+    $css = app(SiteLayout::class)->css();
+
+    expect($css)->toContain('--hd-max:var(--site-max)');
+    expect($css)->not->toMatch('/--hd-max:\s*\d/');
+
+    // And the header's own container really is the property being overridden.
+    expect(w1CssRules('kbb.css'))->toContain('header .wrap{max-width:var(--hd-max)}');
 });
 
 it('never lets a stored value reach a property name, a selector or a unit', function () {

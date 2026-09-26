@@ -161,10 +161,27 @@ it('lets Customer Reviews sit on the page gutter instead of a second one', funct
 
 it('tightens the related grid only where the cards are narrow', function () {
     foreach (pdpMobileBothHalves() as $where => $flat) {
-        // 18px stays the desktop figure; phones get 10px.
-        expect(str_contains($flat, '.rel{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}'))->toBeTrue(
+        /*
+         * 18px stays the desktop figure; phones get 10px. BOTH NUMBERS ARE
+         * UNCHANGED — measured 18px at 900, 1280 and 1680 and 10px below 600,
+         * before and after Lane W1 — but they are spelled as `--kbb-gap` now
+         * rather than as `gap`, and the fixed `repeat(4,1fr)` is gone.
+         *
+         * WHY THE VARIABLE AND NOT `gap`. The auto-fill track in kbb.css divides
+         * the row by `var(--kbb-gap)` to guarantee the column floor. Declare 18px
+         * as a plain `gap` here and the guarantee is computed with 16 while the
+         * browser lays out with 18: on a 320px screen that is two 138px tracks
+         * plus an 18px gap in a 292px row, which is 2px of horizontal page scroll
+         * on the narrowest phone. One number, used by both.
+         *
+         * The count is derived from the row now — `.rel` showed the same four
+         * cards on a 1180px product page as on a 2560px one — so there is no
+         * `repeat(4,1fr)` left to pin. SiteWidthSystemTest pins the shared rule
+         * and docs/W1-SITE-WIDTH.md has the rendered count at seventeen widths.
+         */
+        expect(str_contains($flat, '.rel{--kbb-gap:18px}'))->toBeTrue(
             "The {$where} no longer declares the related grid's desktop gap of 18px.");
-        expect(str_contains($flat, '@media(max-width:600px){.rel{gap:10px}}'))->toBeTrue(
+        expect(str_contains($flat, '@media(max-width:600px){.rel{--kbb-gap:10px}}'))->toBeTrue(
             "The {$where} no longer narrows the related grid's gap at phone width.");
     }
 });
@@ -179,7 +196,13 @@ it('leaves the related block on the same gutter as the rest of the page', functi
      */
     $css = pdpMobileFlat((string) pdpMobileTracked('resources/css/kbb/kbb-product.css'));
 
-    expect($css)->toContain('.wrap{max-width:1180px;margin:0auto;padding:020px}')
+    /*
+     * MOVED BY LANE W1: the fifth of six page-container widths. What this case
+     * pins is that #related inherits the page's gutter and adds none of its own,
+     * and that is unchanged — the gutter is `--site-gutter` (22px) instead of a
+     * literal 20px, and `.rel` still declares no padding at all.
+     */
+    expect($css)->toContain('.wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}')
         ->and($css)->toContain('.sec{padding:34px0;')
         ->and($css)->not->toContain('.rel{padding')
         ->and($css)->not->toContain('.sec{padding:34px20px');

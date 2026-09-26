@@ -187,6 +187,81 @@ it('refuses a key that is not in its own schema rather than writing it', functio
     expect(app(SettingsService::class)->get('admin_path'))->toBe($before);
 });
 
+it('shows the owner all seventeen widths, and names both routes', function () {
+    /*
+     * THE TABLE IS THE DELIVERABLE, so its width list is pinned. The owner asked
+     * for the shop to fit every device and has asked twice for things to fit
+     * every screen; seventeen widths is not padding. A mutation run found that
+     * dropping 1680 from the list — the one row he will look for first — left
+     * every other case in this lane green.
+     *
+     * MUTATION: remove any width from the screen's WIDTHS array and this is red,
+     * and so is the count.
+     */
+    $screen = (string) file_get_contents(
+        base_path('resources/views/admin/partials/site-layout-screen.blade.php')
+    );
+
+    expect($screen)->toContain(
+        'var WIDTHS = [320, 360, 390, 414, 480, 600, 768, 834, 1024, 1180, 1280, 1366, 1440, 1536, 1680, 1920, 2560];'
+    );
+
+    // 1680 is the row the owner asked for, and it is marked.
+    expect($screen)->toContain("(w === 1680 ? ' class=\"is-target\"' : '')");
+
+    /*
+     * And both route NAMES, because they are part of the file the integrator will
+     * require. Nothing reads them today; a rename is still a contract change and
+     * the sibling route files all name theirs.
+     */
+    $routes = (string) file_get_contents(base_path('routes/site-layout-admin.php'));
+
+    expect($routes)->toContain("->name('admin.site-layout');");
+    expect($routes)->toContain("->name('admin.site-layout.save');");
+});
+
+it('ships a migration that clears every compiled cache the screen depends on', function () {
+    /*
+     * CLAUDE.md's landmine, as an assertion: "A route added in routes/web.php
+     * will not take effect until the compiled route cache is cleared, so every
+     * package that adds a route also ships a clear_caches_* migration." Without
+     * the routes glob the screen draws and both of its requests answer 404 — a
+     * dead screen on the live shop, and the exact failure the screen's own 404
+     * banner apologises for. Without the views glob the console has no Site
+     * layout row in its sidebar, because a compiled Blade is keyed by PATH and an
+     * unzip's timestamps are not reliably newer than what is on disk.
+     *
+     * A mutation run found that removing the routes glob left every other case
+     * green.
+     *
+     * MUTATION: delete any one of the five globs and this is red, naming it.
+     */
+    $migration = (string) file_get_contents(base_path(
+        'database/migrations/2027_02_10_000000_clear_caches_site_layout.php'
+    ));
+
+    foreach ([
+        "storage_path('framework/views/*.php')",
+        "base_path('bootstrap/cache/config.php')",
+        "base_path('bootstrap/cache/routes-*.php')",
+        "base_path('bootstrap/cache/services.php')",
+        "base_path('bootstrap/cache/packages.php')",
+    ] as $glob) {
+        expect(str_contains($migration, $glob))->toBeTrue("the migration does not clear {$glob}");
+    }
+
+    /*
+     * And it writes NO setting row. Every one of the ten keys is absent until
+     * somebody saves the screen, and SiteLayout::all() answers the shipped
+     * default for an absent key — so there is no row to align and nothing that
+     * can come on by itself, which is the trap FI-PHASE3-MODULE-INVENTORY
+     * records for `address_autocomplete`.
+     */
+    expect($migration)->not->toContain('insert');
+    expect($migration)->not->toContain('Setting::');
+    expect($migration)->not->toContain('DB::table');
+});
+
 /* ══════════════════════════════════════════ wired exactly once ═══ */
 
 it('is required from routes/web.php exactly once', function () {

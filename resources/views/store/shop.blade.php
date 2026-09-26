@@ -52,7 +52,14 @@
      * page. Nothing is highlighted until something is chosen, which is the
      * truthful state and not a new control.
      */
-    $colsChosen = request()->query('cols') !== null && in_array((string) $cols, ['2', '3', '4'], true);
+    /*
+     * The RAW query value against the allowlist, not Facets::columns()' answer.
+     * That method falls an unusable `?cols=99` back to '4', so testing ITS result
+     * makes a bogus value indistinguishable from a deliberate choice of four —
+     * `?cols=99` pinned the grid at four columns, which is neither what the URL
+     * asked for nor the automatic answer. A mutation run found it.
+     */
+    $colsChosen = in_array((string) request()->query('cols'), ['2', '3', '4'], true);
 @endphp
 
 {{--
