@@ -79,19 +79,33 @@ namespace App\Services;
  * for, arrived at by arithmetic rather than by a new breakpoint. Every cell
  * that moves is in docs/W1-SITE-WIDTH.md, with the width it moved at.
  *
- * ── WHAT SHIPS CHANGED, AND IT IS EXACTLY ONE THING ─────────────────────────
+ * ── WHAT SHIPS CHANGED, AND IT IS EXACTLY TWO THINGS ────────────────────────
  *
  * `max` ships at 1680px. That is a real change to the rendered shop on the
  * home page (1352 → 1680), /shop (1240 → 1680), a product page (1180 → 1680)
  * and the Journal (1160 → 1680), and it is the default the owner asked for in
  * as many words. It is called out in the commit rather than buried.
  *
+ * `header_follows` SHIPS ON, which is the second, and it is the same kind of
+ * exception for the same reason.                                     Lane H1
+ *
+ * It shipped OFF, so that applying the width package moved the page and left
+ * the header at 1280px. The owner's next sentence was "the header need to be
+ * matched the width", which is this switch in as many words, so it ships at the
+ * value he asked for rather than at the value the page had. Measured on /shop/:
+ * the header container goes 1280 → 1366 at a 1366px viewport, 1280 → 1680 at
+ * 1680 and above, and is unchanged at 1280 and below because there the page
+ * container is the viewport too. Called out in the commit and in
+ * 2027_02_14_000000_clear_caches_desktop_header_width, not buried.
+ *
+ * Turning it back off is one click on the screen below and restores 1280px
+ * exactly.
+ *
  * EVERY OTHER SETTING HERE SHIPS AT THE VALUE THE PAGE ALREADY HAD: the
  * gutter at 22px (kbb.css's generic `.wrap` padding), the tile at 260px, the
  * column floor at 2 (what the phone already showed), the cap at 8 (which is
  * more columns than --kbb-tile will ever allow, so it is inert until moved),
- * the gap at 16px, the pin at `auto`, and `header_follows` OFF so the header
- * keeps its own 1280px until somebody says otherwise.
+ * the gap at 16px and the pin at `auto`.
  */
 class SiteLayout
 {
@@ -115,8 +129,8 @@ class SiteLayout
         'gutter_wide' => ['range', 'Side gutter · wide screens', 22,
             'The wide end. Equal to the one above means a constant gutter, which is how it ships.',
             ['min' => 8, 'max' => 80, 'step' => 2, 'unit' => 'px']],
-        'header_follows' => ['bool', 'Header follows the site width', false,
-            'Off: the header keeps its own Content width from Appearance → Header, which is 1280px. On: the header is exactly as wide as the page.'],
+        'header_follows' => ['bool', 'Header follows the site width', true,
+            'On: the header is exactly as wide as the page. Off: the header keeps its own Content width from Appearance → Header, which is 1280px.'],
 
         // ── Product grid ──
         'tile' => ['range', 'Smallest card', 260,
@@ -164,6 +178,13 @@ class SiteLayout
      * which is exactly why `header_follows` is a switch that defers to
      * HeaderSettings rather than a second width box beside it — two controls
      * writing one value is the shape this repo keeps paying for.
+     *
+     * ▲ AND IT DEFERRED BY WRITING THE SAME PROPERTY FROM HERE, WHICH IS NOT
+     * DEFERRING. HeaderSettings writes `--hd-max` into the `style` attribute of
+     * `<header>` on every request; this class wrote it into `:root`, which an
+     * inline declaration beats outright, so the switch moved nothing at any
+     * width. It is read in HeaderSettings::maxWidthCss() now, where the property
+     * is written. See cssVariables() below.
      */
     private const PREFIX = 'layout_';
 
@@ -384,17 +405,26 @@ class SiteLayout
         }
 
         /*
-         * The header is the one width on this screen that another screen
-         * already owns. Appearance → Header's `max_width` writes --hd-max, and
-         * its slider stops at 1600px — below the 1680 asked for here — so a
-         * shop that wants one width everywhere cannot say so there. This switch
-         * says "use the page width" and writes the SAME property rather than
-         * adding a second number beside it. Off by default, so the header keeps
-         * its 1280px.
+         * ── `header_follows` IS NOT EMITTED HERE, AND IT USED TO BE ──────────
+         *
+         * It wrote `--hd-max:var(--site-max)` into this `:root` block, and that
+         * declaration could never reach the element it was aimed at.
+         * HeaderSettings::cssVariables() writes the same property into the
+         * `style` attribute of `<header>` itself, on every request, whether or
+         * not anything has been saved — and an inline declaration on the element
+         * beats a `:root` one outright. `header .wrap`, the only reader of
+         * `--hd-max` anywhere, is a CHILD of `<header>`, so it inherited the
+         * inline value and never saw this one. Measured with the switch saved on:
+         * the header stayed 1280px at 1280, 1680 and 1920 while the page
+         * container went to 1680.
+         *
+         * So the switch is read where the property is actually written, by
+         * HeaderSettings::maxWidthCss(), which has the whole story. One property,
+         * one writer, at the level that wins.
+         *
+         * The `$c` above is still read for every other field; this key is
+         * deliberately absent rather than forgotten.
          */
-        if ($c['header_follows']) {
-            $out[] = '--hd-max:var(--site-max)';
-        }
 
         return implode(';', $out);
     }
