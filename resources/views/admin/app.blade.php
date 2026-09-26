@@ -21689,6 +21689,8 @@ buildNav();
      authenticated owner's click is a different thing from a Host header. --}}
 @include('admin.partials.site-url-banner')
 @include('admin.partials.ugc-library-screen')
+@include('admin.partials.ugc-sections-screen')
+@include('admin.partials.ugc-appearance-screen')
 
 @verbatim
 <script>

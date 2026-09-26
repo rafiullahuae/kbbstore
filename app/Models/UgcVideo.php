@@ -119,6 +119,17 @@ class UgcVideo extends Model
             'position' => 'int',
             'published_at' => 'datetime',
             'rights_granted_at' => 'datetime',
+            /*
+             * A count of real clicks on this shop, never null and never unknown:
+             * we maintain it, so 0 means nobody has pressed it.
+             *
+             * THERE IS NO COLUMN HERE FOR A THIRD PARTY'S COUNT. The owner cut
+             * that mid-round — "leave the counts for now, just get the videos from
+             * there" — and the six nullable metrics_* columns an earlier draft
+             * carried were deleted rather than shipped unwritten. Nothing in this
+             * module asks Instagram, TikTok or YouTube for anything.
+             */
+            'likes' => 'int',
         ];
     }
 
@@ -226,6 +237,48 @@ class UgcVideo extends Model
     }
 
     /**
+     * The rails this clip appears in — Lane V3.
+     *
+     * Many-to-many deliberately: the sunscreen clip belongs in the homepage rail
+     * AND on the sun-care category page, and the alternative to a pivot is
+     * uploading the file twice, which splits its like count in half.
+     *
+     * @return BelongsToMany<UgcSection>
+     */
+    public function sections(): BelongsToMany
+    {
+        return $this->belongsToMany(UgcSection::class, 'ugc_section_video')
+            ->withPivot(['position'])
+            ->orderBy('ugc_sections.position')
+            ->orderBy('ugc_sections.id');
+    }
+
+    /**
+     * The one number a tile may print, and it is ours.
+     *
+     * ── WHY THIS IS A METHOD AND NOT JUST $this->likes ─────────────────────
+     *
+     * Because of what it does NOT return. An earlier draft of this round also
+     * carried a source's like, comment and view counts, with a rule that a figure
+     * which could not be fetched was ABSENT from this array rather than zero in
+     * it — so the template drew no element for it, the way the rating bar draws
+     * nothing for a product with no reviews. The owner cut that: "leave the
+     * counts for now, just get the videos from there."
+     *
+     * The rule survives the cut and is worth keeping written down, because it is
+     * the rule any future version of this has to follow: A NUMBER THIS SHOP
+     * CANNOT VERIFY IS NOT PRINTED. A fabricated like count on a shop is a lie to
+     * a shopper, and a zero standing in for "we could not find out" is the same
+     * lie in a quieter voice.
+     *
+     * @return array{own_likes: int}
+     */
+    public function engagement(): array
+    {
+        return ['own_likes' => (int) $this->likes];
+    }
+
+    /**
      * What a public endpoint may return about this clip — §7.
      *
      * AN EXPLICIT LIST, ITERATED, NOT A MODEL WITH HIDDEN FIELDS. The pattern
@@ -259,7 +312,23 @@ class UgcVideo extends Model
             'creator_handle' => $this->creator_handle,
             'creator_url' => $this->creator_url,
             'source_url' => $this->source_url,
+            /*
+             * WHICH PLATFORM, because the tile's behaviour depends on it and the
+             * storefront is not allowed to guess from the URL. An external clip
+             * opens THEIR embed, which we do not control and cannot give a teaser
+             * loop to; an uploaded one opens our own player. One of
+             * UgcVideo::PLATFORMS and nothing else ever reaches the column — a
+             * select stores one of its own options or the default.
+             */
+            'platform' => (string) $this->source_platform,
             'published_at' => $this->published_at?->toIso8601String(),
+            /*
+             * OUR OWN like count, always present because we count it. The
+             * LEDGER behind it (ugc_video_likes) is never published and has no
+             * endpoint: its one column is the hash of a live bearer cookie.
+             */
+            'likes' => (int) $this->likes,
+
             /*
              * Through the EXISTING allowlist, not a second one. Product::toApi()
              * is already what keeps wc_id, sku and total_sales off the wire, and

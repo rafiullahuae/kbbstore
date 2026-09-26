@@ -131,3 +131,71 @@ Route::post('/ugc-videos/{id}/derive', [UgcVideoController::class, 'derive'])
 Route::post('/ugc-videos/{id}/products', [UgcVideoController::class, 'tag'])
     ->middleware('throttle:60,1')
     ->name('admin.ugc.tag');
+
+/*
+|------------------------------------------------------------------------------
+| Lane V3 — sections, the appearance screen, and the engagement refresh
+|------------------------------------------------------------------------------
+|
+|     GET    /admin-api/ugc-sections               the sections, and the library
+|     POST   /admin-api/ugc-sections               create one
+|     GET    /admin-api/ugc-sections/{id}          one section and its clips
+|     PUT    /admin-api/ugc-sections/{id}          save the fields
+|     DELETE /admin-api/ugc-sections/{id}          delete the section, NOT its clips
+|     POST   /admin-api/ugc-sections/{id}/videos   set the ordered list
+|
+|     GET    /admin-api/ugc-appearance             Appearance -> Shoppable video
+|     POST   /admin-api/ugc-appearance             save it
+|
+| ADDED TO THIS FILE RATHER THAN A NEW ONE, and that is worth a line: this file
+| is ALREADY required from routes/web.php inside the admin-api group, so these
+| nine routes need no wiring at all from the integrator. A second admin route
+| file would have needed a second require in a file this lane may not edit, for no
+| gain — the capabilities, the middleware stack and the reader are identical.
+|
+| The same capabilities, mapped in App\Support\AdminCapabilities with THE WRITES
+| ABOVE THE READS, because RULES is first-match-wins and a GET rule listed first
+| would resolve POST /ugc-sections/7/videos — which reorders a live rail — to
+| ugc.view.
+|
+| ── NOTHING HERE MAKES AN OUTBOUND CALL ─────────────────────────────────────
+|
+| An earlier draft of this round carried POST /ugc-videos/{id}/metrics, which
+| asked Instagram, TikTok or YouTube for a clip's like and comment counts. THE
+| OWNER CUT IT — "okay, leave the counts for now, just get the videos from there"
+| — so the endpoint, the three providers behind it and the credentials they read
+| were all deleted rather than left inert. There is no fetcher in this module and
+| no column for a third party's number to be written into.
+*/
+
+Route::get('/ugc-sections', [\App\Http\Controllers\Admin\UgcSectionController::class, 'index'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.sections');
+
+Route::post('/ugc-sections', [\App\Http\Controllers\Admin\UgcSectionController::class, 'store'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.sections.store');
+
+Route::get('/ugc-sections/{id}', [\App\Http\Controllers\Admin\UgcSectionController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.sections.show');
+
+Route::put('/ugc-sections/{id}', [\App\Http\Controllers\Admin\UgcSectionController::class, 'update'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.sections.update');
+
+Route::delete('/ugc-sections/{id}', [\App\Http\Controllers\Admin\UgcSectionController::class, 'destroy'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.sections.destroy');
+
+Route::post('/ugc-sections/{id}/videos', [\App\Http\Controllers\Admin\UgcSectionController::class, 'videos'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.sections.videos');
+
+Route::get('/ugc-appearance', [\App\Http\Controllers\Admin\UgcAppearanceController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.appearance');
+
+Route::post('/ugc-appearance', [\App\Http\Controllers\Admin\UgcAppearanceController::class, 'save'])
+    ->middleware('throttle:60,1')
+    ->name('admin.ugc.appearance.save');

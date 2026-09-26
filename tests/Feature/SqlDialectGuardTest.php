@@ -722,6 +722,16 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
 
     $ugcVideo->products()->attach($product->id, ['position' => 0]);
 
+    $ugcSection = \App\Models\UgcSection::create([
+        'handle' => 'guard-rail-'.substr(md5(uniqid()), 0, 8),
+        'title' => 'Guard Rail',
+        'heading' => 'Guard heading',
+        'status' => 'publish',
+        'max_tiles' => 12,
+    ]);
+
+    $ugcSection->videos()->attach($ugcVideo->id, ['position' => 0]);
+
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
         'type' => 'percent',
@@ -805,6 +815,21 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * columns. No other route on this list touches that combination.
          */
         'admin-api/ugc-videos/{id}' => '/admin-api/ugc-videos/' . $ugcVideo->id,
+        /*
+         * Content -> Video sections -> Open (Lane V3). Listed here because this
+         * walk caught it too: the route landed with no entry on either list and
+         * this file went red, which is exactly what the walk is for.
+         *
+         * DRIVEN RATHER THAN EXCUSED, and not as "the same shape as
+         * ugc-videos/{id}" — the list above already records why that excuse is
+         * refused here. It is a different query: withCount() over a
+         * belongsToMany, then the pivot ordered by a column ON THE PIVOT
+         * (`ugc_section_video.position`), then a second count per row. An ORDER BY
+         * on a pivot column and a correlated count subquery are the two things
+         * MySQL and SQLite are most likely to disagree about in this module, and
+         * nothing else on this list does either.
+         */
+        'admin-api/ugc-sections/{id}' => '/admin-api/ugc-sections/' . $ugcSection->id,
         /*
          * The Journal editor's read of one article (Lane J). Reads the row and
          * then its translations, and it is listed here because this test caught

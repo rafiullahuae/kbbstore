@@ -8,6 +8,9 @@ use App\Models\Block;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\UgcSection;
+use App\Services\UgcRail;
+use App\Services\UgcSettings;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -68,9 +71,30 @@ final class Shortcodes
             $content
         );
 
-        return (string) preg_replace_callback(
+        $content = (string) preg_replace_callback(
             '/\[kbb_products\b([^\]]*)\]/',
             fn ($m) => self::products(self::attributes($m[1])),
+            $content
+        );
+
+        /*
+         * Shoppable video rails, LAST — and the order is the same argument the
+         * block/products order above makes. A block may contain [kbb_videos], so
+         * blocks are expanded first; a video rail cannot contain a shortcode,
+         * because its content is rows in `ugc_sections` rather than operator
+         * markup, so nothing has to run after it.
+         *
+         * ▲ AND [kbb_products] IS RENDERED AS A VIEW, WHICH A GREP FOR THE BLADE
+         * TAG CANNOT SEE. self::products() ends in view('components.product-grid'),
+         * so that template has a caller nothing in resources/views/ points at —
+         * which has caught a lane out before. This shortcode is the same shape:
+         * resources/views/ugc/rail.blade.php is reached from here and from NOWHERE
+         * ELSE, so a grep for 'ugc.rail' finds this file and a grep for the
+         * partial's own name finds nothing at all.
+         */
+        return (string) preg_replace_callback(
+            '/\[kbb_videos\b([^\]]*)\]/',
+            fn ($m) => self::videos(self::attributes($m[1])),
             $content
         );
     }
@@ -128,6 +152,123 @@ final class Shortcodes
         } finally {
             array_pop(self::$stack);
         }
+    }
+
+    /**
+     * [kbb_videos section="..."] — one shoppable video rail, anywhere.
+     *
+     * The owner's requirement in his own words: "can insert anywhere in the site,
+     * products and pages etc via short code". Which is what this is: a page body,
+     * a post body and an HTML block all go through render(), so a rail can sit in
+     * any of them, as many times as the owner likes, in any order beside anything
+     * else.
+     *
+     * ── IT RENDERS THE EMPTY STRING AND SAYS NOTHING, IN EVERY FAILURE ──────
+     *
+     * Module off, no `section`, no such handle, a draft section, a section
+     * restricted to the other storefront, or a section every clip of which is
+     * unpublished — all of them return ''. THE SAME RULE self::block() FOLLOWS,
+     * and for the reason its docblock gives: a shortcode that cannot resolve must
+     * not leave "[kbb_videos section=...]" in the middle of a published page for a
+     * shopper to read, and it must not print an error either, because the
+     * storefront is not where an authoring mistake is reported. Content →
+     * Shoppable video → Sections is, and it shows every section's status beside
+     * its shortcode.
+     *
+     * THE MODULE SWITCH IS CHECKED FIRST, BEFORE ANY QUERY. UgcRail::section()
+     * checks it too — this is the second lock and the cheap one, because it means
+     * a shop with the module off does not resolve the service out of the container
+     * to be told no.
+     *
+     * ── NOT CACHED HERE ────────────────────────────────────────────────────
+     *
+     * Every other arm of this class wraps its work in Cache::remember. This one
+     * does not, deliberately: App\Services\UgcRail already caches the rail's
+     * content for ten minutes under its own index, keyed by handle, locale and
+     * cap, and it is the layer that knows when to drop it (every UGC admin write
+     * calls UgcRail::flush()). A second cache over the top would hold a rendered
+     * string that Shortcodes::flush() clears and the UGC admin does not — so
+     * editing a video would change the rail for ten minutes and then change it
+     * back, which is the worst of both.
+     */
+    private static function videos(array $a): string
+    {
+        $handle = trim((string) ($a['section'] ?? ''));
+
+        if ($handle === '') {
+            return '';
+        }
+
+        $settings = app(UgcSettings::class);
+
+        if (! $settings->enabled()) {
+            return '';
+        }
+
+        /*
+         * `limit` and `columns` are both ATTRIBUTES AN AUTHOR TYPES, so both are
+         * validated against the same sets the admin screen offers and anything
+         * else is dropped rather than passed through. Rule 5's "a select stores
+         * one of its own options or the default", applied to a shortcode
+         * attribute — which is a place a value arrives from outside just as much
+         * as a POST body is.
+         */
+        $limit = isset($a['limit']) ? max(1, min(UgcSection::MAX_TILES, (int) $a['limit'])) : null;
+
+        $columns = isset($a['columns']) && isset(UgcSettings::COLUMNS[(string) $a['columns']])
+            ? (string) $a['columns']
+            : null;
+
+        $rail = app(UgcRail::class)->section(
+            $handle,
+            app()->getLocale(),
+            $limit,
+        );
+
+        if ($rail['tiles'] === []) {
+            return '';
+        }
+
+        /*
+         * ONE STYLESHEET AND ONE SCRIPT PER PAGE, AND @once DOES NOT DO IT.
+         *
+         * Blade's @once is scoped to a RENDER CYCLE, and every rail on a page is
+         * its own `view(...)->render()` call from here — so the counter is back at
+         * zero by the time the second rail starts and the directive fires again.
+         * Two rails on one page shipped the CSS twice and, worse, the SCRIPT twice:
+         * that script registers a delegated document click listener and an
+         * IntersectionObserver, so a second copy opens the player twice on one tap
+         * and observes every tile twice. Measured directly — two rails, two
+         * `id="kbb-ugc-style"`.
+         *
+         * A static on this class would be wrong in the other direction: it is
+         * per-process, so in a queue worker or a test process the second page would
+         * render no stylesheet at all. The container IS per request in production
+         * and per test in the suite, which is exactly the scope wanted.
+         */
+        $first = ! app()->bound('kbb.ugc.assets');
+
+        if ($first) {
+            app()->instance('kbb.ugc.assets', true);
+        }
+
+        return view('ugc.rail', [
+            'rail' => $rail,
+            'conf' => $settings->all(),
+            'withAssets' => $first,
+            'columnsOverride' => $columns,
+            // An author-supplied heading wins over the section's own, so the same
+            // section can carry a different heading on two pages.
+            'headingOverride' => isset($a['title']) ? (string) $a['title'] : null,
+            /*
+             * The like endpoint, with a PLACEHOLDER rather than a slug: one
+             * rail is one URL and the script substitutes the tile's own slug.
+             * Built with Url::to() so the /kbb-upgrade base path is honoured —
+             * and __SLUG__ is safe to interpolate because Url::to() never sees a
+             * value from outside.
+             */
+            'likeUrl' => Url::to('/api/ugc/__SLUG__/like'),
+        ])->render();
     }
 
     /** Parse key="value" pairs, tolerating single quotes and bare values. */

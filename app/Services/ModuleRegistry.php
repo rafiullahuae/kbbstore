@@ -293,6 +293,34 @@ class ModuleRegistry
          * `site` / `all` for the hover card, which renders "nothing visible" —
          * correct, since this changes nothing a shopper ever sees.
          */
+        /*
+         * Phase 20 — Shoppable UGC video (Lane V3). The rail itself.
+         *
+         * `live`, and App\Services\UgcSettings::enabled() is the reader — the
+         * ONE reader, called from App\Support\Shortcodes::videos() before any
+         * query runs. Off means the shortcode renders the empty string, so a page
+         * that already carries `[kbb_videos section="x"]` is byte-identical with
+         * the switch off. There is no rail on any template: every appearance of
+         * this module on the storefront is somewhere the owner wrote a shortcode,
+         * which is what "insert anywhere in the site" means.
+         *
+         * OFF BY DEFAULT, and that is what makes this package inert. The previous
+         * round shipped the library with NO registry row at all and said why in
+         * 2027_01_10_000001's header: a switch must not be drawn for something
+         * nothing reads, and ModuleFrameworkGuardTest enforces that in both
+         * directions. This is the round that draws a rail, so this is the round
+         * that adds the row.
+         *
+         * The settings screen is Appearance → Video rail, id `ugcstyle` — NOT
+         * "Appearance → Shoppable video", because AdminNavAndIdsTest refuses two
+         * sidebar entries with the same label and Content → Shoppable video is
+         * already the clip library's row,
+         * registered by resources/views/admin/partials/ugc-appearance-screen.blade.php
+         * — which is how the `it points every settings link at a console screen
+         * that exists` guard finds it (a partial declaring `var SCREEN = '...'`
+         * counts, the same way Media Library's does).
+         */
+        'shoppable_video' => ['store', 'Shoppable video', 'Rails of creator videos with the products tagged on each one, placed anywhere on the shop with a [kbb_videos] shortcode. The library is Content → Shoppable video, the rails are Content → Video sections, and the look is Appearance → Video rail. Off by default — nothing appears until you turn it on and write a shortcode.', false, 'Appearance → Video rail', 'ugcstyle', 'site', 'mid', 'Every video rail you have placed with a shortcode.', 'live'],
         'media_library' => ['store', 'Media Library', 'The grid of every image uploaded through the admin, with search by name, by upload date and by the product, brand or category using it — plus what each image is used by before you delete it. Always on: this is a screen, not a switch.', true, 'Content → Media Library', 'media', 'site', 'all', 'An admin screen. Nothing visible on the storefront.', 'screen'],
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],

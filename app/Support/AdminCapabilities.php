@@ -737,6 +737,30 @@ final class AdminCapabilities
         ['GET', 'admin-api/ugc-videos', 'ugc.view'],
         ['GET', 'admin-api/ugc-videos/**', 'ugc.view'],
 
+        /*
+         * Content -> Shoppable video -> Sections, and Appearance -> Shoppable
+         * video (Lane V3). The SAME two capabilities, and the same
+         * writes-above-reads order, for the same first-match-wins reason spelt
+         * out above — POST admin-api/ugc-sections/7/videos reorders a rail on the
+         * live shop, and a GET rule listed first would resolve it to ugc.view.
+         *
+         * NO THIRD CAPABILITY FOR THE APPEARANCE SCREEN, and that is a decision:
+         * the look of the rail and the contents of the rail are the same job done
+         * by the same person, and a `ugc.appearance` nobody would ever grant
+         * separately is a capability that exists to be ticked. The split that IS
+         * real is view/manage — the person who checks whether a rail is live is
+         * not always the person who may replace a clip's file.
+         */
+        ['POST', 'admin-api/ugc-sections', 'ugc.manage'],
+        ['POST', 'admin-api/ugc-sections/**', 'ugc.manage'],
+        ['PUT', 'admin-api/ugc-sections/**', 'ugc.manage'],
+        ['PATCH', 'admin-api/ugc-sections/**', 'ugc.manage'],
+        ['DELETE', 'admin-api/ugc-sections/**', 'ugc.manage'],
+        ['GET', 'admin-api/ugc-sections', 'ugc.view'],
+        ['GET', 'admin-api/ugc-sections/**', 'ugc.view'],
+        ['POST', 'admin-api/ugc-appearance', 'ugc.manage'],
+        ['GET', 'admin-api/ugc-appearance', 'ugc.view'],
+
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],

@@ -61,4 +61,18 @@ require __DIR__.'/payments-webhooks.php';
  */
 require __DIR__.'/security-csp.php';
 
+/*
+ * Shoppable video — one public read and one public write (Phase 20, Lane V3).
+ * In the api group for the two reasons routes/ugc.php's own header sets out and
+ * not for convenience: a like is posted by a script on a page that may be cached,
+ * so a CSRF token minted per session would be stale for the first shopper served
+ * that page; and the one-per-browser token cookie is written and read by this one
+ * endpoint, so it has to be on one side of EncryptCookies or every like looks
+ * like a first like.
+ *
+ * BOTH ROUTES 404 UNTIL THE `shoppable_video` MODULE IS TURNED ON, which is
+ * every install on the day this applies.
+ */
+require __DIR__.'/ugc.php';
+
 });

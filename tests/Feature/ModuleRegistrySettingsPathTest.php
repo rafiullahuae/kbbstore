@@ -186,7 +186,13 @@ it('names a real console location in every module row that names one at all', fu
     // from '' — the value the console renders as "screen not built yet" —
     // to 'Store → Ecommerce → Checkout', which is where its three controls
     // really are. One more row claiming a screen, and one fewer naming none.
-    expect($checked)->toBe(36);
+    //
+    // 37 with Lane V3: `shoppable_video` is a new row and it names
+    // 'Appearance → Video rail', which is a real screen registered by
+    // resources/views/admin/partials/ugc-appearance-screen.blade.php. The count is
+    // deliberately exact rather than a floor — that is what makes it notice a row
+    // added with a screen string nobody checked.
+    expect($checked)->toBe(37);
     expect($wrong)->toBe([]);
 });
 

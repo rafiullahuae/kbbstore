@@ -57,6 +57,7 @@ use App\Services\AccountPanel;
 use App\Services\BuildMyRoutine;
 use App\Services\CartPage;
 use App\Services\CartPanel;
+use App\Services\UgcSettings;
 use App\Services\CheckoutPage;
 use App\Services\HeaderSettings;
 use App\Services\HomepageContent;
@@ -467,6 +468,17 @@ function ehSchemaModules(): array
          * — it had simply never been added here, which is the whole difference
          * between "uses the schema" and "is checked by it".
          */
+        /*
+         * ── LANE V3: Shoppable video, adopted on the way in ─────────────────
+         *
+         * Step 4 of the migration path in ModuleSchema's own header, taken by the
+         * round that created the module rather than by a later one — which is the
+         * cheap moment to take it. The other three steps are "merely tidier"; this
+         * line is the one that buys the guarantee: from here it cannot ship a value
+         * with no control, a control with no value, the same control twice, or a
+         * field the generic settings endpoint would drop in silence.
+         */
+        'shoppable_video' => ['schema' => UgcSettings::SCHEMA, 'tabs' => UgcSettings::TABS, 'policy' => UgcSettings::POLICY],
         'cart_panel' => ['schema' => CartPanel::SCHEMA, 'tabs' => CartPanel::TABS, 'policy' => CartPanel::POLICY],
         'mobile_header' => ['schema' => MobileHeader::SCHEMA, 'tabs' => MobileHeader::TABS, 'policy' => MobileHeader::POLICY],
         'newsletter_settings' => ['schema' => NewsletterSettings::SCHEMA, 'tabs' => NewsletterSettings::TABS, 'policy' => NewsletterSettings::POLICY],

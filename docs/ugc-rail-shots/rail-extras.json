@@ -1,0 +1,235 @@
+{
+  "rating": {
+    "390": [
+      {
+        "product": "Advanced Snail 96 Mucin Power Esse",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.8 out of 5 from 1,284 reviews",
+        "count_visible": false,
+        "bar_width": 27.03,
+        "card_height": 78.25
+      },
+      {
+        "product": "Heartleaf 77% Soothing Toner",
+        "brand_shown": "Anua",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.7 out of 5 from 612 reviews",
+        "count_visible": false,
+        "bar_width": 27.03,
+        "card_height": 78.25
+      },
+      {
+        "product": "Hyaluronic Acid Watery Sun Gel",
+        "brand_shown": "Isntree",
+        "brand_clipped": false,
+        "bar": false,
+        "bar_label": null,
+        "count_visible": null,
+        "bar_width": null,
+        "card_height": 62
+      },
+      {
+        "product": "Low pH Good Morning Gel Cleanser",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.6 out of 5 from 843 reviews",
+        "count_visible": false,
+        "bar_width": 27.03,
+        "card_height": 78.25
+      },
+      {
+        "product": "Advanced Snail 96 Mucin Power Esse",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.8 out of 5 from 1,284 reviews",
+        "count_visible": false,
+        "bar_width": 27.03,
+        "card_height": 78.25
+      },
+      {
+        "product": "Low pH Good Morning Gel Cleanser",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.6 out of 5 from 843 reviews",
+        "count_visible": false,
+        "bar_width": 27.03,
+        "card_height": 78.25
+      },
+      {
+        "product": "Glow Deep Serum Rice + Alpha Arbut",
+        "brand_shown": "Beauty of Joseon",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.7 out of 5 from 431 reviews",
+        "count_visible": false,
+        "bar_width": 27.03,
+        "card_height": 78.25
+      }
+    ],
+    "1280": [
+      {
+        "product": "Advanced Snail 96 Mucin Power Esse",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.8 out of 5 from 1,284 reviews",
+        "count_visible": true,
+        "bar_width": 62.66,
+        "card_height": 62
+      },
+      {
+        "product": "Heartleaf 77% Soothing Toner",
+        "brand_shown": "Anua",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.7 out of 5 from 612 reviews",
+        "count_visible": true,
+        "bar_width": 54.05,
+        "card_height": 62
+      },
+      {
+        "product": "Hyaluronic Acid Watery Sun Gel",
+        "brand_shown": "Isntree",
+        "brand_clipped": false,
+        "bar": false,
+        "bar_label": null,
+        "count_visible": null,
+        "bar_width": null,
+        "card_height": 62
+      },
+      {
+        "product": "Low pH Good Morning Gel Cleanser",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.6 out of 5 from 843 reviews",
+        "count_visible": true,
+        "bar_width": 54.05,
+        "card_height": 62
+      },
+      {
+        "product": "Advanced Snail 96 Mucin Power Esse",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.8 out of 5 from 1,284 reviews",
+        "count_visible": true,
+        "bar_width": 62.66,
+        "card_height": 62
+      },
+      {
+        "product": "Low pH Good Morning Gel Cleanser",
+        "brand_shown": "COSRX",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.6 out of 5 from 843 reviews",
+        "count_visible": true,
+        "bar_width": 54.05,
+        "card_height": 62
+      },
+      {
+        "product": "Glow Deep Serum Rice + Alpha Arbut",
+        "brand_shown": "Beauty of Joseon",
+        "brand_clipped": false,
+        "bar": true,
+        "bar_label": "Rated 4.7 out of 5 from 431 reviews",
+        "count_visible": true,
+        "bar_width": 54.05,
+        "card_height": 78.25
+      }
+    ]
+  },
+  "columns": {
+    "390": {
+      "peek (as designed)": {
+        "tile_width": 158,
+        "page_overflow": 0
+      },
+      "one": {
+        "tile_width": 324,
+        "page_overflow": 0
+      },
+      "one_peek (1.2)": {
+        "tile_width": 268,
+        "page_overflow": 0
+      },
+      "two": {
+        "tile_width": 156,
+        "page_overflow": 0
+      },
+      "two_three (2.3)": {
+        "tile_width": 134.08,
+        "page_overflow": 0
+      },
+      "three": {
+        "tile_width": 99.98,
+        "page_overflow": 0
+      },
+      "grid_two": {
+        "tile_width": 156,
+        "page_overflow": 0
+      }
+    },
+    "1280": {
+      "peek (as designed)": {
+        "tile_width": 158,
+        "page_overflow": 0
+      },
+      "one": {
+        "tile_width": 1126,
+        "page_overflow": 0
+      },
+      "one_peek (1.2)": {
+        "tile_width": 936.33,
+        "page_overflow": 0
+      },
+      "two": {
+        "tile_width": 557,
+        "page_overflow": 0
+      },
+      "two_three (2.3)": {
+        "tile_width": 482.78,
+        "page_overflow": 0
+      },
+      "three": {
+        "tile_width": 367.33,
+        "page_overflow": 0
+      },
+      "grid_two": {
+        "tile_width": 272.5,
+        "page_overflow": 0
+      }
+    }
+  },
+  "rtl": {
+    "390": {
+      "dir": "rtl",
+      "page_overflow": 0,
+      "play_triangle_transform": "matrix(-1, 0, 0, 1, 0, 0)",
+      "rating_at_inline_end": "left (correct for rtl)"
+    },
+    "1280": {
+      "dir": "rtl",
+      "page_overflow": 0,
+      "play_triangle_transform": "matrix(-1, 0, 0, 1, 0, 0)",
+      "rating_at_inline_end": "left (correct for rtl)"
+    }
+  },
+  "overflow": {
+    "390": {
+      "html": 0,
+      "rail_overflows_page": true
+    },
+    "1280": {
+      "html": 0,
+      "rail_overflows_page": true
+    }
+  },
+  "errors": []
+}

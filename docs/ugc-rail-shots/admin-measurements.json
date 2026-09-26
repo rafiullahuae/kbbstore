@@ -1,0 +1,74 @@
+{
+  "errors": [
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "paths": {
+    "sections": {
+      "crumb": "Content",
+      "title": "Video sections",
+      "rows": 3,
+      "overflow": 0
+    },
+    "popup": {
+      "modal": true,
+      "fileInputs": [
+        "video/mp4,video/webm,video/quicktime",
+        "video/mp4,video/webm"
+      ],
+      "posterHasFileInput": false,
+      "overflow": 0
+    },
+    "appearance": {
+      "crumb": "Appearance",
+      "title": "Shoppable video",
+      "tabs": [
+        "Layout",
+        "Motion",
+        "What a tile shows",
+        "Likes"
+      ],
+      "fields": 5,
+      "warning": false,
+      "overflow": 0
+    }
+  }
+}
