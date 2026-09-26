@@ -3,6 +3,60 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.283
+Shoppable video, made findable: one sidebar row instead of three, and demo data
+so the screens can be understood by looking at them.
+
+NOTHING ABOUT THE SHOP CHANGES. This is entirely a change to where things sit in
+the admin, plus a new Demo Content type you have to import on purpose.
+
+### ONE ROW, THREE TABS
+
+  Content -> Shoppable video          <- the only row now; opens all your sections
+    * Sections      every section, each with its shortcode, and New section
+    * All clips     the whole clip library
+    * Appearance    what a rail looks like
+
+There used to be three rows for this one feature -- Content -> Shoppable video
+for the clips, Content -> Video sections for the rails, and Appearance -> Video
+rail for the look. Three doors, and nothing said which was the way in. Every
+link and bookmark you already have still works.
+
+The flow is the one you asked for: the row opens the list of all sections; click
+Open on a section and you get its videos in the order they appear on the shop;
+click Edit on a video and everything about that clip opens in a popup -- title,
+caption, where it came from, its files, the products on it, and when it shows.
+
+### DEMO DATA: Safety -> Demo Content -> Videos
+
+Two sections, six clips, with real products from your own catalogue tagged on
+them, and one clip deliberately placed in BOTH sections -- because a clip can
+belong to several rails at once, and that is the hardest thing to guess from an
+empty screen.
+
+The clips are published and carry a real video file, so a rail built from them
+genuinely renders and loops rather than showing a still. The footage is an
+abstract gradient this application generates -- deliberately not something that
+looks like real creator footage, because a demo that did would be a photograph
+of a person this shop has no permission from, which is the exact thing the
+permission gate exists to prevent.
+
+Remove clears every row AND both media files. Nothing is left behind.
+
+To see a rail on the shop you still need two deliberate steps, unchanged: switch
+the module on at Store -> Modules -> Shoppable video, and paste a section's
+shortcode onto a page.
+
+Files: resources/views/admin/partials/ugc-sections-screen.blade.php,
+ugc-library-screen.blade.php, ugc-appearance-screen.blade.php,
+app/Http/Controllers/Admin/DemoContentController.php,
+app/Support/UgcDemoMedia.php, app/Services/ModuleRegistry.php, and
+database/migrations/2027_02_20_000000_clear_caches_ugc_one_front_door.php.
+
+THAT MIGRATION IS NOT OPTIONAL. Three admin screens changed and compiled screens
+are cached by path, so without it the console still draws three rows, two of
+which open screens with no tab strip -- from a package that reported success.
+
 ## 2.60.282
 Two lanes: the site is 1680px wide now, and the shoppable-video rail has a
 storefront.
