@@ -155,6 +155,58 @@ class PageController extends Controller
         return '(?!(?:' . $alternates . ')$)[a-z0-9]+(?:-[a-z0-9]+)*';
     }
 
+    /**
+     * A content page — /about/, /delivery/, /faqs/, /refund_returns/ and the
+     * other three routed slugs.
+     *
+     * ── THE `seo` COLUMN ON THIS ROW WAS WRITTEN AND READ BY NOTHING ────────
+     *
+     * This method passed the view a row and no SEO context at all, so every
+     * content page took the layout's defaults: the `<title>` from
+     * @section('title'), the description from the SITE-WIDE
+     * `seo_default_description`, and the canonical from the request path.
+     * `pages.seo` — the same `{title, desc, og_image, canonical, noindex}` shape
+     * that `products`, `categories`, `brands` and `posts` all carry — reached
+     * the storefront nowhere.
+     *
+     * Measured on a running server before this change, with the override saved
+     * on the `faqs` row:
+     *
+     *     seo.title     "OVERRIDE TITLE"        <title>Frequently Asked Questions · K-Beauty Bliss</title>
+     *     seo.desc      "OVERRIDE DESCRIPTION"  <meta name="description" content="Shop Korean skincare in the UAE — …">
+     *     seo.canonical /somewhere-else/        <link rel="canonical" href="…/faqs/">
+     *     seo.noindex   true                    <meta name="robots" content="index, follow">
+     *
+     * The last line is the one that matters beyond tidiness. `SeoAudit::scanPages()`
+     * SKIPS a page whose `seo.noindex` is set — it treats the page as
+     * deindexed and stops auditing it — while the page itself went on inviting
+     * the crawl. So the one screen the owner checks reported a page as out of
+     * the index because he had asked for it, and the page was in it. That is the
+     * same shape as the /cart leak CLAUDE.md records: two files disagreeing
+     * about one decision, with the half nobody looks at being the wrong one.
+     *
+     * ── WHY EVERY KEY IS CONDITIONAL, AND NOT MERGED WITH A DEFAULT ─────────
+     *
+     * Rule 1. A page with no override must render byte-for-byte what it renders
+     * today, and the layout's defaults are not reproducible from here: the title
+     * comes from a Blade section this method cannot see, and the description
+     * falls through Seo::describe() to a setting. So a key is passed only when
+     * the override actually carries it, and an untouched shop hands the layout
+     * an empty array — which array_merge treats as absent, exactly as before.
+     * PageSeoOverridesTest pins the byte-identical half as well as the four
+     * override cases.
+     *
+     * `title_is_final` and `title_token` travel with a title override for the
+     * same reason `post()` sends them: an override goes through
+     * TitleTemplate::render(), which DELETES any token it was not handed, so a
+     * value carrying Yoast's `%%title%%` would otherwise publish the site name
+     * alone — the defect that reached production on 671 product pages.
+     *
+     * NOT added here, deliberately: a `BreadcrumbList`. A content page emits
+     * none today, and adding one would change all seven pages on a shop that
+     * has set no override at all, which rule 1 forbids and which is a separate
+     * decision with its own pin to advance.
+     */
     public function show(string $slug)
     {
         $page = Page::query()
@@ -162,9 +214,45 @@ class PageController extends Controller
             ->where('status', 'published')
             ->firstOrFail();
 
+        $override = is_array($page->seo) ? $page->seo : [];
+        $seoCtx = [];
+
+        if (trim((string) ($override['title'] ?? '')) !== '') {
+            $seoCtx['title'] = (string) $override['title'];
+            $seoCtx['title_is_final'] = true;
+            $seoCtx['title_token'] = (string) $page->title;
+        }
+
+        if (trim((string) ($override['desc'] ?? '')) !== '') {
+            $seoCtx['description'] = (string) $override['desc'];
+        }
+
+        if (trim((string) ($override['og_image'] ?? '')) !== '') {
+            $seoCtx['image'] = (string) $override['og_image'];
+        }
+
+        /*
+         * A canonical override is absolutised and scheme-checked by
+         * Support\Seo::canonical() before it becomes an href, exactly as the
+         * per-product and per-category overrides are, and SeoAudit's
+         * `bad_canonical` check reports one pointing off-site. This method adds
+         * no second opinion about it.
+         */
+        if (trim((string) ($override['canonical'] ?? '')) !== '') {
+            $seoCtx['url'] = (string) $override['canonical'];
+        }
+
+        if (! empty($override['noindex'])) {
+            $seoCtx['noindex'] = true;
+        }
+
         return view('store.page', [
             'page' => $page,
             'settings' => $this->settings,
+            // The layout reads `$seoCtx` and merges it over its own defaults;
+            // see resources/views/layouts/store.blade.php. An empty array is the
+            // no-override case and merges to nothing.
+            'seoCtx' => $seoCtx,
         ]);
     }
 
