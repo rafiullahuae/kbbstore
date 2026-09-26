@@ -249,6 +249,65 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
     {{-- Only emitted when the accent differs from the design default. --}}
     <style id="kbb-brand-accent">:root,.kbb-checkout,.kbb-cart{--pink:{{ $kbbAccent['base'] }};--pink-deep:{{ $kbbAccent['deep'] }};}</style>
 @endif
+{{--
+    Appearance → Site layout: the site width, the gutter and the product column
+    count.                                                            Lane W1
+
+    EMITTED ONLY WHEN SOMETHING HAS BEEN MOVED, exactly like the accent block
+    above it and for exactly the same reason. SiteLayout::css() answers the empty
+    string while all ten settings are at their shipped values, so a shop that
+    applies this package and touches nothing gains NOT ONE BYTE on any page.
+    Restating the defaults here would have been correct in pixels and wrong in
+    bytes — a new <style> element on forty storefront pages at once, which is the
+    thing StorefrontEnglishUnchangedTest exists to notice, for a change that
+    renders identically.
+
+    It also keeps the defaults in ONE place, the `:root` block at the top of
+    resources/css/kbb/kbb.css, rather than in a PHP copy that can drift from it.
+    SiteLayoutDefaultsMatchCssTest pins that the two agree, and goes red if
+    either moves alone.
+
+    ▲ EVERY LINE OF THIS IS ARRANGED TO EMIT NOTHING, AND THAT IS NOT COSMETIC.
+    Written the obvious way — the directives each on their own line — this block
+    added four blank lines to the <head> of THIRTY-FIVE storefront pages, and
+    StorefrontEnglishUnchangedTest reported every one of them. The whitespace was
+    the whole diff: the width change itself is pure CSS and this walk cannot see
+    it, so advancing the pin would have been advancing it for nothing. Two
+    mechanics make it zero instead:
+
+      • PHP eats a newline immediately after `?>`, so a raw-PHP block and a
+        conditional that both CLOSE at the end of a line contribute nothing.
+      • the opening directive shares a line with the comment above it and with
+        the <style> tag it guards, so no newline is left outside the branch.
+
+    Rearranging it back costs four blank lines on every page of the shop.
+
+    {!! !!} rather than {{ }}: this is a stylesheet, and every byte of the
+    selectors, properties, units and punctuation in it is a literal in
+    App\Services\SiteLayout. The only thing a save can influence is an integer
+    clamped to its own slider's range — see that class's PX_VARS and css(), and
+    rule 5.
+
+    AFTER @stack('styles') AND AFTER THE ACCENT, so it wins over both: a page
+    sheet pushed onto that stack declares its own `.wrap`, and the point of this
+    block is that the owner's number beats every sheet's.
+
+    THE BLOCK FORM OF THE PHP DIRECTIVE, NOT THE ONE-LINE PARENTHESISED ONE.
+    Blade extracts raw PHP blocks before it compiles anything else, with a
+    non-greedy pattern — so the first opening directive it finds pairs with the
+    NEXT closing one, whatever lies between. In the one-line form this assignment
+    opened a block that closed on the account panel's closing directive forty
+    lines down, swallowing `$apFont = …` into it: every storefront page answered
+    `Undefined variable $apFont`, a 500 on the whole shop, from a pair of
+    parentheses. (The two markers are deliberately not spelled out with their @
+    anywhere in this comment, for the same reason the verbatim markers are not
+    spelled out in the Journal templates: that extraction pass runs before
+    comments are stripped, so naming one here would arm the trap it describes.)
+--}}@php
+    $kbbLayoutCss = app(\App\Services\SiteLayout::class)->css();
+@endphp
+@if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
+@endif
     {{--
         The account panel's welcome typeface, and ONLY for someone who can see
         it.

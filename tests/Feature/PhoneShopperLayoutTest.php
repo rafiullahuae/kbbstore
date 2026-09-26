@@ -408,8 +408,23 @@ it('keeps a side gutter under the product grid on a phone', function () {
      */
     $source = phoneFlat(phoneTracked('resources/css/kbb/kbb-shop.css'));
 
-    expect(phoneHas($source, '.wrap{max-width:1240px;margin:0 auto;padding:0 20px}'))->toBeTrue(
-        'kbb-shop.css no longer gives .wrap a 20px gutter, so the override may be unnecessary.');
+    /*
+     * MOVED BY LANE W1, AND THE POINT OF THE ASSERTION IS UNCHANGED.
+     *
+     * This read `.wrap{max-width:1240px;margin:0 auto;padding:0 20px}` — the
+     * fourth of six page-container widths this shop carried. The width is one
+     * token now (`--site-max`, 1680px) and the gutter is another
+     * (`--site-gutter`, 22px), but the fact this case exists for is exactly as
+     * true as it was: `.wrap` in this sheet DOES set a horizontal padding, and
+     * `.shop`'s shorthand below still zeroes it, so the 16px override above is
+     * restoring the only gutter rather than adding a second one.
+     *
+     * `padding-inline` is a LONGHAND and `.shop`'s `padding:22px 0 60px` is a
+     * shorthand written later, so it still wins — the conversion did not make
+     * the override unnecessary, and this is what would go red if it ever did.
+     */
+    expect(phoneHas($source, '.wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}'))->toBeTrue(
+        'kbb-shop.css no longer gives .wrap a horizontal gutter, so the override may be unnecessary.');
     expect(phoneHas($source, '.shop{display:grid;grid-template-columns:250px 1fr;gap:28px;'.
         'padding:22px 0 60px}'))->toBeTrue(
         '.shop no longer zeroes its horizontal padding with a shorthand, so the override above '.

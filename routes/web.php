@@ -487,6 +487,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/slim-footer-admin.php';
 
         /*
+         * Appearance → Site layout. Lane W1: the one number the whole shop is
+         * wide (1680px) and the one rule that derives the product grid's column
+         * count, replacing six disagreeing page containers and ten media
+         * queries. Same group, same reason as the rows above it -- it writes
+         * settings rows and needs its own capability, `sitelayout.manage`.
+         */
+        require __DIR__.'/site-layout-admin.php';
+
+        /*
          * Store → Security. Lane C. Inside this group for the reason the
          * health-admin comment above gives: RouteRegistrar::middleware()
          * REPLACES rather than appends, so a fresh registration with a chained
