@@ -205,16 +205,63 @@
 
   /* ------------------------------------------------------------- the sidebar */
 
+  /*
+   * ── THE ONE FRONT DOOR ──────────────────────────────────────────────────
+   *
+   * The owner: "I really don't understand the videos rail section, it's really
+   * confusing." Three sidebar rows — Content → Shoppable video, Content → Video
+   * sections and Appearance → Video rail — were three doors into one feature,
+   * and none of them said which was the way in. There is one row now, and these
+   * are its tabs.
+   *
+   * The two screens that lost their row stay ROUTABLE by id, which is the same
+   * thing this console already does for `blog` and `rev-capsule` — see the
+   * TITLES comment in app.blade.php. #ugcvideo, ?go=ugcstyle and every existing
+   * deep link still work.
+   *
+   * Each screen keeps a DISTINCT #ptitle, deliberately: all three guard their
+   * own render() on that text, so two screens sharing a title would both answer
+   * a single navigation and fight over #content. The tab strip is what tells
+   * the owner they are in one place; the title tells the three screens apart.
+   */
+  /* On window, because the other two tabs live in their own IIFEs and each one
+     has to draw the same strip. Defined here because this is the screen the one
+     sidebar row opens, so it is the file that is always present. */
+  window.kbbUgcTabs = function (active) {
+    var tabs = [
+      ['ugcsections', 'Sections'],
+      ['ugcvideo', 'All clips'],
+      ['ugcstyle', 'Appearance']
+    ];
+
+    return '<div class="subtabs" style="margin-bottom:14px">'
+      + tabs.map(function (t) {
+          return '<button class="subtab' + (t[0] === active ? ' on' : '') + '"'
+            + ' data-ugc-tab="' + t[0] + '">' + t[1] + '</button>';
+        }).join('')
+      + '</div>';
+  };
+
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('[data-ugc-tab]') : null;
+    if (!t) return;
+    e.preventDefault();
+    window.go(t.getAttribute('data-ugc-tab'));
+  });
+
   function addNavEntry() {
     window.kbbAddNavEntry({
       screen: SCREEN,
-      label: 'Video sections',
+      label: 'Shoppable video',
       icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="m9 14 4 2-4 2z"/>',
       group: 'Content',
       /* 'ugcvideo' is the LIBRARY screen's own id (ugc-library-screen.blade.php
          declares it), and the first draft said 'ugc' — which nothing registers,
          so AdminNavAndIdsTest failed on a dead anchor. Found by running it. */
-      after: ['ugcvideo', 'media', 'htmlblocks']
+      /* The library screen no longer registers a row of its own, so anchoring
+                 to it would be a dead anchor — the mistake this comment used to
+                 record. Anchored to the Content rows that do exist. */
+                 after: ['media', 'htmlblocks', 'posts']
     });
   }
 
@@ -232,7 +279,7 @@
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = 'Content';
-    if (title) title.textContent = 'Video sections';
+    if (title) title.textContent = 'Shoppable video';
 
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
@@ -740,7 +787,7 @@
 
   function render() {
     var host = document.querySelector('#content');
-    if (!host || (document.querySelector('#ptitle') || {}).textContent !== 'Video sections') return;
+    if (!host || (document.querySelector('#ptitle') || {}).textContent !== 'Shoppable video') return;
 
     if (busy && !sections.length && !editing) {
       host.innerHTML = '<div class="ugx-wrap"><div class="ugx-card"><p class="ugx-sub">Loading…</p></div></div>';
@@ -748,6 +795,7 @@
     }
 
     host.innerHTML = '<div class="ugx-wrap">'
+      + window.kbbUgcTabs(SCREEN)
       + (banner ? '<div class="ugx-note is-bad">' + esc(banner) + '</div>' : '')
       + (moduleOn ? '' : '<div class="ugx-note is-warm"><b>Shoppable video is switched off.</b> '
           + 'Sections and clips can be set up now, and nothing appears on the shop until you turn it on in '

@@ -61,3 +61,8 @@ app/*.zip
 # routes/ and public/build/, and a package carrying it is refused whole.
 _preview.sh
 _shot*.mjs
+
+# Files the shoppable-video demo (and any real upload) writes into the preview
+# web root. Generated, never source: App\Support\UgcDemoMedia writes them at
+# seed time and Demo Content's Remove deletes them again.
+public-web-root/uploads/

@@ -1,10 +1,10 @@
 {{--
-    Appearance → Video rail. (Lane V3 — Phase 20, the rail itself)
+    Content → Shoppable video → Appearance. (Lane V3 — Phase 20, the rail
+    itself; moved under one row by the integrator, see ugcTabsHTML.)
 
     Pulled into resources/views/admin/app.blade.php at the very end, after that
     file closes its raw block, so this runs once the console's own script has
-    defined window.go, window.kbbAddNavEntry and toast(). It registers its own
-    sidebar entry and wraps window.go, exactly as the ten screens beside it do, so
+    defined window.go, window.kbbAddNavEntry and toast(). It wraps window.go, exactly as the ten screens beside it do, so
     that one include is the whole of the change to that file.
 
     ── WHAT THIS SCREEN IS ──────────────────────────────────────────────────
@@ -127,22 +127,20 @@
     return (e && e.body && e.body.error) ? e.body.error : fallback;
   }
 
-  function addNavEntry() {
-    window.kbbAddNavEntry({
-      screen: SCREEN,
-      /* 'Video rail' AND NOT 'Shoppable video', and it is not a preference.
-         AdminNavAndIdsTest refuses two sidebar entries with the same label —
-         "the owner cannot tell which does what" — and Content → Shoppable video
-         is the library, registered by ugc-library-screen.blade.php. Found by
-         running it. So the three rows read: Content → Shoppable video (the
-         clips), Content → Video sections (the rails), Appearance → Video rail
-         (what a rail looks like). */
-      label: 'Video rail',
-      icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/>',
-      group: 'Appearance',
-      after: ['dividers', 'prodstyles', 'homepage']
-    });
-  }
+  /*
+   * ── NO SIDEBAR ENTRY, DELIBERATELY ──────────────────────────────────────
+   *
+   * This screen used to register "Appearance -> Video rail". It is now the
+   * "Appearance" TAB of Content -> Shoppable video. The long argument that used
+   * to stand here -- why the label had to be "Video rail" and not "Shoppable
+   * video" -- was about a collision between two SIDEBAR LABELS. There is one
+   * label now, so the collision it guarded against cannot arise.
+   *
+   * The block is deleted rather than left uncalled because AdminNavAndIdsTest
+   * parses this source for the label rather than watching the call.
+   *
+   * Still routable by id: #ugcstyle and ?go=ugcstyle open it.
+   */
 
   var previousGo = window.go;
 
@@ -276,6 +274,7 @@
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
 
     host.innerHTML = '<div class="ugy-wrap">'
+      + (window.kbbUgcTabs ? window.kbbUgcTabs(SCREEN) : '')
       + (banner ? '<div class="ugy-note is-bad">' + esc(banner) + '</div>' : '')
       + (moduleOn ? '' : '<div class="ugy-note is-warm"><b>Shoppable video is switched off.</b> '
           + 'Nothing on this screen changes the shop until you turn it on in '
@@ -335,7 +334,13 @@
     if (el.tagName === 'SELECT') { values[el.getAttribute('data-ugy-key')] = el.value; }
   });
 
-  addNavEntry();
+  /*
+   * NO SIDEBAR ROW ANY MORE. This is the "Appearance" tab of Content →
+   * Shoppable video. The long note above about 'Video rail' vs 'Shoppable
+   * video' described a collision between two SIDEBAR LABELS; there is only one
+   * label now, so the collision cannot arise. The id stays routable.
+   */
+  /* No addNavEntry() here — see the note above where the block used to be. */
 })();
 </script>
 @endverbatim

@@ -36,7 +36,7 @@ use Illuminate\Support\Str;
  */
 class DemoContentController extends Controller
 {
-    private const TYPES = ['customers', 'products', 'orders', 'pages', 'posts', 'reviews', 'menu', 'routines'];
+    private const TYPES = ['customers', 'products', 'orders', 'pages', 'posts', 'reviews', 'menu', 'routines', 'videos'];
 
     /**
      * Self-healing rather than trusting the migration ran: if an update's
@@ -218,6 +218,22 @@ class DemoContentController extends Controller
             }
         }
 
+        /*
+         * The two demo media FILES are not rows, so the loop above cannot see
+         * them. They are deleted through the same UgcMedia::forget() a real
+         * clip uses, which re-checks the shape of the path before unlinking and
+         * refuses anything that is not a single segment under /uploads/ugc/.
+         *
+         * A real upload can never collide with these: UgcMedia::place() names
+         * every stored file `<kind>-<timestamp>-<10 random chars>.<ext>`, and
+         * these two are the fixed names `demo-clip.webm` and `demo-poster.jpg`.
+         */
+        if ($type === 'videos') {
+            $media = app(\App\Services\UgcMedia::class);
+            $media->forget('/'.\App\Services\UgcMedia::DIR.'/demo-clip.webm');
+            $media->forget('/'.\App\Services\UgcMedia::DIR.'/demo-poster.jpg');
+        }
+
         DB::table('demo_seed_log')->where('type', $type)->delete();
 
         return $expected;
@@ -239,6 +255,174 @@ class DemoContentController extends Controller
     // creates immediately so a failure partway through still leaves a
     // fully-removable trail rather than an orphaned half-import.
     // ---------------------------------------------------------------
+
+    /**
+     * Two video sections and six clips, so the shoppable-video screens can be
+     * understood by looking at them rather than by reading about them.
+     *
+     * ── WHY THIS TYPE EXISTS AT ALL ─────────────────────────────────────────
+     *
+     * The owner's words: "I really don't understand the videos rail section,
+     * it's really confusing." Every one of those screens draws an empty state
+     * on a shop that has never used them, and an empty state cannot show a
+     * sections list, a section's clip list, or the per-clip editor -- which is
+     * the whole shape he was asking about. Nothing was broken; there was
+     * nothing to look at.
+     *
+     * ── PUBLISHED, AND THAT IS DELIBERATE ───────────────────────────────────
+     *
+     * These rows carry a real file, a real poster and `rights_status` granted,
+     * so they satisfy UgcVideo::published() and a rail built from them actually
+     * renders. A demo whose clips are all drafts would demonstrate the admin
+     * list and nothing else -- and "see it in action" was the request.
+     *
+     * It is still inert on the shop as it ships, twice over: `Store -> Modules
+     * -> Shoppable video` is OFF, and a rail appears only where a [kbb_videos]
+     * shortcode has been written. So seeding this adds nothing to any page
+     * until the owner does both of those on purpose.
+     *
+     * ── THE PRODUCTS ARE REAL ONES ──────────────────────────────────────────
+     *
+     * Tagged against whatever visible products this shop already has, taken in
+     * id order, rather than invented. A demo tile linking to a product that
+     * does not exist would 404 the moment he clicked it, which teaches him the
+     * feature is broken.
+     */
+    private function seedVideos(): int
+    {
+        $media = \App\Support\UgcDemoMedia::materialise();
+
+        if ($media === null) {
+            throw new \RuntimeException(
+                'Could not write into the uploads/ugc folder, so the demo clips have no video file. '
+                .'Check that the web root is writable.'
+            );
+        }
+
+        /*
+         * Real, visible products, in id order, or an empty list. `take(12)` and
+         * not all of them: a tile shows a handful, and a demo that tagged the
+         * whole catalogue would make the editor's product list unreadable.
+         */
+        $products = Product::query()
+            ->where('is_visible', true)
+            ->orderBy('id')
+            ->take(12)
+            ->get();
+
+        $clips = [
+            ['Glass skin in 6 steps', '@layla.skin', 'The order that actually matters, and the two steps you can skip.'],
+            ['Salon day: bonding mask', '@jumeirah.glow', 'Fifteen minutes, once a week. This is the one I keep rebuying.'],
+            ['SPF that never stings', '@noor.routine', 'Reapplying over makeup without pilling — the trick is the pat, not the rub.'],
+            ['Double cleanse, no drama', '@amira.beauty', 'Oil first, foam second. If it squeaks, it was too much.'],
+            ['Barrier repair week', '@dxb.skincare', 'Everything off the shelf except three things, for seven days.'],
+            ['Under-eye, honestly', '@sara.k.beauty', 'What actually moved the needle, and what did nothing at all.'],
+        ];
+
+        $count = 0;
+        $videos = [];
+
+        foreach ($clips as $i => [$title, $handle, $caption]) {
+            $video = \App\Models\UgcVideo::create([
+                'slug' => $this->uniqueSlug(Str::slug($title).'-demo', 'ugc_videos'),
+                'title' => $title.' (Demo)',
+                'caption' => $caption,
+                'status' => 'publish',
+                'file_path' => $media['clip'],
+                'bytes' => \App\Support\UgcDemoMedia::clipBytes(),
+                /*
+                 * THE SAME FILE SERVES AS THE TEASER, and that is not a shortcut.
+                 * UgcVideo::mediaState() answers MEDIA_POSTER_ONLY when there is
+                 * a clip and a poster but no teaser, and a poster-only tile shows
+                 * a STILL where a real one loops — so a demo without this would
+                 * have demonstrated everything except the 2-3 second loop, which
+                 * is the part the owner asked about first.
+                 *
+                 * Honest, because the clip genuinely IS a 2.7s silent loop at
+                 * tile size. A real upload gets a purpose-cut teaser from
+                 * UgcTranscoder; this one needs no cutting because it was
+                 * recorded at teaser length to begin with.
+                 */
+                'teaser_path' => $media['clip'],
+                'teaser_bytes' => \App\Support\UgcDemoMedia::clipBytes(),
+                'poster_path' => $media['poster'],
+                'poster_bytes' => \App\Support\UgcDemoMedia::posterBytes(),
+                'width' => 270,
+                'height' => 480,
+                'duration_ms' => 2700,
+                'source_platform' => 'upload',
+                'creator_handle' => $handle,
+                /*
+                 * GRANTED, and it is honest: this footage is an abstract
+                 * gradient this application generated, so the shop genuinely
+                 * does hold the rights to it. A demo that faked a grant on
+                 * someone else's clip would be teaching the owner to do the one
+                 * thing UgcVideo's rights gate exists to stop.
+                 */
+                'rights_status' => 'granted',
+                'rights_granted_at' => now(),
+                'rights_evidence' => 'Demo content generated by this application. Replace with your own clips.',
+            ]);
+
+            $this->log('videos', \App\Models\UgcVideo::class, $video->id);
+            $count++;
+            $videos[] = $video;
+
+            // Two or three products per clip, walking the real catalogue so no
+            // two demo tiles look identical.
+            if ($products->isNotEmpty()) {
+                $attach = [];
+                $take = 2 + ($i % 2);
+
+                for ($n = 0; $n < $take; $n++) {
+                    $product = $products[($i * 2 + $n) % $products->count()];
+                    $attach[$product->id] = ['position' => $n, 'at_ms' => null];
+                }
+
+                $video->products()->sync($attach);
+            }
+        }
+
+        $sections = [
+            ['handle' => 'demo-shop-the-look', 'title' => 'Shop the look (Demo)',
+             'heading' => 'Shop the look', 'subheading' => 'Real routines from the people who use them.',
+             'slice' => [0, 4]],
+            ['handle' => 'demo-this-week', 'title' => 'This week on video (Demo)',
+             'heading' => 'This week', 'subheading' => 'Three short ones worth two minutes.',
+             'slice' => [3, 3]],
+        ];
+
+        foreach ($sections as $position => $row) {
+            $section = \App\Models\UgcSection::create([
+                'handle' => $row['handle'],
+                'title' => $row['title'],
+                'heading' => $row['heading'],
+                'subheading' => $row['subheading'],
+                'status' => 'publish',
+                'max_tiles' => 12,
+                'position' => $position,
+            ]);
+
+            $this->log('videos', \App\Models\UgcSection::class, $section->id);
+            $count++;
+
+            /*
+             * The two sections OVERLAP on purpose -- clips 4 and 5 are in both.
+             * One clip belonging to several rails is a real property of this
+             * data model and the least obvious one from an empty screen.
+             */
+            [$from, $len] = $row['slice'];
+            $attach = [];
+
+            foreach (array_slice($videos, $from, $len) as $n => $video) {
+                $attach[$video->id] = ['position' => $n];
+            }
+
+            $section->videos()->sync($attach);
+        }
+
+        return $count;
+    }
 
     private function seedCustomers(): int
     {

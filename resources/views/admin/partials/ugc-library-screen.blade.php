@@ -1,12 +1,13 @@
 {{--
-    Content → Shoppable video. (Lane V2 — Phase 20, the data model and the ingest)
+    Content → Shoppable video → All clips. (Lane V2 — Phase 20, the data model
+    and the ingest; moved under one row by the integrator.)
 
     Pulled into resources/views/admin/app.blade.php at the very end, after that
     file closes its raw block, so this runs once the console's own script has
     defined window.go, window.kbbAddNavEntry, window.KBBArabic and toast(). It
-    registers its own sidebar entry and wraps window.go, exactly as the nine
-    screens beside it do, so that one include is the whole of the change to
-    that file.
+    wraps window.go, exactly as the nine screens beside it do, so that one
+    include is the whole of the change to that file. It registers NO sidebar
+    entry of its own — it is a tab of Content → Shoppable video.
 
     ── WHAT THIS SCREEN IS FOR ──────────────────────────────────────────────
 
@@ -230,15 +231,23 @@
 
   /* ------------------------------------------------------------- the sidebar */
 
-  function addNavEntry() {
-    window.kbbAddNavEntry({
-      screen: SCREEN,
-      label: 'Shoppable video',
-      icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/>',
-      group: 'Content',
-      after: ['media', 'htmlblocks', 'posts']
-    });
-  }
+  /*
+   * ── NO SIDEBAR ENTRY, DELIBERATELY ──────────────────────────────────────
+   *
+   * This screen used to register its own row, labelled "Shoppable video". It is
+   * now the "All clips" TAB of Content -> Shoppable video, whose single row is
+   * registered by ugc-sections-screen.blade.php.
+   *
+   * THE WHOLE kbbAddNavEntry BLOCK IS GONE rather than merely uncalled, and
+   * that is the point: AdminNavAndIdsTest discovers sidebar entries by PARSING
+   * THIS SOURCE for a `label:` inside a kbbAddNavEntry({...}) call, not by
+   * watching which calls run. A commented-out call left the test reading two
+   * entries labelled "Shoppable video" and failing on the duplicate -- which is
+   * the test doing its job, and how this comment came to be written.
+   *
+   * The screen id stays routable: #ugcvideo and ?go=ugcvideo still open it, the
+   * same way `blog` and `rev-capsule` stay routable without rows of their own.
+   */
 
   var previousGo = window.go;
 
@@ -254,7 +263,7 @@
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = 'Content';
-    if (title) title.textContent = 'Shoppable video';
+    if (title) title.textContent = 'All clips';
 
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
@@ -812,9 +821,10 @@
        #content wholesale, so a late render from an in-flight request must not
        overwrite whichever screen the owner moved to. */
     var title = document.querySelector('#ptitle');
-    if (!title || title.textContent !== 'Shoppable video') return;
+    if (!title || title.textContent !== 'All clips') return;
 
     host.innerHTML = '<div class="wrap ugs-wrap">'
+      + (window.kbbUgcTabs ? window.kbbUgcTabs(SCREEN) : '')
       + (editing ? editorHTML() : listHTML())
       + '</div>';
 
@@ -900,7 +910,13 @@
     upload(e.target.getAttribute('data-ugs-upload'), e.target);
   });
 
-  addNavEntry();
+  /*
+   * NO SIDEBAR ROW ANY MORE — see ugcTabsHTML() in ugc-sections-screen. This is
+   * the "All clips" tab of Content → Shoppable video. The id stays routable, so
+   * #ugcvideo and ?go=ugcvideo still open it, exactly as `blog` and
+   * `rev-capsule` do for screens that share a row.
+   */
+  /* No addNavEntry() here — see the note above where the block used to be. */
 })();
 </script>
 @endverbatim

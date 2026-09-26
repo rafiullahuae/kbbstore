@@ -275,14 +275,27 @@ it('adds exactly one module switch, live, and shipped off', function () {
     expect($default)->toBeFalse()                              // ships OFF: rule 1
         ->and($status)->toBe('live')                           // something reads it
         /*
-         * 'Appearance → Video rail' and NOT 'Appearance → Shoppable video'.
-         * AdminNavAndIdsTest refuses two sidebar entries with the same label, and
-         * Content → Shoppable video is the clip library's row. So the three rows
-         * read: the clips, the rails (Content → Video sections), and what a rail
-         * looks like (Appearance → Video rail).
+         * ADVANCED DELIBERATELY BY THE INTEGRATOR, for the change it means.
+         *
+         * This used to read 'Appearance → Video rail' / 'ugcstyle', and the note
+         * here explained that the label could not be 'Shoppable video' because
+         * AdminNavAndIdsTest refuses two sidebar entries with the same label —
+         * Content → Shoppable video being the clip library's row.
+         *
+         * THAT ARGUMENT DISSOLVED WHEN THE THREE ROWS BECAME ONE. The owner's
+         * words: "I really don't understand the videos rail section, it's really
+         * confusing." Three sidebar rows for one feature — the clips, the rails
+         * and the look — were three doors with nothing saying which was the way
+         * in. There is one row now, Content → Shoppable video, and the other two
+         * screens are its Sections / All clips / Appearance tabs. With one label
+         * there is no collision left for the old note to guard against.
+         *
+         * The module's settings screen is therefore the row itself, and the
+         * route is the screen that row opens. `ugcstyle` stays routable — see
+         * the note where its kbbAddNavEntry block used to be.
          */
-        ->and($screen)->toBe('Appearance → Video rail')
-        ->and($route)->toBe('ugcstyle')
+        ->and($screen)->toBe('Content → Shoppable video')
+        ->and($route)->toBe('ugcsections')
         ->and($group)->toBe('store')
         ->and($name)->toBe('Shoppable video');
 
