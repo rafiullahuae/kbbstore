@@ -29,6 +29,30 @@
 @section('content')
 @php
     $ck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>';
+
+    /*
+     * -- DID THE SHOPPER ASK FOR A COLUMN COUNT? ----------------- Lane W1 --
+     *
+     * `$cols` is Facets::columns(), which answers '4' whether or not `?cols` is
+     * in the URL -- so "four across" was the shop's only setting AND its
+     * default, and the two were indistinguishable. `data-cols` on the grid is a
+     * PIN (see kbb-shop.css), so emitting it unconditionally pinned every
+     * visitor at four columns at every screen size, including 1680 and 2560.
+     * That is exactly the thing the owner asked to have removed: "on 1680px the
+     * grid products will show 1 column extra".
+     *
+     * So the attribute is emitted only when the shopper has actually chosen,
+     * and otherwise the grid takes the automatic answer from --kbb-track, which
+     * gives four at 1280 (unchanged) and five at 1680. A click still pins,
+     * instantly: resources/js/kbb/shop.js sets the attribute itself and the CSS
+     * keyed on it applies without a reload.
+     *
+     * The button highlight follows the same fact rather than $cols, because a
+     * highlighted "4" above a five-column grid is the control lying about the
+     * page. Nothing is highlighted until something is chosen, which is the
+     * truthful state and not a new control.
+     */
+    $colsChosen = request()->query('cols') !== null && in_array((string) $cols, ['2', '3', '4'], true);
 @endphp
 
 {{--
@@ -106,9 +130,9 @@
             <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>
             <div class="gright">
                 <div class="colsel" id="colsel">
-                    <button type="button" data-c="2"@if ('2' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>
-                    <button type="button" data-c="3"@if ('3' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 3) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="4.5" height="14" rx="1.3"/><rect x="9.75" y="5" width="4.5" height="14" rx="1.3"/><rect x="16.5" y="5" width="4.5" height="14" rx="1.3"/></svg></button>
-                    <button type="button" data-c="4"@if ('4' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 4) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
+                    <button type="button" data-c="2"@if ($colsChosen && '2' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>
+                    <button type="button" data-c="3"@if ($colsChosen && '3' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 3) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="4.5" height="14" rx="1.3"/><rect x="9.75" y="5" width="4.5" height="14" rx="1.3"/><rect x="16.5" y="5" width="4.5" height="14" rx="1.3"/></svg></button>
+                    <button type="button" data-c="4"@if ($colsChosen && '4' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 4) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
                 </div>
                 <div class="sortsel">{{ __('store.shop.sort_label') }}
                     <select id="sort" onchange="var u=new URL(location.href);u.searchParams.set('orderby',this.value);u.searchParams.delete('paged');location.href=u.toString()">
@@ -130,7 +154,7 @@
             </div>
         @endif
 
-        <div class="grid" id="grid" data-cols="{{ $cols }}">
+        <div class="grid" id="grid"@if ($colsChosen) data-cols="{{ $cols }}"@endif>
             @forelse ($products as $product)
                 {{-- The first tile is the Largest Contentful Paint element on
                      this page at 1280 and the first thing in the grid on a

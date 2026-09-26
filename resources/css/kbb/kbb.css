@@ -5,13 +5,204 @@
     --r-s:10px; --r-m:16px; --r-l:24px; --sh-s:0 1px 2px rgba(42,34,40,.05),0 4px 14px rgba(42,34,40,.06);
     --sh-m:0 14px 40px -18px rgba(42,34,40,.28); --sh-l:0 24px 60px -22px rgba(42,34,40,.4); --sans:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
     --ease:cubic-bezier(.22,.61,.36,1);--mw:min(68vw,300px);--sw:min(58vw,250px);
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       THE SITE WIDTH SYSTEM — one source of truth, and the narrow measures
+       kept narrow on purpose.                                      Lane W1
+
+       BEFORE THIS BLOCK there was no site width to change. A census of
+       resources/views/{store,components,partials,layouts} and
+       resources/css/kbb counted 217 `max-width:<n>px` declarations; 142 of
+       them are MEDIA-QUERY BREAKPOINTS and only 75 are element widths, of
+       29 distinct values. Of those 75, fourteen are page containers, and
+       they disagreed six ways: 1400 here (twice, and a dead 1200 above it),
+       1352 on a homepage section, 1240 on /shop, 1180 on a product page and
+       the brand landing, 1160 on the Journal and an article, 1040 on the
+       cart and the checkout. The other sixty-one are MEASURES — a 720px
+       article column, a 440px form, a 340px card, 62ch of prose — and a
+       measure is not a site width. Widening a paragraph to 1680px does not
+       make the shop wider, it makes it unreadable, so those keep their own
+       names below and are not on --site-max.
+
+       --site-max IS 1680px BY DEFAULT and that is the one deliberate
+       default change in this lane. The owner asked for it in as many words
+       ("site width max i need 1680 px"). Everything else here ships at the
+       value the page already had, so applying the package moves nothing
+       else until somebody moves a slider.
+
+       WHY min() AND NOT A MEDIA QUERY. `min(100%, var(--site-max))` is the
+       whole of "1680 at the top and auto-adjusting below it": below 1680 the
+       100% wins and the container is the screen less its gutters, above it
+       the cap wins. There is no breakpoint to maintain and no width at which
+       it is undefined, which is what "fits on any kind of device
+       automatically" has to mean to be testable.
+       ═══════════════════════════════════════════════════════════════════════ */
+    --site-max:1680px;
+
+    /* The side gutter. clamp() so it can grow on a wide screen without a
+       breakpoint; it ships as a CONSTANT 22px — clamp(22px, 2.2vw, 22px) is
+       22px at every width — because 22px is exactly what the generic .wrap
+       already used, so rule 1 holds until the owner moves the slider. */
+    --site-gutter-min:22px;
+    --site-gutter-max:22px;
+    --site-gutter:clamp(var(--site-gutter-min),2.2vw,var(--site-gutter-max));
+
+    /* ── THE MEASURES, named for what they are ──────────────────────────────
+       These are NOT the site width and must never be put on --site-max. They
+       are declared here so that the next person looking for "the width" finds
+       the distinction at the same place as the width itself, rather than
+       finding 29 numbers and guessing. Each ships at the value its own
+       surface already used. */
+    --measure-prose:62ch;      /* a paragraph. 62ch is ~10 words a line. */
+    --measure-lede:42ch;       /* a hero sub-line. */
+    --measure-form:440px;      /* a single-column form. */
+    --measure-card:340px;      /* one card on its own. */
+    --measure-article:720px;   /* an article body: store/post.blade.php. */
+
+    /* ── THE PRODUCT GRID, and the four numbers that decide a column count ──
+       See the one grid rule below. --kbb-gap is ProductStyles' `grid_gap` default,
+       repeated here because that service emits it nowhere on the storefront
+       (see docs/W1-SITE-WIDTH.md §"found, not fixed"). */
+    --kbb-gap:16px;
+    --kbb-tile:260px;
+    --kbb-cols-floor:2;
+    --kbb-cols-cap:8;
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       ONE TRACK DEFINITION, USED BY EVERY PRODUCT GRID.
+
+       A custom property may hold an arbitrary token stream, so the whole
+       minmax() lives here once and four sheets say `repeat(auto-fill,
+       …)` instead of carrying a media-query ladder each.
+
+       EVERY LENGTH IN IT RESOLVES AGAINST THE GRID, NOT THE VIEWPORT, and
+       that is the point rather than a detail. `100%` inside
+       grid-template-columns is the grid's own content box, so the count
+       follows the space the grid actually has. /shop is where that matters:
+       at 1280 its grid is 962px wide, because a 250px filter rail and a 28px
+       gap sit beside it — and its old ladder keyed off the VIEWPORT, so at
+       1180 it declared four columns for a grid with 852px to put them in,
+       200px a tile. A viewport breakpoint cannot know that; `100%` cannot
+       not know it.
+
+       THREE TERMS, INNERMOST FIRST:
+
+         max(--kbb-tile, cap-share)   the track is at least --kbb-tile wide,
+                                      and at least a --kbb-cols-cap-th of the
+                                      row, which is what stops auto-fill
+                                      placing more columns than the cap.
+         min(…, floor-share, 100%)    …but never more than a
+                                      --kbb-cols-floor-th of the row, which
+                                      is what GUARANTEES the floor: at 320px
+                                      a 260px tile plus a 16px gap does not
+                                      fit twice, and without this term the
+                                      narrowest phone would drop to one
+                                      column. `100%` is the ordinary
+                                      auto-fill overflow guard.
+
+       WHY NOT CONTAINER QUERIES, since the brief asked. `cqi` would let the
+       tile SCALE with the container (`calc(100px + 12cqi)`), and that was the
+       first draft. It was rejected on measurement: it moves seven cells of
+       the width table where a constant tile moves four, it needs
+       `container-type` on each grid's parent (and therefore `:has()`, or a
+       markup change and an English-pin move on five pages), and it buys
+       nothing here — the count is ALREADY container-derived, by `100%` and
+       `1fr`, in every browser since 2017. Container queries are for changing
+       a card's INTERNAL layout by the space that card has; the skins in
+       kbb-grid-skins.css already do that job by other means. If that ever
+       changes, `@container` is the right tool and this is the note saying so.
+
+       WHY NOT A vw LADDER. `calc(100px + 10vw)` reproduces today's counts
+       better in the middle of the range and then FALLS from five columns to
+       four between 1680 and 2560, because the viewport keeps growing while
+       the container is capped at --site-max. A wider screen showing fewer
+       products is the exact defect the owner is asking to have removed.
+       ═══════════════════════════════════════════════════════════════════════ */
+    /* ▲ THE WHOLE minmax() USED TO BE A CUSTOM PROPERTY HERE, ON :root, AND
+       THAT WAS A BUG.
+
+       A `var()` inside a custom property's value is substituted at computed-value
+       time ON THE ELEMENT WHERE THE PROPERTY IS DECLARED, and the resolved token
+       stream is what inherits. So a track property holding `minmax(… tile …)`
+       declared on :root baked :root's 260px in, and kbb-shop.css's
+       `#grid{--kbb-tile:220px}` could not reach it: the shop listing kept
+       measuring three columns at 1280 where the arithmetic said four, with
+       `--kbb-tile` computing to 220px on that very element. A custom property
+       that reads other custom properties is only overridable where it is
+       DECLARED, not where it is used.
+
+       The expression is inlined into the rule below instead, so every `var()`
+       in it resolves against the grid it is sizing. There is still exactly one
+       copy of it.
+       ═══════════════════════════════════════════════════════════════ */
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   img{max-width:100%}
-  .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+  /* THE PAGE CONTAINER. One rule, one place.
+
+     There were two `.wrap` rules in this sheet and the first one never
+     applied: this line said 1200px and line ~1580 below said 1400px, same
+     selector, same specificity, later wins. Two thousand lines apart, so
+     anyone reading either one read a number the shop does not use. They are
+     one rule now and the second is gone. */
+  .wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     EVERY PRODUCT GRID, ONE DECLARATION.                          Lane W1
+
+     This replaced FOUR independent column systems that disagreed with each
+     other at the same viewport width — measured, in Chromium, before a line
+     was changed:
+
+       .kbb-pgrid   kbb-grid-skins.css   repeat(4,1fr) + 5 media queries
+                    (1180→3, 900→2, plus a --kbb-cols trio at 1181/1180/900)
+       .grid        kbb-shop.css         repeat(2|3|4,1fr) by data-cols
+                    + 1080→3 and 820→2, keyed off the VIEWPORT while the
+                    grid sits beside a 250px filter rail
+       .rel         kbb-product.css      repeat(4,1fr) + 880→2
+       .brw-grid    store/brands.blade   auto-fill on --brw-min — the one
+                    surface that already did this, and the precedent here
+
+     At 1180 the homepage rails showed 3 and /shop showed 4; at 834 the rails
+     showed 2 and /shop showed 3. Same shop, same screen, two answers,
+     because two sheets had each picked their own breakpoints.
+
+     `auto-fill` derives the count from the ROW, so there is no breakpoint
+     left to disagree about.
+
+     ▲ AN EXACT PINNED COUNT IS A RULE HERE, NEVER A CUSTOM PROPERTY, and the
+     first draft of this got it wrong in a way worth recording because it looks
+     harmless. The pin set a count property to 4 alongside a track property holding
+     `minmax(0,1fr)`,
+     and the phone breakpoint undid it by setting that track property to
+     `initial`. `initial` on a
+     CUSTOM property is the guaranteed-invalid value, not "go back to the :root
+     declaration" — so the track's var() would substitute nothing,
+     `repeat(auto-fill, )` is invalid at computed-value time, and the whole
+     declaration becomes `grid-template-columns:none`: every product card in one
+     full-width column, on every phone. A custom property cannot be locally
+     reverted to the value it inherits, so anything that has to be UNDONE at a
+     breakpoint must not be one. Pins are `grid-template-columns` rules inside
+     `@media (min-width: 901px)` instead — kbb-shop.css for the shopper's 2/3/4
+     buttons, App\Services\SiteLayout::css() for the owner's — and below that
+     width nothing matches, so this declaration and --kbb-cols-floor take the
+     phone back with nothing to undo.
+     ═══════════════════════════════════════════════════════════════ */
+  .kbb-pgrid,.rel,#grid{
+    display:grid;
+    gap:var(--kbb-gap);
+    grid-template-columns:repeat(auto-fill,minmax(min(
+        100%,
+        calc((100% - (var(--kbb-cols-floor) - 1) * var(--kbb-gap)) / var(--kbb-cols-floor)),
+        max(
+            var(--kbb-tile),
+            calc((100% - (var(--kbb-cols-cap) - 1) * var(--kbb-gap)) / var(--kbb-cols-cap))
+        )
+    ),1fr));
+  }
   ::selection{background:var(--blush)}
 
   /* announcement */
@@ -588,7 +779,7 @@ svg:not([width]):not([height]){max-width:100%;max-height:100%}
 html{scroll-behavior:smooth}
 body{margin:0;background:#fff;color:var(--ink);font:400 14px/1.6 Poppins,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .kbb-home a{text-decoration:none;color:inherit}
-.kbb-home .wrap{max-width:1400px;margin:0 auto;padding:0 22px}
+.kbb-home .wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}
 .kbb-home .note{background:#2A2228;color:#F2DDE4;padding:9px;text-align:center;font-size:12.5px}
 .kbb-home h1,.kbb-home h2,.kbb-home h3{margin:0;letter-spacing:-.02em}
 /* The fallback <h1> for a home page whose hero section is switched off. Taken
@@ -954,7 +1145,9 @@ body{padding-bottom:46px}
 .kbb-home .ct{width:74px}
 .kbb-home .ct b{font-size:11px;margin-top:7px}
 .kbb-home .ct .n{display:none}
-.kbb-pgrid{grid-template-columns:repeat(2,1fr);gap:10px}
+/* A .kbb-pgrid column count lived here too — the FOURTH in this one sheet.
+   --kbb-cols-floor gives the phone its two columns now, and the gap comes from
+   --kbb-gap, which the grid-skins sheet already narrows to 10px under 400px. */
 .kbb-card{border-radius:14px}
 .kbb-card-thumb{aspect-ratio:1/1.02}
 .kbb-home .cb{padding:9px 10px 11px}
@@ -1102,8 +1295,20 @@ body{padding-bottom:46px}
 .kbb-home .flinks a{padding:2px 0}
 .kbb-home .fb{margin-top:14px;padding-top:0;border:0}
 .kbb-home *{box-sizing:border-box}
-.kbb-pgrid{gap:20px}
-.kbb-pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+/* ════ A SECOND, COMPLETE COPY OF kbb-grid-skins.css STARTS HERE ═══════════
+   Lines below this point repeat ~180 rules that also live in
+   resources/css/kbb/kbb-grid-skins.css, including THREE more declarations of
+   the product grid's column count (two here, one at the end of this sheet with
+   its own 1100/900 ladder). That is where the census of "four column systems"
+   turned out to be SIX, and it was found by measurement rather than by reading:
+   after the ladders in kbb-grid-skins.css were replaced, /shop and the homepage
+   rails still showed four columns at 1680, because the last copy in THIS sheet
+   was winning on every page that does not load the other one.
+
+   The duplication itself is not this lane's to unpick — it is ~180 rules of
+   card styling and any one of them may be the one a skin depends on. Only the
+   COLUMN COUNTS are removed, and only because a count in six places cannot be
+   controlled from one. */
 .kbb-card{border:1px solid rgba(42,34,40,.06);border-radius:14px;overflow:hidden;text-decoration:none;color:#2A2228;display:block}
 .kbb-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#FFF8F5}
 .kbb-card .cb{padding:10px}
@@ -1151,7 +1356,9 @@ body{padding-bottom:46px}
 .kbb-pgrid[data-skin="minimal"] .kbb-card{border:0;background:none}
 .kbb-pgrid[data-skin="minimal"] .kbb-card-thumb{border-radius:12px}
 .kbb-pgrid[data-skin="minimal"] .cb{padding:12px 2px}
-.kbb-pgrid[data-skin="horizontal"]{grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr))!important}
+/* The horizontal skin overrides the tile MINIMUM, not the mechanism — see the
+   matching rule in kbb-grid-skins.css. */
+.kbb-pgrid[data-skin="horizontal"]{--kbb-tile:330px!important;--kbb-cols-floor:1!important}
 .kbb-pgrid[data-skin="horizontal"] .kbb-card{display:grid;grid-template-columns:40% 1fr;min-height:148px;border:1px solid rgba(42,34,40,.08);border-radius:14px;overflow:hidden;background:#fff}
 .kbb-pgrid[data-skin="horizontal"] .kbb-card-thumb{aspect-ratio:auto;height:100%;border-radius:0}
 .kbb-pgrid[data-skin="horizontal"] .kbb-card-thumb img,.kbb-pgrid[data-skin="horizontal"] .kbb-card-thumb .im{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -1286,9 +1493,24 @@ body{padding-bottom:46px}
 .kbb-pgrid[data-skin="reveal"] .kbb-card:hover .cb{opacity:1}}
 @media(hover:hover){.kbb-pgrid[data-skin="overlay"] .kbb-card-cart{opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
 .kbb-pgrid[data-skin="overlay"] .kbb-card:hover .kbb-card-cart{opacity:1;transform:none}}
-.kbb-pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-@media(max-width:1100px){.kbb-pgrid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:900px){.kbb-pgrid{grid-template-columns:repeat(2,1fr);gap:10px}}
+/* ▲ THE LADDER THAT WAS ACTUALLY WINNING, and the reason the first attempt at
+   this lane changed nothing at 1680.
+
+   Three declarations — repeat(4,1fr), 1100→3, 900→2 — at the very end of the
+   sheet every page loads, so they beat the identical-specificity rules in
+   kbb-grid-skins.css AND the new one at the top of this file. With the other
+   sheet's ladder removed and this one left in place, the homepage rails
+   measured four columns in a 1598px row where the arithmetic says five: the
+   change was correct and invisible. Measuring the RENDERED count at seventeen
+   widths is what found it; reading the sheet that was edited would not have.
+
+   The gap is kept, as a gap: --kbb-gap, so the track arithmetic in this sheet
+   divides the row by the same number the browser lays out with. */
+/* No phone gap override. Measured on the shipped shop, .kbb-pgrid's gap is
+   16px at EVERY width: the `gap:10px` that sat here, and the `gap:10px` in
+   kbb-grid-skins.css's 400px query, were both dead — a later
+   `gap:var(--kbb-gap,16px)` in that sheet overrode them. Converting a dead
+   declaration to a live one is a change nobody asked for, so neither was. */
 .kbb-card-thumb .ph2{position:absolute;inset:0;display:block}
 .kbb-card-thumb .ph2::after{content:'';position:absolute;inset:0;
   background:radial-gradient(58% 46% at 34% 24%,rgba(255,255,255,.55),transparent 62%)}
@@ -1324,8 +1546,13 @@ body{
   border:1px solid rgba(226,190,203,.5);
 }
 .kbb-home .sec{padding:clamp(9px,1.1vw,14px) 0}
+/* The homepage's section card. It carried its own 1352px, which is why the
+   home page measured 1352 at every width above it while the generic .wrap
+   said 1400 — a third number, on the one page that matters most. It is on
+   --site-max now; the `calc(100% - 24px)` inset that shapes the card is its
+   own and stays. */
 .kbb-home .sec > .wrap{padding-inline-start:clamp(18px,2vw,28px);padding-inline-end:clamp(18px,2vw,28px);
-  max-width:1352px;width:calc(100% - 24px)}
+  max-width:var(--site-max);width:calc(100% - 24px)}
 /* The inset is logical, so the artwork hugs the inline-end corner either way.
    The border-radius shorthand and the 230deg mask gradient that shape it have no
    logical form, so rather than respelling three direction-carrying values and
@@ -1467,7 +1694,9 @@ body{
 
 
 
-.wrap{max-width:1400px;margin:0 auto;padding:0 22px}
+/* The second copy of `.wrap` lived here and declared 1400px, silently
+   overriding the 1200px one at the top of this sheet. There is one now, at
+   the top, on --site-max. */
 
 
 

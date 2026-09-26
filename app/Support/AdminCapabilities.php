@@ -209,6 +209,12 @@ final class AdminCapabilities
         // two above.
         'slimfooter.manage' => ['owner', 'manager', 'editor'],
 
+        // The site width, the side gutter and the product column count: one
+        // screen, nine numbers, and every one of them printed into a stylesheet
+        // on every page of the shop. Storefront appearance again, and its own
+        // capability for the same reason as the three above. (Lane W1)
+        'sitelayout.manage' => ['owner', 'manager', 'editor'],
+
         // Reviews. The export is separated from the rest of the screen because
         // the review rows carry author_email and the reviewer's IP.
         'reviews.view' => ['owner', 'manager', 'support', 'editor'],
@@ -803,6 +809,8 @@ final class AdminCapabilities
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/checkout-page', 'checkoutpage.manage'],
         ['*', 'admin-api/slim-footer', 'slimfooter.manage'],
+        // One line and no '/**' sibling: this screen has no sub-endpoint.
+        ['*', 'admin-api/site-layout', 'sitelayout.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.

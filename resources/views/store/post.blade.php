@@ -77,7 +77,31 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
   a{color:inherit}
-  .wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+  /* THE PAGE CONTAINER, on the site width.                        Lane W1
+
+     This is a STANDALONE DOCUMENT: it carries its own <html>, its own <head>
+     and its own :root, and it does not load resources/css/kbb/kbb.css. So
+     --site-max is not inherited from anywhere and the literal below is the one
+     place in this repo other than that sheet's :root where the number 1680
+     appears. That duplication is unavoidable for a document that loads no
+     shared stylesheet, so it is pinned instead of trusted:
+     SiteLayoutDefaultsMatchCssTest asserts that every var(--site-max, N)
+     fallback in resources/views agrees with kbb.css, and goes red if either
+     moves alone.
+
+     The var() is not decoration. Appearance -> Site layout emits
+     <style id="kbb-layout"> into this document's head too, so a moved slider
+     reaches the Journal as well as the shop; the fallback is what this page
+     uses until one moves.
+
+     The ARTICLE column is NOT on this. store/post.blade.php keeps
+     `article{max-width:720px}` because 720px is a reading measure and a 1680px
+     paragraph is unreadable. This width is the page chrome around it. */
+  .wrap{max-width:var(--site-max,1680px);margin-inline:auto;
+    /* The clamp is spelled out rather than taken from --site-gutter, which is
+       declared in kbb.css and this document does not load it. The emitted block
+       sets the two ENDS, so both halves reach here. */
+    padding-inline:clamp(var(--site-gutter-min,22px),2.2vw,var(--site-gutter-max,22px))}
   .head{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line-2)}
   .head-in{display:flex;align-items:center;gap:18px;height:68px}
   .logo{font-size:20px;font-weight:700;letter-spacing:-.02em;text-decoration:none}.logo span{color:var(--pink)}
@@ -150,6 +174,27 @@
   .mnav-x{align-self:flex-end;font-size:20px;background:none;border:none;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
   @media(max-width:900px){h1{font-size:26px}.mgrid{grid-template-columns:1fr}.nav-links{display:none}.burger{display:grid}}
 </style>@endverbatim
+{{--
+    Appearance → Site layout, in a document that loads no shared stylesheet.
+                                                                       Lane W1
+    This page carries its own <html> and its own :root, so the only way a moved
+    slider reaches it is for the same block the shared layout emits to be emitted
+    here too. AFTER the <style> above, so the owner's number wins over the
+    literal fallback in it; and empty while every setting is at its shipped
+    value, so this document gains no bytes until one moves — which is why it can
+    be added to a page StorefrontEnglishUnchangedTest pins.
+
+    ▲ ARRANGED TO EMIT NOTHING. The directives share lines with the comment and
+    with the tag they guard, and both close at end of line so PHP eats the
+    newline after each `?>`. Written the obvious way this added blank lines to
+    the <head> of this document and of every page using the shared layout, and
+    the walk reported all of them — for a change it cannot otherwise see, because
+    the width itself is CSS. See the long note in layouts/store.blade.php.
+--}}@php
+    $kbbLayoutCss = app(\App\Services\SiteLayout::class)->css();
+@endphp
+@if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
+@endif
 </head>
 <body>
 <header class="head"><div class="wrap head-in">

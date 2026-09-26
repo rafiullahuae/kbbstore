@@ -4,10 +4,19 @@
 
 *{box-sizing:border-box}
 
-.kbb-pgrid{gap:20px}
+/* A `gap:20px` sat here and was dead: the `gap:var(--kbb-gap,16px)` further
+   down this sheet overrode it, and the measured gap is 16px at every width.
+   Removed rather than converted, because the base rule in kbb.css now supplies
+   `gap:var(--kbb-gap)` and a second number here could only disagree with the
+   one the track arithmetic divides by. */
 
 
-.kbb-pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+/* The base grid is declared once in kbb.css (.kbb-pgrid,.rel,.grid[data-cols])
+   on the auto-fill track there, so this sheet no longer sets a column count. It used
+   to declare `repeat(4,1fr)` with no breakpoints and it loads AFTER kbb.css,
+   which is exactly why the count ladder further down had to exist here. */
+/* The gap comes from --kbb-gap, declared in kbb.css, which the track
+   arithmetic there divides the row by as well — one number for both. */
 
 .kbb-card{border:1px solid rgba(42,34,40,.06);border-radius:14px;overflow:hidden;text-decoration:none;color:#2A2228;display:block}
 
@@ -100,7 +109,13 @@
 
 .kbb-pgrid[data-skin="minimal"] .cb{padding:12px 2px}
 
-.kbb-pgrid[data-skin="horizontal"]{grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr))!important}
+/* The horizontal skin is a wide card, so it overrides the tile MINIMUM rather
+   than the mechanism: the same auto-fill, a bigger floor, and a column floor of
+   one because a 40/60 split needs the whole row on a phone. The `!important`
+   was fighting this sheet's own repeat(4,1fr) — there is nothing left to fight,
+   but an owner-set --kbb-tile must not shrink this card either, so the override
+   keeps its weight. */
+.kbb-pgrid[data-skin="horizontal"]{--kbb-tile:330px!important;--kbb-cols-floor:1!important}
 
 .kbb-pgrid[data-skin="horizontal"] .kbb-card{display:grid;grid-template-columns:40% 1fr;min-height:148px;border:1px solid rgba(42,34,40,.08);border-radius:14px;overflow:hidden;background:#fff}
 
@@ -357,34 +372,36 @@
 @media(hover:hover){.kbb-pgrid[data-skin="overlay"] .kbb-card-cart{opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}.kbb-pgrid[data-skin="overlay"] .kbb-card:hover .kbb-card-cart{opacity:1;transform:none}}
 
 /* ═══════════════════════════════════════════════════════════════
-   COLUMNS BY WIDTH
+   COLUMNS BY WIDTH — the three media queries that set a count are gone.
 
-   This sheet loads after kbb.css and declared four columns with no
-   breakpoints, so it won at every size — phones included. The counts
-   below belong here, next to the rule they correct.
+   Both of the ones that were here (1180→3, 900→2) and the --kbb-cols trio
+   further down keyed off the VIEWPORT. The one rule in kbb.css keys off the
+   grid's own row instead, so a phone still gets two columns — that is
+   --kbb-cols-floor, which is what the note below was protecting — and the
+   count rises by itself as the row widens, which is what the owner asked for
+   and what no ladder can do without being extended at every new screen size.
 
-   Two columns on a phone: at 390px, four columns leaves each card
-   about 85px wide, which is narrower than the price line.
+   The note that was here is still true and is the reason --kbb-cols-floor
+   exists: at 390px, four columns leaves each card about 85px wide, which is
+   narrower than the price line.
+
+   The gap query below stays. It is a gap, not a count, and 10px on a 400px
+   phone is a deliberate decision about spacing that nothing derives.
    ═══════════════════════════════════════════════════════════════ */
-@media (max-width: 1180px){
-    .kbb-pgrid{grid-template-columns:repeat(3,1fr)}
-}
-@media (max-width: 900px){
-    .kbb-pgrid{grid-template-columns:repeat(2,1fr)}
-}
-@media (max-width: 400px){
-    .kbb-pgrid{gap:10px}
-}
+/* The 400px gap query is gone with the rest. It declared `gap:10px` and was
+   ALREADY DEAD — overridden by this sheet's own later
+   `gap:var(--kbb-gap,16px)` — so the shop has been laying out at 16px on a
+   phone for as long as both lines have existed. Making it live would have been
+   a change, not a preservation. Measured: 16px at 320, 390, 600, 900, 1280 and
+   1680, before and after. */
 
 /* The horizontal skin is one card per row on a phone — a 40/60 split of a
-   390px screen gives neither side enough room. */
-@media (max-width: 640px){
-    .kbb-pgrid[data-skin="horizontal"]{grid-template-columns:1fr !important}
-}
+   390px screen gives neither side enough room. That no longer needs a
+   breakpoint: --kbb-cols-floor:1 above lets the 330px tile minimum win on every
+   row too narrow for two of them, which is every phone and nothing else. */
 
 /* ═══ Card settings from Appearance → Product styles ═══
    Emitted as custom properties on the grid, so this sheet stays static. */
-.kbb-pgrid{gap:var(--kbb-gap,16px)}
 .kbb-pgrid .kbb-card{border-radius:var(--kbb-radius,14px)}
 .kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1.02)}
 .kbb-pgrid .cn{display:-webkit-box;-webkit-line-clamp:var(--kbb-name-lines,99);-webkit-box-orient:vertical;overflow:hidden}
@@ -409,10 +426,18 @@
 .kbb-gridhead p{margin:4px 0 0;color:var(--ink-2,#6A5C64);font-size:13.5px}
 .kbb-gridhead .lnk{font-size:13px;font-weight:600;color:var(--pink-deep,#C13E63);white-space:nowrap}
 
-/* The configured column counts. Phones stay capped at two. */
-@media (min-width: 1181px){ .kbb-pgrid{grid-template-columns:repeat(var(--kbb-cols,4),1fr)} }
-@media (max-width: 1180px){ .kbb-pgrid{grid-template-columns:repeat(var(--kbb-cols-t,3),1fr)} }
-@media (max-width: 900px){ .kbb-pgrid{grid-template-columns:repeat(var(--kbb-cols-m,2),1fr)} }
+/* The configured column counts were three more media queries here, on
+   --kbb-cols / --kbb-cols-t / --kbb-cols-m. TWO OF THOSE THREE VARIABLES WERE
+   EMITTED BY NOTHING ON THE STOREFRONT. ProductStyles::cssVariables() is the
+   only writer of --kbb-cols-t and --kbb-gap, and it is called from exactly one
+   place in this repo — resources/views/admin/app.blade.php — so "Columns ·
+   tablet" on Appearance → Product styles moved nothing on the shop and never
+   had. Nor did Gap between cards, Card roundness or Image shape. Recorded in
+   docs/W1-SITE-WIDTH.md §"found, not fixed"; not fixed here because
+   app/Services/ProductStyles.php is not this lane's file.
+
+   The count comes from Appearance → Site layout now, through --kbb-tile and
+   --kbb-tile, and it reaches all five product grids rather than one. */
 
 /* ═══════════════════════════════════════════════════════════════
    BRAND ON ITS OWN LINE, AND CARDS OF EQUAL HEIGHT

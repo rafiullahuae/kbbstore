@@ -21658,6 +21658,23 @@ buildNav();
      CHECKOUT gains the bar, which is what was asked for. --}}
 @include('admin.partials.slim-footer-screen')
 
+{{-- Appearance → Site layout (Lane W1). ONE site width for the whole shop, one
+     gutter, and a product grid whose column count is worked out from the row it
+     actually has rather than from a viewport breakpoint. Before this there were
+     fourteen page-container declarations disagreeing six ways and SIX separate
+     column systems, two of them in the same stylesheet; the census is in
+     App\Services\SiteLayout's header.
+
+     It registers its own sidebar entry inside the Appearance group and wraps
+     window.go, so this include is the whole of the change to this file.
+
+     Applying it moves ONE number on the live shop: the site width becomes
+     1680px, which the owner asked for in as many words. Every other setting on
+     the screen ships at the value the page already had, and the storefront is
+     handed no stylesheet at all until one of them moves. The cart page, the
+     checkout and the slim footer keep their own widths. --}}
+@include('admin.partials.site-layout-screen')
+
 {{-- Store → Security (Lane C, Phase 18 items 6 and 7). The administrative
      audit trail and the report over it: one verdict sentence, the failed
      sign-ins, the rate-limit trips that vanish silently today, and every

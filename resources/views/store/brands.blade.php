@@ -147,7 +147,18 @@
 
 @push('scripts')
 <style>
-.brw{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+/* The brand landing and every brand page, on the site width.        Lane W1
+   This carried its own 1180px — the sixth page-container value in the census in
+   App\Services\SiteLayout. The vertical padding is this page's own and stays.
+
+   THE SIDE PADDING MOVES TOO, from 18px to the shared --site-gutter, and that is
+   a measured decision rather than tidiness. Left at 18px this container's row
+   came to 1644px at a 1680px screen against the homepage rails' 1598px, and 46px
+   is exactly enough to straddle the five/six boundary: the brand page rendered
+   SIX columns where every other page rendered five. The owner asked for one
+   extra column, not two, so the gutter is the same number everywhere and the
+   count follows from one row width rather than from two. */
+.brw{max-width:var(--site-max);margin-inline:auto;padding:22px var(--site-gutter) 60px}
 .brw-crumb{font-size:12px;color:var(--muted);margin-bottom:14px}
 .brw-crumb a{color:var(--muted)}
 .brw-crumb span{margin:0 5px}

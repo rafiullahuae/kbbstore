@@ -47,10 +47,42 @@
 
 @php
     $skin = \App\Support\GridSkins::resolve($skin);
-    $settings = app(\App\Services\SettingsService::class);
-    $cols = $columns ?: (int) $settings->get('grid_columns', 4);
-    // Phones never take the desktop count; two is the most a 390px screen holds.
-    $colsMobile = $columnsMobile ?: max(1, min(2, (int) $settings->get('grid_columns_mobile', 2)));
+    /*
+     * -- THE COLUMN COUNT IS NOT SET HERE ANY MORE --------------- Lane W1 --
+     *
+     * This block used to read `grid_columns` and `grid_columns_mobile` and emit
+     * them as --kbb-cols / --kbb-cols-m on the grid below. Both were dropped,
+     * and the reason is that they governed ONE of the five product grids on
+     * this shop:
+     *
+     *   .kbb-pgrid via THIS component   read them          (brand page, and
+     *                                                       [kbb_products])
+     *   .kbb-pgrid via partials/home/grid   did NOT        (homepage rails,
+     *                                                       a category,
+     *                                                       the wishlist)
+     *   .grid on /shop                  did NOT            (its own data-cols)
+     *   .rel on a product page          did NOT            (its own repeat(4))
+     *   .brw-grid on the brand landing  did NOT            (its own --brw-min)
+     *
+     * and the tablet count, `grid_columns_tablet`, governed NONE of them: the
+     * only writer of --kbb-cols-t is ProductStyles::cssVariables(), which is
+     * called from resources/views/admin/app.blade.php and nowhere else, so that
+     * slider has never moved a pixel of the shop. One setting that reaches one
+     * grid of five is not a setting worth preserving byte-for-byte; it is the
+     * inconsistency the owner asked to be given real control over.
+     *
+     * The count comes from --kbb-track in kbb.css now, which derives it from
+     * the row the grid actually has, and from Appearance -> Site layout, which
+     * reaches all five. See docs/W1-SITE-WIDTH.md.
+     *
+     * `columns` AND `columnsMobile` ARE STILL HONOURED, because they are a
+     * CALLER's instruction and not a stored setting: `[kbb_products columns="3"]`
+     * is somebody writing 3 in a page. A caller's count is a pin, so it is
+     * emitted as a grid-template-columns override rather than as a custom
+     * property -- kbb.css records why a pin may not be a custom property here.
+     */
+    $pinCols = $columns ? max(1, min(8, (int) $columns)) : null;
+    $pinMobile = $columnsMobile ? max(1, min(2, (int) $columnsMobile)) : null;
 @endphp
 
 @if ($heading || $moreUrl)
@@ -63,8 +95,16 @@
     </div>
 @endif
 
-<div class="kbb-pgrid" data-skin="{{ $skin }}"
-     style="--kbb-cols:{{ $cols }};--kbb-cols-m:{{ $colsMobile }}">
+@if ($pinCols || $pinMobile)
+    {{-- A caller's pin. Scoped by an id so one grid on the page can be pinned
+         without pinning the rest, and split at 900px the way every other pin in
+         this system is: a desktop count has no business on a phone. --}}
+    @php
+        $pinId = 'kbbg'.substr(sha1((string) ($pinCols ?? '').'-'.($pinMobile ?? '')), 0, 8);
+    @endphp
+    <style>@if ($pinCols)@media(min-width:901px){#{{ $pinId }}{grid-template-columns:repeat({{ $pinCols }},minmax(0,1fr))}}@endif @if ($pinMobile)@media(max-width:900px){#{{ $pinId }}{grid-template-columns:repeat({{ $pinMobile }},minmax(0,1fr))}}@endif</style>
+@endif
+<div class="kbb-pgrid" data-skin="{{ $skin }}"@if ($pinCols || $pinMobile) id="{{ $pinId }}"@endif>
     @foreach ($products as $p)
         @php
             // See product-card.blade.php: t() is the column on English and the
