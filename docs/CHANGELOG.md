@@ -3,6 +3,100 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.282
+Two lanes: the site is 1680px wide now, and the shoppable-video rail has a
+storefront.
+
+### ONE NUMBER FOR HOW WIDE THE SITE IS — and this one CHANGES the shop
+
+This is the one setting in months that ships at a NEW value rather than the old
+one, because it was asked for in as many words. Every other setting in this
+package ships at the value the page already had.
+
+  Appearance -> Site layout -> Page width -> Site width          1680px
+  Appearance -> Site layout -> Page width -> Side gutter         22px
+  Appearance -> Site layout -> Page width -> Header follows the site width  off
+  Appearance -> Site layout -> Product grid -> Smallest card     260px
+  Appearance -> Site layout -> Product grid -> Smallest card, shop listing  220px
+  Appearance -> Site layout -> Product grid -> Never fewer than / Never more than
+  Appearance -> Site layout -> Product grid -> Gap between cards
+  Appearance -> Site layout -> Product grid -> Or pin an exact count  Automatic
+
+Below both tabs is a table of all seventeen screen sizes showing the container
+width and both column counts, recalculated as you drag a slider, with 1680
+marked. It is arithmetic, not measurement.
+
+WHAT YOU WILL SEE. On a 1680px screen the product grid goes from four columns to
+FIVE -- on the homepage rails, /shop, related products and brand pages. At 1536
+and above, likewise. A phone stays at two columns everywhere, and 390px and
+1280px are unchanged, so nothing you look at day to day moves.
+
+WHY IT NEEDED A LANE. The shop carried SIX different page widths (1400, 1352,
+1240, 1180, 1160, 1080) with a dead duplicate rule 1,456 lines above its live
+twin, and the column count was decided in SIX places -- one of them a complete
+second copy of the grid stylesheet inside kbb.css, which was the copy actually
+winning on every page. They disagreed with each other: at 1180px the homepage
+drew three columns and /shop drew four, on the same screen, at the same moment.
+Ten media queries are gone; there is now one rule that derives the count from
+the space available.
+
+AND TWO SETTINGS THAT HAVE NEVER WORKED are now named honestly: Appearance ->
+Product styles' Columns-tablet, Gap, Card roundness and Image shape have never
+moved a storefront pixel, because the code that emits them is called from the
+admin screen and nowhere else. Not fixed here -- it is a small round of its own.
+
+A BUG FIXED ON THE WAY: every product page scrolled sideways by 8px on a 320px
+phone. It does not now.
+
+Cart, checkout and the slim footer are deliberately NOT on the new width. All
+three already have their own width sliders, and all three are pages asking for
+money.
+
+### THE SHOPPABLE-VIDEO RAIL — the storefront half. Ships OFF.
+
+  Store -> Modules -> Shoppable video                  the master switch, OFF
+  Content -> Video sections                            make a section, order its
+                                                       clips, copy its shortcode
+  Content -> Video sections -> Open -> Edit            the per-video popup
+  Appearance -> Video rail -> Layout                   tiles across on a phone,
+                                                       tile width, gap, radius
+  Appearance -> Video rail -> Motion                   the loop and its length,
+                                                       how many play at once,
+                                                       autoplay on open, sound
+  Appearance -> Video rail -> What a tile shows        rating bar, caption,
+                                                       handle, count, old price
+  Appearance -> Video rail -> Likes
+
+Drop a rail anywhere -- a page, a product, an article -- with the shortcode
+[kbb_videos section="..."], which each section shows you. A clip can appear in
+several rails at once.
+
+THE RATING BAR IS INSIDE THE PRODUCT BOX and costs the card ZERO height: it sits
+on the end of the brand line, the only row with room. It is type only, with no
+pill or badge behind it, because the contrast arithmetic decided it -- the amber
+in the proposal is about 1.7:1 on white and fails outright, while the numbers
+shipped are 15.5:1, 7.3:1 and 4.0:1. One star rather than five, because five at
+a size that fits are 38-45px of 8-9px glyphs and read as texture next to a brand
+name.
+
+THE 2.5-SECOND LOOP RUNS ON EVERY TILE, and that is a consequence of this module
+embedding nothing: a clip a shopper can open is always one this shop serves.
+Instagram and TikTok URLs are for CREDIT -- upload the file and enter the source
+URL, and you get the loop AND the attribution. A genuine embed would be a still
+photograph in the rail that opens their player, with their autoplay rules.
+
+Mobile columns: a peeking 1.x, one, one-and-a-peek, two, 2.3, three, or a
+two-column grid. Every one measured with no sideways scroll at 390px and 1280px.
+
+MATCHED AGAINST THE PROPOSED DESIGN BY MEASUREMENT, not by eye: both pages in
+the same browser at the same width, 21 elements and 45 CSS properties each. Eight
+differences, and every one is the rating bar that was asked for -- except two
+that are one sixty-fourth of a pixel, from the Arabic money formatter.
+
+Files: the two lanes' CSS and Blade, routes/site-layout-admin.php,
+routes/ugc.php, four migrations (two of them cache clears, which are NOT
+optional -- new route files and eleven changed screens are cached by path).
+
 ## 2.60.281
 The SEO back office: see what Google will print BEFORE you save, and one screen
 that says what is still waiting on you.
