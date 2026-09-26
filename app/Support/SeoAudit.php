@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Services\Seo\SeoSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -135,6 +136,14 @@ final class SeoAudit
          */
         self::scanLegacyAddresses($findings);
 
+        /*
+         * NO $scanned ENTRY EITHER, and for a second reason on top of the one
+         * above: this finding is about the SHOP, not about a URL. It counts at
+         * most one, and adding it to $scanned would make "indexable URLs
+         * scanned" include a thing that is not a URL.
+         */
+        self::scanBusinessType($findings);
+
         self::collectDuplicates($titles, $findings, 'duplicate_title');
         self::collectDuplicates($descriptions, $findings, 'duplicate_description');
 
@@ -221,6 +230,15 @@ final class SeoAudit
             'legacy_url_no_redirect' => [
                 'Old shop address with no redirect',
                 'The WooCommerce site published its category pages at the site root (/skincare/, /skincare-sets/) and Google still holds those addresses. This shop now forwards each of them to the matching category archive by itself, with no redirect row needed — so the ones listed here are the ones it cannot: there is no category, page or article in this shop answering to that name. Until there is, the address returns 404 and whatever ranking and links it had are dropped rather than passed on. Import the catalogue so the category exists, or decide where the address should go by hand at Store → SEO & Meta → Redirects & 404s.',
+            ],
+            /*
+             * AFTER legacy_url_no_redirect FOR THE REASON THAT NOTE GIVES: the
+             * screen draws these cards in declaration order, so a new key goes
+             * at the END or every card already on the screen moves down.
+             */
+            'business_type_mismatch' => [
+                'Business type and address disagree',
+                'The Organization node says what kind of business this is, and the address settings say where it is. These two can be set so that they contradict each other, and nothing on any screen says so. Two shapes: a type of Store or Local business with no usable address is a shopfront this shop has not described — Google places a local business by its address, so there is nothing for it to place; and map coordinates filled in under a type of Organization or Online store are silently dropped, because coordinates and opening hours are properties of a place and neither of those two types is one. Fix either side at Store → Business Details → Business, or the type at Store → SEO & Meta → Organization.',
             ],
         ];
 
@@ -753,6 +771,78 @@ final class SeoAudit
      * screen that already scans the whole catalogue and it does not need a
      * fifteen-query loop on top. Nothing here loads a model.
      */
+    /**
+     * Does `org_type` agree with the address settings?
+     *
+     * ══════════════════════════════════════════════════════════════════════
+     * THE TWO STATES A SHOP CAN BE IN WITHOUT BEING TOLD
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * `BusinessAddress` is correct and this check changes none of it. What it
+     * does not do — deliberately, because its job is to emit valid markup and
+     * not to have opinions — is tell anybody that the settings disagree. Both
+     * of these are reachable from the two screens today and both are silent:
+     *
+     *   TYPE CLAIMS A PLACE, NO ADDRESS TO PUT IT IN. `Store` or
+     *   `LocalBusiness` with `BusinessAddress::postal()` answering null. The
+     *   Organization node then says "this is a shop you can walk into" and
+     *   carries nothing a search engine could place. `postal()` is asked rather
+     *   than the three columns, so "half-filled" counts as no address by the
+     *   same rule the emitted node uses — one authority, not two.
+     *
+     *   COORDINATES THAT CANNOT BE PUBLISHED. `geo()` filled in while the type
+     *   is `Organization` or `OnlineStore`. Those are not Places, so
+     *   isPlaceType() drops the coordinates and the owner is looking at a
+     *   latitude and longitude he typed that no page emits.
+     *
+     * ── WHAT IS DELIBERATELY NOT A FINDING ──────────────────────────────────
+     *
+     * An ADDRESS under `OnlineStore` or `Organization`. `address` and
+     * `telephone` are properties of Organization, so a company with a
+     * registered office and no shopfront is a real, valid and common shape —
+     * this shop is online-only and may still want its trading address on the
+     * node. Flagging it would be inventing a rule schema.org does not have.
+     *
+     * An `OnlineStore` with NOTHING filled in, which is this shop today and is
+     * not a fault: 24/7 opening hours need no setting at all, because opening
+     * hours belong on a Place and an online shop is not one.
+     *
+     * ── AT MOST ONE HIT ─────────────────────────────────────────────────────
+     *
+     * A shop is in one state. Two findings against the same pair of screens
+     * would read as two problems to fix.
+     */
+    private static function scanBusinessType(array &$findings): void
+    {
+        $s = SeoSettings::map();
+        $type = SeoSettings::from($s, 'org_type');
+        $isPlace = in_array($type, BusinessAddress::PLACE_TYPES, true);
+
+        if ($isPlace && BusinessAddress::postal($s) === null) {
+            self::hit($findings, 'business_type_mismatch', [
+                'kind' => 'Organization type',
+                'name' => $type,
+                'url' => '',
+                'detail' => 'the type says this business has premises, and no usable street address is '
+                    . 'filled in — street, town and a country this shop recognises are all three needed. '
+                    . 'Either fill the address in, or set the type to Online store if there is no shopfront.',
+            ]);
+
+            return;
+        }
+
+        if (! $isPlace && BusinessAddress::geo($s) !== null) {
+            self::hit($findings, 'business_type_mismatch', [
+                'kind' => 'Organization type',
+                'name' => $type,
+                'url' => '',
+                'detail' => 'map coordinates are filled in and no page publishes them, because '
+                    . 'coordinates are a property of a place and this type is not one. Either clear them, '
+                    . 'or set the type to Store or Local business if this shop has premises.',
+            ]);
+        }
+    }
+
     private static function scanLegacyAddresses(array &$findings): void
     {
         // Same guard as every other pass here: a half-migrated install must

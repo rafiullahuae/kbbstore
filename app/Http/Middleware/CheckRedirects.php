@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\Redirect;
+use App\Support\Locale;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -237,9 +238,113 @@ class CheckRedirects
      */
     private static function step(string $path): ?Redirect
     {
-        $row = self::claimed($path) ? self::row($path) : null;
+        foreach (self::spellings($path) as $spelling) {
+            $row = self::claimed($spelling) ? self::row($spelling) : null;
 
-        return $row ?? self::derived($path);
+            if ($row !== null) {
+                return $row;
+            }
+        }
+
+        return self::derived($path);
+    }
+
+    /**
+     * Every spelling of one incoming path that a stored `source` may be written
+     * in: the bytes the client sent, and — when they differ — the same address
+     * with its percent-escapes decoded.
+     *
+     * ══════════════════════════════════════════════════════════════════════
+     * THE DEFECT: A REDIRECT THE OWNER WRITES FOR AN ARABIC ADDRESS CANNOT
+     * FIRE, BECAUSE NO BROWSER EVER SENDS THE SPELLING HE TYPED
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * `redirects.source` is compared against `getPathInfo()`, and getPathInfo()
+     * is NOT urldecoded — it is the request line, verbatim. For an ASCII
+     * address that distinction does not exist, which is why it went unnoticed
+     * through every round of this table's work.
+     *
+     * It exists the moment an address is not ASCII, and this shop already has
+     * those. The old WordPress site published Arabic-titled articles at
+     * percent-encoded permalinks — `docs/GJ-POSTS-AND-VERDICT.md` carries
+     * `%d8%a7%d9%84…` out of the real export, and the importer renames such an
+     * article and tells the owner to write a redirect for the address it used
+     * to have. `docs/GB-MEDIA-AND-REDIRECTS.md` §"Admin path" records the
+     * deliberate decision that the list he approves from shows that address
+     * DECODED, "because that is the address a person reads and the one Search
+     * Console shows".
+     *
+     * So the screen shows him `/العناية-بالبشرة/`, he pastes it into Store →
+     * SEO & Meta → Redirects & 404s, and the row is stored decoded. Every real
+     * client then sends the escaped form — and there are two of those, because
+     * hex case is not normalised anywhere: browsers and Search Console emit
+     * `%D8%A7…`, WordPress's own permalinks carry `%d8%a7…`. Measured through
+     * this kernel, before this method existed:
+     *
+     *     row source `/العناية-بالبشرة/`   request `/العناية-بالبشرة/`  301
+     *     row source `/العناية-بالبشرة/`   request `/%D8%A7%D9%84…/`    404
+     *     row source `/العناية-بالبشرة/`   request `/%d8%a7%d9%84…/`    404
+     *
+     * The owner does the one thing the import screen asked him to do and the
+     * address 404s for everybody. Decoding the INCOMING path fixes both
+     * escaped spellings with one comparison, because they decode to the same
+     * bytes — which is the reason this is done here and not by writing three
+     * rows per address.
+     *
+     * ── IT CAN ONLY EVER ADD A MATCH, NEVER MOVE ONE ────────────────────────
+     *
+     * The path as sent is tried FIRST and unchanged, so every address that
+     * redirects today redirects to the same target by the same row. On an ASCII
+     * path `rawurldecode()` is the identity function and the second spelling is
+     * dropped as a duplicate, so the overwhelming majority of requests do not
+     * even reach the guards below.
+     *
+     * ── WHAT IS REFUSED, AND WHY EACH ONE ───────────────────────────────────
+     *
+     *   A DECODE THAT CHANGES THE PATH'S SHAPE. `%2F` decodes to a slash, so
+     *   `/a%2Fb/` would otherwise be matched by a row written for `/a/b/` —
+     *   two different addresses, one of which the shop may be serving. The
+     *   segment count has to be identical or the spelling is not a spelling of
+     *   the same address. This also disposes of `%00` and of an escaped `..`,
+     *   which cannot survive a segment-count check that `/../` fails.
+     *
+     *   A DECODE THAT IS NOT VALID UTF-8. `%FF` is a legal escape and an
+     *   illegal UTF-8 byte. Handing that to the database as a string comparison
+     *   is a collation question nobody wants to answer, and no row can be
+     *   written in it through any screen this application has.
+     *
+     *   A DECODED PATH THAT `isExemptPath()` REFUSES. Belt and braces: the
+     *   exemption is normally applied in findMatch() to the path as sent, so
+     *   `/%61dmin/…` is not exempt as sent but decodes into the admin. A row
+     *   under `/admin/…` cannot be reached through the back door this opens.
+     *
+     * @return list<string>
+     */
+    private static function spellings(string $path): array
+    {
+        if (! str_contains($path, '%')) {
+            return [$path];
+        }
+
+        $decoded = rawurldecode($path);
+
+        if ($decoded === $path) {
+            return [$path];
+        }
+
+        if (substr_count($decoded, '/') !== substr_count($path, '/')) {
+            return [$path];
+        }
+
+        if (! mb_check_encoding($decoded, 'UTF-8')) {
+            return [$path];
+        }
+
+        if (self::isExemptPath(ltrim($decoded, '/'))) {
+            return [$path];
+        }
+
+        return [$path, $decoded];
     }
 
     /**
@@ -446,9 +551,47 @@ class CheckRedirects
         return $index['capped'] === true ? null : $index['sources'];
     }
 
+    /**
+     * The enabled row for this path that applies to the language being served,
+     * or null.
+     *
+     * ── WHY THERE IS A LANGUAGE HERE AT ALL ─────────────────────────────────
+     *
+     * `SetLocaleFromPath` strips /ar before this middleware runs and
+     * `redirects.source` is stored with no locale segment, so ONE row has always
+     * served BOTH languages — which is exactly right for an old WooCommerce
+     * address, because it moved in both. `redirects.locale` is NULL on every row
+     * that existed before it, and NULL keeps meaning both, so nothing about the
+     * table's behaviour changes by adding it.
+     *
+     * What it buys is the one thing the table could not say: "this address moved
+     * in Arabic only". That sentence is the whole of the Arabic-slug retrofit —
+     * see App\Services\Seo\ArabicSlugRetrofit — because switching the policy on
+     * moves `/ar/product/anua-heartleaf-toner/` and must leave
+     * `/product/anua-heartleaf-toner/` exactly where it is. Without the column
+     * the only row that could be written would have moved the English page too,
+     * on a shop whose English rankings are the only ones it has.
+     *
+     * ── TWO ROWS FOR ONE SOURCE ARE LEGITIMATE NOW, SO ORDER MATTERS ────────
+     *
+     * A source may carry a row for `ar` and a row for both. The more specific
+     * one wins: a language named explicitly is a decision about that language,
+     * and a NULL is the absence of one. `orderByRaw` puts the non-null first so
+     * the choice does not depend on insertion order — two shops with the same
+     * two rows must redirect the same way.
+     */
     private static function row(string $path): ?Redirect
     {
-        return Redirect::query()->where('source', $path)->where('enabled', true)->first();
+        $locale = Locale::current();
+
+        return Redirect::query()
+            ->where('source', $path)
+            ->where('enabled', true)
+            ->where(static function ($q) use ($locale) {
+                $q->whereNull('locale')->orWhere('locale', $locale);
+            })
+            ->orderByRaw('CASE WHEN locale IS NULL THEN 1 ELSE 0 END')
+            ->first();
     }
 
     /**

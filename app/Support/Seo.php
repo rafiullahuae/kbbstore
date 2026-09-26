@@ -33,6 +33,63 @@ class Seo
     public const COLLECTION_ITEM_TYPES = ['Product', 'Brand'];
 
     /**
+     * What the shop is willing to SAY about returns, as schema.org names it.
+     *
+     * ══════════════════════════════════════════════════════════════════════
+     * "AT THE MOMENT WE DON'T OFFER RETURNS" WAS NOT EXPRESSIBLE
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * The merchant block below gated the whole `MerchantReturnPolicy` on
+     * `merchant_return_days > 0` and could emit exactly one category,
+     * `MerchantReturnFiniteReturnWindow`. Measured on a rendered product page
+     * with `enable_merchant` on and the days box at 0 — and again at blank,
+     * which `AdminController::SETTING_RULES` documents as the same value:
+     *
+     *     shippingDetails            published
+     *     hasMerchantReturnPolicy    ABSENT
+     *
+     * So a shop that takes no returns published its shipping terms and said
+     * nothing whatever about returns, and "we do not accept returns" and "we
+     * have not told you" left the same markup. They are different statements:
+     * schema.org has `MerchantReturnNotPermitted` for the first one, and a
+     * stated policy is worth more in a merchant listing than an absent one.
+     *
+     * ── WHY A CATEGORY AND NOT A SENTINEL IN THE DAYS BOX ───────────────
+     *
+     * "Do you take returns" and "for how many days" are two different
+     * questions, and one integer was carrying both. A `-1` would have made the
+     * bound on that box (`[0, 3650]`) a lie and put the answer to a yes/no
+     * question inside a number the owner reads as a window.
+     *
+     * ── BLANK IS "NOT STATED", AND IT IS TODAY'S BEHAVIOUR EXACTLY ──────────
+     *
+     * The absent row, the empty string and any value not on this list all mean
+     * not stated, and not stated is the shipped default: the days box alone
+     * decides, exactly as it did before this constant existed. Applying the
+     * package moves no markup on any shop. That is the same rule
+     * `BusinessAddress` follows for the postal address, and it matters more
+     * here than usual — publishing "no returns" for a shop that has said
+     * nothing would be the identical error to the hardcoded `FreeReturn` this
+     * block already had to take back out.
+     *
+     * ── THE TWO THAT ARE HERE, AND THE TWO THAT ARE NOT ─────────────────
+     *
+     * schema.org defines four categories. These are the two this shop can
+     * truthfully choose between from the settings it has. `MerchantReturn
+     * UnlimitedWindow` is a promise no line in this application supports, and
+     * `MerchantReturnUnspecifiedReturnWindow` is a returns policy with no terms
+     * in it — Google asks for a `merchantReturnLink` alongside it, which is a
+     * page this shop does not have. Neither is invented here; a later round
+     * with a policy page behind it can add one.
+     *
+     * @var list<string>
+     */
+    public const RETURN_CATEGORIES = [
+        'MerchantReturnNotPermitted',
+        'MerchantReturnFiniteReturnWindow',
+    ];
+
+    /**
      * Is the SEO Engine module switched on?
      *
      * Store → Modules → SEO → SEO Engine. Until this check existed the whole
@@ -656,7 +713,7 @@ class Seo
 
         [$prefix, $path, $suffix] = $split;
 
-        $alternates = Locale::alternatePaths($path);
+        $alternates = self::readerAlternatePaths($path);
 
         if ($alternates === []) {
             return [];
@@ -720,6 +777,78 @@ class Seo
      *
      * @return array{0: string, 1: string, 2: string}|null
      */
+    /**
+     * Every language's address for this page, each spelled as that language's
+     * readers see it.
+     *
+     * ── WHY Locale::alternatePaths() ALONE IS NOT ENOUGH ONCE SLUGS DIFFER ──
+     *
+     * `Locale::alternatePaths()` takes a PATH and no row, and derives every
+     * language's address by swapping the prefix on that one path. While the shop
+     * has one slug per row that is exactly right and every cluster is reciprocal
+     * — ArabicSlugPolicyTest pins it, SeoBilingualTest measures it — and it is
+     * what this method returns, byte for byte, in the shipped `shared` policy.
+     *
+     * The moment a row carries a second slug it is not enough, and the failure
+     * is the expensive kind: the English page would advertise `hreflang="ar"` at
+     * the ENGLISH slug under /ar, and the Arabic page would advertise
+     * `hreflang="en"` at the ARABIC slug. Google requires an hreflang cluster to
+     * be reciprocal and drops the whole cluster when it is not, so both
+     * languages would lose their alternate at once — on every page of the shop,
+     * and in the sitemap, which says the same thing.
+     *
+     * So the translation is applied PER LANGUAGE rather than to the path: each
+     * code gets the address a reader of that language would be served, from
+     * LocaleSlugs, with its own segment on top. English is untouched because
+     * toDisplayPath() answers null for the default locale.
+     *
+     * PUBLIC, AND THAT IS A REQUEST TO ONE OTHER FILE. `SeoFilesController` builds
+     * the sitemap's `<xhtml:link>` alternates and llms.txt's language links from
+     * `Locale::alternatePaths()` directly rather than through this class, so with
+     * the translated policy on the SITEMAP would advertise the shared address
+     * under /ar while the PAGE canonicalises to the Arabic one — an hreflang
+     * cluster that disagrees with itself, which Google resolves by dropping it.
+     * That file belongs to another lane, so the fix is exposed here rather than
+     * made there: swapping `Locale::alternatePaths($path)` for
+     * `Seo::readerAlternatePaths($path)` at its two call sites is the whole of it,
+     * and it is byte-identical in the shipped `shared` policy. Until it is done,
+     * the policy must not be switched on — docs/SEO-ARABIC-SLUGS.md §7.3.
+     *
+     * @return array<string, string> locale => path, base path NOT applied
+     */
+    public static function readerAlternatePaths(string $path): array
+    {
+        $alternates = Locale::alternatePaths($path);
+
+        if ($alternates === [] || ! \App\Support\LocaleSlugs::translating()) {
+            return $alternates;
+        }
+
+        /*
+         * BACK TO THE CANONICAL SPELLING FIRST, AND THIS IS THE STEP THAT IS
+         * EASY TO MISS.
+         *
+         * $path here is the page's own canonical, which localise() has ALREADY
+         * put through displayPath() — so on an Arabic page it is the Arabic slug.
+         * Translating that per language without undoing it first would hand the
+         * English alternate an Arabic slug, which is the same broken cluster one
+         * layer along. The locale is taken from the path rather than from
+         * Locale::current() for the same reason: this method is also reached for
+         * a page whose canonical points somewhere other than the request.
+         */
+        [$pathLocale, $bare] = Locale::splitPath($path);
+        $pathLocale = $pathLocale ?? Locale::DEFAULT;
+        $bare = \App\Support\LocaleSlugs::toCanonicalPath($bare, $pathLocale) ?? $bare;
+
+        $out = [];
+
+        foreach (array_keys($alternates) as $code) {
+            $out[$code] = Locale::withSegment(self::displayPath($bare, $code), $code);
+        }
+
+        return $out;
+    }
+
     private static function splitOwnUrl(?string $url, string $base): ?array
     {
         if ($url === null || $url === '') {
@@ -787,7 +916,46 @@ class Seo
 
         [$prefix, $path, $suffix] = $split;
 
-        return rtrim($base, '/') . $prefix . Locale::withSegment($path) . $suffix;
+        /*
+         * THE LOCALE SEGMENT COMES OFF BEFORE THE SLUG IS TRANSLATED.
+         *
+         * $path here may already carry /ar — every caller builds its canonical
+         * through Url::to(), which adds it. displayPath() matches on the address
+         * shape ('/product/…'), so handing it '/ar/product/…' matches nothing and
+         * the Arabic page would declare the SHARED slug canonical while serving
+         * the translated one: a page telling Google to index a different page,
+         * which is worse than either consistent answer. withSegment() is
+         * idempotent, so splitting first and putting it back is byte-identical in
+         * the shared policy.
+         */
+        [, $bare] = Locale::splitPath($path);
+
+        return rtrim($base, '/') . $prefix . Locale::withSegment(self::displayPath($bare)) . $suffix;
+    }
+
+    /**
+     * The path as a READER of this language sees it.
+     *
+     * Identity while `seo_arabic_slugs` says `shared`, which is the shipped
+     * value and today's behaviour — so this method changes no canonical and no
+     * hreflang on any shop until somebody switches the policy and fills in an
+     * Arabic address.
+     *
+     * With the policy on it is the other half of `ResolveLocaleSlugs`: that
+     * class turns the address a reader typed into the one the router serves, and
+     * this turns the one the router served back into the address the reader
+     * should see. Both halves are needed or the shop would answer at the Arabic
+     * address and declare the English one canonical, which is a page telling
+     * Google to index a different page — the worst of the three states.
+     *
+     * It is HERE, in localise(), because localise() is the one place a locale
+     * segment reaches a canonical, and canonical() is what alternateLinks()
+     * reads. One choke point, so the canonical and its own self-referencing
+     * hreflang cannot disagree about what page this is.
+     */
+    private static function displayPath(string $path, ?string $locale = null): string
+    {
+        return \App\Support\LocaleSlugs::toDisplayPath($path, $locale ?? Locale::current()) ?? $path;
     }
 
     private static function canonicalAbsolute(?string $url, string $base): ?string
@@ -1186,28 +1354,9 @@ class Seo
                         'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => $country],
                     ];
 
-                    $returnDays = (int) ($s['merchant_return_days'] ?? 0);
-                    if ($returnDays > 0) {
-                        $policy = [
-                            '@type' => 'MerchantReturnPolicy',
-                            'applicableCountry' => $country,
-                            'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
-                            'merchantReturnDays' => $returnDays,
-                        ];
+                    $policy = self::returnPolicy($s, $country);
 
-                        // returnMethod and returnFees were hardcoded to
-                        // ReturnByMail and FreeReturn. Neither is something
-                        // this code can know, and both are promises to a
-                        // shopper: a store that charges for returns and
-                        // publishes FreeReturn has misrepresented its terms in
-                        // a Google surface. They are emitted only when an admin
-                        // has actually stated them.
-                        $method = SeoSettings::from($s, 'merchant_return_method', '');
-                        $fees = SeoSettings::from($s, 'merchant_return_fees', '');
-
-                        if ($method !== '') $policy['returnMethod'] = 'https://schema.org/' . $method;
-                        if ($fees !== '')   $policy['returnFees'] = 'https://schema.org/' . $fees;
-
+                    if ($policy !== null) {
                         $offer['hasMerchantReturnPolicy'] = $policy;
                     }
                 }
@@ -1655,6 +1804,82 @@ class Seo
         $minor = self::priceMinor($p);
 
         return $minor === null ? null : Money::decimalString($minor);
+    }
+
+    /**
+     * The `hasMerchantReturnPolicy` node, or null when the shop has stated
+     * nothing this application is willing to publish on its behalf.
+     *
+     * ── THE THREE ANSWERS, AND WHICH SETTING CARRIES EACH ───────────────
+     *
+     *   NOT STATED — `merchant_returns` blank, absent, or not one of
+     *   RETURN_CATEGORIES. The days box alone decides, which is byte for byte
+     *   what this block did before the select existed: a window above zero
+     *   publishes a finite window, and zero or blank publishes nothing. Every
+     *   shop that has not touched the new control is in this branch.
+     *
+     *   NO RETURNS — `MerchantReturnNotPermitted`. The days box is not read at
+     *   all, because a window is not a thing a shop that refuses returns has;
+     *   emitting `merchantReturnDays` beside this category would be markup that
+     *   contradicts itself. `returnMethod` and `returnFees` are suppressed for
+     *   the same reason — the method by which a refused return travels, and the
+     *   fee for it, are not statements anybody can make. This is the answer the
+     *   owner gave in his own words: "at the moment we don't offer returns."
+     *
+     *   A WINDOW — `MerchantReturnFiniteReturnWindow`, which still needs the
+     *   number. Chosen with the box at zero it publishes NOTHING rather than
+     *   guessing a length, because the whole point of separating the two
+     *   questions is that neither answer may be invented from the other.
+     *
+     * `applicableCountry` and the two optional terms are unchanged and come
+     * from settings an admin typed, never from this code. See the block this
+     * was lifted out of for the incident behind that.
+     *
+     * @param  array<string, mixed>  $s
+     * @return array<string, mixed>|null
+     */
+    private static function returnPolicy(array $s, string $country): ?array
+    {
+        $stated = SeoSettings::from($s, 'merchant_returns', '');
+        $category = in_array($stated, self::RETURN_CATEGORIES, true) ? $stated : '';
+        $returnDays = (int) ($s['merchant_return_days'] ?? 0);
+
+        if ($category === 'MerchantReturnNotPermitted') {
+            return [
+                '@type' => 'MerchantReturnPolicy',
+                'applicableCountry' => $country,
+                'returnPolicyCategory' => 'https://schema.org/MerchantReturnNotPermitted',
+            ];
+        }
+
+        if ($returnDays <= 0) {
+            return null;
+        }
+
+        $policy = [
+            '@type' => 'MerchantReturnPolicy',
+            'applicableCountry' => $country,
+            'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+            'merchantReturnDays' => $returnDays,
+        ];
+
+        // returnMethod and returnFees were hardcoded to ReturnByMail and
+        // FreeReturn. Neither is something this code can know, and both are
+        // promises to a shopper: a store that charges for returns and publishes
+        // FreeReturn has misrepresented its terms in a Google surface. They are
+        // emitted only when an admin has actually stated them.
+        $method = SeoSettings::from($s, 'merchant_return_method', '');
+        $fees = SeoSettings::from($s, 'merchant_return_fees', '');
+
+        if ($method !== '') {
+            $policy['returnMethod'] = 'https://schema.org/' . $method;
+        }
+
+        if ($fees !== '') {
+            $policy['returnFees'] = 'https://schema.org/' . $fees;
+        }
+
+        return $policy;
     }
 
     /** The offer price in minor units, or null. */

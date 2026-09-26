@@ -281,6 +281,32 @@ it('has an authorization layer reading the role column', function () {
         'EnforceAdminCapability',
         'NoIndexStaging',
         'NoStoreAdminApi',
+        /*
+         * Lane S5, and I have come and read this file as instructed.
+         *
+         * ResolveLocaleSlugs authorises nothing and reads no role. It does what
+         * SetLocaleFromPath below it does, one level down: when the shop is being
+         * served in a non-default language AND the Arabic-address policy says
+         * `translated`, it turns the address a reader typed into the address the
+         * router serves, before the router runs. No decision it takes depends on
+         * who is asking.
+         *
+         * It is inert on every route this file is about, twice over. It returns
+         * immediately unless `LocaleSlugs::translating()` — which is false on
+         * every shop as it stands, because `seo_arabic_slugs` is not seeded — and
+         * then again unless a non-default locale is bound, which
+         * `Locale::localisable()` refuses for the admin path and /admin-api, so
+         * the back office never carries a language segment at all.
+         *
+         * It is global rather than in a group for SetLocaleFromPath's reason:
+         * middleware in the `web` group runs after the router has matched, which
+         * is too late to change which route matches. It must also run AFTER
+         * CheckRedirects, or the retrofit's own redirect and this rewrite bounce a
+         * visitor between two addresses for ever — the class doc has the
+         * argument, and tests/Feature/ArabicTranslatedSlugsTest.php asserts the
+         * order rather than describing it.
+         */
+        'ResolveLocaleSlugs',
         'SecurityHeaders',
         /*
          * Lane EP, and I have come and read this file as instructed.
