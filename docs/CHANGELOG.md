@@ -3,6 +3,82 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.284
+Two things this package STOPS, and both were already live.
+
+### ▲ A FREE DELIVERY PROMISE YOU NEVER MADE
+
+Switching on Store -> SEO & Meta -> Merchant listing published, on every product
+page, a shipping rate of **0.00 AED to the whole UAE** — from a box you had
+never filled in. The rate was read as "the value, or zero", and a blank value is
+dropped before it gets there, so zero is what Google was handed.
+
+You were one click from it. Your answer on returns is "we don't offer returns",
+the code to publish that refusal now exists, and the ONLY way to publish it is
+that same switch. The screen made it worse: the shipping box arrived holding 0,
+and emptying it FAILED THE SAVE, because the validation refused a blank.
+
+Three things had to change together and all three are here: the box accepts a
+blank, ships blank, and says "Leave blank until you know"; and nothing about
+delivery is published unless there is really a number in it. A typed 0 still
+means free delivery, because somebody may mean that.
+
+**So this is now safe to do, and it is what your answers add up to:**
+Store -> SEO & Meta -> Settings -> Rich product results — switch the merchant
+listing ON, set Returns policy to "We do not accept returns", and LEAVE THE
+SHIPPING COST BLANK. That publishes your returns position on its own, with no
+delivery claim beside it.
+
+### ▲ THE HEADER SWITCH IN 2.60.282 DID NOTHING
+
+"Header follows the site width" shipped two packages ago, reported itself as on,
+and moved nothing. It set the header's width variable in one place while the
+header itself set the same variable on its own tag on every request — and the
+nearer one wins. The header stayed 1280 while the page went to 1680.
+
+Fixed at the writer that actually wins, and the switch now ships ON, because you
+asked for it in as many words. The header is now exactly as wide as the site:
+matching at 1024 through 1680, and both stop at 1680 on wider screens.
+
+**And it keeps ONE ROW by shrinking itself.** The menu's type and spacing taper
+as the screen narrows — 13px down to about 10.75px at 1024 — instead of wrapping
+onto a second line. One row at every desktop width, and nothing scrolls
+sideways. The mobile header is untouched: 188,055 rendered properties were
+compared across seven phone and tablet widths, and not one rendered box moved.
+
+### ALL EIGHT CONCERN PAGES ARE ENABLED — and nothing is published yet
+
+/concern/acne/ was the only one switched on. All eight are now, each with its own
+English heading and intro. **Enabling them publishes nothing**: a concern page
+only exists once at least three products are tagged for it, so today all eight
+addresses 404 and the sitemap carries none of them.
+
+That is deliberate, and it changes what you have to do: you no longer need a
+package to publish a concern page. Tag three products at **Catalog -> Build my
+routine** and that page exists. Tag them for eight concerns and you have eight.
+
+### THE BUSINESS IS DESCRIBED AS ONLINE
+
+You said you have no physical shop and operate only online, so the business type
+now ships as "Online store". No address, phone or emirate is invented, and the
+audit no longer asks you for an address you deliberately have not given.
+
+On being open 24/7: schema.org's opening-hours field describes a door, and there
+is no way to say "orderable at any hour" for a business without premises. The
+shop used to let you type hours and then silently publish nothing; it now tells
+you so on the audit screen instead.
+
+Files: app/Support/Seo.php, app/Support/SeoAudit.php, app/Services/HeaderSettings.php,
+app/Services/SiteLayout.php, app/Services/Seo/SeoSettings.php,
+app/Support/ConcernCollections.php, app/Http/Controllers/Admin/AdminController.php,
+app/Services/Translation/InterfaceStrings.php, resources/css/kbb/kbb.css,
+resources/js/kbb/nav-fit.js, resources/views/admin/app.blade.php, and two
+clear_caches migrations.
+
+THOSE MIGRATIONS ARE NOT OPTIONAL. One drops the compiled admin screen; the other
+drops a stale compiled class whose constructor signature changed, which would
+otherwise be built with the wrong arguments.
+
 ## 2.60.283
 Shoppable video, made findable: one sidebar row instead of three, and demo data
 so the screens can be understood by looking at them.
