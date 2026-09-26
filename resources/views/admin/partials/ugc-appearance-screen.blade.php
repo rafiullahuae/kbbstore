@@ -99,12 +99,31 @@
 
   function say(m) { try { window.toast(m); } catch (e) {} }
 
+  /*
+   * ── THE TOKEN THIS CONSOLE ACTUALLY USES ────────────────────────────────
+   *
+   * `X-XSRF-TOKEN`, read from the `XSRF-TOKEN` COOKIE that Laravel sets on
+   * every response. That is what app.blade.php's own api() has always sent and
+   * what ugc-library-screen.blade.php sends.
+   *
+   * THIS USED TO READ A <meta name="csrf-token"> TAG, AND THE ADMIN HAS NO SUCH
+   * TAG. So the token was '' on every call, every write from this screen was
+   * refused with 419 "CSRF token mismatch", and the screen reported it as
+   * "That section could not be saved." -- a sentence that names the symptom and
+   * hides the cause. Nobody could create a section: this path had never worked
+   * on any shop, and the owner found it before any test did.
+   */
+  function cookie(n) {
+    var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return m ? decodeURIComponent(m.pop()) : '';
+  }
+
   async function api(path, body) {
     var options = { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' };
     if (body !== undefined) {
       options.method = 'POST';
       options.headers['Content-Type'] = 'application/json';
-      options.headers['X-CSRF-TOKEN'] = (document.querySelector('meta[name=csrf-token]') || {}).content || '';
+      options.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
       options.body = JSON.stringify(body);
     }
     var response = await fetch(base() + path, options);

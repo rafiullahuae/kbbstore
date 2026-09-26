@@ -10659,6 +10659,12 @@ const DEMO_CONTENT_TYPES=[
   ['reviews','Demo Reviews','Sample product reviews at a mix of ratings, for testing the review moderation queue and star display.','<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>','#E0567B','#FDF2F6'],
   ['menu','Demo Mega Menu','A ready-made navigation menu with brand and category dropdowns already wired up and set live.','<path d="M3 12h18M3 6h18M3 18h18"/>','#0891B2','#ECFEFF'],
   ['routines','Demo Routine Products','Five products, one for each routine step, so every routine on Catalog \u2192 Build my routine fills and you can see the page before tagging your own. They carry no concerns, so they cannot publish a concern landing page.','<path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="15" cy="18" r="2"/>','#15A85A','#ECFDF3'],
+  /* THIS SCREEN KEEPS ITS OWN LIST, which is the trap: adding a type to
+     DemoContentController::TYPES makes it importable and leaves it INVISIBLE
+     here, so the owner sees no card and concludes the feature does not exist.
+     That is exactly what happened with `videos`. DemoContentTypesAreDrawnTest
+     now pins the two lists equal in both directions. */
+  ['videos','Demo Shoppable Video','Two video sections and six clips, with products from your own catalogue tagged on them and one clip deliberately in both sections. The clips are published and carry a real file, so a rail built from them really loops. Nothing appears on the shop until you switch the module on and place a shortcode.','<path d="M3 4.5h18v15H3z"/><path d="m10 9.5 5 2.5-5 2.5z"/>','#7C3AED','#F5F3FF'],
 ];
 /**
  * Computes the admin-api base the same way pApiBase() does — from the

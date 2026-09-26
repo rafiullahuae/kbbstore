@@ -60,85 +60,249 @@
 --}}
 @verbatim
 <style>
-.ugx-wrap{display:grid;gap:14px;min-width:0}
-.ugx-wrap > *{min-width:0}
-.ugx-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
-          border-radius:var(--r,12px);padding:16px;min-width:0}
-.ugx-title{font-weight:650;font-size:15px}
-.ugx-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin-top:3px;max-width:68ch}
-.ugx-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;margin-top:12px;
-          font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
-.ugx-note b{color:var(--ink,#16181d)}
-.ugx-note.is-warm{border-style:solid;border-color:#e9d5a1;background:#fdf9ef}
-.ugx-note.is-bad{border-style:solid;border-color:#d9534f;color:#b4443c}
-.ugx-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
-.ugx-btn{padding:8px 13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
-         color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
-.ugx-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
-.ugx-btn.is-danger{border-color:#d9534f;color:#d9534f}
-.ugx-btn[disabled]{opacity:.45;cursor:default}
-.ugx-mini{padding:4px 8px;border:1px solid var(--border,#e6e6e6);border-radius:7px;background:transparent;
-          color:inherit;font:inherit;font-size:11.5px;cursor:pointer}
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SHOPPABLE-VIDEO SCREENS.
 
+   Rebuilt on the console's OWN tokens, which is most of what was wrong with
+   the first pass: it hard-coded #e6e6e6 and 12px radii while :root already
+   defines --border, --r/--r-sm/--r-xs, --sh-s/--sh/--sh-l, --surface-2/3, a
+   four-step ink scale and --ease. A screen that names literals cannot follow
+   the console theme and cannot match the panel around it -- which is exactly
+   what "classic" looked like.
+
+   The other half is density. Every field had a paragraph under it and every
+   section stacked, so the clip editor was one very long scroll. It is a tabbed
+   panel now with a fixed header and a sticky action bar, so the thing being
+   edited is always on screen and Save never scrolls away.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ugx-wrap{display:grid;gap:16px;min-width:0}
+.ugx-wrap > *{min-width:0}
+.ugx-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);
+          border-radius:var(--r,18px);padding:18px 18px 16px;min-width:0;box-shadow:var(--sh-s)}
+.ugx-title{font-weight:680;font-size:15.5px;letter-spacing:-.01em;color:var(--ink,#101729)}
+.ugx-sub{color:var(--ink-soft,#626c80);font-size:12.5px;line-height:1.55;margin-top:4px;max-width:68ch}
+.ugx-note{border:1px solid var(--border,#e6e9f2);background:var(--surface-2,#f2f4fb);
+          border-radius:var(--r-sm,12px);padding:11px 13px;font-size:12.5px;line-height:1.55;
+          color:var(--ink-soft,#626c80);min-width:0}
+.ugx-note b{color:var(--ink,#101729);font-weight:650}
+.ugx-note.is-warm{border-color:#f0dcb4;background:var(--amber-soft,#fdf2e2);color:#7a5a1e}
+.ugx-note.is-warm b{color:#5d4416}
+.ugx-note.is-bad{border-color:#f3c9c6;background:var(--red-soft,#fdeceb);color:#9d332c}
+.ugx-note.is-bad b{color:#7d2822}
+
+/* ── controls ───────────────────────────────────────────────────────────── */
+.ugx-actions{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.ugx-btn{padding:8px 14px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+         background:var(--surface,#fff);color:var(--ink-2,#3c465c);font:inherit;font-size:12.5px;
+         font-weight:600;cursor:pointer;max-width:100%;
+         transition:background .16s var(--ease),border-color .16s var(--ease),
+                    color .16s var(--ease),box-shadow .16s var(--ease),transform .12s var(--ease)}
+.ugx-btn:hover{background:var(--surface-2,#f2f4fb);border-color:var(--ink-faint,#97a0b2)}
+.ugx-btn:active{transform:translateY(.5px)}
+.ugx-btn.is-primary{background:var(--accent,#15a85a);border-color:var(--accent,#15a85a);color:#fff;
+                    box-shadow:0 1px 2px rgba(16,24,40,.06),0 8px 18px -10px rgba(21,168,90,.7)}
+.ugx-btn.is-primary:hover{background:var(--accent-strong,#0f8f4b);border-color:var(--accent-strong,#0f8f4b)}
+.ugx-btn.is-danger{color:var(--red,#e3493f)}
+.ugx-btn.is-danger:hover{background:var(--red-soft,#fdeceb);border-color:#f3c9c6}
+.ugx-btn[disabled]{opacity:.45;cursor:default;transform:none}
+.ugx-mini{padding:5px 9px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+          background:var(--surface,#fff);color:var(--ink-2,#3c465c);font:inherit;font-size:11.5px;
+          font-weight:600;cursor:pointer;line-height:1.2;
+          transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease)}
+.ugx-mini:hover{background:var(--surface-2,#f2f4fb)}
+.ugx-mini[disabled]{opacity:.35;cursor:default}
+.ugx-mini.is-danger{color:var(--red,#e3493f)}
+.ugx-mini.is-danger:hover{background:var(--red-soft,#fdeceb);border-color:#f3c9c6}
+.ugx-btn:focus-visible,.ugx-mini:focus-visible,.ugx-x:focus-visible,.ugx-seg button:focus-visible,
+.ugx-tab:focus-visible,.ugx-drop:focus-within{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+
+/* ── the segmented tab strip, shared by all three screens ───────────────── */
+.subtabs.ugx-seg{display:inline-flex;gap:2px;padding:3px;background:var(--surface-2,#f2f4fb);
+                 border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);flex-wrap:wrap}
+.subtabs.ugx-seg .subtab{border:0;background:transparent;color:var(--ink-soft,#626c80);
+        font:inherit;font-size:12.5px;font-weight:620;padding:7px 14px;border-radius:9px;cursor:pointer;
+        transition:background .18s var(--ease),color .18s var(--ease),box-shadow .18s var(--ease)}
+.subtabs.ugx-seg .subtab:hover{color:var(--ink,#101729)}
+.subtabs.ugx-seg .subtab.on{background:var(--surface,#fff);color:var(--ink,#101729);box-shadow:var(--sh-s)}
+
+/* ── the section list ───────────────────────────────────────────────────── */
 .ugx-rows{display:grid;gap:10px;min-width:0}
-.ugx-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;
-         border:1px solid var(--border,#e6e6e6);border-radius:11px;padding:11px;min-width:0}
+.ugx-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+         border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);padding:13px 14px;
+         min-width:0;background:var(--surface,#fff);
+         transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+.ugx-row:hover{border-color:var(--ink-faint,#97a0b2);box-shadow:var(--sh-s)}
 .ugx-row > *{min-width:0}
-.ugx-rowname{font-weight:650;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere}
-.ugx-rowmeta{font-size:11.5px;color:var(--ink-soft,#6b7280);margin-top:3px;line-height:1.5;overflow-wrap:anywhere}
-.ugx-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
-          background:var(--bg-soft,#f6f7f9);border:1px solid var(--border,#e6e6e6);border-radius:7px;
-          padding:3px 7px;display:inline-block;margin-top:6px;overflow-wrap:anywhere;max-width:100%}
+.ugx-rowname{font-weight:660;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere;
+             color:var(--ink,#101729)}
+.ugx-rowmeta{font-size:11.5px;color:var(--ink-soft,#626c80);margin-top:3px;line-height:1.5;
+             overflow-wrap:anywhere}
+.ugx-code{font-family:var(--mono,ui-monospace,monospace);font-size:11px;
+          background:var(--surface-2,#f2f4fb);border:1px solid var(--border,#e6e9f2);
+          border-radius:8px;padding:4px 8px;display:inline-block;margin-top:7px;
+          overflow-wrap:anywhere;max-width:100%;color:var(--ink-2,#3c465c)}
 .ugx-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.ugx-pill{font-size:10.5px;font-weight:650;padding:2px 7px;border-radius:999px;
-          border:1px solid var(--border,#e6e6e6);color:var(--ink-soft,#6b7280);white-space:nowrap}
-.ugx-pill.is-live{border-color:#15a85a;color:#15a85a}
-.ugx-pill.is-hold{border-color:#d9534f;color:#d9534f}
-.ugx-pill.is-soft{border-color:#c9a227;color:#a07d12}
+.ugx-pill{font-size:10.5px;font-weight:680;padding:3px 8px;border-radius:999px;letter-spacing:.01em;
+          border:1px solid var(--border,#e6e9f2);background:var(--surface-2,#f2f4fb);
+          color:var(--ink-soft,#626c80);white-space:nowrap}
+.ugx-pill.is-live{border-color:#bfe7cf;background:var(--accent-soft,#e7f7ee);color:var(--accent-ink,#0b6e3a)}
+.ugx-pill.is-hold{border-color:#f3c9c6;background:var(--red-soft,#fdeceb);color:#9d332c}
+.ugx-pill.is-soft{border-color:#f0dcb4;background:var(--amber-soft,#fdf2e2);color:#7a5a1e}
 .ugx-rowacts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 
-.ugx-fields{display:grid;gap:14px;margin-top:14px;min-width:0}
-.ugx-two{display:grid;gap:14px;grid-template-columns:1fr;min-width:0}
-@media (min-width:820px){ .ugx-two{grid-template-columns:1fr 1fr} }
-.ugx-f{display:grid;gap:5px;min-width:0}
-.ugx-f label{font-size:12.5px;font-weight:650;overflow-wrap:anywhere}
-.ugx-f input[type=text],.ugx-f input[type=number],.ugx-f input[type=datetime-local],
-.ugx-f select,.ugx-f textarea{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;
-  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
-.ugx-f textarea{resize:vertical;min-height:64px}
-.ugx-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:68ch}
-.ugx-sec{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-         color:var(--ink-soft,#6b7280);margin-top:4px}
-.ugx-thumb{width:64px;aspect-ratio:9/16;border-radius:8px;background:#f2f2f4;overflow:hidden;
-           display:grid;place-items:center;color:var(--ink-soft,#9ca3af);font-size:10px;text-align:center;
-           flex:0 0 auto}
-.ugx-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.ugx-vid{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:start;
-         border:1px solid var(--border,#e6e6e6);border-radius:11px;padding:10px;min-width:0}
-.ugx-vid > *{min-width:0}
-.ugx-up{display:grid;gap:8px;border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:11px;min-width:0}
-.ugx-uph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
-.ugx-uph b{font-size:12.5px}
-.ugx-uph span{font-size:11px;color:var(--ink-soft,#6b7280);white-space:nowrap}
-.ugx-up input[type=file]{font:inherit;font-size:12px;max-width:100%}
+/* A screen's own header: a back link on its own line, then the title. */
+.ugx-eh{display:grid;gap:7px;justify-items:start;margin-bottom:16px;min-width:0}
+.ugx-eh > *{min-width:0;max-width:100%}
+.ugx-eh .ugx-code{margin-top:0}
+.ugx-back-link{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;
+               padding:0;font:inherit;font-size:12px;font-weight:620;cursor:pointer;
+               color:var(--ink-soft,#626c80);transition:color .16s var(--ease)}
+.ugx-back-link:hover{color:var(--accent,#15a85a)}
+.ugx-back-link svg{width:14px;height:14px;display:block}
+.ugx-back-link:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:3px;border-radius:5px}
 
-/* ── the popup. `position:fixed` + inset:0, and the panel scrolls rather than
-   the page behind it: a phone keyboard opening inside a dialog that scrolls the
-   document puts the field under the keyboard. */
-.ugx-back{position:fixed;inset:0;z-index:900;background:rgba(18,18,22,.55);
-          display:grid;place-items:center;padding:14px;overflow:auto}
-.ugx-modal{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:14px;
-           width:100%;max-width:760px;max-height:calc(100vh - 28px);overflow:auto;
-           padding:16px;min-width:0;box-shadow:0 24px 60px -24px rgba(0,0,0,.45)}
-.ugx-mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-width:0}
-.ugx-x{padding:5px 10px;border:1px solid var(--border,#e6e6e6);border-radius:8px;background:transparent;
-       color:inherit;font:inherit;font-size:16px;line-height:1;cursor:pointer;flex:0 0 auto}
+/* ── fields ─────────────────────────────────────────────────────────────── */
+.ugx-fields{display:grid;gap:14px;min-width:0}
+.ugx-two{display:grid;gap:14px;grid-template-columns:1fr;min-width:0}
+@media (min-width:760px){ .ugx-two{grid-template-columns:1fr 1fr} }
+.ugx-f{display:grid;gap:6px;min-width:0;align-content:start}
+.ugx-f label{font-size:12px;font-weight:660;color:var(--ink-2,#3c465c);overflow-wrap:anywhere}
+.ugx-f input[type=text],.ugx-f input[type=number],.ugx-f input[type=datetime-local],
+.ugx-f select,.ugx-f textarea{width:100%;min-width:0;padding:9px 11px;font:inherit;font-size:13px;
+  border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+  background:var(--surface,#fff);color:var(--ink,#101729);
+  transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+.ugx-f input:focus,.ugx-f select:focus,.ugx-f textarea:focus{outline:none;
+  border-color:var(--accent,#15a85a);box-shadow:0 0 0 3px var(--accent-soft,#e7f7ee)}
+.ugx-f input::placeholder,.ugx-f textarea::placeholder{color:var(--ink-faint,#97a0b2)}
+.ugx-f textarea{resize:vertical;min-height:70px;line-height:1.5}
+.ugx-help{font-size:11px;color:var(--ink-soft,#626c80);line-height:1.5;margin:0;max-width:66ch}
+.ugx-sec{font-size:11px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--ink-faint,#97a0b2)}
+
+/* ── a clip's poster, wherever one is shown ─────────────────────────────── */
+.ugx-thumb{width:56px;aspect-ratio:9/16;border-radius:10px;background:var(--surface-3,#eef1f9);
+           overflow:hidden;display:grid;place-items:center;color:var(--ink-faint,#97a0b2);
+           font-size:9.5px;text-align:center;flex:0 0 auto;border:1px solid var(--border,#e6e9f2)}
+.ugx-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* A src that 404s otherwise draws the browser's broken-image glyph inside the
+   tile, which looks like a defect in the panel rather than a missing file. */
+.ugx-thumb img[alt='']{font-size:0;color:transparent}
+.ugx-vid{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;
+         border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);padding:11px 12px;
+         min-width:0;background:var(--surface,#fff);
+         transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+.ugx-vid:hover{border-color:var(--ink-faint,#97a0b2);box-shadow:var(--sh-s)}
+.ugx-vid > *{min-width:0}
+
+/* ── FILE PICKERS, AND THE NATIVE ONE IS GONE ────────────────────────────
+   `<input type=file>` renders as the browser's own grey "Choose File / No file
+   chosen" button, which is the single most dated thing a panel can contain and
+   cannot be styled. The input is still THERE -- it is what the change handler
+   listens to, and it is what keeps the picker accessible and keyboard-operable
+   -- it is just visually hidden behind a <label>, which is a real activator for
+   it in every browser. No JavaScript click-forwarding. */
+.ugx-drop{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+          border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);padding:12px 13px;
+          min-width:0;background:var(--surface,#fff);cursor:pointer;margin:0;
+          transition:border-color .16s var(--ease),background .16s var(--ease),box-shadow .16s var(--ease)}
+.ugx-drop:hover{border-color:var(--accent,#15a85a);background:var(--accent-soft,#e7f7ee)}
+.ugx-drop input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.ugx-dropicon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+              background:var(--surface-2,#f2f4fb);color:var(--ink-soft,#626c80);flex:0 0 auto}
+.ugx-drop:hover .ugx-dropicon{background:#fff;color:var(--accent,#15a85a)}
+.ugx-dropicon svg{width:17px;height:17px;display:block}
+.ugx-dropname{display:block;font-size:12.5px;font-weight:660;color:var(--ink,#101729);line-height:1.3}
+.ugx-dropmeta{display:block;font-size:11px;color:var(--ink-soft,#626c80);margin-top:3px;
+              line-height:1.45;max-width:58ch}
+.ugx-dropcta{font-size:11.5px;font-weight:650;color:var(--accent,#15a85a);white-space:nowrap;
+             border:1px solid var(--border,#e6e9f2);border-radius:8px;padding:5px 10px;
+             background:var(--surface,#fff)}
+.ugx-drop:hover .ugx-dropcta{border-color:var(--accent,#15a85a)}
+.ugx-drop.is-empty .ugx-dropname{color:var(--ink-soft,#626c80);font-weight:600}
+
+/* ── the popup ───────────────────────────────────────────────────────────
+   position:fixed + inset:0, and the BODY scrolls rather than the page behind
+   it: a phone keyboard opening inside a dialog that scrolls the document puts
+   the field under the keyboard. The header and the action bar do not scroll, so
+   Save is always reachable -- which the single long scroll could not promise. */
+.ugx-back{position:fixed;inset:0;z-index:900;background:rgba(16,23,41,.52);
+          backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+          display:grid;place-items:center;padding:16px;overflow:auto;
+          animation:ugxFade .18s var(--ease)}
+@keyframes ugxFade{from{opacity:0}to{opacity:1}}
+@keyframes ugxRise{from{opacity:0;transform:translateY(8px) scale(.985)}
+                   to{opacity:1;transform:none}}
+.ugx-modal{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);
+           border-radius:var(--r,18px);width:100%;max-width:820px;
+           max-height:min(760px, calc(100vh - 32px));min-width:0;
+           box-shadow:var(--sh-l,0 24px 60px -22px rgba(16,24,40,.30));
+           display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden;
+           animation:ugxRise .22s var(--ease)}
+@media (prefers-reduced-motion:reduce){
+  .ugx-back,.ugx-modal{animation:none}
+  .ugx-btn,.ugx-mini,.ugx-row,.ugx-vid,.ugx-drop,.ugx-tab,.subtabs.ugx-seg .subtab{transition:none}
+}
+.ugx-mh{display:grid;grid-template-columns:auto 1fr auto;gap:13px;align-items:center;
+        padding:15px 16px 13px;border-bottom:1px solid var(--border-2,#eef0f6);min-width:0}
+.ugx-mh > *{min-width:0}
+.ugx-x{width:30px;height:30px;display:grid;place-items:center;
+       border:1px solid var(--border,#e6e9f2);border-radius:9px;background:var(--surface,#fff);
+       color:var(--ink-soft,#626c80);font:inherit;font-size:16px;line-height:1;cursor:pointer;
+       flex:0 0 auto;transition:background .16s var(--ease),color .16s var(--ease)}
+.ugx-x:hover{background:var(--surface-2,#f2f4fb);color:var(--ink,#101729)}
+
+/* The tab rail inside the dialog. */
+.ugx-tabs{display:flex;gap:2px;padding:10px 16px 0;overflow-x:auto;min-width:0;
+          border-bottom:1px solid var(--border-2,#eef0f6);scrollbar-width:none}
+.ugx-tabs::-webkit-scrollbar{display:none}
+.ugx-tab{border:0;background:transparent;color:var(--ink-soft,#626c80);font:inherit;font-size:12.5px;
+         font-weight:640;padding:8px 12px 11px;cursor:pointer;white-space:nowrap;position:relative;
+         border-bottom:2px solid transparent;margin-bottom:-1px;
+         transition:color .16s var(--ease),border-color .16s var(--ease)}
+.ugx-tab:hover{color:var(--ink,#101729)}
+.ugx-tab.on{color:var(--accent-ink,#0b6e3a);border-bottom-color:var(--accent,#15a85a)}
+.ugx-tab .ugx-count{display:inline-block;margin-inline-start:6px;font-size:10.5px;font-weight:700;
+                    padding:1px 6px;border-radius:999px;background:var(--surface-2,#f2f4fb);
+                    color:var(--ink-soft,#626c80)}
+.ugx-tab.on .ugx-count{background:var(--accent-soft,#e7f7ee);color:var(--accent-ink,#0b6e3a)}
+
+.ugx-body{padding:16px;overflow:auto;min-width:0;display:grid;gap:14px;align-content:start}
+.ugx-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;
+          padding:12px 16px;border-top:1px solid var(--border-2,#eef0f6);
+          background:var(--surface-2,#f2f4fb);min-width:0}
+.ugx-foot .ugx-footnote{margin-inline-end:auto;font-size:11.5px;color:var(--ink-soft,#626c80);
+                        line-height:1.45;min-width:0}
+
+/* The live tile, so the thing being edited is visible while it is edited. */
+.ugx-preview{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center;min-width:0}
+.ugx-preview .ugx-thumb{width:46px;border-radius:9px}
+.ugx-previewname{display:block;font-size:13.5px;font-weight:670;color:var(--ink,#101729);
+                 line-height:1.3;overflow-wrap:anywhere}
+.ugx-previewmeta{display:block;font-size:11.5px;color:var(--ink-soft,#626c80);margin-top:3px;
+                 line-height:1.45;overflow-wrap:anywhere}
+
+/* ── tagged products ────────────────────────────────────────────────────── */
 .ugx-tagged{display:grid;gap:7px;min-width:0}
-.ugx-tag{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
-         border:1px solid var(--border,#e6e6e6);border-radius:9px;padding:8px 10px;min-width:0}
+.ugx-tag{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+         border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);padding:8px 11px;
+         min-width:0;background:var(--surface,#fff);
+         transition:border-color .16s var(--ease),background .16s var(--ease)}
+.ugx-tag:hover{border-color:var(--ink-faint,#97a0b2);background:var(--surface-2,#f2f4fb)}
 .ugx-tag > *{min-width:0}
-.ugx-tagname{font-size:12.5px;line-height:1.35;overflow-wrap:anywhere}
-.ugx-results{display:grid;gap:6px;margin-top:8px;max-height:230px;overflow:auto;min-width:0}
+.ugx-tagno{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;flex:0 0 auto;
+           font-size:10.5px;font-weight:700;background:var(--surface-2,#f2f4fb);
+           color:var(--ink-soft,#626c80)}
+.ugx-tag:first-child .ugx-tagno{background:var(--accent-soft,#e7f7ee);color:var(--accent-ink,#0b6e3a)}
+.ugx-tagname{display:block;font-size:12.5px;line-height:1.35;overflow-wrap:anywhere;
+             color:var(--ink,#101729);font-weight:620}
+.ugx-tagbrand{display:block;font-size:11px;color:var(--ink-soft,#626c80);font-weight:500;margin-top:1px}
+.ugx-results{display:grid;gap:6px;margin-top:8px;max-height:220px;overflow:auto;min-width:0;
+             padding-inline-end:2px}
+.ugx-empty{border:1px dashed var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+           padding:18px;text-align:center;color:var(--ink-soft,#626c80);font-size:12.5px;
+           background:var(--surface-2,#f2f4fb)}
 </style>
 <script>
 (function () {
@@ -164,15 +328,30 @@
 
   function say(m) { try { window.toast(m); } catch (e) {} }
 
-  function token() {
-    return (document.querySelector('meta[name=csrf-token]') || {}).content || '';
+  /*
+   * ── THE TOKEN THIS CONSOLE ACTUALLY USES ────────────────────────────────
+   *
+   * `X-XSRF-TOKEN`, read from the `XSRF-TOKEN` COOKIE that Laravel sets on
+   * every response. That is what app.blade.php's own api() has always sent and
+   * what ugc-library-screen.blade.php sends.
+   *
+   * THIS USED TO READ A <meta name="csrf-token"> TAG, AND THE ADMIN HAS NO SUCH
+   * TAG. So the token was '' on every call, every write from this screen was
+   * refused with 419 "CSRF token mismatch", and the screen reported it as
+   * "That section could not be saved." -- a sentence that names the symptom and
+   * hides the cause. Nobody could create a section: this path had never worked
+   * on any shop, and the owner found it before any test did.
+   */
+  function cookie(n) {
+    var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return m ? decodeURIComponent(m.pop()) : '';
   }
 
   async function api(path, body, method) {
     var options = { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' };
     if (body !== undefined || method) {
       options.method = method || 'POST';
-      options.headers['X-CSRF-TOKEN'] = token();
+      options.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
       if (body !== undefined) {
         options.headers['Content-Type'] = 'application/json';
         options.body = JSON.stringify(body);
@@ -234,7 +413,7 @@
       ['ugcstyle', 'Appearance']
     ];
 
-    return '<div class="subtabs" style="margin-bottom:14px">'
+    return '<div class="subtabs ugx-seg" style="margin-bottom:16px">'
       + tabs.map(function (t) {
           return '<button class="subtab' + (t[0] === active ? ' on' : '') + '"'
             + ' data-ugc-tab="' + t[0] + '">' + t[1] + '</button>';
@@ -327,6 +506,8 @@
     try {
       var body = await api('/ugc-videos/' + encodeURIComponent(id));
       editingVideo = body.video;
+      // Always open on Details rather than wherever the last clip was left.
+      modalTab = 'details';
       tagged = (body.video.products || []).map(function (p) {
         return { id: p.id, name: p.name, brand: p.brand };
       });
@@ -444,7 +625,7 @@
     try {
       var response = await fetch(base() + '/ugc-videos/' + editingVideo.id + '/media', {
         method: 'POST',
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token() },
+        headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') },
         credentials: 'same-origin',
         body: form
       });
@@ -576,10 +757,17 @@
     var inSection = {};
     videos.forEach(function (v) { inSection[v.id] = true; });
 
-    return '<div class="ugx-card"><div class="ugx-mh"><div>'
+    /* Its OWN header, not the dialog's .ugx-mh -- that one is a three-column
+       grid built for the popup, and the back button landed in its 1fr cell and
+       stretched across half the card. */
+    return '<div class="ugx-card"><div class="ugx-eh">'
+      + '<button class="ugx-back-link" data-ugx-back>'
+      + '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" '
+      + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+      + '<path d="M12 4.5 6.5 10l5.5 5.5"/></svg>All sections</button>'
       + '<div class="ugx-title">' + esc(s.title || 'New section') + '</div>'
       + (s.handle ? '<code class="ugx-code">' + esc(s.shortcode) + '</code>' : '')
-      + '</div><button class="ugx-btn" data-ugx-back>All sections</button></div>'
+      + '</div>'
 
       + '<div class="ugx-fields">'
       + '<div class="ugx-f"><label>Name (yours, never shown on the shop)</label>'
@@ -635,7 +823,7 @@
                 + '<button class="ugx-mini" data-ugx-up="' + i + '"' + (i === 0 ? ' disabled' : '') + '>&uarr;</button>'
                 + '<button class="ugx-mini" data-ugx-down="' + i + '"'
                 + (i === videos.length - 1 ? ' disabled' : '') + '>&darr;</button>'
-                + '<button class="ugx-mini" data-ugx-remove="' + i + '">Remove</button>'
+                + '<button class="ugx-mini is-danger" data-ugx-remove="' + i + '">Remove</button>'
                 + '</div></div>';
             }).join('') + '</div>'
           : '<p class="ugx-sub" style="margin-top:10px">Nothing in it yet.</p>')
@@ -669,105 +857,214 @@
   }
 
   /* ── THE POPUP: full controls, product selection, files, source URLs ──── */
+  /* Which tab of the clip editor is open. Reset every time a clip is opened,
+     so the dialog always lands on Details rather than wherever it was left. */
+  var modalTab = 'details';
+
+  var MODAL_TABS = [
+    ['details', 'Details'],
+    ['source', 'Source'],
+    ['files', 'Files'],
+    ['products', 'Products'],
+    ['placement', 'Placement']
+  ];
+
+  /* An inline SVG, from a fixed set. A CONSTANT and never a setting: this is
+     printed unescaped, which CLAUDE.md rule 5 allows only for a constant. */
+  function ugxIcon(name) {
+    var d = {
+      film: '<path d="M3 4.5h14v11H3z"/><path d="M6.5 4.5v11M13.5 4.5v11M3 10h14"/>',
+      image: '<path d="M3 4.5h14v11H3z"/><circle cx="7.2" cy="8.2" r="1.4"/><path d="m3.6 14 4-4 3.2 3 2.4-2 3.2 3"/>',
+      loop: '<path d="M4 8.5a5 5 0 0 1 8.6-3.4L15 7.5"/><path d="M16 11.5a5 5 0 0 1-8.6 3.4L5 12.5"/><path d="M15 3.5v4h-4M5 16.5v-4h4"/>'
+    };
+    return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" '
+      + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (d[name] || '') + '</svg>';
+  }
+
+  /**
+   * One file row: a real <input type=file> inside a <label>.
+   *
+   * The input is visually hidden rather than removed, because it is what the
+   * change handler listens to and what makes the control keyboard-operable —
+   * a <label> is a genuine activator for its input in every browser, so no
+   * JavaScript forwards the click. The browser's own "Choose File / No file
+   * chosen" button is what made this panel look a decade old, and it is the one
+   * thing about a file input that cannot be styled.
+   */
+  function ugxFileRow(kind, icon, title, bytes, note) {
+    var has = bytes > 0;
+
+    /*
+     * THE `accept` IS A LITERAL IN THIS SOURCE, and not a parameter, because
+     * AdminMediaPickerEverywhereTest reads this FILE rather than the rendered
+     * page. It sweeps for a raw <input type=file> and treats one with no
+     * visible accept as an image picker that should have gone through the
+     * shared Media Library. Concatenating the attribute made both of these
+     * invisible to it and the guard reported them -- correctly, on the evidence
+     * it had. These two genuinely are video pickers, and now they say so where
+     * the guard can read it.
+     */
+    var input = kind === 'clip'
+      ? '<input type="file" accept="video/mp4,video/webm,video/quicktime" data-ugx-upload="clip">'
+      : '<input type="file" accept="video/mp4,video/webm" data-ugx-upload="teaser">';
+
+    return '<label class="ugx-drop' + (has ? '' : ' is-empty') + '">'
+      + '<span class="ugx-dropicon">' + ugxIcon(icon) + '</span>'
+      + '<span><span class="ugx-dropname">' + esc(title) + '</span>'
+      + '<span class="ugx-dropmeta">' + (has ? esc(kb(bytes)) + ' · ' : '') + esc(note) + '</span></span>'
+      + '<span class="ugx-dropcta">' + (has ? 'Replace' : 'Choose') + '</span>'
+      + input
+      + '</label>';
+  }
+
+  /** The poster row, which picks from the Media Library rather than from disk. */
+  function ugxPosterRow(v) {
+    var has = (v.poster_bytes || 0) > 0;
+
+    return '<div class="ugx-drop' + (has ? '' : ' is-empty') + '" data-ugx-poster role="button" tabindex="0">'
+      + '<span class="ugx-dropicon">' + ugxIcon('image') + '</span>'
+      + '<span><span class="ugx-dropname">Poster</span>'
+      + '<span class="ugx-dropmeta">' + (has ? esc(kb(v.poster_bytes)) + ' · ' : '')
+      + 'Required to publish — the tile reserves its box from this image, which is what stops the page '
+      + 'jumping.</span></span>'
+      + '<span class="ugx-dropcta">' + (has ? 'Change' : 'Choose') + '</span>'
+      + '</div>';
+  }
+
   function modalHTML() {
     var v = editingVideo;
+    /* `poster_path`, which is what UgcVideoController::card() returns for a
+       single clip. The section LIST uses a different key (`poster`), so both
+       are read rather than guessing which payload opened this dialog. */
+    var poster = v.poster_path || v.poster || '';
+
+    var body = '';
+
+    if (modalTab === 'details') {
+      body = '<div class="ugx-fields">'
+        + '<div class="ugx-f"><label>Title</label>'
+        + '<input type="text" data-ugx-vfield="title" value="' + esc(v.title || '') + '" autocomplete="off"></div>'
+        + '<div class="ugx-f"><label>Caption</label>'
+        + '<textarea data-ugx-vfield="caption" placeholder="The creator’s own words">' + esc(v.caption || '') + '</textarea>'
+        + '<p class="ugx-help">There is deliberately no Translate button here: a machine-translated caption '
+        + 'attributed to a named person is putting words in her mouth.</p></div>'
+        + '</div>';
+    } else if (modalTab === 'source') {
+      body = '<div class="ugx-fields">'
+        + '<div class="ugx-two">'
+        + '<div class="ugx-f"><label>Source</label>'
+        + selectHTML2('source_platform', (vocab && vocab.platforms) || ['upload', 'instagram', 'tiktok', 'youtube'],
+            v.source_platform, { upload: 'Uploaded here', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' })
+        + '</div>'
+        + '<div class="ugx-f"><label>Link to the original post</label>'
+        + '<input type="text" data-ugx-vfield="source_url" value="' + esc(v.source_url || '') + '" '
+        + 'autocomplete="off" placeholder="https://"></div>'
+        + '</div>'
+        + '<p class="ugx-help">Attribution and a link back, never an embed. The shop serves the file you upload, '
+        + 'which is what lets a tile loop a 2–3 second teaser — inside somebody else’s player it could not.</p>'
+        + '<div class="ugx-two">'
+        + '<div class="ugx-f"><label>Creator handle</label>'
+        + '<input type="text" data-ugx-vfield="creator_handle" value="' + esc(v.creator_handle || '') + '" '
+        + 'autocomplete="off" placeholder="@handle"></div>'
+        + '<div class="ugx-f"><label>Creator link</label>'
+        + '<input type="text" data-ugx-vfield="creator_url" value="' + esc(v.creator_url || '') + '" '
+        + 'autocomplete="off" placeholder="https://"></div>'
+        + '</div>'
+        + '<div class="ugx-two">'
+        + '<div class="ugx-f"><label>Permission</label>'
+        + selectHTML2('rights_status', (vocab && vocab.rights) || ['pending', 'granted', 'refused'], v.rights_status,
+            { pending: 'Not asked yet', granted: 'Granted in writing', refused: 'Refused' })
+        + '</div>'
+        + '<div class="ugx-f"><label>Where the permission is recorded</label>'
+        + '<input type="text" data-ugx-vfield="rights_evidence" value="' + esc(v.rights_evidence || '') + '" '
+        + 'autocomplete="off" placeholder="Email, DM, signed note…"></div>'
+        + '</div>'
+        + '<p class="ugx-help">A clip cannot be published until permission says granted — the creator owns the '
+        + 'copyright in her video and being tagged in it grants nothing. Neither field is ever shown on the shop '
+        + 'or returned by any public endpoint.</p>'
+        + '</div>';
+    } else if (modalTab === 'files') {
+      body = '<div class="ugx-fields">'
+        + ugxFileRow('clip', 'film', 'Video', v.bytes,
+            'Up to 64MB. Checked by its own bytes and not by its name.')
+        + ugxPosterRow(v)
+        + ugxFileRow('teaser', 'loop', '2–3 second loop', v.teaser_bytes,
+            'Optional. Without it the tile shows its poster — a quieter rail, not a broken one.')
+        + '</div>';
+    } else if (modalTab === 'products') {
+      body = '<div class="ugx-fields">'
+        + '<div class="ugx-tagged">'
+        + (tagged.length ? tagged.map(function (p, i) {
+            return '<div class="ugx-tag"><span class="ugx-tagno">' + (i + 1) + '</span>'
+              + '<span><span class="ugx-tagname">' + esc(p.name) + '</span>'
+              + (p.brand ? '<span class="ugx-tagbrand">' + esc(p.brand) + '</span>' : '') + '</span>'
+              + '<span class="ugx-rowacts">'
+              + '<button class="ugx-mini" data-ugx-pup="' + i + '"' + (i === 0 ? ' disabled' : '')
+              + ' aria-label="Move up">&uarr;</button>'
+              + '<button class="ugx-mini" data-ugx-pdown="' + i + '"'
+              + (i === tagged.length - 1 ? ' disabled' : '') + ' aria-label="Move down">&darr;</button>'
+              + '<button class="ugx-mini is-danger" data-ugx-untag="' + i + '">Remove</button>'
+              + '</span></div>';
+          }).join('') : '<div class="ugx-empty">No products yet. The first one you add is the product the '
+              + 'tile’s card shows.</div>')
+        + '</div>'
+        + '<div class="ugx-f"><label>Search the catalogue</label>'
+        + '<input type="text" data-ugx-search value="' + esc(term) + '" autocomplete="off" '
+        + 'placeholder="Product name"></div>'
+        + (results.length ? '<div class="ugx-results">' + results.map(function (p) {
+            return '<div class="ugx-tag"><span class="ugx-tagno">+</span>'
+              + '<span><span class="ugx-tagname">' + esc(p.name) + '</span>'
+              + (p.brand ? '<span class="ugx-tagbrand">' + esc(p.brand) + '</span>' : '') + '</span>'
+              + '<button class="ugx-mini" data-ugx-tag="' + esc(String(p.id)) + '"'
+              + ' data-ugx-tagname="' + esc(p.name) + '"'
+              + ' data-ugx-tagbrand="' + esc(p.brand || '') + '">Add</button></div>';
+          }).join('') + '</div>' : '')
+        + '</div>';
+    } else {
+      body = '<div class="ugx-fields"><div class="ugx-two">'
+        + '<div class="ugx-f"><label>Status</label>'
+        + selectHTML2('status', (vocab && vocab.statuses) || ['draft', 'publish'], v.status,
+            { draft: 'Draft', publish: 'Published' }) + '</div>'
+        + '<div class="ugx-f"><label>Language</label>'
+        + selectHTML2('locale', [null, 'en', 'ar'], v.locale,
+            { '': '— both storefronts —', en: 'English only', ar: 'Arabic only' }) + '</div>'
+        + '</div></div>';
+    }
 
     return '<div class="ugx-back" data-ugx-backdrop><div class="ugx-modal" role="dialog" aria-modal="true">'
-      + '<div class="ugx-mh"><div><div class="ugx-title">' + esc(v.title || v.slug) + '</div>'
-      + '<p class="ugx-sub">Everything about this clip. Saved to the library, so it changes in every section '
-      + 'that carries it.</p></div>'
+
+      /* The header carries the clip's own poster, so what is being edited is
+         visible the whole time rather than only on the Files tab. */
+      + '<div class="ugx-mh">'
+      + '<span class="ugx-thumb" style="width:40px">'
+      + (poster ? '<img src="' + esc(poster) + '" alt="">' : 'no<br>poster') + '</span>'
+      + '<span><span class="ugx-previewname">' + esc(v.title || v.slug) + '</span>'
+      + '<span class="ugx-previewmeta">Saved to the library, so it changes in every section that carries it.'
+      + '</span></span>'
       + '<button class="ugx-x" data-ugx-close aria-label="Close">&times;</button></div>'
 
-      + '<div class="ugx-fields">'
-      + '<div class="ugx-f"><label>Title</label>'
-      + '<input type="text" data-ugx-vfield="title" value="' + esc(v.title || '') + '" autocomplete="off"></div>'
-      + '<div class="ugx-f"><label>Caption</label>'
-      + '<textarea data-ugx-vfield="caption">' + esc(v.caption || '') + '</textarea>'
-      + '<p class="ugx-help">The creator’s own words. There is deliberately no Translate button on this '
-      + 'field: a machine-translated caption attributed to a named person is putting words in her mouth.</p></div>'
-
-      + '<div class="ugx-sec">Where it came from</div>'
-      + '<div class="ugx-two">'
-      + '<div class="ugx-f"><label>Source</label>'
-      + selectHTML2('source_platform', (vocab && vocab.platforms) || ['upload', 'instagram', 'tiktok', 'youtube'],
-          v.source_platform, { upload: 'Uploaded here', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' })
-      + '</div>'
-      + '<div class="ugx-f"><label>Link to the original post</label>'
-      + '<input type="text" data-ugx-vfield="source_url" value="' + esc(v.source_url || '') + '" autocomplete="off">'
-      + '<p class="ugx-help">Attribution and a link back, never an embed. The shop serves the file you upload, '
-      + 'which is what lets a tile loop a 2–3 second teaser — inside somebody else’s player it '
-      + 'could not.</p></div>'
-      + '</div>'
-      + '<div class="ugx-two">'
-      + '<div class="ugx-f"><label>Creator handle</label>'
-      + '<input type="text" data-ugx-vfield="creator_handle" value="' + esc(v.creator_handle || '') + '" autocomplete="off"></div>'
-      + '<div class="ugx-f"><label>Creator link</label>'
-      + '<input type="text" data-ugx-vfield="creator_url" value="' + esc(v.creator_url || '') + '" autocomplete="off"></div>'
-      + '</div>'
-      + '<div class="ugx-two">'
-      + '<div class="ugx-f"><label>Permission</label>'
-      + selectHTML2('rights_status', (vocab && vocab.rights) || ['pending', 'granted', 'refused'], v.rights_status,
-          { pending: 'Not asked yet', granted: 'Granted in writing', refused: 'Refused' })
-      + '<p class="ugx-help">A clip cannot be published until this says granted. The creator owns the copyright '
-      + 'in her video and being tagged in it grants nothing.</p></div>'
-      + '<div class="ugx-f"><label>Where the permission is recorded</label>'
-      + '<input type="text" data-ugx-vfield="rights_evidence" value="' + esc(v.rights_evidence || '') + '" autocomplete="off">'
-      + '<p class="ugx-help">Never shown on the shop and never returned by any public endpoint.</p></div>'
+      + '<div class="ugx-tabs" role="tablist">'
+      + MODAL_TABS.map(function (t) {
+          var count = t[0] === 'products' && tagged.length
+            ? '<span class="ugx-count">' + tagged.length + '</span>' : '';
+          return '<button class="ugx-tab' + (t[0] === modalTab ? ' on' : '') + '" role="tab"'
+            + ' aria-selected="' + (t[0] === modalTab ? 'true' : 'false') + '"'
+            + ' data-ugx-mtab="' + t[0] + '">' + t[1] + count + '</button>';
+        }).join('')
       + '</div>'
 
-      + '<div class="ugx-sec">The files</div>'
-      + '<div class="ugx-up"><div class="ugx-uph"><b>Video</b><span>' + esc(kb(v.bytes)) + '</span></div>'
-      + '<input type="file" accept="video/mp4,video/webm,video/quicktime" data-ugx-upload="clip">'
-      + '<p class="ugx-help">Up to 64MB. Checked by its own bytes and not by its name.</p></div>'
-      + '<div class="ugx-up"><div class="ugx-uph"><b>Poster</b><span>' + esc(kb(v.poster_bytes)) + '</span></div>'
-      + '<div><button class="ugx-btn" data-ugx-poster>Choose from the Media Library</button></div>'
-      + '<p class="ugx-help">Required to publish: the tile reserves its box from this image, which is what keeps '
-      + 'the page from jumping before anything has loaded.</p></div>'
-      + '<div class="ugx-up"><div class="ugx-uph"><b>2–3 second loop</b><span>' + esc(kb(v.teaser_bytes)) + '</span></div>'
-      + '<input type="file" accept="video/mp4,video/webm" data-ugx-upload="teaser">'
-      + '<p class="ugx-help">Optional. Without it the tile shows its poster, which is about 22KB instead of '
-      + '129KB — a quieter rail, not a broken one.</p></div>'
-
-      + '<div class="ugx-sec">Products in this video</div>'
-      + '<div class="ugx-tagged">'
-      + (tagged.length ? tagged.map(function (p, i) {
-          return '<div class="ugx-tag"><div class="ugx-tagname">' + esc(p.name)
-            + (p.brand ? ' <span class="ugx-help" style="display:inline">' + esc(p.brand) + '</span>' : '')
-            + '</div><div class="ugx-rowacts">'
-            + '<button class="ugx-mini" data-ugx-pup="' + i + '"' + (i === 0 ? ' disabled' : '') + '>&uarr;</button>'
-            + '<button class="ugx-mini" data-ugx-pdown="' + i + '"'
-            + (i === tagged.length - 1 ? ' disabled' : '') + '>&darr;</button>'
-            + '<button class="ugx-mini" data-ugx-untag="' + i + '">Remove</button>'
-            + '</div></div>';
-        }).join('') : '<p class="ugx-sub">None yet. The first one is the product the tile’s card shows.</p>')
-      + '</div>'
-      + '<div class="ugx-f" style="margin-top:10px"><label>Search the catalogue</label>'
-      + '<input type="text" data-ugx-search value="' + esc(term) + '" autocomplete="off" placeholder="Product name"></div>'
-      + (results.length ? '<div class="ugx-results">' + results.map(function (p) {
-          return '<div class="ugx-tag"><div class="ugx-tagname">' + esc(p.name) + '</div>'
-            + '<button class="ugx-mini" data-ugx-tag="' + esc(String(p.id)) + '"'
-            + ' data-ugx-tagname="' + esc(p.name) + '"'
-            + ' data-ugx-tagbrand="' + esc(p.brand || '') + '">Add</button></div>';
-        }).join('') + '</div>' : '')
-
-      + '<div class="ugx-sec">Where and when</div>'
-      + '<div class="ugx-two">'
-      + '<div class="ugx-f"><label>Status</label>'
-      + selectHTML2('status', (vocab && vocab.statuses) || ['draft', 'publish'], v.status,
-          { draft: 'Draft', publish: 'Published' }) + '</div>'
-      + '<div class="ugx-f"><label>Language</label>'
-      + selectHTML2('locale', [null, 'en', 'ar'], v.locale,
-          { '': '— both storefronts —', en: 'English only', ar: 'Arabic only' }) + '</div>'
-      + '</div>'
-      + '</div>'
-
+      + '<div class="ugx-body">' + body
       + (v.blockers && v.blockers.length
-          ? '<div class="ugx-note is-warm">This clip cannot be published yet: ' + v.blockers.map(esc).join(' ') + '</div>'
+          ? '<div class="ugx-note is-warm"><b>Not publishable yet.</b> ' + v.blockers.map(esc).join(' ') + '</div>'
           : '')
+      + '</div>'
 
-      + '<div class="ugx-actions">'
-      + '<button class="ugx-btn is-primary" data-ugx-vsave' + (busy ? ' disabled' : '') + '>Save video</button>'
+      /* The action bar does not scroll. The single long scroll this replaced
+         could put Save below the fold on every tab. */
+      + '<div class="ugx-foot">'
+      + '<span class="ugx-footnote">Changes apply to every section carrying this clip.</span>'
       + '<button class="ugx-btn" data-ugx-close>Close</button>'
+      + '<button class="ugx-btn is-primary" data-ugx-vsave' + (busy ? ' disabled' : '') + '>Save video</button>'
       + '</div></div></div>';
   }
 
@@ -813,6 +1110,16 @@
 
     if (t.closest('[data-ugx-close]') || (t.hasAttribute && t.hasAttribute('data-ugx-backdrop'))) {
       e.preventDefault(); editingVideo = null; render(); return;
+    }
+    /* A tab of the clip editor. Before the dialog was tabbed this was one very
+       long scroll, so Save could sit below the fold and the thing being edited
+       could scroll out of sight. */
+    var mtab = t.closest('[data-ugx-mtab]');
+    if (mtab) {
+      e.preventDefault();
+      modalTab = mtab.getAttribute('data-ugx-mtab');
+      render();
+      return;
     }
     if (t.closest('[data-ugx-back]')) { e.preventDefault(); editing = null; render(); return; }
     if (t.closest('[data-ugx-new]')) {
