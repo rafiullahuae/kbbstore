@@ -485,7 +485,67 @@ final class EnglishRenderWalk
      * the width alone against a fixed height attribute squashes the picture
      * rather than scaling it.
      */
-    public const BASE_COMMIT = 'e7645c8e201ce53ff187178f9f558e4f18ec0374';
+    /*
+     * ── MOVED AGAIN — LANE W1 (the site width system) ──────────────────────
+     *
+     * SIX PAGES MOVED, THIRTY-FIVE DID NOT, AND THE DIFF WAS READ PAGE BY PAGE
+     * BEFORE THIS CONSTANT WAS TOUCHED.
+     *
+     * The change that lane exists for — one site width of 1680px, and a product
+     * grid whose column count is derived from the row it has rather than from a
+     * viewport breakpoint — is ENTIRELY IN resources/css/kbb/*.css, and this walk
+     * rolls resources/views back and renders. So it cannot see the width change
+     * at all, and every byte that moved below is a view change, each of them a
+     * declaration in an inline <style> or an attribute on a control:
+     *
+     *   shop                    the column selector's default `class="on"` on the
+     *                           4 button, and `data-cols="4"` on the grid. Both
+     *                           are now emitted only when the SHOPPER has chosen.
+     *                           Facets::columns() answers '4' whether or not
+     *                           `?cols` is in the URL, and `data-cols` is a PIN,
+     *                           so every visitor was pinned at four columns at
+     *                           every screen size including 1680 and 2560 — which
+     *                           is the thing the owner asked to have removed. A
+     *                           highlighted "4" above a five-column grid is the
+     *                           control lying about the page, so the highlight
+     *                           follows the same fact.
+     *
+     *   product-category/{path} the same page template, the same two attributes.
+     *
+     *   korean-skincare-brands  `.brw{max-width:1180px;margin:0 auto;padding:22px
+     *                           18px 60px}` became the shared token and the shared
+     *                           gutter. One declaration and its comment.
+     *
+     *   korean-skincare-brands/{slug}
+     *                           <x-product-grid> stopped emitting
+     *                           `style="--kbb-cols:4;--kbb-cols-m:2"`. Nothing
+     *                           reads either name any more, and neither reached
+     *                           four of the five product grids when it did.
+     *
+     *   skincare-guide          `.wrap{max-width:1160px;margin:0 auto;padding:0
+     *   {slug} (an article)     20px}` became the shared token in both standalone
+     *                           documents. One declaration and its comment each.
+     *
+     * NOT ONE BYTE OF SHOPPER-VISIBLE COPY MOVED on any of the six. Four are
+     * inside an inline stylesheet; two are attributes on the shop's own control.
+     *
+     * ▲ AND THIRTY-FIVE PAGES THAT NEARLY MOVED FOR NOTHING. The new
+     * <style id="kbb-layout"> block, written the obvious way with each directive
+     * on its own line, added FOUR BLANK LINES to the <head> of thirty-five
+     * storefront pages — for a block that emits nothing at all on a shop at its
+     * defaults. The whitespace was the entire diff. Advancing this constant there
+     * would have been advancing it for nothing and would have buried the six real
+     * changes in thirty-five fake ones, which is exactly the shape rule 1's
+     * instrument exists to prevent. It is zero now: PHP eats a newline
+     * immediately after `?>`, so the raw-PHP block and the conditional both close
+     * at end of line, and the opening directive shares a line with the comment
+     * above it and with the tag it guards. Rearranging it back costs four blank
+     * lines on every page of the shop, and the comment at the site says so.
+     *
+     * The commit named below is reachable from this branch and stays reachable,
+     * per the note above about rebases rewriting every SHA behind this constant.
+     */
+    public const BASE_COMMIT = '73332adf128068a59c29af8b65624969075f6887';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
