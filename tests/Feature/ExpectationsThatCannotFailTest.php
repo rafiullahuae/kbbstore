@@ -22,6 +22,33 @@ declare(strict_types=1);
  *
  * toContainEqual() has the same signature and the same hole.
  *
+ * ── AND toHaveKey() HAS A DIFFERENT SIGNATURE WITH THE SAME OUTCOME — S8 ────
+ *
+ * `toHaveKey(string $key, mixed $value = null)`. The second argument is an
+ * EXPECTED VALUE, so:
+ *
+ *     expect($vars)->not->toHaveKey('--mh-logo', 'an untouched header moves');
+ *
+ * asserts "$vars does NOT have --mh-logo set to the string 'an untouched header
+ * moves'", which is true whatever $vars contains. **It cannot fail.** That is
+ * not a hypothetical: it is MobileHeaderControlsTest, where a block claiming
+ * "not one size property is emitted" was vacuous for its whole life while being
+ * counted as coverage, and it is on record twice more in
+ * docs/SEO-ARABIC-PARITY.md.
+ *
+ * The sweep below did not cover it, because toHaveKey is not variadic and the
+ * original sweep was written about variadics. The distinction does not matter to
+ * the defect -- both shapes take a message and silently reinterpret it -- so
+ * there is now a second sweep for it, and the repair is the same:
+ *
+ *     expect(array_key_exists($key, $array))->toBeFalse($message);
+ *
+ * THE POSITIVE FORM IS LEFT ALONE AND THAT IS DELIBERATE.
+ * `expect($a)->toHaveKey('k', 3)` is legitimate Pest: it asserts the key exists
+ * AND holds 3. Written by mistake with a message it FAILS LOUDLY rather than
+ * passing vacuously, so it is a bug that reports itself and needs no sweep.
+ * Only the negated form is silent, which is why only the negated form is swept.
+ *
  * THE REPAIR is mechanical and reads no worse:
  *
  *     expect(str_contains($haystack, $needle))->toBeFalse($message);
@@ -172,6 +199,76 @@ it('has a suite to walk and a tokeniser that can see into it', function () {
 
     $single = array_filter($calls, fn ($c) => $c['matcher'] === 'toContain' && $c['args'] === 1);
     expect($single)->not->toBeEmpty();
+});
+
+it('proves the toHaveKey trap too, rather than describing it', function () {
+    /*
+     * The same demonstration as above, for the other shape. The array HAS the
+     * key -- so the honest assertion must go red -- and the message form stays
+     * green, because the key does not hold the message as its value.
+     */
+    $vars = ['--mh-logo' => '22px'];
+
+    expect($vars)->not->toHaveKey('--mh-logo', 'an untouched shop\'s header moves');
+
+    // The honest form of the same question, which does go red.
+    expect(fn () => expect(array_key_exists('--mh-logo', $vars))->toBeFalse('the header moved'))
+        ->toThrow(\PHPUnit\Framework\ExpectationFailedException::class);
+
+    // And so does the one-argument form of the original.
+    expect(fn () => expect($vars)->not->toHaveKey('--mh-logo'))
+        ->toThrow(\PHPUnit\Framework\ExpectationFailedException::class);
+});
+
+it('gives no negated toHaveKey a failure message, anywhere in the suite', function () {
+    /*
+     * THE SECOND SWEEP — Lane S8. `toHaveKey`'s second argument is an expected
+     * VALUE, so `->not->toHaveKey($key, $message)` asserts something that is
+     * true whatever the array holds and cannot fail. The variadic sweep below
+     * does not see it, because toHaveKey is not variadic.
+     *
+     * MUTATION NOTE (run, red): change any `expect(array_key_exists($k, $a))
+     * ->toBeFalse($msg)` in the suite back to `expect($a)->not->toHaveKey($k,
+     * $msg)` and this names the file and the line.
+     */
+    $offenders = [];
+    $checked = 0;
+
+    foreach (suiteFiles() as $path) {
+        // This file's own proof above holds the sample on purpose.
+        if ($path === __FILE__) {
+            continue;
+        }
+
+        foreach (negatedMatcherCalls(file_get_contents($path)) as $call) {
+            if ($call['matcher'] !== 'toHaveKey') {
+                continue;
+            }
+
+            $checked++;
+
+            if ($call['args'] > 1) {
+                $offenders[] = sprintf(
+                    '%s:%d  ->not->toHaveKey() with %d arguments — the second is an expected VALUE, '
+                    . 'not a message, so this expectation cannot fail. Use '
+                    . 'expect(array_key_exists($key, $array))->toBeFalse($message).',
+                    str_replace(base_path() . '/', '', $path),
+                    $call['line'],
+                    $call['args']
+                );
+            }
+        }
+    }
+
+    /*
+     * No floor on $checked here, unlike the variadic sweep. A suite with zero
+     * negated toHaveKey calls left is the GOAL of this sweep rather than a sign
+     * it is broken -- every one of them reads better as array_key_exists -- so a
+     * `toBeGreaterThan` would turn success into failure. The tokeniser is proved
+     * by the test above it, which is where that guard belongs.
+     */
+    expect($checked)->toBeGreaterThanOrEqual(0);
+    expect($offenders)->toBe([], "\n" . implode("\n", $offenders) . "\n");
 });
 
 it('gives no variadic matcher a failure message, anywhere in the suite', function () {

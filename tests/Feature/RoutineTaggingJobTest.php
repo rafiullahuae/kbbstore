@@ -296,10 +296,21 @@ it('tells the owner how many more products each concern page needs', function ()
         ->and($acne['live'])->toBeFalse()
         ->and($acne['path'])->toBe('/concern/acne/');
 
-    // A concern nobody has tagged, and which has no copy either. Both facts are
-    // reported separately, because they are closed by different people.
+    /*
+     * A concern nobody has tagged. Both facts are still reported separately,
+     * because they are closed by different people -- but as of Lane S8 the copy
+     * half is closed for ALL EIGHT concerns, so `has_copy` is true here and the
+     * countdown the owner is looking at is purely his own tagging.
+     *
+     * `has_copy` is asserted as TRUE rather than dropped: it is the field that
+     * tells the owner whether anybody else is in his way, and a lane that
+     * removed a concern's copy while leaving it in ENABLED would ship a page
+     * whose heading is a missing translation key. That is the failure this
+     * expectation now catches.
+     */
     expect($rows['sun']['tagged'])->toBe(0)
-        ->and($rows['sun']['has_copy'])->toBeFalse()
+        ->and($rows['sun']['has_copy'])->toBeTrue()
+        ->and($rows['sun']['needed'])->toBe(ConcernCollections::MIN_PRODUCTS)
         ->and($rows['sun']['live'])->toBeFalse();
 });
 
@@ -416,11 +427,21 @@ it('costs the screen one query for all eight concerns, not one each', function (
 
 it('leaves the shop dark: no concern page appears because this lane shipped', function () {
     /*
-     * Rule 1, asked of the two things this lane could have moved by accident.
-     * ENABLED is still one slug, MIN_PRODUCTS is still the floor it was, and an
-     * untagged shop still 404s every concern address.
+     * Rule 1, asked of the thing this lane could have moved by accident.
+     *
+     * LANE S8 ENABLED ALL EIGHT CONCERNS, at the owner's explicit instruction
+     * ("i don't want to miss or skip anything"), and this test is the proof that
+     * doing so moved nothing on the shop. The claim is not "one slug is
+     * enabled" -- it never really was -- it is that **ENABLED does not publish a
+     * page**. MIN_PRODUCTS is what publishes a page, and an untagged shop still
+     * 404s every one of the eight addresses.
+     *
+     * MUTATION NOTE: set MIN_PRODUCTS to 0 and the live() expectation and every
+     * 404 below go red together, which is the shape of the defect that matters
+     * -- eight thin pages appearing because a floor was lowered, not because a
+     * slug was listed.
      */
-    expect(ConcernCollections::ENABLED)->toBe(['acne'])
+    expect(ConcernCollections::ENABLED)->toBe(RoutineConcerns::slugs())
         ->and(ConcernCollections::MIN_PRODUCTS)->toBe(3)
         ->and(ConcernCollections::live())->toBe([]);
 

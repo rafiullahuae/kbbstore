@@ -65,27 +65,71 @@ use Illuminate\Database\Eloquent\Builder;
  * blemishes" under **Catalog → Build my routine** until at least MIN_PRODUCTS
  * of them are live and in stock. The page then exists. Nothing else.
  *
- * For the other seven: the same tagging, plus one entry of English copy in
- * InterfaceStrings and the slug added to ENABLED -- three lines, no new
- * subsystem, which is what "configuration plus copy" was supposed to mean.
+ * For the other seven, AS OF LANE S8: the same tagging and nothing else. All
+ * eight have their copy written and all eight are in ENABLED, so the owner's
+ * whole remaining job for every concern page on this shop is to tag products
+ * for it. No package, no code change, no copy to commission in English.
  *
- * MEASURE ONE BEFORE SHIPPING SIX. That is the plan's instruction and it is
- * repeated here because this class makes shipping the other seven look free.
- * It is not: seven thin pages cost more than one good one.
+ * MEASURE ONE BEFORE SHIPPING SIX was the plan's instruction and the owner has
+ * overruled it -- see ENABLED's own note for his words and for why enabling all
+ * eight publishes nothing. The instruction's real content survives intact and is
+ * enforced somewhere better: MIN_PRODUCTS is what stops a thin page, and it
+ * stops one whether the slug is in ENABLED or not. The pages still arrive one at
+ * a time; what decides is the tagging rather than a release.
  */
 final class ConcernCollections
 {
     /**
      * The concerns that have copy written for them, and may therefore be live.
      *
-     * ONE, DELIBERATELY. `acne` is the concern the competitor demonstrably
-     * ranks a page for and the one with the clearest buying intent. The other
-     * seven slugs are all valid RoutineConcerns and every one of them is a 404
-     * until somebody writes its sentences.
+     * ══════════════════════════════════════════════════════════════════════
+     * ALL EIGHT — Lane S8, AND THIS OVERRIDES THE "MEASURE ONE FIRST" NOTE
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * This constant held `['acne']` and the header below still argues for
+     * shipping one and measuring it. **The owner has overruled that in his own
+     * words**, and the words are recorded here rather than paraphrased because
+     * the next lane to read the paragraph below deserves to know why it no
+     * longer applies:
+     *
+     *     "also tell the SEO land to finish the missing items in the document.
+     *      i don't want to miss or skip anything. need to work super fast."
+     *
+     * So all eight RoutineConcerns are enabled, each with its own English title
+     * and intro in Services\Translation\InterfaceStrings under
+     * `store.concern.*`.
+     *
+     * ── AND THE REFUSAL IT OVERRULES WAS NOT ABOUT THE SLUG LIST ───────────
+     *
+     * "MEASURE ONE BEFORE SHIPPING SIX" was never really an argument about this
+     * array. It is an argument about SEVEN THIN PAGES, and the thin-page guard
+     * below is what actually prevents those: MIN_PRODUCTS, not ENABLED. A
+     * concern with copy and two tagged products still has no page.
+     *
+     * So enabling all eight today PUBLISHES NOTHING. Measured, not asserted:
+     * on a shop with no product tagged for any concern -- which is this shop --
+     * all eight addresses answer 404, the sitemap carries no `/concern/` entry
+     * at all, and nothing anywhere links to one. The pages appear one at a time,
+     * as the owner's tagging at Catalog -> Build my routine crosses MIN_PRODUCTS
+     * for each concern, which is exactly the staged rollout the paragraph below
+     * was asking for -- driven by the catalogue instead of by a code change.
+     * ConcernCollectionsTest pins both halves.
+     *
+     * The practical difference: the owner no longer needs a package to publish
+     * his second concern page. He needs to tag three products.
      *
      * @var list<string>
      */
-    public const ENABLED = ['acne'];
+    public const ENABLED = [
+        'hydration',
+        'dark-spots',
+        'acne',
+        'ageing',
+        'sensitivity',
+        'pores',
+        'dullness',
+        'sun',
+    ];
 
     /**
      * The fewest live, in-stock products a concern page may be built from.

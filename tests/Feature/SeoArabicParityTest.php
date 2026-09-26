@@ -208,7 +208,14 @@ it('does not put inLanguage on a node that cannot have one', function () {
 
     foreach (['/product/sap-toner/', '/ar/product/sap-toner/'] as $path) {
         foreach (sapNodes($path) as $node) {
-            if (in_array($node['@type'], ['Product', 'Organization', 'Offer', 'BreadcrumbList', 'Brand'], true)) {
+            /*
+             * The organization node is listed by EVERY @type `org_type` can
+             * carry, not just 'Organization' -- Lane S8. The shipped default
+             * moved to 'OnlineStore', and a single literal here silently dropped
+             * the organization node out of this sweep: not a false pass, but a
+             * narrowing nobody would have noticed.
+             */
+            if (in_array($node['@type'], ['Product', 'Organization', 'OnlineStore', 'Store', 'LocalBusiness', 'Offer', 'BreadcrumbList', 'Brand'], true)) {
                 /*
                  * array_key_exists() AND NOT ->not->toHaveKey(), AND THE
                  * DIFFERENCE IS WHY THIS BLOCK EXISTS AT ALL.

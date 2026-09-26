@@ -356,7 +356,7 @@ it('gives every key whose control can be blank a rule that accepts blank', funct
      *
      *   enum / flag / tz / code  the screen posts a <select> or a fixed-width
      *                            code box, which cannot be empty.
-     *   fils / aed / pct         the screen always computes a number — the
+     *   fils / pct               the screen always computes a number — the
      *                            Business Details handler wraps each in
      *                            `parseFloat(...)||0`, so '' never leaves it.
      *   rows                     an array type; '' is a malformed payload.
@@ -364,17 +364,35 @@ it('gives every key whose control can be blank a rule that accepts blank', funct
      *
      * A key appearing here whose control is a free text or number box is the
      * defect this file opened with.
+     *
+     * ── `aed` LEFT THIS LIST — Lane S8, and for a reason worth reading ─────
+     *
+     * The two `aed` keys are merchant_ship_cost and merchant_ship_free_over, and
+     * the justification above ("the screen always computes a number") was TRUE
+     * and was the bug. The SEO screen prefilled the shipping-cost box with `0`
+     * precisely because a blank could not be saved, and `0` in a shipping-cost
+     * box is published to Google as free delivery — on a shop that has never
+     * quoted a rate. So the rule that refused blank was manufacturing a claim.
+     * `aed` now returns ok('') and App\Support\Seo::shippingDetails() reads the
+     * absent key as "not stated" and publishes nothing.
+     *
+     * MUTATION NOTE: delete the `if ($value === '') return $ok('');` guard from
+     * the `aed` branch of AdminController::checkSetting() and this expectation
+     * goes red, naming `aed` as a rule that refuses blank again.
      */
     // array_values AFTER array_unique: array_unique preserves the original
     // keys, so the inner call must be the one that is de-duplicated or the
     // comparison is against a sparsely-keyed array.
     expect(array_values(array_unique($refusesBlank)))->toEqualCanonicalizing(
-        ['enum', 'flag', 'tz', 'code', 'fils', 'aed', 'pct', 'rows']
+        ['enum', 'flag', 'tz', 'code', 'fils', 'pct', 'rows']
     );
 
-    // And the two this lane fixed are no longer among them.
-    expect($refusesBlank)->not->toHaveKey('currency_decimals')
-        ->and($refusesBlank)->not->toHaveKey('merchant_return_days');
+    // And the three this repo has fixed are no longer among them. array_key_exists,
+    // never ->not->toHaveKey($k, $msg): toHaveKey()'s second argument is an
+    // expected VALUE, so the message form passes against nothing.
+    expect(array_key_exists('currency_decimals', $refusesBlank))->toBeFalse();
+    expect(array_key_exists('merchant_return_days', $refusesBlank))->toBeFalse();
+    expect(array_key_exists('merchant_ship_cost', $refusesBlank))->toBeFalse();
 });
 
 /*

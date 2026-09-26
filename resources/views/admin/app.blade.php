@@ -17622,9 +17622,16 @@ buildNav();
           smField('seo_org_name','Organization name',
             '<input id="seo_org_name" value="'+sesc(S.org_name||S.store_name)+'">',
             'The legal or trading name, not the tagline.')+
+          /* Lane S8. The owner's words were "we don't have any physical shop,
+             we operate only online", so the shipped default is OnlineStore and
+             this select agrees with SeoSettings::DEFAULTS -- a select whose
+             fallback differs from the emitter's default shows one type and
+             publishes another. The labels are the wording SeoAudit's own
+             findings use ("set the type to Online store"), so the owner can
+             find in this list the thing the audit told him to pick. */
           smField('seo_org_type','Type',
-            seoSel('seo_org_type',S.org_type,[['Organization','Organization'],['OnlineStore','OnlineStore'],['Store','Store'],['LocalBusiness','LocalBusiness']],'Organization'),
-            'OnlineStore is right for a shop with no shopfront.')+
+            seoSel('seo_org_type',S.org_type,[['OnlineStore','Online store — no shopfront'],['Store','Store — customers can walk in'],['LocalBusiness','Local business — customers can walk in'],['Organization','Organization — a company, unspecified']],'OnlineStore'),
+            'Online store is what this shop is, and it is the shipped setting. Pick Store or Local business only if customers really can walk in: those are the two that publish a map pin and opening hours, and neither is a way to rank locally without premises.')+
           imgUploadField('seo_org_logo',S.org_logo,'Logo','seo')+
         '</div>')+
 
@@ -17633,7 +17640,7 @@ buildNav();
       '<div class="sm-card">'+
 
       smSec('Rich product results',
-        'Adds brand, condition, shipping and return terms to every product’s schema — what unlocks prices and stars showing directly in Google, and eligibility for AI Shopping. Off until you have confirmed the numbers below, because wrong shipping or return terms going out to search engines is worse than none at all.',
+        'Adds brand, condition, shipping and return terms to every product’s schema — what unlocks prices and stars showing directly in Google, and eligibility for AI Shopping. Off until you have confirmed the numbers below, because wrong shipping or return terms going out to search engines is worse than none at all. <b>You do not have to answer all of it at once.</b> Every box below is published only when you have filled it in: leave the shipping cost blank and nothing is said about delivery, answer the returns question and that answer goes out on its own.',
         '<div class="sm-opts">'+
           smOpt('seo_merchant_cbx',String(S.enable_merchant)==='1','Enable merchant listing on every product',
             'Publishes the four values below on every product page.')+
@@ -17651,12 +17658,24 @@ buildNav();
             /* WHOLE DIRHAMS. This is published to Google as the offer's
                shipping rate and the crawler compares it against the till: a
                feed advertising AED 12.50 delivery beside a shop that charges
-               whole dirhams is a price this shop does not honour. */
-            '<input id="seo_merch_cost" type="number" step="1" value="'+sesc(S.merchant_ship_cost||'0')+'">',
-            'The figure quoted in the result, before any threshold.')+
+               whole dirhams is a price this shop does not honour.
+
+               BLANK, NOT PREFILLED 0 -- Lane S8, and this is a bug fix rather
+               than a nicety. This box used to arrive holding `0`, which reads
+               as "delivery is free" and was published as exactly that: every
+               product page went out with "shippingRate":{"value":"0.00"} the
+               moment the switch above was turned on, on a shop that has never
+               quoted a delivery rate. Blank now means "not stated" all the way
+               through -- the box, the save, and the markup. See App\Support\
+               Seo::shippingDetails(). */
+            '<input id="seo_merch_cost" type="number" step="1" value="'+sesc(S.merchant_ship_cost)+'" placeholder="Leave blank until you know">',
+            '<b>Leave blank if you have not settled your delivery rate.</b> Blank publishes nothing about shipping. A number here is a promise Google prints beside your price, so enter 0 only if delivery really is free.')+
           smField('seo_merch_freeover','Free shipping over (AED)',
+            /* Prefill left at 0 deliberately: blank and 0 mean the same thing
+               here ("never free"), so 0 is not a claim the way a 0 shipping
+               cost is. It only ever reduces a rate already stated above. */
             '<input id="seo_merch_freeover" type="number" step="1" value="'+sesc(S.merchant_ship_free_over||'0')+'">',
-            '0 means delivery is never free.')+
+            '0 means delivery is never free. Only read when a shipping cost is filled in above.')+
         '</div>'+
         /* Lane S5. The owner's answer to the returns question was "at the
            moment we don't offer returns", and until this row existed there was
@@ -17672,7 +17691,7 @@ buildNav();
               ['MerchantReturnNotPermitted','We do not accept returns'],
               ['MerchantReturnFiniteReturnWindow','We accept returns within the window below'],
             ],''),
-            'Not stated publishes nothing. "We do not accept returns" publishes a refusal with no window, method or fee beside it.')+
+            'Not stated publishes nothing. "We do not accept returns" publishes a refusal with no window, method or fee beside it — which is the answer for this shop today, and it publishes on its own whether or not the shipping boxes above are filled in.')+
         '</div>'+
         '<div class="sm-grid is-solo">'+
           smField('seo_merch_returndays','Return window (days)',

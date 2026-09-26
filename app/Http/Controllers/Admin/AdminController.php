@@ -2664,6 +2664,32 @@ class AdminController extends Controller
 
             case 'aed':
                 /*
+                 * ── BLANK IS A VALUE HERE, AND IT MEANS "NOT STATED" — S8 ──
+                 *
+                 * The two `aed` keys are merchant_ship_cost and
+                 * merchant_ship_free_over, and both are published to Google as
+                 * facts about delivery. Before this short-circuit a blank was
+                 * REFUSED, so the only way to save the SEO tab was to put a
+                 * number in the box -- and the screen, knowing that, prefilled
+                 * `0`. A prefilled 0 in a shipping-cost box is how this shop
+                 * came to publish "free delivery to the UAE" on a shop that has
+                 * never quoted a delivery rate: see App\Support\Seo::
+                 * shippingDetails() for the incident and the emitted markup.
+                 *
+                 * So blank saves, and Seo::shippingDetails() reads the ABSENCE
+                 * of the key -- SeoSettings::map() drops blanks and keeps '0' --
+                 * as "nobody has said", publishing no shippingDetails at all. A
+                 * typed 0 still means free and still publishes.
+                 *
+                 * Returning $ok('') and not a refusal is the whole point: an
+                 * operator who does not know his delivery rate must be able to
+                 * leave the box alone and still save the rest of the tab.
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                /*
                  * Major units, up to two decimals, parsed digit-by-digit so no
                  * float is ever constructed: 99.50 is 99 * 100 + 50 by
                  * construction. `(int) round($aed * 100)` would be a coin flip

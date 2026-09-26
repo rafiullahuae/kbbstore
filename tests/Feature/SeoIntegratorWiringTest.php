@@ -188,11 +188,43 @@ it('publishes a FAQPage node once the flag is on, and only on a content page', f
 
     /*
      * ONE GRAPH, NOT TWO. SEO-BUILD-PLAN item 3 refuses a second emitter
-     * because two emitters is two Organization nodes on every page. The FAQ node
+     * because two emitters is two organization nodes on every page. The FAQ node
      * is merged into the graph this application already builds, so the count of
-     * Organization nodes is unchanged by turning the flag on.
+     * organization nodes is unchanged by turning the flag on.
+     *
+     * ── ASKED BY ROLE AND NOT BY @type — Lane S8, AND IT WENT RED FIRST ────
+     *
+     * This read `siwNodes('/faqs/', 'Organization')` and the shipped `org_type`
+     * moved from `Organization` to `OnlineStore` (the owner: "we don't have any
+     * physical shop, we operate only online"). The count went 1 -> 0 and this
+     * assertion failed, which is the right way round: it FOUND the change rather
+     * than sailing past it.
+     *
+     * But the repair is not to swap one literal for another. The claim being made
+     * is "there is exactly ONE organization node", and `org_type` is a setting
+     * with four values -- Organization, OnlineStore, Store, LocalBusiness -- so a
+     * single literal here is a test that only holds for one of the four shops
+     * this code runs on. It now asks for the node by ROLE: any of the four types
+     * the setting can carry. A second emitter appearing puts a second one in,
+     * whatever either of them is typed as.
+     *
+     * MUTATION NOTE: make FaqSchema emit its own Organization node beside the
+     * FAQPage and this is red at 2.
      */
-    expect(siwNodes('/faqs/', 'Organization'))->toHaveCount(1);
+    $orgNodes = array_values(array_filter(
+        siwGraphs('/faqs/'),
+        static fn (array $n): bool => in_array(
+            $n['@type'] ?? null,
+            \App\Http\Controllers\Admin\AdminController::SETTING_RULES['org_type'][2],
+            true
+        )
+    ));
+
+    expect($orgNodes)->toHaveCount(1);
+
+    // And it really is the shipped type, so this is not passing on a node that
+    // happens to be there for another reason.
+    expect($orgNodes[0]['@type'])->toBe(\App\Services\Seo\SeoSettings::get('org_type'));
 });
 
 it('publishes no FAQ node on a page that is not written as questions, flag on', function () {
