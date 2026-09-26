@@ -246,7 +246,7 @@ final class SeoAudit
              */
             'business_type_mismatch' => [
                 'Business type and address disagree',
-                'The Organization node says what kind of business this is, and the address settings say where it is. These two can be set so that they contradict each other, and nothing on any screen says so. Two shapes: a type of Store or Local business with no usable address is a shopfront this shop has not described — Google places a local business by its address, so there is nothing for it to place; and map coordinates filled in under a type of Organization or Online store are silently dropped, because coordinates and opening hours are properties of a place and neither of those two types is one. Fix either side at Store → Business Details → Business, or the type at Store → SEO & Meta → Organization.',
+                'The Organization node says what kind of business this is, and the address settings say where it is. These two can be set so that they contradict each other, and nothing on any screen says so. Two shapes: a type of Store or Local business with no usable address is a shopfront this shop has not described — Google places a local business by its address, so there is nothing for it to place; and map coordinates or opening hours filled in under a type of Organization or Online store are silently dropped, because both are properties of a place and neither of those two types is one — there is no way to publish “open 24/7” for a shop with no premises, because opening hours describe a door. Fix either side at Store → Business Details → Business, or the type at Store → SEO & Meta → Settings · Business identity · Type — which ships at “Online store — no shopfront”, because that is what this shop is.',
             ],
         ];
 
@@ -798,10 +798,11 @@ final class SeoAudit
      *   than the three columns, so "half-filled" counts as no address by the
      *   same rule the emitted node uses — one authority, not two.
      *
-     *   COORDINATES THAT CANNOT BE PUBLISHED. `geo()` filled in while the type
-     *   is `Organization` or `OnlineStore`. Those are not Places, so
-     *   isPlaceType() drops the coordinates and the owner is looking at a
-     *   latitude and longitude he typed that no page emits.
+     *   COORDINATES OR OPENING HOURS THAT CANNOT BE PUBLISHED. `geo()` or
+     *   `OpeningHours::spec()` filled in while the type is `Organization` or
+     *   `OnlineStore`. Those are not Places, so isPlaceType() drops both and the
+     *   owner is looking at a latitude, a longitude or a set of hours he typed
+     *   that no page emits.
      *
      * ── WHAT IS DELIBERATELY NOT A FINDING ──────────────────────────────────
      *
@@ -813,7 +814,10 @@ final class SeoAudit
      *
      * An `OnlineStore` with NOTHING filled in, which is this shop today and is
      * not a fault: 24/7 opening hours need no setting at all, because opening
-     * hours belong on a Place and an online shop is not one.
+     * hours belong on a Place and an online shop is not one. `OnlineStore` is
+     * the value this shop SHIPS at as of Lane S8 -- the owner's words were "we
+     * don't have any physical shop, we operate only online" -- so the shipped
+     * configuration raises no finding here, which is the point.
      *
      * ── AT MOST ONE HIT ─────────────────────────────────────────────────────
      *
@@ -839,14 +843,51 @@ final class SeoAudit
             return;
         }
 
-        if (! $isPlace && BusinessAddress::geo($s) !== null) {
+        /*
+         * ── AND THE SAME FOR OPENING HOURS — Lane S8 ───────────────────────
+         *
+         * THE DEFECT: this branch asked about `geo()` and not about the hours,
+         * and the two are dropped by the same gate for the same reason.
+         * `openingHoursSpecification` is a property of schema.org **Place**, so
+         * BusinessAddress::organizationFragment() suppresses it on Organization
+         * and OnlineStore exactly as it suppresses the coordinates -- and said
+         * nothing about it. An owner who read "we are open 24/7" off his own
+         * notes, typed `Mon-Sun 00:00-23:59` into Store -> Business Details ->
+         * Business -> Opening hours and saved it got "Saved", a stored value,
+         * and not one byte on any page. That is the same silent-drop this whole
+         * check exists to break, one field over.
+         *
+         * IT IS ONE FINDING, NOT TWO. Both are the same mistake -- a Place
+         * property entered against a type that is not a Place -- so they share
+         * the key and the card, and the detail names whichever the owner
+         * actually filled in. Two cards would read as two problems.
+         *
+         * NOTE FOR ANYBODY TEMPTED TO PUBLISH 24/7 ANYWAY: there is no
+         * schema.org property that says "orderable at any hour" for a business
+         * with no premises. A 24-hour openingHoursSpecification on an
+         * OnlineStore is invalid markup rather than a generous reading, and the
+         * honest statement for an online retailer is the silence it already
+         * makes. Do not add it; add premises to the settings if there are any.
+         */
+        $hasGeo = BusinessAddress::geo($s) !== null;
+        $hasHours = OpeningHours::spec(trim((string) ($s['store_hours'] ?? ''))) !== null;
+
+        if (! $isPlace && ($hasGeo || $hasHours)) {
+            $filled = match (true) {
+                $hasGeo && $hasHours => 'map coordinates and opening hours are',
+                $hasGeo => 'map coordinates are',
+                default => 'opening hours are',
+            };
+
             self::hit($findings, 'business_type_mismatch', [
                 'kind' => 'Organization type',
                 'name' => $type,
                 'url' => '',
-                'detail' => 'map coordinates are filled in and no page publishes them, because '
-                    . 'coordinates are a property of a place and this type is not one. Either clear them, '
-                    . 'or set the type to Store or Local business if this shop has premises.',
+                'detail' => $filled . ' filled in and no page publishes them, because '
+                    . 'both are properties of a place and this type is not one. Either clear them, '
+                    . 'or set the type to Store or Local business if this shop has premises. '
+                    . 'There is no way to publish "open 24/7" for a shop with no premises: '
+                    . 'opening hours describe a door, and an online-only shop does not have one.',
             ]);
         }
     }

@@ -1361,30 +1361,56 @@ class Seo
                 if (($s['enable_merchant'] ?? '') === '1') {
                     $country = SeoSettings::from($s, 'merchant_ship_country');
 
-                    // Both settings are major units typed into a step="0.01"
-                    // box (AdminController::SETTING_RULES calls them 'aed'), so
-                    // they are converted to minor units once and every
-                    // comparison and the emitted string are integer work from
-                    // there. The old line compared two floats and then cast the
-                    // cost straight to a string, which published "0" for free
-                    // shipping and "12.5" for AED 12.50.
-                    $shipMinor = Money::fromMajor($s['merchant_ship_cost'] ?? 0);
-                    $freeOverMinor = Money::fromMajor($s['merchant_ship_free_over'] ?? 0);
-                    $priceMinor = self::priceMinor($p);
+                    /*
+                     * ═══════════════════════════════════════════════════════
+                     * SHIPPING AND RETURNS ARE TWO ANSWERS, NOT ONE — Lane S8
+                     * ═══════════════════════════════════════════════════════
+                     *
+                     * THE DEFECT, and it was a promise Google shows a shopper.
+                     * These two blocks used to be one: turning `enable_merchant`
+                     * on published `shippingDetails` unconditionally, with the
+                     * rate read as `Money::fromMajor($s['merchant_ship_cost'] ??
+                     * 0)`. `merchant_ship_cost` ships blank, SeoSettings::map()
+                     * drops blanks, so `?? 0` fired and every product page went
+                     * out saying:
+                     *
+                     *     "shippingRate":{"value":"0.00","currency":"AED"}
+                     *
+                     * — free delivery to the whole UAE, on a shop that has never
+                     * stated a delivery rate. Driven and read back off a real
+                     * request before this was changed, not reasoned about.
+                     *
+                     * AND THE OWNER WAS ABOUT TO WALK STRAIGHT INTO IT. He has
+                     * told us "at the moment we don't offer returns", which is a
+                     * fact this application can publish (Lane S5 built the
+                     * category for it) and the ONLY way to publish it was to
+                     * turn this flag on. So the one switch that let him state
+                     * the thing he knows also stated a thing he does not: his
+                     * shipping terms are genuinely unknown and nobody may guess
+                     * them.
+                     *
+                     * THE FIX IS THE DISCRIMINATOR THAT WAS ALREADY THERE.
+                     * SeoSettings::map() drops a BLANK and keeps a '0' -- its own
+                     * docblock says so and names merchant_ship_cost as the
+                     * example. So "the owner typed 0 because delivery is free"
+                     * and "nobody has said" are distinguishable, and the `?? 0`
+                     * was throwing that distinction away. A stated 0 still
+                     * publishes free shipping, which is a real and useful answer;
+                     * an unstated rate publishes no shippingDetails at all.
+                     *
+                     * A MISSING shippingDetails COSTS A WARNING. A WRONG ONE
+                     * COSTS THE SHOPPER. Google treats absent shipping as not
+                     * provided and may show its own estimate or nothing; it
+                     * treats a stated 0.00 as a commitment and prints it. Same
+                     * asymmetry as `priceValidUntil` above -- a missing
+                     * recommended field costs a warning, a stale one costs the
+                     * result.
+                     */
+                    $shipping = self::shippingDetails($s, $p, $country, $currency);
 
-                    if ($freeOverMinor > 0 && $priceMinor !== null && $priceMinor >= $freeOverMinor) {
-                        $shipMinor = 0;
+                    if ($shipping !== null) {
+                        $offer['shippingDetails'] = $shipping;
                     }
-
-                    $offer['shippingDetails'] = [
-                        '@type' => 'OfferShippingDetails',
-                        'shippingRate' => [
-                            '@type' => 'MonetaryAmount',
-                            'value' => Money::decimalString($shipMinor),
-                            'currency' => $currency,
-                        ],
-                        'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => $country],
-                    ];
 
                     $policy = self::returnPolicy($s, $country);
 
@@ -1855,6 +1881,58 @@ class Seo
         $minor = self::priceMinor($p);
 
         return $minor === null ? null : Money::decimalString($minor);
+    }
+
+    /**
+     * `OfferShippingDetails`, or null when nobody has stated a delivery rate.
+     *
+     * ── THE ONE QUESTION THIS ASKS ──────────────────────────────────────
+     *
+     * Has an admin ENTERED a shipping cost? Not "is the cost zero" -- zero is a
+     * legitimate, useful answer and it publishes. The question is whether the
+     * value exists at all, and `SeoSettings::map()` answers it: it removes every
+     * blank value and keeps '0', which is documented in its own header with
+     * `merchant_ship_cost` named as the example. So `array_key_exists()` on the
+     * cleaned map is the exact test, and it is the one the old code skipped by
+     * writing `?? 0`.
+     *
+     * `merchant_ship_free_over` is deliberately NOT part of the test. Its
+     * documented meaning is "0 means delivery is never free", so blank and 0 say
+     * the same thing there and neither is a promise on its own -- it only ever
+     * reduces a rate the owner has already stated.
+     *
+     * The conversion to minor units and the threshold comparison are unchanged
+     * and stay integer work throughout: the old line compared two floats and
+     * then cast the cost straight to a string, which published "0" for free
+     * shipping and "12.5" for AED 12.50.
+     *
+     * @param  array<string, mixed>  $s  the settings map, blanks already dropped
+     * @param  array<string, mixed>  $p
+     * @return array<string, mixed>|null
+     */
+    private static function shippingDetails(array $s, array $p, string $country, string $currency): ?array
+    {
+        if (! array_key_exists('merchant_ship_cost', $s) || trim((string) $s['merchant_ship_cost']) === '') {
+            return null;
+        }
+
+        $shipMinor = Money::fromMajor($s['merchant_ship_cost']);
+        $freeOverMinor = Money::fromMajor($s['merchant_ship_free_over'] ?? 0);
+        $priceMinor = self::priceMinor($p);
+
+        if ($freeOverMinor > 0 && $priceMinor !== null && $priceMinor >= $freeOverMinor) {
+            $shipMinor = 0;
+        }
+
+        return [
+            '@type' => 'OfferShippingDetails',
+            'shippingRate' => [
+                '@type' => 'MonetaryAmount',
+                'value' => Money::decimalString($shipMinor),
+                'currency' => $currency,
+            ],
+            'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => $country],
+        ];
     }
 
     /**

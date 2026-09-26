@@ -197,6 +197,72 @@ delisted, cut the clause.
 
 ---
 
+## What shipped, and what did not — Lane S8, 2026-09-26
+
+**All eight concerns are enabled and all eight have written English copy.** The
+owner's instruction was *"finish the missing items in the document. i don't want
+to miss or skip anything."* `ConcernCollections::ENABLED` now holds every slug in
+`RoutineConcerns`, and `store.concern.title_*` / `store.concern.intro_*` exist for
+each of them in `app/Services/Translation/InterfaceStrings.php`.
+
+**Enabling them published nothing.** A concern page needs copy AND at least
+`ConcernCollections::MIN_PRODUCTS` live, in-stock products tagged for it. Nothing
+is tagged, so all eight addresses answer 404, `/sitemap.xml` carries no
+`/concern/` entry at all, and nothing links to one. Measured in
+`ConcernCollectionsTest` ("enables all eight concerns and still publishes none of
+them") and on `docs/SEO-PREVIEWS.html`. The pages appear one at a time as his
+tagging crosses the floor for each concern — which is the staged rollout
+"MEASURE ONE BEFORE SHIPPING SIX" was asking for, driven by the catalogue instead
+of by a release. **He no longer needs a package to publish his second concern
+page. He needs to tag three products.**
+
+### The three drafts above did NOT ship as written, and this is why
+
+The substance is kept — the ingredients, what each is for, and the honest limit
+each draft ends on. Two things were dropped, and neither is a matter of taste.
+
+**1. The `[SQUARE BRACKET]` placeholders.** A placeholder in a translation value
+is **printed**. There is nothing in this application that resolves a bracket, so
+`[A CENTELLA AMPOULE OR TONER]` would be read by a shopper, on a page submitted to
+Google. Draft 1 carries three, draft 2 three, draft 3 three. The drafts are
+correct as *drafts* — marking the slot rather than inventing a product name was
+exactly right, and §2 above says so — but a draft is not a shippable value.
+
+**2. The named brands.** Every brand list above is marked UNVERIFIED, and §1's own
+note says *"naming a brand the page does not stock is worse than naming none."*
+Which brands land on a concern page is decided by the owner's tagging, months from
+now. A brand named in the intro is a promise the page may not keep.
+
+**And one thing was changed: the length.** The drafts are 205–225 words; what
+shipped is 90–140. Three reasons, in order of weight:
+
+- **The template renders one paragraph.** `store/collection.blade.php` prints an
+  `<h1>` and one intro block, which §"No H2 subheadings" above already
+  establishes. A 225-word single paragraph is a wall; the same argument broken
+  into three paragraphs needs a template change that would move the four curated
+  listings that already work.
+- **Every word is a word of commissioned Arabic**, per key, times eight.
+- The word band is **practitioner convention, not documentation** — §1 of this
+  file says so and says not to put it in a test. It is not in one. The only floor
+  asserted is 40 words, which separates prose from a label.
+
+If you want the long form, it is a template change plus a re-commission and it is
+its own item. Say so and it gets done properly rather than smuggled into a
+translation value.
+
+### What is still yours on this file
+
+**The Arabic.** Unchanged and not worked around: eight intros at roughly 120 words
+for a human Arabic writer. The English pages work meanwhile, because the Arabic
+layer is off.
+
+**Editing or rejecting any of the eight English intros.** They are in
+`InterfaceStrings.php` under `store.concern.*`. Read them on the shop once three
+products are tagged, and if one sounds too plain, that is on purpose — §4 above
+says the voice pushes back once before changing.
+
+---
+
 ## What I did not write, and why
 
 **No Arabic.** `SEO-BUILD-PLAN.md` Part II item 2 concluded that

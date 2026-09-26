@@ -380,7 +380,16 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
 
     /* ──────────── 4. the business address: empty, then filled in ─────────── */
 
-    $orgEmpty = spNode('/', 'Organization');
+    /*
+     * `OnlineStore` AND NOT `Organization` — Lane S8. The shipped org_type is
+     * OnlineStore, so the node on a shop that has saved nothing carries that
+     * @type. Asking for 'Organization' returned NULL after the default changed,
+     * and `! isset($orgEmpty['geo'])` on a null is vacuously true -- the row
+     * about withheld geo would have gone on passing while measuring nothing.
+     */
+    $orgEmpty = spNode('/', 'OnlineStore');
+
+    expect($orgEmpty)->not->toBeNull('the shipped organization node is not the @type this fixture reads, so every row built from it is vacuous');
 
     spBaseSettings([
         'org_type' => 'Store',
@@ -399,11 +408,24 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $orgPartial = null;
     spBaseSettings(['store_street' => '', 'store_locality' => '']);
     $orgPartial = spNode('/', 'Store');
+    /*
+     * BACK TO THE SHIPPED STATE, and `org_type` is DELETED rather than written.
+     *
+     * This used to write 'Organization' here, which was the shipped default when
+     * it was written and is not any more (Lane S8: 'OnlineStore'). A reset that
+     * writes a literal makes the preview show a value the shop does not ship,
+     * and it made the row that measures the shipped type read the fixture's
+     * leftover instead of the default. Deleting the row is what "the owner has
+     * not touched this setting" actually looks like.
+     */
     spBaseSettings([
-        'org_type' => 'Organization', 'org_logo' => '', 'social_instagram' => '',
+        'org_logo' => '', 'social_instagram' => '',
         'store_region' => '', 'store_country' => '', 'store_latitude' => '', 'store_longitude' => '',
         'store_hours' => '', 'support_phone' => '',
     ]);
+    Setting::query()->where('key', 'org_type')->delete();
+    Setting::flushMap();
+    SettingsService::forgetMemo();
 
     /* ──────────── 5. the merchant listing: off, then confirmed ────────────── */
 
@@ -414,7 +436,31 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'merchant_ship_cost' => '20.00', 'merchant_ship_free_over' => '199.00', 'merchant_return_days' => '7',
     ]);
     $offerOn = spNode($shapes['product']['path'], 'Product')['offers'] ?? [];
-    spBaseSettings(['enable_merchant' => '0']);
+
+    /*
+     * ── AND THE CONFIGURATION THIS SHOP WILL ACTUALLY RUN — Lane S8 ───────
+     *
+     * The owner knows ONE of the two merchant facts: "at the moment we don't
+     * offer returns." His shipping terms are genuinely unknown. Until this lane
+     * the switch that let him state the first also stated the second, wrongly:
+     * `merchant_ship_cost` ships blank, SeoSettings::map() drops blanks, and the
+     * emitter read the absence as `?? 0` and published
+     * "shippingRate":{"value":"0.00"} -- free delivery to the whole UAE, printed
+     * by Google beside the price.
+     *
+     * So this fixture is merchant ON, returns stated, shipping blank. Both
+     * settings are cleared explicitly rather than left out, because
+     * spBaseSettings() only writes what it is given and the run above it filled
+     * them in.
+     */
+    spBaseSettings([
+        'enable_merchant' => '1', 'merchant_ship_country' => 'AE',
+        'merchant_ship_cost' => '', 'merchant_ship_free_over' => '',
+        'merchant_return_days' => '0', 'merchant_returns' => 'MerchantReturnNotPermitted',
+    ]);
+    $offerOwner = spNode($shapes['product']['path'], 'Product')['offers'] ?? [];
+
+    spBaseSettings(['enable_merchant' => '0', 'merchant_returns' => '']);
 
     /* ────────────── 6. FAQPage: what this lane built, off and on ──────────── */
 
@@ -464,12 +510,66 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'Confirmed: one product, one path. There is no /collections/x/products/y second address and no route that could serve one. Checked against the whole registered route collection: /product/{slug}/ is the only route that serves a product, and the page canonicalises to itself.',
         'routes/web.php:135');
 
+    /*
+     * ── THE SLASH ROW, DRIVEN ON ALL THREE PAIRS — Lane S8 ────────────────
+     *
+     * This row asserted one status and one canonical and then CLAIMED, in prose,
+     * that "the same holds for /shop and /cart". A prose claim beside a computed
+     * one is exactly the shape this whole file exists to replace, and docs/
+     * SEO-GAP.md now prints the six-request table this produces. So all three
+     * pairs are driven and the verdict is computed from every one of them.
+     *
+     * MUTATION NOTE: add a redirect from the slashless form of any of the three
+     * and $slashRedirects stops being empty, which turns this row MISSING and
+     * the assertion sweep red. Make the two canonicals of any pair disagree and
+     * $slashCanonicalsAgree goes false with the same result.
+     */
+    $slashPairs = ['/product/' . $product->slug, '/shop', '/cart'];
+    $slashProbe = [];
+    $slashRedirects = [];
+
+    foreach ($slashPairs as $bare) {
+        foreach ([$bare, $bare . '/'] as $url) {
+            $status = test()->call('GET', $url)->getStatusCode();
+            $canonical = '—';
+
+            if ($status === 200 && preg_match('#<link rel="canonical" href="([^"]*)"#', spHead($url), $m) === 1) {
+                $canonical = $m[1];
+            }
+
+            $slashProbe[$url] = ['status' => $status, 'canonical' => $canonical];
+
+            if ($status >= 300 && $status < 400) {
+                $slashRedirects[] = $url . ' -> ' . $status;
+            }
+        }
+    }
+
+    $slashAll200 = ! in_array(false, array_map(
+        static fn (array $r): bool => $r['status'] === 200,
+        $slashProbe
+    ), true);
+
+    $slashCanonicalsAgree = true;
+
+    foreach ($slashPairs as $bare) {
+        if ($slashProbe[$bare]['canonical'] !== $slashProbe[$bare . '/']['canonical']
+            || ! str_ends_with($slashProbe[$bare]['canonical'], '/')) {
+            $slashCanonicalsAgree = false;
+        }
+    }
+
     $rows[] = spRow($A,
         '"the slashless form 301s onto it".',
         'SEO-GAP §1 — Have',
-        spCheck(test()->call('GET', '/product/' . $product->slug)->getStatusCode() === 200
-            && str_contains(spHead('/product/' . $product->slug), 'href="https://kbeautybliss.test/product/' . $product->slug . '/"'), 'STALE'),
-        'THERE IS NO REDIRECT, and the outcome is nevertheless right. Measured: /product/' . $product->slug . ' answers 200 and /product/' . $product->slug . '/ answers 200 — Laravel\'s router rtrims the path before matching, so both spellings serve the same document and neither redirects. What consolidates them is the CANONICAL, not a 301: both addresses declare the slashed form, so a single inbound link written without the slash cannot split a page\'s signals. That was itself a fix — the layout used to mirror whatever the request carried and published two different self-referencing canonicals for one document. So the doc names the wrong mechanism, and nothing needs building: the same holds for /shop and /cart.',
+        spCheck($slashAll200 && $slashRedirects === [] && $slashCanonicalsAgree, 'STALE'),
+        'THERE IS NO REDIRECT, and the outcome is nevertheless right. All six requests driven, statuses and canonicals read off the responses: '
+            . implode('  ·  ', array_map(
+                static fn (string $u, array $r): string => $u . ' → ' . $r['status'] . ' canonical ' . $r['canonical'],
+                array_keys($slashProbe),
+                $slashProbe
+            ))
+            . '. Every one answers 200 and not one redirects — Laravel\'s router rtrims the path before matching, so both spellings are the same route to the same controller and there is nothing left for a 301 to redirect. What consolidates them is the CANONICAL: each pair declares ONE address, the slashed form, so a single inbound link written without the slash cannot split a page\'s signals. That was itself a fix — the layout used to mirror whatever the request carried and published two different self-referencing canonicals for one document. So the doc names the wrong mechanism and nothing needs building; do not "fix" it by adding a redirect, which would fire on a URL the site itself advertises. Corrected in docs/SEO-GAP.md §1 by this lane.',
         'resources/views/layouts/store.blade.php:55');
 
     $rows[] = spRow($A,
@@ -505,6 +605,46 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
             && str_contains(implode("\n", $pageOverrideTags), 'How delivery, returns and order tracking work at K-Beauty Bliss.'), 'STALE'),
         'FALSE for `pages` until this lane. Measured before the fix, with every field saved on the `faqs` row: seo.title ignored, seo.desc ignored (the site-wide default was published), seo.canonical ignored, seo.noindex ignored — the page served "index, follow". Store\\PageController::show() passed the view no SEO context at all. Fixed; ten cases in tests/Feature/PageSeoOverridesTest.php. After the fix: ' . implode('  ', preg_grep('#<title>|name="description"#', $pageOverrideTags)),
         'app/Http/Controllers/Store/PageController.php:158');
+
+    /*
+     * ── AND THE OTHER HALF OF THE SAME CLAIM — Lane S8 ────────────────────
+     *
+     * The row above proves a page's SEO fields are now READ. It says nothing
+     * about whether they can be WRITTEN, and SEO-GAP.md §4's claim ("Have, on
+     * five tables including pages") is a claim about a CAPABILITY. Driven: four
+     * of the five tables have an admin writer and `pages` has none, so a finding
+     * raised against a content page is not actionable anywhere in this software.
+     *
+     * Computed from the ROUTE COLLECTION rather than by grepping a controller:
+     * the question is whether any endpoint exists that could write a page at
+     * all, and the router is the authority on that. A page editor arriving --
+     * which is a Content-module item, not an SEO one -- flips this row by
+     * itself.
+     *
+     * MUTATION NOTE: register any non-GET /pages route and $pageWriteRoutes
+     * stops being empty, which turns this row VERIFIED. It is spelled MISSING
+     * and carries "Lane S5" nowhere, so it is excluded from the assertion sweep
+     * the way the other genuinely-absent rows are.
+     */
+    $pageWriteRoutes = [];
+
+    foreach (Route::getRoutes() as $route) {
+        $uri = '/' . ltrim($route->uri(), '/');
+        $methods = array_values(array_diff($route->methods(), ['HEAD']));
+
+        if (str_contains($uri, 'pages') && $methods !== ['GET']) {
+            $pageWriteRoutes[] = implode('|', $methods) . ' ' . $uri;
+        }
+    }
+
+    $rows[] = spRow($A,
+        'Those per-row SEO fields can be EDITED on all five tables — "Have, on five tables including `pages`".',
+        'SEO-GAP §4 — Have (five tables)',
+        spCheck($pageWriteRoutes !== []),
+        'GENUINELY ABSENT, and it is the half of the claim an owner would act on. Driven against the router: there is NO endpoint of any method that writes a page — '
+            . ($pageWriteRoutes === [] ? 'zero non-GET routes whose URI mentions `pages`' : implode(', ', $pageWriteRoutes))
+            . '. Admin\\PagesApiController has exactly two methods, store() and user(), both GET, both listing, and it does not even return the `seo` column, so no screen could render a form over it. Services\\Import\\Entities\\SeoImporter writes `seo` on products only. Products, categories, brands and posts each have an editor that writes it (Catalog → Products → SEO, Catalog → Categories, Catalog → Brands, Content → Blog Posts). So `pages.seo` is null on every shipped row and nothing can make it anything else — reading it was still the right fix, because the audit was reporting pages as deindexed on the strength of a value no screen could set. WHAT IS MISSING IS A PAGE EDITOR, and it is a Content-module item: a page needs a title, a body and a status editor before it needs a meta description, and this shop has none of the four. Do not close this with an SEO-only form for pages. Corrected in docs/SEO-GAP.md §4 by this lane.',
+        'app/Http/Controllers/Admin/PagesApiController.php');
 
     $rows[] = spRow($A,
         'Per-row noindex takes a document out of the index.',
@@ -712,9 +852,34 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $rows[] = spRow($D,
         'geo and openingHoursSpecification are withheld on an org_type that cannot carry them.',
         'SEO-BUILD-PLAN round 2 — Have',
-        spCheck(! isset($orgEmpty['geo'])),
-        'They are gated on org_type being a Place (Store or LocalBusiness). On Organization or OnlineStore they are invalid, and an invalid property is not a richer document. The select offers Organization, OnlineStore, Store, LocalBusiness with the help text "OnlineStore is right for a shop with no shopfront."',
+        spCheck(! isset($orgEmpty['geo'])
+            && ! array_key_exists('openingHoursSpecification', \App\Support\BusinessAddress::organizationFragment(
+                ['store_hours' => 'Mon-Sun 00:00-23:59'],
+                'OnlineStore'
+            ))),
+        'They are gated on org_type being a Place (Store or LocalBusiness). On Organization or OnlineStore they are invalid, and an invalid property is not a richer document. Driven with the hours box filled in and the type at OnlineStore: no openingHoursSpecification is emitted. That is the honest answer to the owner\'s "we are open 24/7" — openingHoursSpecification is a property of schema.org PLACE and describes a door, so there is no valid way to publish 24/7 for a shop with no premises, and the silence an online retailer\'s node already keeps is the correct statement. SeoAudit now REPORTS the box being filled in rather than dropping it quietly (Lane S8).',
         'app/Support/BusinessAddress.php:55');
+
+    /*
+     * ── THE SHIPPED BUSINESS TYPE — Lane S8, and a DEFAULT CHANGE ──────────
+     *
+     * The owner: "we are open 24/7, we don't have any physical shop, we operate
+     * only online." `org_type` shipped at `Organization`, which is a company;
+     * `OnlineStore` is a retailer with no premises, which is what this is. This
+     * is CLAUDE.md rule 1's single exception -- a default the owner asked for in
+     * as many words -- and it is called out here, in SeoSettings::DEFAULTS' own
+     * docblock, and in the commit.
+     *
+     * MUTATION NOTE: put DEFAULTS['org_type'] back to 'Organization' and this row
+     * turns MISSING and the assertion sweep goes red.
+     */
+    $rows[] = spRow($D,
+        'The shipped Organization node says what kind of business this actually is.',
+        'owner item 4 — "we don\'t have any physical shop, we operate only online"',
+        spCheck(($shapes['home']['nodes'][0]['@type'] ?? '') === 'OnlineStore'
+            && \App\Services\Seo\SeoSettings::get('org_type') === 'OnlineStore'),
+        'CHANGED THIS LANE, at the owner\'s word. The shipped node is now ' . spPretty($shapes['home']['nodes'][0] ?? null) . ' — @type OnlineStore, and no address, telephone, geo or opening hours, because he has given none and asked to enter the address later. "Enter it later" is genuinely supported: BusinessAddress refuses to publish a partial address, and nothing nags him for one — SeoAudit\'s business_type_mismatch and the Overview screen\'s localbusiness_address task both fire only on a PLACE type with no address, and OnlineStore is not one. Set the type to Store or Local business and BOTH start asking for the address, which is correct: that is a shopfront claim with nothing behind it.',
+        'app/Services/Seo/SeoSettings.php:43');
 
     $rows[] = spRow($D,
         'WebSite + SearchAction, with the urlTemplate pointing at the parameter the shop actually filters on.',
@@ -786,6 +951,21 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         spCheck(! isset($offerOff['shippingDetails']) && isset($offerOn['shippingDetails'], $offerOn['hasMerchantReturnPolicy'])),
         'OFF: the Offer carries neither. ON, with the terms typed in: ' . spPretty(['shippingDetails' => $offerOn['shippingDetails'] ?? null, 'hasMerchantReturnPolicy' => $offerOn['hasMerchantReturnPolicy'] ?? null]) . ' — and note the shippingRate is 0.00 because this product is over the free-delivery threshold, computed in integer fils rather than by comparing floats.',
         'app/Support/Seo.php:1180');
+
+    /*
+     * ── THE DEFECT THAT WOULD HAVE COST MONEY — Lane S8 ───────────────────
+     *
+     * MUTATION NOTE: restore `Money::fromMajor($s['merchant_ship_cost'] ?? 0)`
+     * inside Seo::shippingDetails() and this row turns MISSING, naming the
+     * 0.00 it publishes.
+     */
+    $rows[] = spRow($D,
+        'Turning the merchant listing on does not invent a delivery rate nobody stated.',
+        'nowhere — the two halves were one block and nothing checked this',
+        spCheck(! array_key_exists('shippingDetails', $offerOwner)
+            && ($offerOwner['hasMerchantReturnPolicy']['returnPolicyCategory'] ?? null) === 'https://schema.org/MerchantReturnNotPermitted'),
+        'FIXED THIS LANE, and this is the configuration the shop will actually run. `enable_merchant` published shippingDetails UNCONDITIONALLY, with the rate read as `Money::fromMajor($s[\'merchant_ship_cost\'] ?? 0)`. That key ships blank and SeoSettings::map() drops blanks, so `?? 0` fired and every product page went out saying shippingRate 0.00 AED — free delivery to the whole UAE, on a shop that has never quoted a rate, printed by Google beside the price. The screen made it worse: the box arrived prefilled with `0`, because the `aed` rule refused a blank and an empty box would have failed the whole save. AND THE OWNER WAS ABOUT TO WALK INTO IT — "at the moment we don\'t offer returns" is publishable and the ONLY way to publish it was this switch. Now shipping and returns are independent. Driven with merchant ON, returns stated and the shipping boxes blank: ' . spPretty($offerOwner) . ' — the refusal publishes on its own and nothing is said about delivery. A typed 0 still publishes free shipping, which is a real answer; an absent key publishes nothing. All three halves shipped together: the rule accepts blank, the box ships blank, the emitter reads the absence.',
+        'app/Support/Seo.php — shippingDetails()');
 
     $rows[] = spRow($D,
         'BreadcrumbList on products, categories, brands and articles.',
@@ -1016,8 +1196,48 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         spCheck($shapes['concern']['status'] === 200
             && in_array('CollectionPage', spTypes($shapes['concern']['path']), true)
             && str_contains($sitemapEn, '/concern/acne/'), 'STALE'),
-        'THE MACHINERY IS BUILT AND IT WORKS END TO END. Measured: with four products tagged for "Acne & blemishes" at Catalog → Build my routine, /concern/acne/ answers ' . $shapes['concern']['status'] . ', is indexable, carries CollectionPage + ItemList (' . implode(' · ', spTypes($shapes['concern']['path'])) . ') and appears in /sitemap.xml with its hreflang cluster. Untag until fewer than ConcernCollections::MIN_PRODUCTS (' . ConcernCollections::MIN_PRODUCTS . ') remain and the page 404s and leaves the sitemap — the thin-page rule is the design, not a warning. ' . count(ConcernCollections::slugs()) . ' concern slugs exist and ' . count(ConcernCollections::ENABLED) . ' is enabled. What is missing is entirely the owner\'s: the tagging and the intro copy.',
+        'THE MACHINERY IS BUILT AND IT WORKS END TO END. Measured: with four products tagged for "Acne & blemishes" at Catalog → Build my routine, /concern/acne/ answers ' . $shapes['concern']['status'] . ', is indexable, carries CollectionPage + ItemList (' . implode(' · ', spTypes($shapes['concern']['path'])) . ') and appears in /sitemap.xml with its hreflang cluster. Untag until fewer than ConcernCollections::MIN_PRODUCTS (' . ConcernCollections::MIN_PRODUCTS . ') remain and the page 404s and leaves the sitemap — the thin-page rule is the design, not a warning. ALL ' . count(ConcernCollections::ENABLED) . ' CONCERN SLUGS ARE NOW ENABLED (Lane S8, at the owner\'s instruction "i don\'t want to miss or skip anything"), each with its own written English title and intro, so the ONLY thing left is the owner\'s tagging — no copy to commission in English and no package to ship for his second page. ' . count(ConcernCollections::slugs()) . ' of ' . count(\App\Support\RoutineConcerns::slugs()) . ' concern slugs have copy.',
         'app/Support/ConcernCollections.php');
+
+    /*
+     * ── AND THE RULE-1 HALF OF ENABLING ALL EIGHT — Lane S8 ───────────────
+     *
+     * The fixture above has products tagged for `acne`, so it cannot answer the
+     * question that matters for a package: does enabling the other seven move
+     * anything on a shop where nothing is tagged? Driven on a fresh count rather
+     * than inferred: ConcernCollections::live() against the fixture returns only
+     * the concerns that really cross the floor, and the other seven are absent
+     * from the sitemap and 404 at the router.
+     *
+     * MUTATION NOTE: set MIN_PRODUCTS to 0 and every untagged concern turns 200
+     * and enters the sitemap, which turns this row MISSING.
+     */
+    $concernUntagged = [];
+
+    foreach (\App\Support\RoutineConcerns::slugs() as $slug) {
+        if (in_array($slug, ConcernCollections::live(), true)) {
+            continue;
+        }
+
+        $concernUntagged[ConcernCollections::path($slug)] = [
+            'status' => test()->call('GET', ConcernCollections::path($slug))->getStatusCode(),
+            'in_sitemap' => str_contains($sitemapEn, ConcernCollections::path($slug)),
+        ];
+    }
+
+    $rows[] = spRow($G,
+        'Enabling a concern publishes nothing by itself, so all eight can ship ahead of the tagging.',
+        'ConcernCollections — "measure one before shipping six"',
+        spCheck($concernUntagged !== [] && ! in_array(true, array_map(
+            static fn (array $r): bool => $r['status'] !== 404 || $r['in_sitemap'],
+            $concernUntagged
+        ), true)),
+        'THE THIN-PAGE GUARD IS MIN_PRODUCTS, NOT THE ENABLED LIST, which is why all eight could be enabled without a staged release. Driven on the ' . count($concernUntagged) . ' concerns this fixture has not tagged: ' . implode('  ·  ', array_map(
+            static fn (string $path, array $r): string => $path . ' → ' . $r['status'] . ($r['in_sitemap'] ? ' IN SITEMAP' : ' absent from sitemap'),
+            array_keys($concernUntagged),
+            $concernUntagged
+        )) . '. On the shipped shop, where nothing is tagged at all, that is all eight. The pages still arrive one at a time — what decides is the owner\'s tagging crossing MIN_PRODUCTS (' . ConcernCollections::MIN_PRODUCTS . ') for each concern, not a code change, so he no longer needs a package to publish his second concern page.',
+        'app/Support/ConcernCollections.php — ENABLED');
 
     $rows[] = spRow($G,
         'The concern vocabulary is the skin quiz\'s own eight, not a second list.',
@@ -1033,11 +1253,42 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'Live at /korean-skincare-brands/{slug}/ with the A-Z index submitted at the address that answers rather than the one that redirects (/brands/ 301s to it). A brand with no live product is left out of the sitemap.',
         'routes/kbb-brands-blog.php');
 
+    /*
+     * ── THE ENGLISH HALF OF THIS IS CLOSED — Lane S8 ──────────────────────
+     *
+     * This was one OWNER row covering two different things, and one of them is
+     * now done: all eight concerns have a written English title and intro. So it
+     * splits, and the English half is COMPUTED against InterfaceStrings rather
+     * than asserted, because "the copy exists" is measurable.
+     *
+     * MUTATION NOTE: blank any concern.intro_* value and the English row turns
+     * MISSING and the sweep goes red.
+     */
+    $concernCopy = \App\Services\Translation\InterfaceStrings::all()['store'] ?? [];
+    $concernCopyWords = [];
+
+    foreach (ConcernCollections::ENABLED as $slug) {
+        $key = str_replace('-', '_', $slug);
+        $concernCopyWords[$slug] = str_word_count((string) ($concernCopy['concern.intro_' . $key] ?? ''));
+    }
+
     $rows[] = spRow($G,
-        '150–300 words of intro copy per concern page, English and Arabic.',
-        'SEO-CONCERN-COPY — English drafted, Arabic refused',
+        'Intro copy per concern page, in English.',
+        'SEO-CONCERN-COPY — three English drafts to edit or reject',
+        spCheck(count($concernCopyWords) === count(\App\Support\RoutineConcerns::slugs())
+            && min($concernCopyWords) > 40),
+        'WRITTEN THIS LANE, for all eight, and the owner asked for exactly that ("i don\'t want to miss or skip anything"). Word counts per concern: ' . implode(', ', array_map(
+            static fn (string $slug, int $n): string => $slug . ' ' . $n,
+            array_keys($concernCopyWords),
+            $concernCopyWords
+        )) . '. Deliberately NOT in the 150–300 word band and deliberately not tested against one: SEO-CONCERN-COPY.md is explicit that the figure is practitioner convention rather than Google documentation, and the template renders one paragraph. What was NOT shipped from S2\'s drafts is their [SQUARE BRACKET] product placeholders and their named brands — a placeholder in a translation value is PRINTED to the shopper, and naming a brand the page does not stock is worse than naming none. The substance of the drafts is kept; see docs/SEO-CONCERN-COPY.md §"What shipped, and what did not".',
+        'app/Services/Translation/InterfaceStrings.php');
+
+    $rows[] = spRow($G,
+        'The same intro copy in Arabic.',
+        'SEO-CONCERN-COPY — Arabic refused, needs a human writer',
         'OWNER',
-        'Three English drafts exist to edit or reject (docs/SEO-CONCERN-COPY.md) and no Arabic. That refusal stands and this lane did not quietly work around it: machine-translated Arabic is worse than no Arabic, and Gulf product search skews to dialect over Modern Standard Arabic. Three intros at ~200 words is a very small commission, which is the argument for paying for it rather than for skipping it.',
+        'STILL THE OWNER\'S, and the refusal stands: machine-translated Arabic is worse than no Arabic, and Gulf product search skews to dialect over Modern Standard Arabic. No lane has quietly worked around it. Eight intros of roughly 120 words each is a small commission with a fee, which is the argument for paying for it rather than for skipping it. The pages work in English meanwhile — the Arabic layer is off.',
         'docs/SEO-CONCERN-COPY.md');
 
     $rows[] = spRow($G,
@@ -1058,15 +1309,29 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'Local editorial links and directory citations.',
         'SEO-FEATURE-MATRIX §2 item 3 — neither code nor content',
         'OWNER',
-        'Named targets with URLs are in docs/SEO-COMPETITIVE.md §12. Zero code, and probably the best return per dirham in the whole programme. It needs one canonical NAP string used identically everywhere, which is why confirming the address should happen BEFORE the markup is switched on rather than after.',
+        'Named targets with URLs are in docs/SEO-COMPETITIVE.md §12. Zero code, and probably the best return per dirham in the whole programme. It needs one canonical NAP string used identically everywhere, which is why confirming the address should happen BEFORE the markup is switched on rather than after. NOTE, Lane S8: the owner has said there is no physical shop and asked to enter the address later, so a directory citation here means a trading address rather than a shopfront, and several UAE directories will not take a listing without one. That is a decision for him, not a blocker on any code — nothing in this application asks him for it and nothing publishes half of one.',
         '—');
 
     $rows[] = spRow($G,
-        'Shipping and returns terms confirmed in writing, so the merchant markup can be switched on.',
+        'Shipping terms confirmed in writing, so a delivery rate can be published.',
         'SEO-BUILD-PLAN Part II item 10',
         'OWNER',
-        'The code is built and off. A wrong delivery promise in a Google listing is worse than none — it is a promise Google shows a shopper. The preview above shows exactly what would be published for a given set of terms, which is the thing to check before the switch is thrown.',
-        'app/Support/Seo.php:1180');
+        'STILL THE OWNER\'S, and it is the only half of this item left. A wrong delivery promise in a Google listing is worse than none — it is a promise Google shows a shopper — so nothing is guessed and the boxes ship blank. What CHANGED this lane is that blank is now a reachable, saveable, publishable-as-nothing state: he can switch the merchant listing on for the returns answer he has already given and say nothing whatever about delivery until he knows. One number closes this: the delivery charge the till actually takes, in whole dirhams. Store → SEO & Meta → Settings → Rich product results → Shipping cost.',
+        'app/Support/Seo.php — shippingDetails()');
+
+    $rows[] = spRow($G,
+        'Returns terms confirmed in writing.',
+        'SEO-BUILD-PLAN Part II item 10',
+        spCheck(($offerOwner['hasMerchantReturnPolicy']['returnPolicyCategory'] ?? null) === 'https://schema.org/MerchantReturnNotPermitted'),
+        'ANSWERED BY THE OWNER, in his own words: "at the moment we don\'t offer returns." Lane S5 built MerchantReturnNotPermitted for exactly that and Lane S8 made it publishable on its own, without a delivery claim beside it — driven above. The control ships blank ("Not stated") because his answer is a value in a setting rather than something this code may assume about every shop it runs on, so ONE select closes this: Store → SEO & Meta → Settings → Rich product results → Returns policy → "We do not accept returns", plus the Enable merchant listing switch above it.',
+        'app/Support/Seo.php — returnPolicy()');
+
+    $rows[] = spRow($G,
+        'Six article topics approved, so the cluster can be commissioned.',
+        'SEO-ROUND-5-VERIFICATION §7 item 6 — "approve six article topics"',
+        'OWNER',
+        'HE COULD NOT APPROVE WHAT DID NOT EXIST. SEO-BUILD-PLAN item 6 names a list and says of it, in its own words, "this list is a proposal, not a decision" — and three of its six rows are wrong for this shop today: its first topic (cica/centella/heartleaf) ALREADY EXISTS as an article, and two more name concern slugs this shop does not have. Six topics are now drafted for him in docs/SEO-ARTICLE-TOPICS.md, each with its target concern, the shape of the query it answers, an English working title and which existing article it links to. Six yes/no answers closes this. No article is written and none should be until he has said which.',
+        'docs/SEO-ARTICLE-TOPICS.md');
 
     /* ═══════════════════════ assert, then render ══════════════════════════ */
 
@@ -1082,8 +1347,25 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $wrong = [];
 
     foreach ($rows as $row) {
-        if ($row['verdict'] === 'MISSING' && ! str_contains($row['observed'], 'BUILT THIS LANE')
-            && ! str_contains($row['observed'], 'Lane S5') && ! str_contains($row['observed'], 'The Article node carries')) {
+        /*
+         * `GENUINELY ABSENT` is an explicit marker — Lane S8.
+         *
+         * This sweep excludes the rows whose MISSING verdict is the CORRECT
+         * answer rather than a regression, and it did so by sniffing for three
+         * phrases that happened to appear in those rows' prose ('BUILT THIS
+         * LANE', 'Lane S5', 'The Article node carries'). That is a guard keyed on
+         * copy: rewording a row's observation silently enrols it in the sweep, or
+         * silently exempts a new row that mentions Lane S5 in passing. The marker
+         * below is a decision a row makes about itself and cannot be tripped by
+         * an edit to a sentence. The three phrases stay recognised so the rows
+         * that predate the marker keep working.
+         */
+        $exempt = str_contains($row['observed'], 'GENUINELY ABSENT')
+            || str_contains($row['observed'], 'BUILT THIS LANE')
+            || str_contains($row['observed'], 'Lane S5')
+            || str_contains($row['observed'], 'The Article node carries');
+
+        if ($row['verdict'] === 'MISSING' && ! $exempt) {
             $wrong[] = $row['claim'];
         }
     }

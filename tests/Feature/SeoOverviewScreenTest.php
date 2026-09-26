@@ -232,7 +232,16 @@ it('counts the concern pages that are waiting, and stops the moment they are not
     expect($task['where'])->toContain('Build my routine');
     expect($task['detail'])->toContain('0 of '.ConcernCollections::MIN_PRODUCTS);
 
-    // Tag exactly enough products, through the column the routine builder writes.
+    /*
+     * Tag exactly enough products for EVERY enabled concern, through the column
+     * the routine builder writes.
+     *
+     * All eight are enabled as of Lane S8, so the row only discharges once all
+     * eight are over the floor -- which is the honest reading of "the work is
+     * done" and is what the owner's own countdown says. Tagging one concern and
+     * expecting the row to vanish would have been the wrong assertion the moment
+     * a second concern got copy.
+     */
     for ($i = 0; $i < ConcernCollections::MIN_PRODUCTS; $i++) {
         Product::create([
             'name' => 'S7 tagged '.$i,
@@ -241,16 +250,20 @@ it('counts the concern pages that are waiting, and stops the moment they are not
             'is_visible' => true,
             'stock_status' => 'instock',
             'price' => 5500,
-            // Exactly as Admin\RoutinesApiController::tag() writes it.
-            'routine_concerns' => json_encode([$slug]),
+            // Exactly as Admin\RoutinesApiController::tag() writes it. One
+            // product can carry several concerns, which is how a real catalogue
+            // is tagged.
+            'routine_concerns' => json_encode($enabled),
         ]);
     }
 
-    expect(ConcernCollections::count($slug))->toBe(ConcernCollections::MIN_PRODUCTS);
+    foreach ($enabled as $each) {
+        expect(ConcernCollections::count($each))->toBe(ConcernCollections::MIN_PRODUCTS);
+    }
 
     $after = s7TaskKeys(s7Tasks());
 
-    expect($after)->not->toContain('concern_pages');
+    expect(in_array('concern_pages', $after, true))->toBeFalse();
 });
 
 it('asks for the address only when the shop has claimed to have one', function () {

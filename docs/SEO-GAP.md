@@ -28,7 +28,7 @@ The competitor is not out-ranking us on markup. Read `SEO-COMPETITIVE.md` §4.
 
 | Capability | Ours | Shopify | Theirs |
 |---|---|---|---|
-| One canonical path per product | **Have.** `/product/{slug}/`, single address, slashless form 301s onto it (`routes/web.php`) | **Structural weakness** — `/products/x` and `/collections/y/products/x` both serve; theme cards link the scoped form against the canonical | `/products/<handle>` observed; whether cards link `within: collection` is *unverified* |
+| One canonical path per product | **Have** — one canonical address, `/product/{slug}/`. **Not by a redirect; see the note below.** | **Structural weakness** — `/products/x` and `/collections/y/products/x` both serve; theme cards link the scoped form against the canonical | `/products/<handle>` observed; whether cards link `within: collection` is *unverified* |
 | robots.txt | **Have**, generated, locale- and base-path aware, `SeoFilesController::robots()` (`:617`) | Generated; overridable via `robots.txt.liquid` | *unverified* |
 | robots.txt agrees with page-level noindex | **Have, and enforced.** `Indexability::PRIVATE_PREFIXES` vs `SeoFilesController::ROBOTS_PRIVATE` (`:24`), with `SeoBilingualTest` asserting the two sets are equal | Disallows `/cart` `/checkout`; no matching `noindex` | *unverified* |
 | Private/staging handling | **Have, and better reasoned.** `SiteHost::isPrivate()` ⇒ invite the crawl, answer `X-Robots-Tag: noindex` — because a disallowed URL is one whose noindex is never read (`:617` comment) | n/a (password page) | n/a |
@@ -37,6 +37,38 @@ The competitor is not out-ranking us on markup. Read `SEO-COMPETITIVE.md` §4.
 | `llms.txt` | **Have** (`:544`). Neither platform has this. | No | No |
 
 **Net: we are ahead**, decisively on the duplicate-path issue.
+
+### CORRECTION (Lane S8, 2026-09-26) — there is no 301, and the mechanism matters
+
+This table said the slashless form *"301s onto it"*. **It does not.** Driven by
+request against the running application:
+
+```
+GET /product/probe-prod   ->  200   canonical https://kb.test/product/probe-prod/
+GET /product/probe-prod/  ->  200   canonical https://kb.test/product/probe-prod/
+GET /shop                 ->  200   canonical https://kb.test/shop/
+GET /shop/                ->  200   canonical https://kb.test/shop/
+GET /cart                 ->  200   canonical https://kb.test/cart/
+GET /cart/                ->  200   canonical https://kb.test/cart/
+```
+
+**Both forms answer 200 and neither redirects.** Laravel's router rtrims the
+path before matching, so `/product/x` and `/product/x/` are the same route to
+the same controller — there is nothing left for a redirect to redirect.
+
+**The outcome this table claims is nevertheless correct, and the reason is the
+canonical, not a redirect.** Both addresses declare the *same* `rel=canonical`
+(the slashed form), and that is what consolidates them: Google follows the
+canonical and indexes one address. So there is **nothing to build here** — this
+is a documentation defect only, and it is written down because the named
+mechanism is the thing a later lane would go looking for, fail to find, and
+"fix" by adding a redirect that would then fire on a URL the site itself
+advertises.
+
+Pinned, not asserted in prose: `SeoPreviewsTest` drives all six requests above
+and computes the verdict from the statuses and the canonicals it gets back, so
+the day a redirect *is* added — or the day the two canonicals stop agreeing —
+this file's claim goes red rather than going stale again.
 
 ---
 
@@ -86,13 +118,32 @@ This is the section that most contradicts the brief's assumptions. All of it is
 | `CollectionPage` + `ItemList` | **Have** (`:1222`) | Rare | *unverified* |
 | `Article` | **Have** (`:1145`) | Theme | *unverified* |
 | **One coherent graph, one encoder** | **Have** — structurally cannot emit two competing `Product` nodes | **The classic Shopify failure**: review app injects a second `Product` | *unverified* |
-| `FAQPage` | **Missing** | Theme/app | *unverified* |
-| `LocalBusiness` address / hours / geo | **Missing** (`org_type` offers the type; no address is emitted) | App | They have a Dubai shop (observed) |
+| `FAQPage` | **BUILT, ships OFF** (round 5, `Services\Seo\FaqSchema`). Not for the retired rich result — for the machine-readable question/answer pair. Store → SEO & Meta → Settings · Sitemap & robots · "FAQ markup on content pages" | Theme/app | *unverified* |
+| `LocalBusiness` address / hours / geo | **BUILT** (round 2, `Support\BusinessAddress`). `address`, `telephone`, `geo` and `openingHoursSpecification` merge into the one Organization node, with `geo`/hours gated to the two `org_type` values that are schema.org Places. **Nothing is published on this shop and that is correct** — it trades online only, with no shopfront | App | They have a Dubai shop (observed) |
 | `VideoObject`, `HowTo` | Missing | Missing | — |
 
-**Net: we are substantially ahead.** `FAQPage` is a dead feature (Google
-deprecated the rich result on 7 May 2026 — see SEO-COMPETITIVE §1.9) and should
-not be built. `LocalBusiness` is the one genuine gap in this table.
+**Net: we are substantially ahead.**
+
+**CORRECTION (Lane S8, 2026-09-26).** This paragraph used to read *"`FAQPage` is
+a dead feature and should not be built. `LocalBusiness` is the one genuine gap in
+this table."* Both halves are now out of date and the second was already out of
+date when it was written:
+
+- `LocalBusiness` **shipped in round 2** — five months before this sentence was
+  last read — and it is not a gap on this shop at all. The owner has since
+  stated it in his own words: *"we are open 24/7, we don't have any physical
+  shop, we operate only online."* A shop with no premises has no `LocalBusiness`
+  markup to publish, and `org_type` now ships at `OnlineStore` to say so.
+- `FAQPage` **was built in round 5 and ships off**, on an argument the three
+  previous refusals did not weigh. The refusal was right about the rich result —
+  Google stopped showing FAQ drop-downs on 7 May 2026 and nobody should be
+  promised one. What it did not weigh is the question/answer *pair* as the unit
+  an answer engine extracts, which an `<h3>` above a `<p>` is not. Read
+  `SEO-ROUND-5-VERIFICATION.md` §4 before re-arguing it in either direction.
+
+The remaining genuine absences in this table are `VideoObject` (now worth
+something it was not, because the shop has a shoppable-video library) and
+`HowTo`, which stays refused.
 
 ### Escaping
 
@@ -110,7 +161,7 @@ must not be "corrected" back.
 | Capability | Ours | Shopify | Theirs |
 |---|---|---|---|
 | Title template with tokens | **Have.** `Seo::titleOf()` (`:380`), `{title}{sep}{sitename}{page}` | Theme + per-row override | Observed: mechanical `{collection} Beauty Products`, unproofread |
-| Per-row SEO title/description | **Have.** `seo` json on products, categories, brands, posts, pages; `ProductSeo::PUBLISHED_KEYS` | `global.title_tag` / `description_tag` | Presumed (platform) |
+| Per-row SEO title/description | **Have on four of five.** `seo` json is on products, categories, brands, posts **and pages**, and all five are now READ — but only four can be EDITED. `pages` has no editor anywhere in the console. See the note below. | `global.title_tag` / `description_tag` | Presumed (platform) |
 | Per-row **canonical** override | **Have** | **No** | No |
 | Per-row **noindex** | **Have** | No (app) | No |
 | `meta robots` | **Have** (`:145`) | Theme | *unverified* |
@@ -123,6 +174,53 @@ must not be "corrected" back.
 | Yoast import (tiers, leftovers) | **Have.** `YoastSeo.php`, `YoastTiers.php`, `SeoImporter`, `docs/FX-YOAST-TIER-CENSUS.md` | n/a | n/a |
 
 **Net: ahead**, with hreflang at parity.
+
+### CORRECTION (Lane S8, 2026-09-26) — `pages` has the column and no editor
+
+This table said *"Per-row SEO title/description — Have. `seo` json on products,
+categories, brands, posts, pages."* **True of the column, false of the
+capability**, and the false half is the half an owner would act on: a finding
+raised against a content page is not actionable anywhere in this software.
+
+Where it actually stands, driven rather than read:
+
+| Table | `seo` column | Read by the storefront | **Editable in the console** | Where |
+|---|---|---|---|---|
+| `products` | yes | yes | **yes** | Catalog → Products → the product → SEO |
+| `categories` | yes | yes | **yes** | Catalog → Categories → the category |
+| `brands` | yes | yes | **yes** | Catalog → Brands → the brand |
+| `posts` | yes | yes | **yes** | Content → Blog Posts → the post |
+| `pages` | yes | **yes, since round 5** | **NO — nothing can write it** | — |
+
+The evidence for the last row is the absence of a writer, so it is stated as an
+absence that was searched for rather than as an opinion:
+
+- `Admin\PagesApiController` is the only Pages endpoint and it has exactly two
+  methods, `store()` and `user()`, both `GET`, both listing. It selects
+  `id, slug, title, status, updated_at` — **it does not even return the `seo`
+  column**, so no screen could render a form over it.
+- `routes/web.php` registers `GET /pages/store` and `GET /pages/user` and no
+  other pages endpoint. There is no create, update or delete.
+- `Services\Import\Entities\SeoImporter` writes `seo` on **products only**
+  (`$context->apply($product, ['seo' => $merged])`). The WooCommerce import does
+  not carry a Yoast override onto a content page.
+- `grep -rn "'seo'" app/Http/Controllers/Admin/` returns product, category,
+  brand and post writers, and nothing for `Page`.
+
+**So `pages.seo` is `null` on every shipped row and there is no path by which it
+could stop being null.** Round 5 was right to make the storefront read it — the
+column being read by nothing was its own defect, and the audit was reporting
+pages as deindexed on the strength of a value no screen could set — but reading
+a column nothing writes buys the owner nothing on its own.
+
+**What is actually missing is a page editor**, and it is a Content-module item
+rather than an SEO one: a page needs a title, a body and a status editor before
+it needs a meta description, and this shop has none of the four. Until it
+exists, the honest statement of this capability is *"four of five tables"*.
+
+Do not close this by adding an SEO-only form for pages. A five-field SEO panel
+on a screen with no way to edit the page's own title or body would be the
+strangest control in the console.
 
 ---
 
@@ -144,13 +242,19 @@ this.
 
 | Capability | Ours | Theirs |
 |---|---|---|
-| Concern-led collections (`/acne`, `/pigmentation`, `/dryness`) | **Missing.** Our listings are merchandising (`new-in`, `best-sellers`, `super-sale`, `everything-under-54-aed`); categories are a product taxonomy | **Observed:** `/collections/acne` |
+| Concern-led collections | **BUILT** (round 2, mounted; all eight enabled as of Lane S8). `/concern/{slug}/` for every concern in `Support\RoutineConcerns`, each with its own English copy, `CollectionPage` + `ItemList`, its own canonical and a sitemap entry. **A page does not exist until `MIN_PRODUCTS` products are tagged for it**, so all eight are 404 today — the one thing still outstanding is the owner's tagging at Catalog → Build my routine | **Observed:** `/collections/acne` |
 | Brand landing pages | **Have**, 93 of them, `/korean-skincare-brands/{slug}/`, sitemap-listed | `/collections/<brand>` |
 | Ingredient/concern editorial mapped onto collections | **Partly.** `/skincare-guide/` and the journal exist; the topical mapping does not | **Observed:** a sustained blog on routines, acne scars, Cica/Heartleaf, moisturiser selection |
 | Local editorial citations | Unknown | **Observed:** Time Out Dubai |
 
-**This is the real gap and none of it is an SEO-module feature.** It is
+**This is the real gap and almost none of it is an SEO-module feature.** It is
 taxonomy, copy and outreach.
+
+**CORRECTION (Lane S8).** The first row said Missing. The pages and all eight
+sets of copy are built and merged; what is missing is the product tagging, which
+is the owner's two or three hours at Catalog → Build my routine. That is a
+genuinely different kind of "missing" and the distinction is the whole point of
+this table: nobody needs to build anything for concern collections.
 
 ---
 

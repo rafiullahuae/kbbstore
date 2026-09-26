@@ -320,6 +320,46 @@ from `SETTING_RULES` is a key the SEO screen posts and the server silently drops
 **Admin path once wired: Store → SEO & Meta → Settings · Sitemap & robots · "FAQ
 markup on content pages".** Ships off.
 
+## 6b. ROUND 6 — what Lane S8 closed, 26 September 2026
+
+The owner's words: *"also tell the SEO land to finish the missing items in the
+document. i don't want to miss or skip anything. need to work super fast."*
+
+**Everything in §7 below that could be closed by code or by writing has been.**
+The list is left standing rather than deleted, because the reasoning in each item
+is still the reasoning; this section says which are done and what the remainder
+actually is. `docs/SEO-PREVIEWS.html` is regenerated and the matrix is 88 rows:
+**63 VERIFIED · 7 STALE · 4 MISSING · 6 DELIBERATE · 8 OWNER.**
+
+| §2 / §7 item | Status after S8 |
+|---|---|
+| §2 row 6 — *"per-row SEO on five tables including `pages`"* | **Document corrected.** `SEO-GAP.md` §4 now says four of five, with the evidence. The column is read on all five and **editable on four**: `pages` has no editor of any kind, and the gap is a page editor (a Content-module item), not an SEO form. A new matrix row measures it against the router. |
+| §2 row 7 — *"the slashless form 301s onto it"* | **Document corrected.** `SEO-GAP.md` §1 now carries the six-request table. Both forms answer 200, neither redirects, both declare the same canonical. The matrix row now drives all three pairs instead of asserting two of them in prose. |
+| §7.1 — tag 30–45 products | **Still the owner's, and it now unblocks eight pages rather than one.** |
+| §7.2 — enable the other concerns | **DONE. All eight.** Each has a written English title and intro. Enabling them published nothing: nothing is tagged, so all eight 404 and none is in the sitemap. `ConcernCollections::ENABLED`'s own note carries the owner's words and why this overrules "measure one before shipping six" — the thin-page guard is `MIN_PRODUCTS`, which does not care how many slugs have copy. |
+| §7.3 — three intro paragraphs, English and Arabic | **English DONE, for eight rather than three.** Arabic unchanged and not worked around: eight intros of ~120 words for a human writer. |
+| §7.4 — confirm address, emirate, phone, opening hours | **Mostly answered by the owner, and the shipped configuration now matches him.** *"we are open 24/7, we don't have any physical shop, we operate only online."* `org_type` ships at `OnlineStore`. No address, phone, emirate, coordinates or hours are published, because he gave none and asked to enter the address later — and nothing nags him for one. **24/7 is deliberately not published**: `openingHoursSpecification` is a property of schema.org *Place* and describes a door, so there is no valid way to state it for a shop with no premises. `SeoAudit` now *reports* the hours box being filled in under a non-Place type instead of dropping it silently, which was the same defect it already caught for map coordinates one field over. |
+| §7.5 — write down shipping and returns terms | **Returns answered; shipping still genuinely unknown — and a real defect was found between them.** `enable_merchant` published `shippingDetails` unconditionally with the rate read as `?? 0`, so switching it on to state the returns refusal also published **`shippingRate 0.00 AED`** — free delivery to the whole UAE, on a shop that has never quoted a rate. The screen prefilled the box with `0` because the `aed` rule refused a blank. All three halves fixed: the rule accepts blank, the box ships blank, the emitter publishes nothing until a rate is entered. A typed `0` still publishes free delivery, which is a real answer. |
+| §7.6 — approve six article topics | **Drafted for him: `docs/SEO-ARTICLE-TOPICS.md`.** He could not approve what did not exist, and `SEO-BUILD-PLAN` item 6's list says of itself *"a proposal, not a decision"* — its first topic already exists as an article and two more name concern slugs this shop does not have. Six yes/no answers closes it. No article written. |
+| §7.7 — turn on Search Console | **Still the owner's.** Unchanged, and still the reason no traffic claim appears anywhere in this corpus. |
+
+**§3's own theme, one round on.** Round 5's finding was two documents agreeing
+with each other and both disagreeing with the owner. Round 6's is narrower and
+worse: a *control* agreeing with a *rule* and both disagreeing with the owner. The
+`aed` rule refused blank, so the screen prefilled `0`, so the emitter published a
+promise. Each of the three was locally defensible. Nothing measured the sentence
+they produced together until a real request was rendered and read back.
+
+**And one guard was extended.** `ExpectationsThatCannotFailTest` swept negated
+*variadic* matchers and not `toHaveKey`, whose second argument is an expected
+VALUE — so `->not->toHaveKey($k, $message)` cannot fail. That is the exact shape
+that made a block of `MobileHeaderControlsTest` vacuous for its whole life. The
+sweep now covers it and proves the trap rather than describing it. The suite is
+clean: zero surviving instances, and the `MobileHeaderControlsTest` one named in
+this project's notes was already repaired.
+
+---
+
 ## 7. Needs the owner — nothing here is code
 
 Unchanged from `SEO-BUILD-PLAN.md`'s own list, re-confirmed by measurement, and

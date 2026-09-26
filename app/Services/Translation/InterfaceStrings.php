@@ -519,6 +519,92 @@ final class InterfaceStrings
             'concern.intro_acne' => 'Gentle, barrier-first routines for skin that breaks out. Salicylic acid and BHA to keep pores clear, centella and madecassoside to calm what is already angry, and lightweight hydration that will not sit heavily on congested skin. Every product here is one we stock and have tagged for blemish-prone skin — start with one new step at a time.',
 
             /*
+             * ── THE OTHER SEVEN — Lane S8, and the owner asked for all of them
+             *
+             * His words: "tell the SEO land to finish the missing items in the
+             * document. i don't want to miss or skip anything." The seven slugs
+             * below were valid RoutineConcerns with no sentences, which is the
+             * one thing that kept them from having a page. They have sentences
+             * now, and ConcernCollections::ENABLED lists all eight.
+             *
+             * ENABLING A CONCERN PUBLISHES NOTHING BY ITSELF, which is why this
+             * is safe to ship ahead of the owner's tagging and is the reason
+             * MIN_PRODUCTS exists. A concern page needs copy AND at least
+             * MIN_PRODUCTS live, in-stock products tagged for it; nothing is
+             * tagged today, so all eight are 404 and all eight are absent from
+             * the sitemap. ConcernCollectionsTest measures exactly that.
+             *
+             * ── WHAT THESE ARE WRITTEN AGAINST ─────────────────────────────
+             *
+             * docs/SEO-CONCERN-COPY.md carries Lane S2's owner-facing drafts for
+             * `sensitivity`, `acne` and `dark-spots`. Those drafts are 200-225
+             * words and carry [SQUARE BRACKET] product placeholders and named
+             * brands. NEITHER SHIPS HERE, and the reason is not taste:
+             *
+             *   - A placeholder in a translation value is PRINTED. The shopper
+             *     reads "[A CENTELLA AMPOULE OR TONER]" on the page. There is
+             *     nothing in this application that resolves a bracket.
+             *   - A brand named in the intro is a brand the page promises to
+             *     carry. Which brands land on a concern page is decided by the
+             *     owner's tagging, months from now, and S2's own note says
+             *     naming a brand the page does not stock is worse than naming
+             *     none.
+             *
+             * So the substance of the drafts is kept — the ingredients, and the
+             * honest limit each one ends on — and the parts that depend on a
+             * catalogue nobody has tagged yet are left out. See
+             * docs/SEO-CONCERN-COPY.md §"What shipped, and what did not".
+             *
+             * ── THE RULES EVERY ONE OF THESE FOLLOWS ───────────────────────
+             *
+             * NO MEDICAL CLAIM. Not one sentence says a product will clear, fade,
+             * cure or repair anything. Every claim is of the form "this is what
+             * the ingredient is for", which is a statement about the ingredient
+             * rather than a promise about the shopper. This shop sells cosmetics,
+             * and "clears acne" is a sentence a skincare retailer must not print
+             * — a liability before it is an SEO problem.
+             *
+             * NO PRODUCT NAME AND NO BRAND NAME, for the reason above.
+             *
+             * ONE PARAGRAPH, because that is the shape the template renders.
+             * store/collection.blade.php prints an <h1> and one intro block; a
+             * draft with H2s in it would need a template change, and that would
+             * move the four curated listings that already work (rule 1).
+             *
+             * THE TITLE IS A SENTENCE AIMED AT A SEARCH RESULT, not the
+             * back-office label. "Pores & oil" is how an operator ticks a box.
+             * "Korean skincare for large pores and oily skin" is what somebody
+             * types. RoutineConcerns::labelKey() still supplies the short label
+             * for the card eyebrow, so there is no third wording anywhere.
+             *
+             * EACH ONE ENDS ON AN HONEST LIMIT. It is the house voice — see
+             * quiz.js_routine_link_lead, which says steps the shop stocks
+             * nothing for "are shown empty rather than filled with a guess" —
+             * and it is the sentence that makes the page worth reading rather
+             * than worth skimming.
+             */
+            'concern.title_hydration' => 'Korean skincare for dehydrated skin',
+            'concern.intro_hydration' => 'Dehydrated is not the same as dry, and in this climate it is the more common of the two: skin that is oily by lunchtime and tight by evening is usually short of water rather than short of oil. Korean routines answer that with layers rather than with one heavy cream — hyaluronic acid and glycerin to draw water in, panthenol and beta-glucan to hold it there, and a light occlusive on top so the day’s air conditioning does not take it straight back out. Everything here is a product we stock and have tagged for hydration. If your skin drinks a toner and still feels tight an hour later, the missing step is usually the last one, not the first.',
+
+            'concern.title_dark_spots' => 'Korean skincare for dark spots and uneven tone',
+            'concern.intro_dark_spots' => 'Uneven tone is the slowest thing in skincare to shift and the easiest to undo. A mark left by a spot, a patch of sun damage, a shadow that was not there last year — all of it moves on a timescale of months. Niacinamide is the everyday ingredient here, gentle enough for morning and night; vitamin C is the one most brightening routines are built around; alpha arbutin, tranexamic acid and kojic acid are the more targeted options, aimed at particular marks rather than at overall dullness. Everything here is a product we stock and have tagged for tone. The part nobody enjoys hearing: sunscreen is the treatment. Without daily SPF every serum on this page is a holding action, and six weeks is not long enough to judge any of them.',
+
+            'concern.title_ageing' => 'Korean skincare for fine lines and firmness',
+            'concern.intro_ageing' => 'Fine lines show up first where skin is thinnest and moves most, and they look deeper on a dehydrated face than on a well-hydrated one — which is why so many Korean routines start here with moisture rather than with an active. Retinal and retinol are the long-game ingredients; peptides and niacinamide sit alongside them and are far easier to tolerate; ceramides and squalane are the support act that keeps a retinoid usable at all. Everything here is a product we stock and have tagged for fine lines. Two honest notes. Start a retinoid twice a week, not nightly, and expect the first month to be worse before it is better. And nothing on this page works without sunscreen — UV is the single largest cause of what it is trying to address.',
+
+            'concern.title_sensitivity' => 'Korean skincare for sensitive, easily-irritated skin',
+            'concern.intro_sensitivity' => 'Reactive skin is not a skin type you grow out of. It is usually a barrier that has been asked to do too much — too many actives at once, too hot a cleanse, or simply a year of moving between 45°C outside and dry air conditioning inside. Korean skincare is unusually good at this, because calming ingredients are the tradition rather than the specialist corner: centella asiatica, or cica, and its refined form madecassoside; heartleaf, which does similar work with a lighter feel; panthenol and ceramides on the repair side. Everything here is a product we stock and have tagged for sensitivity. One honest note. If your skin is reacting right now, the useful move is usually to take products away rather than add one — cleanse, moisturise, sunscreen, nothing else, until the stinging has stopped.',
+
+            'concern.title_pores' => 'Korean skincare for large pores and oily skin',
+            'concern.intro_pores' => 'Pore size is largely inherited and no product closes a pore, so the honest aim of this shelf is a pore that is clear and skin that is not shining by noon. Salicylic acid — BHA on most labels — is oil-soluble, which is why it works inside a pore rather than on top of it; niacinamide is the everyday ingredient for oil balance; clay and gentle enzyme exfoliants handle the texture; a low-pH cleanser keeps the whole thing from tipping over into stripped. Everything here is a product we stock and have tagged for pores and oil. The counter-intuitive part is real: skin that has been stripped makes more oil, not less, so the fix for a shiny face is rarely a stronger cleanser.',
+
+            'concern.title_dullness' => 'Korean skincare for dull skin and glow',
+            'concern.intro_dullness' => 'Dullness is usually two things at once — a layer of dead surface cells that scatters light, and skin that is short of water underneath it. Both are fixable and neither needs anything aggressive. Gentle acids, PHA and lactic acid ahead of anything stronger, deal with the surface; vitamin C and niacinamide work on tone; a hydrating essence or a sleeping mask is what actually produces the look people mean by glow, because light reflects off a well-hydrated surface and not off a dry one. Everything here is a product we stock and have tagged for dullness. If you take one thing from this page: over-exfoliating is the most common way to make dull skin duller, and twice a week is plenty.',
+
+            'concern.title_sun' => 'Korean sunscreen and daily sun protection',
+            'concern.intro_sun' => 'The UAE sun is the whole game. Sunscreen is the one step that does more for tone, texture and fine lines than everything else on this site put together, and it is the step most routines skip because most sunscreens are unpleasant to wear. Korean formulations are where that changed — light chemical filters that sink in without a white cast, hybrid and mineral options for skin that objects to the chemical ones, and finishes from dewy to genuinely matte. Everything here is a product we stock and have tagged for sun protection. What matters more than which one you buy: SPF 50 or higher, wear it every morning including indoors near a window, and reapply if you have been outside. A sunscreen you will actually put on beats a better one you will not.',
+
+            /*
              * /best-sellers/ HAS NO INTRO IN THE CONSTANT: it is the one page
              * whose sentence is a MEASUREMENT, chosen by App\Support\RepeatPurchase
              * from the order history — "customers keep coming back" only if some

@@ -99,8 +99,18 @@ it('publishes no returns policy at all while the owner has stated nothing', func
     smrProduct();
 
     foreach (['0', ''] as $days) {
+        /*
+         * `merchant_ship_cost` IS STATED HERE, and it was not when this test was
+         * written -- Lane S8. The claim being made is "the returns change left
+         * shipping alone", so shipping has to be in a state where it publishes
+         * at all. It no longer publishes from a blank cost: an unstated delivery
+         * rate used to be read as `?? 0` and emitted as a free-delivery promise.
+         * See Seo::shippingDetails(). Stating 20 here keeps this test asking its
+         * own question instead of silently re-pinning that defect.
+         */
         smrSettings([
-            'enable_merchant' => '1', 'merchant_ship_country' => 'AE', 'merchant_return_days' => $days,
+            'enable_merchant' => '1', 'merchant_ship_country' => 'AE',
+            'merchant_ship_cost' => '20', 'merchant_return_days' => $days,
         ]);
 
         $offer = smrOffer();

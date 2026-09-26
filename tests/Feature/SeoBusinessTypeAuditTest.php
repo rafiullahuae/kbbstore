@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Setting;
 use App\Services\SettingsService;
+use App\Services\Seo\SeoSettings;
 use App\Support\BusinessAddress;
 use App\Support\SeoAudit;
 
@@ -68,13 +69,23 @@ it('says nothing about an online shop with nothing filled in, which is this shop
 
 it('says nothing when the type is left at the shipped default either', function () {
     /*
-     * `org_type` has a documented default of 'Organization' in
-     * SeoSettings::DEFAULTS, reached when the row is absent or blank. Not a
-     * Place, nothing typed, so nothing to report. This is the state of every
-     * shop that has never opened the Organization card.
+     * `org_type` has a documented default in SeoSettings::DEFAULTS, reached when
+     * the row is absent or blank. Not a Place, nothing typed, so nothing to
+     * report. This is the state of every shop that has never opened the
+     * Organization card.
+     *
+     * LANE S8 CHANGED WHAT THAT DEFAULT IS -- 'Organization' to 'OnlineStore',
+     * at the owner's word ("we don't have any physical shop, we operate only
+     * online"). This test named the old value in prose and would have gone on
+     * passing with either, so the default is READ rather than quoted, and the
+     * property being pinned is the one that matters: whatever the shipped default
+     * is, it is not a Place type, so an untouched shop raises no finding. A lane
+     * shipping 'Store' as the default would go red here, which is correct -- that
+     * is a shopfront claim on every shop that installs this software.
      */
     sbtSettings([]);
 
+    expect(in_array(SeoSettings::get('org_type'), BusinessAddress::PLACE_TYPES, true))->toBeFalse();
     expect(sbtFinding()['count'])->toBe(0);
 });
 
