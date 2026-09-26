@@ -8,6 +8,50 @@
  * Applied as a CSS custom property (--nav-scale) rather than setting
  * font-size directly in JS, so every existing size/padding rule for
  * .navlink keeps working — this only multiplies them.
+ *
+ * ── WHY THIS FILE STILL MEASURES LAYOUT, WHICH RULE 4 ASKS IT NOT TO ────────
+ *
+ * CLAUDE.md rule 4 says to prefer a rendered-once CSS answer to a scripted one,
+ * and Lane H1 was sent to replace this file with one. Most of it now IS one:
+ * `--nav-pad-x` and `--nav-item-gap` in kbb.css taper the bar's whitespace
+ * against `--hd-room`, its real content width, with no script and no
+ * breakpoint, and that is where a third of the row's width was going. After it,
+ * the twelve-entry menu this shop ships needs no scaling at all from 1366px up.
+ *
+ * THE LAST STEP CANNOT MOVE, and the reason is worth stating rather than
+ * apologising for: fitting a row to its text requires knowing how wide the text
+ * is, and CSS cannot ask. There is no length that means "the width of this
+ * element's content"; container query units measure the CONTAINER, which is the
+ * space available, never the space needed. So a CSS-only answer has exactly
+ * three shapes and this shop can have none of them:
+ *
+ *   - ellipsis or clip — `min-width:0` plus `text-overflow`. Never wraps, never
+ *     overflows, and truncates the menu's words instead of shrinking them,
+ *     which is not what was asked for.
+ *   - a scale worked out from a SERVER-SIDE estimate of the label widths,
+ *     emitted as a number the clamp multiplies. Tried on paper and rejected:
+ *     the estimate needs per-glyph advance widths for Poppins 600, the labels
+ *     are whatever the owner types in Store & content → Menus, and the Arabic
+ *     storefront renders them in a fallback face with metrics this app has no
+ *     way to know. Underestimate by six pixels and the bar wraps — the exact
+ *     defect NavBarContainsItsOwnOverflowTest was opened for. An estimate that
+ *     is deliberately generous instead never wraps and always renders smaller
+ *     than it needed to, on every shop, in every language.
+ *   - a fixed ladder of media queries, which is what four column systems did on
+ *     this shop before Lane W1 deleted them, and it cannot know the menu.
+ *
+ * A real measurement, made once per resize on eleven boxes, is the honest
+ * answer, and it is correct in every language without knowing anything about
+ * any of them. What it costs is bounded and was the subject of its own fix: the
+ * 19.5px line-height below keeps the bar the same height at every scale, so
+ * nothing this file does can shift the page — GridPhotoLoadingTest pins that.
+ *
+ * So the division of labour is: CSS renders the bar at a size that is already
+ * close, once, with no script; this file closes the remaining few per cent and
+ * is the only thing that can catch a menu nobody measured. Below MIN_SCALE it
+ * still declines to shrink further, which is still the right answer — a
+ * sixteen-entry menu at 1024px belongs in an overflow menu, and that is a
+ * feature, not a scale factor.
  */
 
 /**

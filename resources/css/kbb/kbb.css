@@ -276,11 +276,21 @@
      variable into this value, or into padding's first component: either
      change reintroduces the shift, and GridPhotoLoadingTest fails if you
      do. */
-  .navlink{display:inline-flex;align-items:center;gap:calc(6px * var(--nav-scale));padding:13px calc(13px * var(--nav-scale));font-size:calc(13px * var(--nav-scale));line-height:19.5px;font-weight:600;color:var(--ink);cursor:pointer;position:relative;white-space:nowrap}
+  /* --nav-pad-x and --nav-item-gap taper with the bar's own room, in CSS, on
+     one render — see the block that declares them in the HEADER section below.
+     They fall back to the design values so this rule is still correct for any
+     `.navlink` rendered outside a `<header>`, and --nav-scale still multiplies
+     them, so nav-fit.js keeps the last word on the exact fit. Both components
+     of `padding` that decide HEIGHT stay literal: see the note above. */
+  .navlink{display:inline-flex;align-items:center;gap:calc(var(--nav-item-gap, 6px) * var(--nav-scale));padding:13px calc(var(--nav-pad-x, 13px) * var(--nav-scale));font-size:calc(13px * var(--nav-scale));line-height:19.5px;font-weight:600;color:var(--ink);cursor:pointer;position:relative;white-space:nowrap}
   .navlink .ind{font-size:8px;opacity:.5;transition:transform .2s}
   .navitem:hover>.navlink .ind{transform:rotate(180deg)}
   .navlink .npill{font-size:8.5px;font-weight:800;color:#fff;border-radius:5px;padding:1px 5px;letter-spacing:.03em}
-  .navlink::after{content:"";position:absolute;inset-inline-start:calc(13px * var(--nav-scale));inset-inline-end:calc(13px * var(--nav-scale));bottom:7px;height:2px;background:var(--pink);transform:scaleX(0);transform-origin:left;transition:transform .22s var(--ease)}
+  /* The hover underline is inset by the link's own side padding, so it spans
+     the words and not the box. It has to follow --nav-pad-x for the same reason
+     it followed the 13px: the day the two disagree the rule is drawn under the
+     padding on one side and inside the text on the other. */
+  .navlink::after{content:"";position:absolute;inset-inline-start:calc(var(--nav-pad-x, 13px) * var(--nav-scale));inset-inline-end:calc(var(--nav-pad-x, 13px) * var(--nav-scale));bottom:7px;height:2px;background:var(--pink);transform:scaleX(0);transform-origin:left;transition:transform .22s var(--ease)}
   .navitem:hover>.navlink::after{transform:scaleX(1)}
   .navlink.pill{color:var(--pink-deep)}
   .drop{position:absolute;top:calc(100% - 1px);inset-inline-start:0;min-width:216px;background:#fff;border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--sh-l);padding:8px;opacity:0;visibility:hidden;transform:translateY(8px);transition:.16s var(--ease);z-index:70}
@@ -836,7 +846,9 @@ body{margin:0;background:#fff;color:var(--ink);font:400 14px/1.6 Poppins,system-
 .kbb-home .hi .tx span{font-size:11.5px;color:var(--muted)}
 @media(max-width:1500px){.kbb-home .hi:nth-child(3){display:none}}
 @media(max-width:1280px){.kbb-home .hi:nth-child(2){display:none}}
-@media(max-width:1080px){.kbb-home .hinfo{display:none}}
+/* The 1080px rule that dropped the support block on a narrow DESKTOP is gone —
+   see the note on the unprefixed copy further down this file. The 900px block
+   still hides it, so the phone is unchanged. */
 .kbb-home .trend{display:flex;gap:7px;align-items:center;padding:0 0 11px;overflow-x:auto;scrollbar-width:none}
 .kbb-home .trend::-webkit-scrollbar{display:none}
 .kbb-home .trend b{font-size:10.5px;letter-spacing:.16em;color:var(--muted);white-space:nowrap;font-weight:600}
@@ -1815,7 +1827,28 @@ header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:1px solid 
 .hi .tx span{font-size:11.5px;color:var(--muted)}
 @media(max-width:1500px){.hi:nth-child(3){display:none}}
 @media(max-width:1280px){.hi:nth-child(2){display:none}}
-@media(max-width:1080px){.hinfo{display:none}}
+/* ═══ THE SUPPORT BLOCK NO LONGER LEAVES ON A NARROW DESKTOP ═══     Lane H1
+
+   `@media(max-width:1080px){.hinfo{display:none}}` used to be here, and it was
+   the ONE place the desktop header rearranged itself rather than shrinking: the
+   WhatsApp number — the shop's contact route — disappeared between 901px and
+   1080px, at 1024 among others. The owner asked for the opposite ("present the
+   same layout in small screens").
+
+   IT WAS NOT THERE FOR ROOM. Measured on /shop/ at a 1024px viewport with the
+   block forced back on, `.hin` is ONE row, 46px tall, documentElement.scrollWidth
+   equal to clientWidth: logo 163.7 + search 403.9 + icons 132 + support 186.4,
+   three 24px gaps, 958px inside a 980px content box. `.sbox` is `flex:1 1 auto`,
+   so the search field absorbs the difference — which is the whole of what
+   "adjusted as per the screen" needs here, with nothing to resize.
+
+   The two rules above are untouched: they drop the SECOND and THIRD support
+   entries, and this header renders one, so they match nothing today and are
+   somebody else's policy for the day it renders more.
+
+   The phone is unaffected. `.hinfo{display:none}` inside the 900px block below
+   is what hides it there and it is still there, so every width the dedicated
+   mobile header owns renders exactly as it did. */
 
 
 
@@ -2274,11 +2307,74 @@ header{border-bottom:1px solid var(--line-2)}
    HEADER — driven by Appearance → Header. Values arrive as custom
    properties on the <header>, so this block never changes per shop.
    ═══════════════════════════════════════════════════════════════ */
-header{--hd-h:64px;--hd-bg:#fff;--hd-max:1280px;--hd-logo:22px;--hd-logo-c:#2A2228;--hd-logo-a:#E0567B;
+header{--hd-h:64px;--hd-bg:#fff;--hd-max:var(--site-max);--hd-logo:22px;--hd-logo-c:#2A2228;--hd-logo-a:#E0567B;
   --hd-radius:99px;--hd-icon:21px;--hd-badge:#E0567B;--hd-nav:14px;--hd-gap:26px;--hd-hot:#E23B57;
   --hd-sup-bg:#E8F7EE;--hd-sup-fg:#1F9D55;--mi-size:46px;--mi-speed:5s;
   --mi-c1:#E0567B;--mi-c2:#E8A33D;--mi-c3:#1F9D55;
   background:var(--hd-bg)}
+
+/* ═══════════════════════════════════════════════════════════════
+   THE DESKTOP HEADER'S OWN ROOM, AND THE ROW THAT HAS TO FIT IN IT
+                                                          Lane H1
+   The owner asked for three things in one sentence: the header as wide
+   as the site, adapting to the screen "without line breaking", and
+   shrinking "the stuff" to keep the SAME single row on a narrower
+   desktop instead of rearranging. --hd-max above is the first.
+   --hd-room and the two tokens under it are the third.
+
+   --hd-room IS THE BAR'S REAL CONTENT WIDTH, IN CSS, WITH NO SCRIPT.
+   `.wrap` is `max-width:var(--hd-max)` with `padding-inline:var(--site-gutter)`
+   on both sides, so its content box is exactly
+   `min(100vw, --hd-max) - 2 * --site-gutter` at every width. There is no
+   breakpoint in that expression and nothing to keep in step with a
+   media query: lower Site width to 1100 and the room follows, on a
+   2560px screen, which a `vw` ladder could not do.
+
+   (100vw counts a classic scrollbar and clientWidth does not, so on a
+   platform that draws one this reads ~15px generous out of ~1240 — a
+   quarter of a pixel of padding. nav-fit.js measures the real boxes
+   afterwards and absorbs it.)
+
+   WHY THE WHITESPACE TAPERS AND THE TYPE DOES NOT.
+   Measured on the twelve-entry menu this shop ships, with wrapping
+   suspended and --nav-scale at 1, the row needs 1325px:
+
+       979px   the words themselves
+       312px   .navlink side padding   (13px x 2 x 12)
+        22px   the gaps between items  (2px x 11)
+        12px   the gaps inside them
+
+   At a 1024px viewport the bar has 980px. The WORDS ALONE ARE 979 OF
+   IT, so no amount of padding will fit 13px type there and the font has
+   to give. But a third of the row was whitespace, and whitespace is the
+   cheaper thing to spend: taper the padding first and the font keeps
+   more of its size. On this menu that is 9.48px -> 10.9px at 1024,
+   10.97 -> 11.95 at 1180, 11.95 -> 12.57 at 1280, and 11.95 -> 13 at
+   1366 and above, where nothing has to shrink at all any more because
+   --hd-max stopped being 1280.
+
+   BOTH TOKENS REACH THEIR DESIGN VALUES — 13px and 6px, what .navlink
+   has always had — AT --hd-room 1396px, which is a 1440px viewport. So
+   every desktop from 1440 up renders the bar at exactly the sizes it
+   rendered before this lane, and the taper only exists below that,
+   where the alternative was a smaller font. The slopes are
+   (13-6)/(1396-980) and (6-4)/(1396-980); the clamp's own bounds are
+   what hold the ends.
+
+   NOT IN A MEDIA QUERY, DELIBERATELY. A custom property cannot be
+   reverted to its inherited value at a breakpoint — `initial` on one is
+   the guaranteed-invalid value, which is the trap recorded at the top
+   of this file for --kbb-track — so anything that would have to be
+   UNDONE below 1001px must not be a property. Nothing here has to be:
+   `.mbar` is `display:none` under 1001px and `.navlink` exists nowhere
+   else, so these three declarations are inert on the phone and the
+   dedicated mobile header is untouched by them.
+   ═══════════════════════════════════════════════════════════════ */
+header{
+  --hd-room:calc(min(100vw,var(--hd-max)) - 2 * var(--site-gutter));
+  --nav-pad-x:clamp(6px,calc(.016827 * var(--hd-room) - 10.49px),13px);
+  --nav-item-gap:clamp(4px,calc(.004808 * var(--hd-room) - .712px),6px);
+}
 header.hd-sticky{position:sticky;top:0;z-index:90}
 header.hd-border{border-bottom:1px solid var(--line-2)}
 header.hd-shadow.scrolled{box-shadow:0 6px 20px -12px rgba(42,34,40,.28)}

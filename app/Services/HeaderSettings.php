@@ -144,7 +144,58 @@ class HeaderSettings
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
     ];
 
-    public function __construct(private SettingsService $settings) {}
+    public function __construct(
+        private SettingsService $settings,
+        private SiteLayout $layout,
+    ) {}
+
+    /**
+     * What `--hd-max` is worth on this shop: the page width, or the header's
+     * own number.
+     *
+     * ── WHY THIS DECISION LIVES HERE AND NOWHERE ELSE ───────────────────────
+     *
+     * `--hd-max` has exactly ONE reader — `header .wrap{max-width:var(--hd-max)}`
+     * in kbb.css — and until this method existed it had TWO writers, one of
+     * which could never win.
+     *
+     * Appearance → Site layout → Page width ships a switch, "Header follows the
+     * site width", and it wrote `:root{--hd-max:var(--site-max)}` from
+     * SiteLayout::cssVariables(). cssVariables() BELOW writes the same property
+     * into the `style` attribute of the `<header>` element itself, on every
+     * request, whether or not anything has been saved. An inline declaration on
+     * the element beats a `:root` declaration outright — that is not a
+     * specificity contest it can lose, it is a different and stronger origin —
+     * and `.wrap` is a CHILD of `<header>`, so it inherited the inline value and
+     * never saw the `:root` one at all.
+     *
+     * MEASURED IN CHROMIUM, with the switch saved ON, on /shop/:
+     *
+     *            header .wrap    the page container
+     *   1280          1280            1280
+     *   1680          1280            1680
+     *   1920          1280            1680
+     *
+     * The switch moved nothing at any width. It was not a subtle failure — it
+     * was the whole feature, silently absent, with the admin screen reporting it
+     * as on.
+     *
+     * So the property now has one writer, at the strongest level, and the switch
+     * decides what that writer emits. `var(--site-max)` IS THE TOKEN AND NOT THE
+     * NUMBER, for the reason SiteWidthSystemTest records: writing `1680px` here
+     * looks identical the day it is saved and then freezes, so moving Site width
+     * later would leave the header behind with nothing reporting it.
+     *
+     * Both arms are literals in this file. The only thing a save influences is
+     * the integer in the second, which reaches here already clamped to its own
+     * slider's range by cast() — rule 5, unchanged.
+     */
+    private function maxWidthCss(): string
+    {
+        return $this->layout->get('header_follows')
+            ? 'var(--site-max)'
+            : $this->all()['max_width'].'px';
+    }
 
     public function all(): array
     {
@@ -231,7 +282,8 @@ class HeaderSettings
             '--hd-field:' . $c['field_height'] . 'px',
             '--hd-field-m:' . $c['field_height_mobile'] . 'px',
             '--hd-bg:' . $c['bar_bg'],
-            '--hd-max:' . $c['max_width'] . 'px',
+            // The page width or the header's own number — see maxWidthCss().
+            '--hd-max:' . $this->maxWidthCss(),
             '--hd-logo:' . $c['logo_size'] . 'px',
             '--hd-logo-c:' . $c['logo_colour'],
             '--hd-logo-a:' . $c['logo_accent_col'],

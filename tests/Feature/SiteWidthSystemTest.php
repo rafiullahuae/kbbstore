@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Product;
+use App\Services\HeaderSettings;
 use App\Services\ModuleSchema;
 use App\Services\SiteLayout;
 use App\Services\SettingsService;
@@ -514,17 +515,30 @@ it('bounds a column count a caller asks for, however absurd', function () {
 
 /* ══════════════════════════════ the schema, and rule 1 ═══ */
 
-it('ships every setting at the value the page already had, except the one the owner asked for', function () {
+it('ships every setting at the value the page already had, except the ones the owner asked for', function () {
     /*
      * RULE 1, as an assertion rather than a promise. Applying the package must
-     * move nothing until a slider moves — and the ONE exception is `max`, which
-     * the owner asked for in as many words and which is called out in the commit
+     * move nothing until a slider moves — and the exceptions are the settings
+     * the owner asked for in as many words, which are called out in the commit
      * and in the migration rather than buried.
      *
      * The numbers on the right are the MEASURED pre-change values: 22px is
      * kbb.css's generic `.wrap` padding, 16px is the gap `.kbb-pgrid` computed
-     * at every one of 320/390/600/900/1280/1680, 2 is what a phone showed, and
-     * `header_follows` off is the header keeping its own 1280px --hd-max.
+     * at every one of 320/390/600/900/1280/1680, and 2 is what a phone showed.
+     *
+     * ▲ `header_follows` IS NOW THE SECOND EXCEPTION AND SHIPS ON.       Lane H1
+     *
+     * It shipped OFF here, on the reasoning that the header keeping its own
+     * 1280px --hd-max was the value the page already had. That was right about
+     * rule 1 and wrong about the shop: the owner's next sentence was "the header
+     * need to be matched the width", which is this switch in his own words, so
+     * it now ships at the value he asked for. The same paragraph of his message
+     * is why `max` is 1680.
+     *
+     * (And while it was off, nobody found that it did not work. The declaration
+     * it wrote into `:root` was beaten by the one HeaderSettings writes into the
+     * `<header>` style attribute, so turning it on moved nothing at any width —
+     * see the case further down this file and DesktopHeaderWidthTest.)
      *
      * MUTATION: change `gutter` to 24 and this is red.
      */
@@ -534,7 +548,7 @@ it('ships every setting at the value the page already had, except the one the ow
         'max' => 1680,             // <- the one deliberate change
         'gutter' => 22,
         'gutter_wide' => 22,
-        'header_follows' => false,
+        'header_follows' => true,  // <- the second deliberate change (Lane H1)
         'tile' => 260,
         'tile_shop' => 220,
         'cols_floor' => 2,
@@ -657,24 +671,61 @@ it('makes the header FOLLOW the site width rather than copying its number', func
      * identical the day it is saved and freezes: the owner moves Site width to
      * 1800 and the header silently stays at 1680, which is the shop disagreeing
      * with its own setting and no error anywhere. A mutation run found that the
-     * literal passed every other case in this lane.
+     * literal passed every other case in this lane. That half is unchanged and
+     * is still the first assertion below.
      *
-     * MUTATION: change the emission to `'--hd-max:1680px'` and this is red.
+     * ▲ WHAT THIS CASE USED TO ASK, AND WHY IT WAS GREEN ON A DEAD SWITCH.
+     *                                                                   Lane H1
+     * It read SiteLayout::css() and found `--hd-max:var(--site-max)` in the
+     * `:root` block, which is exactly what that method emitted — and the
+     * declaration never reached anything. HeaderSettings::cssVariables() writes
+     * the same property into the `style` attribute of the `<header>` ELEMENT, on
+     * every request, saved or not; an inline declaration beats a `:root` one
+     * outright, and `header .wrap` is a child of `<header>`, so it inherited the
+     * inline value. Measured in Chromium on /shop/ with the switch saved on:
+     * header .wrap 1280 at a 1280px viewport, 1280 at 1680, 1280 at 1920, while
+     * the page container went to 1680.
+     *
+     * A unit test that reads the emitter can only ever ask whether the emitter
+     * emitted. So this case now asks the question the shop asks: what does the
+     * element that carries the property actually say. DesktopHeaderWidthTest
+     * asks it again of a rendered page, which is the other half.
+     *
+     * MUTATION 1: change the emission to `'--hd-max:1680px'` and this is red.
+     * MUTATION 2: emit it from SiteLayout::cssVariables() again instead of from
+     * HeaderSettings, which is what it did before, and this is red — where the
+     * old version of this case was green. RUN AND CONFIRMED.
      */
     $settings = app(SettingsService::class);
 
-    // Off by default: the header keeps its own 1280px until somebody says so.
+    // On by default now, and a default shop still sends no stylesheet at all —
+    // so the follow cannot be riding on one.
     expect(app(SiteLayout::class)->css())->toBe('');
 
-    $settings->set('layout_header_follows', '1');
+    $header = app(HeaderSettings::class)->cssVariables();
+
+    expect($header)->toContain('--hd-max:var(--site-max)');
+    expect($header)->not->toMatch('/--hd-max:\s*\d/');
+
+    // And off again gives the header back its own number, from its own screen.
+    $settings->set('layout_header_follows', '0');
     SettingsService::forgetMemo();
 
-    $css = app(SiteLayout::class)->css();
+    expect(app(HeaderSettings::class)->cssVariables())->toContain('--hd-max:1280px');
 
-    expect($css)->toContain('--hd-max:var(--site-max)');
-    expect($css)->not->toMatch('/--hd-max:\s*\d/');
+    // The property has one writer. SiteLayout emitting it too is the dead
+    // declaration this lane removed, and it is dead in either direction.
+    $settings->set('layout_max', '1600');
+    SettingsService::forgetMemo();
 
-    // And the header's own container really is the property being overridden.
+    // str_contains(), not ->not->toContain($needle, $message): toContain takes
+    // a LIST of needles, so a message passed there becomes a second needle and
+    // the expectation can no longer fail. ExpectationsThatCannotFailTest catches
+    // exactly that, and caught this line.
+    expect(str_contains(app(SiteLayout::class)->css(), '--hd-max'))
+        ->toBeFalse('SiteLayout is writing --hd-max again, where the header\'s own inline style beats it');
+
+    // And the header's own container really is the property being read.
     expect(w1CssRules('kbb.css'))->toContain('header .wrap{max-width:var(--hd-max)}');
 });
 
