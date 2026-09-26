@@ -3,6 +3,60 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.285
+▲ APPLY THIS ONE. Two things you hit, and one of them has never worked.
+
+### You could not add a section, and nobody ever could
+
+The Sections and Appearance screens signed their saves with a security token
+this admin does not issue — they looked for it in a tag the page has never had,
+found nothing, and sent an empty one. The server refused every save with a
+419 and the screen printed "That section could not be saved.", which describes
+the symptom and hides the cause.
+
+This was not a regression from a recent package. That path was wrong from the
+day it was written; the demo sections existed only because they are written
+straight into the database. Uploading a clip worked, because the library screen
+signs correctly — which is why the fault looked like it was about sections.
+
+Fixed to the token the rest of the console has always used. Verified: creating a
+section now answers 201 and the section appears in the list.
+
+### The demo data was importable and invisible
+
+The Demo Content screen keeps its own list of cards, separate from the list of
+things the importer can actually create. The Videos type was added to the second
+and not the first, so you opened the page, saw nine cards, and reasonably
+concluded it did not exist.
+
+**It is there now: Safety -> Demo Content -> Demo Shoppable Video.** Two
+sections, six clips, products from your own catalogue tagged on them.
+
+### And the redesign you asked for in the same breath
+
+The clip editor is no longer one long scroll. It is a tabbed dialog —
+**Details · Source · Files · Products · Placement** — with the clip's poster and
+title fixed at the top and **Save video** fixed at the bottom, so it is always
+reachable. It is 820x435 on a desktop where it used to be a full-height column.
+
+The browser's grey **"Choose File / No file chosen"** buttons are gone. Each file
+is a row with its own icon, its size, and a Replace or Change button; the real
+file input is still underneath, so the keyboard and screen readers work exactly
+as before.
+
+Everything is rebuilt on the console's own design tokens — the same radii,
+shadows, easing and colour scale the rest of the panel uses — instead of the
+hard-coded greys it had. That is most of why it looked a decade older than the
+screens around it. Focus rings, hover states and a blurred backdrop come with
+that, and the whole thing respects "reduce motion".
+
+Files: resources/views/admin/partials/ugc-sections-screen.blade.php,
+ugc-appearance-screen.blade.php, resources/views/admin/app.blade.php.
+
+NO MIGRATION IS NEEDED BEYOND THE ONE IN 2.60.283 — but if you have not applied
+.283 yet, apply it first: its migration is what drops the compiled copies of
+these screens.
+
 ## 2.60.284
 Two things this package STOPS, and both were already live.
 
