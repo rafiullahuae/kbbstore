@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The SEO module &mdash; what it actually emits, item by item</title>
+<style>
+:root{
+  --bg:#fff; --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8;
+  --pink:#E0567B; --pink-deep:#C13E63; --ink:#2A2228; --ink-2:#5E545A; --muted:#8C828A;
+  --line:rgba(42,34,40,.10); --line-2:rgba(42,34,40,.06);
+  --ok:#2E9E6B; --warn:#BE8E2E; --bad:#E23A4E; --cool:#4A6FA5; --owner:#7A5AA8;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+@media(min-width:900px){.wrap{padding:0 24px}}
+code,pre{font-family:var(--mono)}
+pre{background:#1F1B20;color:#EDE7EA;border-radius:10px;padding:12px 13px;font-size:11.5px;line-height:1.55;
+    overflow-x:auto;white-space:pre;margin:6px 0 14px;-webkit-overflow-scrolling:touch}
+.pre-label{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--pink);margin-top:14px}
+.doc-head{background:linear-gradient(180deg,var(--pink-soft),var(--bg));border-bottom:1px solid var(--line-2);padding:28px 0 22px}
+.doc-head h1{font-size:23px;line-height:1.24;letter-spacing:-.02em;font-weight:800;color:var(--pink-deep)}
+.doc-head h1 span{color:var(--ink)}
+.doc-head p{font-size:13.5px;color:var(--ink-2);margin-top:10px;max-width:70ch}
+.gen{margin-top:14px;font-size:11.5px;color:var(--muted);font-family:var(--mono);word-break:break-word}
+@media(min-width:900px){.doc-head h1{font-size:31px}.doc-head p{font-size:14.5px}}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:9px;margin:20px 0 4px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--cream)}
+.tile b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile span{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.tile.tVERIFIED b{color:var(--ok)} .tile.tSTALE b{color:var(--warn)} .tile.tMISSING b{color:var(--bad)}
+.tile.tDELIBERATE b{color:var(--cool)} .tile.tOWNER b{color:var(--owner)}
+.sec{padding:32px 0 6px}
+.sec-n{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pink)}
+.sec h2{font-size:19px;font-weight:800;letter-spacing:-.015em;margin-top:5px}
+.sec p.lede{font-size:13.5px;color:var(--ink-2);margin-top:9px;max-width:72ch}
+@media(min-width:900px){.sec h2{font-size:25px}}
+.card{margin:18px 0 26px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--bg)}
+.card-hd{padding:14px 15px 12px;background:var(--cream);border-bottom:1px solid var(--line-2)}
+.card-hd .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+              color:var(--pink-deep);background:var(--blush);border-radius:99px;padding:3px 9px}
+.card-hd h3{font-size:14px;font-weight:700;margin-top:9px;letter-spacing:-.01em;overflow-wrap:anywhere}
+.card-bd{padding:2px 15px 14px}
+.st{display:inline-block;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-inline-start:6px;vertical-align:2px}
+.stok{background:rgba(46,158,107,.14);color:var(--ok)} .stno{background:rgba(226,58,78,.14);color:var(--bad)}
+.node{border-top:1px dashed var(--line);padding-top:9px;margin-top:9px}
+.node b{font-size:12px;font-weight:700;color:var(--pink-deep)}
+.note{overflow-wrap:anywhere;font-size:12.5px;color:var(--ink-2);background:var(--pink-soft);border-radius:8px;padding:9px 11px;margin:6px 0 12px}
+.ba{display:grid;gap:12px}
+@media(min-width:820px){.ba{grid-template-columns:1fr 1fr}}
+.ba > div{border:1px solid var(--line);border-radius:14px;padding:11px 12px;min-width:0}
+.ba h4{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.ba.before-after > div:first-child{background:#FDF7F8}
+.bar{position:sticky;top:0;z-index:9;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
+     border-bottom:1px solid var(--line);padding:9px 0;margin-top:8px}
+.bar .wrap{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.f{font-size:11.5px;font-weight:700;color:var(--ink-2);background:var(--cream);border:1.5px solid var(--line);
+   border-radius:99px;padding:5px 12px;cursor:pointer;font-family:inherit}
+.f[aria-pressed="true"]{background:var(--pink-deep);border-color:var(--pink-deep);color:#fff}
+.area{font-size:13px;font-weight:800;letter-spacing:.02em;margin:24px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--blush);color:var(--pink-deep)}
+.areacount{font-size:11px;font-weight:700;color:var(--muted)}
+.mrow{display:grid;grid-template-columns:1fr;gap:6px;border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:9px}
+@media(min-width:760px){.mrow{grid-template-columns:104px 1fr;gap:13px}}
+.mv{font-size:10px;font-weight:800;letter-spacing:.07em;text-align:center;border-radius:99px;padding:3px 7px;align-self:start;white-space:nowrap}
+.vVERIFIED{background:rgba(46,158,107,.14);color:var(--ok)}
+.vSTALE{background:rgba(190,142,46,.16);color:var(--warn)}
+.vMISSING{background:rgba(226,58,78,.14);color:var(--bad)}
+.vDELIBERATE{background:rgba(74,111,165,.14);color:var(--cool)}
+.vOWNER{background:rgba(122,90,168,.14);color:var(--owner)}
+.mc{min-width:0}
+.mc p{overflow-wrap:anywhere}
+.claim{font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+.doc,.obs,.where{font-size:12.5px;color:var(--ink-2);margin-top:5px}
+.doc b,.obs b{color:var(--ink);font-weight:700}
+.where{font-size:11px;color:var(--muted)}
+.where code{word-break:break-all}
+footer{margin-top:40px;padding:22px 0 40px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+footer p{margin-top:7px;max-width:74ch}
+</style>
+</head>
+<body>
+
+<header class="doc-head"><div class="wrap">
+  <h1>The SEO module &mdash; <span>what it actually emits, item by item</span></h1>
+  <p>Every research item in the eleven <code>docs/SEO-*.md</code> papers, driven against the running shop rather than read off the page that claimed it. Each row says what the documents say, what a real request returned today, and one of five verdicts.</p>
+  <p><b>Nothing on this page was typed by hand.</b> Every title, meta tag, JSON-LD node and crawl file below came out of a request made through this application&rsquo;s own HTTP kernel while the test suite ran, which is why it cannot drift from the code.</p>
+  <div class="gen">Generated Sat, Sep 26, 2026 9:02 AM &middot; commit <b>seo-matrix-verify-1 @ 32fbee8a7c03</b> &middot; fixture: the Medicube Kojic Acid Turmeric Booster Pro Set and three siblings read out of <code>storage/catalog/products.json</code> (the only real catalogue data in the repository), the real <code>heartleaf-extract&hellip;</code> article slug, and the seeded <code>/faqs/</code> body from <code>2026_11_06_000000_seed_footer_content_pages</code>. Regenerate with <code>vendor/bin/pest tests/Feature/SeoPreviewsTest.php</code>.</div>
+
+  <div class="tiles">
+    <div class="tile tVERIFIED"><b>58</b><span>Verified</span></div>
+    <div class="tile tSTALE"><b>7</b><span>Doc is stale</span></div>
+    <div class="tile tMISSING"><b>3</b><span>Missing</span></div>
+    <div class="tile tDELIBERATE"><b>6</b><span>Refused on purpose</span></div>
+    <div class="tile tOWNER"><b>7</b><span>Needs you</span></div>
+  </div>
+</div></header>
+
+<main>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-n">1 &mdash; the matrix</div>
+  <h2>Every item, with its verdict</h2>
+  <p class="lede"><b>Verified</b> &mdash; it does what the document says, and here is the request that proves it. <b>Doc is stale</b> &mdash; the document is out of date, in either direction. <b>Missing</b> &mdash; genuinely absent. <b>Refused on purpose</b> &mdash; not built, with the argument and today&rsquo;s numbers. <b>Needs you</b> &mdash; the code is done and the content, the address or a decision is not.</p>
+</div></section>
+
+<div class="bar"><div class="wrap">
+  <button class="f" data-f="ALL" aria-pressed="true">All</button>
+  <button class="f" data-f="VERIFIED" aria-pressed="false">Verified</button>
+  <button class="f" data-f="STALE" aria-pressed="false">Doc is stale</button>
+  <button class="f" data-f="MISSING" aria-pressed="false">Missing</button>
+  <button class="f" data-f="DELIBERATE" aria-pressed="false">Refused</button>
+  <button class="f" data-f="OWNER" aria-pressed="false">Needs you</button>
+</div></div>
+
+<section class="sec"><div class="wrap" id="matrix"><h3 class="area">URLs, canonicals and redirects <span class="areacount">9</span></h3><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">One canonical path per product; no Shopify-style /collections/x/products/y duplicate.</p><p class="doc"><b>The documents say:</b> SEO-GAP §1 — Have</p><p class="obs"><b>Driven today:</b> Confirmed: one product, one path. There is no /collections/x/products/y second address and no route that could serve one. Checked against the whole registered route collection: /product/{slug}/ is the only route that serves a product, and the page canonicalises to itself.</p><p class="where"><code>routes/web.php:135</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">&quot;the slashless form 301s onto it&quot;.</p><p class="doc"><b>The documents say:</b> SEO-GAP §1 — Have</p><p class="obs"><b>Driven today:</b> THERE IS NO REDIRECT, and the outcome is nevertheless right. Measured: /product/medicube-kojic-acid-turmeric-booster-pro-set answers 200 and /product/medicube-kojic-acid-turmeric-booster-pro-set/ answers 200 — Laravel&#039;s router rtrims the path before matching, so both spellings serve the same document and neither redirects. What consolidates them is the CANONICAL, not a 301: both addresses declare the slashed form, so a single inbound link written without the slash cannot split a page&#039;s signals. That was itself a fix — the layout used to mirror whatever the request carried and published two different self-referencing canonicals for one document. So the doc names the wrong mechanism, and nothing needs building: the same holds for /shop and /cart.</p><p class="where"><code>resources/views/layouts/store.blade.php:55</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Canonical is absolute, base-path aware and self-referencing on every page shape.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> All five shapes emit one absolute self-referencing canonical: &lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;&gt;</p><p class="where"><code>app/Support/Seo.php:565</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">A facet (/shop/?cat=…) canonicalises back to the clean archive, so a filter never becomes a second indexable page.</p><p class="doc"><b>The documents say:</b> SEO-FEATURE-MATRIX — &quot;We do not have this defect&quot;</p><p class="obs"><b>Driven today:</b> /shop/?cat=beauty-devices answers 200 and declares /shop/ canonical, not itself.</p><p class="where"><code>app/Support/Facets.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Per-row canonical override on products, categories, brands, posts.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> Honoured on all four. As of this lane it is honoured on `pages` as well — see the STALE row in this section.</p><p class="where"><code>app/Support/ProductSeo.php</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">&quot;Per-row SEO title/description — Have. `seo` json on products, categories, brands, posts and PAGES.&quot;</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have (five tables)</p><p class="obs"><b>Driven today:</b> FALSE for `pages` until this lane. Measured before the fix, with every field saved on the `faqs` row: seo.title ignored, seo.desc ignored (the site-wide default was published), seo.canonical ignored, seo.noindex ignored — the page served &quot;index, follow&quot;. Store\PageController::show() passed the view no SEO context at all. Fixed; ten cases in tests/Feature/PageSeoOverridesTest.php. After the fix: &lt;title&gt;Delivery, returns and the questions we are asked most&lt;/title&gt;  &lt;meta name=&quot;description&quot; content=&quot;How delivery, returns and order tracking work at K-Beauty Bliss.&quot;&gt;</p><p class="where"><code>app/Http/Controllers/Store/PageController.php:158</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Per-row noindex takes a document out of the index.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> Products, categories, brands and posts always did. `pages` did not until this lane, and SeoAudit::scanPages() SKIPS a noindexed page — so the audit screen reported the page as deindexed because the owner had asked for it, while the page went on inviting the crawl. Now: &lt;meta name=&quot;robots&quot; content=&quot;noindex, nofollow&quot;&gt;</p><p class="where"><code>app/Http/Controllers/Store/PageController.php:158</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The fifteen legacy flat category addresses the WooCommerce site published are forwarded, derived rather than seeded.</p><p class="doc"><b>The documents say:</b> SEO-URL-MAP §2 — fixed, 15 of 15</p><p class="obs"><b>Driven today:</b> LegacyCategoryUrls::PATHS holds 15 paths. /beauty-devices/ → 301 → /product-category/beauty-devices/ with no redirect row written. An address with no matching category still 404s (measured: /skincare-sets/ with no such category → 404), deliberately — a confident redirect to the wrong listing is worse than a 404 somebody can see.</p><p class="where"><code>app/Support/LegacyCategoryUrls.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Redirect table with its own screen, a 404 log, and refusal of a self-pointing redirect.</p><p class="doc"><b>The documents say:</b> SEO-GAP §1 — Have</p><p class="obs"><b>Driven today:</b> Store → SEO &amp; Meta → Redirects &amp; 404s. Endpoints measured on the router: GET/POST /admin-api/redirects, POST /admin-api/redirects/{id}/toggle, DELETE, plus POST /admin-api/redirects/not-found/{id}/resolve and DELETE for the 404 log.</p><p class="where"><code>app/Http/Controllers/Admin/RedirectsApiController.php</code></p></div></div><h3 class="area">robots.txt, llms.txt and crawl hygiene <span class="areacount">8</span></h3><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">robots.txt is generated from the same list the application uses to decide what is private, so the file and the pages cannot contradict each other.</p><p class="doc"><b>The documents say:</b> SEO-GAP §1 — Have, and enforced</p><p class="obs"><b>Driven today:</b> The two constants hold the same six prefixes: /cart /checkout /my-account /my-wishlist /wishlist /track-my-order. And on the wire: every one of the six that answers 200 also carries &lt;meta name=&quot;robots&quot; content=&quot;noindex, nofollow&quot;&gt; — asserted end to end this lane in CrawlSurfaceCompletenessTest, not only as a set equality.</p><p class="where"><code>app/Support/Indexability.php:52</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Disallow is not used as a deindexing tool; a private page says noindex itself.</p><p class="doc"><b>The documents say:</b> SEO-COMPETITIVE §1.3 — better reasoned than Shopify</p><p class="obs"><b>Driven today:</b> robots.txt disallows /cart, /checkout, /my-account, /my-wishlist, /wishlist, /track-my-order AND each of those pages serves noindex, because a URL Google may not crawl is a URL whose noindex it can never read. Shopify disallows the same paths and emits no noindex on them.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:1112</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">A developer page that asks to be indexed: /_design-check answered 200, carried the brand in its title and said &quot;index, follow&quot;.</p><p class="doc"><b>The documents say:</b> SEO-MODULE-ROUND-4 §3 — found, not fixed</p><p class="obs"><b>Driven today:</b> DELETED. routes/web.php:893 now carries the reasoning in place of the route, and RootSlugCollisionTest reserves the segment. Verified by request: /_design-check → 404. This lane added the guard that would have caught it — CrawlSurfaceCompletenessTest walks the router and fails on any 200 HTML page that says &quot;index&quot; and is absent from the sitemap.</p><p class="where"><code>routes/web.php:893</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">llms.txt, which neither Shopify nor the competitor publishes.</p><p class="doc"><b>The documents say:</b> SEO-GAP §1 — Have</p><p class="obs"><b>Driven today:</b> 182 bytes, 7 lines. It names the shop, its description, /shop/ and /skincare-guide/, and with a second language live it names each language and its localised addresses. Thin against what an answer engine could use — see &quot;Not fixed&quot; on the report.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:1036</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The crawl files cannot be served in the wrong language, and are publicly cacheable.</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §4 — Have, structurally</p><p class="obs"><b>Driven today:</b> With Arabic live: /ar/sitemap.xml 404, /ar/robots.txt 404, /ar/llms.txt 404. Locale::localisable() refuses any first segment containing a dot, so SetLocaleFromPath never strips /ar off these paths and no request reaches the controller with a non-default locale bound.</p><p class="where"><code>app/Support/Locale.php:351</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">robots.txt names both languages of every private path once Arabic is live.</p><p class="doc"><b>The documents say:</b> SEO-BILINGUAL — Have</p><p class="obs"><b>Driven today:</b> With Arabic live robots.txt carries both spellings, e.g. &quot;Disallow: /cart&quot; and &quot;Disallow: /ar/cart&quot;.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:1112</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">IndexNow: a key file at /{key}.txt, and a ping on publish rather than on every save.</p><p class="doc"><b>The documents say:</b> SEO-GAP §1 — Have</p><p class="obs"><b>Driven today:</b> The real key answers 200; a wrong key of the same shape answers 404. The ping fires from AppServiceProvider on a product or article becoming published — measured as wired for products and posts, and NOT for categories or brands, which is written up under &quot;Not fixed&quot;.</p><p class="where"><code>app/Services/Seo/IndexNow.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">We publish no second machine-readable address per listing, so the competitor&#039;s indexed .atom feeds have no equivalent here.</p><p class="doc"><b>The documents say:</b> SEO-FEATURE-MATRIX — a win</p><p class="obs"><b>Driven today:</b> No feed route exists: &quot;feed&quot; is in PageController::RESERVED_SLUGS so it cannot even become an article address, and no controller serves atom or rss. The competitor has /collections/numbuzin.atom in Google&#039;s index (OBSERVED, SEO-COMPETITIVE §10).</p><p class="where"><code>app/Http/Controllers/Store/PageController.php:101</code></p></div></div><h3 class="area">sitemap.xml <span class="areacount">12</span></h3><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">One generated sitemap covering products, categories, brands, articles, content pages, curated listings and concern pages.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — Have, all five</p><p class="obs"><b>Driven today:</b> 62 &lt;loc&gt; entries on the preview fixture, and every one of the seven kinds is present: product, category archive, brand landing page, article, content page, curated listing, concern collection.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:333</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">Excludes a row the owner marked noindex — which Shopify&#039;s sitemap cannot do.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — Have, for products, categories and brands</p><p class="obs"><b>Driven today:</b> True of products, categories and brands, and NOT of content pages: the pages query did not select the `seo` column at all, so a noindexed content page was still submitted while the page itself still said &quot;index, follow&quot;. Fixed this lane. Measured after the fix: with seo.noindex set on `faqs`, /sitemap.xml carries /faqs/ = no, and the other six content pages stay in.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:511</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Lists no URL that the site then redirects or 404s.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — Have</p><p class="obs"><b>Driven today:</b> SeoCrawlSurfaceTest walks every &lt;loc&gt; and requires 200 — a 3xx counts as a failure, because a sitemap exists to name the canonical address and an entry that redirects names one that is not. Re-run green this lane.</p><p class="where"><code>tests/Feature/SeoCrawlSurfaceTest.php:319</code></p></div></div><div class="mrow" data-v="MISSING"><div class="mv vMISSING">MISSING</div><div class="mc"><p class="claim">Every page that invites the crawl is submitted (the other direction).</p><p class="doc"><b>The documents say:</b> nowhere — this direction was never checked</p><p class="obs"><b>Driven today:</b> BUILT THIS LANE. Nothing walked router → sitemap, which is the direction /_design-check escaped in. CrawlSurfaceCompletenessTest now fetches every parameterless storefront GET route and fails on a 200 HTML page that declares &quot;index&quot; and is absent from the sitemap. Exactly one deliberate exception today — /reviews/ while the shop has no approved review — and a second case asserts that exception DISCHARGES the moment a review exists.</p><p class="where"><code>tests/Feature/CrawlSurfaceCompletenessTest.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Leaves out a thin page: /reviews/ is submitted only when a real approved review exists.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — Have</p><p class="obs"><b>Driven today:</b> The preview fixture has one approved review, so /reviews/ is in the sitemap. With none it is absent and the page still answers 200 — not a 404 (that would break the link from the home page&#039;s review wall) and not a noindex (that would keep it out even after the shop earns reviews).</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:411</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">`lastmod` from updated_at on every dynamic entry.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — Have</p><p class="obs"><b>Driven today:</b> 51 &lt;lastmod&gt; elements. The static entries (/, /shop/) carry none, deliberately: there is no row behind them to read a date from and an invented one is worse than none.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:377</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">hreflang alternates inside the sitemap — one entry per language, each carrying the whole cluster.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — Have</p><p class="obs"><b>Driven today:</b> Arabic off: 62 entries, 0 xhtml:link. Arabic on: 124 entries (exactly double) and 372 xhtml:link elements — three per entry (en, ar, x-default), so the sitemap says the same thing the page says.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:948</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Product images in the sitemap — the whole gallery, de-duplicated, where Shopify emits the featured image only.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — NEW, off by default</p><p class="obs"><b>Driven today:</b> Ships OFF: 0 &lt;image:loc&gt; elements at the default. With Store → SEO &amp; Meta → Settings · &quot;Product images in sitemap&quot; on: 6 &lt;image:loc&gt; elements. &lt;image:loc&gt; only — Google withdrew support for image:title, image:caption and image:license.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:879</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The sitemap keeps no list of its own; it asks the router.</p><p class="doc"><b>The documents say:</b> SEO-MODULE-ROUND-4 §2 — taken, done better than asked</p><p class="obs"><b>Driven today:</b> The curated listings come from the routes bound to CollectionController@show and the content pages from the routes bound to PageController@show, keyed by the `slug` route default the controller itself reads. So a new listing or content page cannot render perfectly and never enter the sitemap.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:225</code></p></div></div><div class="mrow" data-v="DELIBERATE"><div class="mv vDELIBERATE">DELIBERATE</div><div class="mc"><p class="claim">Sitemap INDEX + sub-sitemaps, the way Shopify splits at ~5,000 URLs.</p><p class="doc"><b>The documents say:</b> SEO-GAP §2 — Missing; &quot;does not matter at this size&quot;</p><p class="obs"><b>Driven today:</b> REFUSED AGAIN, AND NOW WITH THE SIZE STATED. Measured on this fixture: 62 entries in 9,892 bytes English-only (160 bytes per URL) and 124 entries in 60,162 bytes with Arabic live (485 bytes per URL — the hreflang cluster is most of it). Projected at the live catalogue of 671 products in two languages: about 1,410 entries and 668 KB. The limits are 50,000 URLs and 50 MB uncompressed, so that is 2.8% of the URL limit and 1.3% of the size limit. Splitting would need roughly 25,000 products. Splitting also changes WHICH FILES EXIST, so switching Arabic on or off would make a child sitemap appear and disappear and Search Console would report 404s on a file it had already fetched.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:333</code></p></div></div><div class="mrow" data-v="DELIBERATE"><div class="mv vDELIBERATE">DELIBERATE</div><div class="mc"><p class="claim">Chunked, bounded-memory sitemap generation.</p><p class="doc"><b>The documents say:</b> SEO-GAP §7 — Partly; defer</p><p class="obs"><b>Driven today:</b> REFUSED, on the numbers above. The whole file is assembled in one string: 668 KB projected at the live catalogue in two languages, against PHP&#039;s default memory_limit. /sitemap.xml is budgeted at 24 queries in StorefrontQueryBudgetTest and this lane&#039;s change rides on a query that was already running, so the count does not move. Worth doing at the same point the split is, and together with it.</p><p class="where"><code>app/Http/Controllers/Store/SeoFilesController.php:333</code></p></div></div><div class="mrow" data-v="DELIBERATE"><div class="mv vDELIBERATE">DELIBERATE</div><div class="mc"><p class="claim">A Google News / blog sitemap.</p><p class="doc"><b>The documents say:</b> SEO-BUILD-PLAN item 7 — &quot;cargo cult&quot;</p><p class="obs"><b>Driven today:</b> REFUSED. A News sitemap requires acceptance into Google News, which a retail shop&#039;s journal will not get. A general blog sitemap adds nothing the articles&#039; existing &lt;loc&gt; entries do not already do — measured: the article is in /sitemap.xml with its lastmod and, with Arabic live, its alternates.</p></div></div><h3 class="area">Structured data (JSON-LD) <span class="areacount">26</span></h3><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">One coherent graph from one encoder; structurally cannot emit two competing Product nodes — the classic Shopify review-app failure.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Product page nodes, in document order: Organization · WebSite · Product · BreadcrumbList. Exactly one Product and exactly one organization node.</p><p class="where"><code>app/Support/Seo.php:879</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Organization with logo and sameAs social profiles.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Ships as the bare node — name and url only — because logo and the six social boxes ship blank. Filled in, the same node gains logo and sameAs.</p><p class="where"><code>app/Support/Seo.php:886</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">LocalBusiness / Store markup with a real address, opening hours and geo.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — MISSING; &quot;the one genuine gap in this table&quot;</p><p class="obs"><b>Driven today:</b> BUILT, in round 2, and the gap analysis was never updated. Measured: with the eight Business Details boxes filled and org_type = Store, the EXISTING organization node gains address (PostalAddress), telephone, geo (GeoCoordinates) and openingHoursSpecification — merged into one node, not published as a second one. Blank out the street and locality and the node goes back to name/url/logo/sameAs with no address at all: {
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Store&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;logo&quot;: &quot;https://kbeautybliss.test/logo.png&quot;,
+    &quot;sameAs&quot;: [
+        &quot;https://instagram.com/kbeauty.bliss&quot;
+    ],
+    &quot;telephone&quot;: &quot;+971 58 505 2611&quot;,
+    &quot;geo&quot;: {
+        &quot;@type&quot;: &quot;GeoCoordinates&quot;,
+        &quot;latitude&quot;: &quot;25.1279&quot;,
+        &quot;longitude&quot;: &quot;55.2296&quot;
+    },
+    &quot;openingHoursSpecification&quot;: [
+        {
+            &quot;@type&quot;: &quot;OpeningHoursSpecification&quot;,
+            &quot;dayOfWeek&quot;: [
+                &quot;Monday&quot;,
+                &quot;Tuesday&quot;,
+                &quot;Wednesday&quot;,
+                &quot;Thursday&quot;,
+                &quot;Friday&quot;,
+                &quot;Saturday&quot;
+            ],
+            &quot;opens&quot;: &quot;10:00&quot;,
+            &quot;closes&quot;: &quot;22:00&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;OpeningHoursSpecification&quot;,
+            &quot;dayOfWeek&quot;: &quot;Sunday&quot;,
+            &quot;opens&quot;: &quot;12:00&quot;,
+            &quot;closes&quot;: &quot;20:00&quot;
+        }
+    ]
+} — half an address is never published.</p><p class="where"><code>app/Support/BusinessAddress.php:164</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">geo and openingHoursSpecification are withheld on an org_type that cannot carry them.</p><p class="doc"><b>The documents say:</b> SEO-BUILD-PLAN round 2 — Have</p><p class="obs"><b>Driven today:</b> They are gated on org_type being a Place (Store or LocalBusiness). On Organization or OnlineStore they are invalid, and an invalid property is not a richer document. The select offers Organization, OnlineStore, Store, LocalBusiness with the help text &quot;OnlineStore is right for a shop with no shopfront.&quot;</p><p class="where"><code>app/Support/BusinessAddress.php:55</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">WebSite + SearchAction, with the urlTemplate pointing at the parameter the shop actually filters on.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> {
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;WebSite&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;potentialAction&quot;: {
+        &quot;@type&quot;: &quot;SearchAction&quot;,
+        &quot;target&quot;: {
+            &quot;@type&quot;: &quot;EntryPoint&quot;,
+            &quot;urlTemplate&quot;: &quot;https://kbeautybliss.test/shop/?s={search_term_string}&quot;
+        },
+        &quot;query-input&quot;: &quot;required name=search_term_string&quot;
+    }
+}</p><p class="where"><code>app/Support/Seo.php:937</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The sitelinks searchbox on an Arabic page sends the reader to the Arabic shop.</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §2 — fixed round 3</p><p class="obs"><b>Driven today:</b> Verified by re-measurement: with Arabic live, the Arabic product page&#039;s SearchAction target is the /ar/ shop. A reader who found the Arabic page and typed into the box Google renders under it stays in Arabic.</p><p class="where"><code>app/Support/Seo.php:979</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Product with Offer, price, currency, availability and itemCondition.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> {
+    &quot;@type&quot;: &quot;Offer&quot;,
+    &quot;priceCurrency&quot;: &quot;AED&quot;,
+    &quot;price&quot;: &quot;937.00&quot;,
+    &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+    &quot;itemCondition&quot;: &quot;https://schema.org/NewCondition&quot;,
+    &quot;priceSpecification&quot;: {
+        &quot;@type&quot;: &quot;UnitPriceSpecification&quot;,
+        &quot;price&quot;: &quot;937.00&quot;,
+        &quot;priceCurrency&quot;: &quot;AED&quot;,
+        &quot;valueAddedTaxIncluded&quot;: true
+    }
+}</p><p class="where"><code>app/Support/Seo.php:1087</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">valueAddedTaxIncluded on a UnitPriceSpecification, which almost no Shopify theme emits — and the UAE has 5% VAT.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> priceSpecification: {
+    &quot;@type&quot;: &quot;UnitPriceSpecification&quot;,
+    &quot;price&quot;: &quot;937.00&quot;,
+    &quot;priceCurrency&quot;: &quot;AED&quot;,
+    &quot;valueAddedTaxIncluded&quot;: true
+} — driven by TaxRule::addsToTotal(), so it states what this shop&#039;s own tax configuration says rather than a constant.</p><p class="where"><code>app/Support/Seo.php:1128</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">priceValidUntil only from a live sale window, never a naive +1 year.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Absent on this product, which is on sale with no end date — and that is the correct answer, because a stale priceValidUntil drops the price out of the result entirely. Set sale_ends_at and it appears as that date (measured separately: &quot;priceValidUntil&quot;: &quot;2026-10-06&quot;).</p><p class="where"><code>app/Support/Seo.php:1148</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">gtin, check-digit validated, and sku.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Measured: a product carrying 0885909950806 — one digit off a real GTIN-13 — emits NO gtin at all, and the same barcode with the right check digit emits one. sku is published from the real SKU on the row (KBB-30039).</p><p class="where"><code>app/Support/Gtin.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Several images per product, where a Shopify theme typically publishes the featured one.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Product.image is an array of 3 absolute URLs on this product.</p><p class="where"><code>app/Support/Seo.php:1012</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">AggregateRating from real approved reviews, published only where the page shows the rating.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have, both halves checked</p><p class="obs"><b>Driven today:</b> {
+    &quot;@type&quot;: &quot;AggregateRating&quot;,
+    &quot;ratingValue&quot;: &quot;5&quot;,
+    &quot;reviewCount&quot;: 1,
+    &quot;bestRating&quot;: &quot;5&quot;,
+    &quot;worstRating&quot;: &quot;1&quot;
+} — from the one approved review on the fixture. That is the rule that keeps Google from issuing a manual action for review markup, and every Shopify store of this size pays a monthly app fee for the feature.</p><p class="where"><code>app/Support/Seo.php:1247</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">AggregateOffer with a real price range for a variable product, instead of &quot;AED 0&quot;.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Returns null — keeping the single Offer — for fewer than two priced variants or when every variant is priced the same, because an AggregateOffer whose lowPrice equals its highPrice states a range that is not one. The preview product is simple, so it correctly shows a single Offer.</p><p class="where"><code>app/Support/Seo.php:1555</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Merchant listing: shippingDetails and hasMerchantReturnPolicy, off by default, refusing to invent returnMethod or returnFees.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have, behind enable_merchant</p><p class="obs"><b>Driven today:</b> OFF: the Offer carries neither. ON, with the terms typed in: {
+    &quot;shippingDetails&quot;: {
+        &quot;@type&quot;: &quot;OfferShippingDetails&quot;,
+        &quot;shippingRate&quot;: {
+            &quot;@type&quot;: &quot;MonetaryAmount&quot;,
+            &quot;value&quot;: &quot;0.00&quot;,
+            &quot;currency&quot;: &quot;AED&quot;
+        },
+        &quot;shippingDestination&quot;: {
+            &quot;@type&quot;: &quot;DefinedRegion&quot;,
+            &quot;addressCountry&quot;: &quot;AE&quot;
+        }
+    },
+    &quot;hasMerchantReturnPolicy&quot;: {
+        &quot;@type&quot;: &quot;MerchantReturnPolicy&quot;,
+        &quot;applicableCountry&quot;: &quot;AE&quot;,
+        &quot;returnPolicyCategory&quot;: &quot;https://schema.org/MerchantReturnFiniteReturnWindow&quot;,
+        &quot;merchantReturnDays&quot;: 7
+    }
+} — and note the shippingRate is 0.00 because this product is over the free-delivery threshold, computed in integer fils rather than by comparing floats.</p><p class="where"><code>app/Support/Seo.php:1180</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">BreadcrumbList on products, categories, brands and articles.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Present on the product, the category archive, the brand landing page, the curated listings, the concern page and the article. ABSENT on the seven content pages, which emit Organization and WebSite only — written up under &quot;Not fixed&quot;, because adding it would move all seven pages on a shop that has changed nothing.</p><p class="where"><code>app/Support/Seo.php:1484</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">CollectionPage + ItemList on archives, with position counted across the whole listing rather than restarting per page.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> The category archive carries a CollectionPage whose mainEntity is an ItemList of 4 ListItems, each a Product with its own Offer and price as a decimal string built from integer fils. The list is attached only when the canonical is self-referencing, so a filtered or sorted view — which canonicalises to the clean archive — carries the node without a list rather than describing the wrong document.</p><p class="where"><code>app/Support/Seo.php:1353</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The item type in a list is allowlisted, not taken from the row.</p><p class="doc"><b>The documents say:</b> rule 5</p><p class="obs"><b>Driven today:</b> COLLECTION_ITEM_TYPES = [&quot;Product&quot;,&quot;Brand&quot;]. Anything else in a row falls back to Product, so a row reaching that code from anything less trusted than a builder in the namespace cannot name an arbitrary schema.org type. The Brand arm exists for the A-Z brand directory: publishing 93 brand pages as Product would put 93 priceless, SKU-less products into the index.</p><p class="where"><code>app/Support/Seo.php:1396</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">&quot;The Journal index emits no CollectionPage node, in either language.&quot;</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §7, SEO-MODULE-ROUND-4 §5 — found, not fixed</p><p class="obs"><b>Driven today:</b> FIXED and merged. Measured: /skincare-guide/ nodes are Organization · WebSite · CollectionPage · BreadcrumbList. The exact ANCHOR/REPLACEMENT round 4 handed over was applied.</p><p class="where"><code>app/Http/Controllers/Store/PageController.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Article markup on every journal article.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> {
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Article&quot;,
+    &quot;headline&quot;: &quot;Heartleaf extract: transforming K-beauty skincare&quot;,
+    &quot;datePublished&quot;: &quot;2026-08-27T09:02:01+00:00&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;author&quot;: {
+        &quot;@type&quot;: &quot;Organization&quot;,
+        &quot;name&quot;: &quot;K-Beauty Bliss&quot;
+    },
+    &quot;publisher&quot;: {
+        &quot;@type&quot;: &quot;Organization&quot;,
+        &quot;name&quot;: &quot;K-Beauty Bliss&quot;
+    }
+}</p><p class="where"><code>app/Support/Seo.php:1264</code></p></div></div><div class="mrow" data-v="MISSING"><div class="mv vMISSING">MISSING</div><div class="mc"><p class="claim">Article carries dateModified and a url/mainEntityOfPage.</p><p class="doc"><b>The documents say:</b> not claimed anywhere</p><p class="obs"><b>Driven today:</b> The Article node carries headline, image, datePublished, inLanguage, author and publisher — and no dateModified and no url. dateModified is on Google&#039;s recommended list for Article and `posts.updated_at` is right there. One key, worth having, and it is in app/Support/Seo.php, which is Lane S5&#039;s this round — the exact change is on the report under &quot;Needs S5&quot;.</p><p class="where"><code>app/Support/Seo.php:1264</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">inLanguage on the nodes that can carry it, and withheld from the nodes that cannot.</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §2 — fixed round 3</p><p class="obs"><b>Driven today:</b> CollectionPage, Article and WebSite carry it; Product, Organization, Offer, Brand and BreadcrumbList do not, because inLanguage is a property of CreativeWork and asserting it elsewhere makes a document invalid rather than richer. WebSite says the SITE&#039;s languages (&quot;en&quot;, or [&quot;en&quot;,&quot;ar&quot;]) and not the page&#039;s, because that node carries the same url on every page.</p><p class="where"><code>app/Support/Seo.php:1264</code></p></div></div><div class="mrow" data-v="MISSING"><div class="mv vMISSING">MISSING</div><div class="mc"><p class="claim">FAQPage JSON-LD.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Missing. SEO-BUILD-PLAN and SEO-COMPETITIVE §1.9 — &quot;do not build&quot;</p><p class="obs"><b>Driven today:</b> CONFIRMED MISSING before this lane: grep for FAQPage across app, resources, routes and tests returned nothing, and the content page emitted Organization · WebSite — no FAQPage, and no BreadcrumbList either. BUILT THIS LANE as Services\Seo\FaqSchema, and the three rounds of refusal are answered rather than ignored: the rich RESULT is genuinely gone (Google stopped showing it on 7 May 2026 and nobody should be promised a drop-down), and what is built is the machine-readable question/answer PAIR that an answer engine extracts and that an &lt;h3&gt; above a &lt;p&gt; is not. It reads 4 pairs out of the shipped /faqs/ body and NOTHING out of the shipped /refund_returns/ body (null), because the selection rule is that a heading ends in a question mark — so no page is named anywhere in the class. Ships OFF.</p><p class="where"><code>app/Services/Seo/FaqSchema.php</code></p></div></div><div class="mrow" data-v="DELIBERATE"><div class="mv vDELIBERATE">DELIBERATE</div><div class="mc"><p class="claim">A second JSON-LD emitter (a `SeoGraph` class) carrying WebSite, Organization, BreadcrumbList and FAQPage.</p><p class="doc"><b>The documents say:</b> SEO-BUILD-PLAN item 3 — refused</p><p class="obs"><b>Driven today:</b> REFUSED AGAIN, and this lane&#039;s FAQPage work is built the way the refusal prescribes rather than around it: the node is produced by a service and is merged into the ONE graph Support\Seo emits, exactly as BusinessAddress::organizationFragment() merges the address into the existing Organization node. Three of the four nodes the original brief wanted in a new class already exist there. A second emitter would put two Organization and two WebSite nodes on every page — the duplicate-schema defect SEO-COMPETITIVE §1.4 identifies as the classic Shopify review-app failure. Measured today: exactly one of each, on every page shape.</p><p class="where"><code>app/Support/Seo.php:879</code></p></div></div><div class="mrow" data-v="DELIBERATE"><div class="mv vDELIBERATE">DELIBERATE</div><div class="mc"><p class="claim">JSON_UNESCAPED_SLASHES on the JSON-LD encoder, as the original brief specified.</p><p class="doc"><b>The documents say:</b> SEO-BUILD-PLAN — refused; the flag caused a live XSS</p><p class="obs"><b>Driven today:</b> REFUSED, AND RE-PROVED THIS LANE RATHER THAN RE-READ. A shop whose org_name is &quot;&lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;&quot; was rendered and the emitted &lt;script&gt; block read back: it contains no raw &quot;&lt;&quot; at all. FaqSchema::encode() carries the identical four HEX flags and its own case asserts the same thing, so the new node cannot reintroduce the defect either.</p><p class="where"><code>app/Support/Seo.php:270</code></p></div></div><div class="mrow" data-v="OWNER"><div class="mv vOWNER">OWNER</div><div class="mc"><p class="claim">VideoObject markup.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Missing, on both sides</p><p class="obs"><b>Driven today:</b> Still absent, and it is now worth something it was not when that row was written: the shop has a shoppable-video library under Content → Shoppable video. VideoObject needs a thumbnail, an upload date and either a content or an embed URL per video, and it is only worth emitting for videos that are genuinely the point of a page. Not built: the emission point is app/Support/Seo.php (Lane S5) and the models are app/Models/Ugc* (Lane V3), so it is two lanes&#039; files and one owner decision — which videos, if any, are page content rather than decoration.</p><p class="where"><code>app/Support/Seo.php</code></p></div></div><div class="mrow" data-v="DELIBERATE"><div class="mv vDELIBERATE">DELIBERATE</div><div class="mc"><p class="claim">HowTo markup.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Missing, on both sides</p><p class="obs"><b>Driven today:</b> REFUSED, for the same reason as the FAQ rich result and with less to weigh against it: Google removed HowTo rich results from desktop in August 2023 and from all surfaces shortly after. Unlike FAQPage there is no second consumer argument here — a routine is already published as prose and as the quiz&#039;s own output, and a HowTo node would be a third copy of it with nothing reading it.</p></div></div><h3 class="area">Meta, Open Graph and hreflang <span class="areacount">12</span></h3><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Title template with tokens, a store-wide fallback, and a home title of its own.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> Product: &lt;title&gt;Medicube - Kojic Acid Turmeric Booster Pro Set · K-Beauty Bliss&lt;/title&gt;. Category: &lt;title&gt;Beauty Devices · K-Beauty Bliss&lt;/title&gt;. Yoast-style %%title%% / %%sitename%% / %%sep%% tokens in a per-row override are resolved, and an unknown token is deleted rather than printed as literal braces.</p><p class="where"><code>app/Support/Seo.php:380</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Meta description, per-row where set and site-wide otherwise.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> Present on the product (its own short description), the category (a generated line) and content pages (the site-wide default, or the per-row override as of this lane). ABSENT on an article with no excerpt — the Post carries one on the fixture so the preview shows it, but a post saved with an empty excerpt and no SEO override publishes no description at all and SeoAudit reports it under &quot;No description&quot;.</p><p class="where"><code>app/Support/Seo.php:496</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">meta robots reflects the shop setting, the per-row noindex and a private install.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> A private install (SiteHost::isPrivate()) overrides both the page and the shop&#039;s robots_index setting, because on a staging copy that setting is whatever production&#039;s was.</p><p class="where"><code>app/Support/Seo.php:145</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Open Graph, including og:type product and og:image.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> &lt;meta property=&quot;og:type&quot; content=&quot;product&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Medicube - Kojic Acid Turmeric Booster Pro Set · K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;&gt;
+&lt;meta property=&quot;og:image&quot; content=&quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;&gt;</p><p class="where"><code>app/Support/Seo.php:176</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">product:price:amount and product:availability, which Meta&#039;s catalogue and Pinterest&#039;s rich pins read.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have, rare on Shopify</p><p class="obs"><b>Driven today:</b> &lt;meta property=&quot;product:price:amount&quot; content=&quot;937.00&quot;&gt;
+&lt;meta property=&quot;product:price:currency&quot; content=&quot;AED&quot;&gt;
+&lt;meta property=&quot;product:availability&quot; content=&quot;in stock&quot;&gt; — the same values the Offer carries, mapped explicitly to Open Graph&#039;s own vocabulary (&quot;BackOrder&quot; is not an og value).</p><p class="where"><code>app/Support/Seo.php:188</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Twitter card, summary_large_image where there is an image.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> &lt;meta name=&quot;twitter:card&quot; content=&quot;summary_large_image&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;Medicube - Kojic Acid Turmeric Booster Pro Set · K-Beauty Bliss&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta name=&quot;twitter:image&quot; content=&quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;&gt;</p><p class="where"><code>app/Support/Seo.php:211</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Verification tags for Google, Bing, Pinterest AND Baidu — all four boxes the screen collects.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have, all four</p><p class="obs"><b>Driven today:</b> Driven this lane with all four keys saved: google-site-verification, msvalidate.01, p:domain_verify and baidu-site-verification all appear. Only the first two were ever printed until it was fixed — a screen writing keys nothing read. SeoVerificationTagsTest drives the list off SETTING_RULES, so a fifth engine cannot ship without its tag.</p><p class="where"><code>app/Support/Seo.php:168</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Reciprocal hreflang plus x-default on every storefront page, with the trailing slash matched to the canonical.</p><p class="doc"><b>The documents say:</b> SEO-GAP §4 — Have</p><p class="obs"><b>Driven today:</b> &lt;link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;&gt;
+&lt;link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;&gt;
+&lt;link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;&gt;</p><p class="where"><code>app/Support/Seo.php:645</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">hreflang is built from the canonical and not from the request path.</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §1 — Have</p><p class="obs"><b>Driven today:</b> So a paginated listing&#039;s alternates carry the page parameter, a row with a canonical override points its alternates at the override, and /cart vs /cart/ do not publish two clusters. And it is emitted from Support\Seo rather than from the layout, because four storefront pages render their own &lt;head&gt; and were emitting none at all.</p><p class="where"><code>app/Support/Seo.php:645</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">A document the owner marked noindex retracts its hreflang cluster; a per-visitor private page keeps its own.</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §1 — Have</p><p class="obs"><b>Driven today:</b> noindex_editorial retracts; Indexability::isPrivate() does not — deliberately, so an Arabic shopper&#039;s cart links to the Arabic cart. A document saying &quot;noindex, nofollow&quot; while advertising three alternates of itself is saying two opposite things in one head, and Google drops the whole cluster, which costs the other language its alternate too.</p><p class="where"><code>app/Support/Seo.php:645</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Arabic lives at /ar/ — a subfolder on the same domain, not a subdomain.</p><p class="doc"><b>The documents say:</b> SEO-FEATURE-MATRIX — a structural win</p><p class="obs"><b>Driven today:</b> With Arabic live, /ar/product/{slug}/ answers 200 with &lt;html lang=&quot;ar&quot;&gt; and a self-referencing Arabic canonical. A subfolder shares the domain&#039;s earned authority; the competitor&#039;s ar.kbeautyarabia.com does not (OBSERVED, SEO-COMPETITIVE §8).</p><p class="where"><code>app/Support/Locale.php</code></p></div></div><div class="mrow" data-v="OWNER"><div class="mv vOWNER">OWNER</div><div class="mc"><p class="claim">Arabic slugs in the URL itself.</p><p class="doc"><b>The documents say:</b> SEO-BUILD-PLAN Part II item 7 — decide before building</p><p class="obs"><b>Driven today:</b> Not built, and correctly not built by a lane. It touches canonicals, alternateLinks(), the sitemap&#039;s clusters, the redirect table and every Arabic URL already in the index. The plan&#039;s own recommendation stands — new pages only, after there is Arabic content to put at them — and the two decisions are the owner&#039;s: transliterate or translate, and retrofit or not.</p></div></div><h3 class="area">Auditing and tooling <span class="areacount">6</span></h3><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Whole-surface SEO Audit across products, categories, brands, articles and pages.</p><p class="doc"><b>The documents say:</b> SEO-GAP §5 — NEW</p><p class="obs"><b>Driven today:</b> Store → SEO &amp; Meta → SEO Audit. 12 checks, run on the preview fixture: {
+    &quot;Products&quot;: 28,
+    &quot;Categories&quot;: 7,
+    &quot;Brands&quot;: 8,
+    &quot;Articles&quot;: 1,
+    &quot;Pages&quot;: 7
+}. Verdict line as the screen prints it: &quot;51 indexable URLs scanned. Biggest issue: No image (39).&quot;. The checks are duplicate_title, duplicate_description, bad_canonical, title_too_long, title_too_short, no_description, thin_description, no_image, product_no_image_alt, product_no_identifier, product_no_category, legacy_url_no_redirect.</p><p class="where"><code>app/Support/SeoAudit.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Duplicate titles and duplicate descriptions across the whole set — the two checks no per-row check can produce.</p><p class="doc"><b>The documents say:</b> SEO-GAP §5 — Have</p><p class="obs"><b>Driven today:</b> On the seeded demo catalogue this found 24 products sharing one meta description — the kind of fault that is invisible one page at a time. The audit chunks products at 500 and keeps counts rather than rows, so its working set is bounded by distinct titles and not by catalogue size.</p><p class="where"><code>app/Support/SeoAudit.php:862</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Canonical overrides pointing somewhere unsafe are reported.</p><p class="doc"><b>The documents say:</b> SEO-FEATURE-MATRIX — Have</p><p class="obs"><b>Driven today:</b> canonicalIsSafe() accepts a root-relative path or an https URL and nothing else, so an off-site, downgraded-http or javascript: override is reported under &quot;Canonical points somewhere unsafe&quot;. Note it is REPORTED and not blocked at render time — see &quot;Needs S5&quot; on the report, where the scheme check at the render end is written out.</p><p class="where"><code>app/Support/SeoAudit.php:368</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Product image alt-text coverage is reported.</p><p class="doc"><b>The documents say:</b> SEO-BUILD-PLAN round 2 — built, as an ADVISORY check</p><p class="obs"><b>Driven today:</b> A separate ADVISORY tier keeps a finding where no page is broken from taking the verdict headline away from one where something is. The fix for each row is Catalog → Products → the product → Media, where every gallery row has its own box.</p><p class="where"><code>app/Support/SeoAudit.php:108</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Old addresses with no redirect are reported.</p><p class="doc"><b>The documents say:</b> SEO-MODULE-ROUND-4 §1 — the matrix row can be retired</p><p class="obs"><b>Driven today:</b> And the matrix&#039;s &quot;fifteen rows to type&quot; is genuinely retired: the shop derives all fifteen itself, so the count is zero rows and no import run is needed. What this card lists is the ones it CANNOT derive — where no category, page or article in this shop answers to that name.</p><p class="where"><code>app/Support/SeoAudit.php:756</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Schema Inspector: an admin can see the exact graph any page would emit.</p><p class="doc"><b>The documents say:</b> SEO-GAP §5 — Have</p><p class="obs"><b>Driven today:</b> Store → SEO &amp; Meta → Schema Inspector, behind GET /admin-api/schema-inspect. It calls Seo::inspect(), which is a thin wrapper around the same jsonLd() builder every real page uses — not a reimplementation that could drift.</p><p class="where"><code>app/Support/Seo.php:836</code></p></div></div><h3 class="area">Content and taxonomy — where the shop actually loses <span class="areacount">8</span></h3><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">Concern-led collections (&quot;korean skincare for acne&quot;), the single most instructive thing observed on the competitor.</p><p class="doc"><b>The documents say:</b> SEO-GAP §6 — MISSING. SEO-FEATURE-MATRIX §2 item 1 — the whole ballgame</p><p class="obs"><b>Driven today:</b> THE MACHINERY IS BUILT AND IT WORKS END TO END. Measured: with four products tagged for &quot;Acne &amp; blemishes&quot; at Catalog → Build my routine, /concern/acne/ answers 200, is indexable, carries CollectionPage + ItemList (Organization · WebSite · CollectionPage · BreadcrumbList) and appears in /sitemap.xml with its hreflang cluster. Untag until fewer than ConcernCollections::MIN_PRODUCTS (3) remain and the page 404s and leaves the sitemap — the thin-page rule is the design, not a warning. 1 concern slugs exist and 1 is enabled. What is missing is entirely the owner&#039;s: the tagging and the intro copy.</p><p class="where"><code>app/Support/ConcernCollections.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The concern vocabulary is the skin quiz&#039;s own eight, not a second list.</p><p class="doc"><b>The documents say:</b> SEO-CONCERN-MAPPING §0 — Have, test-pinned</p><p class="obs"><b>Driven today:</b> RoutineConcerns holds eight slugs — hydration, dark-spots, acne, ageing, sensitivity, pores, dullness, sun — and QuizAndRoutinesShareOneConcernListTest pins them equal to the quiz&#039;s. A shop with nine concerns in one place and eight in another has two vocabularies, and the day somebody joins them the join fails silently on the spellings that do not match.</p><p class="where"><code>app/Support/RoutineConcerns.php:55</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Brand landing pages, sitemap-listed, with a brand with nothing live left out.</p><p class="doc"><b>The documents say:</b> SEO-GAP §6 — Have, 93 of them</p><p class="obs"><b>Driven today:</b> Live at /korean-skincare-brands/{slug}/ with the A-Z index submitted at the address that answers rather than the one that redirects (/brands/ 301s to it). A brand with no live product is left out of the sitemap.</p><p class="where"><code>routes/kbb-brands-blog.php</code></p></div></div><div class="mrow" data-v="OWNER"><div class="mv vOWNER">OWNER</div><div class="mc"><p class="claim">150–300 words of intro copy per concern page, English and Arabic.</p><p class="doc"><b>The documents say:</b> SEO-CONCERN-COPY — English drafted, Arabic refused</p><p class="obs"><b>Driven today:</b> Three English drafts exist to edit or reject (docs/SEO-CONCERN-COPY.md) and no Arabic. That refusal stands and this lane did not quietly work around it: machine-translated Arabic is worse than no Arabic, and Gulf product search skews to dialect over Modern Standard Arabic. Three intros at ~200 words is a very small commission, which is the argument for paying for it rather than for skipping it.</p><p class="where"><code>docs/SEO-CONCERN-COPY.md</code></p></div></div><div class="mrow" data-v="OWNER"><div class="mv vOWNER">OWNER</div><div class="mc"><p class="claim">Product-to-concern tagging for the live catalogue.</p><p class="doc"><b>The documents say:</b> SEO-CONCERN-MAPPING §7 — the one piece of real work</p><p class="obs"><b>Driven today:</b> Catalog → Build my routine, ~30–45 products, not 671. A search box and one chip per concern per product, with an untagged count as the headline figure and a `live` flag per row so nothing is over-counted. The search terms to type are in docs/SEO-CONCERN-MAPPING.md §3. Nobody but the owner can judge which of these products treat acne.</p><p class="where"><code>app/Http/Controllers/Admin/RoutinesApiController.php</code></p></div></div><div class="mrow" data-v="OWNER"><div class="mv vOWNER">OWNER</div><div class="mc"><p class="claim">An ingredient/concern article cluster, in both languages, linking down to the concern pages and up to the pillar.</p><p class="doc"><b>The documents say:</b> SEO-GAP §12, SEO-BUILD-PLAN Part II item 6</p><p class="obs"><b>Driven today:</b> The engine is not the gap and the volume is. Five articles exist; Article markup, the /ar/ pipeline and the pillar (/skincare-guide/) are all built and idle. Three of the five articles serve `sensitivity` directly, which is why the mapping document recommends launching that concern first. The word counts in the research are practitioner convention, not Google documentation, and are deliberately not in any test.</p><p class="where"><code>docs/SEO-GAP.md §12</code></p></div></div><div class="mrow" data-v="OWNER"><div class="mv vOWNER">OWNER</div><div class="mc"><p class="claim">Local editorial links and directory citations.</p><p class="doc"><b>The documents say:</b> SEO-FEATURE-MATRIX §2 item 3 — neither code nor content</p><p class="obs"><b>Driven today:</b> Named targets with URLs are in docs/SEO-COMPETITIVE.md §12. Zero code, and probably the best return per dirham in the whole programme. It needs one canonical NAP string used identically everywhere, which is why confirming the address should happen BEFORE the markup is switched on rather than after.</p></div></div><div class="mrow" data-v="OWNER"><div class="mv vOWNER">OWNER</div><div class="mc"><p class="claim">Shipping and returns terms confirmed in writing, so the merchant markup can be switched on.</p><p class="doc"><b>The documents say:</b> SEO-BUILD-PLAN Part II item 10</p><p class="obs"><b>Driven today:</b> The code is built and off. A wrong delivery promise in a Google listing is worse than none — it is a promise Google shows a shopper. The preview above shows exactly what would be published for a given set of terms, which is the thing to check before the switch is thrown.</p><p class="where"><code>app/Support/Seo.php:1180</code></p></div></div></div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-n">2 &mdash; the pages</div>
+  <h2>What each page shape tells a search engine</h2>
+  <p class="lede">The exact <code>&lt;title&gt;</code>, meta description, canonical, Open Graph, Twitter and hreflang tags, and the whole JSON-LD graph formatted so it can be read. These are the bytes, in document order.</p>
+  <div class="card"><div class="card-hd"><span class="tag">The home page</span><h3><code>/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;K-Beauty Bliss · Authentic Korean skincare in the UAE&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+&lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/&quot;&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;website&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;K-Beauty Bliss · Authentic Korean skincare in the UAE&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/&quot;&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;K-Beauty Bliss · Authentic Korean skincare in the UAE&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 2 nodes</div><div class="node"><b>Organization</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Organization&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
+}</pre></div><div class="node"><b>WebSite</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;WebSite&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;potentialAction&quot;: {
+        &quot;@type&quot;: &quot;SearchAction&quot;,
+        &quot;target&quot;: {
+            &quot;@type&quot;: &quot;EntryPoint&quot;,
+            &quot;urlTemplate&quot;: &quot;https://kbeautybliss.test/shop/?s={search_term_string}&quot;
+        },
+        &quot;query-input&quot;: &quot;required name=search_term_string&quot;
+    }
+}</pre></div></div></div><div class="card"><div class="card-hd"><span class="tag">A product page</span><h3><code>/product/medicube-kojic-acid-turmeric-booster-pro-set/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;Medicube - Kojic Acid Turmeric Booster Pro Set · K-Beauty Bliss&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+&lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;product&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Medicube - Kojic Acid Turmeric Booster Pro Set · K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;&gt;
+&lt;meta property=&quot;og:image&quot; content=&quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;&gt;
+&lt;meta property=&quot;product:price:amount&quot; content=&quot;937.00&quot;&gt;
+&lt;meta property=&quot;product:price:currency&quot; content=&quot;AED&quot;&gt;
+&lt;meta property=&quot;product:availability&quot; content=&quot;in stock&quot;&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary_large_image&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;Medicube - Kojic Acid Turmeric Booster Pro Set · K-Beauty Bliss&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta name=&quot;twitter:image&quot; content=&quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 4 nodes</div><div class="node"><b>Organization</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Organization&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
+}</pre></div><div class="node"><b>WebSite</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;WebSite&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;potentialAction&quot;: {
+        &quot;@type&quot;: &quot;SearchAction&quot;,
+        &quot;target&quot;: {
+            &quot;@type&quot;: &quot;EntryPoint&quot;,
+            &quot;urlTemplate&quot;: &quot;https://kbeautybliss.test/shop/?s={search_term_string}&quot;
+        },
+        &quot;query-input&quot;: &quot;required name=search_term_string&quot;
+    }
+}</pre></div><div class="node"><b>Product</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Product&quot;,
+    &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;,
+    &quot;brand&quot;: {
+        &quot;@type&quot;: &quot;Brand&quot;,
+        &quot;name&quot;: &quot;Medicube&quot;
+    },
+    &quot;description&quot;: &quot;Authentic Korean skincare, delivered across the UAE.&quot;,
+    &quot;image&quot;: [
+        &quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;,
+        &quot;http://kbeautybliss.com/wp-content/uploads/2026/03/MEDICUBE-Beauty-Device-AGE-R-Booster-Pro-Yellow-YELOW.webp&quot;,
+        &quot;http://kbeautybliss.com/wp-content/uploads/2026/03/s_l1600_1_1_1_1771563253324618653fb4649.webp&quot;
+    ],
+    &quot;sku&quot;: &quot;KBB-30039&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+    &quot;offers&quot;: {
+        &quot;@type&quot;: &quot;Offer&quot;,
+        &quot;priceCurrency&quot;: &quot;AED&quot;,
+        &quot;price&quot;: &quot;937.00&quot;,
+        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+        &quot;itemCondition&quot;: &quot;https://schema.org/NewCondition&quot;,
+        &quot;priceSpecification&quot;: {
+            &quot;@type&quot;: &quot;UnitPriceSpecification&quot;,
+            &quot;price&quot;: &quot;937.00&quot;,
+            &quot;priceCurrency&quot;: &quot;AED&quot;,
+            &quot;valueAddedTaxIncluded&quot;: true
+        }
+    },
+    &quot;aggregateRating&quot;: {
+        &quot;@type&quot;: &quot;AggregateRating&quot;,
+        &quot;ratingValue&quot;: &quot;5&quot;,
+        &quot;reviewCount&quot;: 1,
+        &quot;bestRating&quot;: &quot;5&quot;,
+        &quot;worstRating&quot;: &quot;1&quot;
+    }
+}</pre></div><div class="node"><b>BreadcrumbList</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;BreadcrumbList&quot;,
+    &quot;itemListElement&quot;: [
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 1,
+            &quot;name&quot;: &quot;Home&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 2,
+            &quot;name&quot;: &quot;Shop&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/shop/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 3,
+            &quot;name&quot;: &quot;Beauty Devices&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/product-category/beauty-devices/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 4,
+            &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;
+        }
+    ]
+}</pre></div></div></div><div class="card"><div class="card-hd"><span class="tag">A category archive</span><h3><code>/product-category/beauty-devices/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;Beauty Devices · K-Beauty Bliss&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;Shop Beauty Devices at K-Beauty Bliss — 4 authentic Korean skincare picks.&quot;&gt;
+&lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+&lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/product-category/beauty-devices/&quot;&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;website&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Beauty Devices · K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Shop Beauty Devices at K-Beauty Bliss — 4 authentic Korean skincare picks.&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/product-category/beauty-devices/&quot;&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;Beauty Devices · K-Beauty Bliss&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;Shop Beauty Devices at K-Beauty Bliss — 4 authentic Korean skincare picks.&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 4 nodes</div><div class="node"><b>Organization</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Organization&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
+}</pre></div><div class="node"><b>WebSite</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;WebSite&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;potentialAction&quot;: {
+        &quot;@type&quot;: &quot;SearchAction&quot;,
+        &quot;target&quot;: {
+            &quot;@type&quot;: &quot;EntryPoint&quot;,
+            &quot;urlTemplate&quot;: &quot;https://kbeautybliss.test/shop/?s={search_term_string}&quot;
+        },
+        &quot;query-input&quot;: &quot;required name=search_term_string&quot;
+    }
+}</pre></div><div class="node"><b>CollectionPage</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;CollectionPage&quot;,
+    &quot;name&quot;: &quot;Beauty Devices&quot;,
+    &quot;description&quot;: &quot;Shop Beauty Devices at K-Beauty Bliss — 4 authentic Korean skincare picks.&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test/product-category/beauty-devices/&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;mainEntity&quot;: {
+        &quot;@type&quot;: &quot;ItemList&quot;,
+        &quot;itemListOrder&quot;: &quot;https://schema.org/ItemListOrderAscending&quot;,
+        &quot;numberOfItems&quot;: 4,
+        &quot;itemListElement&quot;: [
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 1,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;Medicube - Collagen Booster Set&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2024/11/Medicube-set-black.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;1299.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;
+                    }
+                }
+            },
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 2,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;937.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;
+                    }
+                }
+            },
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 3,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;Medicube - PDRN Glow Booster Set (Pink Edition)&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;1399.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;
+                    }
+                }
+            },
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 4,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;ilso - Deep Clean Master&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/04/ilso-Deep-Clean-Master.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;153.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;
+                    }
+                }
+            }
+        ]
+    }
+}</pre></div><div class="node"><b>BreadcrumbList</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;BreadcrumbList&quot;,
+    &quot;itemListElement&quot;: [
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 1,
+            &quot;name&quot;: &quot;Home&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 2,
+            &quot;name&quot;: &quot;Shop&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/shop/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 3,
+            &quot;name&quot;: &quot;Beauty Devices&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/product-category/beauty-devices/&quot;
+        }
+    ]
+}</pre></div></div></div><div class="card"><div class="card-hd"><span class="tag">A journal article</span><h3><code>/heartleaf-extract-transforming-k-beauty-skincare/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;Heartleaf extract: transforming K-beauty skincare | K-Beauty Bliss&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;Houttuynia cordata is the calming ingredient Korean formulators reach for first, and this is what it does.&quot;&gt;
+&lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+&lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/heartleaf-extract-transforming-k-beauty-skincare/&quot;&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;article&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Heartleaf extract: transforming K-beauty skincare | K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Houttuynia cordata is the calming ingredient Korean formulators reach for first, and this is what it does.&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/heartleaf-extract-transforming-k-beauty-skincare/&quot;&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;Heartleaf extract: transforming K-beauty skincare | K-Beauty Bliss&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;Houttuynia cordata is the calming ingredient Korean formulators reach for first, and this is what it does.&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 4 nodes</div><div class="node"><b>Organization</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Organization&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
+}</pre></div><div class="node"><b>WebSite</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;WebSite&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;potentialAction&quot;: {
+        &quot;@type&quot;: &quot;SearchAction&quot;,
+        &quot;target&quot;: {
+            &quot;@type&quot;: &quot;EntryPoint&quot;,
+            &quot;urlTemplate&quot;: &quot;https://kbeautybliss.test/shop/?s={search_term_string}&quot;
+        },
+        &quot;query-input&quot;: &quot;required name=search_term_string&quot;
+    }
+}</pre></div><div class="node"><b>Article</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Article&quot;,
+    &quot;headline&quot;: &quot;Heartleaf extract: transforming K-beauty skincare&quot;,
+    &quot;datePublished&quot;: &quot;2026-08-27T09:02:01+00:00&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;author&quot;: {
+        &quot;@type&quot;: &quot;Organization&quot;,
+        &quot;name&quot;: &quot;K-Beauty Bliss&quot;
+    },
+    &quot;publisher&quot;: {
+        &quot;@type&quot;: &quot;Organization&quot;,
+        &quot;name&quot;: &quot;K-Beauty Bliss&quot;
+    }
+}</pre></div><div class="node"><b>BreadcrumbList</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;BreadcrumbList&quot;,
+    &quot;itemListElement&quot;: [
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 1,
+            &quot;name&quot;: &quot;Home&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 2,
+            &quot;name&quot;: &quot;Journal&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/skincare-guide/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 3,
+            &quot;name&quot;: &quot;Heartleaf extract: transforming K-beauty skincare&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/heartleaf-extract-transforming-k-beauty-skincare/&quot;
+        }
+    ]
+}</pre></div></div></div><div class="card"><div class="card-hd"><span class="tag">A concern collection</span><h3><code>/concern/acne/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;Korean skincare for acne-prone skin · K-Beauty Bliss&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;Gentle, barrier-first routines for skin that breaks out. Salicylic acid and BHA to keep pores clear, centella and madecassoside to calm what is already angry, and lightweight hydration that will not sit heavily on congested skin. Every product here is one we stock and have tagged for blemish-pron…&quot;&gt;
+&lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+&lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/concern/acne/&quot;&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;website&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Korean skincare for acne-prone skin · K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Gentle, barrier-first routines for skin that breaks out. Salicylic acid and BHA to keep pores clear, centella and madecassoside to calm what is already angry, and lightweight hydration that will not sit heavily on congested skin. Every product here is one we stock and have tagged for blemish-pron…&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/concern/acne/&quot;&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;Korean skincare for acne-prone skin · K-Beauty Bliss&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;Gentle, barrier-first routines for skin that breaks out. Salicylic acid and BHA to keep pores clear, centella and madecassoside to calm what is already angry, and lightweight hydration that will not sit heavily on congested skin. Every product here is one we stock and have tagged for blemish-pron…&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 4 nodes</div><div class="node"><b>Organization</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Organization&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
+}</pre></div><div class="node"><b>WebSite</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;WebSite&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;potentialAction&quot;: {
+        &quot;@type&quot;: &quot;SearchAction&quot;,
+        &quot;target&quot;: {
+            &quot;@type&quot;: &quot;EntryPoint&quot;,
+            &quot;urlTemplate&quot;: &quot;https://kbeautybliss.test/shop/?s={search_term_string}&quot;
+        },
+        &quot;query-input&quot;: &quot;required name=search_term_string&quot;
+    }
+}</pre></div><div class="node"><b>CollectionPage</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;CollectionPage&quot;,
+    &quot;name&quot;: &quot;Korean skincare for acne-prone skin&quot;,
+    &quot;description&quot;: &quot;Gentle, barrier-first routines for skin that breaks out. Salicylic acid and BHA to keep pores clear, centella and madecassoside to calm what is already angry, and lightweight hydration that will not sit heavily on congested skin. Every product here is one we stock and have tagged for blemish-pron…&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test/concern/acne/&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;mainEntity&quot;: {
+        &quot;@type&quot;: &quot;ItemList&quot;,
+        &quot;itemListOrder&quot;: &quot;https://schema.org/ItemListOrderAscending&quot;,
+        &quot;numberOfItems&quot;: 4,
+        &quot;itemListElement&quot;: [
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 1,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;937.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;
+                    }
+                }
+            },
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 2,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;Medicube - PDRN Glow Booster Set (Pink Edition)&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;1399.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;
+                    }
+                }
+            },
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 3,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;Medicube - Collagen Booster Set&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2024/11/Medicube-set-black.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;1299.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;
+                    }
+                }
+            },
+            {
+                &quot;@type&quot;: &quot;ListItem&quot;,
+                &quot;position&quot;: 4,
+                &quot;item&quot;: {
+                    &quot;@type&quot;: &quot;Product&quot;,
+                    &quot;name&quot;: &quot;ilso - Deep Clean Master&quot;,
+                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;,
+                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/04/ilso-Deep-Clean-Master.webp&quot;,
+                    &quot;brand&quot;: {
+                        &quot;@type&quot;: &quot;Brand&quot;,
+                        &quot;name&quot;: &quot;Medicube&quot;
+                    },
+                    &quot;offers&quot;: {
+                        &quot;@type&quot;: &quot;Offer&quot;,
+                        &quot;price&quot;: &quot;153.00&quot;,
+                        &quot;priceCurrency&quot;: &quot;AED&quot;,
+                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;
+                    }
+                }
+            }
+        ]
+    }
+}</pre></div><div class="node"><b>BreadcrumbList</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;BreadcrumbList&quot;,
+    &quot;itemListElement&quot;: [
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 1,
+            &quot;name&quot;: &quot;Home&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 2,
+            &quot;name&quot;: &quot;Shop&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/shop/&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;ListItem&quot;,
+            &quot;position&quot;: 3,
+            &quot;name&quot;: &quot;Korean skincare for acne-prone skin&quot;,
+            &quot;item&quot;: &quot;https://kbeautybliss.test/concern/acne/&quot;
+        }
+    ]
+}</pre></div></div></div><div class="card"><div class="card-hd"><span class="tag">A content page</span><h3><code>/faqs/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;Frequently Asked Questions · K-Beauty Bliss&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+&lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/faqs/&quot;&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;website&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Frequently Asked Questions · K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/faqs/&quot;&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;Frequently Asked Questions · K-Beauty Bliss&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 2 nodes</div><div class="node"><b>Organization</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Organization&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
+}</pre></div><div class="node"><b>WebSite</b><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;WebSite&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;potentialAction&quot;: {
+        &quot;@type&quot;: &quot;SearchAction&quot;,
+        &quot;target&quot;: {
+            &quot;@type&quot;: &quot;EntryPoint&quot;,
+            &quot;urlTemplate&quot;: &quot;https://kbeautybliss.test/shop/?s={search_term_string}&quot;
+        },
+        &quot;query-input&quot;: &quot;required name=search_term_string&quot;
+    }
+}</pre></div></div></div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-n">3 &mdash; the crawl files</div>
+  <h2>robots.txt, llms.txt and sitemap.xml</h2>
+  <p class="lede">All three are served publicly cacheable with no cookie, and none of them can be reached under a language prefix &mdash; <code>/ar/sitemap.xml</code>, <code>/ar/robots.txt</code> and <code>/ar/llms.txt</code> all answer 404, so a shared cache cannot be primed with a file built in the wrong language.</p>
+
+  <div class="ba">
+    <div><div class="pre-label">robots.txt, in full</div><pre>User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-api
+Disallow: /api
+Disallow: /checkout
+Disallow: /cart
+Disallow: /my-account
+Disallow: /my-wishlist
+Disallow: /wishlist
+Disallow: /track-my-order
+
+Sitemap: https://kbeautybliss.test/sitemap.xml
+</pre></div>
+    <div><div class="pre-label">llms.txt, in full</div><pre># K-Beauty Bliss
+
+Authentic Korean skincare, delivered across the UAE.
+
+## Key pages
+- [Shop](https://kbeautybliss.test/shop/)
+- [Journal](https://kbeautybliss.test/skincare-guide/)
+</pre></div>
+  </div>
+
+  <div class="pre-label">sitemap.xml &mdash; 62 URLs, English only (first 22 lines)</div>
+  <pre>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;urlset xmlns=&quot;http://www.sitemaps.org/schemas/sitemap/0.9&quot;&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/&lt;/loc&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;1.0&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/shop/&lt;/loc&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.9&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/reviews/&lt;/loc&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/skin-quiz/&lt;/loc&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/korean-skincare-brands/&lt;/loc&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/skincare-guide/&lt;/loc&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/new-in/&lt;/loc&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/best-sellers/&lt;/loc&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/super-sale/&lt;/loc&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/everything-under-54-aed/&lt;/loc&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/concern/acne/&lt;/loc&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/privacy-policy/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.4&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/terms-and-conditions/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.4&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/delivery/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.4&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/refund_returns/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.4&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/faqs/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.4&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/contact-us/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.4&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/about/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.4&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/product/relief-sun-rice-probiotics-spf50/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.8&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/product/glow-deep-serum-rice-alpha-arbutin/&lt;/loc&gt;&lt;lastmod&gt;2026-09-26&lt;/lastmod&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.8&lt;/priority&gt;&lt;/url&gt;</pre>
+
+  <div class="pre-label">sitemap.xml with Arabic live &mdash; 124 URLs, each carrying the whole hreflang cluster (first 18 lines)</div>
+  <pre>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;urlset xmlns=&quot;http://www.sitemaps.org/schemas/sitemap/0.9&quot; xmlns:xhtml=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;1.0&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;1.0&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/shop/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/shop/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/shop/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/shop/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.9&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/shop/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/shop/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/shop/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/shop/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.9&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/reviews/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/reviews/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/reviews/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/reviews/&quot;/&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/reviews/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/reviews/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/reviews/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/reviews/&quot;/&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/skin-quiz/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/skin-quiz/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/skin-quiz/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/skin-quiz/&quot;/&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/skin-quiz/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/skin-quiz/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/skin-quiz/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/skin-quiz/&quot;/&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/korean-skincare-brands/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/korean-skincare-brands/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/korean-skincare-brands/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/korean-skincare-brands/&quot;/&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/korean-skincare-brands/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/korean-skincare-brands/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/korean-skincare-brands/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/korean-skincare-brands/&quot;/&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.5&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/skincare-guide/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/skincare-guide/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/skincare-guide/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/skincare-guide/&quot;/&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/skincare-guide/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/skincare-guide/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/skincare-guide/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/skincare-guide/&quot;/&gt;&lt;changefreq&gt;weekly&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/new-in/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/new-in/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/new-in/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/new-in/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/new-in/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/new-in/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/new-in/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/new-in/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/best-sellers/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/best-sellers/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/best-sellers/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/best-sellers/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;
+  &lt;url&gt;&lt;loc&gt;https://kbeautybliss.test/ar/best-sellers/&lt;/loc&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;en&quot; href=&quot;https://kbeautybliss.test/best-sellers/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;ar&quot; href=&quot;https://kbeautybliss.test/ar/best-sellers/&quot;/&gt;&lt;xhtml:link rel=&quot;alternate&quot; hreflang=&quot;x-default&quot; href=&quot;https://kbeautybliss.test/best-sellers/&quot;/&gt;&lt;changefreq&gt;daily&lt;/changefreq&gt;&lt;priority&gt;0.6&lt;/priority&gt;&lt;/url&gt;</pre>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-n">4 &mdash; before and after</div>
+  <h2>What this round changed, and what a setting changes</h2>
+
+  <h3 class="area">Built this round &mdash; a content page&rsquo;s own SEO fields now reach the page</h3>
+  <p class="lede"><code>pages.seo</code> carries the same <code>{title, desc, og_image, canonical, noindex}</code> shape as products, categories, brands and posts, and the storefront read none of it. Worse: the SEO Audit screen <em>skips</em> a page whose noindex is ticked, so it reported the page as out of the index while the page went on inviting the crawl.</p>
+  <div class="ba before-after">
+    <div><h4>Before</h4><pre>seo.title     &quot;Delivery, returns and the questions we are asked most&quot;
+  published:  &lt;title&gt;Frequently Asked Questions &amp;middot; K-Beauty Bliss&lt;/title&gt;
+
+seo.desc      &quot;How delivery, returns and order tracking work at K-Beauty Bliss.&quot;
+  published:  &lt;meta name=&quot;description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+              (the SITE-WIDE default)
+
+seo.canonical &quot;https://kbeautybliss.test/somewhere-else/&quot;
+  published:  &lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/faqs/&quot;&gt;
+
+seo.noindex   true
+  published:  &lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+  sitemap:    still carried &lt;loc&gt;.../faqs/&lt;/loc&gt;</pre></div>
+    <div><h4>After &mdash; with a title and description saved on the row</h4><pre>&lt;title&gt;Delivery, returns and the questions we are asked most&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;How delivery, returns and order tracking work at K-Beauty Bliss.&quot;&gt;
+&lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
+&lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/faqs/&quot;&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;website&quot;&gt;
+&lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Delivery, returns and the questions we are asked most&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;How delivery, returns and order tracking work at K-Beauty Bliss.&quot;&gt;
+&lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/faqs/&quot;&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot;&gt;
+&lt;meta name=&quot;twitter:title&quot; content=&quot;Delivery, returns and the questions we are asked most&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;How delivery, returns and order tracking work at K-Beauty Bliss.&quot;&gt;</pre></div>
+  </div>
+
+  <h3 class="area">Built this round &mdash; FAQPage, from the questions the page already answers</h3>
+  <p class="lede">No FAQ drop-down is being promised: Google stopped showing that rich result on 7 May 2026 and the research is right about it. What this publishes is the question/answer <em>pair</em> an answer engine extracts, which an <code>&lt;h3&gt;</code> above a <code>&lt;p&gt;</code> is not. A heading counts as a question only if it ends in a question mark &mdash; which is why the shipped FAQ page produces 4 pairs and the shipped returns page produces none, with no page named anywhere in the code. <b>Ships switched off.</b></p>
+  <div class="ba before-after">
+    <div><h4>Before &mdash; the whole graph on /faqs/</h4><pre>@type: Organization
+@type: WebSite
+
+(no FAQPage, and no BreadcrumbList either)</pre></div>
+    <div><h4>After, once switched on</h4><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;FAQPage&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test/faqs/&quot;,
+    &quot;inLanguage&quot;: &quot;en&quot;,
+    &quot;mainEntity&quot;: [
+        {
+            &quot;@type&quot;: &quot;Question&quot;,
+            &quot;name&quot;: &quot;How do I check where my order is?&quot;,
+            &quot;acceptedAnswer&quot;: {
+                &quot;@type&quot;: &quot;Answer&quot;,
+                &quot;text&quot;: &quot;Use our Track my order page. You will need the order number from your confirmation email and the email address you ordered with.&quot;
+            }
+        },
+        {
+            &quot;@type&quot;: &quot;Question&quot;,
+            &quot;name&quot;: &quot;How much is delivery?&quot;,
+            &quot;acceptedAnswer&quot;: {
+                &quot;@type&quot;: &quot;Answer&quot;,
+                &quot;text&quot;: &quot;Delivery options and charges are calculated for your address at checkout and shown in full before you pay. See Shipping &amp; Delivery.&quot;
+            }
+        },
+        {
+            &quot;@type&quot;: &quot;Question&quot;,
+            &quot;name&quot;: &quot;Can I return something?&quot;,
+            &quot;acceptedAnswer&quot;: {
+                &quot;@type&quot;: &quot;Answer&quot;,
+                &quot;text&quot;: &quot;Yes — please start by contacting us with your order number. See Returns &amp; Refunds.&quot;
+            }
+        },
+        {
+            &quot;@type&quot;: &quot;Question&quot;,
+            &quot;name&quot;: &quot;How do I reach a person?&quot;,
+            &quot;acceptedAnswer&quot;: {
+                &quot;@type&quot;: &quot;Answer&quot;,
+                &quot;text&quot;: &quot;The phone number and WhatsApp link at the bottom of every page reach us directly, or you can use our Contact us page.&quot;
+            }
+        }
+    ]
+}</pre></div>
+  </div>
+
+  <h3 class="area">A setting, not a change &mdash; the business address</h3>
+  <p class="lede">Store &rarr; Business Details &rarr; Business. Ships blank, so the node is bare. Fill in the street, the area, the emirate and the country and the <em>existing</em> organization node gains the address &mdash; it is never published as a second node. Blank out one required field and the whole address goes rather than half of it.</p>
+  <div class="ba before-after">
+    <div><h4>As it ships &mdash; nothing filled in</h4><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Organization&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
+}</pre></div>
+    <div><h4>Address, hours and coordinates filled in, org type = Store</h4><pre>{
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;Store&quot;,
+    &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
+    &quot;logo&quot;: &quot;https://kbeautybliss.test/logo.png&quot;,
+    &quot;sameAs&quot;: [
+        &quot;https://instagram.com/kbeauty.bliss&quot;
+    ],
+    &quot;address&quot;: {
+        &quot;@type&quot;: &quot;PostalAddress&quot;,
+        &quot;streetAddress&quot;: &quot;Unit 7, DREC, Al Manara Road&quot;,
+        &quot;addressLocality&quot;: &quot;Al Quoz 1, Dubai&quot;,
+        &quot;addressRegion&quot;: &quot;Dubai&quot;,
+        &quot;addressCountry&quot;: &quot;AE&quot;
+    },
+    &quot;telephone&quot;: &quot;+971 58 505 2611&quot;,
+    &quot;geo&quot;: {
+        &quot;@type&quot;: &quot;GeoCoordinates&quot;,
+        &quot;latitude&quot;: &quot;25.1279&quot;,
+        &quot;longitude&quot;: &quot;55.2296&quot;
+    },
+    &quot;openingHoursSpecification&quot;: [
+        {
+            &quot;@type&quot;: &quot;OpeningHoursSpecification&quot;,
+            &quot;dayOfWeek&quot;: [
+                &quot;Monday&quot;,
+                &quot;Tuesday&quot;,
+                &quot;Wednesday&quot;,
+                &quot;Thursday&quot;,
+                &quot;Friday&quot;,
+                &quot;Saturday&quot;
+            ],
+            &quot;opens&quot;: &quot;10:00&quot;,
+            &quot;closes&quot;: &quot;22:00&quot;
+        },
+        {
+            &quot;@type&quot;: &quot;OpeningHoursSpecification&quot;,
+            &quot;dayOfWeek&quot;: &quot;Sunday&quot;,
+            &quot;opens&quot;: &quot;12:00&quot;,
+            &quot;closes&quot;: &quot;20:00&quot;
+        }
+    ]
+}</pre></div>
+  </div>
+
+  <h3 class="area">A setting, not a change &mdash; the merchant listing</h3>
+  <p class="lede">Store &rarr; SEO &amp; Meta &rarr; Merchant listing. Off by default, because a wrong delivery promise in a Google result is worse than none &mdash; it is a promise Google shows a shopper. This is exactly what would be published for a 20 AED rate, free over 199 AED and a 7-day return window.</p>
+  <div class="ba before-after">
+    <div><h4>Off &mdash; how it ships</h4><pre>{
+    &quot;@type&quot;: &quot;Offer&quot;,
+    &quot;priceCurrency&quot;: &quot;AED&quot;,
+    &quot;price&quot;: &quot;937.00&quot;,
+    &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+    &quot;itemCondition&quot;: &quot;https://schema.org/NewCondition&quot;,
+    &quot;priceSpecification&quot;: {
+        &quot;@type&quot;: &quot;UnitPriceSpecification&quot;,
+        &quot;price&quot;: &quot;937.00&quot;,
+        &quot;priceCurrency&quot;: &quot;AED&quot;,
+        &quot;valueAddedTaxIncluded&quot;: true
+    }
+}</pre></div>
+    <div><h4>On, with terms confirmed</h4><pre>{
+    &quot;@type&quot;: &quot;Offer&quot;,
+    &quot;priceCurrency&quot;: &quot;AED&quot;,
+    &quot;price&quot;: &quot;937.00&quot;,
+    &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
+    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+    &quot;itemCondition&quot;: &quot;https://schema.org/NewCondition&quot;,
+    &quot;priceSpecification&quot;: {
+        &quot;@type&quot;: &quot;UnitPriceSpecification&quot;,
+        &quot;price&quot;: &quot;937.00&quot;,
+        &quot;priceCurrency&quot;: &quot;AED&quot;,
+        &quot;valueAddedTaxIncluded&quot;: true
+    },
+    &quot;shippingDetails&quot;: {
+        &quot;@type&quot;: &quot;OfferShippingDetails&quot;,
+        &quot;shippingRate&quot;: {
+            &quot;@type&quot;: &quot;MonetaryAmount&quot;,
+            &quot;value&quot;: &quot;0.00&quot;,
+            &quot;currency&quot;: &quot;AED&quot;
+        },
+        &quot;shippingDestination&quot;: {
+            &quot;@type&quot;: &quot;DefinedRegion&quot;,
+            &quot;addressCountry&quot;: &quot;AE&quot;
+        }
+    },
+    &quot;hasMerchantReturnPolicy&quot;: {
+        &quot;@type&quot;: &quot;MerchantReturnPolicy&quot;,
+        &quot;applicableCountry&quot;: &quot;AE&quot;,
+        &quot;returnPolicyCategory&quot;: &quot;https://schema.org/MerchantReturnFiniteReturnWindow&quot;,
+        &quot;merchantReturnDays&quot;: 7
+    }
+}</pre></div>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-n">5 &mdash; the audit screen</div>
+  <h2>What Store &rarr; SEO &amp; Meta &rarr; SEO Audit says about this fixture</h2>
+  <p class="lede">Shopify ships nothing comparable. The verdict line is printed at the top of the screen; the counts below it are per check.</p>
+  <pre>{
+    &quot;verdict&quot;: &quot;51 indexable URLs scanned. Biggest issue: No image (39).&quot;,
+    &quot;scanned&quot;: {
+        &quot;Products&quot;: 28,
+        &quot;Categories&quot;: 7,
+        &quot;Brands&quot;: 8,
+        &quot;Articles&quot;: 1,
+        &quot;Pages&quot;: 7
+    },
+    &quot;checks&quot;: {
+        &quot;duplicate_title&quot;: {
+            &quot;label&quot;: &quot;Duplicate titles&quot;,
+            &quot;count&quot;: 0
+        },
+        &quot;duplicate_description&quot;: {
+            &quot;label&quot;: &quot;Duplicate meta descriptions&quot;,
+            &quot;count&quot;: 24
+        },
+        &quot;bad_canonical&quot;: {
+            &quot;label&quot;: &quot;Canonical points somewhere unsafe&quot;,
+            &quot;count&quot;: 0
+        },
+        &quot;title_too_long&quot;: {
+            &quot;label&quot;: &quot;Title longer than 60 characters&quot;,
+            &quot;count&quot;: 0
+        },
+        &quot;title_too_short&quot;: {
+            &quot;label&quot;: &quot;Title shorter than 15 characters&quot;,
+            &quot;count&quot;: 17
+        },
+        &quot;no_description&quot;: {
+            &quot;label&quot;: &quot;No description at all&quot;,
+            &quot;count&quot;: 23
+        },
+        &quot;thin_description&quot;: {
+            &quot;label&quot;: &quot;Description under 8 words&quot;,
+            &quot;count&quot;: 0
+        },
+        &quot;no_image&quot;: {
+            &quot;label&quot;: &quot;No image&quot;,
+            &quot;count&quot;: 39
+        },
+        &quot;product_no_image_alt&quot;: {
+            &quot;label&quot;: &quot;Product image with no alt text&quot;,
+            &quot;count&quot;: 4
+        },
+        &quot;product_no_identifier&quot;: {
+            &quot;label&quot;: &quot;Product has neither SKU nor GTIN&quot;,
+            &quot;count&quot;: 0
+        },
+        &quot;product_no_category&quot;: {
+            &quot;label&quot;: &quot;Product sits in no category&quot;,
+            &quot;count&quot;: 4
+        },
+        &quot;legacy_url_no_redirect&quot;: {
+            &quot;label&quot;: &quot;Old shop address with no redirect&quot;,
+            &quot;count&quot;: 12
+        }
+    }
+}</pre>
+</div></section>
+
+</main>
+
+<footer><div class="wrap">
+  <p><b>How to read a &ldquo;Refused on purpose&rdquo; row.</b> Each one states today&rsquo;s measured size rather than saying &ldquo;not at this size&rdquo;. The sitemap index split, for instance, is refused at a projected 1,410 URLs and 668&nbsp;KB against limits of 50,000 URLs and 50&nbsp;MB.</p>
+  <p><b>What this page is not.</b> It is not a traffic forecast. There is no search-volume figure anywhere in the SEO research for any term in either language, because this project has no keyword tool and no Search Console for any domain. The concern list is well-evidenced for choosing which pages to build and will not support a forecast.</p>
+  <p>Regenerated by <code>tests/Feature/SeoPreviewsTest.php</code> on every suite run, so the page and the code cannot disagree.</p>
+</div></footer>
+
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.mrow'));
+  var areas = Array.prototype.slice.call(document.querySelectorAll('.area'));
+  Array.prototype.forEach.call(document.querySelectorAll('.f'), function (btn) {
+    btn.addEventListener('click', function () {
+      var want = btn.getAttribute('data-f');
+      Array.prototype.forEach.call(document.querySelectorAll('.f'), function (b) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+      rows.forEach(function (r) {
+        r.style.display = (want === 'ALL' || r.getAttribute('data-v') === want) ? '' : 'none';
+      });
+      // Hide a heading whose whole group is filtered out, so the page does not
+      // read as a list of empty sections.
+      areas.forEach(function (h) {
+        var any = false, n = h.nextElementSibling;
+        while (n && n.classList.contains('mrow')) {
+          if (n.style.display !== 'none') { any = true; }
+          n = n.nextElementSibling;
+        }
+        h.style.display = any ? '' : 'none';
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

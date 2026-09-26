@@ -508,13 +508,37 @@ class SeoFilesController extends Controller
             $routedPaths = self::routedPagePaths();
             $routed = array_keys($routedPaths);
 
+            /*
+             * ▲ `seo` RIDES ALONG, BECAUSE A NOINDEXED PAGE WAS STILL SUBMITTED.
+             *
+             * isNoindex() below this block already existed and its own comment
+             * says the rule: "a page that sets noindex must drop out of this
+             * file whichever table it lives in. Google reports the pair 'page
+             * says noindex, sitemap says crawl me' as an error against the
+             * property". It was applied to products, categories and brands and
+             * not to `pages`, which was the one table whose column this query
+             * did not even select.
+             *
+             * Measured before this line existed: `pages.seo.noindex` set on the
+             * `faqs` row, and /sitemap.xml went on carrying /faqs/ — while
+             * PageController::show() went on serving "index, follow" on it,
+             * because that half was broken too. Two documents agreeing with each
+             * other and both disagreeing with the owner.
+             *
+             * One extra column on a query that was already running, so the
+             * sitemap's measured query count does not move.
+             */
             $pages = DB::table('pages')
-                ->select('slug', 'updated_at')
+                ->select('slug', 'updated_at', 'seo')
                 ->whereIn('slug', $routed)
                 ->where('status', 'published')
                 ->get();
 
             foreach ($pages as $page) {
+                if (self::isNoindex($page->seo ?? null)) {
+                    continue;
+                }
+
                 // The ROUTER's address for this row, not the slug spelled into
                 // a URL — see routedPagePaths(). Identical for all seven today.
                 $add($base . $routedPaths[$page->slug], $page->updated_at ?? null, '0.4', 'monthly');

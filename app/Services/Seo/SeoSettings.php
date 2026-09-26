@@ -43,6 +43,15 @@ final class SeoSettings
         'org_type' => 'Organization',
         'sitemap_enabled' => '1',
         'llms_enabled' => '1',
+        /*
+         * FAQPage JSON-LD on a content page written as questions
+         * (Services\Seo\FaqSchema). '0', so the package that carries the class
+         * moves no page by a byte -- rule 1. Turning it on wants the key on
+         * AdminController::SETTING_RULES and a card on Store -> SEO & Meta;
+         * until then this default is what every reader sees and the node is
+         * never built.
+         */
+        'faq_schema' => '0',
         'merchant_condition' => 'NewCondition',
         'merchant_ship_country' => 'AE',
     ];
