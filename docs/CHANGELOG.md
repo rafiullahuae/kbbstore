@@ -3,6 +3,78 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.281
+The SEO back office: see what Google will print BEFORE you save, and one screen
+that says what is still waiting on you.
+
+WHAT CHANGES ON A SCREEN YOU ALREADY USE: a sixth tab appears on Store -> SEO &
+Meta, and a Google result appears above the SEO boxes on four editors. No control
+was added, removed, renamed or moved, and clicking SEO & Meta still opens the
+Settings tab it opened yesterday.
+
+A LIVE GOOGLE RESULT, WHERE YOU ARE EDITING
+
+  Store -> SEO & Meta -> Settings -> Search appearance   (the homepage)
+  Catalog -> Categories -> the category -> above "SEO title"
+  Catalog -> Brands -> the brand -> above "SEO title"
+  Content -> Blog Posts -> the article -> Search engines -> above "Page title"
+
+  (Products already had one. Pages still cannot have one, because there is no
+  page editor to put it in -- see below.)
+
+  This matters because what is in the box is NOT what Google receives, and four
+  rules sit in between that no screen showed you: an EMPTY title box publishes
+  the row's own name through the title template, so the site name gets appended;
+  a FILLED one is the whole title and the site name is NOT appended; %%title%%
+  is substituted on the server and a token the engine is not handed is DELETED
+  -- the defect that once published the site name alone on 671 product pages;
+  and an empty description falls through the row's own description, then the
+  default description, then to nothing.
+
+  The preview asks the SERVER what would be published rather than working it out
+  again in the browser. That is deliberate: a second copy of those rules would be
+  a fifth dialect of them, and the lane's own test caught the second copy getting
+  a category archive wrong before it shipped. For a box left EMPTY the answer is
+  read off the live page itself.
+
+STORE -> SEO & META -> OVERVIEW
+
+  Every row is computed and DISAPPEARS when the work is done -- nothing here
+  nags for ever. It reports, in three bands ordered by what each costs you:
+
+  - The whole shop hidden from Google, in a band of its own and above everything
+    else. One select, no other symptom, and while it is true every other line on
+    the screen is a reading of a switched-off machine.
+  - Concern-page tagging progress, per concern ("0 of 3 tagged").
+  - A business type that says you have a shopfront with no address behind it, or
+    map coordinates filled in under a type that cannot publish them.
+  - FAQ markup in whichever of its two wrong states you are in: switched off
+    while your pages ARE written as questions (with the count it would publish),
+    or switched on while no page is. Neither has any symptom on the shop.
+  - Six settings whose absence has a real consequence, each saying what it is.
+  - The audit's own findings, ranked, with ten "Take me there" buttons. A
+    finding with a count of zero is one green line instead of the twelfth
+    identical card saying "None" -- which is how the one that is NOT fine was
+    getting missed.
+
+Files: app/Http/Controllers/Admin/SeoPreviewApiController.php,
+app/Http/Controllers/Admin/SeoTasksApiController.php, routes/seo-back-office.php,
+resources/views/admin/partials/seo-back-office.blade.php and the three editor
+partials, app/Support/AdminCapabilities.php, app/Support/SeoAudit.php,
+app/Support/Seo.php, app/Services/Seo/FaqSchema.php,
+resources/views/admin/app.blade.php, routes/web.php, and
+database/migrations/2027_02_10_000000_clear_caches_seo_back_office.php.
+
+THAT MIGRATION IS NOT OPTIONAL. A new route file does nothing until the compiled
+route table is dropped -- without it all four previews 404 and the Overview says
+it cannot read the shop -- and five changed screens are cached by path, so a
+stale copy is a console with no Overview tab and no preview anywhere, from a
+package that reported success.
+
+KNOWN, AND NOT FIXED IN THIS PACKAGE: content pages carry SEO fields and are
+scanned by the audit, and there is still no page editor in this console, so a
+finding against a page is not actionable anywhere. The page editor is Phase 11.
+
 ## 2.60.280
 Six SEO features that were finished, tested, merged -- and emitting nothing.
 
