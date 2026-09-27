@@ -192,6 +192,48 @@ Route::post('/ugc-sections/{id}/videos', [\App\Http\Controllers\Admin\UgcSection
     ->middleware('throttle:60,1')
     ->name('admin.ugc.sections.videos');
 
+/*
+|------------------------------------------------------------------------------
+| Lane M1 — upload a new video from inside the section
+|------------------------------------------------------------------------------
+|
+|     POST   /admin-api/ugc-sections/{id}/upload   one file -> a new draft clip,
+|                                                  in this section, in the Clips
+|                                                  tab, and in the Media Library
+|
+| NO WIRING NEEDED, and that is why it is in this file rather than a new one:
+| routes/ugc-admin.php is ALREADY required from routes/web.php inside the
+| admin-api group (line ~695), so this route dispatches the moment the package
+| lands and the route cache is cleared. A second route file would have needed a
+| second require in a file this lane may not edit, for no gain.
+|
+| ── THE CAPABILITY IS ALREADY RIGHT, AND IT WAS CHECKED ─────────────────────
+|
+| App\Support\AdminCapabilities::RULES already carries
+| ['POST', 'admin-api/ugc-sections/**', 'ugc.manage'] ABOVE the GET lines, and
+| RULES is first-match-wins, so this resolves to `ugc.manage` — the same
+| capability that guards POST /ugc-videos/{id}/media, which is the right answer:
+| this endpoint writes a file into the web root and creates a row. No new
+| capability is added, because adding one would mean an operator who may replace
+| a clip's file could not upload one, which is not a distinction anybody wants.
+| UgcSectionUploadTest pins the resolution rather than trusting this paragraph;
+| an unmapped admin route would fail closed anyway.
+|
+| ── THE THROTTLE MATCHES THE UPLOAD IT IS, NOT THE SECTION IT SITS ON ───────
+|
+| 12 a minute, the same as POST /ugc-videos/{id}/media and NOT the 60 the other
+| /ugc-sections routes carry, for the reason that file's header gives: this is
+| the only endpoint in the block that does real work per call — up to 64 MB moved
+| across the disk and, where ffmpeg exists, two transcodes on the request.
+|
+| Ships alongside database/migrations/2027_03_12_000000_clear_caches_media_-
+| everywhere.php, because a route added by a package does nothing until the
+| compiled route table is gone.
+*/
+Route::post('/ugc-sections/{id}/upload', [\App\Http\Controllers\Admin\UgcSectionController::class, 'upload'])
+    ->middleware('throttle:12,1')
+    ->name('admin.ugc.sections.upload');
+
 Route::get('/ugc-appearance', [\App\Http\Controllers\Admin\UgcAppearanceController::class, 'show'])
     ->middleware('throttle:60,1')
     ->name('admin.ugc.appearance');

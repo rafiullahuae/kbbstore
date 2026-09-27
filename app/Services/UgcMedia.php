@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Support\MediaRegistrar;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
@@ -192,11 +193,31 @@ final class UgcMedia
             return ['ok' => false, 'message' => 'Upload failed — check the permissions on public/uploads.'];
         }
 
+        $stored = '/'.self::DIR.'/'.$placed['name'];
+
         return [
             'ok' => true,
-            'path' => '/'.self::DIR.'/'.$placed['name'],
+            'path' => $stored,
             'bytes' => $size,
             'mime' => $verdict['mime'],
+            /*
+             * AND IT JOINS THE MEDIA LIBRARY, which until this lane it did not.
+             *
+             * The owner's rule, in his words: "whenever we upload any media, it
+             * should go to Media also." This class is the ONLY writer of files
+             * under uploads/ugc/ and it wrote no `media` row at all, so every
+             * clip, teaser and poster on the shop was invisible to the library
+             * and to its usage index. One line here covers all three kinds and
+             * both entry points, because both end at the same registrar.
+             *
+             * `media_id` is reported, not required: MediaRegistrar::record()
+             * returns null rather than throwing, for the reason its header sets
+             * out — the file is already written and already being served by the
+             * time this runs, so a failed catalogue entry must not turn a good
+             * upload into a refusal. The caller's own response says which way it
+             * went, and a Rescan picks up anything missed.
+             */
+            'media_id' => MediaRegistrar::record($stored, $file->getClientOriginalName(), $verdict['mime'])?->id,
         ];
     }
 
@@ -253,11 +274,29 @@ final class UgcMedia
             return ['ok' => false, 'message' => 'That file could not be copied into the video library.'];
         }
 
+        $stored = '/'.self::DIR.'/'.$placed['name'];
+
         return [
             'ok' => true,
-            'path' => '/'.self::DIR.'/'.$placed['name'],
+            'path' => $stored,
             'bytes' => (int) @filesize($placed['dir'].'/'.$placed['name']),
             'mime' => $verdict['mime'],
+            /*
+             * THE COPY IS ITS OWN LIBRARY ROW, and that follows from the decision
+             * at the top of this method rather than contradicting it: the file
+             * under uploads/ugc/ is a SEPARATE FILE with its own generated name,
+             * deleted when the clip is, and the library's row for the original is
+             * untouched by any of that. A row for the copy is what stops it being
+             * the one file on this shop that the library cannot see; without it,
+             * deleting the clip would remove a file nothing had ever catalogued.
+             *
+             * The source's basename rides along as `original_name` so the grid
+             * reads "cosrx-cover.jpg" rather than "poster-20260927-...-x8.jpg" —
+             * search only, exactly as everywhere else. It is the SOURCE's name
+             * and not a request value: UgcPath::library() has already bounded the
+             * path it came from.
+             */
+            'media_id' => MediaRegistrar::record($stored, basename($source), $verdict['mime'])?->id,
         ];
     }
 
@@ -300,7 +339,42 @@ final class UgcMedia
          * READING ONE: finfo over the bytes on disk. Not getClientMimeType(),
          * which is a string the browser sends and an attacker sets.
          */
-        $detected = strtolower((string) (@(new \finfo(FILEINFO_MIME_TYPE))->file($path) ?: ''));
+        $detected = $this->finfoType($path);
+
+        if ($detected === null) {
+            /*
+             * ── THE READER ITSELF IS MISSING OR BROKEN ─────────────────────
+             *
+             * THE DEFECT, found by the lane that fixed the upload 500 and left
+             * here because this file is not that lane's. `@` suppresses PHP
+             * WARNINGS and not EXCEPTIONS, and in PHP 8 this line can throw two
+             * different things: finfo::__construct raises an exception when the
+             * magic database cannot be loaded, and on a host built without
+             * ext-fileinfo it is `Error: Class "finfo" not found`. Either one
+             * escaped store(), whose whole contract is to RETURN a refusal, and
+             * became a 500 on every upload of every kind — image, video and
+             * poster alike.
+             *
+             * AND IT IS REFUSED, NOT WAVED THROUGH. The temptation is to fall
+             * back to signature() alone, which is right here in this class and
+             * would keep uploads working. That is exactly the wrong repair:
+             * "both readings must agree" is the property that makes a disguise
+             * have to satisfy two independent readers, and a box with no finfo
+             * would silently become a box with one reader and a different
+             * security posture — the single point of failure the comment above
+             * this block exists to refuse. A shop whose PHP cannot read a file
+             * type is a shop that cannot safely accept files, and it says so.
+             *
+             * The sentence names the extension to install, because "this server
+             * could not read the file" is a refusal nobody can act on.
+             */
+            return [
+                'ok' => false,
+                'message' => 'This server cannot read what type a file is — PHP’s fileinfo extension is '
+                    .'missing or its type database could not be loaded, and nothing is accepted without '
+                    .'it. Nothing was saved. Ask your host to enable ext-fileinfo.',
+            ];
+        }
 
         /* READING TWO: our own signature read, owned by this file. */
         $sniffed = $this->signature($head);
@@ -356,6 +430,49 @@ final class UgcMedia
     }
 
     /**
+     * What finfo says these bytes are, or NULL when finfo cannot answer at all.
+     *
+     * THE DISTINCTION IS THE POINT, and it is the reason this is a method and
+     * not an expression. There are three outcomes and the old one-liner had two:
+     *
+     *   'video/mp4'  finfo read the file and recognised it.
+     *   ''           finfo read the file and does not know what it is — which is
+     *                a refusal on the merits, and check() composes it.
+     *   null         FINFO ITSELF IS NOT AVAILABLE. Nothing was read, nothing is
+     *                known, and the answer is not "unrecognised" — it is "this
+     *                server cannot perform the check".
+     *
+     * Collapsing the third into the second would have been the tidier fix and it
+     * would be wrong: an operator would be told their perfectly good mp4 "is of
+     * a type this server could not read" and would re-encode it forever.
+     *
+     * Throwable and not Exception: `Class "finfo" not found` is an Error, and an
+     * Error is not an Exception. Catching the narrower one is how this defect
+     * survives the fix.
+     */
+    private function finfoType(string $path): ?string
+    {
+        try {
+            $reader = new \finfo(FILEINFO_MIME_TYPE);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+
+        // The read itself. `@` for the warning a permission or a stat failure
+        // raises; the catch for the exception a corrupt file can raise from the
+        // magic parser. Both end as '' — finfo answered, and does not know.
+        try {
+            return strtolower((string) (@$reader->file($path) ?: ''));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return '';
+        }
+    }
+
+    /**
      * The directory, and the name the file will have in it.
      *
      * A GENERATED NAME, never the client's. The uploaded filename is
@@ -389,6 +506,38 @@ final class UgcMedia
      * re-checked here rather than assumed: root-relative, under /uploads/ugc/,
      * one path segment, no traversal. UgcPath::stored() is the single place
      * that decides what that means.
+     *
+     * ── AND THE LIBRARY ROW GOES WITH THE FILE ──────────────────────────────
+     *
+     * THE DECISION, because it is one and not a detail. From this lane every
+     * file this class writes is also a `media` row, and this method unlinks the
+     * file — so left alone, a replaced clip and a deleted video would each leave
+     * a row pointing at nothing. The Media Library renders `<img>`/`<video>` at a
+     * row's URL, so that row is a permanently broken tile with no screen anywhere
+     * that can clear it, and it grows by one every time the owner replaces a
+     * clip. The row therefore follows the file, in this call, by the class that
+     * deleted it.
+     *
+     * NOT THROUGH THE LIBRARY'S OWN DELETE GUARD, deliberately.
+     * MediaLibraryApiController::destroy() refuses while something still points
+     * at a file, and it is right to — there the operator is CHOOSING to remove a
+     * picture and the cost of being wrong is a broken image on a live product
+     * page. Here nothing is being chosen: the file is going regardless, because
+     * the clip that owned it was deleted or replaced. Keeping the row would not
+     * save the file, only hide that it had gone.
+     *
+     * IT CANNOT REACH A SHARED FILE. UgcPath::stored() bounds the path to one
+     * segment of uploads/ugc/, only this class writes there, and adopt() COPIES a
+     * library picture in under a fresh name rather than referencing it — so the
+     * original the picker shows is never the row that goes.
+     *
+     * ORDER MATTERS: the row goes FIRST. A file this method fails to unlink is a
+     * few kilobytes nobody sees; a row whose file has gone is a broken tile, so
+     * the half that must not be skipped is done before the half that can fail.
+     * Neither can throw: MediaRegistrar::forget() reports and returns 0.
+     *
+     * The bool it returns is unchanged, and it still means what it said — whether
+     * the FILE went — because that is what every caller reads it for.
      */
     public function forget(?string $storedPath): bool
     {
@@ -397,6 +546,8 @@ final class UgcMedia
         if ($safe === null) {
             return false;
         }
+
+        MediaRegistrar::forget($safe);
 
         $absolute = public_path(ltrim($safe, '/'));
 

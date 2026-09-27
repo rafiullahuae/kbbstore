@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\UgcVideo;
+use App\Support\MediaRegistrar;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Exception\ExceptionInterface as ProcessException;
 use Symfony\Component\Process\Process;
@@ -191,6 +192,17 @@ final class UgcTranscoder
                 $out['poster'] = '/'.UgcMedia::DIR.'/'.$name;
 
                 /*
+                 * AND INTO THE MEDIA LIBRARY, like every other file this shop
+                 * writes into its own web root — the owner's rule, applied to
+                 * a file ffmpeg made rather than one somebody uploaded, because
+                 * the library cannot tell the difference and neither should it.
+                 * No original name: nobody ever called this frame anything, so
+                 * the tile falls back to the stored filename rather than being
+                 * given a name that pretends to be his.
+                 */
+                MediaRegistrar::record($out['poster'], null, 'image/jpeg');
+
+                /*
                  * THE BOX, WITHOUT ffprobe. getimagesize() reads the poster's
                  * own header, so width and height are known from the frame we
                  * just wrote whether or not this box has a prober. That is what
@@ -213,6 +225,9 @@ final class UgcTranscoder
 
             if ($this->run($this->teaserCommand($ffmpeg, $source, $dir.'/'.$name))) {
                 $out['teaser'] = '/'.UgcMedia::DIR.'/'.$name;
+
+                /* Catalogued for the same reason the poster above is. */
+                MediaRegistrar::record($out['teaser'], null, 'video/mp4');
             } else {
                 // Not an error state. The rail falls back to the poster, which
                 // is drawn and budgeted.

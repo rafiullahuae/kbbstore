@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Media;
 use App\Support\ImageVariants;
+use App\Support\MediaRegistrar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -206,44 +207,28 @@ class MediaUploadController extends Controller
      */
     private function record(string $path, string $filename, string $mime, string $destination, string $clientName): bool
     {
-        try {
-            $size = @filesize($destination);
-
-            // getimagesize() reads the header only. It returns false for SVG,
-            // which has no pixel dimensions, and those rows keep null width and
-            // height rather than a fabricated 0.
-            $dimensions = @getimagesize($destination);
-
-            Media::create([
-                'filename' => $filename,
-                /*
-                 * The name the operator knows the file by, kept ONLY so the
-                 * library can be searched by it. It never decides anything: not
-                 * the stored filename, not the extension, not the served
-                 * Content-Type. Every one of those is settled above from the
-                 * file's own bytes, which is the defect this endpoint already
-                 * had once and must not grow back.
-                 *
-                 * basename() because a browser is free to send a path, and
-                 * truncated to the column width so an absurd name cannot make a
-                 * successful upload fail at the insert. It is rendered through
-                 * the screen's HTML escaper like every other operator string.
-                 */
-                'original_name' => mb_substr(basename(str_replace('\\', '/', $clientName)), 0, 255) ?: null,
-                'path' => $path,
-                'mime' => $mime,
-                'size' => is_int($size) && $size > 0 ? $size : null,
-                'width' => is_array($dimensions) ? (int) $dimensions[0] : null,
-                'height' => is_array($dimensions) ? (int) $dimensions[1] : null,
-                'alt' => '',
-            ]);
-
-            return true;
-        } catch (\Throwable $e) {
-            report($e);
-
-            return false;
-        }
+        /*
+         * THE ROW IS WRITTEN BY App\Support\MediaRegistrar NOW, AND NOT HERE.
+         *
+         * Every decision this method used to make on its own has moved there and
+         * NONE of them changed: the mime is still the one the bytes earned, the
+         * dimensions still come off the header and are still null for an SVG, the
+         * operator's filename is still kept for search only and still truncated
+         * to the column width, and a failure is still best-effort and reported
+         * rather than thrown. MediaUploadTest pins all of that and does not move.
+         *
+         * IT MOVED BECAUSE UgcMedia NEEDS THE SAME FOUR ANSWERS. Two copies of
+         * them is two copies to drift, and the half that drifts is always the one
+         * nobody is looking at — which is precisely how the shoppable-video
+         * module came to write files into the web root for months and record none
+         * of them. See MediaRegistrar's header for the measured state of that.
+         *
+         * $filename and $destination are no longer read: the registrar takes the
+         * basename off the path it was given and resolves public_path() itself,
+         * which is the only correct way to ask where this server's web root is.
+         * The signature is kept so the call site above reads exactly as it did.
+         */
+        return MediaRegistrar::record($path, $clientName, $mime) !== null;
     }
 
     /**
