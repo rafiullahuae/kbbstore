@@ -1,0 +1,386 @@
+{
+  "390": {
+    "step1": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "steps": {
+        "w": 336,
+        "h": 64
+      },
+      "rail": {
+        "w": 120,
+        "h": 62
+      },
+      "foot": {
+        "w": 336,
+        "h": 96
+      },
+      "draft": null,
+      "results": {
+        "w": 0,
+        "h": 0
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 1
+    },
+    "step2": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "steps": {
+        "w": 336,
+        "h": 64
+      },
+      "rail": {
+        "w": 139,
+        "h": 62
+      },
+      "foot": {
+        "w": 336,
+        "h": 161
+      },
+      "draft": null,
+      "results": {
+        "w": 0,
+        "h": 0
+      },
+      "loopBox": {
+        "w": 158,
+        "h": 281
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 2
+    },
+    "step4idle": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "steps": {
+        "w": 336,
+        "h": 64
+      },
+      "rail": {
+        "w": 111,
+        "h": 62
+      },
+      "foot": {
+        "w": 336,
+        "h": 161
+      },
+      "draft": null,
+      "results": {
+        "w": 310,
+        "h": 230
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "11.5px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 4
+    },
+    "step4draft": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "steps": {
+        "w": 336,
+        "h": 64
+      },
+      "rail": {
+        "w": 111,
+        "h": 62
+      },
+      "foot": {
+        "w": 336,
+        "h": 161
+      },
+      "draft": null,
+      "results": {
+        "w": 310,
+        "h": 101
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 4
+    },
+    "step4matches": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "steps": {
+        "w": 336,
+        "h": 64
+      },
+      "rail": {
+        "w": 111,
+        "h": 62
+      },
+      "foot": {
+        "w": 336,
+        "h": 161
+      },
+      "draft": null,
+      "results": {
+        "w": 310,
+        "h": 145
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "11.5px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 4
+    },
+    "draftBar": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "steps": {
+        "w": 336,
+        "h": 64
+      },
+      "rail": {
+        "w": 120,
+        "h": 62
+      },
+      "foot": {
+        "w": 336,
+        "h": 96
+      },
+      "draft": {
+        "w": 336,
+        "h": 128
+      },
+      "results": {
+        "w": 0,
+        "h": 0
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": "12.5px",
+      "panelsInDom": 5,
+      "visiblePanel": 1
+    },
+    "draftBarText": "You have unsaved changes to this clip from a moment ago. What is on screen now is what the server has. Restore themDiscard"
+  },
+  "1280": {
+    "step1": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "steps": {
+        "w": 966,
+        "h": 64
+      },
+      "rail": {
+        "w": 188,
+        "h": 62
+      },
+      "foot": {
+        "w": 966,
+        "h": 62
+      },
+      "draft": null,
+      "results": {
+        "w": 0,
+        "h": 0
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 1
+    },
+    "step2": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "steps": {
+        "w": 966,
+        "h": 64
+      },
+      "rail": {
+        "w": 188,
+        "h": 62
+      },
+      "foot": {
+        "w": 966,
+        "h": 62
+      },
+      "draft": null,
+      "results": {
+        "w": 0,
+        "h": 0
+      },
+      "loopBox": {
+        "w": 158,
+        "h": 281
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 2
+    },
+    "step4idle": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "steps": {
+        "w": 966,
+        "h": 64
+      },
+      "rail": {
+        "w": 188,
+        "h": 62
+      },
+      "foot": {
+        "w": 966,
+        "h": 62
+      },
+      "draft": null,
+      "results": {
+        "w": 451,
+        "h": 230
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "11.5px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 4
+    },
+    "step4draft": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "steps": {
+        "w": 966,
+        "h": 64
+      },
+      "rail": {
+        "w": 188,
+        "h": 62
+      },
+      "foot": {
+        "w": 966,
+        "h": 62
+      },
+      "draft": null,
+      "results": {
+        "w": 451,
+        "h": 82
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 4
+    },
+    "step4matches": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "steps": {
+        "w": 966,
+        "h": 64
+      },
+      "rail": {
+        "w": 188,
+        "h": 62
+      },
+      "foot": {
+        "w": 966,
+        "h": 62
+      },
+      "draft": null,
+      "results": {
+        "w": 451,
+        "h": 145
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "11.5px",
+      "draftFont": null,
+      "panelsInDom": 5,
+      "visiblePanel": 4
+    },
+    "draftBar": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "steps": {
+        "w": 966,
+        "h": 64
+      },
+      "rail": {
+        "w": 188,
+        "h": 62
+      },
+      "foot": {
+        "w": 966,
+        "h": 62
+      },
+      "draft": {
+        "w": 966,
+        "h": 61
+      },
+      "results": {
+        "w": 0,
+        "h": 0
+      },
+      "loopBox": {
+        "w": 0,
+        "h": 0
+      },
+      "stepFont": "12px",
+      "resultsFont": "12px",
+      "draftFont": "12.5px",
+      "panelsInDom": 5,
+      "visiblePanel": 1
+    },
+    "draftBarText": "You have unsaved changes to this clip from a moment ago. What is on screen now is what the server has. Restore themDiscard"
+  }
+}

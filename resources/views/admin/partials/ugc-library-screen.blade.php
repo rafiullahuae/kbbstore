@@ -537,6 +537,47 @@
   .ugs-btn,.ugs-step,.ugs-drop,.ugs-tile,.ugs-progb{transition:none}
 }
 @media (max-width:640px){ .ugs-card{padding:12px} .ugs-foot{inset-block-end:-12px} }
+
+/* ── the repaint regions, the draft bar and the save state ──────────────────
+   A REGION IS AN ELEMENT THIS SCREEN REPAINTS ON ITS OWN, and the whole point
+   of naming them is that a step change no longer replaces #content.
+
+   .ugs-rg is display:contents because two of the regions live inside
+   `.ugs-panel{display:grid;gap:12px}`. A wrapper div there is a grid item, so an
+   EMPTY one -- the blockers region on a clip with no blockers, which is most of
+   them -- would add a 12px gap that was never on the page before. display:contents
+   makes the wrapper contribute nothing at all when it is empty and hand its
+   children straight to the grid when it is not, so the layout is byte-identical
+   either way. Rule 1. */
+.ugs-rg{display:contents}
+
+/* The draft bar. It is deliberately NOT is-bad or is-warm: an unsaved draft is
+   not an error, and colouring it like one would teach the owner to dismiss it. */
+.ugs-draft{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;min-width:0;
+           margin-bottom:12px;padding:10px 12px;border-radius:var(--r-sm,12px);
+           border:1px solid #cfd9ee;background:var(--surface-2,#f2f4fb);
+           color:var(--ink,#1f2633);font-size:12.5px;line-height:1.55}
+.ugs-drafttext{flex:1 1 240px;min-width:0}
+.ugs-drafttext b{font-weight:650}
+.ugs-draftacts{display:flex;flex-wrap:wrap;gap:7px}
+
+/* What the footer says about a save that is happening or has failed. The failed
+   state is the loud one on purpose: a background save that fails quietly is the
+   swallowed-write defect this project has already paid for once, wearing
+   different clothes. The script below names it in full. */
+.ugs-savest{flex:1 1 220px;min-width:0;font-size:12px;line-height:1.5;
+            color:var(--ink-soft,#626c80)}
+.ugs-savest.is-bad{color:var(--red-ink,#9b1c1c);font-weight:600}
+.ugs-savest.is-bad b{font-weight:700}
+
+/* The search's three answers. Each is a sentence rather than an empty box --
+   the defect this fixes is a screen that said nothing at all. */
+.ugs-rnote{padding:12px 10px;text-align:center;color:var(--ink-soft,#626c80);
+           font-size:12px;line-height:1.6}
+.ugs-rnote b{color:var(--ink,#1f2633);font-weight:650}
+.ugs-rhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;
+           padding:1px 2px 4px;color:var(--ink-soft,#626c80);font-size:11.5px;
+           line-height:1.5;font-weight:600;letter-spacing:.01em}
 </style>
 
 <script>
@@ -562,9 +603,207 @@
   var tagged = [];             // [{id, name, brand, at_ms}] in order
   var results = [];            // the product search's last answer
   var term = '';               // ...and what was typed to get it
+  /*
+   * ── WHY THE SEARCH NEEDED THREE MORE PIECES OF STATE ──────────────────────
+   *
+   * THE DEFECT, measured in Chromium before it was touched: type "anua" and the
+   * results area stays COMPLETELY EMPTY for 905 ms -- the 250 ms debounce plus
+   * the round trip -- and then, if nothing published matches, stays empty
+   * forever. resultsHTML() opened with `if (!results.length) return '';`, so
+   * every one of those states rendered the same nothing: nothing typed yet,
+   * still looking, and nothing found. The owner typed four characters, was shown
+   * absolutely nothing, and reasonably reported the search as broken. A silent
+   * empty state is indistinguishable from a dead one.
+   *
+   * Worse, the one case he is most likely to hit is the one nothing explained.
+   * The endpoint filters Product::visible(), so a DRAFT or hidden product is
+   * correctly not returned -- and the screen said nothing about that either.
+   * Measured here on a catalogue seeded with a draft Anua row: the term "rice
+   * 70" matched a real product he owns and drew a blank box.
+   *
+   *   `searching` is a request in flight OR a debounce waiting to fire, so the
+   *              gap is never silent.
+   *   `searched`  is whether a term has been answered at all, which is what
+   *              tells "nothing found" apart from "nothing asked".
+   *   `recent`    is the last few products, fetched once when step 4 is first
+   *              shown, so there is something to press before anybody types --
+   *              the owner asked for exactly this.
+   */
+  var searching = false;
+  var searched = false;
+  var recent = null;
+  var recentAsked = false;
+  var unpublishedHits = 0;     // matched the term but are not publishable
   var banner = null, busy = false, seq = 0;
   var step = 1;                // which panel is on show
   var loopEl = null;           // the mounted preview video, released before each repaint
+
+  /*
+   * ══ WHY A STEP CHANGE USED TO COST A ROUND TRIP, AND WHAT IT COSTS NOW ══════
+   *
+   * MEASURED FIRST, in Chromium against a clip with the owner's own file on it
+   * (8.5 MB, a cover, no teaser) over a link shaped like his -- 300 KB/s, 250 ms
+   * round trip. Click until the target panel was on screen AND the frame carrying
+   * it had been composited:
+   *
+   *   forward  1->2  1170 ms   2->3  1185 ms   3->4  1137 ms   4->5  1135 ms
+   *   back     5->4    21 ms   4->3    14 ms   3->2    19 ms   2->1    19 ms
+   *
+   * So the two halves had completely different diseases, and only one of them was
+   * slow:
+   *
+   * FORWARD was FOUR SEQUENTIAL ROUND TRIPS, not one. goStep() awaited save(),
+   * and save() is PUT /ugc-videos/{id}, then POST .../products, then load(),
+   * then open() -- each waiting on the one before, every time anybody moved one
+   * step to the right. That is the 1.1 s, and on a shop with more clips in the
+   * library and a real database behind it, it is the several seconds the owner
+   * reported.
+   *
+   * BACKWARD WAS ALREADY 14-21 ms and made NO request at all. The five panels are
+   * all in the DOM and toggled with `hidden`, so the panel swap itself was always
+   * free. A wholesale repaint of #content is NOT what made going back feel slow,
+   * and it is worth writing down that it was measured rather than assumed.
+   *
+   * WHAT WAS REALLY WRONG WITH THE REPAINT, then. render() replaced
+   * #content.innerHTML outright, which destroyed and rebuilt both <video>
+   * elements on EVERY repaint in EVERY direction -- proved by stamping a property
+   * on them and watching it never survive. The cost of that is not the paint, it
+   * is everything around it: the loop preview restarted from zero each time step
+   * 2 came back, the main player rewound to 0, and the browser re-issued range
+   * requests against the 8.5 MB file -- up to three per transition on a throttled
+   * link, and one per transition for the cover even on a step that shows neither.
+   * With media served the way a stock Apache directory serves it (a validator and
+   * no max-age) that is a conditional round trip per element per step; with no
+   * caching headers at all it is a re-download. Which of those the live box does
+   * is the one thing this could not see from here, so the fix removes the question
+   * instead of answering it: a repaint no longer touches the media at all.
+   *
+   * ── SO THERE ARE TWO MECHANISMS BELOW, AND THEY ARE INDEPENDENT ────────────
+   *
+   * `mounted` is the first. It holds mountKey() for the editor DOM currently on
+   * screen, and render() compares against it: same key, and the repaint is
+   * SURGICAL -- only the named regions are rewritten and #ugs-form's panels are
+   * left exactly where they are, <video> and all. Different key, and the editor is
+   * built from scratch. This is Lane V5's fix for the clip-editor dialog
+   * (modalHost/renderModal/renderModalBody in ugc-sections-screen.blade.php)
+   * applied to a screen that cannot move the thing out to <body>, because the
+   * video sits inside the layout rather than on top of it: the element stays put
+   * and the repaint gets smaller instead.
+   *
+   * mountKey() carries the three media paths ON PURPOSE. A repaint that did not
+   * change the video must not rebuild it, and a change that DID -- an upload
+   * landing, a cover adopted from the Media Library, the cut -- must. Keying on
+   * the id alone would have left a stale player on screen after an upload, which
+   * is the opposite bug and a worse one.
+   *
+   * The draft is the second, and it deliberately does NOT take part in a step
+   * change: a step change keeps what was typed because the fields are no longer
+   * repainted, full stop. See the draft block further down for why that
+   * separation is the thing that makes the draft safe.
+   */
+  var mounted = null;
+
+  /*
+   * THE BACKGROUND SAVE, AND WHY IT IS NOT ALLOWED TO BE QUIET.
+   *
+   * A forward step still saves -- step 1 has to create the row before
+   * /ugc-videos/{id}/media has an {id}, and nothing may be left behind between
+   * two steps. What changed is that the paint no longer waits for it.
+   *
+   * `saving` is the request in flight. There is at most one, ever: a second
+   * forward step while the first save is still going sets `saveAgain` instead of
+   * opening a parallel PUT of the same row, because two saves of one row racing
+   * each other is how a field gets written back to the value it had before it was
+   * edited.
+   *
+   * `saveFail` is the ending that MUST NOT VANISH. CLAUDE.md's
+   * UpdateRunner::recordManifest() landmine is about exactly this shape -- a
+   * write whose failure was swallowed -- and a save that now happens where nobody
+   * is looking makes a toast the wrong instrument: a toast that appears while the
+   * owner is reading step 4 and is gone before he looks up is indistinguishable
+   * from no message at all. So a failed background save leaves a sentence in the
+   * footer, with a Try again button, and it stays there until a save succeeds. The
+   * draft is NOT cleared while it stands, so nothing typed is riding on one
+   * request.
+   *
+   * `bgSave` is how goStep() tells the one save() writer not to lock the screen.
+   * A flag rather than an argument because save() is the single writer for every
+   * save on this screen and UgcAddClipFlowTest reads its body by name -- one
+   * writer, the argument CLAUDE.md makes for update_releases.
+   */
+  var saving = false, saveAgain = false, bgSave = false, saveFail = null, savedOnce = false;
+
+  /*
+   * ══ THE QUICK DRAFT ════════════════════════════════════════════════════════
+   *
+   * The owner asked for it in those words -- "save temporary data / or make it
+   * quick draft to avoid such long delays" -- and the instinct is right, but the
+   * reason it is right is not the one the phrasing suggests, so this block says
+   * what this draft is FOR and what it is deliberately not for.
+   *
+   * IT IS NOT ON THE PATH OF A STEP CHANGE. Typing survives moving between steps
+   * because the fields are no longer repainted -- `mounted` above -- and that
+   * needed no storage at all. If the draft were what carried typing across a step
+   * change, then every step change would be a read of a copy of the row, and the
+   * screen would be showing values whose provenance nobody could see. So the draft
+   * covers exactly one thing the DOM cannot: a RELOAD, a closed tab, a crash.
+   *
+   * ── HOW IT CAN NEVER BE MISTAKEN FOR SAVED DATA ───────────────────────────
+   *
+   * This is the part that matters, and the rule is one sentence: A DRAFT IS NEVER
+   * APPLIED WITHOUT BEING ASKED FOR. Opening a clip paints the SERVER'S values,
+   * always. If a draft exists for that clip, a bar appears above the steps saying
+   * so in as many words -- "You have unsaved changes to this clip", with when they
+   * were typed -- and two buttons: Restore them, and Discard. Until one is
+   * pressed the screen is showing the database and nothing else.
+   *
+   * WHAT WAS REJECTED, and why each one is worse:
+   *
+   *   - Merging the draft over the row on open, silently. This is the obvious
+   *     implementation and it is the one the brief warns about: the owner would
+   *     be looking at values that are not in the database, with no way to tell
+   *     which were which, and the next partial save would write a mixture of the
+   *     two. A draft that silently diverges from the server is worse than the
+   *     delay it removes.
+   *   - Treating the draft as the source of truth for the form. Same defect,
+   *     arrived at from the other side.
+   *   - sessionStorage. It dies with the tab, which is one of the three cases
+   *     this exists for.
+   *   - One draft for the whole screen. It would arrive on the next clip opened.
+   *     Keyed per clip instead.
+   *
+   * ── AND IT REFUSES TO OVERWRITE SOMEBODY ELSE'S WORK BLIND ────────────────
+   *
+   * The draft records the row's `updated_at` as it was when the draft was taken.
+   * If the row has been saved since -- by somebody else, or in another tab -- the
+   * bar says THAT too, because restoring would then put back values that were
+   * composed against a version of the row that no longer exists. It still offers
+   * the restore; it just stops being a silent one.
+   *
+   * ── WHEN IT IS CLEARED ────────────────────────────────────────────────────
+   *
+   * On a save that succeeded, on delete, and on Discard. Never on a save that
+   * failed -- that is the one moment the draft is the only copy of what was typed.
+   *
+   * Every read and write is wrapped: localStorage throws outright in a browser set
+   * to block site data, and a screen that cannot store a draft must still work.
+   */
+  var DRAFT_KEY = 'kbb.ugs.draft.v1.';
+  var DRAFT_MAX = 64 * 1024;   // a draft is short text; past this it is not stored
+  var draftFound = null;       // {at, stale} offered on open, applied only on request
+  var draftTimer = null;
+  /*
+   * THE ROW AS THE SERVER LAST HANDED IT OVER, fingerprinted.
+   *
+   * The draft records this alongside the typing so that reopening the clip can
+   * tell "you have unsaved changes" from "you have unsaved changes AND the clip
+   * has moved underneath them". There is no updated_at on any of these payloads
+   * -- card() does not carry one -- and rather than assert staleness this screen
+   * cannot see, it compares the row it was handed then with the row it is handed
+   * now. `editing` is no good for this: keepTyped() mutates it, so by the time a
+   * draft is written it is no longer the server's answer.
+   */
+  var serverPrint = null;
 
   /*
    * THE UPLOAD, WHILE IT IS HAPPENING AND AFTER IT HAS.
@@ -587,6 +826,31 @@
   var upState = null;
   var upDone = null;
   var freshClip = null;
+
+  /*
+   * WHY THIS SERVER COULD NOT CUT, KEPT RATHER THAN FLASHED.
+   *
+   * THE DEFECT. The endpoint's explanation arrived in `payload.notes` and the
+   * screen did `(payload.notes || []).forEach(say)` — so the one sentence that
+   * says WHY there is no cover appeared as a toast for a couple of seconds and
+   * was gone, while the thing that stayed on screen was a bare "No cover yet"
+   * badge with nothing beside it. The owner is then looking at a clip that says
+   * a file is missing and offers no reason and no remedy, which is how a fixable
+   * server setting reads as a broken upload.
+   *
+   * The two reasons are kept APART on purpose, because the endpoint keeps them
+   * apart on purpose: "this server has no ffmpeg" and "ffmpeg is installed but
+   * PHP is not allowed to start it" have completely different remedies — install
+   * a program, or change a PHP setting — and collapsing them into one sentence
+   * sends half the readers to do the wrong thing. This screen never composes
+   * either of them; it prints whichever the server sent, verbatim.
+   *
+   * It is per-clip state like the upload panel, dropped by forgetUpload() when
+   * the screen moves to another clip — a reason about THIS upload must not sit
+   * on somebody else's row. It survives a step change for free, because a step
+   * change no longer rebuilds anything.
+   */
+  var cutNote = null;
 
   /*
    * THE REQUEST ITSELF.
@@ -636,12 +900,46 @@
    * over this server's limit gets no Try again button, because pressing it would
    * fail in exactly the same way and the button would be a lie.
    */
+  /**
+   * Keep the server's explanation, and keep only one.
+   *
+   * The notes are still said out loud — a toast is the right instrument for
+   * "here is what just happened" — and now they also STAY, which is the right
+   * instrument for "here is why this clip looks like that". Whichever arrived
+   * last is the current truth about this server.
+   */
+  function rememberNotes(notes) {
+    var list = (notes || []).filter(function (n) { return typeof n === 'string' && n !== ''; });
+    if (!list.length) return;
+    cutNote = list[list.length - 1];
+  }
+
   function failUpload(ending) {
     upState = null;
     upXhr = null;
     busy = false;
     upDone = { ok: false, kind: ending.kind, name: ending.name, bytes: ending.bytes,
-               message: ending.message, retry: ending.retry || null };
+               message: ending.message, retry: ending.retry || null,
+               /*
+                * WHETHER THE ROW SURVIVED THE FAILURE, straight from the server.
+                *
+                * THE DEFECT THIS EXISTS FOR, and it is the most expensive line
+                * this screen ever printed: the panel below said "nothing on the
+                * clip was changed" for EVERY failure, as a static sentence,
+                * without knowing. When the transcode blew up after the file and
+                * the row had already been committed, the owner was told his
+                * 8.4 MB upload had failed when it had succeeded — so he uploaded
+                * it again, minutes of a slow uplink at a time, orphaning a file
+                * on every pass.
+                *
+                * `stored` is the endpoint's own answer to that question. THREE
+                * states, not two: true, false, and — for a request that never
+                * reached the server, or an older server that does not send the
+                * key — undefined, which means NOBODY KNOWS and the panel must
+                * say neither. Defaulting undefined to false would put the wrong
+                * sentence back on exactly the path that has no evidence.
+                */
+               stored: ending.stored };
     say(upDone.message);
     render();
   }
@@ -866,6 +1164,14 @@
 
     forgetUpload();
     editing = null;
+    /* A fresh visit re-reads the newest products: one of them may have been
+       published since, and a stale list here is a product he cannot find. */
+    recent = null;
+    recentAsked = false;
+    draftFound = null;
+    saveFail = null;
+    savedOnce = false;
+    mounted = null;
     step = 1;
     render();
     load();
@@ -976,6 +1282,31 @@
       });
       results = [];
       term = '';
+      searching = false;
+      searched = false;
+      saveFail = null;
+      savedOnce = false;
+
+      /*
+       * WHAT THE SERVER JUST SAID, remembered — and then the draft is CONSIDERED
+       * but never applied. The fields on screen are this row's, always; if there
+       * is unsaved typing for this clip the bar above the steps offers it, and
+       * the owner decides. See the draft block for why anything else is worse
+       * than the delay it would save.
+       */
+      serverPrint = rowPrint(editing);
+
+      var d = readDraft(editing);
+      if (!d) {
+        draftFound = null;
+      } else if (!draftDiffers(d, editing)) {
+        /* Identical to the row it came from, so it is noise rather than work:
+           dropped instead of offered, or the bar would cry wolf. */
+        clearDraft(editing);
+        draftFound = null;
+      } else {
+        draftFound = { at: d.at, stale: !!(d.basis && d.basis !== serverPrint) };
+      }
     } catch (e) {
       say(explain(e, 'That video could not be opened.'));
     } finally {
@@ -994,10 +1325,17 @@
     upDone = null;
     freshClip = null;
     upXhr = null;
+    /* The reason belongs to ONE clip's upload. Left behind, it would explain a
+       missing cover on a clip that never had an upload attempted on it. */
+    cutNote = null;
   }
 
   function blank() {
     forgetUpload();
+    saveFail = null;
+    savedOnce = false;
+    searching = false;
+    searched = false;
     editing = {
       id: null, title: '', caption: '', status: 'draft', rights_status: 'pending',
       source_platform: 'upload', source_url: '', creator_handle: '', creator_url: '',
@@ -1010,10 +1348,178 @@
     results = [];
     term = '';
     step = 1;
+
+    /* A clip that was being typed and never saved has exactly one draft, under
+       the 'new' key. Offered the same way as any other — never applied. */
+    serverPrint = rowPrint(editing);
+    var d = readDraft(editing);
+    draftFound = (d && draftDiffers(d, editing)) ? { at: d.at, stale: false } : null;
+    if (d && !draftFound) clearDraft(editing);
+
     render();
   }
 
   /* ----------------------------------------------------------------- writes */
+
+  /* ── the draft's four operations ──────────────────────────────────────── */
+
+  /** A short, stable fingerprint of the fields a save writes. */
+  function rowPrint(v) {
+    if (!v) return '';
+    return ['title', 'caption', 'status', 'rights_status', 'source_platform', 'source_url',
+      'creator_handle', 'creator_url', 'rights_evidence', 'locale', 'position', 'published_at']
+      .map(function (k) { return String(v[k] == null ? '' : v[k]); }).join('\u0001')
+      + '\u0001' + (v.products || []).map(function (t) { return String(t.id); }).join(',');
+  }
+
+  /** Which clip a draft belongs to. A clip with no id yet has exactly one. */
+  function draftKey(v) {
+    if (!v) return null;
+    return DRAFT_KEY + (v.id ? String(v.id) : 'new');
+  }
+
+  /**
+   * Take a draft of what is on screen now. Called debounced from the input
+   * listener and on every step change; never blocking, never a request.
+   *
+   * It reads the FORM, not `editing`, because the form is what the owner has
+   * typed and `editing` only catches up when a save is attempted.
+   */
+  function writeDraft() {
+    if (!editing) return;
+    var payload = form();
+    if (!payload) return;
+
+    var body;
+    try {
+      body = JSON.stringify({
+        v: 1,
+        at: Date.now(),
+        /* The server's row as it was when this draft was composed, so reopening
+           the clip can say whether it has moved underneath the draft. */
+        basis: serverPrint,
+        fields: payload,
+        tagged: tagged.map(function (t) {
+          return { id: t.id, name: t.name, brand: t.brand, at_ms: t.at_ms };
+        })
+      });
+    } catch (e) { return; }
+
+    if (body.length > DRAFT_MAX) return;
+    try { window.localStorage.setItem(draftKey(editing), body); } catch (e) {}
+  }
+
+  /** The stored draft for one clip, or null. Never throws, never half-reads. */
+  function readDraft(v) {
+    var raw = null;
+    try { raw = window.localStorage.getItem(draftKey(v)); } catch (e) { return null; }
+    if (!raw) return null;
+
+    var d = null;
+    try { d = JSON.parse(raw); } catch (e) { d = null; }
+    /* A draft from an older shape is dropped rather than guessed at: the fields
+       it names are the ones a save sends, and half of them is not a draft. */
+    if (!d || d.v !== 1 || !d.fields || typeof d.fields !== 'object') {
+      clearDraft(v);
+      return null;
+    }
+    return d;
+  }
+
+  function clearDraft(v) {
+    try { window.localStorage.removeItem(draftKey(v)); } catch (e) {}
+  }
+
+  /**
+   * Is this draft worth offering at all? A draft identical to the row it came
+   * from is noise -- it happens whenever somebody opens a clip, touches one box
+   * and puts it back -- and a bar offering to restore what is already on screen
+   * would teach the owner to ignore the bar that matters.
+   */
+  function draftDiffers(d, v) {
+    if (!d || !v) return false;
+
+    var f = d.fields;
+    var same = ['title', 'caption', 'status', 'rights_status', 'source_platform',
+      'source_url', 'creator_handle', 'creator_url', 'rights_evidence'].every(function (k) {
+      return String(f[k] == null ? '' : f[k]) === String(v[k] == null ? '' : v[k]);
+    });
+
+    if (!same) return true;
+    if (String(f.locale || '') !== String(v.locale || '')) return true;
+    if (String(f.published_at || '') !== String(v.published_at || '')) return true;
+    if (Number(f.position || 0) !== Number(v.position || 0)) return true;
+
+    var were = (d.tagged || []).map(function (t) { return String(t.id); }).join(',');
+    var now = (v.products || []).map(function (t) { return String(t.id); }).join(',');
+    return were !== now;
+  }
+
+  /**
+   * Put a draft back on screen. Writes the BOXES, because the boxes are what a
+   * save reads -- and then folds the same values into `editing` so the hero, the
+   * step ticks and the state line agree with them.
+   *
+   * It does NOT save. Restoring is the owner saying "put my typing back", not
+   * "write it to the database"; the save is still his to press, or the next
+   * forward step's.
+   */
+  function restoreDraft() {
+    var d = readDraft(editing);
+    if (!d) { draftFound = null; paintRegion('draft'); return; }
+
+    var host = document.querySelector('#ugs-form');
+    if (!host) return;
+
+    Object.keys(d.fields).forEach(function (k) {
+      if (k === 'translations') return;
+      var el = host.querySelector('[data-ugs-field="' + k + '"]');
+      if (!el) return;
+      var val = d.fields[k];
+      /* A SELECT TAKES ONE OF ITS OWN OPTIONS OR NOTHING -- rule 5, and a draft
+         is untrusted input like any other stored value: it came out of a store
+         the page cannot vouch for. */
+      if (el.tagName === 'SELECT') {
+        var ok = Array.prototype.some.call(el.options, function (o) { return o.value === String(val == null ? '' : val); });
+        if (ok) el.value = String(val == null ? '' : val);
+        return;
+      }
+      el.value = val == null ? '' : String(val);
+    });
+
+    /* The Arabic boxes, written back through the attribute KBBArabic.collect()
+       reads them by -- data-kbbar-input -- so a draft restores exactly the set
+       of fields a save would have sent. This screen draws only plain inputs and
+       textareas through arabicBox(), never the rich pane, so there is no
+       data-kbbar-rich case to answer here. */
+    var L = (window.KBBArabic && window.KBBArabic.locale) || 'ar';
+    var bag = d.fields.translations && d.fields.translations[L];
+    if (bag) {
+      Object.keys(bag).forEach(function (f) {
+        var el = host.querySelector('[data-kbbar-input="' + f + '"]');
+        if (el) el.value = bag[f] == null ? '' : String(bag[f]);
+      });
+    }
+
+    if (Array.isArray(d.tagged)) {
+      tagged = d.tagged.filter(function (t) { return t && t.id; }).map(function (t) {
+        return { id: t.id, name: String(t.name == null ? '' : t.name),
+                 brand: String(t.brand == null ? '' : t.brand), at_ms: t.at_ms == null ? null : t.at_ms };
+      });
+    }
+
+    keepTyped(form() || d.fields);
+    draftFound = { at: d.at, stale: false, restored: true };
+    say('Your unsaved changes are back. Nothing has been saved yet.');
+    paintRegions();
+  }
+
+  function discardDraft() {
+    clearDraft(editing);
+    draftFound = null;
+    paintRegion('draft');
+    say('Draft discarded.');
+  }
 
   function form() {
     var host = document.querySelector('#ugs-form');
@@ -1088,15 +1594,54 @@
     });
   }
 
-  /** Save, and answer whether it went through — the stepper waits on that. */
+  /**
+   * Save, and answer whether it went through.
+   *
+   * THE ONE WRITER for every save on this screen, foreground and background
+   * alike -- the argument CLAUDE.md makes for update_releases, and the reason
+   * `bgSave` is a flag read here rather than an argument passed in: a second
+   * copy of this body is a second place for the ending to be forgotten.
+   *
+   * FOREGROUND is what the Save button does, and what a clip with no id yet
+   * always does. Unchanged: it locks the screen, and it finishes with load() and
+   * open() so the row on screen is the row the server now holds.
+   *
+   * BACKGROUND is what a forward step does once the clip exists. It does the two
+   * writes and NOT the two reads -- the paint has already happened, and the PUT
+   * answers with card(), which carries the blockers, the media state and the
+   * three paths, so everything the screen shows can be brought up to date from
+   * the reply it already has. Four round trips become two, and none of them is
+   * in front of the owner.
+   */
   async function save() {
-    if (busy || !editing) return false;
+    if (!editing) return false;
+
+    /* Read and cleared at once, so a later save cannot inherit a stale flag. */
+    var background = bgSave;
+    bgSave = false;
+
+    /*
+     * AT MOST ONE SAVE OF ONE ROW IN FLIGHT, EVER. Stepping forward twice
+     * quickly marks the row dirty instead of opening a second PUT of the same
+     * id: two saves of one row racing each other is how a field gets written
+     * back to the value it had before it was edited, and the loser of that race
+     * wins the database.
+     */
+    if (saving) { saveAgain = true; return false; }
+    if (busy && !background) return false;
+
     var payload = form();
     if (!payload) return false;
 
     keepTyped(payload);
 
-    busy = true; render();
+    /* A background save must NOT lock the screen -- locking it is the wait this
+       whole change exists to remove. It still says so in the footer. */
+    saving = true;
+    if (!background) { busy = true; }
+    var creating = !editing.id;
+    var wasKey = draftKey(editing);
+    render();
 
     try {
       var body = editing.id
@@ -1112,42 +1657,126 @@
         products: tagged.map(function (t) { return { id: t.id, at_ms: t.at_ms }; })
       });
 
+      saveFail = null;
+      savedOnce = true;
+
+      /* THE DRAFT IS DROPPED ONLY HERE, on a save that actually landed -- and by
+         the key the draft was WRITTEN under, because a create moves the clip from
+         'new' to its id and the old key would otherwise be left behind to be
+         offered on the next new clip. */
+      try { window.localStorage.removeItem(wasKey); } catch (e) {}
+
+      if (background) {
+        /* Fold the server's own answer in, rather than reading the row back.
+           card() carries the blockers and the media state, which is everything
+           the hero, the ticks and the state line read. */
+        Object.keys(body.video).forEach(function (k) { editing[k] = body.video[k]; });
+        editing._blockers = null;
+        editing.products = tagged.map(function (t) {
+          return { id: t.id, name: t.name, brand: t.brand, at_ms: t.at_ms };
+        });
+        serverPrint = rowPrint(editing);
+        /* The library list is what "All clips" shows next, so the saved row is
+           brought up to date in place -- no second GET for a title change. */
+        if (videos) {
+          videos = videos.map(function (x) {
+            return String(x.id) === String(id) ? Object.assign({}, x, body.video) : x;
+          });
+        }
+        say('Saved.');
+        return true;
+      }
+
       say('Saved.');
       await load();
       await open(id);
       return true;
     } catch (e) {
-      /* A publish refusal comes back with its reasons named. Shown as a list
-         rather than a toast: "cannot be published yet" with no reasons is a
-         message nobody can act on. */
+      /*
+       * EVERY WAY THIS CAN FAIL LEAVES A MARK, and that is the whole difference
+       * between a save the owner is watching and one he is not.
+       *
+       * CLAUDE.md: a guarded write that leaves state behind does not contain a
+       * failure, it seeds one. A background save whose only trace was a toast
+       * would be that defect exactly -- the toast appears while he is reading
+       * step 4 and is gone before he looks up, and the next thing he does is
+       * close the tab believing his work is saved. So the ending is written into
+       * `saveFail`, the footer prints it until a save succeeds, and the draft is
+       * NOT cleared: at that moment the draft is the only copy of what he typed.
+       */
       if (e && e.body && e.body.blockers) {
         banner = null;
         editing._blockers = e.body.blockers;
         step = 5;
+        saveFail = { message: e.body.error || 'This video cannot be published yet.' };
         say(e.body.error || 'This video cannot be published yet.');
       } else if (e && e.status === 422) {
-        say(explain(e, 'Some of that was not accepted — a title is required.'));
+        saveFail = { message: explain(e, 'Some of that was not accepted — a title is required.') };
+        say(saveFail.message);
       } else {
-        say(explain(e, 'That could not be saved.'));
+        saveFail = { message: explain(e, 'That could not be saved.') };
+        say(saveFail.message);
       }
+      /* A create that failed must not leave a clip the owner thinks exists. */
+      if (creating) { /* editing.id is still null, which is already the truth */ }
       return false;
     } finally {
-      busy = false; render();
+      saving = false;
+      if (!background) busy = false;
+      render();
+
+      /*
+       * THE COALESCED SAVE. Something was edited while this one was in flight, so
+       * one more goes out -- but only if this one WORKED. Retrying automatically
+       * into a standing failure would hammer the endpoint and keep replacing the
+       * message that tells the owner what went wrong.
+       */
+      if (saveAgain) {
+        saveAgain = false;
+        if (!saveFail) { bgSave = true; save(); }
+      }
     }
   }
 
+  /*
+   * A STEP CHANGE, AND THE WHOLE POINT OF THIS LANE.
+   *
+   * It paints FIRST, from state already in memory, and makes no request to show
+   * a panel. Moving forward still saves -- that guarantee is not negotiable, and
+   * the docblock on the old version says why -- but the save now happens behind
+   * the paint instead of in front of it.
+   *
+   * THE ONE CASE THAT STILL WAITS, and it is deliberate: a clip that has never
+   * been saved has no id, and /ugc-videos/{id}/media has nowhere to put a file.
+   * Painting step 2 for it instantly would mean drawing the locked "nothing can
+   * be uploaded yet" panel and then swapping it out underneath him, which is a
+   * worse screen than a short wait. So the CREATE blocks, exactly once per clip,
+   * and every step change after it is instant. One wait per clip instead of one
+   * per step.
+   *
+   * It stays `async` because the create is still awaited.
+   */
   async function goStep(next) {
     if (next < 1 || next > STEPS.length) return;
+    if (next === step) return;
 
-    /* Forward is always a save first, so nothing is ever left behind between
-       two steps, and so step 1 has created the row the media steps need. */
-    if (next > step) {
+    var forward = next > step;
+
+    /* The create, and only the create, is worth waiting for. */
+    if (forward && editing && !editing.id) {
       var ok = await save();
       if (!ok) return;
+      step = next;
+      render();
+      return;
     }
 
+    /* Everything else: paint now, save behind it. */
     step = next;
-    render();
+    paintStep();
+    writeDraft();
+
+    if (forward) { bgSave = true; save(); }
   }
 
   async function remove(id, title) {
@@ -1155,6 +1784,12 @@
     busy = true; render();
     try {
       await api('/ugc-videos/' + encodeURIComponent(id), {}, 'DELETE');
+      /* The row is gone, so a draft of it is an offer to restore something that
+         cannot be saved anywhere. Cleared by the id rather than off `editing`,
+         which is about to be null. */
+      try { window.localStorage.removeItem(DRAFT_KEY + String(id)); } catch (e) {}
+      draftFound = null;
+      saveFail = null;
       forgetUpload();
       editing = null;
       step = 1;
@@ -1392,6 +2027,10 @@
           failUpload({
             kind: kind, name: name, bytes: size,
             message: (payload && payload.error) ? payload.error : 'That file was not accepted.',
+            /* A 2xx with ok:false is the server judging the FILE, so the row was
+               not written — but it is still the server's word rather than this
+               screen's guess. */
+            stored: payload ? payload.stored : undefined,
             retry: null
           });
           return;
@@ -1413,6 +2052,9 @@
           if (kind === 'clip') freshClip = target;
         }
 
+        /* SAID, AND ALSO KEPT. The toast is what happened; cutNote is why the
+           clip looks the way it does, and that question outlives a toast. */
+        rememberNotes(payload.notes);
         (payload.notes || []).forEach(say);
         say(kind === 'clip' ? 'Video added.' : 'Teaser added.');
         load().then(function () { return here ? open(target) : undefined; });
@@ -1426,11 +2068,16 @@
          * used to print "That file was not accepted" for a file that was fine.
          */
         if (f.body && f.body.limits) limits = f.body.limits;
+        /* A 5xx from this endpoint now carries the reason the cut failed as well
+           as whether the row committed; both are kept. */
+        if (f.body && f.body.notes) rememberNotes(f.body.notes);
         failUpload({
           kind: kind,
           name: upState ? upState.name : file.name,
           bytes: file.size,
           message: f.message,
+          /* undefined on a request that never arrived, which is the point. */
+          stored: f.body ? f.body.stored : undefined,
           /* The kit already decided this: 429 and 5xx and a dropped connection
              and a cancel, never 413 or 422. */
           retry: f.retryable ? file : null
@@ -1538,10 +2185,17 @@
     busy = true; render();
     try {
       var body = await api('/ugc-videos/' + encodeURIComponent(editing.id) + '/derive', {});
+      /* Pressing the cut and being told nothing is the same silence the upload
+         had: the reason is kept here too, and for the same reason. */
+      rememberNotes(body.notes);
       (body.notes || []).forEach(say);
-      if (!(body.notes || []).length) say('Cover and teaser cut.');
+      if (!(body.notes || []).length) { cutNote = null; say('Cover and teaser cut.'); }
+      var keep = cutNote;
       await load();
       await open(editing.id);
+      /* open() is a fresh clip payload and forgetUpload() may have run on the
+         way; the server's reason is about the SERVER and outlives both. */
+      cutNote = keep;
     } catch (e) {
       say(explain(e, 'Nothing could be cut from that clip.'));
     } finally {
@@ -1549,15 +2203,69 @@
     }
   }
 
+  /*
+   * One search. `seq`-style guarding of its own, because a slow answer for
+   * "an" must not overwrite a fast one for "anua" -- the old version had no
+   * such guard and the last request to LAND won rather than the last one sent.
+   */
+  var searchSeq = 0;
+
   async function search() {
+    var mine = ++searchSeq;
+    var asked = term;
+
+    searching = true;
+    paintRegion('results');
+
     try {
-      var body = await api('/ugc-videos/products?q=' + encodeURIComponent(term));
+      var body = await api('/ugc-videos/products?q=' + encodeURIComponent(asked));
+      if (mine !== searchSeq) return;              // a later keystroke owns the box now
       results = body.products || [];
+      /*
+       * HOW MANY MATCHED BUT CANNOT BE TAGGED. The server counts these only when
+       * the visible answer is empty, and it is the difference between "the search
+       * is broken" and "that product is a draft" -- which is the confusion that
+       * produced this bug report in the first place.
+       */
+      unpublishedHits = Number(body.unpublished || 0) || 0;
     } catch (e) {
+      if (mine !== searchSeq) return;
       results = [];
+      unpublishedHits = 0;
       say(explain(e, 'Products could not be searched.'));
+    } finally {
+      if (mine === searchSeq) {
+        searching = false;
+        searched = asked !== '';
+        /* THE RESULTS REGION ONLY. render() would have replaced #content and
+           with it the box being typed into, which is what the old caret dance
+           existed to paper over. */
+        paintRegion('results');
+      }
     }
-    render();
+  }
+
+  /**
+   * The last few products, so step 4 offers something to press before a single
+   * character is typed. The owner asked for the recent ten.
+   *
+   * Asked for ONCE per screen visit and never awaited by anything: a slow or
+   * refused read costs the step nothing and simply leaves the box as the only
+   * way in, exactly as it was before.
+   */
+  async function loadRecent() {
+    if (recentAsked) return;
+    recentAsked = true;
+
+    try {
+      var body = await api('/ugc-videos/products?recent=10');
+      recent = body.products || [];
+    } catch (e) {
+      /* Silent on purpose: this is a convenience on a screen about clips, and a
+         toast about the product endpoint helps nobody tag a product. */
+      recent = [];
+    }
+    if (editing && step === 4) paintRegion('results');
   }
 
   /* ------------------------------------------------------------------ paint */
@@ -1604,17 +2312,33 @@
    * @param {{glyph:string,title:string,sub:string,body:string,
    *          tone?:string,note?:string,bodyClass?:string}} o
    */
+  /*
+   * `o.region` names a section this screen repaints ON ITS OWN, and the
+   * attribute goes on the <section> rather than on a wrapper around it
+   * DELIBERATELY: `.ugs-cols` is a two-column grid whose children carry
+   * `min-width:0`, and an extra div between the grid and the section would take
+   * that rule for itself and leave the section free to overflow at 390px --
+   * which is how one of the four screens in AdminMobileOverflowTest broke
+   * before. No new node, no new layout, nothing to get wrong.
+   */
   function secHTML(o) {
-    return '<section class="ugs-sec' + (o.tone ? ' is-' + o.tone : '') + '">'
-      + '<header class="ugs-sech">'
+    return '<section class="ugs-sec' + (o.tone ? ' is-' + o.tone : '') + '"'
+      + (o.region ? ' data-ugs-region="' + o.region + '"' : '') + '>'
+      + secInnerHTML(o)
+      + '</section>';
+  }
+
+  /** A section's head and body without the <section> around them, so a region
+      can rewrite exactly what changed and leave the element itself in place. */
+  function secInnerHTML(o) {
+    return '<header class="ugs-sech">'
       +   '<span class="ugs-secn">' + icon(o.glyph) + '</span>'
       +   '<span><span class="ugs-sect">' + esc(o.title) + '</span>'
       +     (o.sub ? '<span class="ugs-secs">' + esc(o.sub) + '</span>' : '')
       +   '</span>'
       +   '<span class="ugs-secw">' + esc(o.note || '') + '</span>'
       + '</header>'
-      + '<div class="ugs-secb' + (o.bodyClass ? ' ' + o.bodyClass : '') + '">' + o.body + '</div>'
-      + '</section>';
+      + '<div class="ugs-secb' + (o.bodyClass ? ' ' + o.bodyClass : '') + '">' + o.body + '</div>';
   }
 
   /** Two sections side by side at a desk, stacked on a phone. CSS decides. */
@@ -1759,7 +2483,13 @@
   }
 
   function stepsHTML() {
-    return '<div class="ugs-steps" role="tablist">' + STEPS.map(function (s) {
+    return '<div class="ugs-steps" role="tablist" data-ugs-region="steps">'
+      + stepButtonsHTML() + '</div>';
+  }
+
+  /** The rail's buttons alone, so a step change can rewrite them and nothing else. */
+  function stepButtonsHTML() {
+    return STEPS.map(function (s) {
       var state = stepState(s.n);
       var cls = 'ugs-step'
         + (s.n === step ? ' is-on' : '')
@@ -1773,7 +2503,7 @@
         + '<span><span class="ugs-steplab">' + esc(s.label) + '</span><br>'
         +   '<span class="ugs-stepsub">' + esc(state === 'locked' ? 'after step 1' : s.sub) + '</span></span>'
         + '</button>';
-    }).join('') + '</div>';
+    }).join('');
   }
 
   /* `why` is written into the markup unescaped and `title` is not, and the
@@ -1879,7 +2609,21 @@
       +   '<span>not accepted</span></div>'
       + '<div class="ugs-upm">'
       +   '<span>' + esc(upDone.message) + '</span>'
-      +   '<span>' + esc(bytes(upDone.bytes)) + ' &mdash; nothing on the clip was changed.</span>'
+      /*
+       * THE SENTENCE IS THE SERVER'S ANSWER NOW, or there is no sentence.
+       *
+       * `stored === false` is the only case that may claim the clip is untouched,
+       * and `stored === true` is the case that cost the owner the re-uploads: the
+       * file IS on the clip and saying otherwise sends him to do it all again. An
+       * `undefined` — a request that never arrived — says neither, because
+       * nothing here knows.
+       */
+      +   '<span>' + esc(bytes(upDone.bytes))
+      +     (upDone.stored === false ? ' &mdash; nothing on the clip was changed.'
+          :  upDone.stored === true
+             ? ' &mdash; the file IS on the clip and is being served. Do not upload it again.'
+             : '')
+      +   '</span>'
       + '</div>'
       /* Offered only where failUpload() kept the File, which is only where a
          second press could really work. A Try again beside "this server accepts
@@ -1967,10 +2711,23 @@
     var fresh = freshClip !== null && String(freshClip) === String(v.id);
 
     if (!(transcoder && transcoder.available && v.id)) {
+      /*
+       * THE SERVER'S OWN SENTENCE, NOT THIS SCREEN'S GUESS.
+       *
+       * This used to read "It answered that it has no ffmpeg", which the server
+       * had never said: all it sent was a bool, and the two ways of being unable
+       * to cut — no ffmpeg at all, or an ffmpeg PHP is not allowed to start —
+       * have different remedies. On the box this episode was about, the guess was
+       * the wrong one, and it sent the owner to install a program he already had.
+       * `blocker` is the reason in the server's words, so there is nothing left
+       * here to guess with.
+       */
+      var why = (transcoder && transcoder.blocker) ? String(transcoder.blocker) : '';
+
       return secHTML({
         glyph: ICON_CUT,
         title: 'Nothing can be cut on this server',
-        sub: 'It answered that it has no ffmpeg, so neither the cover nor a teaser can be made here.',
+        sub: why || 'Neither the cover nor a teaser can be made here.',
         note: 'by hand',
         tone: 'warm',
         body: '<div class="ugs-note is-warm"><b>What to do instead.</b> Press '
@@ -2111,6 +2868,25 @@
       + '<button class="ugs-btn is-primary" data-ugs-poster="1"' + (locked ? ' disabled' : '') + '>'
       +   icon(ICON_PLUS) + 'Choose from the Media Library</button>'
       + posterDropHTML(locked);
+
+    /*
+     * THE REASON THERE IS NO COVER, BESIDE THE THING THAT HAS NO COVER.
+     *
+     * It used to be a toast and nothing else, so the persistent signal was a bare
+     * "No cover yet" with no explanation and no remedy — and the owner, looking
+     * at a clip that says a file is missing, does the only thing that screen
+     * suggests and uploads the video again. The sentence is the SERVER's, printed
+     * verbatim and escaped: it is the one thing that knows whether this box has
+     * no ffmpeg or has one it is not allowed to start, and those have different
+     * remedies.
+     *
+     * Above the two file boxes rather than inside the cover one, because on a
+     * server that cannot cut, it is the reason BOTH derived files are absent.
+     */
+    if (cutNote) {
+      html += '<div class="ugs-note is-warm" data-ugs-cutnote="1"><b>Why there is no cover here.</b> '
+        + esc(cutNote) + '</div>';
+    }
 
     html += colsHTML(
       secHTML({
@@ -2287,6 +3063,7 @@
             sub: 'Drag to reorder. The first one is what a tile shows before anybody taps it.',
             note: tagged.length ? String(tagged.length) : 'none yet',
             tone: tagged.length ? 'live' : '',
+            region: 'tagged',
             body: taggedHTML()
           }),
           secHTML({
@@ -2296,17 +3073,57 @@
             note: 'optional',
             body: '<div class="ugs-f">'
               + '<label for="ugs-search">Search the catalogue</label>'
-              /* The typed term is kept in `term` and written back here, because
-                 render() repaints #content wholesale: adding a product
-                 re-renders the list, and a box that emptied itself under a list
-                 of results nobody searched for reads as a bug. */
+              /*
+               * THE BOX IS DRAWN ONCE AND NEVER REPAINTED AFTERWARDS, which is
+               * what finally fixes the caret.
+               *
+               * It used to be repainted with every result, every tag and every
+               * reorder, because render() replaced #content wholesale -- so the
+               * element being typed into was a new node by the time the answer
+               * landed. Two workarounds grew out of that: `term` was written back
+               * into the value here, and the input listener re-focused the box and
+               * pushed the caret to the end after each search. Both are gone. The
+               * results are their own region now, so a repaint of them cannot
+               * touch this input at all, and the caret stays wherever the owner
+               * put it -- including in the MIDDLE of a word, which the old
+               * setSelectionRange(length, length) could not preserve even when it
+               * worked.
+               *
+               * `term` is still written here, and still has to be: a WHOLESALE
+               * mount -- opening the clip again, an upload landing -- does rebuild
+               * this box, and it must come back with what was typed in it.
+               */
               + '<input id="ugs-search" type="text" placeholder="Search by name" data-ugs-search="1"'
-              +   ' value="' + esc(term) + '">'
-              + '<div class="ugs-results">' + resultsHTML() + '</div>'
+              +   ' value="' + esc(term) + '" autocomplete="off">'
+              + '<div class="ugs-results" data-ugs-region="results">' + resultsHTML() + '</div>'
               + '</div>'
           })
         )
       + '</section>';
+  }
+
+  /** The three clauses of the publish gate, ticked. Its own function so the
+      region can repaint it without rebuilding the panel around it. */
+  function checkHTML(v) {
+    var done = function (ok, text) {
+      return '<div class="ugs-ci ' + (ok ? 'is-ok' : 'is-no') + '">'
+        + '<span class="ugs-cid">' + (ok ? '&#10003;' : '!') + '</span>'
+        + '<span>' + text + '</span></div>';
+    };
+
+    return '<div class="ugs-check">'
+      + done(!!v.file_path, 'The video is uploaded')
+      + done(!!v.poster_path, 'The cover is set')
+      + done(v.rights_status === 'granted', 'The creator has granted permission')
+      + '</div>';
+  }
+
+  /** The server's refusal, listed. Its own function so the region can repaint it. */
+  function blockersHTML(blockers) {
+    if (!blockers || !blockers.length) return '';
+    return '<div class="ugs-note is-bad"><b>The last save was refused:</b><ul>'
+      + blockers.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('')
+      + '</ul></div>';
   }
 
   function publishPanel(v) {
@@ -2316,11 +3133,6 @@
        the ticks under it can never disagree. */
     var left = (v.file_path ? 0 : 1) + (v.poster_path ? 0 : 1)
              + (v.rights_status === 'granted' ? 0 : 1);
-    var done = function (ok, text) {
-      return '<div class="ugs-ci ' + (ok ? 'is-ok' : 'is-no') + '">'
-        + '<span class="ugs-cid">' + (ok ? '&#10003;' : '!') + '</span>'
-        + '<span>' + text + '</span></div>';
-    };
 
     return '<section class="ugs-panel"' + (step === 5 ? '' : ' hidden') + '>'
       + panelHead(5, 'Publish', 'Everything below has to be true before a clip can appear. '
@@ -2331,17 +3143,13 @@
           sub: 'Read off UgcVideo::publishBlockers(), which is what the save really checks.',
           note: left === 0 ? 'all three' : (3 - left) + ' of 3',
           tone: left === 0 ? 'live' : 'warm',
-          body: '<div class="ugs-check">'
-            + done(!!v.file_path, 'The video is uploaded')
-            + done(!!v.poster_path, 'The cover is set')
-            + done(v.rights_status === 'granted', 'The creator has granted permission')
-            + '</div>'
+          region: 'check',
+          body: checkHTML(v)
         })
-      + (blockers.length
-          ? '<div class="ugs-note is-bad"><b>The last save was refused:</b><ul>'
-            + blockers.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('')
-            + '</ul></div>'
-          : '')
+      /* The blockers live in a display:contents wrapper so that the usual case --
+         no blockers, nothing drawn -- adds no grid item and therefore no 12px
+         gap to `.ugs-panel`. See the .ugs-rg note in the stylesheet. */
+      + '<div class="ugs-rg" data-ugs-region="blockers">' + blockersHTML(blockers) + '</div>'
       /* WHERE on the left, WHEN on the right. Four fields in one column was the
          longest stretch of dead right half on this screen. */
       + colsHTML(
@@ -2417,13 +3225,72 @@
     }).join('') + '</div>';
   }
 
+  /** One pressable product row. The name and brand are the only things on it. */
+  function resRowHTML(p) {
+    return '<button class="ugs-res" data-ugs-add="' + esc(p.id) + '" data-ugs-addname="' + esc(p.name)
+      + '" data-ugs-addbrand="' + esc(p.brand || '') + '">' + esc(p.name)
+      + (p.brand ? ' <span class="ugs-dim">· ' + esc(p.brand) + '</span>' : '') + '</button>';
+  }
+
+  /*
+   * ══ THE SEARCH ALWAYS SAYS SOMETHING ═══════════════════════════════════════
+   *
+   * THE DEFECT. This function used to begin `if (!results.length) return '';`,
+   * which drew an empty box for three completely different situations: nothing
+   * typed yet, a request still in flight, and a term that matched nothing. The
+   * owner typed "anua", was shown a blank space for the better part of a second
+   * and then a blank space forever, and reported the product search as broken.
+   * It was not broken; it was silent, and from outside those are the same thing.
+   *
+   * There are now four answers and each one names itself.
+   *
+   * MUTATION NOTE. Put `if (!results.length) return '';` back at the top and
+   * UgcProductSearchStatesTest goes red on every one of them.
+   */
   function resultsHTML() {
-    if (!results.length) return '';
-    return results.map(function (p) {
-      return '<button class="ugs-res" data-ugs-add="' + esc(p.id) + '" data-ugs-addname="' + esc(p.name)
-        + '" data-ugs-addbrand="' + esc(p.brand || '') + '">' + esc(p.name)
-        + (p.brand ? ' <span class="ugs-dim">· ' + esc(p.brand) + '</span>' : '') + '</button>';
-    }).join('');
+    /* 1. Still looking — including the debounce, which is most of the wait. */
+    if (searching) {
+      return '<div class="ugs-rnote">Searching&hellip;</div>';
+    }
+
+    /* 2. Something matched. */
+    if (results.length) {
+      return '<div class="ugs-rhead">' + esc(results.length)
+        + (results.length === 1 ? ' match' : ' matches') + '</div>'
+        + results.map(resRowHTML).join('');
+    }
+
+    /* 3. A term was answered and nothing published matched it.
+          WHETHER UNPUBLISHED ROWS WOULD HAVE MATCHED IS THE WHOLE POINT: the
+          section's subtitle already says "Published products only", but it sits
+          above the box rather than where the answer is, and it cannot know that
+          THIS term hit a draft. */
+    if (searched) {
+      return '<div class="ugs-rnote">'
+        + '<b>Nothing published matches &ldquo;' + esc(term) + '&rdquo;.</b>'
+        + (unpublishedHits
+            ? '<br>' + esc(unpublishedHits)
+              + (unpublishedHits === 1 ? ' product matches that name but is a draft or hidden'
+                                       : ' products match that name but are drafts or hidden')
+              + ', so it cannot be tagged on a clip yet. Publish it in '
+              + '<b>Catalogue &rarr; Products</b> and it will appear here.'
+            : '<br>Only published products can be tagged. Check the spelling, or publish the '
+              + 'product first in <b>Catalogue &rarr; Products</b>.')
+        + '</div>';
+    }
+
+    /* 4. Nothing typed yet — so offer the newest products rather than a void.
+          Headed, so it can never read as the answer to a search nobody ran. */
+    if (recent && recent.length) {
+      return '<div class="ugs-rhead">The ' + esc(recent.length) + ' newest products'
+        + '<span class="ugs-dim">&mdash; or search above</span></div>'
+        + recent.map(resRowHTML).join('');
+    }
+    if (recent) {
+      return '<div class="ugs-rnote">No published products yet. '
+        + 'Add one in <b>Catalogue &rarr; Products</b> and it can be tagged here.</div>';
+    }
+    return '<div class="ugs-rnote">Loading the newest products&hellip;</div>';
   }
 
   /** The one line under the step rail that says where this clip stands. */
@@ -2436,18 +3303,117 @@
     return left + (left === 1 ? ' thing' : ' things') + ' still needed before this can be published.';
   }
 
+  /** The hero's contents, repainted on its own when the row's state moves. */
+  function heroHTML(v) {
+    return '<div class="ugs-herotext">'
+      + '<div class="ugs-h">' + (v.id ? esc(v.title || '(untitled)') : 'A new clip') + '</div>'
+      + '<div class="ugs-pills" style="margin-top:6px">'
+      +   pill(v.status === 'publish' ? 'published' : 'draft', v.status === 'publish' ? 'live' : '')
+      +   (v.id ? pill(stateWords(v)[0], stateWords(v)[1]) : '')
+      +   (v.id && v.rights_status !== 'granted' ? pill('no permission yet', 'hold') : '')
+      + '</div>'
+      + '</div>';
+  }
+
+  /*
+   * WHAT THE FOOTER SAYS ABOUT A SAVE NOBODY IS WATCHING.
+   *
+   * A forward step now paints first and saves afterwards, so the save's ending
+   * has to land somewhere the owner will still be looking. This is that place,
+   * and the failed state is the reason the whole region exists: CLAUDE.md's
+   * swallowed-write landmine says a guarded write that leaves no trace does not
+   * contain a failure, it seeds one. A toast would be exactly that -- it appears
+   * while he is reading step 4 and is gone before he looks up.
+   *
+   * So: a failure is a SENTENCE THAT STAYS, with the reason the server gave and
+   * a Try again button, and it stays until a save succeeds.
+   */
+  function saveStateHTML() {
+    if (saveFail) {
+      return '<div class="ugs-savest is-bad" data-ugs-savest="1" role="alert">'
+        + '<b>Not saved.</b> ' + esc(saveFail.message)
+        + ' Your typing is still here and a draft of it is stored.'
+        + '</div>';
+    }
+    if (saving) {
+      return '<div class="ugs-savest" data-ugs-savest="1">Saving&hellip;</div>';
+    }
+    if (savedOnce) {
+      return '<div class="ugs-savest" data-ugs-savest="1">All changes saved.</div>';
+    }
+    return '<div class="ugs-savest" data-ugs-savest="1"></div>';
+  }
+
+  /** The footer's contents: where the clip stands, what a save is doing, and the buttons. */
+  function footHTML(v) {
+    return '<div class="ugs-state">' + esc(stateLine(v)) + '</div>'
+      + saveStateHTML()
+      + '<div class="ugs-footb">'
+      +   (saveFail ? '<button class="ugs-btn is-primary" data-ugs-retrysave="1">Try again</button>' : '')
+      +   (v.id ? '<button class="ugs-btn is-danger" data-ugs-del="' + esc(v.id)
+            + '" data-ugs-delname="' + esc(v.title || '(untitled)') + '">Delete</button>' : '')
+      +   '<button class="ugs-btn" data-ugs-back="1">All clips</button>'
+      +   (step > 1 ? '<button class="ugs-btn" data-ugs-step="' + (step - 1) + '">Back</button>' : '')
+      +   (step < STEPS.length
+            ? '<button class="ugs-btn is-primary" data-ugs-next="1"' + (busy ? ' disabled' : '')
+              + '>Save and continue</button>'
+            : '<button class="ugs-btn is-primary" data-ugs-save="1"' + (busy ? ' disabled' : '')
+              + '>Save</button>')
+      + '</div>';
+  }
+
+  /*
+   * THE DRAFT BAR, and every word of it is chosen so the owner can tell a draft
+   * from the database at a glance. It appears only when a draft exists AND
+   * differs from the row, it never applies itself, and it says WHEN the typing
+   * happened rather than merely that it did.
+   */
+  function draftBarHTML() {
+    if (!draftFound) return '';
+
+    if (draftFound.restored) {
+      return '<div class="ugs-draft" data-ugs-draft="1">'
+        + '<div class="ugs-drafttext"><b>Your unsaved changes are back on screen.</b> '
+        + 'Nothing has been saved yet &mdash; press Save, or Save and continue, to keep them.</div>'
+        + '</div>';
+    }
+
+    return '<div class="ugs-draft" data-ugs-draft="1">'
+      + '<div class="ugs-drafttext">'
+      +   '<b>You have unsaved changes to this clip</b> from ' + esc(ago(draftFound.at)) + '. '
+      +   'What is on screen now is what the server has. '
+      +   (draftFound.stale
+          ? 'This clip has also been saved somewhere else since you typed them, so restoring '
+            + 'will put your version back over that one.'
+          : '')
+      + '</div>'
+      + '<div class="ugs-draftacts">'
+      +   '<button class="ugs-btn is-primary" data-ugs-draftrestore="1">Restore them</button>'
+      +   '<button class="ugs-btn" data-ugs-draftdiscard="1">Discard</button>'
+      + '</div>'
+      + '</div>';
+  }
+
+  /** "4 minutes ago". Plain words, and no clock beyond Date.now(). */
+  function ago(at) {
+    var s = Math.max(0, Math.round((Date.now() - Number(at || 0)) / 1000));
+    if (s < 60) return 'a moment ago';
+    var m = Math.round(s / 60);
+    if (m < 60) return m === 1 ? 'a minute ago' : m + ' minutes ago';
+    var h = Math.round(m / 60);
+    if (h < 24) return h === 1 ? 'an hour ago' : h + ' hours ago';
+    var d = Math.round(h / 24);
+    return d === 1 ? 'yesterday' : d + ' days ago';
+  }
+
   function editorHTML() {
     var v = editing;
 
     return '<div class="ugs-card">'
-      + '<div class="ugs-hero" style="margin-bottom:12px"><div class="ugs-herotext">'
-      +   '<div class="ugs-h">' + (v.id ? esc(v.title || '(untitled)') : 'A new clip') + '</div>'
-      +   '<div class="ugs-pills" style="margin-top:6px">'
-      +     pill(v.status === 'publish' ? 'published' : 'draft', v.status === 'publish' ? 'live' : '')
-      +     (v.id ? pill(stateWords(v)[0], stateWords(v)[1]) : '')
-      +     (v.id && v.rights_status !== 'granted' ? pill('no permission yet', 'hold') : '')
-      +   '</div>'
-      + '</div></div>'
+      + '<div class="ugs-hero" style="margin-bottom:12px" data-ugs-region="hero">'
+      +   heroHTML(v)
+      + '</div>'
+      + '<div class="ugs-rg" data-ugs-region="draft">' + draftBarHTML() + '</div>'
       +   stepsHTML()
       +   '<div id="ugs-form" style="margin-top:14px">'
       +     detailsPanel(v)
@@ -2456,20 +3422,7 @@
       +     productsPanel()
       +     publishPanel(v)
       +   '</div>'
-      +   '<div class="ugs-foot">'
-      +     '<div class="ugs-state">' + esc(stateLine(v)) + '</div>'
-      +     '<div class="ugs-footb">'
-      +       (v.id ? '<button class="ugs-btn is-danger" data-ugs-del="' + esc(v.id)
-                + '" data-ugs-delname="' + esc(v.title || '(untitled)') + '">Delete</button>' : '')
-      +       '<button class="ugs-btn" data-ugs-back="1">All clips</button>'
-      +       (step > 1 ? '<button class="ugs-btn" data-ugs-step="' + (step - 1) + '">Back</button>' : '')
-      +       (step < STEPS.length
-                ? '<button class="ugs-btn is-primary" data-ugs-next="1"' + (busy ? ' disabled' : '')
-                  + '>Save and continue</button>'
-                : '<button class="ugs-btn is-primary" data-ugs-save="1"' + (busy ? ' disabled' : '')
-                  + '>Save</button>')
-      +     '</div>'
-      +   '</div>'
+      +   '<div class="ugs-foot" data-ugs-region="foot">' + footHTML(v) + '</div>'
       + '</div>';
   }
 
@@ -2575,6 +3528,166 @@
     if (p && p.catch) p.catch(function () {});
   }
 
+  /*
+   * WHAT THE EDITOR ON SCREEN WAS BUILT FOR.
+   *
+   * render() compares this against `mounted`: equal, and the repaint is
+   * surgical; different, and the editor is rebuilt from scratch. So every term
+   * in it is a thing whose change MUST rebuild the panels, and nothing else may
+   * be added:
+   *
+   *   the clip        a different row is a different editor, obviously
+   *   the three paths the <video>, its poster and the teaser are built from
+   *                   these. An upload landing, a cover adopted from the Media
+   *                   Library or the cut changes one, and the player must be
+   *                   rebuilt -- keying on the id alone would leave a stale
+   *                   player on screen after an upload, which is the opposite
+   *                   bug and the worse one
+   *   the loop length readMotion() arrives late and un-awaited, and it writes
+   *                   data-ugs-loopms and the prose beside the preview
+   *   the upload      the progress panel and the ending panel are inside the
+   *                   media panel. The PERCENTAGE is not in here on purpose:
+   *                   paintProgress() writes the bar straight into the DOM, so a
+   *                   progress event must not remount anything
+   *
+   * The step is NOT in here, which is the entire point.
+   */
+  function mountKey(v) {
+    if (!v) return null;
+    return (v.id ? 'id:' + v.id : 'new')
+      + '|f:' + (v.file_path || '')
+      + '|p:' + (v.poster_path || '')
+      + '|t:' + (v.teaser_path || '')
+      + '|loop:' + loop().ms + ':' + (loop().on ? '1' : '0')
+      + '|up:' + (upState ? 'live:' + upState.kind + ':' + upState.name
+                : (upDone ? 'done:' + (upDone.ok ? '1' : '0') + ':' + upDone.name : ''))
+      + '|fresh:' + (freshClip === null ? '' : String(freshClip))
+      /* The cut reason is drawn inside the media panel, so a note arriving has
+         to rebuild it. It changes about once per upload, never per keystroke. */
+      + '|note:' + (cutNote === null ? '' : cutNote);
+  }
+
+  /** Repaint one named region, if it is on screen. Never rebuilds anything else. */
+  function paintRegion(name) {
+    var host = document.querySelector('#content');
+    if (!host || !editing) return;
+
+    var el = host.querySelector('[data-ugs-region="' + name + '"]');
+    if (!el) return;
+
+    if (name === 'hero') { el.innerHTML = heroHTML(editing); return; }
+    if (name === 'draft') { el.innerHTML = draftBarHTML(); return; }
+    if (name === 'steps') { el.innerHTML = stepButtonsHTML(); return; }
+    if (name === 'foot') { el.innerHTML = footHTML(editing); return; }
+    if (name === 'results') { el.innerHTML = resultsHTML(); return; }
+    if (name === 'tagged') {
+      /* The head carries a count and a tone that both move with the list, so the
+         whole section's contents are rewritten -- there is no input inside it. */
+      el.className = 'ugs-sec' + (tagged.length ? ' is-live' : '');
+      el.innerHTML = secInnerHTML({
+        glyph: ICON_TAG,
+        title: 'Tagged on this clip',
+        sub: 'Drag to reorder. The first one is what a tile shows before anybody taps it.',
+        note: tagged.length ? String(tagged.length) : 'none yet',
+        body: taggedHTML()
+      });
+      return;
+    }
+    if (name === 'blockers') {
+      el.innerHTML = blockersHTML((editing._blockers || editing.blockers || []));
+      return;
+    }
+    if (name === 'check') {
+      var v = editing;
+      var left = (v.file_path ? 0 : 1) + (v.poster_path ? 0 : 1)
+               + (v.rights_status === 'granted' ? 0 : 1);
+      el.className = 'ugs-sec ' + (left === 0 ? 'is-live' : 'is-warm');
+      el.innerHTML = secInnerHTML({
+        glyph: ICON_SHIELD,
+        title: 'What has to be true',
+        sub: 'Read off UgcVideo::publishBlockers(), which is what the save really checks.',
+        note: left === 0 ? 'all three' : (3 - left) + ' of 3',
+        body: checkHTML(v)
+      });
+    }
+  }
+
+  /**
+   * Everything that can change without the media changing, repainted.
+   *
+   * The list is deliberately short and deliberately excludes every panel that
+   * holds an input the owner might be typing into -- steps 1, 3 and the two
+   * columns of step 5. Those are drawn once per mount and then left alone, which
+   * is what makes typing survive a repaint without any storage being involved.
+   */
+  function paintRegions() {
+    ['hero', 'draft', 'steps', 'tagged', 'results', 'blockers', 'check', 'foot']
+      .forEach(paintRegion);
+  }
+
+  /*
+   * A STEP CHANGE, AND NOTHING ELSE.
+   *
+   * Show one of five sections that are all already in the document, mark the
+   * rail, and redraw the footer's two buttons. No HTML is built for any panel,
+   * no request is made, and #ugs-form is not touched -- so the <video> inside it
+   * is the same element it was a moment ago, still holding its buffer and still
+   * at the same currentTime.
+   */
+  function paintStep() {
+    var host = document.querySelector('#content');
+    if (!host || !editing) return;
+
+    var panels = host.querySelectorAll('#ugs-form > .ugs-panel');
+    /* Not mounted the way this expects -- fall back to a full paint rather than
+       leave the owner on a screen with no visible panel. */
+    if (panels.length !== STEPS.length) { render(); return; }
+
+    for (var i = 0; i < panels.length; i += 1) {
+      if (i + 1 === step) panels[i].removeAttribute('hidden');
+      else panels[i].setAttribute('hidden', '');
+    }
+
+    paintRegion('steps');
+    paintRegion('foot');
+
+    /*
+     * THE LOOP PREVIEW IS MOUNTED ONCE AND THEN PAUSED, NEVER TORN DOWN.
+     *
+     * It used to be mounted by render() whenever the repaint happened to land on
+     * step 2, which was fine only because every step change WAS a repaint. Now
+     * that a step change is not, it has to be mounted the first time step 2 is
+     * shown -- and, much more importantly, it must NOT be released on the way
+     * out. Releasing it is what made coming back to step 2 re-fetch the clip and
+     * restart the loop from zero, which on a clip with no teaser is the whole
+     * 8.5 MB file.
+     *
+     * So: pause on the way out, play on the way back. Neither touches the src,
+     * so neither costs a byte, and currentTime is where he left it. The element
+     * is given up only by releaseLoop(), on a wholesale mount -- which is
+     * exactly when the media really has changed.
+     */
+    /* Step 4 wants something to press before anybody types. Asked for once, and
+       never awaited — the step is already on screen. */
+    if (step === 4) loadRecent();
+
+    if (step === 2) {
+      if (!loopEl) wireLoop(host);
+      else if (loopEl.paused) { var again = loopEl.play(); if (again && again.catch) again.catch(function () {}); }
+    } else if (loopEl && !loopEl.paused) {
+      try { loopEl.pause(); } catch (e) {}
+    }
+
+    /* The step rail is a scroll-snapped strip on a phone, so the step that is now
+       current can be off to the right. This is a scroll COMMAND, not a
+       measurement: it reads no rect, no offset and no scroll position, and rule 4
+       is about laying a page out in script. */
+    var current = host.querySelector('.ugs-step.is-on');
+    if (current && current.scrollIntoView) {
+      try { current.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+    }
+  }
+
   function render() {
     var host = document.querySelector('#content');
     if (!host) return;
@@ -2584,6 +3697,24 @@
     var title = document.querySelector('#ptitle');
     if (!title || title.textContent !== 'All clips') return;
 
+    /*
+     * THE SURGICAL PATH, and the reason the <video> stops being thrown away.
+     *
+     * Lane V5 fixed the same class of bug on the Sections tab by lifting the
+     * clip dialog out of the wholesale string into a host of its own, so screen
+     * repaints and dialog repaints stopped being the same event. The video here
+     * cannot be lifted anywhere -- it sits inside the media panel's layout, not
+     * on top of it -- so the other half of V5's fix is the one that applies:
+     * renderModal()'s `openModalId === editingVideo.id` check, which updates a
+     * dialog that is already open instead of rebuilding it. `mounted` is that
+     * check, and the regions are renderModalBody().
+     */
+    if (editing && mounted !== null && mounted === mountKey(editing)
+        && host.querySelector('#ugs-form')) {
+      paintRegions();
+      return;
+    }
+
     releaseLoop();
 
     host.innerHTML = '<div class="wrap ugs-wrap">'
@@ -2591,13 +3722,13 @@
       + (editing ? editorHTML() : listHTML())
       + '</div>';
 
+    mounted = editing ? mountKey(editing) : null;
+
     if (editing && window.KBBArabic) window.KBBArabic.wire(host);
     if (editing && step === 2) wireLoop(host);
+    if (editing && step === 4) loadRecent();
 
-    /* The step rail is a scroll-snapped strip on a phone, so after "Save and
-       continue" the step that is now current can be off to the right. This is a
-       scroll COMMAND, not a measurement: it reads no rect, no offset and no
-       scroll position, and rule 4 is about laying a page out in script. */
+    /* See the note in paintStep(): a scroll command, not a measurement. */
     if (editing) {
       var current = host.querySelector('.ugs-step.is-on');
       if (current && current.scrollIntoView) {
@@ -2614,7 +3745,8 @@
     var t = e.target.closest ? e.target.closest('[data-ugs-open],[data-ugs-del],[data-ugs-new],'
       + '[data-ugs-save],[data-ugs-back],[data-ugs-derive],[data-ugs-untag],[data-ugs-up],'
       + '[data-ugs-down],[data-ugs-add],[data-ugs-poster],[data-ugs-step],[data-ugs-next],'
-      + '[data-ugs-upcancel],[data-ugs-upretry]') : null;
+      + '[data-ugs-upcancel],[data-ugs-upretry],[data-ugs-draftrestore],[data-ugs-draftdiscard],'
+      + '[data-ugs-retrysave]') : null;
     if (!t) return;
 
     if (t.hasAttribute('data-ugs-new')) { e.preventDefault(); blank(); return; }
@@ -2627,12 +3759,29 @@
       return;
     }
     if (t.hasAttribute('data-ugs-save')) { e.preventDefault(); save(); return; }
+    if (t.hasAttribute('data-ugs-draftrestore')) { e.preventDefault(); restoreDraft(); return; }
+    if (t.hasAttribute('data-ugs-draftdiscard')) { e.preventDefault(); discardDraft(); return; }
+    if (t.hasAttribute('data-ugs-retrysave')) {
+      e.preventDefault();
+      /* The same one writer, in the foreground this time: the owner pressed it,
+         so he is watching, and locking the screen is the honest thing to do. */
+      saveFail = null;
+      paintRegion('foot');
+      save();
+      return;
+    }
     if (t.hasAttribute('data-ugs-next')) { e.preventDefault(); goStep(step + 1); return; }
     if (t.hasAttribute('data-ugs-step')) { e.preventDefault(); goStep(Number(t.getAttribute('data-ugs-step'))); return; }
     if (t.hasAttribute('data-ugs-back')) {
       e.preventDefault();
+      /* Anything typed and not saved is written down on the way out — this is
+         the one moment the DOM that was holding it is about to be thrown away.
+         It is NOT saved to the server: leaving a screen is not consent to
+         publish, and the bar on the way back in is how it is offered. */
+      writeDraft();
       forgetUpload();
       editing = null;
+      draftFound = null;
       step = 1;
       render();
       return;
@@ -2662,7 +3811,7 @@
     if (t.hasAttribute('data-ugs-untag')) {
       e.preventDefault();
       tagged.splice(Number(t.getAttribute('data-ugs-untag')), 1);
-      render();
+      afterTagChange();
       return;
     }
 
@@ -2673,7 +3822,7 @@
       if (to < 0 || to >= tagged.length) return;
       var moved = tagged.splice(from, 1)[0];
       tagged.splice(to, 0, moved);
-      render();
+      afterTagChange();
       return;
     }
 
@@ -2690,24 +3839,94 @@
         brand: t.getAttribute('data-ugs-addbrand') || '',
         at_ms: null
       });
-      render();
+      afterTagChange();
       return;
     }
   });
 
+  /*
+   * THE LIST CHANGED, SO THE LIST IS REPAINTED — AND NOTHING ELSE IS.
+   *
+   * THE DEFECT THIS FIXES, measured before it was touched: pressing a search
+   * result did tag the product (the row really did appear in the list, so
+   * "selection is not working" was not reproducible as stated) — but render()
+   * replaced #content wholesale, so the search box became a NEW element and
+   * document.activeElement stopped being it. Measured: focused=true before the
+   * press, focused=false after, with the caret gone. Anybody adding a second
+   * product then types into nothing and watches the screen ignore them, which
+   * is a fair description of "selection is not working".
+   *
+   * Three regions move when the tagged list moves and the search box is in none
+   * of them, so the caret now stays exactly where it was.
+   */
+  function afterTagChange() {
+    paintRegion('tagged');
+    paintRegion('steps');    // step 4's tick follows the count
+    paintRegion('foot');     // ...and so does the state line
+    writeDraft();
+  }
+
   document.addEventListener('input', function (e) {
-    if (!e.target || !e.target.hasAttribute || !e.target.hasAttribute('data-ugs-search')) return;
-    term = e.target.value;
-    if (searchTimer) clearTimeout(searchTimer);
-    /* Debounced, and the caret is put back after the repaint: render() replaces
-       #content wholesale, so the element being typed into is a new node by the
-       time the answer lands. */
-    searchTimer = setTimeout(function () {
-      search().then(function () {
-        var box = document.querySelector('[data-ugs-search]');
-        if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
-      });
-    }, 250);
+    if (!e.target || !e.target.hasAttribute) return;
+
+    if (e.target.hasAttribute('data-ugs-search')) {
+      term = e.target.value;
+      if (searchTimer) clearTimeout(searchTimer);
+
+      /*
+       * THE CARET DANCE IS GONE, and its absence is the fix rather than a
+       * tidying. It used to read:
+       *
+       *     search().then(function () {
+       *       var box = document.querySelector('[data-ugs-search]');
+       *       if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+       *     });
+       *
+       * — a workaround for render() replacing #content, and therefore the very
+       * box being typed into, on every answer. It could only ever put the caret
+       * at the END, so editing the middle of a term was impossible, and it
+       * fought anybody who kept typing while an answer was in flight. The
+       * results are their own region now and the input is not in it, so the box
+       * is never replaced and there is nothing to restore.
+       *
+       * The empty term is answered WITHOUT a request: clearing the box goes back
+       * to the newest products, which are already in hand.
+       */
+      if (term === '') {
+        searchSeq += 1;                 // abandon any answer still on its way
+        searching = false;
+        searched = false;
+        results = [];
+        unpublishedHits = 0;
+        paintRegion('results');
+        return;
+      }
+
+      /* Said straight away, so the debounce is never a silent second. */
+      searching = true;
+      paintRegion('results');
+      searchTimer = setTimeout(search, 250);
+      return;
+    }
+
+    /* ── every other box on the form feeds the draft ──────────────────────
+       Debounced so a long caption is not serialised on every keystroke, and
+       never a request: this writes to localStorage and nothing else. */
+    if (!editing) return;
+    if (!e.target.closest || !e.target.closest('#ugs-form')) return;
+    if (draftTimer) clearTimeout(draftTimer);
+    draftTimer = setTimeout(writeDraft, 400);
+  });
+
+  /* A <select> and a date box answer `change` rather than `input` in some
+     browsers, and a draft that missed the status field would be a draft that
+     silently dropped it on restore. */
+  document.addEventListener('change', function (e) {
+    if (!editing || !e.target || !e.target.closest) return;
+    if (!e.target.closest('#ugs-form')) return;
+    if (e.target.hasAttribute && e.target.hasAttribute('data-ugs-upload')) return;
+    if (draftTimer) clearTimeout(draftTimer);
+    draftTimer = setTimeout(writeDraft, 400);
   });
 
   document.addEventListener('change', function (e) {
@@ -2800,15 +4019,15 @@
     dragFrom = null;
 
     if (!(from >= 0 && to >= 0) || from === to || from >= tagged.length || to >= tagged.length) {
-      render();
+      paintRegion('tagged');
       return;
     }
 
     var moved = tagged.splice(from, 1)[0];
     tagged.splice(to, 0, moved);
-    /* Repaint, which also drops both drag classes: render() replaces the list
-       wholesale, so there is nothing left holding them. */
-    render();
+    /* Repaint the list, which also drops both drag classes: the region replaces
+       every row, so there is nothing left holding them. */
+    afterTagChange();
   });
 
   document.addEventListener('dragover', function (e) {
