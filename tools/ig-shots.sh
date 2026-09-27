@@ -24,6 +24,39 @@
 # KBB_PUBLIC_PATH is not optional: without it usePublicPath() names a directory on
 # the live server and the seeded pictures are written somewhere that does not exist.
 #
+# ── ROUND 2: THE PREVIEW AND THE POPUP ──────────────────────────────────────
+#
+# Two modes this loop deliberately does NOT drive, because each needs the shop put
+# into a particular state first and a shell loop that writes credentials is a shell
+# loop somebody runs against the wrong database:
+#
+#   # before connecting -- an app registered, nothing authorised, nothing fetched
+#   KBB_PUBLIC_PATH=$PWD/public php artisan tinker --env=igpreview --execute='
+#     \App\Models\InstagramPost::query()->delete();
+#     app(\App\Services\InstagramSettings::class)->forgetProfile();
+#     \App\Services\Instagram\InstagramCredentials::forgetToken();
+#     \App\Services\Instagram\InstagramCredentials::saveApp("1234567890123456",
+#       "abcdef0123456789abcdef0123456789");
+#     \App\Services\SettingsService::forgetMemo(); \App\Models\Setting::flushMap();
+#     \Illuminate\Support\Facades\Cache::flush();'
+#   node tools/ig-shots.cjs preview docs/ig-profile-shots fresh
+#
+#   # after connecting -- re-seed, then store a 60-day token
+#   KBB_PUBLIC_PATH=$PWD/public php artisan tinker --env=igpreview \
+#     --execute="require 'tools/ig-seed-preview.php';"
+#   KBB_PUBLIC_PATH=$PWD/public php artisan tinker --env=igpreview --execute='
+#     \App\Services\Instagram\InstagramCredentials::saveApp("1234567890123456",
+#       "abcdef0123456789abcdef0123456789");
+#     \App\Services\Instagram\InstagramCredentials::saveToken("a-very-long-lived-token",
+#       60*86400, "17841400000000000");
+#     \App\Services\SettingsService::forgetMemo(); \App\Models\Setting::flushMap();
+#     \Illuminate\Support\Facades\Cache::flush();'
+#   node tools/ig-shots.cjs preview docs/ig-profile-shots connected
+#   node tools/ig-shots.cjs popup   docs/ig-profile-shots
+#
+# NODE_PATH may need to point at a checkout that has playwright installed; this
+# worktree does not carry its own node_modules.
+#
 # Expects the preview server already up on 127.0.0.1:8951.
 set -euo pipefail
 cd "$(dirname "$0")/.."

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\InstagramPost;
+use App\Services\Instagram\IgPath;
 use App\Services\Instagram\InstagramAuth;
 use App\Services\Instagram\InstagramClient;
 use App\Services\Instagram\InstagramCredentials;
@@ -16,6 +17,7 @@ use App\Services\ModuleSchema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * Content → Instagram. The connection, the look, and the fetch.
@@ -251,6 +253,13 @@ class InstagramController extends Controller
      * failing (a disk, a permission, a CDN), where no rows at all means no fetch has
      * ever succeeded. One combined count would hide the first case entirely.
      *
+     * And `tiles`, which is the PREVIEW's content — the same posts the shop would
+     * draw, through their own narrow allowlist. It rides on this payload rather than
+     * on an endpoint of its own because the screen is already asking for this exact
+     * thing: the preview has to redraw on every keystroke and every drag, and a
+     * fetch per keystroke is the cost the brief's "light weight" rules out. One read,
+     * everything the drawing needs, and then the drawing is CSS.
+     *
      * @return array<string, mixed>
      */
     private function content(): array
@@ -261,7 +270,70 @@ class InstagramController extends Controller
             'posts' => $total,
             'drawable' => InstagramPost::query()->drawable()->count(),
             'newest' => InstagramPost::query()->drawable()->recent()->value('posted_at'),
+            'tiles' => $this->previewTiles(),
         ];
+    }
+
+    /**
+     * The pictures the screen's preview draws, and NOTHING a preview cannot use.
+     *
+     * ── ITS OWN ALLOWLIST, NARROWER THAN THE STOREFRONT'S ───────────────────
+     *
+     * Not `InstagramPost::toTile()`, which is the SHOP's allowlist and carries three
+     * fields a drawing has no use for: `permalink`, `embed` and the row `id`. Rule 5
+     * is "allowlist what a model returns, never the model", and the honest reading of
+     * it here is the narrowest list that draws the picture — six keys, each one
+     * something the preview actually paints. A preview that carries a permalink is a
+     * preview one careless edit away from being a link, and `id` is a row number this
+     * screen never asks the server about.
+     *
+     * The caption is TRUNCATED here rather than in the browser. `.igs-pvcap` clamps
+     * it to four lines whatever arrives, so a 2,200-character caption would be 2,100
+     * characters of payload nobody can see — on a screen that ships up to 24 of them.
+     * 160 is comfortably more than four lines at the size it is drawn.
+     *
+     * ── 24 AND NOT `posts` ──────────────────────────────────────────────────
+     *
+     * The cap is the MAXIMUM of the `posts` range, not its current value, because the
+     * slider moves without asking this server anything: the preview redraws on input
+     * (rule 4's "measured rather than asserted" has a sibling here — a preview that
+     * needed a fetch per keystroke would be one). Dragging from 9 to 24 has to have
+     * 24 tiles already in hand or it draws placeholders for posts that exist.
+     *
+     * One query, with a named column list. The screen read is an admin request and
+     * not on StorefrontQueryBudgetTest's path, but `*` here would load `caption`,
+     * `remote_id` and `seen_at` to draw nine squares.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function previewTiles(): array
+    {
+        $cap = (int) (InstagramSettings::SCHEMA['posts']['options']['max'] ?? 24);
+
+        return InstagramPost::query()
+            ->drawable()
+            ->recent()
+            ->limit($cap)
+            ->get(['id', 'media_type', 'caption', 'local_path', 'like_count', 'comments_count'])
+            ->map(fn (InstagramPost $p) => [
+                // Our own file under the web root, through the same checker the
+                // storefront uses — null for a row whose stored path does not
+                // resolve, which the next line drops.
+                'image' => IgPath::stored($p->local_path),
+                'video' => $p->isVideo(),
+                'carousel' => $p->media_type === 'CAROUSEL_ALBUM',
+                'caption' => Str::limit((string) ($p->caption ?? ''), 160, ''),
+                // NULL STAYS NULL, the same three-valued rule the shop draws by: a
+                // post Instagram gave us no number for draws no number, and a post
+                // with a real zero draws 0.
+                'likes' => $p->like_count === null ? null : (int) $p->like_count,
+                'comments' => $p->comments_count === null ? null : (int) $p->comments_count,
+            ])
+            // The scope can only say the column is not null; a file that has since
+            // gone is dropped here, exactly as InstagramFeed::build() drops it.
+            ->filter(fn (array $tile) => $tile['image'] !== null)
+            ->values()
+            ->all();
     }
 
     /* ------------------------------------------------------------------- writing */

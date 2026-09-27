@@ -122,6 +122,142 @@
 .igs-me b{font-size:14px;display:block;overflow-wrap:anywhere}
 .igs-me span{font-size:12px;color:var(--ink-soft,#6b7280);display:block;margin-top:2px}
 .igs-empty{color:var(--ink-soft,#6b7280);font-size:13px;padding:6px 0}
+
+/* ── THE PREVIEW ──────────────────────────────────────────────────────────
+   A DRAWING OF THE SECTION, NOT THE SECTION. Every other Appearance screen in
+   this console previews what it controls and this one used to ask the owner to
+   save and go look at the shop.
+
+   It is not an iframe of the storefront, and that is a cost decision rather than
+   a convenience: the section is behind the shop's own routes, so a live preview
+   is an authenticated fetch and a full page render per keystroke — and the
+   controls above it move on INPUT, which for a slider is thirty events a drag.
+   So the storefront's arrangement is restated here in CSS, and the browser lays
+   it out once per repaint from the stylesheet.
+
+   THE RULES BELOW ARE THE SAME ARITHMETIC AS resources/views/instagram/
+   assets.blade.php, at the same two breakpoints (640 and 900), including
+   InstagramSettings::cssVariables()'s peeking-rail fractions -- 2.3 tiles and 1.3
+   gaps on a phone, 5.3 and 4.3 wide. A preview whose columns are its own opinion
+   is a preview that lies, and the way to keep the two honest is for both to be
+   the same expressions rather than two sets of numbers that look similar.
+
+   ── AND THEY ARE @container RULES, NOT @media ──────────────────────────
+   The preview is a BOX INSIDE a console, so the width that decides its
+   arrangement is the box's, never the window's. @media here would draw the
+   desktop grid inside a 340px-wide preview on a 1280px screen, which is the
+   exact wrong answer -- and it is also what makes the Phone/Desktop switch below
+   work without JavaScript measuring anything: the switch sets a max-width, the
+   container query notices, and the browser redoes the layout. A browser with no
+   container-query support ignores every @container block and keeps the phone
+   arrangement, which is a smaller lie than the other way round.
+
+   NOTHING HERE MEASURES ANYTHING -- rule 4, and InstagramSectionShapeTest holds
+   this file to it by scanning for the eight element-measuring APIs BY NAME. Which
+   is why they are not written out in this comment either: that test is a
+   str_contains over the source, so naming one in prose is as red as calling it,
+   and this paragraph went red exactly once for saying so. Every size above is a
+   calc(), a repeat() or an aspect-ratio, and there is nothing left to ask the
+   browser for. */
+.igs-pvh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;min-width:0}
+.igs-pvh b{font-weight:650;font-size:15px}
+.igs-pvh span{font-size:12px;color:var(--ink-soft,#6b7280)}
+.igs-pvw{display:flex;gap:6px;flex:0 0 auto}
+.igs-pvw button{padding:5px 10px;border:1px solid var(--border,#e6e6e6);border-radius:999px;background:transparent;
+  color:inherit;font:inherit;font-size:11.5px;cursor:pointer}
+.igs-pvw button[aria-pressed="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+
+/* The frame. `container-type:inline-size` is what the @container rules below
+   resolve against, and `overflow:hidden` is the thing that keeps a peeking rail
+   inside this card instead of widening the whole console -- the fault rule 4's
+   scrollWidth number exists to catch. */
+.igs-pvf{margin-top:12px;border:1px solid var(--border,#e6e6e6);border-radius:12px;padding:12px;
+  background:var(--surface,#fff);container-type:inline-size;overflow:hidden;min-width:0}
+.igs-pvf.is-phone{max-width:390px}
+
+.igs-pv{--igsp-w:auto;--igsp-gap:8px;--igsp-r:10px;min-width:0}
+.igs-pv *{box-sizing:border-box;min-width:0}
+.igs-pvhd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.igs-pvhd h3{margin:0;font-size:17px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.igs-pvhd i{font-style:normal;font-size:13px;color:#15a85a;font-weight:600;flex:0 0 auto}
+
+/* The profile box, in the two styles that draw one. */
+.igs-pvp{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.igs-pvp img,.igs-pvp .igs-pvav{border-radius:50%;object-fit:cover;flex:0 0 auto;background:#f3f4f6}
+.igs-pvp.is-card{padding:13px 14px;border:1px solid var(--border,#e6e6e6);border-radius:calc(var(--igsp-r) + 4px)}
+.igs-pvp.is-card img,.igs-pvp.is-card .igs-pvav{width:64px;height:64px}
+.igs-pvp.is-bar{gap:9px;margin-bottom:10px}
+.igs-pvp.is-bar img,.igs-pvp.is-bar .igs-pvav{width:36px;height:36px}
+.igs-pvn{display:grid;gap:2px;min-width:0}
+.igs-pvn b{font-size:15px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.igs-pvn span{font-size:12.5px;color:var(--ink-soft,#6b7280);line-height:1.35;overflow-wrap:anywhere}
+.igs-pvp.is-bar .igs-pvn b{font-size:13.5px}
+.igs-pvp.is-bar .igs-pvn span{font-size:11.5px}
+.igs-pvfl{margin-inline-start:auto;flex:0 0 auto;padding:8px 14px;border-radius:999px;background:#15a85a;color:#fff;
+  font-size:12.5px;font-weight:650}
+
+/* The track. Two grids, two flex scrollers, the same as the shop. */
+.igs-pvt{display:grid;gap:var(--igsp-gap)}
+.igs-pvt.is-grid,.igs-pvt.is-mosaic,.igs-pvt.is-masonry{grid-template-columns:repeat(2,minmax(0,1fr))}
+.igs-pvt.is-rail,.igs-pvt.is-strip{display:flex;overflow-x:auto;scrollbar-width:none}
+.igs-pvt.is-rail::-webkit-scrollbar,.igs-pvt.is-strip::-webkit-scrollbar{display:none}
+.igs-pvt.is-rail > *,.igs-pvt.is-strip > *{flex:0 0 var(--igsp-w)}
+.igs-pvt.is-mosaic > :first-child{grid-column:span 2;grid-row:span 2}
+
+/* The cell. `aspect-ratio` is what keeps a tile square without anybody knowing
+   its width, which is the whole reason there is nothing here to measure. */
+.igs-pvc{position:relative;display:block;overflow:hidden;border-radius:var(--igsp-r);aspect-ratio:1/1;
+  background:#f3f4f6}
+.igs-pvt.is-masonry .igs-pvc{aspect-ratio:4/5}
+.igs-pvc > img{display:block;width:100%;height:100%;object-fit:cover}
+
+/* A PLACEHOLDER IS DRAWN AS A PLACEHOLDER. Not an empty grey box that reads as a
+   broken picture: a hairline border and a diagonal wash, so "nothing has been
+   fetched yet" is legible at a glance and the note under the frame says it in
+   words. */
+/* TWO BACKGROUND LAYERS AND NOT A PSEUDO-ELEMENT, because `::before` and
+   `::after` on this cell are already spoken for by the album mark and the play
+   triangle -- and a ghost tile that borrowed one would be a ghost tile whose
+   badge disappeared the day somebody drew a placeholder for a video. */
+.igs-pvc.is-ghost{box-shadow:inset 0 0 0 1px var(--border,#e6e6e6);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b9bec7' stroke-width='1.6'%3E%3Crect x='3' y='3' width='18' height='18' rx='5'/%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Ccircle cx='17.2' cy='6.8' r='1'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(135deg,rgba(0,0,0,.045) 0 8px,transparent 8px 16px);
+  background-repeat:no-repeat,repeat;background-position:50% 50%,0 0;background-size:30% auto,auto}
+
+/* The play triangle and the album mark, as pseudo-elements on the same classes
+   the shop uses, so a tile costs no extra node here either. */
+.igs-pvc.is-video::after{content:"";position:absolute;inset-block-start:50%;inset-inline-start:50%;
+  translate:-50% -50%;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.42);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'%3E%3Cpath d='M9 6.5v11l9-5.5z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:54% 50%;background-size:19px}
+.igs-pvt.is-strip .igs-pvc.is-video::after{width:26px;height:26px;background-size:13px}
+.igs-pvc.is-album::before{content:"";position:absolute;inset-block-start:6px;inset-inline-end:6px;width:14px;height:14px;
+  border:2px solid #fff;border-radius:3px;box-shadow:-3px 3px 0 -1px rgba(255,255,255,.55);opacity:.95}
+
+/* The counts, on the same gradient, and drawn only when there is a number. */
+.igs-pvm{position:absolute;inset-inline:0;inset-block-end:0;display:flex;gap:10px;align-items:center;
+  padding:15px 8px 6px;color:#fff;font-size:11.5px;font-weight:600;line-height:1;
+  background:linear-gradient(to top,rgba(0,0,0,.56),rgba(0,0,0,0))}
+.igs-pvm span{display:inline-flex;gap:4px;align-items:center;font-variant-numeric:tabular-nums}
+.igs-pvm svg{width:12px;height:12px;flex:0 0 auto}
+
+/* The caption. ALWAYS VISIBLE IN THE PREVIEW and hover-only on the shop, which
+   is a deliberate difference and is said in the note under the frame: a preview
+   of a thing that only appears on hover shows the owner nothing when he turns the
+   switch on, which is the one moment he is looking. */
+.igs-pvcap{position:absolute;inset:0;display:flex;align-items:flex-end;padding:8px;color:#fff;font-size:11px;
+  line-height:1.4;background:rgba(0,0,0,.44)}
+.igs-pvcap span{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+
+@container (min-width:640px){
+  .igs-pvt.is-grid,.igs-pvt.is-mosaic,.igs-pvt.is-masonry{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@container (min-width:900px){
+  .igs-pvt.is-masonry{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .igs-pvt.is-rail > *{flex-basis:calc((100% - (var(--igsp-gap) * 4.3)) / 5.3)}
+  .igs-pvt.is-strip > *{flex-basis:calc((100% - (var(--igsp-gap) * 7.5)) / 8.5)}
+  .igs-pvp.is-card img,.igs-pvp.is-card .igs-pvav{width:76px;height:76px}
+}
 </style>
 <script>
 (function () {
@@ -130,6 +266,13 @@
   var SCREEN = 'instagram';
   var tabs = null, values = {}, open = null, banner = null, busy = false, seq = 0;
   var moduleOn = false, connection = null, me = null, content = null;
+  /* Which width the preview frame is drawn at. A view of the drawing and not a
+     setting, so it is never posted and never saved -- and it is why the frame's
+     arrangement is decided by @container rules rather than @media ones. */
+  var pvPhone = false;
+  /* The OAuth popup and the watchdog that notices it was closed by hand. Both
+     nulled the moment either finishes; see watchPopup(). */
+  var popup = null, popupWatch = null;
   /* The sentence the OAuth callback redirected back with, read once from the
      query string and then kept in a variable — see landed() for why it is
      stripped out of the URL rather than left in it. */
@@ -239,6 +382,54 @@
   }
 
   readLanding();
+
+  /* ------------------------------------------------------------------- the popup */
+
+  /*
+   * ── THE ONE WORD THAT CROSSES BETWEEN THE WINDOWS ───────────────────────
+   *
+   * A CONSTANT, AND IT CARRIES NOTHING. Not the token, not the app secret, not the
+   * profile, not even a success flag — this exact string and no other shape is
+   * accepted by the listener below. What the popup is saying is "I have finished,
+   * go and ask the server", and the screen then does exactly that with its own
+   * authenticated read of /admin-api/instagram.
+   *
+   * That is not caution for its own sake. A message is a value from ANOTHER WINDOW,
+   * and a handler that believed a payload would be a handler that could be told the
+   * shop is connected, or handed a sentence to print, by any page that got a handle
+   * on this one. Carrying nothing is the only version of this that cannot be lied
+   * to about anything — and the token never needed to travel anyway: it is
+   * exchanged and stored server-side by App\Services\Instagram\InstagramSync,
+   * which is the whole reason a popup is safe here.
+   */
+  var OAUTH_DONE = 'kbb-instagram-oauth-done';
+
+  /*
+   * ── THIS SAME SCRIPT, RUNNING INSIDE THE POPUP ──────────────────────────
+   *
+   * The callback lands the popup back on this console's own URL with `?ig_done=` or
+   * `?ig_error=` on it (InstagramController::screenUrl()), which means the admin page
+   * — and this file with it — loads in the popup. So the popup half of the handshake
+   * needs NO new route, NO new view and NO new endpoint: it is these ten lines,
+   * running in a window that has an opener and a landing parameter.
+   *
+   * `window.location.origin` AS THE TARGET ORIGIN, never '*'. A '*' here would
+   * broadcast to whatever the opener has since navigated to, and the whole point of
+   * the origin argument is that the browser refuses to deliver when the opener is
+   * not who we think it is. The word itself is harmless; the habit is not.
+   *
+   * `window.opener !== window` is belt and braces — `opener` is null in an ordinary
+   * tab, which is the fallback path, and that path is left exactly as it was: it
+   * prints the banner readLanding() just took out of the address bar.
+   */
+  if (landed && window.opener && window.opener !== window) {
+    try { window.opener.postMessage(OAUTH_DONE, window.location.origin); } catch (e) {}
+    /* CLOSED BY THE POPUP ITSELF, not by the opener. A popup that waits to be
+       closed is a popup left open forever whenever the opener's listener is
+       broken, and the owner is looking at a 620px-wide admin console wondering
+       what to do with it. */
+    try { window.close(); } catch (e) {}
+  }
 
   /* ------------------------------------------------------------------ drawing */
 
@@ -368,13 +559,35 @@
       + '<div class="igs-actions">'
       + '<button class="igs-btn" data-igs-savekeys' + (busy ? ' disabled' : '') + '>Save app ID and secret</button>'
       /*
-       * A REAL LINK AND NOT A FETCH, because an OAuth handshake is a top-level
-       * navigation to a third party and an XHR cannot log anybody in to one. It
-       * also means an owner whose JavaScript is having a bad day can still
-       * finish the connection by clicking it.
+       * ── A REAL LINK AND NOT A FETCH, AND NOW A POPUP OVER THE TOP ─────────
+       *
+       * The original reasoning is kept because it is right and because the anchor
+       * survives on it: an OAuth handshake is a top-level navigation to a third
+       * party and AN XHR CANNOT LOG ANYBODY IN TO ONE. It also means an owner
+       * whose JavaScript is having a bad day can still finish the connection by
+       * clicking it.
+       *
+       * What that reasoning rules out is an XHR. It does NOT rule out a popup: a
+       * popup IS a top-level navigation, in a window of its own, which is exactly
+       * why it is the standard shape for this handshake — the opener's page stays
+       * alive, so the screen does not have to be rebuilt from a redirect and the
+       * owner does not lose the tab he was working in.
+       *
+       * So the click handler opens `/instagram/start` with window.open and, only
+       * if that returns a window, calls preventDefault(). A blocked popup returns
+       * null and the anchor's own navigation happens instead — which is the
+       * fallback the sentence above describes, reached by doing nothing rather
+       * than by a second code path that has to be kept working. The popup posts
+       * one constant word back when it is finished and the screen then ASKS THIS
+       * SERVER what the connection's state is; see the `message` listener.
+       *
+       * Still an <a> with a real href for the third reason too: middle-click and
+       * the context menu's "open in new tab" keep working, a modified click is
+       * handed straight back to the browser by the handler, and a control that is
+       * not a link cannot be any of those.
        */
       + '<a class="igs-btn is-primary' + (ready ? '' : ' is-off') + '" href="' + esc(base()) + '/instagram/start"'
-      + (ready ? '' : ' aria-disabled="true" tabindex="-1"') + '>'
+      + (ready ? ' data-igs-oauth' : ' aria-disabled="true" tabindex="-1"') + '>'
       + (c.connected ? 'Reconnect' : 'Configure now') + '</a>'
       + (c.connected
           ? '<button class="igs-btn" data-igs-refresh' + (busy ? ' disabled' : '') + '>Refresh posts</button>'
@@ -406,6 +619,257 @@
       + expiryHTML()
       + profileHTML()
       + '</div>';
+  }
+
+  /* ------------------------------------------------------------------ preview */
+
+  /*
+   * ── THE PREVIEW IS A DRAWING AND IT MOVES ON INPUT ──────────────────────
+   *
+   * Everything below reads `values`, which is what the CONTROLS currently say --
+   * not what is saved. So the drawing is the unsaved state, which is the only
+   * state worth previewing: a preview of the saved settings is a picture of what
+   * the owner can already go and look at.
+   *
+   * It restates the storefront's arrangement rather than embedding it. The
+   * alternative -- an iframe of the shop -- costs an authenticated request and a
+   * full page render on every keystroke and every slider tick, which the brief
+   * rules out in as many words, and it cannot show UNSAVED settings at all
+   * without the shop reading them out of a query string (which is rule 5's "a
+   * select stores one of its own options or the default" pointed straight at the
+   * thing that decides what to render -- tools/ig-shots.cjs's header records that
+   * exact idea being rejected for this feature's camera).
+   *
+   * WHERE IT IS HONESTLY DIFFERENT FROM THE SHOP, IT SAYS SO under the frame
+   * rather than quietly differing: the caption overlay is always visible here and
+   * hover-only there, and a count is drawn on a real post only because this shop
+   * does not invent a number it has not fetched.
+   */
+
+  /** One of the schema's own options, or its default — never whatever is in `values`. */
+  function pick(key, allowed, fallback) {
+    var v = String(values[key] == null ? '' : values[key]);
+    return allowed.indexOf(v) >= 0 ? v : fallback;
+  }
+
+  function pvNum(key, fallback, low, high) {
+    var n = Number(values[key]);
+    if (!isFinite(n)) n = fallback;
+    return Math.max(low, Math.min(high, Math.round(n)));
+  }
+
+  /* The heart and the speech bubble, literals in this file — which is what makes
+     printing them unescaped correct (rule 5: anything printed unescaped is a
+     constant, never a setting). The same two paths the section draws. */
+  var PV_HEART = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">'
+    + '<path d="M12 21s-7.5-4.6-9.3-9A5.3 5.3 0 0 1 12 6.5 5.3 5.3 0 0 1 21.3 12c-1.8 4.4-9.3 9-9.3 9z"/></svg>';
+  var PV_BUBBLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" '
+    + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+    + '<path d="M21 11.5A8.4 8.4 0 0 1 12 20a9 9 0 0 1-4-.9L3 20l1.3-3.8A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>';
+
+  function pvCount(n) {
+    /* `!== null` AND NOT A TRUTHINESS TEST, which is the whole of
+       docs/UGC-ENGAGEMENT.md's rule in one line: a reel posted an hour ago
+       genuinely has zero comments, and hiding an honest zero is the same defect
+       as inventing a number. 0 draws "0"; null draws nothing at all. */
+    return (n === null || n === undefined) ? null : Number(n).toLocaleString();
+  }
+
+  /** One cell. The same markup for all five layouts, so there is one place the escaping lives. */
+  function pvTile(tile, opt) {
+    var ghost = tile === null;
+    var cls = 'igs-pvc'
+      + (ghost ? ' is-ghost' : '')
+      + (!ghost && opt.play && tile.video ? ' is-video' : '')
+      + (!ghost && tile.carousel ? ' is-album' : '');
+
+    var inner = ghost ? '' : '<img src="' + esc(tile.image) + '" alt="" loading="lazy" decoding="async">';
+
+    if (!ghost && opt.caption && tile.caption) {
+      inner += '<span class="igs-pvcap"><span>' + esc(tile.caption) + '</span></span>';
+    }
+
+    if (!ghost && opt.counts) {
+      var likes = pvCount(tile.likes), comments = pvCount(tile.comments);
+      if (likes !== null || comments !== null) {
+        inner += '<span class="igs-pvm">'
+          + (likes !== null ? '<span>' + PV_HEART + esc(likes) + '</span>' : '')
+          + (comments !== null ? '<span>' + PV_BUBBLE + esc(comments) + '</span>' : '')
+          + '</span>';
+      }
+    }
+
+    return '<div class="' + cls + '">' + inner + '</div>';
+  }
+
+  /** The profile box, or a ghost of it, or nothing at all. */
+  function pvProfile(style) {
+    if (style === 'off' || style === 'inline') return '';
+
+    var real = me && me.username;
+    var bits = [];
+    if (real) {
+      if (me.followers !== null && me.followers !== undefined) { bits.push(Number(me.followers).toLocaleString() + ' followers'); }
+      if (me.posts !== null && me.posts !== undefined) { bits.push(Number(me.posts).toLocaleString() + ' posts'); }
+    }
+
+    return '<div class="igs-pvp is-' + esc(style) + '">'
+      + (real && me.avatar ? '<img src="' + esc(me.avatar) + '" alt="">' : '<span class="igs-pvav"></span>')
+      + '<div class="igs-pvn"><b>' + esc(real ? (me.name || ('@' + me.username)) : 'Your account name') + '</b>'
+      /* NO INVENTED NUMBER BEFORE THE CONNECTION EXISTS. A placeholder that read
+         "48,219 followers" would be this screen telling the owner something
+         false, which is the one thing the section's own count rule forbids. */
+      + '<span>' + esc(real
+          ? ('@' + me.username + (bits.length ? ' · ' + bits.join(' · ') : ''))
+          : 'Followers and post count appear once the connection has fetched them') + '</span></div>'
+      + '<span class="igs-pvfl">Follow</span>'
+      + '</div>';
+  }
+
+  /*
+   * What the preview is showing and where it came from, in words.
+   *
+   * THE HONEST DIFFERENCES ARE LISTED HERE rather than left for the owner to
+   * discover on the shop. A preview that quietly differs from the thing it
+   * previews is worse than no preview, because it is believed.
+   */
+  function pvNote(drawn, stored, cap, tap) {
+    var lines = [];
+
+    if (!(me && me.username)) {
+      lines.push('<b>The profile box is a placeholder.</b> Your avatar, name and follower count are drawn '
+        + 'from what the connection fetches, so they appear here the moment it has — and no number is '
+        + 'invented in the meantime.');
+    }
+
+    if (stored === 0) {
+      lines.push('<b>These are placeholders.</b> No Instagram post with a stored picture has been fetched '
+        + 'yet, so the frame above shows ' + esc(String(drawn)) + ' empty tiles at the size and spacing '
+        + 'your settings ask for. Connect above and press Refresh posts and the real pictures appear here.');
+    } else {
+      /* STORED AND DRAWN ARE DIFFERENT NUMBERS and the sentence says which is
+         which. Written with one number it read "drawn from the 6 posts this shop
+         has already stored" on a shop holding nine with the slider at six — a
+         sentence that tells the owner he has lost three posts. Caught in the
+         390px picture. */
+      lines.push('<b>Drawn from the ' + esc(String(stored)) + ' post' + (stored === 1 ? '' : 's')
+        + ' this shop has already stored</b>, newest first — the same rows, the same order and the same '
+        + 'arrangement the section uses on the shop.');
+
+      if (drawn < stored) {
+        lines.push('Your <b>How many posts</b> is ' + esc(String(cap)) + ', so the newest '
+          + esc(String(drawn)) + ' of them are drawn and the rest are kept — here and on the shop alike.');
+      }
+
+      if (stored < cap) {
+        lines.push('Your <b>How many posts</b> is ' + esc(String(cap)) + ', and there are only '
+          + esc(String(stored)) + ' with a picture stored, so the section draws ' + esc(String(stored))
+          + ' — here and on the shop alike. Press <b>Refresh posts</b> to fetch more.');
+      }
+    }
+
+    lines.push('Two things are deliberately different from the shop and both are about being able to see '
+      + 'what you just switched on: the <b>caption</b> overlay sits open here and only appears on hover or '
+      + 'tap there, and a <b>like or comment count is drawn on a real post only</b> — this shop never '
+      + 'invents a number it has not fetched, so a placeholder carries none.');
+
+    lines.push('<b>What a tap does</b> is not something a drawing can show. Yours is set to: '
+      + esc(tap === 'embed' ? 'play the post here, in a box over the page'
+          : (tap === 'nothing' ? 'nothing — the tiles are pictures, not links'
+            : 'open the post on Instagram, in a new tab')) + '.');
+
+    return '<p class="igs-help" style="margin-top:11px">' + lines.join(' ') + '</p>';
+  }
+
+  function previewHTML() {
+    var layout = pick('layout', ['grid', 'rail', 'mosaic', 'masonry', 'strip'], 'grid');
+    var style = pick('profile_style', ['card', 'bar', 'inline', 'off'], 'card');
+    var tap = pick('tap', ['permalink', 'embed', 'nothing'], 'permalink');
+    var cap = pvNum('posts', 9, 3, 24);
+    var gap = pvNum('gap', 8, 0, 24);
+    var radius = pvNum('radius', 10, 0, 28);
+    var heading = String(values.heading == null ? '' : values.heading);
+
+    var opt = { counts: values.counts === true, caption: values.caption === true, play: values.play_badge === true };
+
+    var real = (content && content.tiles) ? content.tiles : [];
+    /* The shop draws what it HAS, never a padded row of blanks — so when some
+       posts are stored the preview draws exactly those and the note explains the
+       shortfall. Only a shop with nothing at all gets ghosts. */
+    var cells = real.length
+      ? real.slice(0, cap).map(function (t) { return pvTile(t, opt); })
+      : (function () {
+          var out = [];
+          for (var i = 0; i < cap; i++) out.push(pvTile(null, opt));
+          return out;
+        })();
+
+    /* `inline` puts the avatar in the grid instead of in a box. A ghost cell when
+       there is no avatar yet, rather than the nothing the shop draws: the control
+       has to be visibly doing something on the one screen where it is chosen, and
+       the note under the frame says which cells are placeholders. */
+    var inlineCell = style === 'inline'
+      ? (me && me.avatar
+          ? '<div class="igs-pvc"><img src="' + esc(me.avatar) + '" alt=""></div>'
+          : '<div class="igs-pvc is-ghost"></div>')
+      : '';
+
+    /*
+     * THE SAME EXPRESSIONS App\Services\InstagramSettings::cssVariables() WRITES,
+     * and the comment there is the reason they are not rounder numbers: n tiles
+     * carry (n-1) whole gaps plus the fraction of one belonging to the partly
+     * visible tile, and getting that wrong is how a rail overflows by 24px. Two
+     * copies of one piece of arithmetic is a real cost; two DIFFERENT pieces of
+     * arithmetic in a preview and the thing it previews is a worse one.
+     */
+    var width = layout === 'rail' ? 'calc((100% - ' + (gap * 1.3) + 'px) / 2.3)'
+      : (layout === 'strip' ? 'calc((100% - ' + (gap * 3.5) + 'px) / 4.5)' : 'auto');
+
+    var handle = me && me.username ? '@' + me.username : '';
+
+    return '<div class="igs-card" data-igs-preview>'
+      + '<div class="igs-pvh"><b>Preview</b>'
+      + '<span>Redraws as you type or drag. A drawing of the section, not the live page.</span>'
+      /* The two widths rule 2 asks for pictures at, switchable without resizing
+         the window — and the reason the frame is a container query rather than a
+         media one, because a max-width on the frame is all this has to do. */
+      + '<span class="igs-pvw">'
+      + '<button type="button" data-igs-pvwidth="phone" aria-pressed="' + (pvPhone ? 'true' : 'false') + '">Phone</button>'
+      + '<button type="button" data-igs-pvwidth="wide" aria-pressed="' + (pvPhone ? 'false' : 'true') + '">Desktop</button>'
+      + '</span></div>'
+
+      + '<div class="igs-pvf' + (pvPhone ? ' is-phone' : '') + '">'
+      + '<div class="igs-pv" style="--igsp-w:' + esc(width) + ';--igsp-gap:' + esc(String(gap))
+      + 'px;--igsp-r:' + esc(String(radius)) + 'px">'
+      /* The shop's own condition: the header row exists when there is a heading or
+         a handle to put in it, and nothing at all when there is neither. */
+      + ((heading !== '' || handle !== '')
+          ? '<div class="igs-pvhd">' + (heading !== '' ? '<h3>' + esc(heading) + '</h3>' : '')
+            + (handle !== '' ? '<i>' + esc(handle) + '</i>' : '') + '</div>'
+          : '')
+      + pvProfile(style)
+      + '<div class="igs-pvt is-' + esc(layout) + '">' + inlineCell + cells.join('') + '</div>'
+      + '</div></div>'
+
+      + pvNote(cells.length, real.length, cap, tap)
+      + '</div>';
+  }
+
+  /*
+   * Repaint the drawing WITHOUT rebuilding the controls.
+   *
+   * render() replaces #content wholesale, and doing that on every `input` event
+   * takes the slider out from under the finger dragging it and puts the caret at
+   * the end of the heading box on the second character. Both faults are already
+   * recorded in this console — the checkout screen's paintPreview() carries the
+   * same note — so the preview is swapped in place instead.
+   */
+  function paintPreview() {
+    var node = document.querySelector('[data-igs-preview]');
+    if (!node) return;
+    var holder = document.createElement('div');
+    holder.innerHTML = previewHTML();
+    node.replaceWith(holder.firstChild);
   }
 
   function unitOf(field) {
@@ -452,7 +916,7 @@
     if (!host) return;
 
     if (tabs === null) {
-      host.innerHTML = '<div class="igs-wrap"><div class="igs-card"><div class="igs-empty">'
+      host.innerHTML = '<div class="igs-wrap" data-igs-screen><div class="igs-card"><div class="igs-empty">'
         + (banner ? esc(banner.text) : 'Loading…') + '</div></div></div>';
       return;
     }
@@ -465,7 +929,10 @@
         + ' data-igs-tab="' + esc(t.key) + '">' + esc(t.label) + '</button>';
     }).join('');
 
-    host.innerHTML = '<div class="igs-wrap">'
+    /* `data-igs-screen` on the wrapper in BOTH render paths: it is how onScreen()
+       knows this module is still the one on display when a popup finishes minutes
+       after the owner walked off to another screen. */
+    host.innerHTML = '<div class="igs-wrap" data-igs-screen>'
       + (banner ? '<div class="igs-note ' + (banner.ok ? 'is-good' : 'is-bad') + '">' + esc(banner.text)
           + (banner.detail ? ' <b>Instagram said:</b> ' + esc(banner.detail) : '') + '</div>' : '')
 
@@ -495,6 +962,17 @@
             + '<b>[kbb_instagram layout="strip" profile="off" limit="6"]</b> in a footer.</div>'
             + '</div>'
           : '')
+
+      /* THE PREVIEW SITS UNDER THE CONTROLS AND NOT BESIDE THEM. One column at
+         every width, which is the answer the checkout screen's own header
+         records the owner asking for: "bring the preview to downwards, so i can
+         see better". A section mock in a side rail shows nothing, and this one
+         has to be wide enough that three columns read as three columns.
+
+         Drawn whenever there are controls to draw, regardless of which tab is
+         open: BOTH tabs change it. Tabs are where a control lives; the section is
+         one thing. */
+      + (current ? previewHTML() : '')
       + '</div>';
   }
 
@@ -625,6 +1103,165 @@
     }
   }
 
+  /* ---------------------------------------------------------- the opener's half */
+
+  /*
+   * Is this screen still the one on display?
+   *
+   * A popup can be open while the owner wanders off to Orders. The handshake
+   * finishes, the listener fires, and load() would then paint an Instagram screen
+   * into a #content that belongs to somebody else's module. `data-igs-screen` is on
+   * this screen's own wrapper in every render path, so its absence is the answer —
+   * and it is a presence test rather than anything that asks the browser for a size,
+   * because rule 4 forbids the measuring APIs by name in this file.
+   */
+  function onScreen() {
+    return document.querySelector('[data-igs-screen]') !== null;
+  }
+
+  function endWatch() {
+    if (popupWatch !== null) { window.clearInterval(popupWatch); popupWatch = null; }
+  }
+
+  /*
+   * ── THE ONE TIMER, AND WHY IT HAS TO EXIST ──────────────────────────────
+   *
+   * There is no event for "the owner closed the popup", so the only way to notice an
+   * abandoned handshake is to look. That makes this the single piece of polling in
+   * the feature, and the brief's "no polling loop left running after the popup
+   * closes" is met by it having THREE ways to stop and no way to survive:
+   *
+   *   · the popup reports `closed` — cleared, then the state is re-read once, which
+   *     also covers a completion whose message never arrived;
+   *   · the message arrives — the listener calls endWatch() first;
+   *   · the state's own lifetime runs out — InstagramAuth::STATE_TTL_SECONDS is 900,
+   *     after which the callback refuses anyway, so a window left open past it has
+   *     nothing left to come back with.
+   *
+   * endWatch() is also the FIRST thing start() does, so pressing Configure twice
+   * leaves one timer and not two.
+   */
+  function watchPopup() {
+    endWatch();
+
+    var waited = 0;
+
+    popupWatch = window.setInterval(function () {
+      waited += 700;
+
+      var gone;
+      try { gone = !popup || popup.closed; } catch (e) { gone = true; }
+
+      if (gone) {
+        endWatch();
+        popup = null;
+        afterOauth();
+        return;
+      }
+
+      if (waited >= 900 * 1000) { endWatch(); popup = null; }
+    }, 700);
+  }
+
+  /*
+   * Open the handshake in its own window, or say it could not be.
+   *
+   * `location=yes` is deliberate: an OAuth window with no address bar is a window in
+   * which the owner cannot check he is really on instagram.com, which is the thing
+   * every phishing guide tells him to check.
+   */
+  function openPopup(url) {
+    var win = null;
+
+    try {
+      win = window.open(url, 'kbb-instagram-oauth',
+        'popup=yes,width=620,height=780,location=yes,menubar=no,toolbar=no,status=no,resizable=yes,scrollbars=yes');
+    } catch (e) { win = null; }
+
+    if (!win) return null;
+
+    popup = win;
+    try { win.focus(); } catch (e) {}
+    watchPopup();
+
+    return win;
+  }
+
+  /*
+   * The popup is finished (or was abandoned): ASK THE SERVER, then say what it said.
+   *
+   * ── THE STATE COMES FROM /admin-api/instagram AND FROM NOWHERE ELSE ─────
+   *
+   * Not from the message, which carries one constant word, and not from the popup's
+   * URL. So "connected" on this screen means this server, over an authenticated
+   * request, said a token is stored — which is the only thing worth believing.
+   *
+   * A REFUSAL IS REPORTED WITHOUT ITS SENTENCE, and that is a real and deliberate
+   * loss. The exact reason Instagram gave went into the popup's own address bar and
+   * closed with it, and carrying it back in the message is precisely what the rule
+   * above forbids. So the popup path says what it honestly knows — the connection
+   * did not complete — and points at the one path that still prints Meta's own
+   * words: opening the step in this tab, where readLanding() reads it off the URL
+   * exactly as it always did. Better a short true sentence and a way to get the long
+   * one than a long sentence arriving through a channel this screen cannot vouch for.
+   */
+  var oauthPending = false;
+
+  async function afterOauth() {
+    if (oauthPending) return;
+    if (!onScreen()) return;
+
+    oauthPending = true;
+
+    try {
+      await load();
+
+      if (!onScreen()) return;
+
+      banner = (connection && connection.connected)
+        ? { ok: true, text: 'Connected to Instagram. '
+            + (content && content.drawable
+                ? content.drawable + ' post' + (content.drawable === 1 ? '' : 's') + ' with a picture are '
+                  + 'stored and the preview below is drawing them.'
+                : 'Press Refresh posts to fetch the profile and the most recent posts.') }
+        : { ok: false, text: 'The Instagram window closed without the connection being completed, so nothing '
+            + 'was changed. Press Configure now again. If it keeps failing, Instagram’s own reason is printed '
+            + 'in full when the step runs in this tab instead — block this site’s popups in your browser and '
+            + 'press Configure now once more.' };
+
+      render();
+    } finally {
+      oauthPending = false;
+    }
+  }
+
+  /*
+   * ── EVERY MESSAGE IS CHECKED FOR WHERE IT CAME FROM, FIRST ──────────────
+   *
+   * `event.origin !== window.location.origin` is the whole gate and it is the first
+   * line rather than the last. A handler that reads `event.data` before it has
+   * established who sent it is a handler any page with a handle on this one can talk
+   * to — and what it would be telling this admin is that the shop is connected to
+   * Instagram when it is not, which is a lie the owner acts on.
+   *
+   * Then the data must be the ONE CONSTANT. Not "starts with", not a parsed object,
+   * not a shape with fields: equality against a literal, so there is no payload to
+   * get wrong and nothing to validate. Anything else is dropped in silence, because
+   * this window shares an origin with every other screen in this console and some of
+   * them will one day post messages of their own.
+   */
+  window.addEventListener('message', function (e) {
+    if (e.origin !== window.location.origin) return;
+    if (e.data !== OAUTH_DONE) return;
+
+    endWatch();
+
+    try { if (popup && !popup.closed) popup.close(); } catch (err) {}
+    popup = null;
+
+    afterOauth();
+  });
+
   /* ------------------------------------------------------------------ the wiring */
 
   function addNavEntry() {
@@ -675,6 +1312,50 @@
     var tab = t.closest('[data-igs-tab]');
     if (tab) { e.preventDefault(); open = tab.getAttribute('data-igs-tab'); render(); return; }
 
+    /*
+     * ── THE POPUP, AND preventDefault() ONLY IF THERE IS ONE ──────────────
+     *
+     * The order of these three lines is the whole of the fallback. window.open
+     * first; if it returned a window, and only then, stop the anchor. A blocked
+     * popup returns null, nothing is prevented, and the browser follows the href
+     * as it would have before this handler existed — so the owner finishes the
+     * connection in this tab and reads Instagram's own sentence off the landing
+     * banner.
+     *
+     * Written the other way round — preventDefault() first, then try to open —
+     * a blocked popup is a button that does nothing at all, with no way for the
+     * owner to tell that from a broken one. That is the failure this ordering
+     * exists to make impossible rather than to handle.
+     */
+    var oauth = t.closest('[data-igs-oauth]');
+    if (oauth) {
+      /* A MODIFIED CLICK BELONGS TO THE BROWSER. Ctrl, Cmd, Shift and Alt on a link
+         mean "open it somewhere else", and a handler that swallowed them would make
+         this the one control in the console that ignores them. Nothing is prevented
+         here, so the browser does what it always does with the href. */
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || (e.button !== undefined && e.button !== 0)) return;
+
+      var win = openPopup(oauth.getAttribute('href'));
+      if (!win) return;
+
+      e.preventDefault();
+      banner = { ok: true, text: 'Instagram is open in a separate window. Grant access there and it will '
+        + 'close itself — this screen picks the connection up on its own, with nothing to reload.' };
+      render();
+      return;
+    }
+
+    var pvw = t.closest('[data-igs-pvwidth]');
+    if (pvw) {
+      e.preventDefault();
+      pvPhone = pvw.getAttribute('data-igs-pvwidth') === 'phone';
+      /* Repainted, not re-rendered: there is nothing above the preview that this
+         changes, and a full render would scroll the card out from under the
+         button that was just pressed. */
+      paintPreview();
+      return;
+    }
+
     if (t.closest('[data-igs-save]')) { e.preventDefault(); save(); return; }
     if (t.closest('[data-igs-savekeys]')) { e.preventDefault(); saveKeys(); return; }
     if (t.closest('[data-igs-refresh]')) { e.preventDefault(); refresh(); return; }
@@ -711,7 +1392,17 @@
     if (!el || !el.hasAttribute || !el.hasAttribute('data-igs-key')) return;
     var key = el.getAttribute('data-igs-key');
 
-    if (el.type === 'checkbox') { values[key] = el.checked; return; }
+    /*
+     * ── ON INPUT, NOT ON SAVE, AND paintPreview() RATHER THAN render() ──────
+     *
+     * Every branch below ends in the same repaint, which is what "the preview
+     * moves as you type" means in code. It is paintPreview() and not render()
+     * for the two faults this console has already paid for and the checkout
+     * screen's own handler records: a full render replaces #content, which takes
+     * the slider out from under the finger dragging it, and puts the caret at the
+     * end of the heading box on the second character typed.
+     */
+    if (el.type === 'checkbox') { values[key] = el.checked; paintPreview(); return; }
     if (el.type === 'range') {
       values[key] = Number(el.value);
       /* Updated IN PLACE rather than by re-rendering: render() replaces #content
@@ -723,15 +1414,20 @@
         (tabs || []).forEach(function (t) { t.fields.forEach(function (f) { if (f.key === key) field = f; }); });
         out.textContent = String(el.value) + (field ? unitOf(field) : '');
       }
+      paintPreview();
       return;
     }
     values[key] = el.value;
+    paintPreview();
   });
 
   document.addEventListener('change', function (e) {
     var el = e.target;
     if (!el || !el.hasAttribute || !el.hasAttribute('data-igs-key')) return;
-    if (el.tagName === 'SELECT') { values[el.getAttribute('data-igs-key')] = el.value; }
+    /* A select fires `input` in every browser this console supports, so the line
+       above has already stored it and repainted. This is the belt: `change` is the
+       event a select is historically driven by, and the repaint is idempotent. */
+    if (el.tagName === 'SELECT') { values[el.getAttribute('data-igs-key')] = el.value; paintPreview(); }
   });
 
   addNavEntry();
