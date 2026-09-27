@@ -26,7 +26,25 @@ class CartPanelApiController extends Controller
             CartPanel::POLICY,
         );
 
-        return response()->json(['tabs' => $tabs]);
+        /*
+         * `touch` and the two breakpoints are sent rather than repeated in the
+         * screen's JavaScript, because they are facts about the SHOP and a second
+         * copy of a fact is a copy that goes stale. The screen turns the help
+         * text under a `touch` slider warm below 44 and prints the two widths on
+         * the previews' rulers.
+         *
+         * NOTHING HERE IS A THRESHOLD THE SERVER ENFORCES. `min` in the schema is
+         * below 44 on all four keys on purpose — the owner asked to squeeze his
+         * own tap targets, and a slider that stops where nobody asked it to stop
+         * reads as a bug. See CartPanel::TOUCH_TARGETS.
+         */
+        return response()->json([
+            'tabs' => $tabs,
+            'touch' => CartPanel::TOUCH_TARGETS,
+            'touchMin' => 44,
+            'phoneMax' => 680,
+            'tapMax' => 900,
+        ]);
     }
 
     public function save(Request $request): JsonResponse

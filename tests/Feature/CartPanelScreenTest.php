@@ -56,7 +56,9 @@ it('keeps the cart panel screen in its own partial', function () {
     // The screen, the endpoint it reads, and the preview it draws.
     expect($partial)->toContain("var SCREEN = 'cartpanel';")
         ->and($partial)->toContain("/admin-api/cart-panel")
-        ->and($partial)->toContain('.cpp-item{');
+        // The controls, and the mock the previews are drawn from.
+        ->and($partial)->toContain('.cpp-wrap{')
+        ->and($partial)->toContain('.cpv-panel{');
 });
 
 it('reaches the browser as JavaScript rather than as literal Blade', function () {
