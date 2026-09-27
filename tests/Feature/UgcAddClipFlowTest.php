@@ -399,11 +399,135 @@ it('badges a clip with no teaser as one that loops, not as one that is missing a
 
     $code = addClipCode();
 
-    expect(str_contains($code, "if (v.media_state === 'poster_only') return ['Loops the full clip', 'info'];"))
+    expect(str_contains($code, "return ['Loops from full video', 'info'];"))
         ->toBeTrue('the no-teaser state is not badged as the looping state it is');
 
     expect(stripos($code, 'poster only'))
         ->toBeFalse('"Poster only" is back on the screen, and it reads as a fault');
+});
+
+it('badges the no-teaser state in the same words as the Sections tab', function () {
+    /*
+     * The two tabs of Content -> Shoppable video badge the SAME clip one click
+     * apart, off the same media_state. "Loops from full video" here and
+     * something else there is worse than either wording alone, because an owner
+     * comparing the tabs concludes the two screens disagree about his clip.
+     *
+     * This is asserted as a LITERAL rather than by reading the other screen's
+     * source: ugc-sections-screen.blade.php belongs to another lane, and a test
+     * that scraped it would go red the moment that lane reworded anything at
+     * all, on a branch that had not touched this screen. The agreed string is
+     * pinned here; if it ever moves, it moves in both files deliberately.
+     *
+     * MUTATION NOTE. Reword stateWords()' poster_only arm to anything else --
+     * 'Loops the full clip', which is what it said first -- and this is red.
+     * RUN: red.
+     */
+    expect(str_contains(addClipCode(), 'Loops from full video'))
+        ->toBeTrue('this tab no longer uses the Sections tab\'s wording for the no-teaser state');
+});
+
+it('tells a missing cover apart from a missing video', function () {
+    /*
+     * THE DEFECT. UgcVideo::mediaState() answers MEDIA_NONE when EITHER column
+     * is empty -- read it below, asserted rather than quoted -- and the screen
+     * badged that one state "No video yet". So a clip whose 64 MB video had
+     * uploaded perfectly and was only short a cover told the owner his video was
+     * not there, and the obvious next move is to upload it again and watch the
+     * badge not change.
+     *
+     * MUTATION NOTE. Replace the screen's arm with a bare
+     * `return ['No video yet', 'hold'];` and the second half is red. RUN: red.
+     */
+    $noVideo = new UgcVideo(['poster_path' => '/uploads/ugc/x.jpg']);
+    $noCover = new UgcVideo(['file_path' => '/uploads/ugc/x.mp4']);
+
+    // One state, two very different situations -- which is the whole defect.
+    expect($noVideo->mediaState())->toBe(UgcVideo::MEDIA_NONE)
+        ->and($noCover->mediaState())->toBe(UgcVideo::MEDIA_NONE);
+
+    $code = addClipCode();
+
+    expect(str_contains($code, "return v.file_path ? ['No cover yet', 'hold'] : ['No video yet', 'hold'];"))
+        ->toBeTrue('the screen still reports a missing cover as a missing video');
+});
+
+/* ══════════════════════════════════ the loop's length is a SETTING, not 2500 ══ */
+
+it('previews the loop for the length the owner set, not a number typed into the screen', function () {
+    /*
+     * THE DEFECT. `teaser_ms` is a real setting -- Appearance -> Shoppable video
+     * -> Motion, "How long the loop runs before repeating" -- and the screen
+     * hard-coded 2500 into the preview element AND into its own prose. An owner
+     * who had moved that slider to 4000 was shown a preview that rewound at 2.5s
+     * under a sentence claiming 2.5 seconds, neither being what his shop does.
+     * The preview is offered as evidence, so a preview that disagrees with the
+     * shop is worse than no preview.
+     *
+     * Asserted against the SCHEMA so the screen cannot drift from it: the range
+     * the screen clamps to is the range the setting really has.
+     *
+     * MUTATION NOTE. Put `data-ugs-loopms="2500"` back and the first assertion
+     * is red. Drop the clamp and the third is red. RUN: red on both.
+     */
+    $field = App\Services\UgcSettings::SCHEMA['teaser_ms'];
+
+    expect($field['default'])->toBe(2500)
+        ->and($field['options']['min'])->toBe(1500)
+        ->and($field['options']['max'])->toBe(4000);
+
+    $code = addClipCode();
+
+    // The preview element is told the configured number, not a constant.
+    expect(str_contains($code, "data-ugs-loopms=\"' + esc(loop().ms) + '\""))
+        ->toBeTrue('the loop preview still hard-codes its rewind point');
+
+    // ...and it is read from the endpoint that actually holds it.
+    expect(str_contains($code, "api('/ugc-appearance')"))
+        ->toBeTrue('the screen never reads the loop length it claims to preview');
+
+    /*
+     * A SETTING ON ITS WAY INTO MARKUP IS CLAMPED. Rule 5. The schema's own
+     * bounds, so a saved row outside them -- or a string -- becomes the shipped
+     * default rather than an attribute nothing validated.
+     */
+    expect(str_contains($code, 'if (!(ms >= 1500 && ms <= 4000)) ms = 2500;'))
+        ->toBeTrue('a teaser_ms from the database reaches the markup unclamped');
+
+    // And the read never blocks the library it sits on.
+    expect(str_contains($code, 'readMotion();'))
+        ->toBeTrue('the motion read is not fired from load()');
+});
+
+it('claims no length for a clip that has its own teaser file', function () {
+    /*
+     * The other half of the same honesty. `teaser_ms` governs the FULL-CLIP
+     * fallback only -- the schema says so in its own help text, asserted below
+     * -- and a teaser file plays on the native loop for as long as the file is.
+     * This screen reads no durations, so it must not print a number for that
+     * state: an owner who dropped in a 6-second teaser by hand would be told it
+     * loops for 2.5.
+     *
+     * MUTATION NOTE. Make the 'ready' arm read
+     * `['Loops its ' + secs(loop().ms) + 's teaser', 'live']` and this is red.
+     * RUN: red.
+     */
+    expect(App\Services\UgcSettings::SCHEMA['teaser_ms']['help'])
+        ->toContain('no separate teaser file');
+
+    $code = addClipCode();
+
+    expect(str_contains($code, "return ['Loops its own teaser', 'live'];"))
+        ->toBeTrue('the screen prints a loop length it cannot know for a real teaser file');
+
+    /*
+     * The ready arm is ABOVE the poster_only arm and neither is reached by the
+     * other's state, so the number can only appear through the fallback branch.
+     * Pinned as a count rather than a presence: secs() is used in four places on
+     * the media step and must be used in none of them for a teaser FILE.
+     */
+    expect(substr_count($code, "secs(loop().ms) + 's teaser'"))
+        ->toBe(0, 'a teaser file is being described with the full-clip fallback length');
 });
 
 /* ══════════════════════════════════════════ a URL-only clip cannot publish ══ */

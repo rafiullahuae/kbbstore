@@ -19,11 +19,16 @@ use Illuminate\Database\Migrations\Migration;
  *   * the video, the cover and the teaser have real drag-and-drop zones, with a
  *     progress bar on the upload;
  *   * the clip, the cover and the 2-3 second loop are PREVIEWED after they are
- *     added, the loop at the tile's real 158px width and with the shop's own
- *     mechanism;
+ *     added, the loop at the tile's real 158px width, with the shop's own
+ *     mechanism, and for the length the owner's own `teaser_ms` setting says
+ *     rather than a 2500 typed into the screen;
  *   * the screen no longer claims a clip without a separate teaser file shows a
- *     still. It does not: it loops the first 2.5 seconds of the full clip, and
- *     the badge that used to read "Poster only" now reads "Loops the full clip".
+ *     still. It does not: it loops the first seconds of the full clip, and the
+ *     badge that used to read "Poster only" now reads "Loops from full video",
+ *     which is the wording the Sections tab uses for the same state;
+ *   * a clip whose video uploaded but whose cover is missing no longer says
+ *     "No video yet" -- it says "No cover yet", because mediaState() answers
+ *     MEDIA_NONE for both and only one of them was being reported.
  *
  * No route cache clear: this change adds no route. It writes no setting row and
  * changes nothing the shop renders — every file it touches is admin-only, and

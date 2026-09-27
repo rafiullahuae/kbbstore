@@ -49,10 +49,18 @@
     What the storefront really does, in resources/views/ugc (playTeaser): it
     mounts `teaser || full`, and where there is no teaser file it sets loop off
     and rewinds the full clip every time playback passes the rail's own
-    teaser-ms, default 2500. So EVERY clip loops its first two and a half
-    seconds, from the one file that was uploaded. A separate teaser is a
-    BANDWIDTH saving and nothing else — the plan measured 12.19 MB for a rail
-    of eight full clips against 1.01 MB of teasers.
+    teaser-ms. So EVERY clip loops its first seconds from the one file that was
+    uploaded. A separate teaser is a BANDWIDTH saving and nothing else — the
+    plan measured 12.19 MB for a rail of eight full clips against 1.01 MB of
+    teasers.
+
+    HOW LONG IS A SETTING, so this screen reads it instead of printing 2.5:
+    `teaser_ms` on Appearance → Shoppable video → Motion, default 2500 and
+    ranged 1500–4000, and `teaser` beside it decides whether a tile loops at
+    all. readMotion() fetches both once, clamps the number to that range, and
+    falls back to the shipped 2500 — so the preview above and the prose beside
+    it are the owner's own settings rather than a number that was true the day
+    this was written.
 
     The one case where a tile really does stand still is the shopper's, not the
     clip's: data-saver mode, reduced motion, or the rail's own Loop switch
@@ -377,6 +385,7 @@
   ];
 
   var videos = null, transcoder = null, limits = null, vocab = null, translatable = null;
+  var motion = null;           // {ms, on} — the rail's REAL loop settings, read once
   var editing = null;          // the full row being edited, or null for the list
   var tagged = [];             // [{id, name, brand, at_ms}] in order
   var results = [];            // the product search's last answer
@@ -525,10 +534,80 @@
 
   /* ------------------------------------------------------------------ reads */
 
+  /*
+   * ── THE LOOP'S REAL LENGTH, READ RATHER THAN ASSUMED ──────────────────────
+   *
+   * THE DEFECT THIS EXISTS FOR. `teaser_ms` is a SETTING — Appearance →
+   * Shoppable video → Motion → "How long the loop runs before repeating",
+   * default 2500, range 1500–4000 — and so is `teaser`, the switch that decides
+   * whether a tile loops at all. This screen used to hard-code 2500 into the
+   * preview and into its own prose. An owner who had moved that slider to 4000
+   * was then shown a preview that rewound at 2.5s and a sentence that said
+   * "2.5 seconds", neither of which was what his shop does. The preview is
+   * offered as EVIDENCE, so a preview that disagrees with the shop is worse
+   * than none.
+   *
+   * Read ONCE per screen visit and never blocking: `load()` does not await it,
+   * so a slow or forbidden read costs the library nothing and the preview falls
+   * back to the shipped 2500 — which is also the value the shop uses when the
+   * owner has saved nothing.
+   */
+  async function readMotion() {
+    if (motion) return;
+
+    try {
+      var body = await api('/ugc-appearance');
+      var tabs = (body && body.tabs) || [];
+      var found = null;
+
+      tabs.forEach(function (t) {
+        (t.fields || []).forEach(function (f) {
+          if (f && f.key === 'teaser_ms' && f.value !== undefined) found = f.value;
+          if (f && f.key === 'teaser' && f.value !== undefined) {
+            motion = motion || {};
+            motion.on = !!f.value;
+          }
+        });
+      });
+
+      /* CLAMPED TO THE SCHEMA'S OWN RANGE, because this is a setting on its way
+         into the markup. Rule 5: a value from a setting is checked before it is
+         used, and `range` means 1500–4000 here. A saved row outside it, or a
+         string, becomes the shipped default rather than an attribute nothing
+         validates. */
+      var ms = parseInt(found, 10);
+      if (!(ms >= 1500 && ms <= 4000)) ms = 2500;
+
+      motion = motion || {};
+      motion.ms = ms;
+      if (motion.on === undefined) motion.on = true;
+    } catch (e) {
+      /* Silent on purpose: this is a nicety on a screen about clips, and the
+         owner does not need a toast about the Appearance endpoint to add one. */
+      motion = { ms: 2500, on: true };
+    }
+
+    render();
+  }
+
+  /** The loop settings, with the shipped values until the read lands. */
+  function loop() {
+    return { ms: (motion && motion.ms) || 2500, on: !motion || motion.on !== false };
+  }
+
+  /** 2500 -> "2.5", 3000 -> "3". The seconds an owner would say out loud. */
+  function secs(ms) {
+    var s = Math.round(ms / 100) / 10;
+    return String(s);
+  }
+
   async function load() {
     var mine = ++seq;
     busy = true; banner = null;
     render();
+
+    /* Deliberately not awaited — see readMotion(). */
+    readMotion();
 
     try {
       var body = await api('/ugc-videos');
@@ -962,11 +1041,42 @@
    * hunting for a second file to upload. It is not a defect: that tile loops the
    * first two and a half seconds of the full clip, which is what the shop draws.
    * So the badge says what the shopper will see.
+   *
+   * THE WORDS ARE ugc-sections-screen.blade.php's WORDS. That screen badges the
+   * same three states beside the same clips, one tab away, and two tabs that
+   * disagree about what a clip is doing are worse than either wording alone. So
+   * MEDIA_POSTER_ONLY reads "Loops from full video" in both places, and if one
+   * of them is ever reworded the other moves with it.
+   *
+   * ── AND "none" IS TWO DIFFERENT THINGS ──────────────────────────────────
+   *
+   * THE SECOND DEFECT. mediaState() answers MEDIA_NONE when EITHER the video or
+   * the cover is missing — read it: `file_path === '' || poster_path === ''`.
+   * Badged "No video yet" from that one state, a clip whose video had uploaded
+   * perfectly and was only missing a cover told the owner his video was not
+   * there. The next thing anybody does with that sentence is upload the video
+   * again, over a 64 MB round trip, and watch the badge not change.
+   *
+   * The two are told apart from the row's own columns, which the card payload
+   * carries for exactly this kind of question.
    */
   function stateWords(v) {
-    if (v.media_state === 'ready') return ['Loops a 2.5s teaser', 'live'];
-    if (v.media_state === 'poster_only') return ['Loops the full clip', 'info'];
-    return ['No video yet', 'hold'];
+    /* NO NUMBER ON THIS ONE, and that is not an oversight. `teaser_ms` governs
+       the full-clip fallback ONLY — the schema's own help says "Only used when a
+       clip has no separate teaser file" — and a teaser FILE is played on the
+       native loop for exactly as long as the file is. ffmpeg cuts them to
+       UgcTranscoder::TEASER_SECONDS, but an owner may drop one in by hand, and
+       this screen does not read durations. So it claims no length it cannot
+       stand behind. */
+    if (v.media_state === 'ready') {
+      return ['Loops its own teaser', 'live'];
+    }
+
+    if (v.media_state === 'poster_only') {
+      return ['Loops from full video', 'info'];
+    }
+
+    return v.file_path ? ['No cover yet', 'hold'] : ['No video yet', 'hold'];
   }
 
   function tileHTML(v) {
@@ -1201,7 +1311,7 @@
 
     /* ── the loop, as it really plays ────────────────────────────────── */
     html += '<div class="ugs-slot">'
-      + '<div class="ugs-sloth"><b>The 2&ndash;3 second loop</b><span>'
+      + '<div class="ugs-sloth"><b>The ' + esc(secs(loop().ms)) + ' second loop</b><span>'
       +   esc(stateWords(v)[0]) + '</span></div>';
 
     if (clip) {
@@ -1209,7 +1319,8 @@
       html += '<div class="ugs-shots">'
         + '<div class="ugs-loopbox">'
         +   '<div class="ugs-loop" data-ugs-loopsrc="' + esc(src) + '"'
-        +     ' data-ugs-loopms="2500" data-ugs-loopfull="' + (teaser ? '0' : '1') + '">'
+        +     ' data-ugs-loopms="' + esc(loop().ms) + '"'
+        +     ' data-ugs-loopfull="' + (teaser ? '0' : '1') + '">'
         +     (poster ? '<img src="' + esc(poster) + '" alt="">' : '')
         +   '</div>'
         +   '<p class="ugs-loopcap">158px wide — the tile\'s real size on the shop.</p>'
@@ -1218,16 +1329,28 @@
         +   '<div class="ugs-note is-cool">'
         +     (teaser
               ? '<b>This clip has its own teaser file</b>, so the tile downloads about 130 KB '
-                + 'instead of the whole video. The loop above is that file.'
-              : '<b>The loop needs no second file.</b> The tile plays the first 2.5 seconds of this '
+                + 'instead of the whole video. The loop above is that file, played end to end.'
+              : '<b>The loop needs no second file.</b> The tile plays the first '
+                + esc(secs(loop().ms)) + ' seconds of this '
                 + 'very video and rewinds, which is exactly what you are watching. Uploading a '
                 + 'separate teaser is a bandwidth saving and nothing else &mdash; a rail of eight '
                 + 'full clips measured 12.19 MB against 1.01 MB of teasers.')
         +   '</div>'
+        /* Said only when it is TRUE, and read off the setting rather than
+           guessed: an owner who has switched the rail's loop off is watching a
+           preview of something his shop is not doing, and that is the one case
+           where this preview could mislead him. */
+        +   (loop().on ? '' :
+              '<div class="ugs-note is-warm" style="margin-top:8px"><b>The loop is switched off '
+              + 'for the whole rail.</b> Every tile on the shop shows its cover and stands still, '
+              + 'however many clips have teasers. The preview above is what a shopper would see '
+              + 'with it on.</div>')
         +   '<p class="ugs-help" style="margin-top:8px">A shopper in data-saver mode, or with '
         +     'reduced motion switched on, sees the cover and no movement at all &mdash; with or '
-        +     'without a teaser. The loop\'s length and whether it runs at all are set in '
-        +     '<b>Appearance &rarr; Motion</b>.</p>'
+        +     'without a teaser. The loop\'s length'
+        +     (motion ? ', now ' + esc(secs(loop().ms)) + ' seconds,' : '')
+        +     ' and whether it runs at all are set in '
+        +     '<b>Appearance &rarr; Shoppable video &rarr; Motion</b>.</p>'
         + '</div>'
         + '</div>';
 
