@@ -388,8 +388,13 @@
       /* WHAT THE BUTTON IS ABOUT TO DO, SAID BEFORE IT DOES IT. The owner asked
          for one click; one click is not honestly enough, and a button that
          implies it is is a button that gets blamed for Meta's refusals. */
+      /* The LABEL and not the words "Configure now": the button beside this
+         sentence reads "Reconnect" once a token is stored, and a paragraph naming
+         a button that is not on the screen is a paragraph the owner reads twice
+         looking for it. Caught in the 1280px screenshot. */
       + (ready
-          ? '<p class="igs-help" style="margin-top:10px"><b>Configure now</b> will send you to Instagram\'s '
+          ? '<p class="igs-help" style="margin-top:10px"><b>' + (c.connected ? 'Reconnect' : 'Configure now')
+            + '</b> will send you to Instagram\'s '
             + 'own permission screen, asking only for <b>' + esc(c.scope || '') + '</b> — permission to read '
             + 'our own posts. Nothing else. When you come back, this shop exchanges the authorisation for a '
             + '60-day token, stores it encrypted, and fetches the profile and the most recent 25 posts with '

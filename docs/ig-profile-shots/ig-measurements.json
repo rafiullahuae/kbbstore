@@ -1,0 +1,1136 @@
+{
+ "admin-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "contentScrollWidth": 390,
+  "contentClientWidth": 390,
+  "crumb": "Content",
+  "title": "Instagram",
+  "sidebarRows": 1,
+  "stepCount": 6,
+  "stepStates": [
+   "is-done",
+   "todo",
+   "todo",
+   "is-unknown",
+   "is-unknown",
+   "todo"
+  ],
+  "redirectUri": "http://127.0.0.1:8951/admin-api/instagram/callback",
+  "buttons": [
+   "Copy",
+   "Save app ID and secret",
+   "Configure now",
+   "Delete the 9 stored posts",
+   "Save",
+   "Reload"
+  ],
+  "configureGreyedOut": true,
+  "secretType": "password",
+  "secretPlaceholder": "Required the first time",
+  "secretValueLength": 0,
+  "appIdShown": "",
+  "tabs": [
+   "Look",
+   "What a tile shows"
+  ],
+  "fieldCount": 8,
+  "profileReadback": "K-Beauty Bliss",
+  "expiryNote": null,
+  "leaksSecret": false
+ },
+ "admin-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "contentScrollWidth": 1032,
+  "contentClientWidth": 1032,
+  "crumb": "Content",
+  "title": "Instagram",
+  "sidebarRows": 1,
+  "stepCount": 6,
+  "stepStates": [
+   "is-done",
+   "todo",
+   "todo",
+   "is-unknown",
+   "is-unknown",
+   "todo"
+  ],
+  "redirectUri": "http://127.0.0.1:8951/admin-api/instagram/callback",
+  "buttons": [
+   "Copy",
+   "Save app ID and secret",
+   "Configure now",
+   "Delete the 9 stored posts",
+   "Save",
+   "Reload"
+  ],
+  "configureGreyedOut": true,
+  "secretType": "password",
+  "secretPlaceholder": "Required the first time",
+  "secretValueLength": 0,
+  "appIdShown": "",
+  "tabs": [
+   "Look",
+   "What a tile shows"
+  ],
+  "fieldCount": 8,
+  "profileReadback": "K-Beauty Bliss",
+  "expiryNote": null,
+  "leaksSecret": false
+ },
+ "homepage-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 366,
+   "h": 1172
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 179,
+   "h": 179
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0
+ },
+ "homepage-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 1203,
+   "h": 1465
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 396,
+   "h": 396
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0
+ },
+ "caption-on-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 366,
+   "h": 1172
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 179,
+   "h": 179
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "caption-on-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 1203,
+   "h": 1465
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 396,
+   "h": 396
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-grid-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 366,
+   "h": 1172
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 179,
+   "h": 179
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-grid-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 1203,
+   "h": 1465
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 396,
+   "h": 396
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-masonry-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-masonry",
+  "section": {
+   "w": 366,
+   "h": 1396
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 179,
+   "h": 224
+  },
+  "tileAspect": 0.8,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-masonry-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-masonry",
+  "section": {
+   "w": 1203,
+   "h": 1383
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 295,
+   "h": 368
+  },
+  "tileAspect": 0.8,
+  "columns": "294.703px 294.703px 294.703px 294.703px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-mosaic-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-mosaic",
+  "section": {
+   "w": 366,
+   "h": 1359
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 366,
+   "h": 366
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-mosaic-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-mosaic",
+  "section": {
+   "w": 1203,
+   "h": 1868
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 799,
+   "h": 799
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-rail-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-rail",
+  "section": {
+   "w": 366,
+   "h": 401
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 155,
+   "h": 155
+  },
+  "tileAspect": 1,
+  "columns": "none",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1455,
+  "trackClientWidth": 366,
+  "railOverflows": true,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-rail-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-rail",
+  "section": {
+   "w": 1203,
+   "h": 484
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 220,
+   "h": 220
+  },
+  "tileAspect": 1,
+  "columns": "none",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 2048,
+  "trackClientWidth": 1203,
+  "railOverflows": true,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-strip-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-strip",
+  "section": {
+   "w": 366,
+   "h": 322
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 75,
+   "h": 75
+  },
+  "tileAspect": 1,
+  "columns": "none",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 740,
+  "trackClientWidth": 366,
+  "railOverflows": true,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "layout-strip-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-strip",
+  "section": {
+   "w": 1203,
+   "h": 398
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 134,
+   "h": 134
+  },
+  "tileAspect": 1,
+  "columns": "none",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1274,
+  "trackClientWidth": 1203,
+  "railOverflows": true,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-bar-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 366,
+   "h": 1113
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 179,
+   "h": 179
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 37
+  },
+  "avatar": {
+   "w": 36,
+   "h": 36
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-bar-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 1203,
+   "h": 1393
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 396,
+   "h": 396
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 37
+  },
+  "avatar": {
+   "w": 36,
+   "h": 36
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-card-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 366,
+   "h": 1172
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 179,
+   "h": 179
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": {
+   "w": 366,
+   "h": 92
+  },
+  "avatar": {
+   "w": 64,
+   "h": 64
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-card-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 1203,
+   "h": 1465
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 396,
+   "h": 396
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": {
+   "w": 1203,
+   "h": 104
+  },
+  "avatar": {
+   "w": 76,
+   "h": 76
+  },
+  "followText": "48,219 followers                         ·                         1,483 posts",
+  "followButton": "Follow",
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-inline-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 366,
+   "h": 1066
+  },
+  "tiles": 10,
+  "tile": {
+   "w": 179,
+   "h": 179
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": null,
+  "avatar": null,
+  "followText": null,
+  "followButton": null,
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-inline-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 1203,
+   "h": 1750
+  },
+  "tiles": 10,
+  "tile": {
+   "w": 396,
+   "h": 396
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": null,
+  "avatar": null,
+  "followText": null,
+  "followButton": null,
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-off-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 366,
+   "h": 1066
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 179,
+   "h": 179
+  },
+  "tileAspect": 1,
+  "columns": "179px 179px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 366,
+  "trackClientWidth": 366,
+  "railOverflows": false,
+  "headingFontSize": 17,
+  "profileBox": null,
+  "avatar": null,
+  "followText": null,
+  "followButton": null,
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "profile-off-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "sectionClass": "igp-t is-grid",
+  "section": {
+   "w": 1203,
+   "h": 1347
+  },
+  "tiles": 9,
+  "tile": {
+   "w": 396,
+   "h": 396
+  },
+  "tileAspect": 1,
+  "columns": "395.594px 395.609px 395.594px",
+  "gap": 8,
+  "radius": 10,
+  "trackScrollWidth": 1203,
+  "trackClientWidth": 1203,
+  "railOverflows": false,
+  "headingFontSize": 22,
+  "profileBox": null,
+  "avatar": null,
+  "followText": null,
+  "followButton": null,
+  "countsDrawn": 8,
+  "firstCount": "14,238  likes 312  comments",
+  "playBadges": 3,
+  "albumMarks": 2,
+  "stretchedLinks": 9,
+  "imgDimensioned": true,
+  "imgLazy": true,
+  "iframesAtLoad": 0,
+  "thirdPartyRequests": 1,
+  "thirdPartyHosts": [
+   "fonts.googleapis.com"
+  ]
+ },
+ "lightbox-390": {
+  "iframesBeforeTap": 0,
+  "iframesAfterTap": 1,
+  "src": "https://www.instagram.com/p/DEMO0001/embed/captioned/",
+  "open": true,
+  "sandbox": null,
+  "referrerPolicy": "strict-origin-when-cross-origin"
+ },
+ "admin-connected-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "contentScrollWidth": 390,
+  "contentClientWidth": 390,
+  "crumb": "Content",
+  "title": "Instagram",
+  "sidebarRows": 1,
+  "stepCount": 6,
+  "stepStates": [
+   "is-done",
+   "is-done",
+   "is-done",
+   "is-unknown",
+   "is-unknown",
+   "is-done"
+  ],
+  "redirectUri": "http://127.0.0.1:8951/admin-api/instagram/callback",
+  "buttons": [
+   "Copy",
+   "Save app ID and secret",
+   "Reconnect",
+   "Refresh posts",
+   "Disconnect",
+   "Delete the 9 stored posts",
+   "Save",
+   "Reload"
+  ],
+  "configureGreyedOut": false,
+  "secretType": "password",
+  "secretPlaceholder": "A secret is stored — leave empty to keep it",
+  "secretValueLength": 0,
+  "appIdShown": "1234567890123456",
+  "tabs": [
+   "Look",
+   "What a tile shows"
+  ],
+  "fieldCount": 8,
+  "profileReadback": "K-Beauty Bliss",
+  "expiryNote": "Connection valid until November 26, 2026 — 59 days left. It renews itself automatically whenever you open this screen in",
+  "leaksSecret": false
+ },
+ "admin-connected-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "contentScrollWidth": 1032,
+  "contentClientWidth": 1032,
+  "crumb": "Content",
+  "title": "Instagram",
+  "sidebarRows": 1,
+  "stepCount": 6,
+  "stepStates": [
+   "is-done",
+   "is-done",
+   "is-done",
+   "is-unknown",
+   "is-unknown",
+   "is-done"
+  ],
+  "redirectUri": "http://127.0.0.1:8951/admin-api/instagram/callback",
+  "buttons": [
+   "Copy",
+   "Save app ID and secret",
+   "Reconnect",
+   "Refresh posts",
+   "Disconnect",
+   "Delete the 9 stored posts",
+   "Save",
+   "Reload"
+  ],
+  "configureGreyedOut": false,
+  "secretType": "password",
+  "secretPlaceholder": "A secret is stored — leave empty to keep it",
+  "secretValueLength": 0,
+  "appIdShown": "1234567890123456",
+  "tabs": [
+   "Look",
+   "What a tile shows"
+  ],
+  "fieldCount": 8,
+  "profileReadback": "K-Beauty Bliss",
+  "expiryNote": "Connection valid until November 26, 2026 — 59 days left. It renews itself automatically whenever you open this screen in",
+  "leaksSecret": false
+ }
+}
