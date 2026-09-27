@@ -3,6 +3,70 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.301
+Your imported product images will now reach the Media Library — and a refund
+the shop could have offered on money it never took.
+
+### ▲ WITHOUT THIS, YOUR IMPORTED IMAGES WOULD HAVE BEEN INVISIBLE
+
+You are about to bring your WooCommerce catalogue across. On the previous
+version, **none of the pictures that arrived would ever have appeared in
+Content → Media Library** — and pressing *Rescan folder* would not have helped.
+
+Three separate reasons, all now fixed:
+
+1. The importer writes fetched pictures into `wp-content/uploads/…`; the
+   catalogue scan only ever looked in `uploads/`.
+2. Even with the scan widened, the function that records a file **refused any
+   path that did not start with `uploads/`** — so it would still have recorded
+   nothing.
+3. Nothing recorded a picture **at the moment it was fetched**. It now does, so
+   there is nothing to press.
+
+**And the scan was quietly lying about its own limit.** It stops at 20,000
+files; on a folder of 21,000 it produced exactly 20,000 rows **and said
+nothing**, and pressing Rescan again added none of the missing 1,000 because
+every file it could still see already had a row. It now tells you when it has
+stopped short, and counts the limit **per folder** — so your imported pictures
+cannot eat the allowance your own uploads need.
+
+**Measured on a real folder**, not estimated: 21,000 files scanned in 0.9
+seconds, 0.2 seconds on a re-scan. It only ever runs when you press Rescan;
+nothing on the shop got slower.
+
+### ▲ REVIEW PHOTOS AND INSTAGRAM PICTURES APPEAR WITHOUT A RESCAN
+
+Both only reached the library if you happened to press Rescan. They register as
+they arrive now.
+
+The Instagram half also **forgets properly**, which matters more than it
+sounds: every refresh replaces pictures and drops old posts, so recording
+without forgetting would have left a dead row behind each time — a broken
+thumbnail no screen could clear, on a server with no database access.
+Registering alone would have been worse than doing nothing.
+
+### ▲ AND DELETING A PICTURE NOW REALLY DELETES IT
+
+A consequence of the above, caught before it reached you. Deleting a media row
+only removed the file from disk if its path began `uploads/` — on the reasoning
+that anything else lived in the *old* shop's folder, which this app cannot see.
+That was true until the importer started copying files in. Deleting an imported
+picture would have left the bytes on your disk with nothing pointing at them,
+unreachable from every screen, on a host with no shell.
+
+### ▲ A REFUND THE SHOP COULD HAVE OFFERED ON MONEY IT NEVER TOOK
+
+If a payment hold was **released** rather than captured, Store → Orders still
+offered the full amount as refundable — because the check looked at "was it
+paid" and "was it captured" and never at "was it released".
+
+It is not just a failed button: the refund console and **two customer emails**
+treat that figure as the truth, so a shopper could have been told a refund was
+on its way for money that never left his card. Captured money is unaffected —
+that path runs first and still wins, which is pinned by its own test.
+
+**No setting added, no default moved.**
+
 ## 2.60.300
 The Instagram preview and a popup connector, and a field your variable products
 would have lost on the migration.
