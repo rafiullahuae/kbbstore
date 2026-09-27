@@ -18,7 +18,7 @@ use Tests\Support\PageEditorRoutes;
 
 /**
  * =============================================================================
- * Content → Pages → User pages → Edit — the last genuine gap in the SEO work
+ * Pages → User pages → Edit — the last genuine gap in the SEO work
  * =============================================================================
  *
  * ── THE DEFECT, MEASURED AGAINST THE ROUTER ─────────────────────────────────
@@ -1161,4 +1161,62 @@ it('does not widen the one sanitiser gap it found, and names it', function () {
         'RICH_GROUP has changed shape — if pages.content is now sanitised there, delete this case');
 
     expect(PageEditorApiController::RICH_FIELDS)->toBe(['content']);
+});
+
+it('sits where every file in this lane says it sits', function () {
+    /*
+     * RULE 3 — "Say where it sits in the admin", pinned against the console's own
+     * nav rather than against prose.
+     *
+     * THE DEFECT THIS CAUGHT, and it was in this lane's own first pass: every
+     * file here named the screen `Content → Pages → User pages`. There is no such
+     * path. `Pages` is a TOP-LEVEL sidebar section in app.blade.php's NAV — it is
+     * not under Content — and the console's own TITLES map spells the breadcrumb
+     * for `pages-user` as exactly ['Pages','User pages']. An owner told to look
+     * under Content would have opened Blog Posts, HTML Blocks and Media Library
+     * and not found a page editor in any of them.
+     *
+     * It is asserted against app.blade.php because that file is the authority: it
+     * draws the sidebar and the breadcrumb. A lane cannot edit it, which is
+     * precisely why a lane must not contradict it.
+     *
+     * MUTATION, RUN: put "Content → Pages" back into any of the four files and
+     * this is red, naming the file.
+     */
+    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    // The console's own breadcrumb for this screen, read off its TITLES map.
+    expect(str_contains($app, "'pages-user':['Pages','User pages']"))->toBeTrue(
+        'app.blade.php no longer spells this screen\'s breadcrumb as Pages -> User pages; '
+        .'re-read it and correct every file below rather than this expectation'
+    );
+
+    // And `Pages` really is a section of its own, not a row under Content.
+    expect(str_contains($app, "{sec:'Pages',items:[['pages-store'"))->toBeTrue();
+
+    $named = [
+        'app/Http/Controllers/Admin/PageEditorApiController.php',
+        'routes/page-editor-admin.php',
+        'resources/views/admin/partials/page-editor-screen.blade.php',
+        'database/migrations/2027_02_24_000000_clear_caches_page_editor.php',
+    ];
+
+    $wrong = [];
+
+    foreach ($named as $file) {
+        $body = (string) file_get_contents(base_path($file));
+
+        // Both spellings, because the migration's echo is plain ASCII.
+        if (str_contains($body, 'Content → Pages') || str_contains($body, 'Content -> Pages')) {
+            $wrong[] = $file;
+        }
+
+        // And each one says where it sits at all, which is the other half of
+        // rule 3: a file that names no path cannot name a wrong one either.
+        if (! str_contains($body, 'Pages → User pages') && ! str_contains($body, 'Pages -> User pages')) {
+            $wrong[] = $file.' (names no admin path)';
+        }
+    }
+
+    expect($wrong)->toBe([], "These files name the wrong admin path for this screen:\n  ".implode("\n  ", $wrong));
 });

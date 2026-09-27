@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /*
 |------------------------------------------------------------------------------
-| Content → Pages → User pages → Edit  (Lane S9)
+| Pages → User pages → Edit  (Lane S9)
 |------------------------------------------------------------------------------
 |
 | MOUNTED, inside the EXISTING admin-api group in routes/web.php — the group that

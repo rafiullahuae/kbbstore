@@ -15,7 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Content → Pages → Edit — the content page editor, and with it the per-row SEO
+ * Pages → User pages → Edit — the content page editor, and with it the per-row SEO
  * fields on the fifth and last table that carries them. (Lane S9)
  *
  * ── WHAT WAS MISSING, MEASURED AGAINST THE ROUTER ───────────────────────────

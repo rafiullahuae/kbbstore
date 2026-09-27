@@ -1,5 +1,5 @@
 {{--
-    Content → Pages → User pages — the list, and the content page editor behind
+    Pages → User pages — the list, and the content page editor behind
     it. (Lane S9)
 
     Pulled into resources/views/admin/app.blade.php at the very end, after that
@@ -42,7 +42,7 @@
     the WordPress importer that was a latent hole; the moment an operator can
     TYPE a title it is a live admin-side XSS. So renderUserPages is delegated to
     this file at the bottom, where every cell goes through esc(), and the server
-    refuses a tag in a title as well (PageEditorApiController::plainTitle).
+    refuses a tag in a title as well (App\Support\PageTitle::stored()).
 
     NOTHING BELOW THIS COMMENT MAY NAME BLADE'S RAW-BLOCK DIRECTIVES, and
     neither may this comment. Blade pairs the first such opening directive it

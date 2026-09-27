@@ -634,7 +634,7 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'status' => 'published',
         'seo' => [
             'title' => 'Delivery, returns and the questions we are asked most',
-            'desc' => 'Written from Content -> Pages -> User pages -> Edit.',
+            'desc' => 'Written from Pages -> User pages -> Edit.',
             'og_image' => '/storage/pages/faq.jpg',
             'canonical' => '',
             'noindex' => false,
@@ -837,7 +837,7 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
             . implode('  ', preg_grep('#<title>|name="description"|og:image#', $pageEditedTags))
             . '. The same endpoint answered ' . $pageEditRefused . ' to a `javascript:` canonical and ' . $pageEditAnonymous
             . ' with no session at all. Write routes on the router now: ' . implode(', ', $pageWriteRoutes)
-            . '. THE SCREEN IS Content → Pages → User pages → Edit, and it is a page editor rather than an SEO-only form, which is what the previous verdict of this row asked for in as many words: title, body (sanitised through RichText::clean, both languages), status, and the five search-engine fields with Lane S7\'s live Google preview above them. It deliberately CANNOT create or delete a page — the seven content pages are seven literal routes in web.php and the site-root catch-all serves posts, so a created page would be a row no request could reach.',
+            . '. THE SCREEN IS Pages → User pages → Edit, and it is a page editor rather than an SEO-only form, which is what the previous verdict of this row asked for in as many words: title, body (sanitised through RichText::clean, both languages), status, and the five search-engine fields with Lane S7\'s live Google preview above them. It deliberately CANNOT create or delete a page — the seven content pages are seven literal routes in web.php and the site-root catch-all serves posts, so a created page would be a row no request could reach.',
         'app/Http/Controllers/Admin/PageEditorApiController.php');
 
     $rows[] = spRow($A,

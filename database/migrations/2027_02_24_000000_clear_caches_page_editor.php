@@ -20,7 +20,7 @@ use Illuminate\Database\Migrations\Migration;
  * is @included by admin/app.blade.php. A compiled Blade view is only recompiled
  * when the file it came from is newer than it, and an update package copies files
  * with whatever timestamps the archive carries — so the compiled copy can win and
- * Content → Pages → User pages would go on drawing the read-only table with the
+ * Pages → User pages would go on drawing the read-only table with the
  * "Page editor arrives with the CMS in Phase 11" button over a console that has
  * the real screen in it. Clearing storage/framework/views is why this migration
  * globs it.
@@ -61,7 +61,7 @@ return new class extends Migration
         }
 
         if (app()->runningInConsole()) {
-            echo "Cleared {$cleared} compiled files. Content -> Pages -> User pages can now EDIT a\n"
+            echo "Cleared {$cleared} compiled files. Pages -> User pages can now EDIT a\n"
                 ."content page: its title, its body, its Arabic, its status, and the five search-engine\n"
                 ."fields (page title, meta description, canonical, social image, noindex) with a live\n"
                 ."Google preview above them. No page is created or changed by applying this.\n";
