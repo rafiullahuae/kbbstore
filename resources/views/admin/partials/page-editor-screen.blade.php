@@ -2,11 +2,29 @@
     Pages → User pages — the list, and the content page editor behind
     it. (Lane S9)
 
-    Pulled into resources/views/admin/app.blade.php at the very end, after that
-    file closes its raw block and before </body>, so this runs once the console's
-    own script has defined window.go, renderUserPages and the design tokens this
-    screen borrows. Same arrangement as admin/partials/post-editor-screen — that
-    is the precedent, and this screen is the same shape of thing.
+    THE EXACT LINE THE INTEGRATOR ADDS, in the include block of
+    resources/views/admin/app.blade.php, directly under the article editor's:
+
+        @include('admin.partials.page-editor-screen')
+
+    Position VERIFIED by adding it there, booting the console in Chromium and
+    driving the screen end to end, not reasoned about: the list drew 8 rows, Edit
+    opened the editor, Save answered "Saved." and /faqs/ then served the typed
+    title. It has to come after app.blade.php's FIRST <script> block, which is
+    where `async function renderUserPages()` is declared at top level — a
+    top-level declaration in a classic script IS a property of the global object,
+    so the assignment at the foot of THIS file rebinds the very name the dispatch
+    table in go() resolves on every call. app.blade.php overrides renderUsers by
+    the same mechanism from its second script block, and its own comment around
+    line 6826 documents it.
+
+    (The assignment is not spelled out here on purpose: a test counts that string
+    across every admin partial and requires exactly one, so that a second screen
+    cannot quietly take the User pages list over. Naming it in prose would make
+    this comment the second one.)
+
+    Any position after that block works; under the post-editor include is where
+    it was driven.
 
     WHAT WAS HERE BEFORE. renderUserPages() in app.blade.php drew a read-only
     table with one button on it:
