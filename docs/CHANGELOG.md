@@ -3,6 +3,93 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.293
+The Add-video button on a section page, a clips screen that says what went
+wrong, and a product search that behaved differently on your server than in
+the tests.
+
+### ▲ "UPLOAD A NEW VIDEO" ON THE SECTION PAGE — where you drew the red box
+
+It is in the top right of **Add from the library**, and it has been in the code
+since 2.60.291 — which means your server is serving an older *compiled* copy of
+that screen. Applying this package ships the screen again **and** clears the
+compiled-view cache, so the button appears.
+
+**Where:** Content → Shoppable video → Sections → open a section → top right of
+"Add from the library".
+
+Drop a video on it or press it. One upload and the clip exists, is in that
+section, is in the Clips tab and is in the Media Library — with the live
+progress bar and a playable preview of the file **your shop** is now serving.
+
+### ▲ WHY "ALL CLIPS" GAVE YOU A SENTENCE AND NOTHING ELSE
+
+Your screenshot said **"The video library could not be read."** That is all it
+said — and that is all it *could* say. Both Shoppable video screens printed that
+one sentence for every failure that was not one of five specific ones. The HTTP
+status was sitting on the error the whole time and the code threw it away one
+line later.
+
+So a crashed server, an expired login and a dropped connection all looked
+identical. **I could not diagnose your report from it, and neither could you.**
+That is now fixed. Three cases it could never name before:
+
+- **Your login quietly expiring.** The console is drawn once when you sign in
+  and then lives in the tab; every screen after that fetches its data in the
+  background. So when the session lapses you are *not* sent back to the login
+  page — the console keeps drawing and the **data** is refused. It now says:
+  *"Your admin session has expired — nothing is wrong with this screen or your
+  clips. Reload the page and sign in again."* This is the most likely cause of
+  what you saw, and it would also explain why things worked again after a
+  refresh.
+- **A real server error.** It now prints the status, the server's own sentence,
+  and the command that shows the reason: `tail -n 40 storage/logs/laravel.log`.
+- **No connection at all.** Named, rather than blamed on the shop.
+
+Anything else still carries its number, so the next odd failure arrives already
+half-diagnosed instead of costing a round trip.
+
+**Honest note:** this does not by itself fix whatever your server was doing — I
+cannot see it from here. It makes the screen *tell you*, which is the thing that
+was missing. Load All clips after applying this and it will name the cause.
+
+### ▲ A SEARCH THAT FOUND DIFFERENT PRODUCTS ON YOUR SERVER THAN IN THE TESTS
+
+Found by running the suite against MySQL — which is what your shop runs, and
+which the normal test lane never touches.
+
+The product search in the clip editor protected itself from wildcards using a
+backslash. That is correct on MySQL and **means nothing at all on SQLite**. The
+practical effect: searching for a product with a `%` in its name — you have one,
+`Peach Niacinamide 30% Serum` — worked on your shop and found nothing under the
+tests. The test that was supposed to cover it asserted "finds nothing", so it
+passed on the engine you do not use and failed on the one you do, while proving
+nothing either way.
+
+Both search paths now use the helper this project already had for exactly this.
+The test creates its own products and checks the one with a percent sign is
+found and the one without is not.
+
+**Also named, not fixed:** four other admin screens (coupons, coupon usage,
+catalogue reorder, product search) carry the same pattern. They belong to other
+lanes; their searches have the same engine-dependent behaviour.
+
+**No setting added, no default moved.**
+
+### Files
+- `resources/views/admin/partials/ugc-library-screen.blade.php` — the error
+  branches; re-shipped so the compiled copy is replaced.
+- `resources/views/admin/partials/ugc-sections-screen.blade.php` — same, and
+  this is the file that carries the Upload-a-new-video control.
+- `app/Http/Controllers/Admin/UgcVideoController.php` — both search sites
+  through `SearchTerms`.
+- `database/migrations/2027_03_19_000000_clear_caches_ugc_cut_covers.php` —
+  clears the compiled views and code.
+- `app/Console/Commands/CutUgcCovers.php`, `app/Services/UgcDerivedFiles.php`,
+  `app/Services/UgcClipIntake.php` — carried forward from 2.60.292 below.
+- `tests/Feature/UgcErrorsNameTheirCauseTest.php`, `UgcAdminScreenTest.php`
+  (repo only).
+
 ## 2.60.292
 The covers your server could not cut from the browser, cut from the command
 line instead.

@@ -5,8 +5,16 @@ use Illuminate\Database\Migrations\Migration;
 /**
  * Compiled-code cache for the shared derive-column writer.
  *
- * NO ROUTE IS ADDED and NO VIEW CHANGES, so neither the route cache nor the
- * compiled views are the reason this exists. **OPcache is.**
+ * NO ROUTE IS ADDED. Two reasons this exists: the compiled VIEWS and OPcache.
+ *
+ * THE VIEWS ARE THE HALF THE OWNER CAN SEE. His section editor is missing the
+ * "Upload a new video" control that 2.60.291 shipped, which means his server is
+ * still rendering an older COMPILED copy of that Blade file —
+ * storage/framework/views keys a compiled view by the path of its source and
+ * decides staleness on file times, and an unzip's timestamps are not reliably
+ * newer than what is already on disk. Re-shipping both Shoppable video partials
+ * does nothing on its own; deleting the compiled copies is what makes the new
+ * source take effect.
  *
  * This package rewrites the bodies of two files that are already on the server
  * — Admin\UgcVideoController and Services\UgcClipIntake — to call the new
@@ -63,7 +71,11 @@ return new class extends Migration
         }
 
         if (app()->runningInConsole()) {
-            echo "Cleared {$cleared} compiled files. `php artisan ugc:cut-covers` is now\n"
+            echo "Cleared {$cleared} compiled files. The section editor now has its\n"
+                ."\"Upload a new video\" control (Content -> Shoppable video -> Sections -> open one\n"
+                ."-> top right of \"Add from the library\"), and a failure on the clips screens now\n"
+                ."names its own cause instead of one sentence that could mean anything.\n"
+                ."`php artisan ugc:cut-covers` is now\n"
                 ."available over SSH: it cuts the cover and the 2.5s teaser for every clip\n"
                 ."that has a video and no cover, oldest first, and it works on this host\n"
                 ."even though the browser cannot, because the CLI is not the PHP that has\n"
