@@ -3,6 +3,93 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.291
+The upload error explained and fixed, instant step switching, a product search
+that answers, and every upload now joins the Media Library.
+
+### ▲ WHY THE UPLOAD SAID "SERVER ERROR" — and why your video was there anyway
+
+Your 8.4 MB clip **uploaded correctly every single time**. The file was written,
+the clip was saved, and then the app tried to cut the cover and the teaser from
+it — and *that* step crashed, taking the whole response down with it.
+
+So you were told:
+
+> Server Error — 8.4 MB, nothing on the clip was changed.
+
+**That was false**, and it is the part that cost you. Something *was* changed:
+your video was already in. Which is exactly why a refresh showed it sitting
+there as a draft.
+
+**The cause:** PHP on your server has `proc_open` switched off — a common
+hardening setting. The cover-cutting needs it to start ffmpeg. The safety net
+that should have caught the failure was written one line too low to see it.
+
+Three things change:
+
+- **A failed cut can no longer fail an upload.** Your video saves and serves; you
+  get told the cover could not be cut here.
+- **No message may say "nothing was changed" unless nothing was.**
+- **Your orphans are cleaned up.** Every failed attempt left a file on the server
+  that nothing would ever delete. You made several.
+
+The screen also stops promising a cover it cannot cut: ffmpeg *is* installed on
+your server, so the app saw the file and assumed it could run it. It now tells
+"no ffmpeg" apart from "ffmpeg is here but PHP may not start it" — different
+problems, different fixes. **Enable `proc_open` and covers cut themselves again.**
+
+### Steps switch instantly now
+
+Moving forward a step used to make **four** server round trips, one after
+another, before it would draw anything. On a connection like yours:
+
+| | before | after |
+|---|---|---|
+| Details → Video & cover | 1170 ms | **57 ms** |
+| Video & cover → Credit | 1185 ms | **31 ms** |
+| Credit → Products | 1137 ms | **32 ms** |
+| Products → Publish | 1135 ms | **24 ms** |
+
+The video also stopped being thrown away and rebuilt on every step change, which
+is what restarted the loop preview and re-fetched the clip.
+
+**Your typing is safe.** It survives a step change with no saving at all, and if
+you reload or close the tab, the page offers to restore what you had typed — it
+never silently applies it over what the server has.
+
+### The product search answers you now
+
+Typing four characters used to show **nothing at all** for about a second, and
+then nothing for ever if there were no matches. Now: *Searching…*, then either
+the matches, or **"Nothing published matches that"** — and if the product exists
+but is a draft, it says so and where to publish it.
+
+**The ten newest products are listed before you type anything.**
+
+Also fixed: the search box lost your cursor on every keystroke that returned a
+result, which is why adding a second product felt broken.
+
+### Every upload joins the Media Library
+
+Clips and loop files never reached it. They do now — and the ones already on your
+server are catalogued when this update is applied. Videos show as a film-strip
+tile with a **Show: Everything / Pictures / Videos** filter, and play in the
+detail panel.
+
+### ▲ AND THE LIBRARY COULD DELETE A LIVE CLIP'S COVER
+
+Deleting a picture checks whether products, brands or categories are using it —
+but never checked shoppable video. So it has been offering to delete the cover of
+a published clip, and doing it, leaving the video pointing at nothing. Now
+refused, naming the clip using it.
+
+### Upload a new video straight from a section
+
+**Content → Shoppable video → Sections → open a section → "Add from the library",
+top right.** Drop a video there and it becomes a draft clip, added to that
+section, in the Clips tab and in the Media Library — without going to the Clips
+tab first.
+
 ## 2.60.290
 Every upload in the console: a bar that tells slow from stuck, and drag-and-drop
 everywhere.
