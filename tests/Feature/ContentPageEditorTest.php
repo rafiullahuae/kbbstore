@@ -210,7 +210,9 @@ it('can produce every state PageSeoOverridesTest pins, from the form', function 
      * one of these, the column has a state the owner cannot reach.
      *
      * MUTATION, RUN: drop `title` from PageEditorApiController::SEO_KEYS and the
-     * title and Yoast-token rows go red while the rest stay green — 2 failed.
+     * title and Yoast-token rows go red — 6 failed, measured, not 2: the SEO
+     * title is also what four other cases here read back, which is the point of
+     * running a mutation instead of predicting one.
      */
     cpeSave(['seo' => $seo])->assertOk();
 
