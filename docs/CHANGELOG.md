@@ -3,6 +3,69 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.297
+**Apply this one. It replaces 2.60.292 through .296, and it fixes the error you
+just sent me — which was my mistake, not your server's.**
+
+### ▲ WHAT WENT WRONG, PLAINLY
+
+Your All clips screen said:
+
+> The ffmpeg check failed — Error: Call to undefined method
+> `App\Services\UgcTranscoder::blocker()`
+
+That is the real cause of everything since, and it is a **packaging error I
+made**, not a fault on your server.
+
+The method `blocker()` was added in **2.60.291**. Every package I have sent you
+since — .292, .293, .294, .295, .296 — was built as a *difference* from 2.60.291,
+because I assumed you had applied it. So each of those shipped the **new**
+controller that calls `blocker()`, and **none of them shipped the file that
+contains it**.
+
+If 2.60.291 never applied on your server — or applied only partly — you ended up
+with new code calling a method your copy of the older file does not have. Every
+load of that screen failed on it. That is the 500 from two days ago, and it is
+the amber note you are reading now.
+
+**A package should never depend on you having applied the one before it.** This
+one does not: it carries the complete current version of every Shoppable-video
+and Media-library file, so it lands correctly whatever state your server is in.
+
+### ▲ HOW YOU KNOW IT WORKED
+
+Open **Content → Shoppable video → All clips**. The amber "these parts of the
+screen could not be worked out" note should be **gone entirely**.
+
+If any note remains, send me the line in it — it will now name a different
+cause, and that is useful rather than annoying.
+
+### ▲ THE ONE GOOD THING ABOUT THIS
+
+You could read that error at all because of 2.60.294, which stopped one failed
+check from taking the whole library down and made it print what actually broke.
+Before that, this was a bare "Server Error" — and I spent two rounds guessing at
+it. The screen told us in one line.
+
+### ▲ EVERYTHING FROM .292 TO .296 IS INCLUDED
+
+Nothing is lost by skipping straight to this one:
+
+- **Your browser cuts the cover** (.296) — no ffmpeg, no `proc_open`, no cron.
+- **The Media Library opens as a centred popup again** (.296).
+- **A clip can be published without a cover or credits**, warnings kept (.296).
+- **`php artisan ugc:cut-covers`** and the automatic cron route (.292, .295).
+- **A failed check can no longer empty your clip library** (.294).
+- **Errors name their own cause** instead of one blank sentence (.293).
+- **The Upload-a-new-video control** on section pages (.293).
+- **The product search** fixed on MySQL, which is what your shop runs (.293).
+
+**No setting added, no default moved.**
+
+### Files
+The complete current state of every file touched since 2.60.290, including
+`app/Services/UgcTranscoder.php` — the one that was missing.
+
 ## 2.60.296
 The permanent fix: your browser cuts the cover. The Media Library opens as a
 popup again. And a clip can go live without a cover or credits.
