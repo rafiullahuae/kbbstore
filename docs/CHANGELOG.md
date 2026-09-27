@@ -3,6 +3,77 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.292
+The covers your server could not cut from the browser, cut from the command
+line instead.
+
+### ▲ YOUR CLIPS CAN HAVE COVERS TODAY — no server change needed
+
+2.60.291 explained why the upload said "Server Error": your PHP-FPM pool has
+`proc_open` switched off, so the shop cannot start ffmpeg to cut the cover and
+the teaser. That fix stopped the failure from taking your upload down with it.
+It did not give you the covers.
+
+Then your own `php -i` over SSH answered:
+
+> `disable_functions => no value => no value`
+
+**That is the CLI, and the CLI is not blocked.** The web process and the command
+line on Cloudways run two different PHP configurations, and only the web one is
+hardened. ffmpeg is installed and runnable; only the browser's PHP is forbidden
+to start it.
+
+So there is a door that is already open, and this release walks through it:
+
+```
+cd /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app
+php artisan ugc:cut-covers
+```
+
+That cuts the cover and the 2.5-second teaser for every clip that has a video
+and no cover, oldest first. Run it after uploading; run it twice if you like —
+the second run finds nothing to do, because it only touches clips with no cover.
+
+**Options**
+
+| | |
+|---|---|
+| `--dry-run` | Lists what it would cut and changes nothing. |
+| `--limit=50` | How many clips in one run (default 50, max 500). |
+| `--id=12 --id=15` | Only these clips. |
+| `--force` | Re-cut clips that already have a cover, replacing it. |
+
+If your host ever blocks the CLI too, the command says so **before** it touches
+anything, in one sentence, rather than failing fifty times in a row.
+
+`docs/SERVER-PROC-OPEN.md` is still the guide to switching `proc_open` back on
+for the web process, if you would rather have covers cut at upload time. This
+command is the route that needs no support ticket.
+
+### ▲ A BUG THIS FOUND ON THE WAY IN
+
+Writing the command would have been the **fourth** copy of the same sixteen
+lines that record a cut cover — and the three that already existed had drifted
+apart. The copy used by the clip-intake path never released the file it was
+replacing, so re-cutting a cover there left the **old** poster pinned in the
+Media Library permanently, un-deletable, for every clip that was ever re-cut.
+
+All four now go through one writer. The drift is fixed as a consequence, not as
+a patch on top of it.
+
+**No setting added, no default moved.** Nothing on the shop changes until you
+run the command.
+
+### Files
+- `app/Console/Commands/CutUgcCovers.php` — new: the command.
+- `app/Services/UgcDerivedFiles.php` — new: the one writer for the six derive
+  columns, with the orphan-tracking callback the upload path needs.
+- `app/Services/UgcClipIntake.php` — through the writer; gains the missing
+  release.
+- `app/Http/Controllers/Admin/UgcVideoController.php` — both apply-blocks
+  through the writer.
+- `tests/Feature/CutUgcCoversCommandTest.php` — 6 cases (repo only).
+
 ## 2.60.291
 The upload error explained and fixed, instant step switching, a product search
 that answers, and every upload now joins the Media Library.
