@@ -515,13 +515,59 @@ require_once __DIR__.'/../vendor/autoload.php';
      */
     $temp = sys_get_temp_dir().'/kbb-run-'.getmypid().'-'.bin2hex(random_bytes(4));
 
-    // Whatever a SIGKILLed run left behind, on the same day-old rule as the
-    // testing roots above -- these live outside the checkout now, so nothing
-    // else will ever sweep them.
-    foreach (glob(sys_get_temp_dir().'/kbb-run-*') ?: [] as $stale) {
-        if (is_dir($stale) && ! is_link($stale) && filemtime($stale) < time() - 86400) {
-            $sweepTree($stale);
+    /*
+     * ── SWEEPING /tmp, AND WHY IT HAS TO BE WIDER THAN kbb-run-* ────────────
+     *
+     * This used to glob `kbb-run-*` only, on a day-old rule, and it was sweeping
+     * almost nothing: the main checkout was found carrying 12,249 entries and
+     * 12 GB under /tmp, of which only 371 were old enough for that rule to ever
+     * touch. Disk hit 87%, which matters because CLAUDE.md records what a full
+     * disk does here — it aborts a SQLite transaction, destroys every savepoint
+     * inside it, and surfaces as `no such savepoint: trans3` on a row that MOVES
+     * BETWEEN RUNS. An intermittent data bug that is really a disk.
+     *
+     * NONE OF THE LEAKED ENTRIES WERE kbb-run-*. They were kbb-fe-*, kbb-sig-*,
+     * kbb-gk-*, kbb-fd-*, kbb-dep-*, kbb-imp-* and a dozen more prefixes: about
+     * a hundred call sites across tests/ that build their own scratch directory
+     * from sys_get_temp_dir().
+     *
+     * And that is a direct consequence of the correction recorded a few lines
+     * above. The per-run tree is exported through TMPDIR, because `ini_set(
+     * 'sys_temp_dir')` is PHP_INI_SYSTEM and silently does nothing — so
+     * sys_get_temp_dir() inside a test answers the SHARED /tmp, not this run's
+     * own tree, and a directory built from it lands outside everything that
+     * would otherwise clean up. The per-run sweep at shutdown cannot see them
+     * because they are not inside $temp.
+     *
+     * THE AGE GUARD IS WHAT MAKES THIS SAFE, and it is not a formality. Deleting
+     * /tmp/kbb-* with no age rule is precisely the bug fixed earlier in this
+     * file's history: GmImportAcceptsZipTest swept `/tmp/kbb-gm-*` on every
+     * afterEach and deleted the fixture ANOTHER LANE was halfway through
+     * reading, which failed with a filename that moved between runs. Three lanes
+     * share this machine. Two hours is far outside the ~8 minutes a full suite
+     * takes, so nothing live can be inside the window; it is also short enough
+     * that a day of runs cannot accumulate 12 GB again.
+     *
+     * The real fix is the hundred call sites taking a per-run path instead of
+     * sys_get_temp_dir(). This is the backstop, and it is written as one so that
+     * closing those call sites later simply makes it find nothing.
+     */
+    $tmpRoot = sys_get_temp_dir();
+
+    foreach (glob($tmpRoot.'/kbb-*') ?: [] as $stale) {
+        if (is_link($stale) || $stale === $temp) {
+            continue;
         }
+
+        // filemtime() on a directory moves when its ENTRIES change, so a tree a
+        // live run is still writing into keeps refreshing itself out of range.
+        $age = @filemtime($stale);
+
+        if ($age === false || $age >= time() - 7200) {
+            continue;
+        }
+
+        is_dir($stale) ? $sweepTree($stale) : @unlink($stale);
     }
 
     if (! is_dir($temp)) {
