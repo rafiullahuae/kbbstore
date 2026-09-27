@@ -33,9 +33,21 @@ it('renders the main image and the gallery as two separate cards in one grid', f
      * They still travel as ONE registered panel — see the registry — so an
      * arrangement cannot pull them apart or put them in different columns.
      * Two cards is what it looks like; one panel is what it behaves as.
+     *
+     * PIN ADVANCED, LANE P2, and only in what it tolerates AFTER the class list.
+     * Each half is now also a FILE DROP TARGET and carries an id for it
+     * (#peo-mainzone, #peo-galzone) — a photograph dropped anywhere on the card
+     * uploads, instead of the browser navigating away to it. The thing this
+     * assertion is about is unchanged and is still asserted exactly: a
+     * <section> per half, each carrying .peo-card in its own right. What moved
+     * is that the opening tag may now carry more attributes than a class, so the
+     * match is anchored to the tag and the class list rather than to the whole
+     * string. UploadProgressAndDropZonesTest pins that each id is there once.
      */
-    expect($blade)->toContain("'<section class=\"peo-card peo-media-main\">'")
-        ->and($blade)->toContain("'<section class=\"peo-card peo-media-gal\">'");
+    foreach (['peo-media-main', 'peo-media-gal'] as $half) {
+        expect(preg_match('/\'<section class="peo-card '.$half.'"[^\']*>\'/', $blade))
+            ->toBe(1, $half.' is no longer its own <section> carrying .peo-card');
+    }
 
     $open  = strpos($blade, 'function imagesView(){');
     $close = strpos($blade, 'function mainImageView(){');

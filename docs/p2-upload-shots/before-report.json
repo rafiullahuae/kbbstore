@@ -1,0 +1,585 @@
+{
+  "tag": "before",
+  "base": "http://127.0.0.1:8972",
+  "widths": [
+    {
+      "width": 1280,
+      "shots": [
+        "before-1280-1-picker-resting.png",
+        "before-1280-2-picker-drag-over.png",
+        "before-1280-3-picker-after-drop.png",
+        "before-1280-4-editor-resting.png",
+        "before-1280-5-editor-share-image.png",
+        "before-1280-6-editor-gallery-drag-over.png",
+        "before-1280-7-editor-gallery-in-flight.png",
+        "before-1280-8-editor-gallery-done.png",
+        "before-1280-9-importer-resting.png",
+        "before-1280-10-importer-drag-over.png",
+        "before-1280-11-importer-after-drop.png",
+        "before-1280-12-importer-checking.png",
+        "before-1280-13-importer-checked.png",
+        "before-1280-14-importer-oversized.png"
+      ],
+      "picker": {
+        "opened": true,
+        "resting": {
+          "dialog": {
+            "w": 1280,
+            "h": 900,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": null,
+          "uploadRow": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "stopRest": null,
+          "batch": null
+        },
+        "frame": {
+          "docScrollWidth": 1280,
+          "docClientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032
+        },
+        "litWhileHovering": [],
+        "afterDrop": {
+          "dialog": {
+            "w": 1280,
+            "h": 900,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": null,
+          "uploadRow": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "stopRest": null,
+          "batch": null
+        },
+        "rows": []
+      },
+      "editor": {
+        "opened": "peoEdit",
+        "resting": {
+          "mainCard": null,
+          "mainHint": null,
+          "mainBox": null,
+          "galCard": null,
+          "galDrop": {
+            "w": 209,
+            "h": 70,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them here, or tap to choose"
+          },
+          "galCap": null,
+          "ogZone": null,
+          "ogDrop": null,
+          "ogCap": null,
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "frame": {
+          "docScrollWidth": 1280,
+          "docClientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032
+        },
+        "litWhileHovering": [],
+        "inFlight": {
+          "mainCard": null,
+          "mainHint": null,
+          "mainBox": null,
+          "galCard": null,
+          "galDrop": {
+            "w": 209,
+            "h": 70,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them here, or tap to choose"
+          },
+          "galCap": null,
+          "ogZone": null,
+          "ogDrop": null,
+          "ogCap": null,
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "inFlightRows": [],
+        "afterUpload": {
+          "mainCard": null,
+          "mainHint": null,
+          "mainBox": null,
+          "galCard": null,
+          "galDrop": {
+            "w": 209,
+            "h": 70,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them here, or tap to choose"
+          },
+          "galCap": null,
+          "ogZone": null,
+          "ogDrop": null,
+          "ogCap": null,
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "afterRows": []
+      },
+      "importer": {
+        "opened": true,
+        "resting": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "frame": {
+          "docScrollWidth": 1280,
+          "docClientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032
+        },
+        "litWhileHovering": [],
+        "afterDrop": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "checking": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 996,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "Choose a CSV file first."
+          },
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "checked": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 996,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "Choose a CSV file first."
+          },
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "oversized": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 996,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "The POST data is too large."
+          },
+          "name": {
+            "w": 962,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "over-post.csv"
+          }
+        }
+      }
+    },
+    {
+      "width": 390,
+      "shots": [
+        "before-390-1-picker-resting.png",
+        "before-390-2-picker-drag-over.png",
+        "before-390-3-picker-after-drop.png",
+        "before-390-4-editor-resting.png",
+        "before-390-5-editor-share-image.png",
+        "before-390-6-editor-gallery-drag-over.png",
+        "before-390-7-editor-gallery-in-flight.png",
+        "before-390-8-editor-gallery-done.png",
+        "before-390-9-importer-resting.png",
+        "before-390-10-importer-drag-over.png",
+        "before-390-11-importer-after-drop.png",
+        "before-390-12-importer-checking.png",
+        "before-390-13-importer-checked.png",
+        "before-390-14-importer-oversized.png"
+      ],
+      "picker": {
+        "opened": true,
+        "resting": {
+          "dialog": {
+            "w": 390,
+            "h": 844,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": null,
+          "uploadRow": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "stopRest": null,
+          "batch": null
+        },
+        "frame": {
+          "docScrollWidth": 390,
+          "docClientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390
+        },
+        "litWhileHovering": [],
+        "afterDrop": {
+          "dialog": {
+            "w": 390,
+            "h": 844,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": null,
+          "uploadRow": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "stopRest": null,
+          "batch": null
+        },
+        "rows": []
+      },
+      "editor": {
+        "opened": "peoEdit",
+        "resting": {
+          "mainCard": null,
+          "mainHint": null,
+          "mainBox": null,
+          "galCard": null,
+          "galDrop": {
+            "w": 209,
+            "h": 70,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them here, or tap to choose"
+          },
+          "galCap": null,
+          "ogZone": null,
+          "ogDrop": null,
+          "ogCap": null,
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "frame": {
+          "docScrollWidth": 390,
+          "docClientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390
+        },
+        "litWhileHovering": [],
+        "inFlight": {
+          "mainCard": null,
+          "mainHint": null,
+          "mainBox": null,
+          "galCard": null,
+          "galDrop": {
+            "w": 209,
+            "h": 70,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them here, or tap to choose"
+          },
+          "galCap": null,
+          "ogZone": null,
+          "ogDrop": null,
+          "ogCap": null,
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "inFlightRows": [],
+        "afterUpload": {
+          "mainCard": null,
+          "mainHint": null,
+          "mainBox": null,
+          "galCard": null,
+          "galDrop": {
+            "w": 209,
+            "h": 70,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them here, or tap to choose"
+          },
+          "galCap": null,
+          "ogZone": null,
+          "ogDrop": null,
+          "ogCap": null,
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "afterRows": []
+      },
+      "importer": {
+        "opened": true,
+        "resting": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "frame": {
+          "docScrollWidth": 390,
+          "docClientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390
+        },
+        "litWhileHovering": [],
+        "afterDrop": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "checking": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 362,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "Choose a CSV file first."
+          },
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "checked": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 362,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "Choose a CSV file first."
+          },
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "oversized": {
+          "card": null,
+          "drop": null,
+          "cap": null,
+          "legend": null,
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 362,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "The POST data is too large."
+          },
+          "name": {
+            "w": 328,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "over-post.csv"
+          }
+        }
+      }
+    }
+  ],
+  "console": [
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 413 (Content Too Large)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 413 (Content Too Large)"
+  ],
+  "error": null
+}
