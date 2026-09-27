@@ -1109,3 +1109,65 @@ this path. Every new endpoint gets its own capability and fails closed.
 **Done when:** each defect has a test that goes red without the fix and a
 mutation note; the two questions are in the report in one line each; and no
 customer-facing email changes wording without it being called out.
+
+---
+
+## Lane TC — Tamara capture, and three small things the media round surfaced
+
+**1. Tamara auto-capture — the money item that is still open.**
+
+If an order ships and is never captured, the merchant is **never paid**; Tamara
+voids the authorisation after roughly 180 days. `forceCaptureTamaraOrder` is the
+relevant path.
+
+Whether capture should follow fulfilment automatically is a **commercial
+decision and stays the owner's** — put it to him in one line in your report.
+What is yours is the code that would do it and the test proving it cannot
+double-capture. Build it behind whatever switch makes the default "no change",
+so applying the package moves nothing until he chooses.
+
+Its sibling was fixed by the integrator this round and is worth reading first:
+`PaymentRefunder::capturedFils()` was offering a released authorisation as
+refundable money. Two call sites, and the second one's query named its columns
+explicitly — a column left out of an explicit `select()` comes back NULL rather
+than raising, so the rule would have been silently inert there. Expect that
+shape again.
+
+**Money crosses payment interfaces as integer fils. No floats on this path.**
+
+**2. `image/avif` is in `SAFE_TYPES` but not `EXT_MIME`.** An imported AVIF is
+fetched, served, and invisible to the Media Library. The one-line fix is
+obvious and it is **not yours to take**: `EXT_MIME` is also what the shared
+media picker offers for every image field in the console, so adding a type
+widens what a brand logo may be on every screen at once. **Put it to the owner**
+with that cost stated. A test already pins the two lists so they cannot drift
+further unnoticed.
+
+**3. The Media Library screen's blurb is now incomplete.** It reads *"Every file
+uploaded through the admin…"*; imported, review and Instagram files land there
+too now. `resources/views/admin/partials/media-library-screen.blade.php`.
+
+**4. Verify the AVIF and blurb claims yourself** — they come from another lane's
+report, and this round exists partly because a report was wrong once already:
+one told the integrator to delete a function while leaving a live reference to
+it, which would have thrown `ReferenceError` and blacked out the whole console.
+
+## Owns
+
+`app/Services/Payments/**` (except `PaymentRefunder::ceilingFrom`, just
+changed — read it, do not re-litigate it), the Tamara gateway,
+`media-library-screen.blade.php`, `tests/Feature/*Tamara*`, `*Capture*`.
+
+## Must not touch
+
+`routes/web.php`, `resources/views/admin/app.blade.php`, `KBB-Master-Plan.md`,
+`KBB-Progress-Dashboard.html`, `app/Support/MediaBackfill.php`,
+`app/Support/MediaRegistrar.php`, `app/Services/Instagram/**`, the checkout
+page, `CartPanel`, or anything Lane MY is in (the seven MySQL-only failures).
+
+## Done when
+
+Each change has the test that goes red without it and a mutation note; the two
+owner questions are in your report in one line each; no customer-facing email
+changes wording without it being called out; and `df -h /` was checked before
+debugging any intermittent database error.
