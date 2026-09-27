@@ -47,8 +47,8 @@ use Illuminate\Support\Str;
  * rather than churning the pivot.
  *
  * WHAT DOES NOT CROSS, AND WHY IT IS STILL THIS CLASS'S BUSINESS. The exporter's
- * product row carries 45 columns; this class writes 24 of them. The other
- * twenty-one are not silently ignored -- see NOT_CARRIED below, which names each
+ * product row carries 46 columns; this class writes 24 of them. The other
+ * twenty-two are not silently ignored -- see NOT_CARRIED below, which names each
  * one at run time with the value it held, and reportCarriedElsewhere(), which
  * handles the single column that looks lost and is not.
  *
@@ -93,16 +93,16 @@ final class ProductImporter extends EntityImporter
     /**
      * ── WHAT THIS SHOP HAS NOWHERE TO PUT, NAMED ONE BY ONE ─────────────────
      *
-     * The exporter's product row carries 45 columns and this importer reads 24
-     * of them. Of the other twenty-one, `tag_term_ids` arrives by another road
-     * (see reportCarriedElsewhere below) and these TWENTY do not arrive at all:
-     * there is no column in `products` for any of them and no sibling importer
-     * that picks them up.
+     * The exporter's product row carries 46 columns and this importer reads 24
+     * of them. Of the other twenty-two, `tag_term_ids` arrives by another road
+     * (see reportCarriedElsewhere below) and these TWENTY-ONE do not arrive at
+     * all: there is no column in `products` for any of them and no sibling
+     * importer that picks them up.
      *
-     * TWO OF THE TWENTY ARE NEW TO THE EXPORT, added by this lane:
-     * `sold_individually` and `reviews_enabled` were on the owner's edit page
-     * and in no file at all, which is the one kind of loss no report here
-     * could see. See the note in the exporter's columns().
+     * THREE OF THE TWENTY-ONE ARE NEW TO THE EXPORT, added by this lane:
+     * `sold_individually`, `reviews_enabled` and `default_attributes` were on
+     * the owner's edit page and in no file at all, which is the one kind of
+     * loss no report here could see. See the note in the exporter's columns().
      *
      * WHY THEY ARE LISTED HERE RATHER THAN LEFT TO THE RUNNER. ImportRunner
      * already names every column no field of an importer reads, in one
@@ -226,6 +226,30 @@ final class ProductImporter extends EntityImporter
             'why' => 'reviews are not switched on and off per product here, so a product whose reviews the '
                 .'owner had turned OFF arrives with them on',
             'aliases' => ['comment_status'],
+        ],
+        /*
+         * "Default Form Values" on the Variations tab -- WHICH SIZE the product
+         * page opens on.
+         *
+         * `product_variants` has no default flag and nothing in the storefront
+         * preselects a variant, so this has no column and no behaviour to land
+         * in. What makes it worth naming rather than ignoring is that a variable
+         * product is the one kind this shop sells where the visitor has to make
+         * a choice before the Add to basket button means anything: the old shop
+         * opened on 50ml and the new one opens on nothing, which is a step the
+         * shopper now has to take on every visit.
+         *
+         * FOUND THE SAME WAY sold_individually AND reviews_enabled WERE, and it
+         * is the third of that kind: on his edit page, and in no file at all. It
+         * hid behind something worse than an absence -- `_default_attributes`
+         * was already in the exporter's META_KEYS, fetched on every batch and
+         * emitted by nothing, so the list this project offers as its account of
+         * what it reads out of WooCommerce named it while no column carried it.
+         */
+        'default_attributes' => [
+            'why' => 'there is no default variant on product_variants and nothing preselects one, so a '
+                .'variable product that opened on 50ml in WooCommerce opens on no size here',
+            'aliases' => ['default_attribute'],
         ],
     ];
 

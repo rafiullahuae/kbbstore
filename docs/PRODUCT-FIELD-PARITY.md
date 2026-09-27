@@ -16,19 +16,26 @@ themselves are behind `Catalog → Product editor`.
 
 ## The one-paragraph answer
 
-`products.csv` now carries **45 columns**. Twenty-four of them are written onto
+`products.csv` now carries **46 columns**. Twenty-four of them are written onto
 `products`, one (`tag_term_ids`) is redundant because the same pivot arrives from
-`tags.csv`, and **twenty reach no column at all**.
+`tags.csv`, and **twenty-one reach no column at all**.
 
-Eighteen of those twenty were already not crossing before this lane and were
-already in the export; the other two were on his edit page and **in no file at
-all**, so nothing could have reported them. What changed is that all twenty are
-now **named at run time, one by one, with the value each one held and a count of
-the products it happened on**, and that the reconciliation at the end of an
+Eighteen of those twenty-one were already not crossing before this lane and were
+already in the export; the other **three were on his edit page and in no file at
+all**, so nothing could have reported them. What changed is that all twenty-one
+are now **named at run time, one by one, with the value each one held and a count
+of the products it happened on**, and that the reconciliation at the end of an
 import counts fields as well as rows.
 
-**This lane carried nothing new and added no column.** Which of the twenty earn a
-column is the owner's decision, and it is put to him at the bottom of this
+The third of those three — `default_attributes`, "Default Form Values" on the
+Variations tab — hid behind something worse than an absence. `_default_attributes`
+was **already in the exporter's `META_KEYS`**: queried on every batch and emitted
+by no column. So the one list this project offers as its account of what it reads
+out of WooCommerce named a field nothing carried, and a reader checking coverage
+against that list would have concluded it crossed.
+
+**This lane carried nothing new and added no column.** Which of the twenty-one
+earn a column is the owner's decision, and it is put to him at the bottom of this
 document. Reporting them costs nothing and is worth having whichever way he
 decides.
 
@@ -77,7 +84,7 @@ code and this table drift apart.
 |---|---|---|---|
 | 25 | `tag_term_ids` | **CARRIED** | `TagImporter` writes `product_tag` from the **tag** side out of `tags.csv` `product_ids`, so the membership arrives in full. Read by `ProductImporter` only so that the discard list stops naming it beside fields that really do go nowhere. **The premise is checked:** an export with no `tags.csv` in it has nothing to carry the membership, and there this column is reported as a genuine loss rather than reassured about |
 
-### Reaching no column — 20 columns, each NAMED at run time
+### Reaching no column — 21 columns, each NAMED at run time
 
 | # | Exporter column | On his edit page | Why it does not cross |
 |---|---|---|---|
@@ -101,6 +108,7 @@ code and this table drift apart.
 | 43 | `date_modified` | — | This shop stamps its own `updated_at` |
 | 44 | `sold_individually` | Inventory → "Limit purchases to 1 item per order" | **New to the export in this lane.** No one-per-order cap exists on a product here |
 | 45 | `reviews_enabled` | Advanced → "Enable reviews" | **New to the export in this lane.** Reviews are not switched per product here |
+| 46 | `default_attributes` | Variations → "Default Form Values" | **New to the export in this lane, and it was already being fetched.** `product_variants` has no default flag and nothing preselects a variant, so a product that opened on 50ml opens on no size here |
 
 ---
 
@@ -153,27 +161,44 @@ set to. `EntityReport::discardedList()` keeps it whole; the length is bounded by
 the width of the export, and it is recorded once per entity rather than once per
 row.
 
-### 3. Two fields were on his edit page and in no file at all
+### 3. Three fields were on his edit page and in no file at all
 
-`sold_individually` and `reviews_enabled` (WordPress's `posts.comment_status`)
-were not exported. That makes them a **different kind of gap** from the other
-eighteen, and the worse kind: the migration census only classifies columns the
-export writes, and the importer's discard list can only name columns that arrive.
-A field in neither channel is lost in silence, and no report this migration has
-could have found it.
+`sold_individually`, `reviews_enabled` (WordPress's `posts.comment_status`) and
+`default_attributes` were not exported. That makes them a **different kind of
+gap** from the other eighteen, and the worse kind: the migration census only
+classifies columns the export writes, and the importer's discard list can only
+name columns that arrive. A field in neither channel is lost in silence, and no
+report this migration has could have found it.
 
 Consequences on the live shop, had they gone unnoticed: a product the owner had
-capped at one per order can be added to a basket ten times, and a product whose
-reviews he had switched **off** arrives with them **on**.
+capped at one per order can be added to a basket ten times; a product whose
+reviews he had switched **off** arrives with them **on**; and a variable product
+that opened on a chosen size opens on none, so every visitor has to pick before
+the Add to basket button means anything.
 
-Both are now exported and both are reported as dropped. They are **not** carried —
-that is on the list below.
+**`default_attributes` was the worst of the three to find and the cheapest to
+fix, because it was already being read.** `_default_attributes` sits in the
+products stage's `META_KEYS` — fetched on every batch, for every product, and
+emitted by no column. The query cost was already being paid. And `META_KEYS` is
+the list this plugin offers as its own account of what it reads out of
+WooCommerce, so a fetch with no column does not read as an absence, it reads as
+**coverage**: anyone checking whether the field crossed would have found its name
+in the right place and stopped looking.
+
+It was invisible to every test for a second reason, which is now closed. The
+meta-key half of `GqMigrationCensusTest` reads `SELECT DISTINCT meta_key` out of
+the WordPress harness and insists every key is classified — so a field the
+harness does not model is a field that half of the census cannot ask about. The
+harness had variations and no default on any of them. It has one now.
+
+All three are now exported and all three are reported as dropped. They are
+**not** carried — that is on the list below.
 
 ### 4. The reconciliation counts fields as well as rows
 
 Per entity, in the import report:
 
-> `671 read, 671 accounted for, 0 refused, and 20 fields skipped (columns of the
+> `671 read, 671 accounted for, 0 refused, and 21 fields skipped (columns of the
 > export this shop has nowhere to put, not rows — each one is named in the
 > discard list with what it held), 671 in the database.`
 
@@ -190,7 +215,7 @@ and a field count does not belong to it.
 * a **Fields dropped** column per file, whose tooltip is the field names in full;
 * a closing card, **"Did anything get lost?"**, ending in one sentence:
 
-> WooCommerce said 671 rows across 17 files, 671 arrived, 0 refused, and 20
+> WooCommerce said 671 rows across 17 files, 671 arrived, 0 refused, and 21
 > fields skipped (attribute_summary, backorders, …). Every row is accounted for.
 
 It stays a neutral note while the run is unfinished and says so — a green
@@ -301,8 +326,14 @@ understands, which is a storefront change and not an import one.
 * `reviews_enabled` — same shape: one boolean, honoured on the product page.
   Cheap. Worth knowing how many products he actually had reviews switched off on;
   the import report will now tell him.
+* `default_attributes` — one column on `products` naming the default variant, or
+  one nullable `is_default` on `product_variants`, plus the product page
+  preselecting it. Cheap on the import side; the preselect is a storefront change.
+  **The number to decide on is in the report**: if it names a handful of products
+  this is not worth a column, and if it names every variable product he has, his
+  shoppers have all just been given an extra click.
 
-Everything else in the twenty — `product_visibility`'s four states,
+Everything else in the twenty-one — `product_visibility`'s four states,
 `backorders`, `low_stock_amount`, `purchase_note`, `date_modified`,
 `attribute_summary` — is reported and, on the evidence, safe to lose. If any of
 them matters, the report will say how many products carried it and what was in
@@ -312,15 +343,59 @@ them, which is the point.
 
 ## Two deliverables, not one
 
-The exporter change (`sold_individually`, `reviews_enabled`) lives in
-`wordpress-plugin/kbb-exporter/`, which **never ships in an update package** —
-`UpdateGuard` refuses it and `BuildPackage::NEVER_SHIP` blocks it twice. It
-reaches the old site by installing the plugin there **by hand**. The rest travels
-normally through `Store → Core Updates`.
+The exporter change (`sold_individually`, `reviews_enabled`,
+`default_attributes`) lives in `wordpress-plugin/kbb-exporter/`, which **never
+ships in an update package** — `UpdateGuard` refuses it and
+`BuildPackage::NEVER_SHIP` blocks it twice. It reaches the old site by installing
+the plugin there **by hand**. The rest travels normally through
+`Store → Core Updates`.
 
 Exporting again with the old plugin still works; products.csv simply arrives
-without those two columns, and the import reports nineteen skipped fields instead
-of twenty rather than failing.
+without those three columns, and the import reports eighteen skipped fields
+instead of twenty-one rather than failing.
+
+---
+
+## Two defects this round fixed, beyond the field itself
+
+### A process-level static that the suite could not see past
+
+`Checkpoint::$hasColumn` memoises whether `import_checkpoints` has the
+`dropped_fields` column, so `advance()` does not pay for a `Schema::hasColumn()`
+introspection query on each of four hundred committed batches. It caches only the
+**yes**, deliberately: these update packages are applied by hand while the shop
+runs, and a worker that cached a **no** would keep answering "no column" for as
+long as it lived.
+
+That memo went in without being registered in `Tests\Support\StaticMemos`, and
+`StaticMemoIsolationTest` is red on it by name — which is what that test is for.
+It is not a formality. The suite runs every test in one process against a schema
+it migrates, so the first test to commit an import batch fixes the answer for
+every test after it, including one that deliberately builds a checkpoints table
+**without** the column to prove an import still works on a shop whose package has
+not landed. That test would then write a column that is not there and fail
+pointing at the import rather than at the memo — the ordering bug `CLAUDE.md`
+records for `Setting::map()`, with a migration as the change.
+
+Registered with a reset rather than an exemption, because an exemption is a claim
+that the value cannot cross a test boundary and this one plainly can.
+
+### An idempotence test where two of its four pivots were empty
+
+The test named *"imports the same export twice and leaves every row and every
+pivot count identical"* compared five numbers across two passes. Two of them —
+`product_attribute_value` and `product_variants` — were **0 before and 0 after**,
+because its fixture replaced `products.csv` with products `4021`/`4022` while
+`attributes.csv` names `4023` and `variations.csv` has `4023` as every variant's
+`parent_id`. `0 === 0` is identical and asserts nothing: an export whose
+attributes and variations never arrived satisfied every assertion in the test.
+
+The fixture now carries `4023`, and the test asserts each pivot is **non-empty**
+before comparing it. That assertion is what found this — the test was green and
+had been green. A vacuous assertion is the worse half of a green suite, because
+from the outside it is indistinguishable from a real one; it is the same shape as
+`Api\ProductController`'s dead `status` filter and `Row::list()`'s unreachable
+comma fallback, both of which this repository has already paid for.
 
 ---
 
@@ -334,3 +409,14 @@ of twenty rather than failing.
 * `app/Services/Import/Entities/ProductImporter.php` — `NOT_CARRIED`.
 * `app/Services/Import/EntityReport.php` — `discardedList()`, `droppedField()`,
   and the corrected `EXCERPT_LENGTH` docblock.
+* `tests/Feature/ImportProductParityTest.php` → *"emits a column for every
+  product meta key the exporter goes and fetches"* — the guard against the class
+  of gap `default_attributes` was. It reads the stage's `META_KEYS` against the
+  row the stage actually emits, so a key that is fetched and dropped is red by
+  name. It needs no MySQL and runs in CI, unlike the meta-key half of the census.
+* `docs/px-progress-shots/` — the progress page at 390 and 1280, mid-run and
+  finished, regenerated by `tools/px-progress-preview.sh` and
+  `tools/px-progress-shots.mjs`. The seed now **restarts** the run and refuses to
+  shoot a mid-run picture whose reconciliation already reads as concluded: it
+  produced four identical *finished* pictures once, two of them captioned
+  "mid-run", which is evidence for the opposite of what the card does.

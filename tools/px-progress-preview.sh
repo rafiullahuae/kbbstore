@@ -2,7 +2,12 @@
 # Boot a preview of THIS checkout for the Lane PX import-progress screenshots.
 # Modelled on tools/m1-preview.sh -- same shape, its own port and directory.
 set -e
-APP=/home/user/kbb-lane-px
+# DERIVED, NOT HARDCODED. This was `APP=/home/user/kbb-lane-px` -- one lane's
+# worktree path, which does not exist in the next lane's worktree, so the
+# script that produces the evidence for this work could not be re-run to
+# produce it again. The screenshots are a deliverable; the thing that makes
+# them has to travel with the branch.
+APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 DIR=$APP/storage/framework/testing/lane-px-preview
 ROOT=$DIR/webroot
 DB=$DIR/preview.sqlite

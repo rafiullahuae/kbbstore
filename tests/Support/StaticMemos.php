@@ -6,6 +6,7 @@ namespace Tests\Support;
 
 use App\Models\Setting;
 use App\Services\AdminPathService;
+use App\Services\Import\Checkpoint;
 use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\ServerMailTransport;
 use App\Services\ModuleSchema;
@@ -107,6 +108,20 @@ final class StaticMemos
              * this in a `static` of their own until this test refused them.
              */
             ModuleSchema::class => static fn () => ModuleSchema::forgetNormalised(),
+            /*
+             * Whether `import_checkpoints` has the `dropped_fields` column
+             * (Lane PX).
+             *
+             * The memo only ever caches a YES, which is safe in production --
+             * nothing removes a column under a running process -- and is an
+             * ordering bug in a suite that runs every test in one process. The
+             * first test to commit an import batch fixes the answer for every
+             * test after it, including one that builds a checkpoints table
+             * WITHOUT the column to prove an import still works on a shop whose
+             * update package has not been applied yet. That test would then
+             * write a column that is not there and fail pointing at the import.
+             */
+            Checkpoint::class => static fn () => Checkpoint::forgetColumnMemo(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

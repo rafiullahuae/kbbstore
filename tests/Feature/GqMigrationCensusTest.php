@@ -206,6 +206,18 @@ function gqCensus(): array
                 .'per-order cap exists on a product here',
             'reviews_enabled' => GQ_NAMED.': Advanced tab, "Enable reviews", which WordPress keeps in '
                 .'posts.comment_status. Reviews are not switched per product here',
+            /*
+             * AND A THIRD ONE, FOUND THE SAME WAY AND HIDING BETTER. Variations
+             * tab, "Default Form Values": which size the product page opens on.
+             * `_default_attributes` was already in the exporter's META_KEYS --
+             * fetched on every batch and emitted by no column -- so the one list
+             * this project offers as its account of what it reads out of
+             * WooCommerce named the field while nothing carried it. A fetch with
+             * no column reads as coverage, which is worse than an absence.
+             */
+            'default_attributes' => GQ_NAMED.': Variations tab, "Default Form Values". There is no default '
+                .'variant on product_variants and nothing preselects one, so a product that opened on 50ml '
+                .'opens on no size here',
         ]],
 
         'variations.csv' => ['entity' => 'variations', 'columns' => [
@@ -1072,6 +1084,17 @@ function gqMetaKeyCensus(): array
          */
         '_sold_individually' => 'products.csv `sold_individually` -- DROPPED, named in the discard list. '
             .'There is no one-per-order cap on a product in this shop',
+        /*
+         * THE SAME ENTRY AGAIN, ONE GAP FURTHER ALONG. `_sold_individually` was
+         * in his database and in no column. `_default_attributes` was in his
+         * database, in no column, AND IN META_KEYS -- fetched on every batch by
+         * the stage that emits products.csv and then dropped on the floor. That
+         * is the harder version of the same fault: the reader of META_KEYS is
+         * told the field is read, and the reader of the census could not ask,
+         * because this harness did not model it until Lane PX added it.
+         */
+        '_default_attributes' => 'products.csv `default_attributes` -- DROPPED, named in the discard list. '
+            .'Which variation the page opens on; product_variants has no default flag',
 
         /* ── the coupons ────────────────────────────────────────────────── */
         'discount_type' => $coupons.'.type',

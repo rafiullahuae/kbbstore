@@ -464,6 +464,20 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 			'pa_size' => array( 'name' => 'pa_size', 'value' => '', 'is_taxonomy' => 1, 'is_variation' => 1 ),
 			'Scent'   => array( 'name' => 'Scent', 'value' => 'Unscented', 'is_taxonomy' => 0, 'is_variation' => 0 ),
 		) ),
+		/*
+		 * "Default Form Values" -- the Variations tab's own dropdowns, which
+		 * decide WHICH SIZE this product's page opens on.
+		 *
+		 * MODELLED HERE BECAUSE THE CENSUS IS ONLY AS WIDE AS THIS FILE. The
+		 * meta-key half of GqMigrationCensusTest reads DISTINCT meta_key out of
+		 * this shop and insists every key is classified, so a field this harness
+		 * does not hold is a field that half of the census cannot ask about --
+		 * and `_default_attributes` was in the exporter's META_KEYS, fetched on
+		 * every batch, emitted by no column, and invisible to every test for
+		 * exactly that reason. A shop with variations and no default on any of
+		 * them is not the shop being migrated.
+		 */
+		'_default_attributes' => serialize( array( 'pa_size' => '50ml' ) ),
 	) );
 
 	foreach ( array(

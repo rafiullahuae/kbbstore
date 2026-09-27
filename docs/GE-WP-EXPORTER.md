@@ -215,9 +215,21 @@ one has no column for: `date_modified`, `product_visibility`, `backorders`,
 `low_stock_amount`, `weight`, `length`, `width`, `height`, `tax_status`,
 `tax_class`, `shipping_class`, `virtual`, `downloadable`, `purchase_note`,
 `upsell_ids`, `cross_sell_ids`, `grouped_ids`, `tag_term_ids`,
-`attribute_summary`. The import's discard channel names them with a sample value
-in **one** consolidated line per entity, which is the designed way for the owner
-to approve a loss rather than discover it (`docs/FV-IMPORT-AT-VOLUME.md` §10).
+`attribute_summary`, and — added by Lane PX, because each was on the owner's edit
+page and in no file at all — `sold_individually`, `reviews_enabled` and
+`default_attributes`. Each now gets its **own** discard kind in the import
+report, with its own count and its own five samples
+(`ProductImporter::NOT_CARRIED`); the single consolidated line
+`docs/FV-IMPORT-AT-VOLUME.md` §10 describes remains as the backstop for a column
+no importer reads at all. `docs/PRODUCT-FIELD-PARITY.md` is the field-by-field
+table and the place the three carrying decisions are put to the owner.
+
+**`default_attributes` is the one to read twice.** `_default_attributes` was in
+`META_KEYS` before Lane PX and emitted by no column — fetched on every batch and
+dropped. `META_KEYS` is this plugin's own account of what it reads out of
+WooCommerce, so a key in it with no column does not read as an absence, it reads
+as coverage. When adding a key here, add the column in the same commit or say in
+a comment why there is none.
 
 ### `customers.csv` — `CustomerImporter`
 
