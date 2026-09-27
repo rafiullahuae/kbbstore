@@ -190,6 +190,22 @@ class UgcVideoController extends Controller
                     'at_ms' => $p->pivot->at_ms === null ? null : (int) $p->pivot->at_ms,
                 ])->all(),
             ],
+            /*
+             * THE REAL CEILING, ON THE ENDPOINT THAT OPENS ONE CLIP.
+             *
+             * index() has carried this since ServerUploadLimits was written, but
+             * the shoppable-video SECTIONS screen never calls index() — it opens
+             * a clip through this method and nothing else — so it had no number
+             * to print and printed a hard-coded "Up to 64MB". On the live box
+             * post_max_size is the binding limit and the truth is 9.9 MB, so that
+             * line was wrong by a factor of six and a half, in the one place the
+             * owner reads before choosing a file.
+             *
+             * Same shape and same method as index(): a screen that learns the
+             * ceiling from either endpoint reads it the same way. Behind
+             * auth:admin and the ugc capability — nothing here is on /api/*.
+             */
+            'limits' => $this->limits(),
         ]);
     }
 

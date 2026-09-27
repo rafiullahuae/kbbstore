@@ -354,3 +354,159 @@ last byte moved" is 0 or 1 by definition, so a 23-second upload read *"Sending t
 the server. 1s so far."* The send stage now shows elapsed time and the stall
 interval only once it really is a stall; the server stage shows time since the
 handover, which is the interval that had no way of being described at all.
+
+---
+
+## 8. The bar that "stuck at 72%" — what it really was
+
+The owner reported the progress bar **sticking at 72%** on an 8.4 MB clip, with
+the panel reading:
+
+```
+anua mist spray 2.mp4                                    72%
+6.0 MB of 8.4 MB sent    Sending to the server. 20s so far.
+[Cancel this upload]
+```
+
+His server: `upload_max_filesize = 100M`, `post_max_size = 10M`, effective
+ceiling **9.9 MB**. Nothing below is reasoned — every figure was measured
+against a real Chromium and a server that reads the request body at a fixed byte
+rate. The harness is `tests/browser/lane-p1-upload-kit.mjs`; the raw-socket
+experiments are described inline in each finding.
+
+### 8.1 It was not too big, and the ceiling arithmetic is sound
+
+Measured in Chromium with his exact field name and filename:
+
+| case | body (`CONTENT_LENGTH`) | file | overhead |
+|---|---|---|---|
+| `kind=clip` + `anua mist spray 2.mp4` | 8,808,327 | 8,808,038 | **289 B** |
+| 255-character filename | 8,808,561 | 8,808,038 | 523 B |
+| 255-char filename + 4 fields | 8,809,046 | 8,808,038 | 1,008 B |
+
+The overhead is **per-part and fixed — it does not scale with the file**. So
+`ServerUploadLimits::MULTIPART_OVERHEAD = 4096` is right with four times the
+margin it needs, and his 8.8 MB body fits inside a 10 MB `post_max_size` with
+1.6 MB to spare. **This was never a `post_max_size` failure.**
+
+### 8.2 The bar really does sit still, and that is the progress event's doing
+
+Chromium fires `xhr.upload.onprogress` when the socket write buffer drains — in
+strides of about **1.6 MB** — not on a timer. Same 8.4 MB file, three rates:
+
+| server read rate | longest gap between events | jump per event |
+|---|---|---|
+| 600 KB/s | 2,610 ms | ~16 points |
+| 300 KB/s | 5,624 ms | ~19 points |
+| 100 KB/s | **16,764 ms** | ~19 points |
+
+Between events the bar is **exactly** still. At his ~300 KB/s that is a
+five-and-a-half-second freeze, over and over, on a completely healthy upload.
+Repeated runs agreed to within 5 ms, so this is deterministic, not noise.
+
+### 8.3 `loaded` counts bytes handed to the kernel, not bytes the server took
+
+A server that accepted the connection, read the request headers and then **never
+read the body**: the browser credited **4,079,616 bytes — 46% — while the server
+application had consumed ZERO**. In every throttled run the bar reached 46%
+within ~104 ms whatever the rate, because that is the socket buffer and has
+nothing to do with the link.
+
+Two consequences, both now handled:
+
+* the bar runs **ahead** of reality;
+* any speed averaged from the start of the upload is nonsense — 39 MB/s at
+  t=104 ms, and an ETA of zero.
+
+### 8.4 So `xhr.upload.onload` is not "it has arrived" — and the panel said it was
+
+It fires when the last byte enters the kernel buffer.
+
+| link | `upload.onload` | server finished receiving | the panel was wrong for |
+|---|---|---|---|
+| 300 KB/s | 12.6 s | ~28.8 s | **16 s** |
+| 100 KB/s | 37.2 s | ~86 s | **49 s** |
+
+The old sentence — *"All of it has arrived. The server is checking the file"* —
+was therefore false for up to 49 seconds. It now reads **"All of it has left your
+browser. The server is still taking delivery and checking it"**, which is what
+the event means.
+
+### 8.5 The old 20-second stall threshold accused healthy uploads
+
+A fixed 20 s is **below** the legitimate 16,764 ms gap at 100 KB/s and far below
+the ~33 s a 50 KB/s link produces. On an ordinary bad mobile uplink the panel
+announced *"nothing has moved for 20s — if it is stuck, Cancel and try again"*
+during a working upload. **It advised the owner to destroy working work.**
+
+`stallAfter()` is now computed from the stride and the speed *this* upload is
+producing — `max(25 s, 3 × stride/speed)`, capped at 120 s:
+
+| link | expected gap | threshold |
+|---|---|---|
+| 600 KB/s | 2.8 s | 25 s (the floor) |
+| 100 KB/s | 16.5 s | 49 s |
+| 50 KB/s | 33 s | 99 s |
+
+### 8.6 The speedometer, and why the first sample is thrown away
+
+Speed comes from a sliding window that **excludes sample 0** (the buffer burst):
+
+| true rate | reported | error |
+|---|---|---|
+| 300 KB/s | 279–309 KB/s | 1.6 – 7 % |
+| 100 KB/s | 101.6 KB/s | 1.6 % |
+| *including sample 0* | *39 MB/s* | *~13,000 %* |
+
+### 8.7 The panel, at the owner's own frame
+
+Driven through the real screen at a CDP-throttled 300 KB/s, with his filename and
+his file size, against a server configured exactly like his:
+
+| | BEFORE | AFTER |
+|---|---|---|
+| at 20 s | `72%` · `6.0 MB of 8.4 MB sent` · `Sending to the server. 20s so far.` | `71%` · `6 MB of 8.4 MB sent` · **`Sending to the server. 20s so far. 297 KB/s · about 8 seconds left to send.`** |
+| the ceiling printed | `Up to 64MB.` | `Up to 9.9 MB on this server. Shoppable video itself allows 64 MB — PHP's post_max_size is what caps it (currently 10M), and raising it on the server lifts this box with it.` |
+| drag and drop | none | `Drag a file here, or choose one.` on all three rows |
+| the server stage | `All of it has arrived…` (false for up to 49 s) | `All of it has left your browser. The server is still taking delivery and checking it, and cutting what it can. 14s so far.` |
+| a refused file | a toast, panel gone | panel stays: the server's own sentence, and **no Try again** on a 422 |
+
+**The coordinator's reading was right to the second**: ~300 KB/s, about 8 seconds
+left. The upload was slow, not stuck — and the screen now says so.
+
+### 8.8 Layout
+
+`document.documentElement.scrollWidth === clientWidth` at **390** and at **1280**,
+at every state (sections list, section open, clip open, Files tab, refused drop,
+upload in flight, after upload). **No sideways overflow anywhere.** Drop-hint text
+is 10.5px; the bar is 6px tall and 298px wide at 390, 760px at 1280.
+
+### 8.9 What was considered and rejected
+
+* **Chunked / resumable upload.** The real answer to reliability on a slow link,
+  and the *only* thing that would lift the 9.9 MB ceiling without touching server
+  config, since each chunk would sit under `post_max_size`. It needs a new
+  assembly endpoint, temp storage, session state, cleanup of abandoned chunks and
+  its own capability — a lane of its own. **Worth doing; not worth half-doing
+  here.**
+* **A client-side transcode.** Ruled out by the brief, and it would burn the
+  owner's battery to work around a server setting.
+* **Parallel connections.** They do not help a bandwidth-limited uplink and they
+  multiply the `post_max_size` risk.
+* **Anything that makes the bar look busier.** Nothing client-side makes bytes
+  move faster. The honest win was to stop the screen being unable to answer
+  "slow or stuck?".
+
+### 8.10 The one thing that would actually unlock 64 MB for him
+
+`post_max_size = 10M` is what caps him at 9.9 MB while his own
+`upload_max_filesize` is **already 100M**. Raising *that one value* is the whole
+fix.
+
+⚠ **Not confirmed from here.** Whether **Servers → Settings & Packages →
+Settings → Basic → Upload Size** moves `post_max_size` as well as
+`upload_max_filesize` could not be checked from this container — there is no
+access to his Cloudways panel. §3 already warns that the single control does not
+always move the two in step, and routes 2 and 3 there set `post_max_size`
+explicitly and are known to work. **§4 is the reading that settles it**, because
+it reports what the serving process actually has.

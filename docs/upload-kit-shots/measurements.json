@@ -1,0 +1,1393 @@
+{
+  "after": {
+    "tag": "after",
+    "base": "http://127.0.0.1:8956",
+    "clip": "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/p1/anua mist spray 2.mp4",
+    "uploadKbps": 300,
+    "widths": [
+      {
+        "width": 1280,
+        "steps": {
+          "sections": {
+            "scrollWidth": 1280,
+            "clientWidth": 1280,
+            "overflowsSideways": false,
+            "zones": [],
+            "panel": {
+              "present": false
+            }
+          },
+          "openedSection": "Open",
+          "filesTab": {
+            "scrollWidth": 1280,
+            "clientWidth": 1280,
+            "overflowsSideways": false,
+            "zones": [
+              {
+                "kind": "clip",
+                "accept": "video/mp4,video/webm,video/quicktime",
+                "isZone": true,
+                "isOver": false,
+                "isBad": false,
+                "columns": "34px 633.891px 66.1094px",
+                "hintFontPx": "10.5px",
+                "hint": "Drag a file here, or choose one.",
+                "meta": "8.4 MB · Up to 9.9 MB on this server. Shoppable video itself allows 64 MB — PHP’s post_max_size is what caps it (currently 10M), and raising it on the server lifts this box with it. Checked by its own bytes and not by its name.",
+                "msg": "",
+                "box": {
+                  "w": 786,
+                  "h": 128
+                }
+              },
+              {
+                "kind": "poster",
+                "accept": "image/jpeg,image/png,image/webp",
+                "isZone": true,
+                "isOver": false,
+                "isBad": false,
+                "columns": "34px 635.828px 64.1719px",
+                "hintFontPx": "10.5px",
+                "hint": "Drag a picture here, or choose one from the Media Library.",
+                "meta": "Required to publish — the tile reserves its box from this image, which is what stops the page jumping. Up to 4 MB.",
+                "msg": "",
+                "box": {
+                  "w": 786,
+                  "h": 96
+                }
+              },
+              {
+                "kind": "teaser",
+                "accept": "video/mp4,video/webm",
+                "isZone": true,
+                "isOver": false,
+                "isBad": false,
+                "columns": "34px 635.828px 64.1719px",
+                "hintFontPx": "10.5px",
+                "hint": "Drag a file here, or choose one.",
+                "meta": "Up to 8 MB. Optional, and nothing is missing without it — the tile already loops the first 2–3 seconds of the video above. Adding a cut-down file only saves the shopper bytes.",
+                "msg": "",
+                "box": {
+                  "w": 786,
+                  "h": 112
+                }
+              }
+            ],
+            "panel": {
+              "present": false
+            }
+          },
+          "afterUpload": {
+            "scrollWidth": 1280,
+            "clientWidth": 1280,
+            "overflowsSideways": false,
+            "zones": [
+              {
+                "kind": "clip",
+                "accept": "video/mp4,video/webm,video/quicktime",
+                "isZone": true,
+                "isOver": false,
+                "isBad": false,
+                "columns": "34px 633.891px 66.1094px",
+                "hintFontPx": "10.5px",
+                "hint": "Drag a file here, or choose one.",
+                "meta": "8.4 MB · Up to 9.9 MB on this server. Shoppable video itself allows 64 MB — PHP’s post_max_size is what caps it (currently 10M), and raising it on the server lifts this box with it. Checked by its own bytes and not by its name.",
+                "msg": "",
+                "box": {
+                  "w": 786,
+                  "h": 128
+                }
+              },
+              {
+                "kind": "poster",
+                "accept": "image/jpeg,image/png,image/webp",
+                "isZone": true,
+                "isOver": false,
+                "isBad": false,
+                "columns": "34px 635.828px 64.1719px",
+                "hintFontPx": "10.5px",
+                "hint": "Drag a picture here, or choose one from the Media Library.",
+                "meta": "Required to publish — the tile reserves its box from this image, which is what stops the page jumping. Up to 4 MB.",
+                "msg": "",
+                "box": {
+                  "w": 786,
+                  "h": 96
+                }
+              },
+              {
+                "kind": "teaser",
+                "accept": "video/mp4,video/webm",
+                "isZone": true,
+                "isOver": false,
+                "isBad": false,
+                "columns": "34px 635.828px 64.1719px",
+                "hintFontPx": "10.5px",
+                "hint": "Drag a file here, or choose one.",
+                "meta": "Up to 8 MB. Optional, and nothing is missing without it — the tile already loops the first 2–3 seconds of the video above. Adding a cut-down file only saves the shopper bytes.",
+                "msg": "",
+                "box": {
+                  "w": 786,
+                  "h": 112
+                }
+              }
+            ],
+            "panel": {
+              "present": true,
+              "isBad": false,
+              "isSlow": false,
+              "name": "anua mist spray 2.mp4",
+              "percent": null,
+              "sent": null,
+              "stage": null,
+              "barWidthStyle": "100%",
+              "barBox": {
+                "w": 760,
+                "h": 6
+              },
+              "hasCancel": false,
+              "hasRetry": false,
+              "text": "anua mist spray 2.mp4✓ saved8.4 MB arrived whole.This is the video the tile plays.",
+              "box": {
+                "w": 786,
+                "h": 77
+              }
+            }
+          }
+        },
+        "uploadSamples": [
+          {
+            "at": 0.3,
+            "percent": "0%",
+            "sent": "32 KB of 8.4 MB sent",
+            "stage": "Sending to the server.",
+            "barWidthStyle": "0%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 0.5,
+            "percent": "2%",
+            "sent": "160 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 1s so far.",
+            "barWidthStyle": "2%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 0.8,
+            "percent": "3%",
+            "sent": "224 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 1s so far. 316 KB/s · about 26 seconds left to send.",
+            "barWidthStyle": "3%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 1,
+            "percent": "3%",
+            "sent": "272 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 1s so far. 290 KB/s · about 29 seconds left to send.",
+            "barWidthStyle": "3%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 1.3,
+            "percent": "4%",
+            "sent": "336 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 1s so far. 297 KB/s · about 28 seconds left to send.",
+            "barWidthStyle": "4%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 1.8,
+            "percent": "6%",
+            "sent": "528 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 2s so far. 318 KB/s · about 25 seconds left to send.",
+            "barWidthStyle": "6%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 2,
+            "percent": "7%",
+            "sent": "576 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 2s so far. 298 KB/s · about 27 seconds left to send.",
+            "barWidthStyle": "7%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 2.3,
+            "percent": "7%",
+            "sent": "640 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 2s so far. 298 KB/s · about 27 seconds left to send.",
+            "barWidthStyle": "7%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 2.6,
+            "percent": "9%",
+            "sent": "768 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 3s so far. 297 KB/s · about 26 seconds left to send.",
+            "barWidthStyle": "9%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 2.8,
+            "percent": "9%",
+            "sent": "816 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 3s so far. 297 KB/s · about 26 seconds left to send.",
+            "barWidthStyle": "9%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 3.1,
+            "percent": "10%",
+            "sent": "880 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 3s so far. 297 KB/s · about 26 seconds left to send.",
+            "barWidthStyle": "10%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 3.3,
+            "percent": "11%",
+            "sent": "944 KB of 8.4 MB sent",
+            "stage": "Sending to the server. 3s so far. 297 KB/s · about 26 seconds left to send.",
+            "barWidthStyle": "11%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 3.6,
+            "percent": "12%",
+            "sent": "1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 4s so far. 317 KB/s · about 24 seconds left to send.",
+            "barWidthStyle": "12%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 3.8,
+            "percent": "13%",
+            "sent": "1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 4s so far. 297 KB/s · about 25 seconds left to send.",
+            "barWidthStyle": "13%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 4.1,
+            "percent": "14%",
+            "sent": "1.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 4s so far. 297 KB/s · about 25 seconds left to send.",
+            "barWidthStyle": "14%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 4.4,
+            "percent": "15%",
+            "sent": "1.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 4s so far. 297 KB/s · about 24 seconds left to send.",
+            "barWidthStyle": "15%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 4.6,
+            "percent": "16%",
+            "sent": "1.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 5s so far. 296 KB/s · about 24 seconds left to send.",
+            "barWidthStyle": "16%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 4.9,
+            "percent": "17%",
+            "sent": "1.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 5s so far. 296 KB/s · about 24 seconds left to send.",
+            "barWidthStyle": "17%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 5.1,
+            "percent": "17%",
+            "sent": "1.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 5s so far. 296 KB/s · about 24 seconds left to send.",
+            "barWidthStyle": "17%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 5.4,
+            "percent": "19%",
+            "sent": "1.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 5s so far. 316 KB/s · about 22 seconds left to send.",
+            "barWidthStyle": "19%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 5.7,
+            "percent": "19%",
+            "sent": "1.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 6s so far. 297 KB/s · about 23 seconds left to send.",
+            "barWidthStyle": "19%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 5.9,
+            "percent": "20%",
+            "sent": "1.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 6s so far. 297 KB/s · about 23 seconds left to send.",
+            "barWidthStyle": "20%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 6.2,
+            "percent": "22%",
+            "sent": "1.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 6s so far. 298 KB/s · about 23 seconds left to send.",
+            "barWidthStyle": "22%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 6.4,
+            "percent": "22%",
+            "sent": "1.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 6s so far. 298 KB/s · about 22 seconds left to send.",
+            "barWidthStyle": "22%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 6.7,
+            "percent": "23%",
+            "sent": "1.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 7s so far. 298 KB/s · about 22 seconds left to send.",
+            "barWidthStyle": "23%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 6.9,
+            "percent": "24%",
+            "sent": "1.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 7s so far. 298 KB/s · about 22 seconds left to send.",
+            "barWidthStyle": "24%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 7.2,
+            "percent": "25%",
+            "sent": "2.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 7s so far. 318 KB/s · about 20 seconds left to send.",
+            "barWidthStyle": "25%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 7.4,
+            "percent": "26%",
+            "sent": "2.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 7s so far. 298 KB/s · about 21 seconds left to send.",
+            "barWidthStyle": "26%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 7.7,
+            "percent": "26%",
+            "sent": "2.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 8s so far. 298 KB/s · about 21 seconds left to send.",
+            "barWidthStyle": "26%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 7.9,
+            "percent": "27%",
+            "sent": "2.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 8s so far. 298 KB/s · about 21 seconds left to send.",
+            "barWidthStyle": "27%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 8.2,
+            "percent": "28%",
+            "sent": "2.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 8s so far. 298 KB/s · about 21 seconds left to send.",
+            "barWidthStyle": "28%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 8.5,
+            "percent": "29%",
+            "sent": "2.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 8s so far. 298 KB/s · about 20 seconds left to send.",
+            "barWidthStyle": "29%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 8.7,
+            "percent": "30%",
+            "sent": "2.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 9s so far. 298 KB/s · about 20 seconds left to send.",
+            "barWidthStyle": "30%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 9,
+            "percent": "31%",
+            "sent": "2.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 9s so far. 298 KB/s · about 20 seconds left to send.",
+            "barWidthStyle": "31%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 9.2,
+            "percent": "32%",
+            "sent": "2.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 9s so far. 298 KB/s · about 20 seconds left to send.",
+            "barWidthStyle": "32%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 9.5,
+            "percent": "33%",
+            "sent": "2.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 9s so far. 298 KB/s · about 19 seconds left to send.",
+            "barWidthStyle": "33%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 9.7,
+            "percent": "33%",
+            "sent": "2.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 10s so far. 298 KB/s · about 19 seconds left to send.",
+            "barWidthStyle": "33%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 10,
+            "percent": "35%",
+            "sent": "2.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 10s so far. 296 KB/s · about 19 seconds left to send.",
+            "barWidthStyle": "35%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 10.2,
+            "percent": "36%",
+            "sent": "2.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 10s so far. 297 KB/s · about 19 seconds left to send.",
+            "barWidthStyle": "36%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 10.5,
+            "percent": "36%",
+            "sent": "3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 10s so far. 295 KB/s · about 19 seconds left to send.",
+            "barWidthStyle": "36%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 10.7,
+            "percent": "37%",
+            "sent": "3.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 11s so far. 298 KB/s · about 18 seconds left to send.",
+            "barWidthStyle": "37%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 11,
+            "percent": "38%",
+            "sent": "3.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 11s so far. 298 KB/s · about 18 seconds left to send.",
+            "barWidthStyle": "38%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 11.3,
+            "percent": "39%",
+            "sent": "3.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 11s so far. 299 KB/s · about 17 seconds left to send.",
+            "barWidthStyle": "39%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 11.5,
+            "percent": "40%",
+            "sent": "3.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 11s so far. 298 KB/s · about 17 seconds left to send.",
+            "barWidthStyle": "40%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 11.8,
+            "percent": "41%",
+            "sent": "3.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 12s so far. 318 KB/s · about 16 seconds left to send.",
+            "barWidthStyle": "41%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 12,
+            "percent": "42%",
+            "sent": "3.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 12s so far. 298 KB/s · about 17 seconds left to send.",
+            "barWidthStyle": "42%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 12.3,
+            "percent": "43%",
+            "sent": "3.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 12s so far. 297 KB/s · about 17 seconds left to send.",
+            "barWidthStyle": "43%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 12.5,
+            "percent": "43%",
+            "sent": "3.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 12s so far. 298 KB/s · about 16 seconds left to send.",
+            "barWidthStyle": "43%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 12.8,
+            "percent": "44%",
+            "sent": "3.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 13s so far. 298 KB/s · about 16 seconds left to send.",
+            "barWidthStyle": "44%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 13,
+            "percent": "45%",
+            "sent": "3.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 13s so far. 299 KB/s · about 16 seconds left to send.",
+            "barWidthStyle": "45%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 13.3,
+            "percent": "46%",
+            "sent": "3.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 13s so far. 298 KB/s · about 16 seconds left to send.",
+            "barWidthStyle": "46%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 13.5,
+            "percent": "47%",
+            "sent": "3.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 13s so far. 318 KB/s · about 14 seconds left to send.",
+            "barWidthStyle": "47%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 13.8,
+            "percent": "48%",
+            "sent": "4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 14s so far. 297 KB/s · about 15 seconds left to send.",
+            "barWidthStyle": "48%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 14.1,
+            "percent": "49%",
+            "sent": "4.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 14s so far. 297 KB/s · about 15 seconds left to send.",
+            "barWidthStyle": "49%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 14.3,
+            "percent": "50%",
+            "sent": "4.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 14s so far. 297 KB/s · about 15 seconds left to send.",
+            "barWidthStyle": "50%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 14.6,
+            "percent": "50%",
+            "sent": "4.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 14s so far. 297 KB/s · about 14 seconds left to send.",
+            "barWidthStyle": "50%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 14.8,
+            "percent": "52%",
+            "sent": "4.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 15s so far. 297 KB/s · about 14 seconds left to send.",
+            "barWidthStyle": "52%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 15.1,
+            "percent": "52%",
+            "sent": "4.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 15s so far. 297 KB/s · about 14 seconds left to send.",
+            "barWidthStyle": "52%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 15.3,
+            "percent": "53%",
+            "sent": "4.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 15s so far. 317 KB/s · about 13 seconds left to send.",
+            "barWidthStyle": "53%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 15.6,
+            "percent": "54%",
+            "sent": "4.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 15s so far. 297 KB/s · about 13 seconds left to send.",
+            "barWidthStyle": "54%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 15.8,
+            "percent": "55%",
+            "sent": "4.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 16s so far. 297 KB/s · about 13 seconds left to send.",
+            "barWidthStyle": "55%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 16.1,
+            "percent": "56%",
+            "sent": "4.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 16s so far. 297 KB/s · about 13 seconds left to send.",
+            "barWidthStyle": "56%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 16.4,
+            "percent": "57%",
+            "sent": "4.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 16s so far. 297 KB/s · about 13 seconds left to send.",
+            "barWidthStyle": "57%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 16.6,
+            "percent": "57%",
+            "sent": "4.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 16s so far. 297 KB/s · about 12 seconds left to send.",
+            "barWidthStyle": "57%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 16.9,
+            "percent": "59%",
+            "sent": "4.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 17s so far. 297 KB/s · about 12 seconds left to send.",
+            "barWidthStyle": "59%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 17.1,
+            "percent": "60%",
+            "sent": "5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 17s so far. 317 KB/s · about 11 seconds left to send.",
+            "barWidthStyle": "60%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 17.4,
+            "percent": "60%",
+            "sent": "5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 17s so far. 298 KB/s · about 12 seconds left to send.",
+            "barWidthStyle": "60%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 17.6,
+            "percent": "62%",
+            "sent": "5.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 18s so far. 298 KB/s · about 11 seconds left to send.",
+            "barWidthStyle": "62%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 17.9,
+            "percent": "62%",
+            "sent": "5.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 18s so far. 298 KB/s · about 11 seconds left to send.",
+            "barWidthStyle": "62%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 18.1,
+            "percent": "63%",
+            "sent": "5.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 18s so far. 317 KB/s · about 10 seconds left to send.",
+            "barWidthStyle": "63%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 18.4,
+            "percent": "64%",
+            "sent": "5.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 18s so far. 297 KB/s · about 11 seconds left to send.",
+            "barWidthStyle": "64%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 18.6,
+            "percent": "65%",
+            "sent": "5.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 19s so far. 297 KB/s · about 10 seconds left to send.",
+            "barWidthStyle": "65%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 18.9,
+            "percent": "66%",
+            "sent": "5.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 19s so far. 298 KB/s · about 10 seconds left to send.",
+            "barWidthStyle": "66%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 19.2,
+            "percent": "66%",
+            "sent": "5.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 19s so far. 297 KB/s · about 10 seconds left to send.",
+            "barWidthStyle": "66%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 19.4,
+            "percent": "67%",
+            "sent": "5.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 19s so far. 297 KB/s · about 9 seconds left to send.",
+            "barWidthStyle": "67%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 19.7,
+            "percent": "69%",
+            "sent": "5.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 20s so far. 297 KB/s · about 9 seconds left to send.",
+            "barWidthStyle": "69%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 19.9,
+            "percent": "69%",
+            "sent": "5.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 20s so far. 297 KB/s · about 9 seconds left to send.",
+            "barWidthStyle": "69%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 20.2,
+            "percent": "70%",
+            "sent": "5.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 20s so far. 297 KB/s · about 9 seconds left to send.",
+            "barWidthStyle": "70%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 20.4,
+            "percent": "71%",
+            "sent": "5.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 20s so far. 298 KB/s · about 8 seconds left to send.",
+            "barWidthStyle": "71%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 20.7,
+            "percent": "72%",
+            "sent": "6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 21s so far. 318 KB/s · about 8 seconds left to send.",
+            "barWidthStyle": "72%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 20.9,
+            "percent": "73%",
+            "sent": "6.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 21s so far. 298 KB/s · about 8 seconds left to send.",
+            "barWidthStyle": "73%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 21.2,
+            "percent": "73%",
+            "sent": "6.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 21s so far. 298 KB/s · about 8 seconds left to send.",
+            "barWidthStyle": "73%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 21.5,
+            "percent": "74%",
+            "sent": "6.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 21s so far. 298 KB/s · about 7 seconds left to send.",
+            "barWidthStyle": "74%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 21.7,
+            "percent": "76%",
+            "sent": "6.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 22s so far. 298 KB/s · about 7 seconds left to send.",
+            "barWidthStyle": "76%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 22,
+            "percent": "76%",
+            "sent": "6.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 22s so far. 297 KB/s · about 7 seconds left to send.",
+            "barWidthStyle": "76%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 22.2,
+            "percent": "77%",
+            "sent": "6.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 22s so far. 297 KB/s · about 7 seconds left to send.",
+            "barWidthStyle": "77%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 22.5,
+            "percent": "78%",
+            "sent": "6.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 22s so far. 317 KB/s · about 6 seconds left to send.",
+            "barWidthStyle": "78%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 22.7,
+            "percent": "79%",
+            "sent": "6.6 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 23s so far. 298 KB/s · about 6 seconds left to send.",
+            "barWidthStyle": "79%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 23,
+            "percent": "80%",
+            "sent": "6.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 23s so far. 297 KB/s · about 6 seconds left to send.",
+            "barWidthStyle": "80%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 23.2,
+            "percent": "81%",
+            "sent": "6.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 23s so far. 297 KB/s · about 6 seconds left to send.",
+            "barWidthStyle": "81%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 23.5,
+            "percent": "82%",
+            "sent": "6.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 23s so far. 297 KB/s · about 5 seconds left to send.",
+            "barWidthStyle": "82%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 23.7,
+            "percent": "83%",
+            "sent": "6.9 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 24s so far. 297 KB/s · about 5 seconds left to send.",
+            "barWidthStyle": "83%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 24,
+            "percent": "83%",
+            "sent": "7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 24s so far. 297 KB/s · about 5 seconds left to send.",
+            "barWidthStyle": "83%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 24.3,
+            "percent": "84%",
+            "sent": "7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 24s so far. 297 KB/s · about 5 seconds left to send.",
+            "barWidthStyle": "84%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 24.5,
+            "percent": "85%",
+            "sent": "7.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 24s so far. 298 KB/s · about 4 seconds left to send.",
+            "barWidthStyle": "85%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 24.8,
+            "percent": "86%",
+            "sent": "7.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 25s so far. 298 KB/s · about 4 seconds left to send.",
+            "barWidthStyle": "86%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 25,
+            "percent": "87%",
+            "sent": "7.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 25s so far. 298 KB/s · about 4 seconds left to send.",
+            "barWidthStyle": "87%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 25.3,
+            "percent": "88%",
+            "sent": "7.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 25s so far. 298 KB/s · about 4 seconds left to send.",
+            "barWidthStyle": "88%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 25.5,
+            "percent": "89%",
+            "sent": "7.4 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 25s so far. 297 KB/s · about 3 seconds left to send.",
+            "barWidthStyle": "89%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 25.8,
+            "percent": "90%",
+            "sent": "7.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 26s so far. 298 KB/s · about 3 seconds left to send.",
+            "barWidthStyle": "90%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 26,
+            "percent": "90%",
+            "sent": "7.5 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 26s so far. 297 KB/s · about 3 seconds left to send.",
+            "barWidthStyle": "90%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 26.3,
+            "percent": "92%",
+            "sent": "7.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 26s so far. 298 KB/s · about 2 seconds left to send.",
+            "barWidthStyle": "92%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 26.6,
+            "percent": "92%",
+            "sent": "7.7 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 26s so far. 298 KB/s · about 2 seconds left to send.",
+            "barWidthStyle": "92%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 26.8,
+            "percent": "93%",
+            "sent": "7.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 27s so far. 298 KB/s · about 2 seconds left to send.",
+            "barWidthStyle": "93%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 27.1,
+            "percent": "94%",
+            "sent": "7.8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 27s so far. 298 KB/s · about 2 seconds left to send.",
+            "barWidthStyle": "94%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 27.3,
+            "percent": "95%",
+            "sent": "8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 27s so far. 297 KB/s · about 1 second left to send.",
+            "barWidthStyle": "95%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 27.6,
+            "percent": "96%",
+            "sent": "8 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 27s so far. 297 KB/s · about 1 second left to send.",
+            "barWidthStyle": "96%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 27.8,
+            "percent": "97%",
+            "sent": "8.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 28s so far. 297 KB/s · about 1 second left to send.",
+            "barWidthStyle": "97%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 28.1,
+            "percent": "97%",
+            "sent": "8.1 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 28s so far. 317 KB/s · about 1 second left to send.",
+            "barWidthStyle": "97%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 28.3,
+            "percent": "99%",
+            "sent": "8.2 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 28s so far. 298 KB/s · about 1 second left to send.",
+            "barWidthStyle": "99%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 28.6,
+            "percent": "100%",
+            "sent": "8.3 MB of 8.4 MB sent",
+            "stage": "Sending to the server. 29s so far. 298 KB/s · about 1 second left to send.",
+            "barWidthStyle": "100%",
+            "isSlow": false,
+            "hasCancel": true,
+            "inFlight": true
+          },
+          {
+            "at": 28.8,
+            "percent": null,
+            "sent": null,
+            "stage": null,
+            "barWidthStyle": "100%",
+            "isSlow": false,
+            "hasCancel": false,
+            "inFlight": false
+          }
+        ],
+        "drops": {
+          "textDrag": {
+            "ok": true,
+            "seenTypes": [
+              "text/plain"
+            ],
+            "isOver": false
+          },
+          "textDragState": {
+            "kind": "clip",
+            "accept": "video/mp4,video/webm,video/quicktime",
+            "isZone": true,
+            "isOver": false,
+            "isBad": false,
+            "columns": "34px 633.891px 66.1094px",
+            "hintFontPx": "10.5px",
+            "hint": "Drag a file here, or choose one.",
+            "meta": "8.4 MB · Up to 9.9 MB on this server. Shoppable video itself allows 64 MB — PHP’s post_max_size is what caps it (currently 10M), and raising it on the server lifts this box with it. Checked by its own bytes and not by its name.",
+            "msg": "",
+            "box": {
+              "w": 786,
+              "h": 128
+            }
+          },
+          "wrongType": {
+            "ok": true,
+            "seenTypes": [
+              "Files"
+            ],
+            "overAfterDragover": true
+          },
+          "wrongTypeState": {
+            "kind": "clip",
+            "accept": "video/mp4,video/webm,video/quicktime",
+            "isZone": true,
+            "isOver": false,
+            "isBad": true,
+            "columns": "34px 633.891px 66.1094px",
+            "hintFontPx": "10.5px",
+            "hint": "Drag a file here, or choose one.",
+            "meta": "8.4 MB · Up to 9.9 MB on this server. Shoppable video itself allows 64 MB — PHP’s post_max_size is what caps it (currently 10M), and raising it on the server lifts this box with it. Checked by its own bytes and not by its name.",
+            "msg": "“notes.pdf” is not a file this box takes. This box takes an MP4 or WebM video.",
+            "box": {
+              "w": 786,
+              "h": 155
+            }
+          },
+          "posterWrong": {
+            "ok": true,
+            "seenTypes": [
+              "Files"
+            ],
+            "overAfterDragover": true
+          },
+          "posterWrongState": {
+            "kind": "poster",
+            "accept": "image/jpeg,image/png,image/webp",
+            "isZone": true,
+            "isOver": false,
+            "isBad": true,
+            "columns": "34px 635.828px 64.1719px",
+            "hintFontPx": "10.5px",
+            "hint": "Drag a picture here, or choose one from the Media Library.",
+            "meta": "Required to publish — the tile reserves its box from this image, which is what stops the page jumping. Up to 4 MB.",
+            "msg": "“clip.mp4” is not a file this box takes. This box takes a JPG, PNG or WebP picture.",
+            "box": {
+              "w": 786,
+              "h": 123
+            }
+          }
+        },
+        "shots": [
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-sections.png",
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-section-open.png",
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-clip-open.png",
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-files-tab.png",
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-drop-refused.png",
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-over-ceiling.png",
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-upload-in-flight.png",
+          "/home/user/kbbstore/.claude/worktrees/lane-p1/docs/upload-kit-shots/after-1280-after-upload.png"
+        ],
+        "overCeiling": {
+          "panel": {
+            "present": true,
+            "isBad": true,
+            "isSlow": false,
+            "name": "too-big.mp4",
+            "percent": null,
+            "sent": null,
+            "stage": null,
+            "barWidthStyle": null,
+            "barBox": null,
+            "hasCancel": false,
+            "hasRetry": false,
+            "text": "too-big.mp4not acceptedThat file is 12.0 MB and the most this box takes is 9.9 MB on this server. Shoppable video itself allows 64 MB — PHP’s post_max_size is what caps it (currently 10M), and raising it on the server lifts this box with it. It was not sent, so nothing on the clip was changed.12.0 MB — nothing on the clip was changed.",
+            "box": {
+              "w": 786,
+              "h": 99
+            }
+          },
+          "offeredRetry": false
+        },
+        "uploadSawSendingStage": true,
+        "uploadSawServerStage": false,
+        "uploadLastPercent": null
+      }
+    ],
+    "console": [
+      {
+        "width": 1280,
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      }
+    ],
+    "error": null
+  }
+}
