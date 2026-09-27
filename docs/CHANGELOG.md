@@ -3,6 +3,121 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.287
+Tamara and Tabby, Instagram, the page editor, the add-a-clip flow — and eleven
+admin screens that finally have a web address.
+
+### ▲ TWO PAYMENT GATEWAYS, AND WHAT YOU HAVE TO DO BEFORE EITHER TAKES MONEY
+
+**Tamara** and **Tabby** are both built, both at `Store → Ecommerce → Payments`.
+Neither is configured and neither is switched on — every credential box arrives
+empty, which is how this ships.
+
+**Nothing here has spoken to a real Tamara or Tabby server.** Outbound network
+access is blocked on the machine this was built on, so every call is driven
+against a recorded fake. The code is complete and tested; the handshake is not
+proven. Before you take a real order through either, do one sandbox order end to
+end: paste sandbox keys, Save, press **Register webhook**, press **Refresh
+limits**, place one order, then cancel it and press **Release authorisation**.
+Then do it once more with a capture and a partial refund. If a field name on
+their side differs from what we expect, that sequence is where it shows up, and
+it shows up on a test order rather than on a customer's.
+
+**The gap Tamara had that this closes.** Every approval arrived by callback and
+nothing else. A callback that never arrived left the order `pending` for ever —
+holding stock and a coupon use — while the buyer had a live payment plan and
+believed they had bought something. There is now a **Check for missed approvals**
+button on the Tamara panel, and a command behind it, that asks Tamara directly
+about orders in that state. It can also recover orders where the Tamara id was
+never saved, which nothing could reach before.
+
+**Releasing a hold.** Both gateways can now release an authorisation nobody
+captured — the button sits on the order screen beside Capture and Refund. It
+matters because a cancelled BNPL order leaves the customer's credit committed for
+weeks: the shop has cancelled, restocked and refunded the coupon, and their
+Tamara or Tabby account still shows an active plan for an order that no longer
+exists. The button is only offered once the sale is off; it is refused on an
+order the shop still intends to ship, which is the expensive mistake in the other
+direction.
+
+**Tabby needed one thing Stripe and Tamara do not.** Tabby takes no callback URL
+from a dashboard field — it is registered through their API or it does not exist.
+Until that registration is made, Tabby authorises money and then goes silent. The
+button for it is on the Tabby panel.
+
+### Instagram Profile — `Content → Instagram`
+
+Your recent posts as a grid on the shop, with the profile box, likes and
+comments. Five layouts, four profile styles, and a shortcode
+(`[kbb_instagram layout="strip" limit="6"]`) to put it anywhere. **Configure now**
+does the whole handshake with Instagram: it takes you there, takes permission,
+comes back and fills in your avatar and follower count.
+
+The six steps you must do at Meta's end are printed on the screen with ticks read
+from what is actually saved — and the two we cannot observe from here are marked
+with a dashed "?" rather than an empty tick that would imply we had looked.
+
+**Thumbnails are copied to your own shop.** Instagram's picture addresses expire,
+so a page pointing at one is a page that breaks on somebody else's clock. Tapping
+a tile opens the post on Instagram; there is an opt-in in-page player that uses
+Instagram's own embed.
+
+**Ships off.** The module is off, the homepage rows draw nothing until you
+configure them, and neither emits a single byte of empty band in the meantime.
+
+### The video rail on the homepage
+
+`Appearance → Homepage` has a **Video rail** row now. Choose which section it
+shows at `Content → Shoppable video → Appearance → Homepage`, or use the
+shortcode. You have two bands making a similar promise if you keep
+`#KBeautyBliss spotted` as well — that is your call, and the screen says so where
+you pick the section rather than deciding it for you.
+
+### Adding a clip: five steps, and three things the screen was getting wrong
+
+`Content → Shoppable video → All clips → Add a clip` is five numbered steps now,
+with drag-and-drop, and it previews the video after upload from any source.
+
+Three fixes worth naming, because each one was actively misleading:
+
+- **A missing cover said "No video yet".** If your 64MB video uploaded perfectly
+  but had no cover picture, the screen told you the video was missing. The
+  obvious next move is to upload it again and watch nothing change.
+- **The loop preview ignored your setting.** If you had moved the loop length to
+  4 seconds, the preview still rewound at 2.5 and the words under it still said
+  2.5 seconds.
+- **Drag to reorder** the tagged products, which decides which product the tile
+  shows. The arrows stay, for the keyboard.
+
+### `Pages → User pages → Edit`
+
+The seven content pages — FAQs, Delivery, Terms and the rest — are editable:
+title and body in both languages, status, and the whole Search-engines panel with
+the live Google preview.
+
+**It will not let you create or delete one, and that is deliberate.** Those seven
+pages are seven fixed addresses in the code. A page created at any other address
+is a row nothing on the shop can reach — you already have **four** such pages from
+Demo Pages, published and 404ing, and this screen is the first thing that tells
+you so. It marks them **"No address on the shop"** and counts them at the top.
+
+### Eleven admin screens now have a web address
+
+A link to `Shoppable video`, `Instagram`, `Security`, `Cache`, `Build my
+routine`, `Site layout`, `Footer`, `Cart page` or `Checkout page` used to open
+the **Dashboard** — no error, no wrong heading, just the dashboard. Clicking the
+sidebar row always worked, so nothing looked broken until you tried to send
+somebody a link. All eleven now open where they say they do, by link or by click.
+
+### Under the floor
+
+- `docs/SEO-PREVIEWS.html` stopped changing on every test run, so a change to it
+  now means a verdict actually moved. The SEO matrix reads **67 verified, 0
+  missing** over the same 88 rows, up from 63 and 4.
+- The release-an-authorisation endpoint is one file for every gateway rather than
+  one per gateway. Two lanes built the same endpoint in the same round and both
+  registered it; only the last would have survived, silently.
+
 ## 2.60.286
 The video screens: no more flashing, a real search, and the section page in steps.
 
