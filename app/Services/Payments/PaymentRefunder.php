@@ -249,6 +249,30 @@ class PaymentRefunder
             (int) ($order->captured_total ?? 0),
             $order->captured_at !== null,
             $order->paid_at !== null,
+            /*
+             * ── A RELEASED AUTHORISATION IS NOT REFUNDABLE MONEY ───────────
+             *
+             * THE DEFECT. This method never looked at `voided_at`, and the
+             * three lines above are all TRUE of an order whose hold was
+             * released: `paid_at` is set (the authorisation was confirmed),
+             * `captured_at` is null, and there is a `paid` row in `payments`
+             * for the authorisation. So the closure below summed it and the
+             * ceiling came back non-zero — offering a refund of money the shop
+             * never took, against a hold the provider has already given back.
+             *
+             * Refunding it does not merely fail at the provider: RefundConsole
+             * and the two customer emails treat the ceiling as the truth, so
+             * the shopper is told a refund is on its way for money that was
+             * never taken from him in the first place.
+             *
+             * SAFE BECAUSE THE TWO STATES CANNOT COEXIST. PaymentVoider:127
+             * refuses to release an order that carries `captured_at` or a
+             * `capture_ref` — "This order has been captured, so there is no
+             * authorisation to release. Refund it instead." So a voided order
+             * has no captured money to protect, and the capture branch below
+             * still wins where there is.
+             */
+            $order->voided_at !== null,
             // Only `paid` rows. A row whose status is `amount_mismatch`,
             // `currency_mismatch` or a provider failure reason records a
             // payment that was REFUSED, and summing it would build the ceiling
@@ -282,11 +306,22 @@ class PaymentRefunder
         int $capturedTotal,
         bool $captured,
         bool $paid,
+        bool $voided,
         \Closure $confirmedPaid,
         int $total,
     ): int {
         if ($captured && $capturedTotal > 0) {
             return $capturedTotal;
+        }
+
+        /*
+         * AFTER the capture branch and before everything else. Captured money
+         * is real money whatever else happened to the order; a hold that was
+         * released is not, and every test below this line would otherwise
+         * report it as refundable. See the note at the call site.
+         */
+        if ($voided) {
+            return 0;
         }
 
         if (! $paid) {
@@ -373,7 +408,16 @@ class PaymentRefunder
         Order::withTrashed()
             ->where('payment_method', $gateway)
             ->where(fn ($q) => $q->whereNotNull('paid_at')->orWhereNotNull('captured_at'))
-            ->select(['id', 'order_number', 'status', 'total', 'currency', 'paid_at', 'captured_at', 'captured_total', 'created_at'])
+            /*
+             * `voided_at` IS IN THIS LIST ON PURPOSE. ceilingFrom() reads it
+             * below, and a column left out of an explicit select() comes back
+             * NULL on the model rather than raising — so omitting it would have
+             * made the void rule silently inert HERE while working in
+             * capturedFils(), and the sweep would have gone on reporting
+             * released holds as money owed back. A quiet wrong answer, from a
+             * missing word.
+             */
+            ->select(['id', 'order_number', 'status', 'total', 'currency', 'paid_at', 'captured_at', 'captured_total', 'voided_at', 'created_at'])
             /*
              * By id rather than by page: the set is being read while nothing
              * stops an order being paid underneath it, and an offset walk would
@@ -411,6 +455,12 @@ class PaymentRefunder
                         (int) ($order->captured_total ?? 0),
                         $order->captured_at !== null,
                         $order->paid_at !== null,
+                        // The same rule as capturedFils(): a released hold is
+                        // not money owed back, so it must not be counted into
+                        // the outstanding figure this sweep reports either.
+                        // Two call sites, one definition -- which is why the
+                        // flag is a parameter rather than a read inside.
+                        $order->voided_at !== null,
                         fn (): int => (int) ($paid[$id] ?? 0),
                         (int) $order->total,
                     );
