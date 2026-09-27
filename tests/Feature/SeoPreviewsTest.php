@@ -186,8 +186,30 @@ function spSeed(): array
         'status' => 'published',
         'excerpt' => 'Houttuynia cordata is the calming ingredient Korean formulators reach for first, and this is what it does.',
         'body' => '<p>Heartleaf, or houttuynia cordata, is the calming ingredient Korean formulators reach for first.</p>',
-        'published_at' => now()->subDays(30),
+        'published_at' => '2026-08-28T01:00:00+00:00',
     ]);
+
+    /*
+     * FIXED DATES, AND updated_at FORCED TO ONE TOO.
+     *
+     * These two columns are the only values on this whole page that came from
+     * the clock: the Article node prints `datePublished` from `published_at` and
+     * `dateModified` from `updated_at`, so `now()->subDays(30)` plus Eloquent's
+     * own touch of `updated_at` meant two runs a second apart wrote two
+     * different files. That is what kept docs/SEO-PREVIEWS.html permanently
+     * dirty, and the header above spRender() records what that cost.
+     *
+     * A write, not an attribute, because `updated_at` is exactly the column
+     * save() overwrites. Nothing here asserts on either value -- the two rows
+     * that mention dateModified assert whether the KEY is present, never what
+     * is in it -- so pinning them changes no verdict.
+     */
+    Post::query()->whereKey($post->getKey())->update([
+        'published_at' => '2026-08-28 01:00:00',
+        'updated_at' => '2026-09-01 01:00:00',
+    ]);
+
+    $post->refresh();
 
     // The seeded /faqs/ body, character for character from
     // database/migrations/2026_11_06_000000_seed_footer_content_pages.php.
@@ -1403,48 +1425,24 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
 
 /* ========================================================================== */
 
-/**
- * The commit this page was generated from.
+/*
+ * WHY THIS PAGE CARRIES NO TIMESTAMP AND NO COMMIT, which it used to.
  *
- * Read off .git rather than shelled out, because a preview that says which
- * commit it came from has to be right about it and `git` is not guaranteed to be
- * on the PATH of whatever runs the suite. A worktree's .git is a FILE pointing at
- * the real directory, which is exactly the case this runs in.
+ * `docs/SEO-PREVIEWS.html` is a TRACKED file that a test rewrites, so every
+ * suite run left it dirty and every lane had to `git checkout --` it before
+ * committing. Three lanes swept it into a commit by accident (c3f9111, f01ea4f,
+ * and again this round) and the habit it teaches -- reverting this file without
+ * reading it -- is how a real change to it gets thrown away.
+ *
+ * The stamp was also the worse copy of something git already holds exactly:
+ * `git log -- docs/SEO-PREVIEWS.html` names the commit each version was
+ * generated at, and does it correctly, without guessing at a worktree's refs.
+ *
+ * So the render is now a pure function of the SEO facts it reports. A run on an
+ * unchanged tree leaves the file byte-identical and `git status` stays clean; a
+ * diff on it means a verdict actually moved, which is the only time anybody
+ * should be looking at it.
  */
-function spCommit(): string
-{
-    $git = base_path('.git');
-
-    if (is_file($git)) {
-        $line = trim((string) file_get_contents($git));
-
-        if (str_starts_with($line, 'gitdir: ')) {
-            $git = trim(substr($line, 8));
-        }
-    }
-
-    if (! is_dir($git)) {
-        return 'unknown';
-    }
-
-    $head = trim((string) @file_get_contents($git . '/HEAD'));
-
-    if (str_starts_with($head, 'ref: ')) {
-        $ref = trim(substr($head, 5));
-        $branch = basename($ref);
-
-        // A worktree keeps its refs in the COMMON dir, not beside its own HEAD.
-        foreach ([$git . '/' . $ref, dirname(dirname($git)) . '/' . $ref, $git . '/../../' . $ref] as $candidate) {
-            if (is_file($candidate)) {
-                return $branch . ' @ ' . substr(trim((string) file_get_contents($candidate)), 0, 12);
-            }
-        }
-
-        return $branch . ' @ unknown';
-    }
-
-    return substr($head, 0, 12);
-}
 
 function spEsc(mixed $v): string
 {
@@ -1466,9 +1464,6 @@ function spRender(array $rows, array $shapes, array $o): string
     foreach ($rows as $row) {
         $counts[$row['verdict']]++;
     }
-
-    $generated = now()->toDayDateTimeString();
-    $commit = spCommit();
 
     /* ── the page shapes ─────────────────────────────────────────────────── */
     $shapeHtml = '';
@@ -1652,7 +1647,7 @@ footer p{margin-top:7px;max-width:74ch}
   <h1>The SEO module &mdash; <span>what it actually emits, item by item</span></h1>
   <p>Every research item in the eleven <code>docs/SEO-*.md</code> papers, driven against the running shop rather than read off the page that claimed it. Each row says what the documents say, what a real request returned today, and one of five verdicts.</p>
   <p><b>Nothing on this page was typed by hand.</b> Every title, meta tag, JSON-LD node and crawl file below came out of a request made through this application&rsquo;s own HTTP kernel while the test suite ran, which is why it cannot drift from the code.</p>
-  <div class="gen">Generated {$generated} &middot; commit <b>{$commit}</b> &middot; fixture: the Medicube Kojic Acid Turmeric Booster Pro Set and three siblings read out of <code>storage/catalog/products.json</code> (the only real catalogue data in the repository), the real <code>heartleaf-extract&hellip;</code> article slug, and the seeded <code>/faqs/</code> body from <code>2026_11_06_000000_seed_footer_content_pages</code>. Regenerate with <code>vendor/bin/pest tests/Feature/SeoPreviewsTest.php</code>.</div>
+  <div class="gen">Generated by the test suite &middot; which commit from <code>git log -- docs/SEO-PREVIEWS.html</code> &middot; fixture: the Medicube Kojic Acid Turmeric Booster Pro Set and three siblings read out of <code>storage/catalog/products.json</code> (the only real catalogue data in the repository), the real <code>heartleaf-extract&hellip;</code> article slug, and the seeded <code>/faqs/</code> body from <code>2026_11_06_000000_seed_footer_content_pages</code>. Regenerate with <code>vendor/bin/pest tests/Feature/SeoPreviewsTest.php</code>.</div>
 
   <div class="tiles">
     <div class="tile tVERIFIED"><b>{$counts['VERIFIED']}</b><span>Verified</span></div>
@@ -1785,3 +1780,70 @@ footer p{margin-top:7px;max-width:74ch}
 </html>
 HTML;
 }
+
+/*
+ * ── THE GUARD THAT KEEPS THIS FILE'S OUTPUT DETERMINISTIC ──────────────────
+ *
+ * docs/SEO-PREVIEWS.html is TRACKED and this test rewrites it, so the one thing
+ * it must not do is write a different file on every run. It used to: the page
+ * carried a generation timestamp and a commit stamp, and the Article fixture
+ * took its dates from the clock. Three lanes swept the churn into a commit by
+ * accident (c3f9111, f01ea4f, and once more this round), and the reflex it
+ * taught -- `git checkout --` this file without reading it -- is how a real
+ * change to it gets thrown away.
+ *
+ * Pinning the two dates fixed it once. This stops it coming back, by the only
+ * route it can come back: a clock call reaching the render. Source-level rather
+ * than "render twice and compare", because comparing two renders in one process
+ * would agree on any value that is read once and cached, which is precisely the
+ * bug shape (`now()` evaluated at fixture time, printed twice).
+ *
+ * MUTATION: put `now()->subDays(30)` back on the Post fixture and this is red.
+ */
+it('reads no clock, so two runs write the same bytes', function () {
+    $source = (string) file_get_contents(__FILE__);
+
+    /*
+     * Comments stripped FIRST. The prose above names `now()` four times, and a
+     * guard that its own explanation trips is a guard nobody keeps.
+     */
+    $code = (string) preg_replace(['#/\*.*?\*/#s', '#//[^\n]*#'], '', $source);
+
+    // Heredocs too: the rendered page's own <script> and <style> blocks are
+    // literal bytes, and `Date` in a comment inside one is not a PHP clock.
+    $code = (string) preg_replace('/<<<\'?HTML\'?.*?\nHTML;/s', '', $code);
+
+    /*
+     * AND THIS TEST'S OWN BODY, which is the whole reason it needed a second
+     * try: the needle list below is eleven string literals naming eleven clock
+     * calls, so the first version of this guard matched ALL ELEVEN against
+     * itself and reported the file as riddled with them. Same self-match
+     * CLAUDE.md records for AdminNavAndIdsTest counting a commented-out nav
+     * entry -- a source scanner has to exclude the source of the scanner.
+     *
+     * Truncating at this test's own `it(` keeps the exclusion honest: it drops
+     * exactly the tail of the file, so nothing above it can hide behind the
+     * cut, and a clock call added anywhere in the render is still seen.
+     */
+    $mine = strpos($code, "it('reads no clock");
+    $code = $mine === false ? $code : substr($code, 0, $mine);
+
+    $clocks = [];
+
+    /*
+     * Matched on a word boundary, not str_contains, and that is not tidiness:
+     * `->update([` ENDS IN `date(`, so the plain substring version reported the
+     * three Page::update() calls in this file's own fixture as a clock read. A
+     * guard whose failure message names something innocent is a guard the next
+     * reader learns to talk themselves out of.
+     */
+    foreach (['now(', 'today(', 'Carbon::now', 'Carbon::today', 'time()', 'date(', 'microtime', 'uniqid', 'random_', 'mt_rand', 'rand('] as $call) {
+        if (preg_match('/(?<![A-Za-z0-9_])'.preg_quote($call, '/').'/', $code) === 1) {
+            $clocks[] = $call;
+        }
+    }
+
+    expect($clocks)->toBe([], 'SeoPreviewsTest writes a tracked file, so it may read no clock and no randomness — found: '
+        . implode(', ', $clocks)
+        . '. Pin the value instead; docs/SEO-PREVIEWS.html has to be byte-identical on an unchanged tree.');
+});
