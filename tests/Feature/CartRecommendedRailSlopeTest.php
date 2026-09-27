@@ -13,6 +13,7 @@ use App\Services\CartService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\SqlShape;
 
 /**
  * THE RECOMMENDED RAIL READ `brands` ONCE PER CARD, AND FETCHED EVERY CARD WITH
@@ -168,7 +169,21 @@ function railRequest(Cart $cart): array
     railReset();
 
     $sql = [];
-    DB::listen(function ($event) use (&$sql): void { $sql[] = $event->sql; });
+    /*
+     * ▲ NORMALISED to the SQLite spelling of identifier quoting, and this file
+     * is the reason it matters more here than anywhere else.
+     *
+     * The rail is IDENTIFIED by `from "products"` plus `"status" = ?` plus
+     * `"is_visible" = ?`, and on -c phpunit-mysql.xml every one of those is
+     * spelled with backticks — so $railQuery stayed null and the case failed
+     * with "the rail query was not issued at all" while the rail was being
+     * issued perfectly. Worse, the four assertions that follow are all NEGATIVE
+     * (`not->toContain('"description"')`), so had the null check not been there
+     * they would have passed vacuously against any MySQL statement at all,
+     * including one that does select `description`. SqlShape::portable() carries
+     * the full reasoning.
+     */
+    DB::listen(function ($event) use (&$sql): void { $sql[] = SqlShape::portable($event->sql); });
 
     $html = test()
         ->withCredentials()

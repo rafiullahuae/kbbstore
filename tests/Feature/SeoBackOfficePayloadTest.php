@@ -42,6 +42,7 @@
 
 use App\Models\AdminUser;
 use Illuminate\Support\Facades\Hash;
+use Tests\Support\KeyOrder;
 
 /**
  * The endpoints behind every screen this lane draws a preview on.
@@ -102,12 +103,38 @@ it('sends every SEO editing screen the payload it sent before the previews', fun
 
     $moved = [];
 
+    /*
+     * ▲ OBJECT-KEY ORDER IS NORMALISED AND LIST ORDER IS NOT, and every claim the
+     * header above makes for its `===` survives it.
+     *
+     * `settings` is `PRIMARY KEY (key)` on a varchar, so InnoDB's clustered index
+     * hands Setting::map() its rows in KEY ALPHABETICAL order, while SQLite walks
+     * the implicit rowid and hands back INSERTION order. This fixture was recorded
+     * on SQLite, so on -c phpunit-mysql.xml the case failed with the same keys
+     * carrying the same values in a different order — and s7FirstDifference() said
+     * exactly that, by reporting `settings` with no key named beneath it: it
+     * walked every key, found each present and each value identical, and the two
+     * arrays were still `!==`. That signature is what a pure reordering looks
+     * like, and it is worth knowing for the next reader.
+     *
+     * A reordered CATEGORY is still red, because KeyOrder::canonical() leaves
+     * lists in the order they arrived. A moved default is still red, because
+     * values are compared. One extra or missing key is still red. The only
+     * difference no longer reported is the POSITION of a key, which is the engine
+     * talking rather than the endpoint.
+     *
+     * This is NOT re-recording: the fixture is untouched, so it still says what
+     * these endpoints produced off the parent revision.
+     */
     foreach (s7PayloadUrls() as $url) {
         expect($expected[$url] ?? null)->not->toBeNull("no recorded payload for {$url}");
 
-        if ($expected[$url] !== $live[$url]) {
+        $was = KeyOrder::canonical($expected[$url]);
+        $now = KeyOrder::canonical($live[$url]);
+
+        if ($was !== $now) {
             $moved[] = $url.': the recorded body and the live body differ'
-                .' ('.s7FirstDifference($expected[$url], $live[$url]).')';
+                .' ('.s7FirstDifference($was, $now).')';
         }
     }
 

@@ -158,6 +158,103 @@ fix was to write what production writes.
 accident, and everything people reach for instead — `Str::random(40)`,
 `bin2hex(random_bytes(20))` — is longer.
 
+### 7. DDL commits the transaction `RefreshDatabase` is holding
+
+**MySQL has no transactional DDL.** `CREATE TABLE`, `DROP TABLE` and `TRUNCATE`
+each cause an **implicit commit** of whatever transaction is open. SQLite's DDL
+is transactional, so the same statement rolls back with everything else. Reduced
+to the two engines, same four statements:
+
+```
+begin; insert; DROP TABLE scratch; rollback
+
+sqlite -> rollback ok,    0 rows survive
+mysql  -> rollback THREW "There is no active transaction", 1 row survives
+```
+
+`RefreshDatabase` isolates tests by wrapping each one in a transaction and
+rolling it back. A test that issues DDL has therefore **already committed
+everything it wrote** by the time the rollback is attempted, the rollback is a
+no-op, and those rows are in the database for the rest of the process. Thirteen
+Feature files issue DDL, each of them legitimately.
+
+**Measured rather than reasoned, and stated no further than the measurement
+goes.** A probe in `tests/Pest.php`'s `beforeEach` recorded the first test to see
+any `media` row at its own start — which, under `RefreshDatabase`, can only be a
+row some earlier test committed. In a full MySQL run that was
+`DemoOrdersExcludedFromReportingTest`'s *"leaves every reported figure unchanged
+when demo orders are imported for real"*, with **5 rows** already visible, and the
+test immediately before it was the same file's *"reports normally when the demo
+log table does not exist"* — which calls `Schema::dropIfExists(DemoSeed::TABLE)`,
+because that is precisely the state it needs to test.
+
+One thing in that picture is NOT explained and is left open rather than smoothed
+over: the five leaked rows carry `uploads/ugc/...` paths, which the demo-orders
+file has no reason to write. So either the commit boundary is wider than one test
+or something in that path registers media; the isolated harness reproduction
+below is unambiguous about the MECHANISM, and the exact provenance of those five
+rows is not yet closed. A standalone probe — 30 media rows, then
+`Schema::create()` + `Schema::drop()`, under this suite's own
+`RefreshDatabase` — left **all 30 in the database after the run**, on MySQL, in
+this repository. That is the mechanism, confirmed in the harness and not only at
+PDO level.
+
+**What it actually broke.** `MediaLibraryTest`'s *"filters by date inclusively at
+both ends"* was red in a full MySQL run and green on its own, on both engines.
+Measured at the moment it failed: the `media` table held **107 rows where the
+case had created 3**, `/admin-api/media` reported `total=106 pages=5
+per_page=24`, and the row the assertion looked for was on page 5.
+`toContain()` reads page one, so the date filter was working perfectly and the
+row was simply not on the page being read. Nothing about that failure points at
+its cause, and nothing about it reproduces alone.
+
+**Rule, and it is the cheap half:** a test that reads a PAGINATED endpoint must
+scope the query to rows it created itself — a `q=` token, a filter, an explicit
+id — rather than trusting that nothing else is in the table. That is true
+whatever leaks, and `MediaLibraryTest`'s own backfill cases already argued for it
+in as many words ("the count of rows for a name it just created is exactly as
+strong a statement, and it is true whatever else is on disk").
+
+The expensive half is open: nothing detects the leak at its source, so the next
+one will surface somewhere equally unrelated. A guard would have to compare
+committed state across a test boundary, and it would go red on the thirteen
+files below until each one restores what its DDL committed:
+
+```
+CustomersScreenTruthTest   DemoOrdersExcludedFromReportingTest  FaqSchemaTest
+GoBackgroundImportTest     MailDeliveryLogTest                  MediaLibraryTest
+MediaUsagesTest            ModuleRealRulesTest                  OrderTableRepairTest
+RoutineSearchAndDemoTest   SuiteIsolationTest                   YoastSeoImportTest
+UpdateSurvivesAMissingColumnTest
+```
+
+`MediaLibraryTest` is itself on that list, so it leaks its own rows too — which is
+the second reason its date case had to stop trusting the table.
+
+### 8. A collation decides the ORDER of a listing, not only a match
+
+`ORDER BY products.name` is collated. SQLite's default is `BINARY`, so it sorts
+by byte and **every uppercase letter precedes every lowercase one**; MySQL's
+`utf8mb4_unicode_ci` is case-insensitive. On the four SEO preview fixtures that
+is the whole difference between
+
+```
+sqlite: Medicube Collagen · Medicube Kojic · Medicube PDRN · ilso Deep Clean
+mysql : ilso Deep Clean · Medicube Collagen · Medicube Kojic · Medicube PDRN
+```
+
+The shop's ordering is neither ambiguous nor at fault —
+`ShopController::applyDefaultSort()` ends in a total order and every other sort
+carries an id tie-break, for the pagination reason its own comment gives. MySQL's
+answer is the one a shopper expects and the one production gives. It simply is
+not the one the default test lane sees, so **a test that pins listing order pins
+SQLite's byte order rather than the shop's.**
+
+This is what rewrote `docs/SEO-PREVIEWS.html` on every MySQL run: the
+`CollectionPage` node's `itemListElement` is the archive's real display order.
+That file is generated on the default config now, and a MySQL run asserts all
+sixty matrix rows without touching the tracked bytes.
+
 ## The structural guard
 
 `Tests\Support\SqlShape` judges the SQL a request **issues** rather than the
@@ -233,6 +330,25 @@ double-quoted form counts **zero** against a real server.
 `CartPageSqueezeTest` did, and failed reading 0 where it wanted 1. Match either
 form.
 
+**It came back, so there is now a helper rather than a rule to remember.**
+`CartLineEagerLoadTest` (twice) and `CartRecommendedRailSlopeTest` were still
+grepping for the double-quoted form and were red here for that reason alone.
+`SqlShape::portable()` rewrites a captured statement's backticks to double
+quotes, so `DB::listen(fn ($e) => $sql[] = SqlShape::portable($e->sql))` makes
+every existing needle work on both engines.
+
+**And watch which DIRECTION the assertion points, because only one of the two
+fails loudly.** A positive match reads 0 and goes red, which is the lucky case. A
+NEGATIVE one — `expect($q)->not->toContain('"description"')` — is satisfied by
+any MySQL statement whatsoever, including one that does select `description`.
+`CartRecommendedRailSlopeTest` also compared `$ten['brands']` with
+`$one['brands']`, both counted with `from "brands"`: on MySQL that was `0 === 0`,
+so an N+1 guard PASSED while comparing nothing with nothing. Normalising the log
+made it compare real counts, and it still passes — the eager load was right all
+along and the guard was not guarding it. A vacuous green is the failure mode this
+whole document exists to find, so prefer normalising the log to spelling both
+forms in the needle.
+
 ### A query count that includes a schema probe
 
 `Schema::hasColumn()` is **one** select against `information_schema` on MySQL
@@ -251,6 +367,22 @@ order on a real server, and `toBe()` (`assertSame`) reads that as a failure.
 Nothing in the app depends on the order of those keys. Sort before comparing;
 keep the strict value compare.
 
+`Tests\Support\KeyOrder::canonical()` does exactly that, and does the one thing
+that matters beyond it: it sorts the keys of ASSOCIATIVE arrays and leaves LISTS
+in the order they arrived. A list is display order — the categories down a
+select, the products in an `itemListElement`, the lines on a basket — and
+reordering one is a regression a shopper sees. Sorting lists too would also have
+made `ContentPageEditorTest` and `SeoBackOfficePayloadTest` green, and no payload
+fixture would have noticed the loss, because a fixture recorded and compared
+through the same sort agrees with itself.
+
+Two callers, and the second is not a JSON column at all: `settings` is
+`PRIMARY KEY (key)` on a varchar, so InnoDB's clustered index hands
+`Setting::map()` its rows in KEY ALPHABETICAL order while SQLite walks the
+implicit rowid and returns INSERTION order. Same symptom, same remedy, different
+mechanism — an unordered `select` inherits the engine's order, so a map built by
+iterating one is engine-ordered too.
+
 ## Still unverified
 
 - The live host's actual MySQL version, `sql_mode`, collation and
@@ -261,7 +393,38 @@ keep the strict value compare.
   10.11, so no 64-character identifier and no 3072-byte index key is currently
   over the line, but a new long `VARCHAR` unique index would pass on SQLite and
   fail here.
-- MySQL's default collation is case-insensitive and SQLite's `=` is not. No test
-  currently depends on the difference in either direction, so nothing pins it;
-  code that relies on case-sensitive matching of an email or a slug would behave
-  differently in production and the suite would not say so.
+- ~~MySQL's default collation is case-insensitive and SQLite's `=` is not.~~
+  **VERIFIED, and it is worse than case.** `utf8mb4_unicode_ci` is
+  ACCENT-insensitive as well, so `é` and `e` are one character to `=`. Measured
+  through PDO on MySQL 8.0.46 with this suite's own charset and collation, rows
+  `'JOSÉ@Example.com'` and `'jose@example.com'`:
+
+  ```
+  LOWER(email) = 'jose@example.com'  ->  BOTH rows
+  LOWER(email) = 'josé@example.com'  ->  BOTH rows
+  ```
+
+  Two consequences, both real and both now pinned by
+  `tests/Feature/ReviewImporterEmailCaseTest.php`:
+
+  1. `ReviewImporter::resolveCustomer()` filed a review from `jose@` against the
+     customer `josé@` — a different person, whose name the product page then
+     prints under an opinion they did not write. Fixed: the statement is a
+     candidate net and `mb_strtolower()` in PHP decides, which is what
+     `ImportContext::customerIdForEmail()` above it already did.
+
+  2. **`customers.email` is `UNIQUE` under that collation, so the two addresses
+     CANNOT BOTH EXIST.** SQLite holds all three spellings; MySQL accepts the
+     first and rejects the rest with `SQLSTATE[23000] 1062 Duplicate entry`. The
+     importer lowercases every address and pre-checks collisions against a PHP
+     map, so a pure CASE collision gets the friendly decision-D2 rejection on
+     both engines — an ACCENT collision does not: it passes the map as distinct
+     and is refused by the index, arriving as a raw driver message.
+     `ImportRunner` catches `QueryException` per row, so the run reports it and
+     continues rather than aborting, which bounds it. Worth extending the
+     pre-check before the real customer import.
+
+  Because of (2), `CheckoutController::customerForGuestOrder()`'s identical
+  over-match is **load-bearing**: narrowing it would turn a wrong-customer link
+  into a duplicate-key failure at checkout, since the second row cannot be
+  created. That one is a collation decision on the column, not a query fix.
