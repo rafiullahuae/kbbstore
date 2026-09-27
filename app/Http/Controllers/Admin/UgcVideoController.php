@@ -10,6 +10,7 @@ use App\Models\UgcVideo;
 use App\Services\UgcMedia;
 use App\Services\UgcPath;
 use App\Services\UgcTranscoder;
+use App\Support\SearchTerms;
 use App\Support\ServerUploadLimits;
 use App\Support\TranslationInput;
 use App\Support\UploadArrival;
@@ -964,10 +965,24 @@ class UgcVideoController extends Controller
         }
 
         if ($term !== '') {
-            // Bound before it reaches LIKE: an unbounded term is an unbounded
-            // pattern, and `%` is a wildcard the operator did not type.
-            $like = '%'.str_replace(['%', '_'], ['\%', '\_'], mb_substr($term, 0, 60)).'%';
-            $query->where('name', 'like', $like);
+            /*
+             * Bound before it reaches LIKE: an unbounded term is an unbounded
+             * pattern, and `%` is a wildcard the operator did not type.
+             *
+             * THROUGH SearchTerms, WHICH IS THE ONLY WAY THIS IS THE SAME
+             * SEARCH ON BOTH ENGINES. This escaped with a backslash and passed
+             * the pattern to a bare `where(..., 'like', ...)` with no ESCAPE
+             * clause. Backslash is MySQL's DEFAULT like-escape and means
+             * nothing at all to SQLite, so a search for a product with a
+             * percent sign in its name -- `Peach Niacinamide 30% Serum` is in
+             * this shop's own catalogue -- found it in production and found
+             * NOTHING under the test suite. The test that covered this asserted
+             * an empty result and so passed on the engine where the search was
+             * broken. SearchTerms::ESCAPE is `!` precisely because it survives
+             * being written as a string literal in both dialects; its docblock
+             * carries the argument.
+             */
+            SearchTerms::whereLike($query, 'name', mb_substr($term, 0, 60));
         }
 
         $products = $query->get();
@@ -995,9 +1010,12 @@ class UgcVideoController extends Controller
         $unpublished = 0;
 
         if ($term !== '' && $products->isEmpty()) {
-            $like = '%'.str_replace(['%', '_'], ['\%', '\_'], mb_substr($term, 0, 60)).'%';
-            $unpublished = Product::query()
-                ->where('name', 'like', $like)
+            // The same escaping as the visible search above, and it has to be:
+            // a count that used a different pattern would say "3 of these are
+            // drafts" about rows the search itself would never have matched.
+            $unpublished = SearchTerms::whereLike(
+                Product::query(), 'name', mb_substr($term, 0, 60)
+            )
                 ->whereNotIn('id', Product::query()->visible()->select('id'))
                 ->count();
         }

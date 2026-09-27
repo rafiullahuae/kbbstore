@@ -1040,7 +1040,55 @@
            + 'the bar reached 100% and it still failed. Nothing was changed and the file itself '
            + 'is fine. Raise both on the server.';
     }
-    return (e && e.body && e.body.error) ? e.body.error : fallback;
+    /*
+     * ── 401 / 419: THE SESSION WENT, NOT THE FEATURE ───────────────────────
+     *
+     * The console's shell is server-rendered at sign-in and then lives in the
+     * tab for as long as it is left open. Every screen after that is XHR. So an
+     * admin session that lapses does not bounce anybody to a login page — it
+     * lets the console keep painting and refuses the DATA, which arrives here
+     * as a 401 and, before this branch, as the same anonymous sentence a
+     * crashed server gives. A reload is the entire remedy and nothing at all
+     * was wrong with the shop, which is not a guess anybody could make from
+     * "could not be read".
+     *
+     * 419 is the same family: Laravel's answer to a CSRF token that aged out
+     * under a console left open overnight.
+     */
+    if (e && (e.status === 401 || e.status === 419)) {
+      return 'Your admin session has expired — nothing is wrong with this screen or your clips. '
+           + 'Reload the page and sign in again.';
+    }
+    /*
+     * ── 5xx: SAY SO, AND SAY WHERE THE REASON IS ───────────────────────────
+     *
+     * A 500 here used to be indistinguishable from a dropped network: both
+     * produced one sentence naming no cause, carrying no status, and offering
+     * nothing to do next. The status was on the error object the whole time and
+     * was thrown away one line later.
+     *
+     * Laravel answers a 500 with {"message": ...} and NOT {"error": ...}, so the
+     * last line of this function — which reads `error` only — could never have
+     * shown a server crash's own words. APP_DEBUG=false reduces that message to
+     * "Server Error", which is why the log line matters more than the message
+     * and why the command to read it is printed rather than described.
+     */
+    if (e && e.status >= 500) {
+      return 'The server could not answer (HTTP ' + e.status + ').'
+           + (e.body && (e.body.error || e.body.message)
+               ? ' It said: “' + (e.body.error || e.body.message) + '”.' : '')
+           + ' The reason is in the log — over SSH run:  tail -n 40 storage/logs/laravel.log';
+    }
+    if (e && e.body && e.body.error) { return e.body.error; }
+    /*
+     * ANYTHING LEFT CARRIES ITS NUMBER. A status is a fact the browser already
+     * has; printing it costs nothing and is the difference between a report
+     * somebody can act on and a shrug. A status of 0 is fetch's own answer for
+     * a request that never completed — offline, or the tab suspended — so that
+     * one is named rather than printed as a number nobody can look up.
+     */
+    if (e && e.status === 0) { return fallback + ' The request never reached the server — check the connection.'; }
+    return e && e.status ? fallback + ' (HTTP ' + e.status + ')' : fallback;
   }
 
   function kb(n) {

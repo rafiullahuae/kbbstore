@@ -458,14 +458,40 @@ it('does not offer a draft product to be tagged', function () {
 it('treats a wildcard typed into the search as text, not as a pattern', function () {
     $this->actingAs(ugcAdminUser('owner'), 'admin');
 
-    ugcProduct('Anua Heartleaf Toner');
+    /*
+     * A bare % is a LIKE wildcard that would otherwise match the whole
+     * catalogue. Escaped before it reaches the query it matches the literal
+     * character — so the right question is not "does it return nothing" but
+     * "does it return exactly the rows that really carry a percent sign".
+     *
+     * THIS TEST USED TO ASSERT `toBe([])`, on the stated grounds that no
+     * product name carries a percent sign. That is true of the SQLite fixture
+     * this suite usually runs on and FALSE of the MySQL catalogue, which has
+     * `Peach Niacinamide 30% Serum` in it — so the test passed on the dialect
+     * the shop does not use and failed on the dialect it does, while the code
+     * under it was correct the whole time. An assertion that depends on what
+     * else happens to be in the database is not an assertion about escaping.
+     *
+     * Both rows below are created here, so the answer is the same on either
+     * engine and on a shared database.
+     */
+    $pct = ugcProduct('Retinol 5% Night Cream '.strtoupper(substr(uniqid(), -6)));
+    ugcProduct('Anua Heartleaf Toner '.strtoupper(substr(uniqid(), -6)));
 
-    // A bare % is a LIKE wildcard that would match the whole catalogue. Escaped
-    // before it reaches the query, it matches the literal character, which no
-    // product name carries.
     $body = $this->getJson('/admin-api/ugc-videos/products?q=%')->assertOk()->json();
 
-    expect($body['products'])->toBe([]);
+    $names = array_column($body['products'], 'name');
+
+    // The one with a real percent sign is found...
+    expect($names)->toContain($pct->name)
+        // ...and the one without is not, which is the half that goes red the
+        // moment the escaping stops happening: an unescaped % matches every
+        // row in the table.
+        ->not->toContain('Anua Heartleaf Toner');
+
+    foreach ($names as $n) {
+        expect($n)->toContain('%');
+    }
 });
 
 it('deletes a clip and its files together', function () {
