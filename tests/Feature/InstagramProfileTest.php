@@ -391,9 +391,39 @@ it('clamps a nonsense expiry rather than trusting it', function () {
 
 /* ─────────────────────────────────── the fetch ───────────────────────────── */
 
-/** The two Graph answers a happy fetch gets, as Meta documents their shape. */
+/**
+ * The two Graph answers a happy fetch gets, as Meta documents their shape.
+ *
+ * ── Http::fake() MERGES, AND THAT MADE A TEST PASS AGAINST NOTHING ──────────
+ *
+ * `Http::fake()` does not REPLACE the stubs already registered — it merges into
+ * them, and the FIRST matching stub wins. So a test that fakes one answer, runs,
+ * then fakes a different answer for the same URL and runs again gets THE FIRST
+ * ANSWER BOTH TIMES, silently.
+ *
+ * That is not hypothetical here. `it writes a null for a count Instagram did not
+ * send` is built on exactly that shape — fetch with a count, fetch again without
+ * one — and it was passing while the second fetch still saw `like_count: 120`. It
+ * was GREEN under a mutation that replaced the whole `array_key_exists` guard with
+ * `??`, which is the defect the case exists to catch, and that is how it was
+ * found: the test asserted the right thing about a scenario it never reached.
+ *
+ * `Http::clearResolvedInstances()` drops the faked factory out of the container so
+ * the next `Http::fake()` starts from an empty stub list. Every caller here goes
+ * through this function, so the trap cannot come back one test at a time.
+ */
 function igFakeGraph(array $media, array $profile = []): void
 {
+    /*
+     * See the docblock. BOTH lines are needed and the second is the one that does
+     * the work: the client factory is a container SINGLETON, so clearing the facade's
+     * own resolved instance hands back the very same factory with the very same
+     * stubs still on it. Forgetting the binding is what makes the next fake start
+     * from an empty list.
+     */
+    app()->forgetInstance(\Illuminate\Http\Client\Factory::class);
+    Http::clearResolvedInstances();
+
     Http::fake([
         'graph.instagram.com/*/me/media*' => Http::response(['data' => $media]),
         'graph.instagram.com/*/me*' => Http::response(array_merge([
@@ -480,7 +510,7 @@ it('tells a personal account apart from a refusal, and says what to do about it'
         ->and(str_contains(strtolower($result['detail']), 'professional'))->toBeTrue();
 });
 
-it('never stores the short-lived token, even for a moment', function () {
+it('stores the sixty-day token and not the one-hour one', function () {
     /*
      * ── THE ORDERING THAT MATTERS MOST IN THIS FEATURE ──────────────────────
      *
@@ -488,9 +518,20 @@ it('never stores the short-lived token, even for a moment', function () {
      * becomes a SIXTY-DAY one. Storing the first on the way past leaves a shop that
      * reports itself connected and stops working an hour later with no explanation.
      *
-     * MUTATION NOTE. Make InstagramSync::connect() call saveToken() with the short
-     * answer before exchanging it, and this is red: the stored token is 'short'.
-     * RUN: red.
+     * ── AND THIS CASE IS HONEST ABOUT WHAT IT CAN SEE ──────────────────────
+     *
+     * It was called "never stores the short-lived token, even for a moment" and
+     * that name was a claim the assertion cannot make: it reads the END state, so a
+     * connect() that stored the short token and then overwrote it a line later
+     * would pass. RUN as a mutation — saveToken(short) inserted before the
+     * exchange — and it was GREEN, correctly, because the final value really is the
+     * long one. Renamed to what it checks rather than strengthened, because the
+     * transient write is not the defect: the defect is a shop that reports itself
+     * connected and stops working an hour later, and that is exactly the end state.
+     *
+     * MUTATION NOTE. Delete the exchangeForLongLived() call and store
+     * $short['data']['access_token'] instead, and this is red: the stored token is
+     * 'short'. RUN: red.
      */
     InstagramCredentials::saveApp('1234567890123456', 'abcdef0123456789abcdef0123456789');
     igFakeGraph([]);
@@ -584,9 +625,14 @@ it('renders nothing at all with the module off, and makes no query doing it', fu
      * Shortcodes::instagram() reads the module switch (a warmed snapshot) before it
      * resolves InstagramFeed at all.
      *
-     * MUTATION NOTE. Move the `enabled()` check in Shortcodes::instagram() below the
-     * `InstagramFeed::section()` call and the query count is 1 rather than 0. RUN:
-     * red.
+     * MUTATION NOTE, AND IT IS NOT THE OBVIOUS ONE. Removing the `enabled()` guard
+     * from Shortcodes::instagram() alone is GREEN — RUN, and it is — because
+     * InstagramFeed::section() checks the switch too and returns before any query.
+     * That is the second lock doing its job, and it is why the shortcode's own
+     * guard is described in its docblock as the CHEAP one rather than the load-
+     * bearing one. The mutation that makes this red is removing BOTH: take the
+     * `enabled()` check out of InstagramFeed::section() as well and the count is 1.
+     * RUN: green on the first alone, red on the pair.
      */
     igModule(false);
     igPost();
@@ -634,8 +680,21 @@ it('draws no tile for a post whose picture never downloaded', function () {
      * rather than a filter afterwards, so the LIMIT counts rows that will be drawn:
      * filtering afterwards is how a "9 posts" setting renders six.
      *
-     * MUTATION NOTE. Remove `->drawable()` from InstagramFeed::build() and this is
-     * red: an <img src=""> is emitted for the pictureless row. RUN: red.
+     * ── MUTATION NOTE, AND WHAT RUNNING IT ACTUALLY SHOWED ─────────────────
+     *
+     * Removing `->drawable()` alone is GREEN. Removing the `->filter()` alone is
+     * GREEN TOO. Both were run and both were green, and the honest reading is that
+     * EITHER guard is sufficient for this case on its own — the scope stops the row
+     * being selected, and the filter stops a selected row being drawn. Only
+     * removing both turns this red. RUN: green, green, red.
+     *
+     * That is defence in depth rather than a weak test, and the two are kept because
+     * they fail differently on a question this case does NOT ask: the scope is what
+     * makes the LIMIT count rows that will be drawn, so without it a "9 posts"
+     * setting renders six the week two thumbnails fail — a defect no assertion about
+     * two rows can see. The filter is what catches a row whose stored path fails
+     * IgPath::stored() on the way out, which the scope cannot know about because the
+     * column is not null.
      */
     igModule(true);
     igPost(['remote_id' => 'has-picture']);
@@ -809,6 +868,20 @@ it('draws a real zero and draws nothing at all for a count it does not have', fu
      */
     expect(substr_count($html, 'class="igp-c'))->toBe(2)
         ->and(substr_count($html, 'class="igp-m"'))->toBe(1)
+        /*
+         * BOTH numbers, and that is not belt-and-braces — it is the whole case.
+         *
+         * The first draft asserted only that "0" appeared somewhere in the one
+         * metrics element, and went GREEN under the mutation it names below:
+         * changing the LIKES test to a truthy one hides the like count, but the
+         * comment count is still 0 and still drawn, so a "0" was still present and
+         * the element still existed. The assertion could not tell which of the two
+         * numbers it was looking at.
+         *
+         * Two `igp-sr` labels is one like figure AND one comment figure — the
+         * screen-reader word that follows each number — so this counts them.
+         */
+        ->and(substr_count($html, '<span class="igp-sr">'))->toBe(2)
         // The honest zero, printed as a zero. `>0<` is the number's own text node.
         /*
          * The honest zero. Written as the number followed by the screen-reader span
@@ -856,17 +929,36 @@ it('drops a shortcode attribute that is not one of the screen’s own options', 
      * shortcode ATTRIBUTE — which is a place a value arrives from outside just as
      * much as a POST body is, because an author types it.
      *
-     * MUTATION NOTE. Drop the `isset(InstagramSettings::LAYOUTS[...])` guard in
-     * Shortcodes::instagram() and this is red: the class attribute reads
-     * `is-"><script>`. RUN: red.
+     * ── MUTATION NOTE, AND THE THIRD LOCK NOBODY COUNTED ───────────────────
+     *
+     * Dropping the `isset(InstagramSettings::LAYOUTS[...])` guard in
+     * Shortcodes::instagram() alone is GREEN: instagram/section.blade.php re-checks
+     * the layout against the same constant and falls back to `grid`. Dropping BOTH
+     * was green too on the first run — and that was this assertion's fault rather
+     * than the code's, because it read `is-grid`, a string the emitted STYLESHEET
+     * contains as a selector whatever the layout is. Read off the class attribute
+     * instead, both-guards-removed is red. RUN: green on either alone, red on both.
+     *
+     * Worth noting what is still true with all of it gone: Blade's `{{ }}` escapes
+     * the value, so the injected markup is inert even then. Three locks on one
+     * value, and the case asserts against the outermost two because escaping is not
+     * a validation strategy — a value that is merely escaped is still a class
+     * attribute this shop never meant to emit.
      */
     igModule(true);
     igPost();
 
     $html = Shortcodes::render('[kbb_instagram layout="\"><script>alert(1)</script>" limit="900"]');
 
+    /*
+     * READ OFF THE CLASS ATTRIBUTE, not off the word. `is-grid` on its own is in the
+     * stylesheet this section emits as the selector `.igp-t.is-grid`, so the first
+     * draft of this line was true whatever the layout resolved to — which is how it
+     * stayed GREEN with BOTH allowlists removed. The attribute's exact value is the
+     * thing that can actually be wrong.
+     */
     expect(str_contains($html, '<script>alert'))->toBeFalse()
-        ->and(str_contains($html, 'is-grid'))->toBeTrue();
+        ->and(str_contains($html, 'class="igp-t is-grid"'))->toBeTrue();
 });
 
 it('emits its stylesheet and its script exactly once for two sections on one page', function () {
