@@ -675,7 +675,7 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         && $pageEditRefused === 422
         && $pageEditAnonymous === 401
         && str_contains(implode("\n", $pageEditedTags), '<title>Delivery, returns and the questions we are asked most</title>')
-        && str_contains(implode("\n", $pageEditedTags), 'Written from Content -&gt; Pages -&gt; User pages -&gt; Edit.')
+        && str_contains(implode("\n", $pageEditedTags), e($pageEditorForm['seo']['desc']))
         && str_contains(implode("\n", $pageEditedTags), '/storage/pages/faq.jpg');
 
     /* ───────────────────────── 8. the audit screen ────────────────────────── */
