@@ -403,9 +403,53 @@ final class AdminCapabilities
         ['POST', 'admin-api/payments/stripe/connect/application', 'payments.manage'],
         ['POST', 'admin-api/payments/stripe/disconnect', 'payments.manage'],
         ['GET', 'admin-api/payments/stripe/connect/*', 'payments.manage'],
+        /*
+         * Tamara's two provider-side settings — routes/payments-tamara.php.
+         *
+         * `payments.manage`, the same capability as the screen that edits the
+         * keys by hand, on the reasoning already written out for the Stripe
+         * connect routes above: these do the same thing with fewer keystrokes.
+         * Registering the webhook changes what Tamara sends this shop, removing
+         * it silently stops the shop hearing about declines, and the limits
+         * refresh rewrites which baskets are offered BNPL at all.
+         *
+         * BOTH VERBS ON THE WEBHOOK PATH ARE COVERED BY THE '*' METHOD, and the
+         * DELETE is the reason to say so: a rule written 'POST' only would leave
+         * the DELETE unmapped, which is owner-only at runtime and therefore not
+         * a hole — but it would be a hole the day somebody widens
+         * payments.manage to a manager, in a different file, with nothing to
+         * notice. The same argument the security.view / security.integrity split
+         * is made on.
+         *
+         * 'admin-api/payments/tamara' does NOT match 'admin-api/payments/tamara/
+         * webhook' — the single-segment '*' never crosses a slash and a literal
+         * pattern matches nothing beyond itself — so both lines are needed and
+         * neither can swallow the other whichever order they are read in.
+         */
+        ['*', 'admin-api/payments/tamara', 'payments.manage'],
+        ['*', 'admin-api/payments/tamara/*', 'payments.manage'],
         ['GET', 'admin-api/orders/*/settlement', 'orders.money'],
         ['POST', 'admin-api/orders/*/capture', 'orders.money'],
         ['POST', 'admin-api/orders/*/refund', 'orders.money'],
+        /*
+         * Releasing a BNPL authorisation on a cancelled order —
+         * routes/payments-tamara.php, App\Services\Payments\VoidsAuthorisation.
+         *
+         * `orders.money`, WITH the capture and the refund, and deliberately not
+         * a capability of its own. It is the third verb of one act: capture takes
+         * the money, refund gives back money that was taken, and this gives back
+         * the right to take it. Whoever may do two of those three may do the
+         * third — an operator trusted to refund a customer in full is trusted to
+         * stop them being billed for an order the shop cancelled, and it is the
+         * LESS dangerous of the two by a wide margin.
+         *
+         * Splitting it would create exactly the shape the note at the head of
+         * RULES warns about: an operator who can capture but not refund, or here
+         * cancel an order but not release the plan behind it — which leaves the
+         * customer worse off than if neither button existed, because the order
+         * now looks settled from this end.
+         */
+        ['POST', 'admin-api/orders/*/void', 'orders.money'],
 
         // ------------------------------------------------------------- core updates
         ['*', 'admin-api/updates', 'updates.manage'],

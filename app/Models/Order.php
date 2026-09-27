@@ -35,6 +35,13 @@ class Order extends Model
             'paid_at' => 'datetime',
             'captured_at' => 'datetime',
             'captured_total' => 'int',
+            /*
+             * When the authorisation this order was holding was released back to
+             * the provider. Doubles as PaymentVoider's idempotency guard, which
+             * is why it is a timestamp and not a boolean — see
+             * App\Services\Payments\VoidsAuthorisation.
+             */
+            'voided_at' => 'datetime',
             'completed_at' => 'datetime',
             'invoiced_at' => 'datetime',
             'deleted_at' => 'datetime',

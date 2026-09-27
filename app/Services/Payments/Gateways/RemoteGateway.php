@@ -68,6 +68,14 @@ abstract class RemoteGateway implements PaymentGateway
             $response = match (strtoupper($method)) {
                 'GET' => $request->get($url),
                 'PUT' => $request->put($url, $body),
+                /*
+                 * DELETE reaches exactly one endpoint on this shop: Tamara's
+                 * `DELETE /webhooks/{id}`, which takes the id in the path and
+                 * no body at all. Listed rather than folded into the default so
+                 * that a mistyped verb keeps falling through to POST, which is
+                 * the behaviour every caller written before this line relied on.
+                 */
+                'DELETE' => $request->delete($url, $body),
                 default => $request->post($url, $body),
             };
         } catch (\Throwable $e) {
@@ -122,6 +130,14 @@ abstract class RemoteGateway implements PaymentGateway
             $response = match (strtoupper($method)) {
                 'GET' => $request->get($url),
                 'PUT' => $request->put($url, $body),
+                /*
+                 * DELETE reaches exactly one endpoint on this shop: Tamara's
+                 * `DELETE /webhooks/{id}`, which takes the id in the path and
+                 * no body at all. Listed rather than folded into the default so
+                 * that a mistyped verb keeps falling through to POST, which is
+                 * the behaviour every caller written before this line relied on.
+                 */
+                'DELETE' => $request->delete($url, $body),
                 default => $request->post($url, $body),
             };
         } catch (\Throwable $e) {

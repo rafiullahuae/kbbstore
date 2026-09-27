@@ -104,6 +104,22 @@ class PaymentSettlementController extends Controller
             'refunded_total_aed' => Money::toAed($refunded),
             'refundable_aed' => Money::toAed(max(0, $captured - $refunded)),
             'refundable_fils' => max(0, $captured - $refunded),
+            /*
+             * The third verb, on the endpoint the order screen already reads.
+             *
+             * A NESTED KEY rather than more top-level ones, so the screen can
+             * tell "this order's authorisation has been released" from "this
+             * order has been captured" without the two vocabularies growing into
+             * each other. PaymentVoider::status() never calls a provider, for
+             * the same reason PaymentCapturer::status() does not: this is
+             * rendered with the order page.
+             *
+             * ADDITIVE. Nothing that reads this response today looks for `void`,
+             * so nothing changes for any existing caller — see
+             * App\Services\Payments\VoidsAuthorisation for why the key had to
+             * exist at all.
+             */
+            'void' => app(\App\Services\Payments\PaymentVoider::class)->status($order),
         ];
     }
 }
