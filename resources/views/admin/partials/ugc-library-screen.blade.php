@@ -79,6 +79,71 @@
     video and cannot be published at all. Step 2 says that in as many words
     rather than drawing an empty frame.
 
+    ── TWO COLUMNS, AND SECTIONS THAT READ AS SECTIONS ──────────────────────
+
+    The owner, about the screen next door and then about this one: "make the
+    sections prominent and don't give me onwards any classic throw away looks",
+    and "avoid long form page". A step panel used to be one tall column of
+    fields with a small uppercase word over each group, which on a 1280px
+    desktop is a form down the left and a dead half down the right.
+
+    So every step that has enough in it to fill two columns is laid out as two:
+    step 1 is the title beside the caption, step 2 is the video beside the
+    cover, step 3 is who made it beside whether they said yes, step 4 is the
+    tagged list beside the search, and step 5 is where it shows beside when.
+    ONE COLUMN ON A PHONE, and the switch is `.ugs-cols` plus a media query at
+    900px — no script, rule 4.
+
+    A section is `.ugs-sec`: a bordered block whose head is a tinted bar with an
+    icon, a real title, a sentence saying what the section is for, and a figure
+    on the end (the file size, "required", "optional"). Not a label floating
+    over a hairline.
+
+    `.ugs-slot` SURVIVED THIS AS THE BODY of the two media sections rather than
+    as a card of its own, and deliberately: its `align-content:start` is the
+    rule that stops the cover button rendering as a 190px slab beside a 640px
+    video, which a picture found and UgcAddClipFlowTest now pins. The section
+    draws the border and the head; the slot still packs the rows.
+
+    ── THE CUT IS OFFERED WHERE THE UPLOAD ENDS ─────────────────────────────
+
+    "once upload the video complete, it should give option to cut teaser and
+    poster." It used to be a button in the cover box, below a drop zone, that
+    the owner had to notice. It is now `cutHTML()`: its own section, directly
+    under the two file boxes, loud for as long as a video has just landed.
+
+    IT IS ONLY OFFERED WHERE IT IS REAL. `transcoder.available` is this server's
+    own answer — UgcTranscoder::available() is a `which ffmpeg`, read off the
+    library payload — and there has to be a stored clip to cut FROM. Where
+    either is missing the same place says what to do instead in as many words,
+    rather than drawing a button whose only possible answer is a note saying it
+    could not.
+
+    AND IT DOES NOT TAKE CREDIT FOR WORK THE UPLOAD ALREADY DID. On a server
+    that has ffmpeg, UgcVideoController::media() calls derive() ON THE UPLOAD
+    REQUEST for a clip, so by the time this section is drawn both files usually
+    exist already. It reads the row and says which of the two worlds it is in:
+    "both were cut on the way in, cut them again from a different frame" or
+    "cut them now".
+
+    ── THE UPLOAD BAR IS ALL MEASURED AND IT HAS AN END ─────────────────────
+
+    Every number in it came off `xhr.upload.onprogress`: the percentage, the
+    bytes sent and the total. There is no indeterminate mode, because a bar that
+    sweeps while nothing is known is a bar that lies.
+
+    TWO REAL STAGES, not a spinner. `upState.stage` is 'send' until
+    `xhr.upload.onload` fires — the moment the last byte has left — and
+    'server' after it, which is when the server is running its content checks
+    and, where it can, the two transcodes. The panel says so from the moment it
+    is true rather than from 99%.
+
+    AND BOTH ENDINGS STAY ON SCREEN. The old panel was thrown away the instant
+    the request landed, so a 31 MB upload finished with no trace it had ever
+    happened and a refused one left only a toast. `upDone` holds the terminal
+    state — the name, the size and either a tick or the server's own reason —
+    until the next upload replaces it.
+
     ── NOTHING BELOW MAY NAME BLADE'S RAW-BLOCK DIRECTIVES ──────────────────
 
     Not in the code and not in this comment either. Blade pairs the first such
@@ -203,6 +268,52 @@
 .ugs-fields{display:grid;gap:11px;min-width:0}
 .ugs-two{display:grid;gap:11px;grid-template-columns:1fr;min-width:0}
 @media (min-width:820px){ .ugs-two{grid-template-columns:1fr 1fr} }
+
+/* ── two columns at a desk, one on a phone ─────────────────────────────
+   The owner's complaint, in his words: a tall form with a dead right half. One
+   media query decides, so nothing is measured in script. Rule 4.
+
+   align-items, NOT the row-packing declaration .ugs-slot owns: this packs the
+   two SECTIONS to the top of the row, so a short one beside a tall one stays
+   its own height instead of stretching. */
+.ugs-cols{display:grid;gap:12px;grid-template-columns:1fr;align-items:start;min-width:0}
+.ugs-cols > *{min-width:0}
+@media (min-width:900px){ .ugs-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} }
+
+/* ── a section that reads as a section ─────────────────────────────────
+   "make the sections prominent and don't give me onwards any classic throw away
+   looks". So: a bordered block, a tinted head bar carrying an icon, a real
+   title, a sentence saying what it is for, and a figure on the end. Not an
+   uppercase word floating over a hairline. */
+.ugs-sec{display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;
+         border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+         background:var(--surface,#fff);overflow:hidden}
+.ugs-sech{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;
+          padding:10px 12px;min-width:0;background:var(--surface-2,#f2f4fb);
+          border-block-end:1px solid var(--border,#e6e9f2)}
+.ugs-sech > *{min-width:0}
+.ugs-secn{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
+          background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);
+          color:var(--ink-2,#3c465c)}
+.ugs-secn svg{width:16px;height:16px}
+.ugs-sect{display:block;font-size:13px;font-weight:700;letter-spacing:-.01em;line-height:1.3}
+.ugs-secs{display:block;font-size:11px;font-weight:500;color:var(--ink-soft,#626c80);
+          line-height:1.45;margin-block-start:2px}
+.ugs-secw{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+          color:var(--ink-faint,#97a0b2);white-space:nowrap}
+.ugs-secb{display:grid;gap:10px;padding:12px;min-width:0}
+.ugs-secb > *{min-width:0}
+.ugs-sec.is-live{border-color:var(--accent,#15a85a)}
+.ugs-sec.is-live .ugs-sech{background:var(--accent-soft,#e7f7ee);
+                           border-block-end-color:var(--accent,#15a85a)}
+.ugs-sec.is-live .ugs-secn{border-color:var(--accent,#15a85a);color:var(--accent-ink,#0b6e3a)}
+.ugs-sec.is-live .ugs-secw{color:var(--accent-ink,#0b6e3a)}
+.ugs-sec.is-warm{border-color:#f0dcb4}
+.ugs-sec.is-warm .ugs-sech{background:var(--amber-soft,#fdf2e2);border-block-end-color:#f0dcb4}
+.ugs-sec.is-warm .ugs-secn{border-color:#f0dcb4;color:#8a6212}
+.ugs-sec.is-warm .ugs-secw{color:#8a6212}
+/* The buttons a section offers, wrapped rather than squeezed at 390px. */
+.ugs-cutb{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
 .ugs-f{display:grid;gap:4px;min-width:0}
 .ugs-f label{font-size:11.5px;font-weight:650;color:var(--ink-2,#3c465c);overflow-wrap:anywhere}
 .ugs-f input[type=text],.ugs-f input[type=datetime-local],.ugs-f input[type=number],
@@ -244,29 +355,40 @@
 .ugs-dropb{font-size:12.5px;font-weight:650}
 .ugs-drops{font-size:10.5px;color:var(--ink-faint,#97a0b2);line-height:1.45}
 
-/* ── the upload bar ────────────────────────────────────────────────────── */
-.ugs-up{display:grid;gap:6px;border:1px solid var(--accent,#15a85a);border-radius:var(--r-sm,12px);
+/* ── the upload bar ────────────────────────────────────────────────────
+   Every number in here is measured: the percentage, the bytes sent and the
+   total all came off the upload's own progress event. There is NO indeterminate
+   variant, on purpose -- a bar that sweeps while nothing is known is a bar that
+   lies. is-bad is the refused ending, and it stays on screen. */
+.ugs-up{display:grid;gap:7px;border:1px solid var(--accent,#15a85a);border-radius:var(--r-sm,12px);
         padding:11px 12px;background:var(--accent-soft,#e7f7ee);min-width:0}
+.ugs-up.is-bad{border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
 .ugs-uph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
          font-size:11.5px;font-weight:650;min-width:0}
 .ugs-uph span{white-space:nowrap;color:var(--accent-ink,#0b6e3a)}
 .ugs-upn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.ugs-prog{height:5px;border-radius:999px;background:var(--surface,#fff);overflow:hidden}
+/* The file name, its size and what the request is doing, on one wrapping row. */
+.ugs-upm{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:10.5px;line-height:1.5;
+         color:var(--ink-soft,#626c80);min-width:0}
+.ugs-upm > *{min-width:0;overflow-wrap:anywhere}
+.ugs-up.is-bad .ugs-uph span,.ugs-up.is-bad .ugs-upm{color:#8c2f2c}
+.ugs-prog{height:6px;border-radius:999px;background:var(--surface,#fff);overflow:hidden}
 .ugs-progb{height:100%;width:0;background:var(--accent,#15a85a);transition:width .18s var(--ease)}
 
-/* ── the media step ────────────────────────────────────────────────────── */
-.ugs-media{display:grid;gap:11px;grid-template-columns:1fr;min-width:0}
-@media (min-width:880px){ .ugs-media{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} }
-/* align-content:start IS LOAD-BEARING. The two media slots are grid items in a
-   two-column row, so both stretch to the taller one -- and the cover slot,
-   which has no preview until a cover exists, then spread its own rows to fill
-   that height: a stretched "Choose from the Media Library" button with a void
-   of white above it, beside a video preview that was 640px tall. It read as a
-   broken panel. Packing the rows to the top leaves the slot as tall as its
-   neighbour and its CONTENT its own size. */
-.ugs-slot{display:grid;gap:8px;align-content:start;
-          border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
-          padding:11px;min-width:0;background:var(--surface,#fff)}
+/* ── the media step ────────────────────────────────────────────────────
+   .ugs-slot IS NOW THE BODY OF A .ugs-sec rather than a card of its own: the
+   section draws the border, the tinted head and the padding, and this keeps the
+   two declarations that were paid for.
+
+   align-content:start IS LOAD-BEARING. The two media sections are grid items in
+   a two-column row, so both used to stretch to the taller one -- and the cover
+   slot, which has no preview until a cover exists, then spread its own rows to
+   fill that height: a stretched "Choose from the Media Library" button with a
+   void of white above it, beside a video preview that was 640px tall. It read
+   as a broken panel. Packing the rows to the top leaves the slot as tall as its
+   neighbour and its CONTENT its own size. .ugs-cols now also packs the sections
+   themselves to the top, so the defect is shut twice. */
+.ugs-slot{display:grid;gap:8px;align-content:start;min-width:0}
 /* A button in a grid also stretches across its column by default, so it keeps
    the full width deliberately rather than by accident.
 
@@ -277,16 +399,19 @@
    before a word parses as exactly that shape, and this line is where it went
    red. Prose in here starts its sentences with a capital instead. */
 .ugs-slot > .ugs-btn{justify-self:stretch}
-.ugs-sloth{display:flex;justify-content:space-between;align-items:baseline;gap:9px;min-width:0}
-.ugs-sloth b{font-size:12.5px}
-.ugs-sloth span{font-size:10.5px;color:var(--ink-faint,#97a0b2);white-space:nowrap}
 /* A fixed 9:16 box rather than the file's own shape: the preview then reserves
    its space before a byte of video arrives, which is the same reason the shop's
    tile reserves from width and height instead of measuring. */
 .ugs-pv{border-radius:var(--r-sm,12px);overflow:hidden;background:#0b0f18;min-width:0;
         margin-inline:auto;width:min(100%,clamp(150px,18vw,230px));aspect-ratio:9/16}
 .ugs-pv video,.ugs-pv img{display:block;width:100%;height:100%;object-fit:contain;background:#0b0f18}
-.ugs-shots{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;min-width:0}
+/* The loop tile beside the prose about it: one fixed track for the tile and one
+   fluid one for the words, from 900px, and one column below that. In the
+   STYLESHEET rather than in a style attribute, which is the one place a media
+   query cannot reach. */
+.ugs-loopcols{display:grid;gap:12px;grid-template-columns:1fr;align-items:start;min-width:0}
+.ugs-loopcols > *{min-width:0}
+@media (min-width:900px){ .ugs-loopcols{grid-template-columns:178px minmax(0,1fr)} }
 .ugs-loopbox{display:grid;gap:6px;justify-items:center;min-width:0}
 /* 158px is the shop's own rail tile width, so this is the size it really is. */
 .ugs-loop{width:min(100%,158px);aspect-ratio:9/16;border-radius:var(--r-sm,12px);overflow:hidden;
@@ -422,8 +547,27 @@
   var term = '';               // ...and what was typed to get it
   var banner = null, busy = false, seq = 0;
   var step = 1;                // which panel is on show
-  var upState = null;          // {kind, name, pct} while a file is going up
   var loopEl = null;           // the mounted preview video, released before each repaint
+
+  /*
+   * THE UPLOAD, WHILE IT IS HAPPENING AND AFTER IT HAS.
+   *
+   * `upState` is the request in flight: {kind, name, total, sent, pct, stage}.
+   * Every number in it was handed over by `xhr.upload.onprogress` — none is
+   * interpolated, guessed or animated — and `stage` is 'send' until
+   * `xhr.upload.onload` says the last byte has left, 'server' after.
+   *
+   * `upDone` is the ENDING, which the old screen threw away: the panel vanished
+   * the instant the request landed, so a 31 MB upload finished with no trace it
+   * had happened and a refusal left only a toast. It holds
+   * {ok, kind, name, bytes, message} until the next upload replaces it.
+   *
+   * `freshClip` is the id whose VIDEO has just arrived, which is what makes the
+   * cut the next thing on screen rather than something to be noticed.
+   */
+  var upState = null;
+  var upDone = null;
+  var freshClip = null;
 
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -510,6 +654,18 @@
     return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';
   }
 
+  /*
+   * The same figure, but always a number.
+   *
+   * kb() answers an em dash for nothing, which is right beside "The video" on a
+   * clip that has none. It is wrong inside the upload panel, where zero bytes
+   * sent is a fact and "— of 31.0 MB" reads as a panel that has lost track.
+   */
+  function bytes(n) {
+    n = Number(n) || 0;
+    return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';
+  }
+
   function cap(kind) {
     if (kind === 'clip') return limits ? limits.clip_mb : 64;
     if (kind === 'teaser') return limits ? limits.teaser_mb : 8;
@@ -555,6 +711,7 @@
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
 
+    forgetUpload();
     editing = null;
     step = 1;
     render();
@@ -673,7 +830,20 @@
     }
   }
 
+  /*
+   * The upload panel and the cut offer belong to ONE clip, so both are dropped
+   * whenever the screen moves to another one — opening a different tile, leaving
+   * for the list, or starting a new clip. Left behind, a green "uploaded" panel
+   * would sit on the next clip's step 2 describing a file that is not on it.
+   */
+  function forgetUpload() {
+    upState = null;
+    upDone = null;
+    freshClip = null;
+  }
+
   function blank() {
+    forgetUpload();
     editing = {
       id: null, title: '', caption: '', status: 'draft', rights_status: 'pending',
       source_platform: 'upload', source_url: '', creator_handle: '', creator_url: '',
@@ -831,6 +1001,7 @@
     busy = true; render();
     try {
       await api('/ugc-videos/' + encodeURIComponent(id), {}, 'DELETE');
+      forgetUpload();
       editing = null;
       step = 1;
       say('Deleted.');
@@ -849,11 +1020,33 @@
      throw away the caret of anything being typed. Writing a width is not
      measuring one. */
   function paintProgress() {
+    if (!upState) return;
+
     var bar = document.querySelector('[data-ugs-bar]');
     var pct = document.querySelector('[data-ugs-pct]');
-    var n = upState ? upState.pct : 0;
-    if (bar) bar.style.width = n + '%';
-    if (pct) pct.textContent = n + '%';
+    var sent = document.querySelector('[data-ugs-sent]');
+    var stage = document.querySelector('[data-ugs-stage]');
+
+    if (bar) bar.style.width = upState.pct + '%';
+    if (pct) pct.textContent = upState.pct + '%';
+    if (sent) sent.textContent = bytes(upState.sent) + ' of ' + bytes(upState.total) + ' sent';
+    if (stage) stage.textContent = stageWords(upState.stage);
+  }
+
+  /*
+   * What the request is doing, in the owner's words and never a guess.
+   *
+   * 'server' is set by `xhr.upload.onload` — the event that fires when the last
+   * byte has left this browser — so this sentence appears at the moment it
+   * becomes true rather than at 99% or on a timer. What the server is doing
+   * then is real work and worth naming: UgcMedia reads the bytes, and on a box
+   * with ffmpeg UgcVideoController::media() cuts the cover and the teaser on
+   * this same request.
+   */
+  function stageWords(s) {
+    return s === 'server'
+      ? 'All of it has arrived. The server is checking the file and cutting what it can.'
+      : 'Sending to the server.';
   }
 
   /**
@@ -897,7 +1090,11 @@
     data.append('kind', kind);
     data.append('file', file);
 
-    upState = { kind: kind, name: file.name, pct: 0 };
+    upState = { kind: kind, name: file.name, total: file.size, sent: 0, pct: 0, stage: 'send' };
+    /* The last ending is cleared before this one starts, so a red panel from a
+       refused attempt never sits under a fresh bar. */
+    upDone = null;
+    if (kind === 'clip') freshClip = null;
     busy = true; render();
 
     var xhr = new XMLHttpRequest();
@@ -907,7 +1104,21 @@
 
     xhr.upload.onprogress = function (e) {
       if (!e.lengthComputable || !upState) return;
+      upState.sent = e.loaded;
+      upState.total = e.total;
       upState.pct = Math.round((e.loaded / e.total) * 100);
+      paintProgress();
+    };
+
+    /* THE HANDOVER, AS ITS OWN EVENT. Everything is sent and the request is now
+       the server's — which on a box with ffmpeg means two transcodes before it
+       answers, and on a 31 MB clip is the longest part of the wait. Read off
+       the event rather than inferred from a percentage. */
+    xhr.upload.onload = function () {
+      if (!upState) return;
+      upState.sent = upState.total;
+      upState.pct = 100;
+      upState.stage = 'server';
       paintProgress();
     };
 
@@ -915,9 +1126,17 @@
       var payload = null;
       try { payload = JSON.parse(xhr.responseText); } catch (e) { payload = null; }
 
+      /* Kept off upState before it is dropped, so the ending can name the file
+         that produced it. */
+      var name = upState ? upState.name : file.name;
+      var size = upState ? upState.total : file.size;
       upState = null;
 
       if (xhr.status >= 200 && xhr.status < 300 && payload && payload.ok) {
+        upDone = { ok: true, kind: kind, name: name, bytes: size, message: '' };
+        /* WHICH CLIP JUST TOOK A VIDEO, so cutHTML() can offer the cut as the
+           next thing rather than leaving it to be found. */
+        if (kind === 'clip') freshClip = editing.id;
         (payload.notes || []).forEach(say);
         say(kind === 'clip' ? 'Video added.' : 'Teaser added.');
         var id = editing.id;
@@ -928,14 +1147,19 @@
       var err = new Error('upload ' + xhr.status);
       err.status = xhr.status;
       err.body = payload;
+      upDone = { ok: false, kind: kind, name: name, bytes: size,
+                 message: explain(err, 'That file was not accepted.') };
       busy = false;
-      say(explain(err, 'That file was not accepted.'));
+      say(upDone.message);
       render();
     };
 
     xhr.onerror = function () {
+      var name = upState ? upState.name : file.name;
       upState = null; busy = false;
-      say('The upload did not reach the server. Check the connection and try again.');
+      upDone = { ok: false, kind: kind, name: name, bytes: file.size,
+                 message: 'The upload did not reach the server. Check the connection and try again.' };
+      say(upDone.message);
       render();
     };
 
@@ -1059,6 +1283,56 @@
   var ICON_PLUS = '<path d="M12 5v14"/><path d="M5 12h14"/>';
   var ICON_GRIP = '<circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/>'
     + '<circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>';
+
+  /* One glyph per section head. Constants, every one of them, and each is drawn
+     through icon() so the stroke attributes are written in exactly one place. */
+  var ICON_TITLE = '<path d="M4 6h16"/><path d="M4 12h11"/><path d="M4 18h7"/>';
+  var ICON_QUOTE = '<path d="M9 7H5v5h4c0 2-1 3-3 3"/><path d="M19 7h-4v5h4c0 2-1 3-3 3"/>';
+  var ICON_FILM = '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18"/>'
+    + '<path d="M3 14.5h18"/><path d="M8.5 4v16"/><path d="M15.5 4v16"/>';
+  var ICON_IMAGE = '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.4"/>'
+    + '<path d="m4 18.5 5-5 3.5 3.5L16 14l4 4"/>';
+  var ICON_CUT = '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/>'
+    + '<path d="M20 4 8 16"/><path d="M8 8l12 12"/>';
+  var ICON_LOOP = '<path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>'
+    + '<path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>';
+  var ICON_USER = '<circle cx="12" cy="8" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>';
+  var ICON_SHIELD = '<path d="M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>';
+  var ICON_TAG = '<path d="M20.5 13.5 12 22 3 13V3h10z"/><circle cx="7.5" cy="7.5" r="1.2"/>';
+  var ICON_SEARCH = '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>';
+  var ICON_SEND = '<path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>';
+  var ICON_CLOCK = '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3.5 2"/>';
+
+  /*
+   * A SECTION HEAD THAT READS AS A SECTION.
+   *
+   * `title`, `sub` and `note` are CONSTANTS at every call site — never a
+   * setting — and each goes through esc() anyway. `body` is markup the caller
+   * has already escaped, the same contract panelHead() has.
+   *
+   * `tone` is one of two words this file writes itself, and `bodyClass` is one
+   * of this file's own classes. Neither is ever read from a payload.
+   *
+   * @param {{glyph:string,title:string,sub:string,body:string,
+   *          tone?:string,note?:string,bodyClass?:string}} o
+   */
+  function secHTML(o) {
+    return '<section class="ugs-sec' + (o.tone ? ' is-' + o.tone : '') + '">'
+      + '<header class="ugs-sech">'
+      +   '<span class="ugs-secn">' + icon(o.glyph) + '</span>'
+      +   '<span><span class="ugs-sect">' + esc(o.title) + '</span>'
+      +     (o.sub ? '<span class="ugs-secs">' + esc(o.sub) + '</span>' : '')
+      +   '</span>'
+      +   '<span class="ugs-secw">' + esc(o.note || '') + '</span>'
+      + '</header>'
+      + '<div class="ugs-secb' + (o.bodyClass ? ' ' + o.bodyClass : '') + '">' + o.body + '</div>'
+      + '</section>';
+  }
+
+  /** Two sections side by side at a desk, stacked on a phone. CSS decides. */
+  function colsHTML(left, right) {
+    return '<div class="ugs-cols">' + left + right + '</div>';
+  }
 
   function pill(text, tone) {
     return '<span class="ugs-pill' + (tone ? ' is-' + tone : '') + '">' + esc(text) + '</span>';
@@ -1262,34 +1536,190 @@
       + '</label>';
   }
 
+  /*
+   * THE UPLOAD PANEL: in flight, then finished, then refused.
+   *
+   * The percentage, the bytes sent and the total are the upload event's own
+   * numbers — see paintProgress(), which writes them into these three nodes
+   * without a repaint. There is no indeterminate variant anywhere here, because
+   * a bar that sweeps while nothing is known is a bar that lies.
+   *
+   * AND IT HAS AN END. Both endings are drawn, and both stay until the next
+   * upload: a tick with the size that arrived, or the server's own reason in
+   * red. The old panel simply disappeared, which is what a stalled upload looks
+   * like too.
+   */
   function progressHTML() {
-    if (!upState) return '';
-    return '<div class="ugs-up">'
-      + '<div class="ugs-uph"><span class="ugs-upn">' + esc(upState.name) + '</span>'
-      +   '<span data-ugs-pct>' + esc(upState.pct) + '%</span></div>'
-      + '<div class="ugs-prog"><div class="ugs-progb" data-ugs-bar '
-      +   'style="width:' + esc(upState.pct) + '%"></div></div>'
+    if (upState) {
+      return '<div class="ugs-up">'
+        + '<div class="ugs-uph"><span class="ugs-upn">' + esc(upState.name) + '</span>'
+        +   '<span data-ugs-pct>' + esc(upState.pct) + '%</span></div>'
+        + '<div class="ugs-prog"><div class="ugs-progb" data-ugs-bar '
+        +   'style="width:' + esc(upState.pct) + '%"></div></div>'
+        + '<div class="ugs-upm">'
+        +   '<span data-ugs-sent>' + esc(bytes(upState.sent)) + ' of '
+        +     esc(bytes(upState.total)) + ' sent</span>'
+        +   '<span data-ugs-stage>' + esc(stageWords(upState.stage)) + '</span>'
+        + '</div>'
+        + '</div>';
+    }
+
+    if (!upDone) return '';
+
+    if (upDone.ok) {
+      return '<div class="ugs-up">'
+        + '<div class="ugs-uph"><span class="ugs-upn">' + esc(upDone.name) + '</span>'
+        +   '<span>&#10003; 100%</span></div>'
+        + '<div class="ugs-prog"><div class="ugs-progb" style="width:100%"></div></div>'
+        + '<div class="ugs-upm">'
+        +   '<span>' + esc(bytes(upDone.bytes)) + ' arrived whole</span>'
+        +   '<span>' + (upDone.kind === 'clip'
+              ? 'This is the video the tile plays.'
+              : 'This is the teaser the tile loops.') + '</span>'
+        + '</div>'
+        + '</div>';
+    }
+
+    return '<div class="ugs-up is-bad">'
+      + '<div class="ugs-uph"><span class="ugs-upn">' + esc(upDone.name) + '</span>'
+      +   '<span>not accepted</span></div>'
+      + '<div class="ugs-upm">'
+      +   '<span>' + esc(upDone.message) + '</span>'
+      +   '<span>' + esc(bytes(upDone.bytes)) + ' &mdash; nothing on the clip was changed.</span>'
+      + '</div>'
       + '</div>';
+  }
+
+  /*
+   * THE CUT, OFFERED WHERE THE UPLOAD ENDS.
+   *
+   * The owner's ask, verbatim: "once upload the video complete, it should give
+   * option to cut teaser and poster." It used to be a button at the bottom of
+   * the cover box that he had to notice. It is now a section of its own,
+   * directly under the two file boxes, and it wears the loud tone for as long as
+   * a video has just landed on this clip.
+   *
+   * ── IT IS ONLY OFFERED WHERE IT IS REAL ─────────────────────────────────
+   *
+   * `transcoder.available` is this SERVER's answer, not a hope:
+   * UgcTranscoder::available() is a `which ffmpeg` and the library payload
+   * carries it. And there has to be a stored clip to cut FROM. Where either is
+   * missing this same place says what to do instead, in as many words, rather
+   * than drawing a button whose only possible answer is a note saying it could
+   * not — which is what /derive really returns on a box with no ffmpeg.
+   *
+   * ── AND IT TAKES NO CREDIT FOR WHAT THE UPLOAD ALREADY DID ──────────────
+   *
+   * On a server that HAS ffmpeg the cutting has already happened by the time
+   * this is drawn: UgcVideoController::media() calls derive() on the upload
+   * request for a clip. So the section reads the row and says which of the two
+   * worlds the owner is in, instead of offering to do work that is done.
+   */
+  function cutHTML(v, clip) {
+    if (!clip) return '';       // nothing to cut from, and step 2 says so above
+
+    var length = (transcoder && transcoder.teaser_seconds) || '2.5';
+    var fresh = freshClip !== null && String(freshClip) === String(v.id);
+
+    if (!(transcoder && transcoder.available && v.id)) {
+      return secHTML({
+        glyph: ICON_CUT,
+        title: 'Nothing can be cut on this server',
+        sub: 'It answered that it has no ffmpeg, so neither the cover nor a teaser can be made here.',
+        note: 'by hand',
+        tone: 'warm',
+        body: '<div class="ugs-note is-warm"><b>What to do instead.</b> Press '
+          + '<b>Choose from the Media Library</b> in the cover box and pick a still &mdash; one '
+          + 'frame exported from wherever you edited the video. That is the only file still '
+          + 'needed. <b>The loop needs no second file</b>: the tile plays the first '
+          + esc(secs(loop().ms)) + ' seconds of this very video and rewinds, so a separate '
+          + 'teaser is a bandwidth saving you can skip entirely.</div>'
+      });
+    }
+
+    var has = !!(v.poster_path && v.teaser_path);
+    var body = '';
+
+    if (fresh) {
+      body += '<div class="ugs-note is-cool"><b>Your video is uploaded.</b> '
+        + (has
+           ? 'The cover and a ' + esc(length) + ' second teaser were cut from it on the way in, '
+             + 'and both are on the clip now &mdash; there is nothing left to upload. Cut them '
+             + 'again if you would rather they came from a different moment.'
+           : 'Cut the cover and the teaser out of it here, and there is nothing left to upload.')
+        + '</div>';
+    }
+
+    body += '<p class="ugs-help">The cover is one frame taken at 0.6 seconds, because frame zero '
+      + 'of a phone video is very often half-exposed. The teaser is the first ' + esc(length)
+      + ' seconds scaled to 360&times;640 with the sound dropped. Both replace whatever is on '
+      + 'the clip now.</p>'
+      + '<div class="ugs-cutb">'
+      +   '<button class="ugs-btn is-primary" data-ugs-derive="1"' + (busy ? ' disabled' : '') + '>'
+      +     icon(ICON_CUT)
+      +     (has ? 'Cut them again from the video' : 'Cut the cover and teaser from the video')
+      +   '</button>'
+      + '</div>';
+
+    return secHTML({
+      glyph: ICON_CUT,
+      title: has ? 'The cover and the teaser are cut' : 'Cut the cover and teaser from the video',
+      sub: has
+        ? 'Both came out of the video itself, so neither has to be made by hand.'
+        : 'This server has ffmpeg, so neither file has to be made by hand.',
+      note: fresh ? 'just uploaded' : (has ? 'done' : 'one press'),
+      tone: fresh ? 'live' : '',
+      body: body
+    });
   }
 
   /* ─────────────────────────────────────────────────────────── the panels */
 
+  /*
+   * TWO COLUMNS, AND THE ARABIC BOX STAYS WITH ITS OWN FIELD.
+   *
+   * The title on the left and the caption on the right, each with its Arabic box
+   * under it. The other way round — every English field on the left and every
+   * Arabic box on the right — reads tidier and is worse: the two boxes for one
+   * field end up a column apart, and a column that only exists when the Arabic
+   * shop is on is a column that is empty half the time.
+   *
+   * KBBArabic.collect() and wire() both walk the whole form with
+   * querySelectorAll, so where a box SITS is this screen's business and not
+   * theirs. Nothing about the payload changes.
+   */
   function detailsPanel(v) {
+    var titleBody = '<div class="ugs-f"><label for="ugs-title">Title</label>'
+      + '<input id="ugs-title" type="text" maxlength="180" data-ugs-field="title" dir="auto"'
+      +   ' placeholder="Glass skin in 6 steps" value="' + esc(v.title) + '">'
+      + arabicBox('title', 'Title')
+      + '</div>';
+
+    var captionBody = '<div class="ugs-f"><label for="ugs-caption">Caption</label>'
+      + '<textarea id="ugs-caption" maxlength="2000" data-ugs-field="caption" dir="auto"'
+      +   ' placeholder="The creator\'s own words, if you are using them.">' + esc(v.caption) + '</textarea>'
+      + arabicBox('caption', 'Caption', 'textarea')
+      + '</div>';
+
     return '<section class="ugs-panel"' + (step === 1 ? '' : ' hidden') + '>'
       + panelHead(1, 'Details', 'A title is all it takes to start. Saving here creates the clip, '
         + 'which is what the video and the cover then belong to.')
-      + '<div class="ugs-fields">'
-      +   '<div class="ugs-f"><label for="ugs-title">Title</label>'
-      +     '<input id="ugs-title" type="text" maxlength="180" data-ugs-field="title" dir="auto"'
-      +       ' placeholder="Glass skin in 6 steps" value="' + esc(v.title) + '">'
-      +     arabicBox('title', 'Title')
-      +   '</div>'
-      +   '<div class="ugs-f"><label for="ugs-caption">Caption <span class="ugs-dim">· optional</span></label>'
-      +     '<textarea id="ugs-caption" maxlength="2000" data-ugs-field="caption" dir="auto"'
-      +       ' placeholder="The creator\'s own words, if you are using them.">' + esc(v.caption) + '</textarea>'
-      +     arabicBox('caption', 'Caption', 'textarea')
-      +   '</div>'
-      + '</div>'
+      + colsHTML(
+          secHTML({
+            glyph: ICON_TITLE,
+            title: 'What the clip is called',
+            sub: 'Shown under the tile on the shop, and everywhere in this console.',
+            note: 'required',
+            body: titleBody
+          }),
+          secHTML({
+            glyph: ICON_QUOTE,
+            title: 'The caption',
+            sub: 'The creator\'s own words, if you are using them. Nothing waits for it.',
+            note: 'optional',
+            body: captionBody
+          })
+        )
       + '</section>';
   }
 
@@ -1311,44 +1741,68 @@
 
     html += progressHTML();
 
-    /* ── the video ───────────────────────────────────────────────────── */
-    html += '<div class="ugs-media">'
-      + '<div class="ugs-slot">'
-      +   '<div class="ugs-sloth"><b>The video</b><span>' + esc(kb(v.bytes)) + '</span></div>'
-      +   (clip
-          ? '<div class="ugs-pv"><video src="' + esc(clip) + '" controls playsinline preload="metadata"'
-            + (poster ? ' poster="' + esc(poster) + '"' : '') + '></video></div>'
-            + '<p class="ugs-path">' + esc(clip) + '</p>'
-          : '')
-      +   dropHTML('clip', clip ? 'Drop a different video here' : 'Drag your video here',
-            'or press to choose one · MP4 or WebM, up to ' + esc(cap('clip')) + ' MB', locked)
-      + '</div>';
+    /* ── the two files, side by side at a desk and stacked on a phone ──
+       Each is a .ugs-sec whose BODY is the old .ugs-slot: the section draws the
+       border, the tinted head and the size on the end, and the slot still packs
+       its rows to the top so the cover button is never a slab. */
+    var videoBody = (clip
+        ? '<div class="ugs-pv"><video src="' + esc(clip) + '" controls playsinline preload="metadata"'
+          + (poster ? ' poster="' + esc(poster) + '"' : '') + '></video></div>'
+          + '<p class="ugs-path">' + esc(clip) + '</p>'
+        : '')
+      + dropHTML('clip', clip ? 'Drop a different video here' : 'Drag your video here',
+          'or press to choose one · MP4 or WebM, up to ' + esc(cap('clip')) + ' MB', locked);
 
-    /* ── the cover ───────────────────────────────────────────────────── */
-    html += '<div class="ugs-slot">'
-      +   '<div class="ugs-sloth"><b>The cover</b><span>' + esc(kb(v.poster_bytes)) + '</span></div>'
-      +   (poster
-          ? '<div class="ugs-pv"><img src="' + esc(poster) + '" alt=""></div>'
-            + '<p class="ugs-path">' + esc(poster) + ' · '
-            + (v.width && v.height ? esc(v.width + '×' + v.height) : 'size unread') + '</p>'
-          : '')
-      +   '<button class="ugs-btn is-primary" data-ugs-poster="1"' + (locked ? ' disabled' : '') + '>'
-      +     icon(ICON_PLUS) + 'Choose from the Media Library</button>'
-      +   posterDropHTML(locked)
-      +   (transcoder && transcoder.available && v.id && clip
-          ? '<button class="ugs-btn" data-ugs-derive="1">Cut the cover and teaser from the video</button>'
-          : '')
-      + '</div>'
-      + '</div>';
+    var coverBody = (poster
+        ? '<div class="ugs-pv"><img src="' + esc(poster) + '" alt=""></div>'
+          + '<p class="ugs-path">' + esc(poster) + ' · '
+          + (v.width && v.height ? esc(v.width + '×' + v.height) : 'size unread') + '</p>'
+        : '')
+      + '<button class="ugs-btn is-primary" data-ugs-poster="1"' + (locked ? ' disabled' : '') + '>'
+      +   icon(ICON_PLUS) + 'Choose from the Media Library</button>'
+      + posterDropHTML(locked);
+
+    html += colsHTML(
+      secHTML({
+        glyph: ICON_FILM,
+        title: 'The video',
+        sub: 'The clip itself. These are the bytes a tile plays.',
+        note: kb(v.bytes),
+        tone: clip ? 'live' : '',
+        bodyClass: 'ugs-slot',
+        body: videoBody
+      }),
+      secHTML({
+        glyph: ICON_IMAGE,
+        title: 'The cover',
+        sub: 'The still that holds the tile\'s shape while the video loads.',
+        note: kb(v.poster_bytes),
+        tone: poster ? 'live' : '',
+        bodyClass: 'ugs-slot',
+        body: coverBody
+      })
+    );
+
+    /* ── and the cut, where the upload ends rather than where it fits ── */
+    html += cutHTML(v, clip);
 
     /* ── the loop, as it really plays ────────────────────────────────── */
-    html += '<div class="ugs-slot">'
-      + '<div class="ugs-sloth"><b>The ' + esc(secs(loop().ms)) + ' second loop</b><span>'
-      +   esc(stateWords(v)[0]) + '</span></div>';
+    html += '<section class="ugs-sec"><header class="ugs-sech">'
+      + '<span class="ugs-secn">' + icon(ICON_LOOP) + '</span>'
+      + '<span><span class="ugs-sect">The ' + esc(secs(loop().ms)) + ' second loop</span>'
+      +   '<span class="ugs-secs">What a shopper sees on the rail, at the size the tile really '
+      +     'is on the shop.</span></span>'
+      + '<span class="ugs-secw">' + esc(stateWords(v)[0]) + '</span>'
+      + '</header><div class="ugs-secb">';
 
     if (clip) {
       var src = teaser || clip;
-      html += '<div class="ugs-shots">'
+      /* The tile beside the prose about it: a 178px track and one fluid one from
+         900px, one column below that. A GRID IN THE STYLESHEET, not the
+         `style="flex:1 1 220px"` this used to carry -- an inline declaration is
+         the one place a media query cannot reach, which is exactly how one of
+         the four screens in AdminMobileOverflowTest came to overflow. */
+      html += '<div class="ugs-loopcols">'
         + '<div class="ugs-loopbox">'
         +   '<div class="ugs-loop" data-ugs-loopsrc="' + esc(src) + '"'
         +     ' data-ugs-loopms="' + esc(loop().ms) + '"'
@@ -1357,7 +1811,7 @@
         +   '</div>'
         +   '<p class="ugs-loopcap">158px wide — the tile\'s real size on the shop.</p>'
         + '</div>'
-        + '<div style="flex:1 1 220px;min-width:0">'
+        + '<div>'
         +   '<div class="ugs-note is-cool">'
         +     (teaser
               ? '<b>This clip has its own teaser file</b>, so the tile downloads about 130 KB '
@@ -1404,7 +1858,7 @@
         + 'at the size it will be on the shop.</p>';
     }
 
-    html += '</div>';
+    html += '</div></section>';
 
     /* ── what can be previewed from where ───────────────────────────── */
     html += '<div class="ugs-note"><b>What can be previewed, and what cannot.</b> '
@@ -1424,37 +1878,47 @@
       + panelHead(3, 'Credit and permission', 'This shop re-hosts the creator\'s video, and the '
         + 'creator owns the copyright in it. One written yes is all it takes &mdash; and until it is '
         + 'recorded here the clip cannot be published.')
-      + '<div class="ugs-fields">'
-      +   '<div class="ugs-two">'
-      +     '<div class="ugs-f"><label for="ugs-handle">Creator handle</label>'
-      +       '<input id="ugs-handle" type="text" maxlength="120" data-ugs-field="creator_handle"'
-      +         ' placeholder="@layla.skin" value="' + esc(v.creator_handle) + '"></div>'
-      +     '<div class="ugs-f"><label for="ugs-curl">Creator link</label>'
-      +       '<input id="ugs-curl" type="text" maxlength="512" data-ugs-field="creator_url"'
-      +         ' placeholder="https://…" value="' + esc(v.creator_url) + '">'
-      +       '<p class="ugs-help">http:// or https:// only. Anything else is dropped.</p></div>'
-      +   '</div>'
-      +   '<div class="ugs-two">'
-      +     '<div class="ugs-f"><label for="ugs-plat">Where it came from</label>'
-      +       selectHTML('source_platform', vocab ? vocab.platform : [], v.source_platform) + '</div>'
-      +     '<div class="ugs-f"><label for="ugs-surl">Original post</label>'
-      +       '<input id="ugs-surl" type="text" maxlength="512" data-ugs-field="source_url"'
-      +         ' placeholder="https://…" value="' + esc(v.source_url) + '">'
-      +       (post
-                ? '<p class="ugs-help"><a href="' + esc(post) + '" target="_blank" rel="noopener nofollow">'
-                  + 'Open the original post &#8599;</a> &mdash; a credit link, never an embed.</p>'
-                : '<p class="ugs-help">A credit link, never an embed.</p>')
-      +     '</div>'
-      +   '</div>'
-      +   '<div class="ugs-two">'
-      +     '<div class="ugs-f"><label for="ugs-rights">Permission</label>'
-      +       selectHTML('rights_status', vocab ? vocab.rights : [], v.rights_status) + '</div>'
-      +     '<div class="ugs-f"><label for="ugs-ev">Where the permission is recorded</label>'
-      +       '<textarea id="ugs-ev" maxlength="2000" data-ugs-field="rights_evidence"'
-      +         ' placeholder="A DM, an email, a signed release.">' + esc(v.rights_evidence) + '</textarea>'
-      +       '<p class="ugs-help">Never shown on the shop.</p></div>'
-      +   '</div>'
-      + '</div>'
+      /* WHO MADE IT on the left and WHETHER THEY SAID YES on the right: the two
+         halves of this step are two different questions, and only the second one
+         holds the clip back from publishing. */
+      + colsHTML(
+          secHTML({
+            glyph: ICON_USER,
+            title: 'Who made it',
+            sub: 'The credit line a shopper sees under the clip.',
+            note: 'credit',
+            body: '<div class="ugs-f"><label for="ugs-handle">Creator handle</label>'
+              + '<input id="ugs-handle" type="text" maxlength="120" data-ugs-field="creator_handle"'
+              +   ' placeholder="@layla.skin" value="' + esc(v.creator_handle) + '"></div>'
+              + '<div class="ugs-f"><label for="ugs-curl">Creator link</label>'
+              + '<input id="ugs-curl" type="text" maxlength="512" data-ugs-field="creator_url"'
+              +   ' placeholder="https://…" value="' + esc(v.creator_url) + '">'
+              + '<p class="ugs-help">http:// or https:// only. Anything else is dropped.</p></div>'
+              + '<div class="ugs-f"><label for="ugs-plat">Where it came from</label>'
+              + selectHTML('source_platform', vocab ? vocab.platform : [], v.source_platform) + '</div>'
+              + '<div class="ugs-f"><label for="ugs-surl">Original post</label>'
+              + '<input id="ugs-surl" type="text" maxlength="512" data-ugs-field="source_url"'
+              +   ' placeholder="https://…" value="' + esc(v.source_url) + '">'
+              + (post
+                 ? '<p class="ugs-help"><a href="' + esc(post) + '" target="_blank" rel="noopener nofollow">'
+                   + 'Open the original post &#8599;</a> &mdash; a credit link, never an embed.</p>'
+                 : '<p class="ugs-help">A credit link, never an embed.</p>')
+              + '</div>'
+          }),
+          secHTML({
+            glyph: ICON_SHIELD,
+            title: 'Whether they said yes',
+            sub: 'The one thing on this step that stops a clip being published.',
+            note: v.rights_status === 'granted' ? 'granted' : 'required',
+            tone: v.rights_status === 'granted' ? 'live' : 'warm',
+            body: '<div class="ugs-f"><label for="ugs-rights">Permission</label>'
+              + selectHTML('rights_status', vocab ? vocab.rights : [], v.rights_status) + '</div>'
+              + '<div class="ugs-f"><label for="ugs-ev">Where the permission is recorded</label>'
+              + '<textarea id="ugs-ev" maxlength="2000" data-ugs-field="rights_evidence"'
+              +   ' placeholder="A DM, an email, a signed release.">' + esc(v.rights_evidence) + '</textarea>'
+              + '<p class="ugs-help">Never shown on the shop.</p></div>'
+          })
+        )
       + '</section>';
   }
 
@@ -1463,22 +1927,45 @@
       + panelHead(4, 'Products in this clip',
         '<b>Optional</b>, and the whole point of the feature: as many as you like, which is the '
         + 'thing Instagram cannot do. The first is the one a tile shows before anyone taps.')
-      + taggedHTML()
-      + '<div class="ugs-f">'
-      +   '<label for="ugs-search">Add a product</label>'
-      /* The typed term is kept in `term` and written back here, because
-         render() repaints #content wholesale: adding a product re-renders the
-         list, and a box that emptied itself under a list of results nobody
-         searched for reads as a bug. */
-      +   '<input id="ugs-search" type="text" placeholder="Search by name" data-ugs-search="1" value="'
-      +     esc(term) + '">'
-      +   '<div class="ugs-results">' + resultsHTML() + '</div>'
-      + '</div>'
+      /* THE LIST ON THE LEFT AND THE SEARCH ON THE RIGHT, so a clip with six
+         products tagged no longer pushes the only way to add a seventh off the
+         bottom of the screen. */
+      + colsHTML(
+          secHTML({
+            glyph: ICON_TAG,
+            title: 'Tagged on this clip',
+            sub: 'Drag to reorder. The first one is what a tile shows before anybody taps it.',
+            note: tagged.length ? String(tagged.length) : 'none yet',
+            tone: tagged.length ? 'live' : '',
+            body: taggedHTML()
+          }),
+          secHTML({
+            glyph: ICON_SEARCH,
+            title: 'Add a product',
+            sub: 'Published products only, searched by name as you type.',
+            note: 'optional',
+            body: '<div class="ugs-f">'
+              + '<label for="ugs-search">Search the catalogue</label>'
+              /* The typed term is kept in `term` and written back here, because
+                 render() repaints #content wholesale: adding a product
+                 re-renders the list, and a box that emptied itself under a list
+                 of results nobody searched for reads as a bug. */
+              + '<input id="ugs-search" type="text" placeholder="Search by name" data-ugs-search="1"'
+              +   ' value="' + esc(term) + '">'
+              + '<div class="ugs-results">' + resultsHTML() + '</div>'
+              + '</div>'
+          })
+        )
       + '</section>';
   }
 
   function publishPanel(v) {
     var blockers = v._blockers || v.blockers || [];
+    /* How many of the three are still open, counted off the row's own columns —
+       the same three the checklist draws, so the figure on the section head and
+       the ticks under it can never disagree. */
+    var left = (v.file_path ? 0 : 1) + (v.poster_path ? 0 : 1)
+             + (v.rights_status === 'granted' ? 0 : 1);
     var done = function (ok, text) {
       return '<div class="ugs-ci ' + (ok ? 'is-ok' : 'is-no') + '">'
         + '<span class="ugs-cid">' + (ok ? '&#10003;' : '!') + '</span>'
@@ -1488,36 +1975,54 @@
     return '<section class="ugs-panel"' + (step === 5 ? '' : ' hidden') + '>'
       + panelHead(5, 'Publish', 'Everything below has to be true before a clip can appear. '
         + 'The list is the server\'s answer, not this screen\'s guess.')
-      + '<div class="ugs-check">'
-      +   done(!!v.file_path, 'The video is uploaded')
-      +   done(!!v.poster_path, 'The cover is set')
-      +   done(v.rights_status === 'granted', 'The creator has granted permission')
-      + '</div>'
+      + secHTML({
+          glyph: ICON_SHIELD,
+          title: 'What has to be true',
+          sub: 'Read off UgcVideo::publishBlockers(), which is what the save really checks.',
+          note: left === 0 ? 'all three' : (3 - left) + ' of 3',
+          tone: left === 0 ? 'live' : 'warm',
+          body: '<div class="ugs-check">'
+            + done(!!v.file_path, 'The video is uploaded')
+            + done(!!v.poster_path, 'The cover is set')
+            + done(v.rights_status === 'granted', 'The creator has granted permission')
+            + '</div>'
+        })
       + (blockers.length
           ? '<div class="ugs-note is-bad"><b>The last save was refused:</b><ul>'
             + blockers.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('')
             + '</ul></div>'
           : '')
-      + '<div class="ugs-fields">'
-      +   '<div class="ugs-two">'
-      +     '<div class="ugs-f"><label>Status</label>'
-      +       selectHTML('status', vocab ? vocab.status : [], v.status) + '</div>'
-      +     '<div class="ugs-f"><label>Show on</label>'
-      +       selectHTML('locale', vocab ? vocab.locale : [], v.locale, 'Both shops')
-      +       '<p class="ugs-help">A clip spoken in English is not automatically right for the '
-      +         'Arabic shop.</p></div>'
-      +   '</div>'
-      +   '<div class="ugs-two">'
-      +     '<div class="ugs-f"><label>Order</label>'
-      +       '<input type="number" min="0" max="9999" data-ugs-field="position" value="'
-      +         esc(v.position) + '">'
-      +       '<p class="ugs-help">Lowest first. The good one, not the new one.</p></div>'
-      +     '<div class="ugs-f"><label>Publish from</label>'
-      +       '<input type="datetime-local" data-ugs-field="published_at" value="'
-      +         esc(v.published_at) + '">'
-      +       '<p class="ugs-help">Empty means as soon as the status says published.</p></div>'
-      +   '</div>'
-      + '</div>'
+      /* WHERE on the left, WHEN on the right. Four fields in one column was the
+         longest stretch of dead right half on this screen. */
+      + colsHTML(
+          secHTML({
+            glyph: ICON_SEND,
+            title: 'Where it shows',
+            sub: 'Whether it is live at all, and on which of the two shops.',
+            note: v.status === 'publish' ? 'published' : 'draft',
+            tone: v.status === 'publish' ? 'live' : '',
+            body: '<div class="ugs-f"><label>Status</label>'
+              + selectHTML('status', vocab ? vocab.status : [], v.status) + '</div>'
+              + '<div class="ugs-f"><label>Show on</label>'
+              + selectHTML('locale', vocab ? vocab.locale : [], v.locale, 'Both shops')
+              + '<p class="ugs-help">A clip spoken in English is not automatically right for the '
+              +   'Arabic shop.</p></div>'
+          }),
+          secHTML({
+            glyph: ICON_CLOCK,
+            title: 'When, and in what order',
+            sub: 'Where it sits on the rail, and the earliest it may appear.',
+            note: 'optional',
+            body: '<div class="ugs-f"><label>Order</label>'
+              + '<input type="number" min="0" max="9999" data-ugs-field="position" value="'
+              +   esc(v.position) + '">'
+              + '<p class="ugs-help">Lowest first. The good one, not the new one.</p></div>'
+              + '<div class="ugs-f"><label>Publish from</label>'
+              + '<input type="datetime-local" data-ugs-field="published_at" value="'
+              +   esc(v.published_at) + '">'
+              + '<p class="ugs-help">Empty means as soon as the status says published.</p></div>'
+          })
+        )
       + '<div class="ugs-note">A published clip still needs a <b>section</b> before a shopper sees '
       +   'it. Sections are the tab beside this one.</div>'
       + '</section>';
@@ -1762,11 +2267,25 @@
     if (!t) return;
 
     if (t.hasAttribute('data-ugs-new')) { e.preventDefault(); blank(); return; }
-    if (t.hasAttribute('data-ugs-open')) { e.preventDefault(); step = 1; open(t.getAttribute('data-ugs-open')); return; }
+    if (t.hasAttribute('data-ugs-open')) {
+      e.preventDefault();
+      /* A different clip, so the last clip's upload panel goes with it. */
+      forgetUpload();
+      step = 1;
+      open(t.getAttribute('data-ugs-open'));
+      return;
+    }
     if (t.hasAttribute('data-ugs-save')) { e.preventDefault(); save(); return; }
     if (t.hasAttribute('data-ugs-next')) { e.preventDefault(); goStep(step + 1); return; }
     if (t.hasAttribute('data-ugs-step')) { e.preventDefault(); goStep(Number(t.getAttribute('data-ugs-step'))); return; }
-    if (t.hasAttribute('data-ugs-back')) { e.preventDefault(); editing = null; step = 1; render(); return; }
+    if (t.hasAttribute('data-ugs-back')) {
+      e.preventDefault();
+      forgetUpload();
+      editing = null;
+      step = 1;
+      render();
+      return;
+    }
     if (t.hasAttribute('data-ugs-derive')) { e.preventDefault(); derive(); return; }
     if (t.hasAttribute('data-ugs-poster')) { e.preventDefault(); choosePoster(); return; }
 
