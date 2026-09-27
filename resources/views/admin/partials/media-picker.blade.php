@@ -17,6 +17,45 @@
     THE DIALOG IS BUILT ONCE AND REUSED. A picker rebuilt per call would lose
     the browser's own focus handling and leak a listener per open.
 --}}
+@php
+    /*
+     * ── THE REAL CEILING, READ FROM THIS SERVER RATHER THAN ASSUMED ─────────
+     *
+     * The owner's words for this lane were "put on max limit, without assuming
+     * anything", and the reason this dialog needs it is the reason
+     * App\Support\ServerUploadLimits exists: Admin\MediaUploadController allows
+     * 5 MB, this box's PHP allows 2M per file inside an 8M body, and until now
+     * the picker advertised NO number and refused a perfectly good 3 MB
+     * photograph with "The file field must be a file."
+     *
+     * Rendered here, server-side, rather than fetched: this partial is a PURE
+     * CONSUMER of two endpoints that already existed (MediaPickerWiringTest
+     * pins that every apiBase() call in this file is a /media one), and a
+     * third round trip to learn a number PHP already knows at render time
+     * would be a query budget spent on nothing.
+     */
+    $mpLimitReader = app(\App\Support\ServerUploadLimits::class);
+
+    /*
+     * Admin\MediaUploadController::MAX_BYTES, which is private. Duplicated
+     * here as a literal and NOT left to drift: MediaPickerUploadLimitTest
+     * reflects that constant and fails if the two disagree, which is the same
+     * trade the console makes everywhere it prints a controller's cap.
+     */
+    $mpAppCap = 5 * 1024 * 1024;
+
+    $mpLimits = $mpLimitReader->describe($mpAppCap);
+    $mpLimits['server'] = $mpLimitReader->raw();
+@endphp
+{{--
+    A JSON island rather than a `window.` assignment, and every one of the four
+    HEX flags on purpose: the two values in `server` are ini strings read off
+    the host, so they are not this application's constants and rule 5 applies to
+    them exactly as it would to a setting. JSON_HEX_TAG alone makes a closing
+    script tag unrepresentable; the client parses this in a try/catch and prints
+    every string through the same esc() the tiles use.
+--}}
+<script type="application/json" id="mp-limits">@json($mpLimits, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
 @verbatim
 <style>
 /* Prefix mp-, used nowhere else in the console. */
@@ -105,7 +144,56 @@
                  background:var(--accent,#15a85a);transition:width .18s linear}
 .mp-up.is-bad .mp-up-track > i{background:var(--red,#e3493f)}
 .mp-up.is-bad .mp-up-pct{color:var(--red,#e3493f)}
-@media (prefers-reduced-motion: reduce){.mp-up-track > i{transition:none}}
+/* A file whose bytes are all sent but whose answer has not arrived. The stripe
+   is what stops a bar parked at 99% reading as a stall -- that pause is the
+   server reading, resizing and recording the image, and on a 4000x4000 JPEG it
+   is half a second of real work. Animated with a background-position keyframe
+   rather than by script, so nothing measures and nothing runs per frame in JS. */
+.mp-up.is-server .mp-up-track > i{width:100% !important;
+  background-image:linear-gradient(110deg,rgba(255,255,255,.45) 25%,transparent 25%,
+    transparent 50%,rgba(255,255,255,.45) 50%,rgba(255,255,255,.45) 75%,transparent 75%);
+  background-size:14px 14px;animation:mp-stripe .7s linear infinite}
+@keyframes mp-stripe{from{background-position:0 0}to{background-position:14px 0}}
+.mp-up.is-gone .mp-up-track > i{background:var(--ink-soft,#626c80)}
+/* Cancel sits on the row, not in the footer: a batch of six photographs has six
+   things that might need stopping and only one of them is the one in flight. */
+.mp-up-x{font:inherit;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;flex:none;
+         border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);color:var(--ink-soft,#626c80);cursor:pointer}
+.mp-up-x:hover{border-color:var(--red,#e3493f);color:var(--red,#e3493f)}
+.mp-up-x[hidden]{display:none}
+.mp-up-head{display:flex;gap:10px;align-items:baseline;justify-content:space-between;
+            font-size:11.5px;font-weight:650;color:var(--ink-soft,#626c80);min-width:0}
+.mp-up-stop{font:inherit;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;flex:none;
+            border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);color:inherit;cursor:pointer}
+
+/* ── the drop zone ────────────────────────────────────────────────────────
+   Two targets, deliberately, and they are not redundant:
+
+   .mp-drop is the one that TELLS the operator dropping is possible, and it is
+   also the click target that opens the file dialog -- so the affordance and the
+   fallback are the same control.
+
+   The whole dialog is the second, because a 1080px modal with a 140px dashed
+   box in it makes the operator aim. Dropping a photograph anywhere over the
+   picker uploads it. That also closes a real hole: nothing in this console
+   prevents the default drop, so a file let go over an ordinary part of the page
+   makes the browser NAVIGATE AWAY to it -- losing whatever was half-typed
+   behind the dialog. While the picker is open, that can no longer happen. */
+.mp-drop{display:block;width:100%;text-align:center;font:inherit;color:var(--ink-soft,#626c80);
+         border:1.5px dashed var(--border,#e6e9f2);border-radius:11px;padding:14px 12px;margin-bottom:14px;
+         background:var(--surface,#fff);cursor:pointer;min-width:0}
+.mp-drop b{display:block;font-size:13px;font-weight:650;color:inherit;margin-bottom:3px}
+.mp-drop span{display:block;font-size:11.5px;overflow-wrap:anywhere}
+.mp-drop:hover,.mp-drop:focus-visible{border-color:var(--accent,#15a85a);color:var(--accent-ink,#0b6e3a);
+        background:var(--accent-soft,#e7f7ee)}
+/* is-over is set on the ZONE while the pointer carries files anywhere over the
+   dialog, not only over the box -- the whole dialog is the target, so lighting
+   up only the box would understate where a drop will land. */
+.mp-back.is-drag .mp-drop{border-color:var(--accent,#15a85a);border-width:2px;padding:13.5px 11.5px;
+        color:var(--accent-ink,#0b6e3a);background:var(--accent-soft,#e7f7ee)}
+.mp-back.is-drag .mp-box{box-shadow:0 0 0 3px var(--accent,#15a85a),var(--sh-l,0 24px 60px -22px rgba(16,24,40,.30))}
+@media (prefers-reduced-motion: reduce){.mp-up-track > i{transition:none}
+  .mp-up.is-server .mp-up-track > i{animation:none}}
 @media (max-width:560px){
   .mp-back{padding:0}
   .mp-box{max-height:100vh;height:100vh;border-radius:0}
@@ -208,6 +296,70 @@
     if (n < 1024) return n + ' B';
     if (n < 1048576) return (n / 1024).toFixed(0) + ' KB';
     return (n / 1048576).toFixed(1) + ' MB';
+  }
+
+  /* ─────────────────────────── the real ceiling ────────────────────────────
+     Read out of the JSON island this partial renders above, which is
+     App\Support\ServerUploadLimits->describe(MediaUploadController's cap) plus
+     the two ini strings. Wrapped, because a missing or malformed island must
+     leave a working picker rather than a dead one -- every reader below falls
+     back to a value that behaves exactly as this dialog behaved before the
+     island existed, which is "send it and let the server decide".
+
+     WHY THE NUMBERS ARE NOT INTERCHANGEABLE, and why there are four readers:
+       capBytes()  the exact byte ceiling, for the pre-flight refusal. effective_mb
+                   is FLOORED, so refusing against effective_mb * 1048576 would
+                   refuse a file this server would have taken.
+       capWords()  the ceiling as an operator says it -- below a megabyte that
+                   has to read "512 KB" and not "0 MB".
+       cappedBy()  which of the three ceilings is doing the capping, bounded to
+                   the two ini names the island may carry and '' for anything
+                   else, because the sentence below switches on it. Rule 5.
+       serverIni() one of those two ini values as the server spells it, for an
+                   operator who is about to go and edit the line. */
+  var LIMITS = (function(){
+    try {
+      var tag = document.getElementById('mp-limits');
+      if (!tag) return null;
+      var v = JSON.parse(tag.textContent || 'null');
+      return (v && typeof v === 'object') ? v : null;
+    } catch (e) { return null; }
+  })();
+
+  function capBytes(){
+    var n = LIMITS && LIMITS.effective_bytes;
+    return (typeof n === 'number' && n > 0) ? n : 0;   // 0 means "no pre-flight"
+  }
+
+  function capWords(){
+    var w = LIMITS && LIMITS.effective_label;
+    return (typeof w === 'string' && w) ? w : '';
+  }
+
+  function cappedBy(){
+    var by = LIMITS && LIMITS.capped_by;
+    return (by === 'upload_max_filesize' || by === 'post_max_size') ? by : '';
+  }
+
+  function serverIni(name){
+    var srv = LIMITS && LIMITS.server;
+    if (name !== 'upload_max_filesize' && name !== 'post_max_size') return '';
+    return (srv && typeof srv[name] === 'string' && srv[name] !== '') ? srv[name] : 'not readable';
+  }
+
+  /* The sentence under the drop zone. The point of it is that the number is
+     THIS server's, and that when the server is the thing capping it the
+     operator is told which line to raise -- they cannot act on "2 MB" alone. */
+  function capSentence(){
+    var words = capWords();
+    if (!words) return 'JPG, PNG, WebP, GIF or SVG.';
+
+    var by = cappedBy();
+
+    if (!by) return 'JPG, PNG, WebP, GIF or SVG, up to ' + words + ' each.';
+
+    return 'JPG, PNG, WebP, GIF or SVG, up to ' + words + ' each — this server’s own '
+      + by + ' (' + serverIni(by) + '), not a limit of the shop’s.';
   }
 
   function build(){
@@ -339,9 +491,38 @@
     // Clicking the backdrop closes; clicking the dialog must not.
     el.addEventListener('click', function(e){ if (e.target === el) close(); });
 
+    /* ONE delegated listener for everything inside the dialog that paint()
+       rebuilds. Binding per element would have to be redone on every repaint,
+       and a repaint happens on every search keystroke -- which is how a console
+       ends up leaking a listener per keypress. */
     el.querySelector('.mp-box').addEventListener('click', function(e){
-      var tile = e.target.closest ? e.target.closest('[data-mp-url]') : null;
-      if (tile) toggle(tile.getAttribute('data-mp-url'));
+      var hit = e.target.closest ? e.target.closest('[data-mp-url],[data-mp-upx],#mp-drop,#mp-upstop') : null;
+      if (!hit) return;
+
+      if (hit.id === 'mp-drop') { el.querySelector('#mp-file').click(); return; }
+      if (hit.id === 'mp-upstop') { stopRest(); return; }
+
+      if (hit.hasAttribute('data-mp-upx')) {
+        stopOne(parseInt(hit.getAttribute('data-mp-upx'), 10));
+        return;
+      }
+
+      toggle(hit.getAttribute('data-mp-url'));
+    });
+
+    /* THE WHOLE DIALOG IS THE DROP TARGET, bound once here rather than on the
+       dashed box paint() redraws.
+
+       `accept` is the same 'image/*' the #mp-file input above declares, because
+       a drop never goes near that input and the browser applies an input's
+       accept attribute to its own file dialog and to nothing else -- without
+       this, dragging a .zip onto the picker would send it to an image endpoint.
+       `multiple` likewise mirrors the input: the library takes as many as are
+       dropped, whatever the caller asked to pick. */
+    dropZone(el, {
+      accept: 'image/*',
+      multiple: true,
+      onFiles: function(files){ takeFiles(files); }
     });
 
     return el;
@@ -402,19 +583,26 @@
       + '</span></button>';
   }
 
+  /**
+   * The always-visible drop target, and the sentence that says what this server
+   * will really take.
+   *
+   * A BUTTON, not a div: it is the click path to the file dialog as well as the
+   * drop path, so the affordance and the keyboard route are the same control.
+   * Rendered on every paint because .mp-body is replaced wholesale; the drag
+   * handlers are bound ONCE, on the dialog, so nothing here has to be re-armed.
+   */
+  function dropHTML(){
+    return '<button type="button" class="mp-drop" id="mp-drop">'
+      + '<b>Drop images here to upload</b>'
+      + '<span>' + esc(capSentence()) + '</span>'
+      + '</button>';
+  }
+
   function paint(){
     var body = el.querySelector('#mp-body');
 
-    var head = uploads.length
-      ? '<div class="mp-ups">' + uploads.map(function(u, i){
-          var pct = u.state === 'done' ? 100 : (u.pct || 0);
-          return '<div class="mp-up' + (u.state === 'failed' ? ' is-bad' : '') + '" data-mp-up="' + i + '">'
-            + '<div class="mp-up-top"><span class="mp-up-name">' + esc(u.name) + '</span>'
-            +   '<span class="mp-up-pct">' + esc(u.state === 'failed' ? (u.error || 'Failed') : pct + '%') + '</span></div>'
-            + '<div class="mp-up-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"'
-            +   ' aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div></div>';
-        }).join('') + '</div>'
-      : '';
+    var head = dropHTML() + uploadsHTML();
 
     if (busy && !items.length) {
       body.innerHTML = head + '<p class="mp-note">Loading your images…</p>';
@@ -423,7 +611,7 @@
 
     if (!items.length) {
       body.innerHTML = head + '<p class="mp-note">'
-        + (query ? 'No image matches “' + esc(query) + '”.' : 'No images yet. Use <b>Upload new</b> to add the first one.')
+        + (query ? 'No image matches “' + esc(query) + '”.' : 'No images yet. Drop one above, or use <b>Upload new</b>.')
         + '</p>';
       paintSelection();
       return;
@@ -433,24 +621,6 @@
     applyCols();
     el.querySelector('#mp-more').hidden = page >= pages;
     paintSelection();
-  }
-
-  /* Patched in place, exactly as the product editor's own bar is: repainting
-     the dialog on every progress event would rebuild the grid dozens of times a
-     second and drop the operator's selection with it. */
-  function paintUploads(){
-    uploads.forEach(function(u, i){
-      var row = el.querySelector('[data-mp-up="' + i + '"]');
-      if (!row) return;
-      var pct = u.state === 'done' ? 100 : (u.pct || 0);
-      var bar = row.querySelector('.mp-up-track > i');
-      var track = row.querySelector('.mp-up-track');
-      var lab = row.querySelector('.mp-up-pct');
-      if (bar) bar.style.width = pct + '%';
-      if (track) track.setAttribute('aria-valuenow', String(pct));
-      if (lab) lab.textContent = u.state === 'failed' ? (u.error || 'Failed') : pct + '%';
-      row.className = 'mp-up' + (u.state === 'failed' ? ' is-bad' : '');
-    });
   }
 
   async function load(append){
@@ -489,76 +659,531 @@
     paint();
   }
 
-  function upload(file, onProgress){
-    return new Promise(function(resolve, reject){
-      var fd = new FormData();
-      fd.append('file', file);
-      fd.append('folder', (opts && opts.folder) || 'products');
+  /* ── ONE UPLOADER, TWO IMPLEMENTATIONS, ONE CONTRACT ──────────────────────
 
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', apiBase() + '/media/upload', true);
-      xhr.withCredentials = true;
-      xhr.setRequestHeader('Accept', 'application/json');
-      xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));
+     window.kbbUpload is the console's shared uploader (upload-kit.blade.php).
+     It is preferred whenever it is on the page, and the local XHR below is what
+     this dialog falls back to when it is not -- exactly the way every call site
+     in the console already guards window.kbbPickMedia. Both honour the same
+     option names and the same four callbacks, so takeFiles() below is written
+     once against one shape and cannot behave differently depending on which one
+     answered.
 
-      if (xhr.upload) {
-        xhr.upload.onprogress = function(e){
-          if (e.lengthComputable && e.total > 0) onProgress(Math.min(99, Math.round(e.loaded / e.total * 100)));
-        };
-        xhr.upload.onload = function(){ onProgress(99); };
+     WHY XMLHttpRequest AND NOT fetch, in the fallback and in the kit alike:
+     fetch cannot report UPLOAD progress. Its request body is consumed opaquely,
+     so the most a fetch-based uploader can show is a spinner -- which for
+     somebody pushing six photographs over a domestic uplink is
+     indistinguishable from a hung page. That is the whole reason this file had
+     a bar before it had a drop zone.
+
+     It is NOT a second upload path. Same endpoint, same folder field, same CSRF
+     header, same server rules; a different transport. A genuinely second path
+     is the trap this repo has avoided twice, because the one that drifts is
+     always the one carrying the content-type and size rules. */
+  function send(o){
+    if (typeof window.kbbUpload === 'function') return window.kbbUpload(o);
+    return localUpload(o);
+  }
+
+  /**
+   * The fallback uploader. Same options and callbacks as window.kbbUpload:
+   * { url, file, field, extra, max, onProgress, onStage, onDone, onFail }
+   * and it returns { cancel() }.
+   */
+  function localUpload(o){
+    var field = o.field || 'file';
+    var fired = false;
+
+    function stage(s){ if (typeof o.onStage === 'function') o.onStage(s); }
+    function fail(f){
+      if (fired) return;
+      fired = true;
+      stage('failed');
+      if (typeof o.onFail === 'function') o.onFail(f);
+    }
+
+    /* Refused BEFORE a byte is sent, when a ceiling was given. Sending a file
+       this server cannot accept and then reporting the refusal at 100% is the
+       exact defect this lane was opened for: the bar filled, the server had
+       thrown the body away on the way in, and the screen blamed the file. */
+    if (typeof o.max === 'number' && o.max > 0 && o.file && o.file.size > o.max) {
+      fail({ status: 0, message: 'Larger than this server will accept.', retryable: false });
+      return { cancel: function(){} };
+    }
+
+    var fd = new FormData();
+    fd.append(field, o.file);
+
+    var extra = o.extra || {};
+    Object.keys(extra).forEach(function(k){ fd.append(k, extra[k]); });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', o.url, true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Accept', 'application/json');
+    /* There is no csrf-token meta tag in this console; the cookie is the only
+       source. Named X-XSRF-TOKEN because that is the header Laravel reads the
+       encrypted cookie value from. */
+    xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));
+
+    if (xhr.upload) {
+      xhr.upload.onprogress = function(e){
+        // lengthComputable is false for a chunked request, and a fabricated
+        // percentage is worse than none.
+        if (!e.lengthComputable || !(e.total > 0)) return;
+        if (typeof o.onProgress === 'function') {
+          o.onProgress({
+            loaded: e.loaded,
+            total: e.total,
+            // Capped at 99 while sending. 100% has to mean "the server has
+            // answered", not "the last byte left this machine" -- the answer
+            // can still be a 422, and a bar that reads 100% beside a refusal is
+            // how a screen loses the operator's trust.
+            pct: Math.min(99, Math.round(e.loaded / e.total * 100))
+          });
+        }
+      };
+      /* Every byte is gone and nothing has come back. This is its own stage
+         rather than a bar parked at 99%: on a 4000x4000 JPEG the server is
+         spending real time here writing the file, recording the row and making
+         the phone-sized copies. */
+      xhr.upload.onload = function(){ stage('server'); };
+    }
+
+    xhr.onload = function(){
+      if (fired) return;
+
+      var body = null;
+      try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        fired = true;
+        if (typeof o.onProgress === 'function') o.onProgress({ loaded: 1, total: 1, pct: 100 });
+        stage('done');
+        if (typeof o.onDone === 'function') o.onDone(body);
+        return;
       }
 
-      xhr.onload = function(){
-        var b = null;
-        try { b = JSON.parse(xhr.responseText); } catch (err) { b = null; }
-        if (xhr.status >= 200 && xhr.status < 300) { onProgress(100); resolve(b && b.url); return; }
-        var msg = (b && (b.message || b.error)) || ('Upload failed (' + xhr.status + ')');
-        reject(new Error(String(msg).slice(0, 60)));
-      };
-      xhr.onerror = function(){ reject(new Error('Could not reach the server')); };
-      xhr.send(fd);
+      fail({
+        status: xhr.status,
+        message: (body && (body.message || body.error)) || '',
+        // 5xx is worth pressing again; a 413 or a 422 will answer the same way
+        // for ever, and telling somebody to retry a file the server will never
+        // take is how the same photograph gets uploaded four times.
+        retryable: xhr.status >= 500
+      });
+    };
+
+    xhr.onerror = function(){
+      fail({ status: 0, message: 'Could not reach the server.', retryable: true });
+    };
+
+    xhr.onabort = function(){
+      if (fired) return;
+      fired = true;
+      stage('cancelled');
+    };
+
+    xhr.send(fd);
+
+    return { cancel: function(){ try { xhr.abort(); } catch (e) {} } };
+  }
+
+  /* ── ONE DROP ZONE HELPER, THE SAME TWO-IMPLEMENTATION SHAPE ──────────────
+     window.kbbDropZone(el, {accept, multiple, onFiles}) when the kit is on the
+     page, and the wiring below when it is not. Returns a teardown function in
+     both cases; this dialog never calls it, because the dialog is built once and
+     lives for the life of the document. */
+  function dropZone(node, o){
+    if (typeof window.kbbDropZone === 'function') return window.kbbDropZone(node, o);
+    return localDropZone(node, o);
+  }
+
+  /** True when the pointer is carrying files from outside the page. */
+  function carriesFiles(e){
+    var types = e.dataTransfer && e.dataTransfer.types;
+    if (!types) return false;
+    return Array.prototype.indexOf.call(types, 'Files') !== -1;
+  }
+
+  function localDropZone(node, o){
+    /* dragenter and dragleave fire once per element the pointer crosses, and the
+       dialog is full of them -- tiles, captions, images. Counting them is the
+       only way to know when the pointer has really left: a plain dragleave
+       handler switches the highlight off the moment the pointer moves from the
+       dialog onto a tile inside it, which reads as the drop target flickering. */
+    var depth = 0;
+
+    function lit(on){
+      depth = on ? depth : 0;
+      node.classList.toggle('is-drag', on);
+    }
+
+    function enter(e){
+      if (!carriesFiles(e)) return;
+      e.preventDefault();
+      depth++;
+      node.classList.add('is-drag');
+    }
+
+    function over(e){
+      if (!carriesFiles(e)) return;
+      /* preventDefault is what makes this a valid drop target AT ALL, and it is
+         also what stops the browser navigating away to the dropped file -- which
+         is what the console does today anywhere outside a zone. */
+      e.preventDefault();
+      try { e.dataTransfer.dropEffect = 'copy'; } catch (x) {}
+    }
+
+    function leave(e){
+      if (!carriesFiles(e)) return;
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) lit(false);
+    }
+
+    function drop(e){
+      if (!carriesFiles(e)) return;
+      e.preventDefault();
+      lit(false);
+
+      var files = (e.dataTransfer && e.dataTransfer.files) || null;
+      if (!files || !files.length) return;
+
+      var list = Array.prototype.slice.call(files);
+
+      /* The accept string is honoured here as well as on the input, because a
+         drop bypasses the input entirely -- the browser applies `accept` to its
+         own file dialog and to nothing else. A folder dropped on a zone arrives
+         as a zero-length, type-less entry, which is why a directory is dropped
+         rather than uploaded as an empty file. */
+      list = list.filter(function(f){ return matchesAccept(f, o && o.accept); });
+
+      if (!list.length) return;
+      if (!(o && o.multiple)) list = list.slice(0, 1);
+      if (o && typeof o.onFiles === 'function') o.onFiles(list);
+    }
+
+    node.addEventListener('dragenter', enter);
+    node.addEventListener('dragover', over);
+    node.addEventListener('dragleave', leave);
+    node.addEventListener('drop', drop);
+
+    return function teardown(){
+      node.removeEventListener('dragenter', enter);
+      node.removeEventListener('dragover', over);
+      node.removeEventListener('dragleave', leave);
+      node.removeEventListener('drop', drop);
+      lit(false);
+    };
+  }
+
+  /**
+   * Does this dropped file match an `accept` string?
+   *
+   * Only the two forms this console actually uses are understood -- a type/*
+   * wildcard and a .ext suffix -- and ANYTHING NOT UNDERSTOOD IS ACCEPTED. A
+   * client-side filter that guesses wrong silently discards the operator's file
+   * and shows nothing; the server is the authority on what an image is, and it
+   * reads the bytes rather than the name. This exists to stop a dropped folder
+   * and an obviously wrong file, not to enforce a policy.
+   */
+  function matchesAccept(file, accept){
+    if (!accept) return true;
+
+    var name = String((file && file.name) || '').toLowerCase();
+    var type = String((file && file.type) || '').toLowerCase();
+
+    return String(accept).split(',').some(function(rule){
+      rule = rule.trim().toLowerCase();
+      if (!rule) return false;
+      if (rule.charAt(0) === '.') return name.slice(-rule.length) === rule;
+      if (rule.slice(-2) === '/*') return type.indexOf(rule.slice(0, -1)) === 0;
+      if (rule.indexOf('/') !== -1) return type === rule;
+      return true;
     });
+  }
+
+  /* ─────────────────────────── the upload queue ────────────────────────────
+
+     One row per file, each with its own bar and its own ✕. What was rejected,
+     and why:
+
+       ONE AGGREGATE BAR over the whole batch. Rejected. Uploads here are
+       sequential, so the aggregate is one live number plus N zeros and it
+       advances in steps; worse, a single file that fails or stalls is invisible
+       inside it, and which file failed is the one thing the operator has to
+       know.
+
+       PARALLEL UPLOADS. Rejected. Six photographs over one uplink share the
+       same bandwidth: six bars crawl together and none finishes until nearly
+       all of them do. It would also multiply this server's post_max_size
+       problem by six at once.
+
+     Sequential, one bar each, and the batch line above them counts. A failure
+     does not abandon the rest of the run -- an earlier version of this loop
+     stopped at the first bad file and silently dropped everything after it. */
+
+  function pctOf(u){
+    if (u.state === 'done' || u.state === 'server') return 100;
+    return u.pct || 0;
+  }
+
+  function stateLabel(u){
+    if (u.state === 'failed') return u.error || 'Failed';
+    if (u.state === 'cancelled') return 'Stopped';
+    if (u.state === 'server') return 'Sent — saving…';
+    if (u.state === 'waiting') return 'Waiting…';
+    return pctOf(u) + '%';
+  }
+
+  function rowClass(u){
+    return 'mp-up'
+      + (u.state === 'failed' ? ' is-bad' : '')
+      + (u.state === 'cancelled' ? ' is-gone' : '')
+      + (u.state === 'server' ? ' is-server' : '');
+  }
+
+  /** Can this row still be stopped? Only one that has not finished one way or another. */
+  function stoppable(u){
+    return u.state === 'waiting' || u.state === 'sending' || u.state === 'server';
+  }
+
+  function uploadsHTML(){
+    if (!uploads.length) return '';
+
+    var live = uploads.filter(stoppable).length;
+    var done = uploads.filter(function(u){ return u.state === 'done'; }).length;
+    var bad = uploads.filter(function(u){ return u.state === 'failed' || u.state === 'cancelled'; }).length;
+
+    var rows = uploads.map(function(u, i){
+      return '<div class="' + rowClass(u) + '" data-mp-up="' + i + '">'
+        + '<div class="mp-up-top"><span class="mp-up-name">' + esc(u.name) + '</span>'
+        +   '<span class="mp-up-pct">' + esc(stateLabel(u)) + '</span>'
+        +   '<button type="button" class="mp-up-x" data-mp-upx="' + i + '"'
+        +     (stoppable(u) ? '' : ' hidden') + ' aria-label="Stop uploading ' + esc(u.name) + '">Stop</button>'
+        + '</div>'
+        /* aria-valuenow beside the width, so the bar is not a purely visual
+           fact. A screen reader gets the same number the sighted operator has. */
+        + '<div class="mp-up-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"'
+        +   ' aria-valuenow="' + pctOf(u) + '" aria-label="' + esc(u.name) + '"><i style="width:'
+        +   pctOf(u) + '%"></i></div></div>';
+    }).join('');
+
+    return '<div class="mp-ups">'
+      + '<div class="mp-up-head"><span>' + esc(batchLine(done, bad)) + '</span>'
+      +   (live > 1 ? '<button type="button" class="mp-up-stop" id="mp-upstop">Stop the rest</button>' : '')
+      + '</div>' + rows + '</div>';
+  }
+
+  function batchLine(done, bad){
+    return 'Uploading ' + uploads.length + (uploads.length === 1 ? ' image' : ' images')
+      + ' — ' + done + ' done' + (bad ? ', ' + bad + ' not added' : '');
+  }
+
+  /* Patched in place, never through paint(). Repainting the dialog on every
+     progress event would rebuild the grid dozens of times a second and take the
+     operator's ticks and their scroll position with it. This touches the bar's
+     width, its two labels, its class and its ✕ -- nothing else. */
+  function paintUploads(){
+    uploads.forEach(function(u, i){
+      var row = el.querySelector('[data-mp-up="' + i + '"]');
+      if (!row) return;
+
+      var pct = pctOf(u);
+      var bar = row.querySelector('.mp-up-track > i');
+      var track = row.querySelector('.mp-up-track');
+      var lab = row.querySelector('.mp-up-pct');
+      var x = row.querySelector('.mp-up-x');
+
+      if (bar) bar.style.width = pct + '%';
+      if (track) track.setAttribute('aria-valuenow', String(pct));
+      if (lab) lab.textContent = stateLabel(u);
+      if (x) x.hidden = !stoppable(u);
+      row.className = rowClass(u);
+    });
+
+    var head = el.querySelector('.mp-up-head > span');
+    if (head) {
+      head.textContent = batchLine(
+        uploads.filter(function(u){ return u.state === 'done'; }).length,
+        uploads.filter(function(u){ return u.state === 'failed' || u.state === 'cancelled'; }).length
+      );
+    }
+
+    var stop = el.querySelector('#mp-upstop');
+    if (stop) stop.hidden = uploads.filter(stoppable).length < 2;
+  }
+
+  /* ── STOP HAS TO SETTLE THE QUEUE, NOT JUST ABORT THE REQUEST ─────────────
+     FOUND IN CHROMIUM, NOT IN A TEST, AND IT HUNG THE SCREEN. Cancelling is not
+     a failure, so the contract reports it as onStage('cancelled') and NOT as
+     onFail -- and the first version of this queue resolved its promise only from
+     onDone and onFail. So pressing Stop aborted the request, painted the row
+     "Stopped", and then awaited a promise that nothing would ever settle: the
+     loop never reached the next file, `busy` stayed true, and the screen sat
+     greyed out until it was reloaded. Measured: three rows all reading "Stopped"
+     and no render after them.
+     Every row therefore carries its own settle(), called from BOTH ends -- the
+     'cancelled' stage, and stopOne() itself. Resolving a promise twice is a
+     no-op, so the belt and the braces cannot disagree, and a transport that
+     forgets to report the abort at all cannot wedge the queue. */
+
+  /** Stop one row: the request if it is in flight, the place in the queue if not. */
+  function stopOne(i){
+    var u = uploads[i];
+    if (!u || !stoppable(u)) return;
+
+    u.state = 'cancelled';
+
+    if (u.handle && typeof u.handle.cancel === 'function') {
+      try { u.handle.cancel(); } catch (e) {}
+    }
+
+    paintUploads();
+
+    // The braces. See the note above.
+    if (typeof u.settle === 'function') u.settle();
+  }
+
+  function stopRest(){
+    /* Every outstanding row is marked, and the loop below reads the ROW rather
+       than a run-wide flag. One less piece of state that can be left true. */
+    uploads.forEach(function(u, i){ if (stoppable(u)) stopOne(i); });
+  }
+
+  /**
+   * One file, sent, as a promise of its url or null.
+   *
+   * The row is the only state this touches; the caller decides what a url means.
+   */
+  function sendOne(row, file){
+    return new Promise(function(resolve){
+      row.state = 'sending';
+      row.pct = 0;
+      /* The one place this row's promise can be settled from. Assigned before
+         the request starts, because Stop can arrive on the very next tick. */
+      row.settle = function(){ resolve(null); };
+      paintUploads();
+
+      row.handle = send({
+        url: apiBase() + '/media/upload',
+        file: file,
+        field: 'file',
+        extra: { folder: (opts && opts.folder) || 'products' },
+        /* Passed as well as pre-flighted in takeFiles(), and the two cannot
+           both fire: takeFiles refuses first, so this is the belt on the kit's
+           braces for a caller that ever reaches here with an oversized file. */
+        max: capBytes() || undefined,
+        onProgress: function(p){
+          if (row.state !== 'sending') return;   // a cancelled row stops moving
+          row.pct = Math.max(0, Math.min(100, Math.round((p && p.pct) || 0)));
+          paintUploads();
+        },
+        onStage: function(st){
+          // The belt. Cancelling is reported here and never through onFail.
+          if (st === 'cancelled') { row.state = 'cancelled'; paintUploads(); resolve(null); return; }
+          if (row.state === 'cancelled') return;
+          if (st === 'server') { row.state = 'server'; paintUploads(); }
+        },
+        onDone: function(body){
+          if (row.state === 'cancelled') { resolve(null); return; }
+          var url = body && body.url;
+          if (url) { row.state = 'done'; row.pct = 100; }
+          else { row.state = 'failed'; row.error = 'No image came back'; }
+          paintUploads();
+          resolve(url || null);
+        },
+        onFail: function(f){
+          if (row.state === 'cancelled') { paintUploads(); resolve(null); return; }
+          row.state = 'failed';
+          row.error = failWords(f, row);
+          paintUploads();
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  /**
+   * What to put on a failed row, in the operator's units.
+   *
+   * 413 IS ITS OWN CASE AND HAS TO BE. Laravel 11's global ValidatePostSize
+   * throws before the router when the whole body is over post_max_size, and its
+   * response carries `message` and no `error` key. MEASURED in Chromium against
+   * a 9 MB body on this box, that message is exactly:
+   *
+   *     The POST data is too large.
+   *
+   * which names no size, no ceiling and no directive, and is the same sentence
+   * whether the file was 9 MB or 900. So the message is REPLACED rather than
+   * printed: the operator is told what their file was, what the most this server
+   * takes is, and which ini line is doing it.
+   */
+  function failWords(f, row){
+    var status = (f && f.status) || 0;
+    var msg = String((f && f.message) || '');
+
+    if (status === 413) {
+      var by = cappedBy() || 'post_max_size';
+      return 'Too big for this server (' + by + ' = ' + serverIni(by) + '). '
+        + bytes(row.size) + (capWords() ? ' — the most it takes is ' + capWords() : '');
+    }
+
+    if (msg) return msg.slice(0, 80);
+    return status ? ('Upload failed (' + status + ')') : 'Upload failed';
   }
 
   async function takeFiles(files){
     var list = Array.prototype.slice.call(files || []);
     if (!list.length) return;
 
-    uploads = list.map(function(f){ return { name: f.name || 'image', pct: 0, state: 'waiting' }; });
+    uploads = list.map(function(f){
+      return { name: f.name || 'image', size: f.size || 0, pct: 0, state: 'waiting' };
+    });
+
     paint();
 
     var fresh = [];
+    var ceiling = capBytes();
 
     for (var i = 0; i < list.length; i++) {
       var row = uploads[i];
-      row.state = 'sending';
-      paintUploads();
 
-      try {
-        var url = await upload(list[i], (function(r){
-          return function(p){ r.pct = p; paintUploads(); };
-        })(row));
+      // Already cancelled means "Stop the rest", or Close, reached this row
+      // while it was still waiting its turn.
+      if (row.state === 'cancelled') { paintUploads(); continue; }
 
-        if (url) { row.state = 'done'; fresh.push(url); }
-        else { row.state = 'failed'; row.error = 'No image came back'; }
-      } catch (e) {
-        /* One bad file does not abandon the rest — the same lesson the product
-           editor's uploader learned: a run that stops at the first failure
-           silently drops everything after it. */
+      /* ── THE PRE-FLIGHT, AND WHY IT IS HERE AND NOT ONLY IN THE UPLOADER ──
+         Refused before a byte leaves the machine, with the number and the
+         reason in the same sentence. The uploader's own `max` would refuse it
+         too, but it cannot name this server's ini line -- and "which line do I
+         raise" is the only actionable part of the message. A refused file does
+         NOT stop the batch: the other five photographs still go up. */
+      if (ceiling && row.size > ceiling) {
         row.state = 'failed';
-        row.error = (e && e.message) || 'Failed';
+        row.error = bytes(row.size) + ' — over this server’s ' + capWords() + ' limit'
+          + (cappedBy() ? ' (' + cappedBy() + ' = ' + serverIni(cappedBy()) + ')' : '');
+        paintUploads();
+        continue;
       }
-      paintUploads();
+
+      var url = await sendOne(row, list[i]);
+      if (url) fresh.push(url);
     }
 
-    var failed = uploads.filter(function(u){ return u.state === 'failed'; });
-    uploads = failed;      // successes disappear; failures stay on screen
+    /* Successes disappear and failures stay on screen, which is the whole point
+       of keeping the rows after the run: what is left IS the list of what did
+       not make it, with the reason on each line. */
+    uploads = uploads.filter(function(u){ return u.state !== 'done'; });
 
     /* A new upload lands IN THE LIBRARY FIRST and is then pre-ticked, which is
        the flow the owner asked for: the file joins the library rather than
        being attached straight to whatever opened the picker. Page 1 without a
        search, because the newest rows are what the grid orders first and a
        search still in the box would hide the thing just uploaded. */
+    // Nothing to repaint into if the operator closed the dialog mid-run.
+    if (el.hidden) return;
+
     if (fresh.length) {
       query = '';
       var q = el.querySelector('#mp-q');
@@ -588,6 +1213,11 @@
 
   function close(){
     if (!el) return;
+    /* An upload in flight is abandoned when the dialog is closed. "Close" has to
+       mean it: leaving a request running behind a dismissed dialog puts a file
+       in the library that the operator cancelled and cannot see arrive. Files
+       already finished stay in the library, because they are finished. */
+    stopRest();
     el.hidden = true;
     document.removeEventListener('keydown', onKey, true);
     opts = null;

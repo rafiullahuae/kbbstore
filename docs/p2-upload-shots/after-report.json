@@ -1,0 +1,2158 @@
+{
+  "tag": "after",
+  "base": "http://127.0.0.1:8972",
+  "widths": [
+    {
+      "width": 1280,
+      "shots": [
+        "after-1280-1-picker-resting.png",
+        "after-1280-2-picker-drag-over.png",
+        "after-1280-3-picker-after-drop.png",
+        "after-1280-3b-picker-in-flight.png",
+        "after-1280-3c-picker-stopped.png",
+        "after-1280-4-editor-resting.png",
+        "after-1280-5-editor-share-image.png",
+        "after-1280-6-editor-gallery-drag-over.png",
+        "after-1280-7-editor-gallery-in-flight.png",
+        "after-1280-8-editor-gallery-done.png",
+        "after-1280-8b-editor-queue-in-flight.png",
+        "after-1280-8c-editor-queue-stopped.png",
+        "after-1280-9-importer-resting.png",
+        "after-1280-10-importer-drag-over.png",
+        "after-1280-11-importer-after-drop.png",
+        "after-1280-12-importer-checking.png",
+        "after-1280-13-importer-checked.png",
+        "after-1280-13b-importer-in-flight.png",
+        "after-1280-13c-importer-stopped.png",
+        "after-1280-14-importer-oversized.png"
+      ],
+      "picker": {
+        "opened": true,
+        "resting": {
+          "dialog": {
+            "w": 1280,
+            "h": 900,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": {
+            "w": 1044,
+            "h": 70,
+            "fontSize": "14px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop images here to upload JPG, PNG, WebP, GIF or SVG, up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "uploadRow": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "stopRest": null,
+          "batch": null
+        },
+        "frame": {
+          "docScrollWidth": 1280,
+          "docClientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032
+        },
+        "litWhileHovering": [
+          "mp-back is-drag"
+        ],
+        "afterDrop": {
+          "dialog": {
+            "w": 1280,
+            "h": 900,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": {
+            "w": 1044,
+            "h": 70,
+            "fontSize": "14px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop images here to upload JPG, PNG, WebP, GIF or SVG, up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "uploadRow": {
+            "w": 1044,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "over-per-file.png 3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "bar": {
+            "w": 0,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 339,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(227, 73, 63)",
+            "text": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "stopOne": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "stopRest": null,
+          "batch": {
+            "w": 1044,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Uploading 1 image — 0 done, 1 not added"
+          }
+        },
+        "rows": [
+          {
+            "cls": "mp-up is-bad",
+            "name": "over-per-file.png",
+            "pct": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)",
+            "barWidth": "0%",
+            "aria": "0"
+          }
+        ],
+        "inFlight": {
+          "dialog": {
+            "w": 1280,
+            "h": 900,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": {
+            "w": 1044,
+            "h": 70,
+            "fontSize": "14px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop images here to upload JPG, PNG, WebP, GIF or SVG, up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "uploadRow": {
+            "w": 1044,
+            "h": 34,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "under-limit.png 16% Stop"
+          },
+          "bar": {
+            "w": 167,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 23,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "16%"
+          },
+          "stopOne": {
+            "w": 40,
+            "h": 23,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "stopRest": null,
+          "batch": {
+            "w": 1044,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Uploading 1 image — 0 done"
+          }
+        },
+        "inFlightRows": [
+          {
+            "cls": "mp-up",
+            "name": "under-limit.png",
+            "pct": "16%",
+            "barWidth": "16%",
+            "aria": "16",
+            "stopVisible": true
+          }
+        ],
+        "afterStop": [
+          {
+            "cls": "mp-up is-gone",
+            "pct": "Stopped"
+          }
+        ]
+      },
+      "editor": {
+        "opened": "peoEdit",
+        "resting": {
+          "mainCard": {
+            "w": 260,
+            "h": 455,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "MAIN IMAGE The first picture customers see, on the shop grid and at the top of the product page. No main image yet Choose Upload Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_"
+          },
+          "mainHint": {
+            "w": 228,
+            "h": 67,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainBox": {
+            "w": 228,
+            "h": 282,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "No main image yet Choose Upload"
+          },
+          "galCard": {
+            "w": 384,
+            "h": 391,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "GALLERY Drag the handle to reorder, or use ↑ ↓. This is the order customers see, after the main image. The description under each photo is what Google Images and screen readers read — write what is actually in the shot. "
+          },
+          "galDrop": {
+            "w": 352,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them anywhere on this card, or tap to choose Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "galCap": {
+            "w": 326,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogZone": {
+            "w": 628,
+            "h": 199,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Share image Choose from Media Library Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogDrop": {
+            "w": 628,
+            "h": 86,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogCap": {
+            "w": 602,
+            "h": 12,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "frame": {
+          "docScrollWidth": 1280,
+          "docClientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032
+        },
+        "litWhileHovering": [
+          "peo-galzone"
+        ],
+        "inFlight": {
+          "mainCard": {
+            "w": 260,
+            "h": 455,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "MAIN IMAGE The first picture customers see, on the shop grid and at the top of the product page. No main image yet Choose Upload Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_"
+          },
+          "mainHint": {
+            "w": 228,
+            "h": 67,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainBox": {
+            "w": 228,
+            "h": 282,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "No main image yet Choose Upload"
+          },
+          "galCard": {
+            "w": 384,
+            "h": 512,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "GALLERY Drag the handle to reorder, or use ↑ ↓. This is the order customers see, after the main image. The description under each photo is what Google Images and screen readers read — write what is actually in the shot. "
+          },
+          "galDrop": {
+            "w": 352,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them anywhere on this card, or tap to choose Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "galCap": {
+            "w": 326,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogZone": {
+            "w": 628,
+            "h": 199,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Share image Choose from Media Library Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogDrop": {
+            "w": 628,
+            "h": 86,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogCap": {
+            "w": 602,
+            "h": 12,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainUps": null,
+          "galUps": {
+            "w": 352,
+            "h": 60,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Uploading 1 image — 0 done, 1 not added Clear over-per-file.png 3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "ogUps": null,
+          "bar": {
+            "w": 0,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 339,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(180, 68, 60)",
+            "text": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "stopOne": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 996,
+            "h": 43,
+            "fontSize": "12.5px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(227, 195, 192)",
+            "text": "1 of 3 images could not be uploaded; the rest were added."
+          }
+        },
+        "inFlightRows": [
+          {
+            "cls": "peo-up is-bad",
+            "name": "over-per-file.png",
+            "pct": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)",
+            "barWidth": "0%",
+            "aria": "0",
+            "stopVisible": false
+          }
+        ],
+        "afterUpload": {
+          "mainCard": {
+            "w": 260,
+            "h": 455,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "MAIN IMAGE The first picture customers see, on the shop grid and at the top of the product page. No main image yet Choose Upload Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_"
+          },
+          "mainHint": {
+            "w": 228,
+            "h": 67,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainBox": {
+            "w": 228,
+            "h": 282,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "No main image yet Choose Upload"
+          },
+          "galCard": {
+            "w": 384,
+            "h": 512,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "GALLERY Drag the handle to reorder, or use ↑ ↓. This is the order customers see, after the main image. The description under each photo is what Google Images and screen readers read — write what is actually in the shot. "
+          },
+          "galDrop": {
+            "w": 352,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(31, 125, 82)",
+            "text": "Or upload new images Drop them anywhere on this card, or tap to choose Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "galCap": {
+            "w": 326,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(31, 125, 82)",
+            "text": "Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogZone": {
+            "w": 628,
+            "h": 199,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Share image Choose from Media Library Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogDrop": {
+            "w": 628,
+            "h": 86,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogCap": {
+            "w": 602,
+            "h": 12,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainUps": null,
+          "galUps": {
+            "w": 352,
+            "h": 60,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Uploading 1 image — 0 done, 1 not added Clear over-per-file.png 3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "ogUps": null,
+          "bar": {
+            "w": 0,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 339,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(180, 68, 60)",
+            "text": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "stopOne": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 996,
+            "h": 43,
+            "fontSize": "12.5px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(227, 195, 192)",
+            "text": "1 of 3 images could not be uploaded; the rest were added."
+          }
+        },
+        "afterRows": [
+          {
+            "cls": "peo-up is-bad",
+            "name": "over-per-file.png",
+            "pct": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          }
+        ],
+        "throttledRows": [
+          {
+            "cls": "peo-up",
+            "name": "under-limit.png",
+            "pct": "19%",
+            "barWidth": "19%",
+            "aria": "19",
+            "stopVisible": true
+          },
+          {
+            "cls": "peo-up",
+            "name": "under-limit2.png",
+            "pct": "Waiting…",
+            "barWidth": "0%",
+            "aria": "0",
+            "stopVisible": true
+          },
+          {
+            "cls": "peo-up",
+            "name": "small.png",
+            "pct": "Waiting…",
+            "barWidth": "0%",
+            "aria": "0",
+            "stopVisible": true
+          }
+        ],
+        "stopRestVisible": true,
+        "afterStopRest": [
+          {
+            "cls": "peo-up is-gone",
+            "pct": "Stopped"
+          },
+          {
+            "cls": "peo-up is-gone",
+            "pct": "Stopped"
+          },
+          {
+            "cls": "peo-up is-gone",
+            "pct": "Stopped"
+          }
+        ]
+      },
+      "importer": {
+        "opened": true,
+        "resting": {
+          "card": {
+            "w": 996,
+            "h": 650,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 962,
+            "h": 92,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 936,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 556,
+            "h": 56,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "frame": {
+          "docScrollWidth": 1280,
+          "docClientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032
+        },
+        "litWhileHovering": [
+          "rio-import-card"
+        ],
+        "afterDrop": {
+          "card": {
+            "w": 996,
+            "h": 675,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 962,
+            "h": 92,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 936,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 556,
+            "h": 56,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 962,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "small.csv"
+          }
+        },
+        "checking": {
+          "card": {
+            "w": 996,
+            "h": 714,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 962,
+            "h": 92,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 936,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 556,
+            "h": 56,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 962,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "small.csv Read"
+          },
+          "bar": {
+            "w": 962,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 28,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Read"
+          },
+          "stop": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 996,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(21, 168, 90)",
+            "text": "Checked. Nothing has been written — press Import to apply it."
+          },
+          "name": {
+            "w": 962,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "small.csv"
+          }
+        },
+        "checked": {
+          "card": {
+            "w": 996,
+            "h": 714,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 962,
+            "h": 92,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 936,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 556,
+            "h": 56,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 962,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "small.csv Read"
+          },
+          "bar": {
+            "w": 962,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 28,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Read"
+          },
+          "stop": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 996,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(21, 168, 90)",
+            "text": "Checked. Nothing has been written — press Import to apply it."
+          },
+          "name": {
+            "w": 962,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "small.csv"
+          }
+        },
+        "throttled": {
+          "card": {
+            "w": 996,
+            "h": 718,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 962,
+            "h": 92,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 936,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 556,
+            "h": 56,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 962,
+            "h": 34,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "mid.csv 21% Stop"
+          },
+          "bar": {
+            "w": 202,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 23,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "21%"
+          },
+          "stop": {
+            "w": 40,
+            "h": 23,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": null,
+          "name": {
+            "w": 962,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "mid.csv"
+          }
+        },
+        "throttledRow": {
+          "cls": "rio-up",
+          "pct": "21%",
+          "barWidth": "21%",
+          "aria": "21",
+          "stopVisible": true
+        },
+        "afterStop": {
+          "card": {
+            "w": 996,
+            "h": 714,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 962,
+            "h": 92,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 936,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 556,
+            "h": 56,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 962,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "mid.csv Stopped"
+          },
+          "bar": {
+            "w": 212,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 43,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Stopped"
+          },
+          "stop": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 996,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "Check stopped. Nothing past the point it was stopped was written."
+          },
+          "name": {
+            "w": 962,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "mid.csv"
+          }
+        },
+        "oversized": {
+          "card": {
+            "w": 996,
+            "h": 675,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 962,
+            "h": 92,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 936,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 556,
+            "h": 56,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 996,
+            "h": 44,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "That file is 9.0 MB. This server accepts 2 MB (upload_max_filesize = 2M). Split the export, or raise that limit on the server."
+          },
+          "name": {
+            "w": 962,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "over-post.csv"
+          }
+        }
+      }
+    },
+    {
+      "width": 390,
+      "shots": [
+        "after-390-1-picker-resting.png",
+        "after-390-2-picker-drag-over.png",
+        "after-390-3-picker-after-drop.png",
+        "after-390-3b-picker-in-flight.png",
+        "after-390-3c-picker-stopped.png",
+        "after-390-4-editor-resting.png",
+        "after-390-5-editor-share-image.png",
+        "after-390-6-editor-gallery-drag-over.png",
+        "after-390-7-editor-gallery-in-flight.png",
+        "after-390-8-editor-gallery-done.png",
+        "after-390-8b-editor-queue-in-flight.png",
+        "after-390-8c-editor-queue-stopped.png",
+        "after-390-9-importer-resting.png",
+        "after-390-10-importer-drag-over.png",
+        "after-390-11-importer-after-drop.png",
+        "after-390-12-importer-checking.png",
+        "after-390-13-importer-checked.png",
+        "after-390-13b-importer-in-flight.png",
+        "after-390-13c-importer-stopped.png",
+        "after-390-14-importer-oversized.png"
+      ],
+      "picker": {
+        "opened": true,
+        "resting": {
+          "dialog": {
+            "w": 390,
+            "h": 844,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": {
+            "w": 354,
+            "h": 87,
+            "fontSize": "14px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop images here to upload JPG, PNG, WebP, GIF or SVG, up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "uploadRow": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "stopRest": null,
+          "batch": null
+        },
+        "frame": {
+          "docScrollWidth": 390,
+          "docClientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390
+        },
+        "litWhileHovering": [
+          "mp-back is-drag"
+        ],
+        "afterDrop": {
+          "dialog": {
+            "w": 390,
+            "h": 844,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": {
+            "w": 354,
+            "h": 87,
+            "fontSize": "14px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop images here to upload JPG, PNG, WebP, GIF or SVG, up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "uploadRow": {
+            "w": 354,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "over-per-file.png 3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "bar": {
+            "w": 0,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 339,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(227, 73, 63)",
+            "text": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "stopOne": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "stopRest": null,
+          "batch": {
+            "w": 354,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Uploading 1 image — 0 done, 1 not added"
+          }
+        },
+        "rows": [
+          {
+            "cls": "mp-up is-bad",
+            "name": "over-per-file.png",
+            "pct": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)",
+            "barWidth": "0%",
+            "aria": "0"
+          }
+        ],
+        "inFlight": {
+          "dialog": {
+            "w": 390,
+            "h": 844,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Choose an image Pick one, or upload a new one. Close Auto 4 6 8 10 Upload new USED BY Anywhere — no filter A product A brand A category Site-wide images Not used yet PRODUCT, BRAND OR CATEGORY UPLOADED FROM UPLOADED TO C"
+          },
+          "drop": {
+            "w": 354,
+            "h": 87,
+            "fontSize": "14px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop images here to upload JPG, PNG, WebP, GIF or SVG, up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "uploadRow": {
+            "w": 354,
+            "h": 34,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "under-limit.png 16% Stop"
+          },
+          "bar": {
+            "w": 57,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 23,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "16%"
+          },
+          "stopOne": {
+            "w": 40,
+            "h": 23,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "stopRest": null,
+          "batch": {
+            "w": 354,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Uploading 1 image — 0 done"
+          }
+        },
+        "inFlightRows": [
+          {
+            "cls": "mp-up",
+            "name": "under-limit.png",
+            "pct": "16%",
+            "barWidth": "16%",
+            "aria": "16",
+            "stopVisible": true
+          }
+        ],
+        "afterStop": [
+          {
+            "cls": "mp-up is-gone",
+            "pct": "Stopped"
+          }
+        ]
+      },
+      "editor": {
+        "opened": "peoEdit",
+        "resting": {
+          "mainCard": {
+            "w": 362,
+            "h": 466,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "MAIN IMAGE The first picture customers see, on the shop grid and at the top of the product page. No main image yet Choose Upload Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_"
+          },
+          "mainHint": {
+            "w": 334,
+            "h": 50,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainBox": {
+            "w": 260,
+            "h": 314,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "No main image yet Choose Upload"
+          },
+          "galCard": {
+            "w": 362,
+            "h": 387,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "GALLERY Drag the handle to reorder, or use ↑ ↓. This is the order customers see, after the main image. The description under each photo is what Google Images and screen readers read — write what is actually in the shot. "
+          },
+          "galDrop": {
+            "w": 334,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them anywhere on this card, or tap to choose Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "galCap": {
+            "w": 308,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogZone": {
+            "w": 334,
+            "h": 211,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Share image Choose from Media Library Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogDrop": {
+            "w": 334,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogCap": {
+            "w": 308,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainUps": null,
+          "galUps": null,
+          "ogUps": null,
+          "bar": null,
+          "pct": null,
+          "stopOne": null,
+          "banner": null
+        },
+        "frame": {
+          "docScrollWidth": 390,
+          "docClientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390
+        },
+        "litWhileHovering": [
+          "peo-galzone"
+        ],
+        "inFlight": {
+          "mainCard": {
+            "w": 362,
+            "h": 466,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "MAIN IMAGE The first picture customers see, on the shop grid and at the top of the product page. No main image yet Choose Upload Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_"
+          },
+          "mainHint": {
+            "w": 334,
+            "h": 50,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainBox": {
+            "w": 260,
+            "h": 314,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "No main image yet Choose Upload"
+          },
+          "galCard": {
+            "w": 362,
+            "h": 633,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "GALLERY Drag the handle to reorder, or use ↑ ↓. This is the order customers see, after the main image. The description under each photo is what Google Images and screen readers read — write what is actually in the shot. "
+          },
+          "galDrop": {
+            "w": 334,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them anywhere on this card, or tap to choose Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "galCap": {
+            "w": 308,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogZone": {
+            "w": 334,
+            "h": 211,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Share image Choose from Media Library Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogDrop": {
+            "w": 334,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogCap": {
+            "w": 308,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainUps": null,
+          "galUps": {
+            "w": 334,
+            "h": 60,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Uploading 1 image — 0 done, 1 not added Clear over-per-file.png 3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "ogUps": null,
+          "bar": {
+            "w": 0,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 339,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(180, 68, 60)",
+            "text": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "stopOne": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 362,
+            "h": 43,
+            "fontSize": "12.5px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(227, 195, 192)",
+            "text": "1 of 3 images could not be uploaded; the rest were added."
+          }
+        },
+        "inFlightRows": [
+          {
+            "cls": "peo-up is-bad",
+            "name": "over-per-file.png",
+            "pct": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)",
+            "barWidth": "0%",
+            "aria": "0",
+            "stopVisible": false
+          }
+        ],
+        "afterUpload": {
+          "mainCard": {
+            "w": 362,
+            "h": 466,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "MAIN IMAGE The first picture customers see, on the shop grid and at the top of the product page. No main image yet Choose Upload Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_"
+          },
+          "mainHint": {
+            "w": 334,
+            "h": 50,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Drop a photograph on the box above to upload it. Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainBox": {
+            "w": 260,
+            "h": 314,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "No main image yet Choose Upload"
+          },
+          "galCard": {
+            "w": 362,
+            "h": 633,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "GALLERY Drag the handle to reorder, or use ↑ ↓. This is the order customers see, after the main image. The description under each photo is what Google Images and screen readers read — write what is actually in the shot. "
+          },
+          "galDrop": {
+            "w": 334,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload new images Drop them anywhere on this card, or tap to choose Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "galCap": {
+            "w": 308,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB each — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogZone": {
+            "w": 334,
+            "h": 211,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Share image Choose from Media Library Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogDrop": {
+            "w": 334,
+            "h": 98,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Or upload a share image Drop one anywhere in this box, or tap to choose Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "ogCap": {
+            "w": 308,
+            "h": 24,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s."
+          },
+          "mainUps": null,
+          "galUps": {
+            "w": 334,
+            "h": 60,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "Uploading 1 image — 0 done, 1 not added Clear over-per-file.png 3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "ogUps": null,
+          "bar": {
+            "w": 0,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 339,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(180, 68, 60)",
+            "text": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          },
+          "stopOne": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 362,
+            "h": 43,
+            "fontSize": "12.5px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(227, 195, 192)",
+            "text": "1 of 3 images could not be uploaded; the rest were added."
+          }
+        },
+        "afterRows": [
+          {
+            "cls": "peo-up is-bad",
+            "name": "over-per-file.png",
+            "pct": "3.0 MB — over this server’s 2 MB limit (upload_max_filesize = 2M)"
+          }
+        ],
+        "throttledRows": [
+          {
+            "cls": "peo-up",
+            "name": "under-limit.png",
+            "pct": "19%",
+            "barWidth": "19%",
+            "aria": "19",
+            "stopVisible": true
+          },
+          {
+            "cls": "peo-up",
+            "name": "under-limit2.png",
+            "pct": "Waiting…",
+            "barWidth": "0%",
+            "aria": "0",
+            "stopVisible": true
+          },
+          {
+            "cls": "peo-up",
+            "name": "small.png",
+            "pct": "Waiting…",
+            "barWidth": "0%",
+            "aria": "0",
+            "stopVisible": true
+          }
+        ],
+        "stopRestVisible": true,
+        "afterStopRest": [
+          {
+            "cls": "peo-up is-gone",
+            "pct": "Stopped"
+          },
+          {
+            "cls": "peo-up is-gone",
+            "pct": "Stopped"
+          },
+          {
+            "cls": "peo-up is-gone",
+            "pct": "Stopped"
+          }
+        ]
+      },
+      "importer": {
+        "opened": true,
+        "resting": {
+          "card": {
+            "w": 362,
+            "h": 925,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 328,
+            "h": 109,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 302,
+            "h": 35,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 328,
+            "h": 94,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": ""
+          }
+        },
+        "frame": {
+          "docScrollWidth": 390,
+          "docClientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390
+        },
+        "litWhileHovering": [
+          "rio-import-card"
+        ],
+        "afterDrop": {
+          "card": {
+            "w": 362,
+            "h": 950,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 328,
+            "h": 109,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 302,
+            "h": 35,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 328,
+            "h": 94,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": null,
+          "name": {
+            "w": 328,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "small.csv"
+          }
+        },
+        "checking": {
+          "card": {
+            "w": 362,
+            "h": 989,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 328,
+            "h": 109,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 302,
+            "h": 35,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 328,
+            "h": 94,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 328,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "small.csv Read"
+          },
+          "bar": {
+            "w": 328,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 28,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Read"
+          },
+          "stop": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 362,
+            "h": 63,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(21, 168, 90)",
+            "text": "Checked. Nothing has been written — press Import to apply it."
+          },
+          "name": {
+            "w": 328,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "small.csv"
+          }
+        },
+        "checked": {
+          "card": {
+            "w": 362,
+            "h": 989,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 328,
+            "h": 109,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 302,
+            "h": 35,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 328,
+            "h": 94,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 328,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "small.csv Read"
+          },
+          "bar": {
+            "w": 328,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 28,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Read"
+          },
+          "stop": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 362,
+            "h": 63,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(21, 168, 90)",
+            "text": "Checked. Nothing has been written — press Import to apply it."
+          },
+          "name": {
+            "w": 328,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "small.csv"
+          }
+        },
+        "throttled": {
+          "card": {
+            "w": 362,
+            "h": 993,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 328,
+            "h": 109,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 302,
+            "h": 35,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 328,
+            "h": 94,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 328,
+            "h": 34,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "mid.csv 21% Stop"
+          },
+          "bar": {
+            "w": 69,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 23,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "21%"
+          },
+          "stop": {
+            "w": 40,
+            "h": 23,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": null,
+          "name": {
+            "w": 328,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "mid.csv"
+          }
+        },
+        "throttledRow": {
+          "cls": "rio-up",
+          "pct": "21%",
+          "barWidth": "21%",
+          "aria": "21",
+          "stopVisible": true
+        },
+        "afterStop": {
+          "card": {
+            "w": 362,
+            "h": 989,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 328,
+            "h": 109,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 302,
+            "h": 35,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 328,
+            "h": 94,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": {
+            "w": 328,
+            "h": 29,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": "mid.csv Stopped"
+          },
+          "bar": {
+            "w": 72,
+            "h": 6,
+            "fontSize": "14px",
+            "borderStyle": "none",
+            "borderColor": "rgb(16, 23, 41)",
+            "text": ""
+          },
+          "pct": {
+            "w": 43,
+            "h": 17,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Stopped"
+          },
+          "stop": {
+            "w": 0,
+            "h": 0,
+            "fontSize": "11px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Stop"
+          },
+          "banner": {
+            "w": 362,
+            "h": 63,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "Check stopped. Nothing past the point it was stopped was written."
+          },
+          "name": {
+            "w": 328,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "mid.csv"
+          }
+        },
+        "oversized": {
+          "card": {
+            "w": 362,
+            "h": 950,
+            "fontSize": "14px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Import A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at"
+          },
+          "drop": {
+            "w": 328,
+            "h": 109,
+            "fontSize": "12.5px",
+            "borderStyle": "dashed",
+            "borderColor": "rgb(230, 233, 242)",
+            "text": "Drop your CSV here or tap to choose a file Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "cap": {
+            "w": 302,
+            "h": 35,
+            "fontSize": "11.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "Up to 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB"
+          },
+          "legend": {
+            "w": 328,
+            "h": 94,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "A review export from WooCommerce, or a file from the Export box above. Up to 20,000 rows and 2 MB — this server’s own upload_max_filesize (2M), not a limit of the shop’s, which allows 4 MB; rows are written 200 at a time"
+          },
+          "row": null,
+          "bar": null,
+          "pct": null,
+          "stop": null,
+          "banner": {
+            "w": 362,
+            "h": 83,
+            "fontSize": "13px",
+            "borderStyle": "solid",
+            "borderColor": "rgb(217, 83, 79)",
+            "text": "That file is 9.0 MB. This server accepts 2 MB (upload_max_filesize = 2M). Split the export, or raise that limit on the server."
+          },
+          "name": {
+            "w": 328,
+            "h": 19,
+            "fontSize": "12.5px",
+            "borderStyle": "none",
+            "borderColor": "rgb(98, 108, 128)",
+            "text": "over-post.csv"
+          }
+        }
+      }
+    }
+  ],
+  "console": [],
+  "error": null
+}

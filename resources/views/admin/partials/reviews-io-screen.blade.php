@@ -39,6 +39,36 @@
     The whole body is wrapped in one so that the braces inside JavaScript
     template literals are not read as Blade.
 --}}
+@php
+    /*
+     * ── WHAT THIS SERVER WILL REALLY ACCEPT ─────────────────────────────────
+     *
+     * The import card says "Up to 25,000 rows and 4 MB", because 4096 is
+     * ReviewsIoApiController::UPLOAD_MAX_KB. On the live box PHP stops at
+     * upload_max_filesize=2M inside post_max_size=8M, so HALF the number this
+     * screen printed was unreachable -- and a 3 MB WooCommerce export did not
+     * come back "too big", it came back as a validation failure saying the file
+     * was not a file, because PHP had already thrown the upload away.
+     *
+     * This is the same defect App\Support\ServerUploadLimits was written for on
+     * the video screen, applied here. The number is READ, not assumed, and it
+     * costs no round trip: ini_get() has the answer at render time.
+     *
+     * The app cap is duplicated here as a literal because UPLOAD_MAX_KB is
+     * private. ReviewsIoUploadLimitTest reflects it and fails if the two ever
+     * disagree, so it cannot drift.
+     */
+    $rioLimitReader = app(\App\Support\ServerUploadLimits::class);
+    $rioLimits = $rioLimitReader->describe(4096 * 1024);
+    $rioLimits['server'] = $rioLimitReader->raw();
+@endphp
+{{--
+    A JSON island, not a window assignment. The two values under `server` are ini
+    strings read off the host rather than constants of this application, so rule 5
+    applies to them: all four HEX flags out, JSON.parse in a try/catch in, esc()
+    before any of it reaches innerHTML.
+--}}
+<script type="application/json" id="rio-limits">@json($rioLimits, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
 @verbatim
 <style>
 /* ---------------------------------------------------------------------------
@@ -140,6 +170,66 @@
    has been chosen yet. */
 .rio-name{font-size:12.5px;color:var(--ink-soft,#6b7280);word-break:break-all;margin-top:6px}
 .rio-name:empty{display:none}
+
+/* ── the drop zone ────────────────────────────────────────────────────────
+   THE WHOLE IMPORT CARD IS THE TARGET, not the dashed box inside it. A CSV let
+   go two pixels outside a 90px box did not merely fail: nothing in this console
+   prevents the default drop, so the browser NAVIGATED AWAY to the file -- and on
+   this screen that means leaving a half-configured import behind to go and look
+   at raw CSV. The dashed box is what says a drop is possible and is also the
+   click path to the file dialog, so the affordance and the fallback are one
+   control. */
+.rio-drop{display:block;width:100%;margin-top:8px;padding:14px 12px;text-align:center;
+          font:inherit;font-size:12.5px;color:var(--ink-soft,#6b7280);background:none;cursor:pointer;
+          border:1.5px dashed var(--border,#e6e6e6);border-radius:10px;min-width:0}
+.rio-drop b{display:block;font-size:13px;font-weight:650;color:inherit;margin-bottom:3px}
+.rio-drop span{display:block;font-size:11.5px;margin-top:3px;overflow-wrap:anywhere}
+.rio-drop:hover,.rio-drop:focus-visible{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);
+          background:rgba(21,168,90,.05)}
+.rio-card.is-drag{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+.rio-card.is-drag .rio-drop{border-color:var(--accent,#15a85a);border-width:2px;padding:13.5px 11.5px;
+          color:var(--accent,#15a85a);background:rgba(21,168,90,.07)}
+
+/* ── the progress bar ─────────────────────────────────────────────────────
+   WHETHER IT EARNS ITS PLACE HERE, honestly: a review CSV is usually a few
+   hundred KB and goes up in under a second, so on a fast line the bar is a
+   flicker. It earns it in three cases that are not edge cases on this screen:
+
+     1. THE FILE GOES UP TWICE. The documented order is Check, then Import, so
+        every real import uploads the same file a second time.
+     2. A WooCommerce export of three thousand reviews with reply text is
+        comfortably over a megabyte, and the owner is on a domestic uplink.
+     3. THE SERVER PHASE IS THE LONG ONE, and it is the part a bar alone cannot
+        show. ReviewCsvImport writes in batches of rows; a bar that reaches 100%
+        and then sits there for eight seconds reads as a hung screen. That is
+        what the `server` stage below is for -- the bar stops being a percentage
+        and says "Reading the file" instead.
+
+   The drop zone is the bigger win. The bar is what stops the second half of the
+   run looking like nothing is happening. */
+.rio-up{display:grid;gap:5px;margin-top:10px;min-width:0}
+.rio-up-top{display:flex;gap:10px;align-items:baseline;justify-content:space-between;min-width:0}
+.rio-up-name{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rio-up-pct{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-soft,#6b7280);flex:none}
+.rio-up-x{font:inherit;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;flex:none;
+          border:1px solid var(--border,#e6e6e6);background:none;color:var(--ink-soft,#6b7280);cursor:pointer}
+.rio-up-x[hidden]{display:none}
+.rio-up-x:hover{border-color:#b3312c;color:#b3312c}
+.rio-up-track{height:6px;border-radius:999px;background:rgba(127,127,127,.18);overflow:hidden}
+.rio-up-track > i{display:block;height:100%;width:0;border-radius:999px;
+                  background:var(--accent,#15a85a);transition:width .18s linear}
+.rio-up.is-bad .rio-up-track > i{background:#b3312c}
+.rio-up.is-bad .rio-up-pct{color:#b3312c}
+/* Every byte is sent and the answer has not come: the rows are being parsed and
+   written. Striped by a keyframe on background-position, so nothing is measured
+   and no script runs per frame. */
+.rio-up.is-server .rio-up-track > i{width:100% !important;
+  background-image:linear-gradient(110deg,rgba(255,255,255,.45) 25%,transparent 25%,
+    transparent 50%,rgba(255,255,255,.45) 50%,rgba(255,255,255,.45) 75%,transparent 75%);
+  background-size:14px 14px;animation:rio-stripe .7s linear infinite}
+@keyframes rio-stripe{from{background-position:0 0}to{background-position:14px 0}}
+@media (prefers-reduced-motion: reduce){.rio-up-track > i{transition:none}
+  .rio-up.is-server .rio-up-track > i{animation:none}}
 </style>
 
 <script>
@@ -242,11 +332,419 @@
 
   function say(msg){ try { window.toast(msg); } catch (e) {} }
 
+  /* ── THE REAL CEILING, READ RATHER THAN ASSUMED ───────────────────────────
+     Out of the JSON island this partial renders above:
+     App\Support\ServerUploadLimits->describe(UPLOAD_MAX_KB) plus the two ini
+     strings. Wrapped, and every reader falls back to the behaviour this screen
+     had before the island existed -- "send it and let the server decide" -- so a
+     malformed island leaves a working importer.
+
+     Four readers, none interchangeable:
+       capBytes()  the exact byte ceiling, for the pre-flight. effective_mb is
+                   FLOORED, so refusing against effective_mb * 1048576 would
+                   refuse a file this server would have taken.
+       capWords()  the ceiling as an operator says it -- "512 KB", never "0 MB".
+       cappedBy()  which of the three is capping, bounded to the two ini names
+                   the island may carry and '' for anything else, because the
+                   sentence below switches on it. Rule 5.
+       serverIni() that value as the server spells it, for somebody about to go
+                   and edit the line. */
+  var LIMITS = (function(){
+    try {
+      var tag = document.getElementById('rio-limits');
+      if (!tag) return null;
+      var v = JSON.parse(tag.textContent || 'null');
+      return (v && typeof v === 'object') ? v : null;
+    } catch (e) { return null; }
+  })();
+
+  function capBytes(){
+    var n = LIMITS && LIMITS.effective_bytes;
+    return (typeof n === 'number' && n > 0) ? n : 0;      // 0 = no pre-flight
+  }
+
+  function capWords(){
+    var w = LIMITS && LIMITS.effective_label;
+    return (typeof w === 'string' && w) ? w : '';
+  }
+
+  function appWords(){
+    var w = LIMITS && LIMITS.app_mb;
+    return (typeof w === 'number' && w > 0) ? (w + ' MB') : '';
+  }
+
+  function cappedBy(){
+    var by = LIMITS && LIMITS.capped_by;
+    return (by === 'upload_max_filesize' || by === 'post_max_size') ? by : '';
+  }
+
+  function serverIni(name){
+    var srv = LIMITS && LIMITS.server;
+    if (name !== 'upload_max_filesize' && name !== 'post_max_size') return '';
+    return (srv && typeof srv[name] === 'string' && srv[name] !== '') ? srv[name] : 'not readable';
+  }
+
+  /** A byte count as an operator would say it. */
+  function kb(n){
+    n = Number(n) || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return Math.round(n / 1024) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+  }
+
+  /**
+   * The size half of the import card's sentence.
+   *
+   * THIS IS THE LINE THAT WAS WRONG. It read "and 4 MB", which is
+   * ReviewsIoApiController::UPLOAD_MAX_KB and nothing else -- twice what this
+   * server will take. When the server is the thing capping, the directive is
+   * NAMED, because an operator cannot act on "2 MB" alone and the whole failure
+   * mode being fixed here is a screen that blamed the file.
+   */
+  function capSentence(){
+    var words = capWords();
+    if (!words) return '';
+
+    if (!cappedBy()) return words;
+
+    /* NO LEADING "up to". This phrase goes in two places -- the drop zone, which
+       puts "Up to " in front of it, and the legend, which reads "Up to 25,000
+       rows and <this>". Carrying the words in the phrase made the legend say
+       "rows and up to 2 MB", which was measured in Chromium before it was read. */
+    var by = cappedBy();
+    return words + ' — this server’s own ' + by + ' (' + serverIni(by) + '), '
+      + 'not a limit of the shop’s' + (appWords() ? ', which allows ' + appWords() : '');
+  }
+
+  /* ── THE UPLOAD, AND WHY IT IS NOT window.kbbUpload ───────────────────────
+
+     This screen does NOT route through the console's shared uploader, and the
+     reason is one specific field. window.kbbUpload reports a failure as
+     { status, message, retryable } -- the parsed response body is not in it.
+
+     A 422 FROM THIS ENDPOINT IS THE REPORT. "No rating column", the per-row
+     rejections with their reasons, the counts: all of it arrives in the body of a
+     422, and run() below renders it as the report card rather than throwing it
+     away behind a status code. Sending this screen through a callback that
+     carries only `message` would replace a table of three hundred rejected rows
+     with one sentence, silently. That is a regression, not a refactor.
+
+     The drop zone IS taken from the kit -- window.kbbDropZone's contract fits
+     this screen exactly -- so the divergence is one function wide and is
+     recorded here rather than left to be discovered. The moment onFail carries
+     the parsed body, this should become send({...}) like the other two screens.
+
+     XMLHttpRequest and not fetch, for the reason every uploader in this console
+     uses it: fetch cannot report UPLOAD progress. Its request body is consumed
+     opaquely, so the best it can offer is a spinner. It is NOT a second import
+     path -- same endpoint, same fields, same CSRF header, same server rules; a
+     different transport.
+   *
+   * { url, file, field, extra, max, onProgress, onStage, onDone, onFail }
+   * -> { cancel() }.  Deliberately the same shape as the shared kit, so the day
+   * onFail grows a body this is a two-line change.
+   */
+  function rioUpload(o){
+    var fired = false;
+
+    function stage(st){ if (typeof o.onStage === 'function') o.onStage(st); }
+
+    function fail(f){
+      if (fired) return;
+      fired = true;
+      stage('failed');
+      if (typeof o.onFail === 'function') o.onFail(f);
+    }
+
+    if (typeof o.max === 'number' && o.max > 0 && o.file && o.file.size > o.max) {
+      fail({ status: 0, message: 'Larger than this server will accept.', body: null, retryable: false });
+      return { cancel: function(){} };
+    }
+
+    var fd = new FormData();
+    fd.append(o.field || 'file', o.file);
+
+    var extra = o.extra || {};
+    Object.keys(extra).forEach(function(k){ fd.append(k, extra[k]); });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', o.url, true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Accept', 'application/json');
+    /* No Content-Type header, ever: only the browser knows the multipart
+       boundary it is about to generate, and setting it by hand is the classic
+       way to make every upload arrive empty. There is no csrf-token meta tag in
+       this console, so the cookie is the only source for the token. */
+    xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));
+
+    if (xhr.upload) {
+      xhr.upload.onprogress = function(e){
+        // lengthComputable is false for a chunked request, and a fabricated
+        // percentage is worse than none.
+        if (!e.lengthComputable || !(e.total > 0)) return;
+        if (typeof o.onProgress === 'function') {
+          o.onProgress({
+            loaded: e.loaded,
+            total: e.total,
+            /* Capped at 99 while sending. On this screen the gap between the
+               last byte and the answer is not a formality -- it is the parse and
+               up to 25,000 rows written in batches -- and a bar reading 100%
+               through all of it is how a working import looks like a hung page. */
+            pct: Math.min(99, Math.round((e.loaded / e.total) * 100))
+          });
+        }
+      };
+      xhr.upload.onload = function(){ stage('server'); };
+    }
+
+    xhr.onload = function(){
+      if (fired) return;
+
+      var body = null;
+      try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        fired = true;
+        if (typeof o.onProgress === 'function') o.onProgress({ loaded: 1, total: 1, pct: 100 });
+        stage('done');
+        if (typeof o.onDone === 'function') o.onDone(body);
+        return;
+      }
+
+      fail({
+        status: xhr.status,
+        message: (body && (body.message || body.error)) || '',
+        body: body,
+        retryable: xhr.status >= 500
+      });
+    };
+
+    xhr.onerror = function(){
+      fail({ status: 0, message: 'Could not reach the server.', body: null, retryable: true });
+    };
+
+    xhr.onabort = function(){
+      if (fired) return;
+      fired = true;
+      stage('cancelled');
+    };
+
+    xhr.send(fd);
+
+    return { cancel: function(){ try { xhr.abort(); } catch (e) {} } };
+  }
+
+  /* ── THE DROP ZONE, WHICH *IS* THE KIT'S ──────────────────────────────────
+     window.kbbDropZone(el, {accept, multiple, onFiles}) when the console's
+     shared kit is on the page; the wiring below when it is not. Guarded the way
+     every call site here guards window.kbbPickMedia. A teardown function comes
+     back either way, and this screen uses it: render() replaces #content
+     wholesale on every repaint. */
+  function dropZone(node, o){
+    if (typeof window.kbbDropZone === 'function') return window.kbbDropZone(node, o);
+    return localDropZone(node, o);
+  }
+
+  /** True when the pointer carries files from outside the page. */
+  function carriesFiles(e){
+    var types = e.dataTransfer && e.dataTransfer.types;
+    if (!types) return false;
+    return Array.prototype.indexOf.call(types, 'Files') !== -1;
+  }
+
+  function localDropZone(node, o){
+    /* dragenter and dragleave fire once per element the pointer crosses, and this
+       card is full of them -- rows, selects, switches. Counting is the only way to
+       know the pointer has really left: a plain dragleave handler drops the
+       highlight the moment the pointer moves from the card onto a control inside
+       it, which reads as the target flickering. */
+    var depth = 0;
+
+    function enter(e){
+      if (!carriesFiles(e)) return;
+      e.preventDefault();
+      depth++;
+      node.classList.add('is-drag');
+    }
+
+    function over(e){
+      if (!carriesFiles(e)) return;
+      /* preventDefault is what makes this a valid drop target at all, and it is
+         also what stops the browser navigating away to the dropped file. */
+      e.preventDefault();
+      try { e.dataTransfer.dropEffect = 'copy'; } catch (x) {}
+    }
+
+    function leave(e){
+      if (!carriesFiles(e)) return;
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) node.classList.remove('is-drag');
+    }
+
+    function drop(e){
+      if (!carriesFiles(e)) return;
+      e.preventDefault();
+      depth = 0;
+      node.classList.remove('is-drag');
+
+      var files = (e.dataTransfer && e.dataTransfer.files) || null;
+      if (!files || !files.length) return;
+
+      var list = Array.prototype.slice.call(files).filter(function(f){
+        return matchesAccept(f, o && o.accept);
+      });
+
+      if (!list.length) return;
+      if (!(o && o.multiple)) list = list.slice(0, 1);
+      if (o && typeof o.onFiles === 'function') o.onFiles(list);
+    }
+
+    node.addEventListener('dragenter', enter);
+    node.addEventListener('dragover', over);
+    node.addEventListener('dragleave', leave);
+    node.addEventListener('drop', drop);
+
+    return function teardown(){
+      node.removeEventListener('dragenter', enter);
+      node.removeEventListener('dragover', over);
+      node.removeEventListener('dragleave', leave);
+      node.removeEventListener('drop', drop);
+      node.classList.remove('is-drag');
+    };
+  }
+
+  /**
+   * Does a dropped file match an `accept` string?
+   *
+   * Only the two forms this console uses are understood -- a type/* wildcard and
+   * a .ext suffix -- and ANYTHING NOT UNDERSTOOD IS ACCEPTED. A client filter
+   * that guesses wrong discards the operator's file and shows nothing, and this
+   * screen's accept list is the awkward one: Excel, Numbers and half the
+   * WordPress exporters write a .csv that the browser reports as text/plain, as
+   * an empty type, or as application/vnd.ms-excel. So the EXTENSION is what
+   * usually matches here, the server checks it again, and the parser trusts
+   * neither. This exists to stop a dropped folder and an obviously wrong file.
+   */
+  function matchesAccept(file, accept){
+    if (!accept) return true;
+
+    var name = String((file && file.name) || '').toLowerCase();
+    var type = String((file && file.type) || '').toLowerCase();
+
+    return String(accept).split(',').some(function(rule){
+      rule = rule.trim().toLowerCase();
+      if (!rule) return false;
+      if (rule.charAt(0) === '.') return name.slice(-rule.length) === rule;
+      if (rule.slice(-2) === '/*') return type.indexOf(rule.slice(0, -1)) === 0;
+      if (rule.indexOf('/') !== -1) return type === rule;
+      return true;
+    });
+  }
+
+  /* ── THE ONE UPLOAD IN FLIGHT ─────────────────────────────────────────────
+     One file at a time on this screen, by definition: there is one importer and
+     it takes one CSV. `up` is null when nothing is going up.
+     {name, size, pct, state, error, handle};
+     state is 'sending' | 'server' | 'done' | 'failed' | 'cancelled'. */
+  var up = null;
+
+  /** The teardown for the import card's drop zone; see dropZone(). */
+  var zone = null;
+
+  function upPct(){
+    if (!up) return 0;
+    if (up.state === 'done' || up.state === 'server') return 100;
+    return up.pct || 0;
+  }
+
+  function upLabel(){
+    if (!up) return '';
+    if (up.state === 'failed') return up.error || 'Failed';
+    if (up.state === 'cancelled') return 'Stopped';
+    /* NOT "100%". The bytes are all gone and the rows are being parsed and
+       written in batches -- naming that is the difference between a screen that
+       looks busy and a screen that looks hung. */
+    if (up.state === 'server') return 'Reading the file…';
+    if (up.state === 'done') return 'Read';
+    return upPct() + '%';
+  }
+
+  function upHTML(){
+    if (!up) return '';
+
+    var pct = upPct();
+    var live = up.state === 'sending' || up.state === 'server';
+
+    return '<div class="rio-up' + (up.state === 'failed' ? ' is-bad' : '')
+      + (up.state === 'server' ? ' is-server' : '') + '" id="rio-up">'
+      + '<div class="rio-up-top"><span class="rio-up-name">' + esc(up.name) + '</span>'
+      +   '<span class="rio-up-pct">' + esc(upLabel()) + '</span>'
+      +   '<button type="button" class="rio-up-x" id="rio-up-x"' + (live ? '' : ' hidden') + '>Stop</button>'
+      + '</div>'
+      /* aria-valuenow beside the width, so the bar is not a purely visual fact. */
+      + '<div class="rio-up-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"'
+      +   ' aria-valuenow="' + pct + '" aria-label="' + esc(up.name) + '"><i style="width:' + pct + '%"></i></div>'
+      + '</div>';
+  }
+
+  /* Patched in place, NEVER through render(). A repaint on every progress event
+     would replace the file input -- whose selection cannot be restored from
+     script -- which is the defect the comment above `chosen` describes, and it
+     would do it forty times a second. This touches the bar, its label, its class
+     and its Stop. */
+  function paintUp(){
+    var row = document.querySelector('#rio-up');
+    if (!row || !up) return;
+
+    var pct = upPct();
+    var bar = row.querySelector('.rio-up-track > i');
+    var track = row.querySelector('.rio-up-track');
+    var lab = row.querySelector('.rio-up-pct');
+    var x = row.querySelector('#rio-up-x');
+
+    if (bar) bar.style.width = pct + '%';
+    if (track) track.setAttribute('aria-valuenow', String(pct));
+    if (lab) lab.textContent = upLabel();
+    if (x) x.hidden = !(up.state === 'sending' || up.state === 'server');
+    row.className = 'rio-up' + (up.state === 'failed' ? ' is-bad' : '')
+      + (up.state === 'server' ? ' is-server' : '');
+  }
+
+  /* ── STOP HAS TO SETTLE THE QUEUE, NOT JUST ABORT THE REQUEST ─────────────
+     FOUND IN CHROMIUM, NOT IN A TEST, AND IT HUNG THE SCREEN. Cancelling is not
+     a failure, so the contract reports it as onStage('cancelled') and NOT as
+     onFail -- and the first version of this queue resolved its promise only from
+     onDone and onFail. So pressing Stop aborted the request, painted the row
+     "Stopped", and then awaited a promise that nothing would ever settle: the
+     loop never reached the next file, `busy` stayed true, and the screen sat
+     greyed out until it was reloaded. Measured: the row read "Stopped", the banner never
+     appeared and both buttons stayed disabled.
+     The upload therefore carries its own settle(), called from BOTH ends -- the
+     'cancelled' stage, and stopOne() itself. Resolving a promise twice is a
+     no-op, so the belt and the braces cannot disagree, and a transport that
+     forgets to report the abort at all cannot wedge the queue. */
+
+  function stopUp(){
+    if (!up || !(up.state === 'sending' || up.state === 'server')) return;
+    up.state = 'cancelled';
+    if (up.handle && typeof up.handle.cancel === 'function') {
+      try { up.handle.cancel(); } catch (e) {}
+    }
+    paintUp();
+
+    // The braces. See the note above.
+    if (typeof up.settle === 'function') up.settle();
+  }
+
   /* ------------------------------------------------------------- the route */
   var previousGo = window.go;
 
   window.go = function(id){
     if (id !== SCREEN) return previousGo.apply(this, arguments);
+
+    // No bar and no zone carried in from a previous visit to this screen.
+    up = null;
+    if (zone) { try { zone(); } catch (e) {} zone = null; }
 
     /* The console's own go() is NOT called for this id. It would reach
        renderReviewFrame(), and although 'rev-io' is in LIVE_RENDERED -- so
@@ -350,22 +848,98 @@
     chosen = file;
     form.filename = file.name;
 
+    /* ── THE PRE-FLIGHT ──────────────────────────────────────────────────────
+       Refused before a byte leaves the machine, with the size, the ceiling and
+       the directive in one sentence.
+
+       WITHOUT THIS, a 3 MB WooCommerce export on this box did not come back "too
+       big". PHP's rfc1867 handler discards a file over upload_max_filesize and
+       hands Laravel an upload with error=1 and size=0, so `required|file` failed
+       and the 422 said the file was not a file. Over post_max_size it is worse:
+       the whole body is thrown away before the router, ValidatePostSize answers
+       413 with a `message` and no `error` key, and this screen printed "Could not
+       read that file (413)". Neither refusal named a size, and both blamed a file
+       that was fine. */
+    var ceiling = capBytes();
+
+    if (ceiling && file.size > ceiling) {
+      banner = {kind:'err', text: 'That file is ' + kb(file.size) + '. This server accepts '
+        + capWords() + (cappedBy() ? ' (' + cappedBy() + ' = ' + serverIni(cappedBy()) + ')' : '')
+        + '. Split the export, or raise that limit on the server.'};
+      render();
+      return;
+    }
+
     working = true;
     banner = null;
+    report = null;
+    up = { name: file.name || 'reviews.csv', size: file.size || 0, pct: 0, state: 'sending' };
     render();
 
-    var body = new FormData();
-    body.append('file', file);
-    body.append('mode', mode);
-    body.append('on_duplicate', form.on_duplicate);
-    body.append('allow_business', form.allow_business ? '1' : '0');
-    body.append('timezone', form.timezone);
+    /* The body is assembled exactly as it was; only the transport changed, from
+       fetch (which cannot report upload progress) to XMLHttpRequest. Same
+       endpoint, same field names, same values. */
+    var extra = {
+      mode: mode,
+      on_duplicate: form.on_duplicate,
+      allow_business: form.allow_business ? '1' : '0',
+      timezone: form.timezone
+    };
 
-    try {
-      /* No Content-Type header: the browser has to set it, because only the
-         browser knows the multipart boundary it is about to generate. Setting
-         it by hand here is the classic way to make every upload arrive empty. */
-      report = await api('/reviews-io/import', {method:'POST', body: body});
+    var outcome = await new Promise(function(resolve){
+      /* The one place this upload's promise can be settled from. Assigned before
+         the request starts, because Stop can arrive on the very next tick. */
+      up.settle = function(){ resolve({ stopped: true }); };
+
+      up.handle = rioUpload({
+        url: apiBase() + '/reviews-io/import',
+        file: file,
+        field: 'file',
+        extra: extra,
+        // Belt on the pre-flight's braces; the two cannot both fire.
+        max: ceiling || undefined,
+        onProgress: function(p){
+          if (!up || up.state !== 'sending') return;
+          up.pct = Math.max(0, Math.min(100, Math.round((p && p.pct) || 0)));
+          paintUp();
+        },
+        onStage: function(st){
+          // The belt. Cancelling is reported here and never through onFail.
+          if (st === 'cancelled') {
+            if (up) { up.state = 'cancelled'; paintUp(); }
+            resolve({ stopped: true });
+            return;
+          }
+          if (!up || up.state === 'cancelled') return;
+          if (st === 'server') { up.state = 'server'; paintUp(); }
+        },
+        onDone: function(body){
+          if (up && up.state === 'cancelled') { resolve({ stopped: true }); return; }
+          if (up) { up.state = 'done'; up.pct = 100; paintUp(); }
+          resolve({ body: body });
+        },
+        onFail: function(f){
+          if (up && up.state === 'cancelled') { paintUp(); resolve({ stopped: true }); return; }
+          if (up) {
+            up.state = 'failed';
+            up.error = failWords(f);
+            paintUp();
+          }
+          resolve({ fail: f });
+        }
+      });
+    });
+
+    if (outcome.stopped) {
+      banner = {kind:'err', text: (mode === 'check' ? 'Check stopped.' : 'Import stopped.')
+        + ' Nothing past the point it was stopped was written.'};
+      working = false;
+      render();
+      return;
+    }
+
+    if (outcome.body) {
+      report = outcome.body;
       banner = {
         kind: 'ok',
         text: mode === 'check'
@@ -376,22 +950,56 @@
       /* Cleared only after a real import. A checked file is still the file the
          owner is about to import, and dropping it here would put the defect
          above back one line lower down. */
-      if (mode === 'import') { chosen = null; form.filename = ''; load(true); }
-    } catch (e) {
+      if (mode === 'import') { chosen = null; form.filename = ''; up = null; load(true); }
+    } else {
+      var f = outcome.fail || {};
+
       /* A 422 from the importer IS a report -- "no rating column", the row
-         rejections -- and is far more useful than the status code. It is shown
-         as the report rather than thrown away behind a generic failure. */
-      if (e.body && (e.body.message || e.body.rejects)) {
-        report = e.body;
-        banner = {kind:'err', text: e.body.message || 'That file could not be imported.'};
+         rejections -- and is far more useful than the status code. It is shown as
+         the report rather than thrown away behind a generic failure. THIS is the
+         reason this screen does not go through window.kbbUpload: its onFail
+         carries { status, message, retryable } and not the body, and losing the
+         body here loses the rejection table. */
+      if (f.body && (f.body.message || f.body.rejects)) {
+        report = f.body;
+        banner = {kind:'err', text: f.body.message || 'That file could not be imported.'};
       } else {
         report = null;
-        banner = {kind:'err', text:'Could not read that file (' + (e.status || 'network') + ').'};
+        banner = {kind:'err', text: failWords(f)};
       }
-    } finally {
-      working = false;
-      render();
     }
+
+    working = false;
+    render();
+  }
+
+  /**
+   * What a failure says, in the operator's own units.
+   *
+   * 413 IS ITS OWN CASE. Laravel 11's global ValidatePostSize throws before the
+   * router when the whole body is over post_max_size; its response carries
+   * `message` and no `error` key. MEASURED in Chromium with a 9 MB CSV on this
+   * box, the banner this screen printed was, in full:
+   *
+   *     The POST data is too large.
+   *
+   * That is Laravel's own wording, and it is what the owner was shown: no size,
+   * no ceiling, no directive, and the same sentence for a 9 MB file as for a
+   * 900 MB one. It is REPLACED here rather than printed.
+   */
+  function failWords(f){
+    var status = (f && f.status) || 0;
+    var msg = String((f && f.message) || '');
+
+    if (status === 413) {
+      var by = cappedBy() || 'post_max_size';
+      return 'That file is too big for this server (' + by + ' = ' + serverIni(by) + ')'
+        + (capWords() ? '. The most it takes is ' + capWords() : '')
+        + '. Split the export, or raise that limit on the server.';
+    }
+
+    if (msg) return msg;
+    return 'Could not read that file (' + (status || 'network') + ').';
   }
 
   /* ---------------------------------------------------------------- markup */
@@ -458,11 +1066,18 @@
   }
 
   function importCard(){
-    return '<div class="rio-card">' +
+    /* THE SIZE HALF OF THIS SENTENCE USED TO BE data.limits.max_kb / 1024, which
+       is the controller's 4 MB and nothing else -- twice what this server takes.
+       It is now the ceiling read off the host, and it names the directive when
+       the host is the thing capping. The ROW limit still comes from the server
+       payload, because 25,000 rows is genuinely the app's own rule. */
+    var size = capSentence();
+
+    return '<div class="rio-card" id="rio-import-card">' +
       '<p class="rio-legend">Import</p>' +
       '<p class="rio-legend-sub">A review export from WooCommerce, or a file from the Export box above. ' +
-      'Up to ' + esc(num(data.limits.max_rows)) + ' rows and ' + esc(num(data.limits.max_kb / 1024)) +
-      ' MB; rows are written ' + esc(num(data.limits.batch)) + ' at a time so a large file cannot hold the ' +
+      'Up to ' + esc(num(data.limits.max_rows)) + ' rows' + (size ? ' and ' + esc(size) : '') +
+      '; rows are written ' + esc(num(data.limits.batch)) + ' at a time so a large file cannot hold the ' +
       'database open.</p>' +
       '<div class="rio-row rio-wide" style="grid-template-columns:1fr">' +
         '<div><div class="rio-lab">The file</div>' +
@@ -478,6 +1093,13 @@
            pick worked, because by then this element existed. Found in the
            browser, not in a test: nothing server-side can see it. */
         '<div class="rio-name">' + esc(form.filename) + '</div>' +
+        /* The dashed box says a drop is possible and is also the click path to
+           the file dialog. The DROP itself belongs to the whole card -- see the
+           note on .rio-drop. */
+        '<button type="button" class="rio-drop" id="rio-drop"><b>Drop your CSV here</b>' +
+          'or tap to choose a file' +
+          (size ? '<span>Up to ' + esc(size) + '</span>' : '') + '</button>' +
+        upHTML() +
         '</div></div>' +
       row('If a review is already here',
           'Reviews are matched on their id from the system they came from. <b>Leave it alone</b> is the safe ' +
@@ -679,8 +1301,69 @@
 
         var warn = document.querySelector('.rio-banner');
         if (warn && warn.parentNode) warn.parentNode.removeChild(warn);
+
+        /* The previous file's bar goes with the previous file. Removed from the
+           DOM by hand rather than by render(), for the reason above: a repaint
+           replaces this input and its selection cannot be restored from script. */
+        up = null;
+
+        var old = document.querySelector('#rio-up');
+        if (old && old.parentNode) old.parentNode.removeChild(old);
       };
     }
+
+    /* ── THE DROP ZONE ───────────────────────────────────────────────────
+       On the whole import card, registered through the console's shared kit when
+       it is on the page. Torn down first: render() replaces #content wholesale,
+       so the node this was bound to on the previous repaint is no longer in the
+       document -- and this screen repaints on every switch, select and button. */
+    if (zone) { try { zone(); } catch (e) {} zone = null; }
+
+    var card = document.querySelector('#rio-import-card');
+
+    if (card) {
+      zone = dropZone(card, {
+        /* The SAME list the input above declares, and it has to be repeated:
+           a drop never goes near the input, and the browser applies an accept
+           attribute to its own file dialog and to nothing else. Without it,
+           dropping a .jpg on this card would post it to the review importer. */
+        accept: '.csv,.txt,text/csv,text/plain',
+        multiple: false,
+        onFiles: function(files){
+          var f = files[0];
+          if (!f) return;
+
+          /* THE INPUT IS EMPTIED, and that is load-bearing. run() reads
+             `(input && input.files && input.files[0]) || chosen` -- the live input
+             FIRST, because it is where a new choice normally comes from. So
+             choosing A through the dialog and then dropping B would have imported
+             A while the caption read B. Clearing the input is what makes the
+             dropped file the chosen one. */
+          var live = document.querySelector('#rio-file');
+          if (live) { try { live.value = ''; } catch (e) {} }
+
+          chosen = f;
+          form.filename = f.name;
+          banner = null;
+          up = null;
+
+          /* A full render is safe HERE and nowhere near it: there is no
+             selection left in the input to lose -- it was just emptied -- and the
+             card has to redraw to drop the old progress row and the old banner.
+             The file itself lives in `chosen`, which survives any repaint. */
+          render();
+        }
+      });
+    }
+
+    var stop = document.querySelector('#rio-up-x');
+    if (stop) stop.onclick = function(){ stopUp(); };
+
+    var dz = document.querySelector('#rio-drop');
+    if (dz) dz.onclick = function(){
+      var live = document.querySelector('#rio-file');
+      if (live) live.click();
+    };
 
     var x = document.querySelector('#rio-export');
     if (x) x.onclick = function(){

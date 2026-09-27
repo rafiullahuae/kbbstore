@@ -10748,6 +10748,38 @@ $$('#envtog button').forEach(b=>b.onclick=()=>{
 /* LANE DD — window.deploy and window.rollback are gone with the two buttons
    that were their only callers. See the note above renderSandbox(). */
 window.go=go;window.toast=toast;window.reportModal=reportModal;window.closeModal=closeModal;
+/* ── A FILE DROPPED ANYWHERE ELSE MUST NOT NAVIGATE THE CONSOLE AWAY ────────
+   Found by Lane P2 in Chromium, and it is data loss rather than a nuisance: a
+   file let go two pixels outside a drop zone — on the arrange toolbar, on the
+   padding between two media cards — is handled by the BROWSER, which navigates
+   to it. The half-filled product form goes with it, unsaved.
+
+   Every zone the console has now swallows its own drops, but a zone can only
+   cover the pixels it occupies, and the gaps between them belong to nobody.
+   This is the floor under all of them.
+
+   ONLY FILE DRAGS. The predicate is the kit's `carriesFiles`, repeated here for
+   one reason: this runs at the foot of the boot, before any partial has
+   defined window.kbbUpload, and a floor that waits for a later include is not a
+   floor. The two are pinned equal by test rather than left to agree by luck.
+
+   preventDefault on `dragover` is also what MAKES a drop fire at all, so this
+   helps the real zones rather than competing with them: their own handlers run
+   on their own elements and are unaffected — preventDefault stops the browser's
+   default, not other listeners. */
+(function(){
+  function draggingFiles(e){
+    var t = e.dataTransfer && e.dataTransfer.types;
+    if(!t) return false;
+    for(var i=0;i<t.length;i++){ if(String(t[i]).toLowerCase()==='files') return true; }
+    return false;
+  }
+  ['dragover','drop'].forEach(function(name){
+    document.addEventListener(name, function(e){
+      if(draggingFiles(e)) e.preventDefault();
+    }, false);
+  });
+})();
 /* LANE DH - the two Debug & Monitor handlers that are named in an inline
    onclick. kbbHealthRun is exported where it is defined, in the live-wiring
    block below, because that is where api() is. */
