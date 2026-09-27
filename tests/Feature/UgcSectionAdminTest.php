@@ -377,6 +377,23 @@ it('ships every setting at the value R3 already draws', function () {
         'badge' => false,
         'strike' => true,
         'likes_on' => false,
+        /*
+         * ── THE HOMEPAGE, ADDED BY LANE IG, AND BOTH SHIP INERT ─────────────
+         *
+         * '' is the whole of rule 1 for that feature. store/home.blade.php only
+         * reaches for a rail when homeShortcode() returns a non-empty string, and
+         * it returns '' while this is '' — so applying the package leaves the
+         * homepage byte-identical and StorefrontEnglishUnchangedTest cannot move.
+         *
+         * MUTATION NOTE. Change `home_section`'s default from '' to 'spotted' and
+         * this is red — and so is StorefrontEnglishUnchangedTest, at the homepage,
+         * because a shop that has a section by that name would suddenly draw a rail
+         * it was never asked for. RUN: red in both.
+         *
+         * 8 is a cap and not a switch: it decides nothing until a handle is picked.
+         */
+        'home_section' => '',
+        'home_limit' => 8,
     ]);
 });
 

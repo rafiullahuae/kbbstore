@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\UgcSection;
 use App\Services\ModuleSchema;
 use App\Services\UgcRail;
 use App\Services\UgcSettings;
@@ -44,6 +45,44 @@ class UgcAppearanceController extends Controller
              * this one line prevents.
              */
             'module_on' => $this->settings->enabled(),
+            /*
+             * ── THE LIST THE HOMEPAGE DROPDOWN IS DRAWN FROM (Lane IG) ──────
+             *
+             * The owner: "let us choose the section to show from the list or use
+             * shortcode". `home_section` is a `text` field on the schema, for the
+             * reason UgcSettings' own docblock gives — a `select` would put a
+             * query on the storefront's hot path for a value only the homepage
+             * reads — so the LIST is handed over here instead, beside the fields,
+             * and the console renders a real <select> from it.
+             *
+             * ── ONE QUERY, AND WHAT IT DELIBERATELY DOES NOT FILTER ─────────
+             *
+             * `published()` is NOT applied and neither is forLocale(). A draft
+             * section is exactly the thing an owner is about to publish and wants
+             * to pick now, and an Arabic-only section is a legitimate choice on a
+             * bilingual shop. So every section is offered and its STATUS is
+             * carried beside it, which is what the sections screen already does
+             * with the shortcode — the screen can grey a draft row and say why,
+             * where a filtered list would just be missing the row he is looking
+             * for with nothing to explain it.
+             *
+             * Three narrow columns. Reading `*` here would pull every heading and
+             * subheading translation blob out of the table to print a handle.
+             */
+            'sections' => UgcSection::query()
+                ->orderBy('position')
+                ->orderBy('id')
+                ->get(['id', 'handle', 'title', 'status', 'locale'])
+                ->map(fn (UgcSection $s) => [
+                    'handle' => (string) $s->handle,
+                    // The operator's own label, escaped by the console before it
+                    // is printed. Never the shopper-facing heading: this is a
+                    // picker, and `title` is what the sections list calls it.
+                    'title' => (string) ($s->title ?? ''),
+                    'published' => $s->getAttribute('status') === 'publish',
+                    'locale' => $s->locale === null ? null : (string) $s->locale,
+                ])
+                ->all(),
         ]);
     }
 
@@ -55,6 +94,46 @@ class UgcAppearanceController extends Controller
 
         if ($unknown !== []) {
             return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
+        }
+
+        /*
+         * ── `home_section` IS CHECKED AGAINST THE REAL SECTIONS, HERE ────────
+         *
+         * Rule 5: "a select stores one of its own options or the default". This
+         * field is a `text` on the schema so that the storefront does not pay a
+         * query to read it (see UgcSettings' docblock), which means ModuleSchema
+         * cannot enforce membership for it — there is no option set to enforce
+         * against. So the enforcement is HERE, which is the one place in the
+         * application that already has the list in hand.
+         *
+         * REFUSED RATHER THAN SILENTLY DEFAULTED, and that is the opposite of
+         * this module's POLICY for every other field. The reason is that the two
+         * cases are not alike: a `cols` of "banana" is a value nobody typed and
+         * the shipped default is the right answer, while a handle is something
+         * the owner PICKED — so if it does not exist, the honest answers are
+         * "that section is gone" or "you have a stale tab open", and quietly
+         * storing '' would empty his homepage rail and tell him it saved.
+         *
+         * The empty string passes, because it is the real "show nothing" value
+         * and the dropdown's first option.
+         */
+        $handle = $data['settings']['home_section'] ?? null;
+
+        if (is_string($handle) && trim($handle) !== '') {
+            $handle = trim($handle);
+
+            $exists = preg_match(UgcSection::HANDLE_RE, $handle) === 1
+                && UgcSection::query()->where('handle', $handle)->exists();
+
+            if (! $exists) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'There is no video section with the handle “'.$handle.'”. '
+                        .'Pick one from the list, or create it in Content → Video sections first.',
+                ], 422);
+            }
+
+            $data['settings']['home_section'] = $handle;
         }
 
         $result = $this->settings->save($data['settings']);

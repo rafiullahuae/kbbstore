@@ -185,9 +185,28 @@ it('turns a saved order into a flex column and one rule per movable section', fu
     expect($style)->not->toBe('');
     expect($style)->toContain('.kbb-home{display:flex;flex-direction:column}');
 
-    // Fifteen rules, one per section that is a child of .kbb-home. Counted, so
-    // a rule quietly lost or doubled is a failure and not a shrug.
-    expect(substr_count($style, '{order:'))->toBe(15);
+    /*
+     * One rule per section that is a child of .kbb-home — that is, every section in
+     * the registry except the two NESTED inside the hero band, on which `order`
+     * would be a declaration the browser accepts and ignores.
+     *
+     * DERIVED RATHER THAN A LITERAL, and that is a change Lane IG made deliberately
+     * rather than editing 15 to 17 and moving on. The literal was right about the
+     * shop it was written for and says nothing about WHY: the invariant being
+     * asserted is "every movable section gets exactly one rule, no rule is lost and
+     * none is doubled", and adding a section to the registry is a legitimate thing
+     * for a later lane to do. Written this way the next lane to add one does not
+     * have to come here and guess whether 17 was a design decision or a count.
+     *
+     * It is not tautological: orderStyle() builds these rules by iterating all() and
+     * skipping NESTED, so a rule lost to a `continue` in the wrong place, a section
+     * that stopped appearing in all(), or a second rule emitted per section all
+     * still fail this line.
+     */
+    $movable = count(HomepageSections::REGISTRY) - count(HomepageSections::NESTED);
+
+    expect($movable)->toBeGreaterThan(14);
+    expect(substr_count($style, '{order:'))->toBe($movable);
 });
 
 it('pairs the class on the section with the rule in the style, for the whole order', function () {

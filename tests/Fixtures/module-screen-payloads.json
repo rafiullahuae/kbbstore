@@ -3152,6 +3152,14 @@
                 "label": "#KBeautyBliss spotted"
             },
             {
+                "key": "videos",
+                "label": "Video rail"
+            },
+            {
+                "key": "instagram",
+                "label": "Instagram Profile"
+            },
+            {
                 "key": "bestsellers",
                 "label": "Best sellers"
             },

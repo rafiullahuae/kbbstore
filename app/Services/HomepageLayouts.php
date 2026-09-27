@@ -27,7 +27,7 @@ class HomepageLayouts
             'suits' => 'A broad catalogue where discovery matters more than a single message.',
             'sections' => [
                 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'recommended',
-                'routine', 'quiz', 'brands', 'spotted', 'bestsellers', 'flash',
+                'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'bestsellers', 'flash',
                 'blog', 'about', 'reviews', 'trust', 'newsletter',
             ],
             'skins' => ['bundles' => 'classic', 'recommended' => 'soft', 'bestsellers' => 'luxe', 'flash' => 'ribbon'],
@@ -40,7 +40,7 @@ class HomepageLayouts
             'sections' => [
                 'hero', 'ticker', 'delivery', 'flash', 'bundles', 'categories',
                 'bestsellers', 'recommended', 'quiz', 'reviews', 'trust',
-                'brands', 'routine', 'spotted', 'newsletter', 'about', 'blog',
+                'brands', 'routine', 'spotted', 'videos', 'instagram', 'newsletter', 'about', 'blog',
             ],
             'skins' => ['flash' => 'ribbon', 'bundles' => 'pricetag', 'bestsellers' => 'bold', 'recommended' => 'actions'],
             'off' => ['blog'],
@@ -51,7 +51,7 @@ class HomepageLayouts
             'suits' => 'Building trust with visitors who are researching rather than buying today.',
             'sections' => [
                 'hero', 'delivery', 'routine', 'quiz', 'categories', 'bestsellers',
-                'blog', 'brands', 'bundles', 'reviews', 'spotted', 'about',
+                'blog', 'brands', 'bundles', 'reviews', 'spotted', 'videos', 'instagram', 'about',
                 'recommended', 'flash', 'trust', 'newsletter', 'ticker',
             ],
             'skins' => ['bundles' => 'editorial', 'recommended' => 'magazine', 'bestsellers' => 'minimal', 'flash' => 'outline'],
@@ -64,10 +64,26 @@ class HomepageLayouts
             'sections' => [
                 'hero', 'categories', 'bestsellers', 'routine', 'brands',
                 'reviews', 'about', 'trust', 'newsletter',
-                'delivery', 'bundles', 'recommended', 'quiz', 'spotted', 'flash', 'blog', 'ticker',
+                'delivery', 'bundles', 'recommended', 'quiz', 'spotted', 'videos', 'instagram',
+                'flash', 'blog', 'ticker',
             ],
             'skins' => ['bestsellers' => 'luxe', 'bundles' => 'frame', 'recommended' => 'soft', 'flash' => 'minimal'],
-            'off' => ['ticker', 'flash', 'spotted', 'bundles', 'recommended'],
+            /*
+             * `videos` and `instagram` are LISTED AND OFF here (Lane IG), where the
+             * other three presets have them on. That is this preset's own argument
+             * applied rather than an omission: "Fewer, calmer sections... restraint
+             * reads as quality", and a scrolling video rail plus a nine-tile
+             * Instagram grid are the two busiest bands on offer. `spotted` is off
+             * for exactly the same reason and has been since this preset shipped.
+             *
+             * They are still in `sections` rather than left out of it, because
+             * payloadFor() skips a key it does not find and a section missing from a
+             * preset is a section whose ORDER that preset does not decide —
+             * settle() would then place it from the registry index and the preview
+             * would draw a row the apply does not produce, which is the fault
+             * HomepageSections::settleKeys() exists to end.
+             */
+            'off' => ['ticker', 'flash', 'spotted', 'videos', 'instagram', 'bundles', 'recommended'],
         ],
     ];
 

@@ -86,6 +86,7 @@
 
   var SCREEN = 'ugcstyle';
   var tabs = null, values = {}, open = null, banner = null, busy = false, moduleOn = false, seq = 0;
+  var sections = [];
 
   function base() {
     return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
@@ -193,6 +194,11 @@
       if (mine !== seq) return;
       tabs = body.tabs || [];
       moduleOn = body.module_on === true;
+      /* Lane IG — the list the Homepage tab's dropdown is drawn from. The field
+         is a `text` on the schema (UgcSettings says why: a `select` would put a
+         query on the storefront's hot path), so the endpoint hands the real
+         sections over separately and fieldHTML draws a <select> from them. */
+      sections = Array.isArray(body.sections) ? body.sections : [];
       values = {};
       tabs.forEach(function (t) { t.fields.forEach(function (f) { values[f.key] = f.value; }); });
       if (!open || !tabs.some(function (t) { return t.key === open; })) {
@@ -241,6 +247,48 @@
         + (values[f.key] ? ' checked' : '') + '>'
         + '<div><label for="' + esc(id) + '">' + esc(f.label) + '</label>' + help + '</div>'
         + '</div></div>';
+    }
+
+    /*
+     * ── home_section: A REAL DROPDOWN OVER A `text` FIELD (Lane IG) ─────────
+     *
+     * The owner asked to "choose the section to show from the list", and this is
+     * that list. It is drawn here rather than by the generic `select` arm above
+     * because the options are rows in `ugc_sections` and therefore arrive on the
+     * payload instead of on the schema — see App\Services\UgcSettings.
+     *
+     * A DRAFT SECTION IS OFFERED AND LABELLED, not hidden. Hiding it would leave
+     * the owner looking for the section he just made with nothing on the screen
+     * to say why it is missing; saying "draft — nothing will show yet" tells him
+     * the one thing he needs and keeps the pick he wants to make.
+     *
+     * The value the owner has saved is kept as an option even when it is not in
+     * the list any more — a section somebody deleted. Dropping it would silently
+     * re-point the <select> at "Nothing yet" and the next Save would write that,
+     * which is a homepage emptied by a repaint.
+     */
+    if (f.key === 'home_section') {
+      var chosen = String(values[f.key] == null ? '' : values[f.key]);
+      var known = sections.some(function (s) { return s.handle === chosen; });
+      var rows = sections.map(function (s) {
+        var note = s.published ? '' : ' — draft, nothing will show yet';
+        if (s.locale) { note += ' — ' + (s.locale === 'ar' ? 'Arabic shop only' : 'English shop only'); }
+        var name = s.title ? s.title + ' (' + s.handle + ')' : s.handle;
+        return '<option value="' + esc(s.handle) + '"' + (chosen === s.handle ? ' selected' : '')
+          + '>' + esc(name + note) + '</option>';
+      });
+      if (chosen !== '' && !known) {
+        rows.unshift('<option value="' + esc(chosen) + '" selected>'
+          + esc(chosen + ' — this section no longer exists') + '</option>');
+      }
+      rows.unshift('<option value=""' + (chosen === '' ? ' selected' : '') + '>Nothing yet — no rail on the homepage</option>');
+      return '<div class="ugy-f"><div class="ugy-fh"><label for="' + esc(id) + '">' + esc(f.label) + '</label></div>'
+        + '<select id="' + esc(id) + '" data-ugy-key="' + esc(f.key) + '">' + rows.join('') + '</select>'
+        + (sections.length ? '' : '<p class="ugy-help"><b>You have no video sections yet.</b> '
+            + 'Make one in <b>Content → Video sections</b> first, then come back and pick it here.</p>')
+        + (chosen ? '<p class="ugy-help">The same section can still be placed anywhere else at the same time with '
+            + '<b>[kbb_videos section="' + esc(chosen) + '"]</b>.</p>' : '')
+        + help + '</div>';
     }
 
     if (f.type === 'select') {
@@ -299,6 +347,10 @@
           + 'Nothing on this screen changes the shop until you turn it on in '
           + '<b>Store → Modules → Shoppable video</b>. Even then a rail appears only where you have '
           + 'written a <b>[kbb_videos]</b> shortcode — see Content → Video sections for the line to copy.</div>')
+      + (open === 'home' ? '<div class="ugy-note"><b>Where this shows up.</b> The homepage draws the '
+          + 'section you pick here in its own <b>Video rail</b> row — switch that row on, off or move it '
+          + 'up and down in <b>Appearance → Homepage</b>. Leave the dropdown on “Nothing yet” and the '
+          + 'homepage shows no rail at all, which is how this ships.</div>' : '')
       + '<div class="ugy-note">Every setting here ships at the value the <b>R3</b> design you approved '
       + 'already draws: 158px tiles on a phone, 206px from 900px, a 12px gap, the 16px radius, no count '
       + 'badge and no like button. Moving one is a deliberate change to that design.</div>'

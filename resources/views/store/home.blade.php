@@ -555,6 +555,65 @@
   </div>
 </div></section>
 @endunless
+{{--
+
+     VIDEO RAIL — Lane IG.
+
+     The owner: "Also make the Videos rail section on homepage and let us choose
+     the section to show from the list or use shortcode."
+
+     ── WHY THE <section> IS INSIDE THE @if AND NOT AROUND IT ─────────────────
+
+     This is the whole of rule 1 for this feature, and getting it the other way
+     round is the mistake that looks correct. A shop that has not configured this
+     — which is every shop the day the package applies — must emit NOT ONE BYTE
+     more than it does today, and StorefrontEnglishUnchangedTest compares this
+     page against its pre-change self byte for byte. An empty <section> wrapper
+     with a classFor() on it is still a changed page: a new element, a new class
+     attribute and, because SectionDividers::classFor() runs for every key, a new
+     divider rule above it.
+
+     So the element is only reached when there is a rail to put in it. The
+     @unless is kept as well, and it is not redundant: it is what makes the
+     Desktop/Mobile switches on Appearance → Homepage → Video rail work, and it
+     short-circuits before the settings read on a shop that has switched the row
+     off for both.
+
+     ── AND THE STRING IS BUILT IN PHP, NOT IN THE TEMPLATE ──────────────────
+
+     UgcSettings::homeShortcode() returns '' unless the module is on AND a real
+     handle is saved, and it is the thing that applies UgcSection::HANDLE_RE
+     before the handle can become part of a shortcode's own syntax. Written here
+     as [kbb_videos section="{{ $handle }}"] the quoting would be this template's
+     problem, and `[^"]*` inside those quotes is exactly what HANDLE_RE exists to
+     protect — see UgcSettings::homeSection().
+
+     {!! !!} is correct and is the same call Shortcodes::render() already makes
+     from a page body: what comes back is ugc/rail.blade.php's rendered output, in
+     which every operator string went through {{ }} and every URL through UgcPath.
+     Nothing from this template is interpolated into it.
+
+     ── ▲ THE DIRECTIVE IS GLUED TO THE END OF THIS COMMENT, ON PURPOSE ──────
+
+     It looks like a typo and it is the whole reason this block costs zero bytes.
+     This file's own header records the mechanism twice: Blade compiles a
+     directive to <?php ... ?> and PHP SWALLOWS ONE NEWLINE after a closing tag,
+     so a line holding nothing but a directive contributes nothing at all — but a
+     Blade COMMENT is replaced by the empty string and its trailing newline
+     SURVIVES.
+
+     Written the readable way, with this comment on its own line and a blank line
+     above it, the block emitted exactly two newlines on every homepage on earth.
+     StorefrontEnglishUnchangedTest reported it, correctly, as a changed page at
+     byte 51624 — a diff with no words in it, which that file's header warns costs
+     the next reader an hour to prove is nothing. With the @unless closing this
+     line there is no newline left to survive.
+     --}}@unless ($sections->hidden('videos'))
+@php $videoRail = \App\Support\Shortcodes::render(app(\App\Services\UgcSettings::class)->homeShortcode()); @endphp
+@if ($videoRail !== '')
+<section class="sec {{ $sections->classFor('videos') }}"><div class="wrap">{!! $videoRail !!}</div></section>
+@endif
+@endunless
 
 {{-- BEST SELLERS --}}
 @unless ($sections->hidden('bestsellers'))

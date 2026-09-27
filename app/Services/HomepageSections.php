@@ -30,6 +30,41 @@ class HomepageSections
         'quiz'        => ['Skin quiz', 'The two-minute routine finder.', false, null],
         'brands'      => ['Top brands', 'Brand tiles with product counts.', false, null],
         'spotted'     => ['#KBeautyBliss spotted', 'Shoppable community photos.', false, null],
+        /*
+         * ── TWO ROWS ADDED BY LANE IG, AND BOTH DRAW NOTHING ON APPLY ───────
+         *
+         * The owner: "Also make the Videos rail section on homepage and let us
+         * choose the section to show from the list or use shortcode" and "i want
+         * another function called Instagram Profile".
+         *
+         * They sit HERE, immediately after `spotted`, and the position is a
+         * decision rather than an accident. docs/UGC-RAIL-R3.md §9 argued that a
+         * shoppable-video rail belongs where `spotted` already promises
+         * "shoppable community photos" rather than twenty lines from it; this is
+         * that argument honoured without hard-coding a handle — see
+         * docs/UGC-RAIL-R3.md §9 and this lane's report for why the swap it
+         * proposed was NOT taken.
+         *
+         * ▲ INSERTING MID-REGISTRY DOES NOT REORDER A SHOP THAT HAS SAVED AN
+         * ORDER, and that is worth the line because it looks as though it would.
+         * all() reads `$row['order'] ?? $order`, so a saved payload's own
+         * numbers win and only these two new keys fall back to their registry
+         * index — 10 and 11, which TIE with whatever the owner's payload has at
+         * 10 and 11. uasort() is stable as of PHP 8.0, so a tie keeps REGISTRY
+         * iteration order, which puts these two exactly where they are written
+         * and leaves every other row's relative position untouched. settle()
+         * then renumbers 0..n-1. Pinned by HomepageSectionOrderTest's
+         * `it inserts a new registry section without reordering a saved payload`.
+         *
+         * Both render NO BYTES until the owner configures them, so
+         * StorefrontEnglishUnchangedTest cannot move on apply: store/home.blade.php
+         * gates the whole <section> on there being content, not on the switch.
+         * The switches therefore ship ON, like the sixteen beside them, because
+         * an off switch on a section that draws nothing anyway is a second
+         * thing to remember to turn on.
+         */
+        'videos'      => ['Video rail', 'A shoppable video rail. Pick which section in Content → Shoppable video → Appearance → Homepage; nothing shows until you do.', false, null],
+        'instagram'   => ['Instagram Profile', 'Recent posts and reels from our own Instagram, with the profile box. Connect it in Content → Instagram; nothing shows until you do.', false, null],
         'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, 'luxe'],
         'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, 'ribbon'],
         'blog'        => ['Skincare guide', 'Latest journal articles.', false, null],

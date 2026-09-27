@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\UgcSection;
+
 /**
  * Appearance → Video rail. Every control the rail has, on the shared shape.
  *
@@ -150,6 +152,49 @@ class UgcSettings
         'likes_on' => ['type' => 'bool', 'label' => 'Let shoppers like a clip', 'default' => false,
             'help' => 'A heart on each tile with the number of shoppers who have pressed it. One like per browser, rate limited, and nothing personal is stored — no address, no account, just a random token this shop mints. R3 has no heart on it, so this ships off.',
             'store' => ModuleSchema::STORE_MODULE],
+
+        /* ── The homepage ───────────────────────────────────────────────── */
+        /*
+         * ── WHY `home_section` IS A `text` FIELD AND NOT A `select` ──────────
+         *
+         * The owner: "let us choose the section to show from the list or use
+         * shortcode". The LIST is a set of rows in `ugc_sections`, so a `select`
+         * would need its options built from the database — and ModuleSchema casts
+         * a select against its own option set on EVERY read, which means
+         * UgcSettings::all() would have to run that query. all() is called once
+         * per rail render on the storefront, so a `select` here buys a dropdown at
+         * the price of a query on the shop's hot path, for a value only the
+         * homepage reads. That is exactly the trade
+         * SettingsService::moduleSetting()'s own docblock was written about.
+         *
+         * So the STORED SHAPE is a handle, and the validation is split where the
+         * knowledge is:
+         *
+         *   the ENDPOINT   refuses a handle that is not one of this shop's real
+         *                  sections (UgcAppearanceController::save) — the list is
+         *                  already in hand there, so rule 5's "a select stores one
+         *                  of its own options or the default" is enforced at the
+         *                  boundary the value crosses.
+         *   the READER     re-checks UgcSection::HANDLE_RE before the value can
+         *                  reach SQL (homeSection() below), so a row written by a
+         *                  hand-run UPDATE on the live box — which this owner now
+         *                  has a shell for — still cannot carry a handle into a
+         *                  query or into a shortcode's syntax.
+         *
+         * The screen still draws a real dropdown: the appearance endpoint returns
+         * the sections beside the fields and the console renders a <select> from
+         * them. The owner gets the list; the storefront does not get the query.
+         *
+         * SHIPS EMPTY, which is the whole of rule 1 for this feature. The homepage
+         * block in store/home.blade.php renders no bytes at all while this is '',
+         * so applying the package changes the homepage by nothing.
+         */
+        'home_section' => ['type' => 'text', 'label' => 'Video section on the homepage', 'default' => '',
+            'help' => 'The handle of the section the homepage draws. Empty means the homepage shows no video rail at all — which is what this ships as. The same section can still be placed anywhere else with its shortcode at the same time.',
+            'store' => ModuleSchema::STORE_MODULE],
+        'home_limit' => ['type' => 'range', 'label' => 'Most tiles on the homepage', 'default' => 8,
+            'help' => 'The homepage is the most-read page on the shop and the one with the most below it, so it gets its own cap rather than the section’s. The section’s own cap still applies if it is lower.',
+            'options' => ['min' => 1, 'max' => 24, 'step' => 1, 'unit' => ''], 'store' => ModuleSchema::STORE_MODULE],
     ];
 
     public const TABS = [
@@ -157,6 +202,7 @@ class UgcSettings
         'motion' => ['Motion', 'The 2–3 second loop, and what happens when somebody taps.', ['teaser', 'teaser_ms', 'max_playing', 'autoplay_open', 'controls', 'sound_on_open']],
         'tile' => ['What a tile shows', 'Every one of these ships at what R3 draws.', ['rating', 'caption', 'handle', 'badge', 'strike']],
         'likes' => ['Likes', 'Whether a shopper can like a clip, and see how many others have.', ['likes_on']],
+        'home' => ['Homepage', 'Which section the homepage’s own Video rail draws. Leave it on “Nothing yet” and the homepage shows no rail, which is how this ships. Turn the row on or move it in Appearance → Homepage.', ['home_section', 'home_limit']],
     ];
 
     /**
@@ -336,5 +382,69 @@ class UgcSettings
             '--ugc-gap:'.$gap.'px',
             '--ugc-r:'.(int) ($values['radius'] ?? 16).'px',
         ]);
+    }
+
+    /**
+     * The handle the HOMEPAGE draws, or '' — the one reader of `home_section`.
+     *
+     * ── WHY THE REGEX IS HERE AND NOT ONLY AT THE ENDPOINT ──────────────────
+     *
+     * UgcAppearanceController::save() already refuses a handle that is not one of
+     * this shop's real sections, so nothing this application writes can land a bad
+     * value in the column. This is the SECOND lock, and it is not decoration:
+     * `module_settings` is a table, the owner has a shell on Cloudways now
+     * (CLAUDE.md, 24 September 2026), and the value goes on to become part of a
+     * SHORTCODE'S SYNTAX — `[kbb_videos section="..."]` is matched with `[^"]*`
+     * inside the quotes, so a handle carrying a `"` truncates the attribute and one
+     * carrying `]` truncates the whole shortcode. UgcSection::HANDLE_RE exists for
+     * exactly that reason and its docblock says so.
+     *
+     * Rule 5: a value that ends up inside somebody else's syntax is validated at
+     * the boundary it crosses, and this is that boundary for the read path.
+     *
+     * ── AND THE MODULE SWITCH IS READ FIRST, WHICH IS THE COST DECISION ─────
+     *
+     * enabled() reads the `module_toggles` snapshot, which every storefront page
+     * has already warmed. `moduleSetting()` reads a DIFFERENT cached snapshot
+     * (`module_settings`), which the homepage may not have read at all — so on a
+     * cold cache, asking for the handle first would add one SELECT to the
+     * homepage of a shop that has this module OFF. StorefrontQueryBudgetTest is a
+     * budget, and a feature that ships off must cost nothing. So: switch first,
+     * handle second, and with the module off this method costs zero queries.
+     */
+    public function homeSection(): string
+    {
+        if (! $this->enabled()) {
+            return '';
+        }
+
+        $handle = trim((string) $this->settings->moduleSetting(self::MODULE, 'home_section', ''));
+
+        return $handle !== '' && preg_match(UgcSection::HANDLE_RE, $handle) === 1 ? $handle : '';
+    }
+
+    /**
+     * The shortcode store/home.blade.php renders, or '' for "draw nothing".
+     *
+     * Built here rather than in the template so that the homepage block is one
+     * `@if` over a string and cannot get the attribute quoting wrong. The limit
+     * rides along because the homepage has its own cap — see the schema.
+     *
+     * '' IS THE SHIPPED ANSWER and it is what makes this feature rule-1 clean:
+     * Shortcodes::render('') returns before it looks for a `[kbb_` at all, so the
+     * homepage of a shop that has not configured this makes no query, resolves no
+     * service and emits no bytes.
+     */
+    public function homeShortcode(): string
+    {
+        $handle = $this->homeSection();
+
+        if ($handle === '') {
+            return '';
+        }
+
+        $limit = (int) $this->all()['home_limit'];
+
+        return '[kbb_videos section="'.$handle.'" limit="'.$limit.'"]';
     }
 }
