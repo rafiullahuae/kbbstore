@@ -130,8 +130,18 @@ it('lays every step panel out in two columns at a desk and one on a phone', func
         $next = strpos($code, "\n  function ", (int) $from + 1);
         $body = substr($code, (int) $from, $next === false ? null : $next - (int) $from);
 
-        expect(str_contains($body, 'colsHTML('))
-            ->toBeTrue("{$step} is a single column again: {$fn}() draws no two-column row");
+        /*
+         * `colsHTML(` OR `cols3HTML(`. Step 2 grew a THIRD column -- the video,
+         * the cover and the loop side by side, at the owner's request ("so i
+         * can see everything side by side") -- and `cols3HTML` does not contain
+         * the string `colsHTML(`, so a substring check for the two-track helper
+         * alone said step 2 had gone back to one column.
+         *
+         * What this case is really for is unchanged: no step may collapse to a
+         * single stacked column at desk width.
+         */
+        expect(str_contains($body, 'colsHTML(') || str_contains($body, 'cols3HTML('))
+            ->toBeTrue("{$step} is a single column again: {$fn}() draws no multi-column row");
     }
 });
 
@@ -254,10 +264,13 @@ it('puts the cut under the two file boxes instead of inside the cover box', func
     $from = (int) strpos($code, 'function mediaPanel(');
     $body = substr($code, $from, ((int) strpos($code, "\n  function creditPanel(")) - $from);
 
-    $files = strpos($body, 'html += colsHTML(');
+    // `cols3HTML` since the loop joined the video and the cover as a third
+    // column; the ordering rule below is what this case exists for and it is
+    // unchanged.
+    $files = strpos($body, 'html += cols3HTML(');
     $cut = strpos($body, 'html += cutHTML(v, clip);');
 
-    expect($files)->not->toBeFalse('the media step no longer draws its two file boxes as a row');
+    expect($files)->not->toBeFalse('the media step no longer draws its file boxes as a row');
     expect($cut)->not->toBeFalse('the media step no longer offers the cut at all');
     expect($cut > $files)
         ->toBeTrue('the cut is back inside the cover box rather than under both file boxes');

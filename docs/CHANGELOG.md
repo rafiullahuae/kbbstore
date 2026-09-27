@@ -3,6 +3,71 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.298
+Three columns side by side, a real progress bar on the cover cut, and the same
+cut button inside the section popup.
+
+### ▲ THE VIDEO, THE COVER AND THE LOOP, SIDE BY SIDE
+
+**Where:** Content → Shoppable video → open a clip → step 2 (Video & cover).
+
+The 2.5-second loop used to sit full-width underneath. It is now the third
+column beside the video and the cover, so the whole of step 2 is one row.
+
+Three columns only where three columns fit: one on a phone, two from 900px with
+the loop across the bottom, and three from 1440px — measured at **404px each**,
+which keeps every preview legible. Below that the loop would be squeezed to
+~290px, narrower than the tile it is showing you.
+
+### ▲ A REAL PROGRESS BAR ON THE COVER CUT
+
+Taking a frame has no percentage of its own — a video decoder does not report
+one — so a bar driven by a timer would be a **fiction**. It is driven by four
+real browser events instead, each meaning that piece of work genuinely finished:
+
+| | |
+|---|---|
+| **4%** | Opening the video |
+| **22%** | Reading the video |
+| **44%** | Finding the frame at 0.6s |
+| **62%** | Taking the frame |
+| **80%** | Saving the cover |
+| **100%** | Cover set |
+
+**Observed live, not assumed:** sampling the screen every 50ms during a real cut
+caught `4% · Opening the video` → `62% · Taking the frame` → `100% · Cover set`.
+
+**It now holds at 100% for two seconds before it goes.** The first version was
+cleared by the page reload, so on a short clip the whole thing finished in about
+300ms and you would have seen nothing at all — I could not catch it in
+automation either. A bar that vanishes the instant it completes has told nobody
+anything.
+
+### ▲ THE SAME CUT BUTTON INSIDE THE SECTION POPUP
+
+**Where:** Content → Shoppable video → Sections → open a section → click a clip
+→ **Files** tab, under **Poster**.
+
+You add a video to a section, the popup opens on Files, and there was no way to
+get a cover from there — you had to go to All clips. That was an oversight, not
+a decision: both screens edit the same clips through the same endpoints, so a
+cover you can take on one and not the other is a trap.
+
+It is the same button, the same 0.6-second frame and the same progress bar, and
+it goes through the same Media Library path — so the file is registered exactly
+as a picture you chose by hand, and checked the same way by the server.
+
+### ▲ AND A LEAK THAT WAS FILLING YOUR TEST MACHINE
+
+Not something you see on the shop, but worth recording: the test suite was
+leaving temporary files in shared storage and never deleting them — **1,625
+files and 11.6 GB** from one week, some 60 MB apiece. This project's own notes
+warn that a full disk here produces database errors that look exactly like a
+transaction bug, so it was not merely untidy. Fixed at source; a short run now
+leaves **zero** files behind where it used to leave 36.
+
+**No setting added, no default moved.**
+
 ## 2.60.297
 **Apply this one. It replaces 2.60.292 through .296, and it fixes the error you
 just sent me — which was my mistake, not your server's.**

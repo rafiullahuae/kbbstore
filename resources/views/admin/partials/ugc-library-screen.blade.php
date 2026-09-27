@@ -288,6 +288,30 @@
 .ugs-cols > *{min-width:0}
 @media (min-width:900px){ .ugs-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} }
 
+/* ── THE VIDEO, THE COVER AND THE LOOP, SIDE BY SIDE ──────────────────
+   "can u make the third column side by side along with existing two ... so i
+   can see everything side by side."
+
+   THREE TRACKS ONLY WHERE THREE TRACKS FIT. A 1280px console minus the sidebar
+   leaves roughly 900px of content, so three columns there are ~290px each --
+   which is narrower than the 9:16 preview each one holds and would shrink the
+   very thing he wants to look at. So: one column on a phone, two from 900px
+   with the loop spanning the full width underneath, and three only from 1440px,
+   where each track is ~400px and the previews stay legible.
+
+   `grid-column:1/-1` then `auto` rather than two different grids, so the
+   sections keep their DOM order and nothing re-parents at a breakpoint. */
+.ugs-cols3{display:grid;gap:12px;grid-template-columns:1fr;align-items:start;min-width:0}
+.ugs-cols3 > *{min-width:0}
+@media (min-width:900px){
+  .ugs-cols3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .ugs-cols3 > :nth-child(3){grid-column:1 / -1}
+}
+@media (min-width:1440px){
+  .ugs-cols3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ugs-cols3 > :nth-child(3){grid-column:auto}
+}
+
 /* ── a section that reads as a section ─────────────────────────────────
    "make the sections prominent and don't give me onwards any classic throw away
    looks". So: a bordered block, a tinted head bar carrying an icon, a real
@@ -845,6 +869,16 @@
      `busy` disables the whole form, and this is a few hundred milliseconds of
      work on one button. */
   var cutting = false;
+
+  /* Where the cover cut has got to: {pct, words}. Its own state, and NOT the
+     upload panel's -- the two can be on screen together, and a cut that
+     borrowed the upload's bar would overwrite the "8.4 MB arrived whole" the
+     owner is still reading. */
+  var cutStage = null;
+
+  /* The timer that takes the finished bar off screen. Held so a second cut
+     cannot leave an earlier one's timeout to clear its bar out from under it. */
+  var cutClear = null;
 
   /*
    * WHY THIS SERVER COULD NOT CUT, KEPT RATHER THAN FLASHED.
@@ -2325,6 +2359,40 @@
    * for and belongs in the banner. Run on its own, a failure is a cover he did
    * not ask for yet, and the manual button is still there.
    */
+  /**
+   * The cover cut's own bar. Empty unless a cut is running.
+   *
+   * Same shape as the upload panel's bar so the two read as one idea, and it
+   * carries the percentage AND the words, because "62%" on its own does not say
+   * whether the browser is decoding or sending.
+   */
+  function cutBarHTML() {
+    if (!cutStage) return '';
+
+    return '<div class="ugs-up" data-ugs-cutbar style="margin-top:10px">'
+      + '<div class="ugs-uph"><span class="ugs-upn">Taking the cover</span>'
+      + '<span data-ugs-cutpct>' + esc(String(cutStage.pct)) + '%</span></div>'
+      + '<div class="ugs-prog"><div class="ugs-progb" data-ugs-cutfill '
+      + 'style="width:' + esc(String(cutStage.pct)) + '%"></div></div>'
+      + '<div class="ugs-upm"><span data-ugs-cutwords>' + esc(cutStage.words) + '</span></div>'
+      + '</div>';
+  }
+
+  /** Moves the bar without rebuilding the step -- see the onStage comment. */
+  function paintCutBar() {
+    var box = document.querySelector('[data-ugs-cutbar]');
+
+    if (!box) { render(); return; }
+
+    var fill = box.querySelector('[data-ugs-cutfill]');
+    var pct = box.querySelector('[data-ugs-cutpct]');
+    var words = box.querySelector('[data-ugs-cutwords]');
+
+    if (fill) fill.style.width = cutStage.pct + '%';
+    if (pct) pct.textContent = cutStage.pct + '%';
+    if (words) words.textContent = cutStage.words;
+  }
+
   function autoCutCover() {
     return cutCoverHere(true);
   }
@@ -2345,11 +2413,27 @@
 
     if (!source) { say('There is no video on this clip to take a frame from.'); return; }
 
-    cutting = true; render();
+    cutting = true;
+    if (cutClear) { clearTimeout(cutClear); cutClear = null; }
+    cutStage = { pct: 0, words: 'Starting' };
+    render();
 
-    window.kbbPosterFromVideo(source)
+    window.kbbPosterFromVideo(source, {
+      /*
+       * REPAINTS THE BAR ALONE, not the whole editor. render() on every stage
+       * would rebuild the step's markup five times in under a second and throw
+       * away the <video> element mid-decode -- which is the very thing being
+       * read from.
+       */
+      onStage: function (pct, words) {
+        cutStage = { pct: pct, words: words };
+        paintCutBar();
+      }
+    })
       .then(function (blob) {
         cutting = false;
+        cutStage = { pct: 80, words: 'Saving the cover' };
+        paintCutBar();
 
         // A name, because the Media Library lists files by one and "blob"
         // is not something to find again in a month.
@@ -2357,9 +2441,33 @@
         var name = 'cover-' + (editing.slug || editing.id) + '-' + stamp + '.jpg';
 
         dropPoster(new File([blob], name, { type: 'image/jpeg' }));
+
+        /*
+         * ── THE BAR HOLDS AT 100 FOR A MOMENT ──────────────────────────────
+         *
+         * It used to be cleared by the reload that follows, which meant it
+         * vanished the instant the work finished. On a 4-second WebM the whole
+         * cut takes about 300ms, so in practice the owner saw nothing at all --
+         * I could not catch it in automation either, sampling every 50ms.
+         *
+         * A progress bar that disappears the moment it completes has told
+         * nobody anything. It finishes at 100 saying "Cover set", stays long
+         * enough to read, and then goes. Cleared on a timer rather than by the
+         * reload so the reload cannot race it.
+         */
+        cutStage = { pct: 100, words: 'Cover set' };
+        paintCutBar();
+
+        if (cutClear) clearTimeout(cutClear);
+        cutClear = setTimeout(function () {
+          cutStage = null;
+          cutClear = null;
+          render();
+        }, 2200);
       })
       .catch(function (e) {
         cutting = false;
+        cutStage = null;
 
         // See autoCutCover(): a failure nobody asked about is not worth a
         // sentence, and the manual button is still on the screen.
@@ -2538,8 +2646,108 @@
   }
 
   /** Two sections side by side at a desk, stacked on a phone. CSS decides. */
+  /**
+   * The loop panel, as a string, so it can be the third column.
+   *
+   * It used to append straight into `html` and run the full width beneath
+   * the cut panel. The owner asked for the video, the cover and the loop
+   * side by side -- "so i can see everything side by side" -- and a block
+   * that appends cannot be placed. Extracting it changes no markup.
+   */
+  /*
+   * `locked` and `poster` are parameters rather than closure reads because this
+   * function was LIFTED out of mediaPanel(), where both were locals. Two runs
+   * in a real browser found them one at a time -- "poster is not defined", then
+   * "locked is not defined" -- which is the cost of extracting a 72-line block
+   * by hand and the reason it was checked in a browser rather than only by the
+   * suite: neither is reachable from a test that does not execute the page.
+   */
+  function loopSectionHTML(v, clip, teaser, poster, locked) {
+    var loopHtml = '';
+
+      loopHtml += '<section class="ugs-sec"><header class="ugs-sech">'
+        + '<span class="ugs-secn">' + icon(ICON_LOOP) + '</span>'
+        + '<span><span class="ugs-sect">The ' + esc(secs(loop().ms)) + ' second loop</span>'
+        +   '<span class="ugs-secs">What a shopper sees on the rail, at the size the tile really '
+        +     'is on the shop.</span></span>'
+        + '<span class="ugs-secw">' + esc(stateWords(v)[0]) + '</span>'
+        + '</header><div class="ugs-secb">';
+
+      if (clip) {
+        var src = teaser || clip;
+        /* The tile beside the prose about it: a 178px track and one fluid one from
+           900px, one column below that. A GRID IN THE STYLESHEET, not the
+           `style="flex:1 1 220px"` this used to carry -- an inline declaration is
+           the one place a media query cannot reach, which is exactly how one of
+           the four screens in AdminMobileOverflowTest came to overflow. */
+        loopHtml += '<div class="ugs-loopcols">'
+          + '<div class="ugs-loopbox">'
+          +   '<div class="ugs-loop" data-ugs-loopsrc="' + esc(src) + '"'
+          +     ' data-ugs-loopms="' + esc(loop().ms) + '"'
+          +     ' data-ugs-loopfull="' + (teaser ? '0' : '1') + '">'
+          +     (poster ? '<img src="' + esc(poster) + '" alt="">' : '')
+          +   '</div>'
+          +   '<p class="ugs-loopcap">158px wide — the tile\'s real size on the shop.</p>'
+          + '</div>'
+          + '<div>'
+          +   '<div class="ugs-note is-cool">'
+          +     (teaser
+                ? '<b>This clip has its own teaser file</b>, so the tile downloads about 130 KB '
+                  + 'instead of the whole video. The loop above is that file, played end to end.'
+                : '<b>The loop needs no second file.</b> The tile plays the first '
+                  + esc(secs(loop().ms)) + ' seconds of this '
+                  + 'very video and rewinds, which is exactly what you are watching. Uploading a '
+                  + 'separate teaser is a bandwidth saving and nothing else &mdash; a rail of eight '
+                  + 'full clips measured 12.19 MB against 1.01 MB of teasers.')
+          +   '</div>'
+          /* Said only when it is TRUE, and read off the setting rather than
+             guessed: an owner who has switched the rail's loop off is watching a
+             preview of something his shop is not doing, and that is the one case
+             where this preview could mislead him. */
+          +   (loop().on ? '' :
+                '<div class="ugs-note is-warm" style="margin-top:8px"><b>The loop is switched off '
+                + 'for the whole rail.</b> Every tile on the shop shows its cover and stands still, '
+                + 'however many clips have teasers. The preview above is what a shopper would see '
+                + 'with it on.</div>')
+          +   '<p class="ugs-help" style="margin-top:8px">A shopper in data-saver mode, or with '
+          +     'reduced motion switched on, sees the cover and no movement at all &mdash; with or '
+          +     'without a teaser. The loop\'s length'
+          +     (motion ? ', now ' + esc(secs(loop().ms)) + ' seconds,' : '')
+          +     ' and whether it runs at all are set in '
+          +     '<b>Appearance &rarr; Shoppable video &rarr; Motion</b>.</p>'
+          + '</div>'
+          + '</div>';
+
+        /* Folded away: it is the one file on this screen that nothing waits for,
+           and drawn open beside the two required ones it reads as a third thing
+           to do. */
+        loopHtml += '<details class="ugs-more"' + (teaser ? ' open' : '') + '>'
+          + '<summary>A separate teaser file ' + (teaser ? '&mdash; ' + esc(kb(v.teaser_bytes))
+              : '&mdash; optional, saves bandwidth') + '</summary>'
+          + '<div class="ugs-morebody">'
+          +   (teaser ? '<p class="ugs-path">' + esc(teaser) + '</p>' : '')
+          +   dropHTML('teaser', teaser ? 'Drop a different teaser here' : 'Drag a teaser here',
+                '2&ndash;3 seconds, 360&times;640, no sound. Up to ' + esc(cap('teaser')) + ' MB. '
+                + 'Nothing waits for it.', locked)
+          + '</div>'
+          + '</details>';
+      } else {
+        loopHtml += '<p class="ugs-help">Nothing to loop yet. Add the video above and it plays here, '
+          + 'at the size it will be on the shop.</p>';
+      }
+
+      loopHtml += '</div></section>';
+
+    return loopHtml;
+  }
+
   function colsHTML(left, right) {
     return '<div class="ugs-cols">' + left + right + '</div>';
+  }
+
+  /** The video, the cover and the loop in one row -- see .ugs-cols3. */
+  function cols3HTML(a, b, c) {
+    return '<div class="ugs-cols3">' + a + b + c + '</div>';
   }
 
   function pill(text, tone) {
@@ -3080,6 +3288,20 @@
 
     html += progressHTML();
 
+    /*
+     * THE CUT'S BAR LIVES HERE, NOT INSIDE THE CUT PANEL.
+     *
+     * It was inside two of cutHTML()'s arms, and a browser run showed the cost:
+     * once a cover EXISTS that panel draws a different arm, so pressing "Take
+     * the cover again" moved a bar that had nowhere to render. The button was
+     * found and pressed and not one stage was observable.
+     *
+     * Beside the upload panel instead -- drawn on every arm of this step, and
+     * the right neighbour anyway: an upload and a cut are the two things on
+     * this screen that take time and report progress.
+     */
+    html += cutBarHTML();
+
     /* ── the two files, side by side at a desk and stacked on a phone ──
        Each is a .ugs-sec whose BODY is the old .ugs-slot: the section draws the
        border, the tinted head and the size on the end, and the slot still packs
@@ -3134,7 +3356,13 @@
         + '</div>';
     }
 
-    html += colsHTML(
+    /*
+     * BUILT INTO A VARIABLE, NOT APPENDED, so it can become the third column.
+     * It used to run the full width under the cut panel; the owner asked for
+     * all three side by side, and a section that appends to `html` cannot be
+     * placed.
+     */
+    html += cols3HTML(
       secHTML({
         glyph: ICON_FILM,
         title: 'The video',
@@ -3152,85 +3380,12 @@
         tone: poster ? 'live' : '',
         bodyClass: 'ugs-slot',
         body: coverBody
-      })
+      }),
+      loopSectionHTML(v, clip, teaser, poster, locked)
     );
 
     /* ── and the cut, where the upload ends rather than where it fits ── */
     html += cutHTML(v, clip);
-
-    /* ── the loop, as it really plays ────────────────────────────────── */
-    html += '<section class="ugs-sec"><header class="ugs-sech">'
-      + '<span class="ugs-secn">' + icon(ICON_LOOP) + '</span>'
-      + '<span><span class="ugs-sect">The ' + esc(secs(loop().ms)) + ' second loop</span>'
-      +   '<span class="ugs-secs">What a shopper sees on the rail, at the size the tile really '
-      +     'is on the shop.</span></span>'
-      + '<span class="ugs-secw">' + esc(stateWords(v)[0]) + '</span>'
-      + '</header><div class="ugs-secb">';
-
-    if (clip) {
-      var src = teaser || clip;
-      /* The tile beside the prose about it: a 178px track and one fluid one from
-         900px, one column below that. A GRID IN THE STYLESHEET, not the
-         `style="flex:1 1 220px"` this used to carry -- an inline declaration is
-         the one place a media query cannot reach, which is exactly how one of
-         the four screens in AdminMobileOverflowTest came to overflow. */
-      html += '<div class="ugs-loopcols">'
-        + '<div class="ugs-loopbox">'
-        +   '<div class="ugs-loop" data-ugs-loopsrc="' + esc(src) + '"'
-        +     ' data-ugs-loopms="' + esc(loop().ms) + '"'
-        +     ' data-ugs-loopfull="' + (teaser ? '0' : '1') + '">'
-        +     (poster ? '<img src="' + esc(poster) + '" alt="">' : '')
-        +   '</div>'
-        +   '<p class="ugs-loopcap">158px wide — the tile\'s real size on the shop.</p>'
-        + '</div>'
-        + '<div>'
-        +   '<div class="ugs-note is-cool">'
-        +     (teaser
-              ? '<b>This clip has its own teaser file</b>, so the tile downloads about 130 KB '
-                + 'instead of the whole video. The loop above is that file, played end to end.'
-              : '<b>The loop needs no second file.</b> The tile plays the first '
-                + esc(secs(loop().ms)) + ' seconds of this '
-                + 'very video and rewinds, which is exactly what you are watching. Uploading a '
-                + 'separate teaser is a bandwidth saving and nothing else &mdash; a rail of eight '
-                + 'full clips measured 12.19 MB against 1.01 MB of teasers.')
-        +   '</div>'
-        /* Said only when it is TRUE, and read off the setting rather than
-           guessed: an owner who has switched the rail's loop off is watching a
-           preview of something his shop is not doing, and that is the one case
-           where this preview could mislead him. */
-        +   (loop().on ? '' :
-              '<div class="ugs-note is-warm" style="margin-top:8px"><b>The loop is switched off '
-              + 'for the whole rail.</b> Every tile on the shop shows its cover and stands still, '
-              + 'however many clips have teasers. The preview above is what a shopper would see '
-              + 'with it on.</div>')
-        +   '<p class="ugs-help" style="margin-top:8px">A shopper in data-saver mode, or with '
-        +     'reduced motion switched on, sees the cover and no movement at all &mdash; with or '
-        +     'without a teaser. The loop\'s length'
-        +     (motion ? ', now ' + esc(secs(loop().ms)) + ' seconds,' : '')
-        +     ' and whether it runs at all are set in '
-        +     '<b>Appearance &rarr; Shoppable video &rarr; Motion</b>.</p>'
-        + '</div>'
-        + '</div>';
-
-      /* Folded away: it is the one file on this screen that nothing waits for,
-         and drawn open beside the two required ones it reads as a third thing
-         to do. */
-      html += '<details class="ugs-more"' + (teaser ? ' open' : '') + '>'
-        + '<summary>A separate teaser file ' + (teaser ? '&mdash; ' + esc(kb(v.teaser_bytes))
-            : '&mdash; optional, saves bandwidth') + '</summary>'
-        + '<div class="ugs-morebody">'
-        +   (teaser ? '<p class="ugs-path">' + esc(teaser) + '</p>' : '')
-        +   dropHTML('teaser', teaser ? 'Drop a different teaser here' : 'Drag a teaser here',
-              '2&ndash;3 seconds, 360&times;640, no sound. Up to ' + esc(cap('teaser')) + ' MB. '
-              + 'Nothing waits for it.', locked)
-        + '</div>'
-        + '</details>';
-    } else {
-      html += '<p class="ugs-help">Nothing to loop yet. Add the video above and it plays here, '
-        + 'at the size it will be on the shop.</p>';
-    }
-
-    html += '</div></section>';
 
     /* ── what can be previewed from where ───────────────────────────── */
     html += '<div class="ugs-note"><b>What can be previewed, and what cannot.</b> '

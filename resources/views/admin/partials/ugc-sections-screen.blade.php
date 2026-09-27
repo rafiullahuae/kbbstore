@@ -281,6 +281,11 @@
    the only thing on screen telling the owner why nothing happened. */
 .ugx-drop.kbbu-zone.is-over,.ugx-drop.kbbu-zone.is-over:hover{
   border-color:var(--accent,#15a85a);background:var(--accent-soft,#e7f7ee)}
+/* The cover-cut button and its one line of explanation, under the poster row. */
+.ugx-cutrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;min-width:0}
+.ugx-cuthint{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;min-width:0;
+             overflow-wrap:anywhere;flex:1 1 220px}
+
 .ugx-drop.kbbu-zone.is-bad,.ugx-drop.kbbu-zone.is-bad:hover{
   border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
 /* The kit writes its refusal into a span it appends, which must not become a
@@ -484,6 +489,12 @@
   var libTerm = '';
   var editing = null;      /* the section open in the editor */
   var editingVideo = null; /* the clip open in the POPUP */
+
+  /* The browser-side cover cut, on this screen too. Same two pieces of state
+     the All-clips screen carries, for the same reason and with the same
+     meanings -- see cutCoverHere() below. */
+  var cutting = false;
+  var cutStage = null;
   var tagged = [], results = [], term = '';
   var banner = null, busy = false, seq = 0, searchTimer = null;
 
@@ -537,6 +548,20 @@
   }
 
   function say(m) { try { window.toast(m); } catch (e) {} }
+
+  /**
+   * A stored media path, or ''. The same allowlist safeMedia() applies on the
+   * All-clips screen, and the same argument: the server stores these through
+   * UgcPath::stored(), which is the real guard, and this is the SECOND lock so
+   * that a column edited by hand on the box cannot point a <video> or a canvas
+   * at another host. Rule 5, at both ends.
+   */
+  function ugxStored(p) {
+    p = String(p == null ? '' : p);
+
+    return /^\/uploads\/ugc\/[A-Za-z0-9][A-Za-z0-9._-]{0,120}\.(?:mp4|webm|jpg|jpeg|png|webp)$/.test(p)
+      ? p : '';
+  }
 
   /*
    * ── THE TOKEN THIS CONSOLE ACTUALLY USES ────────────────────────────────
@@ -1482,6 +1507,102 @@
    * why there is no <input type="file"> with an image accept anywhere on this
    * screen for AdminMediaPickerEverywhereTest to find.
    */
+  /**
+   * Take the cover out of the video, in this browser, from the popup.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * THE SAME THING THE All-clips SCREEN DOES, because the owner reached this
+   * dialog by adding a video to a section and found no way to get a cover:
+   * "while adding video directly inside section, there should also the same
+   * cover cut functionality in browser, and should have button."
+   *
+   * He is right, and the asymmetry was an oversight rather than a decision.
+   * The two screens edit the same clips through the same endpoints; a cover he
+   * can take on one and not the other is a trap.
+   *
+   * IT GOES THROUGH dropPoster() BELOW, exactly as the other screen goes
+   * through its own: that path already enforces this server's real ceiling,
+   * uploads to the Media Library and adopts the result. A canvas blob is a File
+   * with a name, so it walks in through the same door as a dragged picture --
+   * and the server sniffs the real MIME with finfo, so it is checked the same
+   * way too. Nothing here is a second implementation of anything.
+   *
+   * The frame comes from window.kbbPosterFromVideo (upload-kit.blade.php),
+   * which is where the whole argument for the browser doing this lives.
+   */
+  function cutCoverHere() {
+    if (!editingVideo || !editingVideo.id) { say('Open a clip first.'); return; }
+
+    if (typeof window.kbbPosterFromVideo !== 'function') {
+      say('This console is missing its upload kit; reload the page.');
+
+      return;
+    }
+
+    // The clip this shop is serving. ugxStored() is the same allowlist the
+    // <video> in this dialog goes through, so a hand-edited column cannot
+    // point the canvas at another host.
+    var source = ugxStored(editingVideo.file_path);
+
+    if (!source) { say('There is no video on this clip to take a frame from.'); return; }
+
+    cutting = true;
+    cutStage = { pct: 0, words: 'Starting' };
+    renderModal();
+
+    window.kbbPosterFromVideo(source, {
+      onStage: function (pct, words) {
+        cutStage = { pct: pct, words: words };
+        paintCutBar();
+      }
+    })
+      .then(function (blob) {
+        cutting = false;
+        cutStage = { pct: 80, words: 'Saving the cover' };
+        paintCutBar();
+
+        var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '');
+        var name = 'cover-' + (editingVideo.slug || editingVideo.id) + '-' + stamp + '.jpg';
+
+        dropPoster(new File([blob], name, { type: 'image/jpeg' }));
+      })
+      .catch(function (e) {
+        cutting = false;
+        cutStage = null;
+        say((e && e.message) ? e.message : 'The cover could not be taken from this video here.');
+        renderModal();
+      });
+  }
+
+  /** The cut's bar. Empty unless one is running. */
+  function cutBarHTML() {
+    if (!cutStage) return '';
+
+    return '<div class="ugx-up" data-ugx-cutbar style="margin-top:10px">'
+      + '<div class="ugx-uph"><span class="ugx-upn">Taking the cover</span>'
+      + '<span data-ugx-cutpct>' + esc(String(cutStage.pct)) + '%</span></div>'
+      + '<div class="ugx-prog"><div class="ugx-progb" data-ugx-cutfill '
+      + 'style="width:' + esc(String(cutStage.pct)) + '%"></div></div>'
+      + '<div class="ugx-upm"><span data-ugx-cutwords>' + esc(cutStage.words) + '</span></div>'
+      + '</div>';
+  }
+
+  /* Moves the bar in place: a full renderModal() on every stage would throw
+     away the <video> element mid-decode, which is the thing being read from. */
+  function paintCutBar() {
+    var box = document.querySelector('[data-ugx-cutbar]');
+
+    if (!box) { renderModal(); return; }
+
+    var fill = box.querySelector('[data-ugx-cutfill]');
+    var pct = box.querySelector('[data-ugx-cutpct]');
+    var words = box.querySelector('[data-ugx-cutwords]');
+
+    if (fill) fill.style.width = cutStage.pct + '%';
+    if (pct) pct.textContent = cutStage.pct + '%';
+    if (words) words.textContent = cutStage.words;
+  }
+
   function dropPoster(file) {
     if (!editingVideo || !file) return;
 
@@ -1996,7 +2117,28 @@
       + '<span class="ugx-drophint">Drag a picture here, or choose one from the Media Library.</span>'
       + '</span>'
       + '<span class="ugx-dropcta">' + (has ? 'Change' : 'Choose') + '</span>'
-      + '</div>';
+      + '</div>'
+      /*
+       * ── THE BROWSER CUT, ON THIS SCREEN TOO ───────────────────────────
+       *
+       * OUTSIDE the drop target above, not inside it. That whole block is one
+       * `role="button"` with a click handler on it, so a button nested in it
+       * would open the Media Library picker on its way to doing its own job.
+       *
+       * Offered only when there is a video to take a frame from; without one
+       * the button would have nothing to do and the row already says so.
+       */
+      + (ugxStored(v.file_path)
+          ? '<div class="ugx-cutrow">'
+            + '<button type="button" class="ugx-btn" data-ugx-cuthere="1"'
+            + ((busy || cutting) ? ' disabled' : '') + '>'
+            + (cutting ? 'Taking the frame…' : 'Take the cover from the video')
+            + '</button>'
+            + '<span class="ugx-cuthint">In your browser, from the frame at 0.6 seconds. '
+            + 'Nothing is asked of the server.</span>'
+            + '</div>'
+            + cutBarHTML()
+          : '');
   }
 
   /** Just the panel for whichever tab is open. */
@@ -2466,6 +2608,10 @@
       render();
       return;
     }
+    /* BEFORE the poster row's own handler: the button sits beside that block,
+       but a stray future nesting would otherwise open the picker instead. */
+    if (t.closest('[data-ugx-cuthere]')) { e.preventDefault(); cutCoverHere(); return; }
+
     if (t.closest('[data-ugx-poster]')) { e.preventDefault(); pickPoster(); return; }
 
     var add = t.closest('[data-ugx-add]');

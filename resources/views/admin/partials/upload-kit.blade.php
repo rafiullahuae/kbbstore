@@ -972,6 +972,31 @@
   function kbbPosterFromVideo(source, opts) {
     opts = opts || {};
 
+    /*
+     * ── PROGRESS, FROM REAL EVENTS AND NEVER FROM A TIMER ──────────────────
+     *
+     * "i want a real time progress bar type upon pressing on cut cover button
+     * ... anything which run in the background, should have proper real time
+     * progress bar type."
+     *
+     * Taking a frame has no percentage of its own -- a decoder does not report
+     * one -- so a bar driven by a setInterval here would be a FICTION, and this
+     * project has a rule against exactly that kind of reassurance. What it does
+     * have is four real milestones, each an event the browser fires when that
+     * work is genuinely finished:
+     *
+     *     loadedmetadata  the container is parsed and the size is known
+     *     loadeddata      there is a decoded frame to seek from
+     *     seeked          the decoder has landed on 0.6s
+     *     toBlob          the JPEG exists
+     *
+     * So the bar moves four times, each move meaning something, and the fifth
+     * stretch -- sending it -- is the upload's own byte count, which IS a real
+     * percentage. `onStage(pct, words)` is called with both so a caller can
+     * draw a bar and say what is happening at the same time.
+     */
+    var stage = typeof opts.onStage === 'function' ? opts.onStage : function () {};
+
     var AT = typeof opts.at === 'number' ? opts.at : 0.6;
     var MAX_EDGE = 1440;
     var TIMEOUT = 20000;
@@ -1009,6 +1034,10 @@
         fail('The browser did not finish reading this video in time.');
       }, TIMEOUT);
 
+      stage(4, 'Opening the video');
+
+      video.onloadedmetadata = function () { stage(22, 'Reading the video'); };
+
       video.muted = true;
       video.defaultMuted = true;
       video.playsInline = true;
@@ -1023,6 +1052,8 @@
       };
 
       video.onloadeddata = function () {
+        stage(44, 'Finding the frame at 0.6s');
+
         var d = video.duration;
         // A stream with no readable duration still has a frame at 0.
         var target = (isFinite(d) && d > 0) ? Math.min(AT, Math.max(0, d - 0.05)) : 0;
@@ -1031,7 +1062,7 @@
         // browsers, so that case draws immediately instead of waiting.
         if (target <= 0.001 && video.currentTime <= 0.001) { draw(); return; }
 
-        video.onseeked = draw;
+        video.onseeked = function () { stage(62, 'Taking the frame'); draw(); };
         try { video.currentTime = target; } catch (e) { draw(); }
       };
 
@@ -1071,6 +1102,7 @@
               return;
             }
 
+            stage(72, 'Cover taken');
             done(blob);
           }, 'image/jpeg', 0.85);
         } catch (e) {
