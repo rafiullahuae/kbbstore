@@ -96,12 +96,12 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 			'shipping_class', 'virtual', 'downloadable', 'purchase_note',
 			'upsell_ids', 'cross_sell_ids', 'grouped_ids', 'tag_term_ids', 'attribute_summary',
 			/*
-			 * ── TWO THAT WERE ON HIS EDIT PAGE AND IN NO FILE AT ALL ────────
+			 * ── THREE THAT WERE ON HIS EDIT PAGE AND IN NO FILE AT ALL ──────
 			 *
 			 * Added by Lane PX, and they are a different KIND of gap from the
 			 * nineteen above. Those are exported and then named in the import's
 			 * discard channel, which is the designed way for the owner to
-			 * approve a loss. THESE TWO WERE NOT EXPORTED, so no channel could
+			 * approve a loss. THESE THREE WERE NOT EXPORTED, so no channel could
 			 * name them: the migration census only classifies columns the export
 			 * writes, and the importer's discard list only names columns that
 			 * arrive. A field missing from the file is invisible to every report
@@ -118,10 +118,21 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 			 *   on. posts.csv has carried comment_status all along; products.csv
 			 *   had not.
 			 *
-			 * Both are carried and neither is read: ProductImporter names them
+			 *   default_attributes -- Variations tab, "Default Form Values",
+			 *   which is WHICH SIZE a variable product's page opens on. This one
+			 *   was the worst of the three to find and the cheapest to fix:
+			 *   `_default_attributes` WAS ALREADY IN META_KEYS ABOVE, fetched on
+			 *   every batch and then emitted by nothing. So the query cost was
+			 *   already being paid, and anyone reading META_KEYS -- which is the
+			 *   list this file offers as its account of what it reads out of
+			 *   WooCommerce -- would reasonably conclude the field crossed. A
+			 *   fetch with no column is worse than an absence, because it reads
+			 *   as coverage.
+			 *
+			 * All three are carried and none is read: ProductImporter names them
 			 * in the discard channel with their value, exactly like the rest.
 			 */
-			'sold_individually', 'reviews_enabled',
+			'sold_individually', 'reviews_enabled', 'default_attributes',
 		);
 	}
 
@@ -245,6 +256,7 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 				// this row uses rather than passed through, so the importer has
 				// one convention to read and not two.
 				'reviews_enabled' => 'closed' === $row['comment_status'] ? 'no' : 'yes',
+				'default_attributes' => $this->default_attributes( $get( '_default_attributes' ) ),
 			);
 		}
 
@@ -436,6 +448,51 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 	 * CUSTOM ones, typed into the product and stored nowhere else, which would
 	 * otherwise leave the shop entirely.
 	 */
+	/**
+	 * "Default Form Values" -- which variation a variable product opens on.
+	 *
+	 * `_default_attributes` is a serialised map keyed by the attribute's own
+	 * lowercased name, taxonomy or not: array( 'pa_size' => '50ml', 'scent' =>
+	 * 'Unscented' ). Emitted in the same `name=value | name=value` shape as
+	 * attribute_summary() so the importer has ONE convention to read across this
+	 * row and not two, and so the value is legible in the import report's
+	 * discard sample -- which is the only place it currently goes.
+	 *
+	 * A PIPE IN A VALUE WOULD SPLIT IT, exactly as it would in
+	 * attribute_summary(), so a `|` becomes `/` here too. A default attribute
+	 * value is a term slug or a short label and a pipe in one is not a real
+	 * case; corrupting the separator silently would be.
+	 */
+	private function default_attributes( $raw ) {
+		$value = maybe_unserialize( (string) $raw );
+
+		if ( ! is_array( $value ) ) {
+			return '';
+		}
+
+		$parts = array();
+
+		foreach ( $value as $key => $chosen ) {
+			// Woo has written arrays in here on shops with odd plugins. A
+			// non-scalar has no legible one-line form, so it is skipped rather
+			// than turned into "Array" -- an example value in a discard report
+			// that says "Array" is worse than one column fewer.
+			if ( ! is_scalar( $chosen ) ) {
+				continue;
+			}
+
+			$chosen = (string) $chosen;
+
+			if ( '' === $chosen ) {
+				continue;
+			}
+
+			$parts[] = (string) $key . '=' . str_replace( '|', '/', $chosen );
+		}
+
+		return $this->pipes( $parts );
+	}
+
 	private function attribute_summary( $raw ) {
 		$value = maybe_unserialize( (string) $raw );
 

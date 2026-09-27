@@ -6,15 +6,19 @@
  * The owner is moving his live shop and said: "everything must be compatible
  * without anything skipping or losing... don't assume anything."
  *
- * The exporter's product row carries 45 columns. ProductImporter writes 24 of
+ * The exporter's product row carries 46 columns. ProductImporter writes 24 of
  * them onto `products`, one (`tag_term_ids`) is redundant because the same
  * pivot arrives from tags.csv wherever that file is part of the export, and
- * TWENTY reach no column at all. This file is about the twenty.
+ * TWENTY-ONE reach no column at all. This file is about the twenty-one.
  *
- * Two of them -- `sold_individually` and `reviews_enabled` -- were on the
- * owner's edit page and in NO FILE AT ALL until this lane, which is the one kind
- * of loss no report here could have found: the census classifies columns the
- * export writes, and the discard list names columns that arrive.
+ * Three of them -- `sold_individually`, `reviews_enabled` and
+ * `default_attributes` -- were on the owner's edit page and in NO FILE AT ALL
+ * until this lane, which is the one kind of loss no report here could have
+ * found: the census classifies columns the export writes, and the discard list
+ * names columns that arrive. `default_attributes` hid behind something worse
+ * than an absence -- it was already in the exporter's META_KEYS, fetched on
+ * every batch and emitted by no column, so the list this project offers as its
+ * account of what it reads out of WooCommerce named a field nothing carried.
  *
  * It does NOT assert that they are carried -- the decision about which of them
  * earn a column is the owner's and has not been made. It asserts the thing that
@@ -41,7 +45,7 @@ use App\Services\ImportConsole\ImportWorkspace;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/** The 45 columns the exporter's product stage writes, in its own order. */
+/** The 46 columns the exporter's product stage writes, in its own order. */
 function pxHeader(): array
 {
     return [
@@ -52,12 +56,13 @@ function pxHeader(): array
         'low_stock_amount', 'weight', 'length', 'width', 'height', 'tax_status', 'tax_class',
         'shipping_class', 'virtual', 'downloadable', 'purchase_note', 'upsell_ids', 'cross_sell_ids',
         'grouped_ids', 'tag_term_ids', 'attribute_summary', 'sold_individually', 'reviews_enabled',
+        'default_attributes',
     ];
 }
 
 /**
  * The owner's own product page, as a row: Medicube Kojic Acid Glow Full Routine
- * Set. Every one of the twenty carries a value, because a fixture where they are
+ * Set. Every one of the twenty-one carries a value, because a fixture where they are
  * blank proves nothing about a shop where they are not -- which is exactly how
  * the truncation defect below survived for as long as it did.
  *
@@ -118,6 +123,7 @@ function pxRow(array $overrides = []): array
         'attribute_summary' => 'Skin Type=Combination, Oily | Concern=Hyperpigmentation, Dullness',
         'sold_individually' => 'yes',
         'reviews_enabled' => 'no',
+        'default_attributes' => 'pa_size=50ml | scent=Unscented',
     ];
 
     return array_merge($row, $overrides);
@@ -235,7 +241,7 @@ function pxConsolidated(ImportReport $report, string $entity): ?array
 
 it('names every field it does not carry, with the value that field held', function () {
     /*
-     * THE HEART OF IT. Before this, all eighteen were anonymous names inside one
+     * THE HEART OF IT. Before this, all nineteen were anonymous names inside one
      * consolidated line with a count of 1 -- so `weight` dropped on 400 products
      * and `weight` dropped on one read identically, and the only example of any
      * of them was whichever value the first row happened to hold.
@@ -265,11 +271,21 @@ it('names every field it does not carry, with the value that field held', functi
         'product_visibility' => 'visible',
         'attribute_summary' => 'Skin Type=Combination, Oily | Concern=Hyperpigmentation, Dullness',
         'date_modified' => '2024-06-07 11:22:33',
-        // The two this lane ADDED to the export, because they were on his edit
+        // The three this lane ADDED to the export, because they were on his edit
         // page and in no file. They are asserted here exactly like the rest --
         // the point of carrying them is that they become reportable.
         'sold_individually' => 'yes',
         'reviews_enabled' => 'no',
+        /*
+         * AND THE ONE THAT WAS ALREADY FETCHED. `_default_attributes` was in the
+         * exporter's META_KEYS all along -- queried on every batch and written
+         * into no column -- so it cost the export nothing and reached the import
+         * as nothing. Asserting the VALUE here is what makes the difference
+         * visible: "default_attributes was dropped" is a line in a report;
+         * "default_attributes held pa_size=50ml and was dropped" tells the owner
+         * his variable products have stopped opening on a size.
+         */
+        'default_attributes' => 'pa_size=50ml | scent=Unscented',
     ];
 
     foreach ($expected as $field => $value) {
@@ -308,7 +324,7 @@ it('counts the fields it skipped, once each, however many rows carried them', fu
      * size of the catalogue is one nobody can sanity-check.
      *
      * MUTATION: change EntityReport::droppedField() to keep a counter instead of
-     * a set keyed by the field name, and this reads 36 instead of 18.
+     * a set keyed by the field name, and this reads 42 instead of 21.
      */
     $report = pxImport(pxExport([
         pxRow(),
@@ -317,12 +333,12 @@ it('counts the fields it skipped, once each, however many rows carried them', fu
 
     $products = $report->for('products');
 
-    expect($products->droppedFieldCount())->toBe(20)
+    expect($products->droppedFieldCount())->toBe(21)
         ->and($products->droppedFieldNames())->toBe([
-            'attribute_summary', 'backorders', 'cross_sell_ids', 'date_modified', 'downloadable',
-            'grouped_ids', 'height', 'length', 'low_stock_amount', 'product_visibility', 'purchase_note',
-            'reviews_enabled', 'shipping_class', 'sold_individually', 'tax_class', 'tax_status',
-            'upsell_ids', 'virtual', 'weight', 'width',
+            'attribute_summary', 'backorders', 'cross_sell_ids', 'date_modified', 'default_attributes',
+            'downloadable', 'grouped_ids', 'height', 'length', 'low_stock_amount', 'product_visibility',
+            'purchase_note', 'reviews_enabled', 'shipping_class', 'sold_individually', 'tax_class',
+            'tax_status', 'upsell_ids', 'virtual', 'weight', 'width',
         ]);
 
     // And the per-row count is still there, beside it, on each field's own kind.
@@ -340,12 +356,13 @@ it('does not count a column that was empty on every row as something lost', func
      * had. The column must still be ACCOUNTED FOR though -- see the next test.
      *
      * MUTATION: drop the `if ($value === null) continue;` guard in
-     * reportNotCarried() and this reads 18 instead of 2.
+     * reportNotCarried() and this reads 21 instead of 2.
      */
     $blank = array_fill_keys([
         'date_modified', 'product_visibility', 'backorders', 'low_stock_amount', 'weight', 'length',
         'width', 'height', 'tax_status', 'tax_class', 'shipping_class', 'purchase_note', 'upsell_ids',
         'cross_sell_ids', 'grouped_ids', 'attribute_summary', 'sold_individually', 'reviews_enabled',
+        'default_attributes',
     ], '');
 
     $report = pxImport(pxExport([pxRow($blank)]));
@@ -493,7 +510,7 @@ it('keeps the whole consolidated column list, however wide the export is', funct
 
 it('ends with a sentence that counts the rows AND the fields', function () {
     /*
-     * "WooCommerce said N products, N arrived, 0 refused, 18 fields skipped."
+     * "WooCommerce said N products, N arrived, 0 refused, 21 fields skipped."
      * Every number before the field clause counts ROWS, and the identity they
      * rest on is `accounted + refused = read`. The field count does not belong
      * to that identity, so it says so in its own words rather than sitting in
@@ -501,13 +518,13 @@ it('ends with a sentence that counts the rows AND the fields', function () {
      *
      * MUTATION: delete the droppedFieldCount() clause in verification() and the
      * second expectation is red -- the sentence reports a flawless import of a
-     * catalogue that lost eighteen fields out of every product.
+     * catalogue that lost twenty-one fields out of every product.
      */
     $report = pxImport(pxExport([pxRow()]));
     $sentence = $report->for('products')->verification()['sentence'];
 
     expect($sentence)->toContain('1 read, 1 accounted for, 0 refused')
-        ->and($sentence)->toContain('20 fields skipped')
+        ->and($sentence)->toContain('21 fields skipped')
         ->and($sentence)->toContain('not rows');
 });
 
@@ -542,9 +559,33 @@ it('imports the same export twice and leaves every row and every pivot count ide
      * pivot count doubles; drop the `where('wc_id', $wcId)` lookup and the
      * product count does.
      */
+    /*
+     * ── AND 4023, WHICH IS WHAT MAKES TWO OF THE FOUR PIVOTS EXIST ──────────
+     *
+     * 4023 is the fixture's VARIABLE product: attributes.csv `product_ids` names
+     * it and nothing else, and variations.csv 4101/4102 have it as their
+     * parent_id. Without it in products.csv, AttributeImporter has no product to
+     * attach `pa_size` to and VariationImporter has no parent to hang a variant
+     * on, so `product_attribute_value` and `product_variants` are both EMPTY --
+     * and this test, whose name promises "every pivot count identical", compares
+     * 0 with 0 twice and calls it proof.
+     *
+     * Found by asserting the non-emptiness below rather than by reading, which is
+     * the argument for asserting it: the test was green, had been green, and two
+     * of its four pivots were not being exercised at all.
+     */
     $dir = pxExport([
         pxRow(),
         pxRow(['id' => '4022', 'slug' => 'second-set', 'sku' => 'MED-KOJIC-SET-2', 'category_term_ids' => '15']),
+        pxRow([
+            'id' => '4023',
+            'name' => 'Rice Cleanser',
+            'slug' => 'cleanser-4023',
+            'sku' => 'KBB-4023',
+            'type' => 'variable',
+            'category_term_ids' => '15',
+            'default_attributes' => 'pa_size=50ml',
+        ]),
     ]);
 
     $first = pxImport($dir);
@@ -561,6 +602,30 @@ it('imports the same export twice and leaves every row and every pivot count ide
     ];
 
     $after = $snapshot();
+
+    /*
+     * ── AND EVERY PIVOT IT COMPARES HAS TO HOLD SOMETHING ───────────────────
+     *
+     * This test's name promises "every row and every pivot count identical", and
+     * four of the five numbers in the snapshot are pivots. 0 === 0 is identical
+     * and proves nothing at all: an export whose tags, attributes or variations
+     * never arrived would satisfy every assertion below it while the second pass
+     * churned a pivot that was not there to churn.
+     *
+     * A VACUOUS ASSERTION IS THE WORSE HALF OF A GREEN SUITE, because it is
+     * indistinguishable from a real one from the outside and it is the shape this
+     * repository keeps finding -- Api\ProductController's dead `status` filter
+     * and Row::list()'s unreachable comma fallback were both this. So the
+     * non-emptiness is asserted, here, once, and it is what makes the comparison
+     * below a claim about diffed pivots rather than about empty tables.
+     */
+    foreach (['category_product', 'product_tag', 'product_attribute_value', 'variants'] as $pivot) {
+        expect($after[$pivot])->toBeGreaterThan(
+            0,
+            $pivot.' is empty, so comparing its count across two passes asserts nothing. This fixture is a '
+            .'whole export precisely so that the pivots the second pass must not churn actually exist.'
+        );
+    }
 
     // A fresh runner, the way a second pass really happens: restart so the
     // checkpoint does not simply skip every row it already committed, which
@@ -613,13 +678,13 @@ it('imports the same export twice and leaves every row and every pivot count ide
         'unchanged' => $second->for('products')->unchanged,
         'updated' => $second->for('products')->updated,
     ])->toBe(
-        ['unchanged' => 2, 'updated' => 0],
-        'the second pass did not report both products as unchanged. Either a write is not an upsert on '
+        ['unchanged' => 3, 'updated' => 0],
+        'the second pass did not report every product as unchanged. Either a write is not an upsert on '
         .'wc_id, or a pivot was churned -- ProductImporter promotes an unchanged row to "updated" when its '
         .'category membership moved, which is exactly the churn a diffed pivot exists to prevent.'
     );
 
-    expect($first->for('products')->created)->toBe(2);
+    expect($first->for('products')->created)->toBe(3);
 
     // The drop report is idempotent too, for the same reason the writes are: a
     // count that depends on how many times the import was run is a count the
@@ -669,7 +734,118 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
         .'need looking at.'
     );
 
-    expect($notCarried)->toHaveCount(20);
+    expect($notCarried)->toHaveCount(
+        21,
+        'the number of fields this shop has nowhere to put has changed. That is either a column newly '
+        .'carried -- in which case docs/PRODUCT-FIELD-PARITY.md and the census both move with it -- or a '
+        .'new column in the export that nothing reads.'
+    );
+});
+
+/* ════════════════════════ a meta key the exporter reads and no column carries */
+
+it('emits a column for every product meta key the exporter goes and fetches', function () {
+    /*
+     * ── THE TRAP THAT HID `default_attributes` FOR THE WHOLE OF THIS LANE ────
+     *
+     * `_default_attributes` -- "Default Form Values" on the Variations tab, which
+     * decides WHICH SIZE a variable product's page opens on -- was in the
+     * products stage's META_KEYS and emitted by no column. Fetched on every
+     * batch, for every product, and dropped on the floor.
+     *
+     * THAT IS WORSE THAN AN ABSENCE, WHICH IS WHY IT NEEDS A TEST OF ITS OWN.
+     * Every other channel in this migration is a claim about a column: the census
+     * classifies columns the export writes, and the importer's discard list names
+     * columns that arrive. META_KEYS is neither -- it is the plugin's own account
+     * of what it READS out of WooCommerce, and it is the list a person checking
+     * coverage reaches for first. A key sitting in it with nothing emitting it
+     * does not read as a gap; it reads as coverage, and the reader stops looking.
+     * Two other reports would have caught the field if it had simply been
+     * missing, and neither could see it while it was half-present.
+     *
+     * The harness could not see it either: the meta-key half of
+     * GqMigrationCensusTest reads DISTINCT meta_key out of the WordPress harness,
+     * so a field the harness does not model is outside its reach, and the harness
+     * had variations with no default on any of them. Both halves are closed now;
+     * this one is the half that needs no MySQL and runs in CI.
+     *
+     * MUTATION: delete `'default_attributes' => $this->default_attributes(...)`
+     * from the stage's emitted row, leaving `_default_attributes` in META_KEYS.
+     * Red, naming `_default_attributes`. Deleting the META_KEYS entry as well is
+     * green, which is correct: a field this plugin does not read is a field the
+     * census and the discard list can both see, and this test is only about the
+     * half-present case.
+     */
+    $file = base_path('wordpress-plugin/kbb-exporter/includes/stages/class-kbb-export-stage-products.php');
+    $source = (string) file_get_contents($file);
+
+    preg_match('/const META_KEYS = array\((.*?)\);/s', $source, $block);
+
+    expect($block[1] ?? '')->not->toBe('', 'META_KEYS was not found in the products stage');
+
+    preg_match_all("/'([A-Za-z0-9_]+)'/", (string) $block[1], $found);
+
+    /*
+     * The row the stage emits, so "is this key used" is asked of the OUTPUT and
+     * not of the file -- which is the whole distinction the bug lived in. A key
+     * named only inside META_KEYS itself, or only in a comment, is exactly the
+     * shape being hunted.
+     */
+    preg_match('/\$out\[\] = array\((.*?)\n\t\t\t\);/s', $source, $emitted);
+
+    expect($emitted[1] ?? '')->not->toBe('', "the stage's emitted row was not found");
+
+    /*
+     * Keys whose value reaches a column under ANOTHER name, and the column it
+     * reaches. Every one of these is verifiable by eye in the stage and the point
+     * of listing them here is that the list is short and has to stay short: a new
+     * entry is somebody claiming a key is spent somewhere, in writing.
+     */
+    $spentElsewhere = [
+        // The primary-category ordering, consumed inside category_ids().
+        '_yoast_wpseo_primary_product_cat' => 'category_term_ids',
+        // Woo's own spelling of the sale window; both land, under the names the
+        // importer reads. Named here by this test rather than by reading, which
+        // is the argument for having it.
+        '_sale_price_dates_from' => 'sale_starts_at',
+        '_sale_price_dates_to' => 'sale_ends_at',
+        '_thumbnail_id' => 'image',
+        '_product_image_gallery' => 'images',
+        '_crosssell_ids' => 'cross_sell_ids',
+        '_children' => 'grouped_ids',
+        '_product_attributes' => 'attribute_summary',
+        '_default_attributes' => 'default_attributes',
+    ];
+
+    $unemitted = [];
+
+    foreach (array_unique($found[1]) as $key) {
+        if (isset($spentElsewhere[$key])) {
+            expect(str_contains((string) $emitted[1], "'".$spentElsewhere[$key]."'"))->toBeTrue(
+                $key.' is declared as spent on the `'.$spentElsewhere[$key].'` column, and that column is '
+                .'not emitted'
+            );
+
+            continue;
+        }
+
+        // Otherwise the key's own name, minus WooCommerce's leading underscore,
+        // has to be the column -- which is how the other twenty-odd work.
+        if (! str_contains((string) $emitted[1], "'".ltrim($key, '_')."'")) {
+            $unemitted[] = $key;
+        }
+    }
+
+    sort($unemitted);
+
+    expect($unemitted)->toBe(
+        [],
+        'the products stage fetches these meta keys out of WooCommerce and emits no column for them: '
+        .implode(', ', $unemitted).'. META_KEYS is the only list this project offers as its account of what '
+        .'it reads out of the old shop, so a key in it with no column reads as coverage rather than as a '
+        .'gap -- and the census and the discard list are both blind to it, because both are claims about '
+        .'columns. Either emit it or take it out of META_KEYS.'
+    );
 });
 
 /* ═════════════════════════════════════ live progress, and the last sentence */
@@ -751,7 +927,7 @@ it('shows the fields it dropped on the live progress page, per file', function (
         ->and($products['dropped_fields'])->toContain('weight')
         ->and($products['dropped_fields'])->toContain('tax_class')
         ->and($products['dropped_fields'])->toContain('sold_individually')
-        ->and($products['dropped_fields'])->toHaveCount(20);
+        ->and($products['dropped_fields'])->toHaveCount(21);
 
     // And the entities that lose nothing say so by having nothing, rather than
     // by being absent -- a dash on the page, not a blank.
@@ -787,7 +963,7 @@ it('ends the progress page with a reconciliation the owner can read', function (
         ->toContain('WooCommerce said')
         ->and($reconciliation['sentence'])->toContain('arrived')
         ->and($reconciliation['sentence'])->toContain('refused')
-        ->and($reconciliation['sentence'])->toContain('20 fields skipped');
+        ->and($reconciliation['sentence'])->toContain('21 fields skipped');
 
     expect($reconciliation['fields'])->toContain('weight');
 

@@ -296,6 +296,7 @@ final class Checkpoint
      *
      * @param  list<string>  $fields
      */
+
     /**
      * Whether `import_checkpoints` has the column, asked ONCE per process.
      *
@@ -320,17 +321,31 @@ final class Checkpoint
     private static bool $hasColumn = false;
 
     /**
-     * Forget the schema answer. Tests only, and StaticMemosTest requires it.
+     * Put the memo back to its declared default.
      *
-     * The memo above is correct in a request and wrong across a suite: one test
-     * that runs with the column present leaves `true` behind for the next,
-     * which may be asserting the pre-migration behaviour. Every process-level
-     * memo in this application is reset from Tests\Support\StaticMemos for
-     * exactly that reason, and a new one that is neither reset nor exempt fails
-     * that test on purpose — which is how this was caught rather than by a
-     * flaky import case weeks later.
+     * ── WHY A RESET AND NOT AN EXEMPTION, which is a claim this one cannot
+     * make. Tests\Support\StaticMemos wants every process-level static in
+     * app/ either reset before each test or exempt WITH A REASON, and
+     * StaticMemoIsolationTest refuses a new one that is neither -- which is how
+     * this method came to exist: the static above it was added without one and
+     * the default suite went red naming this class.
+     *
+     * The exemption would have to say the value cannot cross a test boundary,
+     * and it plainly can. The suite runs every test in one process against a
+     * schema it migrates, so the FIRST test to commit an import batch answers
+     * "yes, the column is there" and fixes that answer for every test after it
+     * -- including one that deliberately builds a checkpoints table without the
+     * column to prove the import still works on a shop whose package has not
+     * been applied. That test would then write a column that is not there, and
+     * fail in a way that points at the import rather than at the memo. An
+     * ordering bug of exactly the shape CLAUDE.md records for Setting::map().
+     *
+     * Production keeps the memo, which is the point of it: nothing here removes
+     * a column under a running PHP-FPM process, and re-asking Schema::hasColumn()
+     * once per committed batch is four hundred introspection queries over a
+     * catalogue this size.
      */
-    public static function forgetSchema(): void
+    public static function forgetColumnMemo(): void
     {
         self::$hasColumn = false;
     }
