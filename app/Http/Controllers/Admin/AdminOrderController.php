@@ -109,6 +109,26 @@ class AdminOrderController extends Controller
 
         $customer = $order->customer;
 
+        /*
+         * THE TWO REFUND FIGURES, ASKED FOR ONCE EACH.
+         *
+         * They were read five times between them — `refundedFils()` three times
+         * and `capturedFils()` twice — for the two numbers below. Each is a
+         * fresh aggregate over `refunds` or `payments`, so this screen was
+         * paying for the same two SUMs repeatedly on the one page in the admin
+         * that has money on it. Measured on the detail endpoint: 11 statements
+         * down to 8 on a paid-but-uncaptured order (where `capturedFils()`
+         * really does hit `payments`), and 9 down to 7 on a captured one.
+         *
+         * Correctness, not only cost. Three separate reads of "how much has been
+         * refunded" inside one response can disagree if a refund settles between
+         * them, and `refundable_aed` and `settlement.refundable_fils` are the
+         * same quantity in two units — computing them from one pair of reads is
+         * what makes them incapable of contradicting each other on the screen.
+         */
+        $refundedFils = $refunder->refundedFils($order);
+        $refundableFils = max(0, $refunder->capturedFils($order) - $refundedFils);
+
         return response()->json([
             'id' => $order->id,
             'order_number' => $order->order_number ?? (string) $order->id,
@@ -246,13 +266,37 @@ class AdminOrderController extends Controller
             ]),
             // Only refunds that hold money. Summing every row would count
             // failures, which would quietly reduce what can still be refunded.
-            'refunded_total_aed' => Money::toAed($refunder->refundedFils($order)),
-            'refundable_aed' => Money::toAed(max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order))),
+            'refunded_total_aed' => Money::toAed($refundedFils),
+            'refundable_aed' => Money::toAed($refundableFils),
 
             // Capture: whether this order's money has actually been taken.
             // Never calls a provider — see PaymentCapturer::status().
             'settlement' => $capturer->status($order) + [
-                'refundable_fils' => max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order)),
+                'refundable_fils' => $refundableFils,
+                /*
+                 * THE THIRD VERB, ON THE PAYLOAD THE ORDER SCREEN ACTUALLY
+                 * READS — and it was missing here alone.
+                 *
+                 * PaymentSettlementController::state() has carried this key
+                 * since the release button shipped, with a note explaining that
+                 * the screen needs to tell "this order's authorisation has been
+                 * released" from "this order has been captured". But the order
+                 * detail drawer renders its money panel from THIS endpoint, not
+                 * that one, and here there was no `void` key at all. So the one
+                 * screen the button lives on was the one screen that could not
+                 * see the release: a released authorisation drew the ordinary
+                 * "Not captured" panel, with the capture window counting down
+                 * on a hold that no longer exists.
+                 *
+                 * Same nested shape and same source as the settlement endpoint,
+                 * so the two cannot come to disagree, and calling no provider
+                 * for the reason PaymentCapturer::status() does not — this is
+                 * rendered with every order.
+                 *
+                 * ADDITIVE. Nothing reads `settlement.void` on this endpoint
+                 * today, so no existing caller changes.
+                 */
+                'void' => app(\App\Services\Payments\PaymentVoider::class)->status($order),
             ],
 
             'notes' => $order->notes->map(fn (OrderNote $n) => [
@@ -379,6 +423,14 @@ class AdminOrderController extends Controller
 
         $order->refresh();
 
+        // Read once each, AFTER the refresh, for the reason given on the pair
+        // in show(): three reads of "how much has been refunded" inside one
+        // response can disagree, and these two are the same quantity in two
+        // units. They must be computed here rather than before the refund —
+        // the refund is what changes them.
+        $refundedFils = $refunder->refundedFils($order);
+        $refundableFils = max(0, $refunder->capturedFils($order) - $refundedFils);
+
         return response()->json([
             'ok' => $outcome->ok,
             'code' => $outcome->code,
@@ -387,8 +439,8 @@ class AdminOrderController extends Controller
             'refund_id' => $outcome->refund?->id,
             'refund_status' => $outcome->refund?->status,
             'status' => $order->status,
-            'refunded_total_aed' => Money::toAed($refunder->refundedFils($order)),
-            'refundable_aed' => Money::toAed(max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order))),
+            'refunded_total_aed' => Money::toAed($refundedFils),
+            'refundable_aed' => Money::toAed($refundableFils),
         ], $outcome->ok ? 200 : $outcome->status);
     }
 
@@ -441,6 +493,56 @@ class AdminOrderController extends Controller
      * button look like it worked when it did not, and deleting it would mean
      * the next half-built action invents its own way of saying so.
      */
+    /**
+     * Columns that describe what happened to the ORIGINAL order, and so must
+     * not travel to a copy of it.
+     *
+     * ── WHAT THIS COST ─────────────────────────────────────────────────────
+     *
+     * The list was `['order_number', 'invoice_number', 'transaction_id',
+     * 'paid_at', 'completed_at', 'deleted_at']`, and it is the six columns it
+     * did NOT name that did the damage. `captured_at`, `captured_total` and
+     * `capture_ref` are the record that this shop took a customer's money. A
+     * duplicate carried all three, so pressing Duplicate on a captured AED
+     * 250.00 order produced a brand-new `draft` order that:
+     *
+     *   - READ AS ALREADY PAID. PaymentCapturer::status() answers `captured:
+     *     true`, `captured_total_aed: 250`, `capturable: false`, so the money
+     *     panel printed "Captured · AED 250.00 · ref <the original's>" and the
+     *     Capture button was not drawn at all. Measured, not read: see the
+     *     first expectation below. That is precisely the failure PaymentCapturer
+     *     was written to end — "the store shipped goods against authorisations
+     *     that quietly expired, and the merchant was never paid" — arriving by
+     *     a different door. The duplicate ships and nobody is ever charged.
+     *
+     *   - WAS REFUNDABLE FOR MONEY IT NEVER TOOK. PaymentRefunder's ceiling is
+     *     `captured_total` whenever `captured_at` is set, and `refunds` rows are
+     *     NOT replicated, so the copy read 250.00 captured and 0.00 refunded.
+     *     A full refund on it was accepted: on cash on delivery that is a
+     *     ledger line telling staff to hand back AED 250 in cash to somebody
+     *     who never paid a fil, and the copy moved itself to `refunded`. On a
+     *     gateway it is worse, because `capture_ref` is the ORIGINAL's capture
+     *     reference and the original's own refunded total stays at zero — the
+     *     same capture refunded twice, once from each order.
+     *
+     * `voided_at` and `void_ref` are the same mistake for the release button: a
+     * copy of a released order reported its own authorisation already released.
+     * `invoiced_at` went with them because `invoice_number` was already
+     * excluded, and a copy that carries one half of that pair reads as invoiced
+     * while carrying no invoice number.
+     *
+     * The rule this expresses: a duplicate inherits what was ORDERED — lines,
+     * addresses, shipping method, coupon snapshot, the figures — and inherits
+     * nothing about what was PAID, released or printed. Those are events, and
+     * they happened to the other order.
+     */
+    private const NOT_DUPLICATED = [
+        'order_number', 'invoice_number', 'invoiced_at',
+        'transaction_id', 'paid_at', 'completed_at', 'deleted_at',
+        'captured_at', 'captured_total', 'capture_ref',
+        'voided_at', 'void_ref',
+    ];
+
     public function runAction(Request $request, int $id): JsonResponse
     {
         $order = Order::find($id);
@@ -514,7 +616,7 @@ class AdminOrderController extends Controller
         }
 
         if ($action === 'duplicate') {
-            $new = $order->replicate(['order_number', 'invoice_number', 'transaction_id', 'paid_at', 'completed_at', 'deleted_at']);
+            $new = $order->replicate(self::NOT_DUPLICATED);
             $new->order_number = $this->nextOrderNumber();
             $new->status = 'draft';
             $new->save();

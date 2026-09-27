@@ -116,6 +116,54 @@ class PaymentCapturer
             );
         }
 
+        /*
+         * THE AUTHORISATION HAS BEEN GIVEN BACK, SO THERE IS NOTHING TO TAKE.
+         *
+         * PaymentVoider releases the hold at the provider and records it as
+         * `voided_at`. Nothing recreates it — that class says so in as many
+         * words: start() would have to send the shopper through the provider's
+         * checkout again, and they have gone. So an order carrying `voided_at`
+         * has no authorisation, whatever else its columns say.
+         *
+         * This looked covered and was not. PaymentVoider only releases on
+         * `cancelled` or `failed`, and the VOID list above refuses both, so the
+         * two paths look mutually exclusive — and they are, until an operator
+         * uses the status dropdown. OrderStatus deliberately permits a revive
+         * ("an operator may correct any mistake"), and a revive re-takes the
+         * units and the coupon use but CANNOT re-take an authorisation the
+         * provider has already cancelled. Driven, on a released Tabby order
+         * revived to `processing`: `capturable` came back TRUE and the Capture
+         * button was drawn.
+         *
+         * Two things were wrong with that, and the second is the expensive one:
+         *
+         *   - status() promises exactly the conditions capture() accepts, so
+         *     that "a button that is offered and then refused reads as a bug in
+         *     the screen rather than as the rule it is". `voided_at` broke that
+         *     promise, and the refusal the operator eventually got named the
+         *     PROVIDER — an order note reading "Capture FAILED (transport_error)"
+         *     on an order this shop released itself.
+         *
+         *   - the refusal came only from the gateway's own live status read, not
+         *     from here. A gateway whose capture endpoint accepts a closed
+         *     authorisation, or the next SettlesPayments implementation that
+         *     does not read status first, turns that into a real capture against
+         *     a released hold. The shop's own record of the release is the
+         *     cheapest and most certain place to stop it, and it needs no
+         *     network call.
+         *
+         * Checked BEFORE the claim, like every other refusal here, so a refused
+         * capture never marks the order captured even momentarily.
+         */
+        if ($order->voided_at !== null) {
+            return SettlementResult::failed(
+                'authorisation_released',
+                ['provider' => $providerId],
+                'The authorisation on this order has been released, so there is nothing left to capture. '
+                . 'The customer would have to place the order and pay again.',
+            );
+        }
+
         $amountFils = (int) $order->total;
 
         if ($amountFils <= 0) {
@@ -237,7 +285,14 @@ class PaymentCapturer
             // refunded order is capturable on neither basis — capture() refuses
             // it, and a button that is offered and then refused reads as a bug
             // in the screen rather than as the rule it is.
+            //
+            // `voided_at` is in this list for that exact reason, and it is the
+            // one that had gone missing: a released authorisation that an
+            // operator revived out of `cancelled` offered the button and could
+            // only ever fail at the provider. See the matching refusal in
+            // capture(), which this mirrors condition for condition.
             'capturable' => $supported && ! $captured && (int) $order->total > 0
+                && $order->voided_at === null
                 && ! in_array((string) $order->status, self::VOID, true)
                 && ($windowDays === null || $authorisedAt !== null),
             'window' => $supported ? $gateway->captureWindow() : null,
@@ -246,7 +301,11 @@ class PaymentCapturer
             'days_left' => ($windowDays !== null && $daysHeld !== null)
                 ? max(0, $windowDays - $daysHeld)
                 : null,
+            // "N days left to capture", in red. A released authorisation has no
+            // window left to run out, so urging the operator to beat one is the
+            // same lie `capturable` was telling one line up.
             'expiring' => $windowDays !== null && $daysHeld !== null && ! $captured
+                && $order->voided_at === null
                 && ($windowDays - $daysHeld) <= 3,
         ];
     }
