@@ -1042,10 +1042,25 @@ it('previews a content page exactly as the content page renders it', function ()
      * <title> his page really serves rather than a tidier one this endpoint
      * invented.
      *
-     * MUTATION, RUN: change the `page` arm's `type` to 'article' and the filled
-     * box still matches (both arms are final-title arms) while `published_known`
-     * and the empty-box answer stop agreeing with the page — the value of
-     * quoting show() is that the arm cannot drift silently.
+     * ── AND ONE ASSERTION THIS CASE DID NOT HAVE, FOUND BY ITS OWN MUTATION ─
+     *
+     * The note here used to say that changing the `page` arm's `type` to 'article'
+     * would make `published_known` and the empty-box answer stop agreeing with the
+     * page. It does not: measured, mutation 22 of this lane's run left this file
+     * and SeoBackOfficeWiringTest 58 passed. Everything /admin-api/seo-preview
+     * RETURNS — title, description, url, published_known — goes through the title
+     * and description engines, and 'page' and 'article' are treated alike by both.
+     *
+     * `type` is not inert on the real page, though, which is why the arm having a
+     * wrong one matters: Support\Seo gates the FAQPage node on
+     * `($ctx['type'] ?? '') === 'page'`, and Store\PageController::show() sets
+     * exactly that. So the context is pinned DIRECTLY against the controller it
+     * claims to quote, by reading the page's own $seoCtx off the rendered view and
+     * the preview's off its private builder. An arm that drifts from show() is red
+     * whichever side moves.
+     *
+     * MUTATION, RUN: change the `page` arm's `type` to 'article' — 1 failed. Green
+     * before this assertion existed.
      */
     \Tests\Support\SeoBackOfficeRoutes::wire(app());
 
@@ -1094,6 +1109,27 @@ it('previews a content page exactly as the content page renders it', function ()
 
     expect(html_entity_decode($after[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'))
         ->toBe($preview->json('title'), 'the preview and the page disagree about the title');
+
+    /*
+     * The context the preview builds, against the context the page really
+     * renders with. `type` is the key that gates the FAQPage node, so a preview
+     * arm naming a different one is a preview of a document the shop does not
+     * publish — and nothing the endpoint RETURNS would have shown it.
+     */
+    $ctx = (new ReflectionMethod(\App\Http\Controllers\Admin\SeoPreviewApiController::class, 'context'))
+        ->invoke(app(\App\Http\Controllers\Admin\SeoPreviewApiController::class), 'page', '', '', [
+            'name' => (string) $page->title,
+            'description' => '',
+            'path' => '/faqs/',
+            'stored' => [],
+        ]);
+
+    $rendered = test()->get('/faqs/')->assertOk()->original->getData()['seoCtx'];
+
+    expect($ctx['type'])->toBe($rendered['type'],
+        'the preview arm and Store\\PageController::show() disagree about $seoCtx[type]; '
+        .'Support\\Seo gates the FAQPage node on it')
+        ->and($ctx['type'])->toBe('page');
 });
 
 /* ===================== 10. it ships inert, and it is wired once ============ */
