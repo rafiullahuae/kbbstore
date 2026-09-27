@@ -15,6 +15,7 @@ use App\Support\TranslationInput;
 use App\Support\UploadArrival;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -324,12 +325,118 @@ class UgcVideoController extends Controller
         ]);
 
         $kind = (string) $validated['kind'];
-        $result = $this->media->store($request->file('file'), $kind);
 
-        if (! ($result['ok'] ?? false)) {
-            return response()->json(['ok' => false, 'error' => $result['message']], 422);
+        /*
+         * ── THE SECOND DEFECT, AND THE WORSE ONE ────────────────────────────
+         *
+         * 27 September 2026. The owner uploaded an 8.4 MB .mp4 — under this
+         * server's 9.9 MB ceiling, past the pre-flight, delivered whole — and got
+         *
+         *     Server Error    8.4 MB — nothing on the clip was changed.
+         *
+         * Every word after the comma was false. The file WAS written, `file_path`
+         * WAS saved, and a refresh showed the clip as a draft with the video on
+         * it and no cover. What threw was UgcTranscoder::derive(), out of a
+         * `new Process` that sat outside its own guard on a host where proc_open
+         * is switched off — see that class's docblock for the measurement. It
+         * threw AFTER `$video->save()`, so Laravel answered 500 over a row that
+         * had already been committed, the kit read Laravel's own
+         * `{"message":"Server Error"}` into the red panel, and the owner spent
+         * another half-minute of a ~300 KB/s uplink re-uploading a file that was
+         * already in.
+         *
+         * THE COMMENT ON THE CLIP BRANCH BELOW SAID IT "never fails the upload".
+         * It was an intention, not a property — the exact shape CLAUDE.md already
+         * records for UpdateRunner::recordManifest(), whose docblock claimed a
+         * guarded write could not fail an update and cost three hours. Two rules
+         * come out of that entry and both are applied here:
+         *
+         *   1. A step that may not fail the operation is wrapped, not annotated.
+         *      derive() has its own catch now, and a cut that dies leaves the
+         *      upload at 200 with a note — the "uploaded, no cover" state this
+         *      screen already draws and the owner can already act on.
+         *   2. A failure message may not claim nothing changed unless nothing
+         *      changed. Everything below the file's arrival runs inside one try
+         *      whose answer is composed from `$stage` and from whether the row
+         *      was committed, so the sentence is true about the disk and the row
+         *      in every branch.
+         *
+         * And it is written down where he can read it: one Log::error with the
+         * clip id, the kind, the byte count and the stage, findable in
+         * Safety → Debug & Monitor → "Open the error log →" without SSH.
+         */
+        $stage = self::STAGE_STORE;
+
+        /*
+         * The size, read BEFORE UgcMedia::store() moves the file out from under
+         * the handle — getSize() after a move throws "stat failed", which that
+         * service's own docblock records as the worst shape of bug. Typed rather
+         * than `?->getSize()`: `file[]=a&file[]=b` makes file() an ARRAY, and a
+         * method call on one is an Error, not a 422. The `file` rule above
+         * already refuses that, so this is the second lock on a door that is
+         * shut — which is how UploadLimitsTest's `kind` case got its 500.
+         */
+        $sent = $request->file('file');
+        $bytes = $sent instanceof \Illuminate\Http\UploadedFile ? (int) $sent->getSize() : 0;
+
+        /*
+         * ── THE ORPHANS ─────────────────────────────────────────────────────
+         *
+         * Every file this request writes and has not yet put on the row. A throw
+         * between the write and the save leaves bytes in public/uploads/ugc that
+         * NO column names, so nothing will ever delete them — not the clip's own
+         * deletion, which walks the three columns, and not the replace path, which
+         * only forgets the value it is overwriting. The owner re-sent this file
+         * more than once, so on his server there is one such file per attempt.
+         *
+         * Held as a list and emptied the moment the row commits, so the catch can
+         * never delete something the row now points at.
+         */
+        $uncommitted = [];
+        $committed = false;
+
+        try {
+            $result = $this->media->store($request->file('file'), $kind);
+
+            if (! ($result['ok'] ?? false)) {
+                return response()->json(['ok' => false, 'error' => $result['message']], 422);
+            }
+
+            $uncommitted[] = (string) $result['path'];
+            $stage = self::STAGE_RECORD;
+
+            return $this->writeUpload(
+                $video, $kind, $result, $bytes, $stage, $uncommitted, $committed,
+            );
+        } catch (\Throwable $e) {
+            foreach ($uncommitted as $orphan) {
+                $this->media->forget($orphan);
+            }
+
+            return $this->uploadFailed($e, $video, $kind, $stage, $bytes, $committed);
         }
+    }
 
+    /**
+     * The writing half of upload(), so its try block has one exit and one catch.
+     *
+     * `$stage`, `$uncommitted` and `$committed` are by reference because the
+     * catch in upload() composes its sentence out of all three, and a value copy
+     * would leave it describing the state the request STARTED in — which is the
+     * bug being fixed, one level up.
+     *
+     * @param  array{ok: bool, path?: string, bytes?: int, mime?: string}  $result
+     * @param  list<string>  $uncommitted
+     */
+    private function writeUpload(
+        UgcVideo $video,
+        string $kind,
+        array $result,
+        int $bytes,
+        string &$stage,
+        array &$uncommitted,
+        bool &$committed,
+    ): JsonResponse {
         $column = [
             UgcMedia::KIND_CLIP => 'file_path',
             UgcMedia::KIND_TEASER => 'teaser_path',
@@ -372,37 +479,77 @@ class UgcVideoController extends Controller
          * cron — MediaUploadController makes its phone-sized copies on the
          * upload request for exactly this reason, and says so.
          *
-         * Never fails the upload: the clip is written and already being served,
-         * and a video with a poster and no teaser is a supported, published,
-         * working state.
+         * IT NEVER FAILS THE UPLOAD, AND NOW THAT IS A PROPERTY RATHER THAN A
+         * SENTENCE. The clip is written and already being served by the save on
+         * the line below, and a video with a cover and no teaser — or with
+         * neither — is a supported state this screen already draws as
+         * "No cover yet". So a cut that dies is a NOTE on a 200, never a 500 over
+         * a row that was saved a microsecond earlier.
          */
         if ($kind === UgcMedia::KIND_CLIP) {
             $video->save();
 
-            $derived = $this->transcoder->derive($video);
+            // From here on the clip IS on this row, and nothing this method
+            // answers may say otherwise — nor may the catch upstairs delete it.
+            $committed = true;
+            $uncommitted = [];
+            $stage = self::STAGE_DERIVE;
 
-            if ($derived['poster'] !== null) {
-                $this->media->forget($video->poster_path);
-                $video->poster_path = $derived['poster'];
-                $video->poster_bytes = (int) @filesize(public_path(ltrim($derived['poster'], '/'))) ?: null;
-                $video->width = $derived['width'] ?? $video->width;
-                $video->height = $derived['height'] ?? $video->height;
+            try {
+                $derived = $this->transcoder->derive($video);
+            } catch (\Throwable $e) {
+                /*
+                 * BELT AND BRACES. derive() is written not to throw and its own
+                 * two runners now catch \Throwable, so reaching here means
+                 * something in that class changed or something under it did. The
+                 * upload still succeeded; this is a note and a log line, not a
+                 * failure, and the log line is how anybody finds out it happened.
+                 */
+                $this->logUploadFault($e, $video, $kind, self::STAGE_DERIVE, $bytes, true);
+
+                $derived = null;
+                $notes[] = self::NOTE_CUT_FAILED;
             }
 
-            if ($derived['teaser'] !== null) {
-                $this->media->forget($video->teaser_path);
-                $video->teaser_path = $derived['teaser'];
-                $video->teaser_bytes = (int) @filesize(public_path(ltrim($derived['teaser'], '/'))) ?: null;
-            }
+            if ($derived !== null) {
+                if ($derived['poster'] !== null) {
+                    $uncommitted[] = $derived['poster'];
+                    $this->media->forget($video->poster_path);
+                    $video->poster_path = $derived['poster'];
+                    $video->poster_bytes = (int) @filesize(public_path(ltrim($derived['poster'], '/'))) ?: null;
+                    $video->width = $derived['width'] ?? $video->width;
+                    $video->height = $derived['height'] ?? $video->height;
+                }
 
-            if ($derived['duration_ms'] !== null) {
-                $video->duration_ms = $derived['duration_ms'];
-            }
+                if ($derived['teaser'] !== null) {
+                    $uncommitted[] = $derived['teaser'];
+                    $this->media->forget($video->teaser_path);
+                    $video->teaser_path = $derived['teaser'];
+                    $video->teaser_bytes = (int) @filesize(public_path(ltrim($derived['teaser'], '/'))) ?: null;
+                }
 
-            $notes = $derived['notes'];
+                if ($derived['duration_ms'] !== null) {
+                    $video->duration_ms = $derived['duration_ms'];
+                }
+
+                $notes = array_merge($notes, $derived['notes']);
+            }
         }
 
+        $stage = self::STAGE_COMMIT;
+
         $video->save();
+
+        /*
+         * COMMITTED, FOR EVERY KIND. Nothing written this request is an orphan
+         * any more, so the catch upstairs must not delete any of it — and a
+         * throw from here on (forget(), fresh(), card()) is a throw over a row
+         * that DOES carry the new file. This used to stay false for a poster or
+         * a teaser, which would have told the owner nothing had changed about a
+         * cover that had just been saved: the same false sentence one kind over.
+         */
+        $uncommitted = [];
+        $committed = true;
 
         if ($previous !== null && $previous !== $video->{$column}) {
             $this->media->forget($previous);
@@ -413,6 +560,165 @@ class UgcVideoController extends Controller
             'video' => $this->card($video->fresh()),
             'notes' => $notes,
         ]);
+    }
+
+    /**
+     * ── STAGES, AND WHY THE FAILURE NAMES ONE ───────────────────────────────
+     *
+     * The owner's 500 was indistinguishable from a full disk, a dead database and
+     * a permissions fault, and every one of those has a different remedy. The
+     * stage is in the log line and in the answer, so "it broke" becomes "it broke
+     * cutting the cover, and your video is in".
+     */
+    private const STAGE_STORE = 'store';
+
+    private const STAGE_RECORD = 'record';
+
+    private const STAGE_DERIVE = 'derive';
+
+    private const STAGE_COMMIT = 'commit';
+
+    /**
+     * What a failed cut is called on a successful upload.
+     *
+     * A CONSTANT. Rule 5: what gets printed is never a setting. It says the two
+     * things the owner needs — that the clip is in, and that re-uploading it is
+     * not the remedy — because the alternative is what happened: he re-sent 8.4 MB
+     * over a ~300 KB/s line for a file that was already stored.
+     */
+    private const NOTE_CUT_FAILED = 'The video is uploaded and is being served. This server could not cut '
+        .'the cover or the teaser from it — upload a cover image instead. Re-uploading the video will not '
+        .'change this; the reason is in Safety → Debug & Monitor → Open the error log.';
+
+    /**
+     * The honest answer to a throw on the upload path.
+     *
+     * ── THE ONE RULE IT EXISTS TO KEEP ──────────────────────────────────────
+     *
+     * A sentence about a failure may not claim nothing was changed unless nothing
+     * was changed. So `stored` is read off the flag the writer sets the instant it
+     * commits the clip, and the sentence branches on it. The row is READ and never
+     * written here: CLAUDE.md's UpdateRunner entry is what happens when a failure
+     * path writes — `fill()` dirties the model before `save()` throws, and every
+     * later save re-sends it. This method cannot dirty anything and cannot throw.
+     */
+    private function uploadFailed(
+        \Throwable $e,
+        UgcVideo $video,
+        string $kind,
+        string $stage,
+        int $bytes,
+        bool $committed,
+    ): JsonResponse {
+        $this->logUploadFault($e, $video, $kind, $stage, $bytes, $committed);
+
+        $noun = self::NOUN[$kind] ?? self::NOUN[UgcMedia::KIND_CLIP];
+
+        $what = $committed
+            // TRUE, and it is the whole point of this branch. The bytes are on
+            // disk and the row points at them; telling him otherwise is what sent
+            // him back to the upload box.
+            ? 'The '.$noun.' itself WAS saved onto this clip and is being served — reload this screen and '
+                .'you will see it. What failed came after that, '
+            : 'Nothing on the clip was changed and the file is still fine, ';
+
+        return response()->json([
+            'ok' => false,
+            // `error` first, because the upload kit prefers it and prints it
+            // verbatim; `message` is what Laravel would have put "Server Error" in.
+            'error' => $what.'while '.self::STAGE_WORDS[$stage].'. This is a fault on the server rather '
+                .'than a problem with the file, so a smaller or re-encoded file will not help. The reason '
+                .'is written down in full at Safety → Debug & Monitor → Open the error log.',
+            'stage' => $stage,
+            'stored' => $committed,
+            'video' => $this->safeCard($video),
+            'limits' => $this->limits(),
+        ], 500);
+    }
+
+    /** Each stage in the middle of a sentence. Constants, printed verbatim. */
+    private const STAGE_WORDS = [
+        self::STAGE_STORE => 'writing the file to this server’s disk',
+        self::STAGE_RECORD => 'recording it against the clip',
+        self::STAGE_DERIVE => 'cutting the cover and the teaser out of the video',
+        self::STAGE_COMMIT => 'saving the clip',
+    ];
+
+    /**
+     * The row as it now really is, or null if even reading it fails.
+     *
+     * `fresh()` is a query, and the throw being answered may BE the database. A
+     * failure handler that can itself throw is the second defect in CLAUDE.md's
+     * updater entry — the one that made the first unrecoverable.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function safeCard(UgcVideo $video): ?array
+    {
+        try {
+            $fresh = $video->fresh();
+
+            return $fresh === null ? null : $this->card($fresh);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * One line in storage/logs/laravel.log, and the reason it is a Log call and
+     * not a `report()`.
+     *
+     * ── HOW THE OWNER READS THIS WITHOUT A SHELL ────────────────────────────
+     *
+     * Safety → Debug & Monitor → "Open the error log →" serves the tail of
+     * storage/logs/laravel.log (routes/web.php, the `kbb.health.log` route). The
+     * default log stack is `single`, which is that file. So an ordinary
+     * Log::error IS the console-visible record, with no new screen, no new route
+     * and no edit to a view another lane owns. LOG_MARKER is there so he can find
+     * it in 200 lines of tail by eye.
+     *
+     * ── WHAT IS IN IT, AND WHAT IS DELIBERATELY NOT ─────────────────────────
+     *
+     * The clip id, the kind, the byte count, the stage, whether the row was
+     * committed, and what this box answers about ffmpeg — which is the pair of
+     * facts that told this defect apart from a timeout. NOT the uploaded
+     * filename: that is visitor-controlled text and a log line is read by eye and
+     * pasted into chat, so it stays out. Nothing here is a credential.
+     */
+    public const LOG_MARKER = '[ugc-upload]';
+
+    private function logUploadFault(
+        \Throwable $e,
+        UgcVideo $video,
+        string $kind,
+        string $stage,
+        int $bytes,
+        bool $committed,
+    ): void {
+        try {
+            Log::error(self::LOG_MARKER.' '.$stage.' stage threw on a '.$kind.' upload', [
+                'clip_id' => $video->id,
+                'kind' => $kind,
+                'bytes' => $bytes,
+                'stage' => $stage,
+                'clip_stored' => $committed,
+                // The two facts that separate "no encoder" from "an encoder it
+                // cannot start" from "it ran and failed".
+                'ffmpeg' => $this->transcoder->binary(),
+                'can_spawn' => $this->transcoder->canSpawn(),
+                'transcoder_available' => $this->transcoder->available(),
+                'max_execution_time' => (int) ini_get('max_execution_time'),
+                'exception' => $e::class.': '.$e->getMessage(),
+                'where' => $e->getFile().':'.$e->getLine(),
+            ]);
+        } catch (\Throwable) {
+            /*
+             * A LOG THAT CANNOT WRITE MUST NOT BE THE FAILURE. An unwritable
+             * storage/logs is one of the faults this handler exists to report, and
+             * a handler that throws while reporting it hands the owner the same
+             * bare "Server Error" this whole round is about.
+             */
+        }
     }
 
     /**
@@ -488,7 +794,33 @@ class UgcVideoController extends Controller
             return response()->json(['ok' => false, 'error' => 'not_found'], 404);
         }
 
-        $derived = $this->transcoder->derive($video, remakePoster: true, remakeTeaser: true);
+        /*
+         * SAME GUARD AS THE UPLOAD PATH, AND FOR THE SAME REASON. This endpoint
+         * calls the same derive() the upload does, so before this round it was the
+         * SECOND way to get a bare "Server Error" out of a host that cannot start
+         * a program — one button press, on a clip that was already fine. The
+         * honest answer is the one it already gives for a box with no ffmpeg: ok,
+         * nothing cut, and a note saying why.
+         */
+        try {
+            $derived = $this->transcoder->derive($video, remakePoster: true, remakeTeaser: true);
+        } catch (\Throwable $e) {
+            $this->logUploadFault($e, $video, UgcMedia::KIND_CLIP, self::STAGE_DERIVE, 0, true);
+
+            /*
+             * A REPORT SAYING NOTHING WAS CUT, and then the ordinary exit below.
+             * NOT a second response of its own: UgcEditorColumnsTest COUNTS the
+             * line that puts the transcoder's answer in the payload and requires
+             * exactly two of them — index()'s and this endpoint's — because a
+             * rename of only one slipped past a str_contains once. A third copy
+             * here would break that pin without breaking anything it guards, so
+             * this path falls through to the one exit instead. (Which is also why
+             * this comment describes that line rather than quoting it: a quoted
+             * claim is counted like the claim.)
+             */
+            $derived = ['poster' => null, 'teaser' => null, 'width' => null, 'height' => null,
+                'duration_ms' => null, 'notes' => [self::NOTE_CUT_FAILED]];
+        }
 
         if ($derived['poster'] !== null) {
             $this->media->forget($video->poster_path);
