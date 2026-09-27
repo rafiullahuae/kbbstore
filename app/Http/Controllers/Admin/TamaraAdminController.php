@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Payments\GatewayCredentials;
 use App\Services\Payments\GatewayRegistry;
 use App\Services\Payments\Gateways\TamaraGateway;
+use App\Services\Payments\TamaraSweep;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -211,6 +212,85 @@ class TamaraAdminController extends Controller
                 $limits['country'],
             ),
             'limits' => $limits,
+            'tamara' => $this->state($gateway),
+        ]);
+    }
+
+    /**
+     * Settle Tamara orders whose approval notification never arrived.
+     *
+     * App\Services\Payments\TamaraSweep carries the argument. In short: every
+     * approval reaches this shop as a callback and nothing else, and a callback
+     * that goes missing leaves an order `pending` for ever while the buyer holds
+     * a live payment plan and believes they have bought something. The shop never
+     * ships and never gets paid, and the only evidence is an absence.
+     *
+     * THE BUTTON EXISTS BECAUSE THE OWNER IS THE PERSON WHO NEEDS IT. There is a
+     * console command (`php artisan payments:tamara-sweep`) and cron is the right
+     * home for this, but the owner works through the admin panel; a recovery that
+     * can only be run by somebody with a shell is a recovery that does not
+     * happen. Same reasoning as the Reconcile screen.
+     *
+     * NO AMOUNT, NO ORDER AND NO STATUS CROSSES THE REQUEST. The three bounds
+     * are numbers, clamped here and clamped again in the service, and the
+     * candidate list is chosen by the service from the database. A caller cannot
+     * name an order to settle — which is the whole point, because "settle this
+     * order" posted by a stranger is "mark this order paid".
+     */
+    public function sweep(Request $request, TamaraSweep $sweep): JsonResponse
+    {
+        $gateway = $this->gateway();
+
+        if ($gateway === null) {
+            return response()->json(['error' => 'unsupported'], 404);
+        }
+
+        $data = $request->validate([
+            // Bounded here as well as in the service. An unbounded `days` is a
+            // full table scan somebody can ask for over and over, and an
+            // unbounded `limit` is a thousand round trips to a rate-limited API
+            // on one click.
+            'minutes' => ['nullable', 'integer', 'min:0', 'max:1440'],
+            'days' => ['nullable', 'integer', 'min:1', 'max:180'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:500'],
+        ]);
+
+        $report = $sweep->run(
+            $data['minutes'] ?? null,
+            $data['days'] ?? null,
+            $data['limit'] ?? null,
+            auth('admin')->user()?->name,
+        );
+
+        if (! $report['ran']) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'not_configured',
+                'message' => (string) $report['reason'],
+                'tamara' => $this->state($gateway),
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => $report['examined'] === 0
+                ? 'No Tamara orders are waiting on a notification.'
+                : sprintf(
+                    'Checked %d order(s) with Tamara. Marked paid: %d. Closed as declined or expired: %d. '
+                    . 'Still waiting: %d. Could not check: %d.',
+                    $report['examined'],
+                    $report['paid'],
+                    $report['failed'],
+                    $report['untouched'],
+                    $report['errors'],
+                ),
+            /*
+             * The per-order rows carry an order NUMBER and a machine sentence,
+             * and nothing else. No email, no total, no address — this response
+             * answers "did the sweep work", and an operator who wants an order
+             * opens the order.
+             */
+            'report' => $report,
             'tamara' => $this->state($gateway),
         ]);
     }

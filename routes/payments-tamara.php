@@ -26,7 +26,12 @@ declare(strict_types=1);
 |     this shop about declines, which is invisible until somebody audits
 |     `pending` orders;
 |   - POST /admin-api/payments/tamara/limits rewrites which baskets are offered
-|     BNPL at all.
+|     BNPL at all;
+|   - POST /admin-api/payments/tamara/sweep asks Tamara about every pending
+|     order in the window and marks the approved ones PAID. It names no order
+|     and accepts no amount, so it cannot be pointed at one — but unguarded it
+|     is still a way for a stranger to spend this shop's Tamara rate limit, and
+|     it writes to orders.
 |
 | Mounted in routes/api.php they would be worse still — everything there is
 | unauthenticated by design.
@@ -38,12 +43,18 @@ declare(strict_types=1);
 |     POST   /admin-api/payments/tamara/webhook       register with Tamara
 |     DELETE /admin-api/payments/tamara/webhook       remove the registration
 |     POST   /admin-api/payments/tamara/limits        pull the basket limits
+|     POST   /admin-api/payments/tamara/sweep         settle approvals whose
+|                                                     notification never arrived
 |
 | CAPABILITIES. All five are mapped in App\Support\AdminCapabilities::RULES, and
 | AdminCapabilityMapTest pins every one of them by name:
 |
 |     orders/{id}/void        -> orders.money      (the capture/refund family)
 |     payments/tamara*        -> payments.manage   (the gateway-settings family)
+|
+| All four `payments/tamara*` paths are covered by the ONE `['*',
+| 'admin-api/payments/tamara/*', 'payments.manage']` rule, sweep included, so
+| adding a fifth needs no change to AdminCapabilities.
 |
 | An unmapped admin route is owner-only at runtime, so neither would have been
 | open — but the map is what a reader and a test can see, and the note beside
@@ -81,3 +92,4 @@ Route::get('/payments/tamara', [TamaraAdminController::class, 'show']);
 Route::post('/payments/tamara/webhook', [TamaraAdminController::class, 'registerWebhook']);
 Route::delete('/payments/tamara/webhook', [TamaraAdminController::class, 'unregisterWebhook']);
 Route::post('/payments/tamara/limits', [TamaraAdminController::class, 'refreshLimits']);
+Route::post('/payments/tamara/sweep', [TamaraAdminController::class, 'sweep']);

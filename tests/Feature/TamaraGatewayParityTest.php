@@ -1359,3 +1359,487 @@ it('sends a DELETE and not a POST when removing a webhook', function () {
 
     expect($methods)->toBe(['DELETE']);
 });
+
+/* ══════════ 12. the approval nobody told this shop about ══════════════════ */
+
+/*
+ * THE HOLE: every Tamara approval reached this shop as a callback and nothing
+ * else. A delivery that went missing — this host restarting mid-POST, a blip at
+ * the egress, Tamara's retry budget running out, a webhook secret rotated
+ * between session creation and approval — left the order `pending` FOR EVER.
+ * It held its stock claim and its coupon use, no capture was possible, and at
+ * Tamara's end the buyer was approved, had a payment plan and believed they had
+ * bought something. The shop never shipped and never got paid, and the only
+ * evidence was an absence.
+ *
+ * The merchant's plugin does not trust the callback either — `forceAuthorise-
+ * TamaraOrder` sweeps on cron. App\Services\Payments\TamaraSweep is that sweep.
+ */
+
+/** GET /merchants/orders/{id} answering with one status. */
+function pg1FakeRemote(string $status, array $extra = [], int $totalFils = 10000): void
+{
+    Http::fake([
+        '*/merchants/orders/reference-id/*' => Http::response(['order_id' => 'tam_recovered']),
+        '*/merchants/orders/*' => Http::response(array_merge([
+            'order_id' => 'tam_pg1',
+            'order_reference_id' => $extra['__ref'] ?? null,
+            'status' => $status,
+            'total_amount' => ['amount' => number_format($totalFils / 100, 2, '.', ''), 'currency' => 'AED'],
+        ], array_diff_key($extra, ['__ref' => null]))),
+        '*/authorise' => Http::response(['order_id' => 'tam_pg1', 'status' => 'authorised']),
+    ]);
+}
+
+it('marks an order paid when tamara approved it and the notification never came', function () {
+    pg1Provider();
+    $order = pg1Order(['created_at' => now()->subHours(3)]);
+
+    pg1FakeRemote('approved', ['__ref' => $order->order_number]);
+
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run(by: 'scheduled check');
+
+    expect($report['ran'])->toBeTrue()
+        ->and($report['examined'])->toBe(1)
+        ->and($report['paid'])->toBe(1)
+        ->and($order->fresh()->paid_at)->not->toBeNull();
+
+    // And it AUTHORISED before confirming. An order marked paid here but never
+    // authorised at Tamara is money the shop never receives, which is the whole
+    // reason this is not just a status write.
+    $authorised = false;
+
+    foreach (Http::recorded() as [$request, $response]) {
+        if (str_contains($request->url(), '/authorise')) {
+            $authorised = true;
+        }
+    }
+
+    expect($authorised)->toBeTrue();
+
+    /*
+     * MUTATION: delete TamaraSweep and this is the state the shop was in — the
+     * order stays `pending` with paid_at NULL for ever. Narrower: change
+     * TamaraGateway::settleFromRemote()'s `if ($status === 'approved')` to
+     * `if (false)` and $authorised is false while the order is still marked
+     * paid, which is the exact shape of "shipped and never paid".
+     */
+});
+
+it('does not touch an order tamara is still waiting on the shopper for', function () {
+    pg1Provider();
+    $order = pg1Order(['created_at' => now()->subHours(3)]);
+
+    pg1FakeRemote('new', ['__ref' => $order->order_number]);
+
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['examined'])->toBe(1)
+        ->and($report['untouched'])->toBe(1)
+        ->and($report['paid'])->toBe(0)
+        ->and($order->fresh()->paid_at)->toBeNull()
+        ->and((string) $order->fresh()->status)->toBe('pending');
+
+    /*
+     * A Tamara order sits `new` from session creation until the shopper finishes
+     * the hosted flow. Treating that as a failure would cancel a checkout in
+     * progress — the one mistake in this sweep that costs a sale that was going
+     * to happen.
+     *
+     * MUTATION: move 'new' into settleFromRemote()'s terminal list beside
+     * 'expired' and this order comes back cancelled.
+     */
+});
+
+it('closes an order tamara declined while nobody was listening', function () {
+    pg1Provider();
+    $order = pg1Order(['created_at' => now()->subHours(3)]);
+
+    pg1FakeRemote('declined', ['__ref' => $order->order_number]);
+
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['examined'])->toBe(1)
+        ->and($report['failed'])->toBe(1)
+        ->and($order->fresh()->paid_at)->toBeNull()
+        ->and((string) $order->fresh()->status)->not->toBe('pending');
+
+    // This is the decline branch the unregistered webhook made unreachable,
+    // reached a second way — so a shop whose webhook registration was never
+    // pressed still releases the stock and the coupon use eventually.
+});
+
+it('recovers a tamara order id this shop never managed to save', function () {
+    pg1Provider();
+
+    // start() writes `transaction_id` AFTER POST /checkout returns. An order can
+    // exist at Tamara while this shop holds no id for it: the response was lost,
+    // or the process died between the call and the save. No callback can rescue
+    // those either, because handleWebhook() needs an id to verify against.
+    $order = pg1Order(['created_at' => now()->subHours(3), 'transaction_id' => null]);
+
+    Http::fake([
+        '*/merchants/orders/reference-id/*' => Http::response(['order_id' => 'tam_recovered']),
+        '*/merchants/orders/tam_recovered' => Http::response([
+            'order_id' => 'tam_recovered',
+            'order_reference_id' => $order->order_number,
+            'status' => 'approved',
+            'total_amount' => ['amount' => '100.00', 'currency' => 'AED'],
+        ]),
+        '*/authorise' => Http::response(['status' => 'authorised']),
+    ]);
+
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['paid'])->toBe(1)
+        ->and((string) $order->fresh()->transaction_id)->toBe('tam_recovered')
+        ->and($order->fresh()->paid_at)->not->toBeNull();
+
+    /*
+     * MUTATION: remove the reference-id lookup from reconcileAuthorisation() and
+     * this order can never be settled by any path at all.
+     */
+});
+
+it('refuses to staple a tamara order onto the wrong shop order', function () {
+    pg1Provider();
+    $order = pg1Order(['created_at' => now()->subHours(3), 'transaction_id' => null]);
+
+    // The lookup answers, but the order it points at belongs to somebody else's
+    // reference. Saving the id on the strength of an unverified lookup would
+    // attach a stranger's payment plan to this order PERMANENTLY.
+    Http::fake([
+        '*/merchants/orders/reference-id/*' => Http::response(['order_id' => 'tam_someone_else']),
+        '*/merchants/orders/tam_someone_else' => Http::response([
+            'order_id' => 'tam_someone_else',
+            'order_reference_id' => 'SOMEBODY-ELSES-ORDER',
+            'status' => 'approved',
+            'total_amount' => ['amount' => '100.00', 'currency' => 'AED'],
+        ]),
+    ]);
+
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['errors'])->toBe(1)
+        ->and($report['paid'])->toBe(0)
+        ->and($order->fresh()->transaction_id)->toBeNull()
+        ->and($order->fresh()->paid_at)->toBeNull();
+
+    // And nothing was authorised.
+    foreach (Http::recorded() as [$request, $response]) {
+        expect(str_contains($request->url(), '/authorise'))->toBeFalse();
+    }
+
+    /*
+     * MUTATION: move the `transaction_id` write in reconcileAuthorisation()
+     * above its reference check — the id sticks to this order and every later
+     * capture and refund on it points at a stranger's plan.
+     */
+});
+
+it('leaves an order alone that has already moved on', function () {
+    pg1Provider();
+
+    // A background job that reopened a decision somebody made is the worst thing
+    // this file could do. `processing`, `shipped`, `cancelled` and `refunded` are
+    // all decided; the sweep never fetches them.
+    foreach (['processing', 'shipped', 'completed', 'cancelled', 'refunded'] as $status) {
+        pg1Order(['created_at' => now()->subHours(3), 'status' => $status]);
+    }
+
+    // preventStrayRequests() is what makes this a real assertion: no fake is
+    // registered at all, so ANY call to Tamara fails the test outright.
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['examined'])->toBe(0);
+
+    /*
+     * MUTATION: drop `->where('status', 'pending')` from
+     * TamaraSweep::candidates() and this throws on a stray request.
+     */
+});
+
+it('leaves a shopper who is still on tamaras page alone', function () {
+    pg1Provider();
+    pg1Order(['created_at' => now()->subMinutes(2)]);
+
+    // No fake registered: an order ninety seconds old is a shopper currently
+    // looking at Tamara's hosted page, and asking about an approval that has not
+    // happened yet is a round trip for nothing on every run.
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['examined'])->toBe(0);
+
+    // With the lower bound lifted the same order IS a candidate, which proves
+    // the bound is what excluded it rather than something else about the row.
+    expect(app(\App\Services\Payments\TamaraSweep::class)->candidates(minutes: 0)->count())->toBe(1);
+});
+
+it('sweeps the oldest orders first and never more than its limit', function () {
+    pg1Provider();
+
+    foreach (range(1, 6) as $days) {
+        pg1Order(['order_number' => 'PG1-AGE-' . $days, 'created_at' => now()->subDays($days)]);
+    }
+
+    $numbers = app(\App\Services\Payments\TamaraSweep::class)
+        ->candidates(limit: 3)
+        ->pluck('order_number')
+        ->all();
+
+    // Oldest first: a capped run always makes progress on the orders closest to
+    // being expired by Tamara, which are the ones where waiting costs money.
+    expect($numbers)->toBe(['PG1-AGE-6', 'PG1-AGE-5', 'PG1-AGE-4']);
+
+    /*
+     * And the upper bound really excludes. Six orders, one per day from 1 to 6
+     * days old; asked for 3 days, the ones at 1, 2 and 3 days are inside it and
+     * the ones at 4, 5 and 6 are not.
+     */
+    expect(app(\App\Services\Payments\TamaraSweep::class)->candidates(days: 3)->count())->toBe(3)
+        ->and(app(\App\Services\Payments\TamaraSweep::class)->candidates(days: 3)->pluck('order_number')->all())
+        ->toBe(['PG1-AGE-3', 'PG1-AGE-2', 'PG1-AGE-1']);
+});
+
+it('finds the candidates in one query however many there are', function () {
+    pg1Provider();
+
+    $count = function (int $orders): int {
+        Order::query()->forceDelete();
+
+        foreach (range(1, $orders) as $i) {
+            pg1Order(['order_number' => 'PG1-SLOPE-' . $orders . '-' . $i, 'created_at' => now()->subHours(3)]);
+        }
+
+        $queries = 0;
+        \Illuminate\Support\Facades\DB::listen(function () use (&$queries) {
+            $queries++;
+        });
+
+        app(\App\Services\Payments\TamaraSweep::class)->candidates();
+
+        return $queries;
+    };
+
+    /*
+     * THE SLOPE, AT 1 / 2 / 5 / 10 — not a total, per rule 4. The candidate scan
+     * is one select whatever the size of the backlog, so the count does not move.
+     * A per-order lookup here would read 1 / 2 / 5 / 10 and be the N+1 this
+     * method was most likely to have had.
+     */
+    $at = [1 => $count(1), 2 => $count(2), 5 => $count(5), 10 => $count(10)];
+
+    expect($at[1])->toBe(1)
+        ->and($at[2])->toBe($at[1])
+        ->and($at[5])->toBe($at[1])
+        ->and($at[10])->toBe($at[1]);
+});
+
+it('does not sweep at all when tamara is not configured', function () {
+    // No provider row. A shop that does not use Tamara has no stale Tamara
+    // orders, and a sweep that reported FAILURE here would cry wolf on every
+    // cron tick for ever.
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['ran'])->toBeFalse()
+        ->and($report['examined'])->toBe(0)
+        ->and((string) $report['reason'])->toContain('nothing to sweep');
+});
+
+it('reports a sweep the owner asked for without naming an order', function () {
+    pg1Provider();
+    $order = pg1Order(['created_at' => now()->subHours(3)]);
+
+    pg1FakeRemote('approved', ['__ref' => $order->order_number]);
+
+    $response = $this->actingAs(pg1Admin('sweep'), 'admin')
+        ->postJson('/admin-api/payments/tamara/sweep');
+
+    $response->assertOk();
+
+    expect($response->json('ok'))->toBeTrue()
+        ->and($response->json('report.paid'))->toBe(1)
+        ->and($order->fresh()->paid_at)->not->toBeNull();
+
+    /*
+     * NO ORDER CROSSES THE REQUEST, which is the point: "settle this order"
+     * posted by a caller is "mark this order paid". The endpoint takes three
+     * numbers and the service picks the orders itself.
+     */
+    $body = $response->json();
+
+    expect(json_encode($body))->not->toContain(PG1_API_TOKEN)
+        ->and(json_encode($body))->not->toContain(PG1_NOTIFY_KEY)
+        ->and(json_encode($body))->not->toContain(PG1_URL_SECRET);
+});
+
+it('refuses the sweep endpoint to a stranger', function () {
+    pg1Provider();
+
+    // Mounted inside the admin-api group, so an unauthenticated POST never
+    // reaches the controller. Unguarded this is a way for anybody to spend the
+    // shop's Tamara rate limit and write to orders.
+    $this->postJson('/admin-api/payments/tamara/sweep')->assertStatus(401);
+});
+
+it('clamps what the sweep endpoint will accept', function () {
+    pg1Provider();
+
+    // An unbounded `days` is a full table scan on demand and an unbounded
+    // `limit` is a thousand round trips to a rate-limited API on one click.
+    $this->actingAs(pg1Admin('clamp'), 'admin')
+        ->postJson('/admin-api/payments/tamara/sweep', ['days' => 5000, 'limit' => 100000])
+        ->assertStatus(422);
+});
+
+/* ══════════ 13. the failure branches, driven rather than assumed ══════════ */
+
+it('treats a tamara timeout as reachable-again rather than as a decline', function () {
+    pg1Provider();
+    $order = pg1Order(['created_at' => now()->subHours(3)]);
+
+    // A connection that never answers. RemoteGateway::call() catches and returns
+    // null; nothing may conclude anything about the money from that.
+    Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('timed out'));
+
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['errors'])->toBe(1)
+        ->and($report['failed'])->toBe(0)
+        ->and($order->fresh()->paid_at)->toBeNull()
+        ->and((string) $order->fresh()->status)->toBe('pending');
+
+    /*
+     * THE BUG THIS FORBIDS: a timeout read as "Tamara says no" would cancel a
+     * pending order the buyer HAD been approved for, release its stock and its
+     * coupon, and leave a live payment plan behind — on nothing but a dropped
+     * packet. The order must come out of this exactly as it went in.
+     */
+});
+
+it('treats a malformed tamara body as unreadable and changes nothing', function () {
+    pg1Provider();
+    $order = pg1Order(['created_at' => now()->subHours(3)]);
+
+    // 200 OK with HTML in it: a proxy error page, a WAF block, a maintenance
+    // splash. Every one of these has been served by a payment API at some point.
+    Http::fake(['*' => Http::response('<html>upstream is having a moment</html>', 200)]);
+
+    $report = app(\App\Services\Payments\TamaraSweep::class)->run();
+
+    expect($report['paid'])->toBe(0)
+        ->and($report['failed'])->toBe(0)
+        ->and($order->fresh()->paid_at)->toBeNull()
+        ->and((string) $order->fresh()->status)->toBe('pending');
+
+    // A body with no `status` at all must not read as any particular status —
+    // least of all as one that moves money.
+});
+
+it('refuses to capture a tamara order whose body carries no capture id', function () {
+    pg1Provider();
+    $order = pg1Order([
+        'transaction_id' => 'tam_pg1',
+        'status' => 'processing',
+        'paid_at' => now(),
+    ]);
+
+    Http::fake([
+        '*/merchants/orders/*' => Http::response([
+            'order_reference_id' => $order->order_number,
+            'status' => 'authorised',
+        ]),
+        // 200, and no capture_id. The id is the handle a later REFUND has to
+        // point at, so a capture without one is a capture that can never be
+        // reversed.
+        '*/payments/capture' => Http::response(['message' => 'ok']),
+    ]);
+
+    $result = pg1Gateway()->capture($order, (int) $order->total);
+
+    expect($result->ok)->toBeFalse()
+        ->and($result->code)->not->toBe('captured');
+
+    /*
+     * MUTATION: drop `|| $captureId === null` from capture()'s failure test and
+     * this returns ok() with a null reference — PaymentCapturer then writes
+     * `captured_at` with no `capture_ref`, and every refund on that order
+     * afterwards answers `not_captured` for ever.
+     */
+});
+
+it('treats a partial capture made outside this shop as already captured', function () {
+    pg1Provider();
+    $order = pg1Order(['transaction_id' => 'tam_pg1', 'status' => 'processing', 'paid_at' => now()]);
+
+    // This build captures the whole order in one call and never makes a partial
+    // one, so a partial capture on the account came from Tamara's dashboard.
+    // Silently topping it up is the wrong guess to make with money.
+    Http::fake([
+        '*/merchants/orders/*' => Http::response([
+            'order_reference_id' => $order->order_number,
+            'status' => 'partially_captured',
+            'transactions' => ['captures' => [['capture_id' => 'cap_partial']]],
+        ]),
+    ]);
+
+    $result = pg1Gateway()->capture($order, (int) $order->total);
+
+    expect($result->ok)->toBeTrue()
+        ->and($result->code)->toBe('already_captured')
+        ->and($result->reference)->toBe('cap_partial');
+
+    // And no capture call was made.
+    foreach (Http::recorded() as [$request, $response]) {
+        expect(str_contains($request->url(), '/payments/capture'))->toBeFalse();
+    }
+});
+
+it('refunds part of a capture against the capture it reverses', function () {
+    pg1Provider();
+    $order = pg1Order([
+        'transaction_id' => 'tam_pg1',
+        'capture_ref' => 'cap_pg1',
+        'status' => 'processing',
+        'paid_at' => now(),
+        'captured_at' => now(),
+    ]);
+
+    Http::fake([
+        '*/payments/refund' => Http::response(['refunds' => [['refund_id' => 'ref_pg1']]]),
+    ]);
+
+    // Half of a 100.00 order.
+    $result = pg1Gateway()->refund($order, 5000, 'Damaged in transit', 'cap_pg1', 'idem-pg1');
+
+    expect($result->ok)->toBeTrue()
+        ->and($result->reference)->toBe('ref_pg1');
+
+    $body = pg1SentBody('/payments/refund');
+
+    // ONE refund per call, pointed at the capture it reverses. Tamara batches
+    // them; we send one so that one refund row maps to one provider
+    // transaction, because a partial failure inside a batch cannot be
+    // attributed to the right row in our own table.
+    expect(count($body['refunds'] ?? []))->toBe(1)
+        ->and($body['refunds'][0]['capture_id'] ?? null)->toBe('cap_pg1')
+        ->and($body['refunds'][0]['total_amount']['amount'] ?? null)->toBe(50.0)
+        ->and($body['refunds'][0]['total_amount']['currency'] ?? null)->toBe('AED');
+
+    // The amount is the one asked for and NOT the order total: a partial refund
+    // that sent the whole total would hand back twice what was agreed.
+    expect($body['refunds'][0]['total_amount']['amount'] ?? null)->not->toBe(100.0);
+});
+
+it('refuses a refund before there is a capture to reverse', function () {
+    pg1Provider();
+    $order = pg1Order(['transaction_id' => 'tam_pg1', 'status' => 'processing', 'paid_at' => now()]);
+
+    // No fake: this must not reach Tamara at all. Its refund endpoint requires a
+    // capture_id, so the round trip is wasted and the generic error it produces
+    // does not tell the operator that CAPTURE is the next action.
+    $result = pg1Gateway()->refund($order, 5000, null, null, null);
+
+    expect($result->ok)->toBeFalse()
+        ->and($result->code)->toBe('not_captured');
+});

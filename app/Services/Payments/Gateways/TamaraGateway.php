@@ -524,22 +524,103 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             return WebhookOutcome::failed('could not verify order with Tamara');
         }
 
+        return $this->settleFromRemote($order, $tamaraOrderId, $remote, $summary);
+    }
+
+    /**
+     * Settle one order against the record Tamara itself holds for it.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * The tail of handleWebhook(), lifted out so the SWEEP runs the identical
+     * code — see reconcileAuthorisation(). Two paths that both decide whether
+     * money is owed must not be two pieces of code, because the day one of them
+     * learns a new Tamara status the other one silently does not.
+     *
+     * EVERY DECISION BELOW IS MADE ON `$remote`, WHICH CAME BACK OVER AN
+     * AUTHENTICATED GET, AND NOTHING IS MADE ON THE CALLBACK BODY. That is a
+     * change from what handleWebhook() did before this method existed, and it
+     * was a real weakness rather than a tidy-up:
+     *
+     *   the old code decided whether a FAILED `POST /orders/{id}/authorise`
+     *   was fatal by looking at `order_status` in the delivered body. A body
+     *   claiming `fully_captured` made the authorise failure non-fatal, so the
+     *   order was confirmed as paid on the strength of a field in the payload.
+     *
+     * The body is JWT-signed, so that was not a forgery an outsider could
+     * mount, and it is why this is a weakness and not an incident. But the
+     * whole argument for gate 3 — written out at the head of this class — is
+     * that a signed body still is not an authenticated total, and the same
+     * reasoning applies to an authenticated STATUS. `$remote['status']` costs
+     * nothing extra here; it has already been fetched.
+     *
+     * @param  array<string, mixed>  $remote   the body of GET /merchants/orders/{id}
+     * @param  array<string, mixed>  $summary  named fields for the audit row
+     */
+    private function settleFromRemote(
+        Order $order,
+        string $tamaraOrderId,
+        array $remote,
+        array $summary = [],
+    ): WebhookOutcome {
         // The reference on the fetched order has to be the one we looked up,
         // or a valid token for order A has been pointed at order B.
         if ((string) ($remote['order_reference_id'] ?? '') !== (string) $order->order_number) {
             return WebhookOutcome::refused('reference does not match');
         }
 
+        $status = strtolower(trim((string) ($remote['status'] ?? '')));
+        $summary['remote_status'] = $status;
+
+        /*
+         * TERMINAL FAILURES, FROM TAMARA'S OWN MOUTH.
+         *
+         * The webhook branch above acts on `order_expired` and `order_declined`
+         * because those are the two events Tamara pushes. This reads the same
+         * facts out of the order itself, which is the only way the SWEEP can
+         * learn them — a webhook that was never delivered leaves no event to
+         * act on, and the order's status is the durable record of it.
+         *
+         * PaymentConfirmer::fail() refuses to downgrade an order that is already
+         * paid, so a stale `expired` cannot cancel a real sale.
+         */
+        if (in_array($status, ['declined', 'expired', 'canceled', 'cancelled'], true)) {
+            return $this->confirmer->fail($order, $this->id(), $tamaraOrderId, $status, $summary);
+        }
+
+        /*
+         * `new` IS NOT A FAILURE AND MUST NOT BE TREATED AS ONE.
+         *
+         * A Tamara order sits `new` from session creation until the shopper
+         * finishes Tamara's hosted flow. On the sweep that is the ordinary state
+         * of a basket somebody is still looking at, or walked away from and may
+         * come back to — Tamara expires it itself and the sweep will see
+         * `expired` then. Cancelling our order here would kill a checkout in
+         * progress, which is the one mistake in this method that costs a sale
+         * that was going to happen.
+         */
+        if (! in_array($status, ['approved', 'authorised', 'authorized', 'fully_captured', 'partially_captured'], true)) {
+            return WebhookOutcome::ignored('tamara reports this order as ' . ($status !== '' ? $status : 'unknown'));
+        }
+
         $amount = $remote['total_amount']['amount'] ?? 0;
         $currency = (string) ($remote['total_amount']['currency'] ?? '');
 
-        // Authorise before confirming. Tamara holds the money until this call;
-        // an order marked paid here but never authorised is one we never get.
-        // 409 means it was already authorised, which is a success on a replay.
-        $authorised = $this->call('POST', '/orders/' . urlencode($tamaraOrderId) . '/authorise');
+        /*
+         * AUTHORISE BEFORE CONFIRMING. Tamara holds the money until this call;
+         * an order marked paid here but never authorised is one we never get.
+         *
+         * Only from `approved`, which is the one status that still needs it.
+         * An order Tamara already reports as authorised or captured has been
+         * through this call — calling it again is at best a 409, and treating
+         * that 409 as a failure would leave a PAID order unconfirmed for ever,
+         * which is the bug the sweep exists to clear rather than to create.
+         */
+        if ($status === 'approved') {
+            $authorised = $this->call('POST', '/orders/' . urlencode($tamaraOrderId) . '/authorise');
 
-        if ($authorised === null && ! in_array($status, ['authorised', 'authorized', 'fully_captured'], true)) {
-            return WebhookOutcome::failed('could not authorise with Tamara');
+            if ($authorised === null) {
+                return WebhookOutcome::failed('could not authorise with Tamara');
+            }
         }
 
         return $this->confirmer->confirm(
@@ -550,6 +631,113 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             $currency,
             $summary,
         );
+    }
+
+    /**
+     * Ask Tamara what happened to an order this shop never heard back about.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ── THE HOLE THIS CLOSES, WHICH IS THE MERCHANT NOT BEING PAID ──────────
+     *
+     * Everything this class knew about an approval arrived by callback. The
+     * shopper is redirected to Tamara, approves, and Tamara POSTs the
+     * notification URL handed over at session creation. handleWebhook() does
+     * the rest. When that delivery lands, the shop works perfectly.
+     *
+     * WHEN IT DOES NOT LAND, NOTHING EVER ASKS. The order stays `pending` with
+     * `paid_at` NULL for ever. It holds its stock claim and its coupon use, it
+     * never appears in a list anybody reads, no capture is possible because
+     * PaymentCapturer wants a paid order — and at Tamara's end the buyer was
+     * APPROVED, believes they have bought it, and has a payment plan. The shop
+     * never ships and never gets paid, and the only evidence is an absence.
+     *
+     * A delivery goes missing for ordinary reasons, not exotic ones: this host
+     * restarting during the POST, a 30-second blip at the egress, Tamara's own
+     * retry budget running out, or — the one that has actually bitten this
+     * project — a webhook whose URL secret was rotated between session creation
+     * and approval, so every gate-1 check rejects a genuine notification.
+     *
+     * The merchant's own plugin does not rely on the callback either. It sweeps
+     * (`forceAuthoriseTamaraOrder`, on cron): every `pending` order with a
+     * checkout session and no Tamara order id, going back 180 days, is looked up
+     * and authorised. This is that sweep, for one order.
+     *
+     * ── WHY IT IS SAFE TO RUN OVER AND OVER ─────────────────────────────────
+     *
+     * It decides nothing itself. It fetches Tamara's own record and hands it to
+     * settleFromRemote(), which is the same code the verified webhook runs, so
+     * the amount and currency are compared by PaymentConfirmer exactly as they
+     * are on a callback and `paid_at` is claimed exactly once. An order that is
+     * already paid comes back `ignored`. An order Tamara still reports as `new`
+     * is left completely alone.
+     *
+     * ── THE REFERENCE-ID RECOVERY ───────────────────────────────────────────
+     *
+     * `transaction_id` is written at the end of start(), after `POST /checkout`
+     * has returned. An order can therefore exist at Tamara while this shop holds
+     * no id for it: the response was lost, the process died between the call and
+     * the save, or the shopper's browser hung up mid-request. Those orders are
+     * exactly the ones no callback can rescue either, because handleWebhook()
+     * needs an id to verify against.
+     *
+     * `GET /merchants/orders/reference-id/{ref}` is Tamara's answer and the
+     * plugin's SDK carries it (GetOrderByReferenceIdRequestHandler). Our own
+     * order number is the reference, so the lookup needs nothing this shop has
+     * lost, and the id it returns is saved so the next call is direct.
+     */
+    public function reconcileAuthorisation(Order $order): WebhookOutcome
+    {
+        if (! $this->configured()) {
+            return WebhookOutcome::failed('tamara is not configured');
+        }
+
+        $tamaraOrderId = trim((string) $order->transaction_id);
+        $recovered = false;
+
+        if ($tamaraOrderId === '') {
+            $byReference = $this->call(
+                'GET',
+                '/merchants/orders/reference-id/' . urlencode((string) $order->order_number),
+            );
+
+            if ($byReference === null) {
+                return WebhookOutcome::failed('could not ask tamara about that reference');
+            }
+
+            $tamaraOrderId = (string) ($this->stringOrNull($byReference['order_id'] ?? null) ?? '');
+
+            if ($tamaraOrderId === '') {
+                return WebhookOutcome::refused('tamara has no order for that reference');
+            }
+
+            $recovered = true;
+        }
+
+        $remote = $this->call('GET', '/merchants/orders/' . urlencode($tamaraOrderId));
+
+        if ($remote === null) {
+            return WebhookOutcome::failed('could not read that order from tamara');
+        }
+
+        /*
+         * SAVE THE RECOVERED ID ONLY ONCE THE REFERENCE HAS BEEN CHECKED.
+         *
+         * settleFromRemote() is what compares `order_reference_id` against our
+         * order number, and writing the id before that check would staple
+         * somebody else's Tamara order to this one permanently on the strength
+         * of an unverified lookup. So the guard is repeated here — cheaply, off
+         * a response already in hand — and the write happens after it.
+         */
+        if ($recovered && (string) ($remote['order_reference_id'] ?? '') === (string) $order->order_number) {
+            $order->forceFill(['transaction_id' => $tamaraOrderId])->save();
+        }
+
+        return $this->settleFromRemote($order, $tamaraOrderId, $remote, [
+            'tamara_order_id' => $tamaraOrderId,
+            'reference' => (string) $order->order_number,
+            'source' => 'sweep',
+            'recovered_id' => $recovered,
+        ]);
     }
 
     /* ----------------------------------------------------------- settlement */
