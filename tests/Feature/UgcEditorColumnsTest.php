@@ -33,6 +33,26 @@ function editorSource(): string
 }
 
 /** The same text with the prose taken out: Blade comments, block comments, line comments. */
+/**
+ * The upload kit's CODE, with the prose taken out.
+ *
+ * STRIPPED FOR THE SAME REASON editorCode() IS. The kit's docblock explains the
+ * defects it fixes by QUOTING the wrong sentences — including "All of it has
+ * arrived", the claim this file now asserts is gone — so a scan of the raw text
+ * matches the explanation instead of the code. The first draft of that
+ * assertion failed on the kit's own comment.
+ */
+function editorKitCode(): string
+{
+    $src = (string) file_get_contents(
+        resource_path('views/admin/partials/upload-kit.blade.php')
+    );
+    $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '', $src);
+    $src = (string) preg_replace('#/\*.*?\*/#s', '', $src);
+
+    return (string) preg_replace('#^\s*//.*$#m', '', $src);
+}
+
 function editorCode(): string
 {
     $src = editorSource();
@@ -287,14 +307,36 @@ it('reads every figure in the upload panel off the upload itself', function () {
      */
     $code = editorCode();
 
+    /*
+     * ── THE FIGURES ARE READ IN THE KIT NOW, AND THE PIN FOLLOWS THEM ──────
+     *
+     * These three assignments used to be in this screen. The transport moved to
+     * partials/upload-kit.blade.php so that two screens could not disagree about
+     * what a progress event means — and they had come to disagree about exactly
+     * that: the sentence at 100% claimed the file had ARRIVED, when the event
+     * only says the last byte reached the kernel buffer, measured up to 49
+     * seconds early.
+     *
+     * The property is unchanged and so is the mutation: every figure is the
+     * upload event's own, with no timer, no easing and no indeterminate variant.
+     * It is asserted where the code now lives.
+     */
+    $kit = editorKitCode();
+
     foreach ([
-        'upState.sent = e.loaded;',
-        'upState.total = e.total;',
-        'upState.pct = Math.round((e.loaded / e.total) * 100);',
+        't.loaded = e.loaded;',
+        'Math.round(this.loaded / this.total * 100)',
+        'xhr.upload.onprogress',
     ] as $line) {
-        expect(str_contains($code, $line))
+        expect(str_contains($kit, $line))
             ->toBeTrue("the upload panel stopped reading its own progress event: {$line}");
     }
+
+    /* And this screen prints what the kit measured rather than inventing it. */
+    expect(str_contains($code, 'upState.sent = s.loaded;'))
+        ->toBeTrue('the panel no longer prints the bytes the upload reported')
+        ->and(str_contains($code, 'upState.pct = s.pct;'))
+        ->toBeTrue('the panel no longer prints the percentage the upload reported');
 
     // No animation on the bar: the only thing that moves it is a width.
     expect(preg_match('/\.ugs-progb\{[^}]*animation/', editorStyle()))
@@ -316,10 +358,28 @@ it('reads every figure in the upload panel off the upload itself', function () {
      * entirely still contains the shorter string. RUN: green, which is how this
      * line came to be written the longer way.
      */
-    expect(substr_count($code, 'xhr.upload.onload = function () {'))
-        ->toBe(1, 'the upload no longer says when the bytes have all arrived');
+    /*
+     * ── AND THIS TOO IS PINNED IN THE KIT NOW, WITH ITS CLAIM CORRECTED ────
+     *
+     * The handler moved with the transport. What ALSO changed is what it is
+     * allowed to say. "the last byte has left" is true; "all arrived" is not,
+     * and this screen printed the latter. Measured against a server reading the
+     * body at a fixed rate, xhr.upload.onload fires when the last byte enters
+     * the KERNEL BUFFER — 16 s before the server had the file at 300 KB/s, and
+     * 49 s before it at 100 KB/s. See docs/UPLOAD-LIMITS.md §8.4.
+     */
+    expect(substr_count($kit, 'xhr.upload.onload = function () {'))
+        ->toBe(1, 'the upload no longer says when the bytes have all left the browser');
 
-    expect(str_contains($code, "upState.stage = 'server';"))->toBeTrue();
+    expect(str_contains($kit, "stage('server');"))->toBeTrue()
+        /* The corrected claim, which is the point of having moved it. */
+        ->and(str_contains($kit, 'has left your browser'))->toBeTrue()
+        ->and(str_contains($kit, 'All of it has arrived'))->toBeFalse(
+            'the panel is claiming the file arrived when only the last byte left the browser'
+        );
+
+    /* This screen still tracks the stage it is told about. */
+    expect(str_contains($code, 'upState.stage = s.stage;'))->toBeTrue();
 });
 
 it('leaves a finished upload on screen, whether it worked or not', function () {
@@ -379,23 +439,53 @@ it('leaves a finished upload on screen, whether it worked or not', function () {
     expect(str_contains($code, 'function failUpload(ending) {'))
         ->toBeTrue('there is no single writer for a failed upload');
 
-    // Every way an upload can end badly, and each one of them leaves a panel.
+    /*
+     * ── FOUR CALL SITES NOW, AND THE PIN IS ADVANCED DELIBERATELY ──────────
+     *
+     * It was five: a pre-flight refusal, the non-2xx answer, onerror, a cancel,
+     * and a cover refused for its size. The transport moved to
+     * partials/upload-kit.blade.php, and the kit distinguishes those endings
+     * ITSELF — a dropped connection, a timeout and a cancel all arrive at this
+     * screen through one onFail callback, which makes one failUpload() call.
+     *
+     * NO PATH LOST ITS PANEL; two callers merged into one. The assertion that
+     * actually protects the property is the `upDone = { ok: false` count above,
+     * which is 1 by construction and stays 1 — and the kit's own endings are
+     * pinned in UploadKitTest, which asserts that every one of them reaches
+     * onFail with a message and the right retryable flag.
+     *
+     * MUTATION NOTE. Delete the failUpload() call in onFail and this is red: 3
+     * instead of 4, and a failed upload leaves the screen locked with no panel.
+     * RUN: red.
+     */
     expect(substr_count($code, 'failUpload({'))
-        ->toBe(5, 'one of the five ways an upload can fail leaves nothing on screen');
+        ->toBe(4, 'one of the four ways an upload can fail leaves nothing on screen');
 
-    // And the one writer really does all five things, the clock included: a dead
-    // setInterval repainting a panel that is gone is the leak this shuts.
+    /*
+     * And the one writer really does all of it.
+     *
+     * stopClock() IS GONE FROM THIS LIST ON PURPOSE. The one-second clock is the
+     * kit's now, and it stops itself on every ending — a caller that had to
+     * remember to stop somebody else's timer is the leak this case was written
+     * about, moved rather than fixed. UploadKitTest pins that the kit clears its
+     * own interval on each of the terminal states.
+     */
     $from = (int) strpos($code, 'function failUpload(ending) {');
     $writer = substr($code, $from, 420);
 
-    foreach (['stopClock();', 'upState = null;', 'upXhr = null;', 'busy = false;', 'render();'] as $line) {
+    foreach (['upState = null;', 'upXhr = null;', 'busy = false;', 'render();'] as $line) {
         expect(str_contains($writer, $line))->toBeTrue("failUpload() leaves {$line} undone");
     }
 
-    // The refusal shows the SERVER's reason, through the same explainer the
-    // toast uses, rather than one sentence for every status.
-    expect(str_contains($code, "message: explain(err, 'That file was not accepted.')"))
-        ->toBeTrue('a refused upload does not print the reason the server gave');
+    /*
+     * The refusal shows the SERVER's reason rather than one sentence for every
+     * status — and the explainer moved WITH the transport, because the sentence
+     * that was wrong for a 413 was wrong in every screen that had its own copy.
+     * The kit prefers the server's own `error` key and handles the statuses
+     * Laravel answers before any controller. UploadKitTest pins both halves.
+     */
+    expect(str_contains($code, 'message: f.message'))
+        ->toBeTrue('a refused upload does not print the reason the kit composed');
 });
 
 it('does not carry one clip\'s upload panel onto another clip', function () {

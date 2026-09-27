@@ -129,14 +129,22 @@
     ── THE UPLOAD BAR IS ALL MEASURED AND IT HAS AN END ─────────────────────
 
     Every number in it came off `xhr.upload.onprogress`: the percentage, the
-    bytes sent and the total. There is no indeterminate mode, because a bar that
-    sweeps while nothing is known is a bar that lies.
+    bytes sent and the total, and now the speed and the time remaining too.
+    There is no indeterminate mode, because a bar that sweeps while nothing is
+    known is a bar that lies.
 
-    TWO REAL STAGES, not a spinner. `upState.stage` is 'send' until
-    `xhr.upload.onload` fires — the moment the last byte has left — and
-    'server' after it, which is when the server is running its content checks
-    and, where it can, the two transcodes. The panel says so from the moment it
-    is true rather than from 99%.
+    TWO REAL STAGES, not a spinner, and the transport is now
+    partials/upload-kit.blade.php rather than an XMLHttpRequest written out
+    here. `upState.stage` is 'sending' until `xhr.upload.onload` fires and
+    'server' after it.
+
+    WHAT THAT EVENT MEANS WAS MEASURED AND IT IS NOT WHAT THIS SCREEN USED TO
+    CLAIM. It fires when the last byte enters the KERNEL BUFFER, not when the
+    server has the file: on a throttled 8.4 MB upload it fired 49 seconds before
+    the server finished taking delivery. The sentence therefore says the file has
+    left the browser and the server is still taking delivery — see the kit's
+    docblock, which carries all four measurements and the reason the stall
+    threshold is no longer a constant.
 
     AND BOTH ENDINGS STAY ON SCREEN. The old panel was thrown away the instant
     the request landed, so a 31 MB upload finished with no trace it had ever
@@ -561,10 +569,12 @@
   /*
    * THE UPLOAD, WHILE IT IS HAPPENING AND AFTER IT HAS.
    *
-   * `upState` is the request in flight: {kind, name, total, sent, pct, stage}.
-   * Every number in it was handed over by `xhr.upload.onprogress` — none is
-   * interpolated, guessed or animated — and `stage` is 'send' until
-   * `xhr.upload.onload` says the last byte has left, 'server' after.
+   * `upState` is the request in flight: {kind, name, total, sent, pct, stage,
+   * text, stalled}. Every number in it was handed over by the kit off
+   * `xhr.upload.onprogress` — none is interpolated, guessed or animated — and
+   * `stage` is 'sending' until `xhr.upload.onload` says the last byte has left
+   * this browser, 'server' after. `text` is the kit's composed sentence, which
+   * is where the speed and the time remaining reach the panel.
    *
    * `upDone` is the ENDING, which the old screen threw away: the panel vanished
    * the instant the request landed, so a 31 MB upload finished with no trace it
@@ -579,40 +589,35 @@
   var freshClip = null;
 
   /*
-   * THE REQUEST ITSELF, AND A CLOCK.
+   * THE REQUEST ITSELF.
    *
-   * `upXhr` is kept so Cancel can abort the request the owner is looking at, and
-   * for no other reason — it is nulled on every ending.
+   * `upXhr` is the handle window.kbbUpload() returns, kept so Cancel can stop
+   * the request the owner is looking at and for no other reason — it is nulled
+   * on every ending.
    *
-   * `upClock` is a one-second setInterval that does ONE thing: increment
-   * upState.secs and repaint the two text nodes. It is what makes a slow server
-   * distinguishable from a stalled one, which the panel could not do before:
-   * after xhr.upload.onload the bar sits at 100% with "the server is checking
-   * the file", and that sentence was identical at two seconds and at four
-   * minutes. It is a timer, not a measurement — rule 4 is about laying a page
-   * out in script, and nothing here reads a rect, an offset or a scroll
-   * position.
+   * ── THE CLOCK, THE STALL THRESHOLD AND THE WORDING ALL MOVED OUT ──────────
    *
-   * STALL_AFTER is when the wording changes rather than when anything is given
-   * up on: a transcode of a big clip on a shared box legitimately takes a while,
-   * so the panel says how long it has been and leaves the decision to the owner.
+   * They used to be here: a one-second setInterval, a STALL_AFTER of 20, and a
+   * stageWords() that composed the sentence. All three are now in
+   * partials/upload-kit.blade.php, and that is a fix rather than a tidying.
+   *
+   * The fixed 20-second threshold was BELOW the legitimate quiet interval on a
+   * slow link. Measured against a server reading the body at a fixed rate, the
+   * gap between two progress events on the owner's own 8.4 MB file is 2,610 ms
+   * at 600 KB/s, 5,624 ms at 300 KB/s and 16,764 ms at 100 KB/s — Chromium fires
+   * the event when the socket buffer drains, in strides of about 1.6 MB, so the
+   * bar is EXACTLY still between them. Twenty seconds therefore accused a
+   * perfectly healthy upload of being stuck and told the owner to cancel it.
+   * The kit's stallAfter() computes the threshold from the stride and the speed
+   * this upload is actually producing.
+   *
+   * And "All of it has arrived. The server is checking the file" was measured to
+   * be FALSE for up to 49 seconds: xhr.upload.onload fires when the last byte
+   * enters the kernel buffer, not when the server has it. One copy of that
+   * sentence, in the kit, is how it stops being wrong in one screen and right in
+   * another. The kit's docblock carries every measurement.
    */
   var upXhr = null;
-  var upClock = null;
-  var STALL_AFTER = 20;
-
-  function startClock() {
-    stopClock();
-    upClock = setInterval(function () {
-      if (!upState) { stopClock(); return; }
-      upState.secs = (upState.secs || 0) + 1;
-      paintProgress();
-    }, 1000);
-  }
-
-  function stopClock() {
-    if (upClock) { clearInterval(upClock); upClock = null; }
-  }
 
   /*
    * EVERY WAY AN UPLOAD CAN FAIL ENDS HERE, and that is the point rather than a
@@ -632,7 +637,6 @@
    * fail in exactly the same way and the button would be a lie.
    */
   function failUpload(ending) {
-    stopClock();
     upState = null;
     upXhr = null;
     busy = false;
@@ -986,7 +990,6 @@
    * would sit on the next clip's step 2 describing a file that is not on it.
    */
   function forgetUpload() {
-    stopClock();
     upState = null;
     upDone = null;
     freshClip = null;
@@ -1181,7 +1184,9 @@
     if (bar) bar.style.width = upState.pct + '%';
     if (pct) pct.textContent = upState.pct + '%';
     if (sent) sent.textContent = bytes(upState.sent) + ' of ' + bytes(upState.total) + ' sent';
-    if (stage) stage.textContent = stageWords(upState.stage);
+    /* The kit composed this sentence, numbers and all — see its docblock for why
+       there is exactly one copy of it in the console. */
+    if (stage) stage.textContent = upState.text || '';
     /* The one class the clock toggles, so a panel that has been waiting a long
        time looks different as well as reading differently. A class write is not
        a measurement. */
@@ -1191,74 +1196,28 @@
        turn every click on the upload bar into a reorder of the tagged product
        list with an index of NaN. */
     var box = document.querySelector('[data-ugs-upbox]');
-    if (box) box.classList.toggle('is-slow', stalledFor() >= STALL_AFTER);
+    if (box) box.classList.toggle('is-slow', !!upState.stalled);
   }
 
   /*
-   * HOW LONG THE CURRENT WAIT HAS BEEN, in seconds, and it is the wait that
-   * matters rather than the total.
+   * THE QUIET INTERVAL, THE STALL THRESHOLD AND THE SENTENCE ARE THE KIT'S NOW.
    *
-   * While bytes are moving that is the time since the last progress event, so a
-   * slow-but-healthy upload never reads as stalled. Once xhr.upload.onload has
-   * fired nothing moves again by design, so it becomes the time since the
-   * handover — which is exactly the interval the panel could not describe
-   * before: a 100% bar and "the server is checking the file" read the same at
-   * two seconds and at four minutes.
-   */
-  function stalledFor() {
-    if (!upState) return 0;
-    var since = upState.stage === 'server' ? (upState.serverAt || 0) : (upState.moved || 0);
-    return Math.max(0, (upState.secs || 0) - since);
-  }
-
-  /*
-   * What the request is doing, in the owner's words and never a guess.
+   * stalledFor() and stageWords() used to live here. They are GONE rather than
+   * moved, because both were wrong in ways only measurement found, and a second
+   * copy of either is how a fix reaches one screen and not the other:
    *
-   * 'server' is set by `xhr.upload.onload` — the event that fires when the last
-   * byte has left this browser — so this sentence appears at the moment it
-   * becomes true rather than at 99% or on a timer. What the server is doing
-   * then is real work and worth naming: UgcMedia reads the bytes, and on a box
-   * with ffmpeg UgcVideoController::media() cuts the cover and the teaser on
-   * this same request.
+   *   - the threshold was a fixed 20 seconds, which is BELOW the 16,764 ms that
+   *     two progress events legitimately sit apart at 100 KB/s, so the panel
+   *     accused a perfectly healthy upload of being stuck and advised the owner
+   *     to cancel it;
+   *   - "All of it has arrived. The server is checking the file" was printed from
+   *     xhr.upload.onload, which fires when the last byte reaches the KERNEL
+   *     BUFFER -- measured up to 49 seconds before the server had the file.
+   *
+   * partials/upload-kit.blade.php owns both now, computes the threshold from the
+   * stride and the speed THIS upload is producing, and hands the composed
+   * sentence over on every callback as `text`, which paintProgress() prints.
    */
-  function stageWords(s) {
-    var waited = stalledFor();
-
-    if (s === 'server') {
-      /*
-       * SINCE THE HANDOVER, which is the only interval that means anything here:
-       * nothing moves after xhr.upload.onload by design, so "how long since the
-       * last byte left" is exactly the wait the panel could not describe before.
-       */
-      return 'All of it has arrived. The server is checking the file and cutting what it can.'
-        + (waited > 0 ? ' ' + waited + 's so far.' : '')
-        + (waited >= STALL_AFTER
-            ? ' That is longer than usual. Cutting a cover and a teaser out of a big clip can '
-              + 'take a while on a shared server, so waiting is usually right — Cancel stops it '
-              + 'and leaves the file on your computer.'
-            : '');
-    }
-
-    /*
-     * Bytes stop moving on a dropped connection without any event firing, so the
-     * panel has to say so itself: before this it sat at whatever percentage it had
-     * reached with the word "Sending", which is what a stall looks like too.
-     *
-     * TWO DIFFERENT CLOCKS, and the first draft of this used one for both — which
-     * a picture caught. While bytes are flowing, stalledFor() is 0 or 1 by
-     * definition, so a 23-second upload read "Sending to the server. 1s so far."
-     * The elapsed total is the honest number here; the stall interval is the
-     * honest number only once it IS a stall.
-     */
-    if (waited >= STALL_AFTER) {
-      return 'Sending to the server, but nothing has moved for ' + waited + 's. If it is stuck, '
-        + 'Cancel and try again — nothing has been changed.';
-    }
-
-    var secs = upState ? (upState.secs || 0) : 0;
-
-    return 'Sending to the server.' + (secs > 0 ? ' ' + secs + 's so far.' : '');
-  }
 
   /**
    * Send one video file, with a real progress bar.
@@ -1327,90 +1286,123 @@
       return;
     }
 
-    var data = new FormData();
-    data.append('kind', kind);
-    data.append('file', file);
+    /*
+     * THE KIT HAS TO BE ON THE PAGE, and saying so beats throwing.
+     *
+     * window.kbbUpload is defined by partials/upload-kit.blade.php. If that
+     * @include is ever dropped from app.blade.php — or a stale compiled view
+     * survives a package, which is exactly what this release's clear_caches
+     * migration exists to prevent — calling it raises "kbbUpload is not a
+     * function" INSIDE this handler. Nothing catches that: `busy` stays true, the
+     * screen stays locked, and the only symptom is a dead dialog. The same shape
+     * as the swallowed write CLAUDE.md records for UpdateRunner.
+     *
+     * So it is checked the way this console already checks for the Media Library
+     * picker, and it names the fix rather than the symptom.
+     */
+    if (typeof window.kbbUpload !== 'function') {
+      say('The uploader is not loaded on this page. The admin console needs the upload kit '
+        + 'partial — clear the view cache and reload; if it persists the package did not land.');
+      busy = false; render();
+      return;
+    }
 
-    upState = { kind: kind, name: file.name, total: file.size, sent: 0, pct: 0, stage: 'send',
-                secs: 0, moved: 0, serverAt: 0 };
+    upState = { kind: kind, name: file.name, total: file.size, sent: 0, pct: 0,
+                stage: 'sending', text: '', stalled: false };
     /* The last ending is cleared before this one starts, so a red panel from a
        refused attempt never sits under a fresh bar. */
     upDone = null;
     if (kind === 'clip') freshClip = null;
     busy = true; render();
-    startClock();
 
     /*
      * THE CLIP THIS UPLOAD BELONGS TO, READ ONCE.
      *
-     * THE DEFECT. Every handler below used `editing.id`, and `editing` is
-     * whatever clip is open when the response lands rather than the one the file
-     * was sent to. Pressing Back mid-upload sets `editing` to null, and the
-     * success handler then ran `freshClip = editing.id` — a TypeError inside an
-     * XHR callback, which unlocks nothing and leaves the screen with busy still
-     * true. Opening a DIFFERENT clip instead was quieter and worse: the new
-     * clip's step 2 drew a green "arrived whole" panel for a file that is on
-     * another row.
+     * THE DEFECT, AND IT SURVIVES THE MOVE TO THE KIT UNCHANGED. Every handler
+     * below used to read `editing.id`, and `editing` is whatever clip is open
+     * when the response lands rather than the one the file was sent to. Pressing
+     * Back mid-upload sets `editing` to null, and the success handler then ran
+     * `freshClip = editing.id` -- a TypeError inside a callback, which unlocks
+     * nothing and leaves the screen with busy still true. Opening a DIFFERENT
+     * clip instead was quieter and worse: the new clip's step 2 drew a green
+     * "arrived whole" panel for a file that is on another row.
      */
     var target = editing.id;
 
-    var xhr = new XMLHttpRequest();
-    upXhr = xhr;
-    xhr.open('POST', apiBase() + '/admin-api/ugc-videos/' + encodeURIComponent(target) + '/media');
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));
-
-    xhr.upload.onprogress = function (e) {
-      if (!e.lengthComputable || !upState) return;
-      upState.sent = e.loaded;
-      upState.total = e.total;
-      upState.pct = Math.round((e.loaded / e.total) * 100);
-      /* When bytes last moved, so the clock can tell a slow line from a dead one
-         rather than calling both of them slow. */
-      upState.moved = upState.secs || 0;
-      paintProgress();
-    };
-
-    /* THE HANDOVER, AS ITS OWN EVENT. Everything is sent and the request is now
-       the server's — which on a box with ffmpeg means two transcodes before it
-       answers, and on a 31 MB clip is the longest part of the wait. Read off
-       the event rather than inferred from a percentage. */
-    xhr.upload.onload = function () {
-      if (!upState) return;
-      upState.sent = upState.total;
-      upState.pct = 100;
-      upState.stage = 'server';
-      upState.serverAt = upState.secs || 0;
-      paintProgress();
-    };
-
-    xhr.onload = function () {
-      var payload = null;
-      try { payload = JSON.parse(xhr.responseText); } catch (e) { payload = null; }
-
-      /* Kept off upState before it is dropped, so the ending can name the file
-         that produced it. file.size and not upState.total: e.total is the whole
-         multipart body, a few hundred bytes more than the file, and "31.0 MB
-         arrived whole" should be the size of the thing that arrived. */
-      var name = upState ? upState.name : file.name;
-      var size = file.size;
-
+    /*
+     * THE TRANSPORT IS THE KIT'S, AND SO IS EVERY NUMBER IN THE PANEL.
+     *
+     * window.kbbUpload() is XMLHttpRequest for the one reason that has no
+     * workaround -- fetch reports nothing at all about a request body in flight
+     * -- and it owns the two stages, the two clocks, the self-calibrating stall
+     * threshold, the sliding-window speed and the sentence. See
+     * partials/upload-kit.blade.php for the measurements behind each.
+     *
+     * WHAT STAYS HERE is this screen's own bookkeeping, which the kit has no
+     * business knowing: which clip the file belongs to, the ending panel, the
+     * cut offer, and the ceiling refresh below.
+     */
+    upXhr = window.kbbUpload({
+      url: apiBase() + '/admin-api/ugc-videos/' + encodeURIComponent(target) + '/media',
+      file: file,
+      field: 'file',
+      extra: { kind: kind },
       /*
-       * A SERVER THAT ANSWERS WITH ITS OWN LIMITS IS BELIEVED ABOUT THEM. The
-       * upload endpoint sends `limits` back with every refusal it composes, so a
-       * 413 or a size refusal updates the ceiling this screen advertises in the
-       * same round trip that proved it wrong.
+       * The ceiling is already enforced above with this screen's own much fuller
+       * sentence, so passing `max` as well would refuse twice and print the
+       * kit's shorter message instead. Deliberately omitted.
        */
-      if (payload && payload.limits) limits = payload.limits;
+      /* A CONSTANT, not a setting -- rule 5. It is appended to the kit's
+         server-stage sentence, and on a box with ffmpeg it is the truth: the
+         upload request cuts the cover and the teaser before it answers. */
+      serverNote: 'and cutting what it can',
+      onProgress: function (s) {
+        if (!upState) return;
+        upState.sent = s.loaded;
+        upState.total = s.total;
+        upState.pct = s.pct;
+        upState.stage = s.stage;
+        upState.text = s.text;
+        upState.stalled = s.stalled;
+        paintProgress();
+      },
+      onStage: function (st) {
+        if (upState) upState.stage = st;
+      },
+      onDone: function (payload) {
+        var name = upState ? upState.name : file.name;
+        /* file.size and not the transferred total: e.total is the whole
+           multipart body, a couple of hundred bytes more than the file --
+           measured at 289 for this exact request -- and "8.4 MB arrived whole"
+           should be the size of the thing that arrived. */
+        var size = file.size;
 
-      if (xhr.status >= 200 && xhr.status < 300 && payload && payload.ok) {
-        stopClock();
+        /*
+         * A SERVER THAT ANSWERS WITH ITS OWN LIMITS IS BELIEVED ABOUT THEM. The
+         * upload endpoint sends `limits` back with every refusal it composes, so
+         * a 413 or a size refusal updates the ceiling this screen advertises in
+         * the same round trip that proved it wrong.
+         */
+        if (payload && payload.limits) limits = payload.limits;
+
+        if (!payload || !payload.ok) {
+          /* 2xx with ok:false. The kit cannot judge this -- it is this endpoint's
+             own shape -- so it is judged here, and not retryable, because the
+             server accepted the request and declined the file on its merits. */
+          failUpload({
+            kind: kind, name: name, bytes: size,
+            message: (payload && payload.error) ? payload.error : 'That file was not accepted.',
+            retry: null
+          });
+          return;
+        }
+
         upState = null;
         upXhr = null;
 
         /* Still on the clip this file was sent to? If the owner pressed Back or
            opened another tile while it was in flight, the file is still correctly
-           on `target` — but this screen must not draw a panel about it on
+           on `target` -- but this screen must not draw a panel about it on
            somebody else's row. */
         var here = editing && editing.id === target;
 
@@ -1424,57 +1416,27 @@
         (payload.notes || []).forEach(say);
         say(kind === 'clip' ? 'Video added.' : 'Teaser added.');
         load().then(function () { return here ? open(target) : undefined; });
-        return;
-      }
-
-      var err = new Error('upload ' + xhr.status);
-      err.status = xhr.status;
-      err.body = payload;
-
-      failUpload({
-        kind: kind,
-        name: name,
-        bytes: size,
-        message: explain(err, 'That file was not accepted.'),
+      },
+      onFail: function (f) {
         /*
-         * WHERE A SECOND PRESS COULD ACTUALLY WORK, and nowhere else. 429 is the
-         * upload's own twelve-a-minute throttle and 5xx is a server that fell
-         * over; both are worth one more try. 413 and 422 are not: the request was
-         * too big for this server, or the bytes were refused on their merits, and
-         * both would fail identically.
+         * ONE ENDING WRITER, still. The kit distinguishes a cancel from a
+         * refusal and composes the sentence for both -- including the 413 that
+         * Laravel's global ValidatePostSize answers with a body carrying
+         * `message` and NO `error` key, which is why every screen in this console
+         * used to print "That file was not accepted" for a file that was fine.
          */
-        retry: (xhr.status === 429 || xhr.status >= 500) ? file : null
-      });
-    };
-
-    xhr.onerror = function () {
-      failUpload({
-        kind: kind,
-        name: upState ? upState.name : file.name,
-        bytes: file.size,
-        message: 'The upload did not reach the server. Check the connection and try again.',
-        retry: file
-      });
-    };
-
-    /*
-     * CANCEL, AND THE RETRY IT MAKES POSSIBLE.
-     *
-     * Without this handler an aborted request left upState non-null and busy
-     * true, which is a bar frozen at its last percentage and a locked screen with
-     * nothing coming — the exact shape the panel was rebuilt to stop.
-     */
-    xhr.onabort = function () {
-      failUpload({
-        kind: kind,
-        name: upState ? upState.name : file.name,
-        bytes: file.size,
-        message: 'You stopped that upload, so nothing was sent and nothing on the clip was changed.',
-        retry: file
-      });
-    };
-
-    xhr.send(data);
+        if (f.body && f.body.limits) limits = f.body.limits;
+        failUpload({
+          kind: kind,
+          name: upState ? upState.name : file.name,
+          bytes: file.size,
+          message: f.message,
+          /* The kit already decided this: 429 and 5xx and a dropped connection
+             and a cancel, never 413 or 422. */
+          retry: f.retryable ? file : null
+        });
+      }
+    });
   }
 
   /*
@@ -1885,7 +1847,7 @@
         + '<div class="ugs-upm">'
         +   '<span data-ugs-sent>' + esc(bytes(upState.sent)) + ' of '
         +     esc(bytes(upState.total)) + ' sent</span>'
-        +   '<span data-ugs-stage>' + esc(stageWords(upState.stage)) + '</span>'
+        +   '<span data-ugs-stage>' + esc(upState.text || '') + '</span>'
         + '</div>'
         /* Drawn from the first byte rather than appearing at some threshold: a
            control that materialises once a screen has decided things are going
@@ -2677,9 +2639,10 @@
     }
     if (t.hasAttribute('data-ugs-upcancel')) {
       e.preventDefault();
-      /* abort() fires xhr.onabort, which is where the ending is written — one
-         writer, so a cancel cannot forget the clock the way a second copy would. */
-      if (upXhr) { try { upXhr.abort(); } catch (err) {} }
+      /* The kit's handle. cancel() aborts the request, which fires its onabort
+         and lands in onFail with cancelled set — one ending writer, so a cancel
+         cannot forget the clock the way a second copy would. */
+      if (upXhr) { try { upXhr.cancel(); } catch (err) {} }
       return;
     }
     if (t.hasAttribute('data-ugs-upretry')) {

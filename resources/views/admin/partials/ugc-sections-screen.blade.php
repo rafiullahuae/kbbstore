@@ -221,6 +221,70 @@
              background:var(--surface,#fff)}
 .ugx-drop:hover .ugx-dropcta{border-color:var(--accent,#15a85a)}
 .ugx-drop.is-empty .ugx-dropname{color:var(--ink-soft,#626c80);font-weight:600}
+/* ── the drop affordance ───────────────────────────────────────────────
+   The hint that says dragging works. It is a LINE OF TEXT rather than a dashed
+   slab, because these three rows sit in a dialog body on a 390px phone and a
+   full drop panel each would push Products and Placement below the fold.
+
+   The hover and drag states come from the kit's own .kbbu-zone rules, which
+   window.kbbDropZone adds the class for -- one hover state and one refusal state
+   for every drop target in the console, rather than a third opinion here. The two
+   rules below are only what a ROW needs that a standalone zone does not: the
+   kit's grid would otherwise centre these three columns. */
+.ugx-drophint{display:block;font-size:10.5px;color:var(--ink-faint,#97a0b2);margin-top:4px;
+              line-height:1.4}
+.ugx-drop.kbbu-zone{display:grid;grid-template-columns:auto 1fr auto;justify-items:stretch;
+                    text-align:start;padding:12px 13px}
+.ugx-drop.kbbu-zone.is-over .ugx-drophint{color:var(--accent-ink,#0b6e3a);font-weight:650}
+/* ── A REFUSED ZONE MUST LOOK REFUSED EVEN UNDER THE POINTER ────────────
+   A picture caught this. `.ugx-drop:hover` and `.kbbu-zone.is-bad` are both two
+   selectors deep, so they tie on specificity and the LATER one wins -- and this
+   file is included after the kit, so hover won. A zone that had just refused a
+   file showed the green hover background with the red refusal sentence sitting
+   inside it, which reads as an accepted file with an odd note attached.
+
+   Stating both states again here, with :hover spelled out so the tie cannot be
+   decided by source order. The refusal is the more important of the two: it is
+   the only thing on screen telling the owner why nothing happened. */
+.ugx-drop.kbbu-zone.is-over,.ugx-drop.kbbu-zone.is-over:hover{
+  border-color:var(--accent,#15a85a);background:var(--accent-soft,#e7f7ee)}
+.ugx-drop.kbbu-zone.is-bad,.ugx-drop.kbbu-zone.is-bad:hover{
+  border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
+/* The kit writes its refusal into a span it appends, which must not become a
+   fourth grid column on these rows. */
+.ugx-drop [data-kbbu-zmsg]{grid-column:1 / -1}
+
+/* ── the upload panel ──────────────────────────────────────────────────
+   Every number in here is measured: the percentage, the bytes, the speed and the
+   time remaining all came off the upload's own progress event -- see
+   window.kbbUpload in partials/upload-kit.blade.php. There is NO indeterminate
+   variant, on purpose.
+
+   is-bad is the refused ending and is-slow the long wait, and BOTH STAY ON
+   SCREEN: this screen used to throw the panel away the instant the request
+   landed, which is exactly what a stall looks like too. */
+.ugx-up{display:grid;gap:7px;border:1px solid var(--accent,#15a85a);border-radius:var(--r-sm,12px);
+        padding:11px 12px;background:var(--accent-soft,#e7f7ee);min-width:0}
+.ugx-up.is-bad{border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
+/* A wait long enough to be worth remarking on, in colour as well as in words.
+   The class is written by the kit's one-second tick, which counts seconds and
+   reads no layout. */
+.ugx-up.is-slow{border-color:#f0dcb4;background:var(--amber-soft,#fdf2e2)}
+.ugx-up.is-slow .ugx-uph span,.ugx-up.is-slow .ugx-upm{color:#8a6212}
+.ugx-uph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+         font-size:11.5px;font-weight:650;min-width:0}
+.ugx-uph span{white-space:nowrap;color:var(--accent-ink,#0b6e3a)}
+.ugx-upn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ugx-upm{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:10.5px;line-height:1.5;
+         color:var(--ink-soft,#626c80);min-width:0}
+.ugx-upm > *{min-width:0;overflow-wrap:anywhere}
+.ugx-up.is-bad .ugx-uph span,.ugx-up.is-bad .ugx-upm{color:#8c2f2c}
+.ugx-prog{height:6px;border-radius:999px;background:var(--surface,#fff);overflow:hidden}
+.ugx-progb{height:100%;width:0;background:var(--accent,#15a85a);transition:width .18s var(--ease)}
+/* A flex row rather than a grid child, so Cancel is its own width instead of a
+   slab across the panel, and it wraps on a phone. */
+.ugx-upa{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
+.ugx-footnote{font-size:10.5px;color:var(--ink-faint,#97a0b2);line-height:1.45;min-width:0}
 
 /* ── the popup ───────────────────────────────────────────────────────────
    position:fixed + inset:0, and the BODY scrolls rather than the page behind
@@ -243,6 +307,9 @@
 @media (prefers-reduced-motion:reduce){
   .ugx-back,.ugx-modal{animation:none}
   .ugx-btn,.ugx-mini,.ugx-row,.ugx-vid,.ugx-drop,.ugx-tab,.subtabs.ugx-seg .subtab{transition:none}
+  /* The bar still fills -- it is the one honest indicator of progress -- it just
+     jumps to each measured percentage instead of easing to it. */
+  .ugx-progb{transition:none}
 }
 .ugx-mh{display:grid;grid-template-columns:auto 1fr auto;gap:13px;align-items:center;
         padding:15px 16px 13px;border-bottom:1px solid var(--border-2,#eef0f6);min-width:0}
@@ -387,6 +454,34 @@
   var tagged = [], results = [], term = '';
   var banner = null, busy = false, seq = 0, searchTimer = null;
 
+  /*
+   * ── WHAT THIS SERVER WILL REALLY TAKE, AND WHY IT IS A VARIABLE ──────────
+   *
+   * THE DEFECT THE OWNER PHOTOGRAPHED. The Files tab printed "Up to 64MB" as a
+   * string literal. 64 MB is UgcMedia::MAX_BYTES[KIND_CLIP] — the APP's own cap —
+   * and on his server the real ceiling is 9.9 MB, because post_max_size is 10M
+   * while upload_max_filesize is already 100M. The line was wrong by a factor of
+   * six and a half, in the one place he reads before choosing a file.
+   *
+   * It is filled from the server's own answer — App\Support\ServerUploadLimits
+   * computes min(app cap, upload_max_filesize, post_max_size less the multipart
+   * overhead) and UgcVideoController::show() now returns it — and it is REFRESHED
+   * from any refusal that carries a newer one, so a screen proved wrong about the
+   * ceiling corrects itself in the same round trip.
+   *
+   * null means "not asked yet", and capNote() says nothing about a limit rather
+   * than guessing one. There is deliberately no 64 fallback anywhere below.
+   */
+  var limits = null;
+
+  /* The upload in flight, and the ending it leaves behind. See uploadHTML():
+     BOTH endings stay on screen, because a panel that vanishes when the request
+     lands is indistinguishable from a stall. */
+  var upState = null, upDone = null, upHandle = null;
+  /* Teardowns for the drop zones mounted on the last repaint, so a re-render
+     does not leave listeners on detached nodes. */
+  var zoneOffs = [];
+
   function base() {
     return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
   }
@@ -451,6 +546,115 @@
   function kb(n) {
     if (!n) return '—';
     return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';
+  }
+
+  /* ------------------------------------------------ what this server will take */
+
+  /* The described block for one kind, or null before the server has answered. */
+  function capOf(kind) {
+    return (limits && limits[kind] && typeof limits[kind].effective_bytes === 'number')
+      ? limits[kind] : null;
+  }
+
+  /* The effective ceiling in BYTES, or 0 for "not known". The pre-flight refuses
+     against this and never against the app's own cap — refusing against 64 MB is
+     what let the owner's file sail past and be thrown away by PHP thirty seconds
+     later. */
+  function capBytes(kind) {
+    var c = capOf(kind);
+    return c ? c.effective_bytes : 0;
+  }
+
+  /*
+   * THE SENTENCE UNDER A FILE ROW, AND IT NAMES THE SERVER WHERE THE SERVER IS
+   * THE LIMIT.
+   *
+   * Three shapes, because the owner needs a different thing in each:
+   *   - no answer yet: say nothing about size at all;
+   *   - the app is the limit: one number, nothing to explain;
+   *   - the SERVER is the limit: both numbers and the directive to raise, so he
+   *     can see that the shop allows 64 MB and PHP is what stops him. That is
+   *     what turns "why can I only upload 9.9 MB" into one line in a panel.
+   */
+  function capNote(kind) {
+    var c = capOf(kind);
+    if (!c) return '';
+
+    if (!c.capped) return 'Up to ' + c.effective_label + '.';
+
+    var ini = (limits && limits.server) ? limits.server[c.capped_by] : null;
+
+    return 'Up to ' + c.effective_label + ' on this server. Shoppable video itself allows '
+      + c.app_mb + ' MB — PHP’s ' + c.capped_by + ' is what caps it'
+      + (ini ? ' (currently ' + ini + ')' : '') + ', and raising it on the server lifts this box '
+      + 'with it.';
+  }
+
+  /*
+   * THE UPLOAD PANEL: in flight, then finished, then refused.
+   *
+   * Every number is the upload event's own — see window.kbbUpload in
+   * partials/upload-kit.blade.php, which owns the transport, the two stages, the
+   * speed, the time remaining and the self-calibrating stall threshold, and hands
+   * the composed sentence over as `text`. There is no indeterminate variant here,
+   * because a bar that sweeps while nothing is known is a bar that lies.
+   *
+   * AND BOTH ENDINGS STAY. This screen used to throw the whole thing away the
+   * instant the request landed — no bar, no tick, no reason, just a toast — so a
+   * refused upload and a finished one looked identical, and a stalled one looked
+   * like both.
+   */
+  function uploadHTML() {
+    if (upState) {
+      return '<div class="ugx-up' + (upState.stalled ? ' is-slow' : '') + '" data-ugx-upbox>'
+        + '<div class="ugx-uph"><span class="ugx-upn">' + esc(upState.name) + '</span>'
+        + '<span data-ugx-pct>' + esc(String(upState.pct)) + '%</span></div>'
+        + '<div class="ugx-prog"><div class="ugx-progb" data-ugx-bar '
+        + 'style="width:' + esc(String(upState.pct)) + '%"></div></div>'
+        + '<div class="ugx-upm">'
+        + '<span data-ugx-sent>' + esc(upState.sentText) + '</span>'
+        + '<span data-ugx-stage>' + esc(upState.text || '') + '</span>'
+        + '</div>'
+        /* Drawn from the first byte rather than appearing once the screen has
+           decided things are going badly: a control that materialises at a
+           threshold is a control nobody finds. */
+        + '<div class="ugx-upa"><button type="button" class="ugx-mini" '
+        + 'data-ugx-upcancel="1">Cancel this upload</button></div>'
+        + '</div>';
+    }
+
+    if (!upDone) return '';
+
+    if (upDone.ok) {
+      return '<div class="ugx-up">'
+        + '<div class="ugx-uph"><span class="ugx-upn">' + esc(upDone.name) + '</span>'
+        + '<span>&#10003; saved</span></div>'
+        + '<div class="ugx-prog"><div class="ugx-progb" style="width:100%"></div></div>'
+        + '<div class="ugx-upm"><span>' + esc(kb(upDone.bytes)) + ' arrived whole.</span>'
+        + '<span>' + esc(upDone.note || '') + '</span></div>'
+        + '</div>';
+    }
+
+    return '<div class="ugx-up is-bad">'
+      + '<div class="ugx-uph"><span class="ugx-upn">' + esc(upDone.name) + '</span>'
+      + '<span>not accepted</span></div>'
+      + '<div class="ugx-upm"><span>' + esc(upDone.message) + '</span>'
+      + '<span>' + esc(kb(upDone.bytes)) + ' — nothing on the clip was changed.</span></div>'
+      /* Offered only where the kit kept the file, which is only where a second
+         press could really work: 429, 5xx, a dropped connection, a cancel. A Try
+         again beside "this server accepts at most 9.9 MB" is a button that cannot
+         succeed, and a button that cannot succeed is a lie. */
+      + (upDone.retry
+          ? '<div class="ugx-upa"><button type="button" class="ugx-mini" data-ugx-upretry="1">'
+            + 'Try again</button><span class="ugx-footnote">The file is still on your computer '
+            + '— nothing needs choosing again.</span></div>'
+          : '')
+      + '</div>';
+  }
+
+  function forgetUpload() {
+    if (upHandle) { try { upHandle.cancel(); } catch (e) {} }
+    upState = null; upDone = null; upHandle = null;
   }
 
   /* ------------------------------------------------------------- the sidebar */
@@ -585,6 +789,9 @@
       if (openModalId !== body.video.id) { modalTab = 'details'; }
 
       editingVideo = body.video;
+      /* THE REAL CEILING, straight from the server, so the Files tab can stop
+         printing the app's 64 MB at somebody whose PHP will take 9.9. */
+      if (body.limits) limits = body.limits;
       tagged = (body.video.products || []).map(function (p) {
         return { id: p.id, name: p.name, brand: p.brand };
       });
@@ -693,29 +900,295 @@
     render();
   }
 
-  async function upload(kind, input) {
-    if (!editingVideo || !input.files || !input.files[0]) return;
-    var form = new FormData();
-    form.append('kind', kind);
-    form.append('file', input.files[0]);
-    busy = true; render();
-    try {
-      var response = await fetch(base() + '/ugc-videos/' + editingVideo.id + '/media', {
-        method: 'POST',
-        headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') },
-        credentials: 'same-origin',
-        body: form
-      });
-      var payload = null;
-      try { payload = await response.json(); } catch (e) {}
-      if (!response.ok) throw { status: response.status, body: payload };
-      say('Uploaded.');
-      await openVideo(editingVideo.id);
-      if (editing && editing.id) await openSection(editing.id);
-    } catch (e) {
-      banner = explain(e, 'That file was not accepted.');
-      busy = false; render();
+  /*
+   * ONE FILE, WITH A REAL PROGRESS BAR AND AN HONEST ENDING.
+   *
+   * ── WHAT THIS REPLACES ────────────────────────────────────────────────────
+   *
+   * A `fetch` with a FormData and a spinner. fetch reports NOTHING about a
+   * request body in flight — there is no upload-progress event on it — so this
+   * screen could not have had a bar however much it wanted one. That is the
+   * whole reason window.kbbUpload is XMLHttpRequest.
+   *
+   * It also meant a 9 MB upload showed a disabled panel for thirty seconds with
+   * no percentage, no speed, no time remaining and no Cancel, and then either a
+   * toast saying "Uploaded." or a toast saying "That file was not accepted." —
+   * for a file that was, on the owner's server, perfectly fine.
+   *
+   * `input` may be a file input (the click path) or a File (the drop path). Both
+   * arrive here, so there is one uploader and not two.
+   */
+  function upload(kind, input) {
+    var file = (input instanceof File) ? input
+      : (input && input.files && input.files[0]) ? input.files[0] : null;
+
+    if (!editingVideo || !file) return;
+
+    /*
+     * THE PRE-FLIGHT, AGAINST THE CEILING THIS SERVER WILL REALLY HONOUR AND
+     * NEVER AGAINST THE APP'S OWN 64 MB.
+     *
+     * This is the refusal that was missing. The owner's 8.4 MB file was under
+     * this server's 9.9 MB, so it sent — but a 12 MB one would have sailed past a
+     * 64 MB check, been discarded by PHP before the shop saw a byte, and come
+     * back blaming the file. Refused here it costs nothing and says why.
+     */
+    var ceiling = capBytes(kind);
+
+    if (ceiling > 0 && file.size > ceiling) {
+      upState = null;
+      upDone = {
+        ok: false, kind: kind, name: file.name, bytes: file.size,
+        message: 'That file is ' + kb(file.size) + ' and ' + capNote(kind).replace(/^Up to /, 'the most this '
+          + 'box takes is ') + ' It was not sent, so nothing on the clip was changed.',
+        /* No Try again: the same file over the same ceiling fails identically. */
+        retry: null
+      };
+      say(upDone.message);
+      render();
+      return;
     }
+
+    /*
+     * THE KIT HAS TO BE ON THE PAGE, and saying so beats throwing.
+     *
+     * window.kbbUpload is defined by partials/upload-kit.blade.php. If that
+     * @include is ever dropped from app.blade.php — or a stale compiled view
+     * survives a package, which is exactly what this release's clear_caches
+     * migration exists to prevent — calling it raises "kbbUpload is not a
+     * function" INSIDE this handler. Nothing catches that: `busy` stays true, the
+     * screen stays locked, and the only symptom is a dead dialog. The same shape
+     * as the swallowed write CLAUDE.md records for UpdateRunner.
+     *
+     * So it is checked the way this console already checks for the Media Library
+     * picker, and it names the fix rather than the symptom.
+     */
+    if (typeof window.kbbUpload !== 'function') {
+      say('The uploader is not loaded on this page. The admin console needs the upload kit '
+        + 'partial — clear the view cache and reload; if it persists the package did not land.');
+      busy = false; render();
+      return;
+    }
+
+    upState = { kind: kind, name: file.name, pct: 0, sentText: '', text: '', stalled: false };
+    /* The last ending is cleared before this one starts, so a red panel from a
+       refused attempt never sits under a fresh bar. */
+    upDone = null;
+    busy = true; render();
+
+    /*
+     * THE CLIP THIS UPLOAD BELONGS TO, READ ONCE — not `editingVideo.id` inside
+     * the callbacks. Closing the dialog mid-upload sets editingVideo to null, and
+     * a callback that then reads `.id` throws inside the handler, which unlocks
+     * nothing and leaves the screen with busy still true.
+     */
+    var target = editingVideo.id;
+    var sectionId = editing && editing.id ? editing.id : null;
+
+    upHandle = window.kbbUpload({
+      url: base() + '/ugc-videos/' + encodeURIComponent(target) + '/media',
+      file: file,
+      field: 'file',
+      extra: { kind: kind },
+      /* A CONSTANT, not a setting — rule 5. On a box with ffmpeg the upload
+         request really does cut the cover and the teaser before it answers. */
+      serverNote: 'and cutting what it can',
+      onProgress: function (s) {
+        if (!upState) return;
+        upState.pct = s.pct;
+        upState.sentText = s.loadedText + ' of ' + s.totalText + ' sent';
+        upState.text = s.text;
+        upState.stalled = s.stalled;
+        paintUpload();
+      },
+      onDone: function (payload) {
+        if (payload && payload.limits) limits = payload.limits;
+
+        if (!payload || !payload.ok) {
+          /* 2xx with ok:false is this endpoint's own shape, which the kit cannot
+             judge. Not retryable: the server took the request and declined the
+             file on its merits. */
+          upState = null; upHandle = null; busy = false;
+          upDone = { ok: false, kind: kind, name: file.name, bytes: file.size,
+                     message: (payload && payload.error) || 'That file was not accepted.',
+                     retry: null };
+          say(upDone.message);
+          render();
+          return;
+        }
+
+        upState = null; upHandle = null;
+        upDone = { ok: true, kind: kind, name: file.name, bytes: file.size,
+                   note: kind === 'clip' ? 'This is the video the tile plays.'
+                                         : 'This is the file the tile loops.' };
+        (payload.notes || []).forEach(say);
+        say('Uploaded.');
+
+        /* Re-read the row, then the section, exactly as before — the sizes and
+           the poster on the card come from the server and not from here. */
+        openVideo(target).then(function () {
+          return sectionId ? openSection(sectionId) : undefined;
+        });
+      },
+      onFail: function (f) {
+        upState = null; upHandle = null; busy = false;
+        /*
+         * THE SERVER'S OWN SENTENCE, INCLUDING FOR A 413.
+         *
+         * explain() below ends in `e.body.error`, and App\Support\UploadArrival
+         * composes exactly that key — so the honest sentences DO reach this
+         * screen unchanged, which was worth verifying rather than assuming.
+         *
+         * WHAT DOES NOT reach it is a 413 from Laravel's GLOBAL
+         * ValidatePostSize middleware: it throws PostTooLargeException before the
+         * router, so no controller composes a body, there is no `error` key, and
+         * `e.body.error` is undefined. That is precisely why this screen has been
+         * answering "That file was not accepted." for files that were fine. The
+         * kit's explain() handles that status first and separately.
+         */
+        upDone = { ok: false, kind: kind, name: file.name, bytes: file.size,
+                   message: f.message, retry: f.retryable ? file : null };
+        say(f.message);
+        render();
+      }
+    });
+  }
+
+  /*
+   * THE BAR, WRITTEN STRAIGHT INTO THE DOM RATHER THAN THROUGH render().
+   *
+   * A repaint per progress event would rebuild the whole dialog, which throws
+   * away the caret of anything being typed in another tab and re-mounts the
+   * poster preview. Writing a width is not measuring one — nothing here reads a
+   * rect, an offset or a scroll position.
+   */
+  function paintUpload() {
+    if (!upState) return;
+
+    var bar = document.querySelector('[data-ugx-bar]');
+    var pct = document.querySelector('[data-ugx-pct]');
+    var sent = document.querySelector('[data-ugx-sent]');
+    var stage = document.querySelector('[data-ugx-stage]');
+    var box = document.querySelector('[data-ugx-upbox]');
+
+    if (bar) bar.style.width = upState.pct + '%';
+    if (pct) pct.textContent = upState.pct + '%';
+    if (sent) sent.textContent = upState.sentText;
+    if (stage) stage.textContent = upState.text || '';
+    /* A class write, not a measurement. */
+    if (box) box.classList.toggle('is-slow', !!upState.stalled);
+  }
+
+  /*
+   * A POSTER DROPPED ONTO ITS ROW, WHICH GOES THROUGH THE MEDIA LIBRARY.
+   *
+   * THE OWNER'S RULE, in his words: "on any upload media on the whole backend,
+   * the media library is a must to show." So a dragged image is uploaded to the
+   * LIBRARY's own endpoint and then adopted as the poster by URL — which is
+   * exactly what the Choose button does through window.kbbPickMedia, and it is
+   * why there is no <input type="file"> with an image accept anywhere on this
+   * screen for AdminMediaPickerEverywhereTest to find.
+   */
+  function dropPoster(file) {
+    if (!editingVideo || !file) return;
+
+    var ceiling = capBytes('poster');
+
+    if (ceiling > 0 && file.size > ceiling) {
+      upState = null;
+      upDone = { ok: false, kind: 'poster', name: file.name, bytes: file.size,
+                 message: 'That picture is ' + kb(file.size) + ' and the most this box takes is '
+                   + (capOf('poster') ? capOf('poster').effective_label : '') + '. It was not sent, '
+                   + 'so nothing on the clip was changed.',
+                 retry: null };
+      say(upDone.message);
+      render();
+      return;
+    }
+
+    /*
+     * THE KIT HAS TO BE ON THE PAGE, and saying so beats throwing.
+     *
+     * window.kbbUpload is defined by partials/upload-kit.blade.php. If that
+     * @include is ever dropped from app.blade.php — or a stale compiled view
+     * survives a package, which is exactly what this release's clear_caches
+     * migration exists to prevent — calling it raises "kbbUpload is not a
+     * function" INSIDE this handler. Nothing catches that: `busy` stays true, the
+     * screen stays locked, and the only symptom is a dead dialog. The same shape
+     * as the swallowed write CLAUDE.md records for UpdateRunner.
+     *
+     * So it is checked the way this console already checks for the Media Library
+     * picker, and it names the fix rather than the symptom.
+     */
+    if (typeof window.kbbUpload !== 'function') {
+      say('The uploader is not loaded on this page. The admin console needs the upload kit '
+        + 'partial — clear the view cache and reload; if it persists the package did not land.');
+      busy = false; render();
+      return;
+    }
+
+    upState = { kind: 'poster', name: file.name, pct: 0, sentText: '', text: '', stalled: false };
+    upDone = null;
+    busy = true; render();
+
+    var target = editingVideo.id;
+    var sectionId = editing && editing.id ? editing.id : null;
+
+    upHandle = window.kbbUpload({
+      url: base() + '/media/upload',
+      file: file,
+      field: 'file',
+      extra: { folder: 'posters' },
+      serverNote: 'and adding it to the Media Library',
+      onProgress: function (s) {
+        if (!upState) return;
+        upState.pct = s.pct;
+        upState.sentText = s.loadedText + ' of ' + s.totalText + ' sent';
+        upState.text = s.text;
+        upState.stalled = s.stalled;
+        paintUpload();
+      },
+      onDone: function (payload) {
+        var url = payload && (payload.url || (payload.media && payload.media.url));
+
+        if (!url) {
+          upState = null; upHandle = null; busy = false;
+          upDone = { ok: false, kind: 'poster', name: file.name, bytes: file.size,
+                     message: (payload && payload.error) || 'That picture was uploaded but the '
+                       + 'library did not return a URL for it, so the poster was not changed.',
+                     retry: null };
+          say(upDone.message);
+          render();
+          return;
+        }
+
+        /* The adopt step, by URL, exactly as the picker's path does it. */
+        api('/ugc-videos/' + encodeURIComponent(target) + '/poster', { url: url })
+          .then(function () {
+            upState = null; upHandle = null;
+            upDone = { ok: true, kind: 'poster', name: file.name, bytes: file.size,
+                       note: 'It is in the Media Library too.' };
+            say('Poster set.');
+            return openVideo(target).then(function () {
+              return sectionId ? openSection(sectionId) : undefined;
+            });
+          })
+          .catch(function (err) {
+            upState = null; upHandle = null; busy = false;
+            upDone = { ok: false, kind: 'poster', name: file.name, bytes: file.size,
+                       message: explain(err, 'That picture could not be used as a poster.'),
+                       retry: null };
+            render();
+          });
+      },
+      onFail: function (f) {
+        upState = null; upHandle = null; busy = false;
+        upDone = { ok: false, kind: 'poster', name: file.name, bytes: file.size,
+                   message: f.message, retry: f.retryable ? file : null };
+        say(f.message);
+        render();
+      }
+    });
   }
 
   function pickPoster() {
@@ -1071,10 +1544,22 @@
       ? '<input type="file" accept="video/mp4,video/webm,video/quicktime" data-ugx-upload="clip">'
       : '<input type="file" accept="video/mp4,video/webm" data-ugx-upload="teaser">';
 
-    return '<label class="ugx-drop' + (has ? '' : ' is-empty') + '">'
+    /*
+     * data-ugx-zone IS WHAT MOUNTS THE DROP TARGET. mountZones() finds every one
+     * of them after each repaint and hands it to window.kbbDropZone, which adds
+     * dragging WITHOUT touching the click path — the <label> still opens the file
+     * dialog exactly as it did, and a keyboard user reaches it through the input
+     * inside it.
+     */
+    return '<label class="ugx-drop' + (has ? '' : ' is-empty') + '" data-ugx-zone="' + kind + '" '
+      + 'data-ugx-accept="' + (kind === 'clip' ? 'video/mp4,video/webm,video/quicktime'
+                                               : 'video/mp4,video/webm') + '">'
       + '<span class="ugx-dropicon">' + ugxIcon(icon) + '</span>'
       + '<span><span class="ugx-dropname">' + esc(title) + '</span>'
-      + '<span class="ugx-dropmeta">' + (has ? esc(kb(bytes)) + ' · ' : '') + esc(note) + '</span></span>'
+      + '<span class="ugx-dropmeta">' + (has ? esc(kb(bytes)) + ' · ' : '') + esc(note) + '</span>'
+      /* The one line that says dragging works. Said rather than implied: a drop
+         target nobody knows is a drop target is a plain button. */
+      + '<span class="ugx-drophint">Drag a file here, or choose one.</span></span>'
       + '<span class="ugx-dropcta">' + (has ? 'Replace' : 'Choose') + '</span>'
       + input
       + '</label>';
@@ -1084,12 +1569,23 @@
   function ugxPosterRow(v) {
     var has = (v.poster_bytes || 0) > 0;
 
-    return '<div class="ugx-drop' + (has ? '' : ' is-empty') + '" data-ugx-poster role="button" tabindex="0">'
+    /*
+     * A DROP TARGET WITH NO FILE INPUT IN IT. `accept` is an image type, and a
+     * dragged picture goes through dropPoster() to the Media Library's own
+     * upload endpoint and is then adopted by URL — so the owner's "the media
+     * library is a must" rule holds for the drop path as well as the button, and
+     * AdminMediaPickerEverywhereTest finds no image-accepting <input type=file>
+     * on this screen because there genuinely is not one.
+     */
+    return '<div class="ugx-drop' + (has ? '' : ' is-empty') + '" data-ugx-poster role="button" '
+      + 'tabindex="0" data-ugx-zone="poster" data-ugx-accept="image/jpeg,image/png,image/webp">'
       + '<span class="ugx-dropicon">' + ugxIcon('image') + '</span>'
       + '<span><span class="ugx-dropname">Poster</span>'
       + '<span class="ugx-dropmeta">' + (has ? esc(kb(v.poster_bytes)) + ' · ' : '')
       + 'Required to publish — the tile reserves its box from this image, which is what stops the page '
-      + 'jumping.</span></span>'
+      + 'jumping.' + (capNote('poster') ? ' ' + esc(capNote('poster')) : '') + '</span>'
+      + '<span class="ugx-drophint">Drag a picture here, or choose one from the Media Library.</span>'
+      + '</span>'
       + '<span class="ugx-dropcta">' + (has ? 'Change' : 'Choose') + '</span>'
       + '</div>';
   }
@@ -1144,8 +1640,18 @@
         + '</div>';
     } else if (modalTab === 'files') {
       body = '<div class="ugx-fields">'
-        + ugxFileRow('clip', 'film', 'Video', v.bytes,
-            'Up to 64MB. Checked by its own bytes and not by its name.')
+        /*
+         * THE NUMBER IS THE SERVER'S NOW, AND IT USED TO BE A LIE.
+         *
+         * This line read 'Up to 64MB.' as a literal. 64 MB is the APP's cap
+         * (UgcMedia::MAX_BYTES) and on the owner's box the real ceiling is
+         * 9.9 MB, because post_max_size is 10M while upload_max_filesize is
+         * already 100M. capNote() prints what this server will really take and,
+         * where PHP is the thing capping it, says so and names the directive.
+         */
+        + ugxFileRow('clip', 'film', 'Video',  v.bytes,
+            (capNote('clip') ? capNote('clip') + ' ' : '')
+            + 'Checked by its own bytes and not by its name.')
         + ugxPosterRow(v)
         /*
          * THE OLD HELP LINE HERE WAS FALSE, and the owner reasonably read it as
@@ -1159,8 +1665,13 @@
          * this row now says so instead of implying a missing piece.
          */
         + ugxFileRow('teaser', 'loop', 'Short loop file', v.teaser_bytes,
-            'Optional, and nothing is missing without it — the tile already loops the first '
+            (capNote('teaser') ? capNote('teaser') + ' ' : '')
+            + 'Optional, and nothing is missing without it — the tile already loops the first '
             + '2–3 seconds of the video above. Adding a cut-down file only saves the shopper bytes.')
+        /* THE PANEL, UNDER THE THREE ROWS. In flight it carries the percentage,
+           the bytes, the speed, the time remaining and Cancel; afterwards it
+           carries the ending, and the ending STAYS. */
+        + uploadHTML()
         + '</div>';
     } else if (modalTab === 'products') {
       body = '<div class="ugx-fields">'
@@ -1338,6 +1849,13 @@
     if (!editingVideo) {
       if (host.innerHTML !== '') { host.innerHTML = ''; }
       openModalId = null;
+      /* The panel belongs to ONE clip. Left behind, a green "saved" panel would
+         sit on the next clip's Files tab describing a file that is not on it —
+         and an upload still in flight would go on painting into a dialog that is
+         no longer there. */
+      forgetUpload();
+      zoneOffs.forEach(function (off) { try { off(); } catch (e) {} });
+      zoneOffs = [];
       return;
     }
 
@@ -1348,6 +1866,7 @@
 
     host.innerHTML = modalHTML();
     openModalId = editingVideo.id;
+    mountZones();
   }
 
   /** The body and the tab strip only. No animation, no re-fetched poster. */
@@ -1371,6 +1890,43 @@
 
     var save = host.querySelector('[data-ugx-vsave]');
     if (save) { save.disabled = !!busy; }
+
+    mountZones();
+  }
+
+  /*
+   * MOUNT THE DROP TARGETS THAT THE LAST REPAINT DREW.
+   *
+   * The dialog body is replaced wholesale on every repaint, so the zones are
+   * fresh nodes each time and the previous teardowns must run first — otherwise
+   * every repaint adds another set of listeners to nodes nobody can see, and a
+   * single drop fires the uploader as many times as the tab has been opened.
+   *
+   * `accept` is read from the attribute, which is a LITERAL in ugxFileRow() and
+   * ugxPosterRow() where AdminMediaPickerEverywhereTest can see it.
+   */
+  function mountZones() {
+    zoneOffs.forEach(function (off) { try { off(); } catch (e) {} });
+    zoneOffs = [];
+
+    if (typeof window.kbbDropZone !== 'function') return;
+
+    document.querySelectorAll('[data-ugx-zone]').forEach(function (el) {
+      var kind = el.getAttribute('data-ugx-zone');
+
+      zoneOffs.push(window.kbbDropZone(el, {
+        accept: el.getAttribute('data-ugx-accept') || '',
+        multiple: false,
+        rejectHint: kind === 'poster'
+          ? 'This box takes a JPG, PNG or WebP picture.'
+          : 'This box takes an MP4 or WebM video.',
+        onFiles: function (files) {
+          if (!files || !files.length) return;
+          if (kind === 'poster') dropPoster(files[0]);
+          else upload(kind, files[0]);
+        }
+      }));
+    });
   }
 
   /* -------------------------------------------------------------- listeners */
@@ -1443,6 +1999,21 @@
     if (t.closest('[data-ugx-save]')) { e.preventDefault(); saveSection(); return; }
     if (t.closest('[data-ugx-order]')) { e.preventDefault(); saveOrder(); return; }
     if (t.closest('[data-ugx-vsave]')) { e.preventDefault(); saveVideo(); return; }
+    if (t.closest('[data-ugx-upcancel]')) {
+      e.preventDefault();
+      /* cancel() aborts the request, which lands in the kit's onabort and then in
+         onFail with cancelled set — one ending writer. */
+      if (upHandle) { try { upHandle.cancel(); } catch (err) {} }
+      return;
+    }
+    if (t.closest('[data-ugx-upretry]')) {
+      e.preventDefault();
+      if (upDone && upDone.retry) {
+        if (upDone.kind === 'poster') dropPoster(upDone.retry);
+        else upload(upDone.kind, upDone.retry);
+      }
+      return;
+    }
     if (t.closest('[data-ugx-poster]')) { e.preventDefault(); pickPoster(); return; }
 
     var add = t.closest('[data-ugx-add]');

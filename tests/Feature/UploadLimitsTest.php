@@ -66,6 +66,26 @@ function limitsAdmin(): AdminUser
 }
 
 /** The screen's source with the prose taken out, the way the UGC suite reads it. */
+/**
+ * The upload kit's CODE, prose removed.
+ *
+ * The transport this file's clock assertions were written against moved into
+ * partials/upload-kit.blade.php, so that two screens could not hold two
+ * opinions about what a progress event means — and they had come to hold two.
+ * Stripped for the same reason limitsScreen() is: the kit explains the defects
+ * it fixes by quoting the wrong sentences verbatim.
+ */
+function limitsKit(): string
+{
+    $src = (string) file_get_contents(
+        resource_path('views/admin/partials/upload-kit.blade.php')
+    );
+    $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '', $src);
+    $src = (string) preg_replace('#/\*.*?\*/#s', '', $src);
+
+    return (string) preg_replace('#^\s*//.*$#m', '', $src);
+}
+
 function limitsScreen(): string
 {
     $src = (string) file_get_contents(
@@ -324,30 +344,74 @@ it('tells a slow server apart from a stalled one, and offers a way out of both',
      */
     $code = limitsScreen();
 
-    expect(str_contains($code, 'startClock();'))->toBeTrue('the panel has no clock')
-        ->and(str_contains($code, 'function stalledFor() {'))->toBeTrue();
+    /*
+     * ── THE CLOCK IS THE KIT'S NOW, AND THE PIN FOLLOWS IT ─────────────────
+     *
+     * Every property below is the one this case was written to protect; only the
+     * file it is asserted against has changed. The transport moved to
+     * partials/upload-kit.blade.php after two of these three things were found to
+     * be WRONG in ways a second copy would have hidden — see
+     * docs/UPLOAD-LIMITS.md §8:
+     *
+     *   - the stall threshold was a fixed 20 s, which is BELOW the 16,764 ms that
+     *     two progress events legitimately sit apart at 100 KB/s, so the panel
+     *     accused healthy uploads and told the owner to cancel them;
+     *   - "the server is checking the file" was displayed from the moment the
+     *     last byte reached the kernel buffer, up to 49 s before the server had
+     *     the file at all.
+     */
+    $kit = limitsKit();
 
-    // The two intervals are different numbers and the screen knows which is which:
-    // since the handover in the server stage, since the last byte moved in the send
-    // stage. Using one for both made a 23-second upload read "1s so far".
-    expect(str_contains($code, "upState.stage === 'server' ? (upState.serverAt || 0) : (upState.moved || 0)"))
+    expect(str_contains($kit, 'startTick();'))->toBeTrue('the panel has no clock')
+        ->and(str_contains($kit, 'Transfer.prototype.quietFor'))->toBeTrue();
+
+    /*
+     * The two intervals are still different numbers, computed from different
+     * origins: the elapsed total counts from the start of the request, the quiet
+     * interval from the last thing that moved. Using one for both made a
+     * 23-second upload read "1s so far" — the defect a screenshot caught.
+     */
+    expect(str_contains($kit, 'Date.now() - this.startedAt'))
+        ->toBeTrue('the elapsed clock is gone')
+        ->and(str_contains($kit, 'Date.now() - since'))
         ->toBeTrue('the clock measures the same interval in both stages');
 
-    expect(str_contains($code, 'upState.moved = upState.secs || 0;'))->toBeTrue()
-        ->and(str_contains($code, 'upState.serverAt = upState.secs || 0;'))->toBeTrue();
+    expect(str_contains($kit, 't.lastAt = now;'))->toBeTrue()
+        ->and(str_contains($kit, 't.handoverAt = Date.now();'))->toBeTrue();
 
     // The server stage says how long it has been, and what to make of a long one.
-    expect(str_contains($code, 'That is longer than usual.'))->toBeTrue();
+    expect(str_contains($kit, 'That is longer than usual.'))->toBeTrue();
 
-    // A send that has stopped moving says SO, rather than wearing the same word as
-    // a healthy one.
-    expect(str_contains($code, 'but nothing has moved for'))->toBeTrue();
+    /*
+     * A send that has stopped moving says SO, rather than wearing the same word
+     * as a healthy one — but it no longer says it at a fixed twenty seconds, and
+     * it no longer tells the owner to cancel as though that were the diagnosis.
+     */
+    expect(str_contains($kit, 'Nothing has moved for'))->toBeTrue()
+        /*
+         * THE WHOLE ASSIGNMENT, not the property name — the same trap
+         * UgcEditorColumnsTest records for `xhr.upload.onload`. The first version
+         * of this line was str_contains($kit, 'Transfer.prototype.stallAfter'),
+         * and renaming the method to stallAfterX — which unhooks it completely —
+         * leaves that substring in place. RUN: green, which is how this line came
+         * to be written the longer way.
+         */
+        ->and(str_contains($kit, 'Transfer.prototype.stallAfter = function () {'))
+        ->toBeTrue('the stall threshold is a constant again')
+        /* And it is computed from what this upload is doing, not chosen. */
+        ->and(str_contains($kit, 'this.step / bps'))
+        ->toBeTrue('the stall threshold stopped reading the upload it is timing');
+
+    // And the screen prints the sentence the kit composed.
+    expect(str_contains($code, 'upState.text = s.text;'))->toBeTrue();
 
     // A way out of both, and the abort goes through the one ending writer.
     expect(str_contains($code, 'data-ugs-upcancel'))->toBeTrue('an upload cannot be cancelled')
-        ->and(str_contains($code, 'xhr.onabort = function () {'))->toBeTrue(
+        ->and(str_contains($kit, 'xhr.onabort = function () {'))->toBeTrue(
             'a cancelled upload leaves the bar frozen and the screen locked'
         )
+        /* The screen asks the kit's handle to stop; the kit writes the ending. */
+        ->and(str_contains($code, 'upXhr.cancel()'))->toBeTrue('cancel no longer stops the request')
         ->and(str_contains($code, 'data-ugs-upretry'))->toBeTrue('a failed upload cannot be retried');
 
     /*
@@ -356,8 +420,12 @@ it('tells a slow server apart from a stalled one, and offers a way out of both',
      * one more press. A 413 or a 422 would fail identically, and a button whose
      * only outcome is the message above it is a lie.
      */
-    expect(str_contains($code, 'retry: (xhr.status === 429 || xhr.status >= 500) ? file : null'))
-        ->toBeTrue('a retry is offered for a failure a retry cannot fix');
+    expect(str_contains($kit, 'return status === 429 || status >= 500;'))
+        ->toBeTrue('a retry is offered for a failure a retry cannot fix')
+        /* And the screen keeps the file only where the kit said a retry could
+           work, so the button and the rule cannot drift apart. */
+        ->and(str_contains($code, 'retry: f.retryable ? file : null'))
+        ->toBeTrue('the screen decides retryability for itself again');
 
     // The panel's own attribute is NOT data-ugs-up, which this screen already uses
     // for "move this product up": the delegated listener matches the nearest

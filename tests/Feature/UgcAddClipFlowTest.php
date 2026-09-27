@@ -31,6 +31,25 @@ function addClipSource(): string
 }
 
 /** The same text with the prose taken out: Blade comments, block comments, line comments. */
+/**
+ * The upload kit's CODE, prose removed.
+ *
+ * The XMLHttpRequest this case was written about moved into
+ * partials/upload-kit.blade.php, so the console has ONE uploader instead of one
+ * per screen. Stripped for the same reason addClipCode() is: the kit explains
+ * the defects it fixes by quoting them.
+ */
+function addClipKit(): string
+{
+    $src = (string) file_get_contents(
+        resource_path('views/admin/partials/upload-kit.blade.php')
+    );
+    $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '', $src);
+    $src = (string) preg_replace('#/\*.*?\*/#s', '', $src);
+
+    return (string) preg_replace('#^\s*//.*$#m', '', $src);
+}
+
 function addClipCode(): string
 {
     $src = addClipSource();
@@ -707,15 +726,35 @@ it('signs the progress upload with the cookie this console issues, not a meta ta
      */
     $code = addClipCode();
 
-    expect(str_contains($code, "xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));"))
-        ->toBeTrue('the progress upload is unsigned, so every clip upload is refused with 419');
+    /*
+     * ── THE HEADER MOVED WITH THE TRANSPORT, AND THE RISK MOVED WITH IT ────
+     *
+     * This case's own warning — "that is exactly the kind of change that quietly
+     * loses a header" — applies to this move too, which is why the assertion
+     * follows the code into partials/upload-kit.blade.php rather than being
+     * deleted. There is now ONE signed uploader for the whole console instead of
+     * one per screen, so there is one place this can be got wrong.
+     */
+    $kit = addClipKit();
+
+    expect(str_contains($kit, "xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));"))
+        ->toBeTrue('the progress upload is unsigned, so every clip upload is refused with 419')
+        /* And it reads the COOKIE, because this admin has no csrf-token meta tag
+           at all — reading one returns null and every upload 419s. */
+        ->and(str_contains($kit, 'csrf-token'))->toBeFalse(
+            'the uploader is reading a meta tag this console does not have'
+        );
 
     // The bar is painted directly rather than through render(), because a
     // repaint per progress event restarts the preview and eats the caret.
     expect(str_contains($code, 'function paintProgress()'))
         ->toBeTrue('the upload has no progress bar');
-    expect(str_contains($code, 'xhr.upload.onprogress'))
+    expect(str_contains($kit, 'xhr.upload.onprogress'))
         ->toBeTrue('nothing listens to the upload\'s progress');
+
+    /* The screen really is driving the kit, or none of the above is reached. */
+    expect(str_contains($code, 'window.kbbUpload('))
+        ->toBeTrue('the clip upload no longer goes through the shared uploader');
 });
 
 it('clears the file input before sending, so the same file can be retried', function () {

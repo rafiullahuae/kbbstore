@@ -22047,6 +22047,21 @@ buildNav();
      from the request being answered rather than from the browser, and why an
      authenticated owner's click is a different thing from a Host header. --}}
 @include('admin.partials.site-url-banner')
+{{-- LANE P1 · the shared uploader, and it must come BEFORE every screen that
+     calls it.
+
+     window.kbbUpload and window.kbbDropZone, in the same style as
+     window.kbbPickMedia and window.kbbAddNavEntry. One transport, one set of
+     words. The screens used to carry their own, which is how "All of it has
+     arrived. The server is checking the file" came to be shown for up to 49
+     seconds BEFORE the server had finished receiving anything — a sentence that
+     was right in the file it was written in and wrong about the world.
+
+     Both UGC screens guard on `typeof window.kbbUpload !== 'function'` and say
+     so plainly rather than throwing inside a click handler and leaving the
+     screen locked, so the order below is load-bearing rather than merely
+     tidy. --}}
+@include('admin.partials.upload-kit')
 @include('admin.partials.ugc-library-screen')
 {{-- LANE S7 · the SEO back office.
 
