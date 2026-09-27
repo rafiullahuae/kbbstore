@@ -1,5 +1,5 @@
 {
- "tag": "after",
+ "tag": "after3",
  "base": "http://127.0.0.1:8934",
  "widths": [
   {
@@ -53,7 +53,7 @@
     "tileHeight": null,
     "steps": 5,
     "dropZones": 3,
-    "previews": 3,
+    "previews": 2,
     "fileInputs": 2,
     "visibleFileInputs": 0,
     "brokenImages": 0,
@@ -64,7 +64,7 @@
    "files": {
     "scrollWidth": 390,
     "clientWidth": 390,
-    "contentHeight": 2242,
+    "contentHeight": 1946,
     "viewportHeight": 724,
     "tilesAboveFold": 0,
     "tiles": 0,
@@ -72,7 +72,7 @@
     "tileHeight": null,
     "steps": 6,
     "dropZones": 3,
-    "previews": 4,
+    "previews": 3,
     "fileInputs": 2,
     "visibleFileInputs": 0,
     "brokenImages": 0,
@@ -86,12 +86,12 @@
     "muted": true,
     "paused": false,
     "samplesSeconds": [
-     1.39,
-     0.24,
-     1.74,
-     0.59
+     1.37,
+     0.22,
+     1.72,
+     0.55
     ],
-    "highest": 1.74
+    "highest": 1.72
    },
    "refusal": {
     "titleInBox": "Lane V4 probe 390 EDITED",
@@ -152,7 +152,7 @@
     "tileHeight": null,
     "steps": 5,
     "dropZones": 3,
-    "previews": 3,
+    "previews": 2,
     "fileInputs": 2,
     "visibleFileInputs": 0,
     "brokenImages": 0,
@@ -163,7 +163,7 @@
    "files": {
     "scrollWidth": 1280,
     "clientWidth": 1280,
-    "contentHeight": 1563,
+    "contentHeight": 1516,
     "viewportHeight": 827,
     "tilesAboveFold": 0,
     "tiles": 0,
@@ -171,7 +171,7 @@
     "tileHeight": null,
     "steps": 6,
     "dropZones": 3,
-    "previews": 4,
+    "previews": 3,
     "fileInputs": 2,
     "visibleFileInputs": 0,
     "brokenImages": 0,
@@ -185,12 +185,12 @@
     "muted": true,
     "paused": false,
     "samplesSeconds": [
-     1.28,
-     0.13,
-     1.63,
-     0.48
+     1.48,
+     0.33,
+     1.83,
+     0.68
     ],
-    "highest": 1.63
+    "highest": 1.83
    },
    "refusal": {
     "titleInBox": "Lane V4 probe 1280 EDITED",

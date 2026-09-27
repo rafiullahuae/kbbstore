@@ -257,8 +257,18 @@
 /* ── the media step ────────────────────────────────────────────────────── */
 .ugs-media{display:grid;gap:11px;grid-template-columns:1fr;min-width:0}
 @media (min-width:880px){ .ugs-media{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} }
-.ugs-slot{display:grid;gap:8px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+/* align-content:start IS LOAD-BEARING. The two media slots are grid items in a
+   two-column row, so both stretch to the taller one -- and the cover slot,
+   which has no preview until a cover exists, then spread its own rows to fill
+   that height: a stretched "Choose from the Media Library" button with a void
+   of white above it, beside a video preview that was 640px tall. It read as a
+   broken panel. Packing the rows to the top leaves the slot as tall as its
+   neighbour and its CONTENT its own size. */
+.ugs-slot{display:grid;gap:8px;align-content:start;
+          border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
           padding:11px;min-width:0;background:var(--surface,#fff)}
+/* ...and a button in a grid also stretches across its column by default. */
+.ugs-slot > .ugs-btn{justify-self:stretch}
 .ugs-sloth{display:flex;justify-content:space-between;align-items:baseline;gap:9px;min-width:0}
 .ugs-sloth b{font-size:12.5px}
 .ugs-sloth span{font-size:10.5px;color:var(--ink-faint,#97a0b2);white-space:nowrap}

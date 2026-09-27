@@ -286,6 +286,51 @@ it('takes a dragged cover through the Media Library rather than round it', funct
         ->toBeTrue('the screen calls the Media Library without checking it is loaded');
 });
 
+it('packs the two media slots to the top instead of stretching their contents', function () {
+    /*
+     * THE DEFECT, and it is one a picture found rather than an assertion.
+     *
+     * `.ugs-media` is a two-column grid, so the video slot and the cover slot
+     * are siblings in one row and BOTH stretch to the taller one. The video slot
+     * is tall -- it holds a 9:16 preview. The cover slot, on a clip with no cover
+     * yet, held only a heading and a button, and its own grid rows then spread
+     * to fill that height: "Choose from the Media Library" rendered as a
+     * 190px-tall green slab with a void of white above it, beside a 640px video.
+     * It read as a panel that had failed to load.
+     *
+     * align-content:start packs the slot's rows at the top and leaves the SLOT
+     * as tall as its neighbour, which is what a grid row is for.
+     *
+     * MUTATION NOTE. Take `align-content:start` out of .ugs-slot and the button
+     * is a slab again -- red here, and visible in
+     * docs/ugc-add-clip-shots/8-after-step2-preview-1280.png, which is the
+     * before-and-after of exactly this rule. RUN: red.
+     */
+    /*
+     * addClipCode(), not addClipSource(): the docblock beside this rule in the
+     * screen EXPLAINS align-content:start in prose, and counting the raw text
+     * found the explanation as well as the rule. That is the same trap the
+     * helper at the top of this file exists for.
+     */
+    $css = addClipCode();
+
+    expect(str_contains($css, 'align-content:start'))
+        ->toBeTrue('.ugs-slot stretches its rows again, which slabs the cover button');
+
+    /*
+     * Pinned as a COUNT and not a presence: the declaration has to be the slot
+     * rule's own. Two would mean it had also been put on a rule that wants its
+     * rows spread, and zero is the defect.
+     */
+    expect(substr_count($css, 'align-content:start'))
+        ->toBe(1, 'align-content:start is no longer exactly the .ugs-slot rule');
+
+    // The sizing stays CSS-only -- rule 4. No height is computed for either slot.
+    expect(str_contains($css, '.ugs-slot > .ugs-btn{justify-self:stretch}'))
+        ->toBeTrue('the cover button lost the rule that keeps it full width');
+});
+
+
 /* ══════════════════════════════════════════════════ rule 4, on this screen ══ */
 
 it('measures no layout in script, anywhere on this screen', function () {
