@@ -2767,7 +2767,22 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
 'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
    and 'posts' open the same screen. The id stays routable for #blog and
    ?go=blog, and it names that screen honestly rather than a second one. */
-'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'hpcontent':['Appearance','Homepage content'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
+'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'hpcontent':['Appearance','Homepage content'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library'],
+/* Shoppable video and Instagram (Lanes V2/V3/V4/IG). Absent from this map
+   entirely until now, which is why ?go=ugcvideo and #ugcvideo opened the
+   dashboard: an id that is not in TITLES does not route at all. Each of the four
+   is drawn by its own partial further down this file, so each is also in
+   LATE_RENDERED — see the note there for the condition that makes arming one
+   safe. Breadcrumbs match what each partial's own go() writes into #crumb and
+   #ptitle, because two answers for one screen is how a heading ends up
+   disagreeing with the page under it. */
+'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],
+/* And the seven the new guard found alongside them, every one with a sidebar row
+   the owner clicks every day and no deep link at all: a link to any of these
+   opened the dashboard. Same fix, same condition, and the strings are copied
+   from what each partial's own go() writes so the heading cannot depend on how
+   the screen was reached. */
+'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -7247,7 +7262,19 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    it awaits anything — so the replay's marker inside #content is already
    destroyed by the time its task runs and nothing is drawn twice. That is the
    rule 'rev-all' failed, and the reason it is in neither armed set. */
-const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent']);
+/* The four shoppable-video and Instagram screens, for the same reason again and
+   found the same way: ?go=ugcvideo and #ugcvideo opened the DASHBOARD under
+   whatever breadcrumb, because none of the four ids was in TITLES at all, so
+   nothing routed and go() fell through to renderDash. The screens had no
+   shareable URL and no way in but a click, which is also why the lane that
+   photographed them had to call window.go('ugcvideo') by hand.
+
+   They are safe to arm on the condition this set carries: each of the four wraps
+   window.go in its own partial and calls render() BEFORE load(), synchronously,
+   so the replay's marker inside #content is already destroyed by the time its
+   task runs and nothing is drawn twice. That is the rule 'rev-all' fails, which
+   awaits rvLoad() before it paints and is in neither armed set. */
+const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.

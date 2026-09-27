@@ -1,0 +1,50 @@
+{
+  "after-ugcvideo-390": {
+    "crumb": "Content",
+    "ptitle": "All clips",
+    "first": "Sections All clips Appearance All clips Creator videos with products tagged on them. A cli",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0
+  },
+  "after-security-390": {
+    "crumb": "Store",
+    "ptitle": "Security",
+    "first": "Nothing to act on. 5 administrative changes, 0 failed sign-ins and 0 refused requests in t",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0
+  },
+  "after-routines-390": {
+    "crumb": "Catalog",
+    "ptitle": "Build my routine",
+    "first": "ON THE STOREFRONT 21 GIVEN A STEP 0 STILL UNTAGGED 21 Next: Cleanser. Nothing on the store",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0
+  },
+  "after-ugcvideo-1280": {
+    "crumb": "Content",
+    "ptitle": "All clips",
+    "first": "Sections All clips Appearance All clips Creator videos with products tagged on them. A cli",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0
+  },
+  "after-security-1280": {
+    "crumb": "Store",
+    "ptitle": "Security",
+    "first": "Nothing to act on. 6 administrative changes, 0 failed sign-ins and 0 refused requests in t",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0
+  },
+  "after-routines-1280": {
+    "crumb": "Catalog",
+    "ptitle": "Build my routine",
+    "first": "ON THE STOREFRONT 21 GIVEN A STEP 0 STILL UNTAGGED 21 Next: Cleanser. Nothing on the store",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0
+  }
+}

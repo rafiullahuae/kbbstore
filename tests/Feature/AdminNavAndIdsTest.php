@@ -1938,3 +1938,133 @@ it('keeps the per-screen boot hooks the central replay does not replace', functi
         }
     }
 });
+
+/*
+ * ── EVERY PARTIAL'S SCREEN ID HAS TO ROUTE, AND UNDER ITS OWN HEADING ───────
+ *
+ * The defect: `?go=ugcvideo` and `#ugcvideo` opened the DASHBOARD. Not with an
+ * error, not under the wrong heading — under whatever heading was last set, with
+ * the dashboard's body under it and nothing anywhere to report.
+ *
+ * The mechanism is one step earlier than the LATE_RENDERED note in
+ * app.blade.php describes. That note is about an id which IS in TITLES and has
+ * no renderer. These four were not in TITLES at all, and TITLES is what the deep
+ * link boot consults to decide whether an id routes: absent from it, the id was
+ * not a screen as far as the console was concerned, so the four shoppable-video
+ * and Instagram screens had no shareable URL whatever. Found by Lane V4, which
+ * had to call `window.go('ugcvideo')` by hand to photograph its own work — that
+ * workaround is the tell, and it is the kind of tell that gets normalised.
+ *
+ * So: a partial that declares `var SCREEN = 'x'` and wraps window.go for it is
+ * declaring a screen, and every screen routes.
+ *
+ * SECOND HALF, and it is the half that will actually catch the next one. The
+ * breadcrumb and title in TITLES must be the same two strings the partial's own
+ * go() writes into #crumb and #ptitle. Two answers for one screen is how a
+ * heading ends up disagreeing with the page under it depending on whether the
+ * owner clicked or followed a link — which is a worse bug than the first,
+ * because it looks like it works.
+ *
+ * MUTATION: drop any of the four ids from TITLES and this is red at that id;
+ * change one of their TITLES strings and it is red on the mismatch. Run.
+ */
+it('routes every screen a partial declares, under the heading that partial writes', function () {
+    /*
+     * THE SIX EDITORS, exempt and named rather than skipped.
+     *
+     * Each of these draws ONE ROW — a product, a coupon, a brand, a category, an
+     * order being built — and takes which row from module state the click set, not
+     * from the URL. `?go=product-editor` with no product is an editor with nothing
+     * in it, so routing it would turn a silent dashboard into an empty form,
+     * which is not an improvement. Giving them real deep links means giving them
+     * an id in the address (`#product-editor/1234`) and a read on arrival, which
+     * is a feature per screen and not a TITLES row.
+     *
+     * A LIST AND NOT A PREDICATE, because every predicate I tried was wrong in
+     * one direction: "has no sidebar row" exempts coupon-editor and
+     * product-editor, which do have one; "id contains editor" misses
+     * category-tree and order-new. A list this test prints when it drifts is
+     * honest about being a judgement, and the assertion below fails if one of
+     * these gains a TITLES row without leaving this list — so the exemption
+     * cannot outlive the reason for it, which is the failure mode the
+     * ALIASED_SCREENS note two hundred lines up records.
+     */
+    $rowEditors = [
+        'product-editor',
+        'coupon-editor',
+        'coupon-usage',
+        'brands-manager',
+        'category-tree',
+        'order-new',
+    ];
+
+    $titles = navAuditTitles();
+
+    $routedAnyway = array_values(array_intersect($rowEditors, array_keys($titles)));
+
+    expect($routedAnyway)->toBe([], 'these ids are on this test\'s row-editor exemption list AND in TITLES, so '
+        . 'either they now take their row from the URL — in which case drop them from the list — or a TITLES row '
+        . 'was added that routes them to an empty form: ' . implode(', ', $routedAnyway));
+
+    $missing = [];
+    $mismatched = [];
+
+    foreach (navAuditPartials() as $partial) {
+        $p = navAuditPartialSrc($partial);
+
+        if (preg_match("/var SCREEN\s*=\s*'([^']+)'/", $p, $id) !== 1) {
+            continue;
+        }
+
+        $screen = $id[1];
+
+        if (in_array($screen, $rowEditors, true)) {
+            continue;
+        }
+
+        /*
+         * Only a partial that OWNS the id — one whose window.go wrapper claims
+         * it. A partial that merely mentions another screen's id is not
+         * declaring a screen, and a few do.
+         */
+        if (! str_contains($p, "if (id !== SCREEN)")) {
+            continue;
+        }
+
+        if (! array_key_exists($screen, $titles)) {
+            $missing[] = $screen.' ('.$partial.')';
+
+            continue;
+        }
+
+        /*
+         * What the partial writes. Both are plain single-quoted literals in
+         * every one of these wrappers; a partial that computed either would not
+         * match and would not be compared, which is the honest failure — this
+         * asserts about the ones it can read rather than guessing at the rest.
+         */
+        preg_match("/crumb\.textContent\s*=\s*'([^']*)'/", $p, $crumb);
+        preg_match("/title\.textContent\s*=\s*'([^']*)'/", $p, $title);
+
+        if (($crumb[1] ?? null) === null || ($title[1] ?? null) === null) {
+            continue;
+        }
+
+        [$wantCrumb, $wantTitle] = $titles[$screen];
+
+        if ($crumb[1] !== $wantCrumb || $title[1] !== $wantTitle) {
+            $mismatched[] = sprintf(
+                '%s: TITLES says [%s, %s], %s writes [%s, %s]',
+                $screen, $wantCrumb, $wantTitle, $partial, $crumb[1], $title[1],
+            );
+        }
+    }
+
+    expect($missing)->toBe([], 'these partials declare a screen that is absent from TITLES, so ?go=<id> and '
+        . '#<id> open the dashboard instead and the screen has no shareable URL at all: '
+        . implode(', ', $missing));
+
+    expect($mismatched)->toBe([], 'the heading TITLES sets for a deep link disagrees with the heading the '
+        . 'screen sets for itself, so the same screen is headed two different ways depending on how it '
+        . 'was reached: ' . implode('; ', $mismatched));
+});
