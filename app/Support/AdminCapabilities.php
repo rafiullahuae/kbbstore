@@ -403,9 +403,40 @@ final class AdminCapabilities
         ['POST', 'admin-api/payments/stripe/connect/application', 'payments.manage'],
         ['POST', 'admin-api/payments/stripe/disconnect', 'payments.manage'],
         ['GET', 'admin-api/payments/stripe/connect/*', 'payments.manage'],
+        /*
+         * Tabby webhook registration — routes/payments-tabby.php.
+         *
+         * `payments.manage`, the same capability as the screen that stores the
+         * keys, because it does the same kind of thing: it reads the Tabby
+         * credentials and the POST writes a public callback address into the
+         * merchant's Tabby account. Tabby, unlike Stripe and Tamara, has no
+         * dashboard field for that address — it is registered through their API
+         * or it does not exist, so this pair is what makes Tabby able to tell
+         * this shop that a payment succeeded.
+         *
+         * Not folded into the 'admin-api/payments' rule above it: that rule
+         * matches the exact path and nothing under it, which is deliberate —
+         * a wildcard on 'admin-api/payments/*' would have quietly adopted every
+         * future endpoint anybody hangs off that prefix onto whatever capability
+         * was convenient the day it was written.
+         */
+        ['GET', 'admin-api/payments/tabby/webhooks', 'payments.manage'],
+        ['POST', 'admin-api/payments/tabby/webhooks', 'payments.manage'],
         ['GET', 'admin-api/orders/*/settlement', 'orders.money'],
         ['POST', 'admin-api/orders/*/capture', 'orders.money'],
         ['POST', 'admin-api/orders/*/refund', 'orders.money'],
+        /*
+         * Releasing an uncaptured authorisation — routes/payments-tabby.php.
+         *
+         * `orders.money`, with capture and refund, because it is the same class
+         * of act: it decides what happens to money a customer has committed, and
+         * it can be used on every live order in the shop. The READ is here too
+         * and on the same capability rather than on `orders.view`, matching the
+         * settlement read beside it — whether a hold is open and how much is
+         * being held is the money picture, not the order's contents.
+         */
+        ['GET', 'admin-api/orders/*/void', 'orders.money'],
+        ['POST', 'admin-api/orders/*/void', 'orders.money'],
 
         // ------------------------------------------------------------- core updates
         ['*', 'admin-api/updates', 'updates.manage'],

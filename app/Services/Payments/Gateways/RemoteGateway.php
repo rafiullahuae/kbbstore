@@ -68,6 +68,18 @@ abstract class RemoteGateway implements PaymentGateway
             $response = match (strtoupper($method)) {
                 'GET' => $request->get($url),
                 'PUT' => $request->put($url, $body),
+                /*
+                 * DELETE IS NAMED, and until it was this fell through to POST.
+                 *
+                 * A caller asking for a DELETE got a POST to the same URL with
+                 * no error anywhere: silent, and on a provider API the shape of
+                 * "POST /webhooks/{id}" is a second registration rather than a
+                 * removal. Tabby's webhook administration is the first caller
+                 * that needs it (TabbyGateway::syncWebhooks, which prunes a
+                 * stale registration), and it must not be the one that finds
+                 * this out from a duplicated webhook in production.
+                 */
+                'DELETE' => $request->delete($url, $body),
                 default => $request->post($url, $body),
             };
         } catch (\Throwable $e) {
@@ -122,6 +134,18 @@ abstract class RemoteGateway implements PaymentGateway
             $response = match (strtoupper($method)) {
                 'GET' => $request->get($url),
                 'PUT' => $request->put($url, $body),
+                /*
+                 * DELETE IS NAMED, and until it was this fell through to POST.
+                 *
+                 * A caller asking for a DELETE got a POST to the same URL with
+                 * no error anywhere: silent, and on a provider API the shape of
+                 * "POST /webhooks/{id}" is a second registration rather than a
+                 * removal. Tabby's webhook administration is the first caller
+                 * that needs it (TabbyGateway::syncWebhooks, which prunes a
+                 * stale registration), and it must not be the one that finds
+                 * this out from a duplicated webhook in production.
+                 */
+                'DELETE' => $request->delete($url, $body),
                 default => $request->post($url, $body),
             };
         } catch (\Throwable $e) {

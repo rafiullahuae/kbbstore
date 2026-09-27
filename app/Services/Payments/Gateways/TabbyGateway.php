@@ -14,7 +14,10 @@ use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
+use App\Services\Payments\VoidsAuthorisations;
 use App\Services\Payments\WebhookOutcome;
+use App\Support\Locale;
+use App\Support\Url;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
@@ -26,12 +29,88 @@ use Illuminate\Http\Request;
  *
  *   POST /api/v2/checkout          create a session, get a hosted web_url
  *   GET  /api/v2/payments/{id}     the authoritative state of a payment
+ *   GET  /api/v2/payments?…        the same collection, filtered and paged
  *   POST /api/v1/payments/{id}/captures   take the money after authorisation
  *   POST /api/v1/payments/{id}/refunds    give some or all of it back
- *   Note the version split: reads are v2, settlement writes are v1.
+ *   POST /api/v1/payments/{id}/close      VOID an authorisation nobody captured
+ *   GET/POST/PUT/DELETE /api/v1/webhooks  where Tabby is told to call us
+ *   Note the version split, which is not a convention but a rule the plugin
+ *   encodes literally: a GET is v2 unless it is `webhooks`, `checkout` is v2
+ *   although it is a POST, and every other write is v1.
  *   Auth: Authorization: Bearer <secret_key>, plus X-Merchant-Code per country
  *   Statuses: CREATED, AUTHORIZED, CLOSED, REJECTED, EXPIRED
  *   Amounts: decimal strings in major units
+ *
+ * ---------------------------------------------------------------------------
+ * CLOSED MEANS TWO DIFFERENT THINGS AND THE DIFFERENCE IS THE WHOLE SALE
+ *
+ * Tabby has no VOIDED status. `POST /payments/{id}/close` voids an
+ * authorisation and a successful capture also ends at CLOSED, so the status
+ * alone cannot tell "the money was taken" from "the hold was released and
+ * nobody was charged". The only thing that separates them is whether
+ * `captures[]` carries an entry.
+ *
+ * Three places in this class used to read CLOSED as "captured" flatly, and each
+ * one turned a void into a lie in a different direction:
+ *
+ *   - handleWebhook() marked the order PAID on the close notice, so an
+ *     authorisation the merchant had just released came back as a live,
+ *     paid, stock-committed order;
+ *   - capture() answered `already_captured`, which is an ok() — PaymentCapturer
+ *     writes `captured_at`, `captured_total` and a null `capture_ref` on an ok,
+ *     so the order read as fully captured with nothing behind it and the next
+ *     refund was measured against a ceiling that did not exist;
+ *   - listRemotePayments() reported it SETTLED, so reconciliation found Tabby
+ *     money against an unpaid order and said the two agreed.
+ *
+ * Every one of them now asks `captures[]` first. hasCapture() is the single
+ * reader and the mutation note on TabbyGatewayTest's void cases is "make
+ * hasCapture() return true unconditionally".
+ *
+ * ---------------------------------------------------------------------------
+ * ONE TABBY PRODUCT, NAMED
+ *
+ * Tabby sells three: `installments` (pay in 4), `payLater` (pay in 14 days)
+ * and `creditCardInstallments`. The merchant's own plugin ships all three as
+ * gateway classes and then overrides `is_available()` to return a flat FALSE on
+ * payLater and on creditCardInstallments — so the store it was taken from
+ * offers exactly one, `installments`, and the other two are code that cannot be
+ * reached.
+ *
+ * That matters here because `available_products` is a MAP keyed by product, and
+ * this class used to walk it and take the first `web_url` it found. Tabby
+ * offering a product this merchant has no agreement for was therefore enough to
+ * send a shopper into a Pay-in-14-days flow from a radio button that says pay
+ * in 4 — a different contract, a different repayment schedule, and one nobody
+ * on this side chose. The product is named now, and a response that does not
+ * carry it is a decline.
+ *
+ * ---------------------------------------------------------------------------
+ * WHAT IS DELIBERATELY NOT HERE, AND WHY
+ *
+ *   - **Datadog telemetry.** Every logged event in the plugin also goes to
+ *     `logs.browser-intake-datadoghq.eu` under a hard-coded API key, carrying
+ *     the store hostname, the full request URL, the request BODY (buyer name,
+ *     email, phone, address) and the response body. None of that leaves this
+ *     server. RemoteGateway::log() is the only logger and it writes no bodies.
+ *   - **The product feed.** `WC_Tabby_Feed_Sharing` is ON by default in the
+ *     plugin and pushes the whole catalogue to `plugins-api.tabby.ai`,
+ *     registering itself by POSTing the merchant's SECRET KEY to that host.
+ *     A shop's secret key may not travel anywhere but api.tabby.ai, and its
+ *     catalogue is not Tabby's to hold. Refused outright, not made optional.
+ *   - **The promo widget.** `tabby-promo.js`, third-party script on every
+ *     product and cart page, configured with the signed-in customer's email and
+ *     every phone number on their user record. The storefront already prints a
+ *     Tabby payment mark (App\Support\PaymentMarkArt) with no third-party
+ *     request and no customer data in it.
+ *   - **The unpaid-order cron.** The plugin's cron CANCELS and then DELETES or
+ *     trashes unpaid orders after `order_timeout` minutes, force-delete being
+ *     the default. Destroying a customer's order record on a timer is not a
+ *     behaviour to port; abandoned Tabby orders stay `pending` here and
+ *     reconciliation is what finds them.
+ *   - **A native refund idempotency key.** Tabby documents no idempotency
+ *     header and the plugin sends none, so $idempotencyKey is accepted and
+ *     unused. The unique index behind PaymentRefunder is the real guard.
  *
  * ---------------------------------------------------------------------------
  * How the webhook is trusted, which is the part that matters
@@ -57,7 +136,7 @@ use Illuminate\Http\Request;
  * ever leaked: the body is used for exactly one thing, reading the payment id
  * to go and ask about.
  */
-class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments
+class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, VoidsAuthorisations
 {
     private const API = 'https://api.tabby.ai';
 
@@ -65,13 +144,73 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
     private const COUNTRIES = ['AE', 'SA', 'BH', 'KW', 'QA'];
 
     /**
+     * The currencies Tabby settles in, index-aligned with COUNTRIES.
+     *
+     * Alignment is the point rather than tidiness: the plugin derives a default
+     * merchant code by looking the shop's currency up in one list and reading
+     * the same position out of the other, and this class does the same in
+     * merchantCode(). A shop selling in SAR with no merchant code stored is an
+     * SA account, not an AE one, and getting that wrong is a 403 from Tabby on
+     * every checkout.
+     */
+    private const CURRENCIES = ['AED', 'SAR', 'BHD', 'KWD', 'QAR'];
+
+    /**
+     * The one product this shop offers, as Tabby keys `available_products`.
+     *
+     * See the class comment. `payLater` and `creditCardInstallments` are the
+     * two the source plugin disables, and offering one of them from a control
+     * labelled "pay in 4" would put a shopper on a contract nobody chose.
+     */
+    private const PRODUCT = 'installments';
+
+    /** The languages Tabby's hosted checkout renders. Anything else is 'en'. */
+    private const LANGUAGES = ['en', 'ar'];
+
+    /** How many previous orders may be described to Tabby, as the plugin caps it. */
+    private const HISTORY_LIMIT = 10;
+
+    /**
+     * Order statuses Tabby understands, keyed by ours.
+     *
+     * Only terminal ones, exactly as the plugin maps them: an order still in
+     * flight tells Tabby nothing about whether this buyer pays.
+     */
+    private const HISTORY_STATUSES = [
+        'completed' => 'complete',
+        'cancelled' => 'canceled',
+        'refunded' => 'refunded',
+        'failed' => 'canceled',
+    ];
+
+    /**
+     * The merchant code one call is scoped to, or null for the stored one.
+     *
+     * Webhook administration is per country — Tabby answers a different list of
+     * registered hooks for each X-Merchant-Code, and a code this merchant has no
+     * agreement for answers `not_authorized`. authHeaders() is the only place
+     * that header is built, so this is what lets one call be aimed at a country
+     * without a second copy of the HTTP plumbing. Always set and cleared by
+     * forCountry(), which restores it in a finally.
+     */
+    private ?string $merchantCodeOverride = null;
+
+    /**
      * Default days an AUTHORIZED payment stays capturable.
      *
-     * A default, not a constant of the API: the merchant's own plugin reads a
-     * per-account `order_timeout` and Tabby sets the real figure per merchant
-     * agreement, so this is overridable from the payments screen. Whatever the
-     * number, it is advisory here — capture() re-reads the payment's live
-     * status and Tabby's own answer is what decides.
+     * A default, not a constant of the API: Tabby sets the real figure per
+     * merchant agreement, so this is overridable from the payments screen.
+     * Whatever the number, it is advisory here — capture() re-reads the
+     * payment's live status and Tabby's own answer is what decides.
+     *
+     * THIS IS NOT THE PLUGIN'S `order_timeout` AND THE NOTE THAT SAID IT WAS
+     * WAS WRONG. `tabby_checkout_order_timeout` is twenty MINUTES by default
+     * and measures how long a CREATED checkout session may sit before the
+     * plugin's cron destroys the unpaid order behind it — a session-expiry
+     * figure about a shopper who never finished, on a timer this port
+     * deliberately does not have. The capture window is a different quantity
+     * about a different state, and reading one number as the other would have
+     * warned the merchant that a 30-day hold lapses in twenty minutes.
      */
     private const DEFAULT_CAPTURE_DAYS = 30;
 
@@ -101,19 +240,81 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             return false;
         }
 
+        /*
+         * The shop's own currency, before the destination.
+         *
+         * Tabby settles in five currencies and this shop's is a single stored
+         * value, so a shop configured in USD can never take a Tabby payment —
+         * and offering the radio button anyway means the shopper picks it, gets
+         * redirected, and comes back to a failure that reads as our outage.
+         * PaymentGateway::availableFor() has no currency parameter to pass one
+         * in (widening it would reach Stripe, Tamara and cash on delivery), so
+         * it is read from the store here and again from the ORDER in start(),
+         * which is the one that is authoritative for a specific sale.
+         */
+        if (! $this->supportsCurrency($this->storeCurrency())) {
+            return false;
+        }
+
         // Tabby only operates in the Gulf. Offering it to a shopper it will
         // certainly decline wastes a redirect and looks like our bug.
         return $country === null || in_array(strtoupper($country), self::COUNTRIES, true);
     }
 
+    /** Is this a currency Tabby settles in? */
+    public function supportsCurrency(?string $currency): bool
+    {
+        return $currency !== null
+            && in_array(strtoupper(trim($currency)), self::CURRENCIES, true);
+    }
+
+    /**
+     * The shop's configured currency.
+     *
+     * Falls back to AED rather than to "unsupported": the `orders.currency`
+     * column defaults to AED in the schema and every other money path in this
+     * application reads the same default, so a shop that has never set the
+     * value is an AED shop, not a shop with no currency.
+     */
+    private function storeCurrency(): string
+    {
+        try {
+            $map = \App\Models\Setting::map();
+            $currency = strtoupper(trim((string) ($map['currency'] ?? '')));
+        } catch (\Throwable) {
+            // configured() promises never to throw and availableFor() is asked
+            // on the same page. A settings table that cannot be read is not a
+            // reason to 500 the checkout.
+            $currency = '';
+        }
+
+        return $currency !== '' ? $currency : \App\Support\Money::DEFAULT_CURRENCY;
+    }
+
     public function configSchema(): array
     {
         return [
-            'public_key' => ['text', 'Public key', 'Starts pk_test_ on sandbox, pk_ live. Safe to appear in the page.'],
-            'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ on sandbox, sk_ live. Never leaves the server.'],
-            'merchant_code' => ['text', 'Merchant code', 'The country code Tabby issued the account under — AE for this store.'],
-            'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. It forms part of the webhook URL below; regenerate it by clearing this field and saving.'],
+            'public_key' => ['text', 'Public key', 'Starts pk_test_ on sandbox, pk_ live. Format pk_[test_]xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Safe to appear in the page.'],
+            'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ on sandbox, sk_ live. Format sk_[test_]xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Never leaves the server.'],
+            'merchant_code' => ['text', 'Merchant code', 'The country code Tabby issued the account under — AE for this store. Left blank, the store currency decides it.'],
+            'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. It forms part of the webhook URL below; regenerate it by clearing this field and saving. Re-register the webhook with Tabby afterwards or the old address keeps being called.'],
             'capture_days' => ['text', 'Capture window (days)', 'How long Tabby leaves an authorisation capturable on your account. Default 30. Used only to warn you before it lapses — Tabby itself decides.'],
+            /*
+             * OFF as it ships, per CLAUDE.md rule 1, and this one is not
+             * caution: turning it on sends Tabby a description of up to ten of
+             * this buyer's PREVIOUS orders — the name, phone, email and
+             * delivery address on each, and their line items. Tabby asks for it
+             * because it raises approval rates, and that is a real benefit the
+             * owner may well want; it is still somebody's purchase history
+             * leaving this server, so it is the owner's decision to take and
+             * not a default to inherit.
+             *
+             * `buyer_history` is sent either way and is NOT this switch. It is
+             * two aggregate numbers about the person buying right now — when
+             * they registered, and how many orders they have completed — which
+             * is the ordinary fraud signal any payment provider is given.
+             */
+            'share_order_history' => ['bool', 'Send past-order history to Tabby', 'Raises Tabby approval rates by telling them how this customer has paid before. Sends up to 10 previous orders, each with the name, phone, email, delivery address and items on it. Off by default — a deliberate choice, not a recommendation.'],
         ];
     }
 
@@ -126,15 +327,87 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
     {
         return [
             'Authorization' => 'Bearer ' . $this->credentials->get($this->id(), 'secret_key'),
-            'X-Merchant-Code' => $this->merchantCode(),
+            'X-Merchant-Code' => $this->merchantCodeOverride ?? $this->merchantCode(),
         ];
     }
 
+    /**
+     * Run one call against a specific country's merchant account.
+     *
+     * finally, not a trailing assignment: `attempt()` cannot throw but
+     * everything around it can, and an override left set would silently aim
+     * every later call in the request — including a capture — at the wrong
+     * country's account.
+     */
+    private function forCountry(string $country, callable $call): mixed
+    {
+        $previous = $this->merchantCodeOverride;
+        $this->merchantCodeOverride = strtoupper($country);
+
+        try {
+            return $call();
+        } finally {
+            $this->merchantCodeOverride = $previous;
+        }
+    }
+
+    /**
+     * The merchant code for ordinary calls.
+     *
+     * The stored value wins. Absent one, the store's currency names the country
+     * the way WC_Tabby_Config::getDefaultMerchantCode() does — same two lists,
+     * same index — rather than assuming AE, because an SAR shop sending
+     * X-Merchant-Code: AE is refused on every single call and the error says
+     * nothing about currency.
+     */
     private function merchantCode(): string
     {
         $code = strtoupper($this->credentials->get($this->id(), 'merchant_code'));
 
-        return $code !== '' ? $code : 'AE';
+        if ($code !== '') {
+            return $code;
+        }
+
+        $index = array_search($this->storeCurrency(), self::CURRENCIES, true);
+
+        return $index === false ? 'AE' : self::COUNTRIES[$index];
+    }
+
+    /**
+     * Are the stored keys sandbox keys?
+     *
+     * Read off the SECRET key's prefix, which is what the plugin does and what
+     * Tabby's `is_test` flag on a webhook registration has to agree with. NOT
+     * the `payment_providers.mode` column: that is a label the owner types and
+     * Tabby has never seen it, so a shop with live keys and the switch left on
+     * "Sandbox" would otherwise register a test webhook against a live account
+     * and never be called about a real payment.
+     */
+    public function sandboxKeys(): bool
+    {
+        return str_starts_with($this->credentials->get($this->id(), 'secret_key'), 'sk_test');
+    }
+
+    /**
+     * Do the public and secret keys belong to the same environment?
+     *
+     * A live secret with a sandbox public key (or the reverse) is the
+     * misconfiguration that produces the least useful error: server-to-server
+     * calls succeed, the hosted checkout loads, and the shopper is declined for
+     * reasons nobody can see. Reported by the webhook screen rather than
+     * enforced in configured(), because refusing to be configured would take a
+     * working shop dark the day Tabby changes a prefix.
+     */
+    public function keysDisagree(): bool
+    {
+        $public = $this->credentials->get($this->id(), 'public_key');
+        $secret = $this->credentials->get($this->id(), 'secret_key');
+
+        if ($public === '' || $secret === '') {
+            return false;
+        }
+
+        return str_starts_with($public, 'pk_test') !== str_starts_with($secret, 'sk_test');
     }
 
     /* ------------------------------------------------------------- checkout */
@@ -145,21 +418,24 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             return PaymentStart::failed('Tabby is not available right now.');
         }
 
+        $currency = strtoupper((string) ($order->currency ?: \App\Support\Money::DEFAULT_CURRENCY));
+
+        /*
+         * THE ORDER'S currency, not the shop's, and checked here as well as in
+         * availableFor(). availableFor() is asked while the basket is being
+         * priced and answers about the shop; this is the last gate before money
+         * is committed and answers about the row that will be charged. Tabby
+         * refuses a currency it does not settle in with a 400, which reaches the
+         * shopper as "we could not reach Tabby" — true of nothing, and
+         * unactionable.
+         */
+        if (! $this->supportsCurrency($currency)) {
+            return PaymentStart::failed('Tabby cannot be used for this currency. Please choose another payment method.');
+        }
+
         $result = $this->call('POST', '/api/v2/checkout', [
-            'payment' => [
-                'amount' => $this->toMajor((int) $order->total),
-                'currency' => strtoupper((string) ($order->currency ?: 'AED')),
-                'description' => 'Order ' . $this->reference($order),
-                'buyer' => $this->buyer($order),
-                'order' => [
-                    'reference_id' => $this->reference($order),
-                    'shipping_amount' => $this->toMajor((int) $order->shipping_total),
-                    'discount_amount' => $this->toMajor((int) $order->discount_total),
-                    'tax_amount' => $this->toMajor((int) $order->tax_total),
-                    'items' => $this->items($order),
-                ],
-            ],
-            'lang' => 'en',
+            'payment' => $this->paymentObject($order, $currency),
+            'lang' => $this->language(),
             'merchant_code' => $this->merchantCode(),
             'merchant_urls' => [
                 'success' => $this->returnUrl($order, 'success'),
@@ -172,31 +448,147 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             return PaymentStart::failed('We could not reach Tabby. Please try another payment method.');
         }
 
-        // The hosted URL sits under the first available product. When Tabby
-        // has pre-declined this buyer the list is empty -- that is a decline,
-        // not an outage, and the shopper is told to pick something else.
-        $products = $result['configuration']['available_products'] ?? [];
-        $url = null;
+        /*
+         * THE PRODUCT THIS SHOP SELLS, BY NAME. See the class comment:
+         * `available_products` is a map and taking the first entry out of it was
+         * how a pay-in-4 button could open a pay-in-14-days contract.
+         *
+         * An absent key is a DECLINE and not an outage — it is how Tabby says
+         * "not this buyer, not this basket" — so the shopper is told to pick
+         * another method rather than to try again.
+         */
+        $products = $result['configuration']['available_products'] ?? null;
+        $offers = is_array($products) ? ($products[self::PRODUCT] ?? null) : null;
+        $url = is_array($offers) ? ($offers[0]['web_url'] ?? null) : null;
 
-        foreach (is_array($products) ? $products : [] as $offers) {
-            $url = $offers[0]['web_url'] ?? null;
-
-            if (is_string($url) && $url !== '') {
-                break;
-            }
-        }
-
-        if (! is_string($url) || $url === '') {
+        if (! is_string($url) || $url === '' || ! $this->isTabbyUrl($url)) {
             return PaymentStart::failed('Tabby is not available for this order. Please choose another payment method.');
         }
 
-        $paymentId = (string) ($result['id'] ?? '');
+        /*
+         * `payment.id`, NOT the top-level `id`.
+         *
+         * `POST /checkout` answers with a CHECKOUT SESSION whose own id sits at
+         * the top level and whose `payment` block carries the id every other
+         * endpoint in this class is keyed by. Storing the session id in
+         * `orders.transaction_id` left capture(), voidAuthorisation() and the
+         * refund path all calling `/payments/<a session id>`, which is a 404 —
+         * and the only reason it was ever survivable is that PaymentConfirmer
+         * overwrites the column with the id the WEBHOOK carries, so the bug was
+         * invisible on any shop whose webhook was registered and fatal on one
+         * whose webhook was not. The plugin reads `$result->payment->id` here
+         * and so does this.
+         *
+         * The top level is the fallback rather than the primary, and only so
+         * that a response shape Tabby has not shown us yet degrades to today's
+         * behaviour instead of to no redirect at all.
+         */
+        $paymentId = trim((string) ($result['payment']['id'] ?? $result['id'] ?? ''));
+
+        if ($paymentId === '') {
+            return PaymentStart::failed('Tabby did not return a payment reference. Please try another payment method.');
+        }
 
         $order->forceFill(['transaction_id' => $paymentId])->save();
 
-        $this->log('checkout session created', '/api/v2/checkout', 200, ['reference' => $this->reference($order)]);
+        $this->log('checkout session created', '/api/v2/checkout', 200, [
+            'reference' => $this->reference($order),
+            'product' => self::PRODUCT,
+            // Which field the id came out of, so a shape change is visible in
+            // the log before it is visible as a failed capture a week later.
+            'id_source' => isset($result['payment']['id']) ? 'payment.id' : 'id',
+        ]);
 
         return PaymentStart::redirect($url, $paymentId);
+    }
+
+    /**
+     * Is this a URL we are willing to send a shopper to?
+     *
+     * The redirect target comes out of an API response, and a response is not a
+     * trusted source just because it was authenticated — a compromised or
+     * mis-proxied answer that carried `javascript:` or an attacker's host would
+     * otherwise be handed straight to the browser as a redirect. https only, and
+     * the host must be Tabby's, which is where their hosted checkout lives and
+     * the only place it has ever lived.
+     */
+    private function isTabbyUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https') {
+            return false;
+        }
+
+        $host = strtolower((string) ($parts['host'] ?? ''));
+
+        return $host === 'tabby.ai' || str_ends_with($host, '.tabby.ai');
+    }
+
+    /** 'ar' on an Arabic page, 'en' everywhere else — the two Tabby renders. */
+    private function language(): string
+    {
+        $locale = strtolower(substr(Locale::current(), 0, 2));
+
+        return in_array($locale, self::LANGUAGES, true) ? $locale : 'en';
+    }
+
+    /**
+     * The `payment` block, which is the same shape in the checkout call and in
+     * the availability probe the plugin makes with it.
+     *
+     * @return array<string, mixed>
+     */
+    private function paymentObject(Order $order, string $currency): array
+    {
+        $payment = [
+            'amount' => $this->toMajor((int) $order->total),
+            'currency' => $currency,
+            'description' => 'Order ' . $this->reference($order),
+            'buyer' => $this->buyer($order),
+            'order' => [
+                'reference_id' => $this->reference($order),
+                /*
+                 * shipping_total PLUS its tax, as the plugin sends it
+                 * (`get_shipping_total() + get_shipping_tax()`). It reads as a
+                 * double count beside `tax_amount` and is not one: Tabby
+                 * validates that amount = items + shipping + tax - discount, and
+                 * `orders.tax_total` on this shop is the whole order's tax with
+                 * VAT display-only, so the two agree at zero today and agree at
+                 * the plugin's arithmetic the day tax is switched on.
+                 */
+                'shipping_amount' => $this->toMajor((int) $order->shipping_total),
+                'discount_amount' => $this->toMajor((int) $order->discount_total),
+                'tax_amount' => $this->toMajor((int) $order->tax_total),
+                'items' => $this->items($order),
+            ],
+            /*
+             * Two aggregate numbers about the person buying. See the note on
+             * `share_order_history` in configSchema(): this is not that switch
+             * and carries nobody's purchase history.
+             */
+            'buyer_history' => $this->buyerHistory($order),
+            'shipping_address' => $this->shippingAddress($order),
+            /*
+             * What Tabby's own support reads to tell a plugin problem from a
+             * merchant one. Our name and our version — no hostname, no store
+             * data, and nothing that leaves this call.
+             */
+            'meta' => [
+                'tabby_plugin_platform' => 'kbb-storefront',
+                'tabby_plugin_version' => (string) config('kbb.version', '1.0.0'),
+            ],
+        ];
+
+        $history = $this->orderHistory($order);
+
+        // Omitted rather than sent empty when the switch is off, so a shop that
+        // has not opted in sends Tabby no key at all about it.
+        if ($history !== []) {
+            $payment['order_history'] = $history;
+        }
+
+        return $payment;
     }
 
     /* -------------------------------------------------------------- webhook */
@@ -233,15 +625,43 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         }
 
         $status = strtoupper((string) ($payment['status'] ?? ''));
+        $captured = $this->hasCapture($payment);
 
         $summary = [
             'payment_id' => $paymentId,
             'status' => $status,
             'reference' => $payment['order']['reference_id'] ?? null,
+            // Named, and it is the field that decides the branch below. An
+            // audit row that recorded CLOSED without it could not be read back
+            // to say whether the money moved.
+            'captured' => $captured ? 'yes' : 'no',
         ];
 
         if (in_array($status, ['REJECTED', 'EXPIRED'], true)) {
             return $this->confirmer->fail($order, $this->id(), $paymentId, strtolower($status), $summary);
+        }
+
+        /*
+         * A CLOSED PAYMENT WITH NO CAPTURES IS A VOID, AND THIS USED TO MARK IT
+         * PAID.
+         *
+         * See the class comment for why CLOSED is ambiguous. The reachable
+         * sequence is ordinary rather than exotic: an order is cancelled, the
+         * authorisation is released (by voidAuthorisation() here, by the
+         * merchant in Tabby's dashboard, or by Tabby's own timer), Tabby
+         * delivers the close notice, and the branch below treated it as a
+         * successful payment. The order came back to `processing` with `paid_at`
+         * set, against a hold that had just been released — a live, paid,
+         * stock-committed order for money that will never arrive.
+         *
+         * fail() is the right handler and not merely the opposite one: it
+         * refuses to touch an order that IS paid (a late close after a genuine
+         * capture changes nothing), refuses to move one already dispatched, and
+         * otherwise returns the stock and releases the coupon, which is exactly
+         * what a released authorisation means.
+         */
+        if ($status === 'CLOSED' && ! $captured) {
+            return $this->confirmer->fail($order, $this->id(), $paymentId, 'voided', $summary);
         }
 
         if (! in_array($status, ['AUTHORIZED', 'CLOSED'], true)) {
@@ -322,10 +742,35 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         if ($status === 'CLOSED') {
             $existing = $this->lastId($payment['captures'] ?? null);
 
+            /*
+             * CLOSED AND EMPTY IS A VOID, NOT A CAPTURE, AND ok() HERE WAS A
+             * FABRICATED SETTLEMENT.
+             *
+             * PaymentCapturer treats an ok() as done: it keeps the `captured_at`
+             * it claimed before this call and writes `captured_total` = the full
+             * order amount with `capture_ref` = this method's reference, which on
+             * a voided payment was NULL. The order then read as fully captured
+             * with no provider transaction behind it — and `captured_total` is
+             * the ceiling PaymentRefunder::capturedFils() measures a refund
+             * against, so the next refund was authorised against money the shop
+             * had never received.
+             *
+             * The distinction is `captures[]` and nothing else, because Tabby
+             * ends a void and a capture at the same status.
+             */
+            if ($existing === null || ! $this->hasCapture($payment)) {
+                return SettlementResult::failed(
+                    'voided',
+                    ['provider' => $this->id(), 'payment_id' => $paymentId, 'status' => $status, 'captured' => 'no'],
+                    'This Tabby authorisation has been released and carries no capture, so there is nothing to take. '
+                    . 'The customer has not been charged and cannot be from this payment.',
+                );
+            }
+
             return SettlementResult::ok(
                 'already_captured',
                 $existing,
-                ['provider' => $this->id(), 'payment_id' => $paymentId, 'status' => $status],
+                ['provider' => $this->id(), 'payment_id' => $paymentId, 'status' => $status, 'captured' => 'yes'],
                 'Tabby had already captured this payment.',
             );
         }
@@ -338,12 +783,27 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             );
         }
 
-        $attempt = $this->attempt('POST', '/api/v1/payments/' . urlencode($paymentId) . '/captures', [
-            'amount' => $this->toMajor($amountFils),
-            'tax_amount' => $this->toMajor((int) $order->tax_total),
-            'shipping_amount' => $this->toMajor((int) $order->shipping_total),
-            'items' => $this->items($order),
-        ]);
+        /*
+         * The breakdown rides along ONLY on a full capture.
+         *
+         * Tabby checks that a capture's `amount` agrees with the tax, shipping
+         * and line items sent beside it. PaymentCapturer captures the whole
+         * order total today and nothing else calls this, but the interface takes
+         * an amount and a partial one would have been sent with the WHOLE
+         * order's tax, shipping and items — arithmetic that cannot balance, and
+         * a rejection whose message would be about items rather than about the
+         * amount that caused it. A partial capture sends the amount alone, which
+         * is the one shape that is true whatever it is.
+         */
+        $body = ['amount' => $this->toMajor($amountFils)];
+
+        if ($amountFils === (int) $order->total) {
+            $body['tax_amount'] = $this->toMajor((int) $order->tax_total);
+            $body['shipping_amount'] = $this->toMajor((int) $order->shipping_total);
+            $body['items'] = $this->items($order);
+        }
+
+        $attempt = $this->attempt('POST', '/api/v1/payments/' . urlencode($paymentId) . '/captures', $body);
 
         $captureId = $attempt['ok'] ? $this->lastId($attempt['body']['captures'] ?? null) : null;
 
@@ -377,6 +837,27 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
      * point at. That is reported as its own code rather than as a generic
      * failure, because the fix is "capture it first" and no other message
      * says so.
+     *
+     * TWO PARAMETERS ARE DELIBERATELY NOT USED, and silence about that would
+     * read as an oversight:
+     *
+     *   $captureRef      PaymentRefunder passes `capture_ref ?: transaction_id`,
+     *                    and the fallback half of that is the PAYMENT id. Sent
+     *                    to Tabby as `capture_id` it names nothing, so the
+     *                    order's own `capture_ref` is read here instead and an
+     *                    empty one is refused above rather than papered over
+     *                    with an id that cannot be right.
+     *   $idempotencyKey  Tabby documents no idempotency header and the
+     *                    merchant's plugin sends none, so there is nowhere to
+     *                    put it. Inventing a header name would be inventing an
+     *                    API. The unique index behind PaymentRefunder is the
+     *                    real guard and it is on our side of the wire.
+     *
+     * The plugin also sends an `items` array on a refund, built from the
+     * WooCommerce refund object's own line items. This application's refunds
+     * are an amount and a reason — there is no per-line refund model to build
+     * one from — so it is left out rather than fabricated from the order's
+     * lines, which would describe a whole-order return on a partial refund.
      */
     public function refund(
         Order $order,
@@ -433,6 +914,530 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             ['provider' => $this->id(), 'payment_id' => $paymentId, 'refund_id' => $refundId],
             'Refunded through Tabby.',
         );
+    }
+
+    /* ----------------------------------------------------------------- void */
+
+    /**
+     * Release an authorisation nobody captured.
+     *
+     * `POST /api/v1/payments/{id}/close`, which is Tabby's only word for it —
+     * there is no VOIDED status and no `/void` endpoint, and a closed payment is
+     * distinguishable from a captured one only by its `captures[]`. See the
+     * class comment.
+     *
+     * The live status decides, as it does in capture():
+     *
+     *   AUTHORIZED            releasable. Release it.
+     *   CLOSED, no captures   already released. ok(), so a retry after a
+     *                         dropped connection settles rather than alarms.
+     *   CLOSED, captured      REFUSED, and this is the case worth writing down:
+     *                         the money has moved, so what the caller is asking
+     *                         for is a refund and doing it as a close would
+     *                         either be rejected or — worse, if Tabby ever
+     *                         accepts it — reverse a capture through a path
+     *                         with no refund row, no ledger entry and no
+     *                         `refunded_total` behind it.
+     *   REJECTED / EXPIRED    nothing is held. ok(), with its own code, because
+     *                         the caller's goal ("this order holds no money")
+     *                         is already true and failing would make a
+     *                         cancellation look broken.
+     *   CREATED               the shopper never finished, so nothing is held
+     *                         and nothing is closable. ok(), same reasoning.
+     */
+    public function voidAuthorisation(Order $order): SettlementResult
+    {
+        $paymentId = trim((string) $order->transaction_id);
+
+        if (! $this->configured() || $paymentId === '') {
+            return SettlementResult::failed(
+                'not_configured',
+                ['provider' => $this->id()],
+                'Tabby is not configured, or this order has no Tabby payment on it.',
+            );
+        }
+
+        $payment = $this->call('GET', '/api/v2/payments/' . urlencode($paymentId));
+
+        if ($payment === null) {
+            return SettlementResult::failed(
+                'unreachable',
+                ['provider' => $this->id(), 'payment_id' => $paymentId],
+                'Tabby could not be reached. The authorisation is still open; try again.',
+            );
+        }
+
+        $status = strtoupper((string) ($payment['status'] ?? ''));
+        $summary = ['provider' => $this->id(), 'payment_id' => $paymentId, 'status' => $status];
+
+        if ($status === 'CLOSED') {
+            if ($this->hasCapture($payment)) {
+                return SettlementResult::failed(
+                    'already_captured',
+                    $summary + ['captured' => 'yes'],
+                    'This Tabby payment has been captured, so the money has already moved. '
+                    . 'Refund it instead — releasing an authorisation cannot give captured money back.',
+                );
+            }
+
+            return SettlementResult::ok(
+                'already_voided',
+                $this->lastId($payment['captures'] ?? null),
+                $summary + ['captured' => 'no'],
+                'This Tabby authorisation was already released. Nothing was charged.',
+            );
+        }
+
+        if (in_array($status, ['REJECTED', 'EXPIRED', 'CREATED'], true)) {
+            return SettlementResult::ok(
+                'nothing_held',
+                null,
+                $summary,
+                'Tabby reports this payment as ' . strtolower($status) . ', so no money is being held. Nothing to release.',
+            );
+        }
+
+        if ($status !== 'AUTHORIZED') {
+            return SettlementResult::failed(
+                'not_authorised',
+                $summary,
+                'Tabby reports this payment as ' . ($status !== '' ? strtolower($status) : 'unknown')
+                . ', which is not a state an authorisation can be released from.',
+            );
+        }
+
+        $attempt = $this->attempt('POST', '/api/v1/payments/' . urlencode($paymentId) . '/close');
+
+        if (! $attempt['ok']) {
+            return SettlementResult::failed(
+                $attempt['error'] ?? 'void_rejected',
+                $summary + ['http_status' => $attempt['status'], 'error' => $attempt['error']],
+                'Tabby refused to release this authorisation. It is still open.',
+            );
+        }
+
+        /*
+         * Tabby answers a close with the payment, and its status is the proof.
+         * Trusting a 200 alone would report a release that had not happened on
+         * any future response shape where the call is accepted and ignored.
+         */
+        $closed = strtoupper((string) ($attempt['body']['status'] ?? ''));
+
+        if ($closed !== '' && $closed !== 'CLOSED') {
+            return SettlementResult::failed(
+                'void_not_applied',
+                $summary + ['status_after' => $closed],
+                'Tabby accepted the request but still reports this payment as ' . strtolower($closed)
+                . '. The authorisation may still be open — check it in the Tabby dashboard.',
+            );
+        }
+
+        return SettlementResult::ok(
+            'voided',
+            $paymentId,
+            $summary + ['status_after' => $closed !== '' ? $closed : 'CLOSED'],
+            'The Tabby authorisation has been released. The customer has not been charged.',
+        );
+    }
+
+    /* ------------------------------------------------------------- webhooks */
+
+    /**
+     * What Tabby has been told to call, per country, without changing anything.
+     *
+     * THE GAP THIS CLOSES IS THE ONE THAT MADE EVERYTHING ELSE MOOT. Tabby does
+     * not take a webhook URL from a dashboard field — the endpoint is REGISTERED
+     * THROUGH THE API, one registration per merchant country, and until that
+     * POST is made Tabby never calls this shop at all. handleWebhook() below was
+     * complete and correct and could not run, so every Tabby order sat `pending`
+     * with the money authorised until somebody captured it by hand. The payments
+     * screen said "paste this into the provider dashboard", which for Stripe and
+     * Tamara is right and for Tabby names a field that does not exist.
+     *
+     * `webhooks` is the one GET on v1: everything else reads from v2, and this
+     * collection answers 404 there. The plugin encodes the exception literally
+     * (`$method == 'GET' && $endpoint != 'webhooks'`) and so does this.
+     *
+     * Countries the merchant has no agreement for answer `not_authorized` or
+     * `not_found`, which is not an error — it is how Tabby says "this account is
+     * not an SA account". Those are reported as `not_authorised` per country and
+     * skipped, never surfaced as a failure, because a UAE-only merchant would
+     * otherwise see four failures on a screen that had just worked.
+     *
+     * @return array<string, mixed>
+     */
+    public function webhookStatus(): array
+    {
+        $blocked = $this->webhookPrecondition();
+
+        if ($blocked !== null) {
+            return $blocked;
+        }
+
+        $url = (string) $this->ourWebhookUrl();
+        $countries = [];
+
+        foreach (self::COUNTRIES as $country) {
+            $countries[] = $this->countryWebhookStatus($country, $url) + ['country' => $country];
+        }
+
+        return [
+            'ok' => true,
+            'url' => $url,
+            'is_test' => $this->sandboxKeys(),
+            'keys_disagree' => $this->keysDisagree(),
+            'countries' => $countries,
+        ];
+    }
+
+    /**
+     * Make Tabby's registration agree with this shop, in every country the
+     * account is authorised for.
+     *
+     * Four outcomes per country, and the ordering is the whole design:
+     *
+     *   registered   nothing pointed here. One POST.
+     *   updated      a hook points here with the wrong `is_test`. One PUT,
+     *                which is what makes moving a shop from sandbox keys to
+     *                live keys work: Tabby delivers TEST events to a test hook
+     *                and live events to a live one, so a hook left flagged test
+     *                after the keys went live is a hook that is never called
+     *                about a real payment.
+     *   current      a hook points here and agrees. Nothing is sent.
+     *   pruned       a hook points at THIS shop's webhook path under a
+     *                DIFFERENT secret. Deleted.
+     *
+     * Pruning is the half that is easy to leave out and expensive to. The URL
+     * ends in a 32-character secret, so regenerating it makes a new URL: without
+     * a prune Tabby keeps both, delivers every event twice, and the stale
+     * delivery is answered 401 forever by a gateway that is working perfectly.
+     * It is also safe precisely BECAUSE the path is ours — a candidate has to
+     * match this install's host, base path and `/api/payments/webhook/tabby/`
+     * prefix before it is a candidate at all, so a hook the merchant registered
+     * for anything else is never seen, never listed and never touched.
+     *
+     * @return array<string, mixed>
+     */
+    public function syncWebhooks(): array
+    {
+        /*
+         * The precondition, NOT webhookStatus().
+         *
+         * Calling the read first was the obvious composition and it made this
+         * method list every country TWICE — ten round trips to answer a
+         * five-country question, with the second list able to disagree with the
+         * first and the whole plan having been made against the stale one.
+         * syncCountry() does its own list because it has to act on it.
+         */
+        $blocked = $this->webhookPrecondition();
+
+        if ($blocked !== null) {
+            return $blocked;
+        }
+
+        $url = (string) $this->ourWebhookUrl();
+        $isTest = $this->sandboxKeys();
+        $results = [];
+
+        foreach (self::COUNTRIES as $country) {
+            $results[] = $this->syncCountry($country, $url, $isTest) + ['country' => $country];
+        }
+
+        $reached = array_values(array_filter($results, fn (array $r) => ($r['state'] ?? '') !== 'not_authorised'));
+
+        return [
+            'ok' => true,
+            'url' => $url,
+            'is_test' => $isTest,
+            'keys_disagree' => $this->keysDisagree(),
+            'countries' => $results,
+            // Zero authorised countries means the keys are wrong or the account
+            // is not live yet, and the screen has to say so rather than report
+            // a successful sync that registered nothing anywhere.
+            'registered_anywhere' => $reached !== []
+                && array_filter($reached, fn (array $r) => in_array($r['state'] ?? '', ['registered', 'updated', 'current'], true)) !== [],
+        ];
+    }
+
+    /**
+     * The address Tabby should call, built exactly as the payments screen and
+     * GatewayPreflight build it.
+     *
+     * external(), not redirect(): the reader is a server at Tabby, so what is
+     * registered has to be the address this shop is configured at rather than
+     * whatever host the admin happens to be signed in on. If these three ever
+     * disagreed, syncWebhooks() would prune the live registration as a stale one
+     * on every run.
+     */
+    /**
+     * Why neither webhook call can proceed, or null when both can.
+     *
+     * One reader for both, so the read and the write cannot disagree about when
+     * the shop is ready — and each answer names the box that is empty rather
+     * than saying "not configured", because the fix for each is different.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function webhookPrecondition(): ?array
+    {
+        if (! $this->configured()) {
+            return [
+                'ok' => false,
+                'error' => 'not_configured',
+                'message' => 'Paste the Tabby public and secret keys in first.',
+            ];
+        }
+
+        if ($this->ourWebhookUrl() === null) {
+            return [
+                'ok' => false,
+                'error' => 'no_webhook_secret',
+                'message' => 'Save the Tabby tab once to generate its webhook secret, then register the webhook.',
+            ];
+        }
+
+        return null;
+    }
+
+    public function ourWebhookUrl(): ?string
+    {
+        $secret = $this->credentials->get($this->id(), 'webhook_secret');
+
+        if ($secret === '') {
+            return null;
+        }
+
+        return url(Url::external('/api/payments/webhook/' . $this->id() . '/')) . $secret;
+    }
+
+    /** The prefix every webhook URL of ours shares, whatever the secret is. */
+    private function webhookUrlPrefix(): string
+    {
+        return url(Url::external('/api/payments/webhook/' . $this->id() . '/'));
+    }
+
+    /** @return array<string, mixed> */
+    private function countryWebhookStatus(string $country, string $url): array
+    {
+        $hooks = $this->listWebhooks($country);
+
+        if ($hooks === null) {
+            return ['state' => 'unreadable', 'message' => 'Tabby would not list this country\'s webhooks.'];
+        }
+
+        if ($hooks === 'not_authorised') {
+            return ['state' => 'not_authorised', 'message' => 'This account is not authorised for this country.'];
+        }
+
+        $ours = $this->matchingHook($hooks, $url);
+        $stale = $this->staleHooks($hooks, $url);
+
+        if ($ours === null) {
+            return [
+                'state' => 'missing',
+                'stale' => count($stale),
+                'message' => $stale === []
+                    ? 'Tabby has no webhook pointing at this shop, so it cannot tell us a payment succeeded.'
+                    : 'Tabby is calling an old address for this shop. Re-register to move it and remove the old one.',
+            ];
+        }
+
+        $agrees = $this->hookIsTest($ours) === $this->sandboxKeys();
+
+        return [
+            'state' => $agrees ? 'current' : 'wrong_mode',
+            'stale' => count($stale),
+            'message' => $agrees
+                ? 'Registered and pointing at this shop.'
+                : 'Registered, but flagged for the wrong environment — Tabby will not deliver live events to a test webhook.',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function syncCountry(string $country, string $url, bool $isTest): array
+    {
+        $hooks = $this->listWebhooks($country);
+
+        if ($hooks === null) {
+            return ['state' => 'unreadable', 'message' => 'Tabby would not list this country\'s webhooks, so nothing was changed.'];
+        }
+
+        if ($hooks === 'not_authorised') {
+            return ['state' => 'not_authorised', 'message' => 'This account is not authorised for this country.'];
+        }
+
+        $ours = $this->matchingHook($hooks, $url);
+        $pruned = 0;
+
+        /*
+         * PRUNE BEFORE REGISTERING, not after. If the create fails, a shop with
+         * a stale hook has still had the hook that could not verify anything
+         * removed and a screen that says so — whereas pruning after a successful
+         * create and then failing leaves two hooks and no record of which is
+         * which. And Tabby, unlike Stripe, has never refused a second hook on a
+         * second URL, so there is no state being destroyed to make room.
+         */
+        foreach ($this->staleHooks($hooks, $url) as $hook) {
+            $id = trim((string) ($hook['id'] ?? ''));
+
+            if ($id === '') {
+                continue;
+            }
+
+            $delete = $this->forCountry(
+                $country,
+                fn () => $this->attempt('DELETE', '/api/v1/webhooks/' . urlencode($id)),
+            );
+
+            // A 404 means somebody removed it between the list and now, which is
+            // the outcome that was wanted.
+            if ($delete['ok'] || ($delete['status'] ?? null) === 404) {
+                $pruned++;
+            }
+        }
+
+        if ($ours !== null) {
+            if ($this->hookIsTest($ours) === $isTest) {
+                return ['state' => 'current', 'pruned' => $pruned, 'message' => 'Already registered and correct.'];
+            }
+
+            $id = trim((string) ($ours['id'] ?? ''));
+            $update = $this->forCountry($country, fn () => $this->attempt(
+                'PUT',
+                '/api/v1/webhooks/' . urlencode($id),
+                ['url' => $url, 'is_test' => $isTest],
+            ));
+
+            return $update['ok']
+                ? ['state' => 'updated', 'pruned' => $pruned, 'message' => 'Moved to the ' . ($isTest ? 'sandbox' : 'live') . ' environment.']
+                : ['state' => 'failed', 'pruned' => $pruned, 'error' => $update['error'], 'message' => 'Tabby refused to update the registration.'];
+        }
+
+        $create = $this->forCountry($country, fn () => $this->attempt(
+            'POST',
+            '/api/v1/webhooks',
+            ['url' => $url, 'is_test' => $isTest],
+        ));
+
+        return $create['ok']
+            ? ['state' => 'registered', 'pruned' => $pruned, 'message' => 'Registered with Tabby.']
+            : ['state' => 'failed', 'pruned' => $pruned, 'error' => $create['error'], 'message' => 'Tabby refused to register this shop.'];
+    }
+
+    /**
+     * One country's registered webhooks.
+     *
+     * Three answers, deliberately distinguishable: a list, the string
+     * `not_authorised` for a country this account does not hold, and null for
+     * "could not read". Collapsing the last two would make an outage look like a
+     * country the merchant never had, which is the one shape that would let
+     * syncWebhooks() report success having registered nothing.
+     *
+     * @return array<int, array<string, mixed>>|'not_authorised'|null
+     */
+    private function listWebhooks(string $country): array|string|null
+    {
+        $attempt = $this->forCountry(
+            $country,
+            fn () => $this->attempt('GET', '/api/v1/webhooks'),
+        );
+
+        if (! $attempt['ok']) {
+            /*
+             * `not_authorized` and `not_found` are Tabby's errorType for "not
+             * your country". errorCode() has already reduced the body to that
+             * one named field, so nothing else from the response is read here.
+             */
+            if (in_array((string) $attempt['error'], ['not_authorized', 'not_found'], true)) {
+                return 'not_authorised';
+            }
+
+            return null;
+        }
+
+        $body = $attempt['body'];
+
+        if (! is_array($body)) {
+            return [];
+        }
+
+        // Tabby answers this collection as a bare list, and has been seen to
+        // answer a single registration as one object. Both, plus the wrapped
+        // shapes paymentList() already handles, reduce to a list here.
+        if (isset($body['id'])) {
+            return [$body];
+        }
+
+        $list = $this->paymentList($body);
+
+        return array_values(array_filter($list, 'is_array'));
+    }
+
+    /**
+     * The hook registered for exactly this URL.
+     *
+     * hash_equals rather than ==, and not because a webhook list is an attack
+     * surface: the URL ends in this install's webhook secret, so this comparison
+     * is a secret comparison whatever it is being used for, and a secret
+     * compared with == in one place is how the habit of comparing them with ==
+     * gets established.
+     *
+     * @param  array<int, array<string, mixed>>  $hooks
+     * @return array<string, mixed>|null
+     */
+    private function matchingHook(array $hooks, string $url): ?array
+    {
+        foreach ($hooks as $hook) {
+            $candidate = (string) ($hook['url'] ?? '');
+
+            if ($candidate !== '' && hash_equals($url, $candidate)) {
+                return $hook;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Hooks pointing at THIS shop's webhook path under a different secret.
+     *
+     * The prefix test is what keeps this from touching anything that is not
+     * ours: it carries this install's host and base path as well as the
+     * `/api/payments/webhook/tabby/` route, so a hook the merchant registered
+     * for another system, another store or another environment does not match
+     * and is never a candidate for deletion.
+     *
+     * @param  array<int, array<string, mixed>>  $hooks
+     * @return array<int, array<string, mixed>>
+     */
+    private function staleHooks(array $hooks, string $url): array
+    {
+        $prefix = $this->webhookUrlPrefix();
+        $stale = [];
+
+        foreach ($hooks as $hook) {
+            $candidate = (string) ($hook['url'] ?? '');
+
+            if ($candidate === '' || hash_equals($url, $candidate)) {
+                continue;
+            }
+
+            if (str_starts_with($candidate, $prefix)) {
+                $stale[] = $hook;
+            }
+        }
+
+        return $stale;
+    }
+
+    /** Tabby has answered `is_test` as a bool and as the strings "true"/"1". */
+    private function hookIsTest(array $hook): bool
+    {
+        $value = $hook['is_test'] ?? false;
+
+        return is_string($value)
+            ? in_array(strtolower(trim($value)), ['1', 'true', 'yes'], true)
+            : (bool) $value;
     }
 
     /* -------------------------------------------------------- reconciliation */
@@ -569,14 +1574,24 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         $status = strtoupper((string) ($payment['status'] ?? ''));
 
         /*
-         * CLOSED is Tabby's word for captured — money taken. AUTHORIZED is
-         * money committed and not yet taken, which Tabby auto-voids; it is not
-         * settled and must not be counted as such. CREATED is a shopper who
-         * never finished.
+         * CLOSED is Tabby's word for BOTH "captured" and "voided", and reading
+         * it as settled flatly was a reconciliation that agreed with itself.
+         *
+         * A voided authorisation — cancelled order, released hold, nobody
+         * charged — arrived here as SETTLED money. Reconciliation then matched
+         * it against the order it belonged to and reported the pair as agreed,
+         * which is the single worst answer available: not a discrepancy anybody
+         * could chase, but a clean bill of health over money that does not
+         * exist. The captures list is the only thing that separates the two.
+         *
+         * AUTHORIZED is money committed and not yet taken, which Tabby
+         * auto-voids; it is not settled and must not be counted as such.
+         * CREATED is a shopper who never finished.
          */
-        $state = match ($status) {
-            'CLOSED' => RemoteTxn::SETTLED,
-            'AUTHORIZED' => RemoteTxn::AUTHORISED,
+        $state = match (true) {
+            $status === 'CLOSED' && $this->hasCapture($payment) => RemoteTxn::SETTLED,
+            $status === 'CLOSED' => RemoteTxn::DEAD,
+            $status === 'AUTHORIZED' => RemoteTxn::AUTHORISED,
             default => RemoteTxn::DEAD,
         };
 
@@ -685,6 +1700,37 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         return is_string($id) && $id !== '' ? $id : null;
     }
 
+    /**
+     * Did money actually move on this payment?
+     *
+     * THE SINGLE READER FOR THE CLOSED AMBIGUITY, and the reason it is one
+     * method rather than four `!empty($payment['captures'])` checks: this is the
+     * difference between a sale and a released hold, it was read three different
+     * ways before (and wrongly in all three), and the next place that needs the
+     * answer must not be free to invent a fourth.
+     *
+     * An entry with no id does not count. Tabby has never answered one, but
+     * `captures: [[]]` would otherwise report captured money with no transaction
+     * to point at — which is the exact state capture() was writing when it
+     * treated a void as a capture, reached by a different route.
+     */
+    private function hasCapture(array $payment): bool
+    {
+        $captures = $payment['captures'] ?? null;
+
+        if (! is_array($captures)) {
+            return false;
+        }
+
+        foreach ($captures as $capture) {
+            if (is_array($capture) && trim((string) ($capture['id'] ?? '')) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /* -------------------------------------------------------------- helpers */
 
     private function buyer(Order $order): array
@@ -701,13 +1747,194 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         ];
     }
 
+    /**
+     * Where the goods are going.
+     *
+     * One of Tabby's fraud signals and part of the same transaction they are
+     * being asked to finance, so it travels with the buyer block rather than
+     * behind the `share_order_history` switch — that switch is about OTHER
+     * orders. Shipping address, falling back to billing, exactly as the plugin
+     * falls back.
+     *
+     * Two fields and no more: `address` and `city` are what Tabby's schema
+     * carries here, and a postcode or a phone added "while we are at it" would
+     * be buyer data sent for no purpose.
+     *
+     * @return array<string, string>
+     */
+    private function shippingAddress(Order $order): array
+    {
+        $shipping = is_array($order->shipping_address) ? $order->shipping_address : [];
+        $billing = is_array($order->billing_address) ? $order->billing_address : [];
+
+        $line = $this->addressLine($shipping);
+
+        if ($line === '') {
+            $line = $this->addressLine($billing);
+        }
+
+        $city = trim((string) ($shipping['city'] ?? ''));
+
+        if ($city === '') {
+            $city = trim((string) ($billing['city'] ?? ''));
+        }
+
+        return ['address' => $line, 'city' => $city];
+    }
+
+    /** @param array<string, mixed> $address */
+    private function addressLine(array $address): string
+    {
+        $parts = array_filter([
+            trim((string) ($address['address_1'] ?? $address['address'] ?? '')),
+            trim((string) ($address['address_2'] ?? '')),
+        ], fn (string $part) => $part !== '');
+
+        return implode(', ', $parts);
+    }
+
+    /**
+     * Two aggregate numbers about the person buying.
+     *
+     * `registered_since` and `loyalty_level` — when this customer's account was
+     * created and how many orders they have finished — which is the ordinary
+     * fraud signal any payment provider is given, and is NOT behind
+     * `share_order_history`: it names no order, no address and no amount.
+     *
+     * Null for a guest. A guest has no registration date and inventing one (the
+     * order's own timestamp is the tempting candidate) would tell Tabby every
+     * guest registered moments ago, which is a signal that is both false and
+     * adverse.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buyerHistory(Order $order): ?array
+    {
+        $customerId = $order->customer_id;
+
+        if ($customerId === null) {
+            return null;
+        }
+
+        $customer = \App\Models\Customer::query()
+            ->select(['id', 'created_at'])
+            ->find($customerId);
+
+        if ($customer === null || $customer->created_at === null) {
+            return null;
+        }
+
+        return [
+            'registered_since' => $customer->created_at->toIso8601String(),
+            /*
+             * Completed and refunded, which is how the plugin counts it: a
+             * refunded order was still a real purchase that was really paid for,
+             * and it is evidence about this buyer either way.
+             */
+            'loyalty_level' => (int) \App\Models\Order::query()
+                ->where('customer_id', $customerId)
+                ->whereIn('status', ['completed', 'refunded'])
+                ->count(),
+        ];
+    }
+
+    /**
+     * Up to ten of this buyer's previous orders, and ONLY behind the switch.
+     *
+     * This is the payload half of `share_order_history`. Off — which is how it
+     * ships — the key is absent from the request entirely rather than sent
+     * empty.
+     *
+     * Matched to the customer by EMAIL and never by phone, although the plugin
+     * offers both. A phone number is not unique on this shop's data (imported
+     * WooCommerce orders share household numbers, and the column is nullable and
+     * unvalidated), so a phone match would describe a stranger's purchases to
+     * Tabby as this buyer's — which is both a worse signal and a disclosure
+     * nobody consented to. The plugin has a `use_phone` switch for the same
+     * reason and it is the one setting of theirs this refuses outright.
+     *
+     * Terminal statuses only, as HISTORY_STATUSES maps them: an order still in
+     * flight says nothing about whether this buyer pays.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function orderHistory(Order $order): array
+    {
+        if ($this->credentials->get($this->id(), 'share_order_history') !== '1') {
+            return [];
+        }
+
+        $email = trim((string) $order->email);
+
+        if ($email === '') {
+            return [];
+        }
+
+        // One query for the orders and one for their items — never one per
+        // order. Capped before the join, so the cost does not move with how many
+        // orders this customer has.
+        $previous = \App\Models\Order::query()
+            ->where('email', $email)
+            ->whereKeyNot($order->getKey())
+            ->whereIn('status', array_keys(self::HISTORY_STATUSES))
+            ->orderByDesc('id')
+            ->limit(self::HISTORY_LIMIT)
+            ->with(['items:id,order_id,name,quantity,unit_price,total,sku,product_id'])
+            ->get();
+
+        return $previous->map(fn (Order $past) => [
+            'amount' => $this->toMajor((int) $past->total),
+            'payment_method' => (string) ($past->payment_method ?? ''),
+            'purchased_at' => optional($past->created_at)->toIso8601String(),
+            'status' => self::HISTORY_STATUSES[(string) $past->status] ?? 'canceled',
+            'buyer' => $this->buyer($past),
+            'shipping_address' => $this->shippingAddress($past),
+            'items' => $this->items($past),
+        ])->values()->all();
+    }
+
+    /**
+     * The line items, in Tabby's shape.
+     *
+     * `unit_price` is the line TOTAL divided by the quantity, not the list
+     * price, which is what the plugin sends (`get_total() / get_quantity()`).
+     * It matters when a coupon or a line discount is on the order: Tabby checks
+     * that the items, the shipping and the tax account for the amount, and list
+     * prices on a discounted basket add up to more than is being charged. The
+     * division is integer-safe because both sides are fils and the quantity
+     * cannot be zero here — `order_items.quantity` is an unsigned default-1
+     * column — but it is guarded anyway, because a divide by zero on the
+     * checkout path is a 500 at the till.
+     *
+     * `reference_id` is the SKU when there is one and the product id otherwise,
+     * which is how the shop's own exports key an item, so a line Tabby queries
+     * can be found here.
+     *
+     * The product-derived fields the plugin also sends — `category`,
+     * `image_url`, `product_url` and the full product `description` — are NOT
+     * here. Reaching them means loading every product and its category behind
+     * every item on the checkout POST, and the description in particular is a
+     * page of HTML per line sent to a scoring API that does not read it. Tabby
+     * accepts the payload without them; if approval rates ever argue for the
+     * first three, `with('items.product.category')` is the shape to add and it
+     * is two queries rather than a pattern.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     private function items(Order $order): array
     {
-        return $order->items->map(fn ($item) => [
-            'title' => (string) $item->name,
-            'quantity' => (int) $item->quantity,
-            'unit_price' => $this->toMajor((int) $item->unit_price),
-            'reference_id' => (string) ($item->sku ?: $item->product_id),
-        ])->values()->all();
+        return $order->items->map(function ($item) {
+            $quantity = max(1, (int) $item->quantity);
+            $lineTotal = (int) $item->total;
+
+            return [
+                'title' => (string) $item->name,
+                'quantity' => (int) $item->quantity,
+                'unit_price' => $this->toMajor(
+                    $lineTotal > 0 ? (int) round($lineTotal / $quantity) : (int) $item->unit_price,
+                ),
+                'reference_id' => (string) ($item->sku ?: $item->product_id),
+            ];
+        })->values()->all();
     }
 }
