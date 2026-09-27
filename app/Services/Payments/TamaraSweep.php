@@ -242,9 +242,21 @@ class TamaraSweep
             ->whereNull('paid_at')
             ->where('created_at', '<=', $now->subMinutes($minutes))
             ->where('created_at', '>=', $now->subDays($days))
-            // Oldest first: a capped run works on the orders closest to being
-            // expired by Tamara, which are the ones where waiting costs money.
+            /*
+             * Oldest first: a capped run works on the orders closest to being
+             * expired by Tamara, which are the ones where waiting costs money.
+             *
+             * AND `id` AFTER IT, because `created_at` CAN TIE and this query is
+             * SLICED. StableOrderingTest caught this and it is a real defect, not
+             * a style rule: a shop that placed sixty orders inside one second —
+             * an import, or a busy minute — has sixty rows the database may
+             * return in any order it likes, so a limit of fifty could hand back
+             * an overlapping fifty every run and never reach the last ten. Those
+             * ten are exactly the orders this sweep exists to rescue, and they
+             * would sit there until Tamara expired them.
+             */
             ->orderBy('created_at')
+            ->orderBy('id')
             ->limit($limit)
             ->get();
     }

@@ -2082,3 +2082,121 @@ it('does not promise a widget this shop does not draw', function () {
 
     expect(str_contains($source, "'public_key')"))->toBeFalse();
 });
+
+/* ══════════ 15. the replayed notification that used to 503 for ever ═══════ */
+
+it('answers a replayed tamara notification 200 once the order is authorised', function () {
+    pg1Provider();
+    $order = pg1Order(['total' => 10000, 'subtotal' => 10000]);
+
+    /*
+     * THE BUG, which was in the shipped code and is the reason this case exists.
+     *
+     * handleWebhook() decided whether a FAILED `POST /orders/{id}/authorise` was
+     * fatal by reading `order_status` out of the DELIVERED BODY. Tamara resends a
+     * notification it did not get a 200 for, and the body it resends still says
+     * `approved` — so on the replay:
+     *
+     *   body says approved  ->  authorise the order again
+     *   Tamara answers 409 (it is already authorised)
+     *   RemoteGateway::call() collapses every non-2xx to null
+     *   `$authorised === null && ! in_array('approved', [authorised, ...])` -> TRUE
+     *   WebhookOutcome::failed('could not authorise with Tamara')  ->  503
+     *
+     * A 503 asks the sender to try again. Tamara would retry a notification for
+     * an order that WAS paid, get another 503, and keep going until its retry
+     * budget ran out — filling the provider's delivery log with failures against
+     * a perfectly good order, and hiding any real failure in the noise.
+     *
+     * Reading the status off the AUTHENTICATED fetch instead fixes it for free:
+     * Tamara reports the order as `authorised` on the second look, so the
+     * authorise call is not made at all and PaymentConfirmer answers "already
+     * applied".
+     */
+    $remoteStatus = 'approved';
+
+    Http::fake([
+        // A CALLBACK, not Http::response(fn () => ...): the closure form of
+        // response() treats its argument as the body, so the array arrives as a
+        // stream write and Guzzle throws "Array to string conversion". A callback
+        // as the fake's VALUE is re-evaluated per request, which is what lets
+        // Tamara's answer change between the two deliveries.
+        '*/merchants/orders/*' => function () use ($order, &$remoteStatus) {
+            return Http::response([
+                'order_id' => 'tam_replay',
+                'order_reference_id' => $order->order_number,
+                'status' => $remoteStatus,
+                'total_amount' => ['amount' => 100.00, 'currency' => 'AED'],
+            ]);
+        },
+        // Exactly what Tamara does on a second authorise: 409 Conflict.
+        '*/authorise' => Http::sequence()
+            ->push(['order_id' => 'tam_replay', 'status' => 'authorised'], 200)
+            ->push(['message' => 'order is already authorised'], 409),
+    ]);
+
+    /*
+     * A genuinely signed delivery, built here rather than borrowed from
+     * TamaraWebhookTest: Pest's helpers are global across files, so calling that
+     * file's `tamaraRequest()` would make this case depend on a fixture another
+     * file is free to change, and it would pass or fail for reasons invisible
+     * from here.
+     */
+    $deliver = function () use ($order) {
+        $b64 = fn (string $raw) => rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+
+        $head = $b64((string) json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
+        $claims = $b64((string) json_encode(['sub' => 'notification', 'iat' => time()]));
+        $token = $head . '.' . $claims . '.'
+            . $b64(hash_hmac('sha256', $head . '.' . $claims, PG1_NOTIFY_KEY, true));
+
+        $request = \Illuminate\Http\Request::create(
+            '/api/payments/webhook/tamara/' . PG1_URL_SECRET,
+            'POST', [], [], [],
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $token],
+            (string) json_encode([
+                'order_id' => 'tam_replay',
+                'order_reference_id' => $order->order_number,
+                'order_status' => 'approved',
+            ]),
+        );
+
+        $request->headers->set('Content-Type', 'application/json');
+
+        $route = new \Illuminate\Routing\Route(
+            ['POST'], '/api/payments/webhook/{gateway}/{secret}', fn () => null,
+        );
+        $route->bind($request);
+        $request->setRouteResolver(fn () => $route);
+
+        return pg1Gateway()->handleWebhook($request);
+    };
+
+    $first = $deliver();
+
+    expect($first->accepted)->toBeTrue()
+        ->and($first->status)->toBe(200)
+        ->and($order->fresh()->paid_at)->not->toBeNull();
+
+    // Tamara now reports the order as authorised, which is what the real API
+    // does the moment the first call succeeded.
+    $remoteStatus = 'authorised';
+
+    $second = $deliver();
+
+    expect($second->accepted)->toBeTrue()
+        ->and($second->status)->toBe(200)
+        ->and($second->status)->not->toBe(503);
+
+    /*
+     * MUTATION: put the old line back —
+     *
+     *   $authorised = $this->call('POST', '/orders/'.urlencode($id).'/authorise');
+     *   if ($authorised === null && ! in_array($statusFromBody, [...], true)) {
+     *       return WebhookOutcome::failed('could not authorise with Tamara');
+     *   }
+     *
+     * unconditionally rather than only from `approved`, and the second delivery
+     * comes back 503.
+     */
+});

@@ -7,7 +7,7 @@ use Illuminate\Database\Migrations\Migration;
 /**
  * Clear compiled caches for the Tamara gateway package.
  *
- *   - ROUTES. routes/payments-tamara.php adds five paths — three under
+ *   - ROUTES. routes/payments-tamara.php adds six paths — five under
  *     /admin-api/payments/tamara and one POST /admin-api/orders/{order}/void.
  *     A compiled route cache on the live host knows none of them, and the
  *     failure is the quiet kind that has shipped twice on this project: the
@@ -36,11 +36,21 @@ use Illuminate\Database\Migrations\Migration;
  * Runs after 2026_09_27_000000_add_authorisation_void_tracking, which adds the
  * two columns those classes write.
  *
- * VIEWS are cleared too. This package ships no Blade change — the Tamara
- * settings it adds are text fields that the existing payments screen already
- * renders from configSchema(), which is why it needed no edit to
- * resources/views/admin/app.blade.php — but the view cache is keyed by path and
- * clearing it costs one recompile.
+ *   - AND THE CONSOLE COMMAND LIST. app/Console/Commands/SweepTamaraOrders.php
+ *     is new, and Laravel discovers commands by scanning that directory —
+ *     `bootstrap/cache/services.php` and `packages.php` are already cleared
+ *     below, which is what makes `php artisan payments:tamara-sweep` exist on
+ *     the live host rather than reporting "command not defined". The owner does
+ *     not need it (the sweep has a button) but the person with the Cloudways
+ *     shell does, and a command that is in the package and not in the list is
+ *     the kind of thing that gets diagnosed as a bad package.
+ *
+ * VIEWS are cleared too. This package ships no Blade change — every Tamara
+ * setting it adds (the two basket limits, the payment type, the instalment
+ * count, the two exclusion lists and the registered webhook id) is a text field
+ * that the existing payments screen already renders from configSchema(), which
+ * is why it needed no edit to resources/views/admin/app.blade.php — but the view
+ * cache is keyed by path and clearing it costs one recompile.
  */
 return new class extends Migration
 {

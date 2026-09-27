@@ -189,6 +189,18 @@ function invDeliver(string $gateway, Order $order, int $amountFils, string $curr
         'api-sandbox.tamara.co/merchants/orders/*' => Http::response([
             'order_id' => 'tam_inv',
             'order_reference_id' => $order->order_number,
+            /*
+             * `status` IS PART OF THIS RESPONSE AND THIS FAKE USED TO OMIT IT.
+             *
+             * Tamara's GET /merchants/orders/{id} always carries the order's
+             * status -- TamaraGateway::capture() and ::void() have both read it
+             * since they were written. handleWebhook() did not: it took the
+             * status from the DELIVERED CALLBACK BODY instead, so a fake could
+             * leave it out and nothing noticed. It reads the authenticated
+             * response now (a signed body still is not an authenticated status),
+             * so the fake has to send what the real endpoint sends.
+             */
+            'status' => 'approved',
             'total_amount' => ['amount' => number_format($amountFils / 100, 2, '.', ''), 'currency' => $currency],
         ]),
         'api-sandbox.tamara.co/orders/*' => Http::response(['order_id' => 'tam_inv', 'status' => 'authorised']),
