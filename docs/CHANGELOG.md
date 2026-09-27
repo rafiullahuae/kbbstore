@@ -3,6 +3,76 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.290
+Every upload in the console: a bar that tells slow from stuck, and drag-and-drop
+everywhere.
+
+### ▲ WHY THE BAR "STUCK AT 72%" — it was not stuck, and it was not the size
+
+Measured, not guessed. **The browser's progress event does not tick.** It fires
+when the network buffer drains, in roughly 1.6 MB strides, and **between those
+events the bar is exactly still**:
+
+| your upload speed | how long the bar sits motionless |
+|---|---|
+| 600 KB/s | 2.6 seconds |
+| **300 KB/s (yours)** | **5.6 seconds** |
+| 100 KB/s | 16.8 seconds |
+
+A bar frozen for five and a half seconds, over and over, **is** "stuck at 72%".
+Nothing was wrong with your server: no proxy, no timeout. Your 8.4 MB file plus
+its packaging measures 289 **bytes** of overhead — it would need 1.6 MB to
+breach your limit.
+
+**And the panel was lying to you twice.**
+
+"All of it has arrived. The server is checking the file" was shown **up to 49
+seconds before the server had finished receiving anything**. The browser had
+handed the bytes to the operating system; the upload was still in flight.
+
+Worse, the "stalled" warning fired after 20 seconds — **less than the 16.8
+seconds a healthy 100 KB/s upload legitimately sits still**. On any connection
+below about 82 KB/s it accused a perfectly good upload of dying and invited you
+to cancel it.
+
+**What you get now:** a real speed and a time remaining —
+*"6 MB of 8.4 MB · 297 KB/s · about 8 seconds left to send"* — and a stall
+warning worked out from your own connection, so slow is never called stuck.
+
+At your exact frame it reads 71%, 297 KB/s, 8 seconds left. It was 8 seconds
+from finishing.
+
+### Drag and drop, on every uploader in the console
+
+One uploader now serves them all, so they cannot drift apart again:
+
+- **Shoppable video → Sections → a clip → Files** — the screen you photographed.
+  All three rows are drop targets, with a live bar. The "Up to 64MB" line is gone.
+- **Choose an image** (the picker every screen uses) — drop zone, a real limit, Stop.
+- **Products → Edit** — main image, gallery and share image, each with its bar in
+  the card you clicked rather than the one next door.
+- **Reviews → Import** — drop zone and progress.
+
+Dropping several photos into a gallery uploads them one at a time, each with its
+own bar and its own Stop, and **a file that fails stays on screen with its
+reason** instead of the whole panel emptying.
+
+### ▲ A FILE DROPPED NEXT TO A BOX USED TO THROW AWAY YOUR WORK
+
+Let a picture go two pixels outside a drop zone — on the toolbar, in the gap
+between two cards — and the **browser** took over and opened the file, replacing
+the page. A half-filled product form went with it, unsaved.
+
+Every gap in the console now refuses that. Dragging to reorder still works.
+
+### Also
+
+- The gallery tiles used to light up green when you dragged a photo over them,
+  promising a drop, and then do nothing.
+- Pressing Stop aborted the upload but left the screen greyed out until you
+  reloaded.
+- A 3 MB photo in the picker came back as "The file field must be a file."
+
 ## 2.60.289
 Your 8.4 MB video, why it was refused, and two ways an order could be shipped
 and never paid for.
