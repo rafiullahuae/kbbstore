@@ -3,6 +3,89 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.302
+A review filed against the wrong customer, Tamara auto-capture ready for your
+decision, and the MySQL suite green for the first time.
+
+### ▲ A REVIEW COULD BE FILED AGAINST THE WRONG PERSON
+
+The review importer matched customers with `LOWER(email)`. Measured directly
+against your MySQL version: the default collation is **accent-insensitive as
+well as case-insensitive**, so `jose@example.com` and `JOSÉ@Example.com` matched
+each other.
+
+**What that meant:** a review written by one customer attached to a *different*
+customer — whose name the product page then prints under an opinion they never
+wrote. It matters now because you are about to import.
+
+The comparison is done in PHP now, where accents are accents.
+
+**Related, and deliberately NOT changed:** the checkout has the same over-match,
+and there it is **load-bearing** — the customer email column is unique under
+that collation, so the two spellings cannot both exist. Narrowing it there would
+turn a wrong-customer link into a **failure at checkout**. That one is a
+database-collation decision and it is yours, not something to fix quietly.
+
+### ▲ TAMARA AUTO-CAPTURE — BUILT, AND SWITCHED OFF
+
+If an order ships and is never captured, **you are never paid** — Tamara voids
+the hold after about 180 days.
+
+The machinery now exists and **does nothing until you turn it on**. Applying
+this package captures nothing and does not contact Tamara once.
+
+**See exactly what it would do, before deciding**, over SSH:
+
+```
+php artisan payments:tamara-capture --dry
+```
+
+That lists the orders that would be captured and the total — and it works
+*while the switch is still off*. On a test shop it printed:
+
+```
+1 order(s) would be captured:
+  TC-PREVIEW-1   shipped   249.00 AED   authorised 2026-09-18 22:53:14
+Total that would be captured: 249.00 AED
+```
+
+**The switch:** `Store → Payments → Tamara → How this shop uses it → "Capture
+automatically when an order ships"`.
+
+**The question for you:** should capture follow fulfilment automatically? On
+means the shop takes the money about 30 minutes after an order reaches
+Shipped/Completed, instead of you pressing Capture on each one.
+
+### ▲ THE TEST SUITE NOW PASSES ON MYSQL, WHICH IS WHAT YOUR SHOP RUNS
+
+Seven tests had been failing there while passing on the engine used for
+day-to-day checks. **None of the seven was a fault on your shop** — each was a
+test checking the database driver rather than the behaviour.
+
+That is worth saying because the same mistake pointing the other way passes
+*silently*, and one was found doing exactly that: a check meant to catch a slow
+page was comparing **nothing with nothing** and reporting success.
+
+### ▲ THE MEDIA LIBRARY NOW SAYS WHAT IS REALLY IN IT
+
+It read *"Every file uploaded through the admin…"*. Two of the things that land
+there are not admin uploads at all: **photos your customers attach to reviews**,
+and anything the Instagram sync downloads.
+
+That matters because the Media Library is where files get **deleted** from — if
+you believe the grid holds only your own uploads, you have no reason to expect
+that deleting an unfamiliar row takes a live customer review photo with it.
+
+### ▲ FOUND, REPORTED, NOT FIXED
+
+**A partial capture reads as fully refundable.** If a Tamara order was partly
+captured somewhere other than this shop, the shop records the *whole* order
+total as captured — and that figure is the ceiling a refund is measured against.
+The fix changes an interface four payment gateways implement, so it is named
+here rather than half-done.
+
+**No setting added that does anything, no default moved.**
+
 ## 2.60.301
 Your imported product images will now reach the Media Library — and a refund
 the shop could have offered on money it never took.
