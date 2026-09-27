@@ -409,3 +409,230 @@ Ranked by what it blocks.
 - `srcset` is not parsed by the media rewrite. A comma-separated list of
   address plus descriptor is a different edit from replacing an attribute's
   whole value, and needs its own idempotency argument.
+
+---
+
+# Lane CP — Cart panel: Desktop / Mobile control sets, with a live preview
+
+Added after the owner's mobile screenshot of the slide-out cart, with an arrow
+at the quantity stepper and the note:
+
+> "on mobile cart panel, i need to squeez the rows, spacing, font sizes,
+> quantity button size, cross icon size, padding, and cart checkout buttons
+> style etc. i need all those controls on backend on Appearance > Cart Panel >
+> Desktop / Mobile, the same way you did for checkout page, along with live
+> previews. don't touch the checkout page at all."
+
+**The work.** `Appearance → Cart panel` already has sliders, and they are
+grouped by CATEGORY — Size, Density, Content, Behaviour, Wording, Colour. The
+owner wants them grouped by DEVICE, the way `Appearance → Checkout page` is,
+with a phone preview beside the mobile controls, and he wants a set of values
+that does not exist yet: today only four keys have a phone variant
+(`panel_width_m`, `thumb_size_m`) and everything else — row padding, name size,
+stepper size, list padding — is ONE number shared by a 380px desktop panel and
+a 77vw phone panel. That shared number is the whole complaint: squeezing the
+phone currently squeezes the desktop too.
+
+**Where it sits.** `Appearance → Cart panel`, which becomes two tabs: **Desktop**
+and **Mobile**. Content, Behaviour and Wording are device-independent and stay
+as they are — put them behind a third tab or leave them below both; they are not
+what was asked for and must not change value.
+
+**Owns.**
+- `app/Services/CartPanel.php`
+- `app/Http/Controllers/Admin/CartPanelApiController.php`
+- `resources/views/admin/partials/cart-panel-screen.blade.php` — **new file, see
+  below**
+- `resources/views/partials/drawers.blade.php` and
+  `resources/views/partials/cart-drawer.blade.php`
+- the cart-drawer rules in the storefront stylesheet
+- `tests/Feature/CartPanel*Test.php` — new files
+
+**Must not touch.**
+- **`resources/views/admin/partials/checkout-page-screen.blade.php`,
+  `app/Services/CheckoutPage.php`, `CheckoutPageApiController.php`, and
+  `resources/views/store/checkout.blade.php`.** "don't touch the checkout page
+  at all" is the owner's sentence and it is not a preference — the checkout
+  screen is another lane's finished work and `StorefrontEnglishUnchangedTest`
+  pins the page. Read the checkout screen as the PATTERN; copy from it; change
+  nothing in it.
+- `resources/views/admin/app.blade.php` — see the extraction note below.
+- `app/Services/CartPage.php` and `cart-page-screen.blade.php`. The cart PAGE
+  and the cart PANEL are two different screens and the owner named the panel.
+- `routes/web.php`, `KBB-Master-Plan.md`, `KBB-Progress-Dashboard.html`.
+
+---
+
+## The five things that will go wrong if they are not read first
+
+### 1. An inline `style` attribute beats a media query — this is the landmine
+
+`drawers.blade.php:13` renders the panel as
+
+```blade
+<aside class="drawer {{ $cp->bodyClass() }}" id="cart" style="{{ $cp->cssVariables() }}">
+```
+
+so every custom property arrives in a **style attribute**, which outranks every
+media query in the stylesheet. A mobile tab that writes `--cp-rowpad` expecting
+`@media (max-width:640px)` to override it **will save and move nothing**, and it
+will look like a broken save rather than a specificity problem.
+
+`CartPanel::cssVariables()` already does this correctly for the two keys that
+have phone variants: it emits **both** `--cp-w` and `--cp-w-m`, and the
+STYLESHEET picks between them inside its media query. Every new mobile value
+must follow that shape — emit `--cp-<name>` and `--cp-<name>-m` side by side,
+and choose in the stylesheet. `checkout-page-screen.blade.php` line 26 onward
+carries the same argument in its own words; read it.
+
+### 2. The screen has to be extracted from `app.blade.php` first
+
+`renderCartPanel()` currently lives **inside** `resources/views/admin/app.blade.php`
+(`renderCartPanel()` at app.blade.php:6022), and its preview CSS is in that
+file too (the `cpp-` block from app.blade.php:1079). CLAUDE.md forbids a lane editing `app.blade.php`, because
+three lanes edit it at once — and the checkout screen was moved into its own
+partial for exactly this reason.
+
+So the first commit of this lane is a **pure move**: `renderCartPanel` and its
+`cpp-` styles out of `app.blade.php` and into
+`resources/views/admin/partials/cart-panel-screen.blade.php`, appending its own
+sidebar entry via `window.kbbAddNavEntry` and wrapping `window.go` the way
+`checkout-page-screen.blade.php` does at lines 408 and 418.
+Prove it is a pure move — the screen renders identically before and after, no
+setting changes — and ship that commit on its own so the diff is reviewable.
+
+**The integrator does the `@include`**, the same as every other partial. Do not
+edit `app.blade.php` to add it.
+
+### 3. Pin the FINISHED state, never the absence
+
+CLAUDE.md has this three times over. Do **not** write
+`expect($app)->not->toContain('cart-panel-screen')` to prove you did not wire
+yourself up: it is green in your worktree and goes red the moment the integrator
+does the one thing you asked for. Assert
+`substr_count($app, "@include('admin.partials.cart-panel-screen')") === 1`
+instead — zero is "built, never wired", two registers the sidebar entry twice
+and wraps `window.go` around its own wrapper, and both are real failures.
+
+### 4. Every new setting ships at the value the panel already has
+
+Rule 1. A shop that applies this package and opens nothing must render the cart
+panel **byte for byte** as it does today. So each new mobile key's default is
+the CURRENT shared value, not a nicer number:
+
+| new key | default | because |
+|---|---|---|
+| `row_pad_m` | `9` | today's `row_pad` |
+| `name_size_m` | `13` | today's `name_size` |
+| `stepper_size_m` | `22` | today's `stepper_size` |
+| `list_pad_m` | `16` | today's `list_pad` |
+
+The owner will then squeeze the phone himself. If you believe a default should
+move, say so in the PR body and leave it — do not bury it.
+
+### 5. The controls he actually named, and the two that do not exist yet
+
+From the message, mapped to keys. The first four exist and need a `_m` twin;
+the last three are new on both devices:
+
+- rows / spacing → `row_pad` (kbb.css:371, `.kc-item` already reads
+  `var(--cp-rowpad,9px)`)
+- font sizes → `name_size`, and add a **price size** (`price_size`) — the
+  `AED309` in his screenshot is a hard-coded size today
+- quantity button size → `stepper_size` (kbb.css:376–377, `.kc-qty button`
+  already reads `var(--cp-step,22px)`; note line 377 sizes the NUMBER between
+  the − and + off the same variable, so a change moves three boxes)
+- padding → `list_pad`
+- **cross icon size** → new, and there are **two** crosses, both hard-coded in
+  `resources/css/kbb/kbb.css`:
+  - `.kc-rm` — the ✕ on each product line (`cart-drawer.blade.php:101`).
+    `font-size:13px` at kbb.css:380, and **44×44 with font-size 15px** inside
+    `@media (max-width:900px)` at kbb.css:3354.
+  - `.kc-x` — the panel's own close button (`cart-drawer.blade.php:60`).
+    `28×28` at kbb.css:388, **44×44** on mobile at kbb.css:3325.
+- **cart / checkout button style** → new. `.cobtn` at kbb.css:610 carries
+  `border-radius:99px; padding:14px; font-size:14px`, `.btn-ghost` at
+  kbb.css:417, and both get `min-height:44px` on mobile at kbb.css:3357.
+  `--cp-cta-bg` / `--cp-cta-fg` already drive their COLOUR (kbb.css:709);
+  height, radius and label size do not exist yet.
+
+### The 44px rule, and how to handle the owner asking to break it
+
+Those three `44px` mobile values are not arbitrary and they are not spacing —
+they are **touch targets**. 44px is the minimum a finger hits reliably, and the
+`@media (max-width:900px)` block exists solely to raise `.kc-rm`, `.kc-x` and
+the two footer buttons up to it on a phone.
+
+The owner has asked to squeeze exactly these. So:
+
+- **The mobile default stays 44** for all four, because that is what the shop
+  renders today and rule 1 is not negotiable.
+- **The slider may go below it**, because he asked and it is his shop.
+- **Say so at the point of the decision**: below 44 the control's help text
+  turns warm and reads that taps get less reliable on a phone. One sentence
+  under the slider, not a blocking dialog and not a refusal.
+
+Do not silently clamp at 44 — a slider that stops where the owner did not ask
+it to stop reads as a bug, and he will report it as one.
+
+Anything else you find hard-coded in the panel: add it, default it to what is
+there now, and list it in the PR body. Do not guess at what he meant beyond
+this list — name it and ask.
+
+---
+
+## The preview
+
+Follow `checkout-page-screen.blade.php`, which settled this after two rounds of
+the owner pushing back:
+
+- **Mobile tab → preview on the RIGHT of the controls**, sticky, folding to one
+  column below 1180px. His words on the checkout screen were "in all mobile
+  tabs ... i want the preview on the right side, only in the mobile tabs."
+- **Desktop tab → preview BELOW the controls, full width**, headed "Preview".
+  A desktop panel drawn in a 372px rail shows nothing worth judging.
+- It is a **drawing**, not an iframe of the real panel: the real one needs a
+  basket to render and would cost an authenticated fetch per keystroke. The
+  `cpp-` mock already in `app.blade.php` is the starting point — it already
+  reads `--pad` and `--rowpad`.
+- It must move **on input, not on save**. That is what "live" means here.
+
+---
+
+## Rules 4 and 5 for this lane specifically
+
+- **No JavaScript that measures layout.** Two tests forbid the element-measuring
+  APIs by name. The panel sizes with `calc()` and custom properties; keep it
+  that way.
+- **A colour from a setting is a hex or it is the default.** `POLICY`'s
+  `hex => repair` already covers the three existing colour keys; any new one
+  goes through the same path. Never interpolate a raw setting into a `style`
+  attribute without it.
+- **A select stores one of its own options.** If you add a button-style select
+  (pill / square / full-width), the saved value is one of the literal options or
+  the default — never the string that arrived.
+- **`/api/*` is unauthenticated.** Nothing here should reach it, but if you
+  return panel settings anywhere public, allowlist the keys; `cartpanel_*` is
+  read through `SettingsService` and `SettingController::PUBLIC_KEYS` governs
+  what a shopper may see.
+
+## Done when
+
+1. `Appearance → Cart panel` has **Desktop** and **Mobile** tabs, each with its
+   own stored values, and the device-independent tabs are unchanged.
+2. Every control the owner named exists on both tabs, including the cross icon
+   and the two footer buttons.
+3. Both previews move on input, and the mobile preview sits beside its controls.
+4. `php artisan tinker` on a fresh database shows every `cartpanel_*` setting
+   absent, and the storefront panel renders identically to today —
+   `StorefrontEnglishUnchangedTest` does not move.
+5. A test asserts the screen partial is included **exactly once**.
+6. A test drives `cssVariables()` and proves the mobile value is emitted as its
+   OWN property rather than overwriting the desktop one — the landmine in §1,
+   with a mutation note showing it red.
+7. Screenshots at **390px and 1280px** of the admin screen AND of the storefront
+   panel, before and after a squeeze, with the measured numbers: row height,
+   stepper box, cross box, button height, and
+   `document.documentElement.scrollWidth`.
+8. The PR body names the exact admin path and lists every new key with its
+   default and the hard-coded value it replaced.
