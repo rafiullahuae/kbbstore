@@ -1843,3 +1843,242 @@ it('refuses a refund before there is a capture to reverse', function () {
     expect($result->ok)->toBeFalse()
         ->and($result->code)->toBe('not_captured');
 });
+
+/* ══════════ 14. baskets the merchant's contract does not cover ════════════ */
+
+/*
+ * Tamara agrees per merchant what may be bought on credit. The plugin honours
+ * that with `excluded_products` and `excluded_product_categories` and takes
+ * Tamara off the checkout for a basket containing one. This shop had no such
+ * control at all, so a basket the contract excludes went through Tamara exactly
+ * like any other — nothing crashes, the shop is simply selling on terms it has
+ * not agreed.
+ */
+
+it('opens a tamara session for a basket with nothing excluded', function () {
+    pg1Provider();
+    $order = pg1Order();
+
+    pg1FakeCheckout();
+
+    // The shipped default: both boxes empty, so nothing is excluded and this is
+    // byte-identical to the behaviour before the setting existed (rule 1).
+    expect(pg1Gateway()->start($order)->redirectUrl)->not->toBeNull();
+});
+
+it('will not put an excluded product on a tamara plan', function () {
+    pg1Provider(['excluded_products' => '  SKU-0 , 4242 ']);
+    $order = pg1Order();
+
+    // No fake registered. preventStrayRequests() makes "this never reaches
+    // Tamara" a real assertion: the basket is refused before the call.
+    $start = pg1Gateway()->start($order);
+
+    expect($start->redirectUrl)->toBeNull()
+        ->and((string) $start->message)->toContain('one of the items');
+
+    /*
+     * MUTATION: remove the basketAllowed() guard from start() and this throws on
+     * a stray request to /checkout — which is the shop putting an excluded item
+     * on credit.
+     */
+});
+
+it('matches an excluded product by its id as well as its sku', function () {
+    $order = pg1Order();
+
+    // A real row: order_items.product_id is a foreign key, so an invented id
+    // cannot be inserted -- which is itself worth knowing, because it means the
+    // id half of the exclusion list only ever meets ids the catalogue has.
+    $productId = \App\Models\Product::create([
+        'name' => 'Gift card',
+        'slug' => 'pg1-gift-card-' . uniqid(),
+        'price' => 0,
+        'status' => 'publish',
+    ])->id;
+
+    $order->items()->create([
+        'name' => 'Gift card',
+        'sku' => 'GC-1',
+        'product_id' => $productId,
+        'quantity' => 1,
+        'unit_price' => 0,
+        'subtotal' => 0,
+        'total' => 0,
+    ]);
+
+    // The plugin only takes ids, which is a WooCommerce habit. This shop's own
+    // catalogue screens show SKUs, so an owner told "paste product ids" will
+    // paste SKUs about half the time; both are accepted.
+    pg1Provider(['excluded_products' => (string) $productId]);
+
+    expect(pg1Gateway()->start($order->fresh())->redirectUrl)->toBeNull();
+});
+
+it('will not put a product from an excluded category on a tamara plan', function () {
+    $product = \App\Models\Product::create([
+        'name' => 'Excluded thing',
+        'slug' => 'pg1-excluded-thing-' . uniqid(),
+        'price' => 5000,
+        'status' => 'publish',
+    ]);
+
+    $category = \App\Models\Category::create([
+        'name' => 'No credit',
+        'slug' => 'pg1-no-credit-' . uniqid(),
+    ]);
+
+    \Illuminate\Support\Facades\DB::table('category_product')->insert([
+        'product_id' => $product->id,
+        'category_id' => $category->id,
+    ]);
+
+    $order = pg1Order();
+
+    $order->items()->create([
+        'name' => $product->name,
+        'sku' => 'PG1-CAT-SKU',
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'unit_price' => 5000,
+        'subtotal' => 5000,
+        'total' => 5000,
+    ]);
+
+    pg1Provider(['excluded_categories' => (string) $category->id]);
+
+    expect(pg1Gateway()->start($order->fresh())->redirectUrl)->toBeNull();
+
+    // And the same basket is fine once the category is not excluded, which proves
+    // the category list is what refused it rather than something else about the
+    // row.
+    PaymentProvider::query()->delete();
+    app(GatewayCredentials::class)->forget();
+    pg1Provider();
+    pg1FakeCheckout();
+
+    expect(pg1Gateway()->start($order->fresh())->redirectUrl)->not->toBeNull();
+});
+
+it('asks the category pivot once however many lines the order has', function () {
+    $category = \App\Models\Category::create([
+        'name' => 'Counted',
+        'slug' => 'pg1-counted-' . uniqid(),
+    ]);
+
+    pg1Provider(['excluded_categories' => (string) $category->id]);
+
+    $count = function (int $lines): int {
+        $order = pg1Order(
+            ['order_number' => 'PG1-CATSLOPE-' . $lines . '-' . uniqid()],
+            array_fill(0, $lines, ['qty' => 1, 'unit' => 1000]),
+        );
+
+        foreach ($order->items as $i => $item) {
+            $product = \App\Models\Product::create([
+                'name' => 'P' . $i,
+                'slug' => 'pg1-p-' . uniqid(),
+                'price' => 1000,
+                'status' => 'publish',
+            ]);
+
+            $item->forceFill(['product_id' => $product->id])->save();
+        }
+
+        $order = $order->fresh();
+        $order->load('items');
+
+        $pivot = 0;
+
+        \Illuminate\Support\Facades\DB::listen(function ($q) use (&$pivot) {
+            if (str_contains($q->sql, 'category_product')) {
+                $pivot++;
+            }
+        });
+
+        pg1FakeCheckout();
+        pg1Gateway()->start($order);
+
+        return $pivot;
+    };
+
+    /*
+     * THE SLOPE, AT 1 / 2 / 5 / 10 LINES — rule 4 asks for the slope and not a
+     * total. One `whereIn` against the pivot whatever the basket size. Asking
+     * each product for its categories through the relation would read 1 / 2 / 5 /
+     * 10 here, which is the N+1 this method was most likely to have had and the
+     * reason it does not use $product->categories at all.
+     */
+    $at = [1 => $count(1), 2 => $count(2), 5 => $count(5), 10 => $count(10)];
+
+    expect($at[1])->toBe(1)
+        ->and($at[2])->toBe(1)
+        ->and($at[5])->toBe(1)
+        ->and($at[10])->toBe(1);
+});
+
+it('does not touch the pivot at all when nothing is excluded', function () {
+    pg1Provider();
+
+    $order = pg1Order();
+
+    /*
+     * REAL product ids on the lines, and that is the whole point of this case.
+     *
+     * Written first against the plain fixture — whose items carry no product_id
+     * — it passed with BOTH empty-list guards deleted from basketAllowed(),
+     * because an order with no product ids can never reach the pivot however the
+     * guards are written. It was green and it asserted nothing.
+     *
+     * With ids present, the only thing standing between this order and a pivot
+     * query is the "nothing is excluded" guard, which is exactly the claim.
+     */
+    foreach ($order->items as $i => $item) {
+        $product = \App\Models\Product::create([
+            'name' => 'Ordinary ' . $i,
+            'slug' => 'pg1-ordinary-' . uniqid(),
+            'price' => 5000,
+            'status' => 'publish',
+        ]);
+
+        $item->forceFill(['product_id' => $product->id])->save();
+    }
+
+    $order = $order->fresh();
+    $order->load('items');
+
+    expect($order->items->pluck('product_id')->filter()->count())->toBeGreaterThan(0);
+
+    $pivot = 0;
+
+    \Illuminate\Support\Facades\DB::listen(function ($q) use (&$pivot) {
+        if (str_contains($q->sql, 'category_product')) {
+            $pivot++;
+        }
+    });
+
+    pg1FakeCheckout();
+    pg1Gateway()->start($order);
+
+    /*
+     * The shipped shop — both boxes empty — pays NOTHING for this feature. Not
+     * one query. basketAllowed() returns on the two settings it has already read
+     * before it looks at a line.
+     */
+    expect($pivot)->toBe(0);
+});
+
+it('does not promise a widget this shop does not draw', function () {
+    // `public_key` is stored and read by no code path here. Its help text used to
+    // say "for the product-page widget only", which describes a feature that does
+    // not exist — the owner fills it in and believes something happened.
+    $help = pg1Gateway()->configSchema()['public_key'][2] ?? '';
+
+    expect(str_contains(strtolower($help), 'not used yet'))->toBeTrue();
+
+    // And nothing in the gateway reads it, which is what makes the help text
+    // true rather than merely humble.
+    $source = file_get_contents(app_path('Services/Payments/Gateways/TamaraGateway.php'));
+
+    expect(str_contains($source, "'public_key')"))->toBeFalse();
+});

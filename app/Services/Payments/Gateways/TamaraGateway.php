@@ -219,7 +219,16 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         return [
             'api_token' => ['secret', 'API token', 'From Tamara merchant portal -> Settings -> API. Long JWT-looking string.'],
             'notification_token' => ['secret', 'Notification token', 'Separate from the API token. This is the key Tamara signs webhooks with; without it no webhook can be verified.'],
-            'public_key' => ['text', 'Public key', 'Optional, for the product-page widget only.'],
+            /*
+             * NOT READ BY ANY CODE PATH IN THIS BUILD, and the help text says so.
+             * It used to read "for the product-page widget only", which promised a
+             * widget this shop does not have — a setting whose help describes a
+             * feature that is not there is worse than no setting, because the
+             * owner fills it in and believes something happened. The widget is
+             * named in the lane report as deliberately not shipped: it is a script
+             * served from Tamara's CDN and there is no way to verify it from here.
+             */
+            'public_key' => ['text', 'Public key', 'Not used yet. Tamara issues this for the on-page "pay in 4" widget, which this shop does not display; storing it now does nothing and costs nothing.'],
             'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. Forms part of the webhook URL below.'],
             'capture_days' => ['text', 'Capture window (days)', 'How long Tamara leaves an authorised order capturable on your account. Default 180. Used only to warn you before it lapses — Tamara itself decides.'],
             /*
@@ -235,6 +244,13 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              */
             'payment_type' => ['text', 'Payment type', 'One of PAY_BY_LATER (pay in 30 days), PAY_NOW, PAY_NEXT_MONTH or PAY_BY_INSTALMENTS. Leave empty for PAY_BY_LATER. Anything else is ignored and PAY_BY_LATER is used.'],
             'instalments' => ['text', 'Instalments', 'Only read when the payment type is PAY_BY_INSTALMENTS: how many instalments to ask Tamara for, 2 to 12. Leave empty to let Tamara choose. Your account has to be enabled for the number you ask for.'],
+            /*
+             * The two exclusion boxes. Comma-separated, and matched on product id
+             * OR sku — see basketAllowed() for why both. EMPTY ON EVERY EXISTING
+             * INSTALL, so nothing is excluded until somebody types into them.
+             */
+            'excluded_products' => ['text', 'Products Tamara may not be used for', 'Comma-separated product ids or SKUs. A basket containing one of these is not offered Tamara. Leave empty to exclude nothing — which is what the shop does today.'],
+            'excluded_categories' => ['text', 'Categories Tamara may not be used for', 'Comma-separated category ids. A basket containing any product in one of these is not offered Tamara. Leave empty to exclude nothing.'],
             'min_limit' => ['text', 'Minimum basket', 'In whole currency units as Tamara\'s portal shows them (e.g. 100 for AED 100.00). Baskets below this are not offered Tamara. Leave empty for no minimum. "Refresh limits from Tamara" fills this in for you.'],
             'max_limit' => ['text', 'Maximum basket', 'In whole currency units, as above. Baskets above this are not offered Tamara. Leave empty for no maximum.'],
             /*
@@ -245,6 +261,106 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              */
             'webhook_id' => ['text', 'Registered webhook id', 'Filled in by "Register webhook with Tamara". Until a webhook is registered, Tamara never sends the expiry and decline notices this shop is written to act on.'],
         ];
+    }
+
+    /**
+     * Products and categories the merchant's Tamara contract does not cover.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * A REAL SETTING IN THE PLUGIN, AND NOT A CONVENIENCE. Tamara agrees per
+     * merchant what may be bought on credit, and `excluded_products` /
+     * `excluded_product_categories` are how the plugin honours that:
+     * `adjustTamaraGatewayOnCheckout()` takes Tamara off the checkout entirely
+     * when the basket contains one, by product id or by category id.
+     *
+     * This shop had no such control at all, so a basket the merchant's contract
+     * excludes went through Tamara exactly like any other. Nothing crashes;
+     * the shop is simply selling on terms it has not agreed.
+     *
+     * BOTH SHIP EMPTY, so applying the package excludes nothing (rule 1). An
+     * empty list is not enforced, which is precisely the behaviour this class had
+     * before these settings existed.
+     *
+     * @return array<int, string> trimmed, non-empty, lower-cased tokens
+     */
+    private function excluded(string $key): array
+    {
+        $raw = $this->credentials->get($this->id(), $key);
+
+        if (trim($raw) === '') {
+            return [];
+        }
+
+        /*
+         * Comma-separated, like the plugin's own boxes, and split on whitespace
+         * and semicolons too: the owner will paste a list out of a spreadsheet
+         * and the shape it arrives in is not something to be fussy about when
+         * the cost of being fussy is a silently un-enforced exclusion.
+         */
+        $tokens = preg_split('/[\s,;]+/', strtolower(trim($raw))) ?: [];
+
+        return array_values(array_filter($tokens, fn ($t) => $t !== ''));
+    }
+
+    /**
+     * Is every line on this order one Tamara may be used for?
+     *
+     * TWO QUERIES AT MOST, AND ONLY WHEN A LIST IS SET. A shop that has excluded
+     * nothing — which is every shop until somebody types into the box — does no
+     * work here at all beyond reading two settings it has already loaded. That
+     * matters because this is on the path of a shopper pressing Place order.
+     *
+     * The category half is ONE `whereIn` against the pivot, not a relation walk
+     * per line: `$order->items` has the product ids already, and asking each
+     * product for its categories is the N+1 rule 4 forbids and the obvious way
+     * to write this.
+     *
+     * MATCHED ON PRODUCT ID **AND** SKU, because those are the two things an
+     * operator can actually copy. The plugin only takes ids, which is a
+     * WooCommerce habit — an id is what its admin shows. This shop's own
+     * catalogue screens show SKUs, and an owner told "paste product ids" will
+     * paste SKUs about half the time. Accepting both costs one comparison and
+     * removes the failure mode where the box looks filled in and excludes
+     * nothing.
+     */
+    private function basketAllowed(Order $order): bool
+    {
+        $products = $this->excluded('excluded_products');
+        $categories = $this->excluded('excluded_categories');
+
+        if ($products === [] && $categories === []) {
+            return true;
+        }
+
+        $productIds = [];
+
+        foreach ($order->items as $item) {
+            if ($products !== []) {
+                $id = strtolower(trim((string) $item->product_id));
+                $sku = strtolower(trim((string) $item->sku));
+
+                if (($id !== '' && in_array($id, $products, true))
+                    || ($sku !== '' && in_array($sku, $products, true))) {
+                    return false;
+                }
+            }
+
+            if ($item->product_id !== null) {
+                $productIds[] = (int) $item->product_id;
+            }
+        }
+
+        if ($categories === [] || $productIds === []) {
+            return true;
+        }
+
+        $inBasket = \Illuminate\Support\Facades\DB::table('category_product')
+            ->whereIn('product_id', array_unique($productIds))
+            ->pluck('category_id')
+            ->map(fn ($id) => strtolower(trim((string) $id)))
+            ->all();
+
+        return array_intersect($inBasket, $categories) === [];
     }
 
     /**
@@ -362,6 +478,33 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         if ($phone === '') {
             return PaymentStart::failed(
                 'Tamara needs a mobile number to approve a payment. Please add a phone number and try again.'
+            );
+        }
+
+        /*
+         * IS TAMARA ALLOWED TO PAY FOR THESE LINES?
+         *
+         * Checked HERE, server-side, off the order's own items — never off
+         * anything a request carried. An excluded basket that reaches this method
+         * is either a shopper who had Tamara selected before the setting changed,
+         * or somebody posting a payment method straight at the endpoint; both get
+         * the same answer and neither reaches Tamara.
+         *
+         * The merchant's plugin also HIDES the radio button for such a basket,
+         * which is the better shopper experience and needs a basket-aware
+         * availability check this app's PaymentGateway interface does not have —
+         * availableFor() is handed a total and a country and nothing else. Adding
+         * the basket means changing that interface and all five gateways that
+         * implement it, which is not a change to make while another lane is in
+         * those same files. Named in the lane report for the integrator.
+         *
+         * So this is the enforcing half and it is the half that cannot be
+         * bypassed: a basket the merchant's contract does not cover is never sent
+         * to Tamara, whatever the checkout drew.
+         */
+        if (! $this->basketAllowed($order)) {
+            return PaymentStart::failed(
+                'Tamara cannot be used for one of the items in this order. Please choose another payment method.'
             );
         }
 
