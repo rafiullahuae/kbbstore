@@ -84,10 +84,45 @@ class PaymentSettlementController extends Controller
             // the admin and never carry an API body, a key or a buyer field.
             'message' => $result->message,
             'settlement' => $this->state($order),
-            // 502 rather than 422 on a gateway failure: the request was fine,
-            // the provider was not, and the difference tells the admin whether
-            // to fix something or to try again.
-        ], $result->ok ? 200 : 502);
+        ], $result->ok ? 200 : $this->statusFor($result->code));
+    }
+
+    /**
+     * Which HTTP status a refusal deserves.
+     *
+     * 502 for a gateway that could not be reached or said no: the request was
+     * fine, the provider was not, and a retry may well work.
+     *
+     * 422 for the refusals this shop made on its own, before anything left the
+     * building. Those will say the same thing for ever — the order is cancelled,
+     * the gateway cannot be captured, the authorisation has been released — so
+     * answering 502 tells the screen the provider is having a bad morning and
+     * invites a retry that cannot succeed. That is the same "reports a failure
+     * as something it is not" defect this console keeps finding, one layer down
+     * from the toast.
+     *
+     * PaymentVoidController::statusFor() has drawn exactly this line since the
+     * release button shipped, and its docblock says it is "the same distinction
+     * PaymentSettlementController::capture() draws" — which was not true: this
+     * method answered a flat 502 to everything, including `order_not_live` and
+     * `unsupported_gateway`. Now it is true, and the two endpoints in the same
+     * family answer the same way.
+     *
+     * No existing test moves: the two 502s pinned in PaymentSettlementTest are
+     * both real gateway failures (`capture_failed` from Tabby, a Stripe refund
+     * that comes back `failed` on a 200), and both still answer 502.
+     */
+    private function statusFor(string $code): int
+    {
+        return in_array($code, [
+            'unsupported_gateway',
+            'order_trashed',
+            'order_not_live',
+            'nothing_to_capture',
+            'not_authorised',
+            'authorisation_released',
+            'not_configured',
+        ], true) ? 422 : 502;
     }
 
     /**

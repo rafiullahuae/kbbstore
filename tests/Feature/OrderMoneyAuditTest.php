@@ -540,3 +540,93 @@ it('reports the refunded and refundable totals on the refund response', function
         ->assertJsonPath('ok', false)
         ->assertJsonPath('code', 'over_captured');
 });
+
+/*
+|------------------------------------------------------------------------------
+| 5 — A refusal this shop made is not reported as a provider failure
+|------------------------------------------------------------------------------
+*/
+
+/**
+ * POST /admin-api/orders/{id}/capture answered a flat 502 to everything.
+ *
+ * 502 means "the provider was not fine, try again". It is the right answer to a
+ * gateway that refused or could not be reached, and the wrong answer to every
+ * refusal this shop made on its own before anything left the building: the
+ * order is cancelled, the gateway cannot be captured, the authorisation has
+ * been released. Those say the same thing for ever, so a status that invites a
+ * retry is a failure reported as something it is not — the same defect as a
+ * green tick on an error, one layer down.
+ *
+ * PaymentVoidController::statusFor() has drawn this line since the release
+ * button shipped, and its docblock claims it is "the same distinction
+ * PaymentSettlementController::capture() draws". That claim was false. It is
+ * true now, which is what this pins.
+ *
+ * MUTATION: put `$result->ok ? 200 : 502` back in
+ * PaymentSettlementController::capture(). RUN: red — 502 where 422 is expected.
+ */
+it('answers 422 for a capture this shop refused and 502 for one the gateway refused', function () {
+    $admin = auditAdmin();
+
+    // ── our own refusal: a cancelled order is not ours to take money for ──
+    // COD, so no gateway is configured and no HTTP call can happen. The
+    // beforeEach's preventStrayRequests() is what proves that.
+    $cancelled = auditCapturedOrder([
+        'status' => 'cancelled',
+        'captured_at' => null,
+        'captured_total' => 0,
+        'capture_ref' => null,
+    ]);
+
+    test()->actingAs($admin, 'admin')
+        ->postJson('/admin-api/orders/' . $cancelled->id . '/capture')
+        ->assertStatus(422)
+        ->assertJsonPath('ok', false)
+        ->assertJsonPath('code', 'order_not_live');
+
+    // ── and the release refusal this lane added, which is equally permanent ──
+    auditTabby();
+
+    $released = Order::create([
+        'order_number' => 'AUD-422-' . uniqid(),
+        'email' => 'buyer@example.com',
+        'status' => 'processing',          // revived out of `cancelled`
+        'currency' => 'AED',
+        'subtotal' => 25000,
+        'total' => 25000,
+        'payment_method' => 'tabby',
+        'transaction_id' => 'pay_422',
+        'paid_at' => now(),
+        'voided_at' => now(),
+        'void_ref' => 'pay_422',
+    ]);
+
+    test()->actingAs($admin, 'admin')
+        ->postJson('/admin-api/orders/' . $released->id . '/capture')
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'authorisation_released');
+
+    // ── a GATEWAY refusal is still 502: the request was fine, Tabby was not ──
+    $live = Order::create([
+        'order_number' => 'AUD-502-' . uniqid(),
+        'email' => 'buyer@example.com',
+        'status' => 'processing',
+        'currency' => 'AED',
+        'subtotal' => 25000,
+        'total' => 25000,
+        'payment_method' => 'tabby',
+        'transaction_id' => 'pay_502',
+        'paid_at' => now(),
+    ]);
+
+    Http::fake([
+        'api.tabby.ai/api/v2/payments/*' => Http::response(['id' => 'pay_502', 'status' => 'AUTHORIZED'], 200),
+        'api.tabby.ai/api/v1/payments/*/captures' => Http::response(['errorType' => 'capture_failed'], 400),
+    ]);
+
+    test()->actingAs($admin, 'admin')
+        ->postJson('/admin-api/orders/' . $live->id . '/capture')
+        ->assertStatus(502)
+        ->assertJsonPath('ok', false);
+});
