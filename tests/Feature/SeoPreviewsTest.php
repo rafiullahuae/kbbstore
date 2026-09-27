@@ -19,6 +19,7 @@ use App\Support\LegacyCategoryUrls;
 use App\Support\Locale;
 use App\Support\Seo;
 use App\Support\SeoAudit;
+use App\Support\Url;
 use Illuminate\Support\Facades\Route;
 use Tests\Support\PageEditorRoutes;
 
@@ -361,6 +362,108 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $sitemapImages = (string) test()->get('/sitemap.xml')->getContent();
     $imageTags = preg_match_all('#<image:loc>#', $sitemapImages);
     spBaseSettings(['sitemap_images' => '0']);
+
+    /* ──── 2b. the OTHER direction: router → sitemap, walked rather than read ──── */
+
+    /*
+     * ── WHY THIS IS COMPUTED HERE — Lane S9 ────────────────────────────────
+     *
+     * The row further down ("Every page that invites the crawl is submitted")
+     * used to carry the literal verdict `'MISSING'` beside an observation that
+     * began "BUILT THIS LANE" and then described the guard that had just been
+     * built. The verdict recorded what a lane FOUND; the observation recorded
+     * where the shop then STOOD; and they said opposite things in one row, to the
+     * only person who reads this file. Two other rows had the same shape.
+     *
+     * The verdict is now the measurement, and the measurement is the PROPERTY
+     * rather than the existence of the test that asserts it: every parameterless
+     * storefront GET route is fetched, and one that answers 200 with an HTML body
+     * telling a crawler to index it must appear in /sitemap.xml. That is the
+     * direction /_design-check escaped in, and asking the router is the only way
+     * to ask it — a page absent from the sitemap is absent from every list built
+     * out of the sitemap, this one included.
+     *
+     * MUTATION, RUN: drop the `/faqs/` content-page block from
+     * SeoFilesController::sitemap() and $crawlUnsubmitted names /about/, /faqs/,
+     * /delivery/ and the rest, which turns the row MISSING and the sweep red.
+     */
+    /*
+     * The sitemap's own origin, read off its first <loc> rather than rebuilt from
+     * a setting. Url::to() answers a ROOT-RELATIVE path — that is its whole job,
+     * because KBB_BASE_PATH can prefix every route — so comparing its output
+     * against a <loc> matches nothing, and a walk written that way reports every
+     * page on the shop as unsubmitted while looking as though it measured
+     * something. It did, on the first run of this code.
+     */
+    preg_match('#<loc>(https?://[^/]+)#', $sitemapEn, $originMatch);
+    $crawlOrigin = $originMatch[1] ?? '';
+
+    $crawlChecked = 0;
+    $crawlUnsubmitted = [];
+    $crawlSelfDocument = [];
+
+    foreach (Route::getRoutes() as $route) {
+        if ($route->parameterNames() !== [] || ! in_array('GET', $route->methods(), true)) {
+            continue;
+        }
+
+        $uri = trim($route->uri(), '/');
+        $path = '/'.($uri === '' ? '' : $uri.'/');
+
+        // Not storefront HTML: the console, its JSON, and the crawl files
+        // themselves, none of which carry a robots meta to read.
+        if (preg_match('#^(admin|admin-api|api|_|sitemap|robots|llms|storage)#', $uri)) {
+            continue;
+        }
+
+        $response = test()->get($path);
+
+        if ($response->getStatusCode() !== 200
+            || ! str_contains((string) $response->headers->get('content-type'), 'text/html')) {
+            continue;
+        }
+
+        $html = (string) $response->getContent();
+
+        // "Invites the crawl" is what the page SAYS, not what this file assumes:
+        // a page carrying `noindex` is not making the claim, so it is not a
+        // counter-example to it.
+        if (preg_match('#<meta name="robots"[^>]*noindex#i', $html)) {
+            continue;
+        }
+
+        /*
+         * NOT STOREFRONT CRAWL SURFACE AT ALL: a document with no canonical is
+         * not naming an address for a crawler to prefer, so it is not making the
+         * claim this row is about.
+         *
+         * One page is excluded by this today — /up, Laravel's own health
+         * endpoint, which renders its own document rather than the storefront
+         * layout — and it is the SAME exception, reached by the same reasoning,
+         * that CrawlSurfaceCompletenessTest names at its `$expected = ['/up']`.
+         * Two files must not answer differently about one page, so this is the
+         * RULE and not a list of names: adding /up to
+         * Indexability::PRIVATE_PREFIXES would put "Disallow: /up" into robots.txt
+         * on a shop that has no problem.
+         *
+         * It still catches the shape that escaped. /_design-check rendered
+         * THROUGH the storefront layout, so it carried a canonical and asked to be
+         * indexed, and a page like it is counted and reported below.
+         */
+        if (! str_contains($html, '<link rel="canonical"')) {
+            $crawlSelfDocument[] = $path;
+
+            continue;
+        }
+
+        $crawlChecked++;
+
+        $loc = $crawlOrigin.rtrim(Url::to($path), '/').'/';
+
+        if (! str_contains($sitemapEn, '<loc>'.$loc.'</loc>')) {
+            $crawlUnsubmitted[] = $path;
+        }
+    }
 
     /* ────────────────── 3. the same surface with Arabic live ──────────────── */
 
@@ -854,8 +957,11 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $rows[] = spRow($C,
         'Every page that invites the crawl is submitted (the other direction).',
         'nowhere — this direction was never checked',
-        'MISSING',
-        'BUILT THIS LANE. Nothing walked router → sitemap, which is the direction /_design-check escaped in. CrawlSurfaceCompletenessTest now fetches every parameterless storefront GET route and fails on a 200 HTML page that declares "index" and is absent from the sitemap. Exactly one deliberate exception today — /reviews/ while the shop has no approved review — and a second case asserts that exception DISCHARGES the moment a review exists.',
+        spCheck($crawlUnsubmitted === [] && $crawlChecked > 12),
+        'TRUE OF THE SHOP AS IT STANDS, and this row is the reason the matrix\'s own verdicts were rebuilt. It read MISSING for two rounds beside an observation beginning "BUILT THIS LANE" — the verdict recording what a lane FOUND and the observation recording where the shop STOOD, in one row, saying opposite things to the only person who reads this file. It is now the property rather than the prose: '
+            . $crawlChecked . ' parameterless storefront GET routes answer 200 with HTML that tells a crawler to index them, and '
+            . ($crawlUnsubmitted === [] ? 'every one of them is in /sitemap.xml' : count($crawlUnsubmitted) . ' are absent from /sitemap.xml: ' . implode(', ', $crawlUnsubmitted))
+            . '. The one page excluded as not storefront crawl surface at all — no canonical, so it names no address a crawler could prefer — is ' . (implode(', ', $crawlSelfDocument) ?: 'none') . ', which is the same exception CrawlSurfaceCompletenessTest names, reached by the same rule rather than by a list of paths. Nothing walked router → sitemap before, which is the direction /_design-check escaped in; CrawlSurfaceCompletenessTest is the standing guard, with exactly one deliberate exception — /reviews/ while the shop has no approved review — and a second case asserting that exception DISCHARGES the moment a review exists.',
         'tests/Feature/CrawlSurfaceCompletenessTest.php');
 
     $rows[] = spRow($C,
@@ -1098,9 +1204,10 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $rows[] = spRow($D,
         'Article carries dateModified and a url/mainEntityOfPage.',
         'not claimed anywhere',
-        'MISSING',
-        'The Article node carries headline, image, datePublished, inLanguage, author and publisher — and no dateModified and no url. dateModified is on Google\'s recommended list for Article and `posts.updated_at` is right there. One key, worth having, and it is in app/Support/Seo.php, which is Lane S5\'s this round — the exact change is on the report under "Needs S5".',
-        'app/Support/Seo.php:1264');
+        spCheck(isset(spNode($shapes['article']['path'], 'Article')['dateModified'])
+            && isset(spNode($shapes['article']['path'], 'Article')['url'])),
+        'FIXED AND MERGED, and the verdict is now read off the emitted node rather than restated. The Article on ' . $shapes['article']['path'] . ' carries ' . implode(', ', array_keys((array) spNode($shapes['article']['path'], 'Article'))) . '. dateModified is on Google\'s recommended list for Article and comes from `posts.updated_at`; `url` is the self-referencing address, which is what mainEntityOfPage would otherwise have to say. This row read MISSING for two rounds while describing the absence that had already been filled — it was exempted from the sweep below by a guard that sniffed for the phrase "The Article node carries" in its own prose, so rewording it would have silently enrolled it. Both the verdict and the exemption are gone.',
+        'app/Support/Seo.php:1474');
 
     $rows[] = spRow($D,
         'inLanguage on the nodes that can carry it, and withheld from the nodes that cannot.',
@@ -1113,8 +1220,11 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $rows[] = spRow($D,
         'FAQPage JSON-LD.',
         'SEO-GAP §3 — Missing. SEO-BUILD-PLAN and SEO-COMPETITIVE §1.9 — "do not build"',
-        'MISSING',
-        'CONFIRMED MISSING before this lane: grep for FAQPage across app, resources, routes and tests returned nothing, and the content page emitted ' . implode(' · ', $faqBefore) . ' — no FAQPage, and no BreadcrumbList either. BUILT THIS LANE as Services\\Seo\\FaqSchema, and the three rounds of refusal are answered rather than ignored: the rich RESULT is genuinely gone (Google stopped showing it on 7 May 2026 and nobody should be promised a drop-down), and what is built is the machine-readable question/answer PAIR that an answer engine extracts and that an <h3> above a <p> is not. It reads ' . count($faqPairs) . ' pairs out of the shipped /faqs/ body and NOTHING out of the shipped /refund_returns/ body (' . ($faqReturns === null ? 'null' : 'a node') . '), because the selection rule is that a heading ends in a question mark — so no page is named anywhere in the class. Ships OFF.',
+        spCheck(($faqNode['@type'] ?? null) === 'FAQPage'
+            && count((array) ($faqNode['mainEntity'] ?? [])) === count($faqPairs)
+            && $faqPairs !== []
+            && $faqReturns === null),
+        'BUILT AND MERGED, and the verdict is now the node rather than the sentence: FaqSchema reads the shipped /faqs/ body and returns a ' . ($faqNode['@type'] ?? 'nothing') . ' of ' . count((array) ($faqNode['mainEntity'] ?? [])) . ' question/answer pairs, and the shipped /refund_returns/ body returns ' . ($faqReturns === null ? 'null' : 'a node') . '. This row read MISSING for two rounds beside an observation that said "BUILT THIS LANE" in its second sentence. CONFIRMED MISSING before that lane: grep for FAQPage across app, resources, routes and tests returned nothing, and the content page emitted ' . implode(' · ', $faqBefore) . ' — no FAQPage, and no BreadcrumbList either. It is Services\\Seo\\FaqSchema now, and the three rounds of refusal are answered rather than ignored: the rich RESULT is genuinely gone (Google stopped showing it on 7 May 2026 and nobody should be promised a drop-down), and what is built is the machine-readable question/answer PAIR that an answer engine extracts and that an <h3> above a <p> is not. It reads ' . count($faqPairs) . ' pairs out of the shipped /faqs/ body and NOTHING out of the shipped /refund_returns/ body (' . ($faqReturns === null ? 'null' : 'a node') . '), because the selection rule is that a heading ends in a question mark — so no page is named anywhere in the class. Ships OFF.',
         'app/Services/Seo/FaqSchema.php');
 
     $rows[] = spRow($D,
@@ -1434,29 +1544,39 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
      * The rows whose verdict is a judgement rather than a measurement —
      * DELIBERATE, OWNER, and the four STALE rows — are excluded from this sweep
      * by construction, because they are stated rather than computed.
+     *
+     * ── THERE ARE NO EXEMPTIONS ANY MORE — Lane S9 ─────────────────────────
+     *
+     * This sweep used to skip any row whose PROSE contained one of four phrases:
+     * 'GENUINELY ABSENT', 'BUILT THIS LANE', 'Lane S5' or 'The Article node
+     * carries'. That existed because four rows carried the literal verdict
+     * 'MISSING' — authored, not computed — and would otherwise have failed the
+     * sweep. It was wrong twice over:
+     *
+     *   * It is a guard keyed on COPY. Rewording a row's observation silently
+     *     enrols it in the sweep; a new row mentioning Lane S5 in passing is
+     *     silently exempted from it. Lane S6 found an authored verdict surviving
+     *     a mutation for exactly this reason.
+     *   * Worse, it let a verdict and its own observation say opposite things.
+     *     Three rows read MISSING while their prose described work that had
+     *     SHIPPED — the verdict recording what a lane FOUND rather than where the
+     *     shop STANDS. To the one person who reads docs/SEO-PREVIEWS.html, that is
+     *     not a nuance, it is three false negatives on a page whose whole job is
+     *     to say what is left.
+     *
+     * Every MISSING in this file is now computed by spCheck() from a measurement
+     * taken against the running shop, so a row that measures MISSING IS a
+     * regression and belongs in the sweep. The exemption list is gone rather than
+     * improved: the honest fix for "this row's verdict is stale" is to compute
+     * the verdict, not to teach the sweep to ignore it.
+     *
+     * MUTATION, RUN: hard-code 'MISSING' into any spRow() below and the sweep is
+     * red, naming the claim — which is what the four exempted rows were doing.
      */
     $wrong = [];
 
     foreach ($rows as $row) {
-        /*
-         * `GENUINELY ABSENT` is an explicit marker — Lane S8.
-         *
-         * This sweep excludes the rows whose MISSING verdict is the CORRECT
-         * answer rather than a regression, and it did so by sniffing for three
-         * phrases that happened to appear in those rows' prose ('BUILT THIS
-         * LANE', 'Lane S5', 'The Article node carries'). That is a guard keyed on
-         * copy: rewording a row's observation silently enrols it in the sweep, or
-         * silently exempts a new row that mentions Lane S5 in passing. The marker
-         * below is a decision a row makes about itself and cannot be tripped by
-         * an edit to a sentence. The three phrases stay recognised so the rows
-         * that predate the marker keep working.
-         */
-        $exempt = str_contains($row['observed'], 'GENUINELY ABSENT')
-            || str_contains($row['observed'], 'BUILT THIS LANE')
-            || str_contains($row['observed'], 'Lane S5')
-            || str_contains($row['observed'], 'The Article node carries');
-
-        if ($row['verdict'] === 'MISSING' && ! $exempt) {
+        if ($row['verdict'] === 'MISSING') {
             $wrong[] = $row['claim'];
         }
     }
