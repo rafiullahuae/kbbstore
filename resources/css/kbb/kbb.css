@@ -376,16 +376,20 @@
   .kc-qty button{width:var(--cp-step,22px);height:var(--cp-step,22px);color:var(--ink-2)}
   .kc-qty span{min-width:var(--cp-step,22px);text-align:center;font-size:11.5px;font-weight:600}
   .kc-right{text-align:end;display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}
-  .kc-pr{font-size:12.5px;font-weight:700;color:var(--cp-accent,var(--pink-deep))}
-  .kc-rm{background:none;color:#c3b3bb;cursor:pointer;font-size:13px;line-height:1}
+  /* A SHARE OF 12.5px, not a pixel slider. A range stores whole numbers, so
+     nothing a px slider could hold would leave this price where it is; 100%
+     resolves to calc(12.5px * 1) and moves nothing. Same for .kc-btns a below. */
+  .kc-pr{font-size:calc(12.5px * var(--cp-price,1));font-weight:700;color:var(--cp-accent,var(--pink-deep))}
+  .kc-rm{background:none;color:#c3b3bb;cursor:pointer;font-size:var(--cp-rm,13px);line-height:1}
   .kc-rm:hover{color:var(--pink-deep)}
-  .kc-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .kc-btns{display:grid;grid-template-columns:1fr 1fr;gap:var(--cp-btngap,8px);margin-top:12px}
   /* Sized here rather than inline on the anchors, so the phone rule below can
      shrink them. Both buttons share one rule; they only differ in colour. */
   .kc-btns a{display:flex;align-items:center;justify-content:center;text-align:center;
-             padding:12px 8px;border-radius:99px;font-weight:700;font-size:13.5px;
+             padding:var(--cp-btnpad,12px) 8px;border-radius:var(--cp-btnr,99px);font-weight:700;
+             font-size:calc(13.5px * var(--cp-btnf,1));
              white-space:nowrap;margin:0;width:auto}
-  .kc-x{margin-inline-start:6px;border:0;background:#f4eef1;width:28px;height:28px;border-radius:8px;color:var(--ink-2);cursor:pointer;font-size:13px;flex:none;align-self:center}
+  .kc-x{margin-inline-start:6px;border:0;background:#f4eef1;width:var(--cp-x,28px);height:var(--cp-x,28px);border-radius:8px;color:var(--ink-2);cursor:pointer;font-size:var(--cp-xg,13px);flex:none;align-self:center}
   .kc-x:hover{background:var(--pink-soft);color:var(--pink-deep)}
   .kc-coupon{display:flex;align-items:center;gap:10px;background:var(--pink-soft);border:1px dashed #f0b9cf;border-radius:12px;padding:10px 13px;font-size:11.5px;line-height:1.45;color:var(--ink-2);margin-bottom:12px}
   .kc-coupon .ic{font-size:16px;flex:none}
@@ -675,17 +679,40 @@
        so the page behind stays visible and the panel reads as an overlay. The
        380px desktop width above is untouched. */
     .drawer{width:var(--cp-w-m,77vw);max-width:var(--cp-w-m,77vw)}
-    .dbody{padding:9px calc(var(--cp-pad,16px) - 5px)}
-    .kc-ship{padding:9px calc(var(--cp-pad,16px) - 5px)}
+    /* ── THE PHONE'S OWN NUMBERS, FROM Appearance -> Cart panel -> Mobile ──
+       Every `-m` property below is read HERE and nowhere else, which is the
+       whole of why the Mobile tab works: CartPanel::cssVariables() puts both
+       the desktop value and the phone value in the panel's style attribute,
+       and an inline declaration beats a media query, so the only place the
+       phone value can be CHOSEN is a rule like these.
+
+       The padding used to be `calc(var(--cp-pad,16px) - 5px)`, so the phone
+       rendered 11px whatever the desktop slider said and there was no way to
+       set it. 11 is the default of list_pad_m for that reason — it is what this
+       rule already drew. */
+    .dbody{padding:9px var(--cp-pad-m,11px)}
+    .kc-ship{padding:9px var(--cp-pad-m,11px)}
     .kc-tabs{padding:0 6px}
-    .kc-item{gap:8px}
+    .kc-item{gap:8px;padding:var(--cp-rowpad-m,9px) 0}
     .kc-th{width:var(--cp-thumb-m,38px);height:var(--cp-thumb-m,38px)}
+    .kc-nm{font-size:var(--cp-name-m,13px);-webkit-line-clamp:var(--cp-lines-m,2)}
+    .kc-pr{font-size:calc(12.5px * var(--cp-price-m,1))}
+    /* Both boxes AND the number between them, which is what --cp-step does on
+       the desktop rule. Moving one of the three draws a stepper the panel has
+       never rendered. */
+    .kc-qty button{width:var(--cp-step-m,22px);height:var(--cp-step-m,22px)}
+    .kc-qty span{min-width:var(--cp-step-m,22px)}
     /* At 70vw the two footer buttons would be about 110px each with the words
        Cart and Checkout in them. Stacking keeps the tap targets full width. */
     /* Side by side at 77% of a phone as well. Two 120px buttons are a fine tap
        target; stacking them cost a row of the product list for no gain. */
-    .kc-btns{grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
-    .kc-btns a{padding:10px 4px;font-size:12px}
+    .kc-btns{grid-template-columns:1fr 1fr;gap:var(--cp-btngap-m,6px);margin-top:10px}
+    /* One above the other, when the owner asks for it on the Mobile tab. A
+       CLASS and not a property: `.cp-btnstack .kc-btns` is the only thing that
+       outranks the line above it, and it has to come after it as well. */
+    .cp-btnstack .kc-btns{grid-template-columns:1fr}
+    .kc-btns a{padding:var(--cp-btnpad-m,10px) 4px;font-size:calc(12px * var(--cp-btnf-m,1));
+               border-radius:var(--cp-btnr-m,99px)}
     .dfoot{padding:12px 11px}
     .search-wrap{display:none}
     .slide-txt h1{font-size:32px}.sec-head h2{font-size:24px}.slides{height:400px}
@@ -3321,10 +3348,28 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 @media (max-width: 900px) {
 
 
-  /* Drawer and menu close buttons were 28x28. */
-  .kc-x{width:44px;height:44px}
+  /* Drawer and menu close buttons were 28x28.
+
+     44 IS A TAP TARGET AND NOT SPACING, and the owner asked to squeeze exactly
+     these. x_size_m and tab_h_m default to 44 because that is what this block
+     has always drawn; their sliders go BELOW it because he asked and it is his
+     shop, and neither clamps — Appearance -> Cart panel -> Mobile says what the
+     cost is under the slider instead. See CartPanel::TOUCH_TARGETS.
+
+     Read at 900px rather than at 680px because that is where they are raised
+     today: setting them at 680 would have left the 681-900px band alone and
+     changed the panel where nobody was looking. */
+  .kc-x{width:var(--cp-x-m,44px);height:var(--cp-x-m,44px);font-size:var(--cp-xg-m,13px)}
   .mm-x{width:44px;height:44px}
-  .kc-tab{min-height:44px}
+  /* HEIGHT AND ZERO VERTICAL PADDING, not min-height alone, and the reason is
+     measured rather than assumed: .kc-tab carries `padding:11px 8px`, so its
+     natural box is 39px and a min-height of 32 changes nothing at all — the
+     slider moved and the strip did not. `height` with the padding out of the way
+     is what lets the owner go below 39. At the shipped 44 this renders 44, which
+     is exactly what min-height:44px rendered, so nothing moves on apply; the tab
+     is already a centring flex box, so the label stays centred with no padding
+     to hold it there. */
+  .kc-tab{min-height:var(--cp-tabh-m,44px);height:var(--cp-tabh-m,44px);padding-top:0;padding-bottom:0}
 
   /* .addbtn lives in kbb.css as well as the shop sheet, so this is the rule
      that reaches the related-product cards on the product page - that page
@@ -3351,10 +3396,13 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 
   /* The cart drawer's per-line remove button was 10.9x13 - the smallest
      control on the storefront, and it deletes something. */
-  .kc-rm{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:15px}
+  /* The BOX is the tap target (rm_tap_m) and the GLYPH is the ✕ inside it
+     (rm_size_m). Two values, because the shop sets them apart: 44x44 holding a
+     15px mark. */
+  .kc-rm{width:var(--cp-rmbox-m,44px);height:var(--cp-rmbox-m,44px);display:inline-flex;align-items:center;justify-content:center;font-size:var(--cp-rm-m,15px)}
 
   /* Drawer footer buttons were 41.2px. */
-  .kc-btns .btn-ghost,.kc-btns .cobtn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  .kc-btns .btn-ghost,.kc-btns .cobtn{min-height:var(--cp-btnh-m,44px);display:inline-flex;align-items:center;justify-content:center}
 
   /* Drawer/announcement close buttons were 32-34px. */
   .dwh .x,.msub-h .x{width:44px;height:44px;display:grid;place-items:center}

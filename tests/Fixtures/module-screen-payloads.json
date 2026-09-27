@@ -2,386 +2,800 @@
   "cart-panel": {
     "tabs": [
       {
-        "key": "size",
-        "label": "Size",
-        "description": "How much of the screen the panel takes.",
+        "key": "desktop",
+        "label": "Desktop",
+        "description": "The panel as it opens on a laptop — wider than 680px. Every value here has a twin on the Mobile tab, so squeezing the phone no longer squeezes this.",
         "fields": [
           {
             "key": "panel_width",
+            "name": "panel_width",
             "type": "range",
-            "label": "Width · desktop",
+            "label": "Panel width",
             "help": "",
-            "default": 380,
-            "value": 380,
             "options": {
               "min": 300,
               "max": 520,
               "step": 10,
               "unit": "px"
-            }
-          },
-          {
-            "key": "panel_width_m",
-            "type": "range",
-            "label": "Width · phone",
-            "help": "Share of the screen the panel covers.",
-            "default": 77,
-            "value": 77,
-            "options": {
-              "min": 60,
-              "max": 100,
-              "step": 1,
-              "unit": "%"
-            }
-          }
-        ]
-      },
-      {
-        "key": "density",
-        "label": "Density",
-        "description": "How tightly the lines are packed. Smaller values fit more products.",
-        "fields": [
-          {
-            "key": "row_pad",
-            "type": "range",
-            "label": "Space above and below each line",
-            "help": "",
-            "default": 9,
-            "value": 9,
-            "options": {
-              "min": 4,
-              "max": 18,
-              "step": 1,
-              "unit": "px"
-            }
-          },
-          {
-            "key": "thumb_size",
-            "type": "range",
-            "label": "Thumbnail · desktop",
-            "help": "",
-            "default": 42,
-            "value": 42,
-            "options": {
-              "min": 30,
-              "max": 64,
-              "step": 2,
-              "unit": "px"
-            }
-          },
-          {
-            "key": "thumb_size_m",
-            "type": "range",
-            "label": "Thumbnail · phone",
-            "help": "",
-            "default": 38,
-            "value": 38,
-            "options": {
-              "min": 28,
-              "max": 56,
-              "step": 2,
-              "unit": "px"
-            }
-          },
-          {
-            "key": "name_size",
-            "type": "range",
-            "label": "Product name size",
-            "help": "",
-            "default": 13,
-            "value": 13,
-            "options": {
-              "min": 11,
-              "max": 16,
-              "step": 1,
-              "unit": "px"
-            }
-          },
-          {
-            "key": "name_lines",
-            "type": "range",
-            "label": "Product name · maximum lines",
-            "help": "Longer names are cut off, so every line is the same height.",
-            "default": 2,
-            "value": 2,
-            "options": {
-              "min": 1,
-              "max": 3,
-              "step": 1,
-              "unit": ""
-            }
-          },
-          {
-            "key": "stepper_size",
-            "type": "range",
-            "label": "Quantity buttons",
-            "help": "",
-            "default": 22,
-            "value": 22,
-            "options": {
-              "min": 18,
-              "max": 32,
-              "step": 2,
-              "unit": "px"
-            }
+            },
+            "default": 380,
+            "value": 380
           },
           {
             "key": "list_pad",
+            "name": "list_pad",
             "type": "range",
             "label": "Padding around the list",
-            "help": "",
-            "default": 16,
-            "value": 16,
+            "help": "The gap between the panel edge and the product lines.",
             "options": {
               "min": 6,
               "max": 24,
               "step": 2,
               "unit": "px"
-            }
+            },
+            "default": 16,
+            "value": 16
+          },
+          {
+            "key": "row_pad",
+            "name": "row_pad",
+            "type": "range",
+            "label": "Space above and below each line",
+            "help": "",
+            "options": {
+              "min": 4,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 9,
+            "value": 9
+          },
+          {
+            "key": "thumb_size",
+            "name": "thumb_size",
+            "type": "range",
+            "label": "Thumbnail",
+            "help": "",
+            "options": {
+              "min": 30,
+              "max": 64,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 42,
+            "value": 42
+          },
+          {
+            "key": "name_size",
+            "name": "name_size",
+            "type": "range",
+            "label": "Product name size",
+            "help": "",
+            "options": {
+              "min": 11,
+              "max": 16,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 13,
+            "value": 13
+          },
+          {
+            "key": "name_lines",
+            "name": "name_lines",
+            "type": "range",
+            "label": "Product name · maximum lines",
+            "help": "Longer names are cut off, so every line is the same height.",
+            "options": {
+              "min": 1,
+              "max": 3,
+              "step": 1,
+              "unit": ""
+            },
+            "default": 2,
+            "value": 2
+          },
+          {
+            "key": "price_size",
+            "name": "price_size",
+            "type": "range",
+            "label": "Line price size",
+            "help": "100% is the 12.5px the panel uses today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "stepper_size",
+            "name": "stepper_size",
+            "type": "range",
+            "label": "Quantity buttons",
+            "help": "Sizes the − and + boxes and the number between them together, which is what the panel does.",
+            "options": {
+              "min": 18,
+              "max": 32,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 22,
+            "value": 22
+          },
+          {
+            "key": "rm_size",
+            "name": "rm_size",
+            "type": "range",
+            "label": "Remove ✕ on each line",
+            "help": "",
+            "options": {
+              "min": 9,
+              "max": 20,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 13,
+            "value": 13
+          },
+          {
+            "key": "x_size",
+            "name": "x_size",
+            "type": "range",
+            "label": "Close button",
+            "help": "The ✕ at the top of the panel, which shuts it.",
+            "options": {
+              "min": 20,
+              "max": 48,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 28,
+            "value": 28
+          },
+          {
+            "key": "x_glyph",
+            "name": "x_glyph",
+            "type": "range",
+            "label": "Close button ✕",
+            "help": "",
+            "options": {
+              "min": 9,
+              "max": 22,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 13,
+            "value": 13
+          },
+          {
+            "key": "btn_gap",
+            "name": "btn_gap",
+            "type": "range",
+            "label": "Gap between the two buttons",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 8,
+            "value": 8
+          },
+          {
+            "key": "btn_pad",
+            "name": "btn_pad",
+            "type": "range",
+            "label": "Button height · padding",
+            "help": "Above and below the label.",
+            "options": {
+              "min": 4,
+              "max": 20,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "btn_radius",
+            "name": "btn_radius",
+            "type": "range",
+            "label": "Button corners",
+            "help": "0 is square, 99 is a pill.",
+            "options": {
+              "min": 0,
+              "max": 99,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 99,
+            "value": 99
+          },
+          {
+            "key": "btn_size",
+            "name": "btn_size",
+            "type": "range",
+            "label": "Button label size",
+            "help": "100% is the 13.5px the panel uses today.",
+            "options": {
+              "min": 70,
+              "max": 150,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          }
+        ]
+      },
+      {
+        "key": "mobile",
+        "label": "Mobile",
+        "description": "The panel on a phone. Width, padding, rows and type take effect at 680px and below; the four tap targets at 900px and below, which is where the panel raises them today.",
+        "fields": [
+          {
+            "key": "panel_width_m",
+            "name": "panel_width_m",
+            "type": "range",
+            "label": "Panel width",
+            "help": "Share of the screen the panel covers.",
+            "options": {
+              "min": 60,
+              "max": 100,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 77,
+            "value": 77
+          },
+          {
+            "key": "list_pad_m",
+            "name": "list_pad_m",
+            "type": "range",
+            "label": "Padding around the list",
+            "help": "The gap between the panel edge and the product lines.",
+            "options": {
+              "min": 2,
+              "max": 20,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 11,
+            "value": 11
+          },
+          {
+            "key": "row_pad_m",
+            "name": "row_pad_m",
+            "type": "range",
+            "label": "Space above and below each line",
+            "help": "",
+            "options": {
+              "min": 2,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 9,
+            "value": 9
+          },
+          {
+            "key": "thumb_size_m",
+            "name": "thumb_size_m",
+            "type": "range",
+            "label": "Thumbnail",
+            "help": "",
+            "options": {
+              "min": 28,
+              "max": 56,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 38,
+            "value": 38
+          },
+          {
+            "key": "name_size_m",
+            "name": "name_size_m",
+            "type": "range",
+            "label": "Product name size",
+            "help": "",
+            "options": {
+              "min": 9,
+              "max": 16,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 13,
+            "value": 13
+          },
+          {
+            "key": "name_lines_m",
+            "name": "name_lines_m",
+            "type": "range",
+            "label": "Product name · maximum lines",
+            "help": "One line is the shortest row a product can have.",
+            "options": {
+              "min": 1,
+              "max": 3,
+              "step": 1,
+              "unit": ""
+            },
+            "default": 2,
+            "value": 2
+          },
+          {
+            "key": "price_size_m",
+            "name": "price_size_m",
+            "type": "range",
+            "label": "Line price size",
+            "help": "100% is the 12.5px the panel uses today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "stepper_size_m",
+            "name": "stepper_size_m",
+            "type": "range",
+            "label": "Quantity buttons",
+            "help": "Sizes the − and + boxes and the number between them together.",
+            "options": {
+              "min": 16,
+              "max": 32,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 22,
+            "value": 22
+          },
+          {
+            "key": "rm_size_m",
+            "name": "rm_size_m",
+            "type": "range",
+            "label": "Remove ✕ on each line",
+            "help": "",
+            "options": {
+              "min": 9,
+              "max": 22,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 15,
+            "value": 15
+          },
+          {
+            "key": "rm_tap_m",
+            "name": "rm_tap_m",
+            "type": "range",
+            "label": "Remove ✕ · tap target",
+            "help": "",
+            "options": {
+              "min": 24,
+              "max": 56,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 44,
+            "value": 44
+          },
+          {
+            "key": "x_size_m",
+            "name": "x_size_m",
+            "type": "range",
+            "label": "Close button",
+            "help": "The ✕ at the top of the panel, which shuts it.",
+            "options": {
+              "min": 24,
+              "max": 56,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 44,
+            "value": 44
+          },
+          {
+            "key": "x_glyph_m",
+            "name": "x_glyph_m",
+            "type": "range",
+            "label": "Close button ✕",
+            "help": "",
+            "options": {
+              "min": 9,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 13,
+            "value": 13
+          },
+          {
+            "key": "tab_h_m",
+            "name": "tab_h_m",
+            "type": "range",
+            "label": "Cart / Browsed tab height",
+            "help": "",
+            "options": {
+              "min": 24,
+              "max": 56,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 44,
+            "value": 44
+          },
+          {
+            "key": "btn_layout_m",
+            "name": "btn_layout_m",
+            "type": "select",
+            "label": "Cart and Checkout buttons",
+            "help": "Side by side is what the panel does today. One above the other gives each button the full width of the panel.",
+            "options": {
+              "side": "Side by side",
+              "stack": "One above the other"
+            },
+            "default": "side",
+            "value": "side"
+          },
+          {
+            "key": "btn_gap_m",
+            "name": "btn_gap_m",
+            "type": "range",
+            "label": "Gap between the two buttons",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 16,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 6,
+            "value": 6
+          },
+          {
+            "key": "btn_pad_m",
+            "name": "btn_pad_m",
+            "type": "range",
+            "label": "Button padding",
+            "help": "Above and below the label. The tap target below sets the least a button can be.",
+            "options": {
+              "min": 2,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 10,
+            "value": 10
+          },
+          {
+            "key": "btn_h_m",
+            "name": "btn_h_m",
+            "type": "range",
+            "label": "Button height · tap target",
+            "help": "",
+            "options": {
+              "min": 24,
+              "max": 60,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 44,
+            "value": 44
+          },
+          {
+            "key": "btn_radius_m",
+            "name": "btn_radius_m",
+            "type": "range",
+            "label": "Button corners",
+            "help": "0 is square, 99 is a pill.",
+            "options": {
+              "min": 0,
+              "max": 99,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 99,
+            "value": 99
+          },
+          {
+            "key": "btn_size_m",
+            "name": "btn_size_m",
+            "type": "range",
+            "label": "Button label size",
+            "help": "100% is the 12px the panel uses today.",
+            "options": {
+              "min": 70,
+              "max": 150,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
           }
         ]
       },
       {
         "key": "content",
         "label": "Content",
-        "description": "What each line and the panel show.",
+        "description": "What each line and the panel show. The same on both devices.",
         "fields": [
           {
             "key": "show_thumb",
+            "name": "show_thumb",
             "type": "bool",
             "label": "Thumbnail",
             "help": "",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "show_qty",
+            "name": "show_qty",
             "type": "bool",
             "label": "Quantity buttons",
             "help": "Off leaves the line read-only; quantities are then changed on the cart page.",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "show_remove",
+            "name": "show_remove",
             "type": "bool",
             "label": "Remove button",
             "help": "",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "show_price",
+            "name": "show_price",
             "type": "bool",
             "label": "Line price",
             "help": "",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "show_ship_bar",
+            "name": "show_ship_bar",
             "type": "bool",
             "label": "Free-delivery progress bar",
             "help": "",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "show_promo",
+            "name": "show_promo",
             "type": "bool",
             "label": "Promotion line",
             "help": "",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "show_browsed",
+            "name": "show_browsed",
             "type": "bool",
             "label": "Browsed tab",
             "help": "Recently viewed products, with one-tap add.",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           }
         ]
       },
       {
         "key": "behaviour",
         "label": "Behaviour",
-        "description": "What happens when something is added.",
+        "description": "What happens when something is added. The same on both devices.",
         "fields": [
           {
             "key": "open_on_add",
+            "name": "open_on_add",
             "type": "bool",
             "label": "Open the panel when something is added",
             "help": "",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "added_note",
+            "name": "added_note",
             "type": "bool",
             "label": "Show “Added” beside a product added from Browsed",
             "help": "",
+            "options": null,
             "default": true,
-            "value": true,
-            "options": null
+            "value": true
           },
           {
             "key": "note_ms",
+            "name": "note_ms",
             "type": "range",
             "label": "How long that note stays",
             "help": "",
-            "default": 1400,
-            "value": 1400,
             "options": {
               "min": 400,
               "max": 4000,
               "step": 100,
               "unit": "ms"
-            }
+            },
+            "default": 1400,
+            "value": 1400
           }
         ]
       },
       {
         "key": "wording",
         "label": "Wording",
-        "description": "Every word the panel prints.",
+        "description": "Every word the panel prints. The same on both devices.",
         "fields": [
           {
             "key": "txt_tab_cart",
+            "name": "txt_tab_cart",
             "type": "text",
             "label": "Cart tab",
             "help": "",
+            "options": null,
             "default": "Cart",
-            "value": "Cart",
-            "options": null
+            "value": "Cart"
           },
           {
             "key": "txt_tab_browsed",
+            "name": "txt_tab_browsed",
             "type": "text",
             "label": "Browsed tab",
             "help": "",
+            "options": null,
             "default": "Browsed",
-            "value": "Browsed",
-            "options": null
+            "value": "Browsed"
           },
           {
             "key": "txt_ship_away",
+            "name": "txt_ship_away",
             "type": "text",
             "label": "Free delivery · still to go",
             "help": "Use {amount} where the figure should appear.",
+            "options": null,
             "default": "You're {amount} away from free delivery",
-            "value": "You're {amount} away from free delivery",
-            "options": null
+            "value": "You're {amount} away from free delivery"
           },
           {
             "key": "txt_ship_done",
+            "name": "txt_ship_done",
             "type": "text",
             "label": "Free delivery · reached",
             "help": "",
+            "options": null,
             "default": "🎉 You've unlocked free delivery!",
-            "value": "🎉 You've unlocked free delivery!",
-            "options": null
+            "value": "🎉 You've unlocked free delivery!"
           },
           {
             "key": "txt_subtotal",
+            "name": "txt_subtotal",
             "type": "text",
             "label": "Subtotal label",
             "help": "",
+            "options": null,
             "default": "Subtotal",
-            "value": "Subtotal",
-            "options": null
+            "value": "Subtotal"
           },
           {
             "key": "txt_btn_cart",
+            "name": "txt_btn_cart",
             "type": "text",
             "label": "Left button",
             "help": "",
+            "options": null,
             "default": "Cart",
-            "value": "Cart",
-            "options": null
+            "value": "Cart"
           },
           {
             "key": "txt_btn_checkout",
+            "name": "txt_btn_checkout",
             "type": "text",
             "label": "Right button",
             "help": "",
+            "options": null,
             "default": "Checkout",
-            "value": "Checkout",
-            "options": null
+            "value": "Checkout"
           },
           {
             "key": "txt_empty",
+            "name": "txt_empty",
             "type": "text",
             "label": "Empty bag · line one",
             "help": "",
+            "options": null,
             "default": "Your bag is empty.",
-            "value": "Your bag is empty.",
-            "options": null
+            "value": "Your bag is empty."
           },
           {
             "key": "txt_empty_sub",
+            "name": "txt_empty_sub",
             "type": "text",
             "label": "Empty bag · line two",
             "help": "",
+            "options": null,
             "default": "Add something glowy ✨",
-            "value": "Add something glowy ✨",
-            "options": null
+            "value": "Add something glowy ✨"
           },
           {
             "key": "txt_browsed_none",
+            "name": "txt_browsed_none",
             "type": "text",
             "label": "Nothing browsed yet",
             "help": "",
+            "options": null,
             "default": "Nothing browsed yet.",
-            "value": "Nothing browsed yet.",
-            "options": null
+            "value": "Nothing browsed yet."
           }
         ]
       },
       {
         "key": "colour",
         "label": "Colour",
-        "description": "Prices, tabs and the checkout button.",
+        "description": "Prices, tabs and the checkout button. The same on both devices.",
         "fields": [
           {
             "key": "accent",
+            "name": "accent",
             "type": "colour",
             "label": "Prices and the active tab",
             "help": "",
+            "options": null,
             "default": "#C13E63",
-            "value": "#C13E63",
-            "options": null
+            "value": "#C13E63"
           },
           {
             "key": "checkout_bg",
+            "name": "checkout_bg",
             "type": "colour",
             "label": "Checkout button",
             "help": "",
+            "options": null,
             "default": "#C13E63",
-            "value": "#C13E63",
-            "options": null
+            "value": "#C13E63"
           },
           {
             "key": "checkout_fg",
+            "name": "checkout_fg",
             "type": "colour",
             "label": "Checkout button text",
             "help": "",
+            "options": null,
             "default": "#FFFFFF",
-            "value": "#FFFFFF",
-            "options": null
+            "value": "#FFFFFF"
           }
         ]
       }
-    ]
+    ],
+    "touch": [
+      "rm_tap_m",
+      "x_size_m",
+      "btn_h_m",
+      "tab_h_m"
+    ],
+    "touchMin": 44,
+    "phoneMax": 680,
+    "tapMax": 900
   },
   "account-panel": {
     "tabs": [
