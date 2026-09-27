@@ -112,7 +112,14 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
 .pg-note.is-ok{border-color:#bfe3c9;background:#f2fbf5;color:#1c6b36}
 .pg-note.is-info{border-color:#cfd9e6;background:#f4f7fb;color:#3a4d63}
 .pg-tablewrap{overflow:auto}
-.pg-slugcell{font-size:11.5px;color:var(--ink-soft,#6b7280);word-break:break-all}
+/* The address cell holds one of two things: a PATH, which must be allowed to
+   break anywhere because /everything-under-54-aed/ is wider than the column at
+   390px — and a SENTENCE, when the row has no route at all. `word-break:break-all`
+   on the cell applied it to both, and measured at 390px in Chromium the sentence
+   rendered as "No addres / s on the sh / op". So the rule goes on the <code> that
+   carries the path, which is the only thing in here that needs it. */
+.pg-slugcell{font-size:11.5px;color:var(--ink-soft,#6b7280);overflow-wrap:break-word}
+.pg-slugcell code{word-break:break-all}
 .pg-img{display:grid;gap:8px}
 .pg-img-prev{aspect-ratio:1200/630;border-radius:9px;border:1px solid var(--border,#e6e6e6);
   background:linear-gradient(135deg,#FFF0F4,#FCE0E8);display:grid;place-items:center;

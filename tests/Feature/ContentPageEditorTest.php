@@ -1268,6 +1268,44 @@ it('does not widen the one sanitiser gap it found, and names it', function () {
     expect(PageEditorApiController::RICH_FIELDS)->toBe(['content']);
 });
 
+it('wraps the address cell on words when it holds a sentence', function () {
+    /*
+     * MEASURED AT 390px, IN CHROMIUM, ON THE REAL SCREEN — this is a defect the
+     * screenshots found and no assertion would have.
+     *
+     * The address column holds one of two things. A PATH, which must be allowed to
+     * break anywhere, because /everything-under-54-aed/ is wider than the column on
+     * a phone. And a SENTENCE — "No address on the shop" — when the row has no
+     * route at all, which is the loudest thing this screen says and the only one
+     * that costs an indexed URL.
+     *
+     * `word-break:break-all` was on the CELL, so it applied to both, and the
+     * sentence rendered as "No addres / s on the sh / op" at 390px. The rule now
+     * sits on the <code> that carries the path, which is the only element that
+     * needs it; the cell gets overflow-wrap:break-word, which breaks a long token
+     * without chopping ordinary words.
+     *
+     * CSS, not JavaScript — rule 4. Nothing here measures an element.
+     *
+     * MUTATION, RUN: move `word-break:break-all` back onto `.pg-slugcell` and this
+     * is red — 1 failed.
+     */
+    $partial = (string) file_get_contents(
+        resource_path('views/admin/partials/page-editor-screen.blade.php')
+    );
+
+    expect((bool) preg_match('/\.pg-slugcell\{([^}]*)\}/', $partial, $cell))->toBeTrue();
+
+    expect(str_contains($cell[1], 'word-break:break-all'))->toBeFalse(
+        'break-all is back on the whole address cell, so "No address on the shop" '
+        .'breaks mid-word at 390px'
+    );
+
+    expect(substr_count($partial, '.pg-slugcell code{word-break:break-all}'))->toBe(1,
+        'the path itself still has to be allowed to break anywhere, or a long slug '
+        .'widens the table on a phone');
+});
+
 it('sits where every file in this lane says it sits', function () {
     /*
      * RULE 3 — "Say where it sits in the admin", pinned against the console's own
