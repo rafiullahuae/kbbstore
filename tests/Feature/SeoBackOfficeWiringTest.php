@@ -347,3 +347,98 @@ it('lays the whole back office out with logical properties, so it mirrors', func
     expect($css)->toContain('border-inline-start');
     expect($css)->toContain('text-align:start');
 });
+
+/*
+ * ── EVERY "WHERE" ON THE SEO TO-DO LIST NAMES A PLACE THAT EXISTS ──────────
+ *
+ * The SEO back office prints a `where` beside each open task — the path the
+ * owner is supposed to walk to fix it. Two of them named screens that do not
+ * exist: `Store → Pages`, and (in FaqSchema's docblock) `Content → Pages`. The
+ * real place is `Pages → User pages`, which is where the sidebar has put those
+ * pages all along.
+ *
+ * That is worse than a typo, and CLAUDE.md's rule 3 is about exactly this. The
+ * task list is the one screen whose entire job is to tell the owner where to go;
+ * a task that sends him to a section he cannot find teaches him the list is
+ * unreliable, and the next correct instruction on it gets ignored too. Found by
+ * Lane S9 while building the screen the wrong path was pointing away from.
+ *
+ * WHAT THIS CHECKS, AND WHAT IT DELIBERATELY DOES NOT. The first TWO segments —
+ * the sidebar SECTION and the SCREEN inside it — as a PAIR, against the console's
+ * own TITLES map, which stores each screen as exactly that pair. Everything after
+ * them is tab names, field labels and sentences ("and write the headings as
+ * questions") that live in a dozen partials and are not derivable from one file;
+ * asserting on those would mean a second copy of the console's structure, which
+ * would rot faster than the thing it guards.
+ *
+ * THE PAIR AND NOT THE SECTION ALONE, and that correction is the whole reason
+ * this paragraph is worth reading. The first version of this test checked the
+ * section only, and it was GREEN under its own stated mutation: `Store` is a real
+ * section, so `Store → Pages` sailed through — and `Store → Pages` is one of the
+ * two strings that prompted the test. The defect was never in the segment it was
+ * looking at. Caught by running the mutation rather than by reading the code,
+ * which is the only way that class of mistake is ever caught.
+ *
+ * MUTATIONS, all three run and all three red:
+ *   - `Store → Pages → the page → …` back on the FAQ-headings task.
+ *   - `Settings → Business Details → …` on the shop-address task.
+ *   - the em-dash cut below removed, which makes the guard reject real copy.
+ */
+it('sends the owner to a sidebar screen that exists', function () {
+    $src = (string) file_get_contents(app_path('Http/Controllers/Admin/SeoTasksApiController.php'));
+
+    preg_match_all("/'where'\s*=>\s*'([^']+)'/", $src, $m);
+
+    // The literals only; one task passes a variable and is not a literal to
+    // check. A count guards against the regex silently matching nothing.
+    expect(count($m[1]))->toBeGreaterThanOrEqual(10);
+
+    $console = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    preg_match('/const TITLES=\{(.*?)\};/s', $console, $titles);
+    expect($titles[1] ?? '')->not->toBe('', 'the TITLES map could not be read, so this test proves nothing');
+
+    preg_match_all("/\[\s*'([^']+)'\s*,\s*'([^']*)'\s*\]/", $titles[1], $pairs);
+
+    /** @var array<string, list<string>> section => the screens inside it */
+    $screens = [];
+
+    foreach ($pairs[1] as $i => $section) {
+        $screens[$section][] = $pairs[2][$i];
+    }
+
+    expect($screens)->not->toBeEmpty();
+
+    $strays = [];
+
+    foreach ($m[1] as $where) {
+        $parts = array_map('trim', explode('→', $where));
+
+        $section = $parts[0];
+
+        /*
+         * The em dash, because one task reads "Build my routine — tick the
+         * products and press the concern": the sentence is glued to the screen
+         * name with a dash rather than a fresh arrow. Cutting there reads the
+         * screen out of it instead of reporting the whole sentence as a screen
+         * that does not exist.
+         */
+        $screen = trim(explode('—', $parts[1] ?? '')[0]);
+
+        if (! isset($screens[$section]) || ! in_array($screen, $screens[$section], true)) {
+            $strays[] = $where;
+        }
+    }
+
+    $known = [];
+
+    foreach ($screens as $section => $labels) {
+        foreach ($labels as $label) {
+            $known[] = $section.' → '.$label;
+        }
+    }
+
+    expect($strays)->toBe([], 'these SEO tasks send the owner to a screen the console does not have. '
+        . 'The screens it does have are: ' . implode(', ', $known) . '. Offending: '
+        . implode(' | ', $strays));
+});

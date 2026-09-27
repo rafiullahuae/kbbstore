@@ -32,7 +32,7 @@ use App\Support\Locale;
  *
  * There is no new editor, no new table and no new box to fill in. The source is
  * the content page's own body, which the owner already writes at
- * Content → Pages. A heading becomes a `Question` and the flow content under it
+ * Pages → User pages. A heading becomes a `Question` and the flow content under it
  * becomes its `Answer`.
  *
  * That is deliberate, and it is the rule Google actually enforces about this

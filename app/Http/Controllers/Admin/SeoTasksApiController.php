@@ -601,7 +601,7 @@ class SeoTasksApiController extends Controller
                 'urgency' => 'later',
                 'title' => 'FAQ markup is switched on and no page has questions in it',
                 'why' => 'The switch is on and publishing nothing, because a heading only counts as a question when it ends in a question mark and at least two are needed on one page. Nothing is broken — it is simply doing nothing, which is worth knowing rather than assuming.',
-                'where' => 'Store → Pages → the page → and write the headings as questions',
+                'where' => 'Pages → User pages → Edit → and write the headings as questions',
                 'go' => 'seo',
                 'detail' => 'Either write a page’s headings as questions, or set the switch back to Not published.',
             ];
