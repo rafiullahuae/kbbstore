@@ -231,19 +231,43 @@ class MediaLibraryApiController extends Controller
         $path = (string) $media->path;
 
         /*
-         * Only a file this application wrote is removed from disk.
+         * Only a file this application wrote is removed from disk — and the
+         * test for that is whether the file is THERE, not what its path is
+         * called.
          *
-         * An `uploads/` path is an admin upload and lives in the public web
-         * root this app owns. Anything else is an imported WordPress path under
-         * /wp-content/uploads/, which on the server is a DIFFERENT directory
-         * belonging to the old store — bootstrap/app.php's usePublicPath means
-         * this tree cannot even see it. Forgetting the row is right; reaching
-         * out of our own web root to unlink someone else's file is not.
+         * ── WHY THE PREFIX GUARD WENT ──────────────────────────────────────
+         *
+         * This used to unlink only an `uploads/` path, on the reasoning that
+         * anything under `/wp-content/uploads/` is "a DIFFERENT directory
+         * belonging to the old store — usePublicPath means this tree cannot
+         * even see it". That was true when it was written and STOPPED BEING
+         * TRUE when the importer began sideloading media: MediaSideloader
+         * writes a fetched file to public_path($path) with `wp-content/uploads`
+         * still in it, which is inside this application's own web root and is
+         * a file this application did write.
+         *
+         * So the guard had inverted: it was protecting the old store's files —
+         * which it can no longer reach anyway — while orphaning our own. Delete
+         * such a row and the bytes stayed on disk with nothing referencing
+         * them, unreachable from every screen, on a host with no shell.
+         *
+         * `is_file()` already draws the only line that matters. A path this
+         * tree genuinely cannot see answers false and nothing is unlinked,
+         * which is exactly the case the prefix guard was reaching for.
+         *
+         * THE SHAPE IS STILL CHECKED, and more strictly than before:
+         * MediaRegistrar::normalise() is the one writer of this column and it
+         * admits nothing outside MediaRegistrar::ROOTS. Re-asserting it here
+         * costs one call and means a row edited by hand on the box cannot point
+         * an unlink anywhere — the second lock this project applies to every
+         * stored path (UgcPath::stored(), ReviewWall::photos()).
          */
         $removed = false;
 
-        if (str_starts_with(ltrim($path, '/'), 'uploads/')) {
-            $full = public_path(ltrim($path, '/'));
+        $safe = \App\Support\MediaRegistrar::normalise($path);
+
+        if ($safe !== null) {
+            $full = public_path($safe);
 
             if (is_file($full)) {
                 $removed = @unlink($full);

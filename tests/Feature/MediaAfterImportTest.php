@@ -853,3 +853,93 @@ function mbFakeGraph(array $media, string $image): void
         '*' => Http::response($image, 200, ['Content-Type' => $type]),
     ]);
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * AND THE CONSEQUENCE OF ALL THIS FOR DELETION.
+ *
+ * Found by the lane that widened the walk, and reported rather than edited
+ * because the controller was not its file. It is a REGRESSION THAT ARRIVES
+ * WITH THE FIX, which is the kind worth naming loudly.
+ *
+ * MediaLibraryApiController::destroy() unlinked only an `uploads/` path, on the
+ * reasoning that anything under /wp-content/uploads/ is "a DIFFERENT directory
+ * belonging to the old store — usePublicPath means this tree cannot even see
+ * it". True when written. Untrue the moment MediaSideloader began writing a
+ * fetched file to public_path($path) with `wp-content/uploads` still in it —
+ * inside this application's own web root, written by this application.
+ *
+ * So the guard had inverted: protecting files it can no longer reach, while
+ * orphaning our own. Delete the row and the bytes stay on disk with nothing
+ * referencing them, unreachable from every screen, on a host with no shell.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+it('removes an imported file from disk when its row is deleted', function () {
+    $this->actingAs(mbDeleteOwner(), 'admin');
+
+    $relative = 'wp-content/uploads/2024/03/delete-me-'.uniqid().'.jpg';
+    $full = public_path($relative);
+
+    @mkdir(dirname($full), 0o755, true);
+    file_put_contents($full, mbJpeg(8, 8));
+
+    $media = \App\Models\Media::create([
+        'filename' => basename($relative),
+        'path' => $relative,
+        'mime' => 'image/jpeg',
+        'size' => filesize($full),
+        'width' => 8,
+        'height' => 8,
+    ]);
+
+    expect(is_file($full))->toBeTrue('the fixture did not write');
+
+    $this->deleteJson('/admin-api/media/'.$media->id)->assertOk();
+
+    // The row AND the bytes. A row without its file is a hole nothing can find.
+    expect(\App\Models\Media::find($media->id))->toBeNull()
+        ->and(is_file($full))->toBeFalse('the imported file was orphaned on disk');
+});
+
+/*
+ * MUTATION: put `str_starts_with(ltrim($path, '/'), 'uploads/')` back in place
+ * of the normalise() call and this is red — the file survives its row. RUN: red.
+ */
+
+it('still refuses to unlink anything outside the two known roots', function () {
+    $this->actingAs(mbDeleteOwner(), 'admin');
+
+    /*
+     * THE HALF THE PREFIX GUARD WAS REACHING FOR, kept and made stricter.
+     * normalise() is the one writer of this column and admits nothing outside
+     * MediaRegistrar::ROOTS, so a row edited by hand on the box cannot point an
+     * unlink at an arbitrary path. The second lock this project applies to
+     * every stored path -- UgcPath::stored(), ReviewWall::photos().
+     */
+    $outside = public_path('not-a-media-root-'.uniqid().'.jpg');
+    file_put_contents($outside, mbJpeg(8, 8));
+
+    $media = \App\Models\Media::create([
+        'filename' => basename($outside),
+        'path' => basename($outside),
+        'mime' => 'image/jpeg',
+        'size' => filesize($outside),
+    ]);
+
+    $this->deleteJson('/admin-api/media/'.$media->id)->assertOk();
+
+    expect(is_file($outside))->toBeTrue('an unlink escaped the two known roots');
+
+    @unlink($outside);
+});
+
+/** An owner for the two deletion cases above. */
+function mbDeleteOwner(): \App\Models\AdminUser
+{
+    return \App\Models\AdminUser::create([
+        'name' => 'MB Delete Owner',
+        'email' => 'mb-del-'.uniqid().'@example.test',
+        'password' => 'secret-secret',
+        'role' => 'owner',
+    ]);
+}
