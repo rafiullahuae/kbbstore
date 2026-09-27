@@ -75,7 +75,7 @@ class PaymentsApiController extends Controller
             $fields = [];
 
             foreach ($schema as $key => $def) {
-                [$type, $label, $help] = array_pad($def, 3, '');
+                [$type, $label, $help, $group] = array_pad($def, 4, '');
 
                 $stored = $this->credentials->get($gateway->id(), $key);
                 $secret = $type === 'secret';
@@ -85,6 +85,21 @@ class PaymentsApiController extends Controller
                     'type' => $type,
                     'label' => $label,
                     'help' => $help,
+                    /*
+                     * WHICH COLUMN THE SCREEN PUTS IT IN — 'keys' or 'settings'.
+                     * See PaymentGateway::configSchema() for what the two mean
+                     * and why the answer has to come from here rather than from
+                     * the console, which may not name a gateway.
+                     *
+                     * Falls back to 'settings' for a schema that has not
+                     * declared one, and that fallback is a backstop, not a
+                     * default: PaymentsFieldGroupsTest fails any entry that
+                     * leaves it out. Settings is the safer side to land on —
+                     * the keys column says "paste these in from your provider",
+                     * and a shop setting sitting under that sentence is a lie
+                     * about where the value comes from.
+                     */
+                    'group' => $group === 'keys' ? 'keys' : 'settings',
                     // A secret is NEVER sent back. Not masked with asterisks --
                     // empty, with a flag. A mask still tells you the length.
                     'value' => $secret ? '' : $stored,

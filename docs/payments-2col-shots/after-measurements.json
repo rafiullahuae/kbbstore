@@ -1,0 +1,85 @@
+{
+  "after-cod-390": {
+    "crumb": "Store",
+    "ptitle": "Payments",
+    "paneVisible": true,
+    "gridColumns": "(none)",
+    "sections": [
+      {
+        "title": "How this shop uses it",
+        "sub": "no account with anyone is needed, so there is nothing to paste in",
+        "rows": 3
+      }
+    ],
+    "gridHeight": null,
+    "cardHeight": 586,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0
+  },
+  "after-stripe-390": {
+    "crumb": "Store",
+    "ptitle": "Payments",
+    "paneVisible": true,
+    "gridColumns": "328px",
+    "sections": [
+      {
+        "title": "Keys from Credit / Debit Card",
+        "sub": "0 of 3 filled in · paste these from the provider",
+        "rows": 7
+      },
+      {
+        "title": "How this shop uses it",
+        "sub": "what shoppers see, and the rules this shop applies",
+        "rows": 3
+      }
+    ],
+    "gridHeight": 2188,
+    "cardHeight": 2458,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0
+  },
+  "after-cod-1280": {
+    "crumb": "Store",
+    "ptitle": "Payments",
+    "paneVisible": true,
+    "gridColumns": "(none)",
+    "sections": [
+      {
+        "title": "How this shop uses it",
+        "sub": "no account with anyone is needed, so there is nothing to paste in",
+        "rows": 3
+      }
+    ],
+    "gridHeight": null,
+    "cardHeight": 468,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0
+  },
+  "after-stripe-1280": {
+    "crumb": "Store",
+    "ptitle": "Payments",
+    "paneVisible": true,
+    "gridColumns": "473.094px 473.094px",
+    "sections": [
+      {
+        "title": "Keys from Credit / Debit Card",
+        "sub": "0 of 3 filled in · paste these from the provider",
+        "rows": 7
+      },
+      {
+        "title": "How this shop uses it",
+        "sub": "what shoppers see, and the rules this shop applies",
+        "rows": 3
+      }
+    ],
+    "gridHeight": 1515,
+    "cardHeight": 1702,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0
+  },
+  "pageErrors": []
+}

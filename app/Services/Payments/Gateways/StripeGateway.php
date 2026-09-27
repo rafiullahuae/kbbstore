@@ -166,10 +166,10 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     public function configSchema(): array
     {
         return [
-            'publishable_key' => ['text', 'Publishable key', 'Starts pk_test_ or pk_live_. Safe to appear in the page.'],
-            'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ or sk_live_. Never leaves the server, and is never returned by any API.'],
-            'webhook_signing_secret' => ['secret', 'Webhook signing secret', 'Starts whsec_. From Stripe Dashboard -> Developers -> Webhooks, after adding the endpoint URL below. Without it no webhook can be verified.'],
-            'webhook_secret' => ['secret', 'URL secret', 'Generated for you. Forms part of the webhook URL below.'],
+            'publishable_key' => ['text', 'Publishable key', 'Starts pk_test_ or pk_live_. Safe to appear in the page.', 'keys'],
+            'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ or sk_live_. Never leaves the server, and is never returned by any API.', 'keys'],
+            'webhook_signing_secret' => ['secret', 'Webhook signing secret', 'Starts whsec_. From Stripe Dashboard -> Developers -> Webhooks, after adding the endpoint URL below. Without it no webhook can be verified.', 'keys'],
+            'webhook_secret' => ['secret', 'URL secret', 'Generated for you. Forms part of the webhook URL below.', 'keys'],
             /*
              * NOT A CREDENTIAL — a switch, and the first entry in any gateway's
              * schema that is one. Two consequences follow, and both are handled
@@ -191,7 +191,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * field has Link off from the moment the package lands, with no save
              * required and nothing to remember.
              */
-            'link_enabled' => ['bool', 'Stripe Link', 'Stripe’s own one-click autofill, offered inside the card number field. Off by default: it asks the shopper to save their card with Stripe rather than with this shop, and it puts a second sign-in in the middle of the checkout.'],
+            'link_enabled' => ['bool', 'Stripe Link', 'Stripe’s own one-click autofill, offered inside the card number field. Off by default: it asks the shopper to save their card with Stripe rather than with this shop, and it puts a second sign-in in the middle of the checkout.', 'settings'],
         ];
     }
 

@@ -217,8 +217,8 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     public function configSchema(): array
     {
         return [
-            'api_token' => ['secret', 'API token', 'From Tamara merchant portal -> Settings -> API. Long JWT-looking string.'],
-            'notification_token' => ['secret', 'Notification token', 'Separate from the API token. This is the key Tamara signs webhooks with; without it no webhook can be verified.'],
+            'api_token' => ['secret', 'API token', 'From Tamara merchant portal -> Settings -> API. Long JWT-looking string.', 'keys'],
+            'notification_token' => ['secret', 'Notification token', 'Separate from the API token. This is the key Tamara signs webhooks with; without it no webhook can be verified.', 'keys'],
             /*
              * NOT READ BY ANY CODE PATH IN THIS BUILD, and the help text says so.
              * It used to read "for the product-page widget only", which promised a
@@ -228,9 +228,9 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * named in the lane report as deliberately not shipped: it is a script
              * served from Tamara's CDN and there is no way to verify it from here.
              */
-            'public_key' => ['text', 'Public key', 'Not used yet. Tamara issues this for the on-page "pay in 4" widget, which this shop does not display; storing it now does nothing and costs nothing.'],
-            'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. Forms part of the webhook URL below.'],
-            'capture_days' => ['text', 'Capture window (days)', 'How long Tamara leaves an authorised order capturable on your account. Default 180. Used only to warn you before it lapses — Tamara itself decides.'],
+            'public_key' => ['text', 'Public key', 'Not used yet. Tamara issues this for the on-page "pay in 4" widget, which this shop does not display; storing it now does nothing and costs nothing.', 'keys'],
+            'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. Forms part of the webhook URL below.', 'keys'],
+            'capture_days' => ['text', 'Capture window (days)', 'How long Tamara leaves an authorised order capturable on your account. Default 180. Used only to warn you before it lapses — Tamara itself decides.', 'settings'],
             /*
              * A text box rather than a `select`, and not because a select would
              * be wrong: the payments screen in resources/views/admin/
@@ -242,24 +242,24 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * the stronger place for it — it holds whatever the box contains and
              * whatever a future screen posts.
              */
-            'payment_type' => ['text', 'Payment type', 'One of PAY_BY_LATER (pay in 30 days), PAY_NOW, PAY_NEXT_MONTH or PAY_BY_INSTALMENTS. Leave empty for PAY_BY_LATER. Anything else is ignored and PAY_BY_LATER is used.'],
-            'instalments' => ['text', 'Instalments', 'Only read when the payment type is PAY_BY_INSTALMENTS: how many instalments to ask Tamara for, 2 to 12. Leave empty to let Tamara choose. Your account has to be enabled for the number you ask for.'],
+            'payment_type' => ['text', 'Payment type', 'One of PAY_BY_LATER (pay in 30 days), PAY_NOW, PAY_NEXT_MONTH or PAY_BY_INSTALMENTS. Leave empty for PAY_BY_LATER. Anything else is ignored and PAY_BY_LATER is used.', 'settings'],
+            'instalments' => ['text', 'Instalments', 'Only read when the payment type is PAY_BY_INSTALMENTS: how many instalments to ask Tamara for, 2 to 12. Leave empty to let Tamara choose. Your account has to be enabled for the number you ask for.', 'settings'],
             /*
              * The two exclusion boxes. Comma-separated, and matched on product id
              * OR sku — see basketAllowed() for why both. EMPTY ON EVERY EXISTING
              * INSTALL, so nothing is excluded until somebody types into them.
              */
-            'excluded_products' => ['text', 'Products Tamara may not be used for', 'Comma-separated product ids or SKUs. A basket containing one of these is not offered Tamara. Leave empty to exclude nothing — which is what the shop does today.'],
-            'excluded_categories' => ['text', 'Categories Tamara may not be used for', 'Comma-separated category ids. A basket containing any product in one of these is not offered Tamara. Leave empty to exclude nothing.'],
-            'min_limit' => ['text', 'Minimum basket', 'In whole currency units as Tamara\'s portal shows them (e.g. 100 for AED 100.00). Baskets below this are not offered Tamara. Leave empty for no minimum. "Refresh limits from Tamara" fills this in for you.'],
-            'max_limit' => ['text', 'Maximum basket', 'In whole currency units, as above. Baskets above this are not offered Tamara. Leave empty for no maximum.'],
+            'excluded_products' => ['text', 'Products Tamara may not be used for', 'Comma-separated product ids or SKUs. A basket containing one of these is not offered Tamara. Leave empty to exclude nothing — which is what the shop does today.', 'settings'],
+            'excluded_categories' => ['text', 'Categories Tamara may not be used for', 'Comma-separated category ids. A basket containing any product in one of these is not offered Tamara. Leave empty to exclude nothing.', 'settings'],
+            'min_limit' => ['text', 'Minimum basket', 'In whole currency units as Tamara\'s portal shows them (e.g. 100 for AED 100.00). Baskets below this are not offered Tamara. Leave empty for no minimum. "Refresh limits from Tamara" fills this in for you.', 'settings'],
+            'max_limit' => ['text', 'Maximum basket', 'In whole currency units, as above. Baskets above this are not offered Tamara. Leave empty for no maximum.', 'settings'],
             /*
              * Not a credential — the id Tamara hands back from POST /webhooks,
              * kept so the registration can be removed again. `text` rather than
              * `secret` deliberately: it is not a key, it is unusable without
              * one, and the owner needs to SEE whether a webhook is registered.
              */
-            'webhook_id' => ['text', 'Registered webhook id', 'Filled in by "Register webhook with Tamara". Until a webhook is registered, Tamara never sends the expiry and decline notices this shop is written to act on.'],
+            'webhook_id' => ['text', 'Registered webhook id', 'Filled in by "Register webhook with Tamara". Until a webhook is registered, Tamara never sends the expiry and decline notices this shop is written to act on.', 'keys'],
         ];
     }
 

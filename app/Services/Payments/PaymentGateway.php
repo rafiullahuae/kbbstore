@@ -64,8 +64,25 @@ interface PaymentGateway
     /**
      * The config fields the admin screen renders.
      *
-     * @return array<string, array{0: string, 1: string, 2: string}>
-     *         key => [type (text|secret|bool|select), label, help]
+     * ── THE FOURTH ELEMENT IS WHICH COLUMN THE FIELD BELONGS IN ─────────────
+     *
+     * 'keys' is a value the PROVIDER issues and the owner pastes in, plus the
+     * plumbing that connects the two shops: the tokens, the merchant code, the
+     * webhook secret behind the webhook URL, the registered webhook id.
+     * 'settings' is a decision THIS SHOP makes about how the gateway is used:
+     * the capture window, basket limits, exclusions, payment type, whether to
+     * share order history.
+     *
+     * It exists because the screen may not name a gateway. PaymentsGatewayTabs-
+     * Test forbids it — a console that hardcodes 'tamara' stops following the
+     * registry the moment a gateway is added or renamed — so "is this a key or
+     * a setting" has to be answered by the gateway that owns the field, in the
+     * same place its type and help live. Every entry states it; PaymentsField-
+     * GroupsTest fails a schema that leaves one out rather than guessing,
+     * because a field that silently picks a column is a field in the wrong one.
+     *
+     * @return array<string, array{0: string, 1: string, 2: string, 3: string}>
+     *         key => [type (text|secret|bool|select), label, help, group (keys|settings)]
      */
     public function configSchema(): array;
 }

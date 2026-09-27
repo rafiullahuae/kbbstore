@@ -376,6 +376,12 @@ tr:last-child td{border-bottom:0}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:12px 20px;border-radius:99px;box-shadow:var(--sh-l);opacity:0;pointer-events:none;transition:.3s var(--ease);z-index:120;display:flex;align-items:center;gap:9px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast svg{width:16px;height:16px;color:#5fe39b}
+/* A failure is red and stays up longer, because it is the only toast the
+   operator has to READ rather than merely notice. Both literals are
+   foregrounds on the toast's own near-black pill, which does not follow the
+   theme, so they are correct as literals — see the note at the head of this
+   file on which colours must not be tokenised. */
+.toast.bad svg{color:#ff8f86}
 
 .flag{position:fixed;top:12px;right:14px;z-index:90;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--accent-ink);background:var(--surface);border:1px solid var(--accent-soft);padding:4px 11px;border-radius:99px;box-shadow:var(--sh-s)}
 .themewrap{position:relative}
@@ -2044,6 +2050,68 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .paytab-t{max-width:38vw}
 }
 
+/* ---------- the two columns on a gateway card ------------------------------
+   THE FAULT THIS REPLACES. Every row on this screen was an `.ecopt.wide`,
+   which is `display:block` with a 520px control underneath a full-width label.
+   On a 1670px card that leaves the right two thirds of every single row empty,
+   and Tamara's twelve fields ran down one column for about 1900px with the API
+   tokens interleaved with the basket limits. The owner sent a screenshot with
+   an arrow drawn up the empty column.
+
+   WHICH COLUMN A FIELD LANDS IN is decided by the gateway, in its own
+   configSchema, and carried here as `f.group` — see the note above payCard()
+   for why this file is not allowed to answer that question itself.
+
+   EVERY COLOUR IS var(--token, <literal>), the house pattern recorded at the
+   head of this file: the literal is the fallback for where the tokens are not
+   defined, so these rules follow the theme into Midnight instead of staying
+   light behind it.
+
+   THE GRID IS minmax(0,1fr) AND NOT 1fr, which is the whole of why this screen
+   still passes its overflow test. A `1fr` track has an `auto` minimum, so a
+   long stored path or a wide <select> sets the track's floor and pushes the
+   card past #content instead of wrapping — the same trap the .mmrow note two
+   thousand lines up records, reached from the other direction. */
+.paygrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;
+         align-items:start;margin:14px 0 4px}
+.paylede{margin:10px 0 0;max-width:none}
+
+.paysec{border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+        background:var(--surface,#fff);min-width:0;overflow:hidden}
+/* The head is the "prominent section" the owner asked for: a numbered chip, a
+   title and one line saying what the column is FOR. A bare uppercase word over
+   a hairline is the "classic throw away look" he named. */
+.paysech{display:flex;align-items:center;gap:11px;padding:12px 14px;
+         background:var(--surface-2,#f2f4fb);border-bottom:1px solid var(--border,#e6e9f2)}
+.paysecn{flex:0 0 auto;display:inline-grid;place-items:center;width:23px;height:23px;
+         border-radius:8px;font-size:12px;font-weight:800;
+         background:var(--accent,#15a85a);color:#fff}
+.paysect{min-width:0}
+.paysect b{display:block;font-size:13px;font-weight:700;color:var(--ink,#101729);
+           overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.paysect span{display:block;font-size:11.5px;color:var(--ink-soft,#7b8697);margin-top:1px}
+.paysecb{padding:2px 14px 10px}
+/* The keys column is the one the owner is working down, so it is the one that
+   carries the accent. The settings column is deliberately quieter — two equally
+   loud panels is no hierarchy at all. */
+.paysec.is-set .paysecn{background:var(--surface-3,#eef1f9);color:var(--ink-2,#3c465c)}
+
+/* Inside a column the control is the row, not a 520px box with dead space
+   beside it. This is scoped to .paysecb so no other screen's .ecopt moves. */
+.paysecb .ecopt.wide .inp{width:100%;max-width:none}
+.paysecb .ecopt{padding:12px 0}
+.paysecb .ecopt:last-of-type{border-bottom:0}
+.paysecb .echelp{max-width:none}
+.payfoot{justify-content:flex-end;gap:10px;padding:14px 0 4px;flex-wrap:wrap}
+
+/* ONE COLUMN below the rung where two stop fitting. 1120px and not 900: the
+   console keeps a 268px sidebar, so a 1120px window is a ~800px content column
+   and two tracks of 390 are already tighter than the widest control on them.
+   Measured on Tamara, which has the longest labels. */
+@media (max-width:1120px){
+  .paygrid{grid-template-columns:minmax(0,1fr)}
+}
+
 /* ---------- LANE CJ · Store · Mail — screen styles — BEGIN -----------------
    PREFIX. Every selector below is mlf-, and mlf- appears nowhere else in this
    repo — grepped across resources/views and the whole tree before it was
@@ -2515,6 +2583,9 @@ const I={
   mkt:'<path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1zM15 8a4 4 0 0 1 0 8M19 5a8 8 0 0 1 0 14"/>',
   content:'<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
+  /* The toast's failure glyph. A triangle rather than a cross: a cross reads as
+     "dismiss" on a pill that is already tapping itself away. */
+  alert:'<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4"/><path d="M12 17.5v.5"/>',
   rocket:'<path d="M5 13c-1.5 1.5-2 5-2 5s3.5-.5 5-2M9 15l-3-3M15 9l3-3M14.5 4.5C18 3 21 3 21 3s0 3-1.5 6.5C18 13 14 16 12 17l-5-5c1-2 4-6 7.5-7.5z"/><circle cx="14.5" cy="9.5" r="1.2"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>',
   shield:'<path d="M12 2 4 5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V5z"/><path d="M9 12l2 2 4-4"/>',
@@ -4424,7 +4495,7 @@ function bindNewsletter(){
       if(d.stats) NL.stats=d.stats;
       $('#nlDirty').style.visibility='hidden';
       toast('Newsletter settings saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -4765,7 +4836,7 @@ function bindModules(){
       $('#mdDirty').style.visibility='hidden';
       toast('Modules saved');
       paintModules();
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -5002,7 +5073,7 @@ function bindMobileHdr(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       $('#mhDirty').style.visibility='hidden';
       toast('Mobile header saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -5929,7 +6000,7 @@ function bindDividers(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       $('#dvDirty').style.visibility='hidden';
       toast('Dividers saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -6069,7 +6140,7 @@ function bindCartPanel(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       $('#cpDirty').style.visibility='hidden';
       toast('Cart panel saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -7781,7 +7852,7 @@ async function reorderJumpToRank(productId, rank){
     const j=await r.json();
     if(j.ok){ toast('Moved and saved'); await reorderLoadProducts(); }
     else{ toast(j.message||'Could not move that product.'); }
-  }catch(e){ toast('Could not save — check your connection.'); }
+  }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
 }
 
@@ -7796,7 +7867,7 @@ async function reorderSave(){
     const j=await r.json();
     if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; await reorderLoadProducts(); }
     else{ toast(j.message||'Could not save — reload and try again.'); }
-  }catch(e){ toast('Could not save — check your connection.'); }
+  }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
 }
 let pdTab='general',reyTab='misc',yoastTab='seo',pageTab='general',peCtx={};
@@ -9179,7 +9250,7 @@ function bindShipping(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       $('#shDirty').style.visibility='hidden';
       toast('Delivery saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -9336,7 +9407,7 @@ async function paintGift(){
       toast('Gift wrapping saved');
       GIFT = null;
       paintGift();
-    }catch(e){ toast('Save failed \u2014 check connection'); }
+    }catch(e){ toast('Save failed \u2014 check connection','bad'); }
   };
 }
 
@@ -9830,7 +9901,7 @@ async function paintDeliveryLines(){
       toast('Delivery lines saved');
       DLINES = null;
       paintDeliveryLines();
-    }catch(e){ toast('Save failed \u2014 check connection'); }
+    }catch(e){ toast('Save failed \u2014 check connection','bad'); }
   };
 }
 
@@ -9981,7 +10052,7 @@ function bindExtended(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       $('#xdDirty').style.visibility='hidden';
       toast('Extended delivery saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -10101,7 +10172,7 @@ function bindPayShip(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       $('#psDirty').style.visibility='hidden';
       toast('Rules saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -10191,7 +10262,7 @@ function bindPixels(){
       $('#mpDirty').style.visibility='hidden';
       toast('Pixels saved');
       paintPixels();
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -10315,7 +10386,7 @@ function bindLabels(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       $('#plDirty').style.visibility='hidden';
       toast('Labels saved');
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 }
@@ -10626,7 +10697,26 @@ async function kbbPurge(btn){
     btn.classList.remove('spin');
   }
 }
-let toastT;function toast(m){const t=$('#toast');t.innerHTML=ic(I.check)+'<span>'+m+'</span>';t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
+/* ── A FAILURE MAY NOT WEAR A SUCCESS TICK ─────────────────────────────────
+   Reported by the owner with a screenshot of the clip editor: a black pill
+   reading "✓ That file was not accepted." The tick was not a mistake at that
+   call site — toast() rendered I.check for EVERY message it was ever given,
+   success and failure alike, and `.toast svg` painted it mint green. Every
+   error in this console has been announcing itself with a green tick since the
+   toast was written.
+
+   It is worse than cosmetic on the screens that matter here. "Could not save"
+   under a green tick is the one message an operator glances at and reads as
+   done, and the two screens where that is most expensive — Payments and the
+   order screen's capture and refund — are full of them.
+
+   `kind` defaults to the tick, so not one of the 240-odd existing calls changes
+   behaviour by being left alone. 'bad' is the only other value that does
+   anything, and every simple catch handler in this file now passes it. */
+let toastT;function toast(m,kind){const t=$('#toast');const bad=kind==='bad';
+  t.className='toast'+(bad?' bad':'');
+  t.innerHTML=ic(bad?I.alert:I.check)+'<span>'+m+'</span>';
+  t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),bad?4200:2400);}
 $$('#envtog button').forEach(b=>b.onclick=()=>{
   $$('#envtog button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   document.body.dataset.env=b.dataset.e;
@@ -10849,7 +10939,7 @@ function wireSampleOrder(){
       });
       toast('Sample order created');
       renderDemoContent();
-    }catch(e){ toast('Could not create the sample order: '+e.message); create.disabled=false; }
+    }catch(e){ toast('Could not create the sample order: '+e.message,'bad'); create.disabled=false; }
   };
 
   var remove=document.getElementById('soRemove');
@@ -10860,7 +10950,7 @@ function wireSampleOrder(){
       await dcApi('/sample-order',{method:'DELETE'});
       toast('Sample order deleted');
       renderDemoContent();
-    }catch(e){ toast('Could not delete the sample order: '+e.message); remove.disabled=false; }
+    }catch(e){ toast('Could not delete the sample order: '+e.message,'bad'); remove.disabled=false; }
   };
 
   var open=document.getElementById('soOpenOrders');
@@ -10893,7 +10983,7 @@ function wireDemoContent(){
         var r=await dcApi('/demo-content/'+type+'/import',{method:'POST'});
         toast(r.already?'Already imported':'Imported');
         renderDemoContent();
-      }catch(e){ toast('Could not import: '+e.message); b.disabled=false; }
+      }catch(e){ toast('Could not import: '+e.message,'bad'); b.disabled=false; }
     };
     card.querySelector('.dcremove').onclick=async function(){
       if(card.querySelector('.dcremove').disabled)return;
@@ -10902,19 +10992,19 @@ function wireDemoContent(){
         await dcApi('/demo-content/'+type+'/remove',{method:'POST'});
         toast('Removed');
         renderDemoContent();
-      }catch(e){ toast('Could not remove: '+e.message); }
+      }catch(e){ toast('Could not remove: '+e.message,'bad'); }
     };
   });
   document.getElementById('dcImportAll').onclick=async function(){
     this.disabled=true;
     try{ await dcApi('/demo-content/import-all',{method:'POST'}); toast('All demo content imported'); renderDemoContent(); }
-    catch(e){ toast('Could not import all: '+e.message); this.disabled=false; }
+    catch(e){ toast('Could not import all: '+e.message,'bad'); this.disabled=false; }
   };
   document.getElementById('dcRemoveAll').onclick=async function(){
     if(!confirm('Remove ALL demo content? This cannot be undone.'))return;
     this.disabled=true;
     try{ await dcApi('/demo-content/remove-all',{method:'POST'}); toast('All demo content removed'); renderDemoContent(); }
-    catch(e){ toast('Could not remove all: '+e.message); this.disabled=false; }
+    catch(e){ toast('Could not remove all: '+e.message,'bad'); this.disabled=false; }
   };
 }
 
@@ -11457,7 +11547,7 @@ function bindMail(){
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       toast('Mail settings saved');
       renderMail();
-    }catch(e){ toast('Could not save: '+e.message); }
+    }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
   };
 
@@ -12920,7 +13010,7 @@ buildNav();
         var out = await api('/admin-api/orders-bulk-restore', {method:'POST', body: JSON.stringify({ids: ids})});
         toast(out.restored + ' order' + (out.restored === 1 ? '' : 's') + ' restored');
         OL.sel = {}; olLoad();
-      }catch(e){ toast('Could not restore those orders'); }
+      }catch(e){ toast('Could not restore those orders','bad'); }
     };
 
     /* The detail screen that already exists. This list does not define a second
@@ -13082,7 +13172,7 @@ buildNav();
       var j = await r.json();
       if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.'); return; }
       toast('Product added'); renderOrderDetail(odPickerOrder);
-    }catch(e){ toast('Could not add that product.'); }
+    }catch(e){ toast('Could not add that product.','bad'); }
   }
 
   /**
@@ -13569,7 +13659,7 @@ buildNav();
     document.getElementById('odTrash').onclick = async function(){
       if(!confirm('Move this order to trash?')) return;
       try{ await api('/admin-api/orders/'+id,{method:'DELETE'}); toast('Order moved to trash'); renderOrders(); }
-      catch(e){ toast('Could not trash this order.'); }
+      catch(e){ toast('Could not trash this order.','bad'); }
     };
 
     var custHist = document.getElementById('odCustHist');
@@ -13583,14 +13673,14 @@ buildNav();
       };
       document.getElementById('odShipSave').onclick = async function(){
         var raw = document.getElementById('odShipJson').value;
-        var parsed; try{ parsed = JSON.parse(raw); }catch(e){ toast('That is not valid JSON.'); return; }
+        var parsed; try{ parsed = JSON.parse(raw); }catch(e){ toast('That is not valid JSON.','bad'); return; }
         try{
           var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/address'),{method:'PUT',credentials:'same-origin',
             headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
             body:JSON.stringify({type:'shipping',address:parsed})});
           if(!r.ok) throw 0;
           toast('Shipping address updated'); renderOrderDetail(id);
-        }catch(e){ toast('Could not save the address.'); }
+        }catch(e){ toast('Could not save the address.','bad'); }
       };
     })();
 
@@ -13607,7 +13697,7 @@ buildNav();
             var j = await r.json();
             if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
             toast('Quantity updated'); renderOrderDetail(id);
-          }catch(e){ toast('Could not update that item.'); }
+          }catch(e){ toast('Could not update that item.','bad'); }
         };
       });
       document.querySelectorAll('#content .odprice').forEach(function(inp){
@@ -13621,7 +13711,7 @@ buildNav();
             var j = await r.json();
             if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
             toast('Price updated'); renderOrderDetail(id);
-          }catch(e){ toast('Could not update that item.'); }
+          }catch(e){ toast('Could not update that item.','bad'); }
         };
       });
       document.querySelectorAll('#content .oditemdel').forEach(function(btn){
@@ -13633,7 +13723,7 @@ buildNav();
             var j = await r.json();
             if(!r.ok || j.ok===false){ toast(j.message||'Could not remove that item.'); return; }
             toast('Item removed'); renderOrderDetail(id);
-          }catch(e){ toast('Could not remove that item.'); }
+          }catch(e){ toast('Could not remove that item.','bad'); }
         };
       });
 
@@ -13693,7 +13783,7 @@ buildNav();
         // return the money by hand" are different facts and the admin needs
         // to be told which one happened.
         toast(j.message||'Refund recorded'); renderOrderDetail(id);
-      }catch(e){ btn.disabled = false; toast('Could not process that refund.'); }
+      }catch(e){ btn.disabled = false; toast('Could not process that refund.','bad'); }
     };
 
     // Capture. Present only when the order is capturable -- see odCapturePanel.
@@ -13708,7 +13798,7 @@ buildNav();
           var j = await r.json();
           if(!r.ok || j.ok===false){ captureBtn.disabled = false; toast(j.message||'Could not capture that payment.'); return; }
           toast(j.message||'Captured'); renderOrderDetail(id);
-        }catch(e){ captureBtn.disabled = false; toast('Could not capture that payment.'); }
+        }catch(e){ captureBtn.disabled = false; toast('Could not capture that payment.','bad'); }
       };
     }
 
@@ -13718,7 +13808,7 @@ buildNav();
       if(!content){ toast('Write a note first.'); return; }
       try{ await api('/admin-api/orders/'+id+'/notes',{method:'POST',body:JSON.stringify({content:content})});
         toast('Note added'); renderOrderDetail(id);
-      }catch(e){ toast('Could not save that note.'); }
+      }catch(e){ toast('Could not save that note.','bad'); }
     };
 
     // Actions dropdown.
@@ -13732,7 +13822,7 @@ buildNav();
         var j = await r.json();
         if(!r.ok || j.ok===false){ toast(j.message||'That action could not be completed.'); return; }
         toast('Done'); renderOrderDetail(id);
-      }catch(e){ toast('That action could not be completed.'); }
+      }catch(e){ toast('That action could not be completed.','bad'); }
     };
 
     /* All four are real documents now — the placeholder toast that used to
@@ -13763,7 +13853,7 @@ buildNav();
   }
 
   async function openOrder(id){
-    var o; try{ o=await api('/admin-api/orders/'+id); }catch(e){ toast('Could not load order'); return; }
+    var o; try{ o=await api('/admin-api/orders/'+id); }catch(e){ toast('Could not load order','bad'); return; }
     var opts=ORDER_STATUSES.map(function(s){return '<option value="'+s+'"'+(s===o.status?' selected':'')+'>'+s+'</option>';}).join('');
     var c=o.customer||{};
     var addr=[sesc(c.name),sesc(c.email),sesc(c.phone),sesc((c.emirate||'')+(c.address?(' \u00b7 '+c.address):''))].filter(Boolean).join('<br>');
@@ -13816,7 +13906,7 @@ buildNav();
         Object.keys(invDraft).forEach(function(k){ CAT_PRODUCTS[k][6]=invDraft[k]; });
         var n=changes.length; invDraft={}; catInventory();
         toast('Saved '+n+' product'+(n>1?'s':''));
-      }catch(e){ toast('Save failed \u2014 check connection'); }
+      }catch(e){ toast('Save failed \u2014 check connection','bad'); }
     };
   }
 
@@ -14993,7 +15083,7 @@ buildNav();
           if(payload.price_aed!=null) row[4]=payload.price_aed;
           if('sale_aed' in payload) row[5]=payload.sale_aed;
           toast('Product saved'); go('catalog');
-        }catch(e){ toast('Save failed \u2014 check connection'); }
+        }catch(e){ toast('Save failed \u2014 check connection','bad'); }
       }
       Array.prototype.slice.call(document.querySelectorAll('#content button')).forEach(function(b){
         var txt=(b.textContent||'').trim();
@@ -15449,7 +15539,7 @@ buildNav();
          a status the table does not hold. */
       toast('Review ' + (d.status === 'spam' ? 'rejected' : d.status === 'approved' ? 'approved' : 'moved back to the queue'));
       renderReviews();
-    }catch(e){ toast('That change could not be saved'); }
+    }catch(e){ toast('That change could not be saved','bad'); }
   }
 
   async function rvBulk(action){
@@ -15471,7 +15561,7 @@ buildNav();
         : (d.affected + ' of ' + d.requested + ' updated — the rest were already there'));
       RV.sel = {};
       renderReviews();
-    }catch(e){ toast('That bulk action could not be saved'); }
+    }catch(e){ toast('That bulk action could not be saved','bad'); }
   }
 
   function rvConfirmDelete(ids){
@@ -15493,7 +15583,7 @@ buildNav();
         toast(d.affected + ' review' + (d.affected === 1 ? '' : 's') + ' deleted');
         RV.sel = {};
         renderReviews();
-      }catch(e){ toast('Those reviews could not be deleted'); }
+      }catch(e){ toast('Those reviews could not be deleted','bad'); }
     };
   }
 
@@ -15530,7 +15620,7 @@ buildNav();
         toast('Reply saved');
         closeModal();
         renderReviews();
-      }catch(e){ toast('That reply could not be saved'); }
+      }catch(e){ toast('That reply could not be saved','bad'); }
     };
   }
 
@@ -16197,7 +16287,7 @@ buildNav();
       var body={ name:sval('nu_name'), email:sval('nu_email'), password:sval('nu_pass'), role:sval('nu_role') };
       if(!body.name||!body.email||body.password.length<8){ toast('Name, email and an 8+ char password are required'); return; }
       try{ await api('/admin-api/users',{method:'POST',body:JSON.stringify(body)}); toast('User created'); closeModal(); renderUsers(); }
-      catch(e){ toast('Could not create user (email may already exist)'); }
+      catch(e){ toast('Could not create user (email may already exist)','bad'); }
     };
   }
   function editUser(id){
@@ -16208,7 +16298,7 @@ buildNav();
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="eu_save">Save</button></div></div>');
     document.getElementById('eu_save').onclick=async function(){
       try{ await api('/admin-api/users/'+id,{method:'PUT',body:JSON.stringify({name:sval('eu_name'),role:sval('eu_role')})}); toast('User updated'); closeModal(); renderUsers(); }
-      catch(e){ toast('Update failed (cannot demote the only owner)'); }
+      catch(e){ toast('Update failed (cannot demote the only owner)','bad'); }
     };
   }
   function resetUserPassword(id){
@@ -16219,7 +16309,7 @@ buildNav();
     document.getElementById('rp_save').onclick=async function(){
       var pw=sval('rp_pass'); if(pw.length<8){ toast('Password must be at least 8 characters'); return; }
       try{ await api('/admin-api/users/'+id,{method:'PUT',body:JSON.stringify({password:pw})}); toast('Password updated'); closeModal(); }
-      catch(e){ toast('Could not update password'); }
+      catch(e){ toast('Could not update password','bad'); }
     };
   }
   async function deleteUser(id){
@@ -16229,7 +16319,7 @@ buildNav();
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" style="background:var(--danger,#d6455a)" id="du_yes">Delete</button></div></div>');
     document.getElementById('du_yes').onclick=async function(){
       try{ await api('/admin-api/users/'+id,{method:'DELETE'}); toast('User deleted'); closeModal(); renderUsers(); }
-      catch(e){ toast('Could not delete (cannot remove yourself or the only owner)'); }
+      catch(e){ toast('Could not delete (cannot remove yourself or the only owner)','bad'); }
     };
   }
 
@@ -17869,7 +17959,7 @@ buildNav();
         faq_schema:sval('seo_faq_schema')
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('SEO settings saved'); }
-      catch(e){ toast('Save failed \u2014 check connection'); }
+      catch(e){ toast('Save failed \u2014 check connection','bad'); }
     };
   }
 
@@ -17915,7 +18005,7 @@ buildNav();
         var j=await res.json();
         if(j.ok){ toast('Redirect added'); renderSeoRedirects(); }
         else{ toast(j.message||'Could not add that redirect.'); }
-      }catch(e){ toast('Could not save \u2014 check your connection.'); }
+      }catch(e){ toast('Could not save \u2014 check your connection.','bad'); }
     };
     wireRedirectRows();
     wireNotFoundRows();
@@ -17953,14 +18043,14 @@ buildNav();
         // nobody can account for" complaint the refusal exists to end. The
         // Resolve handler below already reads j.message; this one did not.
         else{ toast(j.message||'Could not update that redirect.'); }
-      }catch(e){ toast('Could not update \u2014 check your connection.'); }
+      }catch(e){ toast('Could not update \u2014 check your connection.','bad'); }
     };});
     $$('#rd_list [data-rddel]').forEach(function(b){ b.onclick=async function(){
       if(!confirm('Delete this redirect?')) return;
       try{
         await fetch(redirectsApiBase()+'/'+b.dataset.rddel,{method:'DELETE',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
         toast('Redirect deleted'); renderSeoRedirects();
-      }catch(e){ toast('Could not delete \u2014 check your connection.'); }
+      }catch(e){ toast('Could not delete \u2014 check your connection.','bad'); }
     };});
   }
 
@@ -17976,13 +18066,13 @@ buildNav();
         var j=await res.json();
         if(j.ok){ toast('Redirect created'); renderSeoRedirects(); }
         else{ toast(j.message||'Could not resolve that.'); }
-      }catch(e){ toast('Could not save \u2014 check your connection.'); }
+      }catch(e){ toast('Could not save \u2014 check your connection.','bad'); }
     };});
     $$('#nf_list [data-nfdismiss]').forEach(function(b){ b.onclick=async function(){
       try{
         await fetch(redirectsApiBase()+'/not-found/'+b.dataset.nfdismiss,{method:'DELETE',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
         renderSeoRedirects();
-      }catch(e){ toast('Could not dismiss \u2014 check your connection.'); }
+      }catch(e){ toast('Could not dismiss \u2014 check your connection.','bad'); }
     };});
   }
 
@@ -18231,7 +18321,7 @@ buildNav();
       try{
         await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})});
         Object.assign(SETTINGS,payload); toast('Brand display saved');
-      }catch(e){ toast('Save failed — check connection'); }
+      }catch(e){ toast('Save failed — check connection','bad'); }
     };
     document.getElementById('brd_add').onclick=function(){ brandEditor(null); };
     document.querySelectorAll('#catBody [data-bedit]').forEach(function(b){
@@ -18281,7 +18371,7 @@ buildNav();
       try{
         await (isNew ? brandWrite('','POST',payload) : brandWrite('/'+brand.id,'PUT',payload));
         toast(isNew?'Brand created':'Brand saved'); closeModal(); window.catBrands();
-      }catch(e){ toast(e.message); }
+      }catch(e){ toast(e.message,'bad'); }
     };
   }
 
@@ -18300,7 +18390,7 @@ buildNav();
         // refuses to unbrand products behind their back.
         await brandWrite('/'+brand.id+'?force=1','DELETE',null);
         toast('Brand deleted'); closeModal(); window.catBrands();
-      }catch(e){ toast(e.message); }
+      }catch(e){ toast(e.message,'bad'); }
     };
   }
 
@@ -20060,46 +20150,135 @@ buildNav();
       '<span class="echelp" id="pay_copied_'+sesc(g.id)+'" style="margin:0"></span></div></div></div>';
   }
 
+  /* ---------------------------------------------------------------------------
+     THE TWO COLUMNS, AND WHY THE SCREEN DOES NOT DECIDE WHICH IS WHICH
+     ---------------------------------------------------------------------------
+     The owner: "on tabby and tamara setting page, i want two columns, on left
+     all keys fields and on right setting things. also make the sections
+     prominent and don't give me onwards any classic throw away looks."
+
+     He is describing a real fault and not a preference. Every row was an
+     `.ecopt.wide`, which is `display:block` with a 520px control under a
+     full-width label — so on a 1670px card the right two thirds of every single
+     row was empty, and Tamara's twelve fields ran down one column for about
+     1900px with the keys interleaved with the basket limits. The screenshot he
+     sent has an arrow drawn up that empty column.
+
+     WHICH SIDE A FIELD GOES TO IS THE GATEWAY'S ANSWER, NOT THIS SCREEN'S.
+     `f.group` is the fourth element of the gateway's own configSchema, carried
+     through PaymentsApiController. This file may not branch on a gateway's id
+     at all: PaymentsGatewayTabsTest forbids naming one here, because a console
+     that hardcodes the list stops following the registry the moment a gateway
+     is added or renamed.
+
+     That guard caught this very comment. The sentence above used to quote an id
+     as an example of what not to write, the test scans the rendered source
+     INCLUDING comments, and it went red on the explanation rather than on the
+     code — the same shape CLAUDE.md records for a commented-out nav entry still
+     counting. An example that trips the rule it is explaining is not an
+     example.
+
+     MODE SITS WITH THE KEYS, deliberately. It is the question "which set of
+     keys are these", which is why every gateway's own help text for it talks
+     about the keys ("Tabby itself decides test or live from the keys you
+     paste"). Putting it on the settings side would separate it from the only
+     thing it describes.
+  --------------------------------------------------------------------------- */
+
+  /* A section head that is a section head: a numbered chip, a title, and one
+     line saying what the column is for. Not an uppercase word over a rule. */
+  function paySection(n,title,sub,body,extra){
+    return '<section class="paysec'+(extra?' '+extra:'')+'">'+
+      '<header class="paysech"><span class="paysecn">'+sesc(String(n))+'</span>'+
+      '<div class="paysect"><b>'+sesc(title)+'</b><span>'+sesc(sub)+'</span></div></header>'+
+      '<div class="paysecb">'+body+'</div></section>';
+  }
+
+  function payModeRow(g){
+    return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_mode_'+sesc(g.id)+'">Mode</label></div>'+
+      '<div class="echelp">'+sesc(PAY_MODE_HELP[g.id]||'Sandbox or live.')+'</div></div>'+
+      '<div class="ecctl"><select class="inp" id="pay_mode_'+sesc(g.id)+'" data-paymode="'+sesc(g.id)+'">'+
+      '<option value="test"'+(g.mode==='live'?'':' selected')+'>Sandbox / test</option>'+
+      '<option value="live"'+(g.mode==='live'?' selected':'')+'>Live</option></select></div></div>';
+  }
+
+  function payEnabledRow(g){
+    return '<div class="ecopt istog"><div class="ecom"><div class="ecl"><label>Offer this at checkout</label></div>'+
+      '<div class="echelp">A gateway that is on but not configured stays hidden rather than failing at the till.</div></div>'+
+      '<div class="ecctl"><span class="ectog'+(g.enabled?' on':'')+'" data-payen="'+sesc(g.id)+'" role="switch" aria-checked="'+(g.enabled?'true':'false')+'" tabindex="0"></span></div></div>';
+  }
+
+  function payTitleRow(g){
+    return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_title_'+sesc(g.id)+'">Label shown to shoppers</label></div>'+
+      '<div class="echelp">The wording on the checkout radio list.</div></div>'+
+      '<div class="ecctl"><input type="text" class="inp" id="pay_title_'+sesc(g.id)+'" data-paytitle="'+sesc(g.id)+'" maxlength="120" value="'+sesc(g.title)+'"></div></div>';
+  }
+
+  /* How many of a gateway's key fields are filled in. Printed on the section
+     head so the answer to "how far through this am I" is visible without
+     reading every box — which is the question the whole screen is for. */
+  function payFilled(fields){
+    var n=0;
+    for(var i=0;i<fields.length;i++){
+      var f=fields[i];
+      if(f.type==='bool') continue;
+      if(f.type==='secret' ? !!f.has_value : String(f.value||'').trim()!=='') n++;
+    }
+    return n;
+  }
+
+  function payCountable(fields){
+    return fields.filter(function(f){ return f.type!=='bool'; }).length;
+  }
+
   function payCard(g){
     var st=payStatus(g);
-    var creds=g.fields.filter(function(f){ return !PAY_HIDDEN_FIELDS[f.key]; });
+    var visible=g.fields.filter(function(f){ return !PAY_HIDDEN_FIELDS[f.key]; });
+    var keys=visible.filter(function(f){ return f.group==='keys'; });
+    var settings=visible.filter(function(f){ return f.group!=='keys'; });
     var hasCreds=g.fields.length>0;
+
+    /* The count is over the KEY fields only. A gateway is "configured" when its
+       credentials are stored; a capture window left at its default has nothing
+       to do with it, so counting settings here would report progress the owner
+       has not made. */
+    var total=payCountable(keys);
+    var done=payFilled(keys);
+
+    var left=(hasCreds?payModeRow(g):'')+
+      (keys.length
+        ? keys.map(function(f){ return payField(g.id,f); }).join('')
+        : '')+
+      payWebhook(g)+
+      (g.supports_connect ? '<div id="pay_conn_stripe" class="ecopt wide"><div class="ecom">'+
+        '<div class="ecl"><label>Connect to Stripe</label></div>'+
+        '<div class="echelp">Loading…</div></div></div>' : '');
+
+    var right=payEnabledRow(g)+payTitleRow(g)+
+      settings.map(function(f){ return payField(g.id,f); }).join('');
+
+    /* A gateway with no credentials at all (cash on delivery) gets ONE column
+       and says so, rather than an empty box headed "Keys" beside a full one.
+       An empty panel reads as a screen that failed to load. */
+    var body = hasCreds
+      ? '<div class="paygrid">'+
+          paySection(1,'Keys from '+g.title,
+            total ? done+' of '+total+' filled in · paste these from the provider' : 'paste these from the provider',
+            left,'is-keys')+
+          paySection(2,'How this shop uses it','what shoppers see, and the rules this shop applies',right,'is-set')+
+        '</div>'
+      : paySection(1,'How this shop uses it','no account with anyone is needed, so there is nothing to paste in',
+          right+'<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Credentials</label></div>'+
+          '<div class="echelp">None — cash on delivery needs no account with anyone, so there is nothing to enter and it is ready as soon as it is switched on.</div></div></div>','is-solo');
 
     return '<div class="card mmcard" data-paycard="'+sesc(g.id)+'">'+
       '<div class="mmhd" style="display:flex;align-items:center;gap:10px">'+
       '<b style="flex:1">'+sesc(g.title)+'</b>'+
       '<span class="pill '+st[0]+'"><span class="d"></span>'+sesc(st[1])+'</span></div>'+
       '<div class="mmbody">'+
-      '<p class="echelp" style="margin:10px 0 2px;max-width:none">'+sesc(payStatusLine(g))+'</p>'+
-
-      '<div class="ecopt istog"><div class="ecom"><div class="ecl"><label>Offer this at checkout</label></div>'+
-      '<div class="echelp">A gateway that is on but not configured stays hidden rather than failing at the till.</div></div>'+
-      '<div class="ecctl"><span class="ectog'+(g.enabled?' on':'')+'" data-payen="'+sesc(g.id)+'" role="switch" aria-checked="'+(g.enabled?'true':'false')+'" tabindex="0"></span></div></div>'+
-
-      '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_title_'+sesc(g.id)+'">Label shown to shoppers</label></div>'+
-      '<div class="echelp">The wording on the checkout radio list.</div></div>'+
-      '<div class="ecctl"><input type="text" class="inp" id="pay_title_'+sesc(g.id)+'" data-paytitle="'+sesc(g.id)+'" maxlength="120" value="'+sesc(g.title)+'"></div></div>'+
-
-      (hasCreds
-        ? '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_mode_'+sesc(g.id)+'">Mode</label></div>'+
-          '<div class="echelp">'+sesc(PAY_MODE_HELP[g.id]||'Sandbox or live.')+'</div></div>'+
-          '<div class="ecctl"><select class="inp" id="pay_mode_'+sesc(g.id)+'" data-paymode="'+sesc(g.id)+'">'+
-          '<option value="test"'+(g.mode==='live'?'':' selected')+'>Sandbox / test</option>'+
-          '<option value="live"'+(g.mode==='live'?' selected':'')+'>Live</option></select></div></div>'
-        : '')+
-
-      (creds.length
-        ? creds.map(function(f){ return payField(g.id,f); }).join('')
-        : '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Credentials</label></div>'+
-          '<div class="echelp">None — cash on delivery needs no account with anyone, so there is nothing to enter and it is ready as soon as it is switched on.</div></div></div>')+
-
-      payWebhook(g)+
-
-      (g.supports_connect ? '<div id="pay_conn_stripe" class="ecopt wide"><div class="ecom">'+
-        '<div class="ecl"><label>Connect to Stripe</label></div>'+
-        '<div class="echelp">Loading\u2026</div></div></div>' : '')+
-
-      '<div class="row" style="justify-content:flex-end;gap:10px;padding:12px 0 4px">'+
+      '<p class="echelp paylede">'+sesc(payStatusLine(g))+'</p>'+
+      body+
+      '<div class="row payfoot">'+
       '<span class="echelp" id="pay_msg_'+sesc(g.id)+'" style="margin:0;margin-right:auto"></span>'+
       (g.supports_connect ? '<button type="button" class="btn ghost" data-paydisc="'+sesc(g.id)+'">Disconnect Stripe</button>' : '')+
       '<button type="button" class="btn ghost" data-paycheck="'+sesc(g.id)+'">Check this setup</button>'+

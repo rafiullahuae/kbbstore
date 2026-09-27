@@ -294,11 +294,11 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
     public function configSchema(): array
     {
         return [
-            'public_key' => ['text', 'Public key', 'Starts pk_test_ on sandbox, pk_ live. Format pk_[test_]xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Safe to appear in the page.'],
-            'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ on sandbox, sk_ live. Format sk_[test_]xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Never leaves the server.'],
-            'merchant_code' => ['text', 'Merchant code', 'The country code Tabby issued the account under — AE for this store. Left blank, the store currency decides it.'],
-            'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. It forms part of the webhook URL below; regenerate it by clearing this field and saving. Re-register the webhook with Tabby afterwards or the old address keeps being called.'],
-            'capture_days' => ['text', 'Capture window (days)', 'How long Tabby leaves an authorisation capturable on your account. Default 30. Used only to warn you before it lapses — Tabby itself decides.'],
+            'public_key' => ['text', 'Public key', 'Starts pk_test_ on sandbox, pk_ live. Format pk_[test_]xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Safe to appear in the page.', 'keys'],
+            'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ on sandbox, sk_ live. Format sk_[test_]xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Never leaves the server.', 'keys'],
+            'merchant_code' => ['text', 'Merchant code', 'The country code Tabby issued the account under — AE for this store. Left blank, the store currency decides it.', 'keys'],
+            'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. It forms part of the webhook URL below; regenerate it by clearing this field and saving. Re-register the webhook with Tabby afterwards or the old address keeps being called.', 'keys'],
+            'capture_days' => ['text', 'Capture window (days)', 'How long Tabby leaves an authorisation capturable on your account. Default 30. Used only to warn you before it lapses — Tabby itself decides.', 'settings'],
             /*
              * OFF as it ships, per CLAUDE.md rule 1, and this one is not
              * caution: turning it on sends Tabby a description of up to ten of
@@ -314,7 +314,7 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
              * they registered, and how many orders they have completed — which
              * is the ordinary fraud signal any payment provider is given.
              */
-            'share_order_history' => ['bool', 'Send past-order history to Tabby', 'Raises Tabby approval rates by telling them how this customer has paid before. Sends up to 10 previous orders, each with the name, phone, email, delivery address and items on it. Off by default — a deliberate choice, not a recommendation.'],
+            'share_order_history' => ['bool', 'Send past-order history to Tabby', 'Raises Tabby approval rates by telling them how this customer has paid before. Sends up to 10 previous orders, each with the name, phone, email, delivery address and items on it. Off by default — a deliberate choice, not a recommendation.', 'settings'],
         ];
     }
 
