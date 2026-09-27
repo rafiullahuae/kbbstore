@@ -34,6 +34,15 @@ class Order extends Model
             'gift_fee' => 'int',
             'paid_at' => 'datetime',
             'captured_at' => 'datetime',
+            /*
+             * When the AUTHORISATION was released — money committed and then
+             * handed back without ever moving. A third state beside
+             * `captured_at` and `refunded_total`, and the one a cancelled BNPL
+             * order ends in; see PaymentVoider and the migration that adds it.
+             * Cast like its two siblings so PaymentVoider's null checks read a
+             * date rather than a string.
+             */
+            'voided_at' => 'datetime',
             'captured_total' => 'int',
             'completed_at' => 'datetime',
             'invoiced_at' => 'datetime',

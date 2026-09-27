@@ -1,0 +1,120 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Support;
+
+use App\Http\Middleware\NoStoreAdminApi;
+use Illuminate\Container\Container;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Routing\RouteCollection;
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Route as RouteFacade;
+
+/**
+ * Mounts routes/payments-tabby.php the way the integrator is told to.
+ *
+ * CLAUDE.md forbids this lane from editing routes/web.php, so the four routes it
+ * adds ship in their own file with the require line in that file's header. This
+ * is how they are tested anyway, and it matters more here than usual: two of
+ * them release money a customer has committed and two read the Tabby
+ * credentials, so leaving the capability guard untested until a package shipped
+ * it would be leaving the guard untested on the endpoints that most need one.
+ *
+ * It registers THE REAL FILE in THE REAL GUARD rather than a hand-written copy
+ * of it, which is the property that makes the test worth having — a copy would
+ * stop resembling what ships the first time either changed.
+ *
+ * ONE middleware() CALL, NOT TWO — the trap Tests\Support\CustomersAdminRoutes
+ * documents at length: RouteRegistrar::middleware() REPLACES the pending
+ * middleware rather than appending to it, so chaining two calls registers routes
+ * carrying only the second, and a guard test written against that harness passes
+ * against nothing. The whole stack goes in one array.
+ *
+ * Deliberately a sibling of the other Tests\Support route harnesses rather than
+ * a shared base class: those files belong to other lanes and are not this one's
+ * to change.
+ */
+final class TabbyAdminRoutes
+{
+    /** The exact stack routes/web.php's admin-api group applies. */
+    public const STACK = ['web', 'auth:admin', NoStoreAdminApi::class];
+
+    public static function wire(Application $app): void
+    {
+        self::reclaimContainer($app);
+
+        /*
+         * Resolve the HTTP kernel first, or the guard is not what it appears:
+         * the `auth` middleware ALIAS is registered on the router by
+         * Kernel::syncMiddlewareToRouter(), which runs in the kernel's
+         * constructor and nowhere else. Without it the pipeline resolves the
+         * AuthManager and the request dies with a 500 — still a refusal, so a
+         * guard test would pass for the wrong reason.
+         */
+        $app->make(\Illuminate\Contracts\Http\Kernel::class);
+
+        $router = RouteFacade::getFacadeRoot();
+
+        foreach ($router->getRoutes()->getRoutes() as $existing) {
+            // Idempotent: several cases in one file call this, and registering
+            // the same four routes twice makes the name lookup ambiguous.
+            if ($existing->uri() === 'admin-api/payments/tabby/webhooks') {
+                return;
+            }
+        }
+
+        // The router is serving a CompiledRouteCollection here — the migration
+        // set runs route:cache — and routes added to one of those are not
+        // matched. Copying into a plain RouteCollection first is what makes a
+        // route registered at runtime actually dispatch.
+        $kept = new RouteCollection();
+
+        foreach ($router->getRoutes() as $route) {
+            $kept->add($route);
+        }
+
+        $router->setRoutes($kept);
+
+        RouteFacade::middleware(self::STACK)
+            ->prefix('admin-api')
+            ->group(base_path('routes/payments-tabby.php'));
+
+        $router->getRoutes()->refreshNameLookups();
+        $router->getRoutes()->refreshActionLookups();
+    }
+
+    /**
+     * Every route this lane's file added, so a test can assert over all of them
+     * rather than a list it has to remember to keep up to date.
+     *
+     * @return list<\Illuminate\Routing\Route>
+     */
+    public static function registered(): array
+    {
+        return collect(RouteFacade::getRoutes()->getRoutes())
+            ->filter(fn ($r) => $r->uri() === 'admin-api/payments/tabby/webhooks'
+                || $r->uri() === 'admin-api/orders/{id}/void')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * See the long note in tests/Pest.php: the migration set runs config:cache
+     * and route:cache, each of which constructs a throwaway Application and
+     * points the container, the facade root and Eloquent's connection resolver
+     * at it. Nothing puts them back, so anything reaching for app() afterwards
+     * can be talking to a discarded application.
+     */
+    private static function reclaimContainer(Application $app): void
+    {
+        Container::setInstance($app);
+
+        Facade::clearResolvedInstances();
+        Facade::setFacadeApplication($app);
+
+        Model::setConnectionResolver($app->make('db'));
+        Model::setEventDispatcher($app->make('events'));
+    }
+}

@@ -361,6 +361,16 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/payments-settlement.php';
 
         /*
+         * Tabby's own two endpoints. Same group, same reason as the two files
+         * above: one registers this shop's webhook with Tabby per country, and
+         * the other releases an authorisation that was never captured — both
+         * move or unmove money, and both carry their own capability
+         * (`payments.manage` and `orders.money`) rather than riding on a
+         * wildcard. Lane PG2.
+         */
+        require __DIR__.'/payments-tabby.php';
+
+        /*
          * The payments preflight check. Same group as the two files above, and that
          * placement is the whole point: it reports which credential fields are still
          * empty and echoes the exact request a gateway would send, redacted. Outside
