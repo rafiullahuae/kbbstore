@@ -3,6 +3,83 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.295
+The poster and teaser now cut themselves, about a minute after you upload —
+with no change to your server.
+
+### ▲ FIRST: "No ffmpeg here" is NOT what your server says
+
+That line was in a picture I sent you, and it was **my own simulated failure** —
+I forced it to show you what the new error note looks like. It is not a reading
+of your shop, and I should have labelled it. Sorry.
+
+**Your server has ffmpeg.** The proof is your own error log: it got as far as
+`new Process`, and the code only reaches that line *after* it has found the
+ffmpeg binary on disk. If ffmpeg were missing it would have stopped one step
+earlier with a different message.
+
+Your actual blocker is the one 2.60.291 named: **PHP-FPM — the PHP that serves
+your website — is not allowed to start programs** (`proc_open` is switched off).
+That is a hardening setting, it is common, and it is not a fault in your shop.
+
+### ▲ SO THE COVERS CUT THEMSELVES NOW
+
+The command line PHP on your server is **not** blocked — your own
+`php -i` output said `disable_functions => no value`. So the work just has to
+happen there instead, and from this release the application arranges that
+itself.
+
+**You add one cron line, once:**
+
+```
+* * * * * cd /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Cloudways: Application Settings → **Cron Job Management** → Add New Cron →
+**Advanced**, and paste that. `docs/SERVER-PROC-OPEN.md` §3b has the walkthrough.
+
+Then, with nothing else to do ever again:
+
+1. You upload a clip. It saves. The cover cannot be cut in the browser — same
+   as now.
+2. **Within about a minute** the scheduled run finds it, cuts the poster and the
+   2.5-second teaser, and records the length and dimensions.
+3. Reload the clip. The cover is there.
+
+**Proven end to end before shipping**, not just tested: a clip with a real video
+and no cover, then nothing typed but `php artisan schedule:run` — poster,
+teaser, `5000ms`, `720×1280`, all recorded.
+
+**One cron line only.** Do not add a second one for the cutting command itself;
+the schedule is decided inside the application and a second line would do the
+work twice.
+
+**If you never add the cron line, nothing breaks.** You just run
+`php artisan ugc:cut-covers` yourself when it suits you, exactly as in 2.60.292.
+
+**An honest limit:** the transcode is real work on a machine you share with the
+shop. Each run takes at most 20 clips and holds a lock so two runs cannot
+overlap — so after a bulk import the covers arrive over several minutes rather
+than all at once. That is deliberate.
+
+### ▲ AND ONE THING THAT WOULD HAVE ANNOYED YOU BY WEDNESDAY
+
+A scheduled command that fails sends mail. Run every minute on a server that
+cannot cut, that is **1,440 emails a day** — and the reliable result of that is
+a filter that also hides the failure you needed to see. So when the schedule
+runs it, "this machine cannot cut" is treated as *nothing to do*, not as a
+failure. Typing the command yourself still tells you loudly, because otherwise
+you would sit waiting for covers that were never coming.
+
+**No setting added, no default moved.**
+
+### Files
+- `routes/console.php` — the schedule (the file was empty; already wired).
+- `app/Console/Commands/CutUgcCovers.php` — the `--unattended` flag.
+- `docs/SERVER-PROC-OPEN.md` — §3b, the cron route, placed before the two
+  php.ini routes because it is easier than both.
+- Everything in 2.60.294, .293 and .292 below is included.
+
 ## 2.60.294
 The All clips page, fixed so that one dead check can no longer take your whole
 library down with it.
