@@ -45,15 +45,37 @@ cover panel names the reason:
 - *"This server has no ffmpeg"* — a different problem; this file will not help.
 - *"ffmpeg is installed but PHP may not start it"* — **that is this file.**
 
-**With SSH**, and note this reads the **CLI** PHP, which is often not the PHP
-serving the site:
+**With SSH — read the LOG, not `php -i`.** This was got wrong once already: a
+bare `php -i | grep disable_functions` over SSH answered "no value", which is
+the **CLI** PHP and says nothing about the PHP-FPM process that serves the site.
+The two routinely differ on managed hosts, and taking the CLI answer for the
+web answer is the same trap §6 records for verification.
+
+The decisive reading is the exception the shop actually threw:
 
 ```sh
-php -r 'var_dump(function_exists("proc_open"));'
-php -i | grep -i disable_functions
+cd /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app
+grep -nE 'ugc-upload|proc_open|UgcTranscoder|Symfony.*Process' storage/logs/laravel.log | tail -20
 ```
 
-The reading that settles it is the app's, because it runs inside PHP-FPM.
+- `LogicException: The Process class relies on proc_open` → it is this file.
+- **Anything else → it is NOT this file, and the rest of these steps are wasted
+  effort.** Bring the line back; the class name names the real cause.
+
+From 2.60.291 the same answer is one line, with no guessing at the cause:
+
+```sh
+grep '\[ugc-upload\]' storage/logs/laravel.log | tail -1
+```
+
+whose `can_spawn`, `ffmpeg` and `exception` keys settle it together.
+
+If you want the FPM ini directly rather than the log, find the file the **FPM**
+SAPI loads rather than assuming a path:
+
+```sh
+grep -rn '^[[:space:]]*disable_functions' /etc/php/*/fpm/php.ini /etc/php/*/fpm/conf.d/ 2>/dev/null
+```
 
 ## 3. ▲ `.user.ini` CANNOT fix this. Do not spend an afternoon on it.
 
