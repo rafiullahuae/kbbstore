@@ -182,8 +182,36 @@ final class ZipBuilder
         return $path;
     }
 
+    /**
+     * A temp path in THIS PROCESS'S OWN namespace.
+     *
+     * ── WHY THE PID IS IN THE NAME ──────────────────────────────────────────
+     *
+     * GmImportAcceptsZipTest's afterEach used to delete every `/tmp/kbb-gm-*`
+     * it could see, and `/tmp` is shared by every lane worktree on this
+     * machine. So a suite finishing a case in one lane DELETED THE FIXTURE
+     * ANOTHER LANE WAS HALFWAY THROUGH READING, and that lane failed with
+     * `copy(/tmp/kbb-gm-....zip): Failed to open stream: No such file or
+     * directory`.
+     *
+     * The tell was that the filename in the error MOVED BETWEEN RUNS while the
+     * file passed 55/55 alone — the same signature CLAUDE.md records for the
+     * full-disk savepoint trap, and the same shape as the KBB_WP_DB collision
+     * it documents: a shared namespace with no lane in it. Found by Lane PG2
+     * after it cost a run.
+     *
+     * getmypid() and not a random prefix, because the CLEANER has to be able to
+     * name the same namespace without being told it. Two concurrent suites are
+     * two processes, so their fixtures can no longer collide and neither can
+     * their cleanups.
+     */
+    public static function tempPrefix(): string
+    {
+        return sys_get_temp_dir().'/kbb-gm-'.getmypid().'-';
+    }
+
     public static function tempPath(string $suffix = '.zip'): string
     {
-        return sys_get_temp_dir().'/kbb-gm-'.bin2hex(random_bytes(8)).$suffix;
+        return self::tempPrefix().bin2hex(random_bytes(8)).$suffix;
     }
 }

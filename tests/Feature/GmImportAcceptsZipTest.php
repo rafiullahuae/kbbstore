@@ -60,7 +60,17 @@ beforeEach(function () {
 afterEach(function () {
     gmPurge(storage_path('app/import'));
 
-    foreach (glob(sys_get_temp_dir().'/kbb-gm-*') ?: [] as $leftover) {
+    /*
+     * THIS PROCESS'S OWN LEFTOVERS, AND NOBODY ELSE'S.
+     *
+     * This used to glob `/tmp/kbb-gm-*`, and sys_get_temp_dir() really is the
+     * shared /tmp -- see the corrected note in tests/bootstrap.php, which used
+     * to claim otherwise. With several lanes running suites at once, finishing
+     * a case here deleted the fixture another lane was reading, and that lane
+     * failed on a file that had been under it a moment earlier.
+     * See ZipBuilder::tempPrefix().
+     */
+    foreach (glob(ZipBuilder::tempPrefix().'*') ?: [] as $leftover) {
         is_dir($leftover) ? gmPurge($leftover) : @unlink($leftover);
     }
 });
@@ -105,7 +115,7 @@ function gmUpload(string $path, string $name, ?string $entity = null): \Illumina
 {
     // A COPY. accept() moves what it is given, and a test that handed over the
     // fixture itself would delete it out of the repository.
-    $temp = sys_get_temp_dir().'/kbb-gm-'.bin2hex(random_bytes(6)).'-'.basename($name);
+    $temp = ZipBuilder::tempPrefix().bin2hex(random_bytes(6)).'-'.basename($name);
     copy($path, $temp);
 
     $body = ['file' => new UploadedFile($temp, $name, null, null, true)];
@@ -175,7 +185,7 @@ function gmGroupManifest(
 /** Data rows the way ImportWorkspace counts them — fgetcsv, header excluded. */
 function gmCountRows(string $body): int
 {
-    $path = sys_get_temp_dir().'/kbb-gm-count-'.bin2hex(random_bytes(4));
+    $path = ZipBuilder::tempPrefix().'count-'.bin2hex(random_bytes(4));
     file_put_contents($path, $body);
 
     $handle = fopen($path, 'rb');
@@ -1552,7 +1562,7 @@ it('covers the upload endpoint with the capability rule that was already there',
 
 it('refuses a zip upload to a caller with no admin session', function () {
     $zip = gmGroupZip('catalogue', ['categories'], ['sales']);
-    $temp = sys_get_temp_dir().'/kbb-gm-'.bin2hex(random_bytes(6)).'.zip';
+    $temp = ZipBuilder::tempPrefix().bin2hex(random_bytes(6)).'.zip';
     copy($zip, $temp);
 
     $this->postJson('/admin-api/import/upload', [

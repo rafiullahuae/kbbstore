@@ -483,13 +483,32 @@ require_once __DIR__.'/../vendor/autoload.php';
      * whatever had merged that day. It is not one -- the same four cases fail
      * identically on a worktree checked out at the previous release.
      *
-     * PER-PROCESS ISOLATION IS PRESERVED, which is the whole point of the block
-     * above: the directory is still named for this process and swept at the end
-     * of it, so the incident that put it here -- one lane's `glob(sys_get_temp_dir
-     * ().'/kbb-gm-*')` unlinking another lane's in-flight fixture -- cannot come
-     * back. `sys_get_temp_dir()` inside the suite still answers THIS directory,
-     * because ini_set('sys_temp_dir') below points at it, so a test globbing the
-     * temp root globs its own.
+     * ▲ AND THE PARAGRAPH THAT STOOD HERE WAS FALSE. It claimed per-process
+     * isolation was preserved because "sys_get_temp_dir() inside the suite still
+     * answers THIS directory, because ini_set('sys_temp_dir') below points at
+     * it, so a test globbing the temp root globs its own."
+     *
+     * MEASURED INSIDE A RUNNING TEST:
+     *
+     *     sys_get_temp_dir()        => "/tmp"                       <- SHARED
+     *     ini_get('sys_temp_dir')   => ""                           <- never set
+     *     getenv('TMPDIR')          => "/tmp/kbb-run-<pid>-<rand>"  <- this did take
+     *
+     * `sys_temp_dir` is PHP_INI_SYSTEM, exactly like the `upload_tmp_dir` this
+     * same comment correctly refuses to set for that reason -- so the ini_set()
+     * below returns false and reads back empty, and sys_get_temp_dir() goes on
+     * answering the shared root. The TMPDIR exports DO take, which is why
+     * Chromium is genuinely isolated and why the browser fix above is real.
+     *
+     * So a test globbing the temp root globs EVERY LANE'S, and the incident this
+     * block was written after was never actually prevented -- Lane PG2 hit it
+     * again and lost a run to it. The two files that glob (GmImportAcceptsZip
+     * and GpAddressesLand, the very two named above) now scope their own
+     * namespace by PID, and TempRootIsSharedTest pins that no third one appears.
+     *
+     * The ini_set stays: it costs nothing, and if a future PHP makes the setting
+     * PHP_INI_ALL it starts working. What is gone is the belief that it already
+     * does.
      *
      * Read BEFORE the ini_set below, so it is the real system temp and not a
      * previous call's answer.

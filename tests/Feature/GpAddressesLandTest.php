@@ -62,10 +62,24 @@ beforeEach(function () {
     gpPurge(storage_path('app/import'));
 });
 
+/** One temp namespace per PROCESS, so two lanes cannot sweep each other. */
+function gpTempPrefix(): string
+{
+    return sys_get_temp_dir().'/kbb-gp-'.getmypid().'-';
+}
+
 afterEach(function () {
     gpPurge(storage_path('app/import'));
 
-    foreach (glob(sys_get_temp_dir().'/kbb-gp-*') ?: [] as $leftover) {
+    /*
+     * THIS PROCESS'S OWN LEFTOVERS. It used to glob `/tmp/kbb-gp-*`, and
+     * sys_get_temp_dir() really is the SHARED /tmp -- see the note in
+     * tests/bootstrap.php, which used to claim otherwise. With several lanes
+     * running suites at once, finishing a case here deleted the fixture another
+     * lane was reading. Same defect as GmImportAcceptsZipTest's, and
+     * bootstrap.php already named BOTH files as having hit it.
+     */
+    foreach (glob(gpTempPrefix().'*') ?: [] as $leftover) {
         @unlink($leftover);
     }
 });
@@ -101,7 +115,7 @@ function gpAdmin(): AdminUser
 /** Upload one file through the real endpoint, the way the screen does. */
 function gpUpload(string $name, string $body, ?string $entity = null): \Illuminate\Testing\TestResponse
 {
-    $temp = sys_get_temp_dir().'/kbb-gp-'.bin2hex(random_bytes(6)).'-'.$name;
+    $temp = gpTempPrefix().bin2hex(random_bytes(6)).'-'.$name;
     file_put_contents($temp, $body);
 
     $payload = ['file' => new UploadedFile($temp, $name, null, null, true)];
@@ -314,7 +328,7 @@ function gpFetch(string $path): \Symfony\Component\HttpFoundation\Response
 /** An UploadedFile for the workspace's own door, without going through HTTP. */
 function gpFile(string $name, string $body): UploadedFile
 {
-    $temp = sys_get_temp_dir().'/kbb-gp-'.bin2hex(random_bytes(6)).'-'.$name;
+    $temp = gpTempPrefix().bin2hex(random_bytes(6)).'-'.$name;
     file_put_contents($temp, $body);
 
     return new UploadedFile($temp, $name, null, null, true);
