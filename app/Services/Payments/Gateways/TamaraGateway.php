@@ -232,6 +232,33 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. Forms part of the webhook URL below.', 'keys'],
             'capture_days' => ['text', 'Capture window (days)', 'How long Tamara leaves an authorised order capturable on your account. Default 180. Used only to warn you before it lapses — Tamara itself decides.', 'settings'],
             /*
+             * ── THE ONE SWITCH THAT DECIDES WHETHER MONEY MOVES ON ITS OWN ──
+             *
+             * OFF ON EVERY INSTALL, INCLUDING AFTER THIS PACKAGE IS APPLIED.
+             * GatewayCredentials::get() returns '' for a key no config blob
+             * carries, autoCapture() reads that as false, and
+             * TamaraCaptureSweep::run() then does nothing and says so. So the
+             * package moves no money and makes no call to Tamara until the
+             * owner sets this to On — which is rule 1, and on this particular
+             * field it is also the only honest default: whether capture follows
+             * fulfilment is a COMMERCIAL decision about when this shop takes a
+             * customer's money, and it is not a lane's to make.
+             *
+             * `bool`, so the payments screen draws the On/Off select it already
+             * draws for every other bool field — no change to app.blade.php,
+             * which this lane may not edit. Stored as '1' or empty.
+             *
+             * WHY THE SWITCH LIVES ON THE GATEWAY rather than in `settings`:
+             * the answer is per provider. Tamara holds an authorisation for 180
+             * days and voids it; cash on delivery has no authorisation at all,
+             * and auto-capturing a COD order would write `captured_total`
+             * against cash nobody has collected — which PaymentRefunder then
+             * offers back as refundable money. A single shop-wide "auto-capture"
+             * flag would be one keystroke away from exactly that, so there is no
+             * such flag: each gateway that can hold a hold carries its own.
+             */
+            'auto_capture' => ['bool', 'Capture automatically when an order ships', 'OFF by default, and nothing captures on its own while it is off. Turned On, the scheduled check takes the money on any Tamara order that has reached Shipped or Completed and has not been captured yet — an order that ships and is never captured is one Tamara voids after about 180 days, and the shop is never paid for it. Run "php artisan payments:tamara-capture --dry" first to see exactly which orders would be captured.', 'settings'],
+            /*
              * A text box rather than a `select`, and not because a select would
              * be wrong: the payments screen in resources/views/admin/
              * app.blade.php renders `secret`, `bool` and then everything else as
@@ -898,6 +925,26 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $configured = (int) $this->credentials->get($this->id(), 'capture_days', (string) self::DEFAULT_CAPTURE_DAYS);
 
         return $configured > 0 ? $configured : self::DEFAULT_CAPTURE_DAYS;
+    }
+
+    /**
+     * Has the owner asked for capture to follow fulfilment?
+     *
+     * FALSE UNLESS THE STORED VALUE IS EXACTLY '1'. The payments screen writes
+     * '1' for On and '' for Off, and every other value — a blob written by an
+     * older build, a key that is not there at all, a '0' or a 'false' typed in
+     * by hand — reads as Off. That direction is not a style choice: this is the
+     * flag that decides whether this shop takes a customer's money without
+     * anybody pressing a button, so anything it cannot positively recognise as
+     * "yes" has to mean no.
+     *
+     * Read through GatewayCredentials, which memoises per instance — see
+     * TamaraAdminController::show() for why a caller that has just written the
+     * config has to forget() before reading it back.
+     */
+    public function autoCapture(): bool
+    {
+        return $this->credentials->get($this->id(), 'auto_capture') === '1';
     }
 
     /**

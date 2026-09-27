@@ -490,12 +490,35 @@
 
     return '<div class="mlib-card"><div class="mlib-head">'
       + '<div><div class="mlib-title">Media Library</div>'
-      /* The sentence says VIDEO now because the screen holds video now. It
-          named four sources and every one of them was an image, which was true
-          until this lane and is the first thing an owner reads. */
-      + '<div class="mlib-sub">Every file uploaded through the admin — product photos, brand logos, '
-      + 'category images, the SEO share image, and the clips and covers from Shoppable video '
-      + 'all land here.</div></div>'
+      /* THE SENTENCE HAS TO LIST WHAT ACTUALLY LANDS HERE, and twice now it has
+          not. It named four sources and every one of them was an image, which
+          was true until Shoppable video; it then opened "Every file uploaded
+          through the admin", which was true until three writers that are not
+          admin uploads at all started registering their files:
+
+            Import\MediaSideloader        images pulled in by a store import
+            Store\ReviewController        photos a CUSTOMER attaches to a review
+            Instagram\InstagramSync       whatever the Instagram sync downloads
+
+          The first sentence an owner reads is not the place to be wrong about
+          where his files come from, and the two customer-facing ones are the
+          ones he most needs to know are in here — a shopper's photograph sitting
+          in the library unannounced is a surprise, and the library is where it
+          gets deleted from. So the sentence no longer claims an origin it cannot
+          promise: it says these all land here, and names every writer.
+          MediaLibraryBlurbNamesEverySourceTest pins the list against the call
+          sites, so a seventh writer cannot be added without this going red.
+
+          THE LINE BREAKS ARE NOT FREE. MediaEverywhereTest reads THIS FILE AS
+          TEXT and pins the phrase "the clips and covers from Shoppable video",
+          so wrapping the sentence through the middle of it turns a true
+          sentence into a red test with a confusing message. It gets a line of
+          its own for that reason. */
+      + '<div class="mlib-sub">Every file this shop keeps a copy of lands here — product photos, '
+      + 'brand logos, category images, the SEO share image, '
+      + 'the clips and covers from Shoppable video, '
+      + 'images brought in by a store import, photos customers attach to their reviews, '
+      + 'and anything the Instagram sync downloads.</div></div>'
       + colsBar()
       + '<button class="mlib-btn" id="mlib-rescan"' + (busy ? ' disabled' : '') + '>Rescan folder</button>'
       + '<button class="mlib-btn" id="mlib-sizes"' + (sizing ? ' disabled' : '') + '>'
