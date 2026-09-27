@@ -192,7 +192,16 @@ it('names a real console location in every module row that names one at all', fu
     // resources/views/admin/partials/ugc-appearance-screen.blade.php. The count is
     // deliberately exact rather than a floor — that is what makes it notice a row
     // added with a screen string nobody checked.
-    expect($checked)->toBe(37);
+    //
+    // 38 with Lane IG: `instagram_profile` is a new row and it names
+    // 'Content → Instagram', which is a real screen registered by
+    // resources/views/admin/partials/instagram-screen.blade.php declaring
+    // `var SCREEN = 'instagram'`. ADVANCED FOR THE CHANGE THAT WAS MEANT, and the
+    // check that makes it safe to advance is the line below it: $wrong stayed empty,
+    // so the new row's screen string really does resolve to a screen the console can
+    // draw. A row whose string resolved to nothing would fail that line whatever
+    // this number said.
+    expect($checked)->toBe(38);
     expect($wrong)->toBe([]);
 });
 

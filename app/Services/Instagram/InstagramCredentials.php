@@ -264,6 +264,18 @@ final class InstagramCredentials
                  * for the settings map — which is a lot of places, including some
                  * that log what they were given. A credential belongs in exactly
                  * one query made by exactly one reader.
+                 *
+                 * ▲ AND IT DOES NOT KEEP THE ROW OUT OF `Setting::map()`, which
+                 * is worth the line because this flag reads as though it would.
+                 * That method is `Setting::query()->get(['key','value'])` with NO
+                 * autoload filter — every row, by design, because its callers want
+                 * one key by name. So the CIPHERTEXT is in that snapshot whatever
+                 * this flag says, and the encryption above is therefore the actual
+                 * protection rather than a second belt over the autoload one.
+                 * Established by running it: InstagramProfileTest's `it stores the
+                 * secret and the token encrypted` asserted against Setting::map()
+                 * first and was red, and it now asserts against both maps
+                 * separately with this distinction written into it.
                  */
                 'autoload' => false,
             ],

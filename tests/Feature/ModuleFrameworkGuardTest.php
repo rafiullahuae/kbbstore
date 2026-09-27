@@ -61,6 +61,7 @@ use App\Services\UgcSettings;
 use App\Services\CheckoutPage;
 use App\Services\HeaderSettings;
 use App\Services\HomepageContent;
+use App\Services\InstagramSettings;
 use App\Services\MobileHeader;
 use App\Services\MobileMenu;
 use App\Services\NewsletterSettings;
@@ -479,6 +480,27 @@ function ehSchemaModules(): array
          * field the generic settings endpoint would drop in silence.
          */
         'shoppable_video' => ['schema' => UgcSettings::SCHEMA, 'tabs' => UgcSettings::TABS, 'policy' => UgcSettings::POLICY],
+        /*
+         * ── LANE IG: Instagram Profile, adopted on the way in ───────────────
+         *
+         * Step 4 of the migration path in ModuleSchema's own header, taken by the
+         * round that created the module rather than by a later one — the cheap
+         * moment, and the same call Lane V3 made for the row above. This line is
+         * what buys the guarantee: from here this module cannot ship a value with no
+         * control, a control with no value, the same control twice, or a field the
+         * generic settings endpoint would drop in silence.
+         *
+         * `profile` is NOT in the schema and is not missing from it: it is the blob
+         * the fetch writes (username, avatar path, follower count), written straight
+         * through setModuleSetting() rather than by a control, because there is no
+         * control for it — nobody types his own follower count. It is invisible to
+         * both directions of the check below for that reason, which is correct: the
+         * checks pair SCHEMA against TABS, and a value with no control and no schema
+         * entry is not a control that saves nothing. docs/UGC-ENGAGEMENT.md's
+         * closing rule is the reason it must never BECOME a control — "do not offer
+         * a box for the owner to type a count into".
+         */
+        'instagram_profile' => ['schema' => InstagramSettings::SCHEMA, 'tabs' => InstagramSettings::TABS, 'policy' => InstagramSettings::POLICY],
         'cart_panel' => ['schema' => CartPanel::SCHEMA, 'tabs' => CartPanel::TABS, 'policy' => CartPanel::POLICY],
         'mobile_header' => ['schema' => MobileHeader::SCHEMA, 'tabs' => MobileHeader::TABS, 'policy' => MobileHeader::POLICY],
         'newsletter_settings' => ['schema' => NewsletterSettings::SCHEMA, 'tabs' => NewsletterSettings::TABS, 'policy' => NewsletterSettings::POLICY],

@@ -8,10 +8,14 @@
 
     ── FIVE LAYOUTS, AND NOT ONE LINE OF JAVASCRIPT MEASURES ANYTHING ───────
 
-    Rule 4 forbids the element-measuring APIs by name — CheckoutFloatingBarGateTest
-    and CartPageSqueezeTest name getBoundingClientRect, offsetTop, offsetHeight,
-    clientHeight and scrollY, and InstagramNoMeasureTest names them again for this
-    file. Every layout is therefore a CLASS plus arithmetic the browser does once:
+    Rule 4 forbids the element-measuring APIs by name. CheckoutFloatingBarGateTest
+    and CartPageSqueezeTest each hold the list for their own files, and
+    InstagramSectionShapeTest holds it for this one — greping THIS FILE for each of
+    them, which is why not one of those names is spelled out anywhere below, in the
+    code or in the prose. A comment naming the API it promises not to use is a file
+    that fails its own guard, and this file did exactly that on the first run.
+
+    Every layout is therefore a CLASS plus arithmetic the browser does once:
 
       .is-grid     grid, repeat(auto-fit) with a minmax floor
       .is-mosaic   the same grid, with the first cell spanning 2 x 2
@@ -24,10 +28,12 @@
 
     ── AND WHY THE CSS IS HERE RATHER THAN IN resources/css ─────────────────
 
-    The storefront serves BUILT css: @vite() resolves to a hashed file under a web
-    root that is a different directory from the application, and `package.json`
-    defines no build script (CLAUDE.md), so building it is a manual step nobody runs
-    during an update. A rule added to kbb.css therefore ships INERT until somebody
+    The storefront serves BUILT css: the Vite directive resolves to a hashed file
+    under a web root that is a different directory from the application, and
+    `package.json` defines no build script (CLAUDE.md), so building it is a manual
+    step nobody runs during an update. (The directive's own name is not written here
+    either — InstagramSectionShapeTest greps this file for it, to prove the
+    stylesheet below is not quietly replaced by a bundle reference one day.) A rule added to kbb.css therefore ships INERT until somebody
     rebuilds the bundle. Emitted here it is part of the page and cannot be stale —
     the same argument HomepageSections::orderStyle() makes for its own element, and
     the one resources/views/ugc/assets.blade.php already made for the video rail.
@@ -168,11 +174,13 @@
    * ── WHAT THIS SCRIPT IS ALLOWED TO DO, AND WHAT IT IS NOT ────────────────
    *
    * It opens one lightbox holding Instagram's own embed iframe, and closes it.
-   * That is all. It MEASURES NOTHING: there is no getBoundingClientRect, no
-   * offsetHeight, no clientHeight, no scrollY anywhere in this file, because rule 4
-   * forbids them by name and every size on this section is a calc() or an
-   * aspect-ratio in the stylesheet above. InstagramNoMeasureTest greps for each of
-   * them, so this is enforced rather than promised.
+   * That is all. IT MEASURES NOTHING — not one of the element-geometry or computed-
+   * style readers appears anywhere in this file, because rule 4 forbids them and
+   * every size on this section is a calc(), a clamp() or an aspect-ratio in the
+   * stylesheet above. InstagramSectionShapeTest greps this file for each of the
+   * eight by name, so it is enforced rather than promised — and the names are
+   * deliberately not repeated here, because a comment that lists them is a file
+   * that fails that grep. (It did, on the first run.)
    *
    * ── AND THE IFRAME'S src IS SET ON TAP, NEVER AT PAGE LOAD ───────────────
    *
