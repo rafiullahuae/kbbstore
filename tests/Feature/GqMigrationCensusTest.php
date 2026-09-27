@@ -150,25 +150,62 @@ function gqCensus(): array
             'short_description' => GQ_LANDS.'products.short_description',
             'description' => GQ_LANDS.'products.description',
             'total_sales' => GQ_LANDS.'products.total_sales',
-            'date_modified' => GQ_CONSOLIDATED.': this shop stamps its own updated_at',
-            'product_visibility' => GQ_CONSOLIDATED.": WooCommerce's four-state visibility, folded into is_visible and featured",
-            'backorders' => GQ_CONSOLIDATED.': no backorder policy column',
-            'low_stock_amount' => GQ_CONSOLIDATED.': the low-stock threshold is a shop-wide setting here',
-            'weight' => GQ_CONSOLIDATED.': no shipping dimensions; shipping is flat-rate per zone',
-            'length' => GQ_CONSOLIDATED.': no shipping dimensions',
-            'width' => GQ_CONSOLIDATED.': no shipping dimensions',
-            'height' => GQ_CONSOLIDATED.': no shipping dimensions',
-            'tax_status' => GQ_CONSOLIDATED.': tax is a shop-wide rate here, not per product',
-            'tax_class' => GQ_CONSOLIDATED.': tax is a shop-wide rate here, not per product',
-            'shipping_class' => GQ_CONSOLIDATED.': no per-product shipping class',
-            'virtual' => GQ_CONSOLIDATED.': every product this shop sells is a physical good',
-            'downloadable' => GQ_CONSOLIDATED.': no downloadable products',
-            'purchase_note' => GQ_CONSOLIDATED.': no per-product note on the order-received page',
-            'upsell_ids' => GQ_CONSOLIDATED.': related products are computed from the category here',
-            'cross_sell_ids' => GQ_CONSOLIDATED.': no cross-sell list',
-            'grouped_ids' => GQ_CONSOLIDATED.': grouped products are not a type this shop has',
-            'tag_term_ids' => GQ_CONSOLIDATED.': the same pivot arrives from tags.csv `product_ids`, which IS read',
-            'attribute_summary' => GQ_CONSOLIDATED.": custom (non-taxonomy) attributes -- `Scent=Unscented`. attributes.csv carries the pa_* ones; these have no table",
+            /*
+             * ── EIGHTEEN MOVED FROM `DROPPED` TO `NAMED` BY LANE PX ──────────
+             *
+             * Not a change of destination: every one of these still reaches no
+             * column, exactly as before. It is a change of CHANNEL. They used to
+             * be nineteen names inside the runner's one consolidated line, which
+             * could not say how many products each one cost, could not show more
+             * than one example of any of them, and put a field that arrives by
+             * another road in the same list as a field that arrives nowhere.
+             * ProductImporter::NOT_CARRIED now declares each one, so each gets
+             * its own discard with its own count and its own five samples.
+             *
+             * `tag_term_ids` is the one that moved for a different reason -- see
+             * its line below. `attribute_summary` is the one whose reason was
+             * WRONG in an earlier telling of this audit: the attributes are NOT
+             * covered from the attribute side. attributes.csv is `pa_*` taxonomy
+             * terms only (the terms stage skips anything without that prefix)
+             * and attribute_summary is the exporter's non-taxonomy half (it
+             * `continue`s on is_taxonomy). The two sets are disjoint, so this is
+             * real product data that nothing in the import carries.
+             */
+            'date_modified' => GQ_NAMED.': this shop stamps its own updated_at',
+            'product_visibility' => GQ_NAMED.": WooCommerce's four-state visibility, folded into is_visible and featured",
+            'backorders' => GQ_NAMED.': no backorder policy column',
+            'low_stock_amount' => GQ_NAMED.': the low-stock threshold is a shop-wide setting here',
+            'weight' => GQ_NAMED.': no shipping weight column; shipping is decided per zone',
+            'length' => GQ_NAMED.': no parcel dimensions',
+            'width' => GQ_NAMED.': no parcel dimensions',
+            'height' => GQ_NAMED.': no parcel dimensions',
+            'tax_status' => GQ_NAMED.': tax is not decided per product here',
+            'tax_class' => GQ_NAMED.': no per-product tax class to select into',
+            'shipping_class' => GQ_NAMED.': no per-product shipping class',
+            'virtual' => GQ_NAMED.': every product this shop sells is a physical good',
+            'downloadable' => GQ_NAMED.': no downloadable products',
+            'purchase_note' => GQ_NAMED.': no per-product note on the order-received page',
+            'upsell_ids' => GQ_NAMED.': related products are computed from the category here',
+            'cross_sell_ids' => GQ_NAMED.': no cross-sell list',
+            'grouped_ids' => GQ_NAMED.': grouped products are not a type this shop has',
+            'tag_term_ids' => GQ_CARRIED.': the product-to-tag pivot arrives from tags.csv `product_ids`, which IS '
+                .'read, so this column is redundant rather than lost -- it is read here only so the discard list '
+                .'stops naming it beside the fields that really do go nowhere',
+            'attribute_summary' => GQ_NAMED.": the CUSTOM (non-taxonomy) attributes -- `Scent=Unscented`. "
+                .'attributes.csv carries the pa_* ones and ONLY those, so these have no table and no other road in',
+            /*
+             * TWO COLUMNS THIS CENSUS COULD NOT HAVE CAUGHT, added to the export
+             * by Lane PX. This file classifies the columns the export WRITES, so
+             * a field on the owner's edit page that reached no file at all was
+             * outside its reach by construction -- and so was the importer's
+             * discard list, which can only name a column that arrives. They were
+             * found by reading his edit page against the exporter's META_KEYS
+             * rather than against anything already written down.
+             */
+            'sold_individually' => GQ_NAMED.': Inventory tab, "Limit purchases to 1 item per order". No '
+                .'per-order cap exists on a product here',
+            'reviews_enabled' => GQ_NAMED.': Advanced tab, "Enable reviews", which WordPress keeps in '
+                .'posts.comment_status. Reviews are not switched per product here',
         ]],
 
         'variations.csv' => ['entity' => 'variations', 'columns' => [
@@ -1020,6 +1057,21 @@ function gqMetaKeyCensus(): array
         '_tax_status' => 'products.csv `tax_status` -- DROPPED, named in the discard list',
         '_product_attributes' => 'products.csv `attribute_summary` -- DROPPED, named in the discard list. '
             .'A CUSTOM (non-taxonomy) attribute has no table in this shop; the pa_* ones cross in attributes.csv',
+        /*
+         * THIS ENTRY IS WHY THIS HALF OF THE CENSUS EXISTS, and it went in the
+         * hard way round. `_sold_individually` was on the owner's product edit
+         * page, in his database, and in NO column of the export -- so the
+         * column half of this file could not see it (it classifies what the
+         * export writes) and the importer's discard list could not name it (it
+         * names what arrives). A key in neither channel is lost in silence,
+         * which is the sentence this test's own failure message uses.
+         *
+         * The exporter now carries it. What this test proves is the general
+         * case: whatever is in his wp_postmeta has to be accounted for here
+         * before anyone can claim it crosses.
+         */
+        '_sold_individually' => 'products.csv `sold_individually` -- DROPPED, named in the discard list. '
+            .'There is no one-per-order cap on a product in this shop',
 
         /* ── the coupons ────────────────────────────────────────────────── */
         'discount_type' => $coupons.'.type',

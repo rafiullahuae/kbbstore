@@ -68,6 +68,18 @@ final class EntityReport
     private array $discards = [];
 
     /**
+     * Fields this entity declared it does not carry, as a SET keyed by name.
+     *
+     * A set and not a counter, because the truthful unit is the field and not
+     * the row: `weight` dropped on 671 products is ONE thing the owner has lost
+     * and 671 rows it happened on. The discard channel beside this already
+     * carries the per-row count.
+     *
+     * @var array<string, true>
+     */
+    private array $droppedFields = [];
+
+    /**
      * COUNT-BASED VERIFICATION, which Phase 13 asks for by name: "count-based
      * verification after each bucket". Until this existed the report could say
      * what it did to the rows it looked at and could not say whether it had
@@ -194,12 +206,16 @@ final class EntityReport
     public const SAMPLES_PER_KIND = 5;
 
     /**
-     * How much of a before/after value is kept.
+     * How much of a before/after VALUE is kept.
      *
-     * Long enough to hold the whole ignored-column list for a wide
-     * WooCommerce export, which is the one sample that is a LIST rather than a
-     * value and is useless truncated -- the names at the end are exactly the
-     * ones nothing else in the report mentions.
+     * It used to say it was "long enough to hold the whole ignored-column list
+     * for a wide WooCommerce export", and it is not: that list is 511 characters
+     * on the fixture, where most of the columns are empty, and exactly 600 with
+     * "..." on the end for one realistic product row. A length limit cannot be
+     * the mechanism that keeps a list whole, whatever number it is set to, so
+     * the list no longer goes through one -- see discardedList(). This governs
+     * values only, where truncating IS the right answer because the alternative
+     * is a kilobyte of product description in a console table.
      */
     public const EXCERPT_LENGTH = 600;
 
@@ -264,9 +280,85 @@ final class EntityReport
     }
 
     /**
+     * A discard whose value is a COMPLETE LIST, kept whole.
+     *
+     * WHY THIS EXISTS, and it is a defect this repository had already reasoned
+     * its way up to and then walked past. EXCERPT_LENGTH's own docblock says 600
+     * is "long enough to hold the whole ignored-column list for a wide
+     * WooCommerce export ... the names at the end are exactly the ones nothing
+     * else in the report mentions". That claim was true of the fixture, where
+     * eleven of the nineteen ignored product columns are empty and the line
+     * comes out at 511 characters, and FALSE of the owner's own shop, where they
+     * carry values: a single realistic product row -- weight, dimensions, a
+     * purchase note, upsell ids, a custom attribute summary -- produces a line
+     * of exactly 600 characters ending in "...".
+     *
+     * WHAT WAS CUT OFF was `virtual`, `weight` and `width`, alphabetically last.
+     * `weight` is the single most load-bearing field in the whole drop list --
+     * the input to any weight-based parcel rate -- and the one report line whose
+     * entire job is to name what the migration is losing was losing it from
+     * itself. A truncated list is worse than a short one, because "..." reads as
+     * "and some more of the same" when it means "and the ones you most need".
+     *
+     * So a list is not a value and does not get a value's budget. The length is
+     * bounded by the width of the export rather than by the size of the data --
+     * one entry per column, once per entity, not once per row -- so keeping it
+     * whole costs a few hundred bytes on a report that already holds every
+     * rejection in full.
+     */
+    public function discardedList(string $kind, int|string $line, string $id, string $field, string $whole): void
+    {
+        $this->collect($this->discards, $kind, $line, $id, $field, $whole, '(nothing)', excerpt: false);
+    }
+
+    /**
+     * A field of the export this importer KNOWINGLY does not carry, by name and
+     * with the value it held.
+     *
+     * ONE CALL, TWO RECORDS, AND THAT IS THE POINT. The owner's sentence is
+     * "everything must be compatible without anything skipping or losing", and
+     * answering it needs both halves: the discard channel, so each dropped field
+     * is named with an example of what was in it, and a COUNT OF DISTINCT
+     * FIELDS, so the reconciliation line at the end can say "17 fields skipped"
+     * instead of leaving him to count discard kinds by eye. Recording them
+     * separately would let the two drift, and a report whose summary disagrees
+     * with its own detail is one nobody can act on.
+     *
+     * COUNTED ONLY WHEN THE FIELD ACTUALLY CARRIED SOMETHING. A column that is
+     * empty on every row of the export lost nothing, and counting it would
+     * inflate the one number the owner is meant to read into an alarm about
+     * data he never had. `weight` empty on all 671 products is not a loss;
+     * `weight` on 400 of them is.
+     */
+    public function droppedField(string $kind, int|string $line, string $id, string $field, string $value): void
+    {
+        $this->droppedFields[$field] = true;
+
+        $this->collect($this->discards, $kind, $line, $id, $field, $value, '(nothing)');
+    }
+
+    /**
+     * The distinct fields this entity declared it does not carry, sorted.
+     *
+     * @return list<string>
+     */
+    public function droppedFieldNames(): array
+    {
+        $names = array_keys($this->droppedFields);
+        sort($names);
+
+        return $names;
+    }
+
+    public function droppedFieldCount(): int
+    {
+        return count($this->droppedFields);
+    }
+
+    /**
      * @param  array<string, array{count: int, samples: list<array{line: int|string, id: string, field: string, before: string, after: string}>}>  $into
      */
-    private function collect(array &$into, string $kind, int|string $line, string $id, string $field, string $before, string $after): void
+    private function collect(array &$into, string $kind, int|string $line, string $id, string $field, string $before, string $after, bool $excerpt = true): void
     {
         $into[$kind] ??= ['count' => 0, 'samples' => []];
         $into[$kind]['count']++;
@@ -277,8 +369,9 @@ final class EntityReport
                 'id' => $id,
                 'field' => $field,
                 // Truncated: a product description is kilobytes long and the
-                // owner is reading a console, not a diff viewer.
-                'before' => self::excerpt($before),
+                // owner is reading a console, not a diff viewer. A LIST is the
+                // exception -- see discardedList().
+                'before' => $excerpt ? self::excerpt($before) : self::tidy($before),
                 'after' => self::excerpt($after),
             ];
         }
@@ -286,11 +379,23 @@ final class EntityReport
 
     private static function excerpt(string $value): string
     {
-        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
+        $value = self::tidy($value);
 
         return mb_strlen($value) > self::EXCERPT_LENGTH
             ? mb_substr($value, 0, self::EXCERPT_LENGTH - 3).'...'
             : $value;
+    }
+
+    /**
+     * Whitespace collapsed, and nothing removed.
+     *
+     * The newlines in a WooCommerce purchase note would break a console table
+     * whatever its length limit, so this half of excerpt() applies to a whole
+     * list as well; only the truncation does not.
+     */
+    private static function tidy(string $value): string
+    {
+        return trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
     }
 
     /** @return array<string, array{count: int, samples: list<array{line: int|string, id: string, field: string, before: string, after: string}>}> */
@@ -436,6 +541,32 @@ final class EntityReport
                             .($this->resumedRejected === 1 ? 'was' : 'were').' refused then, so '
                             .number_format($refusedInFile).' refused against this file in all'
                         : '').')'
+                : '')
+            /*
+             * ── AND THE FIELD-LEVEL HALF OF "NOTHING WAS LOST" ─────────────
+             *
+             * The owner's sentence is "everything must be compatible without
+             * anything skipping or losing", and every number above this clause
+             * counts ROWS. A migration can bring every row across and still
+             * lose a column out of each of them, which is the failure that has
+             * no row-count symptom at all -- the tally reads 671 of 671 and the
+             * parcel weights are gone.
+             *
+             * SAID IN COLUMNS AND SAID TO BE COLUMNS. The identity the rest of
+             * this sentence rests on is `accounted + refused = read`, and a
+             * number that does not belong to it must not look as though it
+             * does, or the owner is left doing arithmetic that cannot balance.
+             * Hence the parenthesis, which is not padding.
+             *
+             * ABSENT WHEN THERE IS NOTHING TO SAY, so an entity that carries
+             * every field it was given reads exactly as it read before this
+             * clause existed -- byte for byte.
+             */
+            .($this->droppedFieldCount() > 0
+                ? ', and '.number_format($this->droppedFieldCount()).' field'
+                    .($this->droppedFieldCount() === 1 ? '' : 's').' skipped (columns of the export this '
+                    .'shop has nowhere to put, not rows -- each one is named in the discard list with what '
+                    .'it held)'
                 : '');
 
         $sentence = match ($verdict) {

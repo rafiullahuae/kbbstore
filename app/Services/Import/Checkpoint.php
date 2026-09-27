@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Import;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * One entity's place in one run, read and advanced through `import_checkpoints`.
@@ -240,22 +241,112 @@ final class Checkpoint
      *
      * MUST be called from inside the batch's own transaction. See the class
      * comment — this is the property the whole resume design rests on.
+     *
+     * @param  list<string>  $droppedFields  fields this entity has declared it does
+     *                                       not carry. UNLIKE the four counts, this
+     *                                       is the whole set and not this batch's
+     *                                       delta -- it is unioned, not summed.
      */
-    public function advance(int $rows, int $created, int $updated, int $unchanged, int $rejected): void
+    public function advance(int $rows, int $created, int $updated, int $unchanged, int $rejected, array $droppedFields = []): void
     {
         $this->processed += $rows;
+
+        $update = [
+            'processed' => $this->processed,
+            'created_rows' => DB::raw('created_rows + '.$created),
+            'updated_rows' => DB::raw('updated_rows + '.$updated),
+            'unchanged_rows' => DB::raw('unchanged_rows + '.$unchanged),
+            'rejected_rows' => DB::raw('rejected_rows + '.$rejected),
+            'updated_at' => now(),
+        ];
+
+        $merged = $this->mergeDroppedFields($droppedFields);
+
+        if ($merged !== null) {
+            $update['dropped_fields'] = $merged;
+        }
 
         DB::table(self::TABLE)
             ->where('run_key', $this->runKey)
             ->where('entity', $this->entity)
-            ->update([
-                'processed' => $this->processed,
-                'created_rows' => DB::raw('created_rows + '.$created),
-                'updated_rows' => DB::raw('updated_rows + '.$updated),
-                'unchanged_rows' => DB::raw('unchanged_rows + '.$unchanged),
-                'rejected_rows' => DB::raw('rejected_rows + '.$rejected),
-                'updated_at' => now(),
-            ]);
+            ->update($update);
+    }
+
+    /**
+     * This slice's dropped fields, UNIONED with what earlier slices recorded.
+     *
+     * UNIONED AND NOT SUMMED, which is the whole reason this is a list of names
+     * rather than a counter. A background import is many requests over one file
+     * and each one reports the fields it saw; adding them would count `weight`
+     * once per batch and tell the owner his catalogue lost three hundred fields.
+     * A set unioned is idempotent, so a request that is killed and retried
+     * cannot inflate it either -- which is the same property every other number
+     * in this table has and the reason the table is believed.
+     *
+     * WRITTEN ONLY WHEN IT WOULD CHANGE SOMETHING. The common case is a second
+     * batch of the same file reporting the same twenty names, and returning null
+     * there keeps the column out of the UPDATE entirely.
+     *
+     * RETURNS NULL RATHER THAN THROWING WHEN THE COLUMN IS NOT THERE. This runs
+     * on a shop whose migration may not have been applied yet -- the update
+     * packages are applied by hand -- and an import that dies because a
+     * progress-page nicety has no column is a far worse failure than a progress
+     * page that cannot show one number. The column is the narrative; the rows
+     * are the migration.
+     *
+     * @param  list<string>  $fields
+     */
+    /**
+     * Whether `import_checkpoints` has the column, asked ONCE per process.
+     *
+     * Schema::hasColumn() is a real introspection query, and advance() runs once
+     * per committed batch -- four hundred times over a catalogue this size. The
+     * answer cannot change inside one request, so it is remembered.
+     *
+     * ONLY THE "YES" IS REMEMBERED, and that asymmetry is deliberate. A static
+     * is exactly the shape CLAUDE.md warns about on Setting::map() -- a
+     * process-level memo that cannot see a later change -- and caching a NO here
+     * would reproduce that bug with a migration as the change: these packages
+     * are applied by hand while the shop is running, and a queue worker that
+     * happened to ask before the package landed would keep answering "no
+     * column" for as long as it lived, silently leaving the number off the page
+     * forever.
+     *
+     * Caching the YES has no such failure: a column is not removed under a
+     * running process, and the cost of re-asking while the answer is still no is
+     * one introspection query per batch on a shop that has not been updated yet
+     * -- a transient state, and the cheap side of the trade.
+     */
+    private static bool $hasColumn = false;
+
+    private static function columnExists(): bool
+    {
+        if (self::$hasColumn) {
+            return true;
+        }
+
+        return self::$hasColumn = Schema::hasColumn(self::TABLE, 'dropped_fields');
+    }
+
+    private function mergeDroppedFields(array $fields): ?string
+    {
+        if ($fields === [] || ! self::columnExists()) {
+            return null;
+        }
+
+        $stored = (string) (DB::table(self::TABLE)
+            ->where('run_key', $this->runKey)
+            ->where('entity', $this->entity)
+            ->value('dropped_fields') ?? '');
+
+        $known = array_filter(array_map('trim', explode(',', $stored)), static fn (string $f): bool => $f !== '');
+
+        $all = array_values(array_unique([...$known, ...$fields]));
+        sort($all);
+
+        $line = implode(',', $all);
+
+        return $line === $stored ? null : $line;
     }
 
     public function finish(): void

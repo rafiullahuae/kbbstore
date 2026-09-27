@@ -1003,6 +1003,9 @@ final class ImportChain
         $barred = 0;
         $everyDenominator = true;
 
+        /** @var list<string> every field any entity declared it is not carrying */
+        $droppedAll = [];
+
         foreach ($denominators as $entity => $d) {
             $cp = $checkpoints[$entity] ?? null;
             $present = $this->workspace->has($entity);
@@ -1019,6 +1022,20 @@ final class ImportChain
                 $everyDenominator = false;
             }
 
+            /*
+             * ── THE FIELD-LEVEL HALF, WHICH NO ROW COUNT CAN SHOW ───────────
+             *
+             * Every number above this counts rows. An import can bring all 671
+             * products across and lose a column out of each of them, and that
+             * failure reaches 100% on the bar with nothing refused.
+             *
+             * ?? null AND NOT ->dropped_fields DIRECTLY: these packages are
+             * applied by hand and this screen has to keep working on a shop
+             * whose migration has not been applied yet. A missing column makes
+             * the page show no drop list, not an error.
+             */
+            $dropped = $this->droppedFields($cp->dropped_fields ?? null);
+
             $entities[] = [
                 'entity' => $entity,
                 'label' => ImportWorkspace::meta($entity)['label'],
@@ -1030,14 +1047,18 @@ final class ImportChain
                 'updated' => $cp === null ? 0 : (int) $cp->updated_rows,
                 'unchanged' => $cp === null ? 0 : (int) $cp->unchanged_rows,
                 'rejected' => $cp === null ? 0 : (int) $cp->rejected_rows,
+                'dropped_fields' => $dropped,
                 'finished' => $cp !== null && $cp->finished_at !== null,
             ];
+
+            $droppedAll = [...$droppedAll, ...$dropped];
         }
 
         return [
             'ok' => true,
             'chain' => $this->state(),
             'entities' => $entities,
+            'reconciliation' => $this->reconciliation($entities, $droppedAll),
             'overall' => [
                 'done' => $barDone,
                 // Same rule as status(): one file short of a trustworthy count
@@ -1049,6 +1070,116 @@ final class ImportChain
                     : null,
             ],
             'server_time' => now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * A stored comma list of field names, as a list.
+     *
+     * @return list<string>
+     */
+    private function droppedFields(?string $stored): array
+    {
+        if ($stored === null || trim($stored) === '') {
+            return [];
+        }
+
+        $names = array_values(array_filter(
+            array_map('trim', explode(',', $stored)),
+            static fn (string $name): bool => $name !== '',
+        ));
+
+        sort($names);
+
+        return $names;
+    }
+
+    /**
+     * ── THE ONE SENTENCE THE OWNER ACTUALLY WANTED ──────────────────────────
+     *
+     * "WooCommerce said 671 products, 671 arrived, 0 refused, 20 fields skipped."
+     *
+     * It is the cheapest possible proof of the whole migration and it is
+     * assembled here, from the checkpoints, rather than from any importer's
+     * account of its own work -- the denominator comes from counting the rows in
+     * the file and the rest from rows committed in the same transaction as the
+     * data they describe. Nothing in it is a number an importer volunteered.
+     *
+     * IT REFUSES TO CONCLUDE WHILE THE RUN IS UNFINISHED, and says so, for the
+     * reason ImportChain::progress() gives about the overall bar: a total that is
+     * wrong in the flattering direction is worse than no total. "Everything
+     * arrived" printed over a half-finished import is the single most expensive
+     * sentence this screen could produce.
+     *
+     * @param  list<array<string, mixed>>  $entities
+     * @param  list<string>  $droppedAll
+     * @return array<string, mixed>
+     */
+    private function reconciliation(array $entities, array $droppedAll): array
+    {
+        $present = array_values(array_filter($entities, static fn (array $e): bool => (bool) $e['present']));
+
+        if ($present === []) {
+            return ['ready' => false, 'sentence' => '', 'fields' => []];
+        }
+
+        $fields = array_values(array_unique($droppedAll));
+        sort($fields);
+
+        $expected = 0;
+        $arrived = 0;
+        $refused = 0;
+        $everyDenominator = true;
+        $allFinished = true;
+
+        foreach ($present as $entity) {
+            if ($entity['denominator'] === null) {
+                $everyDenominator = false;
+            } else {
+                $expected += (int) $entity['denominator'];
+            }
+
+            $arrived += (int) $entity['created'] + (int) $entity['updated'] + (int) $entity['unchanged'];
+            $refused += (int) $entity['rejected'];
+
+            if (! $entity['finished']) {
+                $allFinished = false;
+            }
+        }
+
+        $fieldClause = $fields === []
+            ? 'no field of the export was skipped'
+            : count($fields).' field'.(count($fields) === 1 ? '' : 's').' skipped ('
+                .implode(', ', $fields).')';
+
+        if (! $allFinished || ! $everyDenominator) {
+            return [
+                'ready' => false,
+                'fields' => $fields,
+                'sentence' => 'So far: '.number_format($arrived).' row'
+                    .($arrived === 1 ? '' : 's').' in, '.number_format($refused).' refused, and '
+                    .$fieldClause.'. This import is still going, so these are a slice and not the answer '
+                    .'-- the reconciliation appears when every file has finished.',
+            ];
+        }
+
+        $short = $expected - ($arrived + $refused);
+
+        return [
+            'ready' => true,
+            'fields' => $fields,
+            'sentence' => 'WooCommerce said '.number_format($expected).' row'.($expected === 1 ? '' : 's')
+                .' across '.count($present).' file'.(count($present) === 1 ? '' : 's').', '
+                .number_format($arrived).' arrived, '.number_format($refused).' refused, and '.$fieldClause
+                .'.'
+                .($short === 0
+                    ? ' Every row is accounted for.'
+                    : ' '.number_format(abs($short)).' row'.(abs($short) === 1 ? ' is' : 's are')
+                        .($short > 0
+                            ? ' UNACCOUNTED FOR -- read but neither imported nor refused. DO NOT TREAT THIS '
+                                .'IMPORT AS COMPLETE.'
+                            : ' more than the files supplied, which happens when a table already held rows '
+                                .'from an earlier import.')),
         ];
     }
 
