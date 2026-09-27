@@ -627,8 +627,20 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         $status = strtoupper((string) ($payment['status'] ?? ''));
         $captured = $this->hasCapture($payment);
 
+        /*
+         * THE VERIFIED ID, not the posted one, wherever there is a choice.
+         *
+         * The body is used to decide what to ask about and for nothing else, so
+         * what gets written into `payments.provider_ref` and the audit row is the
+         * id Tabby's own authenticated answer carries. Storing the caller's
+         * string would put an unverified value in the column the merchant later
+         * searches Tabby's dashboard by.
+         */
+        $verifiedId = trim((string) ($payment['id'] ?? ''));
+        $reference = $verifiedId !== '' ? $verifiedId : $paymentId;
+
         $summary = [
-            'payment_id' => $paymentId,
+            'payment_id' => $reference,
             'status' => $status,
             'reference' => $payment['order']['reference_id'] ?? null,
             // Named, and it is the field that decides the branch below. An
@@ -637,8 +649,41 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             'captured' => $captured ? 'yes' : 'no',
         ];
 
+        /*
+         * A FAILURE NOTICE ABOUT A SUPERSEDED ATTEMPT IS NOT A FAILURE.
+         *
+         * One order can carry more than one Tabby payment. start() is reachable
+         * again on the same order — a shopper who abandons the Tabby page and
+         * picks Tabby a second time, or opens it in two tabs — and each call
+         * creates a NEW payment and overwrites `orders.transaction_id` with it.
+         * The abandoned one then EXPIRES on Tabby's own timer and Tabby delivers
+         * an `EXPIRED` notice for it.
+         *
+         * Without this guard that notice was applied to the order: PaymentConfirmer
+         * ::fail() moved it to `failed`, returned the stock and released the
+         * coupon. Webhook delivery is not ordered, so the `AUTHORIZED` notice for
+         * the payment that DID succeed could then arrive second, find the order
+         * in `failed` — which is in PaymentConfirmer's VOID list — and be refused
+         * as "order is no longer live". Net effect: real money authorised on
+         * Tabby, stock back on the shelf, order dead, and the only trace a status
+         * note. The merchant's own plugin guards the same thing by comparing
+         * `get_tabby_payment_id($order)` with the notice's id before acting.
+         *
+         * ONLY the failure branches are guarded, and that asymmetry is deliberate.
+         * A SUCCESS notice for an unexpected id is money the customer really has
+         * committed, and dropping it would be the same silence in the other
+         * direction — so it falls through to confirm(), which checks the amount
+         * and the currency against the order before it believes anything.
+         */
+        $stored = trim((string) ($order->transaction_id ?? ''));
+        $superseded = $stored !== '' && $verifiedId !== '' && ! hash_equals($stored, $verifiedId);
+
         if (in_array($status, ['REJECTED', 'EXPIRED'], true)) {
-            return $this->confirmer->fail($order, $this->id(), $paymentId, strtolower($status), $summary);
+            if ($superseded) {
+                return WebhookOutcome::ignored('notice concerns a superseded payment attempt');
+            }
+
+            return $this->confirmer->fail($order, $this->id(), $reference, strtolower($status), $summary);
         }
 
         /*
@@ -661,7 +706,14 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
          * what a released authorisation means.
          */
         if ($status === 'CLOSED' && ! $captured) {
-            return $this->confirmer->fail($order, $this->id(), $paymentId, 'voided', $summary);
+            // Guarded exactly as REJECTED and EXPIRED are: a released hold on an
+            // attempt this order has already moved past says nothing about the
+            // attempt it is actually waiting on.
+            if ($superseded) {
+                return WebhookOutcome::ignored('notice concerns a superseded payment attempt');
+            }
+
+            return $this->confirmer->fail($order, $this->id(), $reference, 'voided', $summary);
         }
 
         if (! in_array($status, ['AUTHORIZED', 'CLOSED'], true)) {
@@ -673,7 +725,7 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         return $this->confirmer->confirm(
             $order,
             $this->id(),
-            $paymentId,
+            $reference,
             $this->toFils($payment['amount'] ?? 0),
             (string) ($payment['currency'] ?? ''),
             $summary,
