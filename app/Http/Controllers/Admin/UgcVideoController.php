@@ -99,6 +99,38 @@ class UgcVideoController extends Controller
     /** The library, newest first within the owner's own order. */
     public function index(): JsonResponse
     {
+        /*
+         * == WHY THIS METHOD IS BUILT IN PIECES AND NOT IN ONE EXPRESSION =====
+         *
+         * It used to be one `response()->json([...])` containing every call
+         * below. The owner's shop answered HTTP 500 to it on every load, his
+         * whole library vanished behind "The server could not answer", and the
+         * Sections screen beside it was fine -- because Sections asks the
+         * transcoder and the ini limits nothing.
+         *
+         * THE POINT OF THIS ENDPOINT IS THE LIST OF CLIPS. Everything else it
+         * returns is DECORATION: whether ffmpeg can be started, what this
+         * server's upload ceiling really is, the blank Arabic boxes. Each of
+         * those probes the machine -- ini values, the filesystem, four absolute
+         * paths -- and each was able to take the library down with it. Losing
+         * "MP4 or WebM, up to 2 MB" off the screen is cosmetic; losing every
+         * clip IS the screen.
+         *
+         * The same lesson as run() in UgcTranscoder, one layer up: a failed
+         * transcode can no longer fail an upload, and now a failed PROBE cannot
+         * fail the library. Each optional block goes through probe(), which
+         * cannot throw and records what went wrong instead. A row that cannot
+         * be turned into a card is skipped and NAMED rather than taking the
+         * other seven with it.
+         *
+         * THIS IS NOT A GUESS AT THE OWNER'S 500 AND IS NOT OFFERED AS ONE. It
+         * is right on its own merits, and it means the next load of that screen
+         * either works with a line saying which probe died, or names the
+         * exception on screen -- either of which beats a generic 500 nobody can
+         * act on.
+         */
+        $notes = [];
+
         $rows = UgcVideo::query()
             /*
              * withCount, not a products eager-load. The list prints a number,
@@ -111,15 +143,33 @@ class UgcVideoController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $videos = [];
+
+        foreach ($rows as $row) {
+            try {
+                $videos[] = $this->card($row);
+            } catch (\Throwable $e) {
+                // Named, not silently dropped. A clip that quietly disappears
+                // from this list is one the owner goes looking for on the shop
+                // and cannot find.
+                $notes[] = 'Clip #'.$row->id.' could not be read -- '.$this->probeNote($e);
+            }
+        }
+
         return response()->json([
             'ok' => true,
-            'videos' => $rows->map(fn (UgcVideo $v) => $this->card($v))->all(),
+            'videos' => $videos,
             /*
              * WHICH OF THE TWO WORLDS THIS SERVER IS IN, said before the owner
              * uploads anything rather than after. §8 question 4 is unanswered,
              * so the screen asks the server instead of assuming.
              */
-            'transcoder' => [
+            'transcoder' => $this->probe($notes, 'the ffmpeg check', [
+                'available' => false,
+                'blocker' => null,
+                'teaser_seconds' => UgcTranscoder::TEASER_SECONDS,
+                'teaser_size' => UgcTranscoder::TEASER_WIDTH.'x'.UgcTranscoder::TEASER_HEIGHT,
+            ], fn () => [
                 'available' => $this->transcoder->available(),
                 /*
                  * WHICH of the two ways it is unavailable, in the server's own
@@ -144,7 +194,7 @@ class UgcVideoController extends Controller
                 ),
                 'teaser_seconds' => UgcTranscoder::TEASER_SECONDS,
                 'teaser_size' => UgcTranscoder::TEASER_WIDTH.'x'.UgcTranscoder::TEASER_HEIGHT,
-            ],
+            ]),
             /*
              * THE SIZE THIS SERVER WILL REALLY TAKE, NOT THE SIZE THE APP ALLOWS.
              *
@@ -165,20 +215,77 @@ class UgcVideoController extends Controller
              * `clip_mb` is still the number the screen prints, so nothing on it
              * had to learn a new key to stop lying.
              */
-            'limits' => $this->limits(),
+            'limits' => $this->probe($notes, 'the upload limits', [], fn () => $this->limits()),
             /*
              * The blank translatable shape, for the Arabic boxes on the form
              * that creates a clip — a row that does not exist yet has no bag
              * and still has to draw a box per field. Same as the Brands editor.
              */
-            'translatable' => (new UgcVideo)->translationsForEditor(),
+            'translatable' => $this->probe(
+                $notes, 'the translation boxes', [], fn () => (new UgcVideo)->translationsForEditor()
+            ),
             'vocabulary' => [
                 'status' => UgcVideo::STATUSES,
                 'rights' => UgcVideo::RIGHTS,
                 'platform' => UgcVideo::PLATFORMS,
                 'locale' => UgcVideo::LOCALES,
             ],
+            /*
+             * WHAT BROKE, ON THE SCREEN, rather than only in a log file that
+             * has to be reached over SSH to read.
+             *
+             * SAFE HERE AND NOWHERE NEAR /api/*: this route sits behind
+             * auth:admin AND the ugc.view capability, so its only reader is a
+             * signed-in operator looking at his own shop. It carries the
+             * exception class, its message, and a repo-relative file and line
+             * -- enough to name the cause -- and never a stack trace, which is
+             * where framework internals and argument values live.
+             */
+            'probe_errors' => $notes,
         ]);
+    }
+
+    /**
+     * Run one optional block, and never let it fail the page.
+     *
+     * The fallback is what the screen gets when a probe dies, chosen so the
+     * screen renders something HONEST rather than something wrong: `available
+     * => false` claims no ffmpeg, which is the safe claim because it offers a
+     * poster upload instead of promising a cut that cannot happen; and an empty
+     * limits array is the shape the screen already treats as "the server has
+     * not answered yet".
+     *
+     * @template T
+     * @param  list<string>  $notes
+     * @param  T  $fallback
+     * @param  callable(): T  $probe
+     * @return T
+     */
+    private function probe(array &$notes, string $what, mixed $fallback, callable $probe): mixed
+    {
+        try {
+            return $probe();
+        } catch (\Throwable $e) {
+            $notes[] = ucfirst($what).' failed -- '.$this->probeNote($e);
+
+            return $fallback;
+        }
+    }
+
+    /**
+     * One line describing a throwable: class, message, and where.
+     *
+     * The path is cut back to the repository root so the line stays readable
+     * and so the server's absolute directory layout is not printed even to an
+     * admin. The CLASS as well as the message, because an ErrorException
+     * carrying "open_basedir restriction in effect" and a QueryException
+     * carrying the same words send somebody to two different places.
+     */
+    private function probeNote(\Throwable $e): string
+    {
+        $file = str_replace(base_path().'/', '', $e->getFile());
+
+        return $e::class.': '.$e->getMessage().' ('.$file.':'.$e->getLine().')';
     }
 
     /** One clip, with the products tagged on it. */

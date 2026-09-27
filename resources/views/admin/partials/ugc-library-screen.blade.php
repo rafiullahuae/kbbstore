@@ -635,6 +635,16 @@
   var recentAsked = false;
   var unpublishedHits = 0;     // matched the term but are not publishable
   var banner = null, busy = false, seq = 0;
+
+  /*
+   * What the server could not work out, in its own words.
+   *
+   * SEPARATE FROM `banner` ON PURPOSE. banner means "you have no library";
+   * this means "you have your library, and one optional thing beside it did
+   * not answer". Drawing them in the same red box would say the screen is
+   * broken when the only casualty is the ffmpeg line or the upload ceiling.
+   */
+  var probeErrors = [];
   var step = 1;                // which panel is on show
   var loopEl = null;           // the mounted preview video, released before each repaint
 
@@ -1297,7 +1307,7 @@
 
   async function load() {
     var mine = ++seq;
-    busy = true; banner = null;
+    busy = true; banner = null; probeErrors = [];
     render();
 
     /* Deliberately not awaited — see readMotion(). */
@@ -1308,6 +1318,7 @@
       if (mine !== seq) return;
 
       videos = body.videos || [];
+      probeErrors = body.probe_errors || [];
       transcoder = body.transcoder || null;
       limits = body.limits || null;
       vocab = body.vocabulary || null;
@@ -3494,6 +3505,25 @@
 
     if (banner) {
       html += '<div class="ugs-card"><div class="ugs-note is-bad">' + esc(banner) + '</div></div>';
+    }
+
+    /*
+     * A WARM note, not a red one, and below the library rather than instead of
+     * it: every clip is on the screen and something optional beside it did not
+     * answer. The server's own sentence is printed because the whole reason
+     * this exists is that "Server Error" was not something anybody could act
+     * on; it is escaped like every other server string.
+     */
+    if (probeErrors.length) {
+      html += '<div class="ugs-card"><div class="ugs-note is-warm">'
+        + '<b>Your clips are all here.</b> These parts of the screen could not be worked out '
+        + 'on this server, so they are showing their safe defaults:'
+        // No inline style: `.ugs-note ul` already carries it, and it uses
+        // padding-inline-start, which a hardcoded padding-left would break on
+        // the Arabic side of this console.
+        + '<ul>'
+        + probeErrors.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('')
+        + '</ul></div></div>';
     }
 
     if (videos === null) {

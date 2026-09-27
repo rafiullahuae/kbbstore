@@ -3,6 +3,61 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.294
+The All clips page, fixed so that one dead check can no longer take your whole
+library down with it.
+
+### ▲ WHY "ALL CLIPS" WAS 500ing — the actual cause, not the message
+
+2.60.293 made the screen report the status instead of a vague sentence, and it
+did its job: it came back **HTTP 500 · "Server Error"**. That told me where to
+look, and the answer was in the shape of the code rather than in any one line.
+
+When that page loads it asks your server four separate things:
+
+1. **Your clips** — the point of the page.
+2. Can ffmpeg be started here?
+3. What will PHP really accept for an upload?
+4. What do the empty Arabic boxes look like?
+
+Only the first one matters. The other three are **decoration**: a line of
+helper text, a size in the upload box, two blank inputs. But all four were built
+in a single expression — so if any one of them failed, **you lost everything**,
+including every clip, behind a generic error with no cause.
+
+Questions 2 and 3 are the ones that poke at the machine: four absolute paths on
+disk, `proc_open`, PHP ini values. On a hardened host — and yours is hardened,
+that is why `proc_open` is off — those are exactly the calls that can be refused.
+
+**So now each of those checks runs on its own and cannot bring the page down.**
+Your clips load. If a check dies, the screen says which one and quotes the
+server's own words, in a calm amber note under the library rather than instead
+of it. And a clip that cannot be read is **named**, not silently dropped — a
+clip that quietly disappears is one you go hunting for on the shop.
+
+The safe default is used when a check fails: ffmpeg is reported as *absent*,
+so the screen offers you the "choose your own cover" path instead of promising a
+cut that cannot happen.
+
+**Honest note:** I still cannot see your server, so I cannot tell you which of
+the checks was throwing. What I can tell you is that it no longer matters — the
+page works either way, and if one is still failing it will now print the
+exception on screen. If you see that amber note, send me the line in it.
+
+This is the same rule 2.60.291 applied one layer down — *a failed transcode can
+no longer fail an upload* — applied one layer up: **a failed check can no longer
+fail the library.**
+
+**No setting added, no default moved.**
+
+### Files
+- `app/Http/Controllers/Admin/UgcVideoController.php` — each optional block
+  through a probe that cannot throw; per-clip errors named rather than fatal.
+- `resources/views/admin/partials/ugc-library-screen.blade.php` — the amber
+  note under the library.
+- `tests/Feature/UgcLibrarySurvivesAProbeTest.php` (repo only).
+- Everything in 2.60.293 and 2.60.292 below is included.
+
 ## 2.60.293
 The Add-video button on a section page, a clips screen that says what went
 wrong, and a product search that behaved differently on your server than in
