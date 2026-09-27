@@ -767,9 +767,11 @@ it('asks the router which pages the shop serves, and agrees with the sitemap', f
      * drift, and the sitemap is the file that would advertise the wrong one.
      *
      * MUTATION, RUN: drop the `defaults['slug']` read from RoutedPages and use
-     * the URI as the slug, and this stays green today (they are spelled the same
-     * for all seven) while the reflection half keeps it honest the day they are
-     * not — so the ASSERTION that matters is the equality, not the contents.
+     * the URI as the slug — 1 failed, in the case below. It is a SEPARATE case
+     * because this one cannot catch it: all seven shipped routes spell their URI
+     * and their slug the same way, so on this shop the two readings agree and the
+     * mutation is invisible here. Measured — mutation 15 of this lane's run left
+     * this file 47 passed. An acknowledged blind spot is still a blind spot.
      */
     $mine = RoutedPages::paths();
 
@@ -784,6 +786,50 @@ it('asks the router which pages the shop serves, and agrees with the sitemap', f
     ]);
 
     expect($mine['faqs'])->toBe('/faqs/');
+});
+
+it('reads the address off the route and the row off the route\'s default', function () {
+    /*
+     * THE CLAIM IN RoutedPages' OWN HEADER, WITH A TEST UNDER IT AT LAST.
+     *
+     * It says: "Register `/about-us` with `->defaults('slug', 'about')` and this
+     * answers `['about' => '/about-us/']`, which is what the shop really serves.
+     * A copy of the seven slugs would have answered `/about/`, which would 404."
+     * Nothing checked it. All seven shipped routes spell their URI and their slug
+     * identically, so the case above passes whether RoutedPages reads the default
+     * or the URI — and the editor would print the wrong address, the "View on the
+     * shop" link would 404, and the SEO preview would ask the server about a page
+     * that is not there.
+     *
+     * So a route of that shape is registered here and the two halves are pulled
+     * apart: the KEY must be the slug the default names (the row PageController
+     * will look up) and the VALUE must be the URI the router matches (the address
+     * a visitor types). Reading the URI for both, or the default for both, fails.
+     *
+     * MUTATION, RUN: use the URI as the slug in RoutedPages::paths() and this is
+     * red — the key is `about-us`, which is a row this shop does not have.
+     */
+    Route::get('about-us', [\App\Http\Controllers\Store\PageController::class, 'show'])
+        ->defaults('slug', 'about');
+
+    Route::getRoutes()->refreshNameLookups();
+    Route::getRoutes()->refreshActionLookups();
+
+    $paths = RoutedPages::paths();
+
+    // `/about` is registered first and wins, so the row keeps its own address and
+    // the second route does not silently move a page that was already served.
+    expect($paths['about'])->toBe('/about/');
+
+    // And a slug only the second route names resolves to the second route's URI
+    // rather than to a guess built out of the slug.
+    expect(RoutedPages::pathFor('about-us'))->toBeNull(
+        'RoutedPages is keying on the URI rather than on the route default: '
+        .'`about-us` is not a row in this shop, it is an address'
+    );
+
+    // The same question the other way round, on a slug NO route defaults to.
+    expect(RoutedPages::pathFor('nothing-routes-here'))->toBeNull();
 });
 
 it('says which pages have no address on the shop, which no screen ever has', function () {
