@@ -225,6 +225,30 @@ final class GatewayPreflight
             'billing_first_name' => 'Preflight',
             'billing_last_name' => 'Check',
             'billing_country' => 'AE',
+            /*
+             * A PHONE NUMBER, BECAUSE A BNPL GATEWAY WILL NOT SCORE ANYBODY
+             * WITHOUT ONE — and because the dry run is worthless the moment a
+             * gateway refuses this order for a reason the owner's configuration
+             * had nothing to do with. That is the rule this method's own header
+             * already states; the phone is one more column it has to keep.
+             *
+             * TamaraGateway::start() refuses before its HTTP call when the order
+             * carries no mobile number, which is right for a real order and made
+             * the preflight card read `sent: false — Tamara needs a mobile
+             * number to approve a payment`. The owner pressing "Preflight" wants
+             * to see the request and the redacted Authorization header; being
+             * told about a missing phone on a row that does not exist tells him
+             * nothing about his keys. Tabby's payload carries the same field and
+             * gains the same thing here.
+             *
+             * OBVIOUSLY NOT A REAL NUMBER, like every other value in this block:
+             * +971 5 followed by zeroes is the shape a UAE mobile takes and
+             * belongs to nobody. Nothing is ever sent — dryRun() intercepts the
+             * request before it leaves — so this reaches no provider and no
+             * person, but a plausible-looking stranger's number in a file that
+             * gets pasted into a support ticket is a thing not to write.
+             */
+            'phone' => '+971500000000',
         ]);
 
         return $order;
