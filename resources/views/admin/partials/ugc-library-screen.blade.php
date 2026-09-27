@@ -363,6 +363,10 @@
 .ugs-up{display:grid;gap:7px;border:1px solid var(--accent,#15a85a);border-radius:var(--r-sm,12px);
         padding:11px 12px;background:var(--accent-soft,#e7f7ee);min-width:0}
 .ugs-up.is-bad{border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
+/* A wait long enough to be worth remarking on, in colour as well as in words.
+   The class is written by the clock, which counts seconds and reads no layout. */
+.ugs-up.is-slow{border-color:#f0dcb4;background:var(--amber-soft,#fdf2e2)}
+.ugs-up.is-slow .ugs-uph span,.ugs-up.is-slow .ugs-upm{color:#8a6212}
 .ugs-uph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
          font-size:11.5px;font-weight:650;min-width:0}
 .ugs-uph span{white-space:nowrap;color:var(--accent-ink,#0b6e3a)}
@@ -373,6 +377,11 @@
 .ugs-upm > *{min-width:0;overflow-wrap:anywhere}
 .ugs-up.is-bad .ugs-uph span,.ugs-up.is-bad .ugs-upm{color:#8c2f2c}
 .ugs-prog{height:6px;border-radius:999px;background:var(--surface,#fff);overflow:hidden}
+/* The panel's one control: Cancel while the request is in flight, Try again
+   after a failure a second attempt could actually fix. A flex row rather than a
+   grid child so the button is its own width instead of a slab across the panel,
+   and it wraps on a phone. */
+.ugs-upa{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
 .ugs-progb{height:100%;width:0;background:var(--accent,#15a85a);transition:width .18s var(--ease)}
 
 /* ── the media step ────────────────────────────────────────────────────
@@ -569,6 +578,70 @@
   var upDone = null;
   var freshClip = null;
 
+  /*
+   * THE REQUEST ITSELF, AND A CLOCK.
+   *
+   * `upXhr` is kept so Cancel can abort the request the owner is looking at, and
+   * for no other reason — it is nulled on every ending.
+   *
+   * `upClock` is a one-second setInterval that does ONE thing: increment
+   * upState.secs and repaint the two text nodes. It is what makes a slow server
+   * distinguishable from a stalled one, which the panel could not do before:
+   * after xhr.upload.onload the bar sits at 100% with "the server is checking
+   * the file", and that sentence was identical at two seconds and at four
+   * minutes. It is a timer, not a measurement — rule 4 is about laying a page
+   * out in script, and nothing here reads a rect, an offset or a scroll
+   * position.
+   *
+   * STALL_AFTER is when the wording changes rather than when anything is given
+   * up on: a transcode of a big clip on a shared box legitimately takes a while,
+   * so the panel says how long it has been and leaves the decision to the owner.
+   */
+  var upXhr = null;
+  var upClock = null;
+  var STALL_AFTER = 20;
+
+  function startClock() {
+    stopClock();
+    upClock = setInterval(function () {
+      if (!upState) { stopClock(); return; }
+      upState.secs = (upState.secs || 0) + 1;
+      paintProgress();
+    }, 1000);
+  }
+
+  function stopClock() {
+    if (upClock) { clearInterval(upClock); upClock = null; }
+  }
+
+  /*
+   * EVERY WAY AN UPLOAD CAN FAIL ENDS HERE, and that is the point rather than a
+   * tidying.
+   *
+   * There are four of them — the pre-flight refusal, a non-2xx answer, a request
+   * that never reached the server, and Cancel — and each one has to do the same
+   * five things: stop the clock, drop the request, unlock the screen, leave a
+   * panel on screen naming the file, and say it. Four copies of that is three
+   * chances to forget the clock, which leaves a dead setInterval repainting a
+   * panel that is no longer there. ONE writer, the same argument
+   * UpdateRunner::recordManifest() records for update_releases.
+   *
+   * `retry` is a File and is set only where a second attempt could actually
+   * work: a dropped connection, a throttle, a server fault, a cancel. A file
+   * over this server's limit gets no Try again button, because pressing it would
+   * fail in exactly the same way and the button would be a lie.
+   */
+  function failUpload(ending) {
+    stopClock();
+    upState = null;
+    upXhr = null;
+    busy = false;
+    upDone = { ok: false, kind: ending.kind, name: ending.name, bytes: ending.bytes,
+               message: ending.message, retry: ending.retry || null };
+    say(upDone.message);
+    render();
+  }
+
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
     return m ? decodeURIComponent(m.pop()) : '';
@@ -646,6 +719,25 @@
     if (e && e.status === 429) {
       return 'Too many uploads in one minute. Wait a moment and try again — the file was fine.';
     }
+    /*
+     * 413, AND THIS IS THE ONE THE OWNER HIT. The whole request body was over
+     * PHP's post_max_size, so PHP threw every byte of it away and Laravel's
+     * global ValidatePostSize refused the request before this app's own handler
+     * ran — which is why there may be no `error` key to print here. Without this
+     * branch the panel fell through to "That file was not accepted", which blames
+     * a file that never arrived.
+     *
+     * The server's own sentence wins where there is one: the endpoint composes it
+     * with the real numbers when it gets the chance to answer at all.
+     */
+    if (e && e.status === 413) {
+      if (e.body && e.body.error) return e.body.error;
+      return 'That upload was too big for one request on this server. PHP here accepts at most '
+           + serverIni('post_max_size') + ' per request and ' + serverIni('upload_max_filesize')
+           + ' per file, and it discarded this one before the shop saw any of it — which is why '
+           + 'the bar reached 100% and it still failed. Nothing was changed and the file itself '
+           + 'is fine. Raise both on the server.';
+    }
     return (e && e.body && e.body.error) ? e.body.error : fallback;
   }
 
@@ -670,6 +762,63 @@
     if (kind === 'clip') return limits ? limits.clip_mb : 64;
     if (kind === 'teaser') return limits ? limits.teaser_mb : 8;
     return limits ? limits.poster_mb : 4;
+  }
+
+  /*
+   * ── THE CEILING THIS SERVER WILL REALLY HONOUR ──────────────────────────
+   *
+   * THE DEFECT, IN THE OWNER'S WORDS AND NUMBERS. He uploaded an 8.4 MB .mp4
+   * here. The bar reached 100% and the panel said "That file was not accepted.
+   * 8.4 MB — nothing on the clip was changed." His file was fine. That server
+   * has upload_max_filesize=2M and post_max_size=8M, so PHP discarded the whole
+   * request body on the way in, while this screen was advertising "up to 64 MB"
+   * because 64 is what UgcMedia::MAX_BYTES says.
+   *
+   * cap() above now answers the EFFECTIVE number, because the payload's
+   * clip_mb is now min(app cap, upload_max_filesize, post_max_size less the
+   * multipart overhead) — see App\Support\ServerUploadLimits. The three below
+   * are what that number cannot carry on its own:
+   *
+   *   capBytes()  the exact ceiling, for the pre-flight refusal. cap() is a
+   *               FLOORED megabyte count, so refusing against cap() * 1048576
+   *               would refuse a file the server would have taken.
+   *   capWords()  the ceiling as an operator says it, which below a megabyte has
+   *               to be "512 KB" and not "0 MB".
+   *   cappedBy()  which of the three is doing the capping, bounded to the two
+   *               ini names the server may send and '' for anything else — the
+   *               screen switches on it and prints it, so rule 5 applies.
+   */
+  function capBytes(kind) {
+    var d = limits && limits[kind];
+    if (d && typeof d.effective_bytes === 'number' && d.effective_bytes >= 0) {
+      return d.effective_bytes;
+    }
+    return cap(kind) * 1048576;
+  }
+
+  function capWords(kind) {
+    var d = limits && limits[kind];
+    return (d && typeof d.effective_label === 'string' && d.effective_label)
+      ? d.effective_label : (cap(kind) + ' MB');
+  }
+
+  function appWords(kind) {
+    var d = limits && limits[kind];
+    return (d && typeof d.app_mb === 'number') ? (d.app_mb + ' MB') : (cap(kind) + ' MB');
+  }
+
+  function cappedBy(kind) {
+    var d = limits && limits[kind];
+    var by = d && d.capped_by;
+    return (by === 'upload_max_filesize' || by === 'post_max_size') ? by : '';
+  }
+
+  /* One of the ini values, as the server spells it. Bounded to the two keys this
+     screen names, so a payload that grows a third cannot be printed by accident. */
+  function serverIni(name) {
+    var srv = limits && limits.server;
+    if (name !== 'upload_max_filesize' && name !== 'post_max_size') return '';
+    return (srv && typeof srv[name] === 'string' && srv[name] !== '') ? srv[name] : 'not readable';
   }
 
   /* ------------------------------------------------------------- the sidebar */
@@ -837,9 +986,11 @@
    * would sit on the next clip's step 2 describing a file that is not on it.
    */
   function forgetUpload() {
+    stopClock();
     upState = null;
     upDone = null;
     freshClip = null;
+    upXhr = null;
   }
 
   function blank() {
@@ -1031,6 +1182,33 @@
     if (pct) pct.textContent = upState.pct + '%';
     if (sent) sent.textContent = bytes(upState.sent) + ' of ' + bytes(upState.total) + ' sent';
     if (stage) stage.textContent = stageWords(upState.stage);
+    /* The one class the clock toggles, so a panel that has been waiting a long
+       time looks different as well as reading differently. A class write is not
+       a measurement. */
+    /* data-ugs-upbox and NOT data-ugs-up, which this screen already uses for the
+       "move this product up" button. The click listener matches on the nearest
+       ancestor carrying any of its attributes, so a panel named data-ugs-up would
+       turn every click on the upload bar into a reorder of the tagged product
+       list with an index of NaN. */
+    var box = document.querySelector('[data-ugs-upbox]');
+    if (box) box.classList.toggle('is-slow', stalledFor() >= STALL_AFTER);
+  }
+
+  /*
+   * HOW LONG THE CURRENT WAIT HAS BEEN, in seconds, and it is the wait that
+   * matters rather than the total.
+   *
+   * While bytes are moving that is the time since the last progress event, so a
+   * slow-but-healthy upload never reads as stalled. Once xhr.upload.onload has
+   * fired nothing moves again by design, so it becomes the time since the
+   * handover — which is exactly the interval the panel could not describe
+   * before: a 100% bar and "the server is checking the file" read the same at
+   * two seconds and at four minutes.
+   */
+  function stalledFor() {
+    if (!upState) return 0;
+    var since = upState.stage === 'server' ? (upState.serverAt || 0) : (upState.moved || 0);
+    return Math.max(0, (upState.secs || 0) - since);
   }
 
   /*
@@ -1044,9 +1222,42 @@
    * this same request.
    */
   function stageWords(s) {
-    return s === 'server'
-      ? 'All of it has arrived. The server is checking the file and cutting what it can.'
-      : 'Sending to the server.';
+    var waited = stalledFor();
+
+    if (s === 'server') {
+      /*
+       * SINCE THE HANDOVER, which is the only interval that means anything here:
+       * nothing moves after xhr.upload.onload by design, so "how long since the
+       * last byte left" is exactly the wait the panel could not describe before.
+       */
+      return 'All of it has arrived. The server is checking the file and cutting what it can.'
+        + (waited > 0 ? ' ' + waited + 's so far.' : '')
+        + (waited >= STALL_AFTER
+            ? ' That is longer than usual. Cutting a cover and a teaser out of a big clip can '
+              + 'take a while on a shared server, so waiting is usually right — Cancel stops it '
+              + 'and leaves the file on your computer.'
+            : '');
+    }
+
+    /*
+     * Bytes stop moving on a dropped connection without any event firing, so the
+     * panel has to say so itself: before this it sat at whatever percentage it had
+     * reached with the word "Sending", which is what a stall looks like too.
+     *
+     * TWO DIFFERENT CLOCKS, and the first draft of this used one for both — which
+     * a picture caught. While bytes are flowing, stalledFor() is 0 or 1 by
+     * definition, so a 23-second upload read "Sending to the server. 1s so far."
+     * The elapsed total is the honest number here; the stall interval is the
+     * honest number only once it IS a stall.
+     */
+    if (waited >= STALL_AFTER) {
+      return 'Sending to the server, but nothing has moved for ' + waited + 's. If it is stuck, '
+        + 'Cancel and try again — nothing has been changed.';
+    }
+
+    var secs = upState ? (upState.secs || 0) : 0;
+
+    return 'Sending to the server.' + (secs > 0 ? ' ' + secs + 's so far.' : '');
   }
 
   /**
@@ -1071,10 +1282,40 @@
       return;
     }
 
-    var mb = cap(kind);
-    if (file.size > mb * 1048576) {
-      say('That file is ' + kb(file.size) + ', and the limit here is ' + mb + ' MB. '
-        + 'It was not sent — re-encode it smaller.');
+    /*
+     * THE PRE-FLIGHT, AGAINST THE CEILING THIS SERVER WILL REALLY HONOUR.
+     *
+     * Two defects in the four lines this replaces. It refused against cap() —
+     * the app's own 64 MB — so the owner's 8.4 MB file sailed past it and was
+     * thrown away by PHP thirty seconds later. And it refused with a TOAST and
+     * nothing else, so the one refusal on this screen that costs no time at all
+     * was also the only one that left no panel behind: the same defect
+     * UgcEditorColumnsTest records for the endings, in the one place it was
+     * still open.
+     *
+     * capBytes() and not cap() * 1048576, because cap() is a floored megabyte
+     * count and refusing against the floor refuses files the server would take.
+     */
+    var ceiling = capBytes(kind);
+
+    if (file.size > ceiling) {
+      var by = cappedBy(kind);
+
+      failUpload({
+        kind: kind,
+        name: file.name,
+        bytes: file.size,
+        message: 'That file is ' + kb(file.size) + ' and the most that can be uploaded here is '
+          + capWords(kind) + '. It was not sent, so nothing on the clip was changed.'
+          + (by === ''
+              ? ' Re-encode it smaller and try again.'
+              : ' The limit is PHP on this server and not Shoppable video, which allows '
+                + appWords(kind) + ' for a ' + kind + ': ' + by + ' is ' + serverIni(by)
+                + '. Raise it on the server and this box will take the bigger file.'),
+        /* No Try again: the same file would be refused in the same way, and a
+           button whose only outcome is the message above is a lie. */
+        retry: null
+      });
       return;
     }
 
@@ -1090,15 +1331,32 @@
     data.append('kind', kind);
     data.append('file', file);
 
-    upState = { kind: kind, name: file.name, total: file.size, sent: 0, pct: 0, stage: 'send' };
+    upState = { kind: kind, name: file.name, total: file.size, sent: 0, pct: 0, stage: 'send',
+                secs: 0, moved: 0, serverAt: 0 };
     /* The last ending is cleared before this one starts, so a red panel from a
        refused attempt never sits under a fresh bar. */
     upDone = null;
     if (kind === 'clip') freshClip = null;
     busy = true; render();
+    startClock();
+
+    /*
+     * THE CLIP THIS UPLOAD BELONGS TO, READ ONCE.
+     *
+     * THE DEFECT. Every handler below used `editing.id`, and `editing` is
+     * whatever clip is open when the response lands rather than the one the file
+     * was sent to. Pressing Back mid-upload sets `editing` to null, and the
+     * success handler then ran `freshClip = editing.id` — a TypeError inside an
+     * XHR callback, which unlocks nothing and leaves the screen with busy still
+     * true. Opening a DIFFERENT clip instead was quieter and worse: the new
+     * clip's step 2 drew a green "arrived whole" panel for a file that is on
+     * another row.
+     */
+    var target = editing.id;
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', apiBase() + '/admin-api/ugc-videos/' + encodeURIComponent(editing.id) + '/media');
+    upXhr = xhr;
+    xhr.open('POST', apiBase() + '/admin-api/ugc-videos/' + encodeURIComponent(target) + '/media');
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));
 
@@ -1107,6 +1365,9 @@
       upState.sent = e.loaded;
       upState.total = e.total;
       upState.pct = Math.round((e.loaded / e.total) * 100);
+      /* When bytes last moved, so the clock can tell a slow line from a dead one
+         rather than calling both of them slow. */
+      upState.moved = upState.secs || 0;
       paintProgress();
     };
 
@@ -1119,6 +1380,7 @@
       upState.sent = upState.total;
       upState.pct = 100;
       upState.stage = 'server';
+      upState.serverAt = upState.secs || 0;
       paintProgress();
     };
 
@@ -1127,40 +1389,89 @@
       try { payload = JSON.parse(xhr.responseText); } catch (e) { payload = null; }
 
       /* Kept off upState before it is dropped, so the ending can name the file
-         that produced it. */
+         that produced it. file.size and not upState.total: e.total is the whole
+         multipart body, a few hundred bytes more than the file, and "31.0 MB
+         arrived whole" should be the size of the thing that arrived. */
       var name = upState ? upState.name : file.name;
-      var size = upState ? upState.total : file.size;
-      upState = null;
+      var size = file.size;
+
+      /*
+       * A SERVER THAT ANSWERS WITH ITS OWN LIMITS IS BELIEVED ABOUT THEM. The
+       * upload endpoint sends `limits` back with every refusal it composes, so a
+       * 413 or a size refusal updates the ceiling this screen advertises in the
+       * same round trip that proved it wrong.
+       */
+      if (payload && payload.limits) limits = payload.limits;
 
       if (xhr.status >= 200 && xhr.status < 300 && payload && payload.ok) {
-        upDone = { ok: true, kind: kind, name: name, bytes: size, message: '' };
-        /* WHICH CLIP JUST TOOK A VIDEO, so cutHTML() can offer the cut as the
-           next thing rather than leaving it to be found. */
-        if (kind === 'clip') freshClip = editing.id;
+        stopClock();
+        upState = null;
+        upXhr = null;
+
+        /* Still on the clip this file was sent to? If the owner pressed Back or
+           opened another tile while it was in flight, the file is still correctly
+           on `target` — but this screen must not draw a panel about it on
+           somebody else's row. */
+        var here = editing && editing.id === target;
+
+        if (here) {
+          upDone = { ok: true, kind: kind, name: name, bytes: size, message: '' };
+          /* WHICH CLIP JUST TOOK A VIDEO, so cutHTML() can offer the cut as the
+             next thing rather than leaving it to be found. */
+          if (kind === 'clip') freshClip = target;
+        }
+
         (payload.notes || []).forEach(say);
         say(kind === 'clip' ? 'Video added.' : 'Teaser added.');
-        var id = editing.id;
-        load().then(function () { return open(id); });
+        load().then(function () { return here ? open(target) : undefined; });
         return;
       }
 
       var err = new Error('upload ' + xhr.status);
       err.status = xhr.status;
       err.body = payload;
-      upDone = { ok: false, kind: kind, name: name, bytes: size,
-                 message: explain(err, 'That file was not accepted.') };
-      busy = false;
-      say(upDone.message);
-      render();
+
+      failUpload({
+        kind: kind,
+        name: name,
+        bytes: size,
+        message: explain(err, 'That file was not accepted.'),
+        /*
+         * WHERE A SECOND PRESS COULD ACTUALLY WORK, and nowhere else. 429 is the
+         * upload's own twelve-a-minute throttle and 5xx is a server that fell
+         * over; both are worth one more try. 413 and 422 are not: the request was
+         * too big for this server, or the bytes were refused on their merits, and
+         * both would fail identically.
+         */
+        retry: (xhr.status === 429 || xhr.status >= 500) ? file : null
+      });
     };
 
     xhr.onerror = function () {
-      var name = upState ? upState.name : file.name;
-      upState = null; busy = false;
-      upDone = { ok: false, kind: kind, name: name, bytes: file.size,
-                 message: 'The upload did not reach the server. Check the connection and try again.' };
-      say(upDone.message);
-      render();
+      failUpload({
+        kind: kind,
+        name: upState ? upState.name : file.name,
+        bytes: file.size,
+        message: 'The upload did not reach the server. Check the connection and try again.',
+        retry: file
+      });
+    };
+
+    /*
+     * CANCEL, AND THE RETRY IT MAKES POSSIBLE.
+     *
+     * Without this handler an aborted request left upState non-null and busy
+     * true, which is a bar frozen at its last percentage and a locked screen with
+     * nothing coming — the exact shape the panel was rebuilt to stop.
+     */
+    xhr.onabort = function () {
+      failUpload({
+        kind: kind,
+        name: upState ? upState.name : file.name,
+        bytes: file.size,
+        message: 'You stopped that upload, so nothing was sent and nothing on the clip was changed.',
+        retry: file
+      });
     };
 
     xhr.send(data);
@@ -1207,9 +1518,24 @@
   function dropPoster(file) {
     if (!editing || !editing.id) { say('Save step 1 first — the file needs a clip to belong to.'); return; }
 
-    var mb = cap('poster');
-    if (file.size > mb * 1048576) {
-      say('That picture is ' + kb(file.size) + ', and the limit here is ' + mb + ' MB.');
+    /* The same ceiling and the same ending as the video zone — see sendFile(). A
+       cover refused for its size used to leave a toast and nothing else, which is
+       the one refusal on this screen with no panel behind it. */
+    if (file.size > capBytes('poster')) {
+      var pby = cappedBy('poster');
+
+      failUpload({
+        kind: 'poster',
+        name: file.name,
+        bytes: file.size,
+        message: 'That picture is ' + kb(file.size) + ' and the most that can be uploaded here is '
+          + capWords('poster') + '. It was not sent, so nothing on the clip was changed.'
+          + (pby === ''
+              ? ' Save it smaller and try again.'
+              : ' The limit is PHP on this server and not Shoppable video, which allows '
+                + appWords('poster') + ' for a cover: ' + pby + ' is ' + serverIni(pby) + '.'),
+        retry: null
+      });
       return;
     }
 
@@ -1551,7 +1877,7 @@
    */
   function progressHTML() {
     if (upState) {
-      return '<div class="ugs-up">'
+      return '<div class="ugs-up" data-ugs-upbox>'
         + '<div class="ugs-uph"><span class="ugs-upn">' + esc(upState.name) + '</span>'
         +   '<span data-ugs-pct>' + esc(upState.pct) + '%</span></div>'
         + '<div class="ugs-prog"><div class="ugs-progb" data-ugs-bar '
@@ -1561,6 +1887,12 @@
         +     esc(bytes(upState.total)) + ' sent</span>'
         +   '<span data-ugs-stage>' + esc(stageWords(upState.stage)) + '</span>'
         + '</div>'
+        /* Drawn from the first byte rather than appearing at some threshold: a
+           control that materialises once a screen has decided things are going
+           badly is a control nobody finds. It is also what makes Try again
+           reachable, since the File cannot be recovered after the request ends. */
+        + '<div class="ugs-upa"><button type="button" class="ugs-btn ugs-mini" '
+        +   'data-ugs-upcancel="1">Cancel this upload</button></div>'
         + '</div>';
     }
 
@@ -1587,6 +1919,57 @@
       +   '<span>' + esc(upDone.message) + '</span>'
       +   '<span>' + esc(bytes(upDone.bytes)) + ' &mdash; nothing on the clip was changed.</span>'
       + '</div>'
+      /* Offered only where failUpload() kept the File, which is only where a
+         second press could really work. A Try again beside "this server accepts
+         at most 2 MB" would be a button that cannot succeed. */
+      + (upDone.retry
+          ? '<div class="ugs-upa"><button type="button" class="ugs-btn ugs-mini" '
+            + 'data-ugs-upretry="1">Try again</button>'
+            + '<span>The file is still on your computer &mdash; nothing needs choosing again.</span>'
+            + '</div>'
+          : '')
+      + '</div>';
+  }
+
+  /*
+   * ── WHEN THE SERVER IS THE CEILING, SAY SO WHERE THE FILE IS CHOSEN ──────
+   *
+   * THE DEFECT THIS EXISTS FOR, and it is the second half of the 8.4 MB one.
+   * Making cap() honest on its own turns "up to 64 MB" into "up to 2 MB", which
+   * is a smaller number with no explanation attached — the owner would read it
+   * as the shop having got worse, and nothing on the screen would tell him the
+   * number is PHP's and that he can change it.
+   *
+   * Drawn only when the server really is the binding limit, so a properly
+   * configured host sees nothing at all and nobody is warned about a problem
+   * they do not have. Every value in it is escaped; the two ini NAMES are
+   * constants in this file and the values come through serverIni(), which is
+   * bounded to those two keys.
+   */
+  function serverCapHTML() {
+    if (cappedBy('clip') === '') return '';
+
+    var nothing = capBytes('clip') < 1048576;
+
+    return '<div class="ugs-note is-warm">'
+      + '<b>' + (nothing
+            ? 'This server will not accept a video of any useful size yet.'
+            : 'The size limit on this step is this server, not the shop.') + '</b> '
+      + 'Shoppable video allows a video of ' + esc(appWords('clip')) + ', but PHP on this server '
+      + 'accepts at most <b>' + esc(serverIni('upload_max_filesize')) + '</b> per file '
+      + '(upload_max_filesize) and <b>' + esc(serverIni('post_max_size')) + '</b> per whole '
+      + 'request (post_max_size), so <b>' + esc(capWords('clip')) + '</b> is the real ceiling '
+      + 'today. The cover and the teaser are held to the same two numbers.'
+      + '<ul>'
+      +   '<li>A bigger file is thrown away by PHP <b>before this shop sees any of it</b>. That '
+      +     'is why an upload can reach 100% and still fail: the bytes leave your browser and '
+      +     'never arrive.</li>'
+      +   '<li>Raise it on the server, not here. On Cloudways: <b>Servers &rarr; Settings &amp; '
+      +     'Packages &rarr; Basic &rarr; Upload Size</b>, or put upload_max_filesize and '
+      +     'post_max_size in a user ini file in the web root over SSH.</li>'
+      +   '<li>Then reload this screen. This note disappears and the box goes back to saying '
+      +     esc(appWords('clip')) + '.</li>'
+      + '</ul>'
       + '</div>';
   }
 
@@ -1738,6 +2121,11 @@
       html += '<div class="ugs-note is-warm"><b>Nothing can be uploaded yet.</b> '
         + 'Give the clip a title on step 1 and save — a file needs a clip to belong to.</div>';
     }
+
+    /* Before the drop zones rather than after them: the number in the zone's own
+       sub-line is now the server's, and an unexplained small number is the thing
+       this note exists to stop the owner reading. */
+    html += serverCapHTML();
 
     html += progressHTML();
 
@@ -2263,7 +2651,8 @@
   document.addEventListener('click', function (e) {
     var t = e.target.closest ? e.target.closest('[data-ugs-open],[data-ugs-del],[data-ugs-new],'
       + '[data-ugs-save],[data-ugs-back],[data-ugs-derive],[data-ugs-untag],[data-ugs-up],'
-      + '[data-ugs-down],[data-ugs-add],[data-ugs-poster],[data-ugs-step],[data-ugs-next]') : null;
+      + '[data-ugs-down],[data-ugs-add],[data-ugs-poster],[data-ugs-step],[data-ugs-next],'
+      + '[data-ugs-upcancel],[data-ugs-upretry]') : null;
     if (!t) return;
 
     if (t.hasAttribute('data-ugs-new')) { e.preventDefault(); blank(); return; }
@@ -2284,6 +2673,18 @@
       editing = null;
       step = 1;
       render();
+      return;
+    }
+    if (t.hasAttribute('data-ugs-upcancel')) {
+      e.preventDefault();
+      /* abort() fires xhr.onabort, which is where the ending is written — one
+         writer, so a cancel cannot forget the clock the way a second copy would. */
+      if (upXhr) { try { upXhr.abort(); } catch (err) {} }
+      return;
+    }
+    if (t.hasAttribute('data-ugs-upretry')) {
+      e.preventDefault();
+      if (upDone && upDone.retry) sendFile(upDone.kind, upDone.retry);
       return;
     }
     if (t.hasAttribute('data-ugs-derive')) { e.preventDefault(); derive(); return; }

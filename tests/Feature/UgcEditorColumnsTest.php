@@ -348,12 +348,49 @@ it('leaves a finished upload on screen, whether it worked or not', function () {
     expect(str_contains($code, 'if (!upDone) return \'\';'))
         ->toBeTrue('progressHTML() draws no ending at all');
 
-    // One success path, and BOTH failure paths: the non-2xx answer and onerror.
+    // One success path, written in one place.
     expect(substr_count($code, 'upDone = { ok: true'))
         ->toBe(1, 'a successful upload leaves nothing on screen');
 
+    /*
+     * ── THIS PIN WAS ADVANCED ON PURPOSE, 27 September 2026 ─────────────────
+     *
+     * It counted `upDone = { ok: false` and required exactly 2, which were the
+     * two failure paths that existed: the non-2xx answer and onerror. There are
+     * now FIVE — a pre-flight refusal against this server's real ceiling, the
+     * non-2xx answer, onerror, a cancel, and a cover refused for its size — and
+     * the assertion went red for the best possible reason: the screen grew ways
+     * of failing, which is exactly what this case exists to keep on screen.
+     *
+     * Counting the literal was the brittle half. Every one of the five now goes
+     * through ONE writer, failUpload(), which is the only place `upDone = { ok:
+     * false` appears — so the count below is 1 by construction, and what is
+     * actually pinned is that no path writes an ending by hand and forgets the
+     * clock the way a sixth copy would. The same argument
+     * UpdateRunner::recordManifest() makes for update_releases.
+     *
+     * MUTATION NOTE. Write `upDone = { ok: false, ... }` inline in xhr.onerror
+     * instead of calling failUpload() and this is red on the first assertion: 2
+     * instead of 1. RUN: red.
+     */
     expect(substr_count($code, 'upDone = { ok: false'))
-        ->toBe(2, 'one of the two ways an upload can fail leaves nothing on screen');
+        ->toBe(1, 'a failure ending is written somewhere other than the one writer');
+
+    expect(str_contains($code, 'function failUpload(ending) {'))
+        ->toBeTrue('there is no single writer for a failed upload');
+
+    // Every way an upload can end badly, and each one of them leaves a panel.
+    expect(substr_count($code, 'failUpload({'))
+        ->toBe(5, 'one of the five ways an upload can fail leaves nothing on screen');
+
+    // And the one writer really does all five things, the clock included: a dead
+    // setInterval repainting a panel that is gone is the leak this shuts.
+    $from = (int) strpos($code, 'function failUpload(ending) {');
+    $writer = substr($code, $from, 420);
+
+    foreach (['stopClock();', 'upState = null;', 'upXhr = null;', 'busy = false;', 'render();'] as $line) {
+        expect(str_contains($writer, $line))->toBeTrue("failUpload() leaves {$line} undone");
+    }
 
     // The refusal shows the SERVER's reason, through the same explainer the
     // toast uses, rather than one sentence for every status.
