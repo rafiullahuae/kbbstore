@@ -69,6 +69,7 @@ use Illuminate\Support\Str;
 final class UgcClipIntake
 {
     public function __construct(
+        private UgcDerivedFiles $derivedFiles,
         private UgcMedia $media,
         private UgcTranscoder $transcoder,
     ) {}
@@ -129,21 +130,14 @@ final class UgcClipIntake
         try {
             $derived = $this->transcoder->derive($video);
 
-            if ($derived['poster'] !== null) {
-                $video->poster_path = $derived['poster'];
-                $video->poster_bytes = (int) @filesize(public_path(ltrim($derived['poster'], '/'))) ?: null;
-                $video->width = $derived['width'] ?? $video->width;
-                $video->height = $derived['height'] ?? $video->height;
-            }
-
-            if ($derived['teaser'] !== null) {
-                $video->teaser_path = $derived['teaser'];
-                $video->teaser_bytes = (int) @filesize(public_path(ltrim($derived['teaser'], '/'))) ?: null;
-            }
-
-            if ($derived['duration_ms'] !== null) {
-                $video->duration_ms = $derived['duration_ms'];
-            }
+            /*
+             * One writer for the six columns — App\Services\UgcDerivedFiles.
+             * This copy was the one that had already drifted: it did not forget
+             * the path it replaced, so a re-cut through here left the previous
+             * poster on disk with no column naming it. Going through the shared
+             * writer fixes that as a side effect of not having a fourth copy.
+             */
+            $this->derivedFiles->apply($video, $derived);
 
             $notes = $derived['notes'];
 

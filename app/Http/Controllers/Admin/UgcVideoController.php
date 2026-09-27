@@ -77,6 +77,7 @@ class UgcVideoController extends Controller
     public function __construct(
         private UgcMedia $media,
         private UgcTranscoder $transcoder,
+        private \App\Services\UgcDerivedFiles $derivedFiles,
         private ServerUploadLimits $serverLimits,
         private UploadArrival $arrival,
     ) {}
@@ -533,25 +534,17 @@ class UgcVideoController extends Controller
             }
 
             if ($derived !== null) {
-                if ($derived['poster'] !== null) {
-                    $uncommitted[] = $derived['poster'];
-                    $this->media->forget($video->poster_path);
-                    $video->poster_path = $derived['poster'];
-                    $video->poster_bytes = (int) @filesize(public_path(ltrim($derived['poster'], '/'))) ?: null;
-                    $video->width = $derived['width'] ?? $video->width;
-                    $video->height = $derived['height'] ?? $video->height;
-                }
-
-                if ($derived['teaser'] !== null) {
-                    $uncommitted[] = $derived['teaser'];
-                    $this->media->forget($video->teaser_path);
-                    $video->teaser_path = $derived['teaser'];
-                    $video->teaser_bytes = (int) @filesize(public_path(ltrim($derived['teaser'], '/'))) ?: null;
-                }
-
-                if ($derived['duration_ms'] !== null) {
-                    $video->duration_ms = $derived['duration_ms'];
-                }
+                /*
+                 * The six columns go through App\Services\UgcDerivedFiles,
+                 * which is the only writer of them — see its header for what a
+                 * second copy already cost here. The callback is how this path
+                 * keeps its orphan tracking: it has to learn about each file AS
+                 * it lands, because the throw it is guarding against can happen
+                 * between the write and the save.
+                 */
+                $this->derivedFiles->apply($video, $derived, function (string $path) use (&$uncommitted): void {
+                    $uncommitted[] = $path;
+                });
 
                 $notes = array_merge($notes, $derived['notes']);
             }
@@ -843,23 +836,10 @@ class UgcVideoController extends Controller
                 'duration_ms' => null, 'notes' => [self::NOTE_CUT_FAILED]];
         }
 
-        if ($derived['poster'] !== null) {
-            $this->media->forget($video->poster_path);
-            $video->poster_path = $derived['poster'];
-            $video->poster_bytes = (int) @filesize(public_path(ltrim($derived['poster'], '/'))) ?: null;
-            $video->width = $derived['width'] ?? $video->width;
-            $video->height = $derived['height'] ?? $video->height;
-        }
-
-        if ($derived['teaser'] !== null) {
-            $this->media->forget($video->teaser_path);
-            $video->teaser_path = $derived['teaser'];
-            $video->teaser_bytes = (int) @filesize(public_path(ltrim($derived['teaser'], '/'))) ?: null;
-        }
-
-        if ($derived['duration_ms'] !== null) {
-            $video->duration_ms = $derived['duration_ms'];
-        }
+        // One writer for the six columns — App\Services\UgcDerivedFiles. No
+        // orphan callback here: this endpoint writes nothing before the save
+        // that a throw could strand.
+        $this->derivedFiles->apply($video, $derived);
 
         $video->save();
 
