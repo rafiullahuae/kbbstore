@@ -350,7 +350,30 @@
       + (open === 'home' ? '<div class="ugy-note"><b>Where this shows up.</b> The homepage draws the '
           + 'section you pick here in its own <b>Video rail</b> row — switch that row on, off or move it '
           + 'up and down in <b>Appearance → Homepage</b>. Leave the dropdown on “Nothing yet” and the '
-          + 'homepage shows no rail at all, which is how this ships.</div>' : '')
+          + 'homepage shows no rail at all, which is how this ships.</div>'
+        /*
+         * ── THE ONE THING THE OWNER HAS TO DECIDE, SAID RATHER THAN DECIDED ──
+         *
+         * docs/UGC-RAIL-R3.md §9 observed that the homepage already has a
+         * `#KBeautyBliss spotted` band promising shoppable creator content and
+         * delivering four still photographs, and proposed that the rail become
+         * that section's content instead of sitting near it. That objection is
+         * real: with both rows on, the homepage makes the same promise twice,
+         * twenty lines apart.
+         *
+         * This lane did not take the swap — docs/IG-PROFILE.md §11 has the four
+         * reasons, the first being that a row labelled "#KBeautyBliss spotted ·
+         * Shoppable community photos" drawing a video rail is a row that lies
+         * about what it draws, which is the same class of fault as a switch that
+         * moves nothing. But a lane that declines a good suggestion owes the
+         * owner the choice, not silence: this is the sentence that hands it to
+         * him, on the screen where he picks the section, where it is actionable.
+         */
+        + '<div class="ugy-note"><b>You now have two bands making a similar promise.</b> '
+          + '<b>#KBeautyBliss spotted</b> on the homepage says “shoppable” and shows four still '
+          + 'photographs; this rail shows the real clips. They are separate rows, so you can keep both, '
+          + 'or switch <b>#KBeautyBliss spotted</b> off in <b>Appearance → Homepage</b> and let the '
+          + 'video rail be the one that makes it. Nothing here changes that for you.</div>' : '')
       + '<div class="ugy-note">Every setting here ships at the value the <b>R3</b> design you approved '
       + 'already draws: 158px tiles on a phone, 206px from 900px, a 12px gap, the 16px radius, no count '
       + 'badge and no like button. Moving one is a deliberate change to that design.</div>'

@@ -345,3 +345,141 @@ class's own index, exactly as `UgcRail` does. Measured as a slope at 1, 2, 5, 10
 **With the module off the storefront does nothing at all**: `enabled()` reads the
 `module_toggles` snapshot the homepage has already warmed, returns false, and the
 section renders no bytes — no query, no cache read, no outbound request.
+
+---
+
+## 11. The video rail as a homepage section, and the `#KBeautyBliss spotted` question
+
+The other half of this lane. `App\Services\UgcRail` and the
+`[kbb_videos section="..."]` shortcode already existed; what did not was a way to
+put a rail on the homepage **from the homepage's own list**, choosing which video
+section it draws.
+
+**What shipped:** a `videos` row in `HomepageSections::REGISTRY`, ordered and
+switched like the sixteen beside it, drawing the section chosen from a real
+dropdown at **Content → Shoppable video → Appearance → Homepage**. The handle is a
+`text` field on the schema rather than a `select` — a `select` would make
+`UgcSettings::all()` run a query on the storefront's hot path to cast a value only
+the homepage reads — so membership is enforced at the endpoint, which already has
+the list, and the regex is re-checked at the reader before the handle can reach
+SQL or a shortcode's syntax.
+
+### The recommendation from §9 of `docs/UGC-RAIL-R3.md`, and why it was not taken
+
+That lane proposed the rail become the **content of the existing
+`#KBeautyBliss spotted` section** rather than a section of its own, with a
+five-line `@if/@else` whose `@else` keeps today's grid byte-identical. Its
+observation is correct and worth restating: that band's heading, badge and
+subtitle all promise shoppable creator content, and what it draws is four
+photographs — so with both rows on, the most-read page on the shop makes the same
+promise twice, twenty lines apart.
+
+It was still declined, for four reasons in order of weight:
+
+1. **It answers a different question.** The owner asked to "choose the section to
+   show from the list". §9's snippet hard-codes `section="spotted"`; there is no
+   list and nothing to choose. Delivering it would have left the actual request
+   undone.
+2. **It makes a row lie about what it draws.** `Appearance → Homepage` would show
+   **#KBeautyBliss spotted · Shoppable community photos** while the shop rendered
+   a video rail, and that row's Desktop/Mobile switches and divider would govern
+   the rail. That is the same class of defect as the `instagram` row this lane
+   found registered and never drawn, and as the ↑ arrows
+   `HomepageSections::NESTED` exists to prevent.
+3. **It cannot be turned off independently.** An owner who wants the rail *and*
+   his four photographs has no way to have both, and one who wants the
+   photographs back has to empty the rail to get them.
+4. **Blast radius.** Splicing a conditional into a live section of
+   `store/home.blade.php` is a larger change to a shared file than appending a new
+   block that renders nothing until configured.
+
+**But the objection is real and is not being ignored.** It is a judgement about
+what the owner's homepage should say, which is his to make and not a lane's — so
+the screen where he picks the section now says it in as many words: he has two
+bands making a similar promise, they are separate rows, and he can keep both or
+switch `#KBeautyBliss spotted` off in `Appearance → Homepage`. Said where it is
+actionable, and nothing is decided for him.
+
+**If he wants §9's answer instead**, it is still available and still cheap — the
+`@else` is what makes it safe — but it belongs to the round that owns
+`store/home.blade.php` and it should replace this row rather than sit beside it.
+
+---
+
+## 12. What the resuming run corrected in this document
+
+This file was written by the run that was killed mid-flight. Re-reading it against
+the code found four things it claims that were not true of the tree it described,
+and they are corrected here rather than quietly in the code:
+
+* **§8 said "Configure now … lands the owner back on the screen with his own
+  profile picture, follower count and grid showing".** There was no screen, no
+  controller and no route file — only the capability map entries for endpoints
+  nothing implemented. All three exist now.
+* **§10's "with the module off the storefront does nothing at all" was true and
+  unreachable**, because `instagram_profile` had no row in `ModuleRegistry` at
+  all: no switch was drawn anywhere, `moduleEnabled()` returned its default
+  forever, and the feature could not be turned on by any means. The row ships OFF.
+* **§9's five layouts were real; the tests named in §10 and §3 were not.**
+  `InstagramSlopeTest`, `InstagramSecurityTest` and `InstagramNoMeasureTest` did
+  not exist. The assertions they described now live in
+  `tests/Feature/InstagramProfileTest.php` (38 cases) and
+  `tests/Feature/InstagramSectionShapeTest.php` (11).
+* **§6's "neither key is on `SettingController::PUBLIC_KEYS`" is right, and its
+  reasoning about `autoload` was half right.** `autoload => false` keeps a row out
+  of the snapshot `SettingsService::all()` builds — which is the one that matters,
+  and the one that is handed around. It does **not** keep it out of
+  `Setting::map()`, which reads every row with no filter. The ciphertext is in
+  that snapshot, which is exactly why the encryption is the protection rather than
+  a second belt over the flag.
+
+### And the measured claim §10 makes is now measured
+
+"Two queries, flat" was an estimate. Measured at 1, 2, 5, 10 and 20 posts it is
+**one query, flat** — the profile box rides the `module_settings` snapshot and
+costs nothing, and the posts are a single `SELECT … LIMIT n`, cached for ten
+minutes afterwards so the second render of a page costs zero. With the module off
+the section costs **zero queries and zero outbound requests**.
+
+The first harness for that measurement reported a rising slope and was wrong: it
+registered a `DB::listen()` closure per pass over one by-reference counter, so the
+fifth pass counted five times. The paragraph explaining it is kept in the test,
+because a false N+1 is more expensive than no measurement at all.
+
+---
+
+## 13. The pictures
+
+`docs/ig-profile-shots/`, Chromium at deviceScaleFactor 2, 390px and 1280px,
+taken against a real preview of this branch. `tools/ig-shots.sh` rebuilds them and
+its header carries the whole recipe.
+
+| File | What |
+|---|---|
+| `layout-{grid,rail,mosaic,masonry,strip}-390/1280.png` | **every layout, both widths** |
+| `profile-{card,bar,inline,off}-390/1280.png` | every profile style |
+| `caption-on-390/1280.png` | the caption overlay switched on |
+| `homepage-in-place-390/1280.png` | the section where a shopper meets it |
+| `lightbox-390.png` | the in-page player, the one place an iframe is ever made |
+| `admin-connection-390/1280.png` | **Content → Instagram, never connected** |
+| `admin-connection-connected-390/1280.png` | the same screen once a token is held |
+| `admin-tile-*` | the *What a tile shows* tab |
+| `ig-measurements.json` | 27 measurement sets — tile geometry, overflow, third-party request counts, iframe counts, the admin field census |
+
+Numbers worth reading out of that JSON:
+
+| | 390px | 1280px |
+|---|---|---|
+| `scrollWidth − clientWidth`, every layout | **0** | **0** |
+| grid tile | 179 × 179, 2 across | 396 × 396, 3 across |
+| masonry tile | 179 × 224 (4:5) | 3 across, 4 from 900px |
+| rail tile | 155px on a scrolling track | 5.3 tiles visible |
+| strip tile | — | 134px, 8.5 visible |
+| mosaic first cell | double | 799 × 799 |
+| third-party requests from this section | **0** | **0** |
+| iframes at page load / after one tap | **0 / 1** | — |
+| tiles drawn / metrics elements drawn | **9 / 8** | — |
+| admin horizontal overflow | **0** | **0** |
+
+The 9-against-8 is the count rule photographed: the post with a genuine zero reads
+`0`, and the post Instagram gave no number for draws no element at all.
