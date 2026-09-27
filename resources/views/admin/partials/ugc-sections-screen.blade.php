@@ -283,6 +283,73 @@
 .ugx-previewmeta{display:block;font-size:11.5px;color:var(--ink-soft,#626c80);margin-top:3px;
                  line-height:1.45;overflow-wrap:anywhere}
 
+/* ── numbered steps ──────────────────────────────────────────────────────
+   "every step etc must be prominent, so user can understand better" — so a
+   step is a numbered badge, a title and one line of why, not a small-caps
+   label lost above a field. */
+.ugx-step{display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:start;margin-bottom:14px;
+          min-width:0}
+.ugx-step > *{min-width:0}
+.ugx-stepno{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+            font-size:12px;font-weight:720;background:var(--accent-soft,#e7f7ee);
+            color:var(--accent-ink,#0b6e3a);border:1px solid #bfe7cf}
+.ugx-steptitle{display:block;font-size:14px;font-weight:670;color:var(--ink,#101729);
+               line-height:1.3;letter-spacing:-.005em}
+.ugx-stephint{display:block;font-size:12px;color:var(--ink-soft,#626c80);line-height:1.5;
+              margin-top:3px;max-width:70ch}
+/* A step that FOLLOWS a block of fields needs air, or its number collides with
+   the help line of the field above it -- which is what the first render did. */
+.ugx-fields + .ugx-step{margin-top:26px;padding-top:20px;
+                        border-top:1px solid var(--border-2,#eef0f6)}
+
+.ugx-listhead{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;
+              margin-bottom:14px;min-width:0}
+.ugx-listhead > *{min-width:0}
+
+.ugx-hero{text-align:start}
+.ugx-steps-mini{margin:14px 0 0;padding:0 0 0 20px;display:grid;gap:7px;
+                font-size:12.5px;color:var(--ink-soft,#626c80);line-height:1.55;max-width:66ch}
+.ugx-steps-mini b{color:var(--ink,#101729);font-weight:650}
+
+/* The shortcode, at a size somebody can read and copy. */
+.ugx-shortcode{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;min-width:0;
+               border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+               background:var(--surface-2,#f2f4fb);padding:11px 12px}
+.ugx-shortcode code{font-family:var(--mono,ui-monospace,monospace);font-size:13px;
+                    color:var(--ink,#101729);overflow-wrap:anywhere;min-width:0}
+
+/* ── the library picker: a search, and rows a third of the old height ─────
+   The old list drew each clip as a full .ugx-vid card with a 56px poster and
+   14px of padding, so six clips filled a screen and sixty would have been
+   unusable. These rows are 44px tall, so roughly three fit where one did, and
+   the list is capped and scrolls rather than pushing the page down. */
+.ugx-search{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;
+            border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+            padding:8px 11px;background:var(--surface,#fff);min-width:0;
+            transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+.ugx-search:focus-within{border-color:var(--accent,#15a85a);
+                         box-shadow:0 0 0 3px var(--accent-soft,#e7f7ee)}
+.ugx-search svg{width:16px;height:16px;display:block;color:var(--ink-faint,#97a0b2);flex:0 0 auto}
+.ugx-search input{border:0;background:transparent;font:inherit;font-size:13px;width:100%;min-width:0;
+                  color:var(--ink,#101729);padding:0}
+.ugx-search input:focus{outline:none}
+.ugx-search input::placeholder{color:var(--ink-faint,#97a0b2)}
+
+.ugx-picks{display:grid;gap:4px;margin-top:10px;min-width:0;
+           max-height:min(52vh, 420px);overflow:auto;padding-inline-end:3px}
+.ugx-pick{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+          padding:5px 8px;border-radius:var(--r-xs,9px);min-width:0;border:1px solid transparent;
+          transition:background .14s var(--ease),border-color .14s var(--ease)}
+.ugx-pick:hover{background:var(--surface-2,#f2f4fb);border-color:var(--border,#e6e9f2)}
+.ugx-pick > *{min-width:0}
+.ugx-pick .ugx-thumb{width:24px;border-radius:5px;aspect-ratio:9/16;border:0}
+.ugx-pickbody{display:grid;min-width:0}
+.ugx-pickname{display:block;font-size:12.5px;font-weight:620;color:var(--ink,#101729);
+              line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ugx-pickmeta{display:block;font-size:11px;color:var(--ink-soft,#626c80);line-height:1.35;
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ugx-pick.is-in{opacity:.62}
+
 /* ── tagged products ────────────────────────────────────────────────────── */
 .ugx-tagged{display:grid;gap:7px;min-width:0}
 .ugx-tag{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
@@ -311,6 +378,10 @@
   var SCREEN = 'ugcsections';
 
   var sections = [], library = [], vocab = null, maxTiles = 48, moduleOn = false;
+
+  /* What is typed into the "Add from the library" search. Its own variable and
+     not `term`, which belongs to the product search inside the clip dialog. */
+  var libTerm = '';
   var editing = null;      /* the section open in the editor */
   var editingVideo = null; /* the clip open in the POPUP */
   var tagged = [], results = [], term = '';
@@ -505,9 +576,15 @@
     busy = true; render();
     try {
       var body = await api('/ugc-videos/' + encodeURIComponent(id));
+      /*
+       * RESET THE TAB ONLY FOR A DIFFERENT CLIP. openVideo() is called again
+       * right after a save, to pick up what the server made of the row — and
+       * resetting here unconditionally threw the owner back to Details every
+       * time he pressed Save from the Products tab.
+       */
+      if (openModalId !== body.video.id) { modalTab = 'details'; }
+
       editingVideo = body.video;
-      // Always open on Details rather than wherever the last clip was left.
-      modalTab = 'details';
       tagged = (body.video.products || []).map(function (p) {
         return { id: p.id, name: p.name, brand: p.brand };
       });
@@ -708,7 +785,11 @@
     if (v.rights_status !== 'granted') {
       out += '<span class="ugx-pill is-hold">Permission ' + esc(v.rights_status) + '</span>';
     }
-    if (v.media_state === 'poster_only') out += '<span class="ugx-pill is-soft">Poster only</span>';
+    /* NOT "Poster only", which read as a fault and is not one: a clip with no
+       cut-down loop file still loops, from the full video. Measured. The pill
+       is neutral and says what it is — an optimisation that has not been
+       applied — rather than amber, which meant "something is wrong here". */
+    if (v.media_state === 'poster_only') out += '<span class="ugx-pill">Loops from full video</span>';
     if (v.media_state === 'none') out += '<span class="ugx-pill is-hold">No files</span>';
     out += '<span class="ugx-pill">' + esc(String(v.products_count || 0)) + ' products</span>';
     return out;
@@ -716,15 +797,24 @@
 
   function listHTML() {
     if (!sections.length) {
-      return '<div class="ugx-card"><div class="ugx-title">No sections yet</div>'
-        + '<p class="ugx-sub">A section is a named, ordered set of clips that you place on the shop with a '
-        + 'shortcode. Make one, put some videos in it, then paste its shortcode into a page, a post or an '
-        + 'HTML block — as many times and in as many places as you like.</p>'
-        + '<div class="ugx-actions"><button class="ugx-btn is-primary" data-ugx-new>New section</button></div></div>';
+      /* THE EMPTY STATE IS THE INSTRUCTIONS. The owner asked for "every step
+         prominent" — so the three things a section needs are the three things
+         he reads here, numbered, rather than one paragraph he has to parse. */
+      return '<div class="ugx-card ugx-hero">'
+        + '<div class="ugx-title" style="font-size:17px">Put a rail of shoppable videos anywhere</div>'
+        + '<p class="ugx-sub">A section is a named, ordered set of clips. You make one, fill it, and paste '
+        + 'its shortcode wherever you want the rail — as many places as you like.</p>'
+        + '<ol class="ugx-steps-mini">'
+        + '<li><b>Name it.</b> Only you ever see the name.</li>'
+        + '<li><b>Add clips</b> from your library, in the order they should appear.</li>'
+        + '<li><b>Paste its shortcode</b> into a page, a post or an HTML block.</li>'
+        + '</ol>'
+        + '<div class="ugx-actions"><button class="ugx-btn is-primary" data-ugx-new>'
+        + 'Make the first section</button></div></div>';
     }
 
-    return '<div class="ugx-card"><div class="ugx-mh"><div>'
-      + '<div class="ugx-title">Video sections</div>'
+    return '<div class="ugx-card"><div class="ugx-listhead">'
+      + '<div><div class="ugx-title">Video sections</div>'
       + '<p class="ugx-sub">Each one is a rail you can place anywhere with its shortcode.</p></div>'
       + '<button class="ugx-btn is-primary" data-ugx-new>New section</button></div>'
       + '<div class="ugx-rows" style="margin-top:14px">'
@@ -757,6 +847,14 @@
     var inSection = {};
     videos.forEach(function (v) { inSection[v.id] = true; });
 
+    /* Title OR creator handle, case-folded, substring. Deliberately not fuzzy:
+       an owner searching "noor" wants the clips by @noor.routine, and a fuzzy
+       match that also returned "no drama" would be worse than no search. */
+    var needle = libTerm.trim().toLowerCase();
+    var matches = needle === '' ? library : library.filter(function (v) {
+      return (String(v.title || '') + ' ' + String(v.handle || '')).toLowerCase().indexOf(needle) !== -1;
+    });
+
     /* Its OWN header, not the dialog's .ugx-mh -- that one is a three-column
        grid built for the popup, and the back button landed in its 1fr cell and
        stretched across half the card. */
@@ -766,19 +864,39 @@
       + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
       + '<path d="M12 4.5 6.5 10l5.5 5.5"/></svg>All sections</button>'
       + '<div class="ugx-title">' + esc(s.title || 'New section') + '</div>'
-      + (s.handle ? '<code class="ugx-code">' + esc(s.shortcode) + '</code>' : '')
       + '</div>'
 
+      /*
+       * ── THREE NUMBERED STEPS, NOT ONE FORM ────────────────────────────────
+       *
+       * The owner: "i don't like the default add section page, i want something
+       * focused and user friendly and without classic look, with more prominent
+       * every step etc." What was here threw name, heading, status, columns,
+       * language and tile cap at him in one undifferentiated block, and buried
+       * the shortcode — the one thing that actually puts the rail on the shop —
+       * as a small grey chip beside the title.
+       *
+       * The steps are the three things a section genuinely needs, in the order
+       * it needs them, and each one says what it is for.
+       */
+      + ugxStep(1, 'Name it', 'Only you see the name. The heading is what a shopper reads above the rail.')
       + '<div class="ugx-fields">'
       + '<div class="ugx-f"><label>Name (yours, never shown on the shop)</label>'
-      + '<input type="text" data-ugx-field="title" value="' + esc(s.title || '') + '" autocomplete="off"></div>'
+      + '<input type="text" data-ugx-field="title" value="' + esc(s.title || '') + '" autocomplete="off"'
+      + ' placeholder="Homepage rail"></div>'
       + '<div class="ugx-two">'
       + '<div class="ugx-f"><label>Heading on the shop</label>'
-      + '<input type="text" data-ugx-field="heading" value="' + esc(s.heading || '') + '" autocomplete="off">'
+      + '<input type="text" data-ugx-field="heading" value="' + esc(s.heading || '') + '" autocomplete="off"'
+      + ' placeholder="Shop the look">'
       + '<p class="ugx-help">Leave empty and no heading is drawn at all.</p></div>'
       + '<div class="ugx-f"><label>Line under the heading</label>'
-      + '<input type="text" data-ugx-field="subheading" value="' + esc(s.subheading || '') + '" autocomplete="off"></div>'
-      + '</div>'
+      + '<input type="text" data-ugx-field="subheading" value="' + esc(s.subheading || '') + '"'
+      + ' autocomplete="off" placeholder="Real routines from the people who use them."></div>'
+      + '</div></div>'
+
+      + ugxStep(2, 'Decide how it looks and who sees it',
+          'Every one of these can be left alone — the rail follows Appearance → Video rail by default.')
+      + '<div class="ugx-fields">'
       + '<div class="ugx-two">'
       + '<div class="ugx-f"><label>Status</label>'
       + selectHTML('status', (vocab && vocab.status) || ['draft', 'publish'], s.status,
@@ -786,8 +904,7 @@
       + '<div class="ugx-f"><label>Tiles across on a phone</label>'
       + selectHTML('columns', [null].concat(Object.keys((vocab && vocab.columns) || {})), s.columns,
           Object.assign({ '': '— follow Appearance → Video rail —' }, (vocab && vocab.columns) || {}))
-      + '<p class="ugx-help">A per-section override. Leave it on the first option and this rail follows the '
-      + 'setting, which is the R3 default.</p></div>'
+      + '</div>'
       + '</div>'
       + '<div class="ugx-two">'
       + '<div class="ugx-f"><label>Language</label>'
@@ -798,13 +915,19 @@
       + esc(String(s.max_tiles || 12)) + '"></div>'
       + '</div>'
       + '</div>'
-      + '<div class="ugx-actions">'
+      + '<div class="ugx-actions" style="margin-top:16px">'
       + '<button class="ugx-btn is-primary" data-ugx-save' + (busy ? ' disabled' : '') + '>Save section</button>'
       + '</div></div>'
 
+      /*
+       * ── STEP 4 FIRST ON THE PAGE WHEN IT EXISTS ────────────────────────
+       * The shortcode is the whole point of a section and it was a grey chip.
+       * It is a step of its own now, with the line to copy at a size somebody
+       * can actually read and copy.
+       */
       /* ── the list of clips inside it, which is the thing he asked for ──── */
-      + '<div class="ugx-card"><div class="ugx-title">Videos in this section</div>'
-      + '<p class="ugx-sub">In the order they appear on the shop. Click one to edit it in a popup.</p>'
+      + '<div class="ugx-card">'
+      + ugxStep(3, 'Put clips in it', 'In the order they appear on the shop. Click one to edit it in a popup.')
       + (videos.length
           ? '<div class="ugx-rows" style="margin-top:12px">' + videos.map(function (v, i) {
               return '<div class="ugx-vid">'
@@ -832,34 +955,74 @@
       + '</div></div>'
 
       /* ── and the library to fill it from ──────────────────────────────── */
-      + '<div class="ugx-card"><div class="ugx-title">Add from the library</div>'
-      + '<p class="ugx-sub">Every clip in Content → Shoppable video. A clip can be in as many sections as you '
-      + 'like — it is the same file and the same like count in each.</p>'
+      /*
+       * SEARCHED AND DENSE. The owner: "I want here proper search option to
+       * search videos and add. also squeeze this list, so more videos can be
+       * show." Six clips filled a screen; a shop with sixty would be unusable.
+       *
+       * The filter is done HERE, over the library already loaded, rather than
+       * by asking the server on every keystroke: this list is the whole library
+       * and it is already in memory, so a round trip would be slower and would
+       * spend a query per character for an answer the browser already holds.
+       */
+      + '<div class="ugx-card"><div class="ugx-eh" style="margin-bottom:12px">'
+      + '<div class="ugx-title">Add from the library</div>'
+      + '<p class="ugx-sub">A clip can be in as many sections as you like — the same file and the same '
+      + 'like count in each.</p></div>'
       + (library.length
-          ? '<div class="ugx-rows" style="margin-top:12px">' + library.map(function (v) {
-              var already = inSection[v.id];
-              return '<div class="ugx-vid">'
-                + '<div class="ugx-thumb">' + (v.poster
-                    ? '<img src="' + esc(v.poster) + '" alt="" loading="lazy">'
-                    : 'no poster') + '</div>'
-                + '<div><div class="ugx-rowname">' + esc(v.title || ('#' + v.id)) + '</div>'
-                + '<div class="ugx-rowmeta"><bdi>' + esc(v.handle || '—') + '</bdi>'
-                + (v.live ? '' : ' · will not show until it is published and permitted') + '</div></div>'
-                + '<div class="ugx-rowacts">'
-                + (already
-                    ? '<span class="ugx-pill is-live">In this section</span>'
-                    : '<button class="ugx-mini" data-ugx-add="' + esc(String(v.id)) + '">Add</button>')
-                + '</div></div>';
-            }).join('') + '</div>'
-          : '<p class="ugx-sub" style="margin-top:10px">The library is empty. Add a video in '
-            + '<b>Content → Shoppable video</b> first.</p>')
-      + '</div>';
+          ? '<div class="ugx-search">'
+            + '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" '
+            + 'stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/>'
+            + '<path d="m13.2 13.2 3.3 3.3"/></svg>'
+            + '<input type="text" data-ugx-libsearch value="' + esc(libTerm) + '" autocomplete="off"'
+            + ' placeholder="Search ' + library.length + ' clips by title or creator">'
+            + (libTerm ? '<button class="ugx-mini" data-ugx-libclear>Clear</button>' : '')
+            + '</div>'
+            + (matches.length
+                ? '<div class="ugx-picks">' + matches.map(function (v) {
+                    var already = inSection[v.id];
+                    return '<div class="ugx-pick' + (already ? ' is-in' : '') + '">'
+                      + '<span class="ugx-thumb">' + (v.poster
+                          ? '<img src="' + esc(v.poster) + '" alt="" loading="lazy">'
+                          : '') + '</span>'
+                      + '<span class="ugx-pickbody"><span class="ugx-pickname">'
+                      + esc(v.title || ('#' + v.id)) + '</span>'
+                      + '<span class="ugx-pickmeta"><bdi>' + esc(v.handle || '—') + '</bdi>'
+                      + (v.live ? '' : ' · not live yet') + '</span></span>'
+                      + (already
+                          ? '<span class="ugx-pill is-live">Added</span>'
+                          : '<button class="ugx-mini" data-ugx-add="' + esc(String(v.id)) + '">Add</button>')
+                      + '</div>';
+                  }).join('') + '</div>'
+                : '<div class="ugx-empty" style="margin-top:12px">No clip matches “' + esc(libTerm)
+                  + '”. Clear the search to see all ' + library.length + '.</div>')
+          : '<div class="ugx-empty" style="margin-top:12px">The library is empty. Add a video in '
+            + '<b>Content → Shoppable video</b> first.</div>')
+      + '</div>'
+
+      + (s.handle
+          ? '<div class="ugx-card">'
+            + ugxStep(4, 'Put it on the shop', 'Paste this wherever the rail should appear — a page, a '
+                + 'post, or an HTML block. It works in as many places as you like.')
+            + '<div class="ugx-shortcode">'
+            + '<code>' + esc(s.shortcode) + '</code>'
+            + '<button class="ugx-btn" data-ugx-copy="' + esc(s.shortcode) + '">Copy</button>'
+            + '</div>'
+            + (s.status === 'publish' ? '' : '<div class="ugx-note is-warm" style="margin-top:12px">'
+                + '<b>This section is a draft.</b> The shortcode will render nothing until you set the '
+                + 'status above to Published.</div>')
+            + '</div>'
+          : '');
   }
 
   /* ── THE POPUP: full controls, product selection, files, source URLs ──── */
   /* Which tab of the clip editor is open. Reset every time a clip is opened,
      so the dialog always lands on Details rather than wherever it was left. */
   var modalTab = 'details';
+
+  /* The id of the clip the dialog on screen was built for. renderModal()
+     compares against it so an open dialog is updated rather than rebuilt. */
+  var openModalId = null;
 
   var MODAL_TABS = [
     ['details', 'Details'],
@@ -931,13 +1094,9 @@
       + '</div>';
   }
 
-  function modalHTML() {
+  /** Just the panel for whichever tab is open. */
+  function modalBodyHTML() {
     var v = editingVideo;
-    /* `poster_path`, which is what UgcVideoController::card() returns for a
-       single clip. The section LIST uses a different key (`poster`), so both
-       are read rather than guessing which payload opened this dialog. */
-    var poster = v.poster_path || v.poster || '';
-
     var body = '';
 
     if (modalTab === 'details') {
@@ -988,8 +1147,20 @@
         + ugxFileRow('clip', 'film', 'Video', v.bytes,
             'Up to 64MB. Checked by its own bytes and not by its name.')
         + ugxPosterRow(v)
-        + ugxFileRow('teaser', 'loop', '2–3 second loop', v.teaser_bytes,
-            'Optional. Without it the tile shows its poster — a quieter rail, not a broken one.')
+        /*
+         * THE OLD HELP LINE HERE WAS FALSE, and the owner reasonably read it as
+         * "you must upload a second file". Measured in Chromium with
+         * teaser_path NULL on every clip: the rail mounts the FULL clip and
+         * loops inside the first 2.5 seconds (currentTime 0.35 -> 0.9 after
+         * 5.7s, never past the limit). See playTeaser() in ugc/assets.blade.php,
+         * which is `src = teaser || full` with a timeupdate rewind.
+         *
+         * So a separate loop is a BANDWIDTH optimisation and nothing else, and
+         * this row now says so instead of implying a missing piece.
+         */
+        + ugxFileRow('teaser', 'loop', 'Short loop file', v.teaser_bytes,
+            'Optional, and nothing is missing without it — the tile already loops the first '
+            + '2–3 seconds of the video above. Adding a cut-down file only saves the shopper bytes.')
         + '</div>';
     } else if (modalTab === 'products') {
       body = '<div class="ugx-fields">'
@@ -1031,6 +1202,19 @@
         + '</div></div>';
     }
 
+    return body
+      + (v.blockers && v.blockers.length
+          ? '<div class="ugx-note is-warm"><b>Not publishable yet.</b> ' + v.blockers.map(esc).join(' ') + '</div>'
+          : '');
+  }
+
+  function modalHTML() {
+    var v = editingVideo;
+    /* `poster_path`, which is what UgcVideoController::card() returns for a
+       single clip. The section LIST uses a different key (`poster`), so both
+       are read rather than guessing which payload opened this dialog. */
+    var poster = v.poster_path || v.poster || '';
+
     return '<div class="ugx-back" data-ugx-backdrop><div class="ugx-modal" role="dialog" aria-modal="true">'
 
       /* The header carries the clip's own poster, so what is being edited is
@@ -1053,11 +1237,7 @@
         }).join('')
       + '</div>'
 
-      + '<div class="ugx-body">' + body
-      + (v.blockers && v.blockers.length
-          ? '<div class="ugx-note is-warm"><b>Not publishable yet.</b> ' + v.blockers.map(esc).join(' ') + '</div>'
-          : '')
-      + '</div>'
+      + '<div class="ugx-body">' + modalBodyHTML() + '</div>'
 
       /* The action bar does not scroll. The single long scroll this replaced
          could put Save below the fold on every tab. */
@@ -1098,8 +1278,99 @@
           + 'Sections and clips can be set up now, and nothing appears on the shop until you turn it on in '
           + '<b>Store → Modules → Shoppable video</b>.</div>')
       + (editing ? editorHTML() : listHTML())
-      + '</div>'
-      + (editingVideo ? modalHTML() : '');
+      + '</div>';
+
+    /*
+     * THE DIALOG IS NOT PART OF THIS STRING ANY MORE, and that is the whole fix
+     * for the flashing the owner reported.
+     *
+     * render() replaces #content.innerHTML outright. While the dialog lived in
+     * that string, EVERY screen re-render tore the dialog down and built it
+     * again -- which re-ran its entrance animation, re-fetched the poster and
+     * reset the scroll position. Switching a tab did it once (one flash), and
+     * saving did it about seven times in a row, because saveVideo() calls
+     * render(), then openVideo(), openSection() and load(), each of which
+     * renders twice more. That is exactly the "all the tabs flash one by one,
+     * and then saving" he described.
+     *
+     * The dialog now lives in its own element under <body>, painted by
+     * renderModal(), so the two are independent: the screen can re-render as
+     * often as it likes underneath an open dialog and the dialog does not move.
+     */
+    renderModal();
+  }
+
+  /**
+   * A numbered step header. `n` is an integer this file supplies and `title`
+   * and `hint` are literals from this file — never a setting — which is what
+   * lets them be printed as markup at all (CLAUDE.md rule 5).
+   */
+  function ugxStep(n, title, hint) {
+    return '<div class="ugx-step">'
+      + '<span class="ugx-stepno">' + n + '</span>'
+      + '<span><span class="ugx-steptitle">' + esc(title) + '</span>'
+      + '<span class="ugx-stephint">' + esc(hint) + '</span></span>'
+      + '</div>';
+  }
+
+  /** The dialog's own host, created once and reused. */
+  function modalHost() {
+    var host = document.getElementById('ugxModalHost');
+
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'ugxModalHost';
+      document.body.appendChild(host);
+    }
+
+    return host;
+  }
+
+  /**
+   * Paint the dialog, and DO NOT REBUILD ONE THAT IS ALREADY OPEN ON THE SAME
+   * CLIP -- rebuilding is what flashed. When the clip has not changed, only the
+   * body and the tab strip are touched, which is a swap of one element's
+   * children rather than a teardown of the dialog.
+   */
+  function renderModal() {
+    var host = modalHost();
+
+    if (!editingVideo) {
+      if (host.innerHTML !== '') { host.innerHTML = ''; }
+      openModalId = null;
+      return;
+    }
+
+    if (openModalId === editingVideo.id && host.querySelector('.ugx-modal')) {
+      renderModalBody();
+      return;
+    }
+
+    host.innerHTML = modalHTML();
+    openModalId = editingVideo.id;
+  }
+
+  /** The body and the tab strip only. No animation, no re-fetched poster. */
+  function renderModalBody() {
+    var host = modalHost();
+    var body = host.querySelector('.ugx-body');
+
+    if (!body) { host.innerHTML = modalHTML(); openModalId = editingVideo.id; return; }
+
+    body.innerHTML = modalBodyHTML();
+
+    host.querySelectorAll('[data-ugx-mtab]').forEach(function (b) {
+      var on = b.getAttribute('data-ugx-mtab') === modalTab;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+
+    /* The tab strip carries a count that changes as products are added. */
+    var count = host.querySelector('[data-ugx-mtab="products"] .ugx-count');
+    if (count) { count.textContent = String(tagged.length); }
+
+    var save = host.querySelector('[data-ugx-vsave]');
+    if (save) { save.disabled = !!busy; }
   }
 
   /* -------------------------------------------------------------- listeners */
@@ -1114,11 +1385,22 @@
     /* A tab of the clip editor. Before the dialog was tabbed this was one very
        long scroll, so Save could sit below the fold and the thing being edited
        could scroll out of sight. */
+    if (t.closest('[data-ugx-libclear]')) {
+      e.preventDefault();
+      libTerm = '';
+      var box = document.querySelector('[data-ugx-libsearch]');
+      if (box) { box.value = ''; box.focus(); }
+      repaintPicks();
+      return;
+    }
+
     var mtab = t.closest('[data-ugx-mtab]');
     if (mtab) {
       e.preventDefault();
       modalTab = mtab.getAttribute('data-ugx-mtab');
-      render();
+      /* renderModalBody(), NOT render(): re-rendering the screen is what made
+         switching a tab flash. Nothing outside the dialog changes. */
+      renderModalBody();
       return;
     }
     if (t.closest('[data-ugx-back]')) { e.preventDefault(); editing = null; render(); return; }
@@ -1232,6 +1514,63 @@
     }
   });
 
+  /** Re-draw the library picker's rows in place, leaving the search box alone. */
+  function repaintPicks() {
+    var card = document.querySelector('[data-ugx-libsearch]');
+    if (!card) return;
+
+    card = card.closest('.ugx-card');
+    if (!card) return;
+
+    var needle = libTerm.trim().toLowerCase();
+    var inSection = {};
+
+    /* `editing.videos`, not a bare `videos` — that name is a LOCAL inside
+       editorHTML() and this function is not inside it. The first draft read it
+       anyway and threw "videos is not defined" on the first keystroke, which
+       left the list showing everything however narrow the search was. */
+    ((editing && editing.videos) || []).forEach(function (v) { inSection[v.id] = true; });
+
+    var matches = needle === '' ? library : library.filter(function (v) {
+      return (String(v.title || '') + ' ' + String(v.handle || '')).toLowerCase().indexOf(needle) !== -1;
+    });
+
+    var list = card.querySelector('.ugx-picks') || card.querySelector('.ugx-empty');
+    if (!list) return;
+
+    var html = matches.length
+      ? '<div class="ugx-picks">' + matches.map(function (v) {
+          var already = inSection[v.id];
+          return '<div class="ugx-pick' + (already ? ' is-in' : '') + '">'
+            + '<span class="ugx-thumb">' + (v.poster
+                ? '<img src="' + esc(v.poster) + '" alt="" loading="lazy">' : '') + '</span>'
+            + '<span class="ugx-pickbody"><span class="ugx-pickname">'
+            + esc(v.title || ('#' + v.id)) + '</span>'
+            + '<span class="ugx-pickmeta"><bdi>' + esc(v.handle || '—') + '</bdi>'
+            + (v.live ? '' : ' · not live yet') + '</span></span>'
+            + (already
+                ? '<span class="ugx-pill is-live">Added</span>'
+                : '<button class="ugx-mini" data-ugx-add="' + esc(String(v.id)) + '">Add</button>')
+            + '</div>';
+        }).join('') + '</div>'
+      : '<div class="ugx-empty" style="margin-top:12px">No clip matches “' + esc(libTerm)
+        + '”. Clear the search to see all ' + library.length + '.</div>';
+
+    list.outerHTML = html;
+
+    /* The Clear button appears and disappears with the term, and it sits in the
+       search row rather than the list, so it is toggled separately. */
+    var row = card.querySelector('.ugx-search');
+    var clear = row ? row.querySelector('[data-ugx-libclear]') : null;
+
+    if (libTerm && !clear && row) {
+      row.insertAdjacentHTML('beforeend',
+        '<button class="ugx-mini" data-ugx-libclear>Clear</button>');
+    } else if (!libTerm && clear) {
+      clear.remove();
+    }
+  }
+
   document.addEventListener('input', function (e) {
     var el = e.target;
     if (!el || !el.hasAttribute) return;
@@ -1244,6 +1583,23 @@
       editingVideo[el.getAttribute('data-ugx-vfield')] = el.value;
       return;
     }
+    /*
+     * THE LIBRARY SEARCH REPAINTS THE LIST AND NOTHING ELSE.
+     *
+     * Not render(): that replaces #content wholesale, so the input being typed
+     * into becomes a new node on every keystroke and the caret has to be put
+     * back by hand — which is the workaround the product search below still
+     * carries. Swapping only the results keeps the very element the owner is
+     * typing in, so there is no caret to restore and nothing flickers.
+     *
+     * No debounce and no request: this filters the library already in memory.
+     */
+    if (el.hasAttribute('data-ugx-libsearch')) {
+      libTerm = el.value;
+      repaintPicks();
+      return;
+    }
+
     if (el.hasAttribute('data-ugx-search')) {
       term = el.value;
       if (searchTimer) clearTimeout(searchTimer);
