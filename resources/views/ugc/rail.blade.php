@@ -150,7 +150,7 @@
              data-ugcr-slug="{{ $tile['slug'] }}"
              @if ($tile['teaser'])data-ugcr-teaser-src="{{ $tile['teaser'] }}"@endif
              @if ($tile['src'])data-ugcr-src="{{ $tile['src'] }}"@endif
-             data-ugcr-poster="{{ $tile['poster'] }}"
+             @if ($tile['poster'])data-ugcr-poster="{{ $tile['poster'] }}"@endif
              role="button" tabindex="0"
              aria-label="{{ __('store.ugc.play') }}: {{ $tile['title'] !== '' ? $tile['title'] : $tile['caption'] }}">
 
@@ -168,8 +168,17 @@
                The reserved box is the tile's `aspect-ratio`, set from the stored
                width and height a line above, which is what actually keeps layout
                shift at zero before any media has loaded. --}}
-          <img class="ugcr-poster" src="{{ $tile['poster'] }}" alt=""
-               decoding="async" loading="lazy">
+          {{-- ONLY WHEN THERE IS ONE. A clip may now be published without a
+               cover (UgcVideo::publishWarnings() carries the argument), and
+               `src=""` is not a blank image: a browser resolves the empty
+               string against the document and FETCHES THE PAGE ITSELF, once per
+               cover-less tile, then fails to decode it. The reserved box is the
+               tile's own `aspect-ratio` a few lines above and does not depend on
+               this element existing, so leaving it out shifts nothing. --}}
+          @if ($tile['poster'])
+            <img class="ugcr-poster" src="{{ $tile['poster'] }}" alt=""
+                 decoding="async" loading="lazy">
+          @endif
 
           @if (($conf['badge'] ?? false) && $tile['count'] > 0)
             <span class="ugcr-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/></svg>{{ $tile['count'] }}</span>

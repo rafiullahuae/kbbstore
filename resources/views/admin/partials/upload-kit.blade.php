@@ -915,8 +915,184 @@
    * a partial cannot call a function another partial declared, so the console's
    * shared helpers all live here.
    */
+  /* ═══════════════════════════════════════════════════════════════════════
+   * CUT A COVER OUT OF A VIDEO — IN THE BROWSER.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * ── WHY THIS EXISTS, AND WHY IT IS THE PERMANENT ANSWER ─────────────────
+   *
+   * The shop this was written for runs on a host whose PHP-FPM pool has
+   * proc_open switched off. ffmpeg is installed and PHP is not allowed to
+   * start it, so the server cannot cut a cover in the request that uploads
+   * the video. Two routes out of that were shipped before this one and BOTH
+   * ask the owner to administer a server: re-enable proc_open (2.60.293's
+   * guide), or add a crontab line so the CLI cuts it a minute later
+   * (2.60.295). He asked for a permanent fix, and neither is one: the first
+   * may be refused by the host, the second is a second moving part, and on
+   * BOTH the admin screen still says "this server cannot cut" because, in
+   * the request, it cannot.
+   *
+   * THE BROWSER ALREADY DECODED THIS VIDEO. It has to -- the screen plays it
+   * back in a preview, and the shop plays it to shoppers in a <video>. A
+   * frame is therefore already available on the client, and `drawImage` plus
+   * `toBlob` turns it into a JPEG without asking the server for anything.
+   *
+   * So this needs: no ffmpeg, no proc_open, no cron, no host that allows any
+   * of it. It works on this shop today and on every host it is ever moved to.
+   *
+   * ── WHAT IT DOES NOT DO ────────────────────────────────────────────────
+   *
+   * The TEASER. A 2.5-second re-encoded MP4 is not something to build out of
+   * MediaRecorder on an admin screen, and it does not need building: a teaser
+   * is a bandwidth saving, and UgcVideo::publishBlockers() does not list one.
+   * The POSTER is the blocker, and the poster is what this cuts.
+   *
+   * ── THE DETAILS THAT DECIDE WHETHER IT WORKS ───────────────────────────
+   *
+   * -- 0.6 SECONDS IN, because that is `-ss 0.6` in UgcTranscoder::
+   *    posterCommand(). The same moment as the server's own cut, so a clip
+   *    covered here and one covered by ffmpeg look the same. It is also past
+   *    the black first frame most editors leave.
+   * -- SAME ORIGIN, SO THE CANVAS IS NOT TAINTED. A blob: URL from the File
+   *    the operator just chose is same-origin by construction; an existing
+   *    clip is read from /uploads/ugc/ on this very host. A tainted canvas
+   *    throws on toBlob(), which is caught below and reported rather than
+   *    left as a dead button.
+   * -- MUTED AND playsInline, or a mobile browser refuses to decode at all
+   *    without a gesture.
+   * -- A HARD TIMEOUT. `seeked` is not guaranteed to fire for every container
+   *    a browser will half-open, and a promise that never settles is a button
+   *    that spins forever.
+   * -- THE LONG EDGE IS CAPPED AT 1440. UgcMedia caps a poster at 4 MB and a
+   *    4K frame as JPEG can pass that; the cap is applied before encoding
+   *    rather than by retrying at lower quality.
+   *
+   * Resolves with a Blob. Rejects with an Error whose message is printable.
+   */
+  function kbbPosterFromVideo(source, opts) {
+    opts = opts || {};
+
+    var AT = typeof opts.at === 'number' ? opts.at : 0.6;
+    var MAX_EDGE = 1440;
+    var TIMEOUT = 20000;
+
+    return new Promise(function (resolve, reject) {
+      var objectUrl = (typeof source === 'string') ? null : URL.createObjectURL(source);
+      var src = objectUrl || source;
+
+      var video = document.createElement('video');
+      var settled = false;
+      var timer = null;
+
+      function cleanup() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        video.removeAttribute('src');
+        try { video.load(); } catch (e) {}
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+      }
+
+      function fail(message) {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error(message));
+      }
+
+      function done(blob) {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(blob);
+      }
+
+      timer = setTimeout(function () {
+        fail('The browser did not finish reading this video in time.');
+      }, TIMEOUT);
+
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      // Harmless for a blob: URL and correct for the same-origin file case;
+      // without it a future move of /uploads to a CDN would taint the canvas
+      // silently rather than loudly.
+      video.crossOrigin = 'anonymous';
+
+      video.onerror = function () {
+        fail('This browser cannot decode this video, so it cannot take a frame from it.');
+      };
+
+      video.onloadeddata = function () {
+        var d = video.duration;
+        // A stream with no readable duration still has a frame at 0.
+        var target = (isFinite(d) && d > 0) ? Math.min(AT, Math.max(0, d - 0.05)) : 0;
+
+        // Seeking to 0 when already at 0 fires no `seeked` event in some
+        // browsers, so that case draws immediately instead of waiting.
+        if (target <= 0.001 && video.currentTime <= 0.001) { draw(); return; }
+
+        video.onseeked = draw;
+        try { video.currentTime = target; } catch (e) { draw(); }
+      };
+
+      function draw() {
+        if (settled) return;
+
+        var w = video.videoWidth;
+        var h = video.videoHeight;
+
+        if (!w || !h) {
+          fail('The browser read this video but reported no picture size.');
+
+          return;
+        }
+
+        var scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+
+        var canvas = document.createElement('canvas');
+        canvas.width = cw;
+        canvas.height = ch;
+
+        try {
+          canvas.getContext('2d').drawImage(video, 0, 0, cw, ch);
+        } catch (e) {
+          fail('This video is served from somewhere this page may not read pixels from.');
+
+          return;
+        }
+
+        try {
+          canvas.toBlob(function (blob) {
+            if (!blob) {
+              fail('The browser could not turn that frame into an image.');
+
+              return;
+            }
+
+            done(blob);
+          }, 'image/jpeg', 0.85);
+        } catch (e) {
+          // Chiefly the tainted-canvas SecurityError, which toBlob throws
+          // synchronously rather than passing to the callback.
+          fail('This video is served from somewhere this page may not read pixels from.');
+        }
+      }
+
+      video.src = src;
+      // Not awaited and the rejection is swallowed on purpose: some browsers
+      // will not decode a frame until playback is attempted, and every
+      // browser rejects this promise when the element is muted-autoplay
+      // blocked. The frame still arrives through onloadeddata.
+      var played = video.play();
+      if (played && typeof played.catch === 'function') played.catch(function () {});
+    });
+  }
+
   window.kbbUpload = kbbUpload;
   window.kbbDropZone = kbbDropZone;
+  window.kbbPosterFromVideo = kbbPosterFromVideo;
 
   /* The kit's own formatters, exposed so a screen's panel and the refusal
      underneath it cannot disagree about what 8,808,038 bytes is called. */

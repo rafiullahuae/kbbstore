@@ -166,10 +166,29 @@ class UgcVideo extends Model
      */
     public function scopePublished($query)
     {
+        /*
+         * ── THIS HAS TO AGREE WITH publishBlockers(), OR PUBLISHING LIES ────
+         *
+         * The admin gate and this query are the same decision asked twice. When
+         * they disagreed the failure was invisible and the worst of both: the
+         * owner would set a clip to Published, the screen would say Published,
+         * and the rail would silently never show it — because the row was
+         * filtered out here. A refusal he can see beats a success that is not
+         * true.
+         *
+         * So the two conditions that stopped being blockers stop being filters.
+         * A published clip appears on the shop; the cost of a missing cover or
+         * unrecorded permission is carried by the warnings in the admin, which
+         * is where somebody can act on it.
+         *
+         * file_path stays, and status and the schedule stay: a row with no
+         * video has nothing to play, and a clip dated for next Tuesday is not
+         * live today.
+         */
         return $query
             ->where('status', 'publish')
-            ->where('rights_status', 'granted')
-            ->whereNotNull('poster_path')
+            // Never a clip whose creator said no -- see publishBlockers().
+            ->where('rights_status', '!=', 'refused')
             ->whereNotNull('file_path')
             ->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()));
     }
@@ -203,18 +222,94 @@ class UgcVideo extends Model
     {
         $out = [];
 
+        /*
+         * ── ONE BLOCKER LEFT, AND ONLY ONE ─────────────────────────────────
+         *
+         * A shoppable-video tile with no video is not a degraded tile, it is an
+         * empty box that plays nothing. Nothing downstream can make it work and
+         * no warning helps, so this stays a refusal.
+         *
+         * THE OTHER TWO MOVED TO publishWarnings(), at the owner's explicit
+         * request: "the video can be published without credits and poster
+         * cover, but warnings should remains there." They were blockers because
+         * each is a real cost — read publishWarnings() for what each one costs —
+         * but they are his costs to accept on his own shop, and a tile without
+         * them still works.
+         */
         if ((string) $this->file_path === '') {
             $out[] = 'No video file has been uploaded yet.';
         }
 
-        if ((string) $this->poster_path === '') {
-            // Not cosmetic: §2 budgets layout shift at 0 and the box is
-            // reserved from the poster's own dimensions. A tile with no poster
-            // is a hole in the page at first paint.
-            $out[] = 'No poster image yet — a tile with no poster is a hole in the page before anything loads.';
+        /*
+         * ── "NOT YET ASKED" AND "THEY SAID NO" ARE NOT THE SAME STATE ──────
+         *
+         * This stayed a blocker when `pending` stopped being one, and the
+         * distinction is the whole point. The owner asked to publish "without
+         * credits", which is the PENDING case: permission he has not got round
+         * to recording. `refused` is the creator having been asked and having
+         * said no, and there is no warning that makes overriding that
+         * acceptable — it is not a cost he may choose to carry, because the
+         * cost lands on somebody else.
+         *
+         * A TEST CAUGHT THIS, and it is worth saying so: the first cut of this
+         * change dropped `rights_status` from the gate entirely, which would
+         * have put refused clips on the shop. UgcLikeApiTest's 404-consistency
+         * case went red because a refused clip became fetchable, and that test
+         * exists for the id-oracle reason in CLAUDE.md's Known gaps — an
+         * endpoint that answers differently for "exists but you may not" is a
+         * directory of exactly the rows nobody should be advertising.
+         */
+        if ($this->rights_status === 'refused') {
+            $out[] = 'The creator refused permission. This clip cannot be published.';
         }
 
-        if ($this->rights_status !== 'granted') {
+        return $out;
+    }
+
+    /**
+     * Real costs, stated, that no longer stop a clip going live.
+     *
+     * DELIBERATE DEFAULT CHANGE, asked for in as many words, and CLAUDE.md rule
+     * 1 requires it be called out rather than buried. Before this, a clip with
+     * no cover or no recorded permission could not be published at all.
+     *
+     * Each of these was a blocker for a reason that has not gone away:
+     *
+     * -- THE COVER. §2 budgets layout shift at 0. The tile's box is still
+     *    reserved without one — from the clip's own width and height, or the
+     *    9:16 fallback — so the page does not jump; what the shopper sees
+     *    before the video paints is an empty box rather than a picture. That is
+     *    a worse first frame, not a broken one. On a host whose PHP cannot run
+     *    ffmpeg this was the difference between using the feature and not.
+     *
+     * -- THE PERMISSION. This one is not cosmetic and is not the shop's risk to
+     *    shrug at: publishing a creator's video without their recorded
+     *    permission is a rights question, not a layout question. It is now a
+     *    warning that follows the clip everywhere the admin lists it, rather
+     *    than a refusal — but it is still WRONG to ignore, and it says so.
+     *
+     * @return list<string>
+     */
+    public function publishWarnings(): array
+    {
+        $out = [];
+
+        if ((string) $this->poster_path === '') {
+            $out[] = 'No cover image — the tile reserves its box but shows nothing until the video paints.';
+        }
+
+        /*
+         * ANYTHING THAT IS NOT `granted`, EXCEPT `refused` — which is a blocker
+         * above, and repeating it here would warn about something he cannot do
+         * anyway.
+         *
+         * Not `=== 'pending'`, and a test caught the difference: the column's
+         * default is applied by the DATABASE, so an unsaved `new UgcVideo` holds
+         * NULL and a check for the literal 'pending' said nothing at all about
+         * it. The screen builds exactly that object to ask what a blank clip
+         * still needs.
+         */
+        if (! in_array($this->rights_status, ['granted', 'refused'], true)) {
             $out[] = 'The creator has not granted permission yet (Rights & credit).';
         }
 

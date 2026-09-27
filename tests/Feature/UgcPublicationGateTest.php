@@ -54,20 +54,51 @@ it('publishes a clip that has a poster and no teaser at all', function () {
         ->and(UgcVideo::published()->pluck('id')->all())->toContain($video->id);
 });
 
-it('refuses to publish a clip whose creator has not said yes', function (string $rights) {
+/*
+ * ── "NOT ASKED YET" AND "THEY SAID NO" ARE NOW DIFFERENT ANSWERS ───────────
+ *
+ * This case used to run `->with(['pending', 'refused'])` and demand a refusal
+ * for both. The owner asked to be able to publish without credits recorded —
+ * "the video can be published without credits and poster cover, but warnings
+ * should remains there" — and that is the PENDING case: permission he has not
+ * got round to writing down.
+ *
+ * `refused` is not that, and it did not move. The creator was asked and said
+ * no; there is no warning that makes overriding that acceptable, because the
+ * cost of getting it wrong lands on somebody who is not the shop. Splitting the
+ * dataset is the whole change: one row stayed a blocker, one became a warning.
+ */
+it('still refuses to publish a clip whose creator said no', function () {
     /*
-     * MUTATION NOTE. Drop the rights_status branch from publishBlockers() and
-     * both of these go green — a clip with permission `refused` becomes
+     * MUTATION NOTE. Drop the `rights_status === 'refused'` branch from
+     * publishBlockers() and this is green — a clip the creator refused becomes
      * publishable, which is the one failure in this module that costs money
-     * rather than pixels. RUN.
+     * rather than pixels. RUN: red.
      */
-    $video = ugcRow(['rights_status' => $rights]);
+    $video = ugcRow(['rights_status' => 'refused']);
 
     expect($video->canPublish())->toBeFalse()
-        ->and(implode(' ', $video->publishBlockers()))->toContain('permission');
-})->with(['pending', 'refused']);
+        ->and(implode(' ', $video->publishBlockers()))->toContain('refused');
+});
 
-it('keeps a published clip out of the storefront scope the moment permission is withdrawn', function () {
+it('lets a clip publish while permission is only pending, and says so', function () {
+    $video = ugcRow(['rights_status' => 'pending']);
+
+    expect($video->canPublish())->toBeTrue()
+        // NOT SILENT. The point of moving it out of the blockers was never to
+        // stop mentioning it: it follows the clip as a warning everywhere the
+        // admin lists one.
+        ->and(implode(' ', $video->publishWarnings()))->toContain('permission');
+});
+
+/*
+ * MUTATION NOTE for the pair above. Put `rights_status !== 'granted'` back in
+ * publishBlockers() and the second is red; delete the publishWarnings() branch
+ * and the second is red on the warning instead. Either way the pair holds both
+ * halves: publishable, and still told about.
+ */
+
+it('takes a published clip off the shop the moment permission is REFUSED', function () {
     /*
      * Two halves of the same rule, and the second is the one that matters: the
      * controller refuses the publish, and the READ refuses it too. A row that
@@ -86,17 +117,26 @@ it('keeps a published clip out of the storefront scope the moment permission is 
     expect(UgcVideo::published()->pluck('id')->all())->not->toContain($video->id);
 });
 
-it('refuses to publish a clip with no poster', function () {
+it('lets a clip publish with no cover, and warns about it', function () {
     /*
-     * Not cosmetic. §2 budgets layout shift at 0 and the tile reserves its box
-     * from the poster's own dimensions, because two tests in this repo forbid
-     * the element-measuring APIs by name. A clip with no poster is a hole in
-     * the page at first paint.
+     * ANOTHER DELIBERATE DEFAULT CHANGE, asked for in as many words.
+     *
+     * The old rule was not cosmetic and the reason has not gone away: §2 budgets
+     * layout shift at 0. What makes this safe is that the RESERVED BOX never
+     * depended on the poster file — Ugc\Tile reserves it from the clip's own
+     * width and height with a 9:16 fallback, and two tests in this repo forbid
+     * the element-measuring APIs by name. So a cover-less tile holds exactly the
+     * same space; the shopper sees an empty box for the moment before the video
+     * paints instead of a still. Worse first frame, not a broken page.
+     *
+     * The clincher is who it was costing: on a host whose PHP may not run
+     * ffmpeg, EVERY clip is cover-less, so this was the difference between the
+     * feature working and not existing.
      */
     $video = ugcRow(['poster_path' => null]);
 
-    expect($video->canPublish())->toBeFalse()
-        ->and(implode(' ', $video->publishBlockers()))->toContain('poster');
+    expect($video->canPublish())->toBeTrue()
+        ->and(implode(' ', $video->publishWarnings()))->toContain('cover');
 });
 
 it('refuses to publish a clip with no video file', function () {
@@ -130,22 +170,24 @@ it('honours published_at against the clock, because there is no scheduler', func
         ->and($live)->toContain($never->id);
 });
 
-it('keeps a clip with no poster out of the storefront scope', function () {
+it('serves a cover-less clip on the shop, because the admin said it could', function () {
     /*
-     * The other half of the poster rule, and the one the first mutation run
-     * found missing: publishBlockers() refuses to publish it, and the READ
-     * refuses it too. A row whose poster file was replaced and lost — or one
-     * written by an import that never had one — is a tile with no shape at
-     * first paint, and §2 budgets layout shift at zero.
+     * THE HALF THAT MAKES THE OTHER ONE TRUE, and the one that would have been
+     * easy to forget: the admin gate and this query are the same decision asked
+     * twice, and when they disagree the failure is invisible and the worst of
+     * both. The owner would set the clip to Published, the screen would say
+     * Published, and the rail would never show it.
      *
-     * MUTATION NOTE. Remove ->whereNotNull('poster_path') from
-     * scopePublished() and this is red. RUN — green before this case existed,
-     * which is why it does.
+     * A refusal he can see beats a success that is not true.
+     *
+     * MUTATION NOTE. Put ->whereNotNull('poster_path') back into
+     * scopePublished() and this is red while "lets a clip publish with no cover"
+     * stays green — which is exactly the silent-no-show shape. RUN: red.
      */
     $video = ugcRow(['status' => 'publish']);
     $video->forceFill(['poster_path' => null])->save();
 
-    expect(UgcVideo::published()->pluck('id')->all())->not->toContain($video->id);
+    expect(UgcVideo::published()->pluck('id')->all())->toContain($video->id);
 });
 
 it('keeps a draft out of the storefront scope whatever else is true of it', function () {

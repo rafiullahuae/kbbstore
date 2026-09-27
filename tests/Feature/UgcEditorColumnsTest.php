@@ -190,15 +190,23 @@ it('offers the cut only where the server said it can cut, and only with a clip t
         ->toBeTrue('the cut is offered on a clip that has no video on it yet');
 
     /*
-     * And where it cannot cut, it says what to do INSTEAD. "plainly" was the
-     * ask: a warm section naming the one control that does the job, not a
-     * disabled button.
+     * And where the SERVER cannot cut, it says so and offers the way that
+     * works. The title used to read "Nothing can be cut on this server", which
+     * was true of the server and which the owner read — correctly — as being
+     * true of the screen. It is not, since the browser can take the frame
+     * itself: it has already decoded the clip to play it back.
+     *
+     * So what is pinned is that the arm still NAMES the server's limitation and
+     * still offers something to press, rather than the exact old sentence.
      */
-    expect(str_contains($code, 'Nothing can be cut on this server'))
+    expect(str_contains($code, 'This server cannot cut a cover'))
         ->toBeTrue('a server with no ffmpeg is not told so on the step where it matters');
 
-    expect(str_contains($code, '<b>What to do instead.</b> Press '))
-        ->toBeTrue('the no-ffmpeg arm names no alternative');
+    expect(str_contains($code, 'data-ugs-cuthere'))
+        ->toBeTrue('the no-ffmpeg arm offers no way to get a cover');
+
+    expect(str_contains($code, '<b>Or choose a still yourself.</b> '))
+        ->toBeTrue('the no-ffmpeg arm names no manual alternative');
 });
 
 it('puts the cut under the two file boxes instead of inside the cover box', function () {

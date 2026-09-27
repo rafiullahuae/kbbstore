@@ -989,9 +989,21 @@ it('titles the clip from the filename and says it is a draft', function () {
     expect($body['title'])->toBe('Anua Mist Spray 2')
         ->and($body['status'])->toBe('draft')
         ->and($body['rights_status'])->toBe('pending')
-        // Never publishable straight off an upload: permission is always
-        // outstanding, and on a box with no transcoder the cover is too.
-        ->and($body['blockers'])->not->toBe([]);
+        /*
+         * IT IS PUBLISHABLE STRAIGHT OFF AN UPLOAD NOW, and that is the change
+         * the owner asked for: "the video can be published without credits and
+         * poster cover, but warnings should remains there." Permission pending
+         * and a missing cover are both warnings; the only blocker left is
+         * having no video at all, and this row has one.
+         *
+         * SO THE ASSERTION MOVED RATHER THAN BEING DELETED. What mattered here
+         * was never the refusal — it was that a fresh upload is not quietly
+         * perfect and the screen is told what is still outstanding. That is
+         * exactly what publishWarnings() carries now, so this checks there.
+         */
+        ->and($body['blockers'])->toBe([])
+        ->and($body['warnings'])->not->toBe([])
+        ->and(implode(' ', $body['warnings']))->toContain('permission');
 });
 
 it('derives a usable title from any filename, and never an empty one', function () {

@@ -1288,6 +1288,14 @@ class UgcVideoController extends Controller
             'duration_ms' => $video->duration_ms,
             'media_state' => $video->mediaState(),
             'blockers' => $video->publishBlockers(),
+            /*
+             * SAID, NOT ENFORCED. The owner asked to publish without a cover or
+             * recorded permission "but warnings should remains there", so the
+             * two that stopped being blockers have to travel with the row or
+             * they stop existing: a warning nothing returns is a warning
+             * nothing can draw.
+             */
+            'warnings' => $video->publishWarnings(),
             'products_count' => $video->products_count ?? $video->products()->count(),
         ];
     }

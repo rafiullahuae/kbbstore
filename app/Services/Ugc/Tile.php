@@ -62,19 +62,31 @@ final class Tile
     public static function fromVideo(UgcVideo $video, string $locale): ?array
     {
         /*
-         * THE POSTER DECIDES WHETHER THIS TILE EXISTS AT ALL.
+         * ── THE VIDEO DECIDES WHETHER THIS TILE EXISTS. THE POSTER NO LONGER ──
          *
-         * UgcVideo::published() already requires a non-null poster_path, so a
-         * null here means the stored path failed UgcPath::stored()'s allowlist —
-         * which is a path that was written before the allowlist, or edited on the
-         * box by hand. Drawing the tile anyway would be a hole in the page at
-         * first paint: §2 budgets layout shift at 0 and the box is reserved from
-         * the poster's own width/height, because two tests in this repo forbid the
-         * element-measuring APIs by name.
+         * This used to `return null` for a missing poster, and UgcVideo::
+         * published() used to refuse to hand one over anyway. Both changed
+         * together when the owner asked to be able to publish without a cover —
+         * and BOTH had to, or a clip he published would have been fetched by the
+         * query and then dropped silently here, which is the same invisible
+         * no-show by a different route.
+         *
+         * A null poster is now drawn. What is NOT given up is the reserved box:
+         * §2 budgets layout shift at 0, the width and height below come from the
+         * clip's own columns with a 9:16 fallback, and two tests in this repo
+         * forbid the element-measuring APIs by name. So a cover-less tile holds
+         * exactly the same space as a covered one and the page does not jump —
+         * the shopper simply sees an empty box for the moment before the video
+         * paints instead of a still.
+         *
+         * A SOURCE IS STILL REQUIRED. `src` below is scheme-checked the same way,
+         * and a tile with neither a poster nor a playable source is an empty box
+         * that plays nothing, so that one is still refused.
          */
         $poster = UgcPath::stored($video->poster_path);
+        $src = UgcPath::stored($video->file_path);
 
-        if ($poster === null) {
+        if ($poster === null && $src === null) {
             return null;
         }
 
@@ -85,7 +97,7 @@ final class Tile
             'title' => (string) $video->t('title'),
             'caption' => (string) ($video->t('caption') ?? ''),
             'poster' => $poster,
-            'src' => UgcPath::stored($video->file_path),
+            'src' => $src,
             'teaser' => UgcPath::stored($video->teaser_path),
             // The box, from the columns, never from a measurement.
             'width' => (int) ($video->width ?: 720),

@@ -795,7 +795,39 @@
      both cases; this dialog never calls it, because the dialog is built once and
      lives for the life of the document. */
   function dropZone(node, o){
-    if (typeof window.kbbDropZone === 'function') return window.kbbDropZone(node, o);
+    /*
+     * ── THE LOCAL ONE, ALWAYS, AND THIS IS A BUG FIX ───────────────────────
+     *
+     * This used to prefer window.kbbDropZone when the upload kit was on the
+     * page. The kit arriving broke this dialog in TWO ways at once, and the
+     * owner reported the first: "the manual option is opening the media
+     * downside, not in popup as normal".
+     *
+     * 1. LAYOUT. kbbDropZone marks its target with `.kbbu-zone`, which carries
+     *    `position:relative; display:grid` because the kit's zones are standing
+     *    dashed boxes. The node it is handed HERE is `.mp-back` — the
+     *    full-screen backdrop, whose whole existence is `position:fixed;
+     *    inset:0; display:flex` centring the dialog. The class won on cascade
+     *    order, `fixed` became `relative`, and the dialog dropped out of the
+     *    viewport and into the page flow at the bottom of the document.
+     *    Measured in the browser rather than guessed: computed position read
+     *    `relative` and display read `grid`, with `.kbbu-zone` the only other
+     *    matching rule.
+     *
+     * 2. THE DRAG STATE. The kit writes `.is-over` and `.is-bad`. Every rule in
+     *    this file is written against `.mp-back.is-drag` — this dialog's own
+     *    state class, chosen before the kit existed. So while the kit was
+     *    driving, nothing in here lit up on a drag at all.
+     *
+     * localDropZone is not a fallback and is not lesser: it counts
+     * dragenter/dragleave depth because this dialog is full of tiles to cross,
+     * which is the problem the kit solves too — it simply writes this file's
+     * class names instead of the kit's.
+     *
+     * A drop target that is also a layout container must not be handed to a
+     * helper that styles its target. Left as a named function rather than
+     * inlined so the next reader sees the choice.
+     */
     return localDropZone(node, o);
   }
 

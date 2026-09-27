@@ -509,6 +509,53 @@ it('prefers the console\'s shared uploader and drop zone, and works without them
     }
 
     foreach (p2Screens() as $name => $src) {
+        /*
+         * ── ONE SCREEN IS EXEMPT, AND IT IS A BUG FIX ──────────────────────
+         *
+         * media-picker hands its FULL-SCREEN BACKDROP to the drop-zone helper.
+         * kbbDropZone marks its target with `.kbbu-zone`, which carries
+         * `position:relative; display:grid` because the kit's zones are
+         * standing dashed boxes — and that beat `.mp-back`'s own
+         * `position:fixed; inset:0; display:flex`. The dialog fell out of the
+         * viewport and rendered at the bottom of the document, which is what
+         * the owner reported: "the manual option is opening the media
+         * downside, not in popup as normal".
+         *
+         * It broke a second thing quietly too: the kit writes `.is-over`, and
+         * every rule in that file is written against `.mp-back.is-drag`, so
+         * nothing lit up on a drag while the kit was driving.
+         *
+         * So the picker keeps its own implementation, which is not a lesser
+         * one — it counts dragenter/dragleave depth exactly as the kit does and
+         * writes that file's own class names. Measured in the browser, not
+         * guessed: computed position read `relative` and display `grid`, with
+         * `.kbbu-zone` the only other matching rule.
+         *
+         * THE RULE THIS LEAVES: a drop target that is also a layout container
+         * must not be handed to a helper that styles its target.
+         */
+        if ($name === 'media-picker') {
+            /*
+             * BOTH HALVES, and the second is the one that matters. A first cut
+             * of this asserted only that `localDropZone` is still called — and
+             * a mutation that put the kbbDropZone line BACK, above it, left
+             * that assertion green, because the local line was still in the
+             * file. Found by running the mutation rather than reading the
+             * assertion.
+             *
+             * Asserting the absence is right here, unlike the "not wired up
+             * yet" absences CLAUDE.md warns about: this is a permanent property
+             * of the file, not a temporary state waiting for an integrator to
+             * change it.
+             */
+            expect(str_contains($src, 'return localDropZone(node, o);'))
+                ->toBeTrue('media-picker must keep its own drop zone, or the dialog loses position:fixed')
+                ->and(str_contains($src, 'return window.kbbDropZone(node, o);'))
+                ->toBeFalse('media-picker hands its fixed-position backdrop to the kit again');
+
+            continue;
+        }
+
         expect(str_contains($src, "if (typeof window.kbbDropZone === 'function') return window.kbbDropZone(node, o);"))
             ->toBeTrue("{$name} does not prefer the shared drop zone");
 

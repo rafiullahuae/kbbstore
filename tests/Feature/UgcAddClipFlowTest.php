@@ -439,13 +439,23 @@ it('locks the five steps to the three things the server really refuses on', func
      * screen about it is caught here rather than by an owner who cannot work out
      * why Publish is refused.
      *
-     * MUTATION NOTE. Drop the poster clause from publishBlockers() and the
-     * count below is 2, which is red. Drop `v.poster_path` from the screen's
-     * step-2 test and the second half is red. RUN: red on both.
+     * THE GATE IS ONE BLOCKER AND TWO WARNINGS NOW, at the owner's request, so
+     * this counts both lists rather than one. The screen still has to know
+     * about all three columns — which is what this case is really for — and
+     * splitting them changed WHERE each is reported, not WHETHER.
+     *
+     * MUTATION NOTE. Drop the poster clause from publishWarnings() and the
+     * warning count below is 1, which is red. Drop the file clause from
+     * publishBlockers() and the blocker count is 0, red. Drop `v.poster_path`
+     * from the screen's step-2 test and the second half is red. RUN: red on
+     * all three.
      */
     $clip = new UgcVideo;
 
-    expect($clip->publishBlockers())->toHaveCount(3);
+    // The one thing no warning can stand in for: nothing to play.
+    expect($clip->publishBlockers())->toHaveCount(1)
+        // ...and the two that are now said rather than enforced.
+        ->and($clip->publishWarnings())->toHaveCount(2);
 
     $clip->file_path = '/uploads/ugc/x.mp4';
     $clip->poster_path = '/uploads/ugc/x.jpg';

@@ -225,8 +225,16 @@ it('refuses to publish a clip that is not publishable, and says why', function (
      * pressed Publish and got a draft would press it again.
      *
      * MUTATION NOTE. Delete the canPublish() branch from
-     * UgcVideoController::write() and this is green — a clip with no file, no
-     * poster and no permission is published. RUN.
+     * UgcVideoController::write() and this is green — a clip with no file at all
+     * is published. RUN.
+     *
+     * THE REASON IT LOOKS FOR CHANGED, and the change is the point. This asked
+     * for 'permission', because a fresh payload used to trip three blockers at
+     * once and any of them proved the gate. Permission-pending and a missing
+     * cover are warnings now, so the ONE blocker left is the one that cannot be
+     * warned around: a clip with no video is an empty box that plays nothing.
+     * Asserting on the surviving blocker is what keeps this a test of the gate
+     * rather than of whichever message happened to be first.
      */
     $this->actingAs(ugcAdminUser('owner'), 'admin');
 
@@ -235,7 +243,7 @@ it('refuses to publish a clip that is not publishable, and says why', function (
         ->json();
 
     expect($body['blockers'])->toBeArray()
-        ->and(implode(' ', $body['blockers']))->toContain('permission')
+        ->and(implode(' ', $body['blockers']))->toContain('No video file')
         ->and(UgcVideo::count())->toBe(0);
 });
 

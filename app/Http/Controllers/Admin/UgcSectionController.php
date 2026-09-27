@@ -141,6 +141,7 @@ class UgcSectionController extends Controller
                     'rights_status' => (string) $v->rights_status,
                     'media_state' => $v->mediaState(),
                     'blockers' => $v->publishBlockers(),
+                    'warnings' => $v->publishWarnings(),
                     'products_count' => $v->products()->count(),
                     'position' => (int) $v->pivot->position,
                 ])->values()->all(),
@@ -374,6 +375,7 @@ class UgcSectionController extends Controller
                 'rights_status' => (string) $video->rights_status,
                 'media_state' => $video->mediaState(),
                 'blockers' => $video->publishBlockers(),
+                'warnings' => $video->publishWarnings(),
             ],
             'notes' => $made['notes'] ?? [],
         ], 201);

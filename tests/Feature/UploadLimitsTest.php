@@ -455,7 +455,12 @@ it('finishes an upload onto the clip it was sent to, not whatever is open', func
     // The request, the ending and the reload all name the same captured id.
     expect(str_contains($code, "encodeURIComponent(target) + '/media'"))->toBeTrue()
         ->and(str_contains($code, 'var here = editing && editing.id === target;'))->toBeTrue()
-        ->and(str_contains($code, "if (kind === 'clip') freshClip = target;"))->toBeTrue();
+        // The assignment grew a body when the upload started KEEPING the File,
+        // so the in-browser cover cut can read the frame out of bytes already
+        // in the tab instead of fetching the clip back. Still one statement,
+        // still the captured id.
+        ->and(str_contains($code, 'freshClip = target;'))->toBeTrue()
+        ->and(str_contains($code, 'freshFile = file;'))->toBeTrue();
 });
 
 /* ══════════════════════════════════════════════════ mode B, end to end ══ */

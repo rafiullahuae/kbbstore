@@ -837,6 +837,15 @@
   var upDone = null;
   var freshClip = null;
 
+  /* The File the operator just chose, kept so the in-browser cover cut can read
+     the bytes already in this tab instead of downloading the clip back. */
+  var freshFile = null;
+
+  /* True while the browser is decoding a frame. Its own flag and not `busy`:
+     `busy` disables the whole form, and this is a few hundred milliseconds of
+     work on one button. */
+  var cutting = false;
+
   /*
    * WHY THIS SERVER COULD NOT CUT, KEPT RATHER THAN FLASHED.
    *
@@ -1383,6 +1392,7 @@
     upState = null;
     upDone = null;
     freshClip = null;
+    freshFile = null;
     upXhr = null;
     /* The reason belongs to ONE clip's upload. Left behind, it would explain a
        missing cover on a clip that never had an upload attempted on it. */
@@ -2006,7 +2016,7 @@
     /* The last ending is cleared before this one starts, so a red panel from a
        refused attempt never sits under a fresh bar. */
     upDone = null;
-    if (kind === 'clip') freshClip = null;
+    if (kind === 'clip') { freshClip = null; freshFile = null; }
     busy = true; render();
 
     /*
@@ -2108,7 +2118,18 @@
           upDone = { ok: true, kind: kind, name: name, bytes: size, message: '' };
           /* WHICH CLIP JUST TOOK A VIDEO, so cutHTML() can offer the cut as the
              next thing rather than leaving it to be found. */
-          if (kind === 'clip') freshClip = target;
+          if (kind === 'clip') {
+            freshClip = target;
+            /*
+             * THE BYTES, KEPT. cutCoverHere() reads the frame out of this File
+             * rather than fetching the clip back off the server -- they are
+             * already in the tab, and on a 2 MB-per-request host the round trip
+             * is the slowest part of the whole operation. Dropped again the
+             * moment another clip is opened, so a long session does not hold
+             * a video per clip visited.
+             */
+            freshFile = file;
+          }
         }
 
         /* SAID, AND ALSO KEPT. The toast is what happened; cutNote is why the
@@ -2237,6 +2258,66 @@
     } finally {
       busy = false; render();
     }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * CUT THE COVER HERE, IN THIS BROWSER.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * The permanent answer for a host whose PHP may not start ffmpeg. The
+   * argument for it is in upload-kit.blade.php beside kbbPosterFromVideo();
+   * the short version is that the browser has already decoded this video in
+   * order to play it back three inches further up the screen, so the frame is
+   * on the client already and needs nothing from the server.
+   *
+   * IT REUSES dropPoster() RATHER THAN POSTING ANYTHING ITSELF, which is the
+   * whole reason this is eight lines. That path already enforces the size cap
+   * this server will really take, registers the file in the Media Library,
+   * adopts it on to the clip and reports its own failures. A canvas Blob is a
+   * File with a name, so it can walk in through the same door as a picture the
+   * operator chose by hand -- and the server sniffs the real MIME with finfo,
+   * so it is checked identically too.
+   */
+  function cutCoverHere() {
+    if (!editing || !editing.id) { say('Save step 1 first.'); return; }
+
+    /*
+     * THE LOCAL FILE IF THIS UPLOAD IS STILL ON SCREEN, otherwise the copy the
+     * shop is serving. The local one is free -- the bytes are already in the
+     * tab -- and it also works in the seconds before the server has finished
+     * writing the file. safeMedia() is the same scheme check the <video> above
+     * goes through, so a hand-edited column cannot point this at another host.
+     */
+    var source = (freshFile && String(freshClip) === String(editing.id))
+      ? freshFile
+      : safeMedia(editing.file_path);
+
+    if (!source) { say('There is no video on this clip to take a frame from.'); return; }
+
+    cutting = true; render();
+
+    window.kbbPosterFromVideo(source)
+      .then(function (blob) {
+        cutting = false;
+
+        // A name, because the Media Library lists files by one and "blob"
+        // is not something to find again in a month.
+        var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '');
+        var name = 'cover-' + (editing.slug || editing.id) + '-' + stamp + '.jpg';
+
+        dropPoster(new File([blob], name, { type: 'image/jpeg' }));
+      })
+      .catch(function (e) {
+        cutting = false;
+        /*
+         * The reason, in the sentence kbbPosterFromVideo chose -- it knows
+         * which of the four things went wrong and this does not. Said in the
+         * banner rather than a toast because it is the answer to a question
+         * the owner deliberately asked.
+         */
+        say((e && e.message) ? e.message : 'The cover could not be taken from this video here.');
+        render();
+      });
   }
 
   async function derive() {
@@ -2783,18 +2864,33 @@
        */
       var why = (transcoder && transcoder.blocker) ? String(transcoder.blocker) : '';
 
+      /*
+       * THE TITLE NO LONGER SAYS "NOTHING CAN BE CUT", because that stopped
+       * being true the moment the cover could be cut in the browser. It named
+       * the SERVER's limitation and the owner read it, correctly, as the
+       * screen's. What cannot be cut here is the teaser; the cover can, and
+       * offering it is the whole point of this panel now.
+       */
       return secHTML({
         glyph: ICON_CUT,
-        title: 'Nothing can be cut on this server',
-        sub: why || 'Neither the cover nor a teaser can be made here.',
-        note: 'by hand',
+        title: 'This server cannot cut a cover — your browser can',
+        sub: why || 'ffmpeg cannot be run on this server.',
+        note: 'in this browser',
         tone: 'warm',
-        body: '<div class="ugs-note is-warm"><b>What to do instead.</b> Press '
-          + '<b>Choose from the Media Library</b> in the cover box and pick a still &mdash; one '
-          + 'frame exported from wherever you edited the video. That is the only file still '
-          + 'needed. <b>The loop needs no second file</b>: the tile plays the first '
-          + esc(secs(loop().ms)) + ' seconds of this very video and rewinds, so a separate '
-          + 'teaser is a bandwidth saving you can skip entirely.</div>'
+        body: '<div class="ugs-note is-cool"><b>Take the cover from the video, here.</b> '
+          + 'Your browser has already decoded this clip to play it back, so it can hand the '
+          + 'frame at 0.6 seconds straight to the cover &mdash; the same moment this shop\'s '
+          + 'own cutter uses. It needs nothing from the server and no setting changed.</div>'
+          + '<div class="ugs-slotrow" style="margin-top:10px">'
+          + '<button class="ugs-btn is-primary" data-ugs-cuthere="1"'
+          + ((busy || cutting) ? ' disabled' : '') + '>'
+          + (cutting ? 'Taking the frame…' : 'Cut the cover from the video') + '</button>'
+          + '</div>'
+          + '<div class="ugs-note is-warm" style="margin-top:10px"><b>Or choose a still yourself.</b> '
+          + 'Press <b>Choose from the Media Library</b> in the cover box and pick a frame exported '
+          + 'from wherever you edited the video. <b>The loop needs no second file</b>: the tile '
+          + 'plays the first ' + esc(secs(loop().ms)) + ' seconds of this very video and rewinds, '
+          + 'so a separate teaser is a bandwidth saving you can skip entirely.</div>'
       });
     }
 
@@ -2943,8 +3039,22 @@
      * server that cannot cut, it is the reason BOTH derived files are absent.
      */
     if (cutNote) {
+      /*
+       * The reason, and then the way out of it. This used to end at the reason,
+       * which on this host reads as a dead end -- and it was one until the
+       * browser could cut the frame itself. The button is offered only when
+       * there IS a video to take a frame from; without one the sentence is
+       * still worth printing and the button would do nothing.
+       */
       html += '<div class="ugs-note is-warm" data-ugs-cutnote="1"><b>Why there is no cover here.</b> '
-        + esc(cutNote) + '</div>';
+        + esc(cutNote)
+        + (clip
+            ? '<div style="margin-top:9px"><button class="ugs-btn is-primary" '
+              + 'data-ugs-cuthere="1"' + ((busy || cutting) ? ' disabled' : '') + '>'
+              + (cutting ? 'Taking the frame…' : 'Cut the cover here, in your browser')
+              + '</button></div>'
+            : '')
+        + '</div>';
     }
 
     html += colsHTML(
@@ -3185,6 +3295,25 @@
       + '</ul></div>';
   }
 
+  /**
+   * The costs that no longer stop a publish, listed anyway.
+   *
+   * A DIFFERENT COLOUR AND A DIFFERENT SENTENCE from blockersHTML, because they
+   * are different facts: red means the save did not happen, amber means it did
+   * and something is worse for it. Drawing them the same would teach the owner
+   * to read past both.
+   *
+   * These stay on screen while the clip is published -- that is the whole of
+   * "warnings should remains there". They are not a save result, so they are
+   * not cleared by a successful one.
+   */
+  function warningsHTML(warnings) {
+    if (!warnings || !warnings.length) return '';
+    return '<div class="ugs-note is-warm"><b>Published, with these still open:</b><ul>'
+      + warnings.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('')
+      + '</ul></div>';
+  }
+
   function publishPanel(v) {
     var blockers = v._blockers || v.blockers || [];
     /* How many of the three are still open, counted off the row's own columns —
@@ -3199,7 +3328,8 @@
       + secHTML({
           glyph: ICON_SHIELD,
           title: 'What has to be true',
-          sub: 'Read off UgcVideo::publishBlockers(), which is what the save really checks.',
+          sub: 'Read off UgcVideo::publishBlockers() and publishWarnings(). Only the video '
+            + 'is required; the other two are strongly advised and do not stop a publish.',
           note: left === 0 ? 'all three' : (3 - left) + ' of 3',
           tone: left === 0 ? 'live' : 'warm',
           region: 'check',
@@ -3209,6 +3339,8 @@
          no blockers, nothing drawn -- adds no grid item and therefore no 12px
          gap to `.ugs-panel`. See the .ugs-rg note in the stylesheet. */
       + '<div class="ugs-rg" data-ugs-region="blockers">' + blockersHTML(blockers) + '</div>'
+      + '<div class="ugs-rg" data-ugs-region="warnings">'
+      +   warningsHTML(v.warnings || []) + '</div>'
       /* WHERE on the left, WHEN on the right. Four fields in one column was the
          longest stretch of dead right half on this screen. */
       + colsHTML(
@@ -3673,6 +3805,11 @@
     }
     if (name === 'blockers') {
       el.innerHTML = blockersHTML((editing._blockers || editing.blockers || []));
+    }
+
+    el = document.querySelector('[data-ugs-region="warnings"]');
+    if (el) {
+      el.innerHTML = warningsHTML((editing && editing.warnings) || []);
       return;
     }
     if (name === 'check') {
@@ -3824,7 +3961,7 @@
       + '[data-ugs-save],[data-ugs-back],[data-ugs-derive],[data-ugs-untag],[data-ugs-up],'
       + '[data-ugs-down],[data-ugs-add],[data-ugs-poster],[data-ugs-step],[data-ugs-next],'
       + '[data-ugs-upcancel],[data-ugs-upretry],[data-ugs-draftrestore],[data-ugs-draftdiscard],'
-      + '[data-ugs-retrysave]') : null;
+      + '[data-ugs-retrysave],[data-ugs-cuthere]') : null;
     if (!t) return;
 
     if (t.hasAttribute('data-ugs-new')) { e.preventDefault(); blank(); return; }
@@ -3878,6 +4015,7 @@
       return;
     }
     if (t.hasAttribute('data-ugs-derive')) { e.preventDefault(); derive(); return; }
+    if (t.hasAttribute('data-ugs-cuthere')) { e.preventDefault(); cutCoverHere(); return; }
     if (t.hasAttribute('data-ugs-poster')) { e.preventDefault(); choosePoster(); return; }
 
     if (t.hasAttribute('data-ugs-del')) {
