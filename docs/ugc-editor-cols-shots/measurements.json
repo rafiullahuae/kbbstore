@@ -1,0 +1,2233 @@
+{
+ "what": "Content -> Shoppable video -> All clips, the two-column clip editor. Measured in Chromium 1194 by tests/browser/lane-v5-editor-cols.mjs against a throwaway admin preview, at 390px and 1280px.",
+ "how": "Column counts are getComputedStyle(row).gridTemplateColumns -- the tracks the stylesheet resolved -- not positions read off rectangles. The upload figures are whatever the screen had put on the page at each sample, and the screen puts nothing there but its own xhr.upload.onprogress numbers.",
+ "runs": {
+  "transcoder_available": {
+   "tag": "v5",
+   "base": "http://127.0.0.1:8951",
+   "clip": "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/clip-big.mp4",
+   "widths": [
+    {
+     "width": 390,
+     "steps": {
+      "step1": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Details",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What the clip is called",
+         "note": "required",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The caption",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step2empty": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Video & cover",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "The video",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The cover",
+         "note": "—",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The 2.5 second loop",
+         "note": "No video yet",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step3": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Credit",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Who made it",
+         "note": "credit",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Whether they said yes",
+         "note": "required",
+         "tone": "is-warm",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 1,
+       "cutSection": {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "hasButton": true,
+        "topRelativeToFiles": -981
+       },
+       "upload": {
+        "name": "clip-big.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "30.6 MB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step4": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Credit",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Who made it",
+         "note": "credit",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Whether they said yes",
+         "note": "required",
+         "tone": "is-warm",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 1,
+       "cutSection": {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "hasButton": true,
+        "topRelativeToFiles": -981
+       },
+       "upload": {
+        "name": "clip-big.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "30.6 MB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step5": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Products",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Tagged on this clip",
+         "note": "none yet",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Add a product",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 1,
+       "cutSection": {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "hasButton": true,
+        "topRelativeToFiles": -681
+       },
+       "upload": {
+        "name": "clip-big.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "30.6 MB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      }
+     },
+     "uploadSamples": [
+      {
+       "at": 0.7,
+       "percent": "5%",
+       "sent": "1.5 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "5%",
+       "inFlight": true
+      },
+      {
+       "at": 1.4,
+       "percent": "10%",
+       "sent": "3.2 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "10%",
+       "inFlight": true
+      },
+      {
+       "at": 2.0999999999999996,
+       "percent": "16%",
+       "sent": "4.9 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "16%",
+       "inFlight": true
+      },
+      {
+       "at": 2.8,
+       "percent": "22%",
+       "sent": "6.6 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "22%",
+       "inFlight": true
+      },
+      {
+       "at": 3.5,
+       "percent": "33%",
+       "sent": "10.0 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "33%",
+       "inFlight": true
+      },
+      {
+       "at": 4.199999999999999,
+       "percent": "38%",
+       "sent": "11.5 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "38%",
+       "inFlight": true
+      },
+      {
+       "at": 4.8999999999999995,
+       "percent": "43%",
+       "sent": "13.2 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "43%",
+       "inFlight": true
+      },
+      {
+       "at": 5.6,
+       "percent": "49%",
+       "sent": "14.9 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "49%",
+       "inFlight": true
+      },
+      {
+       "at": 6.3,
+       "percent": "54%",
+       "sent": "16.6 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "54%",
+       "inFlight": true
+      },
+      {
+       "at": 7,
+       "percent": "60%",
+       "sent": "18.3 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "60%",
+       "inFlight": true
+      },
+      {
+       "at": 7.699999999999999,
+       "percent": "66%",
+       "sent": "20.0 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "66%",
+       "inFlight": true
+      },
+      {
+       "at": 8.399999999999999,
+       "percent": "71%",
+       "sent": "21.8 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "71%",
+       "inFlight": true
+      },
+      {
+       "at": 9.1,
+       "percent": "77%",
+       "sent": "23.5 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "77%",
+       "inFlight": true
+      },
+      {
+       "at": 9.799999999999999,
+       "percent": "82%",
+       "sent": "25.2 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "82%",
+       "inFlight": true
+      },
+      {
+       "at": 10.5,
+       "percent": "88%",
+       "sent": "26.9 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "88%",
+       "inFlight": true
+      },
+      {
+       "at": 11.2,
+       "percent": "93%",
+       "sent": "28.6 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "93%",
+       "inFlight": true
+      },
+      {
+       "at": 11.899999999999999,
+       "percent": "99%",
+       "sent": "30.3 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "99%",
+       "inFlight": true
+      },
+      {
+       "at": 12.6,
+       "percent": "100%",
+       "sent": "30.6 MB of 30.6 MB sent",
+       "stage": "All of it has arrived. The server is checking the file and cutting what it can.",
+       "barWidthStyle": "100%",
+       "inFlight": true
+      },
+      {
+       "at": 13.299999999999999,
+       "percent": "100%",
+       "sent": "30.6 MB of 30.6 MB sent",
+       "stage": "All of it has arrived. The server is checking the file and cutting what it can.",
+       "barWidthStyle": "100%",
+       "inFlight": true
+      },
+      {
+       "at": 14,
+       "percent": null,
+       "sent": null,
+       "stage": null,
+       "barWidthStyle": "100%",
+       "inFlight": false
+      }
+     ],
+     "afterUpload": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390,
+      "panelOn": "Video & cover",
+      "rows": [
+       {
+        "cls": "ugs-cols",
+        "columns": 1,
+        "template": "336px",
+        "children": 2,
+        "overflowsBy": 0
+       },
+       {
+        "cls": "ugs-loopcols",
+        "columns": 1,
+        "template": "310px",
+        "children": 2,
+        "overflowsBy": 0
+       }
+      ],
+      "sections": [
+       {
+        "title": "The video",
+        "note": "30.6 MB",
+        "tone": "is-live",
+        "headHeight": 72,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover",
+        "note": "218 KB",
+        "tone": "is-live",
+        "headHeight": 72,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "headHeight": 89,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The 2.5 second loop",
+        "note": "Loops its own teaser",
+        "tone": "",
+        "headHeight": 88,
+        "titleSize": "13px"
+       }
+      ],
+      "deriveButtons": 1,
+      "cutSection": {
+       "title": "The cover and the teaser are cut",
+       "note": "just uploaded",
+       "tone": "is-live",
+       "hasButton": true,
+       "topRelativeToFiles": 12
+      },
+      "upload": {
+       "name": "clip-big.mp4",
+       "percent": "✓ 100%",
+       "sent": null,
+       "stage": null,
+       "meta": [
+        "30.6 MB arrived whole",
+        "This is the video the tile plays."
+       ],
+       "barWidthStyle": "100%",
+       "bad": false
+      }
+     },
+     "afterCut": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390,
+      "panelOn": "Video & cover",
+      "rows": [
+       {
+        "cls": "ugs-cols",
+        "columns": 1,
+        "template": "336px",
+        "children": 2,
+        "overflowsBy": 0
+       },
+       {
+        "cls": "ugs-loopcols",
+        "columns": 1,
+        "template": "310px",
+        "children": 2,
+        "overflowsBy": 0
+       }
+      ],
+      "sections": [
+       {
+        "title": "The video",
+        "note": "30.6 MB",
+        "tone": "is-live",
+        "headHeight": 72,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover",
+        "note": "218 KB",
+        "tone": "is-live",
+        "headHeight": 72,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "headHeight": 89,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The 2.5 second loop",
+        "note": "Loops its own teaser",
+        "tone": "",
+        "headHeight": 88,
+        "titleSize": "13px"
+       }
+      ],
+      "deriveButtons": 1,
+      "cutSection": {
+       "title": "The cover and the teaser are cut",
+       "note": "just uploaded",
+       "tone": "is-live",
+       "hasButton": true,
+       "topRelativeToFiles": 12
+      },
+      "upload": {
+       "name": "clip-big.mp4",
+       "percent": "✓ 100%",
+       "sent": null,
+       "stage": null,
+       "meta": [
+        "30.6 MB arrived whole",
+        "This is the video the tile plays."
+       ],
+       "barWidthStyle": "100%",
+       "bad": false
+      }
+     }
+    },
+    {
+     "width": 1280,
+     "steps": {
+      "step1": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Details",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What the clip is called",
+         "note": "required",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The caption",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step2empty": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Video & cover",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "The video",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The cover",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The 2.5 second loop",
+         "note": "No video yet",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step3": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Credit",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Who made it",
+         "note": "credit",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Whether they said yes",
+         "note": "required",
+         "tone": "is-warm",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 1,
+       "cutSection": {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "hasButton": true,
+        "topRelativeToFiles": -791
+       },
+       "upload": {
+        "name": "clip-big.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "30.6 MB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step4": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Credit",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Who made it",
+         "note": "credit",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Whether they said yes",
+         "note": "required",
+         "tone": "is-warm",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 1,
+       "cutSection": {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "hasButton": true,
+        "topRelativeToFiles": -791
+       },
+       "upload": {
+        "name": "clip-big.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "30.6 MB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step5": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Products",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Tagged on this clip",
+         "note": "none yet",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Add a product",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 1,
+       "cutSection": {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "hasButton": true,
+        "topRelativeToFiles": -568
+       },
+       "upload": {
+        "name": "clip-big.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "30.6 MB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      }
+     },
+     "uploadSamples": [
+      {
+       "at": 0.7,
+       "percent": "5%",
+       "sent": "1.5 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "5%",
+       "inFlight": true
+      },
+      {
+       "at": 1.4,
+       "percent": "10%",
+       "sent": "3.2 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "10%",
+       "inFlight": true
+      },
+      {
+       "at": 2.0999999999999996,
+       "percent": "16%",
+       "sent": "4.9 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "16%",
+       "inFlight": true
+      },
+      {
+       "at": 2.8,
+       "percent": "22%",
+       "sent": "6.6 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "22%",
+       "inFlight": true
+      },
+      {
+       "at": 3.5,
+       "percent": "35%",
+       "sent": "10.8 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "35%",
+       "inFlight": true
+      },
+      {
+       "at": 4.199999999999999,
+       "percent": "41%",
+       "sent": "12.5 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "41%",
+       "inFlight": true
+      },
+      {
+       "at": 4.8999999999999995,
+       "percent": "47%",
+       "sent": "14.2 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "47%",
+       "inFlight": true
+      },
+      {
+       "at": 5.6,
+       "percent": "52%",
+       "sent": "15.9 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "52%",
+       "inFlight": true
+      },
+      {
+       "at": 6.3,
+       "percent": "58%",
+       "sent": "17.7 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "58%",
+       "inFlight": true
+      },
+      {
+       "at": 7,
+       "percent": "63%",
+       "sent": "19.4 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "63%",
+       "inFlight": true
+      },
+      {
+       "at": 7.699999999999999,
+       "percent": "69%",
+       "sent": "21.1 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "69%",
+       "inFlight": true
+      },
+      {
+       "at": 8.399999999999999,
+       "percent": "75%",
+       "sent": "22.8 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "75%",
+       "inFlight": true
+      },
+      {
+       "at": 9.1,
+       "percent": "80%",
+       "sent": "24.5 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "80%",
+       "inFlight": true
+      },
+      {
+       "at": 9.799999999999999,
+       "percent": "86%",
+       "sent": "26.2 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "86%",
+       "inFlight": true
+      },
+      {
+       "at": 10.5,
+       "percent": "91%",
+       "sent": "28.0 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "91%",
+       "inFlight": true
+      },
+      {
+       "at": 11.2,
+       "percent": "97%",
+       "sent": "29.7 MB of 30.6 MB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "97%",
+       "inFlight": true
+      },
+      {
+       "at": 11.899999999999999,
+       "percent": "100%",
+       "sent": "30.6 MB of 30.6 MB sent",
+       "stage": "All of it has arrived. The server is checking the file and cutting what it can.",
+       "barWidthStyle": "100%",
+       "inFlight": true
+      },
+      {
+       "at": 12.6,
+       "percent": "100%",
+       "sent": "30.6 MB of 30.6 MB sent",
+       "stage": "All of it has arrived. The server is checking the file and cutting what it can.",
+       "barWidthStyle": "100%",
+       "inFlight": true
+      },
+      {
+       "at": 13.299999999999999,
+       "percent": null,
+       "sent": null,
+       "stage": null,
+       "barWidthStyle": "100%",
+       "inFlight": false
+      }
+     ],
+     "afterUpload": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "panelOn": "Video & cover",
+      "rows": [
+       {
+        "cls": "ugs-cols",
+        "columns": 2,
+        "template": "477.094px 477.094px",
+        "children": 2,
+        "overflowsBy": 0
+       },
+       {
+        "cls": "ugs-loopcols",
+        "columns": 2,
+        "template": "178px 750.188px",
+        "children": 2,
+        "overflowsBy": 0
+       }
+      ],
+      "sections": [
+       {
+        "title": "The video",
+        "note": "30.6 MB",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover",
+        "note": "218 KB",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The 2.5 second loop",
+        "note": "Loops its own teaser",
+        "tone": "",
+        "headHeight": 56,
+        "titleSize": "13px"
+       }
+      ],
+      "deriveButtons": 1,
+      "cutSection": {
+       "title": "The cover and the teaser are cut",
+       "note": "just uploaded",
+       "tone": "is-live",
+       "hasButton": true,
+       "topRelativeToFiles": 12
+      },
+      "upload": {
+       "name": "clip-big.mp4",
+       "percent": "✓ 100%",
+       "sent": null,
+       "stage": null,
+       "meta": [
+        "30.6 MB arrived whole",
+        "This is the video the tile plays."
+       ],
+       "barWidthStyle": "100%",
+       "bad": false
+      }
+     },
+     "afterCut": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "panelOn": "Video & cover",
+      "rows": [
+       {
+        "cls": "ugs-cols",
+        "columns": 2,
+        "template": "477.094px 477.094px",
+        "children": 2,
+        "overflowsBy": 0
+       },
+       {
+        "cls": "ugs-loopcols",
+        "columns": 2,
+        "template": "178px 750.188px",
+        "children": 2,
+        "overflowsBy": 0
+       }
+      ],
+      "sections": [
+       {
+        "title": "The video",
+        "note": "30.6 MB",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover",
+        "note": "218 KB",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover and the teaser are cut",
+        "note": "just uploaded",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The 2.5 second loop",
+        "note": "Loops its own teaser",
+        "tone": "",
+        "headHeight": 56,
+        "titleSize": "13px"
+       }
+      ],
+      "deriveButtons": 1,
+      "cutSection": {
+       "title": "The cover and the teaser are cut",
+       "note": "just uploaded",
+       "tone": "is-live",
+       "hasButton": true,
+       "topRelativeToFiles": 12
+      },
+      "upload": {
+       "name": "clip-big.mp4",
+       "percent": "✓ 100%",
+       "sent": null,
+       "stage": null,
+       "meta": [
+        "30.6 MB arrived whole",
+        "This is the video the tile plays."
+       ],
+       "barWidthStyle": "100%",
+       "bad": false
+      }
+     }
+    }
+   ],
+   "console": [
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+   ],
+   "error": null
+  },
+  "no_transcoder_390": {
+   "tag": "v5noff",
+   "base": "http://127.0.0.1:8952",
+   "clip": "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/clip-small.mp4",
+   "widths": [
+    {
+     "width": 390,
+     "steps": {
+      "step1": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Details",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What the clip is called",
+         "note": "required",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The caption",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step2empty": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Video & cover",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "The video",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The cover",
+         "note": "—",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The 2.5 second loop",
+         "note": "No video yet",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step3": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Credit",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Who made it",
+         "note": "credit",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Whether they said yes",
+         "note": "required",
+         "tone": "is-warm",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "hasButton": false,
+        "topRelativeToFiles": -1135
+       },
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "630 KB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step4": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Products",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Tagged on this clip",
+         "note": "none yet",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Add a product",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "hasButton": false,
+        "topRelativeToFiles": -810
+       },
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "630 KB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step5": {
+       "docScrollWidth": 390,
+       "docClientWidth": 390,
+       "contentScrollWidth": 390,
+       "contentClientWidth": 390,
+       "panelOn": "Publish",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 1,
+         "template": "336px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What has to be true",
+         "note": "1 of 3",
+         "tone": "is-warm",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Where it shows",
+         "note": "draft",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "When, and in what order",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "hasButton": false,
+        "topRelativeToFiles": -1290
+       },
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "630 KB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      }
+     },
+     "uploadSamples": [
+      {
+       "at": 0.7,
+       "percent": "13%",
+       "sent": "80 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "13%",
+       "inFlight": true
+      },
+      {
+       "at": 1.4,
+       "percent": "23%",
+       "sent": "144 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "23%",
+       "inFlight": true
+      },
+      {
+       "at": 2.0999999999999996,
+       "percent": "36%",
+       "sent": "224 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "36%",
+       "inFlight": true
+      },
+      {
+       "at": 2.8,
+       "percent": "48%",
+       "sent": "304 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "48%",
+       "inFlight": true
+      },
+      {
+       "at": 3.5,
+       "percent": "71%",
+       "sent": "448 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "71%",
+       "inFlight": true
+      },
+      {
+       "at": 4.199999999999999,
+       "percent": "84%",
+       "sent": "528 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "84%",
+       "inFlight": true
+      },
+      {
+       "at": 4.8999999999999995,
+       "percent": "97%",
+       "sent": "608 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "97%",
+       "inFlight": true
+      },
+      {
+       "at": 5.6,
+       "percent": null,
+       "sent": null,
+       "stage": null,
+       "barWidthStyle": "100%",
+       "inFlight": false
+      }
+     ],
+     "afterUpload": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390,
+      "panelOn": "Video & cover",
+      "rows": [
+       {
+        "cls": "ugs-cols",
+        "columns": 1,
+        "template": "336px",
+        "children": 2,
+        "overflowsBy": 0
+       },
+       {
+        "cls": "ugs-loopcols",
+        "columns": 1,
+        "template": "310px",
+        "children": 2,
+        "overflowsBy": 0
+       }
+      ],
+      "sections": [
+       {
+        "title": "The video",
+        "note": "630 KB",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover",
+        "note": "—",
+        "tone": "",
+        "headHeight": 72,
+        "titleSize": "13px"
+       },
+       {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "headHeight": 72,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The 2.5 second loop",
+        "note": "No cover yet",
+        "tone": "",
+        "headHeight": 72,
+        "titleSize": "13px"
+       }
+      ],
+      "deriveButtons": 0,
+      "cutSection": {
+       "title": "Nothing can be cut on this server",
+       "note": "by hand",
+       "tone": "is-warm",
+       "hasButton": false,
+       "topRelativeToFiles": 12
+      },
+      "upload": {
+       "name": "clip-small.mp4",
+       "percent": "✓ 100%",
+       "sent": null,
+       "stage": null,
+       "meta": [
+        "630 KB arrived whole",
+        "This is the video the tile plays."
+       ],
+       "barWidthStyle": "100%",
+       "bad": false
+      }
+     },
+     "afterCut": null
+    },
+    {
+     "width": 1280,
+     "steps": {
+      "step1": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Details",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What the clip is called",
+         "note": "required",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The caption",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step2empty": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Video & cover",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "The video",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The cover",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The 2.5 second loop",
+         "note": "No video yet",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step3": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Credit",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Who made it",
+         "note": "credit",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Whether they said yes",
+         "note": "required",
+         "tone": "is-warm",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "not accepted",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "Too many uploads in one minute. Wait a moment and try again — the file was fine.",
+         "630 KB — nothing on the clip was changed."
+        ],
+        "barWidthStyle": null,
+        "bad": true
+       }
+      },
+      "step4": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Products",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Tagged on this clip",
+         "note": "none yet",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Add a product",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "not accepted",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "Too many uploads in one minute. Wait a moment and try again — the file was fine.",
+         "630 KB — nothing on the clip was changed."
+        ],
+        "barWidthStyle": null,
+        "bad": true
+       }
+      },
+      "step5": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Publish",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What has to be true",
+         "note": "0 of 3",
+         "tone": "is-warm",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Where it shows",
+         "note": "draft",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "When, and in what order",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "not accepted",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "Too many uploads in one minute. Wait a moment and try again — the file was fine.",
+         "630 KB — nothing on the clip was changed."
+        ],
+        "barWidthStyle": null,
+        "bad": true
+       }
+      }
+     },
+     "uploadSamples": [
+      {
+       "at": 0.7,
+       "percent": "13%",
+       "sent": "80 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "13%",
+       "inFlight": true
+      },
+      {
+       "at": 1.4,
+       "percent": "23%",
+       "sent": "144 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "23%",
+       "inFlight": true
+      },
+      {
+       "at": 2.0999999999999996,
+       "percent": "36%",
+       "sent": "224 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "36%",
+       "inFlight": true
+      },
+      {
+       "at": 2.8,
+       "percent": "48%",
+       "sent": "304 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "48%",
+       "inFlight": true
+      },
+      {
+       "at": 3.5,
+       "percent": "76%",
+       "sent": "480 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "76%",
+       "inFlight": true
+      },
+      {
+       "at": 4.199999999999999,
+       "percent": "89%",
+       "sent": "560 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "89%",
+       "inFlight": true
+      },
+      {
+       "at": 4.8999999999999995,
+       "percent": null,
+       "sent": null,
+       "stage": null,
+       "barWidthStyle": null,
+       "inFlight": false
+      }
+     ],
+     "afterUpload": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "panelOn": "Video & cover",
+      "rows": [
+       {
+        "cls": "ugs-cols",
+        "columns": 2,
+        "template": "477.094px 477.094px",
+        "children": 2,
+        "overflowsBy": 0
+       }
+      ],
+      "sections": [
+       {
+        "title": "The video",
+        "note": "—",
+        "tone": "",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover",
+        "note": "—",
+        "tone": "",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The 2.5 second loop",
+        "note": "No video yet",
+        "tone": "",
+        "headHeight": 56,
+        "titleSize": "13px"
+       }
+      ],
+      "deriveButtons": 0,
+      "cutSection": null,
+      "upload": {
+       "name": "clip-small.mp4",
+       "percent": "not accepted",
+       "sent": null,
+       "stage": null,
+       "meta": [
+        "Too many uploads in one minute. Wait a moment and try again — the file was fine.",
+        "630 KB — nothing on the clip was changed."
+       ],
+       "barWidthStyle": null,
+       "bad": true
+      }
+     },
+     "afterCut": null
+    }
+   ],
+   "console": [
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+   ],
+   "error": null
+  },
+  "no_transcoder_1280": {
+   "tag": "v5noff",
+   "base": "http://127.0.0.1:8952",
+   "clip": "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/clip-small.mp4",
+   "widths": [
+    {
+     "width": 1280,
+     "steps": {
+      "step1": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Details",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What the clip is called",
+         "note": "required",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The caption",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step2empty": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Video & cover",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "The video",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The cover",
+         "note": "—",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "The 2.5 second loop",
+         "note": "No video yet",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": null,
+       "upload": null
+      },
+      "step3": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Credit",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Who made it",
+         "note": "credit",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Whether they said yes",
+         "note": "required",
+         "tone": "is-warm",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "hasButton": false,
+        "topRelativeToFiles": -791
+       },
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "630 KB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step4": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Products",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "Tagged on this clip",
+         "note": "none yet",
+         "tone": "",
+         "headHeight": 72,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Add a product",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "hasButton": false,
+        "topRelativeToFiles": -568
+       },
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "630 KB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      },
+      "step5": {
+       "docScrollWidth": 1280,
+       "docClientWidth": 1280,
+       "contentScrollWidth": 1032,
+       "contentClientWidth": 1032,
+       "panelOn": "Publish",
+       "rows": [
+        {
+         "cls": "ugs-cols",
+         "columns": 2,
+         "template": "477.094px 477.094px",
+         "children": 2,
+         "overflowsBy": 0
+        }
+       ],
+       "sections": [
+        {
+         "title": "What has to be true",
+         "note": "1 of 3",
+         "tone": "is-warm",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "Where it shows",
+         "note": "draft",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        },
+        {
+         "title": "When, and in what order",
+         "note": "optional",
+         "tone": "",
+         "headHeight": 56,
+         "titleSize": "13px"
+        }
+       ],
+       "deriveButtons": 0,
+       "cutSection": {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "hasButton": false,
+        "topRelativeToFiles": -909
+       },
+       "upload": {
+        "name": "clip-small.mp4",
+        "percent": "✓ 100%",
+        "sent": null,
+        "stage": null,
+        "meta": [
+         "630 KB arrived whole",
+         "This is the video the tile plays."
+        ],
+        "barWidthStyle": "100%",
+        "bad": false
+       }
+      }
+     },
+     "uploadSamples": [
+      {
+       "at": 0.7,
+       "percent": "13%",
+       "sent": "80 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "13%",
+       "inFlight": true
+      },
+      {
+       "at": 1.4,
+       "percent": "23%",
+       "sent": "144 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "23%",
+       "inFlight": true
+      },
+      {
+       "at": 2.0999999999999996,
+       "percent": "36%",
+       "sent": "224 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "36%",
+       "inFlight": true
+      },
+      {
+       "at": 2.8,
+       "percent": "48%",
+       "sent": "304 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "48%",
+       "inFlight": true
+      },
+      {
+       "at": 3.5,
+       "percent": "76%",
+       "sent": "480 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "76%",
+       "inFlight": true
+      },
+      {
+       "at": 4.199999999999999,
+       "percent": "89%",
+       "sent": "560 KB of 630 KB sent",
+       "stage": "Sending to the server.",
+       "barWidthStyle": "89%",
+       "inFlight": true
+      },
+      {
+       "at": 4.8999999999999995,
+       "percent": null,
+       "sent": null,
+       "stage": null,
+       "barWidthStyle": "100%",
+       "inFlight": false
+      }
+     ],
+     "afterUpload": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "panelOn": "Video & cover",
+      "rows": [
+       {
+        "cls": "ugs-cols",
+        "columns": 2,
+        "template": "477.094px 477.094px",
+        "children": 2,
+        "overflowsBy": 0
+       },
+       {
+        "cls": "ugs-loopcols",
+        "columns": 2,
+        "template": "178px 750.188px",
+        "children": 2,
+        "overflowsBy": 0
+       }
+      ],
+      "sections": [
+       {
+        "title": "The video",
+        "note": "630 KB",
+        "tone": "is-live",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The cover",
+        "note": "—",
+        "tone": "",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "Nothing can be cut on this server",
+        "note": "by hand",
+        "tone": "is-warm",
+        "headHeight": 56,
+        "titleSize": "13px"
+       },
+       {
+        "title": "The 2.5 second loop",
+        "note": "No cover yet",
+        "tone": "",
+        "headHeight": 56,
+        "titleSize": "13px"
+       }
+      ],
+      "deriveButtons": 0,
+      "cutSection": {
+       "title": "Nothing can be cut on this server",
+       "note": "by hand",
+       "tone": "is-warm",
+       "hasButton": false,
+       "topRelativeToFiles": 12
+      },
+      "upload": {
+       "name": "clip-small.mp4",
+       "percent": "✓ 100%",
+       "sent": null,
+       "stage": null,
+       "meta": [
+        "630 KB arrived whole",
+        "This is the video the tile plays."
+       ],
+       "barWidthStyle": "100%",
+       "bad": false
+      }
+     },
+     "afterCut": null
+    }
+   ],
+   "console": [
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "error": null
+  }
+ }
+}
