@@ -606,7 +606,7 @@ it('blames upload_max_filesize rather than the file when PHP refuses one file', 
 
     $video = UgcVideo::create(['slug' => 'modea-'.uniqid(), 'title' => 'Mode A']);
 
-    $path = tempnam(sys_get_temp_dir(), 'modea');
+    $path = tempnam(kbbTempDir(), 'modea');
     file_put_contents($path, '');
 
     $refused = new UploadedFile($path, 'holiday.mp4', 'video/mp4', UPLOAD_ERR_INI_SIZE, true);
@@ -648,7 +648,7 @@ it('does not 500 on a kind that arrives as an array', function () {
 
     $video = UgcVideo::create(['slug' => 'arraykind-'.uniqid(), 'title' => 'Array kind']);
 
-    $path = tempnam(sys_get_temp_dir(), 'ak');
+    $path = tempnam(kbbTempDir(), 'ak');
     file_put_contents($path, 'x');
 
     $response = $this->post('/admin-api/ugc-videos/'.$video->id.'/media', [
@@ -675,7 +675,7 @@ it('calls a server fault a server fault instead of a bad file', function () {
 
     $video = UgcVideo::create(['slug' => 'cantwrite-'.uniqid(), 'title' => 'Cant write']);
 
-    $path = tempnam(sys_get_temp_dir(), 'cw');
+    $path = tempnam(kbbTempDir(), 'cw');
     file_put_contents($path, 'x');
 
     $response = $this->post('/admin-api/ugc-videos/'.$video->id.'/media', [
@@ -708,7 +708,7 @@ it('leaves a file PHP delivered whole to the content checks, unchanged', functio
 
     $video = UgcVideo::create(['slug' => 'real-'.uniqid(), 'title' => 'Real refusal']);
 
-    $path = tempnam(sys_get_temp_dir(), 'notvid');
+    $path = tempnam(kbbTempDir(), 'notvid');
     file_put_contents($path, "<?php echo 'x'; ?>".str_repeat('A', 400));
 
     $response = $this->post('/admin-api/ugc-videos/'.$video->id.'/media', [

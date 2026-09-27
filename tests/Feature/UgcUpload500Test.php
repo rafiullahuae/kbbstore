@@ -86,7 +86,7 @@ function u5Mp4(): string
 
 function u5File(string $name, string $bytes): \Illuminate\Http\UploadedFile
 {
-    $path = tempnam(sys_get_temp_dir(), 'u5up');
+    $path = tempnam(kbbTempDir(), 'u5up');
     file_put_contents($path, $bytes);
 
     return new \Illuminate\Http\UploadedFile($path, $name, null, null, true);
@@ -120,7 +120,7 @@ function u5Stored(): array
  */
 function u5LogFile(): string
 {
-    $path = tempnam(sys_get_temp_dir(), 'u5log');
+    $path = tempnam(kbbTempDir(), 'u5log');
 
     config([
         'logging.default' => 'single',
@@ -352,7 +352,7 @@ it('does not blame max_execution_time on a build where it cannot be the cause', 
      * test that asserts about the platform and not about this code should admit
      * which it is.
      */
-    $script = tempnam(sys_get_temp_dir(), 'u5tl');
+    $script = tempnam(kbbTempDir(), 'u5tl');
     file_put_contents($script, <<<'CHILD'
         <?php
         require $argv[1];

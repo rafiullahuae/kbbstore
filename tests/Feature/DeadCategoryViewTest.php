@@ -151,7 +151,7 @@ it('excludes comments from that search rather than passing by accident', functio
      */
     $needle = 'store' . '.category';
 
-    $file = tempnam(sys_get_temp_dir(), 'dcv') . '.php';
+    $file = tempnam(kbbTempDir(), 'dcv') . '.php';
 
     file_put_contents($file, "<?php\n// a note about " . $needle . "\nreturn 1;\n");
     expect(str_contains(dcvResolvableText($file), $needle))->toBeFalse();

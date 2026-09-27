@@ -575,10 +575,74 @@ require_once __DIR__.'/../vendor/autoload.php';
     }
 
     if (is_dir($temp) && is_writable($temp)) {
+        /*
+         * ── NEITHER OF THESE REDIRECTS sys_get_temp_dir(). MEASURED. ───────
+         *
+         * `sys_temp_dir` is PHP_INI_SYSTEM, so the ini_set is a line that does
+         * nothing; and PHP resolves its temp directory once at startup, so a
+         * putenv() here is already too late. Both were verified in this
+         * container rather than reasoned about:
+         *
+         *     before putenv: /tmp
+         *     after  putenv: /tmp          <- unchanged
+         *     tempnam()    : /tmp/probe... <- still the shared directory
+         *
+         * Exporting TMPDIR BEFORE php starts does work, and that is the only
+         * thing that does:
+         *
+         *     TMPDIR=/tmp/kbb-probe-env php -r '...'  -> /tmp/kbb-probe-env
+         *
+         * WHAT IT COST. 27 tempnam() sites across this suite asked
+         * sys_get_temp_dir() and therefore wrote into the SHARED /tmp, and
+         * nothing deleted them. Measured on this machine: 1,625 files and
+         * 11.6 GB from one week of runs, some of them 60 MB apiece because the
+         * upload tests write real bytes to exercise the size cap. CLAUDE.md's
+         * own landmine says a full disk here reads exactly like a transaction
+         * bug -- `no such savepoint: trans3` -- so this was not merely untidy.
+         *
+         * They are left in place because they are harmless once the call sites
+         * stop consulting them: kbbTempDir() below hands out THIS run's
+         * directory, which the shutdown sweep already removes.
+         */
         ini_set('sys_temp_dir', $temp);
         putenv('TMPDIR='.$temp);
         $_ENV['TMPDIR'] = $temp;
         $_SERVER['TMPDIR'] = $temp;
+    }
+
+    /*
+     * THE DIRECTORY A TEST SHOULD WRITE A TEMPORARY FILE INTO.
+     *
+     * `tempnam(kbbTempDir(), 'x')` rather than `tempnam(kbbTempDir(),
+     * 'x')`: same call, same result, except the file lands in this run's own
+     * tree and is swept when the process exits. The fallback keeps a test
+     * honest if it is ever run without this bootstrap.
+     */
+    putenv('KBB_TEMP_DIR='.$temp);
+
+    if (! function_exists('kbbTempDir')) {
+        /*
+         * CARRIED THROUGH AN ENVIRONMENT VARIABLE OF OUR OWN, not a global.
+         *
+         * The first cut of this closed over `$temp` via `global $kbbTemp`, and
+         * that silently did nothing: this whole block runs inside a closure, so
+         * the assignment made a LOCAL, `global` found null, and every call fell
+         * through to the shared directory it was written to avoid. The tell was
+         * that the fix changed nothing measurable -- 3 more `ugcup*` files in
+         * /tmp on the very next run.
+         *
+         * `getenv()` on a name of our own is not the trap TMPDIR is: PHP caches
+         * its OWN temp directory at startup and ignores later putenv()s, but it
+         * has no opinion about KBB_TEMP_DIR.
+         */
+        function kbbTempDir(): string
+        {
+            $dir = (string) getenv('KBB_TEMP_DIR');
+
+            return ($dir !== '' && is_dir($dir) && is_writable($dir))
+                ? $dir
+                : sys_get_temp_dir();
+        }
     }
 
     /*

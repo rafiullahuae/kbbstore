@@ -56,7 +56,7 @@ function asMuAdmin(): void
  */
 function muUpload(string $name, string $bytes): \Illuminate\Http\UploadedFile
 {
-    $path = tempnam(sys_get_temp_dir(), 'muup');
+    $path = tempnam(kbbTempDir(), 'muup');
     file_put_contents($path, $bytes);
 
     return new \Illuminate\Http\UploadedFile($path, $name, null, null, true);

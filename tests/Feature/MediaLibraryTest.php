@@ -220,7 +220,7 @@ it('records an upload in the library instead of only writing the file', function
 
     $before = Media::query()->count();
 
-    $path = tempnam(sys_get_temp_dir(), 'mlup');
+    $path = tempnam(kbbTempDir(), 'mlup');
     file_put_contents($path, mlPngBytes());
 
     $response = test()->post('/admin-api/media/upload', [
@@ -252,7 +252,7 @@ it('shows a just-uploaded file in the grid', function () {
     asMlAdmin();
     mlClearUploads();
 
-    $path = tempnam(sys_get_temp_dir(), 'mlup');
+    $path = tempnam(kbbTempDir(), 'mlup');
     file_put_contents($path, mlPngBytes());
 
     $filename = test()->post('/admin-api/media/upload', [
@@ -372,7 +372,7 @@ it('finds an upload by the name the operator gave it, not only the generated one
      * A search that answers 200 and finds nothing looks exactly like a search
      * that works. That is the landmine in CLAUDE.md, in a new place.
      */
-    $path = tempnam(sys_get_temp_dir(), 'mlup');
+    $path = tempnam(kbbTempDir(), 'mlup');
     file_put_contents($path, mlPngBytes());
 
     $generated = test()->post('/admin-api/media/upload', [
@@ -414,7 +414,7 @@ it('never lets the operator-supplied name decide anything but search', function 
      * guise: the stored extension, the served Content-Type and the decision to
      * run the SVG scan must all keep coming from the file's own bytes.
      */
-    $path = tempnam(sys_get_temp_dir(), 'mlup');
+    $path = tempnam(kbbTempDir(), 'mlup');
     file_put_contents($path, mlPngBytes());
 
     $response = test()->post('/admin-api/media/upload', [

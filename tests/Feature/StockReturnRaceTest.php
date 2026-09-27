@@ -150,7 +150,7 @@ it('credits the shelf once when two cancellations release the same order togethe
         $plan = stockReturnRaceWorker(array_merge(['--mode=seed', "--rounds={$rounds}"], $connection));
         expect($plan['ok'] ?? false)->toBeTrue('seeding failed: ' . json_encode($plan));
 
-        $planFile = tempnam(sys_get_temp_dir(), 'stock-return-race-');
+        $planFile = tempnam(kbbTempDir(), 'stock-return-race-');
         file_put_contents($planFile, json_encode($plan));
 
         // Far enough ahead that both workers have booted Laravel and are

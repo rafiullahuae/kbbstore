@@ -87,7 +87,7 @@ const drawn = Array.from(html.matchAll(/data-mail="([a-z_]+)"/g)).map(m => m[1])
 process.stdout.write(JSON.stringify(drawn));
 JS;
 
-    $tmp = tempnam(sys_get_temp_dir(), 'mailsec').'.js';
+    $tmp = tempnam(kbbTempDir(), 'mailsec').'.js';
     file_put_contents($tmp, $driver);
 
     $out = (string) shell_exec(escapeshellcmd($node).' '.escapeshellarg($tmp).' 2>&1');

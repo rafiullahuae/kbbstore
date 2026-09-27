@@ -175,7 +175,7 @@ it('lets only one of two simultaneous orders take the last use of a coupon', fun
         $plan = raceWorker(array_merge(['--mode=seed', "--rounds={$rounds}"], $connection));
         expect($plan['ok'] ?? false)->toBeTrue('seeding failed: ' . json_encode($plan));
 
-        $planFile = tempnam(sys_get_temp_dir(), 'coupon-race-');
+        $planFile = tempnam(kbbTempDir(), 'coupon-race-');
         file_put_contents($planFile, json_encode($plan));
 
         // Far enough ahead that both workers have booted Laravel and are

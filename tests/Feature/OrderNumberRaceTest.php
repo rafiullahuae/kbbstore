@@ -171,7 +171,7 @@ function runOrderNumberRace(string $path, int $rounds): void
         $plan = orderRaceWorker(array_merge(['--mode=seed', "--rounds={$rounds}"], $connection));
         expect($plan['ok'] ?? false)->toBeTrue('seeding failed: ' . json_encode($plan));
 
-        $planFile = tempnam(sys_get_temp_dir(), 'order-number-race-');
+        $planFile = tempnam(kbbTempDir(), 'order-number-race-');
         file_put_contents($planFile, json_encode($plan));
 
         // Far enough ahead that both workers have booted Laravel and are

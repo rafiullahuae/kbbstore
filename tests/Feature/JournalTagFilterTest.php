@@ -182,7 +182,7 @@ it('highlights the chip the shopper clicked, with Arabic labels, in a real brows
     expect($html)->toContain('id="chips"')
         ->toContain('onerror=alert(1)');
 
-    $file = tempnam(sys_get_temp_dir(), 'fj-journal-') . '.html';
+    $file = tempnam(kbbTempDir(), 'fj-journal-') . '.html';
     file_put_contents($file, $html);
 
     try {

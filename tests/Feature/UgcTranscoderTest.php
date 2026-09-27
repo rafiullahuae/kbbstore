@@ -189,7 +189,7 @@ it('drives the real plumbing against a stub binary', function () {
      * "empty output" case below goes green with a zero-byte .mp4 recorded — a
      * <video src> pointing at nothing, which is a tile that spins forever. RUN.
      */
-    $stub = tempnam(sys_get_temp_dir(), 'ffstub');
+    $stub = tempnam(kbbTempDir(), 'ffstub');
     // `for out; do :; done` leaves $out holding the LAST positional argument,
     // which is where both commands put their destination.
     file_put_contents($stub, <<<'STUB'
@@ -241,7 +241,7 @@ it('records nothing when the stub writes an empty file', function () {
     // no decodable video stream. A zero-byte .mp4 in a <video src> is a tile
     // that spins forever, so the destination is checked for SIZE as well as
     // existence, and an empty one is removed rather than recorded.
-    $stub = tempnam(sys_get_temp_dir(), 'ffempty');
+    $stub = tempnam(kbbTempDir(), 'ffempty');
     file_put_contents($stub, <<<'STUB'
     #!/bin/sh
     for out; do :; done

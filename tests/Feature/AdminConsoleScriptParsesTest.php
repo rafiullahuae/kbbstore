@@ -114,7 +114,7 @@ it('parses every script block in the admin console', function () {
              * and concatenating them here would invent collisions between two
              * blocks that never share a scope.
              */
-            $tmp = tempnam(sys_get_temp_dir(), 'kbbjs') . '.js';
+            $tmp = tempnam(kbbTempDir(), 'kbbjs') . '.js';
             file_put_contents($tmp, $script);
 
             $out = [];

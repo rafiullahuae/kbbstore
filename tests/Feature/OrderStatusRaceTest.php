@@ -162,7 +162,7 @@ it('hands one coupon use back when two processes close the same order together',
         $plan = statusRaceWorker(array_merge(['--mode=seed', "--rounds={$rounds}"], $connection));
         expect($plan['ok'] ?? false)->toBeTrue('seeding failed: ' . json_encode($plan));
 
-        $planFile = tempnam(sys_get_temp_dir(), 'order-status-race-');
+        $planFile = tempnam(kbbTempDir(), 'order-status-race-');
         file_put_contents($planFile, json_encode($plan));
 
         // Far enough ahead that both workers have booted Laravel and are

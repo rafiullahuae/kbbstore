@@ -37,7 +37,7 @@ use Tests\Support\UgcAdminRoutes;
  */
 function ugcFile(string $name, string $bytes): \Illuminate\Http\UploadedFile
 {
-    $path = tempnam(sys_get_temp_dir(), 'ugcup');
+    $path = tempnam(kbbTempDir(), 'ugcup');
     file_put_contents($path, $bytes);
 
     return new \Illuminate\Http\UploadedFile($path, $name, null, null, true);

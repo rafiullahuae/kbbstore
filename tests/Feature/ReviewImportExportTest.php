@@ -75,7 +75,7 @@ function beProduct(array $overrides = []): Product
 /** A CSV on disk, as an upload. */
 function beCsv(string $body, string $name = 'reviews.csv'): UploadedFile
 {
-    $path = tempnam(sys_get_temp_dir(), 'becsv');
+    $path = tempnam(kbbTempDir(), 'becsv');
     file_put_contents($path, $body);
 
     // `test` => the file is not moved through the real upload machinery, which

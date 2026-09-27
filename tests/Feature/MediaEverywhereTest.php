@@ -44,7 +44,7 @@ use Tests\Support\MediaLibraryRoutes;
 
 function mevFile(string $name, string $bytes): \Illuminate\Http\UploadedFile
 {
-    $path = tempnam(sys_get_temp_dir(), 'mev');
+    $path = tempnam(kbbTempDir(), 'mev');
     file_put_contents($path, $bytes);
 
     return new \Illuminate\Http\UploadedFile($path, $name, null, null, true);
@@ -543,7 +543,7 @@ it('catalogues the cover and the teaser ffmpeg cuts, not only the file that was 
      * MUTATION NOTE. Remove either MediaRegistrar::record() call from
      * UgcTranscoder::derive() and this is red on that file. RUN: red on each.
      */
-    $stub = tempnam(sys_get_temp_dir(), 'mevff');
+    $stub = tempnam(kbbTempDir(), 'mevff');
     // `for out; do :; done` leaves $out holding the LAST positional argument,
     // which is where both commands put their destination.
     file_put_contents($stub, "#!/bin/sh\nfor out; do :; done\ncase \"\$out\" in\n  *.jpg) printf 'fake-jpeg-bytes' > \"\$out\" ;;\n  *) printf 'x' > \"\$out\" ;;\nesac\nexit 0\n");
