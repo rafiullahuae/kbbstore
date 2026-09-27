@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Review;
 use App\Services\SettingsService;
+use App\Support\MediaRegistrar;
 use App\Support\ReviewSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -189,7 +190,47 @@ class ReviewController extends Controller
             }
 
             $photo->move($dir, $name);
-            $images[] = '/uploads/reviews/' . $name;
+            $stored = '/uploads/reviews/' . $name;
+            $images[] = $stored;
+
+            /*
+             * ── AND IT JOINS THE MEDIA LIBRARY NOW, NOT AT THE NEXT RESCAN ───
+             *
+             * THE DEFECT THIS CLOSES, and it is freshness rather than absence.
+             * public/uploads/reviews/ IS under MediaBackfill's walk, so a
+             * shopper's photograph has always been catalogued — eventually, by
+             * whoever next pressed Rescan on Store → Media Library. Until then
+             * the picture was on a live product page and in no library, so the
+             * owner could not find it to look at, could not see its usage, and
+             * MediaUsage's delete guard had no row to protect. "Eventually, if
+             * somebody presses a button" is not a state this shop should have:
+             * the owner's rule is that every file this shop writes joins the
+             * library, and the pattern for honouring it at the write is already
+             * in Services\UgcMedia, which calls the same registrar on the same
+             * line it stores the file.
+             *
+             * THE MIME IS NOT PASSED, and that is not an omission. $photo is a
+             * shopper's upload and its client mime type is a header the browser
+             * sent; MediaRegistrar derives the mime from the extension on disk,
+             * which here came from `$photo->extension()` — Symfony's guess from
+             * the file's own CONTENT, not from its name. Handing it the client
+             * value could only ever corroborate (it is checked against the same
+             * table) or be discarded, so passing nothing is the same answer with
+             * one less place for visitor-controlled text to travel.
+             *
+             * NOR IS THE ORIGINAL FILENAME. `original_name` is stored for search
+             * only, and on the other writers it is an operator's own name for
+             * their own file. Here it is a string a stranger on the internet
+             * chose, printed back into the admin console; the uploaded name
+             * already never touches the filesystem path two lines up, for that
+             * reason, and there is no reason to let it into the library either.
+             *
+             * IT CANNOT FAIL THE SUBMISSION. record() reports and returns null
+             * on any throw, and by this point the file is written. A shopper's
+             * review must not be refused because a catalogue row did not write —
+             * and the next Rescan picks it up, exactly as it did before.
+             */
+            MediaRegistrar::record($stored);
         }
 
         $review = Review::create([

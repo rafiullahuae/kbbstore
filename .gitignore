@@ -74,6 +74,14 @@ public-web-root/uploads/
 # tracked — it is the built asset bundle — so this is the uploads folder only.
 public/uploads/
 
+# Lane MB. The IMPORT's tree, and the same rule a third time along.
+# Import\MediaSideloader fetches the owner's whole WooCommerce catalogue into
+# public/wp-content/uploads/ (D-45: the paths in `products`.image already point
+# there, so no shared image URL breaks), and this lane's tests write real bytes
+# into it. Hundreds of a live shop's product photographs are not source, and a
+# `git add -A` that caught them would put them inside an update package.
+public/wp-content/
+
 # ...and the preview database beside it. A stray .sqlite in the tree fails
 # PackageSigningTest's `it holds no private key in this tree` scan, which is how
 # this one was found.

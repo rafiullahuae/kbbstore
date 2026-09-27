@@ -268,7 +268,7 @@ it('does not write a second row for a path it has already catalogued', function 
         ->and($second->alt)->toBe('the operator typed this');
 });
 
-it('refuses to catalogue anything that is not media, or that is not under uploads', function () {
+it('refuses to catalogue anything that is not media, or that is not under an uploads root', function () {
     /*
      * THE REGISTRAR TURNS ITS ARGUMENT INTO A public_path() CONCATENATION AND,
      * in forget(), INTO A DELETE. A column is only ever as trustworthy as
@@ -276,28 +276,51 @@ it('refuses to catalogue anything that is not media, or that is not under upload
      * rather than a denylist of tricks — the rule UgcPath::stored() states, one
      * directory wider.
      *
-     * `uploads/` specifically, and not merely "inside the web root", because
-     * that prefix is ALSO what Media::urlFor() reads to tell an admin upload
-     * from an imported /wp-content/uploads/ path. A row stored outside it would
-     * be served from the wrong root and 404.
+     * TWO ROOTS AND NOT ONE, SINCE LANE MB, and the pin below was advanced
+     * rather than deleted. It used to assert that
+     * `normalise('/wp-content/uploads/2024/01/x.jpg')` was NULL, on this
+     * reasoning, which is kept here because it was wrong in an instructive way:
      *
-     * MUTATION NOTE. Drop the `str_starts_with($clean, 'uploads/')` test from
-     * MediaRegistrar::normalise() and the wp-content case goes green — a row
-     * whose URL is /wp-content/uploads/wp-content/... RUN: red as written,
-     * green with the test removed.
+     *     "`uploads/` specifically, and not merely 'inside the web root',
+     *      because that prefix is ALSO what Media::urlFor() reads to tell an
+     *      admin upload from an imported /wp-content/uploads/ path. A row
+     *      stored outside it would be served from the wrong root and 404."
+     *
+     * The first half is true and still is — urlFor() does tell them apart by
+     * that prefix. The CONCLUSION did not follow: urlFor() sends the other
+     * shape to Url::media(), which has always carried an explicit branch for a
+     * path that already names the root ("Accept paths already carrying the
+     * root, so importers can store either form"), so the doubled
+     * `/wp-content/uploads/wp-content/...` the old mutation note predicted
+     * cannot happen. MediaAfterImportTest proves both shapes resolve.
+     *
+     * What the refusal actually did was keep the owner's entire imported
+     * WooCommerce catalogue out of his Media Library: Import\MediaSideloader
+     * writes every fetched photograph to `public_path('wp-content/uploads/…')`,
+     * and record() returned null for all of them. So the shape is now ACCEPTED
+     * and what is pinned here is that widening it widened nothing else.
+     *
+     * MUTATION NOTE. Remove `'wp-content/uploads/'` from MediaRegistrar::ROOTS
+     * and the last expectation is red — and so is the import half of
+     * MediaAfterImportTest. Change the `str_starts_with($clean, $root)` loop to
+     * `str_contains(...)` and the `etc/…` expectation below is red: a root
+     * found in the MIDDLE of a path is not a root. RUN: red for each.
      */
     mevPut('uploads/mev-scan/parked.zip', 'PK'.str_repeat("\x00", 40));
     mevPut('uploads/mev-scan/real.png', mevPng(10, 10));
 
     expect(MediaRegistrar::record('uploads/mev-scan/parked.zip'))->toBeNull()
         ->and(MediaRegistrar::normalise('uploads/mev-scan/../../etc/passwd'))->toBeNull()
-        ->and(MediaRegistrar::normalise('/wp-content/uploads/2024/01/x.jpg'))->toBeNull()
+        ->and(MediaRegistrar::normalise('etc/wp-content/uploads/2024/01/x.jpg'))->toBeNull()
         ->and(MediaRegistrar::normalise('https://evil.test/x.png'))->toBeNull()
         ->and(MediaRegistrar::normalise('//evil.test/x.png'))->toBeNull()
         ->and(MediaRegistrar::normalise('uploads\\mev-scan\\x.png'))->toBeNull()
         // And the shape it does accept, normalised to the one spelling `media`.path
         // and Media::urlFor() both use.
-        ->and(MediaRegistrar::normalise('/uploads/mev-scan/real.png'))->toBe('uploads/mev-scan/real.png');
+        ->and(MediaRegistrar::normalise('/uploads/mev-scan/real.png'))->toBe('uploads/mev-scan/real.png')
+        // ...and the import's root, which this used to refuse.
+        ->and(MediaRegistrar::normalise('/wp-content/uploads/2024/01/x.jpg'))
+        ->toBe('wp-content/uploads/2024/01/x.jpg');
 
     // A row for a file that is not on disk is a broken thumbnail forever, which
     // is the very thing forget() exists to prevent. Refused, not recorded hopefully.

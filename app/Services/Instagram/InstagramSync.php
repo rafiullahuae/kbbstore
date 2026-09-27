@@ -7,6 +7,7 @@ namespace App\Services\Instagram;
 use App\Models\InstagramPost;
 use App\Services\InstagramFeed;
 use App\Services\InstagramSettings;
+use App\Support\MediaRegistrar;
 
 /**
  * One fetch: the token refreshed if it needs it, the profile, the media, the
@@ -512,12 +513,63 @@ class InstagramSync
             return null;
         }
 
+        /*
+         * ── IT JOINS THE MEDIA LIBRARY NOW, NOT AT THE NEXT RESCAN ───────────
+         *
+         * THE DEFECT THIS CLOSES, and like the review-photo path it is freshness
+         * rather than absence: `uploads/instagram/` IS under MediaBackfill's
+         * walk, so these have always been catalogued EVENTUALLY — by whoever next
+         * pressed Rescan on Store → Media Library. Until then a picture was on
+         * the storefront's Instagram rail and in no library. The owner's rule is
+         * that every file this shop writes joins the library; UgcMedia does it on
+         * the line it stores the file, and so does this now.
+         *
+         * AFTER IgPath::stored() HAS PASSED, deliberately. The check above is the
+         * one that can still `@unlink` this file and return null, and a row for a
+         * file that was then deleted is the broken thumbnail forget() exists to
+         * prevent. Registering below it means nothing is ever catalogued that
+         * this method did not keep.
+         *
+         * NO MIME PASSED. getimagesizefromstring() on the downloaded body chose
+         * the extension a few lines up — the bytes decided, which is this
+         * method's own rule — so the extension on disk is already the
+         * byte-derived answer MediaRegistrar would read. There is no second
+         * opinion to offer.
+         */
+        MediaRegistrar::record($stored);
+
         if ($replacing !== null && $replacing !== $stored) {
             $old = IgPath::absolute($replacing);
 
             if ($old !== null && is_file($old)) {
                 @unlink($old);
             }
+
+            /*
+             * ── AND THE ROW FOLLOWS THE FILE, WHICH IS NOT OPTIONAL ──────────
+             *
+             * REGISTERING WITHOUT THIS WOULD HAVE BEEN WORSE THAN NOT
+             * REGISTERING AT ALL. A post whose picture changes — Instagram
+             * re-issues a thumbnail URL, or a VIDEO's poster frame is
+             * regenerated — gets a new file here and its old one unlinked. Left
+             * alone, the old file's `media` row would survive pointing at
+             * nothing: a permanently broken tile in the Media Library that no
+             * screen can clear, growing by one on every refresh that replaces a
+             * picture, on a host where the owner cannot reach the table. That is
+             * exactly the failure MediaRegistrar::forget() was written for, and
+             * its docblock settles the reasoning: the FILE is going regardless,
+             * so keeping the row would not save the image, it would only hide
+             * that it is gone.
+             *
+             * INSIDE THE `$replacing !== $stored` BRANCH, matching the unlink it
+             * pairs with to the byte. A refresh that lands the SAME path — the
+             * common case, since IgPath::fileName() is derived from the post's
+             * remote id — must not forget the row it has just written.
+             *
+             * forget() never throws and returns a count; it is not consulted,
+             * because a sync must not fail over a catalogue row.
+             */
+            MediaRegistrar::forget($replacing);
         }
 
         return $stored;
@@ -693,6 +745,21 @@ class InstagramSync
             if ($file !== null && is_file($file)) {
                 @unlink($file);
             }
+
+            /*
+             * THE ROW FOLLOWS THE FILE HERE TOO, and this is the branch that
+             * would have leaked fastest. prune() runs on every refresh and
+             * unlinks the picture of every post that has dropped off the feed,
+             * so with registration on write and no forget here the Media Library
+             * would accumulate one dead tile per pruned post, for ever, with no
+             * screen able to clear it. Same call, same reasoning as the replace
+             * branch in storeImage(): the file is going, so the row goes with it.
+             *
+             * Unconditional rather than inside the is_file() check: a row whose
+             * file was ALREADY missing is the very thing being cleaned up, and
+             * MediaRegistrar::forget() answers 0 when there is no row.
+             */
+            MediaRegistrar::forget((string) $post->local_path);
 
             $post->delete();
         }
