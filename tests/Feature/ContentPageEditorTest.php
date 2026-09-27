@@ -379,28 +379,49 @@ it('registers no route that could create or delete a page', function () {
      * deleted page is a 404 at an address the footer advertises.
      *
      * Asserted over the ROUTER rather than by reading the controller, because
-     * that is the question: does any endpoint exist. And over this lane's own
-     * URIs rather than a prefix sweep, so it cannot silently start asserting
-     * over another lane's endpoints.
+     * that is the question: does any endpoint exist.
+     *
+     * ── THIS CASE ASSERTED NOTHING AT ALL UNTIL THE MUTATION WAS RUN ────────
+     *
+     * It used to sweep `PageEditorRoutes::registered()`, which filters the router
+     * down to the four URIs in `PageEditorRoutes::URIS`. A create route is BY
+     * DEFINITION not one of those four, so it was invisible to the sweep: adding
+     * `POST /admin-api/page-editor-create` left this case green, and the header
+     * above it claimed in as many words that it would go red. Measured — mutation
+     * 6 of this lane's run — 47 passed.
+     *
+     * A "no such endpoint exists" claim cannot be checked against a list of the
+     * endpoints that do exist. So the sweep is over the WHOLE route collection
+     * now, for every non-GET route whose URI names a page, and the set must be
+     * exactly the one save route. That also catches a write route another lane
+     * mounts under `admin-api/pages/…`, which is where the capability rules would
+     * have decided its guard by list order.
      *
      * MUTATION, RUN: add a `POST /page-editor-create` route and this is red,
-     * naming it.
+     * naming it — 1 failed. Green before the fix.
      */
-    $mine = PageEditorRoutes::registered();
-
-    expect($mine)->toHaveCount(count(PageEditorRoutes::URIS));
+    expect(PageEditorRoutes::registered())->toHaveCount(count(PageEditorRoutes::URIS));
 
     $writes = [];
 
-    foreach ($mine as $route) {
+    foreach (Route::getRoutes() as $route) {
+        $uri = $route->uri();
+
+        if (! str_contains($uri, 'pages') && ! str_contains($uri, 'page-editor')) {
+            continue;
+        }
+
         foreach (array_diff($route->methods(), ['HEAD', 'OPTIONS']) as $method) {
             if ($method !== 'GET') {
-                $writes[] = $method.' /'.$route->uri();
+                $writes[] = $method.' /'.$uri;
             }
         }
     }
 
-    expect($writes)->toBe(['POST /admin-api/page-editor-save/{id}']);
+    sort($writes);
+
+    expect($writes)->toBe(['POST /admin-api/page-editor-save/{id}'],
+        'a route that writes a page exists outside this editor, or the editor grew one');
 
     // And nothing anywhere in the router deletes a page.
     $deletes = [];
