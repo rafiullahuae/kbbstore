@@ -1,0 +1,865 @@
+{
+ "_note": "Lane IG round 2 — the preview and Configure-now-in-a-popup. Taken with tools/ig-shots.cjs (modes `preview` and `popup`) against tools/ig-preview-router.php on 127.0.0.1:8951, Chromium at deviceScaleFactor 2. `fresh` is an app registered but nothing authorised and nothing fetched; `connected` is a stored 60-day token with the nine seeded posts. Each preview entry carries four readings: asLoaded, afterLookInput (layout=rail, gap=22, radius=0, posts=6 driven as real `input` events), afterCaptionInput, and afterPhoneSwitch — with serverStillHolds read back from /admin-api/instagram to show NOTHING WAS SAVED. Egress is blocked in this container (docs/IG-PROFILE.md §0), so the popup entry drives the browser half of the handshake and not Meta.",
+ "preview-fresh-390": {
+  "asLoaded": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 974
+   },
+   "trackClass": "igs-pvt is-grid",
+   "columns": "147px 147px",
+   "gap": 8,
+   "radius": 10,
+   "tiles": 9,
+   "ghosts": 9,
+   "tile": {
+    "w": 147,
+    "h": 147
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 302,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "drove": {
+   "layout": true,
+   "gap": true,
+   "radius": true,
+   "posts": true,
+   "caption": true
+  },
+  "afterLookInput": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 326
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 6,
+   "tile": {
+    "w": 119,
+    "h": 119
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 823,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterCaptionInput": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 326
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 6,
+   "tile": {
+    "w": 119,
+    "h": 119
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 823,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterPhoneSwitch": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 326
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 6,
+   "tile": {
+    "w": 119,
+    "h": 119
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 823,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone*",
+    "Desktop"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "serverStillHolds": {
+   "layout": "grid",
+   "profile_style": "card",
+   "posts": 9,
+   "gap": 8,
+   "radius": 10,
+   "heading": "Follow us on Instagram",
+   "counts": true,
+   "caption": false,
+   "play_badge": true,
+   "tap": "permalink",
+   "__tiles": 0,
+   "__connected": false
+  }
+ },
+ "preview-fresh-1280": {
+  "asLoaded": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 962,
+    "h": 1113
+   },
+   "trackClass": "igs-pvt is-grid",
+   "columns": "306.719px 306.734px 306.719px",
+   "gap": 8,
+   "radius": 10,
+   "tiles": 9,
+   "ghosts": 9,
+   "tile": {
+    "w": 307,
+    "h": 307
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 936,
+   "trackClientWidth": 936,
+   "frameScrollWidth": 960,
+   "frameClientWidth": 960,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "drove": {
+   "layout": true,
+   "gap": true,
+   "radius": true,
+   "posts": true,
+   "caption": true
+  },
+  "afterLookInput": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 962,
+    "h": 336
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 6,
+   "tile": {
+    "w": 159,
+    "h": 159
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 1063,
+   "trackClientWidth": 936,
+   "frameScrollWidth": 960,
+   "frameClientWidth": 960,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterCaptionInput": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 962,
+    "h": 336
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 6,
+   "tile": {
+    "w": 159,
+    "h": 159
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 1063,
+   "trackClientWidth": 936,
+   "frameScrollWidth": 960,
+   "frameClientWidth": 960,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterPhoneSwitch": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 390,
+    "h": 318
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 6,
+   "tile": {
+    "w": 146,
+    "h": 146
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 985,
+   "trackClientWidth": 364,
+   "frameScrollWidth": 388,
+   "frameClientWidth": 388,
+   "playBadges": 0,
+   "albumMarks": 0,
+   "captionsDrawn": 0,
+   "countsDrawn": 0,
+   "firstCount": null,
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "Your account name",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "The profile box is a placeholder. Your avatar, name and follower count are drawn from what the connection fetches, so they appear here the moment it has — and no number is invented in the meantime. These are placeholders. No Instagram post with a stored pictur",
+   "widthSwitch": [
+    "Phone*",
+    "Desktop"
+   ],
+   "configureLabel": "Configure now",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "serverStillHolds": {
+   "layout": "grid",
+   "profile_style": "card",
+   "posts": 9,
+   "gap": 8,
+   "radius": 10,
+   "heading": "Follow us on Instagram",
+   "counts": true,
+   "caption": false,
+   "play_badge": true,
+   "tap": "permalink",
+   "__tiles": 0,
+   "__connected": false
+  }
+ },
+ "preview-connected-390": {
+  "asLoaded": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 939
+   },
+   "trackClass": "igs-pvt is-grid",
+   "columns": "147px 147px",
+   "gap": 8,
+   "radius": 10,
+   "tiles": 9,
+   "ghosts": 0,
+   "tile": {
+    "w": 147,
+    "h": 147
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 302,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 3,
+   "albumMarks": 2,
+   "captionsDrawn": 0,
+   "countsDrawn": 8,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Two things are deliberately different from the shop and both are about being able to see what you just swit",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "drove": {
+   "layout": true,
+   "gap": true,
+   "radius": true,
+   "posts": true,
+   "caption": true
+  },
+  "afterLookInput": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 291
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 0,
+   "tile": {
+    "w": 119,
+    "h": 119
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 823,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 2,
+   "albumMarks": 1,
+   "captionsDrawn": 0,
+   "countsDrawn": 6,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Your How many posts is 6, so the newest 6 of them are drawn and the rest are kept — here and on the shop al",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterCaptionInput": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 291
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 0,
+   "tile": {
+    "w": 119,
+    "h": 119
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 823,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 2,
+   "albumMarks": 1,
+   "captionsDrawn": 6,
+   "countsDrawn": 6,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Your How many posts is 6, so the newest 6 of them are drawn and the rest are kept — here and on the shop al",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterPhoneSwitch": {
+   "viewport": 390,
+   "pageScrollWidth": 390,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 328,
+    "h": 291
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 0,
+   "tile": {
+    "w": 119,
+    "h": 119
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 823,
+   "trackClientWidth": 302,
+   "frameScrollWidth": 326,
+   "frameClientWidth": 326,
+   "playBadges": 2,
+   "albumMarks": 1,
+   "captionsDrawn": 6,
+   "countsDrawn": 6,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Your How many posts is 6, so the newest 6 of them are drawn and the rest are kept — here and on the shop al",
+   "widthSwitch": [
+    "Phone*",
+    "Desktop"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "serverStillHolds": {
+   "layout": "grid",
+   "profile_style": "card",
+   "posts": 9,
+   "gap": 8,
+   "radius": 10,
+   "heading": "Follow us on Instagram",
+   "counts": true,
+   "caption": false,
+   "play_badge": true,
+   "tap": "permalink",
+   "__tiles": 9,
+   "__connected": true
+  }
+ },
+ "preview-connected-1280": {
+  "asLoaded": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 962,
+    "h": 1114
+   },
+   "trackClass": "igs-pvt is-grid",
+   "columns": "306.719px 306.734px 306.719px",
+   "gap": 8,
+   "radius": 10,
+   "tiles": 9,
+   "ghosts": 0,
+   "tile": {
+    "w": 307,
+    "h": 307
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 936,
+   "trackClientWidth": 936,
+   "frameScrollWidth": 960,
+   "frameClientWidth": 960,
+   "playBadges": 3,
+   "albumMarks": 2,
+   "captionsDrawn": 0,
+   "countsDrawn": 8,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Two things are deliberately different from the shop and both are about being able to see what you just swit",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "drove": {
+   "layout": true,
+   "gap": true,
+   "radius": true,
+   "posts": true,
+   "caption": true
+  },
+  "afterLookInput": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 962,
+    "h": 336
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 0,
+   "tile": {
+    "w": 159,
+    "h": 159
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 1063,
+   "trackClientWidth": 936,
+   "frameScrollWidth": 960,
+   "frameClientWidth": 960,
+   "playBadges": 2,
+   "albumMarks": 1,
+   "captionsDrawn": 0,
+   "countsDrawn": 6,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Your How many posts is 6, so the newest 6 of them are drawn and the rest are kept — here and on the shop al",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterCaptionInput": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 962,
+    "h": 336
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 0,
+   "tile": {
+    "w": 159,
+    "h": 159
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 1063,
+   "trackClientWidth": 936,
+   "frameScrollWidth": 960,
+   "frameClientWidth": 960,
+   "playBadges": 2,
+   "albumMarks": 1,
+   "captionsDrawn": 6,
+   "countsDrawn": 6,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Your How many posts is 6, so the newest 6 of them are drawn and the rest are kept — here and on the shop al",
+   "widthSwitch": [
+    "Phone",
+    "Desktop*"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "afterPhoneSwitch": {
+   "viewport": 1280,
+   "pageScrollWidth": 1280,
+   "horizontalOverflow": 0,
+   "contentOverflow": 0,
+   "previewPresent": true,
+   "frame": {
+    "w": 390,
+    "h": 311
+   },
+   "trackClass": "igs-pvt is-rail",
+   "columns": "none",
+   "gap": 22,
+   "radius": 0,
+   "tiles": 6,
+   "ghosts": 0,
+   "tile": {
+    "w": 146,
+    "h": 146
+   },
+   "tileAspect": 1,
+   "trackScrollWidth": 985,
+   "trackClientWidth": 364,
+   "frameScrollWidth": 388,
+   "frameClientWidth": 388,
+   "playBadges": 2,
+   "albumMarks": 1,
+   "captionsDrawn": 6,
+   "countsDrawn": 6,
+   "firstCount": "14,238 312",
+   "profileStyle": "igs-pvp is-card",
+   "profileName": "K-Beauty Bliss",
+   "heading": "Follow us on Instagram",
+   "headingFontSize": 17,
+   "note": "Drawn from the 9 posts this shop has already stored, newest first — the same rows, the same order and the same arrangement the section uses on the shop. Your How many posts is 6, so the newest 6 of them are drawn and the rest are kept — here and on the shop al",
+   "widthSwitch": [
+    "Phone*",
+    "Desktop"
+   ],
+   "configureLabel": "Reconnect",
+   "oauthTag": "A",
+   "oauthHref": "/admin-api/instagram/start",
+   "leaksSecret": false,
+   "leaksToken": false
+  },
+  "serverStillHolds": {
+   "layout": "grid",
+   "profile_style": "card",
+   "posts": 9,
+   "gap": 8,
+   "radius": 10,
+   "heading": "Follow us on Instagram",
+   "counts": true,
+   "caption": false,
+   "play_badge": true,
+   "tap": "permalink",
+   "__tiles": 9,
+   "__connected": true
+  }
+ },
+ "popup-1280-not-yet-connected": {
+  "openerUrlBefore": "http://127.0.0.1:8951/admin#instagram",
+  "pagesBefore": 1,
+  "opened": {
+   "gotPopup": true,
+   "pagesAfter": 2,
+   "openerStillHere": true,
+   "openerBanner": {
+    "klass": "igs-note is-good",
+    "text": "Instagram is open in a separate window. Grant access there and it will close itself — this screen picks the connection up on its own, with nothing to reload."
+   },
+   "popupUrl": "chrome-error://chromewebdata/"
+  },
+  "finished": {
+   "gotPopup": true,
+   "popupClosedItself": true,
+   "openerBanner": {
+    "klass": "igs-note is-bad",
+    "text": "The Instagram window closed without the connection being completed, so nothing was changed. Press Configure now again. If it keeps failing, Instagram’s own reason is printed in full when the step runs"
+   },
+   "openerStillHere": true,
+   "pagesAfter": 1
+  },
+  "abandoned": {
+   "gotPopup": true,
+   "timersWhileOpen": 1,
+   "timersAfterClose": 0,
+   "openerBanner": {
+    "klass": "igs-note is-bad",
+    "text": "The Instagram window closed without the connection being completed, so nothing was changed. Press Configure now again. If it keeps failing, Instagram’s own reason is printed in full when the step runs"
+   },
+   "pages": 1
+  },
+  "ignored": {
+   "bannerBefore": {
+    "klass": "igs-note is-bad",
+    "text": "The Instagram window closed without the connection being completed, so nothing was changed. Press Configure now again. If it keeps failing, Instagram’s own reason is printed in full when the step runs"
+   },
+   "bannerAfter": {
+    "klass": "igs-note is-bad",
+    "text": "The Instagram window closed without the connection being completed, so nothing was changed. Press Configure now again. If it keeps failing, Instagram’s own reason is printed in full when the step runs"
+   }
+  },
+  "fellBack": {
+   "navigatedTo": [
+    "http://127.0.0.1:8951/admin-api/instagram/start"
+   ],
+   "pages": 1
+  }
+ }
+}

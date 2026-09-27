@@ -300,7 +300,7 @@ it**, because the owner asked for one click and one click is not honestly enough
 |---|---|---|
 | 1 | Prints the six items in §7 as a checklist, with the exact redirect URI to copy and a Copy button. Nothing is sent. | reading only |
 | 2 | Takes the Instagram app ID and app secret. Stores the secret encrypted. Validates the ID is digits and the secret is 32 hex characters **before** anything leaves this server. | yes |
-| 3 | **Configure now.** Mints a single-use `state`, redirects to Instagram's own authorisation screen, and on the way back: verifies the state with `hash_equals`, exchanges the code for a short token, exchanges that for a 60-day token, stores it encrypted, fetches the profile, fetches the most recent media, downloads every thumbnail locally, and writes the rows. Then it lands the owner back on the screen with his own profile picture, follower count and grid showing. | **yes, all of it** |
+| 3 | **Configure now.** Opens a popup on `/instagram/start`, which mints a single-use `state` and sends it to Instagram's own authorisation screen. On the way back the server verifies the state with `hash_equals`, exchanges the code for a short token, exchanges that for a 60-day token, stores it encrypted, fetches the profile, fetches the most recent media, downloads every thumbnail locally, and writes the rows. The popup then posts one constant word to the opener and closes itself, and the screen re-reads its own state from this server — the owner never leaves the page he was on. | **yes, all of it** |
 
 Step 3 is the whole of "it should reach to instagram, take permission and configure,
 and display the profile". The button is labelled **Configure now** on a fresh shop and
@@ -464,6 +464,12 @@ its header carries the whole recipe.
 | `admin-connection-390/1280.png` | **Content → Instagram, never connected** |
 | `admin-connection-connected-390/1280.png` | the same screen once a token is held |
 | `admin-tile-*` | the *What a tile shows* tab |
+| `preview-fresh-390/1280.png` | **round 2 — the preview before connecting**: placeholders, at the settings on screen |
+| `preview-connected-390/1280.png` | **the preview once a token is held**: the nine stored posts, newest first |
+| `preview-*-moved-390/1280.png` | the same preview after the controls were driven with real `input` events and **nothing saved** |
+| `screen-fresh-390/1280.png` | where it sits — *Content → Instagram*, the wizard and the preview in one frame |
+| `popup-returned-1280.png` | the screen the moment the popup came back and closed itself |
+| `ig-preview-popup-measurements.json` | round 2 — the preview's geometry at both widths in four states, plus the popup probe |
 | `ig-measurements.json` | 27 measurement sets — tile geometry, overflow, third-party request counts, iframe counts, the admin field census |
 
 Numbers worth reading out of that JSON:
@@ -483,3 +489,74 @@ Numbers worth reading out of that JSON:
 
 The 9-against-8 is the count rule photographed: the post with a genuine zero reads
 `0`, and the post Instagram gave no number for draws no element at all.
+
+---
+
+## 14. Round two — the preview, and Configure now in a popup
+
+Two gaps, both closed, and neither of them a rewrite of anything above: the OAuth
+handshake, the token exchange and the fetch are the same code they were.
+
+**The preview.** `Content → Instagram` now draws the section under the controls, at
+the settings currently on screen, redrawing on `input` rather than on Save. It is a
+**drawing and not an iframe**: rendering the real storefront would be an
+authenticated request and a full page render per keystroke, and it could not show
+UNSAVED settings at all without the shop reading a layout out of a query string —
+which `tools/ig-shots.cjs`'s header already records being rejected for this feature's
+camera, for the reason rule 5 gives.
+
+Its content rides on `GET /admin-api/instagram`, which the screen was already
+calling, as `content.tiles` — its own six-key allowlist, narrower than the shop's
+`InstagramPost::toTile()`, carrying no permalink, no embed and no row id. Capped at
+24, which is the *maximum* of the `posts` slider rather than its current value,
+because the slider moves without asking this server anything.
+
+It restates the section's arrangement in CSS at the same two breakpoints (640 and
+900) and with the same `calc()` fractions `InstagramSettings::cssVariables()` writes
+— 2.3 tiles and 1.3 gaps for a peeking rail on a phone, 5.3 and 4.3 wide. Those are
+**`@container` rules, not `@media` ones**: the preview is a box inside a console, so
+the width that decides its arrangement is the box's and never the window's, and that
+is also what makes the Phone/Desktop switch beside it work without anything
+measuring anything.
+
+Where it differs from the shop it says so under the frame, rather than leaving the
+owner to find out: the caption overlay sits open here and is hover-only there, and a
+like or comment count is drawn on a **real post only** — this shop does not invent a
+number it has not fetched, so a placeholder carries none.
+
+**The popup.** The docblock above the anchor argued that an OAuth handshake is a
+top-level navigation and an XHR cannot log anybody in to one. That is correct, and
+it is not an argument against a popup — a popup *is* a top-level navigation, in a
+window of its own, which is why it is the standard shape. So the anchor stays,
+exactly as it was, and a click handler opens it with `window.open` first and calls
+`preventDefault()` **only if a window came back**. A blocked popup returns null,
+nothing is prevented, and the browser follows the href as it always did; a modified
+click (Ctrl, Cmd, Shift, Alt) is handed straight back to the browser.
+
+The popup half needs no new route and no new view: the callback already lands the
+owner on this console's own URL, so the admin page — and the screen's script with it
+— loads in the popup. Landing parameters plus an opener is the whole condition.
+
+Three properties, and each has a test:
+
+- **the origin is checked before one byte of the data is read.** `event.origin !==
+  window.location.origin` is the first line of the listener, and the test asserts
+  the ordering as well as the existence — an origin check written after the payload
+  has been parsed protects nothing;
+- **the message is one constant word and carries nothing.** Not the token, which was
+  never in the browser to begin with; not a success flag. `window.location.origin`
+  as the target, never `'*'`. Having received it the screen **asks this server** what
+  the state is, which is why a popup that returned with `ig_done` on its URL but no
+  token stored still reports honestly that the connection did not complete — measured,
+  in `popup-1280-not-yet-connected`;
+- **no timer survives the popup.** There is no event for "the owner closed it", so one
+  interval looks — and it is cleared when the popup reports closed, when the message
+  arrives, and at `InstagramAuth::STATE_TTL_SECONDS`. Counted from the harness side:
+  `timersWhileOpen: 1`, `timersAfterClose: 0`.
+
+**The `state` was already verified**, and the brief asked this lane to check rather
+than assume. `InstagramAuth::consume()` pulls it first so every refusal has spent it,
+checks both sides are non-empty before `hash_equals` (because `hash_equals('', '')`
+is true), and enforces the TTL. What nothing covered was the *end* of that — a
+refused callback must also never reach Meta — so that is now asserted through the
+real route with `Http::assertNothingSent()`.
