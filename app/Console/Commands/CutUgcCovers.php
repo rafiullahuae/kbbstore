@@ -55,7 +55,8 @@ class CutUgcCovers extends Command
         {--id=* : Only these clip ids. Repeatable.}
         {--limit=50 : How many clips to attempt in one run.}
         {--force : Re-cut clips that already have a cover, replacing it.}
-        {--dry-run : List what would be cut and change nothing.}';
+        {--dry-run : List what would be cut and change nothing.}
+        {--unattended : Running from the scheduler. A machine that cannot cut is a no-op, not a failure.}';
 
     protected $description = 'Cut the cover and 2.5s teaser for shoppable-video clips, from the CLI';
 
@@ -69,6 +70,32 @@ class CutUgcCovers extends Command
          * what the admin screen says.
          */
         if (! $transcoder->available()) {
+            /*
+             * ── WHY THE SCHEDULER GETS A DIFFERENT ANSWER ──────────────────
+             *
+             * An operator who TYPES this wants to be told it cannot run, and
+             * loudly: a silent exit 0 would leave him waiting for covers that
+             * are never coming.
+             *
+             * Cron does not. This runs every minute; a shop whose host has no
+             * ffmpeg would mail its owner a failure 1,440 times a day, and the
+             * one reliable outcome of that is a mail filter that also hides
+             * the failure he needed to see. "This machine cannot cut" is a
+             * standing condition of the machine, not an event, and a standing
+             * condition reported once a minute is noise.
+             *
+             * It still SAYS so -- at normal verbosity, in one line -- so
+             * `schedule:run` run by hand tells the truth. Only the exit code
+             * differs, and the exit code is the only part cron reads.
+             */
+            if ($this->option('unattended')) {
+                $this->line('Nothing cut: '.(string) $transcoder->blocker(
+                    $transcoder->canSpawn(), $transcoder->binary()
+                ));
+
+                return self::SUCCESS;
+            }
+
             $this->error('This machine cannot cut anything.');
             $this->line('  '.(string) $transcoder->blocker($transcoder->canSpawn(), $transcoder->binary()));
             $this->newLine();

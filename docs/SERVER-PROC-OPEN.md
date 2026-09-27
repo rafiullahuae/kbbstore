@@ -97,6 +97,50 @@ A package cannot ship the fix either: `UpdateGuard::ALLOWED_PREFIXES` is `app/`,
 
 **This is a server change. It has to be made on the server.**
 
+## 3b. ▲ THE EASIEST ROUTE OF ALL — one cron line, and no PHP change at all
+
+**Read this before routes 1 and 2.** Neither of them is necessary if all you
+want is the cover and the teaser.
+
+The reason is the fact §2 established: `proc_open` is switched off in the
+**PHP-FPM pool** that serves the shop, and it is switched **on** in the
+**command line** PHP on the very same machine. So a cover the browser cannot
+cut can be cut by a scheduled command, and nothing on the server has to change.
+
+From 2.60.295 the application schedules that itself. All it needs is Laravel's
+single scheduler entry, which is one line and drives every future scheduled
+task as well:
+
+```
+* * * * * cd /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app && php artisan schedule:run >> /dev/null 2>&1
+```
+
+**Where to put it on Cloudways:** Application Settings → **Cron Job Management**
+→ Add New Cron → **Advanced**, and paste the line above. Basic mode's dropdowns
+cannot express `* * * * *` with a `cd` in front of it.
+
+What then happens, with no further action:
+
+1. You upload a clip. It saves, and the cover cannot be cut in the request —
+   exactly as now.
+2. Within a minute the scheduled run finds the clip, cuts the poster and the
+   2.5-second teaser, and records the duration and dimensions.
+3. Reload the clip and the cover is there.
+
+**Do not add a second cron line for `ugc:cut-covers` itself.** The schedule is
+decided inside PHP; a second entry would run the work twice.
+
+**If you never add the cron line**, nothing breaks — you just cut the covers
+yourself with `php artisan ugc:cut-covers` when it suits you, or upload a
+poster image by hand.
+
+**One honest limit:** this is a *shared* machine and the transcode is real work.
+The scheduled run takes at most 20 clips a minute and holds a lock so two runs
+cannot overlap. After a bulk import of hundreds of clips the covers therefore
+arrive over several minutes rather than all at once. That is deliberate.
+
+---
+
 ## 4. Route 1 — Application Settings → PHP-FPM Settings (per application)
 
 **Applications → (your app) → Application Settings → PHP-FPM Settings.** That

@@ -636,3 +636,222 @@ the owner pushing back:
    `document.documentElement.scrollWidth`.
 8. The PR body names the exact admin path and lists every new key with its
    default and the hard-coded value it replaced.
+
+---
+
+# Lane PX — the WooCommerce product round-trip, field by field
+
+The owner uploaded his live WooCommerce product edit page (`Medicube – Kojic
+Acid Glow Full Routine Set`) and said:
+
+> "check everything on edit page and match with ours. because we will export the
+> products from wordpress site and import into ours. also check and update our
+> import/export module if needed. don't assume anything. everything must be
+> compatible without anything skipping or losing. Also check everything which is
+> related to products, i want super strong, smooth and bugs free functionality.
+> with live progress / counts etc."
+
+**This is a migration correctness lane, not a features lane.** The shop is being
+moved. A field that silently does not arrive is a field nobody discovers until a
+customer asks why a parcel's weight is wrong.
+
+**Where it sits.** `Store → Store Import / Export`, and the product screens
+behind `Catalog → Product editor`.
+
+---
+
+## What the audit already found — start here, do not redo it
+
+I diffed the exporter's product row against what `ProductImporter` reads. Facts,
+each verified in the code, not inferred:
+
+**The exporter emits 40 fields** per product
+(`wordpress-plugin/kbb-exporter/includes/stages/class-kbb-export-stage-products.php:159-213`).
+**`ProductImporter` reads 24 of them.**
+
+### Correctly handled — do NOT "fix" these
+
+Check them, then leave them alone. Each already works and a change is a
+regression risk:
+
+| Concern | How it is already handled |
+|---|---|
+| **Multiple categories** | `category_term_ids` is a comma list; `ProductImporter:212-232` resolves each, writes the full set to the `category_product` pivot and the first to `products.category_id` |
+| **Primary category** | The exporter sorts on `_yoast_wpseo_primary_product_cat` so the primary lands first, which is what `category_id` then takes. The Yoast key is in `YoastSeo::UNMAPPED` because it is consumed on the **product** row, not the SEO row — this looks like a gap and is not one |
+| **Tags** | `TagImporter:221-243` writes `product_tag` membership from the **tag** side. `tag_term_ids` on the product row is therefore redundant, not lost |
+| **Attributes** | `AttributeImporter:505-533` writes `product_attribute_value` from the **attribute** side |
+| **Variations** | `VariationImporter` — its own entity and file |
+| **Yoast SEO** | The SEO stage exports **every** `_yoast_wpseo_*` and `wpseo_*` key by `SELECT DISTINCT meta_key`, not a fixed list. `YoastSeo::MAPPED` imports five (title, metadesc, canonical, og-image, noindex) and `UNMAPPED` names nineteen it deliberately skips **and reports as skipped** |
+
+### ▲ Exported, and then genuinely dropped — this is the lane's work
+
+These have **no column in `products`** and **no sibling importer**. They are
+read out of WooCommerce, written into the CSV, and thrown away on arrival:
+
+| Field | What it is on his page |
+|---|---|
+| `weight` | Product data → Shipping |
+| `length`, `width`, `height` | Product data → Shipping, dimensions |
+| `shipping_class` | Product data → Shipping |
+| `tax_status`, `tax_class` | Product data → General |
+| `virtual`, `downloadable` | The two checkboxes beside "Simple product" |
+| `backorders`, `low_stock_amount` | Product data → Inventory |
+| `upsell_ids`, `cross_sell_ids` | Product data → Linked Products |
+| `grouped_ids` | Linked Products, for grouped products |
+| `purchase_note` | Product data → Advanced |
+| `product_visibility` | The richer four-state value; only the derived `is_visible` yes/no survives |
+| `date_modified` | Overwritten by Eloquent's `updated_at` on insert |
+
+Confirm each against `Schema::getColumnListing('products')` before you start —
+the current list is:
+`brand_id category_id created_at custom_tabs deleted_at description featured
+gtin how_to_use id image image_alts images ingredients is_visible manage_stock
+meta_feed name position price published_at rating review_count routine_concerns
+routine_role sale_ends_at sale_price sale_starts_at seo seo_json short_description
+sku slug status stock stock_status total_sales type updated_at wc_id`.
+
+**The decision this lane must put to the owner, not make alone:** which of those
+he actually needs. Three groups, and they are not equal:
+
+1. **Shipping (`weight`, dimensions, `shipping_class`)** — he ships real
+   parcels across the UAE. Losing weight is losing the input to any weight-based
+   rate. Almost certainly must be carried.
+2. **Tax (`tax_status`, `tax_class`)** — checked, and the answer is *half*. A
+   `tax_rates` table exists with `country, state, rate, priority, is_inclusive,
+   applies_to_shipping` — WooCommerce's own shape, **and it currently holds zero
+   rows**. What does not exist is any per-PRODUCT tax class, which is what
+   `tax_class` selects into. So carrying `tax_class` is only worth anything
+   once the rate table is populated and something reads it. Ask the owner
+   whether UAE VAT is one flat rate on everything — if it is, per-product tax
+   class is data he will never use, and saying so is better than adding two
+   columns nobody reads.
+3. **Linked products (`upsell_ids`, `cross_sell_ids`, `grouped_ids`)** — these
+   are *product-to-product* references and need a pivot plus a **second pass**,
+   because a product can point at one imported after it. Do not try to resolve
+   them inline; `ImportContext::localId()` will legitimately answer null on the
+   first pass.
+
+Bring the three groups to the owner with a one-line cost each. Do not add
+fourteen columns because they exist.
+
+---
+
+## The rules this lane is most likely to break
+
+### 1. A dropped field must be REPORTED, never silent
+
+This is the heart of "without anything skipping or losing". `ImportReport`
+already has `->for($entity)->note(...)`, and `ProductImporter:216` already uses
+it for a category that is not in the import. **Every field the importer
+knowingly does not carry gets the same treatment**, the way `YoastSeo::UNMAPPED`
+does it for SEO: seen, named, skipped, counted. A field that is dropped in
+silence is indistinguishable from a field that was never there.
+
+That alone — before a single new column — turns this from "we hope nothing was
+lost" into a list the owner can read.
+
+### 2. Re-running an import must not duplicate anything
+
+`wc_id` is the identity. Every write is an upsert on it, and the pivots
+(`category_product`, `product_tag`, `product_attribute_value`) are
+diffed — read the existing set, insert the additions, delete the removals — not
+blindly re-inserted. `ProductImporter:345-362` is the pattern; follow it exactly
+for anything new. A test must import the **same file twice** and assert the row
+count and every pivot count are identical after the second run.
+
+### 3. `ImportAtVolumeTest` and the savepoint trap
+
+There is a documented landmine in CLAUDE.md: an intermittent
+`no such savepoint: trans3` in the resume test is **a full disk**, not a
+transaction bug — SQLite aborts the transaction when it cannot write, which
+destroys every savepoint inside it. The tell is that the row it blames moves
+between runs. **Check `df -h /` before debugging any intermittent database error
+in this lane**, and remove finished worktrees.
+
+### 4. Money is integer fils, and a price is not a float
+
+`regular_price` arrives as WooCommerce's decimal string. It is stored as an
+integer. Do not introduce a float anywhere on the path; the existing
+`$row->money()` is the only converter.
+
+### 5. HTML from WordPress is not trusted
+
+`ProductImporter:265-266` runs `description` and `short_description` through
+`cleanHtmlReported()`, which **reports** what it changed. His description is
+full WYSIWYG HTML with lists and bold. Any new text field (`purchase_note`) goes
+through the same path, and rule 5 applies: nothing from an import is ever
+printed unescaped.
+
+### 6. `/api/*` is unauthenticated
+
+`products` already carries `wc_id`, `sku` and `total_sales`, and
+`Product::toApi()` is the allowlist that keeps them off the public endpoint.
+**Every column this lane adds must be considered for that allowlist before it
+is added** — `tax_class` and supplier-ish fields are not shopper business.
+`tests/Feature/ApiSecurityTest.php` pins it and exists because each case leaked
+in production.
+
+---
+
+## Live progress and counts
+
+Largely built — verify and extend, do not rewrite:
+
+- `ImportBackgroundController::progress()` → `ImportChain::progress()`
+- `ImportDriver::denominators()` already reasons about what the denominator of a
+  progress bar should be
+- `ImportLedger` keeps per-file `rows_counted` and merges counters rather than
+  summing them blindly (`ImportLedger:162`)
+- `ImportLedger:366` returns `counts => [imported, changed, new, files]`
+
+What to check, with the owner's words in mind ("live progress / counts"):
+
+1. Does the progress page show **per-entity** counts — products, variations,
+   categories, tags, attributes, reviews — or only a total? Per-entity is what
+   makes "nothing was lost" checkable.
+2. Does a **skipped field** counter reach that page? After rule 1 above it
+   should.
+3. Does the bar move during the products stage on a real-sized catalogue, or
+   jump at the end? Drive it with a seeded export, not a 3-row fixture.
+4. Is there a **final reconciliation**: "WooCommerce said 671 products, 671
+   arrived, 0 refused, 14 fields skipped"? If not, build it. That single
+   sentence is what the owner actually wants and it is the cheapest possible
+   proof of the whole migration.
+
+---
+
+## Done when
+
+1. A written field-by-field table — **every** column of the exporter's product
+   row against what arrives — committed as `docs/PRODUCT-FIELD-PARITY.md`, with
+   each field marked carried / deliberately skipped / newly carried by this lane.
+2. Every deliberately-skipped field is **reported by the importer at run time**,
+   not only in that document.
+3. The owner has been asked, in the PR body, about the three groups above, with
+   a cost per group.
+4. Whatever he approves is carried, with a migration, the `Product::toApi()`
+   allowlist reviewed, and `ApiSecurityTest` extended.
+5. An import of the same file **twice** leaves identical row and pivot counts —
+   with a test.
+6. The progress page shows per-entity counts and ends with a reconciliation
+   sentence.
+7. Screenshots at 390px and 1280px of the progress page mid-run and at the end.
+8. `StorefrontEnglishUnchangedTest` and `StorefrontQueryBudgetTest` unmoved; any
+   new column defaults to what the page renders today.
+
+## Owns
+
+`app/Services/Import/**`, `app/Services/ImportConsole/**`,
+`app/Http/Controllers/Admin/Import*.php`, `wordpress-plugin/kbb-exporter/**`,
+new migrations, `docs/PRODUCT-FIELD-PARITY.md`, `tests/Feature/Import*Test.php`.
+
+## Must not touch
+
+`routes/web.php`, `resources/views/admin/app.blade.php`, `KBB-Master-Plan.md`,
+`KBB-Progress-Dashboard.html`, and anything owned by Lane CP
+(`CartPanel`, the cart-panel screen) or the checkout page.
+
+**`wordpress-plugin/` never ships in a package** — `UpdateGuard` refuses it and
+`BuildPackage::NEVER_SHIP` blocks it twice over. Exporter changes reach the old
+site by installing the plugin there, not through Core Updates. Say so in the PR
+body so the owner knows there are two deliverables, not one.

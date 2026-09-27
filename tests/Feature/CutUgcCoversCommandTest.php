@@ -297,3 +297,58 @@ it('stays quiet about the directory when one clip is present but unreadable', fu
         ->doesntExpectOutputToContain('check WHERE this looked')
         ->run();
 });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * THE SCHEDULED RUN — how a cover gets cut without anybody typing anything.
+ *
+ * The owner asked, in as many words: "i want to have auto get the poster from
+ * the video." On his host the web request cannot do it, and this command can,
+ * so the answer is to run this command on a schedule — one crontab line for
+ * `schedule:run`, and routes/console.php decides the rest.
+ *
+ * That turns one detail of the command into load-bearing behaviour: a machine
+ * that CANNOT cut must not report a failure every minute forever. A cron that
+ * mails its owner 1,440 times a day trains him to filter the mail, and the
+ * filter then hides the failure that mattered.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+it('treats a machine that cannot cut as a no-op when the scheduler runs it', function () {
+    cucClip();
+
+    cucWithoutFfmpeg(function () {
+        $this->artisan('ugc:cut-covers --unattended')
+            // STILL SAYS SO -- `schedule:run` by hand has to tell the truth,
+            // and the sentence is the transcoder's own so it cannot drift.
+            ->expectsOutputToContain('Nothing cut:')
+            // ...but exit 0, which is the only part cron reads.
+            ->assertExitCode(0);
+    });
+});
+
+/*
+ * MUTATION: delete the `if ($this->option('unattended'))` arm and this is red
+ * with exit code 1 -- the cron-failure-every-minute shape. RUN: red.
+ *
+ * AND THE OTHER HALF, which is the one a careless fix would break: a person who
+ * TYPES the command must still be told, loudly, that it cannot run. The case
+ * near the top of this file ("says why it cannot cut") covers that, and it
+ * passes the flag NOT at all -- so the two arms are pinned independently and a
+ * change that silenced both would still go red.
+ */
+it('keeps the scheduled entry pointed at the unattended flag', function () {
+    /*
+     * Read out of the file rather than out of the Schedule, because what is
+     * being pinned is that the SCHEDULED invocation carries --unattended. A
+     * schedule registered without it would exit non-zero every minute on a host
+     * with no ffmpeg, which is exactly the defect the arm above prevents, and
+     * nothing else in this suite would notice.
+     */
+    $console = (string) file_get_contents(base_path('routes/console.php'));
+
+    expect($console)->toContain("Schedule::command('ugc:cut-covers --limit=20 --unattended')")
+        // A long transcode must not hold schedule:run, and a killed process
+        // must not hold the lock forever.
+        ->toContain('->withoutOverlapping(10)')
+        ->toContain('->runInBackground()');
+});
