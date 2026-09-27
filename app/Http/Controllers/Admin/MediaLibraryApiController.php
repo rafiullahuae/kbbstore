@@ -7,8 +7,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Media;
 use App\Models\MediaUsageRecord;
+use App\Models\UgcVideo;
 use App\Support\AggregatesQueries;
 use App\Support\MediaBackfill;
+use App\Support\MediaRegistrar;
 use App\Support\MediaUsage;
 use App\Support\SearchTerms;
 use Illuminate\Database\Eloquent\Builder;
@@ -175,6 +177,44 @@ class MediaLibraryApiController extends Controller
      */
     public function destroy(Request $request, Media $media): JsonResponse
     {
+        /*
+         * ── A SHOPPABLE-VIDEO FILE IS REFUSED, AND force=1 DOES NOT PASS ────
+         *
+         * THE DEFECT THIS CLOSES. MediaUsage walks products, brands and
+         * categories — and nothing else. A file under uploads/ugc/ is referenced
+         * by `ugc_videos`.file_path / teaser_path / poster_path, which that walk
+         * has never looked at, so verify() answers "nothing points at this" and
+         * the detail panel prints "safe to delete" for the clip playing on the
+         * owner's homepage. The unlink below then removes it and the storefront
+         * serves <video src> at a 404.
+         *
+         * THIS WAS ALREADY REACHABLE BEFORE THIS LANE, which is why it is a fix
+         * and not a consequence: MediaBackfill's walk of public/uploads is
+         * recursive, so a Rescan has always catalogued the POSTER of every clip.
+         * Adding the clips themselves to the library only widens a hole that was
+         * open on the posters.
+         *
+         * NOT OVERRIDABLE. Every other refusal on this endpoint is, because
+         * there the operator can see the consequence and may want it — a broken
+         * image on a page they are about to rebuild. Forcing this one produces a
+         * state NO screen can repair: the clip row survives with a path to
+         * nothing, the rail tile is a black box, and the owner's only route back
+         * is to re-upload through a dialog that will not tell him why. The clip's
+         * own Delete removes the row and all three files together, which is the
+         * operation he actually wants, and the refusal says so by name.
+         */
+        if (($clip = $this->shoppableVideoUsing((string) $media->path)) !== null) {
+            return response()->json([
+                'ok' => false,
+                'used' => true,
+                'usage' => [],
+                'message' => 'This file belongs to the shoppable video “'.$clip.'”. Deleting it here would '
+                    .'leave that video pointing at nothing, and no screen could put it back. Open '
+                    .'Content → Shoppable video, find that clip and delete or replace it there — its '
+                    .'files go with it.',
+            ], 409);
+        }
+
         $usage = MediaUsage::verify(MediaUsage::index(), (string) $media->filename, (string) $media->path);
 
         $force = in_array((string) $request->query('force', ''), ['1', 'true', 'yes'], true);
@@ -279,6 +319,42 @@ class MediaLibraryApiController extends Controller
     private function filtered(Request $request): Builder
     {
         $query = Media::query();
+
+        /*
+         * ── by what it IS: a picture or a video ──────────────────────────
+         *
+         * NEW, AND THE DEFAULT IS THE ANSWER THIS ENDPOINT ALREADY GAVE.
+         *
+         * From this lane the library also holds shoppable-video clips and
+         * teasers, because the owner's rule is that every upload joins it. But
+         * this endpoint has one other caller: window.kbbPickMedia, the shared
+         * picker, which every image field in the console opens — the product
+         * gallery, brand logos, category images, the SEO share image, the clip's
+         * own poster. Offering a 40 MB .mp4 as a brand logo would be a
+         * regression in the exact shape rule 1 forbids, and the picker sends no
+         * new parameter, so THE DEFAULT HAS TO BE WHAT IT WAS.
+         *
+         * So the default EXCLUDES VIDEO rather than requiring an image. That
+         * distinction is the whole safety of it: a positive `mime LIKE image/%`
+         * test would also drop every row whose mime is NULL or an odd spelling
+         * — the WooCommerce import wrote plenty — and those rows are in the
+         * picker today. Excluding one new thing removes nothing that is there.
+         *
+         * `all` is what the Media Library screen sends, because the owner asked
+         * to see his videos there. Anything else falls to the default, which is
+         * the "a select stores one of its own options or the default" rule
+         * applied to a query parameter.
+         */
+        $kind = strtolower(trim((string) $request->query('kind', '')));
+
+        if ($kind === 'video') {
+            $query->where('media.mime', 'like', 'video/%');
+        } elseif ($kind !== 'all') {
+            $query->where(function ($w) {
+                $w->whereNull('media.mime')
+                    ->orWhere('media.mime', 'not like', 'video/%');
+            });
+        }
 
         /*
          * ── by name ──────────────────────────────────────────────────────
@@ -531,6 +607,13 @@ class MediaLibraryApiController extends Controller
             'width' => $media->width === null ? null : (int) $media->width,
             'height' => $media->height === null ? null : (int) $media->height,
             'alt' => (string) $media->alt,
+            /*
+             * WHAT THE TILE SHOULD DRAW, decided here rather than by the screen
+             * sniffing the mime string for itself. MediaRegistrar::isVideo() is
+             * the one test, so a row the WooCommerce import spelled unusually
+             * cannot read as a picture on one screen and a video on another.
+             */
+            'is_video' => MediaRegistrar::isVideo($media->mime),
             'created_at' => optional($media->created_at)->toIso8601String(),
             'used' => $usage !== [],
             'used_count' => count($usage),
@@ -556,6 +639,55 @@ class MediaLibraryApiController extends Controller
                 array_slice($usage, 0, 3),
             ))),
         ];
+    }
+
+    /**
+     * The title of the shoppable video that still points at this file, or null.
+     *
+     * ── WHY IT IS HERE AND NOT IN MediaUsage ────────────────────────────────
+     *
+     * MediaUsage is the index BEHIND THE GRID: its TYPES vocabulary is returned
+     * by index(), rendered as the "Used by" filter, written into `media_usages`
+     * and pinned by MediaUsagesTest. Adding a fourth owner kind to it would move
+     * a filter the owner already uses, a column's vocabulary and a public payload
+     * — a lot of moving parts for a question with exactly one caller. So this is
+     * a targeted lookup at the one point of use, and it says plainly that the
+     * grid's badge does not know about it.
+     *
+     * TWO QUERIES AT MOST, AND ONLY ON A DELETE. Bounded by the path shape: a
+     * file outside uploads/ugc/ cannot be a clip's file and is answered without
+     * touching the database at all, so every product image, brand logo and SEO
+     * share image deleted from this screen costs exactly what it did before.
+     *
+     * A THREE-COLUMN `OR`, not three queries. The same file cannot be two kinds
+     * at once, but a row can be found by whichever column names it, and the
+     * comparison is on the stored spelling — UgcMedia writes `/uploads/ugc/<name>`
+     * with the leading slash and that is what the columns hold.
+     */
+    private function shoppableVideoUsing(string $path): ?string
+    {
+        $stored = '/'.ltrim(trim($path), '/');
+
+        if (! str_starts_with($stored, '/uploads/ugc/')) {
+            return null;
+        }
+
+        $clip = UgcVideo::query()
+            ->where(function ($w) use ($stored) {
+                $w->where('file_path', $stored)
+                    ->orWhere('teaser_path', $stored)
+                    ->orWhere('poster_path', $stored);
+            })
+            ->first();
+
+        if ($clip === null) {
+            return null;
+        }
+
+        // A title, never empty: a clip created from a filename always has one,
+        // but a row edited by hand could carry '' and a refusal reading
+        // "belongs to the shoppable video ""'" tells nobody anything.
+        return (string) $clip->title !== '' ? (string) $clip->title : ('#'.$clip->id);
     }
 
     /** Y-m-d, or null. Anything else is ignored rather than turned into "now". */

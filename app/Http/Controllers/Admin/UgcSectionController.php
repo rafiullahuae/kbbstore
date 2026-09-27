@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\UgcSection;
 use App\Models\UgcVideo;
+use App\Services\UgcMedia;
 use App\Services\UgcRail;
 use App\Services\UgcSettings;
 use Illuminate\Http\JsonResponse;
@@ -235,6 +236,147 @@ class UgcSectionController extends Controller
         UgcRail::flush();
 
         return response()->json(['ok' => true, 'count' => count($sync)]);
+    }
+
+    /**
+     * Upload a video straight into this section — REQUIREMENT ONE OF THIS LANE.
+     *
+     * ── WHAT THE OWNER ASKED FOR, IN HIS WORDS ──────────────────────────────
+     *
+     *   "I want also the upload new video function, instead of going to clips
+     *    tab specially. also that video will auto add to clips page + Media too.
+     *    in short whenever we upload any media, it should go to Media also."
+     *
+     * He drew the box in the top-right of the "Add from the library" card, on
+     * Content → Shoppable video → Sections → (open a section). One drop there,
+     * and afterwards the clip is in THIS section, in the Clips tab, and in the
+     * Media Library. All three, or it is not what he asked for.
+     *
+     * ── WHY IT IS A POST TO A SECTION AND NOT TO /ugc-videos/{id}/media ──────
+     *
+     * Because there is no {id}. Every upload endpoint in this module attaches a
+     * file to a row that already exists, which is right for the clip editor and
+     * impossible here: the clip he is creating does not exist until the file
+     * arrives. So the upload creates the row — App\Services\UgcClipIntake — and
+     * this method's own job is the placement, which is the part that belongs to a
+     * section and to nothing else.
+     *
+     * NOT A SECOND SET OF FILE RULES. Every byte-level check is UgcMedia's, the
+     * derivatives are UgcTranscoder's, the library row is MediaRegistrar's, and
+     * the pre-flight refusal is UploadArrival's — the same four this module has
+     * used since they were written. There is no validation here that
+     * /ugc-videos/{id}/media does not also apply.
+     *
+     * ── IT LANDS AT THE END, AND THE CAP IS HONOURED ────────────────────────
+     *
+     * `position` is max+1, so a new clip appears last rather than displacing the
+     * order the operator arranged. UgcSection::MAX_TILES is refused rather than
+     * silently dropped: a file accepted, written to disk and then not added to
+     * the section he was looking at is the worst shape of all, so the cap is
+     * checked BEFORE the upload is taken and says what to do about it.
+     *
+     * ── AND IT IS A DRAFT, SAID OUT LOUD ───────────────────────────────────
+     *
+     * A clip cannot be published without a cover and granted permission —
+     * UgcVideo::publishBlockers() — so this returns them with the row, and the
+     * panel prints them rather than letting him think the rail just changed.
+     * Nothing here can publish: `status` is not accepted from the request and
+     * the gate lives on UgcVideoController's write path.
+     */
+    public function upload(
+        Request $request,
+        string $id,
+        \App\Services\UgcClipIntake $intake,
+        \App\Support\UploadArrival $arrival,
+    ): JsonResponse {
+        $section = $this->find($id);
+
+        if ($section === null) {
+            return response()->json(['ok' => false, 'error' => 'not_found'], 404);
+        }
+
+        /*
+         * THE CAP, BEFORE THE FILE IS LOOKED AT. See the note above: refusing
+         * after a 40 MB upload has been written would be worse than refusing
+         * before it, and the count is one query.
+         */
+        if ($section->videos()->count() >= UgcSection::MAX_TILES) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'This section already holds the most clips a section can ('
+                    .UgcSection::MAX_TILES.'). Remove one first, or put this clip in another section.',
+            ], 422);
+        }
+
+        /*
+         * WHAT PHP DID TO THE REQUEST, BEFORE ANY RULE RUNS.
+         *
+         * The defect App\Support\UploadArrival was written for, and it applies
+         * here identically: when a body is larger than post_max_size, PHP throws
+         * the WHOLE body away and $_POST and $_FILES both arrive empty, so
+         * validate() fails on a missing file and the endpoint blames a file that
+         * was fine. The cap quoted is the CLIP's, because a clip is the only thing
+         * this endpoint takes — there is no `kind` to read, which is one fewer
+         * thing that can be wrong than on /ugc-videos/{id}/media.
+         */
+        $arrived = $arrival->check($request, 'file', UgcMedia::MAX_BYTES[UgcMedia::KIND_CLIP], 'video');
+
+        if ($arrived !== null) {
+            return response()->json([
+                'ok' => false,
+                'error' => $arrived['error'],
+                'reason' => $arrived['reason'],
+            ], $arrived['status']);
+        }
+
+        $request->validate([
+            'file' => ['required', 'file'],
+            /*
+             * OPTIONAL, AND NOT A SETTING. The screen does not send it today —
+             * the title comes off the filename, because inventing one would be
+             * putting words in his mouth. It is accepted so that a rename box
+             * beside the drop zone is a screen change and not an endpoint change,
+             * and it is bounded by the same rule the clip editor's `title` is.
+             */
+            'title' => ['nullable', 'string', 'max:180'],
+        ]);
+
+        $made = $intake->create($request->file('file'), $request->input('title'));
+
+        if (! ($made['ok'] ?? false)) {
+            return response()->json(['ok' => false, 'error' => (string) ($made['message'] ?? '')], 422);
+        }
+
+        /** @var UgcVideo $video */
+        $video = $made['video'];
+
+        /*
+         * LAST IN THE ORDER. max()+1 over this section's own pivot rows, so the
+         * arrangement the operator saved is not disturbed by an arrival. Read
+         * after the upload rather than before it, because an upload takes seconds
+         * and another tab may have added a clip in the meantime.
+         */
+        $next = (int) $section->videos()->max('ugc_section_video.position');
+
+        $section->videos()->attach($video->id, ['position' => $next + 1]);
+
+        UgcRail::flush();
+
+        return response()->json([
+            'ok' => true,
+            'video' => [
+                'id' => $video->id,
+                'title' => (string) $video->title,
+                'slug' => (string) $video->slug,
+                'poster' => \App\Services\UgcPath::stored($video->poster_path),
+                'file_path' => \App\Services\UgcPath::stored($video->file_path),
+                'status' => (string) $video->status,
+                'rights_status' => (string) $video->rights_status,
+                'media_state' => $video->mediaState(),
+                'blockers' => $video->publishBlockers(),
+            ],
+            'notes' => $made['notes'] ?? [],
+        ], 201);
     }
 
     /**

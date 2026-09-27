@@ -38,18 +38,19 @@ final class MediaBackfill
     /**
      * Extensions worth cataloguing, and the mime each is served as.
      *
-     * The same set MediaUploadController accepts, keyed the other way round.
-     * Anything else in the uploads tree — a stray .txt, a .zip somebody parked
-     * there — is not an image and does not belong in an image library.
+     * READ OUT OF MediaRegistrar RATHER THAN KEPT HERE, and that is the whole
+     * reason that class exists. This file used to hold its own copy of the list,
+     * and the copy was images-only — while Services\UgcMedia had been writing
+     * .mp4 and .webm into public/uploads/ugc/, which is UNDER THIS VERY WALK and
+     * this walk is recursive, for the whole life of the shoppable-video module.
+     * So a Rescan catalogued the POSTER of every clip and silently skipped the
+     * clip itself. Two lists, one of them stale, in the shape this repo keeps
+     * paying for.
+     *
+     * Anything not in that table — a stray .txt, a .zip somebody parked there —
+     * is not media and does not belong in a media library.
      */
-    private const EXT_MIME = [
-        'jpg' => 'image/jpeg',
-        'jpeg' => 'image/jpeg',
-        'png' => 'image/png',
-        'webp' => 'image/webp',
-        'gif' => 'image/gif',
-        'svg' => 'image/svg+xml',
-    ];
+    private const EXT_MIME = MediaRegistrar::EXT_MIME;
 
     /** Belt and braces against a runaway walk of a web root somebody symlinked. */
     private const MAX_FILES = 20000;
@@ -174,7 +175,19 @@ final class MediaBackfill
             );
 
             $size = @filesize($full);
-            $dimensions = @getimagesize($full);
+
+            /*
+             * Not asked of a video, which getimagesize() cannot read: it would
+             * open and parse the head of a file up to 64 MB to return false. The
+             * box a tile reserves comes from the clip's POSTER, whose dimensions
+             * the shoppable-video controller reads off the image header at upload
+             * time, so there is no number here that anything reads.
+             * MediaRegistrar::record() skips it for the same reason and by the
+             * same test.
+             */
+            $dimensions = MediaRegistrar::isVideo(self::EXT_MIME[$ext])
+                ? false
+                : @getimagesize($full);
 
             $out[] = [
                 'filename' => $entry->getFilename(),

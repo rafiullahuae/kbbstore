@@ -152,6 +152,39 @@
 .ugx-rowacts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 
 /* A screen's own header: a back link on its own line, then the title. */
+/* ── UPLOAD A NEW VIDEO, IN THE TOP-RIGHT OF THE CARD HEAD ────────────────
+   The owner drew the box there, so the head becomes a row with the title on the
+   left and the control on the right. FLEX WITH WRAP, and the wrap is the mobile
+   answer: at 390px the control drops under the title and spans it, with no media
+   query needed and nothing measured in script. min-width:0 on both children so a
+   long title shrinks rather than pushing the control off the card. */
+.ugx-ehtop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+           flex-wrap:wrap;min-width:0;width:100%}
+.ugx-ehtop > .ugx-ehtitle{flex:1 1 min(260px,100%);min-width:0}
+/* The control is a real <label> wrapping a real file input -- the input is what
+   the change handler listens to and what makes it keyboard-operable, and a label
+   is a genuine activator for its input in every browser, so no script forwards
+   the click. Sized with calc() off the viewport like every other control here. */
+.ugx-newup{flex:0 1 auto;display:inline-grid;gap:2px;justify-items:start;cursor:pointer;
+           border:1.5px dashed var(--line,#e3e7ee);border-radius:var(--r-sm,12px);
+           padding:calc(6px + 0.2vw) calc(10px + 0.4vw);background:var(--surface-2,#fafbfc);
+           min-width:0;max-width:100%;
+           transition:border-color .15s var(--ease,ease),background .15s var(--ease,ease)}
+.ugx-newup:focus-within{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+.ugx-newup.is-over{border-color:var(--accent,#15a85a);border-style:solid;
+                   background:var(--accent-soft,#e7f7ee)}
+.ugx-newup.is-bad{border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
+.ugx-newup input[type=file]{position:absolute;width:1px;height:1px;opacity:0;
+                            clip:rect(0 0 0 0);overflow:hidden;white-space:nowrap}
+.ugx-newupname{font-size:12.5px;font-weight:680;color:var(--ink,#101729);overflow-wrap:anywhere}
+.ugx-newupmeta{font-size:10.5px;line-height:1.45;color:var(--ink-faint,#97a0b2);overflow-wrap:anywhere}
+/* The preview of what just arrived. A fixed 9:16 box, the same shape a rail tile
+   reserves, so the panel does not resize around whatever the file's own aspect
+   ratio happens to be. */
+.ugx-newpv{margin-top:10px;width:min(180px,44vw);aspect-ratio:9 / 16;border-radius:var(--r-sm,12px);
+           overflow:hidden;background:#0b0f18}
+.ugx-newpv video{display:block;width:100%;height:100%;object-fit:contain;background:#0b0f18}
+
 .ugx-eh{display:grid;gap:7px;justify-items:start;margin-bottom:16px;min-width:0}
 .ugx-eh > *{min-width:0;max-width:100%}
 .ugx-eh .ugx-code{margin-top:0}
@@ -478,6 +511,17 @@
      BOTH endings stay on screen, because a panel that vanishes when the request
      lands is indistinguishable from a stall. */
   var upState = null, upDone = null, upHandle = null;
+
+  /*
+   * THE SECTION-LEVEL UPLOAD'S OWN THREE, SEPARATE FROM THE DIALOG'S ABOVE.
+   *
+   * Not shared, and that is deliberate: the dialog can be closed while this
+   * upload is in flight, and one shared `upState` would mean the section panel's
+   * bar and the clip editor's bar overwriting each other's percentage. Separate
+   * data attributes too (data-ugx-nbar, not data-ugx-bar), so paintUpload() and
+   * paintNewUpload() cannot find each other's nodes.
+   */
+  var newUp = null, newDone = null, newHandle = null;
   /* Teardowns for the drop zones mounted on the last repaint, so a re-render
      does not leave listeners on detached nodes. */
   var zoneOffs = [];
@@ -655,6 +699,307 @@
   function forgetUpload() {
     if (upHandle) { try { upHandle.cancel(); } catch (e) {} }
     upState = null; upDone = null; upHandle = null;
+  }
+
+  /* ══════════════════════════ UPLOAD A NEW VIDEO INTO THIS SECTION ══════════ */
+
+  /**
+   * The control in the top-right of the "Add from the library" card head.
+   *
+   * A REAL <input type="file"> INSIDE A <label>, exactly as ugxFileRow() does it
+   * and for the same three reasons: the input is what the change handler listens
+   * to, a <label> is a genuine activator for its input in every browser so no
+   * script forwards the click, and it stays keyboard-operable. The input is
+   * visually hidden rather than removed — the browser's own "Choose File / No
+   * file chosen" chrome is the one part of a file input that cannot be styled.
+   *
+   * THE `accept` IS A LITERAL IN THIS SOURCE, not a variable and not
+   * concatenated. AdminMediaPickerEverywhereTest reads this FILE rather than the
+   * rendered page: it sweeps for raw file inputs and treats one whose accept it
+   * cannot see as an image picker that should have gone through the shared Media
+   * Library. This one genuinely is a video picker — the library is an image
+   * library and a 64 MB clip has no business in it — and it says so where the
+   * guard can read it. ugxFileRow's own comment records that concatenating the
+   * attribute made two of these invisible to the guard once already.
+   */
+  function newUploadControlHTML() {
+    var note = capNote('clip');
+
+    return '<label class="ugx-newup" data-ugx-zone="newclip" '
+      + 'data-ugx-accept="video/mp4,video/webm">'
+      + '<input type="file" accept="video/mp4,video/webm" data-ugx-newupload'
+      + (busy ? ' disabled' : '') + '>'
+      + '<span class="ugx-newupname">&#8593; Upload a new video</span>'
+      + '<span class="ugx-newupmeta">Drop one here, or press to choose. It joins this section, '
+      + 'the Clips tab and the Media Library.' + (note ? ' ' + esc(note) : '') + '</span>'
+      + '</label>';
+  }
+
+  /**
+   * The panel under that head: in flight, then what arrived, then refused.
+   *
+   * THE SAME THREE SHAPES uploadHTML() draws for the clip editor, because they
+   * are the shapes that were measured and argued for — see the header of
+   * partials/upload-kit.blade.php for the four defects behind them. What is added
+   * here is the PREVIEW and the DRAFT NOTICE, which are the two things a clip
+   * created out of nothing needs and a clip being edited does not: he has not
+   * seen this file on this shop yet, and he has not been told it cannot go live.
+   */
+  function newUploadHTML() {
+    if (newUp) {
+      return '<div class="ugx-up' + (newUp.stalled ? ' is-slow' : '') + '" data-ugx-nupbox '
+        + 'style="margin-top:12px">'
+        + '<div class="ugx-uph"><span class="ugx-upn">' + esc(newUp.name) + '</span>'
+        + '<span data-ugx-npct>' + esc(String(newUp.pct)) + '%</span></div>'
+        + '<div class="ugx-prog"><div class="ugx-progb" data-ugx-nbar '
+        + 'style="width:' + esc(String(newUp.pct)) + '%"></div></div>'
+        + '<div class="ugx-upm">'
+        + '<span data-ugx-nsent>' + esc(newUp.sentText) + '</span>'
+        + '<span data-ugx-nstage>' + esc(newUp.text || '') + '</span>'
+        + '</div>'
+        + '<div class="ugx-upa"><button type="button" class="ugx-mini" '
+        + 'data-ugx-nupcancel="1">Cancel this upload</button></div>'
+        + '</div>';
+    }
+
+    if (!newDone) return '';
+
+    if (newDone.ok) {
+      /*
+       * THE PREVIEW IS THE FILE THIS SHOP IS NOW SERVING, not the one on his
+       * computer. That distinction is the whole value of it: a preview read out
+       * of the local File object proves the browser can play the file, and a
+       * preview read back off /uploads/ugc/ proves the SHOP can — which is the
+       * thing that was in doubt. `preload="metadata"` and no autoplay: enough to
+       * paint the first frame, and nothing that starts making noise in a back
+       * office. The poster rides along where ffmpeg cut one.
+       *
+       * A URL FROM THE SERVER IS STILL SCHEME-CHECKED BEFORE IT BECOMES A src:
+       * the endpoint returns it through UgcPath::stored(), which accepts
+       * `/uploads/ugc/<one segment>` and nothing else, so a column edited by hand
+       * cannot point this <video> anywhere. Rule 5, at both ends.
+       */
+      var pv = newDone.clip
+        ? '<div class="ugx-newpv"><video src="' + esc(newDone.clip) + '" controls playsinline '
+          + 'preload="metadata"' + (newDone.poster ? ' poster="' + esc(newDone.poster) + '"' : '')
+          + '></video></div>'
+        : '';
+
+      return '<div class="ugx-up" style="margin-top:12px">'
+        + '<div class="ugx-uph"><span class="ugx-upn">' + esc(newDone.title || newDone.name) + '</span>'
+        + '<span>&#10003; added to this section</span></div>'
+        + '<div class="ugx-prog"><div class="ugx-progb" style="width:100%"></div></div>'
+        + '<div class="ugx-upm">'
+        + '<span>' + esc(kb(newDone.bytes)) + ' arrived whole.</span>'
+        + '<span>It is in the Clips tab and the Media Library too.</span>'
+        + '</div>'
+        + pv
+        /*
+         * SAID PLAINLY, BECAUSE THE ALTERNATIVE IS HIM THINKING IT IS LIVE.
+         * A clip cannot be published without a cover and a granted permission —
+         * UgcVideo::publishBlockers() decides, and the endpoint returns its
+         * answer rather than this screen guessing at the rule. Printing the
+         * server's own list is what keeps the two from drifting.
+         */
+        + '<div class="ugx-note is-warm" style="margin-top:10px">'
+        + '<b>This clip is a draft.</b> It will not appear on the shop until it has a cover image '
+        + 'and the creator’s permission is recorded.'
+        + (newDone.blockers && newDone.blockers.length
+            ? '<br>' + newDone.blockers.map(esc).join('<br>')
+            : '')
+        /*
+         * WHAT THE SERVER COULD NOT DO, PRINTED HERE AND NOT ONLY TOASTED.
+         *
+         * On a box with ffmpeg the upload request cuts the cover and the teaser
+         * and this is empty. On a box without one — and UgcTranscoder::available()
+         * now answers false for a host that cannot start a program at all, not
+         * merely one with no binary — derive() returns a sentence saying so, and
+         * that sentence is the difference between "choose a cover and this goes
+         * live" and an owner staring at a draft with no reason given.
+         *
+         * A toast is not enough for it: a toast is gone in four seconds and this
+         * is the one thing standing between the clip and the shop. The server's
+         * own words, escaped, beside the blockers they explain.
+         */
+        + ((newDone.notes && newDone.notes.length)
+            ? '<br>' + newDone.notes.map(esc).join('<br>')
+            : '')
+        + '</div>'
+        + '<div class="ugx-upa">'
+        + '<button type="button" class="ugx-mini" data-ugx-edit="' + esc(String(newDone.id)) + '">'
+        + 'Name it and add the cover</button>'
+        + '<button type="button" class="ugx-mini" data-ugx-nupdismiss="1">Dismiss</button>'
+        + '</div>'
+        + '</div>';
+    }
+
+    return '<div class="ugx-up is-bad" style="margin-top:12px">'
+      + '<div class="ugx-uph"><span class="ugx-upn">' + esc(newDone.name) + '</span>'
+      + '<span>not accepted</span></div>'
+      + '<div class="ugx-upm"><span>' + esc(newDone.message) + '</span>'
+      + '<span>' + esc(kb(newDone.bytes)) + ' — no clip was created.</span></div>'
+      /* Offered only where the kit kept the file, which is only where a second
+         press could really work. A Try again beside "this server accepts at most
+         9.9 MB" is a button that cannot succeed. */
+      + (newDone.retry
+          ? '<div class="ugx-upa"><button type="button" class="ugx-mini" data-ugx-nupretry="1">'
+            + 'Try again</button><span class="ugx-footnote">The file is still on your computer '
+            + '— nothing needs choosing again.</span></div>'
+          : '<div class="ugx-upa"><button type="button" class="ugx-mini" '
+            + 'data-ugx-nupdismiss="1">Dismiss</button></div>')
+      + '</div>';
+  }
+
+  /**
+   * One file, straight into the section being edited.
+   *
+   * `input` may be a file input (the click path) or a File (the drop path), so
+   * there is one uploader and not two — the shape upload() above already uses.
+   */
+  function uploadNewClip(input) {
+    var file = (input instanceof File) ? input
+      : (input && input.files && input.files[0]) ? input.files[0] : null;
+
+    var sectionId = editing && editing.id ? editing.id : null;
+
+    if (!sectionId || !file) return;
+
+    /*
+     * THE PRE-FLIGHT, AGAINST THE CEILING THIS SERVER WILL REALLY HONOUR AND
+     * NEVER AGAINST THE APP'S OWN 64 MB. App\Support\ServerUploadLimits answers
+     * min(app cap, upload_max_filesize, post_max_size less the multipart
+     * overhead); a file over it is discarded by PHP before the shop sees a byte,
+     * and the refusal that follows blames the file. Refused here it costs nothing
+     * and says why.
+     */
+    var ceiling = capBytes('clip');
+
+    if (ceiling > 0 && file.size > ceiling) {
+      newUp = null;
+      newDone = {
+        ok: false, name: file.name, bytes: file.size,
+        message: 'That file is ' + kb(file.size) + ' and ' + capNote('clip').replace(/^Up to /, 'the most '
+          + 'this box takes is ') + ' It was not sent, so no clip was created.',
+        retry: null
+      };
+      say(newDone.message);
+      render();
+      return;
+    }
+
+    /*
+     * THE KIT HAS TO BE ON THE PAGE, and saying so beats throwing.
+     *
+     * window.kbbUpload is defined by partials/upload-kit.blade.php. If that
+     * @include is ever dropped from app.blade.php — or a stale compiled view
+     * survives a package, which is what this release's clear_caches migration
+     * exists to prevent — calling it raises "kbbUpload is not a function" INSIDE
+     * this handler. Nothing catches that: `busy` stays true, the screen stays
+     * locked, and the only symptom is a dead card. The same shape as the
+     * swallowed write CLAUDE.md records for UpdateRunner.
+     */
+    if (typeof window.kbbUpload !== 'function') {
+      say('The uploader is not loaded on this page. The admin console needs the upload kit '
+        + 'partial — clear the view cache and reload; if it persists the package did not land.');
+      busy = false; render();
+      return;
+    }
+
+    newUp = { name: file.name, pct: 0, sentText: '', text: '', stalled: false };
+    newDone = null;
+    busy = true; render();
+
+    newHandle = window.kbbUpload({
+      url: base() + '/ugc-sections/' + encodeURIComponent(sectionId) + '/upload',
+      file: file,
+      field: 'file',
+      /* A CONSTANT, not a setting — rule 5. On a box with ffmpeg the upload
+         request really does cut the cover and the teaser before it answers. */
+      serverNote: 'and cutting what it can',
+      onProgress: function (st) {
+        if (!newUp) return;
+        newUp.pct = st.pct;
+        newUp.sentText = st.loadedText + ' of ' + st.totalText + ' sent';
+        newUp.text = st.text;
+        newUp.stalled = st.stalled;
+        paintNewUpload();
+      },
+      onDone: function (payload) {
+        if (!payload || !payload.ok || !payload.video) {
+          /* 2xx with ok:false is this endpoint's own shape, which the kit cannot
+             judge. Not retryable: the server took the request and declined the
+             file on its merits. */
+          newUp = null; newHandle = null; busy = false;
+          newDone = { ok: false, name: file.name, bytes: file.size,
+                      message: (payload && payload.error) || 'That file was not accepted.',
+                      retry: null };
+          say(newDone.message);
+          render();
+          return;
+        }
+
+        var v = payload.video;
+
+        newUp = null; newHandle = null;
+        newDone = {
+          ok: true, id: v.id, title: v.title, name: file.name, bytes: file.size,
+          clip: v.file_path || '', poster: v.poster || '',
+          blockers: v.blockers || [],
+          /* The server's own sentences about what it could and could not cut.
+             Kept on the panel, not only toasted — see the note where they are
+             printed. */
+          notes: payload.notes || []
+        };
+
+        (payload.notes || []).forEach(say);
+        say('Added to this section as a draft.');
+
+        /* Re-read the section and the library, so the list above and the picker
+           below both hold the new clip — the counts and the poster come from the
+           server and not from here. */
+        openSection(sectionId).then(function () { return load(); });
+      },
+      onFail: function (f) {
+        newUp = null; newHandle = null; busy = false;
+        /*
+         * THE SERVER'S OWN SENTENCE, INCLUDING FOR A 413. The kit's explain()
+         * reads `body.error`, and App\Support\UploadArrival composes exactly
+         * that key, so the honest sentences reach this panel unchanged. What does
+         * NOT is a 413 from Laravel's global ValidatePostSize middleware, which
+         * throws before the router and leaves no body at all — the kit handles
+         * that status first and separately.
+         */
+        newDone = { ok: false, name: file.name, bytes: file.size,
+                    message: f.message, retry: f.retryable ? file : null };
+        say(f.message);
+        render();
+      }
+    });
+  }
+
+  /*
+   * THE BAR, WRITTEN STRAIGHT INTO THE DOM RATHER THAN THROUGH render().
+   *
+   * A repaint per progress event would rebuild the whole card, which throws away
+   * the caret of anything being typed in the section's own fields and re-mounts
+   * the drop zones. WRITING A WIDTH IS NOT MEASURING ONE — nothing here reads a
+   * rect, an offset or a scroll position. Rule 4.
+   */
+  function paintNewUpload() {
+    if (!newUp) return;
+
+    var bar = document.querySelector('[data-ugx-nbar]');
+    var pct = document.querySelector('[data-ugx-npct]');
+    var sent = document.querySelector('[data-ugx-nsent]');
+    var stage = document.querySelector('[data-ugx-nstage]');
+    var box = document.querySelector('[data-ugx-nupbox]');
+
+    if (bar) bar.style.width = newUp.pct + '%';
+    if (pct) pct.textContent = newUp.pct + '%';
+    if (sent) sent.textContent = newUp.sentText;
+    if (stage) stage.textContent = newUp.text || '';
+    /* A class write, not a measurement. */
+    if (box) box.classList.toggle('is-slow', !!newUp.stalled);
   }
 
   /* ------------------------------------------------------------- the sidebar */
@@ -1439,9 +1784,25 @@
        * spend a query per character for an answer the browser already holds.
        */
       + '<div class="ugx-card"><div class="ugx-eh" style="margin-bottom:12px">'
+      /*
+       * ── THE HEAD IS A ROW NOW: TITLE LEFT, UPLOAD RIGHT ────────────────
+       *
+       * The owner drew a red box in the top-right of this card and asked for
+       * "the upload new video function, instead of going to clips tab
+       * specially". This is that box. One drop and the clip exists, is in THIS
+       * section, is in the Clips tab and is in the Media Library — the panel
+       * underneath says so, with the live bar and the playable preview the clip
+       * editor already has.
+       */
+      + '<div class="ugx-ehtop">'
+      + '<div class="ugx-ehtitle">'
       + '<div class="ugx-title">Add from the library</div>'
       + '<p class="ugx-sub">A clip can be in as many sections as you like — the same file and the same '
       + 'like count in each.</p></div>'
+      + newUploadControlHTML()
+      + '</div>'
+      + newUploadHTML()
+      + '</div>'
       + (library.length
           ? '<div class="ugx-search">'
             + '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" '
@@ -1809,6 +2170,26 @@
      * often as it likes underneath an open dialog and the dialog does not move.
      */
     renderModal();
+
+    /*
+     * AND THE PAGE'S OWN DROP ZONES, WHICH USED NOT TO EXIST.
+     *
+     * mountZones() was called only from renderModal()/renderModalBody(), because
+     * until this lane every drop target on this screen was inside the dialog. The
+     * "Upload a new video" control in the card head is the first one on the PAGE,
+     * and two things made calling it here necessary rather than tidy:
+     *
+     *   - render() replaces #content.innerHTML, so the zone is a fresh node with
+     *     no listeners after every repaint;
+     *   - renderModal() with no clip open tears every zoneOff down and returns
+     *     early, so closing the dialog would silently un-mount the page's zone
+     *     and dropping a file on it would open it in the browser instead.
+     *
+     * LAST, AFTER renderModal(), because mountZones() tears down and re-scans the
+     * whole document — so whichever of the two ran most recently, the end state is
+     * one listener per zone that is currently on the page.
+     */
+    mountZones();
   }
 
   /**
@@ -1923,6 +2304,11 @@
         onFiles: function (files) {
           if (!files || !files.length) return;
           if (kind === 'poster') dropPoster(files[0]);
+          /* 'newclip' is the card-head control, which CREATES a clip rather than
+             replacing one — see uploadNewClip(). It is not a `kind` UgcMedia
+             knows and must never be passed to upload(), which would post it as
+             one. */
+          else if (kind === 'newclip') uploadNewClip(files[0]);
           else upload(kind, files[0]);
         }
       }));
@@ -2012,6 +2398,24 @@
         if (upDone.kind === 'poster') dropPoster(upDone.retry);
         else upload(upDone.kind, upDone.retry);
       }
+      return;
+    }
+    if (t.closest('[data-ugx-nupcancel]')) {
+      e.preventDefault();
+      /* cancel() aborts the request, which lands in the kit's onabort and then in
+         onFail with cancelled set — one ending writer, as above. */
+      if (newHandle) { try { newHandle.cancel(); } catch (err) {} }
+      return;
+    }
+    if (t.closest('[data-ugx-nupretry]')) {
+      e.preventDefault();
+      if (newDone && newDone.retry) uploadNewClip(newDone.retry);
+      return;
+    }
+    if (t.closest('[data-ugx-nupdismiss]')) {
+      e.preventDefault();
+      newUp = null; newDone = null; newHandle = null;
+      render();
       return;
     }
     if (t.closest('[data-ugx-poster]')) { e.preventDefault(); pickPoster(); return; }
@@ -2199,6 +2603,19 @@
       return;
     }
     if (el.hasAttribute('data-ugx-upload')) { upload(el.getAttribute('data-ugx-upload'), el); }
+    /*
+     * THE NEW-CLIP INPUT, AND ITS VALUE IS CLEARED AFTERWARDS.
+     *
+     * Without the reset, choosing the SAME file twice fires no `change` at all —
+     * the value has not changed — so a failed upload could not be retried by
+     * picking the file again, which is precisely what somebody does after a
+     * refusal. Read the File first, then clear.
+     */
+    if (el.hasAttribute('data-ugx-newupload')) {
+      var chosen = (el.files && el.files[0]) ? el.files[0] : null;
+      el.value = '';
+      if (chosen) uploadNewClip(chosen);
+    }
   });
 
   document.addEventListener('keydown', function (e) {

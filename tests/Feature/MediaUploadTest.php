@@ -112,6 +112,24 @@ it('has exactly one image upload endpoint in the whole application', function ()
      * Lane AT's removal of the /catalog-product-* endpoints did not change this
      * list, because that lane never added an upload route either: the create
      * form posted the URL this endpoint returned, never a file.
+     *
+     * ── THE PIN ADVANCED, ONCE, FOR A FOURTH KIND ──────────────────────────
+     *
+     * admin-api/ugc-sections/{id}/upload takes ONE VIDEO and creates a
+     * shoppable-video clip from it, in the section being edited. It is not a
+     * fourth image path and the guard above is untouched by it: this endpoint
+     * accepts only MP4 and WebM, through App\Services\UgcMedia, whose two
+     * independent readings have to agree before a byte is written — the image
+     * library is an image library and a 64 MB clip has no business going
+     * through it.
+     *
+     * AND NOTE WHAT THIS LIST IS, because the number is smaller than it looks:
+     * it is every route whose URI contains the word "upload", not every route
+     * that takes a file. POST admin-api/ugc-videos/{id}/media has taken clips,
+     * teasers and posters since the module shipped and has never appeared here,
+     * because of its spelling. The list is a tripwire for a new NAME, which is
+     * still worth having — it is how this change came to be written down — and
+     * it should not be read as a census.
      */
     $uploads = collect(\Illuminate\Support\Facades\Route::getRoutes()->getRoutes())
         ->filter(fn ($r) => str_contains($r->uri(), 'upload'))
@@ -122,9 +140,10 @@ it('has exactly one image upload endpoint in the whole application', function ()
         ->all();
 
     expect($uploads)->toBe([
-        'admin-api/import/upload',      // WooCommerce export files
-        'admin-api/media/upload',       // every image in the admin
-        'admin/updates/upload',         // signed update packages
+        'admin-api/import/upload',              // WooCommerce export files
+        'admin-api/media/upload',               // every image in the admin
+        'admin-api/ugc-sections/{id}/upload',   // one video -> a new clip in that section
+        'admin/updates/upload',                 // signed update packages
     ]);
 });
 

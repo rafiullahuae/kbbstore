@@ -169,6 +169,35 @@
 .mlib-pill{display:inline-block;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:600;
            background:rgba(16,23,41,.72);color:#fff;white-space:nowrap}
 .mlib-pill.is-free{background:rgba(98,108,128,.72)}
+/* A VIDEO'S TILE. Green rather than grey, so a page holding both reads as two
+   kinds at a glance and not as one kind with a label on some of them. */
+.mlib-pill.is-video{background:var(--accent,#15a85a)}
+
+/* ── WHAT A VIDEO LOOKS LIKE IN THE GRID ──────────────────────────────────
+   A film strip and the container name, drawn in CSS and one inline SVG, and
+   deliberately NOT a <video> element.
+
+   WHY NOT A <video>. A page of this grid is 24 tiles. `preload="metadata"` on
+   each is 24 extra range requests per page view, on a shared plan, to paint a
+   frame the owner does not need: the tile's title is the name he uploaded the
+   file under -- "anua mist spray 2.mp4" -- which is what he recognises it by,
+   and the badge says it is a video. `preload="none"` would fetch nothing and
+   paint an empty black box, which is worse than a drawn placeholder because it
+   looks like a failure. The real, playable preview is one click away on the
+   detail panel, where it is ONE video and the operator asked for it.
+
+   Sized with aspect-ratio and calc() from the tile it sits in. Nothing here is
+   measured in script -- rule 4. */
+.mlib-film{display:grid;gap:6px;justify-items:center;align-content:center;
+           color:var(--ink-faint,#97a0b2);padding:8px;min-width:0}
+.mlib-film svg{width:clamp(22px,18%,34px);height:auto;display:block;
+               stroke:currentColor;fill:none;stroke-width:1.4}
+.mlib-film b{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+
+/* The playable preview on the detail panel, capped the same way its <img>
+   sibling is so opening a 1080x1920 phone clip cannot push the facts off the
+   dialog. */
+.mlib-preview video{max-width:100%;max-height:300px;display:block;border-radius:8px;background:#000}
 
 .mlib-meta{padding:9px 10px;display:grid;gap:2px;min-width:0}
 /* overflow-wrap:anywhere, not ellipsis: a media filename is the only way to
@@ -247,7 +276,17 @@
 
   /* ---------------------------------------------------------------- state */
   var data = null;          // the last successful grid response
-  var state = {page: 1, q: '', from: '', to: '', attached: '', attached_q: ''};
+  /*
+   * `kind` IS 'all' HERE AND 'image' AT THE ENDPOINT, and the two are not in
+   * disagreement -- they are two callers with two jobs.
+   *
+   * GET /admin-api/media defaults to excluding video, because its other caller
+   * is the shared picker that every image field in the console opens and a .mp4
+   * offered as a brand logo is a regression. This screen is the LIBRARY, and the
+   * owner asked in as many words for his uploads to show up in it, so it sends
+   * kind=all on every request and offers him the narrowing as a control.
+   */
+  var state = {page: 1, q: '', from: '', to: '', attached: '', attached_q: '', kind: 'all'};
 
   /* How many tiles across. A way of looking at the library rather than a
      property of anything in it, so it lives in localStorage per browser and
@@ -404,6 +443,9 @@
       // kind chosen has to say "any" explicitly rather than send nothing.
       if (!state.attached) p.push('attached=any');
     }
+    /* Always sent, never omitted: the endpoint's own default is images-only for
+       the picker's sake, so "everything" has to be asked for out loud. */
+    if (state.kind) p.push('kind=' + encodeURIComponent(state.kind));
     if (state.page > 1) p.push('page=' + state.page);
     return p.length ? ('?' + p.join('&')) : '';
   }
@@ -448,8 +490,12 @@
 
     return '<div class="mlib-card"><div class="mlib-head">'
       + '<div><div class="mlib-title">Media Library</div>'
-      + '<div class="mlib-sub">Every image uploaded through the admin — product photos, brand logos, '
-      + 'category images and the SEO share image all land here.</div></div>'
+      /* The sentence says VIDEO now because the screen holds video now. It
+          named four sources and every one of them was an image, which was true
+          until this lane and is the first thing an owner reads. */
+      + '<div class="mlib-sub">Every file uploaded through the admin — product photos, brand logos, '
+      + 'category images, the SEO share image, and the clips and covers from Shoppable video '
+      + 'all land here.</div></div>'
       + colsBar()
       + '<button class="mlib-btn" id="mlib-rescan"' + (busy ? ' disabled' : '') + '>Rescan folder</button>'
       + '<button class="mlib-btn" id="mlib-sizes"' + (sizing ? ' disabled' : '') + '>'
@@ -457,7 +503,8 @@
       + '</div>'
       + '<div class="mlib-stats" style="margin-top:14px">'
       + '<div class="mlib-stat"><b>' + esc(String(total)) + '</b><span>'
-      + (filtered() ? 'images match' : 'images in the library') + '</span></div>'
+      /* "files", not "images": the count includes videos. */
+      + (filtered() ? 'files match' : 'files in the library') + '</span></div>'
       + '<div class="mlib-stat"><b>' + esc(bytes(size)) + '</b><span>total size</span></div>'
       + sizesStat()
       + '</div></div>';
@@ -549,7 +596,11 @@
   }
 
   function filtered(){
-    return !!(state.q || state.from || state.to || state.attached);
+    /* kind counts as a filter ONLY when it is narrowing. 'all' is this screen's
+       resting state, so a fresh library must not offer to clear a filter nobody
+       set -- the "Clear filters" button being live on an untouched screen is how
+       somebody concludes the grid is already hiding something. */
+    return !!(state.q || state.from || state.to || state.attached || (state.kind && state.kind !== 'all'));
   }
 
   function filterCard(){
@@ -576,7 +627,20 @@
     // How many of the folded-away filters are actually set, so the toggle can
     // say so — a collapsed panel silently narrowing the grid is how somebody
     // concludes the library has lost their images.
-    var extras = [state.attached, state.from, state.to].filter(Boolean).length;
+    var extras = [state.attached, state.from, state.to,
+                  (state.kind && state.kind !== 'all') ? state.kind : ''].filter(Boolean).length;
+
+    /* Pictures or videos. Three options, and the resting one is "everything" --
+       a library that hid half of what was in it by default would be the same
+       screen the owner has been complaining about. */
+    var kinds = [
+      ['all', 'Everything'],
+      ['image', 'Pictures only'],
+      ['video', 'Videos only']
+    ].map(function(o){
+      return '<option value="' + esc(o[0]) + '"' + (state.kind === o[0] ? ' selected' : '') + '>'
+           + esc(o[1]) + '</option>';
+    }).join('');
 
     return '<div class="mlib-card"><div class="mlib-filters">'
 
@@ -589,6 +653,9 @@
       + '</button>'
 
       + '<div class="mlib-extra' + (extraOpen ? ' is-open' : '') + '">'
+
+      + '<div class="mlib-field"><label for="mlib-kind">Show</label>'
+      + '<select id="mlib-kind">' + kinds + '</select></div>'
 
       + '<div class="mlib-field"><label for="mlib-attached">Used by</label>'
       + '<select id="mlib-attached">' + opts + '</select></div>'
@@ -638,28 +705,67 @@
      reason rather than leaving the owner to wonder whether it is broken. */
   function emptyState(){
     if (filtered()) {
-      return '<div class="mlib-empty"><b>No images match</b>'
+      return '<div class="mlib-empty"><b>Nothing matches</b>'
         + '<p>Nothing in the library matches these filters. Clear them to see everything.</p>'
         + '<button class="mlib-btn" id="mlib-clear2">Clear filters</button></div>';
     }
 
     return '<div class="mlib-empty"><b>Nothing here yet</b>'
-      + '<p>Images appear here as soon as they are uploaded — from the product editor, a brand logo, '
-      + 'a category image or the SEO share image. If you know there are images on the server already, '
+      + '<p>Media appears here as soon as it is uploaded — from the product editor, a brand logo, '
+      + 'a category image, the SEO share image, or a clip or cover from Content → Shoppable video. '
+      + 'If you know there are files on the server already, '
       + 'press Rescan folder and they will be catalogued.</p></div>';
   }
 
-  function tile(item){
-    var badge = item.used
-      ? '<span class="mlib-pill">' + esc(item.used_types.join(', ')) + '</span>'
-      : '<span class="mlib-pill is-free">unused</span>';
+  /*
+   * The film strip a video tile draws. A CONSTANT, and printed unescaped only
+   * because it is one -- rule 5. No src, no request, no measurement.
+   */
+  function filmIcon(){
+    return '<svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round">'
+      + '<rect x="2.5" y="5" width="19" height="14" rx="2"/>'
+      + '<path d="M7 5v14M17 5v14M2.5 9.7h4.5M2.5 14.3h4.5M17 9.7h4.5M17 14.3h4.5"/></svg>';
+  }
 
-    // loading="lazy" and decoding="async" because a full page of 24 originals
-    // is the whole point of the screen and none of them are resized server-side
-    // -- the `sizes` column exists but nothing has ever generated a variant.
-    var img = item.url
-      ? '<img src="' + esc(item.url) + '" alt="" loading="lazy" decoding="async">'
-      : '<div class="mlib-noimg">no file</div>';
+  /* The container, upper-cased, from the mime this shop stored. Falls back to
+     the plain word rather than printing "VIDEO/" for an odd spelling. */
+  function videoLabel(item){
+    var m = String(item.mime || '');
+    var slash = m.indexOf('/');
+    var sub = slash >= 0 ? m.slice(slash + 1) : '';
+    return sub ? sub.toUpperCase() : 'VIDEO';
+  }
+
+  function tile(item){
+    var badge = (item.is_video ? '<span class="mlib-pill is-video">video</span>' : '')
+      + (item.used
+        ? '<span class="mlib-pill">' + esc(item.used_types.join(', ')) + '</span>'
+        : '<span class="mlib-pill is-free">unused</span>');
+
+    /*
+     * A VIDEO DRAWS A FILM STRIP, NOT AN <img>.
+     *
+     * THE DEFECT THIS AVOIDS, and it is the reason this branch exists at all:
+     * every row in this grid used to be an image, so the tile emitted
+     * `<img src=item.url>` unconditionally. From this lane the library also
+     * holds .mp4 and .webm -- the owner asked for it -- and an <img> pointed at
+     * an mp4 is a broken-image glyph. Not a missing thumbnail: a BROKEN one,
+     * which reads as "this file is corrupt" for a clip that plays perfectly on
+     * the shop.
+     *
+     * Why a placeholder and not a <video>: see the note on .mlib-film in the
+     * stylesheet above. 24 tiles x one metadata fetch each, per page view, on a
+     * shared plan, to paint a frame the owner identifies by name anyway. The
+     * playable preview is on the detail panel, where there is one of them.
+     */
+    var img = item.is_video
+      ? '<div class="mlib-film">' + filmIcon() + '<b>' + esc(videoLabel(item)) + '</b></div>'
+      : (item.url
+        // loading="lazy" and decoding="async" because a full page of 24 originals
+        // is the whole point of the screen and none of them are resized server-side
+        // -- the `sizes` column exists but nothing has ever generated a variant.
+        ? '<img src="' + esc(item.url) + '" alt="" loading="lazy" decoding="async">'
+        : '<div class="mlib-noimg">no file</div>');
 
     /* The operator's own name is the title. UNDERNEATH IT goes what the image
        is used by — the product, brand or category — because that is what the
@@ -734,6 +840,17 @@
       load();
     });
 
+    /* A select stores one of its own options or the default -- rule 5, applied
+       on the way out as well as in the endpoint. An option this screen never
+       rendered cannot be sent by using it, and the endpoint falls back to its
+       own default for anything it does not recognise. */
+    on('mlib-kind', 'change', function(e){
+      var v = String(e.target.value);
+      state.kind = (v === 'image' || v === 'video') ? v : 'all';
+      state.page = 1;
+      load();
+    });
+
     on('mlib-from', 'change', function(e){ state.from = e.target.value; state.page = 1; load(); });
     on('mlib-to', 'change', function(e){ state.to = e.target.value; state.page = 1; load(); });
 
@@ -766,7 +883,11 @@
   }
 
   function clear(){
-    state = {page: 1, q: '', from: '', to: '', attached: '', attached_q: ''};
+    /* Back to 'all', which is this screen's resting state and not the
+       endpoint's -- see the note on `state` at the top. Clearing the filters on
+       the Media Library must show the owner everything he has, including his
+       videos, or the button hides work rather than revealing it. */
+    state = {page: 1, q: '', from: '', to: '', attached: '', attached_q: '', kind: 'all'};
     load();
   }
 
@@ -813,7 +934,18 @@
     return '<h3>' + esc(item.original_name || item.filename) + '</h3>'
       + '<div class="mlib-cols">'
       + '<div class="mlib-preview">'
-      + (item.url ? '<img src="' + esc(item.url) + '" alt="' + esc(item.alt) + '">' : '<span class="mlib-sub">no file</span>')
+      /*
+       * HERE the video really is played, because here there is one of it and the
+       * operator opened the panel on purpose. `preload="metadata"` and no
+       * autoplay: enough to paint the first frame and show the duration, and
+       * nothing that starts making noise in a back office. `controls` because
+       * the reason to open this panel on a clip is to check it is the right one.
+       */
+      + (item.url
+          ? (item.is_video
+              ? '<video src="' + esc(item.url) + '" controls preload="metadata" playsinline></video>'
+              : '<img src="' + esc(item.url) + '" alt="' + esc(item.alt) + '">')
+          : '<span class="mlib-sub">no file</span>')
       + '</div>'
       + '<dl class="mlib-facts">'
       + fact('Dimensions', esc(dims(item)))
