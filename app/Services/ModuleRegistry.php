@@ -321,6 +321,33 @@ class ModuleRegistry
          * counts, the same way Media Library's does).
          */
         'shoppable_video' => ['store', 'Shoppable video', 'Rails of creator videos with the products tagged on each one, placed anywhere on the shop with a [kbb_videos] shortcode. Everything is under Content → Shoppable video: its Sections tab builds the rails, All clips is the library, and Appearance is the look. Off by default — nothing appears until you turn it on and write a shortcode.', false, 'Content → Shoppable video', 'ugcsections', 'site', 'mid', 'Every video rail you have placed with a shortcode.', 'live'],
+        /*
+         * ── Content → Instagram (Lane IG — Phase 21) ────────────────────────
+         *
+         * THE ROW THE PREVIOUS RUN OF THIS LANE NEVER WROTE, and without it the
+         * whole feature is unreachable: InstagramSettings::enabled() is
+         * moduleEnabled('instagram_profile', false), so with no registry row the
+         * switch is not drawn, the default is the only value it ever has, and
+         * every screen, shortcode and homepage section built on top of it answers
+         * "off" forever. ModuleFrameworkGuardTest enforces the pairing in both
+         * directions and is what catches this.
+         *
+         * OFF BY DEFAULT, like everything else this registry adds. The module is
+         * additionally inert until the owner has connected an account AND a fetch
+         * has stored a post with a downloadable picture, so turning the switch on
+         * by itself still renders nothing — see InstagramFeed::section().
+         *
+         * The settings screen is `Content → Instagram`, id `instagram`, registered
+         * by resources/views/admin/partials/instagram-screen.blade.php declaring
+         * `var SCREEN = 'instagram'` — which is how AdminNavAndIdsTest's `it points
+         * every settings link at a console screen that exists` finds it.
+         *
+         * 'live' and not 'screen': this module draws a section a SHOPPER sees, on
+         * the homepage and anywhere a [kbb_instagram] shortcode is written. The
+         * Media Library row below is `screen` because nothing it does reaches the
+         * storefront at all, which is the distinction that array documents.
+         */
+        'instagram_profile' => ['store', 'Instagram Profile', 'Our own Instagram — recent posts and reels in one of five layouts, with the real like and comment counts Instagram reports for them, and the profile box. Connect the account once under Content → Instagram (the Configure now button does the authorisation), then place it on the homepage’s Instagram Profile row or anywhere at all with a [kbb_instagram] shortcode. Off by default, and shows nothing until an account is connected and a fetch has run.', false, 'Content → Instagram', 'instagram', 'site', 'mid', 'A grid of our recent Instagram posts, wherever you have placed it — the homepage row or a [kbb_instagram] shortcode.', 'live'],
         'media_library' => ['store', 'Media Library', 'The grid of every image uploaded through the admin, with search by name, by upload date and by the product, brand or category using it — plus what each image is used by before you delete it. Always on: this is a screen, not a switch.', true, 'Content → Media Library', 'media', 'site', 'all', 'An admin screen. Nothing visible on the storefront.', 'screen'],
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],

@@ -102,7 +102,15 @@ it('leaves the preset definitions alone — only the picture of them changed', f
 it('counts the same sections it always did, and names the same ones off', function () {
     // The SET is decided by `off`, which this change does not touch. Pinned so
     // that a reordering fix cannot quietly become a visibility one.
-    $expected = ['signature' => 17, 'conversion' => 16, 'editorial' => 16, 'boutique' => 12];
+    /*
+     * ADVANCED BY LANE IG, from 17/16/16/12, and the diff is exactly two sections
+     * per preset except Boutique. `videos` and `instagram` joined REGISTRY and all
+     * four presets; three switch them on and Boutique lists them in `off` beside
+     * `spotted`, for the reason written at that preset. So three counts rise by two
+     * and the fourth does not move — which is the check, rather than a number that
+     * was updated until it passed.
+     */
+    $expected = ['signature' => 19, 'conversion' => 18, 'editorial' => 18, 'boutique' => 12];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

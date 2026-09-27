@@ -109,6 +109,7 @@ final class InterfaceStrings
                 self::storeQuiz(),
                 self::storeRoutines(),
                 self::storeUgc(),
+                self::storeInstagram(),
                 self::storeNewsletter(),
                 self::storeJs(),
             ),
@@ -1499,6 +1500,56 @@ final class InterfaceStrings
             'ugc.views_label' => 'views',
             'ugc.next' => 'Next video',
             'ugc.previous' => 'Previous video',
+        ];
+    }
+
+    /**
+     * Instagram Profile — the section (Phase 21, Lane IG).
+     *
+     * FIVE KEYS, and the shortness is the point: everything else on that section
+     * is CONTENT. The caption is the caption Instagram has, the username is a
+     * handle, and a handle is not translated any more than the wordmark is — so
+     * neither goes through here. What is left is the four words this shop puts
+     * around them and one aria-label.
+     *
+     * ── WHY `likes` AND `comments` ARE NOT HERE ─────────────────────────────
+     *
+     * `store.ugc.likes_label` and `store.ugc.comments_label` already exist and
+     * already say exactly these two words, for the shoppable-video rail's own
+     * screen-reader text. A second pair spelled `instagram.*` would be two keys
+     * holding one string, which is two things for a translator to keep in step and
+     * one of them to get wrong. The Instagram section calls the existing pair.
+     *
+     * ── AND `followers` / `posts` ARE SEPARATE KEYS, NOT ONE SENTENCE ────────
+     *
+     * The profile box draws them as "12,345 followers · 148 posts", and the
+     * temptation is one key with two placeholders. It is refused because either
+     * number may be ABSENT — Instagram omits a count it will not give us, and
+     * docs/UGC-ENGAGEMENT.md's rule is that the element is then not drawn at all
+     * rather than drawn with a zero in it. A single sentence cannot have half of
+     * itself removed, so the shop would have to print "0 posts" to keep the
+     * grammar, which is the exact lie that rule exists to prevent. Two keys, each
+     * drawn only when there is a number for it.
+     *
+     * Pluralisation is Laravel's `|` through trans_choice(), and the number is
+     * passed a SECOND time as `:formatted` so the printed figure is grouped
+     * ("12,345") while the choice is made on the raw integer — the shape
+     * `store.reviews.review_count_formatted` already established here.
+     *
+     * @return array<string, string>
+     */
+    private static function storeInstagram(): array
+    {
+        return [
+            'instagram.followers' => ':formatted follower|:formatted followers',
+            'instagram.posts' => ':formatted post|:formatted posts',
+            'instagram.follow' => 'Follow',
+            // The alt text on a tile whose caption is empty. A picture with no
+            // caption still needs a name a screen reader can read.
+            'instagram.post_alt' => 'Instagram post',
+            // The tile's own label, used when the caption is empty so the link is
+            // never announced as just a URL.
+            'instagram.open_post' => 'Open this post on Instagram',
         ];
     }
 

@@ -21840,6 +21840,26 @@ buildNav();
      that says so. --}}
 @include('admin.partials.page-editor-screen')
 
+{{-- LANE IG · Content → Instagram.
+
+     The grid of our own recent posts, the profile box, five layouts, and the
+     "Configure now" handshake that reaches Instagram, takes permission and
+     writes the connection down.
+
+     SHIPS OFF: `instagram_profile` is false in ModuleRegistry and the homepage
+     section's content ships empty, so neither of the two new homepage rows emits
+     one byte until the owner configures it — the <section> element is INSIDE the
+     content check, not around it.
+
+     Thumbnails are downloaded to our own disk at fetch time rather than hotlinked:
+     Instagram's media_url is a signed, expiring CDN address, so a page pointing at
+     one is a page that breaks on somebody else's clock. Tapping a tile opens the
+     post on Instagram by default; the in-page player is opt-in and uses
+     Instagram's own embed iframe, which carries no token and nothing that expires.
+     That opt-in needs `frame-src` widened by one host — docs/IG-PROFILE.md §3 has
+     the exact line — and the setting ships at the value that needs nothing. --}}
+@include('admin.partials.instagram-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------

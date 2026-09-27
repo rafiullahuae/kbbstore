@@ -555,6 +555,117 @@
   </div>
 </div></section>
 @endunless
+{{--
+
+     VIDEO RAIL — Lane IG.
+
+     The owner: "Also make the Videos rail section on homepage and let us choose
+     the section to show from the list or use shortcode."
+
+     ── WHY THE <section> IS INSIDE THE @if AND NOT AROUND IT ─────────────────
+
+     This is the whole of rule 1 for this feature, and getting it the other way
+     round is the mistake that looks correct. A shop that has not configured this
+     — which is every shop the day the package applies — must emit NOT ONE BYTE
+     more than it does today, and StorefrontEnglishUnchangedTest compares this
+     page against its pre-change self byte for byte. An empty <section> wrapper
+     with a classFor() on it is still a changed page: a new element, a new class
+     attribute and, because SectionDividers::classFor() runs for every key, a new
+     divider rule above it.
+
+     So the element is only reached when there is a rail to put in it. The
+     @unless is kept as well, and it is not redundant: it is what makes the
+     Desktop/Mobile switches on Appearance → Homepage → Video rail work, and it
+     short-circuits before the settings read on a shop that has switched the row
+     off for both.
+
+     ── AND THE STRING IS BUILT IN PHP, NOT IN THE TEMPLATE ──────────────────
+
+     UgcSettings::homeShortcode() returns '' unless the module is on AND a real
+     handle is saved, and it is the thing that applies UgcSection::HANDLE_RE
+     before the handle can become part of a shortcode's own syntax. Written here
+     as [kbb_videos section="{{ $handle }}"] the quoting would be this template's
+     problem, and `[^"]*` inside those quotes is exactly what HANDLE_RE exists to
+     protect — see UgcSettings::homeSection().
+
+     {!! !!} is correct and is the same call Shortcodes::render() already makes
+     from a page body: what comes back is ugc/rail.blade.php's rendered output, in
+     which every operator string went through {{ }} and every URL through UgcPath.
+     Nothing from this template is interpolated into it.
+
+     ── ▲ THE DIRECTIVE IS GLUED TO THE END OF THIS COMMENT, ON PURPOSE ──────
+
+     It looks like a typo and it is the whole reason this block costs zero bytes.
+     This file's own header records the mechanism twice: Blade compiles a
+     directive to <?php ... ?> and PHP SWALLOWS ONE NEWLINE after a closing tag,
+     so a line holding nothing but a directive contributes nothing at all — but a
+     Blade COMMENT is replaced by the empty string and its trailing newline
+     SURVIVES.
+
+     Written the readable way, with this comment on its own line and a blank line
+     above it, the block emitted exactly two newlines on every homepage on earth.
+     StorefrontEnglishUnchangedTest reported it, correctly, as a changed page at
+     byte 51624 — a diff with no words in it, which that file's header warns costs
+     the next reader an hour to prove is nothing. With the @unless closing this
+     line there is no newline left to survive.
+     --}}@unless ($sections->hidden('videos'))
+@php $videoRail = \App\Support\Shortcodes::render(app(\App\Services\UgcSettings::class)->homeShortcode()); @endphp
+@if ($videoRail !== '')
+<section class="sec {{ $sections->classFor('videos') }}"><div class="wrap">{!! $videoRail !!}</div></section>
+@endif
+@endunless
+{{--
+
+     INSTAGRAM PROFILE — Lane IG.
+
+     The owner: "i want another function called Instagram Profile ... i want a nice
+     grid type instagram section where all our recent posts/videos display".
+
+     The `instagram` row went into HomepageSections::REGISTRY in the same change
+     that added `videos`, AND THE PREVIOUS RUN OF THIS LANE NEVER DREW IT. That is
+     a switch on Appearance → Homepage that moves a row on a screen and nothing on
+     the shop — precisely the fault docs/FO-HOMEPAGE-INVENTORY.md was written to
+     catalogue and HomepageSections::NESTED carries a paragraph about. Pinned now by
+     HomepageInstagramSectionTest, which pairs every REGISTRY key against this file.
+
+     ── THE SHAPE IS THE VIDEO RAIL'S, AND FOR THE SAME THREE REASONS ─────────
+
+     Read the block above for the full argument; it applies here unchanged.
+
+       · the <section> is INSIDE the @if, not around it, so a shop that has not
+         connected an account emits not one byte more than it does today — an empty
+         wrapper with a classFor() on it is still a changed page, and
+         StorefrontEnglishUnchangedTest compares this file's output byte for byte.
+       · the @unless is kept as well, because it is what makes the Desktop/Mobile
+         switches on Appearance → Homepage → Instagram Profile work at all, and it
+         short-circuits before any read on a shop that has switched the row off.
+       · the directive is GLUED to the end of this comment. A Blade comment is
+         replaced by the empty string and ITS TRAILING NEWLINE SURVIVES, where a
+         line holding only a directive contributes nothing — the video block above
+         cost two newlines on every homepage on earth written the readable way, and
+         StorefrontEnglishUnchangedTest reported it at byte 51624.
+
+     ── AND THE SHORTCODE IS THE GATE, NOT A SETTING ─────────────────────────
+
+     Unlike the rail there is nothing to pick: there is one Instagram account, so
+     `[kbb_instagram]` is the whole of it and no handle has to be validated into
+     somebody else's syntax. Shortcodes::instagram() returns '' when the module is
+     off, when nothing has been fetched, and when every fetched post's thumbnail
+     failed to download — so this renders nothing until the owner has connected the
+     account AND a fetch has stored a drawable post. The layout, the profile box and
+     the counts all come from the saved settings, which is what makes the homepage
+     row and the shortcode the same section rather than two.
+
+     It is a CONSTANT STRING, so nothing from a setting reaches a shortcode's syntax
+     here and there is no handle to escape — the one respect in which this block is
+     simpler than the rail's, and the reason it needs no UgcSettings::homeShortcode()
+     equivalent.
+     --}}@unless ($sections->hidden('instagram'))
+@php $igSection = \App\Support\Shortcodes::render('[kbb_instagram]'); @endphp
+@if ($igSection !== '')
+<section class="sec {{ $sections->classFor('instagram') }}"><div class="wrap">{!! $igSection !!}</div></section>
+@endif
+@endunless
 
 {{-- BEST SELLERS --}}
 @unless ($sections->hidden('bestsellers'))

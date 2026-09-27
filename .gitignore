@@ -66,3 +66,15 @@ _shot*.mjs
 # web root. Generated, never source: App\Support\UgcDemoMedia writes them at
 # seed time and Demo Content's Remove deletes them again.
 public-web-root/uploads/
+
+# Lane IG. The same rule one directory along, and it is not theoretical: the
+# screenshot preview writes demo pictures into public/uploads/instagram/ and ten
+# of them were committed by a `git add -A`, which would have shipped nine fake
+# Instagram posts and an avatar inside an update package. `public/build/` stays
+# tracked — it is the built asset bundle — so this is the uploads folder only.
+public/uploads/
+
+# ...and the preview database beside it. A stray .sqlite in the tree fails
+# PackageSigningTest's `it holds no private key in this tree` scan, which is how
+# this one was found.
+/database/ig-preview.sqlite
