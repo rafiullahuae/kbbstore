@@ -307,9 +307,21 @@
 
 /* ── product tagging ───────────────────────────────────────────────────── */
 .ugs-tagged{display:grid;gap:6px;min-width:0}
-.ugs-tag{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
-         border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);padding:7px 10px;min-width:0}
+.ugs-tag{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;
+         border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);padding:7px 10px;min-width:0;
+         background:var(--surface,#fff);
+         transition:border-color .16s var(--ease),box-shadow .16s var(--ease),opacity .16s var(--ease)}
 .ugs-tag > *{min-width:0}
+/* The row being carried, and the row it would land on. Both are a CLASS the
+   drag events add -- nothing here reads a coordinate. */
+.ugs-tag.is-lifted{opacity:.4}
+.ugs-tag.is-landing{border-color:var(--accent,#15a85a);box-shadow:0 0 0 3px var(--accent-soft,#e7f7ee)}
+/* The grip is the only draggable part on a touch-less mouse drag, and it says
+   so: `cursor:grab` is the whole affordance. */
+.ugs-grip{display:grid;place-items:center;width:20px;height:24px;cursor:grab;
+          color:var(--ink-faint,#97a0b2);border-radius:var(--r-xs,9px)}
+.ugs-grip:active{cursor:grabbing}
+.ugs-grip svg{width:14px;height:14px}
 .ugs-tagname{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
 .ugs-tagacts{display:flex;gap:4px;flex-wrap:wrap}
 .ugs-results{display:grid;gap:5px;margin-top:8px;max-height:230px;overflow:auto;min-width:0}
@@ -1037,6 +1049,8 @@
 
   var ICON_UP = '<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>';
   var ICON_PLUS = '<path d="M12 5v14"/><path d="M5 12h14"/>';
+  var ICON_GRIP = '<circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/>'
+    + '<circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>';
 
   function pill(text, tone) {
     return '<span class="ugs-pill' + (tone ? ' is-' + tone : '') + '">' + esc(text) + '</span>';
@@ -1506,10 +1520,28 @@
       return '<div class="ugs-empty">No products tagged yet.</div>';
     }
 
+    /*
+     * DRAGGABLE, AND THE ARROWS STAY.
+     *
+     * The order decides which product a tile shows before anybody taps, so it
+     * is worth dragging -- the owner asked for "a nice drag n drop etc
+     * everywhere where it needed". But a drag is a mouse-only gesture, so the
+     * up and down buttons are NOT replaced by it: they are how this list is
+     * reordered from a keyboard, and removing them would trade one input method
+     * for another rather than adding one.
+     *
+     * The row is the draggable element and the grip is the handle a mouse
+     * looks for. No coordinate is read anywhere in the reorder -- the drop
+     * target is whichever row the pointer ENTERED, which the browser tells us.
+     * Rule 4 holds.
+     */
     return '<div class="ugs-tagged">' + tagged.map(function (t, i) {
-      return '<div class="ugs-tag">'
+      return '<div class="ugs-tag" draggable="true" data-ugs-drag="' + esc(i) + '">'
+        + '<span class="ugs-grip" aria-hidden="true" title="Drag to reorder">'
+        +   icon(ICON_GRIP) + '</span>'
         + '<div class="ugs-tagname">' + esc(i + 1) + '. ' + esc(t.name)
         +   (t.brand ? ' <span class="ugs-dim">· ' + esc(t.brand) + '</span>' : '')
+        +   (i === 0 ? ' <span class="ugs-pill is-info">shown on the tile</span>' : '')
         + '</div>'
         + '<div class="ugs-tagacts">'
         +   '<button class="ugs-mini" data-ugs-up="' + esc(i) + '"' + (i === 0 ? ' disabled' : '')
@@ -1807,7 +1839,93 @@
     return e.target && e.target.closest ? e.target.closest('[data-ugs-drop]') : null;
   }
 
+  /* ── reordering the tagged products by drag ────────────────────────────
+     A SECOND KIND OF DRAG ON THE SAME DOCUMENT, and the two must never meet:
+     the zones above carry files from the desktop, these rows carry an index
+     from inside the page. Every handler below refuses a drag that carries
+     FILES, and the file handlers refuse anything that is not a [data-ugs-drop]
+     zone, so a video dropped on the product list does nothing and a row
+     dragged onto the video zone does nothing. */
+  var dragFrom = null;
+
+  function rowOf(e) {
+    return e.target && e.target.closest ? e.target.closest('[data-ugs-drag]') : null;
+  }
+
+  /** True when the pointer is carrying files rather than one of our rows. */
+  function carriesFiles(e) {
+    var types = e.dataTransfer && e.dataTransfer.types;
+    if (!types) return false;
+    return Array.prototype.indexOf.call(types, 'Files') !== -1;
+  }
+
+  document.addEventListener('dragstart', function (e) {
+    var row = rowOf(e);
+    if (!row) return;
+
+    dragFrom = Number(row.getAttribute('data-ugs-drag'));
+    row.classList.add('is-lifted');
+
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      /* Firefox starts no drag at all unless something is set. The payload is
+         never read back -- dragFrom is the source of truth, because a page can
+         only be dragging one of its own rows at a time. */
+      try { e.dataTransfer.setData('text/plain', String(dragFrom)); } catch (err) {}
+    }
+  });
+
+  document.addEventListener('dragend', function () {
+    dragFrom = null;
+    document.querySelectorAll('.ugs-tag.is-lifted,.ugs-tag.is-landing').forEach(function (r) {
+      r.classList.remove('is-lifted');
+      r.classList.remove('is-landing');
+    });
+  });
+
   document.addEventListener('dragover', function (e) {
+    if (dragFrom === null || carriesFiles(e)) return;
+    var row = rowOf(e);
+    if (!row) return;
+    /* preventDefault is what makes a row a valid drop target at all. */
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+
+    document.querySelectorAll('.ugs-tag.is-landing').forEach(function (r) {
+      r.classList.remove('is-landing');
+    });
+    if (!row.classList.contains('is-lifted')) row.classList.add('is-landing');
+  });
+
+  document.addEventListener('drop', function (e) {
+    if (dragFrom === null || carriesFiles(e)) return;
+    var row = rowOf(e);
+    if (!row) return;
+
+    e.preventDefault();
+
+    var to = Number(row.getAttribute('data-ugs-drag'));
+    var from = dragFrom;
+    dragFrom = null;
+
+    if (!(from >= 0 && to >= 0) || from === to || from >= tagged.length || to >= tagged.length) {
+      render();
+      return;
+    }
+
+    var moved = tagged.splice(from, 1)[0];
+    tagged.splice(to, 0, moved);
+    /* Repaint, which also drops both drag classes: render() replaces the list
+       wholesale, so there is nothing left holding them. */
+    render();
+  });
+
+  document.addEventListener('dragover', function (e) {
+    /* A PRODUCT ROW BEING DRAGGED IS NOT A FILE. Without this the upload zones
+       lit up green while somebody reordered the product list, promising a drop
+       that would then do nothing. The two drags share one document and each
+       refuses the other's payload. */
+    if (dragFrom !== null) return;
     var zone = zoneOf(e);
     if (!zone) return;
     e.preventDefault();
@@ -1821,6 +1939,7 @@
   });
 
   document.addEventListener('drop', function (e) {
+    if (dragFrom !== null) return;          // ...and the same on the drop.
     var zone = zoneOf(e);
     if (!zone) return;
     e.preventDefault();

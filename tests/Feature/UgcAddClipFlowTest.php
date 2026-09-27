@@ -331,6 +331,56 @@ it('packs the two media slots to the top instead of stretching their contents', 
 });
 
 
+it('reorders tagged products by drag without letting the two drags collide', function () {
+    /*
+     * The owner asked for "a nice drag n drop etc everywhere where it needed",
+     * and the product ORDER is somewhere it is needed: the first product is the
+     * one a tile shows before anybody taps, which the row now says in as many
+     * words.
+     *
+     * THE TRAP THIS CASE REALLY GUARDS. There are now two kinds of drag on one
+     * document -- files from the desktop onto the upload zones, and a product
+     * row onto another product row -- and both are delegated to `document`.
+     * Without a guard each handler answers the other\'s drag: the upload zones
+     * lit up green and promised a drop while somebody was reordering products,
+     * and a file dropped on the list would have been read as a reorder. So the
+     * file handlers refuse a drag while a row is in the air, and the row
+     * handlers refuse a drag that carries Files.
+     *
+     * MUTATION NOTE. Delete `if (dragFrom !== null) return;` from either file
+     * handler and the third assertion is red -- with upload zones that glow
+     * during a reorder. Delete the carriesFiles() guard and the fourth is red.
+     * RUN: red on both.
+     */
+    $code = addClipCode();
+
+    // The row is draggable and carries its own index.
+    expect(str_contains($code, 'draggable="true" data-ugs-drag="\' + esc(i) + \'"'))
+        ->toBeTrue('the tagged-product rows are not draggable');
+
+    // ...and the keyboard route is NOT traded away for the mouse one.
+    foreach (['data-ugs-up=', 'data-ugs-down='] as $keyboard) {
+        expect(str_contains($code, $keyboard))
+            ->toBeTrue("the drag replaced the keyboard reorder instead of joining it: {$keyboard}");
+    }
+
+    // Each drag refuses the other's payload. Both halves, named.
+    expect(substr_count($code, 'if (dragFrom !== null) return;'))
+        ->toBe(2, 'the file drop zones no longer stand aside while a row is being dragged');
+
+    expect(str_contains($code, 'if (dragFrom === null || carriesFiles(e)) return;'))
+        ->toBeTrue('a row drag handler no longer refuses a drag that carries files');
+
+    /*
+     * AND THE REORDER READS NO COORDINATE. The drop target is whichever row the
+     * pointer entered, which the browser hands us -- rule 4 is already pinned
+     * whole by the case above, and this is the line that would have broken it.
+     */
+    expect(str_contains($code, "row.getAttribute('data-ugs-drag')"))
+        ->toBeTrue('the reorder no longer takes its target from the row the pointer entered');
+});
+
+
 /* ══════════════════════════════════════════════════ rule 4, on this screen ══ */
 
 it('measures no layout in script, anywhere on this screen', function () {
