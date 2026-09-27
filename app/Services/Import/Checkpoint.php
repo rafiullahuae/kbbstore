@@ -319,6 +319,22 @@ final class Checkpoint
      */
     private static bool $hasColumn = false;
 
+    /**
+     * Forget the schema answer. Tests only, and StaticMemosTest requires it.
+     *
+     * The memo above is correct in a request and wrong across a suite: one test
+     * that runs with the column present leaves `true` behind for the next,
+     * which may be asserting the pre-migration behaviour. Every process-level
+     * memo in this application is reset from Tests\Support\StaticMemos for
+     * exactly that reason, and a new one that is neither reset nor exempt fails
+     * that test on purpose — which is how this was caught rather than by a
+     * flaky import case weeks later.
+     */
+    public static function forgetSchema(): void
+    {
+        self::$hasColumn = false;
+    }
+
     private static function columnExists(): bool
     {
         if (self::$hasColumn) {

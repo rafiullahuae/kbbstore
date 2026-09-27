@@ -3,6 +3,72 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.299
+The stuck cover bar fixed, Save closes the popup, and the Cart panel gets
+Desktop and Mobile control sets.
+
+### ▲ "SAVING THE COVER" NO LONGER STICKS AT 80%
+
+Your screenshot: the cut worked, the Poster row showed **134 KB**, and the bar
+sat at **80% · Saving the cover** underneath it for good.
+
+**That was my oversight.** The All-clips screen got the finishing step and the
+section popup did not — the same feature written twice and finished once. The
+bar was set to 80%, the file was handed off, and nothing ever moved it again.
+
+It now finishes when the cover is **actually adopted onto the clip** — a real
+event, not a timer — so 100% means the cover is genuinely there. It says
+**Cover set**, holds for a moment so you can read it, and goes. A failure
+clears it too; a bar stuck at 80% under a refusal is the same bug in a
+different colour.
+
+### ▲ SAVE NOW CLOSES THE POPUP
+
+**Saving every tab together already worked** and was never the gap: one press
+writes Details, Source and Placement in one go, then the Products tab, and the
+Files tab saves on upload. What Save then did was *re-open* the same dialog on
+the row it had just saved — which reads as nothing having happened.
+
+It closes now, and the section list behind it refreshes so the row you just
+edited is up to date. The close happens **after** both writes finish, never
+between them — closing early would have turned a cosmetic annoyance into lost
+edits.
+
+### ▲ APPEARANCE → CART PANEL: DESKTOP AND MOBILE
+
+**Where:** `Appearance → Cart panel`, now six tabs — **Desktop · Mobile ·
+Content · Behaviour · Wording · Colour**.
+
+Everything you asked for on the mobile cart panel now has its own value,
+separate from the desktop one: row spacing, padding, font sizes, the quantity
+buttons, **both** crosses (the ✕ on each line and the panel's own close), the
+tab strip, and the Cart/Checkout buttons — their gap, padding, corners, label
+size, and whether they sit side by side or stacked.
+
+**25 new controls, every one shipping at the value your panel renders today.**
+Applying this moves nothing until you move a slider.
+
+**The point of the whole thing, measured:** squeezing every mobile control
+changed **nothing at all** on the desktop panel — a programmatic diff of the two
+sets of measurements returns *no differences*, and the two Desktop-tab
+screenshots are byte-for-byte identical.
+
+**The 44px tap targets.** Four controls (the line ✕, the close button, the tab
+strip, the buttons) sit at 44px because that is the smallest box a finger hits
+reliably. You asked to shrink them, so **the sliders go below 44 and nothing
+stops you** — a warm line simply appears under that one slider saying taps get
+less reliable, and names the number you have chosen. It never silently clamps.
+
+**One thing needing your decision:** on the **shop and category pages only**,
+the drawer's Checkout button is held at a fixed 50px and Cart at 44px by that
+page's own stylesheet, so the button-height control does not govern there — and
+those two buttons have been 6px different in height all along. Everywhere else
+the control works. The fix is one line, but it changes a button that works today
+on a page you did not ask about. **Should those two be the same height on the
+shop page?**
+
+**No setting added beyond the 25 above, no default moved.**
+
 ## 2.60.298
 Three columns side by side, a real progress bar on the cover cut, and the same
 cut button inside the section popup.

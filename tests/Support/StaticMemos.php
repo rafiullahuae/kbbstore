@@ -64,6 +64,9 @@ final class StaticMemos
     {
         return [
             Setting::class => static fn () => Setting::flushMap(),
+            // Remembers whether import_checkpoints has `dropped_fields`. Correct
+            // within a request, wrong across a suite -- see forgetSchema().
+            \App\Services\Import\Checkpoint::class => static fn () => \App\Services\Import\Checkpoint::forgetSchema(),
             SettingsService::class => static fn () => SettingsService::forgetMemo(),
             AdminPathService::class => static fn () => AdminPathService::forgetMemo(),
             IndexNow::class => static fn () => IndexNow::forgetKey(),

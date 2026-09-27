@@ -106,7 +106,7 @@ shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language
 ## Block 3 · arm the deep-link replay for the four screens
 
 > **The armed set has grown since this block was applied, and this replacement
-> has been updated to match.** Eleven more ids joined `LATE_RENDERED` in the
+> has been updated to match.** Twelve more ids joined `LATE_RENDERED` in the
 > round that merged Lanes V4, PG1/PG2, S9 and IG — the shoppable-video and
 > Instagram screens plus seven that had had a sidebar row and no URL since they
 > were written. The reasoning is identical to the paragraph above, and the
@@ -150,7 +150,7 @@ const LATE_RENDERED=new Set(['media','tax']);
    so the replay's marker inside #content is already destroyed by the time its
    task runs and nothing is drawn twice. That is the rule 'rev-all' fails, which
    awaits rvLoad() before it paints and is in neither armed set. */
-const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 ```
 
 ---

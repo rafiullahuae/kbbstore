@@ -495,6 +495,10 @@
      meanings -- see cutCoverHere() below. */
   var cutting = false;
   var cutStage = null;
+
+  /* The timer that takes the finished bar off screen; held so a second cut
+     cannot leave an earlier one's timeout to clear its bar out from under it. */
+  var cutClear = null;
   var tagged = [], results = [], term = '';
   var banner = null, busy = false, seq = 0, searchTimer = null;
 
@@ -1299,7 +1303,28 @@
       });
 
       say('Video saved.');
-      await openVideo(v.id);
+
+      /*
+       * ── SAVED, THEN CLOSED ─────────────────────────────────────────────
+       *
+       * "when hit save on popup, it should save all steps together and close
+       * the popup automatically."
+       *
+       * BOTH HALVES ALREADY SAVED TOGETHER and that was never the gap: the PUT
+       * above carries every field from Details, Source and Placement, the call
+       * after it carries the Products tab, and the Files tab writes on upload
+       * rather than on save. One press has always persisted the lot.
+       *
+       * What it then did was re-open the dialog on the row it had just saved,
+       * which reads as "nothing happened" -- the owner pressed Save and was
+       * left looking at the same popup. It closes now, and the lists behind it
+       * refresh so the row he just edited is up to date underneath.
+       *
+       * openVideo() is gone from this path rather than kept and closed after:
+       * it re-fetches the clip only to throw the result away, which on his
+       * server is a round trip spent on nothing.
+       */
+      editingVideo = null;
       if (editing && editing.id) await openSection(editing.id);
       await load();
     } catch (e) {
@@ -1547,6 +1572,7 @@
     if (!source) { say('There is no video on this clip to take a frame from.'); return; }
 
     cutting = true;
+    if (cutClear) { clearTimeout(cutClear); cutClear = null; }
     cutStage = { pct: 0, words: 'Starting' };
     renderModal();
 
@@ -1682,12 +1708,45 @@
             upState = null; upHandle = null;
             upDone = { ok: true, kind: 'poster', name: file.name, bytes: file.size,
                        note: 'It is in the Media Library too.' };
+
+            /*
+             * ── THE CUT'S BAR FINISHES HERE, AND ONLY HERE ─────────────────
+             *
+             * THE DEFECT. cutCoverHere() set the bar to 80% "Saving the cover"
+             * and handed the file to dropPoster(), and NOTHING ever moved it
+             * again. The cover arrived -- the Poster row showed 134 KB -- and
+             * the bar sat at 80% underneath it for good. The owner reported
+             * exactly that: "saving the cover step stucks. and nothing
+             * proceeding further."
+             *
+             * It was my oversight: the All-clips screen got this completion
+             * and this screen did not, which is the cost of writing the same
+             * feature twice.
+             *
+             * It completes on the REAL event -- the adopt call returning --
+             * rather than on a timer, so 100% means the cover is genuinely on
+             * the clip and not merely that some milliseconds have passed.
+             */
+            cutStage = { pct: 100, words: 'Cover set' };
+            paintCutBar();
+
+            if (cutClear) clearTimeout(cutClear);
+            cutClear = setTimeout(function () {
+              cutStage = null;
+              cutClear = null;
+              renderModal();
+            }, 1800);
+
             say('Poster set.');
             return openVideo(target).then(function () {
               return sectionId ? openSection(sectionId) : undefined;
             });
           })
           .catch(function (err) {
+            // A bar stuck at 80 under a refusal is the same defect wearing a
+            // different colour.
+            cutStage = null;
+            if (cutClear) { clearTimeout(cutClear); cutClear = null; }
             upState = null; upHandle = null; busy = false;
             upDone = { ok: false, kind: 'poster', name: file.name, bytes: file.size,
                        message: explain(err, 'That picture could not be used as a poster.'),

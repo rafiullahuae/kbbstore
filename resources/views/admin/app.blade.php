@@ -1075,35 +1075,6 @@ tr.invdirty{background:var(--accent-soft)}
 .nlprev-f b{border-radius:99px;padding:8px 14px;font-size:11px;font-weight:700}
 .nlprev-n{font-size:11px;font-weight:600;margin:10px 0 0}
 .nlwarn{background:#FFF8E6;border:1px solid #F0DFB0;border-radius:10px;padding:10px 13px;font-size:11.5px;color:#7a5c14;margin:0 0 12px;line-height:1.5}
-/* Appearance · Cart panel preview. cpp- prefix; nothing else in this file uses it. */
-.cpp{background:#fff;border:1px solid #e6e9ef;border-radius:12px;overflow:hidden;margin:0 auto;
-     display:flex;flex-direction:column;max-width:100%}
-.cpp-tabs{display:flex;align-items:center;gap:4px;padding:0 6px;border-bottom:1px solid #eef1f6}
-.cpp-tabs b{flex:1;text-align:center;font-size:11px;font-weight:800;padding:9px 4px;border-bottom:2px solid}
-.cpp-tabs i{flex:1;text-align:center;font-size:11px;font-weight:700;color:#9aa3b0;font-style:normal;padding:9px 4px}
-.cpp-tabs u{color:#9aa3b0;text-decoration:none;font-size:11px;padding:0 4px}
-.cpp-ship{padding:8px var(--pad);border-bottom:1px solid #eef1f6;font-size:10.5px;color:#5c6675}
-.cpp-bar{height:5px;border-radius:5px;background:#f0e2e8;overflow:hidden;margin-top:5px}
-.cpp-bar div{height:100%;width:100%}
-.cpp-body{padding:6px var(--pad);max-height:230px;overflow:auto}
-.cpp-item{display:flex;gap:8px;align-items:center;padding:var(--rowpad) 0;border-bottom:1px solid #f2f4f8}
-.cpp-item:last-child{border-bottom:0}
-.cpp-th{width:var(--thumb);height:var(--thumb);border-radius:8px;flex:none;display:grid;place-items:center;
-        color:#fff;font-weight:700;font-size:9px}
-.cpp-mid{flex:1;min-width:0}
-.cpp-nm{font-size:var(--nm);font-weight:600;line-height:1.25;margin-bottom:4px;
-        display:-webkit-box;-webkit-line-clamp:var(--lines);-webkit-box-orient:vertical;overflow:hidden}
-.cpp-qty{display:inline-flex;align-items:center;border:1px solid #e6e9ef;border-radius:7px;overflow:hidden}
-.cpp-qty span,.cpp-qty b{width:var(--step);height:var(--step);display:grid;place-items:center;font-size:10.5px;font-weight:600}
-.cpp-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
-.cpp-rm{color:#c3b3bb;font-size:11px}
-.cpp-pr{font-size:11px;font-weight:800;color:var(--acc)}
-.cpp-promo{padding:7px var(--pad);background:#fff0f4;font-size:10px;color:#5e545a}
-.cpp-foot{border-top:1px solid #eef1f6;padding:10px var(--pad)}
-.cpp-sum{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
-.cpp-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.cpp-btns a{text-align:center;padding:8px;border-radius:99px;font-size:10.5px;font-weight:700;
-            border:1px solid #e6e9ef;color:#1d2430}
 /* Appearance · Section dividers. dv- prefix; unused elsewhere in this file. */
 .dvsec{padding:10px 0}
 .dvsec.off{opacity:.5}
@@ -2656,7 +2627,7 @@ const NAV=[
      renders it as a real .nav-group without being asked. Nothing injects rows
      into this group, so it will never be a one-item section. */
   {sec:'Translation',items:[['tr-settings','Language settings','<path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/><circle cx="9" cy="5" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="8" cy="19" r="2.2"/>'],['tr-progress','Progress','<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/>'],['tr-strings','Strings','<path d="M4 7V5h16v2"/><path d="M9 19h6"/><path d="M12 5v14"/>'],['tr-machine','Machine translation','<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>']]},
-  {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
+  {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
   {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>','lock'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
   /* One row for the Rating Badge, not two. 'rev-capsule' had a row of its own
@@ -2874,7 +2845,7 @@ function go(id,sub){
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
   const t=TITLES[id]||['Platform',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
   $('#content').innerHTML='';
-  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,mail:renderMail,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,siteaddr:renderSiteAddress,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
+  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,mail:renderMail,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,siteaddr:renderSiteAddress,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
@@ -6011,145 +5982,6 @@ function bindDividers(){
   };
 }
 
-/* ---------- Appearance · Cart panel ----------
-   Same shape as the other settings screens: the server sends tabs and fields,
-   this renders them generically, so adding a setting to the service is all it
-   takes to have a control appear here. */
-let CP=null, CPTAB='size';
-
-function cpBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/cart-panel'; }
-
-async function renderCartPanel(){
-  $('#content').innerHTML=`<div class="wrap"><div class="page-head"><h2>Cart panel</h2><p>Loading…</p></div></div>`;
-  try{
-    const r=await fetch(cpBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
-    if(!r.ok) throw new Error(r.status);
-    CP=await r.json();
-  }catch(e){
-    const why=String(e.message||e);
-    const hint = why==='404'
-      ? 'The admin route is not registered — the cache-clearing migration for this release may not have run.'
-      : why==='500' ? 'The server errored. Check storage/logs/laravel.log.' : 'The request did not complete.';
-    $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">
-      <b>Could not load the cart panel settings.</b>
-      <p style="margin:6px 0 12px;color:#7b8697;font-size:12.5px">${escHtml(hint)} <code>${escHtml(why)}</code></p>
-      <button class="btn small" onclick="renderCartPanel()">Retry</button></div></div>`;
-    return;
-  }
-  paintCartPanel();
-}
-function cpGet(k){ for(const t of CP.tabs){ const f=t.fields.find(x=>x.key===k); if(f) return f.value; } return null; }
-function cpSet(k,v){ for(const t of CP.tabs){ const f=t.fields.find(x=>x.key===k); if(f){ f.value=v; return; } } }
-
-function cpField(f){
-  const v=f.value;
-  if(f.type==='bool')
-    return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
-      <span class="ectog${v?' on':''}" data-cp="${f.key}" role="switch" aria-checked="${v}" tabindex="0"></span></div>`;
-  if(f.type==='range'){ const o=f.options||{};
-    return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
-      <span class="mmrange"><input type="range" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${v}" data-cp="${f.key}">
-        <i id="cpv-${f.key}">${v}${o.unit||''}</i></span></div>`; }
-  if(f.type==='colour')
-    return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
-      <span class="mmcol"><input type="color" value="${v}" data-cp="${f.key}"><code>${v}</code></span></div>`;
-  return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
-    <input type="text" value="${escAttr(String(v))}" data-cp="${f.key}"></div>`;
-}
-
-/* A real panel at the chosen size and density, using the drawer's own class
-   names so the preview and the storefront cannot drift apart. */
-function cpPreview(){
-  const on = (k)=>cpGet(k)!==false;
-  const line = (init,name,price,grad)=>`<div class="cpp-item">
-      ${on('show_thumb')?`<div class="cpp-th" style="background:${grad}">${init}</div>`:''}
-      <div class="cpp-mid"><div class="cpp-nm">${escHtml(name)}</div>
-        ${on('show_qty')?`<div class="cpp-qty"><span>−</span><b>2</b><span>+</span></div>`:''}</div>
-      <div class="cpp-right">${on('show_remove')?`<span class="cpp-rm">✕</span>`:''}
-        ${on('show_price')?`<div class="cpp-pr">${price} د.إ</div>`:''}</div>
-    </div>`;
-
-  const acc = cpGet('accent'), cta = cpGet('checkout_bg'), ctaFg = cpGet('checkout_fg');
-
-  return `<div class="cpp" style="width:${Math.round(cpGet('panel_width')*0.62)}px;
-      --pad:${cpGet('list_pad')}px;--rowpad:${cpGet('row_pad')}px;--thumb:${cpGet('thumb_size')}px;
-      --nm:${cpGet('name_size')}px;--lines:${cpGet('name_lines')};--step:${cpGet('stepper_size')}px;--acc:${acc}">
-    <div class="cpp-tabs"><b style="color:${escAttr(acc)};border-color:${escAttr(acc)}">${escHtml(cpGet('txt_tab_cart'))} 4</b>${on('show_browsed')?`<i>${escHtml(cpGet('txt_tab_browsed'))}</i>`:''}<u>✕</u></div>
-    ${on('show_ship_bar')?`<div class="cpp-ship">${escHtml(cpGet('txt_ship_done'))}<div class="cpp-bar"><div style="background:${escAttr(acc)}"></div></div></div>`:''}
-    <div class="cpp-body">
-      ${line('I','Age-R Booster Pro Device','80','linear-gradient(140deg,#F6C6A0,#E89B6C)')}
-      ${line('RL','Hyaluronic Acid Watery Sun Gel that runs to a second line','133','linear-gradient(140deg,#F4A6B8,#E0567B)')}
-      ${line('M','Cellmazing Fit Serum','299','linear-gradient(140deg,#A8D0F0,#5F9BD4)')}
-      ${line('S','Ceramide Daily Moisturiser','329','linear-gradient(140deg,#C4B5F0,#8B6FD4)')}
-    </div>
-    ${on('show_promo')?`<div class="cpp-promo">🎁 Spend 199 for free delivery</div>`:''}
-    <div class="cpp-foot"><div class="cpp-sum"><span>${escHtml(cpGet('txt_subtotal'))}</span><span>841 د.إ</span></div>
-      <div class="cpp-btns"><a>${escHtml(cpGet('txt_btn_cart'))}</a><a style="background:${escAttr(cta)};color:${escAttr(ctaFg)};border-color:${escAttr(cta)}">${escHtml(cpGet('txt_btn_checkout'))}</a></div></div>
-  </div>`;
-}
-
-function paintCartPanel(){
-  const tab=CP.tabs.find(t=>t.key===CPTAB)||CP.tabs[0];
-  $('#content').innerHTML=`<div class="wrap ecwrap mmwrap">
-    <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Cart panel</h2>
-      <p class="mdesc" style="margin:0">The slide-out bag: how wide it is, how tightly the lines pack, and what each line shows.</p></div>
-    <div class="ectabs">${CP.tabs.map(t=>`<button class="ectab${t.key===CPTAB?' on':''}" data-cptab="${t.key}">${escHtml(t.label)}<span class="ecn">${t.fields.length}</span></button>`).join('')}</div>
-    <div class="mmgrid">
-      <div class="mmcols"><div class="card mmcard">
-        <div class="mmhd"><b>${escHtml(tab.label)}</b><span>${escHtml(tab.description)}</span></div>
-        <div class="mmbody">${tab.fields.map(cpField).join('')}</div></div></div>
-      <div class="mmpv"><div class="mmpv-in">${cpPreview()}</div><p class="mmpv-note">Live preview · desktop width, shown smaller</p></div>
-    </div>
-    <div class="ecsave">
-      <span class="ecdirty" id="cpDirty" style="visibility:hidden">Unsaved changes</span>
-      <button class="btn primary" id="cpSave">Save changes</button>
-    </div>
-  </div>`;
-  bindCartPanel();
-}
-
-function bindCartPanel(){
-  $$('[data-cptab]').forEach(b=>b.onclick=()=>{ CPTAB=b.dataset.cptab; paintCartPanel(); });
-
-  $$('[data-cp]').forEach(el=>{
-    const k=el.dataset.cp;
-    const dirty=()=>{ const d=$('#cpDirty'); if(d) d.style.visibility='visible'; };
-
-    if(el.classList.contains('ectog')){
-      el.onclick=()=>{ const v=!el.classList.contains('on'); el.classList.toggle('on',v);
-        el.setAttribute('aria-checked',String(v)); cpSet(k,v); dirty(); paintCartPanel(); };
-      return;
-    }
-    if(el.type==='range'){
-      /* Repaint the preview on every drag but leave the slider alone, so the
-         thumb does not jump out from under the pointer mid-drag. */
-      el.oninput=()=>{ cpSet(k,Number(el.value)); dirty();
-        const badge=$('#cpv-'+k); if(badge){ const f=CP.tabs.flatMap(t=>t.fields).find(x=>x.key===k);
-          badge.textContent=el.value+((f.options||{}).unit||''); }
-        $('.mmpv-in').innerHTML=cpPreview(); };
-      return;
-    }
-    el.oninput=()=>{ cpSet(k,el.value); dirty(); $('.mmpv-in').innerHTML=cpPreview();
-      const code=el.parentElement.querySelector('code'); if(code) code.textContent=el.value; };
-  });
-
-  const save=$('#cpSave');
-  if(save) save.onclick=async()=>{
-    const settings={};
-    for(const t of CP.tabs) for(const f of t.fields) settings[f.key]=f.value;
-    save.disabled=true;
-    try{
-      const r=await fetch(cpBase(),{method:'POST',credentials:'same-origin',
-        headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-        body:JSON.stringify({settings})});
-      const d=await r.json();
-      if(!r.ok||!d.ok) throw new Error(d.error||r.status);
-      $('#cpDirty').style.visibility='hidden';
-      toast('Cart panel saved');
-    }catch(e){ toast('Could not save: '+e.message,'bad'); }
-    finally{ save.disabled=false; }
-  };
-}
 
 /* ---------- Appearance · Login / Register panel ---------- */
 let AP=null, APTAB='welcome', APDEV='desktop';
@@ -7362,7 +7194,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    so the replay's marker inside #content is already destroyed by the time its
    task runs and nothing is drawn twice. That is the rule 'rev-all' fails, which
    awaits rvLoad() before it paints and is in neither armed set. */
-const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -22002,6 +21834,7 @@ buildNav();
      screen is the layout switch and it ships as `classic`, which is the cart
      page this shop renders today; every other control is inert until that one
      is moved, and the screen says so above the tabs. --}}
+@include('admin.partials.cart-panel-screen')
 @include('admin.partials.cart-page-screen')
 
 {{-- Appearance → Checkout page (Lane: checkout-page). The spacing behind the

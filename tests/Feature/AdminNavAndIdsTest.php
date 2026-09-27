@@ -287,7 +287,17 @@ const TABBED_SCREENS = [
     'paintNewsletter' => 'paintNewsletter',
     'paintMobileHdr' => 'paintMobileHdr',
     'paintDividers' => 'paintDividers',
-    'paintCartPanel' => 'paintCartPanel',
+    /*
+     * paintCartPanel is GONE FROM app.blade.php, not gone from the console.
+     * The Cart panel screen moved into its own partial when it gained the
+     * Desktop and Mobile control sets, the way the checkout and cart-page
+     * screens already had -- this list reads app.blade.php only, so the entry
+     * became a name it can never find.
+     *
+     * The strip itself did not stop being checked: CartPanelScreenTest pins
+     * the six tabs, that exactly one is selected, and that each carries
+     * aria-selected -- against the partial, where it now lives.
+     */
     'apPaint' => 'apPaint',
     'paintHeader' => 'paintHeader',
     'paintSiteSearch' => 'paintSiteSearch',
