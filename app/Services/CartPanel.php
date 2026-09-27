@@ -111,7 +111,12 @@ class CartPanel
         // own number and it says what it is.
         'list_pad_m'       => ['range',  'Padding around the list', 11, 'The gap between the panel edge and the product lines.', ['min' => 2, 'max' => 20, 'step' => 1, 'unit' => 'px']],
         'row_pad_m'        => ['range',  'Space above and below each line', 9, '', ['min' => 2, 'max' => 18, 'step' => 1, 'unit' => 'px']],
-        'thumb_size_m'     => ['range',  'Thumbnail', 38, '', ['min' => 24, 'max' => 56, 'step' => 2, 'unit' => 'px']],
+        // min 28, NOT 24. thumb_size_m already had a phone twin and already
+        // worked; the owner's list of things to squeeze does not mention the
+        // thumbnail, and widening a working slider's range is a change to
+        // something nobody asked about. ModuleSchemaEquivalenceTest is what
+        // caught it — the pin recorded 28 as this field's floor.
+        'thumb_size_m'     => ['range',  'Thumbnail', 38, '', ['min' => 28, 'max' => 56, 'step' => 2, 'unit' => 'px']],
         'name_size_m'      => ['range',  'Product name size', 13, '', ['min' => 9, 'max' => 16, 'step' => 1, 'unit' => 'px']],
         'name_lines_m'     => ['range',  'Product name · maximum lines', 2, 'One line is the shortest row a product can have.', ['min' => 1, 'max' => 3, 'step' => 1, 'unit' => '']],
         'price_size_m'     => ['range',  'Line price size', 100, '100% is the 12.5px the panel uses today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],

@@ -3361,7 +3361,15 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
      changed the panel where nobody was looking. */
   .kc-x{width:var(--cp-x-m,44px);height:var(--cp-x-m,44px);font-size:var(--cp-xg-m,13px)}
   .mm-x{width:44px;height:44px}
-  .kc-tab{min-height:var(--cp-tabh-m,44px)}
+  /* HEIGHT AND ZERO VERTICAL PADDING, not min-height alone, and the reason is
+     measured rather than assumed: .kc-tab carries `padding:11px 8px`, so its
+     natural box is 39px and a min-height of 32 changes nothing at all — the
+     slider moved and the strip did not. `height` with the padding out of the way
+     is what lets the owner go below 39. At the shipped 44 this renders 44, which
+     is exactly what min-height:44px rendered, so nothing moves on apply; the tab
+     is already a centring flex box, so the label stays centred with no padding
+     to hold it there. */
+  .kc-tab{min-height:var(--cp-tabh-m,44px);height:var(--cp-tabh-m,44px);padding-top:0;padding-bottom:0}
 
   /* .addbtn lives in kbb.css as well as the shop sheet, so this is the rule
      that reaches the related-product cards on the product page - that page

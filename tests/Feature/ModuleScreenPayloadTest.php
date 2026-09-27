@@ -212,7 +212,17 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // stale one: the three screens it added carry no `tabs`, so they are
     // compared key by key above and contribute no tab-walked control. The
     // count below would not notice them going missing, so a second guard does:
-    expect($compared)->toBe(500, 'the number of controls drawn changed');
+    //
+    // 525 AFTER LANE CP, which is 500 plus the twenty-five controls Appearance →
+    // Cart panel gained when it was split into Desktop and Mobile tabs. The
+    // fixture's cart-panel entry was advanced in the same commit, and it was
+    // advanced ADDITIVELY: no control that existed before is gone, and every
+    // surviving one carries the same key, type, value, default and options it
+    // carried. What moved is which tab each one sits on (`size`/`density` became
+    // `desktop`/`mobile`), two labels that had a device suffix which the tab now
+    // says for them, and two help sentences that were empty. All of it was read
+    // off the diff rather than regenerated on trust.
+    expect($compared)->toBe(525, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

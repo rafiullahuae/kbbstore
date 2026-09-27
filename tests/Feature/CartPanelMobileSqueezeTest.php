@@ -476,3 +476,72 @@ it('refuses a key that is not in the schema rather than writing it', function ()
     expect(app(SettingsService::class)->get('cartpanel_row_pad_m', null))->toBeNull();
     expect(app(SettingsService::class)->get('admin_path', null))->not->toBe('hijacked');
 });
+
+/* ------------------------------------------------------------------------
+ | 5. Two things measurement found that reading the CSS did not
+ |------------------------------------------------------------------------*/
+
+it('shrinks the tab strip with a height rather than a minimum', function () {
+    /*
+     * MEASURED, AND THE FIRST VERSION WAS WRONG. tab_h_m started as
+     * `.kc-tab{min-height:var(--cp-tabh-m,44px)}`, which is where the 44 it
+     * replaces lived — and .kc-tab carries `padding:11px 8px`, so its natural box
+     * is 39px high. Dragging the slider to 32 moved the number on the screen and
+     * left the strip at 39: a min-height cannot shrink a box below its own
+     * padding. Chromium at 390px said 39 while the control said 32, which is the
+     * kind of defect that only a measurement finds.
+     *
+     * So the rule sets `height` and takes the vertical padding out of the way.
+     * At the shipped 44 it renders 44, which is exactly what min-height:44px
+     * rendered — measured at 44 on / and /shop with no settings stored — and the
+     * tab is already a centring flex box, so the label does not move.
+     *
+     * MUTATION: put `.kc-tab{min-height:var(--cp-tabh-m,44px)}` back on its own.
+     * RED here, and the shop goes back to answering 39 for a slider set to 32.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+
+    expect($css)->toContain(
+        '.kc-tab{min-height:var(--cp-tabh-m,44px);height:var(--cp-tabh-m,44px);padding-top:0;padding-bottom:0}'
+    );
+});
+
+it('reads btn_h_m on the footer buttons, whatever a page sheet does to them', function () {
+    /*
+     * ── FOUND AND DELIBERATELY NOT FIXED ────────────────────────────────────
+     *
+     * The drawer's footer buttons are `.btn-ghost` and `.cobtn`, and
+     * resources/css/kbb/kbb-shop.css — the SHOP and CATEGORY pages' sheet, for
+     * the buttons on a product card — sets a FIXED height on both class names
+     * (`.cobtn{...height:50px...}` and `.btn-ghost{...height:44px...}`). That
+     * sheet loads after kbb.css and a fixed `height` beats a `min-height`
+     * outright, so on those two page types the drawer's Cart button is 44px and
+     * its Checkout button 50px whatever btn_h_m says.
+     *
+     * MEASURED in Chromium at 390px from one set of stored settings
+     * (btn_h_m = 32): /shop answered Cart 44 / Checkout 50, and the home page
+     * answered Cart 32 / Checkout 32. So the control governs the product page, the
+     * home page, the cart, the checkout, the blog and every content page, and is
+     * overridden on /shop and /category.
+     *
+     * WHY IT IS NOT FIXED. The fix is one drawer-scoped line —
+     * `#cart .kc-btns .btn-ghost,#cart .kc-btns .cobtn{height:auto}` — whose ID
+     * outranks a page sheet whatever the order. It would also take the shop
+     * page's drawer Checkout button from 50px to 44px on every shop that applied
+     * it: a visual change to something that works today, on a page the owner did
+     * not ask about, in another lane's file. CLAUDE.md rule 1 allows one
+     * exception and it is a default the owner asked for in as many words. He asked
+     * for controls; whether his two footer buttons should be the same height on
+     * the shop page is a decision about his shop, so it is his.
+     *
+     * THIS CASE PINS THE HALF THAT IS THIS LANE'S: that the panel's own rule
+     * reads the setting at all. It deliberately does NOT pin the absence of the
+     * fix, and it does NOT pin kbb-shop.css's two heights — the first goes red
+     * the day somebody does the right thing, and the second goes red the day
+     * another lane changes its own file for its own reasons. Neither is a
+     * failure. The finding lives in this comment and in the lane report.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+
+    expect($css)->toContain('.kc-btns .btn-ghost,.kc-btns .cobtn{min-height:var(--cp-btnh-m,44px)');
+});

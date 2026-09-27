@@ -227,7 +227,12 @@
 .cpv-ship{padding:8px var(--cpv-pad,16px);border-bottom:1px solid #eef1f6;font-size:10.5px;color:#5c6675}
 .cpv-bar2{height:5px;border-radius:5px;background:#f0e2e8;overflow:hidden;margin-top:5px}
 .cpv-bar2 div{height:100%;width:100%}
-.cpv-body{padding:6px var(--cpv-pad,16px);flex:1;overflow:hidden}
+/* SCROLLS, because the panel it is drawing scrolls: .dbody is
+   `flex:1;overflow:auto;min-height:0` on the shop and the list is taller than
+   any box this preview can be given. Clipping it instead drew half a product
+   line under the promotion strip, which reads as a fault in the panel rather
+   than as a list with more in it. */
+.cpv-body{padding:6px var(--cpv-pad,16px);flex:1;overflow:auto;min-height:0}
 .cpv-item{display:flex;gap:8px;align-items:center;padding:var(--cpv-rowpad,9px) 0;border-bottom:1px solid #f2f4f8}
 .cpv-item:last-child{border-bottom:0}
 .cpv-th{width:var(--cpv-thumb,42px);height:var(--cpv-thumb,42px);border-radius:8px;flex:none;
@@ -770,7 +775,7 @@
 
     return '<div class="cpv-frame">'
       + '<div class="cpv-bar"><i></i><i></i><i></i><span>Wider than ' + phoneMax + 'px · drawn 1:1</span></div>'
-      + '<div class="cpv-stage" style="--cpv-stage:320px">' + pvPanel(k, pvOwn, vars, false) + '</div>'
+      + '<div class="cpv-stage" style="--cpv-stage:360px">' + pvPanel(k, pvOwn, vars, false) + '</div>'
       + '</div>'
       + '<div class="cpv-ruler">Panel <b>' + pvNum('panel_width', 380) + 'px</b>'
       + '<span>·</span>list padding <b>' + pvNum('list_pad', 16) + 'px</b>'
