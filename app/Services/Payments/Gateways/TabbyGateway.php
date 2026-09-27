@@ -359,6 +359,29 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
      * same index — rather than assuming AE, because an SAR shop sending
      * X-Merchant-Code: AE is refused on every single call and the error says
      * nothing about currency.
+     *
+     * A KNOWN AND DELIBERATE DIFFERENCE FROM THE PLUGIN, stated because silence
+     * would read as an oversight. `WC_Tabby_Config::getMerchantCode($order)`
+     * derives the code from the ORDER's billing (then shipping) country, so a
+     * multi-country merchant's SA buyer is sent under X-Merchant-Code: SA. This
+     * reads the SHOP's configured code instead, for every order.
+     *
+     * The two agree exactly for a single-country merchant, which is what this
+     * shop is (`merchant_code` = AE, currency AED, and Tabby issues the account
+     * per country). They diverge for a merchant holding several country
+     * agreements — and there the plugin's behaviour is the right one. It is not
+     * adopted here because the failure modes are asymmetric and untestable from
+     * this project: deriving the code from a buyer's address sends
+     * X-Merchant-Code: SA on behalf of an AE-only account, which Tabby answers
+     * `not_authorized` — a 403 on the checkout call, for every Saudi shopper, on
+     * a shop that works perfectly today. Egress to api.tabby.ai is blocked here,
+     * so that branch could not be driven against the real API either way.
+     *
+     * If the owner adds a second country agreement, the change is this method
+     * taking an optional Order and preferring a billing country that is BOTH in
+     * self::COUNTRIES and one the account is authorised for — and
+     * webhookStatus() already reports the authorised set per country, so the
+     * information needed to do it safely is on the screen.
      */
     private function merchantCode(): string
     {

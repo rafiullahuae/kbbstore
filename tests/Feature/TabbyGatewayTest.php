@@ -1996,3 +1996,155 @@ function tgAnswers(string $pattern = 'api.tabby.ai/*'): Closure
         $box->answer = $answer;
     };
 }
+
+/* ======================================================================= */
+/* THE CONCURRENCY CLAIMS, REACHED                                         */
+/* ======================================================================= */
+
+/*
+ * TWO MUTATIONS SURVIVED THE FIRST PASS AND THESE ARE WHY THEY NO LONGER DO.
+ *
+ * `PaymentVoider`'s conditional UPDATE against a null `voided_at`, and
+ * `PaymentConfirmer`'s `only: ['paid_at' => null, ...]` precondition on the
+ * locked row, are both CONCURRENCY guards. Every sequential test reaches the
+ * ordinary read-check that sits in front of them first — `if ($order->voided_at
+ * !== null)` and `if ($order->paid_at !== null)` — so removing the claim changed
+ * nothing that `it releases once when the button is clicked twice` or `it applies
+ * a replayed webhook exactly once` could see. Both stayed green with the guard
+ * deleted, which means neither was asserting the thing it was written for.
+ *
+ * What two PHP-FPM workers have that a sequential test does not is a model
+ * instance READ BEFORE EITHER OF THEM WROTE. That is reproducible exactly: load
+ * the order twice up front, act on both. The in-memory check passes on the second
+ * because its copy is stale, and the claim is then the only thing left.
+ */
+
+it('releases once when two workers both read the order before either wrote', function () {
+    /*
+     * MUTATION: drop `->whereNull('voided_at')` from PaymentVoider's claim and
+     * this is red — two closes go to Tabby for one authorisation. The sequential
+     * double-click case does NOT catch that, which is the whole reason this
+     * exists.
+     */
+    tg();
+    $row = tgOrder(['transaction_id' => 'pay_race', 'status' => 'cancelled']);
+
+    Http::fake([
+        'api.tabby.ai/api/v2/payments/*' => Http::response(['id' => 'pay_race', 'status' => 'AUTHORIZED'], 200),
+        'api.tabby.ai/api/v1/payments/*/close' => Http::response(['id' => 'pay_race', 'status' => 'CLOSED'], 200),
+    ]);
+
+    // Both workers read first. Neither has written, so both see voided_at null.
+    $workerA = Order::find($row->id);
+    $workerB = Order::find($row->id);
+
+    expect($workerA->voided_at)->toBeNull();
+    expect($workerB->voided_at)->toBeNull();
+
+    $voider = app(PaymentVoider::class);
+
+    $first = $voider->void($workerA);
+    $second = $voider->void($workerB);
+
+    expect($first->code)->toBe('voided');
+    // The loser is told it was already done, and is a SUCCESS — the caller's goal
+    // is true either way and failing would make a cancellation look broken.
+    expect($second->ok)->toBeTrue();
+    expect($second->code)->toBe('already_voided');
+
+    $closes = collect(Http::recorded())
+        ->filter(fn ($pair) => str_contains($pair[0]->url(), '/close'))
+        ->count();
+
+    expect($closes)->toBe(1);
+});
+
+it('confirms once when two deliveries of one payment race on an already-shipped order', function () {
+    /*
+     * The same shape on the paid side, and the status has to be one
+     * PaymentConfirmer::HOLDS_PLACE carries — `shipped` — for the claim to be the
+     * deciding factor rather than the status.
+     *
+     * On any other status the first delivery MOVES the order (pending →
+     * processing), so a second delivery decided against a stale `pending` read is
+     * refused by the status half of the precondition whatever the `paid_at` half
+     * says. On a `shipped` order the target IS `shipped`, the status half matches
+     * on both deliveries, and `paid_at` is the only thing standing between one
+     * payment row and two. That is not a contrived status either: a late callback
+     * on an order already out with the courier is the case HOLDS_PLACE was added
+     * for, and providers retry.
+     *
+     * MUTATION: change PaymentConfirmer's precondition to `only: ['status' =>
+     * $status]` — dropping the `'paid_at' => null` half — and this is red: two
+     * `payments` rows, two notes, and `paid_at` overwritten by the second.
+     */
+    tg();
+    $row = tgOrder(['status' => 'shipped', 'transaction_id' => 'pay_ship_race']);
+
+    $confirmer = app(\App\Services\Payments\PaymentConfirmer::class);
+
+    $deliveryA = Order::find($row->id);
+    $deliveryB = Order::find($row->id);
+
+    $confirm = fn (Order $order) => $confirmer->confirm(
+        $order,
+        'tabby',
+        'pay_ship_race',
+        25000,
+        'AED',
+        ['payment_id' => 'pay_ship_race', 'status' => 'AUTHORIZED'],
+    );
+
+    $first = $confirm($deliveryA);
+    $paidAt = $row->fresh()->paid_at;
+
+    expect($first->accepted)->toBeTrue();
+    expect($paidAt)->not->toBeNull();
+    // Not wound backwards off the courier.
+    expect($row->fresh()->status)->toBe('shipped');
+
+    $second = $confirm($deliveryB);
+
+    /*
+     * ONE audit event and ONE note, which are the observables that actually
+     * move — and finding that out was the point of running the mutation rather
+     * than writing the note and trusting it.
+     *
+     * `payments` is NOT one of them: record() uses `Payment::updateOrCreate` keyed
+     * on (provider, provider_ref), so a replay silently updates the one row and a
+     * count of it is 1 whether the guard is there or not. `paid_at` is not one
+     * either: both deliveries land inside the same second, so the column reads
+     * identical even when the second really did rewrite it. `payment_events` and
+     * `order_notes` are unconditional inserts inside the claimed transaction, so
+     * they are the two places a second confirmation cannot hide.
+     */
+    $paidEvents = PaymentEvent::where('provider', 'tabby')
+        ->where('external_id', 'pay_ship_race')
+        ->where('type', 'paid')
+        ->count();
+
+    expect($paidEvents)->toBe(1);
+    expect($row->notes()->where('content', 'like', 'Payment confirmed via tabby%')->count())->toBe(1);
+    expect(\App\Models\Payment::where('order_id', $row->id)->count())->toBe(1);
+    expect($row->fresh()->status)->toBe('shipped');
+
+    /*
+     * And the loser is told "already applied" — a 200, so the provider stops
+     * retrying. Worth pinning because it is NOT what a reading of the code
+     * predicts: the loser's own copy went into confirm() with `paid_at` null, so
+     * the obvious outcome is the 503 that the "status moved underneath us" branch
+     * gives. confirm() calls `$order->refresh()` between the claim and the
+     * answer, so the loser reads the winner's committed write and takes the
+     * replay branch instead. A 503 here would be wrong in a way that costs
+     * nothing visible — Tabby would redeliver a notice that is already applied,
+     * forever.
+     */
+    expect($second->accepted)->toBeTrue();
+    expect($second->status)->toBe(200);
+
+    // A third, non-stale delivery answers the same and still adds nothing.
+    $third = $confirm($row->fresh());
+    expect($third->accepted)->toBeTrue();
+    expect($third->status)->toBe(200);
+    expect(PaymentEvent::where('external_id', 'pay_ship_race')->where('type', 'paid')->count())->toBe(1);
+});
