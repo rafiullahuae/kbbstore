@@ -273,8 +273,48 @@ final class MediaRegistrar
     }
 
     /**
+     * EVERY ROOT IN THIS APPLICATION'S WEB ROOT THAT HOLDS MEDIA, longest first.
+     *
+     * ── WHY THERE ARE TWO, AND WHY THE SECOND ONE WAS MISSING ───────────────
+     *
+     * `uploads/` is this application's own: MediaUploadController, UgcMedia,
+     * InstagramSync and the review form all write under it.
+     *
+     * `wp-content/uploads/` is THE IMPORT'S, and it is under public_path() on
+     * this server just as surely as the first one is —
+     * `Import\MediaSideloader::targetPath()` cuts the old host's URL at
+     * `UPLOAD_ROOTS = ['wp-content/uploads/', 'uploads/']` and
+     * `MediaSideloader::absolute()` then writes the bytes to
+     * `public_path($that)`. So after a fetch the owner's catalogue photographs
+     * are files in this shop's own web root, served by this shop, and until this
+     * lane NOT ONE OF THEM COULD BE CATALOGUED: this method refused the shape
+     * outright, so `record()` returned null for every one of them, and
+     * `MediaBackfill` never walked the tree they are in. The Media Library after
+     * a WooCommerce import showed nothing the import had brought, and Rescan
+     * could not change that.
+     *
+     * THE LIST AGREES WITH MediaSideloader::UPLOAD_ROOTS ON PURPOSE. It has to:
+     * the sideloader decides where the bytes go and this decides what may be
+     * catalogued, and a root in one and not the other is either a file nothing
+     * can find or a row for a file nothing wrote.
+     *
+     * LONGEST FIRST, because `wp-content/uploads/` CONTAINS `uploads/` — the
+     * same ordering note MediaSideloader::targetPath() carries. Here the roots
+     * are matched as prefixes rather than searched for anywhere in the string,
+     * so the order does not change which root matches; it is kept so that the
+     * two lists read the same way round and neither invites the other's bug.
+     *
+     * Media::urlFor() tells the two apart by the `uploads/` prefix and serves
+     * each from the root it belongs to, so both shapes round-trip to a working
+     * URL — `Url::media()` already accepts a path that carries `wp-content/
+     * uploads/` and does not prefix it twice.
+     */
+    public const ROOTS = ['wp-content/uploads/', 'uploads/'];
+
+    /**
      * The stored path, in the one shape `media`.path and Media::urlFor() use:
-     * root-relative, no leading slash, under uploads/. Null for anything else.
+     * root-relative, no leading slash, under one of self::ROOTS. Null for
+     * anything else.
      *
      * AN ALLOWLIST OF SHAPES, NOT A DENYLIST OF TRICKS — UgcPath::stored()'s own
      * rule, applied one directory wider because this class serves every uploads
@@ -283,10 +323,13 @@ final class MediaRegistrar
      * has ever written to it, and record() turns this into a public_path()
      * concatenation and forget() turns it into a DELETE.
      *
-     * `uploads/` and nothing above it, because that prefix is also what
-     * Media::urlFor() reads to tell an admin upload from an imported
-     * /wp-content/uploads/ path. A row stored outside it would be served from
-     * the wrong root.
+     * WIDENING THIS DID NOT WIDEN WHAT CAN BE REACHED, and that is the point of
+     * doing it here rather than at the call sites. A second ALLOWED PREFIX is
+     * added; every other rule is untouched and still applies to both roots. The
+     * traversal refusal below runs on the segments of whichever root matched, so
+     * `wp-content/uploads/../../etc/passwd` is refused on its `..` exactly as
+     * `uploads/../../etc/passwd` always was, and nothing outside public_path()
+     * became expressible.
      */
     public static function normalise(string $path): ?string
     {
@@ -303,7 +346,25 @@ final class MediaRegistrar
 
         $clean = ltrim($path, '/');
 
-        if (! str_starts_with($clean, 'uploads/')) {
+        /*
+         * A PREFIX TEST, NOT A SEARCH. MediaSideloader::targetPath() uses
+         * strpos() because it is cutting a root out of the middle of a remote
+         * URL's path; here the caller has already produced a root-relative
+         * path, so anything that is not AT the front is not a root, and
+         * `etc/wp-content/uploads/x.jpg` is refused rather than silently cut
+         * down to the part that looks safe.
+         */
+        $rooted = false;
+
+        foreach (self::ROOTS as $root) {
+            if (str_starts_with($clean, $root)) {
+                $rooted = true;
+
+                break;
+            }
+        }
+
+        if (! $rooted) {
             return null;
         }
 

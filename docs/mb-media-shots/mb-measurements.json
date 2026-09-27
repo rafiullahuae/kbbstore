@@ -1,0 +1,44 @@
+{
+ "media-390": {
+  "viewport": 390,
+  "pageScrollWidth": 390,
+  "horizontalOverflow": 0,
+  "title": "Media Library",
+  "crumb": "Content",
+  "tilesDrawn": 18,
+  "importedTilesDrawn": 17,
+  "brokenThumbnails": 0,
+  "firstTile": {
+   "w": 156,
+   "h": 156
+  },
+  "anImportedSrc": "/wp-content/uploads/2021/09/cleansing-oil-duo.jpg",
+  "searchGinseng": {
+   "tiles": 4,
+   "usedBadges": 3,
+   "unusedBadges": 1,
+   "notUsedYetText": 1
+  }
+ },
+ "media-1280": {
+  "viewport": 1280,
+  "pageScrollWidth": 1280,
+  "horizontalOverflow": 0,
+  "title": "Media Library",
+  "crumb": "Content",
+  "tilesDrawn": 18,
+  "importedTilesDrawn": 17,
+  "brokenThumbnails": 0,
+  "firstTile": {
+   "w": 148,
+   "h": 148
+  },
+  "anImportedSrc": "/wp-content/uploads/2021/09/cleansing-oil-duo.jpg",
+  "searchGinseng": {
+   "tiles": 4,
+   "usedBadges": 3,
+   "unusedBadges": 1,
+   "notUsedYetText": 1
+  }
+ }
+}

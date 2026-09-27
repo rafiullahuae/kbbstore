@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Import;
 
+use App\Support\MediaRegistrar;
 use App\Support\MediaUsage;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
@@ -250,6 +251,18 @@ final class MediaSideloader
     ];
 
     /** The two upload roots this application has, longest first. */
+    /**
+     * The two roots a remote URL's path may be cut at.
+     *
+     * DELIBERATELY ITS OWN LIST, and not `MediaRegistrar::ROOTS` even though the
+     * two are the same two strings today. This constant decides WHERE THIS CLASS
+     * WRITES ATTACKER-INFLUENCEABLE BYTES INTO THE WEB ROOT; that one decides
+     * what may be catalogued in a database table. Aliasing this to it would mean
+     * a future root added for the media library's benefit silently widened an
+     * RCE surface from another file — the same argument targetPath() makes for
+     * not reusing `MediaRewrite::uploadsRelative()`, one level down. They must
+     * AGREE, and a test pins that they do; they must not be the same symbol.
+     */
     private const UPLOAD_ROOTS = ['wp-content/uploads/', 'uploads/'];
 
     /**
@@ -768,6 +781,57 @@ final class MediaSideloader
                 $fetched++;
                 $bytes += $outcome['bytes'];
                 $landed[] = $reference['url'];
+
+                /*
+                 * ── AND IT JOINS THE MEDIA LIBRARY, IN THIS SAME REQUEST ─────
+                 *
+                 * THE DEFECT THIS CLOSES. Every photograph this class has ever
+                 * fetched landed in the web root and was catalogued by NOTHING.
+                 * `Support\MediaBackfill` — the only thing that ever turned a
+                 * file on disk into a `media` row without an upload — walked
+                 * `public_path('uploads')` and that alone, and these files are
+                 * under `public_path('wp-content/uploads')`. So the owner could
+                 * import his entire live catalogue, see every picture on every
+                 * product page, open Store → Media Library and find it empty of
+                 * all of it — with a Rescan button that could not help, because
+                 * the walk did not know the tree existed. Both halves are fixed;
+                 * this is the half that needs nobody to press anything.
+                 *
+                 * HERE AND NOT IN fetchOne(), deliberately. fetchOne() moves
+                 * bytes and is the class's security surface — eight guards and a
+                 * mutation test each. A database insert does not belong inside
+                 * it. This is the same place `repoint()` is called from and for
+                 * the same reason: the request that landed the file is the
+                 * request that records it, so there is no state in which the
+                 * picture is on disk and the shop has no record of it.
+                 *
+                 * THE SNIFFED TYPE, NOT THE DECLARED ONE. $outcome['type'] is
+                 * what guard 3 read out of the first bytes, and it is passed as
+                 * MediaRegistrar's corroborating $mime — that method accepts it
+                 * only when it maps back to the extension already on disk, so
+                 * this is a second opinion that agrees and never an override.
+                 * Bytes and dimensions it reads off the finished file itself.
+                 *
+                 * IT CANNOT FAIL THIS BATCH, and that is not a hope. record()
+                 * returns null and reports on any throw, builds a brand-new
+                 * model inside its own try so no dirty attribute is left on
+                 * anything a later save() would re-send — the UpdateRunner
+                 * failure CLAUDE.md records — and the file is already fetched,
+                 * validated and being served by the time this runs. A library
+                 * row that did not write is what the next Rescan is for; a
+                 * fetch that was thrown away because a row did not write is a
+                 * download the owner pays for twice.
+                 *
+                 * NOT COUNTED IN THE BATCH'S TALLY on purpose. `fetched` means
+                 * "bytes landed", which is what the progress bar and `remaining`
+                 * are computed from, and a number that means two things is a
+                 * number that disagrees with itself.
+                 */
+                MediaRegistrar::record(
+                    (string) $reference['path'],
+                    basename((string) $reference['path']),
+                    $outcome['type'],
+                );
             } elseif ($outcome['state'] === self::REFUSED) {
                 $refused++;
             } else {
