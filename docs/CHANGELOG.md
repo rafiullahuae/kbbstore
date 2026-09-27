@@ -3,6 +3,68 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.300
+The Instagram preview and a popup connector, and a field your variable products
+would have lost on the migration.
+
+### ▲ CONTENT → INSTAGRAM NOW HAS A PREVIEW
+
+There was none at all before — you saved and went to look at the shop. It now
+draws the section at the settings **currently on screen**, redrawing as you move
+a slider rather than on save. All five layouts, all four profile styles, gap,
+corners, heading, counts, caption and the play badge.
+
+It is a drawing, not a live embed — rendering the real storefront would cost a
+fetch per keystroke. Where you have posts stored it draws **your** posts; where
+you have none it draws placeholders and says so rather than an empty box. It
+also states honestly where the drawing differs from the shop: the caption sits
+open here and is hover-only on a real tile.
+
+There is a **Phone / Desktop** switch beside it, and it works by the preview box
+asking its own width — nothing measures anything.
+
+### ▲ "CONFIGURE NOW" OPENS A POPUP
+
+Press it and Instagram opens in a small window. Log in, and the window **closes
+itself** and the screen updates — without leaving the page you were on.
+
+**If your browser blocks popups, nothing breaks**: the button falls back to the
+old behaviour, navigating in the same tab exactly as before. Both paths were
+driven in a real browser before shipping.
+
+**On security, which matters for a login window:** the page ignores any message
+that does not come from your own shop's address, and the message itself carries
+only the word "done" — never a token. The screen then asks **your server** what
+the state is, so a forged message tells it nothing. The app secret never reaches
+your browser at all; it is returned as a yes/no, never as a value.
+
+### ▲ A FIELD YOUR VARIABLE PRODUCTS WOULD HAVE LOST
+
+`default_attributes` — **"Default Form Values"** on the Variations tab, which
+decides *which size a variable product's page opens on*.
+
+It was worse than simply missing. The exporter was **already fetching it** on
+every batch and then emitting no column for it — so anybody checking what the
+migration covered would have seen the field on the list and stopped looking.
+
+**What it would have cost you:** every variable product would open on no size,
+so a shopper has to choose before "Add to basket" means anything — on every
+visit — where your old shop had chosen for him.
+
+It is now exported and reported. **Whether it earns a column is your call** —
+the import report now tells you how many products actually set one. If it is a
+handful, it is not worth a column; if it is every variable product you have,
+your shoppers have all just been given an extra click.
+
+### ▲ AND A TEST THAT WAS CHECKING NOTHING
+
+The "imports the same file twice and changes nothing" test compared five
+numbers, and two of them were **zero before and zero after** — its fixture never
+created the rows it was counting. `0 === 0` is identical and proves nothing. The
+fixture is fixed and each count must now be non-empty *before* it is compared.
+
+**No setting added, no default moved.**
+
 ## 2.60.299
 The stuck cover bar fixed, Save closes the popup, and the Cart panel gets
 Desktop and Mobile control sets.
