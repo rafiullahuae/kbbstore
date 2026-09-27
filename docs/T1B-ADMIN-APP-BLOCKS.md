@@ -105,6 +105,16 @@ shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language
 
 ## Block 3 · arm the deep-link replay for the four screens
 
+> **The armed set has grown since this block was applied, and this replacement
+> has been updated to match.** Eleven more ids joined `LATE_RENDERED` in the
+> round that merged Lanes V4, PG1/PG2, S9 and IG — the shoppable-video and
+> Instagram screens plus seven that had had a sidebar row and no URL since they
+> were written. The reasoning is identical to the paragraph above, and the
+> second comment in the block records it. This document is the record of what is
+> applied, so when that line moves, this moves with it; `TranslationConsoleTest >
+> it keeps the handover document and the applied console in step` is what says
+> so, and it is the test that caught this.
+
 **Anchor** (occurs once):
 
 ```
@@ -128,7 +138,19 @@ const LATE_RENDERED=new Set(['media','tax']);
    it awaits anything — so the replay's marker inside #content is already
    destroyed by the time its task runs and nothing is drawn twice. That is the
    rule 'rev-all' failed, and the reason it is in neither armed set. */
-const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent']);
+/* The four shoppable-video and Instagram screens, for the same reason again and
+   found the same way: ?go=ugcvideo and #ugcvideo opened the DASHBOARD under
+   whatever breadcrumb, because none of the four ids was in TITLES at all, so
+   nothing routed and go() fell through to renderDash. The screens had no
+   shareable URL and no way in but a click, which is also why the lane that
+   photographed them had to call window.go('ugcvideo') by hand.
+
+   They are safe to arm on the condition this set carries: each of the four wraps
+   window.go in its own partial and calls render() BEFORE load(), synchronously,
+   so the replay's marker inside #content is already destroyed by the time its
+   task runs and nothing is drawn twice. That is the rule 'rev-all' fails, which
+   awaits rvLoad() before it paints and is in neither armed set. */
+const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 ```
 
 ---
