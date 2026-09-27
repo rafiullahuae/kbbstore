@@ -1,0 +1,443 @@
+{
+  "tag": "after",
+  "base": "http://127.0.0.1:8971",
+  "widths": [
+    {
+      "width": 1280,
+      "shots": [
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-1280-1-step2-resting.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-1280-2-refused-8.4mb.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-1280-3-refused-3mb.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-1280-4-in-flight.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-1280-5-slow.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-1280-6-cancelled.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-1280-7-accepted.png"
+      ],
+      "steps": {
+        "resting": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 966,
+            "h": 135
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": null,
+          "uploadPanelClasses": null,
+          "uploadPanelText": null,
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "owners84": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 966,
+            "h": 135
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 966,
+            "h": 99
+          },
+          "uploadPanelClasses": "ugs-up is-bad",
+          "uploadPanelText": "owners-8.4mb.mp4 not accepted That file is 8.4 MB and the most that can be uploaded here is 2 MB. It was not sent, so nothing on the clip was changed. The limit is PHP on this server and not Shoppable video, which allows 64 MB for a clip: upload_max_filesize is 2M. Raise it on the server and this box will take the bigger file. 8.4 MB — nothing on the clip was changed.",
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "overPerFile": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 966,
+            "h": 135
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 966,
+            "h": 99
+          },
+          "uploadPanelClasses": "ugs-up is-bad",
+          "uploadPanelText": "over-per-file.mp4 not accepted That file is 3.0 MB and the most that can be uploaded here is 2 MB. It was not sent, so nothing on the clip was changed. The limit is PHP on this server and not Shoppable video, which allows 64 MB for a clip: upload_max_filesize is 2M. Raise it on the server and this box will take the bigger file. 3.0 MB — nothing on the clip was changed.",
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "inFlight": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 966,
+            "h": 135
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 966,
+            "h": 109
+          },
+          "uploadPanelClasses": "ugs-up",
+          "uploadPanelText": "under-limit.mp4 19% 368 KB of 1.9 MB sent Sending to the server. 6s so far. Cancel this upload",
+          "barWidth": "176.375px",
+          "pct": "19%",
+          "sent": "368 KB of 1.9 MB sent",
+          "stage": "Sending to the server. 6s so far.",
+          "cancelPresent": true,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "slow": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 966,
+            "h": 135
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 966,
+            "h": 109
+          },
+          "uploadPanelClasses": "ugs-up",
+          "uploadPanelText": "under-limit.mp4 72% 1.4 MB of 1.9 MB sent Sending to the server. 23s so far. Cancel this upload",
+          "barWidth": "676.906px",
+          "pct": "72%",
+          "sent": "1.4 MB of 1.9 MB sent",
+          "stage": "Sending to the server. 23s so far.",
+          "cancelPresent": true,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "cancelled": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 966,
+            "h": 135
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 966,
+            "h": 96
+          },
+          "uploadPanelClasses": "ugs-up is-bad",
+          "uploadPanelText": "under-limit.mp4 not accepted You stopped that upload, so nothing was sent and nothing on the clip was changed. 1.9 MB — nothing on the clip was changed. Try again The file is still on your computer — nothing needs choosing again.",
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": true,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "accepted": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "contentScrollWidth": 1032,
+          "contentClientWidth": 1032,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 966,
+            "h": 135
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 966,
+            "h": 77
+          },
+          "uploadPanelClasses": "ugs-up",
+          "uploadPanelText": "under-limit.mp4 ✓ 100% 1.9 MB arrived whole This is the video the tile plays.",
+          "barWidth": "940.188px",
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        }
+      }
+    },
+    {
+      "width": 390,
+      "shots": [
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-390-1-step2-resting.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-390-2-refused-8.4mb.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-390-3-refused-3mb.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-390-4-in-flight.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-390-5-slow.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-390-6-cancelled.png",
+        "/tmp/claude-0/-home-user-kbbstore/719ff49f-5d63-5981-9f03-fffb8cde43b0/scratchpad/shots-after/after-390-7-accepted.png"
+      ],
+      "steps": {
+        "resting": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 336,
+            "h": 313
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": null,
+          "uploadPanelClasses": null,
+          "uploadPanelText": null,
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "owners84": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 336,
+            "h": 313
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 336,
+            "h": 146
+          },
+          "uploadPanelClasses": "ugs-up is-bad",
+          "uploadPanelText": "owners-8.4mb.mp4 not accepted That file is 8.4 MB and the most that can be uploaded here is 2 MB. It was not sent, so nothing on the clip was changed. The limit is PHP on this server and not Shoppable video, which allows 64 MB for a clip: upload_max_filesize is 2M. Raise it on the server and this box will take the bigger file. 8.4 MB — nothing on the clip was changed.",
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "overPerFile": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 336,
+            "h": 313
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 336,
+            "h": 146
+          },
+          "uploadPanelClasses": "ugs-up is-bad",
+          "uploadPanelText": "over-per-file.mp4 not accepted That file is 3.0 MB and the most that can be uploaded here is 2 MB. It was not sent, so nothing on the clip was changed. The limit is PHP on this server and not Shoppable video, which allows 64 MB for a clip: upload_max_filesize is 2M. Raise it on the server and this box will take the bigger file. 3.0 MB — nothing on the clip was changed.",
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "inFlight": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 336,
+            "h": 313
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 336,
+            "h": 109
+          },
+          "uploadPanelClasses": "ugs-up",
+          "uploadPanelText": "under-limit.mp4 19% 368 KB of 1.9 MB sent Sending to the server. 6s so far. Cancel this upload",
+          "barWidth": "58.1562px",
+          "pct": "19%",
+          "sent": "368 KB of 1.9 MB sent",
+          "stage": "Sending to the server. 6s so far.",
+          "cancelPresent": true,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "slow": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 336,
+            "h": 313
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 336,
+            "h": 109
+          },
+          "uploadPanelClasses": "ugs-up",
+          "uploadPanelText": "under-limit.mp4 72% 1.4 MB of 1.9 MB sent Sending to the server. 23s so far. Cancel this upload",
+          "barWidth": "220.094px",
+          "pct": "72%",
+          "sent": "1.4 MB of 1.9 MB sent",
+          "stage": "Sending to the server. 23s so far.",
+          "cancelPresent": true,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "cancelled": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 336,
+            "h": 313
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 336,
+            "h": 180
+          },
+          "uploadPanelClasses": "ugs-up is-bad",
+          "uploadPanelText": "under-limit.mp4 not accepted You stopped that upload, so nothing was sent and nothing on the clip was changed. 1.9 MB — nothing on the clip was changed. Try again The file is still on your computer — nothing needs choosing again.",
+          "barWidth": null,
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": true,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        },
+        "accepted": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "contentScrollWidth": 390,
+          "contentClientWidth": 390,
+          "videoZoneSub": "or press to choose one · MP4 or WebM, up to 2 MB",
+          "capNotePresent": true,
+          "capNoteText": "The size limit on this step is this server, not the shop. Shoppable video allows a video of 64 MB, but PHP on this server accepts at most 2M per file (upload_max_filesize) and 8M per whole request (post_max_size), so 2 MB is the real ceiling today. The cover and the teaser are held to the same two numbers. A bigger file is thrown away by PHP before this shop sees any of it. That is why an upload can reach 100% and still fail: the bytes leave your browser and never arrive. Raise it on the server, not here. On Cloudways: Servers → Settings & Packages → Basic → Upload Size, or put upload_max_filesize and post_max_size in a user ini file in the web root over SSH. Then reload this screen. This note disappears and the box goes back to saying 64 MB.",
+          "capNoteBox": {
+            "w": 336,
+            "h": 313
+          },
+          "capNoteFontSize": "11.5px",
+          "uploadPanel": {
+            "w": 336,
+            "h": 77
+          },
+          "uploadPanelClasses": "ugs-up",
+          "uploadPanelText": "under-limit.mp4 ✓ 100% 1.9 MB arrived whole This is the video the tile plays.",
+          "barWidth": "310px",
+          "pct": null,
+          "sent": null,
+          "stage": null,
+          "cancelPresent": false,
+          "retryPresent": false,
+          "dropZones": 3,
+          "fileInputs": 2,
+          "brokenImages": 0
+        }
+      }
+    }
+  ],
+  "console": [
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "1280: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "390: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "error": null
+}

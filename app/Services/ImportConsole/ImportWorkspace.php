@@ -7,6 +7,7 @@ namespace App\Services\ImportConsole;
 use App\Services\Import\ImportRunner;
 use App\Services\Import\RowRejected;
 use App\Services\Import\Sources\CsvRowSource;
+use App\Support\ServerUploadLimits;
 use Illuminate\Http\UploadedFile;
 
 /**
@@ -859,12 +860,38 @@ final class ImportWorkspace
         clearstatcache(true, $path);
     }
 
-    /** What this PHP install will actually accept, which is often less than we allow. */
+    /**
+     * What this PHP install will actually accept, which is often less than we allow.
+     *
+     * ── THE TWO UPLOAD DIRECTIVES NOW COME FROM ONE PLACE ───────────────────
+     *
+     * The sentence above was right, and for months this was the only screen in
+     * the console acting on it. Content → Shoppable video → All clips advertised
+     * "MP4 or WebM, up to 64 MB" on a server that takes 2M per file, so the
+     * owner's 8.4 MB clip reached 100% and came back "That file was not
+     * accepted" — the exact failure this method's docblock predicted, on a
+     * screen that had never read it.
+     *
+     * App\Support\ServerUploadLimits is that reading, done once and with the
+     * arithmetic this method never had: the ini shorthand parsed the way PHP
+     * parses it, and min(app cap, upload_max_filesize, post_max_size less the
+     * multipart overhead). The two string keys below are delegated to it so
+     * there is ONE reader of those directives rather than a second one per
+     * screen.
+     *
+     * WHAT THIS RETURNS IS UNCHANGED — same five keys, same types, same values.
+     * The import screen reads `lim.upload_max_filesize` and `lim.post_max_size`
+     * out of resources/views/admin/app.blade.php, which is the integrator's file
+     * and not a lane's, so this is a refactor and must be nothing else.
+     * UploadLimitsTest pins it against ini_get directly.
+     */
     public function serverLimits(): array
     {
+        $server = (new ServerUploadLimits)->raw();
+
         return [
-            'upload_max_filesize' => (string) ini_get('upload_max_filesize'),
-            'post_max_size' => (string) ini_get('post_max_size'),
+            'upload_max_filesize' => $server['upload_max_filesize'],
+            'post_max_size' => $server['post_max_size'],
             'max_execution_time' => (int) ini_get('max_execution_time'),
             'memory_limit' => (string) ini_get('memory_limit'),
             'our_max_bytes' => self::MAX_BYTES,

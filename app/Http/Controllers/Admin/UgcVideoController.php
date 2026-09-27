@@ -10,7 +10,9 @@ use App\Models\UgcVideo;
 use App\Services\UgcMedia;
 use App\Services\UgcPath;
 use App\Services\UgcTranscoder;
+use App\Support\ServerUploadLimits;
 use App\Support\TranslationInput;
+use App\Support\UploadArrival;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -74,7 +76,22 @@ class UgcVideoController extends Controller
     public function __construct(
         private UgcMedia $media,
         private UgcTranscoder $transcoder,
+        private ServerUploadLimits $serverLimits,
+        private UploadArrival $arrival,
     ) {}
+
+    /**
+     * What each kind is called in a sentence an operator reads.
+     *
+     * CONSTANTS, and they are constants because UploadArrival interpolates them
+     * into an error message. Rule 5: anything printed is a constant, never a
+     * setting.
+     */
+    private const NOUN = [
+        UgcMedia::KIND_CLIP => 'video',
+        UgcMedia::KIND_TEASER => 'teaser',
+        UgcMedia::KIND_POSTER => 'cover image',
+    ];
 
     /** The library, newest first within the owner's own order. */
     public function index(): JsonResponse
@@ -104,11 +121,27 @@ class UgcVideoController extends Controller
                 'teaser_seconds' => UgcTranscoder::TEASER_SECONDS,
                 'teaser_size' => UgcTranscoder::TEASER_WIDTH.'x'.UgcTranscoder::TEASER_HEIGHT,
             ],
-            'limits' => [
-                'clip_mb' => (int) (UgcMedia::MAX_BYTES[UgcMedia::KIND_CLIP] / 1048576),
-                'teaser_mb' => (int) (UgcMedia::MAX_BYTES[UgcMedia::KIND_TEASER] / 1048576),
-                'poster_mb' => (int) (UgcMedia::MAX_BYTES[UgcMedia::KIND_POSTER] / 1048576),
-            ],
+            /*
+             * THE SIZE THIS SERVER WILL REALLY TAKE, NOT THE SIZE THE APP ALLOWS.
+             *
+             * These three keys used to be UgcMedia::MAX_BYTES divided by a
+             * megabyte and nothing else, and the screen printed them as "MP4 or
+             * WebM, up to 64 MB". On the live shop upload_max_filesize is 2M and
+             * post_max_size is 8M, so 64 MB was a number this application could
+             * not honour and every refusal above 2 MB blamed the operator's file.
+             *
+             * They are now min(app cap, upload_max_filesize, post_max_size less
+             * the multipart overhead) — see App\Support\ServerUploadLimits, which
+             * carries the measurements. The per-kind blocks beside them keep the
+             * app's OWN number as `app_mb` and name which of the three is doing
+             * the capping in `capped_by`, so the screen can say "the server is
+             * the limit, not the shop" instead of quietly showing a smaller
+             * number the owner cannot explain.
+             *
+             * `clip_mb` is still the number the screen prints, so nothing on it
+             * had to learn a new key to stop lying.
+             */
+            'limits' => $this->limits(),
             /*
              * The blank translatable shape, for the Arabic boxes on the form
              * that creates a clip — a row that does not exist yet has no bag
@@ -219,6 +252,54 @@ class UgcVideoController extends Controller
 
         if ($video === null) {
             return response()->json(['ok' => false, 'error' => 'not_found'], 404);
+        }
+
+        /*
+         * ── WHAT PHP DID TO THE REQUEST, BEFORE ANY RULE RUNS ───────────────
+         *
+         * THE DEFECT. The owner uploaded an 8.4 MB .mp4 here. The bar reached
+         * 100% and the screen said "That file was not accepted. 8.4 MB —
+         * nothing on the clip was changed." His file was fine: post_max_size on
+         * that server is 8M, so PHP threw the entire body away and $_POST and
+         * $_FILES both arrived empty. validate() then failed on a missing file
+         * and this endpoint returned 422 with a message about the file.
+         *
+         * The `kind` this request WANTED is read before validation for the same
+         * reason: on a discarded body there is no `kind` either, and the cap
+         * quoted in the refusal has to be the cap of the box the operator
+         * actually dropped his file into. It is bounded to the three kinds the
+         * service knows before it is used, so a forged value picks the clip's
+         * cap rather than indexing MAX_BYTES with anything it likes.
+         */
+        $wanted = $request->input('kind');
+        // is_string BEFORE the cast: `kind[]=clip` makes input() an array, and
+        // (string) on an array is a PHP error rather than a 422 — a 500 on an
+        // endpoint whose whole job this round is answering honestly.
+        $wanted = is_string($wanted) && in_array($wanted, UgcMedia::KINDS, true)
+            ? $wanted
+            : UgcMedia::KIND_CLIP;
+
+        $arrived = $this->arrival->check(
+            $request,
+            'file',
+            UgcMedia::MAX_BYTES[$wanted],
+            self::NOUN[$wanted],
+        );
+
+        if ($arrived !== null) {
+            /*
+             * The same `error` key every other refusal on this endpoint uses, so
+             * the screen prints the server's own sentence rather than falling
+             * back to its generic one. `limits` rides along because the panel
+             * that shows this refusal is also the panel that has to stop
+             * advertising a size this server will not take.
+             */
+            return response()->json([
+                'ok' => false,
+                'error' => $arrived['error'],
+                'reason' => $arrived['reason'],
+                'limits' => $this->limits(),
+            ], $arrived['status']);
         }
 
         $validated = $request->validate([
@@ -677,6 +758,43 @@ class UgcVideoController extends Controller
             'blockers' => $video->publishBlockers(),
             'products_count' => $video->products_count ?? $video->products()->count(),
         ];
+    }
+
+    /**
+     * The three caps, as this server will really honour them.
+     *
+     * One place, called by index() and by the upload's own refusal, because the
+     * number the screen advertises and the number a refusal quotes have to be
+     * the same number — the whole defect being fixed here is two places
+     * disagreeing about what fits.
+     *
+     * @return array<string, mixed>
+     */
+    private function limits(): array
+    {
+        $out = [];
+
+        foreach (UgcMedia::KINDS as $kind) {
+            $described = $this->serverLimits->describe(UgcMedia::MAX_BYTES[$kind]);
+
+            // The flat key the screen already reads, now carrying the effective
+            // number rather than the app's wish.
+            $out[$kind.'_mb'] = $described['effective_mb'];
+            $out[$kind] = $described;
+        }
+
+        /*
+         * The ini values themselves, so the screen can name what to edit rather
+         * than say "ask your host to raise the limit". This is an admin endpoint
+         * behind auth:admin and ugc.view — nothing here is on /api/*.
+         */
+        $out['server'] = $this->serverLimits->raw() + [
+            'per_file_bytes' => $this->serverLimits->perFile(),
+            'per_request_bytes' => $this->serverLimits->perRequest(),
+            'multipart_overhead' => ServerUploadLimits::MULTIPART_OVERHEAD,
+        ];
+
+        return $out;
     }
 
     private function find(string $id): ?UgcVideo

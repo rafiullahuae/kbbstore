@@ -193,8 +193,30 @@ it('creates a clip and reports what this server can do for it', function () {
          * This key is what lets it tell the owner whether he uploads one file
          * or three BEFORE he uploads anything.
          */
-        ->and($body['transcoder'])->toHaveKey('available')
-        ->and($body['limits']['clip_mb'])->toBe(64);
+        ->and($body['transcoder'])->toHaveKey('available');
+
+    /*
+     * ── THIS PIN WAS ADVANCED ON PURPOSE, 27 September 2026 ─────────────────
+     *
+     * It read `->and($body['limits']['clip_mb'])->toBe(64)`, which was right when
+     * `clip_mb` was UgcMedia::MAX_BYTES divided by a megabyte. It is now the
+     * EFFECTIVE ceiling — min(app cap, upload_max_filesize, post_max_size less
+     * the multipart overhead) — because the owner uploaded an 8.4 MB clip to a
+     * server with upload_max_filesize=2M, watched the bar reach 100%, and was
+     * told his file was not accepted. 64 was a number this application could not
+     * honour on the only server it runs on.
+     *
+     * The app's OWN cap is still asserted, and still 64: nothing about that
+     * change relaxed what Shoppable video allows. It has simply moved to the key
+     * that means it. App\Support\ServerUploadLimits carries the measurements and
+     * tests/Feature/UploadLimitsTest.php the arithmetic.
+     */
+    $clip = app(\App\Support\ServerUploadLimits::class)
+        ->describe(\App\Services\UgcMedia::MAX_BYTES[\App\Services\UgcMedia::KIND_CLIP]);
+
+    expect($body['limits']['clip']['app_mb'])->toBe(64)
+        ->and($body['limits']['clip_mb'])->toBe($clip['effective_mb'])
+        ->and($body['limits']['clip_mb'])->toBeLessThanOrEqual(64);
 });
 
 it('refuses to publish a clip that is not publishable, and says why', function () {
