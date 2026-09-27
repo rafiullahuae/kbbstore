@@ -1,6 +1,6 @@
 <?php
 /* Preview seed — scratchpad only, never part of a package. */
-use App\Models\{AdminUser, PaymentProvider};
+use App\Models\{AdminUser, Order, PaymentProvider};
 
 AdminUser::updateOrCreate(
     ['email' => 'owner@pg1.test'],
@@ -28,5 +28,30 @@ $row->config = [
     'capture_days' => '180',
 ];
 $row->save();
+
+/*
+ * ONE ORDER THE SWEEP WILL FIND: `pending`, paid via Tamara, no paid_at, placed
+ * three hours ago so it is past the sweep's lower bound. This is what an approval
+ * whose notification never arrived actually looks like in the database -- stock
+ * claimed, coupon spent, and the buyer holding a live payment plan.
+ */
+Order::where('order_number', 'PG1-PREVIEW-MISSED')->forceDelete();
+
+Order::create([
+    'order_number' => 'PG1-PREVIEW-MISSED',
+    'email' => 'missed@pg1.test',
+    'phone' => '+971500000000',
+    'status' => 'pending',
+    'currency' => 'AED',
+    'subtotal' => 25000,
+    'discount_total' => 0,
+    'shipping_total' => 0,
+    'tax_total' => 0,
+    'fee_total' => 0,
+    'total' => 25000,
+    'payment_method' => 'tamara',
+    'transaction_id' => 'tam_preview_missed',
+    'created_at' => now()->subHours(3),
+]);
 
 echo "seeded admin owner@pg1.test / pg1-preview-secret\n";

@@ -36,7 +36,8 @@ async function openTamara(page) {
   await page.waitForTimeout(1000);
   // Bring the first NEW field to the top of the shot.
   await page.evaluate(() => {
-    const el = document.querySelector('[data-payg="tamara"][data-payf="payment_type"]');
+    const el = document.querySelector('[data-payg="tamara"][data-payf="excluded_products"]')
+      || document.querySelector('[data-payg="tamara"][data-payf="payment_type"]');
     if (el) el.closest('.ecopt')?.scrollIntoView({ block: 'center' });
   });
   await page.waitForTimeout(400);
@@ -69,6 +70,9 @@ async function openTamara(page) {
     return {
       register: await call('POST', '/admin-api/payments/tamara/webhook'),
       limits: await call('POST', '/admin-api/payments/tamara/limits', { country: 'AE', currency: 'AED' }),
+      // The sweep: one pending order the seed planted, which Tamara reports as
+      // approved. Its report is what proves the button does the work.
+      sweep: await call('POST', '/admin-api/payments/tamara/sweep', { minutes: 0 }),
       state: await call('GET', '/admin-api/payments/tamara'),
     };
   });

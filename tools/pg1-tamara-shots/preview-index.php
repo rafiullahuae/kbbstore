@@ -41,6 +41,30 @@ $app->booted(function () use ($base) {
             ], 200);
         }
 
+        /*
+         * The SWEEP's two reads. The seeded shop has one `pending` Tamara order
+         * that Tamara reports as `approved` -- exactly the shape of an approval
+         * whose notification never arrived -- so pressing the button marks it
+         * paid and the screen can be photographed saying so.
+         */
+        if ($method === 'GET' && str_starts_with($path, '/merchants/orders/reference-id/')) {
+            return Http::response(['order_id' => 'tam_preview_missed'], 200);
+        }
+
+        if ($method === 'GET' && str_starts_with($path, '/merchants/orders/')) {
+            return Http::response([
+                'order_id' => 'tam_preview_missed',
+                'order_reference_id' => \App\Models\Order::where('payment_method', 'tamara')
+                    ->orderBy('id')->value('order_number'),
+                'status' => 'approved',
+                'total_amount' => ['amount' => 250.00, 'currency' => 'AED'],
+            ], 200);
+        }
+
+        if ($method === 'POST' && str_ends_with($path, '/authorise')) {
+            return Http::response(['order_id' => 'tam_preview_missed', 'status' => 'authorised'], 200);
+        }
+
         return Http::response(['error_code' => 'unfaked_'.$method], 418);
     });
 });

@@ -4,7 +4,7 @@ Development tooling. `tools/` is not on `UpdateGuard::ALLOWED_PREFIXES`, so
 nothing here can reach the server in a package — which is the point: the fake
 Tamara API below must never run anywhere near a real shop.
 
-Pest covers the server (`tests/Feature/TamaraGatewayParityTest.php`, 48 cases).
+Pest covers the server (`tests/Feature/TamaraGatewayParityTest.php`, 75 cases).
 This covers the half Pest cannot see: that the five new settings actually
 render on Store → Ecommerce → Payments → Tamara, at 390px and at 1280px, that
 they cause no horizontal overflow, and that the two provider-side buttons
@@ -12,7 +12,9 @@ round-trip through the real endpoints and come back visible in the boxes.
 
 **api-sandbox.tamara.co is blocked by the sandbox's egress proxy**, so
 `preview-index.php` fakes it with `Http::fake()` — `POST /webhooks`,
-`DELETE /webhooks/{id}` and `GET /checkout/payment-types`. What this proves is
+`DELETE /webhooks/{id}`, `GET /checkout/payment-types`, and the sweep's
+`GET /merchants/orders/{id}`, `GET /merchants/orders/reference-id/{ref}` and
+`POST /orders/{id}/authorise`. What this proves is
 that the screen and the application agree with each other; it does not prove
 Tamara agrees. See the report for what still needs one real sandbox merchant.
 
@@ -85,13 +87,29 @@ kill "$(cat /tmp/pg1-preview/server.pid)"
 | | 390px | 1280px |
 |---|---|---|
 | `document.documentElement.scrollWidth` | 390 | 1280 |
+| viewport width | 390 | 1280 |
 | horizontal overflow | none | none |
-| Tamara setting inputs | 9 | 9 |
-| new input box | 328 × 33px, 13px | 520 × 33px, 13px |
+| Tamara setting inputs | 11 | 11 |
+| every new input box | 328 × 33px, 13px | 520 × 33px, 13px |
 
-Before: `payment_type`, `instalments`, `min_limit`, `max_limit` and
-`webhook_id` all empty — which is the shipped state, and the state in which
-nothing about the shop's behaviour differs from before this package.
-After pressing the two buttons: `min_limit` 100.00, `max_limit` 5000.00,
-`webhook_id` wh_preview_a1b2c3, and `payment_type` still empty because
-PAY_BY_LATER is the default and an empty box means it.
+Before: `payment_type`, `instalments`, `excluded_products`,
+`excluded_categories`, `min_limit`, `max_limit` and `webhook_id` ALL EMPTY —
+which is the shipped state, and the state in which nothing about the shop's
+behaviour differs from before this package.
+
+After pressing the three buttons: `min_limit` 100.00, `max_limit` 5000.00,
+`webhook_id` wh_preview_a1b2c3. `payment_type` is still empty because
+PAY_BY_LATER is the default and an empty box means it, and BOTH EXCLUSION BOXES
+ARE STILL EMPTY because no button fills them — they are the owner's to type
+into, and an empty one excludes nothing.
+
+The sweep's own answer, from the real endpoint against the seeded order:
+
+    Checked 1 order(s) with Tamara. Marked paid: 1. Closed as declined or
+    expired: 0. Still waiting: 0. Could not check: 0.
+
+    orders: [{ order: PG1-PREVIEW-MISSED, outcome: settled,
+               message: payment applied }]
+
+That order was seeded `pending` with no `paid_at`, three hours old — the exact
+shape of an approval whose notification never arrived. It is paid afterwards.
