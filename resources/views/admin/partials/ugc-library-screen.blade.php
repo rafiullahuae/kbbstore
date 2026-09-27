@@ -267,7 +267,15 @@
 .ugs-slot{display:grid;gap:8px;align-content:start;
           border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
           padding:11px;min-width:0;background:var(--surface,#fff)}
-/* ...and a button in a grid also stretches across its column by default. */
+/* A button in a grid also stretches across its column by default, so it keeps
+   the full width deliberately rather than by accident.
+
+   NO ELLIPSIS IN A COMMENT ANYWHERE IN THIS STYLE BLOCK. UgcAdminScreenTest
+   scans the whole block, comments included, for a dot followed by a word and
+   proves every one of them is prefixed ugs- -- because a rule here named for
+   a bare word would restyle every other screen in this console. An ellipsis
+   before a word parses as exactly that shape, and this line is where it went
+   red. Prose in here starts its sentences with a capital instead. */
 .ugs-slot > .ugs-btn{justify-self:stretch}
 .ugs-sloth{display:flex;justify-content:space-between;align-items:baseline;gap:9px;min-width:0}
 .ugs-sloth b{font-size:12.5px}
