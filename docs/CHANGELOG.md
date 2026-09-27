@@ -3,6 +3,83 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.289
+Your 8.4 MB video, why it was refused, and two ways an order could be shipped
+and never paid for.
+
+### ▲ THE VIDEO UPLOAD: IT WAS NEVER YOUR FILE
+
+You uploaded an 8.4 MB clip, the bar reached 100%, and the screen said **"That
+file was not accepted."** Your file was fine. **PHP on the server threw the whole
+upload away**, and the screen had no idea — it was advertising "up to 64 MB", a
+number this app has never checked it could honour.
+
+There are two separate limits and your file was over both:
+
+- `upload_max_filesize` — the biggest single file. On the machine this was built
+  on it is **2 MB**.
+- `post_max_size` — the biggest whole request. **8 MB**. Over this, PHP discards
+  the entire upload *before the app is even asked*, which is why every byte sends
+  and then it fails.
+
+**What changed.** Step 2 now reads your server and advertises the number it will
+really take. If your file is too big it says so **before sending it**, names both
+figures, and says which one is stopping you:
+
+> That file is 8.4 MB and the most that can be uploaded here is 2 MB. It was not
+> sent, so nothing on the clip was changed. The limit is PHP on this server and
+> not Shoppable video, which allows 64 MB for a clip: upload_max_filesize is 2M.
+> Raise it on the server and this box will take the bigger file.
+
+**To actually upload big clips, raise the limits on your server** — on Cloudways,
+Application Settings. Applying this package prints your server's real numbers in
+the update log, and step 2 shows them too.
+
+### The upload bar itself
+
+A clock (how long it has been sending, and how long the server has been thinking
+since), a **Cancel**, and a **Try again** that appears only where pressing it
+could actually work — never on a file the server will refuse again.
+
+Also fixed: every upload handler used the clip you had *open*, not the one the
+file was sent to. Pressing Back mid-upload locked the screen; opening a different
+clip was worse, showing a green "arrived whole" panel for a file that landed on
+another row.
+
+### ▲ DUPLICATING AN ORDER COPIED THE ORIGINAL'S PAYMENT
+
+Duplicate an order that had been captured and the copy arrived **already marked
+paid**, with no Capture button — and pressing Capture answered "already
+captured". You pack it, you ship it, **you are never paid**.
+
+The same copy was **refundable for money it never took**. A full refund on it was
+accepted. On cash on delivery that is an instruction to hand AED 250 in cash to
+someone who never paid a fil.
+
+### ▲ A RELEASED AUTHORISATION COULD STILL BE CAPTURED
+
+Release the hold on a cancelled order, then revive that order, and the screen
+offered **"Capture AED 250"** with a red countdown on a window that no longer
+exists — four inches above the order's own note saying the authorisation had been
+released. Pressing it reached the provider and came back blaming *them*.
+
+Both are refused now, before anything is claimed and without a network call. And
+the panel says what actually happened — that the authorisation was released, and
+when — instead of "this order has not been authorised", which was never true.
+
+### Error messages stop wearing a green tick
+
+Following on from last release: **41 more** failure messages across the console
+were still drawing the green success tick, including **"Could not process that
+refund"** and **"Could not capture that payment"** — which anyone scanning reads
+as done, right before the goods go out.
+
+### Faster
+
+The order detail screen dropped from 9 database reads to 7, and from 11 to 8 on
+an uncaptured order, by working out two figures once instead of five times.
+Measured flat at 1, 2, 5, 10 and 20 rows — no N+1 anywhere on the order path.
+
 ## 2.60.288
 Two columns everywhere you were scrolling, and three controls that were lying to
 you.
