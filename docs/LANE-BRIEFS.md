@@ -966,3 +966,146 @@ checkout page.
    to reach the browser — each with a test.
 5. Screenshots at 390px and 1280px of the screen before and after connecting.
 6. Mutation notes for every new test.
+
+---
+
+# Round 4 — three lanes, every claim below verified first-hand
+
+**Read this before taking any of these.** The master plan's remaining `[ ]`
+items were checked before this round was written and three of the obvious
+candidates are NOT available:
+
+- **Ed25519 signing** (plan line 2662) reads like the next thing to do and the
+  lines directly above it say `⏸ ON HOLD AT THE OWNER'S INSTRUCTION, 24
+  September 2026 … step 6 is not to be taken. The lane is freed.` Do not take
+  it. Only the owner can unblock it.
+- **"Multiple products per video, with the tagging screen"** (line 3507) is
+  already built: `UgcVideo::products()` is a `belongsToMany` over
+  `ugc_video_product` with `position` and `at_ms`, and step 4 of the clip
+  editor is the tagging screen.
+- **"Live editing of homepage sections"** (line 2717) —
+  `resources/views/admin/partials/homepage-content-screen.blade.php` exists and
+  `hpcontent` is in `LATE_RENDERED`.
+
+A stale plan entry is not a task. If an item you are given turns out to be
+built, say so and stop rather than building a second copy — that is a mistake
+this repo has made and documented more than once.
+
+---
+
+## Lane MB — the Media Library after the WooCommerce import
+
+**The work.** The owner is about to import his live catalogue. When he does,
+**none of the images that arrive will ever appear in his Media Library**, and
+no amount of pressing Rescan will change it.
+
+Verified, not inferred:
+
+- The importer writes fetched media to `public_path($path)` where `$path`
+  contains `wp-content/uploads` — so files land under
+  `public/wp-content/uploads/…`.
+- `MediaBackfill::…` walks exactly one root: `$root = public_path('uploads')`.
+  Its own comment at the rewrite step distinguishes "an `uploads/` prefix as
+  this app's own web root" from "an imported `/wp-content/` path", so the two
+  shapes are already known to be different — nothing walks the second.
+- `MediaRegistrar` is called from `UgcMedia`, `UgcDerivedFiles`,
+  `UgcTranscoder`, `MediaUploadController`, `MediaLibraryApiController` and
+  `UgcSectionController`. It is **not** called from the review-photo path or
+  from `InstagramSync`, so those register only if a walk finds them.
+- Instagram images land in `public/uploads/instagram`, which **is** under the
+  walk — so those are reachable by Rescan today, just not on write.
+
+**So there are two separate defects and they need different fixes.** Do not
+conflate them:
+
+1. **Imported media is outside the walk entirely.** Decide with evidence
+   whether the right answer is to widen the walk, to register on fetch, or to
+   move where the importer writes. Each has a cost; state it. Widening the walk
+   is the smallest change and the one most likely to be right, but
+   `MAX_FILES = 20000` exists for a reason and his catalogue is large — measure
+   before choosing.
+2. **Review photos and Instagram images register only at Rescan.** These
+   already sit under the walk, so this is a freshness problem, not an absence.
+   Registering on write is the fix; the pattern is already in `UgcMedia`.
+
+**Done when:** an import of the fixture export leaves every fetched image in
+the `media` table with the right `mime`, `bytes` and dimensions; a review photo
+and an Instagram image appear without anybody pressing Rescan; and there is a
+test that fails without each half. Report the measured cost of the walk on a
+realistic file count.
+
+**Owns.** `app/Support/MediaBackfill.php`, `app/Support/MediaRegistrar.php`, the
+review-photo write path, `app/Services/Instagram/InstagramSync.php`, and the
+importer's media fetch. **Must not touch** `routes/web.php`,
+`resources/views/admin/app.blade.php`, the plan, the dashboard, the checkout
+page, `CartPanel`, or the Instagram ADMIN SCREEN (another round's work; the sync
+service is yours, the screen is not).
+
+---
+
+## Lane MY — MySQL is what the shop runs, and eight tests fail on it
+
+**The work.** The default lane is SQLite. **Production is MySQL 8.0.** Lane PX2
+reported eight failures under `-c phpunit-mysql.xml` and established each as
+pre-existing by re-running it on an unmodified base:
+
+```
+CartLineEagerLoadTest (×2) · CartRecommendedRailSlopeTest · ColumnWidthGuardTest
+ContentPageEditorTest · SeoBackOfficePayloadTest · MediaLibraryTest (order-dependent)
+```
+
+**Verify that list yourself before working from it** — it is another lane's
+report, and this round was written because a report was wrong once already.
+`ColumnWidthGuardTest` was specifically flagged as *looking* like an import
+problem and not being one (its diff names `instagram_posts` and `locale_slugs`).
+
+Two engine-divergence findings to check while you are in there, both named by
+PX2 and neither fixed:
+
+- **`ReviewImporter:511` uses `whereRaw('LOWER(email) = ?')`.** SQLite's
+  `LOWER()` is ASCII-only; MySQL's under `utf8mb4` is not. A non-ASCII email
+  links on one engine and not the other.
+- **A full suite run rewrites `docs/SEO-PREVIEWS.html`**, a tracked file — a
+  preview generator re-emitting JSON with different key ordering. The next lane
+  will commit it by accident. (I fixed a version of this before by pinning
+  fixture dates and removing a timestamp; this is a different cause.)
+
+**Done when:** the MySQL suite is green, each fix ships with the test that goes
+red without it, and anything you decline to fix is named with why. If a failure
+is genuinely another lane's file, say so and leave it — do not edit across.
+
+**Watch the disk.** CLAUDE.md records that a full disk here produces
+`no such savepoint: trans3`, which reads exactly like a transaction bug.
+`df -h /` before debugging any intermittent database error.
+
+---
+
+## Lane OD — two money defects the owner has been asked about twice
+
+**The work.** Both are real, both cost money, and both have been sitting in the
+handover list unanswered. Build the fix and the test; the DECISION stays the
+owner's and goes in your report, phrased so he can answer it in one line.
+
+1. **`PaymentRefunder::capturedFils()` counts a released authorisation as
+   refundable.** Read it: the ceiling is built from `captured_total`,
+   `captured_at`, `paid_at` and a closure summing `paid` payment rows. An
+   authorisation that was RELEASED (voided) rather than captured is money that
+   never left the shopper — refunding against it is refunding money the shop
+   never took. The fix touches two customer-facing emails, which is why it has
+   not been made casually.
+
+2. **Tamara auto-capture.** If an order ships and is never captured, the
+   merchant is never paid; Tamara voids the authorisation after roughly 180
+   days. `forceCaptureTamaraOrder` is the relevant path. The question for the
+   owner is whether capture should follow fulfilment automatically, and that is
+   a commercial decision, not a technical one — but the code that would do it,
+   and the test proving it cannot double-capture, are yours.
+
+**Money crosses payment interfaces as integer fils.** No floats anywhere on
+this path. Every new endpoint gets its own capability and fails closed.
+`/api/*` is unauthenticated and payment rows carry provider references — check
+`ApiSecurityTest` before returning anything new.
+
+**Done when:** each defect has a test that goes red without the fix and a
+mutation note; the two questions are in the report in one line each; and no
+customer-facing email changes wording without it being called out.
