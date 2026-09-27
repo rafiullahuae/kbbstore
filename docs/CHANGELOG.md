@@ -3,6 +3,54 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.286
+The video screens: no more flashing, a real search, and the section page in steps.
+
+### The flashing is gone, and it was my fault
+
+Switching a tab in the clip editor flashed, and saving flashed every tab one
+after another. The dialog was being rebuilt from scratch on every repaint of the
+screen behind it — so it re-ran its opening animation, re-fetched the poster and
+lost its place. A tab click did that once; a save did it about seven times.
+
+The dialog is now independent of the screen. Measured with a DOM observer: five
+tab switches cause **zero** rebuilds, and so does a save. Saving also no longer
+throws you back to the Details tab.
+
+### Add from the library: searchable, and a third of the height
+
+There is a search box that matches a clip's title **or** its creator handle, and
+it filters as you type without asking the server. Rows went from tall cards to
+55px lines, so roughly three clips fit where one did, and the list scrolls
+inside its own box instead of pushing the page down.
+
+### The section page is four numbered steps
+
+**1 Name it · 2 Decide how it looks and who sees it · 3 Put clips in it ·
+4 Put it on the shop.**
+
+The shortcode — the one thing that actually puts a rail on your shop — was a
+small grey chip beside the title. It is step 4 now, at a size you can read, with
+a Copy button, and it warns you when the section is still a draft and the
+shortcode would render nothing.
+
+### ▲ AND THE 2–3 SECOND LOOP ALREADY WORKED — the screen was lying
+
+The Files tab offered a "2–3 second loop" upload and said that without it the
+tile shows a still picture. **That was false.** With no loop file at all, the
+rail plays the full video and loops its first 2–3 seconds by itself. Verified in
+a browser: the clips were stripped of their loop files, and the tiles went on
+looping inside the first 2.5 seconds.
+
+So you never have to make a second video, from any source. The badge that read
+**"Poster only"** in amber — which looked like a fault — now reads **"Loops from
+full video"** and is neutral, and the upload slot says plainly that a cut-down
+file only saves your shopper bytes and that nothing is missing without one.
+
+Files: resources/views/admin/partials/ugc-sections-screen.blade.php.
+
+A cache-clear migration ships with it, as with every change to a console screen.
+
 ## 2.60.285
 ▲ APPLY THIS ONE. Two things you hit, and one of them has never worked.
 
