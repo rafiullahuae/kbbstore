@@ -371,6 +371,30 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/payments-tabby.php';
 
         /*
+         * Tamara's five provider-side endpoints (Lane PG1). Same group, same
+         * reason: they register and remove this shop's webhook with Tamara,
+         * refresh which baskets are offered BNPL at all, and sweep for
+         * approvals whose notification never arrived — marking the approved
+         * ones PAID. The sweep names no order and accepts no amount, so it
+         * cannot be pointed at one, but it writes to orders.
+         */
+        require __DIR__.'/payments-tamara.php';
+
+        /*
+         * Releasing an authorisation nobody captured — ONE file, for every
+         * gateway that can do it.
+         *
+         * PG1 and PG2 both wrote these two routes, in their own gateway's file,
+         * and both mounted would have registered POST orders/{id}/void TWICE:
+         * Laravel takes the last require, so the order of these lines would
+         * have silently decided which controller method served every release in
+         * the shop, and the loser's tests would have gone on passing against a
+         * method nothing called. The endpoint names no provider anywhere —
+         * PaymentVoider asks the registry — so it belongs to neither of them.
+         */
+        require __DIR__.'/payments-void.php';
+
+        /*
          * The payments preflight check. Same group as the two files above, and that
          * placement is the whole point: it reports which credential fields are still
          * empty and echoes the exact request a gateway would send, redacted. Outside

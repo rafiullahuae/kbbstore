@@ -39,8 +39,12 @@ declare(strict_types=1);
 |                                               country. Changes nothing.
 |     POST /admin-api/payments/tabby/webhooks   make Tabby's registration agree
 |                                               with this shop.
-|     GET  /admin-api/orders/{id}/void          can this hold be released?
-|     POST /admin-api/orders/{id}/void          release it.
+|
+| The two release-an-authorisation routes this lane also wrote now live in
+| routes/payments-void.php, because the Tamara lane wrote them too and both
+| mounted would have registered POST /admin-api/orders/{id}/void twice. That
+| file's header records the whole reasoning; nothing about the endpoint was
+| Tabby-specific.
 |
 | WHY THE WEBHOOK PAIR EXISTS AT ALL, which is the point of the lane: Tabby does
 | not take a callback URL from a dashboard field the way Stripe and Tamara do.
@@ -60,15 +64,9 @@ declare(strict_types=1);
 |
 */
 
-use App\Http\Controllers\Admin\PaymentVoidController;
 use App\Http\Controllers\Admin\TabbyWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/payments/tabby/webhooks', [TabbyWebhookController::class, 'show']);
 Route::post('/payments/tabby/webhooks', [TabbyWebhookController::class, 'sync']);
 
-Route::get('/orders/{id}/void', [PaymentVoidController::class, 'show'])
-    ->where('id', '[0-9]+');
-
-Route::post('/orders/{id}/void', [PaymentVoidController::class, 'store'])
-    ->where('id', '[0-9]+');

@@ -39,8 +39,16 @@ class Order extends Model
              * handed back without ever moving. A third state beside
              * `captured_at` and `refunded_total`, and the one a cancelled BNPL
              * order ends in; see PaymentVoider and the migration that adds it.
+             *
              * Cast like its two siblings so PaymentVoider's null checks read a
-             * date rather than a string.
+             * date rather than a string, and a timestamp rather than a boolean
+             * because it doubles as PaymentVoider's idempotency guard — the
+             * claim is a conditional UPDATE against NULL, so the column has to
+             * carry WHEN as well as WHETHER. See
+             * App\Services\Payments\VoidsAuthorisation.
+             *
+             * (Two lanes added this cast in the same round, one for each BNPL
+             * gateway, and the merge took both. One line, one comment.)
              */
             'voided_at' => 'datetime',
             'captured_total' => 'int',

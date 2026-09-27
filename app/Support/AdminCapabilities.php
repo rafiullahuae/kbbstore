@@ -422,18 +422,63 @@ final class AdminCapabilities
          */
         ['GET', 'admin-api/payments/tabby/webhooks', 'payments.manage'],
         ['POST', 'admin-api/payments/tabby/webhooks', 'payments.manage'],
+        /*
+         * Tamara's two provider-side settings — routes/payments-tamara.php.
+         *
+         * `payments.manage`, the same capability as the screen that edits the
+         * keys by hand, on the reasoning already written out for the Stripe
+         * connect routes above: these do the same thing with fewer keystrokes.
+         * Registering the webhook changes what Tamara sends this shop, removing
+         * it silently stops the shop hearing about declines, and the limits
+         * refresh rewrites which baskets are offered BNPL at all.
+         *
+         * BOTH VERBS ON THE WEBHOOK PATH ARE COVERED BY THE '*' METHOD, and the
+         * DELETE is the reason to say so: a rule written 'POST' only would leave
+         * the DELETE unmapped, which is owner-only at runtime and therefore not
+         * a hole — but it would be a hole the day somebody widens
+         * payments.manage to a manager, in a different file, with nothing to
+         * notice. The same argument the security.view / security.integrity split
+         * is made on.
+         *
+         * 'admin-api/payments/tamara' does NOT match 'admin-api/payments/tamara/
+         * webhook' — the single-segment '*' never crosses a slash and a literal
+         * pattern matches nothing beyond itself — so both lines are needed and
+         * neither can swallow the other whichever order they are read in.
+         */
+        ['*', 'admin-api/payments/tamara', 'payments.manage'],
+        ['*', 'admin-api/payments/tamara/*', 'payments.manage'],
         ['GET', 'admin-api/orders/*/settlement', 'orders.money'],
         ['POST', 'admin-api/orders/*/capture', 'orders.money'],
         ['POST', 'admin-api/orders/*/refund', 'orders.money'],
         /*
-         * Releasing an uncaptured authorisation — routes/payments-tabby.php.
+         * Releasing a BNPL authorisation on a cancelled order —
+         * routes/payments-void.php, App\Services\Payments\VoidsAuthorisation.
          *
-         * `orders.money`, with capture and refund, because it is the same class
-         * of act: it decides what happens to money a customer has committed, and
-         * it can be used on every live order in the shop. The READ is here too
-         * and on the same capability rather than on `orders.view`, matching the
-         * settlement read beside it — whether a hold is open and how much is
-         * being held is the money picture, not the order's contents.
+         * GATEWAY-AGNOSTIC, WHICH IS WHY THE PATH NAMES NO PROVIDER. Two lanes
+         * built this endpoint in the same round, one for Tamara and one for
+         * Tabby, and it is the same endpoint: PaymentVoider asks the registry
+         * whether the order's gateway implements VoidsAuthorisation. Both rules
+         * below therefore cover both providers and anything that implements it
+         * next.
+         *
+         * `orders.money`, WITH the capture and the refund, and deliberately not
+         * a capability of its own. It is the third verb of one act: capture takes
+         * the money, refund gives back money that was taken, and this gives back
+         * the right to take it. Whoever may do two of those three may do the
+         * third — an operator trusted to refund a customer in full is trusted to
+         * stop them being billed for an order the shop cancelled, and it is the
+         * LESS dangerous of the two by a wide margin.
+         *
+         * Splitting it would create exactly the shape the note at the head of
+         * RULES warns about: an operator who can capture but not refund, or here
+         * cancel an order but not release the plan behind it — which leaves the
+         * customer worse off than if neither button existed, because the order
+         * now looks settled from this end.
+         *
+         * THE READ IS ON THE SAME CAPABILITY, not on `orders.view`, matching the
+         * settlement read three lines up: whether a hold is open, what it is
+         * worth and why the button is refused is the money picture, not the
+         * order's contents.
          */
         ['GET', 'admin-api/orders/*/void', 'orders.money'],
         ['POST', 'admin-api/orders/*/void', 'orders.money'],

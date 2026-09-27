@@ -586,7 +586,7 @@ it('refuses to report a voided payment as captured', function () {
      * are equivalent for every response Tabby has been seen to send and the
      * second is the one that carries the meaning, which is why both are there —
      * but only the first is what this case exercises. hasCapture() IS
-     * load-bearing on its own in handleWebhook() and voidAuthorisation(), and
+     * load-bearing on its own in handleWebhook() and void(), and
      * those two cases name it.)
      */
     $gateway = tg();
@@ -727,7 +727,7 @@ it('releases an authorised payment through the close endpoint', function () {
         'api.tabby.ai/api/v1/payments/*/close' => Http::response(['id' => 'pay_hold', 'status' => 'CLOSED'], 200),
     ]);
 
-    $result = $gateway->voidAuthorisation($order);
+    $result = $gateway->void($order, (int) $order->total);
 
     expect($result->ok)->toBeTrue();
     expect($result->code)->toBe('voided');
@@ -758,7 +758,7 @@ it('refuses to release a payment whose money has already been captured', functio
         ], 200),
     ]);
 
-    $result = $gateway->voidAuthorisation($order);
+    $result = $gateway->void($order, (int) $order->total);
 
     expect($result->ok)->toBeFalse();
     expect($result->code)->toBe('already_captured');
@@ -777,7 +777,7 @@ it('reports an already-released hold as a success so a retry settles', function 
         ], 200),
     ]);
 
-    expect($gateway->voidAuthorisation($order)->code)->toBe('already_voided');
+    expect($gateway->void($order, (int) $order->total)->code)->toBe('already_voided');
 });
 
 it('does not report a release that tabby accepted and did not apply', function () {
@@ -786,7 +786,7 @@ it('does not report a release that tabby accepted and did not apply', function (
      * future response shape where the call is accepted and ignored — and the
      * merchant would stop looking for a hold that is still open.
      *
-     * MUTATION: delete the status_after check in voidAuthorisation() and this is
+     * MUTATION: delete the status_after check in TabbyGateway::void() and this is
      * red.
      */
     $gateway = tg();
@@ -797,7 +797,7 @@ it('does not report a release that tabby accepted and did not apply', function (
         'api.tabby.ai/api/v1/payments/*/close' => Http::response(['id' => 'pay_stuck', 'status' => 'AUTHORIZED'], 200),
     ]);
 
-    $result = $gateway->voidAuthorisation($order);
+    $result = $gateway->void($order, (int) $order->total);
 
     expect($result->ok)->toBeFalse();
     expect($result->code)->toBe('void_not_applied');
@@ -813,7 +813,7 @@ it('puts the release claim back when tabby refuses, and writes the failure down'
      * MUTATION: delete the `voided_at => null` restore in PaymentVoider and the
      * second expectation is red.
      */
-    $order = tgOrder(['transaction_id' => 'pay_refuse', 'status' => 'cancelled']);
+    $order = tgOrder(['transaction_id' => 'pay_refuse', 'status' => 'cancelled', 'paid_at' => now()]);
     tg();
 
     Http::fake([
@@ -829,7 +829,7 @@ it('puts the release claim back when tabby refuses, and writes the failure down'
 });
 
 it('releases once when the button is clicked twice', function () {
-    $order = tgOrder(['transaction_id' => 'pay_twice', 'status' => 'cancelled']);
+    $order = tgOrder(['transaction_id' => 'pay_twice', 'status' => 'cancelled', 'paid_at' => now()]);
     tg();
 
     Http::fake([
@@ -1214,7 +1214,7 @@ it('releases a hold from the order screen and refuses a captured one', function 
     TabbyAdminRoutes::wire($this->app);
 
     tg();
-    $order = tgOrder(['transaction_id' => 'pay_screen', 'status' => 'cancelled']);
+    $order = tgOrder(['transaction_id' => 'pay_screen', 'status' => 'cancelled', 'paid_at' => now()]);
 
     Http::fake([
         'api.tabby.ai/api/v2/payments/*' => Http::response(['id' => 'pay_screen', 'status' => 'AUTHORIZED'], 200),
@@ -1225,7 +1225,7 @@ it('releases a hold from the order screen and refuses a captured one', function 
 
     $this->getJson('/admin-api/orders/' . $order->id . '/void')
         ->assertOk()
-        ->assertJson(['void_supported' => true, 'voidable' => true, 'voided' => false]);
+        ->assertJson(['supported' => true, 'voidable' => true, 'voided' => false]);
 
     $this->postJson('/admin-api/orders/' . $order->id . '/void')
         ->assertOk()
@@ -1248,11 +1248,17 @@ it('offers no release on an order paid by a gateway that cannot release one', fu
 
     $this->getJson('/admin-api/orders/' . $order->id . '/void')
         ->assertOk()
-        ->assertJson(['void_supported' => false, 'voidable' => false]);
+        ->assertJson(['supported' => false, 'voidable' => false]);
 
+    /*
+     * 422 AND NOT 502, which is the distinction PaymentVoidController::statusFor()
+     * draws: a gateway that has no authorisation to release will say so for ever,
+     * so offering the screen a retry would be a lie. 502 is reserved for a
+     * provider that could not be reached or refused, where a retry may work.
+     */
     $this->postJson('/admin-api/orders/' . $order->id . '/void')
-        ->assertStatus(502)
-        ->assertJson(['ok' => false, 'code' => 'unsupported']);
+        ->assertStatus(422)
+        ->assertJson(['ok' => false, 'code' => 'unsupported_gateway']);
 });
 
 /* ======================================================================= */
@@ -1809,7 +1815,7 @@ it('sends the shopper to another payment method when tabby times out', function 
     expect(str_contains((string) $start->message, 'another payment method'))->toBeTrue();
 
     expect($gateway->capture($order, 25000)->code)->toBe('unreachable');
-    expect($gateway->voidAuthorisation($order)->code)->toBe('unreachable');
+    expect($gateway->void($order, (int) $order->total)->code)->toBe('unreachable');
 
     // Nothing was written to the order on any of the three.
     expect($order->fresh()->paid_at)->toBeNull();
@@ -2027,7 +2033,7 @@ it('releases once when two workers both read the order before either wrote', fun
      * exists.
      */
     tg();
-    $row = tgOrder(['transaction_id' => 'pay_race', 'status' => 'cancelled']);
+    $row = tgOrder(['transaction_id' => 'pay_race', 'status' => 'cancelled', 'paid_at' => now()]);
 
     Http::fake([
         'api.tabby.ai/api/v2/payments/*' => Http::response(['id' => 'pay_race', 'status' => 'AUTHORIZED'], 200),

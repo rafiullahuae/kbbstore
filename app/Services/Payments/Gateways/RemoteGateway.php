@@ -74,10 +74,15 @@ abstract class RemoteGateway implements PaymentGateway
                  * A caller asking for a DELETE got a POST to the same URL with
                  * no error anywhere: silent, and on a provider API the shape of
                  * "POST /webhooks/{id}" is a second registration rather than a
-                 * removal. Tabby's webhook administration is the first caller
-                 * that needs it (TabbyGateway::syncWebhooks, which prunes a
-                 * stale registration), and it must not be the one that finds
-                 * this out from a duplicated webhook in production.
+                 * removal. Both BNPL gateways need it and both arrived at it
+                 * independently — TabbyGateway::syncWebhooks() prunes a stale
+                 * registration, TamaraGateway::unregisterWebhook() removes one
+                 * — and neither should be the caller that finds this out from a
+                 * duplicated webhook in production.
+                 *
+                 * Listed rather than folded into the default so that a MISTYPED
+                 * verb keeps falling through to POST, which is the behaviour
+                 * every caller written before this line relied on.
                  */
                 'DELETE' => $request->delete($url, $body),
                 default => $request->post($url, $body),
@@ -140,10 +145,15 @@ abstract class RemoteGateway implements PaymentGateway
                  * A caller asking for a DELETE got a POST to the same URL with
                  * no error anywhere: silent, and on a provider API the shape of
                  * "POST /webhooks/{id}" is a second registration rather than a
-                 * removal. Tabby's webhook administration is the first caller
-                 * that needs it (TabbyGateway::syncWebhooks, which prunes a
-                 * stale registration), and it must not be the one that finds
-                 * this out from a duplicated webhook in production.
+                 * removal. Both BNPL gateways need it and both arrived at it
+                 * independently — TabbyGateway::syncWebhooks() prunes a stale
+                 * registration, TamaraGateway::unregisterWebhook() removes one
+                 * — and neither should be the caller that finds this out from a
+                 * duplicated webhook in production.
+                 *
+                 * Listed rather than folded into the default so that a MISTYPED
+                 * verb keeps falling through to POST, which is the behaviour
+                 * every caller written before this line relied on.
                  */
                 'DELETE' => $request->delete($url, $body),
                 default => $request->post($url, $body),

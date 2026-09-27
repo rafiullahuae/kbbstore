@@ -176,6 +176,9 @@ it('refuses a tamara order whose verified amount disagrees with ours', function 
         '*/merchants/orders/*' => Http::response([
             'order_id' => 'tam_1',
             'order_reference_id' => $order->order_number,
+            // Part of the real response; see the note in PaymentInvariantsTest.
+            // This case is about the AMOUNT disagreeing, which it still is.
+            'status' => 'approved',
             'total_amount' => ['amount' => 3.00, 'currency' => 'AED'],
         ]),
         '*/authorise' => Http::response(['status' => 'authorised']),
@@ -233,6 +236,7 @@ it('marks an order paid on a valid tamara notification, once', function () {
         '*/merchants/orders/*' => Http::response([
             'order_id' => 'tam_ok',
             'order_reference_id' => $order->order_number,
+            'status' => 'approved',
             'total_amount' => ['amount' => 300.00, 'currency' => 'AED'],
         ]),
         '*/authorise' => Http::response(['status' => 'authorised']),

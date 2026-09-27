@@ -14,7 +14,7 @@ use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
-use App\Services\Payments\VoidsAuthorisations;
+use App\Services\Payments\VoidsAuthorisation;
 use App\Services\Payments\WebhookOutcome;
 use App\Support\Locale;
 use App\Support\Url;
@@ -136,7 +136,7 @@ use Illuminate\Http\Request;
  * ever leaked: the body is used for exactly one thing, reading the payment id
  * to go and ask about.
  */
-class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, VoidsAuthorisations
+class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, VoidsAuthorisation
 {
     private const API = 'https://api.tabby.ai';
 
@@ -494,7 +494,7 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
          * `POST /checkout` answers with a CHECKOUT SESSION whose own id sits at
          * the top level and whose `payment` block carries the id every other
          * endpoint in this class is keyed by. Storing the session id in
-         * `orders.transaction_id` left capture(), voidAuthorisation() and the
+         * `orders.transaction_id` left capture(), void() and the
          * refund path all calling `/payments/<a session id>`, which is a 404 —
          * and the only reason it was ever survivable is that PaymentConfirmer
          * overwrites the column with the id the WEBHOOK carries, so the bug was
@@ -715,7 +715,7 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
          *
          * See the class comment for why CLOSED is ambiguous. The reachable
          * sequence is ordinary rather than exotic: an order is cancelled, the
-         * authorisation is released (by voidAuthorisation() here, by the
+         * authorisation is released (by void() here, by the
          * merchant in Tabby's dashboard, or by Tabby's own timer), Tabby
          * delivers the close notice, and the branch below treated it as a
          * successful payment. The order came back to `processing` with `paid_at`
@@ -1020,7 +1020,17 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
      *   CREATED               the shopper never finished, so nothing is held
      *                         and nothing is closable. ok(), same reasoning.
      */
-    public function voidAuthorisation(Order $order): SettlementResult
+    /**
+     * @param  int  $amountFils  NOT SENT, and the signature is right anyway.
+     *   Tabby's close endpoint takes the payment id in the path and no body at
+     *   all — there is nothing to echo an amount back to. Tamara's cancel wants
+     *   the order's figures echoed and they have to balance, so the amount is on
+     *   the interface; an interface written to Tabby's narrower shape would have
+     *   forced the Tamara implementation to reach back into the order for a
+     *   number the caller already had. It is read here only to be refused by
+     *   name in the docblock, which is cheaper than a reader wondering.
+     */
+    public function void(Order $order, int $amountFils): SettlementResult
     {
         $paymentId = trim((string) $order->transaction_id);
 
