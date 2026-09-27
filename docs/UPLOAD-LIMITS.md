@@ -101,6 +101,11 @@ no `reason` key, so the screen does not dress them up as a server limit.
 
 ---
 
+> **A different server setting, same SSH session:** if a video uploads but the
+> cover will not cut, that is `proc_open` in `disable_functions`, not a size
+> limit — and a `.user.ini` cannot fix it, because `disable_functions` is
+> `PHP_INI_SYSTEM` rather than `PHP_INI_PERDIR`. See `docs/SERVER-PROC-OPEN.md`.
+
 ## 3. Raising it on Cloudways
 
 The shop is `extrabeauty.ae` on Cloudways. App root
