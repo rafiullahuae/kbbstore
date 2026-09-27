@@ -4571,7 +4571,7 @@ function mdAutosave(key, on){
       // isn't really saved — the exact gap this exists to close.
       const m=mdFind(key); if(m) m.on=!on;
       paintModules();
-      toast('Could not save that: ' + e.message);
+      toast('Could not save that: ' + e.message, 'bad');
     }
   }, 350);
 }
@@ -5401,7 +5401,7 @@ function bindMegaMenu(){
     const ok = await mgmDeleteConfirm(b.dataset.mgmlabel);
     if(!ok) return;
     const r = await mgmApi('/' + b.dataset.mgmdel + '/delete', {method:'POST'});
-    if(!r.ok){ toast('Could not delete that.'); return; }
+    if(!r.ok){ toast('Could not delete that.', 'bad'); return; }
     toast('Deleted.');
     renderMegaMenu();
   });
@@ -5589,7 +5589,7 @@ async function mgmPerformDrop(draggedId, target){
       .map(c => c.id).filter(id => id !== draggedId);
     newSiblings.push(draggedId);
     const r = await mgmApi('/' + draggedId + '/move', {method:'POST', body: JSON.stringify({parent_id: target.into, ids: newSiblings})});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not move that.'); return; }
+    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not move that.', 'bad'); return; }
     toast('Moved.');
     MGM_EXPANDED.add(target.into);
     renderMegaMenu();
@@ -5606,10 +5606,10 @@ async function mgmPerformDrop(draggedId, target){
 
   if(sameParent){
     const r = await mgmApi('/reorder', {method:'POST', body: JSON.stringify({ids: newIds})});
-    if(!r.ok){ toast('Could not save the new order.'); renderMegaMenu(); return; }
+    if(!r.ok){ toast('Could not save the new order.', 'bad'); renderMegaMenu(); return; }
   } else {
     const r = await mgmApi('/' + draggedId + '/move', {method:'POST', body: JSON.stringify({parent_id: newParentId, ids: newIds})});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not move that.'); renderMegaMenu(); return; }
+    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not move that.', 'bad'); renderMegaMenu(); return; }
   }
   toast('Moved.');
   renderMegaMenu();
@@ -5743,7 +5743,7 @@ function mgmOpenForm(parentId, depth, editing){
       : await mgmApi('', {method:'POST', body: JSON.stringify(payload)});
 
     if(!r.ok){
-      toast((r.data.errors && r.data.errors[0]) || 'Could not save that.');
+      toast((r.data.errors && r.data.errors[0]) || 'Could not save that.', 'bad');
       return;
     }
     toast(isEdit ? 'Saved.' : 'Added.');
@@ -5769,7 +5769,7 @@ function mgmLoadDemoConfirm(){
   w.querySelector('[data-yes]').onclick = async () => {
     done();
     const r = await mgmApi('/demo', {method: 'POST'});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not load the demo menu.'); return; }
+    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not load the demo menu.', 'bad'); return; }
     toast('Loaded — live on desktop and mobile now.');
     renderMegaMenu(r.data.id);
   };
@@ -5788,7 +5788,7 @@ function mgmNewMenuPrompt(){
     const name = $('#mgmNewName').value.trim();
     if(!name){ toast('Give it a name first.'); return; }
     const r = await mgmApi('/menus', {method:'POST', body: JSON.stringify({name})});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not create that.'); return; }
+    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not create that.', 'bad'); return; }
     toast('Menu created.');
     closeModal();
     renderMegaMenu(r.data.id);
@@ -5834,7 +5834,7 @@ function mgmMenuSettingsForm(){
       show_footer: $('#mgmMs_show_footer').checked,
     };
     const r = await mgmApi('/menus/' + current.id, {method:'POST', body: JSON.stringify(payload)});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not save that.'); return; }
+    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not save that.', 'bad'); return; }
     toast('Menu settings saved.');
     closeModal();
     renderMegaMenu(current.id);
@@ -5842,7 +5842,7 @@ function mgmMenuSettingsForm(){
 
   $('#mgmMsDuplicate').onclick = async () => {
     const r = await mgmApi('/menus/' + current.id + '/duplicate', {method:'POST'});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not duplicate that.'); return; }
+    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not duplicate that.', 'bad'); return; }
     toast('Duplicated — not shown anywhere yet, assign it in Menu settings when ready.');
     closeModal();
     renderMegaMenu(r.data.id);
@@ -5853,7 +5853,7 @@ function mgmMenuSettingsForm(){
     const ok = await mgmDeleteMenuConfirm(current.name);
     if(!ok) return;
     const r = await mgmApi('/menus/' + current.id + '/delete', {method:'POST'});
-    if(!r.ok){ toast('Could not delete that.'); return; }
+    if(!r.ok){ toast('Could not delete that.', 'bad'); return; }
     toast('Menu deleted.');
     closeModal();
     MGM_CURRENT_MENU_ID = null;
@@ -7162,7 +7162,9 @@ async function kbbCopyReport(){
     }catch(e){ ok = false; }
   }
   closeModal();
-  toast(ok ? 'Report copied' : 'Could not copy — select the report text and copy it by hand');
+  ok
+    ? toast('Report copied')
+    : toast('Could not copy — select the report text and copy it by hand', 'bad');
 }
 
 /* ---------- Sandbox & Deploy ----------
@@ -7749,7 +7751,7 @@ function reorderPaint(){
     const j=await r.json();
     reorderBusy=false;
     if(j.ok){toast(`Sorted ${j.sorted} products — fine-tune below`);reorderPage=1;reorderLoadProducts();}
-    else{toast('Could not auto-sort.');}
+    else{toast('Could not auto-sort.', 'bad');}
   };
   $('#rePerPage').onchange=e=>{
     if(!reorderConfirmDiscard()){ reorderPaint(); return; }
@@ -7866,7 +7868,7 @@ async function reorderJumpToRank(productId, rank){
       body:JSON.stringify({product_id:productId, to:rank-1})});
     const j=await r.json();
     if(j.ok){ toast('Moved and saved'); await reorderLoadProducts(); }
-    else{ toast(j.message||'Could not move that product.'); }
+    else{ toast(j.message||'Could not move that product.', 'bad'); }
   }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
 }
@@ -7881,7 +7883,7 @@ async function reorderSave(){
       body:JSON.stringify({page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)})});
     const j=await r.json();
     if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; await reorderLoadProducts(); }
-    else{ toast(j.message||'Could not save — reload and try again.'); }
+    else{ toast(j.message||'Could not save — reload and try again.', 'bad'); }
   }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
 }
@@ -9413,7 +9415,7 @@ async function paintGift(){
       // The endpoint answers ok even when it skipped every key, which is how
       // this screen reported success while writing nothing. Trust the counts.
       if(res.rejected && res.rejected.length){
-        toast('Not saved: '+res.rejected.join(', ')+' \u2014 the server rejected these keys');
+        toast('Not saved: '+res.rejected.join(', ')+' \u2014 the server rejected these keys', 'bad');
         return;
       }
       if(res.saved === 0){ toast('Nothing was saved \u2014 check the server log'); return; }
@@ -9898,7 +9900,7 @@ async function paintDeliveryLines(){
       /* The server names the field it refused; showing that instead of a
          generic failure is the difference between fixing a row and guessing. */
       if(!r.ok){
-        toast(res.message || res.error || 'Not saved \u2014 check the lines above.');
+        toast(res.message || res.error || 'Not saved \u2014 check the lines above.', 'bad');
         return;
       }
       /* SAVE REPORTS SUCCESS EVEN WHEN IT SKIPPED EVERY KEY \u2014 the failure mode
@@ -9907,7 +9909,7 @@ async function paintDeliveryLines(){
          counts are the only trustworthy part of the answer, so they are what is
          checked, exactly as the Gift tab checks them. */
       if(res.rejected && res.rejected.length){
-        toast('Not saved: '+res.rejected.join(', ')+' \u2014 the server rejected these keys');
+        toast('Not saved: '+res.rejected.join(', ')+' \u2014 the server rejected these keys', 'bad');
         return;
       }
       if(res.saved === 0){ toast('Nothing was saved \u2014 check the server log'); return; }
@@ -10705,7 +10707,7 @@ async function kbbPurge(btn){
     const n = (r && Array.isArray(r.ran)) ? r.ran.length : 0;
     toast(n ? 'Cleared ' + n + ' cache' + (n === 1 ? '' : 's') + '.' : 'Caches cleared.');
   } catch (e) {
-    toast(e && e.message ? e.message : 'Could not clear the caches.');
+    toast(e && e.message ? e.message : 'Could not clear the caches.', 'bad');
   } finally {
     kbbPurging = false;
     btn.disabled = false;
@@ -11529,7 +11531,7 @@ function paintStatusEmails(rows){
         toast(wanted?'Customers will be emailed on '+status:'Customers will not be emailed on '+status);
       }catch(e){
         box.checked=!wanted;
-        toast(String(e.message||'Could not save that.'));
+        toast(String(e.message||'Could not save that.'), 'bad');
       }
     };
   });
@@ -13080,7 +13082,7 @@ buildNav();
       toast(out.changed + ' order' + (out.changed === 1 ? '' : 's') + ' updated');
       OL.sel = {}; olLoad();
     }catch(e){
-      toast('Could not complete that — nothing was changed');
+      toast('Could not complete that — nothing was changed', 'bad');
     }
   }
 
@@ -13110,7 +13112,7 @@ buildNav();
       toast(out.deleted + ' order' + (out.deleted === 1 ? '' : 's') + ' moved to trash');
       OL.sel = {}; olLoad();
     }catch(e){
-      toast('Could not complete that — nothing was changed');
+      toast('Could not complete that — nothing was changed', 'bad');
     }
   }
 
@@ -13185,7 +13187,7 @@ buildNav();
         headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
         body:JSON.stringify({product_id:parseInt(productId,10), quantity:1})});
       var j = await r.json();
-      if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.'); return; }
+      if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.', 'bad'); return; }
       toast('Product added'); renderOrderDetail(odPickerOrder);
     }catch(e){ toast('Could not add that product.','bad'); }
   }
@@ -13518,8 +13520,25 @@ buildNav();
     }
 
     if(!s.capturable){
+      /* WHY THERE ARE TWO SENTENCES HERE NOW. The single one said "this order
+         has not been authorised by the payment provider", which is a lie on the
+         one order most likely to be looked at: a released authorisation. It WAS
+         authorised — this shop then gave the hold back, on purpose, and the
+         order's own note says so a few inches further down the same screen.
+         Telling the operator it was never authorised sends him to the provider
+         to ask why, for something the shop did itself.
+
+         `s.void` is PaymentVoider::status(), which Lane O1 added to this
+         endpoint; before that the drawer had no way to know. It never calls a
+         provider, so this costs the screen nothing. */
+      var released = s.void && s.void.voided;
+
       return '<div style="margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--ink-faint)">'+
-        'Not capturable yet \u2014 this order has not been authorised by the payment provider.</div>';
+        (released
+          ? 'The authorisation on this order was released'+
+            (s.void.voided_at?' on '+fmtDT(s.void.voided_at):'')+
+            ', so there is nothing left to capture. The customer would have to order and pay again.'
+          : 'Not capturable yet \u2014 this order has not been authorised by the payment provider.')+'</div>';
     }
 
     var urgent = !!s.expiring;
@@ -13667,7 +13686,7 @@ buildNav();
           renderOrderDetail(id);
           return;
         }
-        toast('Update failed');
+        toast('Update failed', 'bad');
       }
     };
 
@@ -13704,13 +13723,13 @@ buildNav();
       document.querySelectorAll('#content .odqty').forEach(function(inp){
         inp.onchange = async function(){
           var qty = parseInt(inp.value, 10);
-          if(!qty || qty<1){ toast('Quantity must be at least 1.'); renderOrderDetail(id); return; }
+          if(!qty || qty<1){ toast('Quantity must be at least 1.', 'bad'); renderOrderDetail(id); return; }
           try{
             var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+inp.dataset.itemid),{method:'PUT',credentials:'same-origin',
               headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
               body:JSON.stringify({quantity:qty})});
             var j = await r.json();
-            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.', 'bad'); return; }
             toast('Quantity updated'); renderOrderDetail(id);
           }catch(e){ toast('Could not update that item.','bad'); }
         };
@@ -13718,13 +13737,13 @@ buildNav();
       document.querySelectorAll('#content .odprice').forEach(function(inp){
         inp.onchange = async function(){
           var price = parseFloat(inp.value);
-          if(price==null || isNaN(price) || price<0){ toast('Enter a valid price.'); renderOrderDetail(id); return; }
+          if(price==null || isNaN(price) || price<0){ toast('Enter a valid price.', 'bad'); renderOrderDetail(id); return; }
           try{
             var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+inp.dataset.itemid),{method:'PUT',credentials:'same-origin',
               headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
               body:JSON.stringify({unit_price_aed:price})});
             var j = await r.json();
-            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.', 'bad'); return; }
             toast('Price updated'); renderOrderDetail(id);
           }catch(e){ toast('Could not update that item.','bad'); }
         };
@@ -13736,7 +13755,7 @@ buildNav();
             var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+btn.dataset.itemid),{method:'DELETE',credentials:'same-origin',
               headers:{'X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'}});
             var j = await r.json();
-            if(!r.ok || j.ok===false){ toast(j.message||'Could not remove that item.'); return; }
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not remove that item.', 'bad'); return; }
             toast('Item removed'); renderOrderDetail(id);
           }catch(e){ toast('Could not remove that item.','bad'); }
         };
@@ -13781,7 +13800,7 @@ buildNav();
     };
     document.getElementById('odRefundGo').onclick = async function(){
       var amt = parseFloat(document.getElementById('odRefundAmt').value);
-      if(!amt || amt<=0){ toast('Enter a refund amount.'); return; }
+      if(!amt || amt<=0){ toast('Enter a refund amount.', 'bad'); return; }
       var reason = document.getElementById('odRefundReason').value;
       var btn = this;
       // Cosmetic only. The guard that counts is the idempotency key below,
@@ -13793,7 +13812,7 @@ buildNav();
           headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
           body:JSON.stringify({amount_aed:amt, reason:reason, idempotency_key:document.getElementById('odRefundKey').value})});
         var j = await r.json();
-        if(!r.ok || j.ok===false){ btn.disabled = false; toast(j.message||'Could not process that refund.'); return; }
+        if(!r.ok || j.ok===false){ btn.disabled = false; toast(j.message||'Could not process that refund.', 'bad'); return; }
         // The server's own words: "refunded through Tabby" and "recorded --
         // return the money by hand" are different facts and the admin needs
         // to be told which one happened.
@@ -13811,7 +13830,7 @@ buildNav();
             headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
             body:'{}'});
           var j = await r.json();
-          if(!r.ok || j.ok===false){ captureBtn.disabled = false; toast(j.message||'Could not capture that payment.'); return; }
+          if(!r.ok || j.ok===false){ captureBtn.disabled = false; toast(j.message||'Could not capture that payment.', 'bad'); return; }
           toast(j.message||'Captured'); renderOrderDetail(id);
         }catch(e){ captureBtn.disabled = false; toast('Could not capture that payment.','bad'); }
       };
@@ -13820,7 +13839,7 @@ buildNav();
     // Add note.
     document.getElementById('odNoteGo').onclick = async function(){
       var content = document.getElementById('odNoteText').value.trim();
-      if(!content){ toast('Write a note first.'); return; }
+      if(!content){ toast('Write a note first.', 'bad'); return; }
       try{ await api('/admin-api/orders/'+id+'/notes',{method:'POST',body:JSON.stringify({content:content})});
         toast('Note added'); renderOrderDetail(id);
       }catch(e){ toast('Could not save that note.','bad'); }
@@ -13829,13 +13848,13 @@ buildNav();
     // Actions dropdown.
     document.getElementById('odActionGo').onclick = async function(){
       var action = document.getElementById('odActionSel').value;
-      if(!action){ toast('Choose an action first.'); return; }
+      if(!action){ toast('Choose an action first.', 'bad'); return; }
       try{
         var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/action'),{method:'POST',credentials:'same-origin',
           headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
           body:JSON.stringify({action:action})});
         var j = await r.json();
-        if(!r.ok || j.ok===false){ toast(j.message||'That action could not be completed.'); return; }
+        if(!r.ok || j.ok===false){ toast(j.message||'That action could not be completed.', 'bad'); return; }
         toast('Done'); renderOrderDetail(id);
       }catch(e){ toast('That action could not be completed.','bad'); }
     };
@@ -13862,7 +13881,7 @@ buildNav();
                  : kind === 'Dispatch label' ? (o.shipping_label_url || '')
                  : '';
         if (url) { window.open(url, '_blank', 'noopener'); return; }
-        toast('That document is not available for this order.');
+        toast('That document is not available for this order.', 'bad');
       };
     });
   }
@@ -13902,7 +13921,7 @@ buildNav();
           alert(e.body.message);
           return;
         }
-        toast('Update failed');
+        toast('Update failed', 'bad');
       }
     };
   }
@@ -14050,7 +14069,10 @@ buildNav();
   }
   function cuLabel(c){ return c.name || c.email || ('Customer #' + c.id); }
   function cuDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
-  function cuToast(msg){ toast(sesc(msg)); }
+  /* Customers screen. It reports successes AND failures through one helper,
+     so it has to carry the kind through — otherwise 'Could not restore this
+     customer' arrives wearing the same green tick as 'Customer restored'. */
+  function cuToast(msg, kind){ toast(sesc(msg), kind); }
 
   function cuTypePill(c){
     var badge = c.account_type === 'account'
@@ -14412,7 +14434,7 @@ buildNav();
         try{
           await api('/admin-api/customers/' + (+b.dataset.curestore) + '/restore', {method:'POST'});
           cuToast('Customer restored'); cuLoad();
-        }catch(e){ cuToast('Could not restore this customer'); }
+        }catch(e){ cuToast('Could not restore this customer', 'bad'); }
       };
     });
 
@@ -14471,7 +14493,7 @@ buildNav();
       }
       CU.sel = {}; cuLoad();
     }catch(e){
-      cuToast('Could not complete that — nothing was changed');
+      cuToast('Could not complete that — nothing was changed', 'bad');
     }
   }
 
@@ -14610,7 +14632,7 @@ buildNav();
     var restore = document.getElementById('cuRestore');
     if(restore) restore.onclick = async function(){
       try{ await api('/admin-api/customers/' + c.id + '/restore', {method:'POST'}); cuToast('Customer restored'); cuDetail(c.id); }
-      catch(e){ cuToast('Could not restore this customer'); }
+      catch(e){ cuToast('Could not restore this customer', 'bad'); }
     };
 
     var saveNote = document.getElementById('cuNoteSave');
@@ -14619,7 +14641,7 @@ buildNav();
       try{
         await api('/admin-api/customers/' + c.id + '/note', {method:'POST', body: JSON.stringify({notes: box ? box.value : ''})});
         cuToast('Note saved');
-      }catch(e){ cuToast('Could not save the note'); }
+      }catch(e){ cuToast('Could not save the note', 'bad'); }
     };
   }
 
@@ -14869,7 +14891,7 @@ buildNav();
           /* Put the control back to what the server still believes, rather than
              leaving the screen showing a change that did not happen. */
           sel.value = was || 'new';
-          if(typeof toast==='function') toast('Could not update that lead');
+          if(typeof toast==='function') toast('Could not update that lead', 'bad');
         }
         leadBusy=false;
       };
@@ -15538,7 +15560,7 @@ buildNav();
         RV.full['ip_' + id] = (d.review && d.review.ip) || '';
       }catch(e){
         RV.full[id] = '';
-        toast('Could not load the full review');
+        toast('Could not load the full review', 'bad');
       }
     }
     renderReviews();
@@ -17452,7 +17474,7 @@ buildNav();
            value is wrong, and says which. Showing that beats "check
            connection" — nothing was saved and the owner needs to know what to
            change, not to go and look at his router. */
-        toast((e && e.body && e.body.message) ? e.body.message : 'Save failed — check connection');
+        toast((e && e.body && e.body.message) ? e.body.message : 'Save failed — check connection', 'bad');
       }
     };
   }
@@ -18019,7 +18041,7 @@ buildNav();
           body:JSON.stringify({source:source,target:target,code:+code})});
         var j=await res.json();
         if(j.ok){ toast('Redirect added'); renderSeoRedirects(); }
-        else{ toast(j.message||'Could not add that redirect.'); }
+        else{ toast(j.message||'Could not add that redirect.', 'bad'); }
       }catch(e){ toast('Could not save \u2014 check your connection.','bad'); }
     };
     wireRedirectRows();
@@ -18057,7 +18079,7 @@ buildNav();
         // nothing moves and nothing explains why -- which is the same "a row
         // nobody can account for" complaint the refusal exists to end. The
         // Resolve handler below already reads j.message; this one did not.
-        else{ toast(j.message||'Could not update that redirect.'); }
+        else{ toast(j.message||'Could not update that redirect.', 'bad'); }
       }catch(e){ toast('Could not update \u2014 check your connection.','bad'); }
     };});
     $$('#rd_list [data-rddel]').forEach(function(b){ b.onclick=async function(){
@@ -18080,7 +18102,7 @@ buildNav();
           headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify({target:target,code:301})});
         var j=await res.json();
         if(j.ok){ toast('Redirect created'); renderSeoRedirects(); }
-        else{ toast(j.message||'Could not resolve that.'); }
+        else{ toast(j.message||'Could not resolve that.', 'bad'); }
       }catch(e){ toast('Could not save \u2014 check your connection.','bad'); }
     };});
     $$('#nf_list [data-nfdismiss]').forEach(function(b){ b.onclick=async function(){
@@ -20540,7 +20562,7 @@ buildNav();
             alert(e.body.message);
             return;
           }
-          toast('Could not record that');
+          toast('Could not record that', 'bad');
         }
       };
     });
@@ -20697,7 +20719,7 @@ buildNav();
       payRestorePending(pending);
     }catch(e){
       payMsg(id,'');
-      toast('Could not save — '+e.message);
+      toast('Could not save — '+e.message, 'bad');
       if(btn) btn.disabled=false;
     }
   }
