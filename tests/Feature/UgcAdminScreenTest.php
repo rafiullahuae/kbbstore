@@ -611,11 +611,20 @@ it('escapes every operator string it prints, and prefixes every class it invents
     preg_match_all('/data-(?!ugs-)([a-z-]+)=/', $source, $matches);
 
     $foreign = array_values(array_filter(array_unique($matches[1]), fn ($a) => ! in_array($a, [
-        // Two attributes this screen READS off the console's own markup rather
-        // than inventing: the sidebar group wrapper, and KBBArabic's
-        // placeholder. Neither is written by this file.
+        // Three attributes this screen READS off the console's own markup rather
+        // than inventing: the sidebar group wrapper, KBBArabic's placeholder,
+        // and the box KBBArabic puts a translated field in. None is written by
+        // this file.
+        //
+        // `kbbar-input` is the one the draft restore reaches for, and it is the
+        // SAME attribute KBBArabic.collect() reads when it gathers those boxes
+        // for a save -- so a restored draft puts back exactly the set of fields
+        // a save would have sent. Writing a second name for those boxes here is
+        // what the rule above is really guarding against, and this is not that:
+        // nothing on this screen emits it.
         'sec',
         'ph',
+        'kbbar-input',
     ], true)));
 
     expect($foreign)->toBe([]);

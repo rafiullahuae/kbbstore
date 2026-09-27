@@ -119,6 +119,27 @@ class UgcVideoController extends Controller
              */
             'transcoder' => [
                 'available' => $this->transcoder->available(),
+                /*
+                 * WHICH of the two ways it is unavailable, in the server's own
+                 * sentence — or null when it can cut.
+                 *
+                 * THE DEFECT THIS ANSWERS. The screen had only the bool, so it
+                 * wrote its own explanation and picked one: "It answered that it
+                 * has no ffmpeg." On the box this whole episode was about, that
+                 * is FALSE — ffmpeg is installed and PHP is not allowed to start
+                 * it — and it sends the owner to install something he already
+                 * has instead of to the PHP setting that is really in the way.
+                 * blocker() keeps the two apart precisely because the remedies
+                 * differ, and that distinction was being thrown away at the last
+                 * step by a screen that had not been told.
+                 *
+                 * A CONSTANT SENTENCE, never a setting, so the screen may print
+                 * it as prose; it is escaped there regardless.
+                 */
+                'blocker' => $this->transcoder->blocker(
+                    $this->transcoder->canSpawn(),
+                    $this->transcoder->binary()
+                ),
                 'teaser_seconds' => UgcTranscoder::TEASER_SECONDS,
                 'teaser_size' => UgcTranscoder::TEASER_WIDTH.'x'.UgcTranscoder::TEASER_HEIGHT,
             ],
@@ -923,19 +944,44 @@ class UgcVideoController extends Controller
     {
         $term = trim((string) $request->query('q', ''));
 
+        /*
+         * ── `recent` IS A SEPARATE MODE, NOT A CHANGE TO THE EXISTING ONE ────
+         *
+         * The admin screen now shows the newest few products before anybody
+         * types, because an empty box under an empty list is what made the owner
+         * report the search as broken. That needs an order this endpoint did not
+         * have, and reordering the ANSWER IT ALREADY GIVES would be a change to
+         * behaviour that works — rule 1. So recency arrives as its own parameter
+         * and the termless answer every existing caller gets is byte-identical.
+         *
+         * Bounded to 1..30 so the parameter cannot be used to ask for the
+         * catalogue, and the last ORDER BY key is `id`, which cannot tie:
+         * StableOrderingTest refuses a sliced query whose ordering can, and
+         * created_at ties freely — an import writes a whole catalogue inside one
+         * second.
+         */
+        $recent = (int) $request->query('recent', 0);
+
         $query = Product::query()
             ->visible()
-            ->with('brand')
-            ->orderBy('name')
-            /*
-             * A tie-breaker that cannot tie, because this query is SLICED.
-             * Two products with the same name sit either side of the limit in
-             * whatever order the engine feels like, so the thirtieth row moves
-             * between identical requests. StableOrderingTest refuses a sliced
-             * query whose last ORDER BY key can tie, and it is right to.
-             */
-            ->orderBy('id')
-            ->limit(30);
+            ->with('brand');
+
+        if ($recent > 0 && $term === '') {
+            $query->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit(max(1, min(30, $recent)));
+        } else {
+            $query->orderBy('name')
+                /*
+                 * A tie-breaker that cannot tie, because this query is SLICED.
+                 * Two products with the same name sit either side of the limit in
+                 * whatever order the engine feels like, so the thirtieth row moves
+                 * between identical requests. StableOrderingTest refuses a sliced
+                 * query whose last ORDER BY key can tie, and it is right to.
+                 */
+                ->orderBy('id')
+                ->limit(30);
+        }
 
         if ($term !== '') {
             // Bound before it reaches LIKE: an unbounded term is an unbounded
@@ -944,9 +990,42 @@ class UgcVideoController extends Controller
             $query->where('name', 'like', $like);
         }
 
+        $products = $query->get();
+
+        /*
+         * ── HOW MANY MATCHED BUT CANNOT BE TAGGED ───────────────────────────
+         *
+         * THE DEFECT THIS ANSWERS. visible() is `status = publish AND is_visible`
+         * plus a schedule check, so a DRAFT product is correctly not returned —
+         * and the screen had no way to say so. The owner searched for a product
+         * he owns, got an empty box, and reported the search as broken. "Nothing
+         * matched" and "that product is a draft" need completely different things
+         * done about them, and only the server can tell them apart.
+         *
+         * Counted ONLY when the visible answer is empty, so the ordinary
+         * keystroke costs exactly what it always did: this is one indexed COUNT
+         * on the rarest branch, and StorefrontQueryBudgetTest is a storefront
+         * budget — this is an authenticated admin endpoint behind its own
+         * capability.
+         *
+         * It returns a COUNT and never the rows: an unpublished product's name is
+         * not something this endpoint is allowed to start handing out just
+         * because it was searched for.
+         */
+        $unpublished = 0;
+
+        if ($term !== '' && $products->isEmpty()) {
+            $like = '%'.str_replace(['%', '_'], ['\%', '\_'], mb_substr($term, 0, 60)).'%';
+            $unpublished = Product::query()
+                ->where('name', 'like', $like)
+                ->whereNotIn('id', Product::query()->visible()->select('id'))
+                ->count();
+        }
+
         return response()->json([
             'ok' => true,
-            'products' => $query->get()->map(fn (Product $p) => [
+            'unpublished' => $unpublished,
+            'products' => $products->map(fn (Product $p) => [
                 'id' => $p->id,
                 'name' => (string) $p->name,
                 'brand' => $p->brand?->name,
