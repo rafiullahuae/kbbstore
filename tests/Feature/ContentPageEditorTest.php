@@ -14,6 +14,7 @@ use App\Support\PageTitle;
 use App\Support\RoutedPages;
 use Illuminate\Support\Facades\Route;
 use Tests\Support\ArabicShop;
+use Tests\Support\KeyOrder;
 use Tests\Support\PageEditorRoutes;
 
 /**
@@ -150,11 +151,24 @@ it('writes the per-row SEO fields the storefront was already reading', function 
         'noindex' => false,
     ]])->assertOk()->assertJson(['ok' => true]);
 
-    expect(cpePage()->seo)->toBe([
+    /*
+     * ▲ KEY ORDER IS THE ENGINE'S, NOT THIS ENDPOINT'S. `pages.seo` is a `json`
+     * column, and MySQL's JSON type does not store object key order — it sorts
+     * members by (key length, then bytewise). So the three keys written
+     * title/desc/og_image come back desc/title/og_image on the engine the shop
+     * runs, `toBe()` is order-sensitive, and this case was red on
+     * -c phpunit-mysql.xml with the endpoint behaving perfectly. SQLite has no
+     * JSON type, stores the bytes it was given, and hid it.
+     *
+     * Every key and every value is still asserted — including that `canonical`
+     * and `noindex` were DROPPED rather than stored blank, which is what the
+     * three-key expectation says. Tests\Support\KeyOrder carries the measurement.
+     */
+    expect(KeyOrder::canonical(cpePage()->seo))->toBe(KeyOrder::canonical([
         'title' => 'Delivery, returns and the questions we are asked most',
         'desc' => 'How delivery, returns and order tracking work at K-Beauty Bliss.',
         'og_image' => '/storage/pages/faq.jpg',
-    ]);
+    ]));
 
     // And on the wire, which is the only claim that matters.
     $head = cpeHead('/faqs/');

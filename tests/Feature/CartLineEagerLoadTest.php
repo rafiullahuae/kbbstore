@@ -12,6 +12,7 @@ use App\Services\CartService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\SqlShape;
 
 /**
  * THE CART READ ONE TABLE ONCE PER LINE, ON THE SCREEN WHERE SOMEBODY DECIDES
@@ -218,7 +219,16 @@ function elRequest(Cart $cart, string $path): array
     elReset();
 
     $sql = [];
-    DB::listen(function ($event) use (&$sql): void { $sql[] = $event->sql; });
+    /*
+     * ▲ NORMALISED, because the needle below is spelled for one engine.
+     *
+     * SQLiteGrammar quotes an identifier with `"` and MySqlGrammar with a
+     * backtick, so `from "attribute_values"` matches nothing at all on
+     * -c phpunit-mysql.xml: both cost cases counted 0 where they require 1 and
+     * failed on the engine the shop actually runs, with the shop behaving
+     * correctly the whole time. SqlShape::portable() carries the reasoning.
+     */
+    DB::listen(function ($event) use (&$sql): void { $sql[] = SqlShape::portable($event->sql); });
 
     $html = test()
         ->withCredentials()

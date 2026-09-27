@@ -232,12 +232,24 @@ final class ColumnWidths
             'run_uid' => 32,
             'status' => 16,
         ],
+        'instagram_posts' => [
+            'local_path' => 255,
+            'media_type' => 32,
+            'permalink' => 255,
+            'remote_id' => 64,
+            'shortcode' => 64,
+        ],
         'job_batches' => [
             'id' => 255,
             'name' => 255,
         ],
         'jobs' => [
             'queue' => 255,
+        ],
+        'locale_slugs' => [
+            'group' => 32,
+            'locale' => 5,
+            'slug' => 191,
         ],
         'mail_credentials' => [
             'id' => 255,
@@ -328,6 +340,7 @@ final class ColumnWidths
             'status' => 255,
             'tax_basis' => 16,
             'transaction_id' => 255,
+            'void_ref' => 255,
         ],
         'outbound_optouts' => [
             'email' => 191,
@@ -436,6 +449,7 @@ final class ColumnWidths
             'target' => 255,
         ],
         'redirects' => [
+            'locale' => 5,
             'source' => 255,
             'target' => 255,
         ],
@@ -510,6 +524,32 @@ final class ColumnWidths
             'source' => 10,
             'source_hash' => 40,
             'status' => 10,
+        ],
+        'ugc_sections' => [
+            'columns' => 16,
+            'handle' => 96,
+            'heading' => 191,
+            'locale' => 5,
+            'status' => 16,
+            'subheading' => 255,
+            'title' => 191,
+        ],
+        'ugc_video_likes' => [
+            'token_hash' => 64,
+        ],
+        'ugc_videos' => [
+            'creator_handle' => 120,
+            'creator_url' => 512,
+            'file_path' => 255,
+            'locale' => 5,
+            'poster_path' => 255,
+            'rights_status' => 16,
+            'slug' => 191,
+            'source_platform' => 24,
+            'source_url' => 512,
+            'status' => 16,
+            'teaser_path' => 255,
+            'title' => 191,
         ],
         'update_releases' => [
             'archive_path' => 255,

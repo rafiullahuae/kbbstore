@@ -481,21 +481,73 @@ it('searches alt text as well as the filename', function () {
 it('filters by date inclusively at both ends', function () {
     asMlAdmin();
 
-    $old = mlMedia();
+    /*
+     * ── SCOPED TO THIS TEST'S OWN THREE ROWS, AND WHY IT HAS TO BE ──────────
+     *
+     * THE FAILURE, and it was NOT in the date filter. This case was red in a
+     * full run on -c phpunit-mysql.xml and green on its own, on both engines.
+     * Measured at the moment it failed: `media` held 107 rows where this case
+     * had created 3, the endpoint reported `total=106 pages=5 per_page=24`, and
+     * `$new` was on page 5. `toContain()` reads page ONE, so the row was found
+     * by the filter and simply not printed on the page that was looked at.
+     *
+     * THE 104 EXTRA ROWS ARE LEAKED, and the mechanism is a MySQL/SQLite
+     * divergence worth writing down because it will do this again somewhere
+     * else. MySQL COMMITS THE OPEN TRANSACTION IMPLICITLY WHEN A STATEMENT IS
+     * DDL; SQLite's DDL is transactional. RefreshDatabase wraps each test in a
+     * transaction and rolls it back, so a test that runs `Schema::drop()`,
+     * `Schema::create()` or a TRUNCATE has already committed everything it wrote
+     * by the time the rollback is attempted — and the rollback then throws
+     * "There is no active transaction". Reduced to the two engines, same shape:
+     *
+     *     begin; insert; DROP TABLE scratch; rollback
+     *     sqlite -> rollback ok,    0 rows survive
+     *     mysql  -> rollback THREW, 1 row survives
+     *
+     * Measured, and stated no further: a probe in tests/Pest.php's beforeEach named
+     * the first test to see any media row at its own start — which under
+     * RefreshDatabase can only be one an earlier test committed. That was
+     * DemoOrdersExcludedFromReportingTest, whose previous case calls
+     * `Schema::dropIfExists(DemoSeed::TABLE)`, on purpose and correctly. Thirteen
+     * Feature files issue DDL, THIS ONE AMONG THEM. Leaked rows then
+     * accumulate for the rest of the process. That is somebody's whole finding to
+     * fix and it is not this file's to hide, so it is named here rather than
+     * papered over — see this lane's report.
+     *
+     * WHAT THE SCOPING DOES AND DOES NOT CHANGE. `q=` searches `alt`, which the
+     * case above this one pins, so tagging the three fixtures with one token and
+     * passing it makes the result set exactly these three rows. Every date
+     * assertion below is unchanged and every one is still made: inclusive at
+     * both ends, late-in-the-day included, a malformed date ignored. The
+     * assertions get STRONGER, not weaker — they were previously true only while
+     * nothing else crowded page one, which is a condition about the rest of the
+     * suite rather than about the filter.
+     *
+     * MUTATION: drop the `q=` from $names() and this case is green alone and red
+     * in a full MySQL run — which is exactly the shape it was found in.
+     */
+    $token = 'datefilter-'.uniqid();
+
+    $old = mlMedia(['alt' => $token]);
     $old->forceFill(['created_at' => '2026-01-10 09:00:00'])->save();
 
-    $onTheDay = mlMedia();
+    $onTheDay = mlMedia(['alt' => $token]);
     // Late in the day on purpose: a `to` filter that compares against midnight
     // excludes everything uploaded after breakfast, which reads as "the filter
     // is broken" to the only person who would ever notice.
     $onTheDay->forceFill(['created_at' => '2026-02-20 23:41:00'])->save();
 
-    $new = mlMedia();
+    $new = mlMedia(['alt' => $token]);
     $new->forceFill(['created_at' => '2026-03-05 12:00:00'])->save();
 
     $names = fn (string $query) => collect(
-        test()->getJson('/admin-api/media?'.$query)->assertOk()->json('items')
+        test()->getJson('/admin-api/media?q='.$token.'&'.$query)->assertOk()->json('items')
     )->pluck('filename')->all();
+
+    // The scoping is load-bearing, so it is asserted rather than assumed: if `q`
+    // ever stopped matching `alt` every expectation below would pass vacuously on
+    // an empty list.
+    expect($names(''))->toHaveCount(3, 'the q= scope did not return this test\'s three rows');
 
     $window = $names('from=2026-02-20&to=2026-02-20');
 

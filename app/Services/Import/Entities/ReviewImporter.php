@@ -507,10 +507,74 @@ final class ReviewImporter extends EntityImporter
             return $held;
         }
 
-        // Soft-deleted customers are still rows this review belongs to.
-        $id = Customer::query()->withTrashed()->whereRaw('LOWER(email) = ?', [mb_strtolower($email)])->value('id');
+        /*
+         * Soft-deleted customers are still rows this review belongs to.
+         *
+         * ── WHY THE MATCH IS CONFIRMED IN PHP AND NOT LEFT TO `=` ────────────
+         *
+         * `LOWER(email) = ?` does not mean the same thing on the two engines, and
+         * the dangerous direction is the one this shop RUNS. Measured on MySQL
+         * 8.0.46 with the suite's own `utf8mb4` / `utf8mb4_unicode_ci`:
+         *
+         *     rows: 'JOSÉ@Example.com' and 'jose@example.com'
+         *     LOWER(email) = 'jose@example.com'  ->  BOTH rows
+         *     LOWER(email) = 'josé@example.com'  ->  BOTH rows
+         *
+         * MySQL's LOWER() is Unicode-aware, which is fine — but the comparison
+         * runs under a collation that is ACCENT-INSENSITIVE as well as
+         * case-insensitive, so `é` and `e` are the same character to `=`. Two
+         * different mailboxes are therefore one row to this lookup, and `value()`
+         * takes whichever the engine hands back first: the review is attributed to
+         * a customer who did not write it, with their name printed under it on the
+         * product page. On SQLite the same statement matched only the exact row,
+         * because SQLite's `=` is neither, so nothing in the default suite could
+         * see it.
+         *
+         * So the statement is now a CANDIDATE NET and PHP decides. mb_strtolower()
+         * is case-folding only — it does not strip accents — so `jose@` can no
+         * longer be answered with `josé@`, on either engine. The second bound
+         * spelling catches the row whose stored case differs, which is what the
+         * LOWER() was for.
+         *
+         * ── THE ONE CASE STILL ENGINE-DEPENDENT, AND WHY IT IS LEFT ──────────
+         *
+         * A stored 'JOSÉ@x.com' against an incoming 'josé@x.com' — a case
+         * difference IN a non-ASCII character — is found on MySQL and missed on
+         * SQLite, because SQLite's LOWER() is ASCII-only (measured:
+         * LOWER('JOSÉ@Example.com') is 'josÉ@example.com') and no bound value can
+         * make it fold É. That is unfixable in SQL without a normalised column,
+         * and it is the SAFE direction: the review imports UNLINKED, which
+         * `reviews.customer_id` null already means and which the import reports,
+         * rather than linked to the wrong person. app/Support/MediaUsageWriter.php
+         * records the same trade-off for filenames in the same words.
+         *
+         * MUTATION: put the single `whereRaw('LOWER(email) = ?')` back and
+         * ReviewImporterEmailCaseTest's accent case goes red on
+         * -c phpunit-mysql.xml — the review comes back linked to the unaccented
+         * customer — and stays green on the default config.
+         */
+        $wanted = mb_strtolower($email);
 
-        return $id === null ? null : (int) $id;
+        $candidates = Customer::query()
+            ->withTrashed()
+            ->where(static function ($q) use ($wanted, $email): void {
+                $q->whereRaw('LOWER(email) = ?', [$wanted])
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower($email)])
+                    ->orWhere('email', $email);
+            })
+            // Oldest wins, so a table that already holds a duplicate pair keeps
+            // answering with the same one rather than alternating between them --
+            // the same rule CheckoutController::customerForGuestOrder() applies.
+            ->orderBy('id')
+            ->get(['id', 'email']);
+
+        foreach ($candidates as $candidate) {
+            if (mb_strtolower((string) $candidate->email) === $wanted) {
+                return (int) $candidate->id;
+            }
+        }
+
+        return null;
     }
 
     /**

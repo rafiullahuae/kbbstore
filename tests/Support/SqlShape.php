@@ -47,6 +47,66 @@ final class SqlShape
     ];
 
     /**
+     * One statement with its identifier quoting spelled the SQLite way.
+     *
+     * ── WHY A TEST THAT READS SQL NEEDS THIS ────────────────────────────────
+     *
+     * The two grammars quote identifiers differently and nothing else about the
+     * statement changes: Illuminate's SQLiteGrammar wraps a column in double
+     * quotes, MySqlGrammar wraps it in backticks. So the SAME query is logged
+     * as
+     *
+     *     select "id" from "products" where "status" = ?        (sqlite)
+     *     select `id` from `products` where `status` = ?        (mysql)
+     *
+     * and every matcher in this suite is written against the first spelling,
+     * because the default lane is SQLite. On the MySQL config those matchers
+     * match NOTHING, and what that costs depends entirely on which direction
+     * the assertion points:
+     *
+     *   - A POSITIVE assertion fails loudly, which is the lucky case. Two
+     *     CartLineEagerLoadTest cases counted `from "attribute_values"` and got
+     *     0 where they required 1; CartRecommendedRailSlopeTest looked for the
+     *     rail's query by `from "products"` plus `"status" = ?` and reported
+     *     "the rail query was not issued at all". Nothing was wrong with the
+     *     shop in either case — the needle was spelled for the other engine.
+     *
+     *   - A NEGATIVE assertion passes VACUOUSLY, which is the dangerous case
+     *     and the reason this lives here rather than being inlined twice.
+     *     `expect($railQuery)->not->toContain('"description"')` is satisfied by
+     *     any MySQL statement whatsoever, including one that selects
+     *     `description`. The guard reports green on the engine the shop runs
+     *     and means nothing there.
+     *
+     * Backticks are rewritten to double quotes rather than both being stripped,
+     * so the needles keep their delimiters: bare `description` would also match
+     * `meta_description` and `short_description`, turning a vacuous assertion
+     * into a falsely strict one. Bindings are logged as `?` by the query log,
+     * so a backtick inside a string literal is not a case this has to survive.
+     *
+     * MUTATION, RUN BOTH WAYS: `return $sql;` unchanged gives
+     *
+     *     -c phpunit-mysql.xml    3 failed, 8 passed
+     *     default config         11 passed
+     *
+     * The three are the two CartLineEagerLoadTest cost cases and
+     * CartRecommendedRailSlopeTest's "does not fetch the whole row". Red only on
+     * the engine the shop runs, which is the whole asymmetry this method removes.
+     *
+     * A FOURTH THING IT FIXED IS NOT IN THAT COUNT, and it is the one worth
+     * reading twice: CartRecommendedRailSlopeTest also asserts
+     * `$ten['brands'] === $one['brands']`, and `brands` was counted with
+     * `from "brands"`. On MySQL that counted 0 both times, so the brands N+1
+     * guard PASSED while comparing nothing with nothing. It compares real counts
+     * now, and still passes — so the eager load was right all along and the guard
+     * was not guarding it.
+     */
+    public static function portable(string $sql): string
+    {
+        return strtr($sql, ['`' => '"']);
+    }
+
+    /**
      * Run $fn with a query log attached.
      *
      * @return list<array{sql: string, bindings: array<int, mixed>, schema: bool}>

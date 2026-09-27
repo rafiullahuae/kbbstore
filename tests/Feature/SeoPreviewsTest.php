@@ -20,6 +20,7 @@ use App\Support\Locale;
 use App\Support\Seo;
 use App\Support\SeoAudit;
 use App\Support\Url;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\Support\PageEditorRoutes;
 
@@ -1607,7 +1608,47 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
 
     expect(count($rows))->toBeGreaterThan(55, 'the matrix is shorter than the corpus it is supposed to cover');
 
-    file_put_contents(spPath(), spRender($rows, $shapes, [
+    /*
+     * ── WRITTEN ONLY ON THE ENGINE THIS FILE WAS GENERATED ON ───────────────
+     *
+     * `docs/SEO-PREVIEWS.html` is TRACKED, and the guard at the end of this file
+     * keeps the render a pure function of the SEO facts — no clock, no
+     * randomness — so two runs on ONE engine write the same bytes. They do not
+     * write the same bytes on TWO engines, and that was rewriting this file on
+     * every `-c phpunit-mysql.xml` run, leaving it dirty for the next lane to
+     * sweep into a commit. The habit that causes — `git checkout --` this file
+     * without reading it — is how a real change to it gets thrown away, which is
+     * the cost the header above records three lanes already paying.
+     *
+     * Two mechanisms, both measured, and NEITHER is a defect to fix in the app:
+     *
+     *   1. `ORDER BY products.name` IS COLLATED. SQLite's default is BINARY, so
+     *      it sorts by byte and every uppercase letter precedes every lowercase
+     *      one; MySQL's `utf8mb4_unicode_ci` is case-insensitive. On the four
+     *      preview fixtures that is the whole difference between
+     *
+     *          sqlite: Medicube Collagen · Medicube Kojic · Medicube PDRN · ilso
+     *          mysql : ilso · Medicube Collagen · Medicube Kojic · Medicube PDRN
+     *
+     *      and it reorders the CollectionPage's `itemListElement` accordingly.
+     *      The shop's ordering is not at fault and is not ambiguous —
+     *      ShopController::applyDefaultSort() ends in a total order and every
+     *      other sort carries an id tie-break, for the pagination reason its own
+     *      comment gives. MySQL's answer is the one a shopper wants, and it is
+     *      the one production gives. It simply is not SQLite's.
+     *
+     *   2. A MYSQL `json` COLUMN DOES NOT STORE KEY ORDER. It sorts object
+     *      members by (key length, then bytewise), so the `pages.seo` blob this
+     *      page prints comes back desc/title/og_image where it was written
+     *      title/desc/og_image. Tests\Support\KeyOrder carries the measurement.
+     *
+     * So the file is generated on the DEFAULT config, which is the lane every
+     * change to this repository is written in, and a MySQL run asserts all sixty
+     * rows of the matrix above without touching the tracked bytes. Skipping the
+     * WRITE and not the RENDER is the point: spRender() still runs, so a
+     * MySQL-only crash in it is still a red test rather than a silent skip.
+     */
+    $rendered = spRender($rows, $shapes, [
         'sitemapEn' => $sitemapEn,
         'sitemapAr' => $sitemapAr,
         'robots' => $robots,
@@ -1628,8 +1669,16 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'audit' => $audit,
         'projectedUrls' => $projectedUrls,
         'projectedBytes' => $projectedBytes,
-    ]));
+    ]);
 
+    expect(strlen($rendered))->toBeGreaterThan(40000, 'the render came back too short to be the preview page');
+
+    if (DB::connection()->getDriverName() === 'sqlite') {
+        file_put_contents(spPath(), $rendered);
+    }
+
+    // The tracked file is asserted either way: a MySQL run must still find the
+    // committed page on disk, so a lane that deleted it cannot get a green run.
     expect(file_exists(spPath()))->toBeTrue();
     expect(filesize(spPath()))->toBeGreaterThan(40000);
 });
