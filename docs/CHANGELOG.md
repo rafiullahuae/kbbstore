@@ -3,6 +3,66 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.288
+Two columns everywhere you were scrolling, and three controls that were lying to
+you.
+
+### Payments: keys on the left, settings on the right
+
+`Store → Ecommerce → Payments`. Every row used to be a full-width label with a
+520px box under it, so on a wide screen the right two thirds of every single row
+was empty — and Tamara's twelve fields ran down one column with the API tokens
+mixed in among the basket limits and the product exclusions.
+
+Now: **① Keys from <provider>** on the left, counting itself as you fill it in
+("0 of 4 filled in"), and **② How this shop uses it** on the right. Tamara's card
+is **748px shorter** at desktop width with nothing removed. One column on a
+phone. Cash on delivery gets a single section that says why it has no keys,
+rather than an empty box next to a full one.
+
+### ▲ Every error message in the console has been showing a green tick
+
+You sent a screenshot of one: **"✓ That file was not accepted."** That was not
+that screen's bug. The toast drew a tick for *every* message it has ever been
+given, and painted it green — so "Could not save" looked exactly like "Saved",
+on every screen, including Payments and the capture and refund buttons on an
+order.
+
+Failures are a **red triangle** now, and they stay up nearly twice as long,
+because a failure is the one message you have to read rather than notice.
+
+### ▲ The header's "Content width" slider does nothing, and now says so
+
+`Appearance → Header → Bar → Content width` is only read when **"Header follows
+the site width" is OFF** — and that switch ships on. So dragging it did nothing,
+you got "Saved", and the header did not move. Its help text was blank.
+
+It is greyed out now, with the reason under it and the path to the switch that
+governs it. Faded rather than hidden: it is still the right control once that
+switch is off.
+
+**The header does already follow the site width** — measured at 1200px against a
+1200px page at three different screen sizes. If it is not following on your shop,
+you are on a package older than 2.60.284.
+
+### The clip editor: two columns, and the cut offered where the upload ends
+
+`Content → Shoppable video → All clips`. Every step is two columns now — title
+beside caption, video beside cover, who-made-it beside permission, tagged
+products beside the search.
+
+The upload bar shows **the bytes as well as the percentage**, then a real second
+stage — *"All of it has arrived. The server is checking the file and cutting what
+it can."* — fired the moment the last byte leaves rather than at 99%. Both
+endings now **stay on screen**; the panel used to vanish the instant the request
+landed, which looks exactly like a stalled upload.
+
+And the cover-and-teaser cut is its own section directly under the two file
+boxes, marked **JUST UPLOADED**, instead of a button hidden at the bottom of the
+cover panel. It reads your server before it speaks: where the shop can cut, it
+says the cover and teaser **are** cut and offers to do it again; where it cannot,
+it says so plainly and tells you the one thing left to do by hand.
+
 ## 2.60.287
 Tamara and Tabby, Instagram, the page editor, the add-a-clip flow — and eleven
 admin screens that finally have a web address.
