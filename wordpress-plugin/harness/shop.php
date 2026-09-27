@@ -400,6 +400,9 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		'post_excerpt' => 'Hanbang ginseng, in a bottle.',
 		'post_date' => '2019-03-04 10:00:00', 'post_date_gmt' => '2019-03-04 06:00:00',
 		'post_modified' => '2024-01-02 09:00:00', 'menu_order' => 1,
+		// Advanced tab, "Enable reviews", unticked. WordPress keeps it here and
+		// not in meta, which is why products.csv had never carried it.
+		'comment_status' => 'closed',
 	) );
 
 	$meta( 'postmeta', 'post_id', 4021, array(
@@ -411,6 +414,10 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		// separator and proves nothing.
 		'_thumbnail_id' => '9001', '_product_image_gallery' => '9002,9006',
 		'total_sales' => '37', '_weight' => '0.25', '_tax_status' => 'taxable',
+		// Inventory tab, "Limit purchases to 1 item per order". Set on exactly
+		// one product so the export shows a yes and a no rather than one value
+		// repeated, which proves nothing about the column being read.
+		'_sold_individually' => 'yes',
 		'_yoast_wpseo_title' => 'Ginseng Serum %%sep%% %%sitename%% %%currentyear%%',
 		'_yoast_wpseo_metadesc' => 'A ginseng serum, exported from the old shop\'s Yoast settings.',
 		// The leaf, not the parent. Without it products.csv would name 15

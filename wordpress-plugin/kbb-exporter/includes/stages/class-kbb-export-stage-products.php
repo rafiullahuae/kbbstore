@@ -52,6 +52,8 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 		'_thumbnail_id', '_product_image_gallery', 'total_sales',
 		'_weight', '_length', '_width', '_height', '_tax_status', '_tax_class',
 		'_virtual', '_downloadable', '_purchase_note', '_upsell_ids', '_crosssell_ids',
+		// Inventory tab, "Limit purchases to 1 item per order". See columns().
+		'_sold_individually',
 		'_product_attributes', '_default_attributes', '_children',
 		// Not Yoast's SEO: Yoast is also where WooCommerce's PRIMARY category
 		// is stored, and ProductImporter writes `products.category_id` from
@@ -93,6 +95,33 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 			'weight', 'length', 'width', 'height', 'tax_status', 'tax_class',
 			'shipping_class', 'virtual', 'downloadable', 'purchase_note',
 			'upsell_ids', 'cross_sell_ids', 'grouped_ids', 'tag_term_ids', 'attribute_summary',
+			/*
+			 * ── TWO THAT WERE ON HIS EDIT PAGE AND IN NO FILE AT ALL ────────
+			 *
+			 * Added by Lane PX, and they are a different KIND of gap from the
+			 * nineteen above. Those are exported and then named in the import's
+			 * discard channel, which is the designed way for the owner to
+			 * approve a loss. THESE TWO WERE NOT EXPORTED, so no channel could
+			 * name them: the migration census only classifies columns the export
+			 * writes, and the importer's discard list only names columns that
+			 * arrive. A field missing from the file is invisible to every report
+			 * this migration has, which makes it the only loss that genuinely
+			 * cannot be discovered before a customer finds it.
+			 *
+			 *   sold_individually -- Inventory tab, "Limit purchases to 1 item
+			 *   per order". A product with it set that arrives without it can be
+			 *   added to a basket ten times.
+			 *
+			 *   reviews_enabled -- Advanced tab, "Enable reviews", which
+			 *   WordPress keeps in posts.comment_status and not in meta. A
+			 *   product whose reviews the owner had turned OFF arrives with them
+			 *   on. posts.csv has carried comment_status all along; products.csv
+			 *   had not.
+			 *
+			 * Both are carried and neither is read: ProductImporter names them
+			 * in the discard channel with their value, exactly like the rest.
+			 */
+			'sold_individually', 'reviews_enabled',
 		);
 	}
 
@@ -113,7 +142,7 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 		global $wpdb;
 
 		$rows = $wpdb->get_results(
-			'SELECT ID, post_title, post_name, post_status, post_date, post_modified, post_content, post_excerpt, menu_order
+			'SELECT ID, post_title, post_name, post_status, post_date, post_modified, post_content, post_excerpt, menu_order, comment_status
 			 FROM ' . $wpdb->prefix . "posts
 			 WHERE post_type = 'product' AND post_status IN (" . $this->status_list() . ')
 			   AND ID > ' . (int) $cursor . '
@@ -210,6 +239,12 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 				'grouped_ids'    => $this->id_list( $get( '_children' ) ),
 				'tag_term_ids'   => $this->commas( $this->term_ids( $t, 'product_tag' ) ),
 				'attribute_summary' => $this->attribute_summary( $get( '_product_attributes' ) ),
+				'sold_individually' => $this->yesno( $get( '_sold_individually' ) ),
+				// 'open' or 'closed', and Woo writes 'closed' when the box is
+				// unticked. Normalised to the same yes/no every other flag in
+				// this row uses rather than passed through, so the importer has
+				// one convention to read and not two.
+				'reviews_enabled' => 'closed' === $row['comment_status'] ? 'no' : 'yes',
 			);
 		}
 

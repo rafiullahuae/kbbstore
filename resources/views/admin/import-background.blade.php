@@ -81,6 +81,26 @@ button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--li
 button.primary{background:var(--live);border-color:var(--live);color:#fff;font-weight:600}
 button[disabled]{opacity:.5;cursor:default}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+/*
+ * ── THE TABLE SCROLLS, NOT THE PAGE ──────────────────────────────────────
+ *
+ * Nine columns of counts do not fit a 390px phone, and they did not before this
+ * lane either: document.documentElement.scrollWidth measured 503 against a 390
+ * viewport on the finished page, so the whole document scrolled sideways and the
+ * cards, the headings and the alerts all slid with it. Adding a tenth column
+ * ("Fields dropped") took it to 567 and made an existing defect harder to
+ * ignore.
+ *
+ * A pane of its own means the numbers can be swiped while the page around them
+ * stays put -- scrollWidth comes back to 390 exactly. CSS and not script:
+ * CLAUDE.md rule 4 forbids measuring layout in JavaScript, and there is nothing
+ * here to measure.
+ *
+ * min-width on the table so it does not squeeze ten columns into 390px and
+ * wrap every header into three lines, which is unreadable in a different way.
+ */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tscroll table{min-width:680px}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--soft);font-weight:600;font-size:12px}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
@@ -103,6 +123,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
   <div id="chain" class="card"></div>
   <div id="overall" class="card"></div>
   <div id="files" class="card"></div>
+  <div id="reconcile" class="card" style="display:none"></div>
 
   <p class="foot" id="foot"></p>
 </div>
@@ -204,6 +225,11 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 
   function filesCard(entities) {
     var rows = entities.filter(function (e) { return e.present; }).map(function (e) {
+      /* The fields this entity is knowingly NOT carrying. A count with the names
+         behind it in the title, because the names are what the owner decides on
+         and a bare number only sends him looking. */
+      var dropped = e.dropped_fields || [];
+
       return '<tr><td>' + esc(e.label) + '</td>'
         + '<td class="n">' + num(e.processed) + '</td>'
         + '<td class="n">' + (e.denominator == null ? '—' : num(e.denominator)) + '</td>'
@@ -212,6 +238,9 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
         + '<td class="n">' + num(e.updated) + '</td>'
         + '<td class="n">' + num(e.unchanged) + '</td>'
         + '<td class="n">' + num(e.rejected) + '</td>'
+        + '<td class="n">' + (dropped.length === 0 ? '—'
+            : '<span title="' + esc(dropped.join(', ')) + '">' + num(dropped.length) + '</span>')
+        + '</td>'
         + '<td>' + (e.finished ? 'done' : '') + '</td></tr>';
     }).join('');
 
@@ -219,10 +248,44 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 
     return '<h2>Files</h2>'
       + '<p class="why">Read straight out of the checkpoints, which were committed in the same transaction '
-      + 'as the rows they count — so these numbers survive a request that was killed.</p>'
-      + '<table><thead><tr><th>File</th><th class="n">Rows done</th><th class="n">Of</th><th class="n">%</th>'
+      + 'as the rows they count — so these numbers survive a request that was killed. "Fields dropped" is '
+      + 'the one column that does not count rows: it is how many columns of that file this shop has nowhere '
+      + 'to put, named in full in the import report.</p>'
+      + '<div class="tscroll"><table><thead><tr><th>File</th><th class="n">Rows done</th>'
+      + '<th class="n">Of</th><th class="n">%</th>'
       + '<th class="n">New</th><th class="n">Changed</th><th class="n">Same</th><th class="n">Refused</th>'
-      + '<th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+      + '<th class="n">Fields dropped</th>'
+      + '<th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  /*
+   * ── THE SENTENCE THE OWNER ASKED FOR, AT THE BOTTOM OF THE PAGE ───────────
+   *
+   * "WooCommerce said 671 products, 671 arrived, 0 refused, 20 fields skipped."
+   *
+   * It is deliberately the LAST thing on the page and deliberately plain: the
+   * cards above it are how the import is going, and this is whether it worked.
+   * It renders as a neutral note while the run is unfinished and only turns green
+   * when every file has finished AND every row is accounted for — a green
+   * "everything arrived" over a half-done import is the most expensive sentence
+   * this screen could print.
+   */
+  function reconcileCard(r) {
+    if (!r || !r.sentence) return '';
+
+    var cls = r.ready
+      ? (r.sentence.indexOf('UNACCOUNTED FOR') === -1 ? 'a-good' : 'a-bad')
+      : 'a-warn';
+
+    return '<h2>Did anything get lost?</h2>'
+      + '<p class="why">Counted from the checkpoints and from the rows in the files, not from what any '
+      + 'importer said about its own work.</p>'
+      + '<div class="alert ' + cls + '">' + esc(r.sentence) + '</div>'
+      + (r.fields && r.fields.length
+          ? '<p class="why">The dropped fields, in full: ' + esc(r.fields.join(', ')) + '. Each one is in '
+            + 'the export and has no column in this shop; the import report names every one with an example '
+            + 'of what it held.</p>'
+          : '');
   }
 
   function alerts(c) {
@@ -253,6 +316,11 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
     document.getElementById('chain').innerHTML = chainCard(c);
     document.getElementById('overall').innerHTML = overallCard(snap.overall, c.state);
     document.getElementById('files').innerHTML = filesCard(snap.entities);
+    /* An empty card is a bare bordered box, so the element is hidden rather than
+       emptied when there is nothing to reconcile yet. */
+    var rec = document.getElementById('reconcile');
+    rec.innerHTML = reconcileCard(snap.reconciliation);
+    rec.style.display = rec.innerHTML === '' ? 'none' : '';
 
     var go = document.getElementById('go');
     var pause = document.getElementById('pause');

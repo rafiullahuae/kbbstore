@@ -45,6 +45,19 @@ use Illuminate\Support\Str;
  * the sync below tolerates that by computing the difference instead of
  * re-inserting, which also makes a second pass report the product unchanged
  * rather than churning the pivot.
+ *
+ * WHAT DOES NOT CROSS, AND WHY IT IS STILL THIS CLASS'S BUSINESS. The exporter's
+ * product row carries 45 columns; this class writes 24 of them. The other
+ * twenty-one are not silently ignored -- see NOT_CARRIED below, which names each
+ * one at run time with the value it held, and reportCarriedElsewhere(), which
+ * handles the single column that looks lost and is not.
+ *
+ * The owner's instruction was "everything must be compatible without anything
+ * skipping or losing", and a field dropped in silence is indistinguishable from
+ * a field that was never there. Naming them costs one array lookup per column
+ * per row and is worth more than most of the columns would be. Which of them
+ * earn a column of their own is the owner's decision, and it is set out in
+ * docs/PRODUCT-FIELD-PARITY.md.
  */
 final class ProductImporter extends EntityImporter
 {
@@ -75,6 +88,145 @@ final class ProductImporter extends EntityImporter
         'onbackorder' => 'onbackorder',
         'on backorder' => 'onbackorder',
         'backorder' => 'onbackorder',
+    ];
+
+    /**
+     * ── WHAT THIS SHOP HAS NOWHERE TO PUT, NAMED ONE BY ONE ─────────────────
+     *
+     * The exporter's product row carries 45 columns and this importer reads 24
+     * of them. Of the other twenty-one, `tag_term_ids` arrives by another road
+     * (see reportCarriedElsewhere below) and these TWENTY do not arrive at all:
+     * there is no column in `products` for any of them and no sibling importer
+     * that picks them up.
+     *
+     * TWO OF THE TWENTY ARE NEW TO THE EXPORT, added by this lane:
+     * `sold_individually` and `reviews_enabled` were on the owner's edit page
+     * and in no file at all, which is the one kind of loss no report here
+     * could see. See the note in the exporter's columns().
+     *
+     * WHY THEY ARE LISTED HERE RATHER THAN LEFT TO THE RUNNER. ImportRunner
+     * already names every column no field of an importer reads, in one
+     * consolidated line per entity. That line is a good backstop and a bad
+     * answer to the owner's question, for three reasons this lane found by
+     * reading the report it produces:
+     *
+     *   IT CANNOT SAY HOW MANY. The line is one discard with a count of 1 -- one
+     *   observation about the file -- so `weight` dropped on 400 products and
+     *   `weight` dropped on one look identical.
+     *
+     *   IT CANNOT SAY WHAT WAS IN THEM, beyond the FIRST value the file held for
+     *   each. Five samples per kind is the report's own answer to "show me what
+     *   this looks like", and a consolidated line gets one sample for nineteen
+     *   columns between them.
+     *
+     *   IT CANNOT TELL A LOSS FROM A TRANSFER. `tag_term_ids` sat in that list
+     *   beside `weight`, and the two are not the same kind of fact: the tags
+     *   arrive from tags.csv and the weight arrives nowhere. A discard list with
+     *   false alarms in it is a discard list nobody finishes reading, and the
+     *   owner was being shown two.
+     *
+     * So each field gets its own discard KIND -- its own count, its own five
+     * samples, its own sentence saying why it does not cross -- exactly the way
+     * SeoImporter does it for the Yoast keys in YoastSeo::UNMAPPED. Reading the
+     * field here is also what moves it OUT of the runner's consolidated line, so
+     * the two channels do not report the same column twice.
+     *
+     * THE ALIASES ARE WOO'S OWN SPELLINGS and every one of them is a name this
+     * importer does not already read. `catalog_visibility` is deliberately NOT
+     * an alias of `product_visibility` even though Woo writes it there: this
+     * importer reads it as `is_visible`, and claiming it as a drop would report
+     * a field as lost while the same cell was being imported.
+     *
+     * @var array<string, array{why: string, aliases: list<string>}>
+     */
+    private const NOT_CARRIED = [
+        'weight' => [
+            'why' => 'there is no weight column on products, so nothing here can price a parcel by weight',
+            'aliases' => ['weight_kg'],
+        ],
+        'length' => [
+            'why' => 'there are no parcel dimensions on products',
+            'aliases' => ['length_cm'],
+        ],
+        'width' => [
+            'why' => 'there are no parcel dimensions on products',
+            'aliases' => ['width_cm'],
+        ],
+        'height' => [
+            'why' => 'there are no parcel dimensions on products',
+            'aliases' => ['height_cm'],
+        ],
+        'shipping_class' => [
+            'why' => 'there is no per-product shipping class; shipping is decided per zone here',
+            'aliases' => [],
+        ],
+        'tax_status' => [
+            'why' => 'tax is not decided per product here -- `tax_rates` holds the rates and currently has none',
+            'aliases' => [],
+        ],
+        'tax_class' => [
+            'why' => 'there is no per-product tax class to select into -- `tax_rates` has no class column',
+            'aliases' => [],
+        ],
+        'virtual' => [
+            'why' => 'every product is treated as a physical good; there is no virtual flag',
+            'aliases' => ['is_virtual'],
+        ],
+        'downloadable' => [
+            'why' => 'there are no downloadable products and no file permissions table',
+            'aliases' => ['is_downloadable'],
+        ],
+        'backorders' => [
+            'why' => 'there is no backorder policy column -- `stock_status` can say onbackorder but not whether to allow one',
+            'aliases' => ['backorders_allowed'],
+        ],
+        'low_stock_amount' => [
+            'why' => 'the low-stock threshold is one shop-wide setting here, not a per-product number',
+            'aliases' => [],
+        ],
+        'upsell_ids' => [
+            'why' => 'there is no upsell pivot; related products are computed from the category',
+            'aliases' => ['upsells'],
+        ],
+        'cross_sell_ids' => [
+            'why' => 'there is no cross-sell pivot',
+            'aliases' => ['cross_sells'],
+        ],
+        'grouped_ids' => [
+            'why' => 'grouped products are not a type this shop sells, so the children have nowhere to attach',
+            'aliases' => ['grouped_products'],
+        ],
+        'purchase_note' => [
+            'why' => 'there is no per-product note on the order-received page or the confirmation email',
+            'aliases' => [],
+        ],
+        'product_visibility' => [
+            'why' => "WooCommerce's four states (visible, catalog, search, hidden) fold into the "
+                .'is_visible yes/no and the featured flag, so `search` and `hidden` both arrive as not visible '
+                .'and the difference between them is gone',
+            'aliases' => [],
+        ],
+        'attribute_summary' => [
+            'why' => 'these are the CUSTOM (non-taxonomy) attributes typed on the product itself, and there is '
+                .'no table for them -- attributes.csv carries only the pa_* taxonomy ones, so nothing else in '
+                .'this import covers these',
+            'aliases' => [],
+        ],
+        'date_modified' => [
+            'why' => "this shop stamps its own updated_at when it writes the row, so WooCommerce's last-edited "
+                .'date is replaced rather than kept',
+            'aliases' => ['date_modified_gmt'],
+        ],
+        'sold_individually' => [
+            'why' => 'there is no one-per-order limit on a product here, so a product the owner had capped at '
+                .'one can be added to a basket ten times',
+            'aliases' => [],
+        ],
+        'reviews_enabled' => [
+            'why' => 'reviews are not switched on and off per product here, so a product whose reviews the '
+                .'owner had turned OFF arrives with them on',
+            'aliases' => ['comment_status'],
+        ],
     ];
 
     /**
@@ -185,6 +337,8 @@ final class ProductImporter extends EntityImporter
 
         $this->reportSku($row, $wcId, $name, $context);
         $this->reportFils($row, $context, $price, $salePrice);
+        $this->reportNotCarried($row, $wcId, $context);
+        $this->reportCarriedElsewhere($row, $context);
 
         $product = Product::query()->withTrashed()->where('wc_id', $wcId)->first();
 
@@ -433,6 +587,115 @@ final class ProductImporter extends EntityImporter
         // rather than coerced: the column is free-form and a wrong coercion
         // would make a grouped product behave as a purchasable simple one.
         return $raw === '' ? 'simple' : $raw;
+    }
+
+    /**
+     * Name every field of this row that the shop has nowhere to put.
+     *
+     * READ UNCONDITIONALLY, REPORTED ONLY WHEN IT HELD SOMETHING, and the two
+     * halves do different jobs. The read is what tells ImportRunner this column
+     * is accounted for, and it has to happen even for a column that is empty on
+     * every row -- otherwise an always-empty `weight` stays in the consolidated
+     * "no field reads this" line and the owner is told twice about the same
+     * column, once vaguely. The report is what he acts on, and a column that
+     * was empty everywhere cost him nothing, so it is not counted as a loss.
+     *
+     * A ROW THAT IS REFUSED NEVER GETS HERE, because it throws further up. That
+     * is correct and not a hole: Row::readKeys() is unioned across the whole
+     * entity by the runner, so one importable row is enough to account for the
+     * column, and an export where every single row is refused genuinely has no
+     * evidence about what its columns hold.
+     */
+    private function reportNotCarried(Row $row, int $wcId, ImportContext $context): void
+    {
+        $report = $context->report->for($this->name());
+
+        foreach (self::NOT_CARRIED as $field => $spec) {
+            $value = $row->text($field, ...$spec['aliases']);
+
+            if ($value === null) {
+                continue;
+            }
+
+            $report->droppedField(
+                $field.' is in this export and this shop has nowhere to put it -- '.$spec['why'],
+                $row->line,
+                (string) $wcId,
+                $field,
+                $value,
+            );
+        }
+    }
+
+    /**
+     * The one column on this row that looks lost and is not.
+     *
+     * `tag_term_ids` is the product side of the product-to-tag pivot, and
+     * TagImporter writes that pivot from the TAG side out of tags.csv
+     * `product_ids`. The membership therefore arrives in full whether or not
+     * this column is ever read -- so it is redundant, not dropped, and putting
+     * it in the discard channel beside `weight` told the owner he was losing his
+     * tags when he was not.
+     *
+     * note() and NOT droppedField(): nothing is being discarded, so it must not
+     * move the "fields skipped" count, and the fact is the same sentence on
+     * every row, which is exactly what a counted note is for. Read here so the
+     * runner's consolidated line stops naming it as well.
+     *
+     * ▲ BUT ONLY WHEN tags.csv IS ACTUALLY IN THIS RUN, and that caveat is the
+     * whole reason this method asks. "Nothing is lost, the tags arrive from
+     * tags.csv" is a statement about the OTHER FILE, and it is simply false for
+     * an import of products alone -- `--only=products`, or an export folder that
+     * has no tags.csv in it. In that run the membership arrives from nowhere and
+     * the column really is a loss.
+     *
+     * Reassurance that does not check its own premise is worse than no
+     * reassurance, because the owner stops looking. So the premise is checked,
+     * and when it does not hold the column is reported as the drop it is.
+     */
+    private function reportCarriedElsewhere(Row $row, ImportContext $context): void
+    {
+        $value = $row->text('tag_term_ids', 'tag_ids', 'tags');
+
+        if ($value === null) {
+            return;
+        }
+
+        $report = $context->report->for($this->name());
+
+        /*
+         * THE PREMISE IS "THIS EXPORT HAS A tags.csv", not "this slice is about
+         * to read it", and the difference bit once already. ImportDriver steps
+         * ONE ENTITY AT A TIME, so `only` is ['products'] for the whole products
+         * step of an ordinary background run -- and asking options->wants('tags')
+         * there answers false on a run that imports the tags perfectly well two
+         * steps later. Every product in the owner's catalogue would have been
+         * reported as losing its tags.
+         *
+         * File presence is the honest test: the claim being made is about the
+         * export, not about which slice happens to be running.
+         */
+        $tagsAreComing = $context->options->fileFor('tags', 'tags.csv') !== null;
+
+        if (! $tagsAreComing) {
+            $report->droppedField(
+                'tag_term_ids is in this export and nothing in THIS run reads it -- the product-to-tag '
+                .'membership normally arrives from tags.csv `product_ids`, and this run has no tags.csv, '
+                .'so these tags reach no table',
+                $row->line,
+                $this->identify($row),
+                'tag_term_ids',
+                $value,
+            );
+
+            return;
+        }
+
+        $report->note(
+            'tag_term_ids is not read from the product row and nothing is lost by that -- the same '
+            .'product-to-tag membership arrives from tags.csv `product_ids`, which IS read. Counted here so '
+            .'the export and the database can be reconciled on it.'
+        );
     }
 
     /**

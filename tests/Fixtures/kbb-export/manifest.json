@@ -81,8 +81,8 @@
         },
         "products.csv": {
             "rows": 4,
-            "bytes": 2018,
-            "sha256": "bce8adca019abe25f880240c7355a94dd5a084da92791440724b569f943094e5"
+            "bytes": 2100,
+            "sha256": "dd1a71a77225c750e4ff9810d20ce1d5c63e327f598cc2181e4936e520974c89"
         },
         "variations.csv": {
             "rows": 2,

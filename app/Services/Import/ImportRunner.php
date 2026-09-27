@@ -558,6 +558,13 @@ final class ImportRunner
                     $report->updated - $before['updated'],
                     $report->unchanged - $before['unchanged'],
                     $report->rejectedCount() - $before['rejected'],
+                    // THE WHOLE SET AND NOT THIS BATCH'S DELTA, unlike the four
+                    // counts above it. Those are sums and have to be deltas or
+                    // they double; this is a union and is idempotent, so handing
+                    // it the cumulative set is both simpler and the only version
+                    // that survives a batch being retried after its request was
+                    // killed.
+                    $report->droppedFieldNames(),
                 );
             }
         });
@@ -728,7 +735,13 @@ final class ImportRunner
             $named[] = $sample === '' ? $column.' (always empty)' : $column.' = '.$sample;
         }
 
-        $report->discarded(
+        /*
+         * discardedList(), NOT discarded(): this value is the whole point of the
+         * line and must not be truncated. See EntityReport::discardedList() for
+         * what truncating it cost -- `weight` fell off the end of the list whose
+         * job is to name what the migration loses.
+         */
+        $report->discardedList(
             'columns in this export that no field of this importer reads -- they are in the file and '
             .'they will not be in the database, and nothing else in this report mentions them',
             basename($label),
