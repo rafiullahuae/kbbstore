@@ -7,19 +7,14 @@ declare(strict_types=1);
 | Tabby — webhook registration, and releasing an authorisation (Lane PG2)
 |------------------------------------------------------------------------------
 |
-| NOT YET WIRED. CLAUDE.md forbids this lane from editing routes/web.php, so the
-| four routes below ship in this file and the integrator adds ONE line.
-|
-| Add it inside the EXISTING `admin-api` group in routes/web.php — the one
-| opened with
+| MOUNTED. routes/web.php requires this file from inside the EXISTING `admin-api`
+| group — the one opened with
 |
 |     Route::prefix('admin-api')->middleware(\App\Http\Middleware\NoStoreAdminApi::class)->group(function () {
 |
-| which is itself nested inside the `Route::middleware('auth:admin')` group.
-| Put it beside the other payment requires, next to
-| `require __DIR__.'/payments-settlement.php';`:
-|
-|     require __DIR__.'/payments-tabby.php';
+| which is itself nested inside the `Route::middleware('auth:admin')` group. The
+| require sits beside the other payment requires, next to
+| `require __DIR__.'/payments-settlement.php';`.
 |
 | IT MUST STAY INSIDE THAT GROUP, and for two different reasons:
 |
@@ -34,9 +29,9 @@ declare(strict_types=1);
 | Both are mapped in App\Support\AdminCapabilities::RULES already — the webhook
 | pair to `payments.manage` (owner only, the same capability as the screen that
 | stores the keys) and the release pair to `orders.money` (the same capability as
-| capture and refund). Those entries ship in this package, so the guard is in
-| place the moment the require line lands and AdminCapabilityMapTest does not go
-| red on an unmapped route.
+| capture and refund). Those entries ship in this package alongside the require,
+| so the guard is in place for all four paths and AdminCapabilityMapTest sees no
+| unmapped route.
 |
 | Resulting paths:
 |

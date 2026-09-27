@@ -754,6 +754,21 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/orders/{id}' => '/admin-api/orders/' . $order->id,
         'admin-api/orders/{id}/detail' => '/admin-api/orders/' . $order->id . '/detail',
         'admin-api/orders/{id}/settlement' => '/admin-api/orders/' . $order->id . '/settlement',
+        /*
+         * Can this order's authorisation be released? (Lane PG2, the order
+         * screen's void button.) Listed here because this walk caught it: the
+         * route landed with no entry on either list and this file went red,
+         * which is exactly what the walk is for.
+         *
+         * DRIVEN RATHER THAN EXCUSED, and specifically not as "the same order
+         * as the settlement read above" -- the list below already records why
+         * that excuse is refused here. It is the only parameterised admin GET
+         * on this list that resolves its row with withTrashed(), so it is the
+         * only one whose SELECT ships WITHOUT the soft-delete predicate every
+         * other order route carries. It reads no amount and calls no provider;
+         * PaymentVoider::status() answers from the row's own columns.
+         */
+        'admin-api/orders/{id}/void' => '/admin-api/orders/' . $order->id . '/void',
         'admin-api/customers/{id}' => '/admin-api/customers/' . $customer->id,
         'admin-api/catalog-products-detail/{id}' => '/admin-api/catalog-products-detail/' . $product->id,
         'admin-api/catalog/reorder/{type}/{id}/products' => '/admin-api/catalog/reorder/category/' . $category->id . '/products',
