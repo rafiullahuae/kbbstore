@@ -2137,7 +2137,45 @@
         rememberNotes(payload.notes);
         (payload.notes || []).forEach(say);
         say(kind === 'clip' ? 'Video added.' : 'Teaser added.');
-        load().then(function () { return here ? open(target) : undefined; });
+        load().then(function () { return here ? open(target) : undefined; })
+          .then(function () {
+            /*
+             * ── AND TAKE THE COVER, WITHOUT BEING ASKED ────────────────────
+             *
+             * The owner's words, after being shown a panel that explained the
+             * server's limitation and offered a button: "i need the permanent
+             * solution or any other method to solve this super reliable."
+             *
+             * He is right, and the button was the wrong shape. A panel that
+             * announces "this server cannot cut a cover" is an EXPLANATION, not
+             * a solution -- it puts the work back on him every single time, for
+             * a thing the browser can do in under a second without being told.
+             *
+             * So it happens here instead: the upload lands, and if the server
+             * did not manage a cover, the browser takes one immediately from
+             * the bytes still in this tab. He uploads a video and a cover
+             * appears. There is nothing to press and nothing to read.
+             *
+             * ONLY WHEN THE SERVER DID NOT. A host that CAN run ffmpeg has
+             * already cut a better cover (and the teaser with it) by the time
+             * this runs, and overwriting it with a canvas frame would be a
+             * downgrade. `editing.poster_path` after the reload above is the
+             * honest answer to "is there one", whichever way it got there.
+             *
+             * SILENT ON FAILURE, DELIBERATELY. If the browser cannot decode the
+             * clip there is still a manual button and the Media Library behind
+             * it; a toast here would be a second thing to read about a cover
+             * that nobody asked for yet. cutCoverHere() writes its own banner
+             * when the owner presses the button, which is when he is waiting
+             * for an answer.
+             */
+            if (kind !== 'clip' || !here) return;
+            if (!editing || String(editing.id) !== String(target)) return;
+            if (editing.poster_path) return;
+            if (typeof window.kbbPosterFromVideo !== 'function') return;
+
+            autoCutCover();
+          });
       },
       onFail: function (f) {
         /*
@@ -2278,7 +2316,20 @@
    * operator chose by hand -- and the server sniffs the real MIME with finfo,
    * so it is checked identically too.
    */
-  function cutCoverHere() {
+  /**
+   * The cover, taken automatically after an upload.
+   *
+   * SHARES cutCoverHere()'s BODY through one flag rather than being a second
+   * copy of it, because the two differ in exactly one respect: what happens
+   * when it fails. Pressed by hand, a failure is an answer the owner is waiting
+   * for and belongs in the banner. Run on its own, a failure is a cover he did
+   * not ask for yet, and the manual button is still there.
+   */
+  function autoCutCover() {
+    return cutCoverHere(true);
+  }
+
+  function cutCoverHere(quiet) {
     if (!editing || !editing.id) { say('Save step 1 first.'); return; }
 
     /*
@@ -2309,6 +2360,11 @@
       })
       .catch(function (e) {
         cutting = false;
+
+        // See autoCutCover(): a failure nobody asked about is not worth a
+        // sentence, and the manual button is still on the screen.
+        if (quiet) { render(); return; }
+
         /*
          * The reason, in the sentence kbbPosterFromVideo chose -- it knows
          * which of the four things went wrong and this does not. Said in the
@@ -2873,18 +2929,39 @@
        */
       return secHTML({
         glyph: ICON_CUT,
-        title: 'This server cannot cut a cover — your browser can',
-        sub: why || 'ffmpeg cannot be run on this server.',
-        note: 'in this browser',
-        tone: 'warm',
-        body: '<div class="ugs-note is-cool"><b>Take the cover from the video, here.</b> '
-          + 'Your browser has already decoded this clip to play it back, so it can hand the '
-          + 'frame at 0.6 seconds straight to the cover &mdash; the same moment this shop\'s '
-          + 'own cutter uses. It needs nothing from the server and no setting changed.</div>'
+        /*
+         * ── IT LEADS WITH WHAT HAPPENS, NOT WITH WHAT THE SERVER CANNOT DO ──
+         *
+         * Two titles ago this said "Nothing can be cut on this server". Then
+         * "This server cannot cut a cover — your browser can". The owner read
+         * the second and answered: "i need the permanent solution or any other
+         * method to solve this super reliable."
+         *
+         * He was right both times, and the fault was not the wording. A panel
+         * whose first line is the server's limitation reads as a fault report
+         * however it ends, and a button underneath puts the work back on him
+         * for something that now happens by itself. The cover IS taken
+         * automatically on upload -- see autoCutCover() -- so this panel is no
+         * longer where the job gets done. It says so, and keeps the button for
+         * re-cutting and for clips uploaded before this version.
+         */
+        title: 'The cover is taken here, in your browser',
+        sub: 'Automatically, the moment a video finishes uploading. Nothing to press.',
+        note: 'automatic',
+        tone: 'live',
+        body: '<div class="ugs-note is-cool"><b>This is already done for you.</b> '
+          + 'Your browser has decoded the clip in order to play it back, so it takes the '
+          + 'frame at 0.6 seconds &mdash; the same moment this shop\'s own cutter uses &mdash; '
+          + 'and sets it as the cover as soon as the upload lands. It needs nothing from the '
+          + 'server, no ffmpeg and no setting changed, and it will keep working on any host '
+          + 'this shop is ever moved to.'
+          + (why ? ' <br><br><span style="opacity:.75">Why it is not done on the server: '
+              + esc(String(why)) + '</span>' : '')
+          + '</div>'
           + '<div class="ugs-slotrow" style="margin-top:10px">'
-          + '<button class="ugs-btn is-primary" data-ugs-cuthere="1"'
+          + '<button class="ugs-btn" data-ugs-cuthere="1"'
           + ((busy || cutting) ? ' disabled' : '') + '>'
-          + (cutting ? 'Taking the frame…' : 'Cut the cover from the video') + '</button>'
+          + (cutting ? 'Taking the frame…' : 'Take the cover again') + '</button>'
           + '</div>'
           + '<div class="ugs-note is-warm" style="margin-top:10px"><b>Or choose a still yourself.</b> '
           + 'Press <b>Choose from the Media Library</b> in the cover box and pick a frame exported '

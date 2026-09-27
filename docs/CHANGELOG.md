@@ -47,6 +47,33 @@ check from taking the whole library down and made it print what actually broke.
 Before that, this was a bare "Server Error" — and I spent two rounds guessing at
 it. The screen told us in one line.
 
+### ▲ AND THE COVER IS NOW TAKEN AUTOMATICALLY — nothing to press
+
+You saw the panel that said *"This server cannot cut a cover — your browser
+can"* and answered: **"i need the permanent solution ... super reliable."**
+
+You were right, and the wording was not the problem. A panel whose first line is
+your server's limitation reads as a fault report however it ends, and a button
+underneath it puts the work back on you every single time — for something that
+takes the browser under a second.
+
+**So it just happens now.** You upload a video; the moment the upload lands, the
+browser takes the frame at 0.6 seconds and sets it as the cover. There is
+nothing to press and nothing to read. The panel now says so instead of
+apologising, and keeps a quiet **Take the cover again** button for re-cutting and
+for clips uploaded before this version.
+
+**It only runs when the server did not manage one.** A host that can run ffmpeg
+has already cut a better cover — and the teaser with it — by the time this
+would fire, and overwriting that with a browser frame would be a downgrade.
+
+**Proven before shipping:** on a preview booted with no ffmpeg at all, a video
+was uploaded and **nothing else was touched** — a real JPEG cover appeared on
+the clip by itself.
+
+The reason your host cannot do it server-side is still printed, in smaller grey
+text at the bottom of that panel, for when you want it.
+
 ### ▲ EVERYTHING FROM .292 TO .296 IS INCLUDED
 
 Nothing is lost by skipping straight to this one:

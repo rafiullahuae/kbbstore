@@ -199,8 +199,31 @@ it('offers the cut only where the server said it can cut, and only with a clip t
      * So what is pinned is that the arm still NAMES the server's limitation and
      * still offers something to press, rather than the exact old sentence.
      */
-    expect(str_contains($code, 'This server cannot cut a cover'))
-        ->toBeTrue('a server with no ffmpeg is not told so on the step where it matters');
+    /*
+     * THE TITLE MOVED AGAIN, and the reason is the point. It read "Nothing can
+     * be cut on this server", then "This server cannot cut a cover — your
+     * browser can". The owner answered the second with "i need the permanent
+     * solution ... super reliable", and he was right: a panel whose first line
+     * is the server's limitation reads as a fault report however it ends, and a
+     * button under it puts the work back on him for something that now happens
+     * by itself.
+     *
+     * So what is pinned is no longer a sentence about the SERVER. It is that
+     * the panel says the cover is taken automatically, AND that the server's
+     * own reason is still printed somewhere in it — because an owner who wants
+     * to know why his host is different must still be able to find out.
+     */
+    expect(str_contains($code, 'The cover is taken here, in your browser'))
+        ->toBeTrue('the cover panel no longer says where the cover comes from');
+
+    expect(str_contains($code, 'Why it is not done on the server: '))
+        ->toBeTrue('the server’s own reason is no longer printed anywhere');
+
+    // AND IT REALLY IS AUTOMATIC, not just described as such. This is the call
+    // site in the upload's success path; without it the sentence above is a
+    // claim the screen does not honour.
+    expect(str_contains($code, 'autoCutCover();'))
+        ->toBeTrue('the cover is advertised as automatic but nothing calls for it');
 
     expect(str_contains($code, 'data-ugs-cuthere'))
         ->toBeTrue('the no-ffmpeg arm offers no way to get a cover');
