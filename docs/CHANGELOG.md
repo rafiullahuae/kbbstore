@@ -3,6 +3,102 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.296
+The permanent fix: your browser cuts the cover. The Media Library opens as a
+popup again. And a clip can go live without a cover or credits.
+
+### ▲ THE COVER NOW COMES FROM YOUR BROWSER — permanently, on any host
+
+You asked for a permanent fix, and you were right that the last two were not
+one: re-enabling `proc_open` needs your host to allow it, and the cron route
+needs a cron line. Both are server admin, and on both the screen still says
+"this server cannot cut", because in that moment it cannot.
+
+**Your browser already decoded the video.** It has to — it plays it back on
+that very screen, and your shop plays it to shoppers. So the frame is already
+on your computer, and the browser can hand it straight to the cover.
+
+**It needs nothing. No ffmpeg, no `proc_open`, no cron, no setting.** It will
+keep working on any host you ever move to.
+
+**Where:** Content → Shoppable video → open a clip → step 2 (Video & cover).
+Where it used to say *"Nothing can be cut on this server"* there is now a green
+**Cut the cover from the video** button. Press it and the cover appears.
+
+It takes the frame at **0.6 seconds in** — the same instant this shop's own
+cutter uses, so a cover taken here and one taken by ffmpeg are the same picture.
+It also joins the Media Library like any other image.
+
+**Proven before shipping**, on a preview deliberately booted with no ffmpeg at
+all: upload, press, and a real 720×1280 JPEG lands on the clip.
+
+**What it does not do:** the teaser. A 2.5-second re-encoded video is not
+something a browser should be building, and it is not needed — a teaser is a
+bandwidth saving, never a requirement. The cover was the thing that blocked you.
+
+### ▲ THE MEDIA LIBRARY OPENED AT THE BOTTOM OF THE PAGE — fixed
+
+*"the manual option is opening the media downside, not in popup as normal"* —
+and that was my bug, from the round that added drag-and-drop everywhere.
+
+The picker lets you drop a file anywhere on its dark backdrop. To do that it
+registered the backdrop as a drop zone — and the shared drop-zone helper styles
+whatever it is given, because normally it is given a small dashed box. Those
+styles overrode the backdrop's own full-screen positioning, so the dialog fell
+out of the middle of the screen and landed at the bottom of the page.
+
+It was quietly breaking something else too: the highlight that should appear
+while you drag a file over the dialog had stopped working entirely.
+
+Both fixed. The dialog is centred over a dimmed page again, and dragging a file
+onto it lights up properly.
+
+### ▲ A CLIP CAN NOW BE PUBLISHED WITHOUT A COVER OR CREDITS
+
+**This is a deliberate change to how the shop behaves**, asked for in as many
+words, so it is called out here rather than buried.
+
+Before: no cover **or** no recorded permission meant Publish was refused.
+Now: only **one** thing is required — the video itself. A clip with nothing to
+play is an empty box, and no warning fixes that.
+
+The other two are now **warnings that stay on the screen**, in amber, separate
+from the red "the save was refused". They do not go away when you publish.
+
+**Both halves changed, and that mattered.** The shop's own query *also* required
+a cover. Had I only changed the admin, you would have pressed Publish, seen
+"Published", and the rail would have silently never shown the clip. A refusal
+you can see beats a success that is not true.
+
+**The page does not jump.** The tile's space was never reserved from the cover
+file — it comes from the video's own dimensions — so a cover-less tile holds
+exactly the same space. You see an empty box for the instant before the video
+paints instead of a still.
+
+### ▲ ONE THING I DID NOT CHANGE, ON PURPOSE
+
+If a creator has been asked and **refused** permission, that clip still cannot
+be published. "Haven't got round to recording it" and "they said no" are
+different, and only the first is yours to wave through — the cost of the second
+lands on somebody who is not your shop.
+
+I want to be straight that this was not caution on my part: my first attempt
+removed the permission check entirely, and **one of this project's own tests
+caught it** before it got anywhere near you.
+
+**No setting added. Everything above is included from 2.60.292 onward.**
+
+### Files
+- `resources/views/admin/partials/upload-kit.blade.php` — the browser cutter.
+- `resources/views/admin/partials/ugc-library-screen.blade.php` — the button,
+  and the warnings panel.
+- `resources/views/admin/partials/media-picker.blade.php` — the popup fix.
+- `app/Models/UgcVideo.php` — blockers split from warnings; the shop query.
+- `app/Services/Ugc/Tile.php`, `resources/views/ugc/rail.blade.php` — a tile
+  without a cover.
+- `app/Http/Controllers/Admin/UgcVideoController.php`, `UgcSectionController.php`
+  — the warnings travel with the clip.
+
 ## 2.60.295
 The poster and teaser now cut themselves, about a minute after you upload —
 with no change to your server.
