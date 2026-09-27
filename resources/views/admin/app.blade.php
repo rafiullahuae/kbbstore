@@ -949,6 +949,12 @@ tr.invdirty{background:var(--accent-soft)}
 .mmlbl b{display:block;font-size:13px;font-weight:500}
 .mmlbl span{display:block;font-size:11.5px;color:#7b8697;margin-top:1px}
 .mmrow input[type=text],.mmrow select{border:1px solid #dfe5ec;border-radius:8px;padding:7px 10px;font:400 13px inherit;min-width:150px}
+/* A control the shop is currently ignoring. Faded rather than hidden: the
+   owner came looking for this slider, so removing it would leave him hunting
+   for a control that is still the right one once the other switch is off. */
+.mmrow.is-inert .mmrange{opacity:.45}
+.mmrow.is-inert input[type=range]{cursor:not-allowed}
+.mminert{display:block;font-size:11.5px;margin-top:3px;color:var(--amber,#e0922f);font-weight:600}
 /* A <select> is sized by its WIDEST OPTION, not by that min-width. On Section
    dividers the longest option is "Drifting petals · …", which gives the
    control a 291px min-content — so the row needs 368px, .mmbody's padding
@@ -6317,8 +6323,17 @@ function hdField(f){
     return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <span class="ectog${v?' on':''}" data-hd="${f.key}" role="switch" aria-checked="${v}" tabindex="0"></span></div>`;
   if(f.type==='range'){ const o=f.options||{};
-    return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
-      <span class="mmrange"><input type="range" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${v}" data-hd="${f.key}">
+    /* A FIELD THE SHOP IS CURRENTLY IGNORING SAYS SO, AND CANNOT BE DRAGGED.
+       `inert` comes from the endpoint, not from this file, because whether a
+       control is doing anything is a fact about the shop right now and not
+       about the field — see HeaderApiController::show(). Today the only one is
+       the header's own Content width while "Header follows the site width" is
+       on, which is the state it ships in: the owner dragged it, saved, was told
+       "Saved", and the header did not move. A greyed slider with the reason
+       under it is the whole fix; a note beside a slider that still slides is
+       still a trap. */
+    return `<div class="mmrow${f.inert?' is-inert':''}"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}${f.inert&&f.inert_why?`<span class="mminert">${escHtml(f.inert_why)}</span>`:''}</div>
+      <span class="mmrange"><input type="range" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${v}" data-hd="${f.key}"${f.inert?' disabled':''}>
         <i id="hdv-${f.key}">${v}${o.unit||''}</i></span></div>`; }
   if(f.type==='select')
     return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>

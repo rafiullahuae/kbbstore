@@ -35,6 +35,42 @@ class HeaderApiController extends Controller
             \App\Models\Category::query()->orderBy('name')->orderBy('id')->limit(30)->pluck('name')->all(),
         ))));
 
+        /*
+         * ── ONE FIELD IS INERT WHILE ANOTHER SCREEN'S SWITCH IS ON ──────────
+         *
+         * `max_width` is read by HeaderSettings::maxWidthCss() ONLY when
+         * Appearance → Site layout → Page width → "Header follows the site
+         * width" is off, and that switch ships ON. Dragging it on the shipped
+         * shop therefore does nothing at all, which is what the owner reported:
+         * "we have this option, but header remains still same width".
+         *
+         * Marked here rather than in SCHEMA because it is not a property of the
+         * field — it is a property of the shop right now, and it changes the
+         * moment the other screen is saved. The schema states what the field IS;
+         * this states whether it is currently doing anything.
+         *
+         * The reason travels with the flag rather than being written into the
+         * console, so the screen stays a renderer and the two cannot drift.
+         */
+        $follows = (bool) app(\App\Services\SiteLayout::class)->get('header_follows');
+
+        foreach ($tabs as &$tab) {
+            foreach ($tab['fields'] as &$field) {
+                if (($field['key'] ?? '') !== 'max_width') {
+                    continue;
+                }
+
+                $field['inert'] = $follows;
+                $field['inert_why'] = $follows
+                    ? 'Not in use — the header is following the site width. Turn that off on Appearance → Site layout → Page width to set the header\'s own width here.'
+                    : '';
+            }
+
+            unset($field);
+        }
+
+        unset($tab);
+
         return response()->json(['tabs' => $tabs, 'suggestions' => $suggestions]);
     }
 

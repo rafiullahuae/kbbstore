@@ -28,7 +28,29 @@ class HeaderSettings
         'bar_bg'          => ['colour', 'Background', '#FFFFFF', ''],
         'bar_border'      => ['bool',   'Bottom border', true, ''],
         'shadow_on_scroll'=> ['bool',   'Shadow once scrolled', true, 'A soft shadow appears after the page moves.'],
-        'max_width'       => ['range',  'Content width', 1280, '', ['min' => 1040, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
+        /*
+         * A SLIDER THAT DOES NOTHING WHILE THE FOLLOW SWITCH IS ON, and until
+         * now it did not say so. Its help was the empty string.
+         *
+         * maxWidthCss() below reads this value ONLY when
+         * SiteLayout::get('header_follows') is false, and that switch ships ON.
+         * So the ordinary path was: the owner opens Appearance → Header → Bar,
+         * finds a control labelled "Content width", drags it, saves, gets
+         * "Saved", and the header does not move. Reported exactly that way —
+         * "we have this option, but header remains still same width".
+         *
+         * Nothing was broken underneath: the header really does follow the site
+         * width, measured 1200/1200 against the page container at 1280, 1680 and
+         * 1920. What was broken was that the screen let him spend his afternoon
+         * on the one control that could not win, and said nothing.
+         *
+         * The help is the honest half. HeaderApiController marks the field inert
+         * while the switch is on so the screen can grey it out as well — a note
+         * under a slider that still slides is still a trap.
+         */
+        'max_width'       => ['range',  'Content width', 1280,
+                              'Only used when "Header follows the site width" is OFF, on Appearance → Site layout → Page width. While that switch is on, the header is exactly as wide as the page and this number is ignored.',
+                              ['min' => 1040, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
 
         // ── Logo ──
         'logo_text'       => ['text',   'Wordmark', 'K-Beauty', 'The first half, in ink.'],

@@ -1,0 +1,25 @@
+{
+  "header-390": {
+    "crumb": "Appearance",
+    "ptitle": "Header",
+    "rowFound": true,
+    "isInert": true,
+    "sliderDisabled": true,
+    "note": "Not in use — the header is following the site width. Turn that off on Appearance → Site layout → Page width to set the h",
+    "help": "Only used when \"Header follows the site width\" is OFF, on Appearance → Site layout → Page ",
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "header-1280": {
+    "crumb": "Appearance",
+    "ptitle": "Header",
+    "rowFound": true,
+    "isInert": true,
+    "sliderDisabled": true,
+    "note": "Not in use — the header is following the site width. Turn that off on Appearance → Site layout → Page width to set the h",
+    "help": "Only used when \"Header follows the site width\" is OFF, on Appearance → Site layout → Page ",
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "pageErrors": []
+}
