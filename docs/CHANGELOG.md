@@ -46,6 +46,13 @@ the second run finds nothing to do, because it only touches clips with no cover.
 If your host ever blocks the CLI too, the command says so **before** it touches
 anything, in one sentence, rather than failing fifty times in a row.
 
+**If it says every clip is missing, read the path it prints.** The command runs
+under a different PHP than your shop does, and the two can disagree about where
+the web root is. When *every* clip comes back missing it now prints the exact
+directory it looked in, so you can compare it against your web root instead of
+going to look for uploads that were never lost. (`bootstrap/public-path.php` is
+the fix if they differ — it is a file, so both PHPs read the same value.)
+
 `docs/SERVER-PROC-OPEN.md` is still the guide to switching `proc_open` back on
 for the web process, if you would rather have covers cut at upload time. This
 command is the route that needs no support ticket.
