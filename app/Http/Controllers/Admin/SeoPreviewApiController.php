@@ -7,9 +7,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Page;
 use App\Models\Post;
 use App\Services\Seo\SeoSettings;
 use App\Support\ProductSeo;
+use App\Support\RoutedPages;
 use App\Support\Seo;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
@@ -114,7 +116,7 @@ class SeoPreviewApiController extends Controller
      * kind is added here in the same commit as the screen that asks for it, so
      * the list cannot name a preview nothing draws.
      */
-    public const KINDS = ['home', 'category', 'brand', 'article'];
+    public const KINDS = ['home', 'category', 'brand', 'article', 'page'];
 
     /**
      * The sanity ceiling on a candidate string — see the class note.
@@ -449,6 +451,40 @@ class SeoPreviewApiController extends Controller
             ];
         }
 
+        /*
+         * A CONTENT PAGE — Lane S9, the fifth screen with an SEO title and
+         * description box and the last table that carries the column.
+         *
+         * `name` is the RAW column, not a decoded one. `pages.title` is an HTML
+         * column (store/page.blade.php prints it with {!! !!} and
+         * seed_policy_pages stores the literal `Terms &amp; Conditions`), and
+         * Store\PageController::show() passes that raw value as `title_token`.
+         * Quoting it is the whole contract of this endpoint: the preview must
+         * show the bytes the page publishes, double-encoded ampersand included,
+         * rather than a tidier string this file invented.
+         *
+         * `path` comes from the ROUTER — App\Support\RoutedPages — because a
+         * content page is served at the address its route names and not at
+         * `/`.$slug.`/`. A row with no route falls back to the address it would
+         * have, whose sub-request 404s and degrades to the title engine, which
+         * is exactly what published() is written to do.
+         *
+         * A page has no excerpt, so there is no third fallback for the
+         * description: an empty box falls through to the stored override and
+         * then to `seo_default_description`, which is what show() leaves the
+         * layout to do.
+         */
+        if ($kind === 'page') {
+            $page = Page::query()->find($id);
+
+            return $page === null ? null : [
+                'name' => (string) $page->title,
+                'description' => '',
+                'path' => RoutedPages::pathFor((string) $page->slug) ?? '/'.$page->slug.'/',
+                'stored' => is_array($page->seo) ? $page->seo : [],
+            ];
+        }
+
         return null;
     }
 
@@ -553,6 +589,53 @@ class SeoPreviewApiController extends Controller
         }
 
         /*
+         * Store\PageController::show() — Lane S9. `type: page`, and EVERY key is
+         * conditional there, which is why this arm is shaped differently from the
+         * article one above it.
+         *
+         * show() passes `title`, `title_is_final` AND `title_token` together and
+         * only when the override is non-blank, because a content page with no
+         * override must render the layout's own `@section('title')` byte-for-byte
+         * — PageSeoOverridesTest's first case is exactly that. So an empty box
+         * here means "do not pass a title at all", and the answer for it comes
+         * from published(), which reads the real page.
+         *
+         * `title_token` is the page's own raw title, for the reason the 671
+         * product pages paid for: TitleTemplate::render() DELETES a token it was
+         * not handed, so an override carrying Yoast's `%%title%%` would publish
+         * the site name alone.
+         */
+        if ($kind === 'page') {
+            $ctx = [
+                'type' => 'page',
+                'url' => $this->siteBase().($row['path'] ?? '/'),
+            ];
+
+            if ($title !== '') {
+                $ctx['title'] = $title;
+                $ctx['title_is_final'] = true;
+                $ctx['title_token'] = $name;
+            } elseif ($name !== '') {
+                // Only reached when the page itself could not be read (a draft,
+                // or a row with no route). Deliberately NOT final, so the name
+                // goes through `seo_title_template` as the page's own section
+                // title does; the response reports published_known: false and
+                // the screen says the exact tag appears once the page is live.
+                $ctx['title'] = $name;
+            }
+
+            $resolved = $description !== ''
+                ? $description
+                : (string) ($stored['desc'] ?? '');
+
+            if ($resolved !== '') {
+                $ctx['description'] = $resolved;
+            }
+
+            return $ctx;
+        }
+
+        /*
          * Store\ShopController::index() and Store\BrandController::seoCtx() —
          * `type: collection`, and both leave `title` OUT unless there is an
          * override, so an un-overridden archive renders through
@@ -650,6 +733,10 @@ class SeoPreviewApiController extends Controller
             'category' => Url::to('/product-category/'.$slug.'/'),
             'brand' => Url::to('/korean-skincare-brands/'.$slug.'/'),
             'article' => '/'.$slug.'/',
+            // A content page is never created (PageEditorApiController's header
+            // says why), so this is only ever reached by a caller that sent a
+            // slug and no id. The address a page WOULD have is the same shape.
+            'page' => '/'.$slug.'/',
             default => '/',
         };
     }

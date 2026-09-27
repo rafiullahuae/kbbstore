@@ -21827,6 +21827,19 @@ buildNav();
 @include('admin.partials.ugc-sections-screen')
 @include('admin.partials.ugc-appearance-screen')
 
+{{-- LANE S9 · the content page editor, at Pages → User pages → Edit.
+
+     It rebinds renderUserPages itself, the same mechanism this file already uses
+     for renderUsers (see the note at line 6826), so this one line is the whole
+     of its change here. That rebinding also closes a latent admin XSS: the old
+     pagesTable() interpolated ${p.name} unescaped.
+
+     It draws "No address on the shop" against any page row whose slug has no
+     literal route, which is four of the rows Demo Pages writes — published, and
+     unreachable by any request. That warning is the first place in this console
+     that says so. --}}
+@include('admin.partials.page-editor-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------

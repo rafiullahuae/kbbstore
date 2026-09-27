@@ -51,6 +51,7 @@
  *     homepage case goes red on a shop that has already saved a home title.
  */
 
+use App\Http\Controllers\Admin\SeoPreviewApiController;
 use App\Models\AdminUser;
 use App\Models\Brand;
 use App\Models\Category;
@@ -348,8 +349,29 @@ it('refuses an unknown page kind rather than defaulting to one', function () {
      * — each kind carries different rules about whether the site name is
      * appended, so a guessed kind draws a plausible preview of a page that does
      * not exist, and nothing on the screen says so.
+     *
+     * `page` WAS in this list and is not any more — Lane S9. It was a fair
+     * example of an unknown kind for as long as there was no page editor to ask
+     * for one; the content page editor at Pages → User pages → Edit is the fifth
+     * screen with these boxes, and `page` is a real kind now
+     * (SeoPreviewApiController::KINDS). Advancing the pin rather than leaving it
+     * is the rule-1 move: the list is a list of kinds that do NOT exist, so a
+     * kind that now does has to leave it.
+     *
+     * The list is DERIVED from KINDS rather than restated, so the next kind
+     * somebody adds cannot leave a stale name here for a full-suite run to find.
+     * `product` stays because it is the trap this case was written for: it is a
+     * real preview kind on the PRODUCT editor's own endpoint and not one of
+     * these, so it is the name most likely to be sent by mistake.
      */
-    foreach (['product', 'page', '', 'HOME', null, ['home']] as $bad) {
+    $bogus = array_values(array_diff(
+        ['product', 'page', 'collection', 'post', 'listing'],
+        SeoPreviewApiController::KINDS
+    ));
+
+    expect($bogus)->not->toBeEmpty();
+
+    foreach (array_merge($bogus, ['', 'HOME', null, ['home']]) as $bad) {
         $response = test()->postJson('/admin-api/seo-preview', ['kind' => $bad, 'title' => 'x']);
 
         expect($response->status())->toBe(422, 'kind '.json_encode($bad).' was accepted');

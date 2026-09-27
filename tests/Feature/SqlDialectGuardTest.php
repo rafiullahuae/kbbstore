@@ -698,6 +698,32 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
     ]);
 
     /*
+     * One content page for the page editor's read route below, with an Arabic
+     * translation attached for the same reason the article above has one: the
+     * load ends in translationsForEditor(), so a page with no translations
+     * returns the early-return shape and the loop body never runs.
+     *
+     * `faqs` and not a made-up slug, because that is one of the seven slugs
+     * web.php carries a literal route for -- RoutedPages resolves the address
+     * from the router, and a page with no route takes the other branch.
+     */
+    $page = \App\Models\Page::firstOrCreate(['slug' => 'faqs'], [
+        'title' => 'Frequently Asked Questions',
+        'status' => 'published',
+        'content' => '<h3>Guard question</h3><p>Guard answer.</p>',
+    ]);
+
+    \App\Models\Translation::create([
+        'locale' => 'ar',
+        'group' => 'pages',
+        'item_id' => $page->id,
+        'field' => 'title',
+        'value' => 'الأسئلة الشائعة',
+        'status' => 'draft',
+        'source' => 'machine',
+    ]);
+
+    /*
      * One shoppable video with a product tagged on it, for the read route
      * below. The product matters: show() loads `products.brand`, which is the
      * many-to-many through a pivot plus a belongsTo on the far side -- a join
@@ -860,6 +886,19 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * item id, which no other route on this list touches.
          */
         'admin-api/post-editor-load/{id}' => '/admin-api/post-editor-load/' . $post->id,
+        /*
+         * The content-page editor's read of one page (Lane S9). Listed here
+         * because this walk caught it: the route landed with no entry on either
+         * list and this file went red, which is exactly what the walk is for.
+         *
+         * Driven rather than excused, and not as "the same shape as
+         * post-editor-load" — the list above already records why a route excused
+         * because a sibling is covered is a route nobody drives. It reads the
+         * `pages` table, which nothing else on this list touches, and then its
+         * `translations` rows filtered by a DIFFERENT group; the SEO override
+         * arrives as a json column read on that same row.
+         */
+        'admin-api/page-editor-load/{id}' => '/admin-api/page-editor-load/' . $page->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */

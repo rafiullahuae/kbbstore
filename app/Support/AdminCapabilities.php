@@ -189,6 +189,20 @@ final class AdminCapabilities
         // one can still be shown what exists.
         'posts.manage' => ['owner', 'manager', 'editor'],
 
+        // Rewriting a content page — the privacy policy, the terms, the returns
+        // policy, the FAQ (Lane S9). The same three roles content.manage
+        // carries, and its own capability for the same reason posts.manage has
+        // one: these seven pages are what the footer links to from every page of
+        // the shop, their bodies are printed UNESCAPED
+        // (resources/views/store/page.blade.php), and who may rewrite the terms
+        // of sale is a decision worth being able to narrow without narrowing the
+        // mega menu and the media library with it.
+        //
+        // READING the list of pages stays on content.manage: GET
+        // admin-api/pages/* is a table of titles and addresses, and someone who
+        // may not rewrite the returns policy can still be shown that it exists.
+        'pages.manage' => ['owner', 'manager', 'editor'],
+
         // The cart page's own appearance — row density, the recommended rail
         // and which products fill it, the summary wording and the two docked
         // bars. Storefront appearance, so the same three roles as
@@ -898,6 +912,30 @@ final class AdminCapabilities
         ['POST', 'admin-api/post-editor-slug', 'posts.manage'],
         ['POST', 'admin-api/post-editor-create', 'posts.manage'],
         ['POST', 'admin-api/post-editor-save/*', 'posts.manage'],
+        /*
+         * The content page editor (Lane S9, routes/page-editor-admin.php).
+         *
+         * Beside the `admin-api/pages/*` line above for the same reason the
+         * article editor sits beside `admin-api/posts`: the read half and the
+         * write half of one screen are read together, and nobody widens
+         * `admin-api/pages/**` onto content.manage one day without seeing that
+         * the write side is a different capability.
+         *
+         * Flat paths rather than /pages/{id}: the existing `admin-api/pages/*`
+         * rule would otherwise decide which capability a write reached, and
+         * first-match-wins means that is settled by list order rather than by
+         * intent. See the header of routes/page-editor-admin.php.
+         *
+         * There is no create and no delete entry because there are no such
+         * routes — a content page's address is a literal route in web.php, so a
+         * created page would be unreachable and a deleted one would 404 an
+         * address the footer links to. PageEditorApiController's header has the
+         * measurement.
+         */
+        ['GET', 'admin-api/page-editor-bootstrap', 'pages.manage'],
+        ['GET', 'admin-api/page-editor-list', 'pages.manage'],
+        ['GET', 'admin-api/page-editor-load/*', 'pages.manage'],
+        ['POST', 'admin-api/page-editor-save/*', 'pages.manage'],
         ['*', 'admin-api/redirects', 'content.manage'],
         ['*', 'admin-api/redirects/**', 'content.manage'],
         ['*', 'admin-api/mega-menu', 'content.manage'],

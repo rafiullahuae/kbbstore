@@ -220,7 +220,26 @@ class PageController extends Controller
         if (trim((string) ($override['title'] ?? '')) !== '') {
             $seoCtx['title'] = (string) $override['title'];
             $seoCtx['title_is_final'] = true;
-            $seoCtx['title_token'] = (string) $page->title;
+            /*
+             * DECODED — Lane S9, and it moves nothing on the shop today because
+             * no shipped row carries an override.
+             *
+             * `pages.title` is an HTML column: seed_policy_pages stores the
+             * literal `Terms &amp; Conditions`, because store/page.blade.php
+             * prints the title with {!! !!}. This key is the substitution for
+             * Yoast's `%%title%%`, which Support\Seo then escapes on its way
+             * into `<title>`. Passing the raw column meant that an owner who
+             * typed Yoast's own shipped template — `%%title%% %%sep%%
+             * %%sitename%%`, which is what most of the imported corpus holds —
+             * into the new SEO title box on /terms-and-conditions/ published
+             * `<title>Terms &amp;amp; Conditions | K-Beauty Bliss</title>`. The
+             * one box built to fix a title would have re-broken it.
+             *
+             * App\Support\PageTitle's header carries the measurements, including
+             * the separate double-escape in layouts/store.blade.php that this
+             * does NOT fix and that is reported instead.
+             */
+            $seoCtx['title_token'] = \App\Support\PageTitle::decoded($page->title);
         }
 
         if (trim((string) ($override['desc'] ?? '')) !== '') {

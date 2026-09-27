@@ -837,6 +837,21 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::get('/pages/store', [\App\Http\Controllers\Admin\PagesApiController::class, 'store']);
         Route::get('/pages/user',  [\App\Http\Controllers\Admin\PagesApiController::class, 'user']);
 
+        /*
+         * Pages → User pages → Edit (Lane S9). The four endpoints behind the
+         * editor for the seven content pages, mounted directly under the list
+         * route they extend and inside the same guarded group, each carrying
+         * `pages.manage`.
+         *
+         * It offers no create and no delete, and that is a finding rather than a
+         * gap: those seven pages are seven LITERAL routes in this file carrying
+         * ->defaults('slug', …), and the site-root catch-all reaches
+         * PageController::post(), which queries Post only. A page created at any
+         * other slug is a row no request can reach — Demo Pages already writes
+         * four such rows, published, and all four 404.
+         */
+        require __DIR__.'/page-editor-admin.php';
+
         // Core Updates panel (JSON). Sits alongside the standalone page, which
         // stays as the fallback for when the admin bundle itself is broken.
         Route::get('/updates',                    [\App\Http\Controllers\Admin\UpdateApiController::class, 'status']);
