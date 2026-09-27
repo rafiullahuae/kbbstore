@@ -6,6 +6,8 @@ namespace App\Console\Commands;
 
 use App\Models\UgcVideo;
 use App\Services\UgcDerivedFiles;
+use App\Services\UgcMedia;
+use App\Services\UgcPath;
 use App\Services\UgcTranscoder;
 use Illuminate\Console\Command;
 
@@ -101,9 +103,21 @@ class CutUgcCovers extends Command
 
         $cut = 0;
         $failed = 0;
+        $missing = 0;
 
         foreach ($clips as $clip) {
             $this->line(sprintf('#%d  %s', $clip->id, (string) $clip->title));
+
+            /*
+             * CLASSIFIED BEFORE THE ATTEMPT, for the report at the foot of this
+             * method and nothing else — derive() makes this same check and its
+             * answer is the one that counts. See the note below for why "the
+             * file is not on disk" is the one failure worth separating out.
+             */
+            $stored = UgcPath::stored($clip->file_path);
+            if ($stored === null || ! is_file(public_path(ltrim($stored, '/')))) {
+                $missing++;
+            }
 
             try {
                 $derived = $transcoder->derive(
@@ -141,6 +155,38 @@ class CutUgcCovers extends Command
 
         $this->newLine();
         $this->info(sprintf('%d cut, %d could not be.', $cut, $failed));
+
+        /*
+         * ── THE ONE WRONG ANSWER THIS COMMAND CAN GIVE ─────────────────────
+         *
+         * public_path() is not `<app>/public` on this shop. bootstrap/app.php
+         * ends in usePublicPath(), reading $KBB_PUBLIC_PATH first, then
+         * bootstrap/public-path.php, then a hardcoded fallback that belongs to
+         * a DIFFERENT, older server. That chain is evaluated while the
+         * application is being built, BEFORE .env is read — so a KBB_PUBLIC_PATH
+         * set in the FPM pool (`env[KBB_PUBLIC_PATH] = ...`) is seen by the web
+         * and NOT by this command, and a value in .env is seen by neither.
+         *
+         * When that happens every clip here reports its file missing, which is
+         * true of the directory this process is looking in and false of the
+         * shop. An operator reading "the stored clip is missing" would go and
+         * look for lost uploads that were never lost. So when nothing could be
+         * found, say WHERE this process looked: a path that is not the web root
+         * is the answer, visible in one line.
+         *
+         * Only when the misses are ALL of them — one clip whose file really did
+         * go missing is not a configuration problem, and saying so there would
+         * be noise on an otherwise good run.
+         */
+        if ($missing > 0 && $missing === $clips->count()) {
+            $this->newLine();
+            $this->warn('Every clip\'s file was missing, so check WHERE this looked before hunting for them:');
+            $this->line('  '.public_path(UgcMedia::DIR));
+            $this->line('If that is not inside your web root, this command resolved a different public');
+            $this->line('path than the shop does. bootstrap/public-path.php is the fix — it is a FILE, so');
+            $this->line('the web and the command line read the same value. $KBB_PUBLIC_PATH set in an FPM');
+            $this->line('pool, or in .env, reaches one of them at most.');
+        }
 
         /*
          * A non-zero exit ONLY when nothing worked at all. A run that cut

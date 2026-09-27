@@ -41,18 +41,46 @@ function cucClip(array $attributes = []): UgcVideo
     ], $attributes));
 }
 
+/**
+ * Point the transcoder at a binary that is not there, for the length of one
+ * test.
+ *
+ * THIS HELPER EXISTS BECAUSE THE TEST BELOW WAS WRONG. It used to rely on the
+ * container simply not having ffmpeg, with a comment saying so. That passed
+ * for exactly as long as no machine running this suite had ffmpeg installed —
+ * and the moment one did, it went red, having asserted nothing about the code
+ * the whole time. A test whose premise is "what happens to be installed here"
+ * is a test that reports on the machine, not on the software.
+ *
+ * `binary()` reads KBB_FFMPEG through env(), whose default repository includes
+ * the putenv adapter, so this reaches it. Restored in a finally, because a
+ * leaked value would follow every later test in the file.
+ */
+function cucWithoutFfmpeg(callable $body): void
+{
+    $was = getenv('KBB_FFMPEG');
+    putenv('KBB_FFMPEG=/nonexistent/ffmpeg');
+
+    try {
+        $body();
+    } finally {
+        $was === false ? putenv('KBB_FFMPEG') : putenv('KBB_FFMPEG='.$was);
+    }
+}
+
 it('says why it cannot cut, rather than failing fifty clips one at a time', function () {
     cucClip();
 
     /*
-     * This container has no ffmpeg, so the command takes the refusal arm — and
-     * that IS the case worth pinning here. A run that cannot cut must say so
-     * ONCE, before any work, rather than attempting every clip and printing the
-     * same failure per row.
+     * A run that cannot cut must say so ONCE, before any work, rather than
+     * attempting every clip and printing the same failure per row. Fifty clips
+     * is fifty identical errors and a minute of waiting for them.
      */
-    $this->artisan('ugc:cut-covers')
-        ->expectsOutputToContain('This machine cannot cut anything.')
-        ->assertExitCode(1);
+    cucWithoutFfmpeg(function () {
+        $this->artisan('ugc:cut-covers')
+            ->expectsOutputToContain('This machine cannot cut anything.')
+            ->assertExitCode(1);
+    });
 });
 
 /*
@@ -200,4 +228,72 @@ it('tells the caller about each file as it lands, for the orphan sweep', functio
     ], function (string $path) use (&$seen) { $seen[] = $path; });
 
     expect($seen)->toBe([$poster, $teaser]);
+});
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * THE ONE WRONG ANSWER THIS COMMAND CAN GIVE, and how it was found.
+ *
+ * Running the command for real against seeded clips, it reported every one of
+ * them as "The stored clip is missing from the server at /uploads/ugc/...".
+ * The files were there. What was not there was the DIRECTORY the process was
+ * looking in: bootstrap/app.php ends in usePublicPath(), whose chain is
+ * evaluated while the application is being built — BEFORE .env is read — so
+ * this shop's public path comes from $KBB_PUBLIC_PATH in the real environment,
+ * or bootstrap/public-path.php, or a hardcoded fallback belonging to an older
+ * server that no longer exists.
+ *
+ * That matters here more than anywhere else in the application, because this is
+ * the one entry point that runs under a DIFFERENT SAPI from the shop. A
+ * KBB_PUBLIC_PATH set in an FPM pool (`env[KBB_PUBLIC_PATH] = ...`) is read by
+ * the web and not by the command line. The shop would be serving every one of
+ * those files while this command swore they were gone — and the operator would
+ * go hunting for uploads that were never lost.
+ *
+ * So the command names the directory it looked in. One line, and the wrong
+ * answer becomes the right question.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+it('names the directory it looked in when every file is missing', function () {
+    // Both rows point at files that were never written. This is the shape a
+    // public-path mismatch takes: the rows are fine, the disk this process can
+    // see is not.
+    cucClip(['file_path' => '/uploads/ugc/never-written-a.mp4']);
+    cucClip(['file_path' => '/uploads/ugc/never-written-b.mp4']);
+
+    $this->artisan('ugc:cut-covers')
+        ->expectsOutputToContain('0 cut, 2 could not be.')
+        ->expectsOutputToContain('check WHERE this looked')
+        // The ACTUAL resolved directory, not a description of one. An operator
+        // comparing it against their web root is the whole point; a sentence
+        // that says "check your public path" without saying what it is leaves
+        // them exactly where they started.
+        ->expectsOutputToContain(public_path(UgcMedia::DIR))
+        ->assertExitCode(1);
+});
+
+/*
+ * MUTATION: drop the `$missing === $clips->count()` half of the condition in
+ * CutUgcCovers::handle() and THIS is the test that goes red, because the hint
+ * then prints on a run that cut most of its clips. RUN: red — "Output contains
+ * 'check WHERE this looked'".
+ *
+ * That half matters: one clip whose file genuinely did go missing is not a
+ * configuration problem, and six lines about public paths under an otherwise
+ * good run is the kind of noise that gets output ignored.
+ */
+it('stays quiet about the directory when one clip is present but unreadable', function () {
+    /*
+     * cucFile writes one byte, so this row's file EXISTS and is not a video.
+     * That is precisely the row this test needs: it fails to cut, like the
+     * other one, and it fails for a reason that is not "the directory is
+     * wrong". The hint is tied to "every one of them was missing", and one row
+     * that is present is enough to withhold it -- whatever became of it after.
+     */
+    cucClip(['file_path' => cucFile('present-but-not-a-video-'.uniqid().'.mp4')]);
+    cucClip(['file_path' => '/uploads/ugc/never-written-'.uniqid().'.mp4']);
+
+    $this->artisan('ugc:cut-covers')
+        ->doesntExpectOutputToContain('check WHERE this looked')
+        ->run();
 });
