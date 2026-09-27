@@ -855,3 +855,114 @@ new migrations, `docs/PRODUCT-FIELD-PARITY.md`, `tests/Feature/Import*Test.php`.
 `BuildPackage::NEVER_SHIP` blocks it twice over. Exporter changes reach the old
 site by installing the plugin there, not through Core Updates. Say so in the PR
 body so the owner knows there are two deliverables, not one.
+
+---
+
+# Lane IG — the Instagram preview, and Configure in a popup
+
+> "i want the instagram section preview. and also i need auto connector by
+> pressing configure button, the system should open popup, request instagram,
+> fetch the api etc after login, and save the information. must be super smooth,
+> secure and reliable and light weight"
+
+**Most of this is already built. Read before you write.** `app/Services/
+Instagram/` already contains `InstagramAuth`, `InstagramClient`,
+`InstagramCredentials`, `InstagramSync` and `IgPath`; `InstagramController`
+serves the screen; `InstagramSettings` and `InstagramFeed` are the storefront
+half. The OAuth handshake, the token exchange and the post fetch all exist and
+work. **Do not rewrite any of it.** There are exactly two gaps.
+
+**Where it sits.** `Content → Instagram`.
+
+---
+
+## Gap 1 — there is no preview at all
+
+`grep -c preview resources/views/admin/partials/instagram-screen.blade.php`
+answers **0**. Every other Appearance screen in this console previews what it
+controls; this one asks the owner to save and go look at the shop.
+
+Build the same kind of drawing the other screens use — a mock of the Instagram
+rail as the storefront renders it, at the settings currently on screen, moving
+on input rather than on save. `resources/views/admin/partials/
+checkout-page-screen.blade.php` is the pattern for a preview beside/below
+controls, and `ugc-library-screen.blade.php`'s loop panel is the pattern for
+previewing a media rail specifically.
+
+It is a **drawing, not an iframe**: rendering the real storefront here would
+cost an authenticated fetch per keystroke. Where there are real stored posts,
+draw those (the screen already knows `content.posts`); where there are none,
+draw placeholders and say so, rather than an empty box.
+
+## Gap 2 — Configure is a full-page redirect, not a popup
+
+`instagram-screen.blade.php:376` is an `<a href=".../instagram/start">`, and its
+docblock defends that choice:
+
+> A REAL LINK AND NOT A FETCH, because an OAuth handshake is a top-level
+> navigation to a third party and an XHR cannot log anybody in to one.
+
+**That reasoning is correct and it is not an argument against a popup.** A popup
+window IS a top-level navigation — in its own window — which is the standard
+OAuth pattern precisely because it keeps the opener's page alive. What the
+docblock rules out is an XHR, and a popup is not one.
+
+So: open `/instagram/start` with `window.open`, let the callback page post a
+message back to the opener and close itself, and have the screen refresh its
+connection state in place. **Keep the anchor as the fallback** — its second
+sentence is also right, an owner whose popup is blocked must still be able to
+finish by clicking, and a `window.open` that returns null is exactly that case.
+Update the docblock rather than deleting it; the reasoning in it is sound and
+the next reader needs to know why the anchor survives.
+
+### The security rules this gap lives under
+
+- **`postMessage` must check `event.origin`** against this shop's own origin and
+  ignore anything else. A callback page that accepts a message from any origin
+  is a way for another tab to tell your admin it is connected.
+- **Nothing sensitive crosses in the message.** The token is exchanged and
+  stored server-side by `InstagramAuth`; the popup should post back *"done"* and
+  nothing more, and the screen should then ASK the server what the state is.
+- **The `state` parameter must be verified** on the callback — check whether
+  `InstagramAuth` already does this before assuming. If it does not, that is a
+  CSRF hole in the existing code and fixing it is part of this lane.
+- **The app secret never reaches the browser.** Check what the screen's payload
+  currently returns; `InstagramCredentials` is the only thing that should hold
+  it.
+
+---
+
+## Rules
+
+- **"Light weight"** was asked for explicitly: no new front-end dependency, no
+  polling loop left running after the popup closes, and the preview draws from
+  data the screen already has rather than a new endpoint if one can be avoided.
+- Every new setting ships at the value the page renders today (rule 1).
+- The preview must not use any element-measuring API — two tests forbid them by
+  name. Size with `calc()` and CSS.
+- 390px and 1280px both work, no horizontal overflow.
+
+## Owns
+
+`app/Services/Instagram/**`, `app/Services/InstagramFeed.php`,
+`InstagramSettings.php`, `app/Http/Controllers/Admin/InstagramController.php`,
+`resources/views/admin/partials/instagram-screen.blade.php`, the Instagram
+storefront partials, `tests/Feature/Instagram*Test.php`.
+
+## Must not touch
+
+`routes/web.php`, `resources/views/admin/app.blade.php`, `KBB-Master-Plan.md`,
+`KBB-Progress-Dashboard.html`, anything owned by Lane CP (`CartPanel`, the
+cart-panel screen), Lane PX (`app/Services/Import/**`, the exporter), or the
+checkout page.
+
+## Done when
+
+1. `Content → Instagram` previews the rail, and the preview moves on input.
+2. Configure opens a popup, the connection completes without leaving the screen,
+   and the screen shows the new state without a manual reload.
+3. A blocked popup still connects via the anchor, and that path is tested.
+4. `event.origin` is checked, `state` is verified, and the secret is proven not
+   to reach the browser — each with a test.
+5. Screenshots at 390px and 1280px of the screen before and after connecting.
+6. Mutation notes for every new test.
