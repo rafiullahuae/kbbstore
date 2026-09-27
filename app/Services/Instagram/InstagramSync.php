@@ -104,6 +104,139 @@ class InstagramSync
     }
 
     /**
+     * The whole of "Configure now", from the code Meta handed back to a grid.
+     *
+     * ── FOUR STEPS, AND THE ORDER IS THE ONLY SAFE ONE ──────────────────────
+     *
+     * The code becomes a ONE-HOUR token; that becomes a SIXTY-DAY one; only then is
+     * anything stored; and only then is a fetch attempted. Storing the short token
+     * on the way past would leave a shop that reports itself connected and stops
+     * working an hour later with no explanation — which is the failure this ordering
+     * exists to make impossible. Nothing is written until there is a long-lived
+     * token in hand.
+     *
+     * ── AND A FAILED FIRST FETCH IS NOT A FAILED CONNECTION ─────────────────
+     *
+     * If the token exchange succeeded, THE SHOP IS CONNECTED, and that fact is kept
+     * even when the media call then fails — a rate limit, a timeout, a scope Meta
+     * has not approved yet. Throwing the token away because the first fetch was
+     * unlucky would send the owner back through the whole authorisation for a
+     * problem the Refresh button fixes. So the token is stored, and the message says
+     * honestly which half worked.
+     *
+     * `$code` is Meta's authorisation code, single-use and already matched against a
+     * single-use `state` by InstagramAuth::consume() before this is reached. It is
+     * never logged: it goes into a form body and nowhere else.
+     *
+     * @return array{ok: bool, message?: string, error?: string, detail?: string, reason?: string}
+     */
+    public function connect(string $code): array
+    {
+        $short = $this->client->exchangeCode($code, InstagramAuth::redirectUri());
+
+        if (! ($short['ok'] ?? false)) {
+            return [
+                'ok' => false,
+                'reason' => (string) ($short['reason'] ?? 'refused'),
+                'error' => (string) ($short['error'] ?? ''),
+                /*
+                 * This is where a redirect-URI mismatch surfaces, and Meta names it
+                 * in as many words. docs/IG-PROFILE.md §7 item 4 calls it the
+                 * commonest way this flow fails, so its own sentence is passed
+                 * through — scrubbed of the secret and the token by
+                 * InstagramClient::scrub() before it ever left that class.
+                 */
+                'detail' => (string) ($short['detail'] ?? ''),
+            ];
+        }
+
+        $long = $this->client->exchangeForLongLived((string) ($short['data']['access_token'] ?? ''));
+
+        if (! ($long['ok'] ?? false)) {
+            return [
+                'ok' => false,
+                'reason' => (string) ($long['reason'] ?? 'refused'),
+                'error' => (string) ($long['error'] ?? ''),
+                'detail' => (string) ($long['detail'] ?? ''),
+            ];
+        }
+
+        $data = $long['data'] ?? [];
+
+        InstagramCredentials::saveToken(
+            (string) ($data['access_token'] ?? ''),
+            (int) ($data['expires_in'] ?? 60 * 86400),
+            // Meta returns the IG user id on the CODE exchange, not on the token
+            // exchange, so it is carried across from the first answer.
+            isset($short['data']['user_id']) ? (string) $short['data']['user_id'] : null,
+        );
+
+        // Nothing was stored if the token came back empty, and saveToken() refuses
+        // an empty one silently — so this is checked rather than assumed.
+        if (! InstagramCredentials::hasToken()) {
+            return [
+                'ok' => false,
+                'reason' => 'malformed',
+                'error' => InstagramClient::REASONS['malformed'] ?? 'Instagram sent an answer this shop could not read.',
+                'detail' => 'The long-lived token came back empty.',
+            ];
+        }
+
+        $fetch = $this->run();
+
+        if (! ($fetch['ok'] ?? false)) {
+            return [
+                'ok' => true,
+                'message' => 'Connected to Instagram — the account is authorised and the connection is stored. '
+                    .'The first fetch did not finish, though: '
+                    .lcfirst((string) ($fetch['error'] ?? 'Instagram could not be reached.'))
+                    .' Press Refresh posts to try again; you do not have to reconnect.',
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'message' => 'Connected to Instagram. '.(int) ($fetch['stored'] ?? 0).' posts fetched, '
+                .(int) ($fetch['pictures'] ?? 0).' pictures stored on this shop. Pick a layout below, then '
+                .'turn the module on in Store → Modules → Instagram Profile.',
+        ];
+    }
+
+    /**
+     * Delete every stored post and every picture we downloaded for one.
+     *
+     * ── SEPARATE FROM DISCONNECTING, ON PURPOSE ─────────────────────────────
+     *
+     * Disconnecting revokes this shop's ACCESS. This throws away CONTENT. Doing both
+     * from one button is how an owner who wanted to change Meta apps finds his
+     * homepage section empty, so they are two buttons with two sentences and this one
+     * says how many rows it is about to remove before it removes them.
+     *
+     * The file is unlinked BEFORE the row, and a file that will not unlink does not
+     * stop the row going: a leftover file is 40 KB nobody sees, where a leftover row
+     * is a tile pointing at a picture that is not there.
+     */
+    public function forgetEverything(): int
+    {
+        $removed = 0;
+
+        foreach (InstagramPost::query()->get(['id', 'local_path']) as $post) {
+            $file = IgPath::absolute($post->local_path);
+
+            if ($file !== null && is_file($file)) {
+                @unlink($file);
+            }
+
+            $post->delete();
+            $removed++;
+        }
+
+        InstagramFeed::flush();
+
+        return $removed;
+    }
+
+    /**
      * Fetch the profile and the recent media, and write everything down.
      *
      * @return array{ok: bool, error?: string, reason?: string, detail?: string, stored?: int, pictures?: int, failed?: int, pruned?: int}

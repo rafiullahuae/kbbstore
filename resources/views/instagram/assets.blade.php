@@ -83,6 +83,16 @@
 
 .igp-c{position:relative;display:block;overflow:hidden;border-radius:var(--ig-r);
        background:#f3f4f6;aspect-ratio:1/1;text-decoration:none;color:inherit}
+
+/* THE STRETCHED LINK. The cell is always a <div>; when the post has somewhere to
+   go the template puts this empty <a> in it, last, covering the whole tile. That
+   is what lets the counts and the caption sit OUTSIDE the link — a screen reader
+   then reads the tile's own label rather than the whole overlay as the link name —
+   while a tap anywhere on the picture still opens the post. z-index over the
+   scrim and the caption, both of which are decoration. */
+.igp-c > .igp-lk{position:absolute;inset:0;z-index:2;border-radius:inherit;
+       -webkit-tap-highlight-color:transparent}
+.igp-c > .igp-lk:focus-visible{outline:2px solid #15a85a;outline-offset:-3px}
 .igp-t.is-masonry .igp-c{aspect-ratio:4/5}
 .igp-c > img{display:block;width:100%;height:100%;object-fit:cover}
 
@@ -115,7 +125,9 @@
 .igp-m svg{width:13px;height:13px;flex:0 0 auto}
 .igp-cap{position:absolute;inset:0;display:flex;align-items:flex-end;padding:9px;color:#fff;font-size:11.5px;
   line-height:1.4;background:rgba(0,0,0,.44);opacity:0;transition:opacity .18s ease}
-.igp-c:hover .igp-cap,.igp-c:focus-visible .igp-cap{opacity:1}
+/* `:focus-within` and not `:focus-visible` on the cell: the focusable element is
+   the stretched <a> INSIDE it now, so the cell itself never takes focus. */
+.igp-c:hover .igp-cap,.igp-c:focus-within .igp-cap{opacity:1}
 .igp-cap span{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 
 /* The word "likes" beside the number, for a screen reader only. A heart icon plus a

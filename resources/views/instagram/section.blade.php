@@ -106,28 +106,44 @@
                      rather than nothing. --}}
                 @if ($profile['followers'] !== null || $profile['posts'] !== null)
                     <span>
-                        @if ($profile['followers'] !== null){{ number_format($profile['followers']) }} followers@endif
+                        @if ($profile['followers'] !== null){{ trans_choice('store.instagram.followers', $profile['followers'], ['formatted' => number_format($profile['followers'])]) }}@endif
                         @if ($profile['followers'] !== null && $profile['posts'] !== null) · @endif
-                        @if ($profile['posts'] !== null){{ number_format($profile['posts']) }} posts@endif
+                        @if ($profile['posts'] !== null){{ trans_choice('store.instagram.posts', $profile['posts'], ['formatted' => number_format($profile['posts'])]) }}@endif
                     </span>
                 @endif
             </div>
             @if (($profile['checked'] ?? null) !== null)
-                <a class="igp-pf" href="{{ $profile['checked'] }}" target="_blank" rel="noopener nofollow">Follow</a>
+                <a class="igp-pf" href="{{ $profile['checked'] }}" target="_blank" rel="noopener nofollow">{{ __('store.instagram.follow') }}</a>
             @endif
         </div>
     @endif
 
     <div class="igp-t is-{{ $layout }}">
         @if ($drawInline)
-            {{-- `inline`: the avatar becomes the first cell. A LINK and not a tile,
-                 so it is obvious what it does, and it inherits the same square crop
-                 from .igp-c as everything beside it. --}}
-            <a class="igp-c" href="{{ $profile['checked'] ?? '#' }}" target="_blank" rel="noopener nofollow">
+            {{-- `inline`: the avatar becomes the first cell, and it inherits the same
+                 square crop from .igp-c as everything beside it.
+
+                 ── AND IT IS ONLY A LINK WHEN THERE IS SOMEWHERE TO GO ────────
+                 This used to be `href="{{ $profile['checked'] ?? '#' }}"`, which is a
+                 dead anchor — a control that lies about being one, which this file's
+                 own tile comment forbids twenty lines below. `checked` is null
+                 whenever the stored username failed InstagramFeed's handle alphabet,
+                 so the case is reachable rather than theoretical. Drawn as a plain
+                 cell instead: the avatar still shows, and nothing pretends to be
+                 clickable. --}}
+            @if (($profile['checked'] ?? null) !== null)
+            <a class="igp-c" href="{{ $profile['checked'] }}" target="_blank" rel="noopener nofollow">
                 <img src="{{ $profile['avatar'] }}"
                      alt="{{ $profile['name'] !== '' ? $profile['name'] : $profile['username'] }}"
                      width="152" height="152" loading="lazy" decoding="async">
             </a>
+            @else
+            <div class="igp-c">
+                <img src="{{ $profile['avatar'] }}"
+                     alt="{{ $profile['name'] !== '' ? $profile['name'] : $profile['username'] }}"
+                     width="152" height="152" loading="lazy" decoding="async">
+            </div>
+            @endif
         @endif
 
         @foreach ($tiles as $tile)
@@ -140,21 +156,45 @@
                  * lies about being one.
                  */
                 $embed = $tap === 'embed' ? $tile['embed'] : null;
-                $href = $embed === null && $tap !== 'nothing' ? $tile['permalink'] : null;
-                $element = $embed !== null || $href !== null ? 'a' : 'div';
+                $href = $embed !== null ? ($tile['permalink'] ?? $embed) : ($tap !== 'nothing' ? $tile['permalink'] : null);
                 $hasCounts = $showCounts && ($tile['likes'] !== null || $tile['comments'] !== null);
+                $label = $tile['caption'] !== '' ? \Illuminate\Support\Str::limit($tile['caption'], 90) : __('store.instagram.post_alt');
             @endphp
-            <{{ $element }} class="igp-c{{ $showPlay && $tile['video'] ? ' is-video' : '' }}{{ $tile['carousel'] ? ' is-album' : '' }}"
-                @if ($embed !== null)
-                    {{-- The script reads this and sets an iframe src on TAP. It is a
-                         constant with a checked shortcode in it; see the assets file. --}}
-                    href="{{ $tile['permalink'] ?? $embed }}" data-ig-embed="{{ $embed }}"
-                @elseif ($href !== null)
-                    href="{{ $href }}" target="_blank" rel="noopener nofollow"
-                @endif
-            >
+            {{--
+                ── THE CELL IS ALWAYS A <div> AND THE LINK IS INSIDE IT ──────────
+
+                This used to be an opening tag whose NAME was an echo of $element,
+                computed as 'a' or 'div', with the closing tag written the same way.
+                Two things were wrong with it and only one of them was cosmetic:
+
+                  · StorefrontStringsAreKeyedTest reads every storefront Blade with
+                    BladeProse to find English a shopper reads that does not go
+                    through __(). A tag whose NAME is an echo is not a tag to that
+                    reader, so the whole opening tag was scanned as a TEXT NODE and
+                    reported as three separate untranslated strings — `class="igp-c`,
+                    `href="..." data-ig-embed="..."` and the rel/target pair. It was
+                    red on the first suite run this lane made.
+                  · and an element whose tag name is a variable is an element whose
+                    open and close can disagree. They cannot here, because both read
+                    the same variable — but the next person to add a branch is one
+                    edit away from `<a>…</div>`.
+
+                So: one <div class="igp-c"> in every case, with a STRETCHED <a>
+                inside it when there is somewhere to go. That keeps the property
+                this file's header claims — one tile markup, one set of escaping,
+                so a layout cannot be the one that drops it — and it keeps the
+                "never a dead anchor" rule, because with no permalink and no embed
+                there is simply no <a> element at all.
+
+                The <a> is LAST so `.igp-c:focus-within` can light the caption
+                without a sibling selector that depends on source order, and it is
+                empty with an aria-label rather than wrapping the picture: wrapping
+                would put the counts and the caption inside the link, so a screen
+                reader would read the whole overlay as the link's name.
+            --}}
+            <div class="igp-c{{ $showPlay && $tile['video'] ? ' is-video' : '' }}{{ $tile['carousel'] ? ' is-album' : '' }}">
                 <img src="{{ $tile['image'] }}"
-                     alt="{{ $tile['caption'] !== '' ? \Illuminate\Support\Str::limit($tile['caption'], 90) : 'Instagram post' }}"
+                     alt="{{ $label }}"
                      @if ($tile['width'] !== null && $tile['height'] !== null)
                          width="{{ $tile['width'] }}" height="{{ $tile['height'] }}"
                      @endif
@@ -179,18 +219,30 @@
                         @if ($tile['likes'] !== null)
                             <span>
                                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 21s-7.5-4.6-9.3-9A5.3 5.3 0 0 1 12 6.5 5.3 5.3 0 0 1 21.3 12c-1.8 4.4-9.3 9-9.3 9z"/></svg>
-                                {{ number_format($tile['likes']) }}<span class="igp-sr">&nbsp;likes</span>
+                                {{ number_format($tile['likes']) }}<span class="igp-sr">&nbsp;{{ __('store.ugc.likes_label') }}</span>
                             </span>
                         @endif
                         @if ($tile['comments'] !== null)
                             <span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 11.5A8.4 8.4 0 0 1 12 20a9 9 0 0 1-4-.9L3 20l1.3-3.8A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>
-                                {{ number_format($tile['comments']) }}<span class="igp-sr">&nbsp;comments</span>
+                                {{ number_format($tile['comments']) }}<span class="igp-sr">&nbsp;{{ __('store.ugc.comments_label') }}</span>
                             </span>
                         @endif
                     </span>
                 @endif
-            </{{ $element }}>
+
+                @if ($href !== null)
+                    {{-- data-ig-embed is what the script reads on a tap. It is a
+                         constant with a shortcode in it that matched
+                         InstagramPost::SHORTCODE_RE; see the assets file. With the
+                         `embed` tap chosen the href is STILL the permalink, so a
+                         shopper whose JavaScript never ran gets the real post
+                         rather than a bare iframe URL. --}}
+                    <a class="igp-lk" href="{{ $href }}"
+                       @if ($embed !== null) data-ig-embed="{{ $embed }}" @else target="_blank" rel="noopener nofollow" @endif
+                       aria-label="{{ $tile['caption'] !== '' ? $label : __('store.instagram.open_post') }}"></a>
+                @endif
+            </div>
         @endforeach
     </div>
 </section>
