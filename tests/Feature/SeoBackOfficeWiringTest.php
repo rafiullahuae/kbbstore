@@ -238,7 +238,7 @@ it('refuses both routes to a role that is not the owner', function () {
 
 it('names every kind it previews and previews every kind it names', function () {
     /*
-     * The list is the contract between the four screens and the endpoint. A kind
+     * The list is the contract between the five screens and the endpoint. A kind
      * in KINDS that the endpoint cannot build a context for would answer 200 with
      * a preview of nothing; a screen asking for a kind not in KINDS gets a 422 it
      * cannot act on. Both are checked by driving every kind rather than by
@@ -255,7 +255,10 @@ it('names every kind it previews and previews every kind it names', function () 
 
     test()->actingAs($owner, 'admin');
 
-    expect(SeoPreviewApiController::KINDS)->toBe(['home', 'category', 'brand', 'article']);
+    // 'page' — Lane S9. The content page editor is the fifth screen with an SEO
+    // title and description box, and this list is the contract between the
+    // screens and the endpoint, so it moves in the same commit as the screen.
+    expect(SeoPreviewApiController::KINDS)->toBe(['home', 'category', 'brand', 'article', 'page']);
 
     foreach (SeoPreviewApiController::KINDS as $kind) {
         $response = test()->postJson('/admin-api/seo-preview', [

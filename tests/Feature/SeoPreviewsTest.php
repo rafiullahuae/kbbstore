@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\AdminUser;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Page;
@@ -19,6 +20,7 @@ use App\Support\Locale;
 use App\Support\Seo;
 use App\Support\SeoAudit;
 use Illuminate\Support\Facades\Route;
+use Tests\Support\PageEditorRoutes;
 
 /**
  * =============================================================================
@@ -481,6 +483,98 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $sitemapNoindexedPage = str_contains((string) test()->get('/sitemap.xml')->getContent(), '<loc>https://kbeautybliss.test/faqs/</loc>');
     Page::query()->where('slug', 'faqs')->update(['seo' => null]);
 
+    /* ───── 7b. and the other half of that claim: can they be WRITTEN? ────── */
+
+    /*
+     * ── WHY THIS IS DRIVEN AND NOT ASKED OF THE ROUTER — Lane S9 ───────────
+     *
+     * The row below used to compute its verdict from `str_contains($uri,
+     * 'pages')` over the route collection, which was the right answer to the
+     * wrong question twice over. It measured whether a URI CONTAINED a word, so
+     * the editor this lane built — mounted at `admin-api/page-editor-save/{id}`,
+     * which does not contain "pages" — would have left the row reading MISSING
+     * while the feature worked. And a route matching that word would have turned
+     * it VERIFIED without anything having been written.
+     *
+     * So the claim is driven end to end, as the owner would: sign in, POST the
+     * form, and read the bytes /faqs/ then serves. The refusal is driven too,
+     * because an endpoint that accepts anything is not a screen, it is a hole:
+     * a `javascript:` canonical must come back 422.
+     *
+     * THE FIXTURE IS PUT BACK, both columns. `seo` returns to null and the body
+     * returns to the seeded heredoc, because section 8's audit and every row
+     * after it measures this same page and a leftover would flatter or fail them
+     * for reasons nothing on the page would explain.
+     */
+    PageEditorRoutes::wire(app());
+
+    $pageWriteRoutes = [];
+
+    foreach (Route::getRoutes() as $route) {
+        $uri = '/' . ltrim($route->uri(), '/');
+        $methods = array_values(array_diff($route->methods(), ['HEAD']));
+
+        if ($methods === ['GET']) {
+            continue;
+        }
+
+        if (str_contains($uri, 'pages') || str_contains($uri, 'page-editor')) {
+            $pageWriteRoutes[] = implode('|', $methods) . ' ' . $uri;
+        }
+    }
+
+    $pageBodyBefore = (string) Page::query()->where('slug', 'faqs')->value('content');
+
+    $pageEditorForm = [
+        'title' => 'Frequently Asked Questions',
+        'content' => $pageBodyBefore,
+        'status' => 'published',
+        'seo' => [
+            'title' => 'Delivery, returns and the questions we are asked most',
+            'desc' => 'Written from Content -> Pages -> User pages -> Edit.',
+            'og_image' => '/storage/pages/faq.jpg',
+            'canonical' => '',
+            'noindex' => false,
+        ],
+        'translations' => [],
+    ];
+
+    test()->actingAs(AdminUser::create([
+        'name' => 'SEO preview owner',
+        'email' => 'sp-page-editor-owner@example.test',
+        'password' => 'secret-secret',
+        'role' => 'owner',
+    ]), 'admin');
+
+    $pageEditAccepted = test()
+        ->postJson('/admin-api/page-editor-save/' . $seed['page']->id, $pageEditorForm)
+        ->getStatusCode();
+
+    $pageEditRefused = test()->postJson(
+        '/admin-api/page-editor-save/' . $seed['page']->id,
+        array_merge($pageEditorForm, ['seo' => ['canonical' => 'javascript:alert(1)']])
+    )->getStatusCode();
+
+    app('auth')->guard('admin')->logout();
+
+    // Anonymous, now that the session is gone — the other half of the guard.
+    $pageEditAnonymous = test()->postJson(
+        '/admin-api/page-editor-save/' . $seed['page']->id,
+        $pageEditorForm
+    )->getStatusCode();
+
+    $pageEditedColumn = Page::query()->where('slug', 'faqs')->value('seo');
+    $pageEditedTags = spHeadTags('/faqs/');
+
+    Page::query()->where('slug', 'faqs')->update(['seo' => null, 'content' => $pageBodyBefore]);
+
+    $pagesEditable = $pageEditAccepted === 200
+        && $pageEditRefused === 422
+        && $pageEditAnonymous === 401
+        && str_contains(implode("\n", $pageEditedTags), '<title>Delivery, returns and the questions we are asked most</title>')
+        && str_contains(implode("\n", $pageEditedTags), 'Written from Content -&gt; Pages -&gt; User pages -&gt; Edit.')
+        && str_contains(implode("\n", $pageEditedTags), '/storage/pages/faq.jpg');
+
     /* ───────────────────────── 8. the audit screen ────────────────────────── */
 
     $audit = SeoAudit::run();
@@ -607,44 +701,41 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'app/Http/Controllers/Store/PageController.php:158');
 
     /*
-     * ── AND THE OTHER HALF OF THE SAME CLAIM — Lane S8 ────────────────────
+     * ── AND THE OTHER HALF OF THE SAME CLAIM — Lane S8, CLOSED BY LANE S9 ──
      *
-     * The row above proves a page's SEO fields are now READ. It says nothing
-     * about whether they can be WRITTEN, and SEO-GAP.md §4's claim ("Have, on
-     * five tables including pages") is a claim about a CAPABILITY. Driven: four
-     * of the five tables have an admin writer and `pages` has none, so a finding
-     * raised against a content page is not actionable anywhere in this software.
+     * The row above proves a page's SEO fields are now READ. This one is about
+     * whether they can be WRITTEN, which is what SEO-GAP.md §4's claim ("Have,
+     * on five tables including pages") actually promises: a CAPABILITY. It read
+     * MISSING for two rounds, correctly — four of the five tables had an admin
+     * writer and `pages` had none, so a finding the SEO Audit screen raised
+     * against a content page was not actionable anywhere in this software.
      *
-     * Computed from the ROUTE COLLECTION rather than by grepping a controller:
-     * the question is whether any endpoint exists that could write a page at
-     * all, and the router is the authority on that. A page editor arriving --
-     * which is a Content-module item, not an SEO one -- flips this row by
-     * itself.
+     * DRIVEN NOW, NOT ASKED OF THE ROUTER. The previous verdict was
+     * `str_contains($uri, 'pages')` over the route collection, and that is the
+     * wrong question in both directions: the editor Lane S9 built is mounted at
+     * `admin-api/page-editor-save/{id}`, which does not contain the word, so the
+     * row would have gone on reading MISSING over a working feature — and a route
+     * that merely matched the word would have turned it VERIFIED with nothing
+     * written. Section 7b signs in, POSTs the form and reads the bytes /faqs/
+     * then serves, and requires the refusal as well: an endpoint that accepts a
+     * `javascript:` canonical is not a screen.
      *
-     * MUTATION NOTE: register any non-GET /pages route and $pageWriteRoutes
-     * stops being empty, which turns this row VERIFIED. It is spelled MISSING
-     * and carries "Lane S5" nowhere, so it is excluded from the assertion sweep
-     * the way the other genuinely-absent rows are.
+     * MUTATION NOTE, RUN: delete the `save` route from
+     * routes/page-editor-admin.php and $pageEditAccepted is 404 rather than 200,
+     * which turns this row MISSING and the assertion sweep red — which is now the
+     * correct behaviour, because the row is no longer exempt from it.
      */
-    $pageWriteRoutes = [];
-
-    foreach (Route::getRoutes() as $route) {
-        $uri = '/' . ltrim($route->uri(), '/');
-        $methods = array_values(array_diff($route->methods(), ['HEAD']));
-
-        if (str_contains($uri, 'pages') && $methods !== ['GET']) {
-            $pageWriteRoutes[] = implode('|', $methods) . ' ' . $uri;
-        }
-    }
-
     $rows[] = spRow($A,
         'Those per-row SEO fields can be EDITED on all five tables — "Have, on five tables including `pages`".',
         'SEO-GAP §4 — Have (five tables)',
-        spCheck($pageWriteRoutes !== []),
-        'GENUINELY ABSENT, and it is the half of the claim an owner would act on. Driven against the router: there is NO endpoint of any method that writes a page — '
-            . ($pageWriteRoutes === [] ? 'zero non-GET routes whose URI mentions `pages`' : implode(', ', $pageWriteRoutes))
-            . '. Admin\\PagesApiController has exactly two methods, store() and user(), both GET, both listing, and it does not even return the `seo` column, so no screen could render a form over it. Services\\Import\\Entities\\SeoImporter writes `seo` on products only. Products, categories, brands and posts each have an editor that writes it (Catalog → Products → SEO, Catalog → Categories, Catalog → Brands, Content → Blog Posts). So `pages.seo` is null on every shipped row and nothing can make it anything else — reading it was still the right fix, because the audit was reporting pages as deindexed on the strength of a value no screen could set. WHAT IS MISSING IS A PAGE EDITOR, and it is a Content-module item: a page needs a title, a body and a status editor before it needs a meta description, and this shop has none of the four. Do not close this with an SEO-only form for pages. Corrected in docs/SEO-GAP.md §4 by this lane.',
-        'app/Http/Controllers/Admin/PagesApiController.php');
+        spCheck($pagesEditable),
+        'TRUE OF ALL FIVE TABLES AS OF LANE S9, and it was the one genuinely absent item in the SEO programme before it. Driven end to end rather than read off the router: signed in as an owner, POST /admin-api/page-editor-save/{id} answered '
+            . $pageEditAccepted . ', the column then held ' . spPretty($pageEditedColumn) . ', and /faqs/ served '
+            . implode('  ', preg_grep('#<title>|name="description"|og:image#', $pageEditedTags))
+            . '. The same endpoint answered ' . $pageEditRefused . ' to a `javascript:` canonical and ' . $pageEditAnonymous
+            . ' with no session at all. Write routes on the router now: ' . implode(', ', $pageWriteRoutes)
+            . '. THE SCREEN IS Content → Pages → User pages → Edit, and it is a page editor rather than an SEO-only form, which is what the previous verdict of this row asked for in as many words: title, body (sanitised through RichText::clean, both languages), status, and the five search-engine fields with Lane S7\'s live Google preview above them. It deliberately CANNOT create or delete a page — the seven content pages are seven literal routes in web.php and the site-root catch-all serves posts, so a created page would be a row no request could reach.',
+        'app/Http/Controllers/Admin/PageEditorApiController.php');
 
     $rows[] = spRow($A,
         'Per-row noindex takes a document out of the index.',

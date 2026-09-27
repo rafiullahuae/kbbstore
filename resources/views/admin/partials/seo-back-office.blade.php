@@ -130,7 +130,7 @@
 .s7-more{font-size:11.5px;color:var(--ink-soft);margin:6px 0 0}
 .s7-empty{font-size:12.5px;color:var(--ink-soft);margin:0}
 
-/* ---- the preview, used on four screens -------------------------------------
+/* ---- the preview, used on five screens -------------------------------------
    It has to sit inside .sm-field (SEO & Meta), .ct-fld (categories), .bz-fld
    (brands) and .pj-f (articles), none of which it may restyle, so every rule
    here is scoped to .s7-prev and nothing above it is touched. */
@@ -223,7 +223,7 @@
      opts:
        mount        Element, or a selector string resolved at call time. The
                     preview replaces its contents.
-       kind         'home' | 'category' | 'brand' | 'article' — one of
+       kind         'home' | 'category' | 'brand' | 'article' | 'page' — one of
                     Admin\SeoPreviewApiController::KINDS. The server REFUSES an
                     unknown one rather than defaulting, because each kind has
                     different rules about whether the site name is appended and
