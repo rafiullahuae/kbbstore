@@ -3,6 +3,81 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.317
+**Your two clips were not playing because the four demo clips were using up all
+four slots.** Found, proved in a browser, fixed.
+
+### WHAT WAS HAPPENING
+
+The rail plays **four clips at once** — that is the setting *Most clips moving at
+once*, and four is sensible. But it chose which four **in the order the clips
+were added**, and the demo placeholders were added before you uploaded anything.
+
+So: demos first, all four slots gone, and your real clips sat showing a still
+picture with a play button. Exactly the screenshot you sent.
+
+Measured on a rail built to match yours, playback sampled every second:
+
+```
+BEFORE   the four demos          playing
+         your two clips          NOT playing
+AFTER    two demos               playing
+         YOUR TWO CLIPS          playing, looping 2.33 → 0.68 → 1.69
+```
+
+**A second fault was hiding the first.** The play button was hidden the moment a
+clip was *mounted*, not when it actually started — so a tile that never played
+could still look like it had. That is why this was checked twice before and
+reported as working.
+
+The rail now picks its four by **your real clips first**, then whichever tiles are
+most on screen. A clip whose file fails to load also **gives its slot back** —
+before, it held one for as long as the page was open.
+
+### ▲ READ THIS SCREEN FIRST AFTER APPLYING
+
+**Content → Shoppable video → Appearance → Motion** now tells you, clip by clip,
+what your shop will actually do:
+
+> 1 Glass skin (Demo) — will move
+> 2 Salon day (Demo) — will move
+> 3 SPF that never stings (Demo) — waiting for slot
+> 4 Double cleanse (Demo) — waiting for slot
+> 5 anua mist spray — **will move**
+> 6 bright underarms — **will move**
+
+It also says how many of the moving clips are demo footage and where to remove
+them, names the setting that caps it, and names the two things a *shopper's own
+phone* can switch off that no shop can override.
+
+**If that panel lists your two clips as "will move", this is finished.** And if
+you remove the demo content, all four slots go to your own clips.
+
+### THE THINGS YOU ASKED FOR IN THE POPUP
+
+- **Previous and next arrows.** Outside the video on a desktop, on its edge on a
+  phone where there is no outside. Arrow keys work. Mirrored in Arabic. At the
+  first and last clip the arrow is **visibly greyed rather than silently wrapping
+  round** — you arranged the order, so you should be able to tell when you have
+  reached the end.
+- **A square product thumbnail.** It was 138×46 — a wide letterbox. It is 46×46,
+  which gives the product name **91 more pixels**: *"Fresh That Lasts Deodorant"*
+  now fits on one line instead of two.
+
+### A CLIP WHOSE VIDEO HAS VANISHED SAYS SO
+
+Two of your clips point at video files that are no longer on the server. They
+used to report *"ffmpeg could not read a poster frame"* — blaming the video
+software for a missing file. The clips screen now shows **"Video file is gone"**
+on that clip, in red.
+
+### FILES
+
+`resources/views/ugc/assets.blade.php`, `ugc/rail.blade.php`,
+`app/Services/Ugc/RailPlayback.php` and `ClipFile.php` (new), `Tile.php`,
+`UgcTranscoder`, `CutUgcCovers`, the two UGC admin screens, and one
+cache-clearing migration.
+
 ## 2.60.316
 **One product card, everywhere.** Square pictures, five across on a desktop, two
 on a phone, and the filter sidebar folded away until you want it.
