@@ -655,6 +655,22 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 
 	$meta( 'commentmeta', 'comment_id', 8101, array( 'rating' => '5', 'verified' => '1' ) );
 
+	// HER PHOTOGRAPHS. Two rows under ONE key, which is how the review-photo
+	// plugins store a multi-image upload and the shape a meta pivot keeping
+	// "the last value for this key" silently reduces to one picture.
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'reviews-images' => '9001' ) );
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'reviews-images' => '9002' ) );
+
+	// A key that is NOT a photograph. It is here so the export has something to
+	// leave behind and NAME, rather than a fixture in which everything happens
+	// to be a picture and the unused-key report never fires.
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'wc_review_helpful' => '7' ) );
+
+	// AND SOMEBODY ELSE'S SERVER. A meta value holding an offsite image is the
+	// case that turns "any URL ending in .jpg" into this shop hotlinking a
+	// stranger's file from a product page, so it must NOT come across.
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'imported_avatar' => 'https://evil.test/trophy.jpg' ) );
+
 	// Pre-WooCommerce-3.0: a product review with an EMPTY comment_type.
 	$insert( 'comments', array(
 		'comment_ID' => 8102, 'comment_post_ID' => 4021, 'comment_author' => '',
@@ -665,6 +681,14 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	) );
 
 	$meta( 'commentmeta', 'comment_id', 8102, array( 'rating' => '4' ) );
+
+	// The OTHER storage shape: a PHP-serialised array of uploads URLs rather
+	// than attachment ids, written http:// before this shop moved to https.
+	$meta( 'commentmeta', 'comment_id', 8102, array(
+		'cr_photos' => serialize( array(
+			'http://kbeautybliss.com/wp-content/uploads/2020/01/skincare-category.jpg',
+		) ),
+	) );
 
 	// A customer QUESTION: a product comment with no rating. Not a review.
 	$insert( 'comments', array(
@@ -703,6 +727,96 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		'post_date' => '2019-01-01 09:00:00', 'post_date_gmt' => '2019-01-01 05:00:00',
 		'post_modified' => '2019-01-01 09:00:00',
 	) );
+
+	// A CHILD page, which exists for one reason: its address is /about-us/team/
+	// and not /team/. An old-slug row for it is the case that catches a
+	// reconstruction which reassembles the URL from a base instead of editing
+	// the address WordPress actually reports.
+	$insert( 'posts', array(
+		'ID' => 7003, 'post_author' => 1, 'post_type' => 'page', 'post_status' => 'publish',
+		'post_parent' => 7002,
+		'post_title' => 'Our team', 'post_name' => 'team',
+		'post_content' => 'Six people and a cat.', 'post_excerpt' => '',
+		'post_date' => '2019-01-02 09:00:00', 'post_date_gmt' => '2019-01-02 05:00:00',
+		'post_modified' => '2019-01-02 09:00:00',
+	) );
+
+	// ── The navigation menu ─────────────────────────────────────────────────
+	//
+	// WordPress keeps a menu as a `nav_menu` TAXONOMY term whose members are
+	// `nav_menu_item` POSTS, each carrying its target in postmeta. No stage
+	// exports it: `nav_menu_item` is on posts.csv's NOT_CONTENT list, so the
+	// whole navigation is meant to be "counted and named in the manifest
+	// notes" and re-entered by hand.
+	//
+	// THE FIXTURE HAD NO MENU, so that note had never fired and nobody had
+	// ever seen whether it says anything. A gap that is only named on a shop
+	// nothing tests is a gap that is not named.
+	$insert( 'terms', array( 'term_id' => 950, 'name' => 'Main menu', 'slug' => 'main-menu' ) );
+	$insert( 'term_taxonomy', array(
+		'term_taxonomy_id' => 950, 'term_id' => 950, 'taxonomy' => 'nav_menu',
+		'description' => '', 'parent' => 0, 'count' => 3,
+	) );
+
+	$menu_items = array(
+		// A category link, a page link and a hand-typed URL: the three kinds a
+		// real header carries, and three different things to re-enter.
+		array( 'id' => 7501, 'title' => 'Skincare', 'order' => 1, 'type' => 'taxonomy', 'object' => 'product_cat', 'object_id' => 15, 'url' => '' ),
+		array( 'id' => 7502, 'title' => 'About us', 'order' => 2, 'type' => 'post_type', 'object' => 'page', 'object_id' => 7002, 'url' => '' ),
+		array( 'id' => 7503, 'title' => 'Sale', 'order' => 3, 'type' => 'custom', 'object' => 'custom', 'object_id' => 0, 'url' => 'https://kbeautybliss.com/super-sale/' ),
+	);
+
+	foreach ( $menu_items as $item ) {
+		$insert( 'posts', array(
+			'ID' => $item['id'], 'post_author' => 1, 'post_type' => 'nav_menu_item', 'post_status' => 'publish',
+			'post_title' => $item['title'], 'post_name' => (string) $item['id'],
+			'post_content' => '', 'post_excerpt' => '',
+			'post_date' => '2019-02-01 09:00:00', 'post_date_gmt' => '2019-02-01 05:00:00',
+			'post_modified' => '2019-02-01 09:00:00', 'menu_order' => $item['order'],
+		) );
+
+		$meta( 'postmeta', 'post_id', $item['id'], array(
+			'_menu_item_type'             => $item['type'],
+			'_menu_item_object'           => $item['object'],
+			'_menu_item_object_id'        => (string) $item['object_id'],
+			'_menu_item_menu_item_parent' => '0',
+			'_menu_item_url'              => $item['url'],
+		) );
+
+		$insert( 'term_relationships', array(
+			'object_id' => $item['id'], 'term_taxonomy_id' => 950, 'term_order' => 0,
+		) );
+	}
+
+	// ── Previous addresses ──────────────────────────────────────────────────
+	//
+	// `_wp_old_slug` is what WordPress writes when a PUBLISHED post's slug
+	// changes, and wp_old_slug_redirect() -- core, on every front-end 404 --
+	// has been 301ing these addresses ever since. They are the addresses Google
+	// holds and nothing in this migration had ever read them. A real six-year-
+	// old shop has hundreds; the fixture carries the four shapes that matter.
+	//
+	// meta_id order is the export's cursor, so these are inserted in the order
+	// the rows come out.
+	$meta( 'postmeta', 'post_id', 4021, array( '_wp_old_slug' => 'vitamin-c-serum' ) );
+
+	// A SECOND rename of the same product. One row per rename, not per post --
+	// a reconstruction keyed on the post id would emit one of these and lose
+	// the other.
+	$meta( 'postmeta', 'post_id', 4021, array( '_wp_old_slug' => 'ginseng-elixir' ) );
+
+	// An article. Its address has no base at all under /%postname%/, which is
+	// the structure this shop runs.
+	$meta( 'postmeta', 'post_id', 7001, array( '_wp_old_slug' => 'k-beauty-layering' ) );
+
+	// The child page: /about-us/our-team/, NOT /our-team/.
+	$meta( 'postmeta', 'post_id', 7003, array( '_wp_old_slug' => 'our-team' ) );
+
+	// And one on an ATTACHMENT, which must NOT appear: `attachment` is in
+	// KBB_Export_Stage_Posts::NOT_CONTENT, an attachment address is a media
+	// URL rather than a page this shop serves, and emitting it would propose a
+	// redirect from an image to a product.
+	$meta( 'postmeta', 'post_id', 9001, array( '_wp_old_slug' => 'ginseng-serum-photo-old' ) );
 }
 
 /**

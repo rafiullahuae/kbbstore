@@ -108,6 +108,65 @@ class KBB_Export_Wp {
 	}
 
 	/**
+	 * EVERY commentmeta ROW a batch of comments carries, in meta_id order.
+	 *
+	 * ── WHY THIS IS NOT comment_meta() ─────────────────────────────────────
+	 *
+	 * Two differences, and both are the point.
+	 *
+	 * IT CANNOT NAME ITS KEYS. Review photographs are not a WooCommerce core
+	 * feature: every shop that has them has them from a plugin, and each plugin
+	 * invents its own meta key. This plugin's standing rule is that it does not
+	 * write down what it remembers about somebody else's software -- so the
+	 * reviews stage recognises a photograph by what the VALUE is (an
+	 * attachment id, or an address under this site's own uploads directory)
+	 * and reports every key it did not use. A list of keys to look for would be
+	 * a list of guesses, and a guess that misses is silent.
+	 *
+	 * IT KEEPS EVERY ROW, NOT THE LAST ONE. meta_for() pivots to one value per
+	 * key because that is what get_post_meta($id, $key, true) returns. Three
+	 * photographs on one review are commonly three ROWS under one key, and that
+	 * pivot would keep one of them and drop two without saying so.
+	 *
+	 * @param array<int,int> $ids
+	 * @param array<int,string> $except keys another column already carries
+	 * @return array<int,array<int,array<string,string>>>
+	 */
+	public static function comment_meta_rows( array $ids, array $except = array() ) {
+		global $wpdb;
+
+		$out = array();
+
+		if ( empty( $ids ) ) {
+			return $out;
+		}
+
+		$id_list = implode( ',', array_map( 'intval', $ids ) );
+		$where   = '';
+
+		if ( ! empty( $except ) ) {
+			$where = ' AND meta_key NOT IN (' . implode( ',', array_map( array( __CLASS__, 'quote' ), $except ) ) . ')';
+		}
+
+		$rows = $wpdb->get_results(
+			'SELECT comment_id, meta_key, meta_value
+			 FROM ' . $wpdb->prefix . 'commentmeta
+			 WHERE comment_id IN (' . $id_list . ')' . $where . '
+			 ORDER BY meta_id',
+			ARRAY_A
+		);
+
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row['comment_id'] ][] = array(
+				'key'   => (string) $row['meta_key'],
+				'value' => (string) $row['meta_value'],
+			);
+		}
+
+		return $out;
+	}
+
+	/**
 	 * EVERY meta key a batch of posts carries, pivoted the same way.
 	 *
 	 * Used only by the SEO stage, which cannot name its keys in advance: a shop

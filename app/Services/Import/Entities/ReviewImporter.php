@@ -11,6 +11,7 @@ use App\Services\Import\ImportContext;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Support\ProductRating;
+use App\Support\SafeUrl;
 use App\Support\ReviewStatus;
 
 /**
@@ -271,6 +272,24 @@ final class ReviewImporter extends EntityImporter
             // varchar(60), and an IPv6 address with a zone is longer than that.
             'ip' => mb_substr((string) ($row->text('ip', 'ip', 'author_ip', 'comment_author_ip') ?? ''), 0, 60),
         ];
+
+        $photographs = $this->photographs($row);
+
+        /*
+         * ONLY WHEN THE EXPORT CARRIES ONE, which is the same rule SeoImporter
+         * applies to the barcodes: never write over something this shop already
+         * holds with nothing.
+         *
+         * `reviews.images` on an imported row can also have been filled HERE --
+         * a shopper uploading a photo to the new shop through
+         * Store\ReviewController. A re-run of the import (which is the normal
+         * case, not an edge case: full, delta, cutover delta) would otherwise
+         * delete her photograph every time, because the export it is matched
+         * against has never heard of it.
+         */
+        if ($photographs !== []) {
+            $attributes['images'] = $photographs;
+        }
 
         $created = $row->date(
             'comment_date',
@@ -756,6 +775,88 @@ final class ReviewImporter extends EntityImporter
         }
 
         return $clean === '' ? null : $clean;
+    }
+
+    /**
+     * A shopper's photographs of the product, scheme-checked before they land.
+     *
+     * ── THE COLUMN WAS BUILT AND NOTHING HAS EVER FILLED IT ─────────────────
+     *
+     * `reviews.images` is a `json` column from the first schema migration, cast
+     * to an array on the model, drawn by the product page (up to four, with a
+     * "+n" chip), filtered on by the review wall, and scheme-checked by
+     * `ReviewWall::photos()` on the way out. Every part of that has been in
+     * place and tested for months. The only writer was a shopper uploading to
+     * THIS shop, so on an imported catalogue it rendered nothing at all.
+     *
+     * The exporter's reviews stage now carries them, recognised by the value
+     * being an attachment WordPress resolves or an address under the old site's
+     * own uploads directory, and names in `manifest.json` every comment meta
+     * key it did not use. This is the other end of that.
+     *
+     * ── WHY IT IS CHECKED HERE AS WELL AS AT THE RENDER ─────────────────────
+     *
+     * `ReviewWall::photos()` already refuses a `javascript:` URL, and the
+     * product page runs every one through `CssUrl::value()`. Both are true and
+     * neither is a reason to store one.
+     *
+     * CLAUDE.md's rule is that a URL arriving from data is scheme-checked
+     * BEFORE it becomes an `href` or a `src`, and the reason is that a render
+     * -time filter protects the paths that remember to call it. `reviews.images`
+     * is read by four other things — `ReviewsApiController`,
+     * `ReviewAssignApiController`, the admin console and the review wall's own
+     * payload — and `/api/*` on this shop is unauthenticated. A row that cannot
+     * hold an executable address cannot leak one through the fifth reader
+     * somebody adds next year.
+     *
+     * A dropped address is REPORTED, not silently skipped: a photograph that
+     * does not arrive is a thing the owner should be able to see in the import
+     * report rather than notice missing from a product page.
+     *
+     * @return list<string>
+     */
+    private function photographs(Row $row): array
+    {
+        $raw = $row->text('images', 'images', 'photos', 'image_urls', 'review_images');
+
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        // Pipe first, comma second — the same order and the same reason as
+        // ProductImporter's gallery: an uploads filename may contain a comma
+        // and splitting on one turns a single file into two broken addresses.
+        $parts = str_contains($raw, '|')
+            ? $row->list('|', 'images', 'photos', 'image_urls', 'review_images')
+            : $row->list(',', 'images', 'photos', 'image_urls', 'review_images');
+
+        $out = [];
+
+        foreach ($parts as $part) {
+            $url = SafeUrl::src($part);
+
+            if ($url === '') {
+                $this->later(
+                    'discarded',
+                    'a review photograph whose address is not one a picture can be fetched from — only http and '
+                    .'https are stored, so an executable or offsite-scheme address never reaches a page or an '
+                    .'/api/ response',
+                    $row->line,
+                    $this->identify($row),
+                    'images',
+                    $part,
+                    '(not imported)',
+                );
+
+                continue;
+            }
+
+            // One picture once. A plugin that stored both the attachment ids
+            // and the URLs would otherwise double every photograph.
+            $out[$url] = true;
+        }
+
+        return array_keys($out);
     }
 
     private function reply(Row $row): ?string

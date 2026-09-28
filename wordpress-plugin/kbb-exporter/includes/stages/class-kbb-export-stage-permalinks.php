@@ -124,6 +124,19 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 			$sources[] = array( 'kind' => 'post', 'type' => $type, 'label' => $type );
 		}
 
+		/*
+		 * LAST, AND LAST ON PURPOSE.
+		 *
+		 * The cursor encodes this list's INDEX (see SOURCE_STRIDE), so a source
+		 * inserted anywhere but the end renumbers every source after it and a
+		 * resumed export continues into the wrong one. Appending is the only
+		 * safe edit to this list, and it is also why `old-slug` is emitted
+		 * after every current address rather than beside the object it belongs
+		 * to: a reader grouping permalinks.csv by `type` still finds the
+		 * object's CURRENT address first.
+		 */
+		$sources[] = array( 'kind' => 'old_slug', 'type' => '', 'label' => 'old-slug' );
+
 		$this->sources = $sources;
 
 		return $this->sources;
@@ -135,6 +148,18 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 		$total = 0;
 
 		foreach ( $this->sources() as $source ) {
+			if ( 'old_slug' === $source['kind'] ) {
+				$total += (int) $wpdb->get_var(
+					'SELECT COUNT(*) FROM ' . $wpdb->prefix . 'postmeta pm
+					 JOIN ' . $wpdb->prefix . "posts p ON p.ID = pm.post_id
+					 WHERE pm.meta_key = '_wp_old_slug'
+					   AND p.post_status IN ('publish','draft','private','pending','future')
+					   AND p.post_type NOT IN (" . $this->not_content_list() . ')'
+				);
+
+				continue;
+			}
+
 			if ( 'post' === $source['kind'] ) {
 				$total += (int) $wpdb->get_var(
 					'SELECT COUNT(*) FROM ' . $wpdb->prefix . 'posts
@@ -167,9 +192,14 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 
 		while ( $index < count( $sources ) ) {
 			$source = $sources[ $index ];
-			$rows   = 'post' === $source['kind']
-				? $this->post_rows( $source, $inner, $limit )
-				: $this->term_rows( $source, $inner, $limit );
+
+			if ( 'old_slug' === $source['kind'] ) {
+				$rows = $this->old_slug_rows( $inner, $limit );
+			} elseif ( 'post' === $source['kind'] ) {
+				$rows = $this->post_rows( $source, $inner, $limit );
+			} else {
+				$rows = $this->term_rows( $source, $inner, $limit );
+			}
 
 			if ( ! empty( $rows['rows'] ) ) {
 				$next = count( $rows['rows'] ) < (int) $limit
@@ -285,6 +315,246 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 	}
 
 	/**
+	 * The post types whose previous addresses are NOT worth a row, as SQL.
+	 *
+	 * `KBB_Export_Stage_Posts::NOT_CONTENT` is the nearest existing list and it
+	 * is ALMOST this one -- but not quite, and the difference is the whole
+	 * catalogue.
+	 *
+	 * ── WHY `product` IS TAKEN BACK OUT, WHICH IS NOT A DETAIL ──────────────
+	 *
+	 * NOT_CONTENT answers a different question. It is posts.csv's list of "post
+	 * types this file does not carry", and `product` is in it because
+	 * products.csv carries products -- not because a product has no address. A
+	 * product has the most valuable address on the shop.
+	 *
+	 * Used verbatim here it therefore drops EVERY PRODUCT RENAME, which is the
+	 * single largest source of old addresses on a six-year-old catalogue and
+	 * the one the owner most needs to keep: a renamed product's old URL is on
+	 * Google, in newsletters, and on other people's blogs. Measured, not
+	 * argued -- with NOT_CONTENT used as-is the fixture's two `_wp_old_slug`
+	 * rows for product 4021 came out of the export and the other two did not.
+	 *
+	 * MUTATION NOTE. Delete the `'product' !== $type` guard below and
+	 * `it('carries every previous address, products included')` goes red naming
+	 * both of them.
+	 *
+	 * Every other NOT_CONTENT entry belongs here for the reason this method
+	 * wants: an order, a variation, a revision, a menu item, an attachment and
+	 * a block template are either WordPress's own plumbing or a thing this shop
+	 * does not serve at a public address, so a redirect from one goes nowhere
+	 * useful and a redirect from an attachment points a picture at a page.
+	 *
+	 * Shared by the count and the batch so the two cannot drift: a type counted
+	 * and not emitted makes `total()` a denominator the bar never reaches.
+	 */
+	private function not_content_list() {
+		$out = array();
+
+		foreach ( KBB_Export_Stage_Posts::NOT_CONTENT as $type ) {
+			if ( 'product' !== $type ) {
+				$out[] = KBB_Export_Wp::quote( $type );
+			}
+		}
+
+		return implode( ',', $out );
+	}
+
+	/**
+	 * `_wp_old_slug` -- every address this post USED to have.
+	 *
+	 * ========================================================================
+	 * THIS IS THE ONLY RECORD OF AN ADDRESS THE SITE NO LONGER SERVES, AND
+	 * NOTHING IN THIS MIGRATION HAS EVER READ IT.
+	 * ========================================================================
+	 *
+	 * Every other row in permalinks.csv is an address the site serves TODAY.
+	 * Those are the easy half: the object is still there, and what is wanted is
+	 * the mapping from its old shape to its new one.
+	 *
+	 * `_wp_old_slug` is the hard half. WordPress writes one of these rows every
+	 * time a PUBLISHED post's slug changes, and `wp_old_slug_redirect()` -- core,
+	 * on every front-end 404 -- then answers the OLD address with a 301 to the
+	 * new one. So a product renamed from `vitamin-c-serum` to
+	 * `glow-vitamin-c-serum` in 2021 has been quietly 301ing ever since, Google
+	 * still holds the old address, shoppers still have it bookmarked, and
+	 * inbound links still point at it.
+	 *
+	 * That redirect is a WORDPRESS FEATURE. It dies with WordPress. Switch the
+	 * old shop off without carrying these rows and every one of those addresses
+	 * becomes a hard 404 on the new shop on day one -- and there is no way to
+	 * recover the list afterwards, because it only ever existed in the database
+	 * that was turned off.
+	 *
+	 * ── WHY THE URL IS BUILT FROM THE CURRENT PERMALINK ─────────────────────
+	 *
+	 * `_wp_old_slug` stores a SLUG, not a URL. Turning it back into the address
+	 * the site served means knowing the base it sat under -- and this plugin's
+	 * whole reason for existing is that it does not guess at bases.
+	 *
+	 * So it does not assemble one. It takes `get_permalink()`'s answer for the
+	 * post -- the real address, with every rewrite rule and filter applied --
+	 * and swaps the LAST path segment for the old slug. For every permalink
+	 * structure ending in `%postname%`, which is what produces a `_wp_old_slug`
+	 * row in the first place, that is exact rather than derived.
+	 *
+	 * Where the last segment is NOT the post's current slug -- a numeric or
+	 * id-based structure, or a draft whose permalink is `?p=123` -- the address
+	 * CANNOT be reconstructed, and the row says so in its note with an empty
+	 * `permalink`. RedirectMap skips an empty permalink, so a row this plugin
+	 * could not measure proposes nothing; it is counted and named instead. The
+	 * alternative is inventing an address that may never have existed, which is
+	 * the mistake the brand-archive note in this file's header exists to avoid.
+	 *
+	 * ── AND IT NEEDS NO IMPORTER ────────────────────────────────────────────
+	 *
+	 * `RedirectMap::fromPermalinks()` reads `type`, `wc_id` and `permalink` and
+	 * resolves the object's CURRENT path from `wc_id`. An old-slug row carries
+	 * the same `type` and the same `wc_id` as that object's current row, so the
+	 * map already does exactly the right thing with it: source = the old
+	 * address, target = wherever the object lives in this shop now. Nothing on
+	 * the Laravel side has to learn a new word.
+	 *
+	 * @return array{rows: array<int,array<string,string>>, cursor: int}
+	 */
+	private function old_slug_rows( $cursor, $limit ) {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			'SELECT pm.meta_id, pm.post_id, pm.meta_value AS old_slug, p.post_type, p.post_name, p.post_status
+			 FROM ' . $wpdb->prefix . 'postmeta pm
+			 JOIN ' . $wpdb->prefix . "posts p ON p.ID = pm.post_id
+			 WHERE pm.meta_key = '_wp_old_slug'
+			   AND p.post_status IN ('publish','draft','private','pending','future')
+			   AND p.post_type NOT IN (" . $this->not_content_list() . ')
+			   AND pm.meta_id > ' . (int) $cursor . '
+			 ORDER BY pm.meta_id
+			 LIMIT ' . (int) $limit,
+			ARRAY_A
+		);
+
+		$rows = (array) $rows;
+		$out  = array();
+		$last = (int) $cursor;
+
+		foreach ( $rows as $row ) {
+			$last = (int) $row['meta_id'];
+
+			$id       = (int) $row['post_id'];
+			$old_slug = (string) $row['old_slug'];
+
+			$current = function_exists( 'get_permalink' ) ? get_permalink( $id ) : false;
+			$current = is_string( $current ) ? $current : '';
+			$address = $this->swap_last_segment( $current, (string) $row['post_name'], $old_slug );
+
+			$out[] = array(
+				// The object's own label, so RedirectMap resolves `wc_id`
+				// against the same table it would for the current address.
+				// `product` is the one type whose label is not its post type.
+				'type'      => 'product' === $row['post_type'] ? 'product' : (string) $row['post_type'],
+				'wc_id'     => $id,
+				'slug'      => $old_slug,
+				'permalink' => $address,
+				// NOT the post's status. This address is retired by definition:
+				// the post answers at a different one now.
+				'status'    => 'old-slug',
+				// `derived` and never `wp`: get_permalink() answered about the
+				// CURRENT address, and the last segment was substituted. The
+				// column means "this was measured", and this was not.
+				'source'    => 'derived',
+				'note'      => '' === $address
+					? 'WordPress recorded `' . $old_slug . '` as a previous slug of this ' . $row['post_type']
+						. ", but its current permalink ('" . $current . "') does not end in its current slug ('"
+						. $row['post_name'] . "'), so the address this site served for the old slug cannot be "
+						. 'reconstructed and is NOT guessed at. wp_old_slug_redirect() is answering it on '
+						. 'WordPress today and nothing will answer it after the cutover.'
+					: 'a PREVIOUS address of this ' . $row['post_type'] . '. WordPress core (wp_old_slug_redirect) '
+						. '301s it to the current address today; that redirect stops the moment WordPress does, '
+						. 'so it has to become a row in this shop or it becomes a 404.',
+			);
+		}
+
+		return array( 'rows' => $out, 'cursor' => $last );
+	}
+
+	/**
+	 * `$url` with its last path segment replaced, or '' when it is not `$from`.
+	 *
+	 * The guard is the point of the function. Returning a URL when the last
+	 * segment was something else would be inventing an address, and an invented
+	 * address that looks measured is worse than no address at all -- it would
+	 * be written as a 301 and send a real shopper somewhere the old site never
+	 * had.
+	 */
+	private function swap_last_segment( $url, $from, $to ) {
+		if ( '' === $url || '' === $from || '' === $to ) {
+			return '';
+		}
+
+		$path = parse_url( $url, PHP_URL_PATH );
+
+		if ( ! is_string( $path ) || '' === $path ) {
+			return '';
+		}
+
+		$trailing = '/' === substr( $path, -1 );
+		$segments = explode( '/', trim( $path, '/' ) );
+		$leaf     = end( $segments );
+
+		// WordPress stores post_name percent-encoded for a non-ASCII slug and
+		// get_permalink() returns it the same way, so the two compare directly.
+		if ( rawurldecode( (string) $leaf ) !== rawurldecode( $from ) ) {
+			return '';
+		}
+
+		$segments[ count( $segments ) - 1 ] = $to;
+
+		$rebuilt = '/' . implode( '/', $segments ) . ( $trailing ? '/' : '' );
+		$parts   = parse_url( $url );
+
+		$prefix = '';
+
+		if ( isset( $parts['scheme'], $parts['host'] ) ) {
+			$prefix = $parts['scheme'] . '://' . $parts['host']
+				. ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' );
+		}
+
+		return $prefix . $rebuilt;
+	}
+
+	/**
+	 * How many previous addresses this site is still answering, said out loud.
+	 *
+	 * The count matters on its own: it is the number of addresses that go from
+	 * "301, quietly, for years" to "404" on cutover day, and it is a number
+	 * nobody in this migration has ever had.
+	 */
+	private function report_old_slugs() {
+		global $wpdb;
+
+		$total = (int) $wpdb->get_var(
+			'SELECT COUNT(*) FROM ' . $wpdb->prefix . 'postmeta pm
+			 JOIN ' . $wpdb->prefix . "posts p ON p.ID = pm.post_id
+			 WHERE pm.meta_key = '_wp_old_slug'
+			   AND p.post_status IN ('publish','draft','private','pending','future')
+			   AND p.post_type NOT IN (" . $this->not_content_list() . ')'
+		);
+
+		if ( 0 === $total ) {
+			return;
+		}
+
+		$this->note(
+			$total . ' previous address' . ( 1 === $total ? '' : 'es' ) . ' (`_wp_old_slug`) '
+				. ( 1 === $total ? 'is' : 'are' ) . " in permalinks.csv with status `old-slug`. WordPress core "
+				. 'answers these with a 301 on every front-end 404 (wp_old_slug_redirect), which is why they still '
+				. 'work today and why nobody has noticed them. That is a WordPress feature and it stops when '
+				. 'WordPress does: without these rows every one of these addresses 404s on the new shop, and the '
+				. 'list cannot be recovered afterwards because it only ever existed in the old database.'
+		);
+	}
+
+	/**
 	 * The fallback, assembled from the two options rather than from a habit.
 	 *
 	 * Only reached when get_permalink() is unavailable or refused. It is marked
@@ -313,6 +583,8 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 	 * before he does anything else with the file.
 	 */
 	private function report_settings() {
+		$this->report_old_slugs();
+
 		$structure  = KBB_Export_Wp::option( 'permalink_structure', '' );
 		$permalinks = get_option( 'woocommerce_permalinks', array() );
 		$permalinks = is_array( $permalinks ) ? $permalinks : array();

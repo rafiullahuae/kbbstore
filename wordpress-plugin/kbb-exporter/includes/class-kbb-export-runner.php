@@ -61,7 +61,33 @@ class KBB_Export_Runner {
 	 */
 	const SENSITIVE_FILES = array( 'customers.csv', 'reviews.csv', 'orders.csv' );
 	const FORMAT       = 'kbb-export/1';
-	const PLUGIN_VERSION = '1.0.0';
+
+	/**
+	 * The build that wrote an export, as `manifest.json`'s `source.plugin_version`.
+	 *
+	 * ── A THIRD COPY OF THE VERSION, AND THE ONLY ONE THAT REACHES THE OWNER ─
+	 *
+	 * 1.5.0's changelog entry says the version had "stayed at 1.0.0 through
+	 * every entry below, so an owner looking at Plugins in WordPress could not
+	 * tell which build was installed, and `manifest.json` -- which records the
+	 * exporter's version as `source.plugin_version` -- could not say which build
+	 * produced a set of files. That is corrected at 1.5.0 and guarded by
+	 * `GeWpExporterTest`."
+	 *
+	 * Half of that was true. The guard compares the plugin HEADER against
+	 * `KBB_EXPORTER_VERSION`, and neither of those is what the manifest carries:
+	 * this constant is, and it was still 1.0.0. So every export written by the
+	 * 1.5.0 plugin said it was written by 1.0.0, and the sentence "re-export
+	 * with the new plugin and try again" still had no way of being confirmed --
+	 * which is the exact problem that entry was written about.
+	 *
+	 * The guard now covers all three. It is three literals rather than one
+	 * because the header line must be one for WordPress to read it off the file
+	 * and the runner must work when the harness loads `includes/` without the
+	 * plugin's main file; a test that they agree is the part a human cannot do
+	 * by looking at one file.
+	 */
+	const PLUGIN_VERSION = '1.6.0';
 
 	/** @var array<string,mixed> */
 	private $state;
