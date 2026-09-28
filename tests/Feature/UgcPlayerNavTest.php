@@ -154,8 +154,20 @@ it('returns focus to the clip the shopper ended on', function () {
      * returnFocusTo on every step, so Escape lands on the clip actually being
      * watched.
      *
-     * MUTATION NOTE — RUN. Guarding `returnFocusTo = tile;` with `if (!wasOpen)`
-     * makes this red and puts the keyboard shopper back where they started.
+     * MUTATION NOTE — RUN, AND RUN IN A BROWSER TOO, which matters because
+     * everything this particular test can see is the SOURCE. It reads the
+     * JavaScript and can only say that `returnFocusTo = tile;` sits outside the
+     * wasOpen guard; whether a browser then puts focus anywhere is a different
+     * claim, and it was the one claim in this lane pinned only by reading.
+     *
+     * tools/ug2-player-shots.cjs now presses Escape after walking to the last
+     * clip and asks the document who has focus. Shipped, in all four contexts
+     * (en/ar x 390/1280), focus lands on `ug2-medicube` — the clip the shopper
+     * ENDED on. Guard `returnFocusTo = tile;` with `if (!wasOpen)` and this
+     * test goes red AND the measurement goes with it: focus lands on
+     * `glass-skin-in-6-steps-demo`, the tile they opened five presses earlier,
+     * which the rail has since scrolled off screen. Both runs are in
+     * docs/lane-ug2-shots/player-after.json under the `-closed` keys.
      */
     $js = playerJs();
     $at = (int) strpos($js, 'returnFocusTo = tile;');

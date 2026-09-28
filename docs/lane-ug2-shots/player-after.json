@@ -143,6 +143,13 @@
     "openSlug": "ug2-medicube",
     "scrollWidth": 390
   },
+  "en-390-closed": {
+    "focusedSlug": "ug2-medicube",
+    "focusedTag": "div",
+    "playerOpen": false,
+    "endedOn": "ug2-medicube",
+    "returnedToEnded": true
+  },
   "en-1280-first": {
     "dir": "ltr",
     "box": {
@@ -286,6 +293,13 @@
     },
     "openSlug": "ug2-medicube",
     "scrollWidth": 1280
+  },
+  "en-1280-closed": {
+    "focusedSlug": "ug2-medicube",
+    "focusedTag": "div",
+    "playerOpen": false,
+    "endedOn": "ug2-medicube",
+    "returnedToEnded": true
   },
   "ar-390-first": {
     "dir": "rtl",
@@ -431,6 +445,13 @@
     "openSlug": "ug2-medicube",
     "scrollWidth": 390
   },
+  "ar-390-closed": {
+    "focusedSlug": "ug2-medicube",
+    "focusedTag": "div",
+    "playerOpen": false,
+    "endedOn": "ug2-medicube",
+    "returnedToEnded": true
+  },
   "ar-1280-first": {
     "dir": "rtl",
     "box": {
@@ -574,5 +595,12 @@
     },
     "openSlug": "ug2-medicube",
     "scrollWidth": 1280
+  },
+  "ar-1280-closed": {
+    "focusedSlug": "ug2-medicube",
+    "focusedTag": "div",
+    "playerOpen": false,
+    "endedOn": "ug2-medicube",
+    "returnedToEnded": true
   }
 }

@@ -111,6 +111,38 @@ const PROBE = () => {
       }) || await page.evaluate(PROBE);
       await page.evaluate(() => document.getElementById('ug2-mutate').remove());
 
+      /*
+       * ── THE ONE CLAIM IN THIS LANE THAT WAS PINNED IN SOURCE AND NEVER
+       *    MEASURED ────────────────────────────────────────────────────────
+       *
+       * "On close, focus must return to the tile the shopper ENDED on, not the
+       * one they opened" is the thing prev/next quietly breaks, and the test
+       * for it reads the JavaScript — it can only say that `returnFocusTo =
+       * tile;` sits outside the wasOpen guard. That is a statement about the
+       * source, not about a browser.
+       *
+       * So: press Escape and ask the document who has focus. The shopper opened
+       * tile 1 and walked to the last one, so a correct answer is the LAST
+       * tile's slug and the bug's answer is the first's.
+       */
+      const ended = report[key + '-last'].openSlug;
+
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+
+      report[key + '-closed'] = await page.evaluate(() => {
+        const el = document.activeElement;
+        const tile = el && el.closest ? el.closest('.ugcr-t[data-ugcr-tile]') : null;
+        return {
+          focusedSlug: tile ? tile.getAttribute('data-ugcr-slug') : null,
+          focusedTag: el ? el.tagName.toLowerCase() : null,
+          playerOpen: !!document.querySelector('.ugcp.is-on'),
+        };
+      });
+      report[key + '-closed'].endedOn = ended;
+      report[key + '-closed'].returnedToEnded =
+        report[key + '-closed'].focusedSlug === ended;
+
       console.log('\n== ' + TAG + ' ' + key + ' ==');
       const brief = (r) => 'thumb ' + r.thumb.w + 'x' + r.thumb.h
         + ' square=' + r.thumbSquare
@@ -121,6 +153,10 @@ const PROBE = () => {
       console.log('  first        ' + brief(report[key + '-first']));
       console.log('  last         ' + brief(report[key + '-last']));
       console.log('  last MUTATED ' + brief(report[key + '-last-mutated']));
+      const c = report[key + '-closed'];
+      console.log('  on close     focus -> ' + c.focusedSlug
+        + ' (ended on ' + c.endedOn + ') returnedToEnded=' + c.returnedToEnded
+        + ' playerOpen=' + c.playerOpen);
 
       await page.close();
     }
