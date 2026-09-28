@@ -171,6 +171,60 @@ it('gives the loop preview a grid in the stylesheet rather than in a style attri
         ->toBeTrue('the loop tile and its prose have lost their breakpoint');
 });
 
+it('stacks the loop preview so the clip is on screen and not below it', function () {
+    /*
+     * ── THE DEFECT, ON THE SCREEN ───────────────────────────────────────────
+     *
+     * The owner: *"the 2-3 second clip is not getting from the video, instead
+     * of it just displays the cover."* He was right, and nothing was wrong with
+     * the player: wireLoop() built the <video>, gave it the src, muted it,
+     * played it. The rule was
+     *
+     *     .ugs-loop video,.ugs-loop img{display:block;width:100%;height:100%;object-fit:cover}
+     *
+     * and neither child was positioned. `.ugs-loop` is 158px wide with
+     * aspect-ratio 9/16 -- 281px tall -- and `overflow:hidden`. The <img> is in
+     * the markup loopSectionHTML() returns; the <video> is appended AFTER it. In
+     * normal flow the poster took the whole 281px and the video was laid out
+     * below the box and clipped.
+     *
+     * MEASURED in Chromium against those exact two rules, nothing else on the
+     * page:
+     *
+     *     box    top 8   height 281
+     *     poster top 8   height 281
+     *     video  top 289 height 281      <- outside the box
+     *
+     * and after the fix the video reads top 8, height 281.
+     *
+     * THE FIX IS THE SHOP'S OWN RULE. resources/views/ugc/assets.blade.php:129
+     * stacks the rail's poster and video with `position:absolute;inset:0` and
+     * has never had this bug. This preview's header says it shows "what a
+     * shopper sees on the rail, at the size the tile really is", so stacking it
+     * any other way is how the two drifted apart in the first place.
+     *
+     * WHY THE POSTER STAYS UNDER IT. A <video> with no decoded frame paints
+     * nothing, so the cover shows through until the first frame lands: no black
+     * flash, no reflow, no second element to remove. z-index is explicit
+     * because DOM order is not a guarantee -- a repaint that re-inserted the
+     * <img> last would hide the clip again, which is this defect exactly.
+     *
+     * MUTATION NOTE, RUN: drop `position:absolute;inset:0` from the rule and
+     * this is red on the first assertion; drop the `.ugs-loop video{z-index:1}`
+     * line and it is red on the second.
+     */
+    $style = editorStyle();
+
+    expect(preg_match(
+        '/\.ugs-loop video,\.ugs-loop img\{[^}]*position:absolute;inset:0/',
+        $style
+    ))->toBe(1, 'the loop preview\'s video and poster are in normal flow again, '
+        . 'so the video is laid out below a box that clips it');
+
+    expect(str_contains($style, '.ugs-loop video{z-index:1}'))
+        ->toBeTrue('the clip is no longer explicitly above its own cover');
+});
+
 /* ══════════════════════════════════════════ the cut, where the upload ends ══ */
 
 it('offers the cut only where the server said it can cut, and only with a clip to cut from', function () {

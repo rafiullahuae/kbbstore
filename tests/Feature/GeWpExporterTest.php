@@ -2858,3 +2858,61 @@ it('packs and draws the archives live, in a browser, one bounded unit at a time'
         expect($row['description'])->toContain('.zip');
     }
 });
+
+it('keeps the plugin header and KBB_EXPORTER_VERSION saying the same thing', function () {
+    /*
+     * ── ONE VALUE IN TWO PLACES, AND IT HAD NOT MOVED IN TWELVE COMMITS ─────
+     *
+     * WordPress prints the `Version:` line from the plugin header on the
+     * Plugins screen. `KBB_EXPORTER_VERSION` is what the runner writes into
+     * `manifest.json` as `source.plugin_version`, which the import's report
+     * shows back to the owner. Nothing made them agree, and nothing made either
+     * of them move: both read 1.0.0 from the first commit through the manifest
+     * survey, group selection, per-group downloads, the real delete and the
+     * three product columns that had been on his edit page and in no file.
+     *
+     * Two consequences, and both are the migration's problem rather than the
+     * plugin's: the owner could not tell which build was installed on
+     * WordPress, and a set of exported files could not say which build produced
+     * it — so "re-export with the new plugin and try again" had no way of being
+     * confirmed.
+     *
+     * This does not pin a NUMBER — a version that may never rise is the defect,
+     * not the fix. It pins that the two places say the same thing, which is the
+     * half a human cannot check by looking at one file.
+     *
+     * MUTATION NOTE, RUN: change either the header line or the constant and
+     * leave the other, and this is red naming both values.
+     */
+    $plugin = (string) file_get_contents(base_path('wordpress-plugin/kbb-exporter/kbb-exporter.php'));
+
+    expect(preg_match('/^\s*\*\s*Version:\s*([0-9]+\.[0-9]+\.[0-9]+)\s*$/m', $plugin, $header))
+        ->toBe(1, 'the plugin header has no Version: line, so WordPress will not show one');
+
+    expect(preg_match("/define\(\s*'KBB_EXPORTER_VERSION',\s*'([0-9]+\.[0-9]+\.[0-9]+)'\s*\)/", $plugin, $const))
+        ->toBe(1, 'KBB_EXPORTER_VERSION is gone, so manifest.json cannot record which build wrote it');
+
+    expect($header[1])->toBe(
+        $const[1],
+        "the plugin header says {$header[1]} and KBB_EXPORTER_VERSION says {$const[1]}; "
+        . 'WordPress would show one and manifest.json would record the other'
+    );
+
+    // The history the number is given, so a bump cannot be a number with no
+    // account behind it.
+    expect(is_file(base_path('wordpress-plugin/kbb-exporter/CHANGELOG.md')))
+        ->toBeTrue('the plugin has a version and no record of what earned it');
+
+    /*
+     * str_contains() AND NOT ->toContain($needle, $message). Pest's toContain()
+     * IS VARIADIC, so a message passed as the second argument is read as a
+     * SECOND NEEDLE and the assertion fails on the message itself. This is the
+     * trap UgcLikeApiTest's own comment names, and the first draft of this line
+     * walked straight into it -- red with "CHANGELOG.md does not say what 1.5.0
+     * changed" reported as a missing substring.
+     */
+    $changelog = (string) file_get_contents(base_path('wordpress-plugin/kbb-exporter/CHANGELOG.md'));
+
+    expect(str_contains($changelog, '## ' . $header[1]))
+        ->toBeTrue("CHANGELOG.md does not say what {$header[1]} changed");
+});

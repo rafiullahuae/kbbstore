@@ -65,3 +65,35 @@ Schedule::command('ugc:cut-covers --limit=20 --unattended')
     // would hold `schedule:run` — and therefore every later entry in this file
     // — for those 30 seconds.
     ->runInBackground();
+
+/*
+| ── CAPTURE THE TAMARA ORDERS THAT HAVE ALREADY SHIPPED ─────────────────────
+|
+| The owner turned this on in as many words on 28 September 2026, and the
+| migration 2027_03_21_000000_tamara_auto_capture_on_by_default writes the
+| switch. Without a schedule that switch does nothing: TamaraCaptureSweep is
+| only reached by this command, and until now nothing ran it, so an install
+| with auto-capture On would still have been waiting for somebody to type the
+| command over SSH.
+|
+| WHY HOURLY AND NOT EVERY MINUTE. This one makes network calls to Tamara and
+| moves money, which the cover cutter above does neither of. The thing it is
+| racing is Tamara voiding an authorisation after ~180 days; an hour of latency
+| against a 180-day deadline is nothing, and an hourly run keeps the shop's
+| API traffic to Tamara proportionate to what it is doing.
+|
+| THE COMMAND IS SAFE TO RUN WITH NOTHING TO DO, which is what it does almost
+| every hour: `run()` returns early with a reason when the gateway is not
+| configured or the switch is off, and the candidate query is one indexed
+| SELECT bounded by `--limit`. `--minutes` defaults to 30, so an operator who
+| marks the wrong order shipped has half an hour to undo it before this takes
+| the money.
+|
+| withoutOverlapping, because a slow Tamara is the case where two runs would
+| otherwise ask about the same orders; runInBackground, because the scheduler
+| waits for a foreground command and this one talks to the network.
+*/
+Schedule::command('payments:tamara-capture')
+    ->hourly()
+    ->withoutOverlapping(30)
+    ->runInBackground();

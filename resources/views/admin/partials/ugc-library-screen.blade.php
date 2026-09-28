@@ -457,7 +457,34 @@
 /* 158px is the shop's own rail tile width, so this is the size it really is. */
 .ugs-loop{width:min(100%,158px);aspect-ratio:9/16;border-radius:var(--r-sm,12px);overflow:hidden;
           background:#0b0f18;position:relative}
-.ugs-loop video,.ugs-loop img{display:block;width:100%;height:100%;object-fit:cover}
+/* ── THE PREVIEW SHOWED THE COVER AND NEVER THE CLIP ──────────────────────
+
+   These two used to be `display:block;width:100%;height:100%` and NOTHING
+   ELSE. Both are in normal flow, so in a box that is 158px wide and
+   aspect-ratio 9/16 -- 281px tall -- the <img> took the whole 281px and the
+   <video> wireLoop() appends AFTER it was laid out at 281px, below the box,
+   where `overflow:hidden` clipped it. MEASURED in Chromium against these exact
+   rules: box top 8 height 281, poster top 8 height 281, VIDEO TOP 289. The
+   element was mounted, had its src, and was playing; it was simply not on
+   screen, so the column headed "The 2.5 second loop" showed a still and the
+   prose beside it said the tile was playing.
+
+   The shop has never had this bug and the fix is its rule, not a new one:
+   resources/views/ugc/assets.blade.php:129 stacks the rail's poster and video
+   with `position:absolute;inset:0`. This preview's whole claim is "what a
+   shopper sees on the rail, at the size the tile really is", so it should
+   stack the way the rail does.
+
+   The poster stays UNDERNEATH rather than being removed, and that is the
+   smooth part: a <video> with no decoded frame yet paints nothing, so the
+   cover shows through until the first frame arrives and the swap has no black
+   flash and no reflow. z-index is explicit rather than left to DOM order,
+   because a repaint that re-inserts the <img> last would otherwise hide the
+   clip again -- which is exactly the class of bug this comment is about. */
+.ugs-loop video,.ugs-loop img{display:block;width:100%;height:100%;object-fit:cover;
+                              position:absolute;inset:0}
+.ugs-loop img{z-index:0}
+.ugs-loop video{z-index:1}
 .ugs-loopcap{font-size:10px;color:var(--ink-faint,#97a0b2);text-align:center;line-height:1.4;max-width:158px}
 .ugs-path{font-size:10px;color:var(--ink-faint,#97a0b2);overflow-wrap:anywhere;line-height:1.4}
 /* The optional extra, folded away rather than thrown at the owner beside the

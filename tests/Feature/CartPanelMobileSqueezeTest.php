@@ -524,24 +524,38 @@ it('reads btn_h_m on the footer buttons, whatever a page sheet does to them', fu
      * home page, the cart, the checkout, the blog and every content page, and is
      * overridden on /shop and /category.
      *
-     * WHY IT IS NOT FIXED. The fix is one drawer-scoped line —
-     * `#cart .kc-btns .btn-ghost,#cart .kc-btns .cobtn{height:auto}` — whose ID
-     * outranks a page sheet whatever the order. It would also take the shop
-     * page's drawer Checkout button from 50px to 44px on every shop that applied
-     * it: a visual change to something that works today, on a page the owner did
-     * not ask about, in another lane's file. CLAUDE.md rule 1 allows one
-     * exception and it is a default the owner asked for in as many words. He asked
-     * for controls; whether his two footer buttons should be the same height on
-     * the shop page is a decision about his shop, so it is his.
+     * ── AND THE OWNER ANSWERED IT ON 28 SEPTEMBER 2026: "yes make it equal" ──
      *
-     * THIS CASE PINS THE HALF THAT IS THIS LANE'S: that the panel's own rule
-     * reads the setting at all. It deliberately does NOT pin the absence of the
-     * fix, and it does NOT pin kbb-shop.css's two heights — the first goes red
-     * the day somebody does the right thing, and the second goes red the day
-     * another lane changes its own file for its own reasons. Neither is a
-     * failure. The finding lives in this comment and in the lane report.
+     * So it is fixed, and this comment is kept as written above because the
+     * measurement in it is the before. The fix is the drawer-scoped line this
+     * case proposed, with one correction that matters: it named `#cart`, and
+     * the drawer's id is `#kcCart` (resources/views/partials/cart-drawer.blade
+     * .php). As proposed it would have matched nothing and the buttons would
+     * have stayed 44 and 50 with a test going green over it.
+     *
+     * MEASURED in Chromium on /shop/ through tools/cp-preview.sh, before and
+     * after, at both widths the owner is shown:
+     *
+     *     before   1280: Cart 44    Checkout 50      390: Cart 44  Checkout 50
+     *     after    1280: Cart 46.25 Checkout 46.25   390: Cart 44  Checkout 44
+     *
+     * `height:auto` hands both buttons to the padding rule every other page
+     * already uses, and at =<900px to the `min-height` below — so the SECOND
+     * half of the finding is closed too: `--cp-btnh-m`, the Mobile · Button
+     * height slider, now moves these buttons on /shop as it always did
+     * everywhere else. docs/od-drawer-shots/ carries the pictures.
+     *
+     * This case pins BOTH rules now: the panel's own mobile rule, and the
+     * drawer-scoped override without which a page sheet wins. It still does not
+     * pin kbb-shop.css's two heights — that file is free to change for its own
+     * reasons, and the override is written so that it may.
+     *
+     * MUTATION, RUN: delete the `#kcCart` line from kbb.css and this is red;
+     * change its selector back to the `#cart` the comment above proposed and it
+     * is red too, which is the half that would otherwise have shipped.
      */
     $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
 
-    expect($css)->toContain('.kc-btns .btn-ghost,.kc-btns .cobtn{min-height:var(--cp-btnh-m,44px)');
+    expect($css)->toContain('.kc-btns .btn-ghost,.kc-btns .cobtn{min-height:var(--cp-btnh-m,44px)')
+        ->and($css)->toContain('#kcCart .kc-btns .btn-ghost,#kcCart .kc-btns .cobtn{height:auto}');
 });

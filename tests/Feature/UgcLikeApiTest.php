@@ -48,7 +48,23 @@ function likeShop(bool $module = true, bool $likes = true): UgcVideo
          */
         'wc_id' => random_int(100000, 999999),
         'sku' => 'SECRET-SKU',
-        'total_sales' => 777,
+        /*
+         * NINE DIGITS, AND 777 IS WHY.
+         *
+         * The leak sweep below looks for this value as a SUBSTRING of the whole
+         * feed document, and the document legitimately publishes the product's
+         * slug -- which is `like-p-` plus uniqid(), thirteen hex characters
+         * drawn from the clock. On 28 September 2026 a full MySQL run drew a
+         * slug carrying `777` and the sweep reported *"the public feed leaks
+         * 777"*: a green suite on either engine most of the time, and roughly
+         * one run in four hundred failing as though total_sales had reached the
+         * wire. A three-digit sentinel cannot tell a leak from a coincidence,
+         * and the one it raises reads like a security breach.
+         *
+         * Nine digits cannot be drawn by accident out of a thirteen-character
+         * hex string, or out of any other field this feed publishes.
+         */
+        'total_sales' => 987654321,
     ]);
 
     $video = UgcVideo::query()->updateOrCreate(['slug' => 'likeable'], [
@@ -356,7 +372,7 @@ it('publishes an allowlist and never a model', function () {
     $json = $this->getJson('/api/ugc/likeable')->getContent();
 
     foreach (['rights_evidence', 'rights_status', 'rights_granted_at', 'DM from',
-        'SECRET-SKU', '777', 'position', 'created_at', 'updated_at'] as $forbidden) {
+        'SECRET-SKU', 'total_sales', '987654321', 'position', 'created_at', 'updated_at'] as $forbidden) {
         /*
          * str_contains() AND NOT ->not->toContain($needle, $message).
          * Pest's toContain() IS VARIADIC, so the second argument is read as a
@@ -373,4 +389,44 @@ it('publishes an allowlist and never a model', function () {
      * reads. A public feed has no business with the first.
      */
     expect($json)->not->toContain('Likeable"');
+});
+
+/*
+ * THE CASE THAT WOULD HAVE CAUGHT THE SENTINEL, AND IT IS NOT A STYLE POINT.
+ *
+ * The sweep above searches the whole feed document for a substring. Everything
+ * it looks for has to be a string that CANNOT occur in the feed except by
+ * leaking -- and `777`, the old total_sales, was not: the feed publishes the
+ * product slug, the fixture builds that slug out of uniqid(), and uniqid() is
+ * thirteen hex characters off the clock. A full MySQL run on 28 September 2026
+ * drew `like-p-...777...` and the sweep announced *"the public feed leaks
+ * 777"*. Nothing had leaked. The suite had been green on both engines the day
+ * before and was green on both again straight afterwards, which is exactly how
+ * a one-in-four-hundred assertion reads: as flake, on the one test where flake
+ * and a security breach are reported in the same words.
+ *
+ * So this pins the property the sentinel has to have, by publishing a slug that
+ * deliberately carries the old one.
+ *
+ * MUTATION, RUN: put `'777'` back in the forbidden list above and this case is
+ * red -- "the public feed leaks 777" -- on a feed that leaks nothing.
+ */
+it('does not read a published slug that happens to carry the sentinel as a leak', function () {
+    likeShop();
+
+    // A legitimate, published, allowlisted field carrying the digits the old
+    // sentinel used. uniqid() produced this shape by itself; here it is chosen.
+    Product::query()->where('slug', 'like', 'like-p-%')
+        ->update(['slug' => 'like-p-777kbb777']);
+
+    $json = $this->getJson('/api/ugc/likeable')->assertOk()->getContent();
+
+    expect(str_contains($json, 'like-p-777kbb777'))->toBeTrue(
+        'the slug under test is not in the document, so this case proves nothing'
+    );
+
+    foreach (['rights_evidence', 'rights_status', 'rights_granted_at', 'DM from',
+        'SECRET-SKU', 'total_sales', '987654321', 'position', 'created_at', 'updated_at'] as $forbidden) {
+        expect(str_contains($json, $forbidden))->toBeFalse("the public feed leaks {$forbidden}");
+    }
 });

@@ -2,7 +2,12 @@
 # Boot a preview of THIS cart panel for the Lane CP screenshots.
 # Mirrors tools/m1-preview.sh.
 set -e
-APP=/home/user/kbb-lane-cp
+# DERIVED, NOT HARDCODED. This read `APP=/home/user/kbb-lane-cp` -- Lane CP's
+# worktree, which was removed when its branch merged, so the script that makes
+# this lane's evidence could not make it again. The screenshots are a
+# deliverable; the thing that produces them has to travel with the branch.
+# Same fix, and the same reasoning, as tools/px-progress-preview.sh.
+APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 DIR=$APP/storage/framework/testing/lane-cp-preview
 ROOT=$DIR/webroot
 DB=$DIR/preview.sqlite

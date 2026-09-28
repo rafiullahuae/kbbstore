@@ -3,7 +3,7 @@
  * Plugin Name:       KBB Store Exporter
  * Plugin URI:        https://kbeautybliss.com/
  * Description:       Exports this WooCommerce shop as the CSV set the KBB Laravel storefront imports. Batched and resumable from the admin screen, because this host has no shell.
- * Version:           1.0.0
+ * Version:           1.5.0
  * Requires at least: 5.6
  * Requires PHP:      7.4
  * Author:            KBB migration
@@ -48,7 +48,22 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'KBB_EXPORTER_VERSION', '1.0.0' );
+/*
+ * ── ONE VALUE, TWO PLACES, AND IT HAD NOT MOVED IN TWELVE COMMITS ──────────
+ *
+ * This constant and the `Version:` line in the header above MUST agree: the
+ * header is what WordPress prints on Plugins, the constant is what the runner
+ * writes into `manifest.json` as `source.plugin_version`, and the importer's
+ * report shows that. They sat at 1.0.0 from the first commit through group
+ * selection, per-group downloads, the real delete and three new product
+ * columns, so an owner looking at Plugins could not tell which build was on his
+ * site and a manifest could not say which build produced the files.
+ *
+ * GeWpExporterTest now fails if the two disagree. The history they were given
+ * is in CHANGELOG.md beside this file, derived from the commits rather than
+ * from memory.
+ */
+define( 'KBB_EXPORTER_VERSION', '1.5.0' );
 define( 'KBB_EXPORTER_DIR', __DIR__ );
 
 require_once __DIR__ . '/includes/class-kbb-export-csv.php';
