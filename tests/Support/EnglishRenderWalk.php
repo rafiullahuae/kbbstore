@@ -750,7 +750,30 @@ final class EnglishRenderWalk
      * blocks of prose above are kept in full because they, not this value, are
      * the record of what moved and why.
      */
-    public const BASE_COMMIT = 'fe1ab3e05b7257ea7736bdf6333470f2a29d1202';
+    /*
+     * ── ADVANCED AGAIN, FOR ONE LINE THE INTEGRATOR ADDED ──────────────────
+     *
+     * The related rail on a product page gained `kbb-pgrid` and a `data-skin`
+     * so that it answers Appearance -> Product styles -> Grid skin like the
+     * other four grids do. Lane PG could not make that change itself --
+     * store/product.blade.php was another lane's for the round -- and reported
+     * it as optional polish, which it is: the rail renders correctly without
+     * it. It was taken because the whole point of the round is that every grid
+     * on the shop is now ONE grid, and a related rail that ignores the skin
+     * setting is the last place that is not true.
+     *
+     * The walk was run at the merge and reported EXACTLY that, one page, one
+     * byte range, no attribute of substance moved:
+     *
+     *   product/{slug}   at byte 50657
+     *     before:  <h2>You may also like</h2>⏎    <div class=" rel" id="related">
+     *     after:   <h2>You may also like</h2>⏎    <div class=" rel kbb-pgrid"
+     *              data-skin="classic" id="related">
+     *
+     * -- and nothing else. Not one of the pages the two blocks above list came
+     * back, which is what says the merge and this edit both took cleanly.
+     */
+    public const BASE_COMMIT = '936a8ee08729ad4302e4ecd3d63f2a84f0e9c014';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
