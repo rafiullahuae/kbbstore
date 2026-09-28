@@ -391,7 +391,28 @@ did not named as the control.
 
 ---
 
-## 10 · Found, not fixed
+## 10 · Where it sits in the admin
+
+Nothing new was added to the console. What moved, and the exact path to each:
+
+| what | where |
+| --- | --- |
+| the column count (the 220px tile minimum, and the floor of 2 that holds a phone) | **Appearance → Site layout → Product grid → Smallest card**, and **Never fewer than** beside it |
+| the shop listing's own minimum, for when the rail is open | **Appearance → Site layout → Product grid → Smallest card · shop listing** |
+| an exact pinned count, if the owner would rather not have it derived | **Appearance → Site layout → Product grid → Or pin an exact count** |
+| the card's skin — which now reaches `/shop` and every category archive for the first time | **Appearance → Product styles → Grid skin** |
+| the heart on the tile | **Catalogue → Wishlist** (off by default) |
+| the quick-view button on the tile | **Catalogue → Quick view** (on by default) |
+| the badge, when the owner wants to write it | **Growth & Marketing → Product Labels** |
+
+**The filter default is not an admin setting, deliberately.** The owner asked
+for it hidden by default and for the shopper to be able to open it — that option
+is the button on the page, and the shopper's own choice is remembered. A second
+switch in the console for the same fact is the shape this repo keeps paying for.
+
+---
+
+## 11 · Found, not fixed
 
 **`.cbody`, `.addbtn`, `.binit` and `.ph2` are now unused by the storefront and
 were left in the stylesheets.** Only rules whose *every* selector required `.pc`
