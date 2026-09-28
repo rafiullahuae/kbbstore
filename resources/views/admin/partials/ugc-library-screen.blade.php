@@ -2957,9 +2957,25 @@
       + '<b>Every tile still loops. Nothing is broken.</b> '
       + 'The rail plays the first ' + esc(length) + ' seconds of the video you uploaded and '
       + 'rewinds, so a clip loops whether or not a separate 2.5-second file was ever cut. '
-      + 'The cover is taken in your browser the moment an upload lands. '
-      + 'A cut teaser is a <b>bandwidth</b> saving for shoppers on a phone — it is not what makes '
-      + 'the loop work.'
+      + 'The cover is taken in your browser the moment an upload lands.'
+      /*
+       * AND THEN THE HONEST SIZE OF WHAT IS MISSING, because "a bandwidth
+       * saving" reads as small and it is not. Measured in Chromium against this
+       * branch, at 390, on a 6.1 MB clip: with no teaser file the tile fetched
+       * 5,959 KB on a fast link and 10,955 KB over twenty seconds on a throttled
+       * 3 Mbit one — MORE than the file, because the loop rewinds past what the
+       * browser has already dropped and it fetches it again. The same clip with
+       * a 2.5-second teaser fetched 97 KB, once, and buffered exactly 2.50s.
+       *
+       * HTTP Range does not bound this and cannot: the shop controls what it
+       * serves, and the browser alone decides how far ahead of the playhead to
+       * buffer. The teaser file is the only thing that puts a ceiling on it.
+       */
+      + '<div style="margin-top:10px"><b>It is worth cutting them, though.</b> '
+      + 'Measured on a 6.1 MB clip at phone width: a tile with no teaser file fetched '
+      + '<b>10.7 MB</b> in twenty seconds on a 3 Mbit connection — it re-fetches what the loop has '
+      + 'rewound past — while the same clip with a 2.5-second teaser fetched <b>97 KB</b>, once. '
+      + 'That is about a hundred times the data, per tile, and up to four tiles play at once.</div>'
       + '<div style="margin-top:10px">' + why + '</div>'
       + '<div style="margin-top:10px"><b>If you want the teasers cut anyway</b>, this shop can do it '
       + 'on a schedule instead — the command line on this same machine is allowed to start ffmpeg '

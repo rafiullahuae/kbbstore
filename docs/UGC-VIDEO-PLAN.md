@@ -692,9 +692,11 @@ style selector has to allow for it.
 3. **The rights question (§3.3).** Will he ask creators for written permission?
    Yes → self-hosting has no downside left. No → those creators do not get
    featured, and that is a content decision, not an engineering one.
-4. **Does `ffmpeg` exist on the Cloudways server?** `which ffmpeg` over SSH.
-   Ten seconds, and it decides whether round 3 can resolve an Instagram URL or
-   whether the URL field is attribution only.
+4. ~~**Does `ffmpeg` exist on the Cloudways server?**~~ **ANSWERED — and the
+   answer has two halves.** ffmpeg IS installed; PHP-FPM is not allowed to start
+   it, because `proc_open` is in that pool's `disable_functions`. See §8b.1 and
+   `docs/SERVER-PROC-OPEN.md` §1. What is left to decide is §3b of that file:
+   whether to add the one cron line. §8b.2 is the arithmetic that says yes.
 5. **Does he want the teaser loop on, at all, on a phone?** The previews turn
    it off from the toolbar so he can see the section both ways. The recommended
    shape is on, at ~129 KB a tile and only while the tile is on screen (§0b.1) —
@@ -703,6 +705,124 @@ style selector has to allow for it.
 6. **Roughly how many clips, and does he have them yet?** Style 3 wants twelve
    or it looks empty; style 1 is fine with four. The right style depends on the
    library he actually has.
+
+---
+
+## 8b. Round four — the three complaints on the live shop, root-caused (Lane UG)
+
+The owner, on the shipped feature: *"the 2-3 seconds clip is not generating
+automatically when upload the video. and also on front-end no auto play is there
+the 2-3 seconds clip on loop... upon click on video on front-end, the popup is
+not the same as we finalized. the products boxes should come over the video at
+the bottom, not outside the video frame! and there should not top and bottom
+black weird space!!! only the video will popup, along with products box(es), and
+other credit etc will also come on the video frame."*
+
+Three complaints, three different answers. Two of them are the server and the
+package he has installed; one was a real defect in this repository.
+
+### 8b.1 The teaser — the code is right and the server cannot run it
+
+**Proved, not suspected.** Driven through `App\Services\UgcClipIntake` with a
+real H.264 mp4 and ffmpeg on `PATH`, one upload produced `teaser_path` (a 36,049-
+byte file on disk beside a 49,594-byte clip), `poster_path`, `duration_ms` 6000
+and the dimensions, with no notes. `derive()` **is** called on the upload request
+and **does** cut a teaser wherever it can run at all.
+
+It cannot run on his box. `available()` is `blocker(canSpawn(), binary())`, and
+there `/usr/bin/ffmpeg` is a real file while `proc_open` is in the PHP-FPM pool's
+`disable_functions` — §1 of `docs/SERVER-PROC-OPEN.md` reproduces it.
+
+**So question 4 of §8 is answered, and the answer is not the one it asked for.**
+ffmpeg exists. PHP may not start it. Those have different remedies and the
+screen was naming the wrong one: the chip at the top of All clips read, hard
+coded, *"No ffmpeg here — you choose the cover"*, on every server that could not
+cut. It now asks `UgcTranscoder::reason()` and says which.
+
+### 8b.2 The teaser file is NOT optional after all, and here is the arithmetic
+
+§0b.1 chose a separate teaser file over seeking the full clip, on a table of
+sizes. The fallback that plays the first `teaser_ms` of the whole clip was
+described afterwards as costing "12x the bytes". **Measured end to end, it is
+far worse than that, and HTTP Range does not help.**
+
+One 6.1 MB, 30-second, 720x1280 VP9 clip, one tile, 390px wide, Chromium,
+`tools/m1-router.php` serving real 206s:
+
+| tile | requests | bytes fetched | buffered ahead |
+|---|---|---|---|
+| no teaser file, loops the clip's first 2.5s, fast link | 2 | **5,959 KB** | 18.0 s |
+| no teaser file, same, throttled to 3 Mbit | 3 | **10,955 KB** | 5.4 s |
+| its own 2.5s teaser file (97 KB) | 1 | **97 KB** | 2.50 s |
+
+Two things in that table matter more than the ratio:
+
+1. **The throttled row is BIGGER than the file.** The loop rewinds past what the
+   browser has already evicted, and it fetches those bytes again. A slower
+   connection makes it worse, not better.
+2. **Range cannot bound it.** The shop controls what it serves; the browser alone
+   decides how far ahead of the playhead to buffer, and here it buffered 18
+   seconds to play 2.5. There is no header, no media fragment and no attribute
+   that puts a ceiling on that. A teaser file does, because the file IS the
+   ceiling.
+
+Up to four tiles play at once (`max_playing`), so a rail with no teasers is of
+the order of 40 MB of phone data for a section nobody has tapped.
+
+**Conclusion.** The full-clip loop is the right FALLBACK — it means a shop with
+no ffmpeg still has a working feature, which is what §3.4 wanted — and it is the
+wrong steady state. The one cron line in `SERVER-PROC-OPEN.md` §3b is worth two
+minutes of the owner's time, and the clips screen now says so with these numbers
+on it.
+
+### 8b.3 The loop on the front end works, and has since 2.60.304
+
+Measured rather than asserted: `currentTime` sampled every 150 ms for six
+seconds, per tile, at 390 and at 1280. A clip with no teaser file reads
+`0.45 0.61 0.76 … 2.65, 0.13 0.28 … 2.61, 0.10 0.25 … 1.18` — 37 advances and
+2 wraps, a clean 2.5-second sawtooth with no stall and no media error. A clip
+with its own teaser file loops natively on the file and never seeks. Two tiles
+play at 390 and three at 1280; the rest are off the side of a horizontal rail and
+correctly not decoding. `muted`, `playsinline` (attribute and property),
+`preload`, the caught `play()` promise, the IntersectionObserver, the
+reduced-motion query and the poster stacking are each correct in this
+repository.
+
+**So there is nothing to fix here.** The stutter the owner saw is the stacked
+rewind seek, and the package that fixes it is **2.60.304**; the rail itself first
+shipped in 2.60.279. A shop on anything older than .304 hangs on exactly the
+clips his does — the ones with no teaser file, where every rewind is a real seek
+through a real 8 MB file, four at a time.
+
+### 8b.4 The popup was a viewport-shaped box with the video fitted inside it
+
+The one real defect in this repository, and it produced all three halves of his
+third complaint from one cause:
+
+```css
+.ugcp-box{width:100%;height:100%;max-width:520px}
+.ugcp-v  {object-fit:contain}
+```
+
+The frame was sized to the VIEWPORT and the picture was fitted inside it, so they
+were different rectangles — and `.ugcp-credit`, `.ugcp-rail` and `.ugcp-x` are
+every one of them positioned against the FRAME. Measured before:
+
+| viewport | frame | picture | black |
+|---|---|---|---|
+| 390 x 844 | 390x844 | 390x693 | **75px above and below**; credit at y=14 on the top band; 76 of the rail's 163px below the picture |
+| 1280 x 800 | 520x800 | 450x800 | **35px each side**; the rail overhung the picture at both ends |
+
+The frame is now built from the clip's own `width`/`height` — the same two
+columns the tile reserves its box from — printed onto the tile as
+`data-ugcr-ar` and consumed by a pair of `min()` expressions. That is exactly the
+rectangle `contain` would have drawn, computed in CSS rather than left to the
+video element, so `cover` fills it with nothing to letterbox. After: 390x693 and
+450x800, band 0 on every edge, the product rail's box the picture's box to the
+pixel, at both widths, in RTL, with one product box and with four, over a
+near-white clip and a near-black one. Nothing is measured to do it.
+
+`docs/lane-ug-shots/measurements.json` carries every number above.
 
 ---
 
