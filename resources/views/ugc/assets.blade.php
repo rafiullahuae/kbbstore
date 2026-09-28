@@ -237,23 +237,111 @@
 .ugcr-eng svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2}
 .ugcr-like.is-on svg{fill:currentColor}
 
-/* ── the opened player ─────────────────────────────────────────────────── */
+/* ── the opened player ─────────────────────────────────────────────────────
+   ── THE FRAME IS THE VIDEO, AND THAT IS THE WHOLE OF THIS BLOCK ───────────
+
+   The owner, in his own words: *"the products boxes should come over the video
+   at the bottom, not outside the video frame! and there should not top and
+   bottom black weird space!!! only the video will popup, along with products
+   box(es), and other credit etc will also come on the video frame."*
+
+   What produced the black space was two lines that read as harmless:
+
+       .ugcp-box{width:100%;height:100%;max-width:520px}
+       .ugcp-v  {object-fit:contain}
+
+   The BOX was sized to the VIEWPORT and the picture was then fitted inside it,
+   so the box and the picture were different rectangles — and every overlay in
+   here (`.ugcp-credit`, `.ugcp-rail`, `.ugcp-x`) is positioned against the BOX.
+   Measured in Chromium against this repo, on the 9:16 clips this feature is for:
+
+     390 x 844   box 390x844, picture 390x693  ->  75px of black above AND below;
+                 the credit sat at y=14, ON the top band, and 76 of the product
+                 rail's 163px hung below the picture's bottom edge at y=768.
+     1280 x 800  box 520x800, picture 450x800  ->  35px of black each side; the
+                 rail spanned the full 520 and overhung the picture at both ends.
+
+   Those are the three complaints, in one cause.
+
+   THE FIX IS ARITHMETIC, NOT MEASUREMENT. `--ugcp-ar` is the clip's own
+   width÷height, printed by the server onto the tile from the same two columns
+   the tile reserves its box from (`data-ugcr-ar` in ugc/rail.blade.php), and
+   handed to this box by open(). The frame is then the largest rectangle of that
+   ratio that fits — which is precisely the rectangle `object-fit:contain` would
+   have drawn the picture in, computed in CSS instead of left to the video
+   element. Box ratio and picture ratio are now the same number, so there is
+   nothing to letterbox: `object-fit:cover` fills the frame edge to edge, and
+   every overlay is positioned against a rectangle that IS the picture.
+
+   Rule 4 holds: no element is measured. `min()` and `calc()` do the whole job,
+   once, at layout — there is no resize listener and nothing reads a rect. */
+/* `overflow:hidden` AND `overscroll-behavior:contain` TOGETHER, and neither
+   works without the other. A swipe anywhere on this overlay that is not the
+   product rail has no scrollable ancestor inside the dialog, so it chains to the
+   page — and the shop scrolls behind a modal that is covering it, which is the
+   opposite of "only the video will popup". `overscroll-behavior` only applies to
+   a scroll container, and `overflow:hidden` is what makes this one (its
+   scrollable overflow is zero, so nothing is clipped and nothing can scroll).
+   Pure CSS: no body-scroll lock, so no reflow of the page behind and no
+   scrollbar width to measure. */
 .ugcp{position:fixed;inset:0;z-index:2000;background:rgba(18,12,16,.92);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  overflow:hidden;overscroll-behavior:contain;
   display:none;align-items:center;justify-content:center}
 .ugcp.is-on{display:flex}
-.ugcp-box{position:relative;width:100%;height:100%;max-width:520px;background:#100c10;overflow:hidden}
-.ugcp-v{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#100c10}
+.ugcp-box{
+  /* The shipped value is 9:16 — the shape every clip in this feature is — so a
+     clip whose row lost its dimensions frames exactly as it did before. */
+  --ugcp-ar:.5625;
+  /* The two bounds the frame may not exceed. 560px keeps a 9:16 clip from
+     becoming a 1000px-wide column on a tall desktop window; on every phone and
+     on 1280x800 the height bound is the one that binds. */
+  --ugcp-w:min(100vw,560px);
+  /* dvh where it exists, because 100vh on mobile Safari is the tall viewport
+     and the frame would run under the toolbar. The @supports below is the
+     upgrade; this line is what old WebKit reads. */
+  --ugcp-h:100vh;
+  position:relative;overflow:hidden;background:#100c10;
+  width:min(var(--ugcp-w),calc(var(--ugcp-h) * var(--ugcp-ar)));
+  height:min(var(--ugcp-h),calc(var(--ugcp-w) / var(--ugcp-ar)))}
+@supports (height:100dvh){ .ugcp-box{--ugcp-h:100dvh} }
+/* COVER, not contain, and only because the line above made them identical: the
+   frame already carries this clip's ratio, so cover crops nothing. It is also
+   the safe failure — a row whose stored dimensions disagree with the file loses
+   a few pixels at one edge instead of growing the bands back. The rail's own
+   tiles have used cover since R3, so the popup and the tile now agree. */
+.ugcp-v{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;background:#100c10}
+/* THE LEGIBILITY SCRIM AT THE TOP, measured rather than guessed. The credit is
+   white text on whatever the clip's first frames happen to be; over the bright
+   clip in the preview seed the frame under it is #F6E7EC, and white on that is
+   1.05:1 — invisible, text-shadow or no text-shadow. This gradient puts a
+   measured 0.55 alpha of black under the credit and the close button and fades
+   to nothing by 100% of its own height, so a dark clip is not darkened twice.
+   The bottom half of the frame is the product rail's own gradient, below. */
+.ugcp-box::before{content:'';position:absolute;inset:0 0 auto 0;height:21%;z-index:5;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.26) 48%,rgba(0,0,0,0) 100%)}
 .ugcp-x{position:absolute;top:12px;inset-inline-end:12px;z-index:7;width:36px;height:36px;border-radius:99px;
   background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
   color:#fff;display:grid;place-items:center;font-size:20px;line-height:1}
 .ugcp-credit{position:absolute;top:14px;inset-inline-start:14px;z-index:7;color:#fff;font-size:12px;
   font-weight:600;display:flex;align-items:center;gap:6px;text-decoration:none;
+  /* Room for the close disc: the credit is a creator handle of any length and
+     without this it runs under a 36px button at 390. */
+  max-width:calc(100% - 66px);min-width:0;
   text-shadow:0 1px 3px rgba(0,0,0,.55)}
+.ugcp-credit bdi{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .ugcp-credit .ugcr-av{width:20px;height:20px}
+/* A visible focus ring on both, because the frame is dark glass and the UA
+   default outline is nearly invisible on it. Keyboard only — :focus-visible —
+   so a tap does not draw one. */
+.ugcp-x:focus-visible,.ugcp-credit:focus-visible,.ugcp-card :focus-visible{
+  outline:2px solid #fff;outline-offset:2px;border-radius:6px}
 .ugcp-rail{position:absolute;inset:auto 0 0 0;z-index:6;display:flex;gap:10px;overflow-x:auto;
   scroll-snap-type:x mandatory;padding:26px 14px calc(14px + env(safe-area-inset-bottom));
-  background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.6) 55%)}
+  background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.62) 55%)}
+/* NOTHING AT ALL when the clip has no products, rather than an empty 163px
+   gradient strip across the bottom of the video. */
+.ugcp-rail:empty{display:none}
 .ugcp-card{scroll-snap-align:center;flex:0 0 auto;width:min(78%,300px);display:flex;gap:9px;
   align-items:center;background:#fff;border-radius:12px;padding:8px;
   box-shadow:0 10px 28px -14px rgba(0,0,0,.6)}
@@ -527,12 +615,71 @@
     });
   }
 
+  /* ── the focus trap ──────────────────────────────────────────────────────
+   *
+   * An overlay with `aria-modal="true"` that does not hold focus is lying to a
+   * screen reader: the rest of the document stays in the tab order, so Tab
+   * walks out of the dialog and onto the rail behind it — which is still there,
+   * still clickable, and now has the keyboard while a modal covers it.
+   *
+   * Three parts, and all three are needed:
+   *   - focus goes INTO the dialog when it opens (the close button, so the
+   *     first Escape-equivalent is one Enter away);
+   *   - Tab and Shift+Tab cycle inside it;
+   *   - focus goes BACK to the tile that opened it on close, so a keyboard
+   *     shopper carries on from where they were rather than at the top of the
+   *     document.
+   *
+   * querySelectorAll over a fixed selector list rather than anything measured.
+   * It is re-read on each Tab because the product cards are built per clip.
+   */
+  var FOCUSABLE = 'a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  var returnFocusTo = null;
+
+  function focusables() {
+    if (!shell) return [];
+    /* `hidden` is on the credit link when a clip has no creator handle, and a
+       hidden element is not focusable — walking onto it would look like Tab
+       doing nothing. */
+    return Array.prototype.filter.call(shell.querySelectorAll(FOCUSABLE), function (el) {
+      return !el.hidden && el.getAttribute('aria-hidden') !== 'true';
+    });
+  }
+
+  function trapTab(e) {
+    var list = focusables();
+    if (!list.length) return;
+
+    var first = list[0];
+    var last = list[list.length - 1];
+    var here = document.activeElement;
+
+    if (e.shiftKey && (here === first || !shell.contains(here))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (here === last || !shell.contains(here))) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   function ensureShell() {
     if (shell) return shell;
     shell = document.createElement('div');
     shell.className = 'kbb-ugc ugcp';
     shell.setAttribute('role', 'dialog');
     shell.setAttribute('aria-modal', 'true');
+    /* A NAME, because a dialog without one is announced as "dialog". The clip's
+       own title is set per open() in open(); this is the fallback for a clip
+       with no title and it is a constant, never a setting. */
+    shell.setAttribute('aria-label', 'Video');
+    /*
+     * THE ORDER OF THESE FOUR IS THE DESIGN, not tidiness. Everything except the
+     * video is INSIDE .ugcp-box, which is now exactly the picture — so the
+     * credit, the product boxes and the close button are all over the video
+     * frame, which is what the owner asked for and what the old viewport-sized
+     * box made impossible.
+     */
     shell.innerHTML = '<div class="ugcp-box">'
       + '<video class="ugcp-v" playsinline webkit-playsinline></video>'
       + '<a class="ugcp-credit" target="_blank" rel="noopener nofollow" hidden>'
@@ -544,6 +691,12 @@
 
     shell.addEventListener('click', function (e) {
       if (e.target === shell || (e.target.closest && e.target.closest('[data-ugcp-close]'))) close();
+    });
+
+    /* On the shell rather than on document, so it can only ever fire while the
+       dialog is the thing being typed into. */
+    shell.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab') trapTab(e);
     });
 
     return shell;
@@ -567,6 +720,15 @@
     fresh.setAttribute('webkit-playsinline', '');
     var box = shell.querySelector('.ugcp-box');
     box.insertBefore(fresh, box.firstChild);
+
+    /* BACK TO THE TILE THAT OPENED IT. Without this the focus is on a button
+       that has just been hidden, and the next Tab starts again at the top of
+       the document — which on this shop is the header, several screens above
+       the rail the shopper was reading. */
+    if (returnFocusTo && returnFocusTo.isConnected && returnFocusTo.focus) {
+      try { returnFocusTo.focus(); } catch (e) {}
+    }
+    returnFocusTo = null;
 
     rebalance();
   }
@@ -598,6 +760,24 @@
       + '</div></div>';
   }
 
+  /**
+   * The clip's own width÷height, as the server printed it onto the tile.
+   *
+   * NOT MEASURED, and deliberately not taken from the video element's
+   * `videoWidth`/`videoHeight` either. Those are only known after metadata
+   * loads, so sizing the frame from them would draw one rectangle and then jump
+   * to another — a layout shift on top of a modal, on the slowest connection,
+   * which is exactly the reader this feature is for. The server has the number
+   * from the clip's own columns before the page is sent; this reads it back.
+   */
+  function frameRatio(tile) {
+    var ar = parseFloat(tile.getAttribute('data-ugcr-ar'));
+
+    /* The same band the server clamps to, applied again here because an
+       attribute is a string from a page and this one divides. */
+    return (ar >= 0.2 && ar <= 5) ? ar : 0.5625;
+  }
+
   function open(tile) {
     var src = tile.getAttribute('data-ugcr-src');
     if (!src) return;
@@ -614,6 +794,21 @@
     var data = {};
     var json = tile.parentNode.querySelector('script[data-ugcr-data]');
     if (json) { try { data = JSON.parse(json.textContent); } catch (e) { data = {}; } }
+
+    /*
+     * THE FRAME, BEFORE ANYTHING IS PUT IN IT. .ugcp-box's width and height are
+     * both min() expressions over this one number, so setting it is the whole of
+     * "the popup is the shape of the clip" — see the CSS for the measurements
+     * this replaced.
+     */
+    var frame = box.querySelector('.ugcp-box');
+    frame.style.setProperty('--ugcp-ar', String(frameRatio(tile)));
+
+    /* The dialog's name, from the clip's own label. `aria-label` on the tile is
+       built by the server from the title or the caption and is already escaped
+       there; setAttribute writes text, never markup. */
+    var label = tile.getAttribute('aria-label');
+    if (label) box.setAttribute('aria-label', label);
 
     var credit = box.querySelector('.ugcp-credit');
     if (data.handle) {
@@ -641,6 +836,12 @@
     exclusive = v;
 
     box.classList.add('is-on');
+
+    /* FOCUS IN, and remember where it came from. After the class is added,
+       because focus() on a `display:none` subtree does nothing at all. */
+    returnFocusTo = tile;
+    var closer = box.querySelector('.ugcp-x');
+    if (closer) { try { closer.focus(); } catch (e) {} }
 
     if (conf(tile, 'autoplay', '1') === '1') {
       var p = v.play();

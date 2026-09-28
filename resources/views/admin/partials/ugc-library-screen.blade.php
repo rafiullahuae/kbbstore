@@ -2869,7 +2869,32 @@
   }
 
   /* What this server can do for the owner, asked rather than assumed — §8
-     question 4 has never been answered. Two sentences, not a wall. */
+     question 4 has never been answered. Two sentences, not a wall.
+
+     ── AND IT USED TO GUESS, WRONGLY, ON THIS VERY SHOP ────────────────────
+
+     The last line of this function read, hard-coded:
+
+         'No ffmpeg here — you choose the cover'
+
+     On the owner's Cloudways box that is FALSE. /usr/bin/ffmpeg is installed;
+     PHP-FPM is not allowed to START it, because `proc_open` is in that pool's
+     disable_functions — reproduced and written up in docs/SERVER-PROC-OPEN.md
+     §1. So the first thing on the first screen of this feature has been telling
+     him to install a program he already has, while the setting actually in the
+     way went unnamed. It is exactly the mistake UgcTranscoder::blocker() was
+     written to end, surviving one layer further out because this function had a
+     bool and no way to ask which of the two it meant.
+
+     It asks now. `transcoder.reason` is one of a closed set the server owns
+     (UgcTranscoder::REASON_*), and the words for each are THIS screen's,
+     chosen from the map below — the server never sends a label and this never
+     invents a diagnosis. */
+  var CUT_CHIP = {
+    no_ffmpeg: 'No ffmpeg here — the cover is taken in your browser',
+    no_spawn: 'ffmpeg is here, but PHP may not start it'
+  };
+
   function transcoderChip() {
     if (!transcoder) return '';
 
@@ -2878,7 +2903,94 @@
         + esc(transcoder.teaser_seconds) + 's teaser for you</span>';
     }
 
-    return '<span class="ugs-chip is-warm">No ffmpeg here — you choose the cover</span>';
+    /* The fallback is the honest one: a box whose reason did not arrive is a box
+       this screen knows cannot cut and does not know why, and saying so beats
+       naming the more likely of two. */
+    return '<span class="ugs-chip is-warm">'
+      + esc(CUT_CHIP[transcoder.reason] || 'The cover is taken in your browser')
+      + '</span>';
+  }
+
+  /**
+   * THE REMEDY, ONCE, ON THE SCREEN HE IS ALREADY LOOKING AT.
+   * ═════════════════════════════════════════════════════════════════════════
+   *
+   * The owner: *"the 2-3 seconds clip is not generating automatically when
+   * upload the video."* It is not, on his server, and until now nothing on this
+   * screen said why or what to do — the reason lived one clip and one step
+   * deep, in the editor, and the way out lived only in docs/SERVER-PROC-OPEN.md,
+   * which is a file on a branch and not a thing he can read.
+   *
+   * THE FIRST PARAGRAPH IS THE ONE THAT MATTERS, and it is the one nobody had
+   * told him: THE RAIL DOES NOT NEED THE TEASER FILE. resources/views/ugc/
+   * assets.blade.php mounts `teaser || full` and, where there is no teaser,
+   * plays the first `teaser_ms` of the clip itself and rewinds — measured in
+   * Chromium on a clip with no teaser file: currentTime ran 0.90 → 1.61 → 2.31
+   * → 0.32 → 1.03, a clean 2.5s sawtooth. So a shop with no ffmpeg loops
+   * exactly as one with it; the teaser is a BANDWIDTH saving and nothing else.
+   * A screen that leads with the fault instead of that fact sends its reader to
+   * fix something that is not broken.
+   *
+   * The second is the fix, in the words of the panel he would type it into.
+   * NO SERVER PATH IS PRINTED: HealthApiController and this controller's own
+   * probeNote() both strip base_path() out of anything that reaches a screen,
+   * and one remedy note is not a reason to start leaking the machine's layout.
+   * Cloudways shows the application folder on the page the cron box is on.
+   *
+   * SHOWN ONLY WHERE IT IS TRUE — `available === false` — so a shop that can cut
+   * never sees it, and it says nothing on the screen the owner uses every day.
+   */
+  function cutRemedyHTML() {
+    if (!transcoder || transcoder.available) return '';
+
+    var length = secs(loop().ms);
+
+    var why = transcoder.reason === 'no_spawn'
+      ? 'ffmpeg <b>is</b> installed on this server, but PHP is not allowed to start a program '
+        + '(<code>proc_open</code> is switched off in the PHP-FPM pool that serves the shop), so the '
+        + 'cut cannot happen inside an upload.'
+      : transcoder.reason === 'no_ffmpeg'
+        ? 'ffmpeg is not installed on this server, so there is nothing here to cut with.'
+        : 'This server cannot cut the derived files during an upload.';
+
+    return '<div class="ugs-card"><div class="ugs-note is-cool" data-ugs-cutremedy="1">'
+      + '<b>Every tile still loops. Nothing is broken.</b> '
+      + 'The rail plays the first ' + esc(length) + ' seconds of the video you uploaded and '
+      + 'rewinds, so a clip loops whether or not a separate 2.5-second file was ever cut. '
+      + 'The cover is taken in your browser the moment an upload lands.'
+      /*
+       * AND THEN THE HONEST SIZE OF WHAT IS MISSING, because "a bandwidth
+       * saving" reads as small and it is not. Measured in Chromium against this
+       * branch, at 390, on a 6.1 MB clip: with no teaser file the tile fetched
+       * 5,959 KB on a fast link and 10,955 KB over twenty seconds on a throttled
+       * 3 Mbit one — MORE than the file, because the loop rewinds past what the
+       * browser has already dropped and it fetches it again. The same clip with
+       * a 2.5-second teaser fetched 97 KB, once, and buffered exactly 2.50s.
+       *
+       * HTTP Range does not bound this and cannot: the shop controls what it
+       * serves, and the browser alone decides how far ahead of the playhead to
+       * buffer. The teaser file is the only thing that puts a ceiling on it.
+       */
+      + '<div style="margin-top:10px"><b>It is worth cutting them, though.</b> '
+      + 'Measured on a 6.1 MB clip at phone width: a tile with no teaser file fetched '
+      + '<b>10.7 MB</b> in twenty seconds on a 3 Mbit connection — it re-fetches what the loop has '
+      + 'rewound past — while the same clip with a 2.5-second teaser fetched <b>97 KB</b>, once. '
+      + 'That is about a hundred times the data, per tile, and up to four tiles play at once.</div>'
+      + '<div style="margin-top:10px">' + why + '</div>'
+      + '<div style="margin-top:10px"><b>If you want the teasers cut anyway</b>, this shop can do it '
+      + 'on a schedule instead — the command line on this same machine is allowed to start ffmpeg '
+      + 'even when the web server is not. Add <b>one</b> cron entry and every clip, including the '
+      + 'ones already here, gets its cover and its 2.5-second teaser within a minute of being '
+      + 'uploaded:'
+      + '<div style="margin-top:8px"><code>* * * * * cd /path/to/your/application &amp;&amp; '
+      + 'php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</code></div>'
+      + '<div style="margin-top:8px">On Cloudways that is '
+      + '<b>Application Settings → Cron Job Management → Add New Cron → Advanced</b>'
+      + ', and the application folder to put after '
+      + '<code>cd</code> is the one shown on that same Application Settings page. Add this one '
+      + 'entry only — do not add a second for the cover cut itself, or the work runs twice.</div>'
+      + '</div>'
+      + '</div></div>';
   }
 
   function selectHTML(name, options, current, blankLabel) {
@@ -3931,6 +4043,11 @@
     if (banner) {
       html += '<div class="ugs-card"><div class="ugs-note is-bad">' + esc(banner) + '</div></div>';
     }
+
+    /* Under the hero and above the library: the first thing after the chip that
+       raised the question. Empty on a server that can cut, which is most of
+       them. */
+    html += cutRemedyHTML();
 
     /*
      * A WARM note, not a red one, and below the library rather than instead of
