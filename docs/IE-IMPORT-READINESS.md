@@ -298,13 +298,28 @@ discoveries.
 
 ## 8. The instrument
 
-`tests/Feature/IeLegacyAddressesAndPhotosTest.php` — 11 tests, **9 mutation
-notes, all 9 run**. One of them **survived** on the first attempt and is the most
-useful thing in the file: deleting the importer's scheme check left the suite
-green, because the export refuses an offsite address at source and no bad value
-ever reached the importer. The file now also feeds `ImportRunner` a `reviews.csv`
-this plugin did not write, which is the ordinary case for a shop that also takes
-uploads through **Store → Import** and **Store → Reviews → Import**.
+`tests/Feature/IeLegacyAddressesAndPhotosTest.php` — **14 tests, 10 mutation
+notes, all 10 run.**
+
+One of them **survived** on the first attempt and is the most useful thing in the
+file: deleting the importer's scheme check left the whole suite green, because
+the export refuses an offsite address at source, so on the plugin's own output
+no bad value ever reached the importer. Two defences, one asserted, and no way to
+tell which. The file now also feeds `ImportRunner` a `reviews.csv` this plugin
+did not write — an executable address, a protocol-relative one and a real picture
+in the same cell — which is the ordinary case for a shop that also takes uploads
+through **Store → Import** and **Store → Reviews → Import**.
+
+Two other things were found by an assertion going red on correct behaviour rather
+than by design:
+
+- `json_encode()` escapes `/` as `\/`, so a `str_contains()` for a **path**
+  silently never matches. Twice in this file, both times reading "the shop
+  offers nothing" about a shop that offers everything.
+- the photograph-key note was tallied across batches, and **a batch is a separate
+  HTTP request**. It would have named only the last request's keys on the live
+  site and stayed green here forever, because two reviews fit in one batch. It is
+  recomputed now, and the test asserts `--batch=1` and `--batch=500` agree.
 
 `GqMigrationCensusTest` learns the new column, the two new post types, the new
 taxonomy and the ten new meta keys; both halves of it went red on this lane's
