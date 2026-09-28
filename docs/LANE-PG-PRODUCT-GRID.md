@@ -403,7 +403,12 @@ and against 84 — still report identical counts.
 it renders `<x-product-card>` and that is the card. **Nothing has to change for
 it to work** — the screenshots above are of the rail as it renders today.
 
-One line is still worth changing, and only Lane SF's owner can make it. Line 538:
+One line is still worth changing, and only the integrator can make it. **Line
+585** after merging `origin/claude/kind-mayer-rpqesv` — it was line 538 before,
+and Lanes SF and IM have since pushed it down by 47 lines (IM added two
+`ImageVariants::variantUrl(..., 400)` calls, at lines 105 and 320, both above
+it). The line's own bytes are unchanged by either lane; only its number moved.
+Quoted here from the merged tree:
 
 ```
     <div class="{{ $modules->classFor('related') }} rel" id="related">@foreach ($related as $item)<x-product-card :product="$item" />@endforeach</div>
@@ -489,7 +494,19 @@ This lane added no route, no admin screen and no partial. `routes/web.php`,
 
 `EnglishRenderWalk::BASE_COMMIT` was advanced to this lane's own commit with the
 thirty-three pages that moved written at it, grouped by why, and the eight that
-did not named as the control.
+did not named as the control. It was advanced a second time for the owner's
+follow-up (two pages, the fifth column button).
+
+**It moved a third time, at the merge with `origin/claude/kind-mayer-rpqesv`.**
+Lane SF had advanced the same constant on the integrator branch, so the merge
+offered two values and neither was right on its own: PG's views do not contain
+SF's include move and SF's do not contain PG's one card, so keeping either would
+re-report the other lane's already-approved diff as new. The pin sits at the
+merge commit, which is the first that holds both. It was checked rather than
+assumed — run at the merge with PG's value still in place, the walk reported
+**exactly one** page, `product/{slug}` at byte 42926, which is the two blank
+lines SF's own note describes to the byte, and none of PG's thirty-three came
+back. Both lanes' prose is kept in full above the constant.
 
 ---
 
