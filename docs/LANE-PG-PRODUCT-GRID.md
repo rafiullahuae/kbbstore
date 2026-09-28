@@ -487,6 +487,8 @@ Nothing new was added to the console. What moved, and the exact path to each:
 | the shop listing's own minimum, for when the rail is open | **Appearance → Site layout → Product grid → Smallest card · shop listing** |
 | an exact pinned count, if the owner would rather not have it derived | **Appearance → Site layout → Product grid → Or pin an exact count** |
 | the card's skin — which now reaches `/shop` and every category archive for the first time | **Appearance → Product styles → Grid skin** |
+| the square thumbnail (shipped value moved from Portrait to **Square**) | **Appearance → Product styles → Image shape** |
+| the shopper's own 2 / 3 / 4 / **5** buttons | the toolbar above the grid on `/shop` and every category archive — not a console setting |
 | the heart on the tile | **Catalogue → Wishlist** (off by default) |
 | the quick-view button on the tile | **Catalogue → Quick view** (on by default) |
 | the badge, when the owner wants to write it | **Growth & Marketing → Product Labels** |
