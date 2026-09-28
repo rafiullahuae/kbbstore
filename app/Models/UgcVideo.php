@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\Ugc\ClipFile;
 use App\Support\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -236,8 +237,27 @@ class UgcVideo extends Model
          * but they are his costs to accept on his own shop, and a tile without
          * them still works.
          */
-        if ((string) $this->file_path === '') {
-            $out[] = 'No video file has been uploaded yet.';
+        /*
+         * ── THE COLUMN WAS THE WRONG THING TO READ ─────────────────────────
+         *
+         * This was `(string) $this->file_path === ''`, which asks "is anything
+         * recorded" and nothing else. A row recording a path that this shop
+         * WILL NOT SERVE passed the gate and went live, and then
+         * App\Services\Ugc\Tile built its `src` from UgcPath::stored(), got
+         * null, and rendered a tile with no `data-ugcr-src` at all — a dead
+         * poster that can never open and can never play. That is precisely the
+         * "empty box that plays nothing" this refusal is written about; it was
+         * only ever reading half of it.
+         *
+         * `gone` is deliberately NOT here. A file that is missing from THIS
+         * process's web root is a warning — see publishWarnings(), and see
+         * App\Services\Ugc\ClipFile for why a shop must not lose its whole
+         * library to one process looking in the wrong directory.
+         */
+        $file = $this->fileState();
+
+        if ($file === ClipFile::NONE || $file === ClipFile::UNSERVABLE) {
+            $out[] = (string) ClipFile::sentence($file, $this->file_path);
         }
 
         /*
@@ -313,7 +333,42 @@ class UgcVideo extends Model
             $out[] = 'The creator has not granted permission yet (Rights & credit).';
         }
 
+        /*
+         * ── A PUBLISHED CLIP CAN LOSE ITS FILE, AND NOTHING SAID SO ────────
+         *
+         * The owner's own run named two clips whose files are not in his
+         * uploads directory any more. Every screen went on describing them as
+         * healthy: mediaState() reads the COLUMNS, so the clips screen badged
+         * one of them "Loops from full video" while there was nothing left to
+         * loop, and publishBlockers() let it stay published.
+         *
+         * A warning rather than a blocker, and ClipFile carries the argument:
+         * this is repairable by re-uploading, and "not in this web root" is
+         * also what a host whose CLI and FPM disagree about public_path() looks
+         * like. It travels with the row to every admin screen that lists one,
+         * which is the whole ask — "if a published clip can lose its file, the
+         * clips screen should show it."
+         */
+        if ($this->fileState() === ClipFile::GONE) {
+            $out[] = (string) ClipFile::sentence(ClipFile::GONE, $this->file_path);
+        }
+
         return $out;
+    }
+
+    /**
+     * One of App\Services\Ugc\ClipFile's four constants, for this row's video.
+     *
+     * A METHOD ON THE MODEL AND A DECISION IN THE SERVICE. The screens need to
+     * ask a row about itself; the reasoning about what the four states mean,
+     * and which of them is a refusal, belongs in one file that
+     * UgcTranscoder::derive() and the appearance screen's Motion panel read
+     * too. The alternative is what this replaced: three callers each deciding
+     * on their own and disagreeing about the same row.
+     */
+    public function fileState(): string
+    {
+        return ClipFile::state($this->file_path);
     }
 
     public function canPublish(): bool

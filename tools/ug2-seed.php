@@ -106,6 +106,32 @@ foreach ($rows as [$slug, $title, $handle, $caption, $file, $teaser, $poster, $w
     $section->videos()->syncWithoutDetaching([$v->id => ['position' => $pos++]]);
 }
 
+/* ── THE SEVENTH CLIP: A ROW WHOSE FILE IS GONE ──────────────────────────────
+ *
+ * The owner's own `ugc:cut-covers` run named two clips, #9 and #10, that could
+ * not be cut; his listing of uploads/ugc shows six files and neither of those
+ * names. The ROWS survived and the FILES did not, and every screen went on
+ * describing them as healthy.
+ *
+ * DELIBERATELY NOT IN THE SECTION. The rail's before/after measurements were
+ * taken against six tiles in the shape of his screenshot, and a seventh would
+ * invalidate the comparison the whole autoplay finding rests on. What this row
+ * is for is the CLIPS screen, which lists every clip whether or not a rail
+ * carries it — and that screen badged a row like this one "Loops from full
+ * video", about a clip with nothing left to loop.
+ *
+ * Its poster is a real file, because that is the shape that fooled the screen:
+ * a cover that loads perfectly beside a video that is not there. */
+UgcVideo::updateOrCreate(['slug' => 'ug2-lost-file'], [
+    'title' => 'niacinamide routine, week 3', 'caption' => 'Fresh That Lasts',
+    'status' => 'publish', 'rights_status' => 'granted', 'rights_granted_at' => now(),
+    'file_path' => '/uploads/ugc/clip-20260921-7hk2mq9wxb.webm',   // never written
+    'poster_path' => '/uploads/ugc/real-b.jpg',                     // really there
+    'width' => 270, 'height' => 480, 'duration_ms' => 7000,
+    'creator_handle' => '@extrabeauty', 'source_platform' => 'upload',
+    'published_at' => now()->subDay(),
+]);
+
 Page::updateOrCreate(['slug' => 'about'], [
     // `published`, not `publish` — Store\PageController::show() filters on the
     // former and a page seeded with the latter 404s.
@@ -129,4 +155,4 @@ $sv->flush();
 app(\App\Services\UgcRail::class)->flush();
 \App\Support\Shortcodes::flush();
 
-echo "seeded ".UgcVideo::count()." clips (4 demo + 2 real), section shop-the-look, page /about\n";
+echo "seeded ".UgcVideo::count()." clips (4 demo + 2 real + 1 whose file is gone), section shop-the-look, page /about\n";

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\UgcVideo;
+use App\Services\Ugc\ClipFile;
 use App\Support\MediaRegistrar;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
@@ -381,22 +382,37 @@ class UgcTranscoder
 
         $stored = UgcPath::stored($video->file_path);
 
-        if ($stored === null) {
-            $out['notes'][] = 'There is no uploaded clip to cut from yet.';
+        /*
+         * ── ONE SENTENCE FOR TWO DIFFERENT ROWS, AND ONE OF THEM WAS FALSE ─
+         *
+         * This said "There is no uploaded clip to cut from yet." whenever
+         * UgcPath::stored() answered null — and stored() answers null for a row
+         * with NOTHING recorded *and* for a row recording a path this shop will
+         * not serve. MEASURED, on a row whose file_path is
+         * `/uploads/other/clip.mp4`: that exact sentence, about a row that has
+         * a clip. Whoever reads it uploads a 64 MB file again and watches
+         * nothing change.
+         *
+         * App\Services\Ugc\ClipFile tells the three apart and owns the words,
+         * so this command, the clips screen and the sections screen cannot
+         * describe the same row three different ways. `gone` keeps the sentence
+         * it already had, in ClipFile's wording: it was right, and it is the
+         * one this whole round is about — a clip whose file is not on the disk
+         * any more must never be reported as "ffmpeg could not read a poster
+         * frame out of that clip", which blames ffmpeg for a file that is not
+         * there for it to read.
+         */
+        $fileState = ClipFile::state($video->file_path);
+
+        if ($fileState !== ClipFile::OK || $stored === null) {
+            // The `|| $stored === null` is for the type checker below, not for
+            // the logic: state() cannot answer OK for a path stored() refuses.
+            $out['notes'][] = (string) ClipFile::sentence($fileState, $video->file_path);
 
             return $out;
         }
 
         $source = public_path(ltrim($stored, '/'));
-
-        if (! is_file($source)) {
-            // The row says there is a file and the disk disagrees. Said out
-            // loud: a silent null here reads as "ffmpeg is missing", which
-            // would send somebody to the wrong problem.
-            $out['notes'][] = 'The stored clip is missing from the server at '.$stored.'.';
-
-            return $out;
-        }
 
         $ffmpeg = $this->binary();
 

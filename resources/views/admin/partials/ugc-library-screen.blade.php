@@ -2825,6 +2825,30 @@
        UgcTranscoder::TEASER_SECONDS, but an owner may drop one in by hand, and
        this screen does not read durations. So it claims no length it cannot
        stand behind. */
+    /*
+     * ── THE FILE ITSELF, BEFORE ANYTHING ABOUT ITS DERIVATIVES ────────────
+     *
+     * THE THIRD DEFECT, and the one the owner hit. media_state reads three
+     * COLUMNS and nothing else, so a clip whose video file had been deleted off
+     * the server went on badging "Loops from full video" — a clip described as
+     * looping with nothing left to loop, on the one screen whose job is to say
+     * what each clip is doing. His own cut run named two of them.
+     *
+     * `file_state` is the server's answer to the question the columns cannot
+     * answer (App\Services\Ugc\ClipFile), and it is asked FIRST because a
+     * missing file outranks every statement about a teaser cut from it. The
+     * full sentence, with the path to search for, is already in `warnings` and
+     * is drawn in the editor panel; this is the badge that makes it findable in
+     * a list of forty.
+     */
+    if (v.file_state === 'gone') {
+      return ['Video file is gone', 'hold'];
+    }
+
+    if (v.file_state === 'unservable') {
+      return ['Video path unusable', 'hold'];
+    }
+
     if (v.media_state === 'ready') {
       return ['Loops its own teaser', 'live'];
     }

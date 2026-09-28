@@ -217,12 +217,17 @@ final class RailPlayback
      * tile that was playing. The storefront now gives that slot back; this is
      * how the ADMIN gets to name the clip before a shopper ever meets it.
      *
+     * THROUGH ClipFile, which is the same decider UgcVideo::publishWarnings()
+     * and UgcTranscoder::derive() ask. This panel exists to stop three screens
+     * describing one row three different ways, so it must not be a fourth
+     * reading of the same column.
+     *
      * The path has already been through UgcPath::stored(), so it is
      * `/uploads/ugc/<one segment>` and nothing else: no traversal reaches this,
      * and it is a read of a public file either way.
      */
     private function onDisk(string $path): bool
     {
-        return is_file(public_path(ltrim($path, '/')));
+        return ClipFile::state($path) === ClipFile::OK;
     }
 }
