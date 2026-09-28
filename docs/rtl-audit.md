@@ -63,10 +63,22 @@ It is there so the guard in `tests/Feature/RtlReadinessTest.php` can tell "this
 file is clean" from "the reader silently read nothing", which is the failure
 mode that makes a guard worthless.
 
+▲ **`kbb.css` reads 190 → 186, and four logical declarations were DELETED
+rather than converted back.** Lane PG removed the thirty-eight rules keyed on
+`.pc` — the /shop card and the `.kbb-home .pc` rail — because nothing in
+`resources/views` emits that class any more; there is one product tile now and
+it is `.kbb-card.kbb-tile`. Four of those dead rules carried
+`inset-inline-start` / `inset-inline-end`: the old card's `.lbl` corner, its
+`.heart` corner, and the rail's `.off` and `.rank` corners. The tile that
+replaced them carries its own — `.kbb-tile .lbl`, `.kbb-tile .heart` and
+`.kbb-badge-best` are all logical, and `/ar` is screenshotted at 1280 and 390
+in `docs/lane-pg-shots`. This floor is lower because the sheet is smaller, not
+because anything went physical.
+
 <!-- rtl-audit:floors:begin -->
 | file | logical direction declarations (floor) | total declarations parsed |
 |---|---|---|
-| `resources/css/kbb/kbb.css` | 190 | 5765 |
+| `resources/css/kbb/kbb.css` | 186 | 5765 |
 | `resources/css/kbb/kbb-shop.css` | 40 | 1248 |
 | `resources/css/kbb/kbb-product.css` | 36 | 1341 |
 | `resources/css/kbb/kbb-cart.css` | 5 | 300 |

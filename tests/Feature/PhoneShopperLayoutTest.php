@@ -400,11 +400,26 @@ it('keeps a side gutter under the product grid on a phone', function () {
     }
 
     /*
-     * And the reason it is needed, pinned so that this override cannot outlive
-     * it: `.shop`'s padding shorthand still zeroes the horizontal padding that
-     * `.wrap` sets. Both selectors are one class and `.shop` is written later,
-     * so the shorthand wins. If that ever changes, the rule above is a second
-     * gutter rather than the first one and should be removed.
+     * And what the override now IS, pinned so that it cannot be mistaken for
+     * the thing it used to be.
+     *
+     * ▲ `.shop` NO LONGER ZEROES ANYTHING.                            Lane PG
+     *
+     * It said `padding:22px 0 60px`, and the `0` in that shorthand beat
+     * `.wrap{padding-inline:var(--site-gutter)}` at EVERY width -- the desktop
+     * half of the very defect this case is about, which Lane EA saw and
+     * deliberately left, because with the filter rail shown the thing flush to
+     * the window's edge was the rail and nobody reads a sidebar's gutter. Lane
+     * PG made the rail start hidden, which put the product grid there instead,
+     * so `.shop` sets `padding-block` now and the site gutter survives.
+     *
+     * The rule above therefore NARROWS the gutter on a phone -- 22px to 16px --
+     * where it used to restore the only one. It is kept deliberately: 16px is
+     * exactly what a phone rendered before this round, and rule 1 says the
+     * phone must not move.
+     *
+     * So this assertion pins the new fact, which is the one that can regress:
+     * `.shop` must not take a horizontal padding again.
      */
     $source = phoneFlat(phoneTracked('resources/css/kbb/kbb-shop.css'));
 
@@ -426,9 +441,9 @@ it('keeps a side gutter under the product grid on a phone', function () {
     expect(phoneHas($source, '.wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}'))->toBeTrue(
         'kbb-shop.css no longer gives .wrap a horizontal gutter, so the override may be unnecessary.');
     expect(phoneHas($source, '.shop{display:grid;grid-template-columns:250px 1fr;gap:28px;'.
-        'padding:22px 0 60px}'))->toBeTrue(
-        '.shop no longer zeroes its horizontal padding with a shorthand, so the override above '.
-        'is now adding a second gutter rather than restoring the only one.');
+        'padding-block:22px 60px}'))->toBeTrue(
+        '.shop sets a horizontal padding again, which overrides .wrap\'s site gutter on /shop '.
+        'and on every category archive at every width -- the defect Lane PG fixed.');
 });
 
 it('writes the form-field font in longhands that a browser actually applies', function () {

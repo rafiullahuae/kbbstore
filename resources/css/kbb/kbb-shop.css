@@ -489,16 +489,29 @@ img{max-width:100%}
 
 /* Phone shopper pass - Lane EA. <=820px only.
 
-   1. THE SIDE GUTTER. `.shop` is declared above as
-      `padding:22px 0 60px`, and the markup is `<div class="wrap shop">`. Both
-      selectors are one class, `.shop` is written later, so its shorthand `0`
-      overwrites `.wrap{padding:0 20px}` and the shop, category and search
-      grids lost their side gutter at every viewport under the 1240px
-      max-width. On a phone that put the product cards' borders on the first
-      and last pixel of the screen and clipped the rounded left corner of the
-      "Filters" pill, while the heading and breadcrumb directly above them -
-      which sit in a different .wrap - stayed inset. Restoring the gutter on
-      phones only leaves the desktop grid exactly as it is.
+   1. THE SIDE GUTTER. `.shop` was declared above as `padding:22px 0 60px`, and
+      the markup is `<div class="wrap shop">`. Both selectors are one class,
+      `.shop` is written later, so its shorthand `0` overwrote
+      `.wrap{padding:0 20px}` and the shop, category and search grids lost their
+      side gutter at every viewport under the 1240px max-width. On a phone that
+      put the product cards' borders on the first and last pixel of the screen
+      and clipped the rounded left corner of the "Filters" pill, while the
+      heading and breadcrumb directly above them - which sit in a different
+      .wrap - stayed inset. Restoring the gutter on phones only left the desktop
+      grid exactly as it was.
+
+      ▲ THE CAUSE IS GONE NOW, AND THIS RULE IS NOT.                  Lane PG
+      `.shop` sets `padding-block` (see the note beside it), so `.wrap`'s
+      `padding-inline` survives at EVERY width -- the desktop half of the same
+      defect, which Lane EA saw and deliberately left because the thing flush to
+      the edge there was the filter rail. The rail starts hidden now, so it was
+      the product grid.
+
+      This rule therefore no longer RESTORES the gutter; it NARROWS it, from the
+      site's 22px to 16px, on phones only. That is a deliberate keep rather than
+      an oversight: 16px is exactly what a phone rendered before this round, at
+      every width up to 820, and rule 1 says the phone must not move. Delete it
+      and phones go to 22px -- a real change, for nobody's benefit.
 
    2. The sort dropdown is 13px, so choosing "Price, low to high" on an iPhone
       zoomed the page. See the note in kbb.css; this sheet loads after it. */
