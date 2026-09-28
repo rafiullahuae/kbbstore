@@ -578,8 +578,98 @@ final class EnglishRenderWalk
      * The commit named below is this lane's own and is reachable from this
      * branch, per the note above about rebases rewriting every SHA behind this
      * constant.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * ── MOVED AGAIN — LANE PG (one product card, five columns, hidden
+     *    filters). THIRTY-THREE PAGES MOVED AND EIGHT DID NOT, and every one
+     *    of the thirty-three was read before this constant was advanced.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * The owner asked for three things in one sentence — the reference card
+     * everywhere, five columns on a desktop and two on a phone, and the filter
+     * rail shut by default — and all three are rule-1 exceptions: defaults he
+     * asked for in as many words. Each is called out in its own commit.
+     *
+     * The COLUMN COUNT is invisible to this walk, exactly as Lane W1's width
+     * change was: it is one number in `resources/css/kbb/kbb.css`, and this
+     * walk rolls `resources/views` back and renders. Nothing below is about it.
+     *
+     * ── (a) TWENTY-ONE PAGES WITH NO PRODUCT GRID ON THEM, two lines each ───
+     *
+     *     privacy-policy, terms-and-conditions, delivery, refund_returns,
+     *     faqs, about, contact-us, cart, checkout/success, my-wishlist,
+     *     my-account, my-account/forgot, my-account/orders,
+     *     my-account/orders/{id}, my-account/edit-address,
+     *     my-account/edit-address/{id}, my-account/reset/{id}/{token},
+     *     track-my-order, newsletter/confirm/{id},
+     *     newsletter/unsubscribe/{id}, mail-preferences/{kind}/{id},
+     *     and both (with a basket) variants of /cart and /checkout
+     *
+     * layouts/store.blade.php emits the quick-view style block on EVERY page,
+     * and it opened with two rules naming the card that no longer exists:
+     *
+     *     before   <style>⏎.pc .ph{position:relative}⏎/* RTL-PHYSICAL…
+     *              .pc:hover .qv-btn,.qv-btn:focus-visible{…}
+     *     after    <style>⏎/* RTL-PHYSICAL…
+     *              .kbb-tile:hover .qv-btn,.qv-btn:focus-visible{…}
+     *
+     * The hover selector could NOT be left alone — with `.pc:hover` the
+     * quick-view button would never have appeared on any tile again — so these
+     * pages move whatever is done. The positioning rule is deleted rather than
+     * renamed because kbb.css already declares it. Not one other byte moved on
+     * any of the twenty-one.
+     *
+     * ── (b) TEN PAGES THAT DRAW A PRODUCT GRID ─────────────────────────────
+     *
+     *     /                        the four homepage rails
+     *     new-in, best-sellers, super-sale, everything-under-54-aed
+     *     my-wishlist              (also in (a); it moves for both reasons)
+     *     brands/{slug}            a brand page's popular grid
+     *     product/{slug}           the "you may also like" rail
+     *     brands                   the brand DIRECTORY, which draws no product
+     *                              grid at all — it is in (a)'s list too and
+     *                              moves only by those two lines. `.brw-grid`
+     *                              lists BRANDS, not products, and is untouched.
+     *
+     * The tile itself:
+     *
+     *     before   <a class="kbb-card" href="/product/…/">   (the skinned card)
+     *     before   <div class="pc">                          (the /shop card)
+     *     after    <div class="kbb-card kbb-tile">           (the one card)
+     *
+     * The root is a <div> because the tile now holds a real `?add-to-cart=`
+     * link and two buttons, and `<a>` inside `<a>` is the one nesting the HTML
+     * parser breaks apart. Within the tile: the name is a `.cn` link wrapping
+     * `.kbb-card-nm`, an unreviewed product has NO `.kbb-card-rate` row at all
+     * (it drew five hollow stars and "(0)" — the defect the owner reported),
+     * the theme's sale badge is the reference grid's `-N%` pill instead of the
+     * old `-N% OFF` label, and the homepage rails gained the wishlist heart,
+     * the quick-view button and Product Labels support they never had.
+     *
+     * ── (c) /shop AND collections/{path} ───────────────────────────────────
+     *
+     * The tile change above, plus two more, both of them the filter default:
+     *
+     *     before   <body class=" dvs-ticks"
+     *     after    <body class="filters-hidden dvs-ticks"
+     *
+     *     before   <div class="grid" id="grid">
+     *     after    <div class="grid kbb-pgrid" id="grid" data-skin="classic">
+     *
+     * and the two filter buttons gained a `document.cookie` write beside the
+     * class they toggle, plus a `.fcount` badge when filters are applied. The
+     * category archive's tiles also gained the category's name as the eyebrow
+     * line, which is a caller's string and costs no query.
+     *
+     * ── (d) THE EIGHT THAT DID NOT MOVE, and why that is the useful half ────
+     *
+     * Every page carrying its own <html> rather than layouts/store: the
+     * Journal, an article, the review wall, the skin quiz, and the four
+     * standalone documents. None of them draws a product grid and none of them
+     * emits the quick-view block, so none of them moved — which is the evidence
+     * that (a) really is the style block and not something wider.
      */
-    public const BASE_COMMIT = '18f6467b62f5eea561f8164b8c5d6f92cc39f061';
+    public const BASE_COMMIT = '24fac5624d069330de095455f819036592e40507';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
