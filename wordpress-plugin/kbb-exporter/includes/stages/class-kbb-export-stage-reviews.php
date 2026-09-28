@@ -255,14 +255,8 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 				$found = $this->image_urls( $entry['value'] );
 
 				if ( empty( $found ) ) {
-					$this->unused_keys[ $entry['key'] ] = isset( $this->unused_keys[ $entry['key'] ] )
-						? $this->unused_keys[ $entry['key'] ] + 1
-						: 1;
-
 					continue;
 				}
-
-				$this->used_keys[ $entry['key'] ] = true;
 
 				foreach ( $found as $url ) {
 					// One picture once, however many keys name it. A plugin
@@ -279,12 +273,6 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 
 		return $out;
 	}
-
-	/** @var array<string,int> meta keys seen on a review that held no picture */
-	private $unused_keys = array();
-
-	/** @var array<string,bool> meta keys a picture was actually taken from */
-	private $used_keys = array();
 
 	/**
 	 * Every image address one meta value names, or an empty list.
@@ -393,43 +381,106 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 	/**
 	 * What was taken, and -- the load-bearing half -- what was left behind.
 	 *
+	 * ── RECOMPUTED, NOT ACCUMULATED, AND THAT IS THE WHOLE DESIGN ───────────
+	 *
+	 * The obvious way to write this is to tally the keys as the batches go by
+	 * and report the tally at the end. It is also wrong here, and wrong in a
+	 * way the fixture could never show.
+	 *
+	 * A batch is a SEPARATE HTTP REQUEST on the live site -- that is the
+	 * reason this whole plugin is batched and resumable, and
+	 * harness/run-export.php says so: "Every batch is a separate call into the
+	 * runner that reloads its state from the options table, exactly as a
+	 * separate HTTP request would." An instance property does not survive that.
+	 * So an accumulating tally would name only the keys seen in the LAST
+	 * request, and on a shop with 2,514 reviews at 500 rows a batch that is the
+	 * last 14 of them.
+	 *
+	 * It would also be green on this fixture forever, because two reviews fit
+	 * in one batch.
+	 *
+	 * `report_unrated()` above already solves the same problem the same way:
+	 * it re-asks the database at the end rather than carrying a count. This
+	 * does that.
+	 *
+	 * ── HOW THE SAMPLE IS BOUNDED, AND WHAT IT COSTS ────────────────────────
+	 *
+	 * Whether a key holds photographs is a question about its VALUES, and the
+	 * test is PHP rather than SQL. Reading every commentmeta row of every
+	 * review to answer it would undo the batching this whole class is built
+	 * for, so each key is judged on up to 200 DISTINCT values.
+	 *
+	 * That is generous by two orders of magnitude for what it decides -- one
+	 * value that resolves is enough to classify a key as carrying pictures --
+	 * and the direction of any error is the safe one: a key whose only
+	 * photographs are beyond 200 distinct values is reported as NOT exported,
+	 * which sends the reader to look at a key rather than away from one.
+	 *
 	 * @return void
 	 */
 	private function report_photographs() {
-		if ( ! empty( $this->used_keys ) ) {
+		global $wpdb;
+
+		$reviews = 'SELECT c.comment_ID FROM ' . $wpdb->prefix . 'comments c WHERE ' . $this->where();
+
+		$keys = $wpdb->get_results(
+			'SELECT DISTINCT meta_key FROM ' . $wpdb->prefix . 'commentmeta
+			 WHERE comment_id IN (' . $reviews . ')
+			 ORDER BY meta_key',
+			ARRAY_A
+		);
+
+		$used   = array();
+		$unused = array();
+
+		foreach ( (array) $keys as $row ) {
+			$key = (string) $row['meta_key'];
+
+			if ( in_array( $key, self::META_CARRIED_ELSEWHERE, true ) ) {
+				continue;
+			}
+
+			$values = $wpdb->get_results(
+				'SELECT DISTINCT meta_value FROM ' . $wpdb->prefix . 'commentmeta
+				 WHERE comment_id IN (' . $reviews . ') AND meta_key = ' . KBB_Export_Wp::quote( $key ) . '
+				 LIMIT 200',
+				ARRAY_A
+			);
+
+			$carries = false;
+
+			foreach ( (array) $values as $value ) {
+				if ( ! empty( $this->image_urls( $value['meta_value'] ) ) ) {
+					$carries = true;
+
+					break;
+				}
+			}
+
+			if ( $carries ) {
+				$used[] = $key;
+			} else {
+				$unused[] = $key;
+			}
+		}
+
+		if ( ! empty( $used ) ) {
 			$this->note(
-				'Review photographs were read from ' . count( $this->used_keys ) . ' comment meta key(s): `'
-					. implode( '`, `', array_keys( $this->used_keys ) ) . '`. They are in reviews.csv\'s `images` '
+				'Review photographs were read from ' . count( $used ) . ' comment meta key(s): `'
+					. implode( '`, `', $used ) . '`. They are in reviews.csv\'s `images` '
 					. 'column, pipe-separated, and land in `reviews.images`. Recognised by the VALUE being an '
 					. 'attachment id this site resolves or an address under its own uploads directory -- not by the '
 					. 'key being one this plugin had heard of.'
 			);
 		}
 
-		$unused = $this->unused_keys;
-
-		// A key that produced a picture ANYWHERE is not an unused key, even if
-		// some of its rows held something else -- reporting it would send the
-		// reader to look at a key that is already working.
-		foreach ( array_keys( $this->used_keys ) as $key ) {
-			unset( $unused[ $key ] );
-		}
-
 		if ( empty( $unused ) ) {
 			return;
 		}
 
-		arsort( $unused );
-
-		$parts = array();
-
-		foreach ( $unused as $key => $count ) {
-			$parts[] = '`' . $key . '` (' . $count . ')';
-		}
-
 		$this->note(
-			'These comment meta keys are on reviews and are NOT in reviews.csv: ' . implode( ', ', $parts )
-				. '. Most will be a plugin\'s bookkeeping and no loss at all. But if this shop shows customer '
+			'These comment meta keys are on reviews and are NOT in reviews.csv: `' . implode( '`, `', $unused )
+				. '`. Most will be a plugin\'s bookkeeping and no loss at all. But if this shop shows customer '
 				. 'PHOTOGRAPHS on its reviews and the `images` column came out empty, the plugin storing them is '
 				. 'one of these keys in a shape this export did not recognise (a bare filename, or a path relative '
 				. 'to the uploads root). That is the list to look at, and it is here so the answer is a key name '

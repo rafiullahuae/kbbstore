@@ -758,6 +758,80 @@ it('names the navigation menu as a loss instead of as WordPress plumbing', funct
     expect(\DB::table('menu_items')->count())->toBe($before['menu_items']);
 });
 
+it('reports the same photograph keys however many requests the export takes', function () {
+    /*
+     * ══════════════════════════════════════════════════════════════════════
+     * A BATCH IS A SEPARATE HTTP REQUEST, AND THIS NOTE IS WHY THAT MATTERS.
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * The unused-key note is the only thing that will tell the owner his
+     * review-photo plugin was not recognised. It is the whole safety net under
+     * "recognise a photograph by its value rather than by a key we remember".
+     *
+     * The obvious way to build it is to tally the keys as the batches go by.
+     * That is wrong here, and wrong in a way this fixture could never show.
+     * `harness/run-export.php` states the premise: "Every batch is a separate
+     * call into the runner that reloads its state from the options table,
+     * exactly as a separate HTTP request would." An instance property does not
+     * survive that — so an accumulating tally names only the keys seen in the
+     * LAST request. On 2,514 reviews at 500 rows a batch, that is the last 14.
+     *
+     * And it would have been green forever, because the fixture's two reviews
+     * fit in one batch at every batch size the other tests use.
+     *
+     * So the note is RECOMPUTED from the database at the end, the way
+     * report_unrated() above it already is, and this asserts the property that
+     * makes the difference visible: one row per request must say exactly what
+     * everything-in-one says.
+     *
+     * MUTATION NOTE, RUN: tally the keys on instance properties across
+     * batch() instead of recomputing, and the batch=1 run reports a different
+     * set of keys from the batch=500 run — which is the live site's behaviour
+     * and the fixture's, disagreeing.
+     */
+    $script = base_path('wordpress-plugin/harness/run-export.php');
+    $db = getenv('KBB_WP_DB') ?: 'kbb_ge_wp';
+    $out = sys_get_temp_dir().'/kbb-ie-batches-'.bin2hex(random_bytes(4));
+
+    $notes = [];
+
+    foreach ([1, 500] as $batch) {
+        $lines = [];
+
+        exec(
+            escapeshellcmd(PHP_BINARY).' '.escapeshellarg($script)
+            .' --storage=posts --out='.escapeshellarg($out.'/'.$batch)
+            .' --db='.$db.' --batch='.$batch.' 2>&1',
+            $lines,
+            $status
+        );
+
+        if ($status === 3) {
+            $this->markTestSkipped('no MySQL here: '.implode(' ', $lines));
+        }
+
+        expect($status)->toBe(0, 'the harness export failed: '.implode("\n", $lines));
+
+        $manifest = json_decode((string) file_get_contents($out.'/'.$batch.'/export/manifest.json'), true);
+
+        $notes[$batch] = array_values(array_filter(
+            $manifest['notes'],
+            static fn (string $note): bool => str_contains($note, 'comment meta key'),
+        ));
+    }
+
+    expect($notes[1])->toBe(
+        $notes[500],
+        'the export names different review-photo meta keys depending on how many requests it took. The note is '
+        .'the only thing that tells the owner his photo plugin was not recognised, and on the live site every '
+        .'batch is a separate request.',
+    );
+
+    // And it must actually SAY something, or the assertion above is two empty
+    // arrays agreeing.
+    expect(count($notes[1]))->toBe(2, 'the keys taken and the keys left behind are both named: '.json_encode($notes[1]));
+});
+
 it('leaves the pictures this change is accounted for with', function () {
     /*
      * The account in docs/IE-IMPORT-READINESS.md §6 is about what the owner

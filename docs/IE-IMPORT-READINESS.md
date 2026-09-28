@@ -265,7 +265,38 @@ on are the ones that already exist:
 
 ---
 
-## 7. The instrument
+## 7. How the remaining gaps were looked for — and the two that are not gaps
+
+The two holes this lane closed were both the same shape: **a column built to
+receive imported data that nothing ever wrote to.** `reviews.images` was one;
+`menus.source_term_id` and `menu_items.source_post_id` are the other, and they
+are still empty.
+
+That shape is searchable, so it was searched rather than reasoned about. Every
+`source_*`, `wc_*` and `legacy_*` column in the schema, against every writer in
+`app/`:
+
+| slot | written by | verdict |
+|---|---|---|
+| `wc_id`, `wc_order_id`, `wc_item_id`, `wc_refund_id` | the entity importers | filled |
+| `source_term_id` (categories, brands, tags, attribute values) | the entity importers | filled |
+| `source_post_id` (posts) | `PostImporter` | filled |
+| `source_attribute_id` | `AttributeImporter` | filled |
+| `source_comment_id` | `OrderNoteImporter` | filled |
+| `source_key` (addresses) | `AddressWriter` | filled |
+| `legacy_password` | `CustomerImporter` | filled |
+| `source_id` (reviews) | `ReviewImporter` | filled |
+| **`menus.source_term_id`, `menu_items.source_post_id`** | **nothing** | **§2.3 — the navigation** |
+| `media.source_attachment_id` | nothing | **not a new gap** — `media.csv` is the file nothing opens, by decision; `kbb:import-media` re-derives its download list from the imported product URLs. Named in the contract and in census §4.4 |
+| `shipping_zones.source_zone_id` | nothing | **not a new gap** — shipping is re-entered by hand, census §4.4 |
+
+So: **after the navigation, there is no third column of this kind.** The two
+that remain empty are both decisions already written down and approved, not
+discoveries.
+
+---
+
+## 8. The instrument
 
 `tests/Feature/IeLegacyAddressesAndPhotosTest.php` — 11 tests, **9 mutation
 notes, all 9 run**. One of them **survived** on the first attempt and is the most
