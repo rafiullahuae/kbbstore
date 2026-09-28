@@ -3,6 +3,72 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.307
+The banner editor now has a **Save button**, a background, button colours and a
+choice of where the title sits — and two settings that had no control at all.
+
+### A SAVE BUTTON, AND NOTHING SAVES BEHIND YOUR BACK
+
+Every control used to write the moment you touched it, and re-draw the screen
+underneath you. You asked for a Save button so you could make several edits
+first, and that is what it is now:
+
+- edits are held until you press **Save**, and the footer counts them ("Save 5
+  changes");
+- **Discard changes** puts everything back;
+- leaving the screen, opening another set or closing the tab **asks first**;
+- a failed save **keeps** your edits rather than losing them;
+- **the live preview still updates as you type**, from what you have typed —
+  nothing is written to the database until you press Save.
+
+Adding, duplicating and deleting a card still act immediately, because those
+create and destroy rows, and the screen says so.
+
+### SPEED WAS ALREADY THERE — NOW YOU CAN FIND IT
+
+It existed as a millisecond box among nine other numeric boxes. The controls are
+in five named groups now, **Speed is the first one**, the slider runs the way you
+expect (**right is faster** — it used to be backwards, because the stored value
+is a duration), and it reads *"Medium — 4.0s per card, so 24s for one full loop
+of 6 cards."*
+
+### NEW CONTROLS
+
+- **Behind the row** — no background, a colour, or a picture.
+- **The button** — its colour, its text colour, and its colour when the mouse is
+  over it. Each has a *"Use the shop's own colour"* switch.
+- **Where the words sit** — below the picture, or **on** it, with a soft dark
+  gradient so the words stay readable over a light photo or a dark one. The card
+  is exactly the same size either way.
+- **Showing / Hidden per card** — a card can be taken down for a week without
+  deleting it and losing the picture, the words and the link. **There was no way
+  to do that before.**
+- **Order** on each set, which decides the order of the list and the homepage
+  picker.
+
+### ▲ ONE THING ON THE SHOP CHANGES, AND ONLY IF YOU HAVE THE BANNER SWITCHED ON
+
+**The card button's label was dark ink on the shop, not white.** A shop-wide rule
+outranked the section's own colour, so the white it has declared since the day it
+shipped never actually applied — and the admin preview, which does not load that
+stylesheet, always showed white. So the screen has been showing you something the
+shop was not doing.
+
+It is white now. It had to be fixed rather than frozen, because the new
+button-text control reads that same rule and would otherwise have done nothing.
+
+Also fixed: the arrows were drawn over a row that was scrolling by itself, which
+the screen has always said they would not be; and the admin preview drew the
+wrong pink, so a colour was being chosen against the wrong background.
+
+### Files
+
+`app/Services/Banners.php`, `app/Models/BannerSet.php`,
+`app/Http/Controllers/Admin/BannerApiController.php`, `routes/banners-admin.php`,
+`resources/views/partials/home/cards-banner.blade.php`,
+`resources/views/admin/partials/banners-screen.blade.php`, two migrations, and
+their tests.
+
 ## 2.60.306
 A security fix on the search panel, and one helper for every image address that
 becomes CSS. **Apply this one — it matters more than its size suggests.**
