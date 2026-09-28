@@ -275,8 +275,18 @@
 
    Rule 4 holds: no element is measured. `min()` and `calc()` do the whole job,
    once, at layout — there is no resize listener and nothing reads a rect. */
+/* `overflow:hidden` AND `overscroll-behavior:contain` TOGETHER, and neither
+   works without the other. A swipe anywhere on this overlay that is not the
+   product rail has no scrollable ancestor inside the dialog, so it chains to the
+   page — and the shop scrolls behind a modal that is covering it, which is the
+   opposite of "only the video will popup". `overscroll-behavior` only applies to
+   a scroll container, and `overflow:hidden` is what makes this one (its
+   scrollable overflow is zero, so nothing is clipped and nothing can scroll).
+   Pure CSS: no body-scroll lock, so no reflow of the page behind and no
+   scrollbar width to measure. */
 .ugcp{position:fixed;inset:0;z-index:2000;background:rgba(18,12,16,.92);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  overflow:hidden;overscroll-behavior:contain;
   display:none;align-items:center;justify-content:center}
 .ugcp.is-on{display:flex}
 .ugcp-box{
