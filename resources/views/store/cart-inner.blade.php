@@ -167,7 +167,12 @@ $kbbLineWas = static function ($kbbWasLine): int {
                         $name  = $p?->t('name');
                         $seed  = ($p?->brand?->name ?? '') . ($p?->name ?? '');
                         $img   = $item->variant?->image ?: $p?->image;
-                        $imgCss = CssUrl::value($img);
+                        // (Lane IM) The basket page's line thumbnail is the same .kc-th
+                        // square as the drawer's and was pulling the same full-size file.
+                        // ImageVariants::variantUrl() returns the original untouched when
+                        // there is no copy, so a catalogue that has never been through the
+                        // batch renders exactly what it renders today.
+                        $imgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $img, 400));
                         $thumb = $imgCss !== '' ? "background-image:url('" . e($imgCss) . "')" : 'background:' . Gradient::for($seed);
                         $attrs = $item->variant?->label();
                         $line  = $item->lineTotal();
@@ -245,7 +250,8 @@ $kbbLineWas = static function ($kbbWasLine): int {
                     @php
                         $recSeed  = ($recProduct->brand?->name ?? '') . $recProduct->name;
                         $recImg   = $recProduct->image;
-                        $recImgCss = CssUrl::value($recImg);
+                        // (Lane IM) The recommended card's picture, same substitution.
+                        $recImgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $recImg, 400));
                         $recStyle = $recImgCss !== ''
                             ? "background-image:url('" . e($recImgCss) . "')"
                             : 'background:' . Gradient::for($recSeed);

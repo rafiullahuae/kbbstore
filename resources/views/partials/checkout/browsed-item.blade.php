@@ -17,7 +17,9 @@
     // The seed stays English — see components/product-card.blade.php — and the
     // name a shopper reads is t().
     $name = $bp->t('name');
-    $imgCss = CssUrl::value($bp->image);
+    // (Lane IM) A 48px square, drawn from the full-size photograph. See
+    // ImageVariants::variantUrl().
+    $imgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $bp->image, 400));
     $thumb = $imgCss !== ''
         ? "background-image:url('" . e($imgCss) . "')"
         : 'background:' . Gradient::for(($bp->brand?->name ?? '') . $bp->name);
