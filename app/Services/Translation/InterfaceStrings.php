@@ -756,6 +756,19 @@ final class InterfaceStrings
     private static function storeHome(): array
     {
         return [
+            /*
+             * ── THE CARDS BANNER'S TWO STRINGS — Lane BN ────────────────────
+             *
+             * The dots under the cards banner. They are the only words that
+             * section prints which are not an operator's own: the heading, the
+             * body, the alt text and the button label are all typed into
+             * Appearance -> Banners -> Cards banner and are the owner's, which
+             * is why they are NOT here — the note above this method's siblings
+             * gives the rule ("a second English source for a value the owner
+             * types would be one of the two silently wrong").
+             */
+            'home.cards_banner_nav' => 'Banner cards',
+            'home.cards_banner_go' => 'Go to card :n',
             'home.slider_previous' => 'Previous',
             'home.slider_next' => 'Next',
             'home.category_product_count' => ':count product|:count products',

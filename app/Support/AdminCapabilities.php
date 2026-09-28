@@ -230,6 +230,26 @@ final class AdminCapabilities
         'instagram.view' => ['owner', 'manager', 'editor'],
         'instagram.manage' => ['owner', 'manager'],
 
+        /*
+         * ── Appearance → Banners → Cards banner (Lane BN, routes/banners-admin.php)
+         *
+         * TWO, AND NEITHER REUSES content.manage. A banner set decides what the
+         * FRONT PAGE of the shop shows, which is a narrower and louder thing than
+         * the media library or the mega menu that capability also covers — and a
+         * capability that covers everything is one nobody can grant carefully.
+         *
+         * `editor` IS on the manage half here, where it is deliberately not on
+         * instagram.manage, and the difference is the point of splitting them at
+         * all: this grant is "may lay out the homepage's banner row", which is the
+         * storefront work that role exists for. It holds no credential, reaches no
+         * third party and can disconnect nothing.
+         *
+         * `support` is on neither. A support account answers customers; it has no
+         * reason to be able to read, let alone rewrite, what the homepage shows.
+         */
+        'banners.view' => ['owner', 'manager', 'editor'],
+        'banners.manage' => ['owner', 'manager', 'editor'],
+
         // Writing an article into the Journal (Lane J). The same three roles
         // content.manage carries, and its own capability for the reason the
         // three below give: an article is published at the SITE ROOT of this
@@ -1009,6 +1029,33 @@ final class AdminCapabilities
         ['DELETE', 'admin-api/instagram/**', 'instagram.manage'],
         ['GET', 'admin-api/instagram', 'instagram.view'],
         ['GET', 'admin-api/instagram/**', 'instagram.view'],
+
+        /*
+         * ── Appearance → Banners → Cards banner (Lane BN) ───────────────────
+         *
+         * THE WRITES ABOVE THE READS, for the reason the Instagram block above
+         * states and this file's header states before it: RULES is
+         * first-match-wins, and a `GET admin-api/banners/**` rule listed first
+         * would resolve nothing dangerous today — every GET here really is a read
+         * — but it would resolve the NEXT read-shaped write somebody adds, which
+         * is exactly how `admin-api/instagram/start` would have been mapped to a
+         * view capability. The order is the guard, not the current path list.
+         *
+         * `**` after each literal prefix rather than a rule per path: the paths
+         * beneath `admin-api/banners/` are sets, cards and one preview, and every
+         * one of them is the same grant. A path added there tomorrow is covered
+         * by the same capability its siblings carry rather than falling through
+         * to the closed owner-only default and 403ing a manager on a screen that
+         * otherwise works — which is the failure mode AdminCapabilityMapTest
+         * names by route.
+         */
+        ['POST', 'admin-api/banners', 'banners.manage'],
+        ['POST', 'admin-api/banners/**', 'banners.manage'],
+        ['PUT', 'admin-api/banners/**', 'banners.manage'],
+        ['PATCH', 'admin-api/banners/**', 'banners.manage'],
+        ['DELETE', 'admin-api/banners/**', 'banners.manage'],
+        ['GET', 'admin-api/banners', 'banners.view'],
+        ['GET', 'admin-api/banners/**', 'banners.view'],
 
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],

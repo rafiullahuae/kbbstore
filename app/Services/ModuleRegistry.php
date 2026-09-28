@@ -348,6 +348,33 @@ class ModuleRegistry
          * storefront at all, which is the distinction that array documents.
          */
         'instagram_profile' => ['store', 'Instagram Profile', 'Our own Instagram — recent posts and reels in one of five layouts, with the real like and comment counts Instagram reports for them, and the profile box. Connect the account once under Content → Instagram (the Configure now button does the authorisation), then place it on the homepage’s Instagram Profile row or anywhere at all with a [kbb_instagram] shortcode. Off by default, and shows nothing until an account is connected and a fetch has run.', false, 'Content → Instagram', 'instagram', 'site', 'mid', 'A grid of our recent Instagram posts, wherever you have placed it — the homepage row or a [kbb_instagram] shortcode.', 'live'],
+        /*
+         * ── Appearance → Banners → Cards banner (Lane BN — Phase 22) ────────
+         *
+         * The owner: "we can turn on off card banners". THIS ROW IS THAT
+         * SWITCH, and without it the feature is unreachable in exactly the way
+         * the Instagram note above records: Banners::enabled() is
+         * moduleEnabled('cards_banner', false), so with no registry row the
+         * switch is never drawn, `false` is the only value it ever has, and the
+         * homepage section answers "off" forever.
+         *
+         * OFF BY DEFAULT, and inert twice over on top of that: the module ships
+         * with no set chosen, and a set that IS chosen draws nothing until it is
+         * published and holds a card with a picture. Applying the package
+         * therefore moves nothing on the front page, which is rule 1 on the most
+         * visible page in the shop — CardsBannerShipsOffTest renders it with a
+         * full table and asserts the bytes.
+         *
+         * 'live' and not 'screen': this draws a row a SHOPPER sees.
+         *
+         * The settings screen is `Appearance → Banners`, id `banners`,
+         * registered by resources/views/admin/partials/banners-screen.blade.php
+         * declaring `var SCREEN = 'banners'` — which is how AdminNavAndIdsTest's
+         * "it points every settings link at a console screen that exists" finds
+         * it. The integrator adds that partial's @include and its TITLES entry;
+         * the lane report names both lines.
+         */
+        'cards_banner' => ['store', 'Cards banner', 'A row of picture cards that scrolls itself, with one or two lines of text and a small button under each picture. Build any number of named sets under Appearance → Banners → Cards banner — each set carries its own speed, animation, how many cards show at once, corner radius and shadow — then pick which set the homepage shows. Off by default, and shows nothing until a published set with at least one card is chosen.', false, 'Appearance → Banners', 'banners', 'site', 'mid', 'The cards banner row on the homepage, once you have chosen a set for it.', 'live'],
         'media_library' => ['store', 'Media Library', 'The grid of every image uploaded through the admin, with search by name, by upload date and by the product, brand or category using it — plus what each image is used by before you delete it. Always on: this is a screen, not a switch.', true, 'Content → Media Library', 'media', 'site', 'all', 'An admin screen. Nothing visible on the storefront.', 'screen'],
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],

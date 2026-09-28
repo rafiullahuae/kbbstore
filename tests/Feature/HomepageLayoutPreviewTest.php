@@ -84,8 +84,16 @@ it('puts the delivery strip second in the two presets that asked for it elsewher
     // Named individually as well as swept above, because the sweep would stay
     // green if BOTH sides broke the same way — it compares two computed lists.
     // These two are the concrete wrong pictures the screen was drawing.
+    /*
+     * ADVANCED BY LANE BN. `cards_banner` joined Conversion's own sequence
+     * directly after the delivery strip and this preview is the first eight
+     * keys of it, so `recommended` falls off the end of the wire-frame. The
+     * CLAIM this case exists for is untouched and is the first three entries:
+     * the strip is drawn SECOND, where the preset's stored sequence asks for it
+     * third, because settle() puts a nested section back behind its host.
+     */
     expect(fwPreviewKeys('conversion'))->toBe([
-        'hero', 'delivery', 'ticker', 'flash', 'bundles', 'categories', 'bestsellers', 'recommended',
+        'hero', 'delivery', 'ticker', 'cards_banner', 'flash', 'bundles', 'categories', 'bestsellers',
     ]);
 
     expect(array_slice(fwPreviewKeys('boutique'), 0, 3))->toBe(['hero', 'delivery', 'categories']);
@@ -109,8 +117,18 @@ it('counts the same sections it always did, and names the same ones off', functi
      * `spotted`, for the reason written at that preset. So three counts rise by two
      * and the fourth does not move — which is the check, rather than a number that
      * was updated until it passed.
+     *
+     * ADVANCED AGAIN BY LANE BN, from 19/18/18/12, and the diff is exactly ONE
+     * section for three presets and none for the fourth. `cards_banner` joined
+     * REGISTRY and all four presets; Signature, Conversion and Editorial switch
+     * it on, and Boutique lists it in `off` beside `videos`, `instagram` and
+     * `spotted`, for the reason written at that preset — a row of cards that
+     * scrolls itself is one of the busiest bands on offer and that preset's
+     * case is restraint. So three counts rise by one and the fourth does not
+     * move, which is the check rather than four numbers updated until they
+     * passed. The `off` comparison in the loop below is what pins the fourth.
      */
-    $expected = ['signature' => 19, 'conversion' => 18, 'editorial' => 18, 'boutique' => 12];
+    $expected = ['signature' => 20, 'conversion' => 19, 'editorial' => 19, 'boutique' => 12];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

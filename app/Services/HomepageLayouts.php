@@ -26,7 +26,17 @@ class HomepageLayouts
             'blurb' => 'The full store. Every section on, in the order the site uses today.',
             'suits' => 'A broad catalogue where discovery matters more than a single message.',
             'sections' => [
-                'hero', 'delivery', 'ticker', 'categories', 'bundles', 'recommended',
+                /*
+                 * `cards_banner` sits where the REGISTRY puts it and where
+                 * store/home.blade.php draws it — Lane BN. Signature's whole
+                 * claim is "every section on, in the order the site uses
+                 * today", and HomepageSections::orderIsDefault() compares the
+                 * applied key sequence against array_keys(REGISTRY): a key
+                 * missing here, or placed anywhere else, makes applying
+                 * Signature produce a page that is NOT the shipped order, which
+                 * is what HomepageSectionOrderTest's "put it back" case checks.
+                 */
+                'hero', 'delivery', 'ticker', 'cards_banner', 'categories', 'bundles', 'recommended',
                 'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'bestsellers', 'flash',
                 'blog', 'about', 'reviews', 'trust', 'newsletter',
             ],
@@ -38,7 +48,7 @@ class HomepageLayouts
             'blurb' => 'Offers first. Flash sale and bundles above the fold, editorial pushed down.',
             'suits' => 'Sale periods and paid traffic, where the visit has one job.',
             'sections' => [
-                'hero', 'ticker', 'delivery', 'flash', 'bundles', 'categories',
+                'hero', 'ticker', 'delivery', 'cards_banner', 'flash', 'bundles', 'categories',
                 'bestsellers', 'recommended', 'quiz', 'reviews', 'trust',
                 'brands', 'routine', 'spotted', 'videos', 'instagram', 'newsletter', 'about', 'blog',
             ],
@@ -50,7 +60,7 @@ class HomepageLayouts
             'blurb' => 'Content leads. Routine, quiz and journal early; products follow the story.',
             'suits' => 'Building trust with visitors who are researching rather than buying today.',
             'sections' => [
-                'hero', 'delivery', 'routine', 'quiz', 'categories', 'bestsellers',
+                'hero', 'delivery', 'cards_banner', 'routine', 'quiz', 'categories', 'bestsellers',
                 'blog', 'brands', 'bundles', 'reviews', 'spotted', 'videos', 'instagram', 'about',
                 'recommended', 'flash', 'trust', 'newsletter', 'ticker',
             ],
@@ -65,7 +75,7 @@ class HomepageLayouts
                 'hero', 'categories', 'bestsellers', 'routine', 'brands',
                 'reviews', 'about', 'trust', 'newsletter',
                 'delivery', 'bundles', 'recommended', 'quiz', 'spotted', 'videos', 'instagram',
-                'flash', 'blog', 'ticker',
+                'flash', 'blog', 'ticker', 'cards_banner',
             ],
             'skins' => ['bestsellers' => 'luxe', 'bundles' => 'frame', 'recommended' => 'soft', 'flash' => 'minimal'],
             /*
@@ -83,7 +93,16 @@ class HomepageLayouts
              * would draw a row the apply does not produce, which is the fault
              * HomepageSections::settleKeys() exists to end.
              */
-            'off' => ['ticker', 'flash', 'spotted', 'videos', 'instagram', 'bundles', 'recommended'],
+            /*
+             * `cards_banner` joins that list (Lane BN) for the same argument in
+             * the same words: a row of cards that scrolls itself is one of the
+             * busiest bands on offer, and this preset's case is "fewer, calmer
+             * sections ... restraint reads as quality". It is LISTED in
+             * `sections` above and switched off here rather than left out, for
+             * the reason the note above gives — a section missing from a preset
+             * is a section whose order that preset does not decide.
+             */
+            'off' => ['ticker', 'flash', 'spotted', 'videos', 'instagram', 'bundles', 'recommended', 'cards_banner'],
         ],
     ];
 

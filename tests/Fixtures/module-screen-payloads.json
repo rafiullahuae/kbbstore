@@ -3540,6 +3540,10 @@
         "label": "Promo ticker"
       },
       {
+        "key": "cards_banner",
+        "label": "Cards banner"
+      },
+      {
         "key": "categories",
         "label": "Category circles"
       },
