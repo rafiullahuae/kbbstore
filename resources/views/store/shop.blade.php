@@ -93,6 +93,25 @@
      * `?cols=99` pinned the grid at four columns, which is neither what the URL
      * asked for nor the automatic answer. A mutation run found it.
      */
+    /*
+     * -- AND FIVE IS ON THE BUTTON ROW ----------------------------- Lane PG --
+     *
+     * The row offered 2, 3 and 4 while the grid derives FIVE. Every position on
+     * it was a step DOWN from the page the shopper was already looking at, and
+     * there was no way back to the default except editing the URL -- a control
+     * lying about the page it sits above, which is the defect the note above
+     * removed from the HIGHLIGHT and left in the OPTIONS.
+     *
+     * Widened rather than removed, because the owner asked for five AND uses
+     * these buttons; deleting the control would answer half his sentence by
+     * deleting the other half. Facets::columns() carries '5' on its allowlist
+     * and as its fallback, and kbb-shop.css has the matching pin.
+     *
+     * THE COMMENT IS HERE AND NOT BESIDE THE BUTTON, for the reason this file
+     * records twice already: a Blade comment on its own line down in the markup
+     * leaves its indentation and its newline in the rendered page, and
+     * StorefrontEnglishUnchangedTest compares BYTES.
+     */
     $colsChosen = in_array((string) request()->query('cols'), ['2', '3', '4', '5'], true);
 
     /*
@@ -181,15 +200,6 @@
                     <button type="button" data-c="2"@if ($colsChosen && '2' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>
                     <button type="button" data-c="3"@if ($colsChosen && '3' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 3) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="4.5" height="14" rx="1.3"/><rect x="9.75" y="5" width="4.5" height="14" rx="1.3"/><rect x="16.5" y="5" width="4.5" height="14" rx="1.3"/></svg></button>
                     <button type="button" data-c="4"@if ($colsChosen && '4' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 4) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
-                    {{-- FIVE, BECAUSE FIVE IS THE DEFAULT.                Lane PG
-                         This row offered 2, 3 and 4 while the grid showed five:
-                         every position on it was a step DOWN from the page the
-                         shopper was already looking at, and there was no way
-                         back to the default except editing the URL. A control
-                         that cannot reach its own page's answer is a control
-                         that lies about it. Widened rather than removed,
-                         because the owner asked for five AND uses these
-                         buttons. --}}
                     <button type="button" data-c="5"@if ($colsChosen && '5' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 5) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="2.7" height="14" rx=".9"/><rect x="6.3" y="5" width="2.7" height="14" rx=".9"/><rect x="10.6" y="5" width="2.7" height="14" rx=".9"/><rect x="14.9" y="5" width="2.7" height="14" rx=".9"/><rect x="19.2" y="5" width="2.7" height="14" rx=".9"/></svg></button>
                 </div>
                 <div class="sortsel">{{ __('store.shop.sort_label') }}
