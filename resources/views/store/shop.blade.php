@@ -74,8 +74,10 @@
      * grid products will show 1 column extra".
      *
      * So the attribute is emitted only when the shopper has actually chosen,
-     * and otherwise the grid takes the automatic answer from --kbb-track, which
-     * gives four at 1280 (unchanged) and five at 1680. A click still pins,
+     * and otherwise the grid takes the automatic answer from the one track rule
+     * in kbb.css -- which, since Lane PG moved the tile minimum to 220px and
+     * the filter rail started hidden, is FIVE at 1280 and six at 1680 rather
+     * than the four and five this comment used to name. A click still pins,
      * instantly: resources/js/kbb/shop.js sets the attribute itself and the CSS
      * keyed on it applies without a reload.
      *
