@@ -180,6 +180,128 @@ class HomepageApiController extends Controller
     }
 
     /**
+     * Which sections have WORDS, and where those words are edited.
+     *
+     * ── WHY THIS MAP EXISTS AND WHY IT IS NOT A SECOND SET OF BOXES ─────────
+     *
+     * A section on the homepage is two questions: WHERE it appears, which
+     * HomepageSections::SECTION_SCHEMA owns, and WHAT IT SAYS, which
+     * HomepageContent owns. The live panel answers the first with the section's
+     * own schema, drawn through ModuleSchema exactly as every other screen in
+     * this console draws a control.
+     *
+     * It answers the second with a LINK to the box that already exists, and
+     * that is a decision rather than a shortcut. copyTab() on that same screen
+     * states the rule it follows: "one sentence with two boxes is a sentence
+     * that changes depending on which box you touched last." The hero slides,
+     * the promo chip and the About paragraph each have exactly one control and
+     * exactly one writer; this map says which tab of THAT SAME SCREEN the
+     * control is on, so selecting a section in the picture is one click from
+     * its wording without growing a rival box for it.
+     *
+     * `key` is the HomepageContent::SCHEMA key the link should focus, or null
+     * where the words are a repeater rather than a field (the hero's slides).
+     * `tab` is a tab of that screen: 'hero' is the slide repeater, and anything
+     * else must be a key of HomepageContent::TABS.
+     *
+     * HomepageLiveEditTest holds all of that to the two constants in both
+     * directions — a section key that is not in REGISTRY, a setting key that is
+     * not in SCHEMA, a tab that does not carry it, or a SCHEMA key no section
+     * claims, each fails by name. That is what stops this map becoming the
+     * fourth thing on this screen that can go stale.
+     *
+     * @var array<string, array{tab: string, key: string|null, label: string}>
+     */
+    public const WORDS = [
+        'hero' => ['tab' => 'hero', 'key' => null, 'label' => 'the slides, their colours and their links'],
+        'ticker' => ['tab' => 'copy', 'key' => 'home_ticker', 'label' => 'the chip it scrolls'],
+        'about' => ['tab' => 'copy', 'key' => 'about_text', 'label' => 'the paragraph'],
+    ];
+
+    /**
+     * Appearance → Homepage content → Live preview: THE REAL HOMEPAGE, with
+     * every section in it selectable, and each section's own controls beside it.
+     *
+     * ── THE GAP THIS CLOSES ─────────────────────────────────────────────────
+     *
+     * Phase 15's last unticked line is "Live editing of homepage sections,
+     * reusing the settings schemas". Both halves already existed and nothing
+     * joined them: preview() above renders the real page from an unsaved
+     * arrangement, and HomepageSections::SECTION_SCHEMA is the ModuleSchema
+     * description of the three controls a section carries. What was missing was
+     * the seam — pointing at a section in the picture and getting THAT
+     * section's controls.
+     *
+     * ── WHAT IS DIFFERENT FROM preview(), AND IT IS ONE THING ───────────────
+     *
+     * The reader is built with `annotate: true`, so every section wrapper
+     * carries HomepageSections::SELECT_CLASS and a class naming its key. That
+     * is the whole mechanism: the screen selects on a CLASS, which is what rule
+     * 4 asks for, rather than measuring anything. The document is otherwise the
+     * same document — the same renderHome(), the same storefront controller and
+     * template — which is why the picture cannot drift from the shop, and
+     * HomepageLiveEditTest asserts exactly that by stripping the hooks and
+     * diffing this answer against the plain preview's.
+     *
+     * preview() keeps its own promise unchanged: its document is byte-identical
+     * to GET /, and HomepagePreviewTest §1 still asserts it, because annotation
+     * is opt-in and nothing but this method opts in.
+     *
+     * ── AND IT WRITES NOTHING ───────────────────────────────────────────────
+     *
+     * Same guarantee as preview(), by the same construction: the proposal
+     * reaches the page as a HomepageSections instance bound for the length of
+     * one render and dropped, that instance refuses save() outright, and none
+     * of the four cache keys the two writing endpoints forget is touched here.
+     * The SAVE is the endpoint that has always written these three values —
+     * POST /admin-api/homepage, above — so every control this screen draws has
+     * the writer it has always had and this route adds none.
+     */
+    public function live(Request $request): JsonResponse
+    {
+        $data = $request->validate(self::sectionRules());
+
+        [$payload, $error] = self::payloadFor($data['sections']);
+
+        if ($error !== null) {
+            return $error;
+        }
+
+        $reader = HomepageSections::proposing(app(SettingsService::class), $payload, true);
+
+        $rows = [];
+
+        foreach ($reader->all() as $row) {
+            $rows[] = $row + [
+                /*
+                 * THE CONTROLS, AS THE MODULE FRAMEWORK EMITS THEM.
+                 *
+                 * Not a list this controller writes out: HomepageSections
+                 * builds it from its own SECTION_SCHEMA, SECTION_TABS and
+                 * SECTION_POLICY through ModuleSchema::tabs(), which is the
+                 * call PayShipRules and MarketingPixels are drawn with. The
+                 * console switches on `f.type` and names not one setting, so a
+                 * field added to SECTION_SCHEMA appears on the screen without a
+                 * line of the screen changing — which is the difference between
+                 * reusing the schema and copying it.
+                 */
+                'tabs' => HomepageSections::sectionTabs($row['key'], $row),
+                'words' => self::WORDS[$row['key']] ?? null,
+            ];
+        }
+
+        return response()->json([
+            'ok' => true,
+            'html' => $this->renderHome($reader),
+            // Named from the service rather than repeated in the console's
+            // JavaScript, so the screen cannot come to select on a class the
+            // renderer has stopped emitting.
+            'select_class' => HomepageSections::SELECT_CLASS,
+            'sections' => $rows,
+        ]);
+    }
+
+    /**
      * store/home.blade.php, rendered through the storefront's own controller.
      *
      * ── THE REQUEST IS SWAPPED, AND THAT IS THE WHOLE TRICK ─────────────────
