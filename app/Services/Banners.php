@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\BannerCard;
 use App\Models\BannerSet;
 use App\Models\Media as MediaUrl;
+use App\Support\Color;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -273,6 +274,11 @@ class Banners
             'id', 'name', 'slug', 'status', 'position', 'autoplay', 'speed_ms',
             'animation', 'per_view', 'peek', 'gap', 'card_radius', 'show_arrows',
             'show_dots', 'pause_on_hover', 'ratio', 'show_text', 'show_button', 'shadow',
+            // Lane BP. NAMED HERE OR THE STOREFRONT NEVER SEES THEM: this list
+            // is the whole of what forHome() hydrates, so a column added to the
+            // table and not added here reaches the admin screen and the preview
+            // (which read the model) and silently does nothing on the shop.
+            'bg_mode', 'bg_color', 'bg_image', 'btn_bg', 'btn_text', 'btn_hover', 'title_pos',
         ];
 
         $select = ['banner_cards.'.'id as c_id'];
@@ -389,7 +395,7 @@ class Banners
         $radius = self::clamp($set->card_radius, ...BannerSet::LIMITS['card_radius']);
         $speed = self::clamp($set->speed_ms, ...BannerSet::LIMITS['speed_ms']);
 
-        return implode(';', [
+        $vars = [
             '--kbbn-per-lg:'.$per,
             // Two decimals, printed from an integer this method has already
             // clamped, so the declaration cannot carry anything but digits.
@@ -399,7 +405,133 @@ class Banners
             '--kbbn-ar:'.$set->ratioCss(),
             '--kbbn-sh:'.$set->shadowCss(),
             '--kbbn-dur:'.number_format(($speed * $count) / 1000, 2, '.', '').'s',
-        ]);
+        ];
+
+        /*
+         * ── THE FOUR OPERATOR COLOURS, AND WHY EACH IS OMITTED WHEN EMPTY ──
+         *
+         * Rule 1 on the most visible page in the shop. Every one of these ships
+         * at '' and the template's fallback is what the button already draws —
+         * `var(--pink,#E8919F)` and `#fff`. Written as an empty custom property
+         * the fallback would NOT apply (an empty value is a value), so the
+         * declaration is left out of the string entirely instead.
+         *
+         * `hex()` is the gate: it returns '' for anything Color::isValidHex()
+         * refuses, so what is printed here is `#` and three or six hex digits
+         * or nothing at all. No operator string reaches the style attribute.
+         */
+        foreach ([
+            '--kbbn-btn-bg' => $set->btn_bg,
+            '--kbbn-btn-tx' => $set->btn_text,
+            '--kbbn-btn-hv' => $set->btn_hover,
+        ] as $property => $raw) {
+            $hex = self::hex($raw);
+
+            if ($hex !== '') {
+                $vars[] = $property.':'.$hex;
+            }
+        }
+
+        return implode(';', $vars);
+    }
+
+    /**
+     * What goes behind the WHOLE row, on the section's own element.
+     *
+     * ── AND IT IS A SECOND METHOD BECAUSE IT IS A SECOND ELEMENT ────────────
+     *
+     * `cssVariables()` is written onto `.kbbn-vp`, the scroller. A custom
+     * property inherits DOWNWARDS and only downwards, so a background declared
+     * on `.kbbn` — the section's outer box, which is where the bleed and the
+     * padding live — cannot see anything written on the box inside it.
+     *
+     * The first version of this round put all of it on the scroller and the
+     * background did not paint at all: `has-bg` was on the element, the rule
+     * matched, and `background-color:var(--kbbn-bg,transparent)` resolved to
+     * the fallback because `--kbbn-bg` was two levels out of reach. A
+     * screenshot found it — `background.color` came back `rgba(0,0,0,0)` with
+     * the class present — which is the whole reason rule 2 asks for measured
+     * numbers rather than "it works".
+     *
+     * Returns '' for a set with no background, and the template then writes no
+     * `style` attribute on that element at all — rule 1, and the reason the
+     * byte-identity comparison in CardsBannerAppearanceTest holds.
+     */
+    public static function sectionVariables(BannerSet $set): string
+    {
+        $mode = $set->bgMode();
+
+        if ($mode === 'color') {
+            return '--kbbn-bg:'.self::hex($set->bg_color);
+        }
+
+        if ($mode === 'image') {
+            return '--kbbn-bgimg:'.self::cssUrl(self::imageUrl((string) $set->bg_image));
+        }
+
+        return '';
+    }
+
+    /**
+     * A colour a set may print into CSS, as `#rrggbb` or `#rgb`, or ''.
+     *
+     * `Color::isValidHex()` is the allowlist and it is deliberately the ONLY
+     * test: it matches `#?([0-9a-f]{3}|[0-9a-f]{6})` anchored at both ends, so
+     * a value it accepts cannot carry a semicolon, a brace, a `url(`, a comment
+     * opener or whitespace. The `#` is added rather than assumed, because that
+     * pattern makes it optional and a bare `e0567b` printed into a declaration
+     * is not a colour — it is an invalid token that kills the whole declaration.
+     *
+     * CLAUDE.md records that this helper once accepted a hex nobody could see:
+     * that was about CONTRAST, not about syntax, and it is why the screen draws
+     * a real swatch beside every one of these boxes rather than a text field.
+     */
+    public static function hex(?string $raw): string
+    {
+        $value = trim((string) $raw);
+
+        if (! Color::isValidHex($value)) {
+            return '';
+        }
+
+        return '#'.ltrim($value, '#');
+    }
+
+    /**
+     * A URL as a CSS `url()` token, with everything that could end the token
+     * percent-encoded.
+     *
+     * ── WHY NOT THE HTML ESCAPER, WHICH IS THE BUG NEXT DOOR ────────────────
+     *
+     * Lane SX is fixing this exact class of defect across twelve storefront
+     * files as this is written: a CSS `url()` built with `e()` / `{{ }}`.
+     * HTML escaping turns `"` into `&quot;`, which a CSS parser reads as six
+     * literal characters and NOT as a closing quote — so the escaper both fails
+     * to terminate the injection and corrupts the path. The two grammars are
+     * different and the escaper has to match the one it is writing into.
+     *
+     * So this encodes for CSS: every character outside an unreserved,
+     * path-shaped set becomes `%XX`. `"`, `'`, `(`, `)`, `\`, `;`, `{`, `}`,
+     * whitespace and every control character are therefore impossible in the
+     * output, which is what makes the surrounding `url("…")` unclosable.
+     *
+     * The input is already narrow — `bg_image` holds a path MediaRegistrar
+     * allowlisted — and this does not rely on that. Two doors, the same trade
+     * BannerSet's enum header describes.
+     *
+     * ▲ WHEN LANE SX'S SHARED HELPER LANDS, THIS SHOULD BECOME A CALL TO IT.
+     *   It is written here because that helper does not exist in this tree yet
+     *   and the alternative was to ship the escaper that is being removed.
+     */
+    public static function cssUrl(string $url): string
+    {
+        $safe = preg_replace_callback(
+            '/[^A-Za-z0-9\-._~:\/?#\[\]@!$&*+,=]/',
+            static fn (array $m): string => rawurlencode($m[0]),
+            $url
+        );
+
+        return 'url("'.$safe.'")';
     }
 
     private static function clamp(mixed $value, int $min, int $max): int

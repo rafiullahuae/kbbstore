@@ -13,6 +13,7 @@ use App\Services\SettingsService;
 use App\Support\MediaRegistrar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -104,6 +105,8 @@ class BannerApiController extends Controller
                 'animations' => self::labels(BannerSet::ANIMATIONS),
                 'shadows' => self::labels(BannerSet::SHADOWS),
                 'statuses' => BannerSet::STATUSES,
+                'bg_modes' => BannerSet::BG_MODES,
+                'title_positions' => BannerSet::TITLE_POSITIONS,
                 'limits' => BannerSet::LIMITS,
             ],
         ]);
@@ -168,9 +171,19 @@ class BannerApiController extends Controller
         return response()->json(['ok' => true, 'set' => $this->setPayload($set->refresh())], 201);
     }
 
-    public function updateSet(Request $request, BannerSet $set): JsonResponse
+    /**
+     * The rules a set's own columns are written under, under an optional prefix.
+     *
+     * ONE COPY, because there are now three writers — `updateSet`, `saveAll` and
+     * the buffered preview — and three copies of a validation list is three
+     * places for the next column to be forgotten. The prefix is what lets the
+     * same list validate `{...}` and `set.{...}`.
+     *
+     * @return array<string, list<mixed>>
+     */
+    private static function setRules(string $prefix = ''): array
     {
-        $data = $request->validate([
+        $rules = [
             'name' => ['sometimes', 'string', 'max:180'],
             'status' => ['sometimes', Rule::in(array_keys(BannerSet::STATUSES))],
             'animation' => ['sometimes', Rule::in(array_keys(BannerSet::ANIMATIONS))],
@@ -188,8 +201,55 @@ class BannerApiController extends Controller
             'gap' => ['sometimes', 'integer'],
             'card_radius' => ['sometimes', 'integer'],
             'position' => ['sometimes', 'integer'],
-        ]);
 
+            /*
+             * ── LANE BP: the seven appearance columns ───────────────────────
+             *
+             * The two enums go through `Rule::in(array_keys(...))` like the
+             * four that were already here — rule 5, "a select stores one of its
+             * own options or the default" — and the model refuses an unknown
+             * token a second time at render.
+             *
+             * THE FOUR COLOURS ARE NOT `['string']`. A hex is checked HERE with
+             * the same regex `App\Support\Color::isValidHex()` uses, so a
+             * value that is not a colour is a 422 the screen can explain rather
+             * than a string that reaches the column and is silently dropped at
+             * render. `nullable` + the empty string is how "use the shop's own
+             * colour" is stored, and it is the shipped value of all four.
+             */
+            'bg_mode' => ['sometimes', Rule::in(array_keys(BannerSet::BG_MODES))],
+            'title_pos' => ['sometimes', Rule::in(array_keys(BannerSet::TITLE_POSITIONS))],
+            'bg_image' => ['sometimes', 'nullable', 'string', 'max:400'],
+        ];
+
+        foreach (['bg_color', 'btn_bg', 'btn_text', 'btn_hover'] as $colour) {
+            $rules[$colour] = ['sometimes', 'nullable', 'string', 'regex:/^(#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$/'];
+        }
+
+        if ($prefix === '') {
+            return $rules;
+        }
+
+        $prefixed = [];
+
+        foreach ($rules as $key => $rule) {
+            $prefixed[$prefix.$key] = $rule;
+        }
+
+        return $prefixed;
+    }
+
+    /**
+     * Put a validated set payload onto a model, without saving it.
+     *
+     * NOT SAVED HERE, and that is what lets the buffered preview reuse it: the
+     * preview needs a set carrying the owner's unsaved numbers and must not
+     * write one of them. `saveAll()` and `updateSet()` call `save()` after.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function fillSet(BannerSet $set, array $data): void
+    {
         foreach (BannerSet::LIMITS as $column => [$min, $max]) {
             if (array_key_exists($column, $data)) {
                 $data[$column] = max($min, min($max, (int) $data[$column]));
@@ -197,16 +257,113 @@ class BannerApiController extends Controller
         }
 
         if (array_key_exists('name', $data)) {
-            $data['name'] = trim($data['name']) === '' ? $set->name : trim($data['name']);
+            $data['name'] = trim((string) $data['name']) === '' ? $set->name : trim((string) $data['name']);
 
             if ($data['name'] !== $set->name) {
                 $data['slug'] = $this->uniqueSlug($data['name'], $set->id);
             }
         }
 
-        $set->fill($data)->save();
+        /*
+         * A hex is stored NORMALISED — '#' + the digits, lower case — or ''.
+         * `Banners::hex()` is the one place that decision is made and it is the
+         * same method the storefront prints through, so the value in the column
+         * and the value on the page cannot disagree about what a colour is.
+         */
+        foreach (['bg_color', 'btn_bg', 'btn_text', 'btn_hover'] as $colour) {
+            if (array_key_exists($colour, $data)) {
+                $data[$colour] = strtolower(Banners::hex((string) $data[$colour]));
+            }
+        }
+
+        /*
+         * The background picture takes the SAME road a card's does: cut a
+         * picker's URL down to a path, then through MediaRegistrar's allowlist,
+         * which refuses a scheme, a host, a traversal and anything outside the
+         * two upload roots. A path it will not accept stores '' rather than the
+         * operator's text, so this column cannot hold a URL and the CSS
+         * `url()` the section emits is always a path this shop wrote.
+         */
+        if (array_key_exists('bg_image', $data)) {
+            $path = self::storedPath((string) $data['bg_image']);
+            $data['bg_image'] = $path ?? '';
+
+            if ($data['bg_image'] !== '') {
+                MediaRegistrar::record($data['bg_image']);
+            }
+        }
+
+        $set->fill($data);
+    }
+
+    public function updateSet(Request $request, BannerSet $set): JsonResponse
+    {
+        $data = $request->validate(self::setRules());
+
+        $this->fillSet($set, $data);
+        $set->save();
 
         return response()->json(['ok' => true, 'set' => $this->setPayload($set->fresh())]);
+    }
+
+    /**
+     * THE SAVE BUTTON: one request that writes the set and every card in it.
+     *
+     * ── WHY THIS ENDPOINT EXISTS AT ALL ─────────────────────────────────────
+     *
+     * The owner, after using the screen: "i don't want auto save, there should
+     * b save button, bcz i need multiple edits before save." The screen used to
+     * PUT on every `change` — one request per field, each followed by a
+     * re-render — so three edits were three writes and the row moved under him
+     * between them. With this, the editor buffers and presses Save once.
+     *
+     * ONE TRANSACTION, because a half-applied set is the shape that costs an
+     * afternoon: the row saved with its new colours and two of six cards, and
+     * no way for the owner to tell which. Either the whole editor lands or none
+     * of it does and the screen still holds everything he typed.
+     *
+     * A CARD ID THAT IS NOT IN THIS SET IS REFUSED, not ignored. `cards.*.id`
+     * arrives from the browser, and an editor that wrote whatever id it was
+     * handed would let one set's Save rewrite another set's cards.
+     */
+    public function saveAll(Request $request, BannerSet $set): JsonResponse
+    {
+        $data = $request->validate(self::setRules('set.') + [
+            'set' => ['sometimes', 'array'],
+            'cards' => ['sometimes', 'array'],
+            'cards.*.id' => ['required', 'integer'],
+        ] + self::cardRules('cards.*.'));
+
+        $cards = $set->cards()->get()->keyBy('id');
+
+        foreach ($data['cards'] ?? [] as $row) {
+            if (! $cards->has((int) $row['id'])) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'That card is not in this set. Reload the screen and try again.',
+                ], 422);
+            }
+        }
+
+        DB::transaction(function () use ($set, $data, $cards) {
+            $this->fillSet($set, $data['set'] ?? []);
+            $set->save();
+
+            foreach ($data['cards'] ?? [] as $row) {
+                $card = $cards->get((int) $row['id']);
+
+                $this->fillCard($card, $row);
+                $card->save();
+            }
+        });
+
+        $set->refresh();
+
+        return response()->json([
+            'ok' => true,
+            'set' => $this->setPayload($set),
+            'cards' => $set->cards()->get()->map(fn (BannerCard $c) => $this->cardPayload($c))->all(),
+        ]);
     }
 
     /**
@@ -302,9 +459,14 @@ class BannerApiController extends Controller
      * cannot hold a URL and the storefront's `<img src>` is always a path this
      * shop wrote.
      */
-    private function applyCard(Request $request, BannerCard $card, int $status = 200): JsonResponse
+    /**
+     * The rules a card is written under, under an optional prefix.
+     *
+     * @return array<string, list<mixed>>
+     */
+    private static function cardRules(string $prefix = ''): array
     {
-        $data = $request->validate([
+        $rules = [
             'image' => ['sometimes', 'nullable', 'string', 'max:400'],
             'alt' => ['sometimes', 'nullable', 'string', 'max:255'],
             'heading' => ['sometimes', 'nullable', 'string', 'max:190'],
@@ -313,8 +475,28 @@ class BannerApiController extends Controller
             'button_url' => ['sometimes', 'nullable', 'string', 'max:400'],
             'position' => ['sometimes', 'integer', 'min:0', 'max:9999'],
             'status' => ['sometimes', Rule::in(array_keys(BannerCard::STATUSES))],
-        ]);
+        ];
 
+        if ($prefix === '') {
+            return $rules;
+        }
+
+        $prefixed = [];
+
+        foreach ($rules as $key => $rule) {
+            $prefixed[$prefix.$key] = $rule;
+        }
+
+        return $prefixed;
+    }
+
+    /**
+     * Put a validated card payload onto a model, without saving it.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function fillCard(BannerCard $card, array $data): void
+    {
         foreach (['alt', 'heading', 'body', 'button_label', 'button_url'] as $text) {
             if (array_key_exists($text, $data)) {
                 $card->{$text} = trim((string) $data[$text]);
@@ -345,7 +527,13 @@ class BannerApiController extends Controller
                 $card->image_h = $media?->height === null ? null : (int) $media->height;
             }
         }
+    }
 
+    private function applyCard(Request $request, BannerCard $card, int $status = 200): JsonResponse
+    {
+        $data = $request->validate(self::cardRules());
+
+        $this->fillCard($card, $data);
         $card->save();
 
         return response()->json(['ok' => true, 'card' => $this->cardPayload($card->fresh())], $status);
@@ -462,6 +650,90 @@ class BannerApiController extends Controller
         ]);
     }
 
+    /**
+     * The same row, drawn from the editor's UNSAVED buffer — Lane BP.
+     *
+     * ── WHY A BUFFERED EDITOR NEEDS ITS OWN PREVIEW DOOR ────────────────────
+     *
+     * The whole reason the owner asked for a Save button is to see a
+     * COMBINATION before committing it — a colour, a radius and two headings
+     * together. A preview that reads the database would show him the row he has
+     * not saved yet, which is the state he is trying to get away from.
+     *
+     * ── AND IT WRITES NOTHING, BY CONSTRUCTION ──────────────────────────────
+     *
+     * The stored set and its cards are read, the validated buffer is laid over
+     * them IN MEMORY with the same `fillSet()`/`fillCard()` the save uses — so
+     * the preview cannot drift from what Save would produce — and `save()` is
+     * never called. The models are thrown away with the response.
+     *
+     * `fillSet()` calls `MediaRegistrar::record()` for a background picture,
+     * which is a write — to the MEDIA table, not to this one. It is idempotent
+     * by path and is the same registration the picker already did when the
+     * owner chose the file, so a preview cannot leave a banner set changed.
+     *
+     * A DRAFT SET IS DRAWN, like the stored preview: a draft is precisely what
+     * the owner is looking at while he builds it.
+     */
+    public function previewDraft(Request $request, BannerSet $set): JsonResponse
+    {
+        $data = $request->validate(self::setRules('set.') + [
+            'set' => ['sometimes', 'array'],
+            'cards' => ['sometimes', 'array'],
+            'cards.*.id' => ['required', 'integer'],
+        ] + self::cardRules('cards.*.'));
+
+        $loaded = $this->banners->forPreview($set->id);
+
+        if ($loaded === null) {
+            return response()->json(['ok' => true, 'html' => '', 'empty' => true]);
+        }
+
+        [$draftSet, $cards] = $loaded;
+
+        $this->fillSet($draftSet, $data['set'] ?? []);
+
+        $byId = [];
+
+        foreach ($data['cards'] ?? [] as $row) {
+            $byId[(int) $row['id']] = $row;
+        }
+
+        foreach ($cards as $card) {
+            if (isset($byId[(int) $card->id])) {
+                $this->fillCard($card, $byId[(int) $card->id]);
+            }
+        }
+
+        /*
+         * THE ORDER IS RE-APPLIED HERE, because `position` is one of the fields
+         * the buffer carries and the query that loaded these rows sorted by the
+         * STORED one. Left alone, dragging a card to the front would look like
+         * nothing happened until Save — which is exactly the feedback the buffer
+         * exists to give. `usort` is stable in PHP 8, so cards sharing a
+         * position keep the id order the query gave them.
+         */
+        usort($cards, static fn (BannerCard $a, BannerCard $b) => [$a->position, $a->id] <=> [$b->position, $b->id]);
+
+        /*
+         * A card the buffer has emptied of its picture is not drawn, the same
+         * rule `Banners::load()` applies with `image <> ''` — otherwise the
+         * preview would show an empty box the width of its neighbours, which is
+         * the one thing BannerCard::drawable() exists to prevent.
+         */
+        $cards = array_values(array_filter($cards, static fn (BannerCard $c) => $c->drawable()));
+
+        if ($cards === []) {
+            return response()->json(['ok' => true, 'html' => '', 'empty' => true]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'empty' => false,
+            'html' => view('partials.home.cards-banner', ['set' => $draftSet, 'cards' => $cards])->render(),
+        ]);
+    }
+
     /* ──────────────────────────────── helpers ───────────────────────────── */
 
     /**
@@ -497,6 +769,16 @@ class BannerApiController extends Controller
             'show_text' => $set->show_text,
             'show_button' => $set->show_button,
             'shadow' => $set->shadow,
+            // Lane BP. Named one by one for the reason this method's own header
+            // gives: a column reaches a screen because somebody put it here.
+            'bg_mode' => $set->bg_mode,
+            'bg_color' => $set->bg_color,
+            'bg_image' => $set->bg_image,
+            'bg_image_url' => trim((string) $set->bg_image) === '' ? '' : Banners::imageUrl((string) $set->bg_image),
+            'btn_bg' => $set->btn_bg,
+            'btn_text' => $set->btn_text,
+            'btn_hover' => $set->btn_hover,
+            'title_pos' => $set->title_pos,
             'cards_count' => $set->cards_count ?? $set->cards()->count(),
         ];
     }

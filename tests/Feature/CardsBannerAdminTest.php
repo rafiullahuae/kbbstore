@@ -100,7 +100,7 @@ it('is required from routes/web.php exactly once, once the integrator has wired 
     );
 });
 
-it('registers twelve routes and maps every one of them to a capability', function () {
+it('registers fourteen routes and maps every one of them to a capability', function () {
     /*
      * THE GUARD FAILS CLOSED BY CONSTRUCTION — AdminCapabilities::for() returns
      * null for a route it does not recognise and EnforceAdminCapability turns a
@@ -116,7 +116,16 @@ it('registers twelve routes and maps every one of them to a capability', functio
 
     $routes = BannersAdminRoutes::registered();
 
-    expect($routes)->toHaveCount(12);
+    /*
+     * TWELVE UNTIL ROUND 7; FOURTEEN NOW. Lane BP added
+     * `POST /banners/sets/{set}/preview` (the row drawn from the editor's
+     * unsaved buffer) and `PUT /banners/sets/{set}/all` (the Save button). Both
+     * are writes by verb and therefore land on `banners.manage` through the
+     * wildcard rows below, which the loop under this line is what proves — the
+     * count is advanced deliberately, and the capability check is the part that
+     * had to keep holding.
+     */
+    expect($routes)->toHaveCount(14);
 
     foreach ($routes as $route) {
         $capability = AdminCapabilities::for($route);
