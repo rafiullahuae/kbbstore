@@ -525,32 +525,21 @@
   /* product cards */
   .prow{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
   .prow.five{grid-template-columns:repeat(5,1fr)}
-  .pc{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-m);overflow:hidden;transition:.2s var(--ease);display:flex;flex-direction:column}
-  .pc:hover{box-shadow:var(--sh-m);transform:translateY(-4px)}
-  .pc .ph{height:180px;position:relative;display:grid;place-items:center;color:#fff;cursor:pointer}
-  /* The card photograph. Same swap, and the same reasoning, as .gmain-img in
-     kbb-product.css: a CSS background became a real <img> so it can be lazy,
-     indexed and described, and object-fit:contain is the exact equivalent of
-     the `center/contain no-repeat` shorthand it replaces.
+  /* ▲ THE OLD /shop CARD'S RULES STOOD HERE AND ARE GONE.          Lane PG
+     `.pc`, `.pc .ph`, `.pc .ph-img`, `.pc .binit`, `.pc .lbl`, `.pc .heart`
+     and the `.kbb-home .pc` rail below them described a card that no template
+     renders any more: there is ONE product tile now
+     (components/product-card.blade.php) and it is `.kbb-card.kbb-tile`. Only
+     rules whose every selector REQUIRED `.pc` were removed, so nothing that
+     could still match was touched — `.cbody`, `.cbrand`, `.cname` and the rest
+     below are left exactly as they were.
 
-     WHAT KEEPS CUMULATIVE LAYOUT SHIFT AT ZERO HERE, and it is not the img.
-     .ph above is a fixed 180-pixel box -- a frame whose size is settled by the
-     stylesheet before a single byte of any photograph has arrived -- and this
-     rule takes the img out of flow inside it. Nothing in the card can move when
-     an image decodes, arrives late, or 404s, which is the one thing the old
-     background got right and the conversion had to keep. Do not give .ph an
-     `auto` height, and do not make this img a flow child: either change makes
-     the tile's height depend on the file and reintroduces the shift.
-
-     Absolute rather than a grid item for the second reason .gmain-img is: .ph
-     is display:grid;place-items:center and .binit is its centred child, so a
-     flow img would be laid out beside the fallback initials rather than
-     sharing the frame with them. */
-  .pc .ph-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
-  .pc .binit{font-weight:700;font-size:13px;text-align:center;line-height:1.35;text-shadow:0 1px 6px rgba(0,0,0,.12)}
-  .pc .lbl{position:absolute;top:12px;inset-inline-start:12px;font-size:10px;font-weight:700;color:#fff;border-radius:99px;padding:4px 10px}
-  .pc .heart{position:absolute;top:11px;inset-inline-end:11px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;color:var(--ink)}
-  .pc .heart svg{width:17px;height:17px}.pc .heart.on{color:var(--pink)}.pc .heart.on svg{fill:var(--pink)}
+     What the removed block said, kept because the next card has to keep doing
+     it: the frame reserves its own box in CSS and the photograph is taken out
+     of flow inside it, so nothing can move when an image decodes, arrives late
+     or 404s. The one tile does the same thing with `aspect-ratio` on
+     `.kbb-card-thumb` and `position:absolute` on `.kbb-card-shot`, and
+     GridPhotoLoadingTest is what holds it there. */
   .cbody{padding:13px 14px 15px;display:flex;flex-direction:column;flex:1}
   .cbrand{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--pink);font-weight:700}
   .cname{font-size:13.5px;font-weight:600;margin:3px 0 6px;line-height:1.3;color:var(--ink)}
@@ -978,33 +967,6 @@ body{margin:0;background:#fff;color:var(--ink);font:400 14px/1.6 Poppins,system-
 .kbb-home .rail{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 22px 16px;margin:0 -22px;scrollbar-width:none;cursor:grab}
 .kbb-home .rail::-webkit-scrollbar{display:none}
 .kbb-home .rail.drag{cursor:grabbing;scroll-snap-type:none}
-.kbb-home .pc{flex:0 0 clamp(178px,17vw,220px);scroll-snap-align:start;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;transition:.25s;display:flex;flex-direction:column}
-.kbb-home .pc:hover{border-color:var(--pink);box-shadow:var(--sh-l);transform:translateY(-3px)}
-.kbb-home .pc .ph{aspect-ratio:1;position:relative;background:var(--line2)}
-.kbb-home .pc .ph::after{content:'';position:absolute;inset:0;background:radial-gradient(58% 46% at 34% 24%,rgba(255,255,255,.55),transparent 62%)}
-.kbb-home .pc .off{position:absolute;top:9px;inset-inline-start:9px;background:var(--sale);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;z-index:2}
-.kbb-home .pc .wl{position:absolute;top:8px;inset-inline-end:8px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center;z-index:2;transition:.2s}
-.kbb-home .pc .wl:hover{background:var(--pink);color:#fff}
-.kbb-home .pc .wl svg{width:15px;height:15px}
-.kbb-home .pc .b{padding:11px 12px 12px;display:flex;flex-direction:column;flex:1}
-.kbb-home .pc .br{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.kbb-home .pc h3{font-size:12.8px;font-weight:500;line-height:1.35;margin:4px 0 6px;
-       display:-webkit-box;-webkit-line-clamp:var(--kbb-name-lines,99);-webkit-box-orient:vertical;
-       overflow:hidden;min-height:calc(var(--kbb-name-min,0))}
-.kbb-home .pc .rt{font-size:11px;color:var(--amber);margin-bottom:6px}
-.kbb-home .pc .rt span{color:var(--muted)}
-.kbb-home .pc .pz{margin-top:auto;font-size:15px;font-weight:700}
-.kbb-home .pc .pz s{color:var(--muted);font-weight:400;font-size:12.5px;margin-inline-end:6px}
-.kbb-home .pc .add{margin-top:9px;border:0;background:var(--ink);color:#fff;border-radius:99px;padding:9px;font:600 12px Poppins;cursor:pointer;transition:.2s;width:100%}
-.kbb-home .pc .add:hover{background:var(--pink)}
-.kbb-home .pc .rank{position:absolute;top:9px;inset-inline-start:9px;background:var(--ink);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;z-index:2}
-.kbb-home .pc .off + .rank{top:38px}
-.kbb-home .pc .stock{position:absolute;inset-inline-start:9px;inset-inline-end:9px;bottom:9px;z-index:2}
-.kbb-home .pc .stock i{display:block;height:4px;border-radius:99px;background:var(--sale);margin-bottom:3px}
-.kbb-home .pc .stock{background:rgba(255,255,255,.9);border-radius:8px;padding:5px 7px;backdrop-filter:blur(4px)}
-.kbb-home .pc .stock b{font-size:10px;font-weight:700;color:var(--sale)}
-.kbb-home .pc .rt.none{color:var(--green);font-weight:600}
-.kbb-home .pc .save{display:inline-block;font-size:10.5px;font-weight:700;color:var(--green);background:#E9F6EF;border-radius:5px;padding:2px 7px;margin-inline-start:6px;vertical-align:middle}
 .kbb-home .rout{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 .kbb-home .rt6{text-align:center}
 .kbb-home .rt6 .im{aspect-ratio:1;border-radius:16px;position:relative;overflow:hidden;transition:.3s}
@@ -1313,7 +1275,7 @@ body{padding-bottom:46px}
 .kbb-home .fs{padding:11px 13px}
 .kbb-home .flinks{gap:5px 14px;font-size:12px;padding:13px 0}
 .kbb-home .fb{flex-direction:column;gap:9px;font-size:11.5px}}
-@media(max-width:420px){.kbb-home .pc{flex:0 0 58vw}
+@media(max-width:420px){
 .kbb-home .brands{grid-template-columns:repeat(2,1fr)}
 .kbb-home .sl :is(h1,h2){font-size:23px}
 .kbb-home .fg{grid-template-columns:1fr}}
