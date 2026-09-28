@@ -201,7 +201,15 @@ it('names a real console location in every module row that names one at all', fu
     // so the new row's screen string really does resolve to a screen the console can
     // draw. A row whose string resolved to nothing would fail that line whatever
     // this number said.
-    expect($checked)->toBe(38);
+    //
+    // 39 with Lane BN: `cards_banner` is a new row and it names
+    // 'Appearance → Banners', which is a real screen registered by
+    // resources/views/admin/partials/banners-screen.blade.php declaring
+    // `var SCREEN = 'banners'`. Advanced for the change that was meant, and the
+    // line below it is again what makes advancing safe: $wrong stayed empty, so
+    // the new row's screen string really does resolve to a screen the console
+    // can draw.
+    expect($checked)->toBe(39);
     expect($wrong)->toBe([]);
 });
 

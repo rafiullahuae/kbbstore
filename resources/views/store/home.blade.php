@@ -382,6 +382,56 @@
   @endunless
 </div></section>
 @endunless
+{{--
+
+     THE CARDS BANNER — Lane BN.
+
+     The owner: "I need multiple cards type with auto scroll smooth scroll, each
+     card will have image banner and downside 1-2 lines text with right side
+     small beautiful button ... we can turn on off card banners, and inside each
+     banner section we can create multiple cards and the whole section will have
+     full control options to choose which banner will show on homepage".
+
+     ── THE SHAPE IS THE VIDEO RAIL'S AND THE INSTAGRAM BLOCK'S, DELIBERATELY ─
+
+     Both blocks below carry the full argument; every word of it applies here and
+     is not repeated:
+
+       · the <section> is INSIDE the @if, not around it, so a shop that has not
+         switched this on — which is every shop the day the package applies —
+         emits NOT ONE BYTE more than it does today. An empty wrapper with a
+         classFor() on it is still a changed page: a new element, a new class
+         attribute, and a divider rule above it from SectionDividers.
+       · the @unless is kept as well, and it is not redundant: it is what makes
+         the Desktop/Mobile switches on Appearance → Homepage → Cards banner
+         work at all, and it short-circuits before any read on a shop that has
+         switched the row off for both.
+       · the directive is GLUED to the end of this comment. A Blade comment is
+         replaced by the empty string and ITS TRAILING NEWLINE SURVIVES, where a
+         line holding only a directive contributes nothing — the video block
+         below cost two newlines on every homepage on earth written the readable
+         way, and StorefrontEnglishUnchangedTest reported it at byte 51624.
+
+     ── ONE CALL, AND IT IS THE GATE AS WELL AS THE READ ─────────────────────
+
+     Banners::forHome() returns null for all three ways this section draws
+     nothing — the module is off, no set is chosen, or the chosen set is
+     missing, drafted or empty of drawable cards — so the template has one
+     question to ask rather than four. It short-circuits on the module switch
+     BEFORE any settings or table read, so a shop with this off pays exactly
+     what it paid before the package applied; with it on it is ONE query, a
+     join, for the set and its cards together. That class's header has the
+     measurement and CardsBannerQueryCostTest holds it.
+
+     Nothing from a setting is interpolated into this file: the partial escapes
+     the four operator strings itself and scheme-checks the button's URL before
+     it becomes an href.
+     --}}@unless ($sections->hidden('cards_banner'))
+@php $bnSection = app(\App\Services\Banners::class)->forHome(); @endphp
+@if ($bnSection !== null)
+<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include('partials.home.cards-banner', ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
+@endif
+@endunless
 
 {{-- CATEGORIES --}}
 @unless ($sections->hidden('categories'))

@@ -82,6 +82,16 @@ it('names every writer that puts a file in the media library', function () {
         'app/Services/Import/MediaSideloader.php' => ['store import'],
         'app/Http/Controllers/Store/ReviewController.php' => ['reviews'],
         'app/Services/Instagram/InstagramSync.php' => ['Instagram'],
+        /*
+         * THE SEVENTH WRITER, and this file is the reason it is named on the
+         * screen at all — Lane BN. A card's picture reaches the library from
+         * Appearance → Banners, through the shared picker's own upload endpoint
+         * on the common path and through BannerApiController's own
+         * MediaRegistrar::record() on every write besides. The owner deletes
+         * from this grid; a picture he cannot place is one he deletes off the
+         * front page of his shop.
+         */
+        'app/Http/Controllers/Admin/BannerApiController.php' => ['banner'],
     ];
 
     $blurb = mlbBlurb();
@@ -105,7 +115,7 @@ it('names every writer that puts a file in the media library', function () {
     expect($blurb)->not->toContain('uploaded through the admin');
 });
 
-it('goes red when a seventh writer starts filling the library', function () {
+it('goes red when an eighth writer starts filling the library', function () {
     /*
      * THE HALF THAT KEEPS WORKING. The case above pins today's wording; this one
      * pins the SET, so the next lane that teaches a new subsystem to register its
@@ -124,6 +134,9 @@ it('goes red when a seventh writer starts filling the library', function () {
         'app/Services/Import/MediaSideloader.php',
         'app/Http/Controllers/Store/ReviewController.php',
         'app/Services/Instagram/InstagramSync.php',
+        // Lane BN — Appearance → Banners → Cards banner. See the row beside it
+        // in the case above for what the sentence now has to carry for it.
+        'app/Http/Controllers/Admin/BannerApiController.php',
     ];
 
     $found = [];

@@ -23,6 +23,33 @@ class HomepageSections
         'hero'        => ['Hero slider', 'The rotating banners at the top.', false, null],
         'delivery'    => ['Delivery strip', '1-3 days delivery, free over AED 199.', false, null],
         'ticker'      => ['Promo ticker', 'The scrolling discount-code line.', false, null],
+        /*
+         * ── ONE ROW ADDED BY LANE BN, AND IT DRAWS NOTHING ON APPLY ─────────
+         *
+         * The owner: "I need multiple cards type with auto scroll smooth
+         * scroll ... we can turn on off card banners ... full control options
+         * to choose which banner will show on homepage".
+         *
+         * It sits HERE, immediately after the hero band, because that is where
+         * the template draws it and the two have to agree: this list IS the
+         * default order, and a key whose position here disagrees with
+         * store/home.blade.php would hand Appearance -> Homepage a picture the
+         * shop does not draw. That is the fault HomepageSections::settle()
+         * exists to stop one level along.
+         *
+         * IT COSTS AN UNCONFIGURED SHOP NOTHING. A key added to this list
+         * changes no byte on its own: `order` is the registry index for every
+         * row, so orderIsDefault() is still true and orderStyle() still returns
+         * '', and the section's own element is drawn INSIDE the @if in
+         * store/home.blade.php rather than around it — so a shop with the
+         * module off, or with no set chosen, emits exactly what it emitted
+         * before. StorefrontEnglishUnchangedTest is the instrument and
+         * CardsBannerShipsOffTest is the argument.
+         *
+         * Its Desktop and Mobile switches still work: the @unless on the
+         * template is kept as well, and it short-circuits before any read.
+         */
+        'cards_banner' => ['Cards banner', 'An auto-scrolling row of picture cards. Build the sets in Appearance → Banners → Cards banner and pick which one shows; nothing shows until you do.', false, null],
         'categories'  => ['Category circles', 'Shop by category, scrollable.', false, null],
         'bundles'     => ['Big savings bundles', 'Skincare sets and routines.', true, 'classic'],
         'recommended' => ['Recommended for you', 'Handpicked essentials.', true, 'soft'],

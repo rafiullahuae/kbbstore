@@ -518,6 +518,7 @@
       + 'brand logos, category images, the SEO share image, '
       + 'the clips and covers from Shoppable video, '
       + 'images brought in by a store import, photos customers attach to their reviews, '
+      + 'the pictures on your banner cards, '
       + 'and anything the Instagram sync downloads.</div></div>'
       + colsBar()
       + '<button class="mlib-btn" id="mlib-rescan"' + (busy ? ' disabled' : '') + '>Rescan folder</button>'
