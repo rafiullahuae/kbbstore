@@ -668,8 +668,27 @@ final class EnglishRenderWalk
      * standalone documents. None of them draws a product grid and none of them
      * emits the quick-view block, so none of them moved — which is the evidence
      * that (a) really is the style block and not something wider.
+     *
+     * ▲ ADVANCED AGAIN WITHIN THE SAME LANE, FOR THE OWNER'S FOLLOW-UP.
+     *
+     * He sent a second screenshot ("i need the same, with square image
+     * thumbnail… by default 5 columns will be there and hidden filter sidebar
+     * by default") and TWO pages moved for it, by exactly one element each:
+     *
+     *     shop, collections/{path}
+     *         before   …rx="1"/></svg></button>⏎                </div>
+     *         after    …rx="1"/></svg></button>⏎                    <button
+     *                  type="button" data-c="5" title="5 columns">…
+     *
+     * The column switcher offered 2, 3 and 4 while the grid derives five, so
+     * every position on it was a step down from the page the shopper was
+     * already looking at. It offers five now. Nothing else on either page
+     * moved, and no other page moved at all — the square thumbnail is a
+     * stylesheet fallback (1/1.02 → 1/1) and this walk rolls `resources/views`
+     * back and renders, so it is invisible here exactly as the column count
+     * was.
      */
-    public const BASE_COMMIT = '24fac5624d069330de095455f819036592e40507';
+    public const BASE_COMMIT = '6ecc5a451192ca2f15cf376a35b27541d838ef66';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
