@@ -60,6 +60,49 @@ const OUT = process.env.BP_OUT || (__dirname + '/../docs/lane-bp-shots');
   console.log(JSON.stringify({ step: 'editor-clean', width, ...clean }, null, 2));
   await page.screenshot({ path: `${OUT}/admin-editor-clean-${width}.png`, fullPage: true });
 
+  /* The two bands the brief asks for by name, cropped so they can be read:
+     Motion (where Speed now is, and what its readout says) and "How a shopper
+     moves the row" (the arrows switch and the sentence about which browsers
+     draw them). The console's own page does not grow a full-page screenshot —
+     it scrolls internally — so a crop is the only way to photograph a band
+     that is below the fold. */
+  for (const [name, heading] of [['motion', 'Motion'], ['steering', 'How a shopper moves the row']]) {
+    const band = await page.evaluateHandle((h) => {
+      const sec = [...document.querySelectorAll('.bns-sec')].find(s => s.textContent.trim() === h);
+      if (!sec) return null;
+      // The heading plus everything up to the next heading.
+      const wrap = document.createElement('div');
+      return sec;
+    }, heading);
+
+    const el = band.asElement();
+    if (!el) continue;
+
+    await el.evaluate(e => e.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(250);
+
+    const boxA = await el.boundingBox();
+    const next = await page.evaluateHandle((h) => {
+      const all = [...document.querySelectorAll('.bns-sec')];
+      const i = all.findIndex(s => s.textContent.trim() === h);
+      return all[i + 1] || null;
+    }, heading);
+    const nextEl = next.asElement();
+    const boxB = nextEl ? await nextEl.boundingBox() : null;
+
+    if (boxA) {
+      await page.screenshot({
+        path: `${OUT}/admin-${name}-${width}.png`,
+        clip: {
+          x: Math.max(0, boxA.x - 14),
+          y: Math.max(0, boxA.y - 10),
+          width: Math.min(width - Math.max(0, boxA.x - 14), boxA.width + 28),
+          height: boxB && boxB.y > boxA.y ? Math.min(boxB.y - boxA.y + 4, 900) : 320,
+        },
+      });
+    }
+  }
+
   /* ── SEVERAL EDITS, NONE OF THEM SAVED ─────────────────────────────────── */
   await page.evaluate(() => {
     const fire = (el, type) => el.dispatchEvent(new Event(type, { bubbles: true }));
