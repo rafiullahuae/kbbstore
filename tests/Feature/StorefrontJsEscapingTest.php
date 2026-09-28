@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * ── WHAT THE SWEEP FOUND, AND WHAT IT LEFT ALONE ────────────────────────────
  *
- * Three holes, in three files, each one a value from outside this page's own
+ * Four holes, in four files, each one a value from outside this page's own
  * source reaching the DOM in a context its escaping did not cover:
  *
  *  1. mobile-nav.js — EVERY href in the mobile drawer was escaped and NONE was
@@ -32,6 +32,15 @@ declare(strict_types=1);
  *  3. reviews.js — a review photo's address went into `<img src="…">` escaped
  *     and not scheme-checked. `reviews` is the one table on this shop whose
  *     rows are already written by the public.
+ *
+ *  4. pdp.js — the variant price came out of `data-price`, which is
+ *     `Money::plain()` carrying the `currency_symbol` SETTING, and went into
+ *     `innerHTML`. THE BLADE ESCAPE DOES NOT REACH THIS: `{{ }}` escapes for
+ *     the attribute and the HTML parser decodes it again while building the
+ *     attribute, so `dataset.price` hands the live characters back. It is the
+ *     only `dataset.*` value anywhere under resources/js that reaches an HTML
+ *     sink, and it is rule 5 — printed unescaped, and a setting rather than a
+ *     constant.
  *
  * Everything else was read and recorded as safe with a reason, in a comment at
  * the site: the cart drawer/page fragments, every `*Html` value on the checkout
@@ -243,6 +252,43 @@ it('scheme-checks a review photo and draws nothing for a refused one', function 
         ->toBeTrue('the createObjectURL preview changed — a blob: address is browser-generated and cssUrl() would refuse it');
 });
 
+it('escapes the variant price a data attribute hands back before it becomes markup', function () {
+    /*
+     * THE DEFECT ON THE SHOP, AND THE SUBTLEST OF THE FOUR. `setPrice()` sets
+     * innerHTML, and its one dynamic caller read `variant.dataset.price` — which
+     * is `Money::plain()`, TEXT rather than markup, carrying the
+     * `currency_symbol` SETTING, stored by the admin as free text.
+     *
+     * The Blade escape does NOT protect it. `data-price="{{ … }}"` escapes for
+     * the attribute, and the HTML parser DECODES those entities while it builds
+     * the attribute — so by the time `dataset.price` is read the live
+     * characters are back, exactly the round trip `App\Support\CssUrl`'s header
+     * records for `&#39;` inside a style attribute. Measured in node: a symbol
+     * containing `<img src=x onerror=…>` comes out of the attribute identical
+     * to what went in.
+     *
+     * This is rule 5 in CLAUDE.md — anything printed unescaped is a constant,
+     * never a setting — and it is the only `dataset.*` value anywhere under
+     * resources/js that reaches an HTML sink. Everything else is a number, a
+     * key comparison, or textContent.
+     *
+     * The `pricehtml` branch stays raw deliberately: it means "the server
+     * composed this as markup" and nothing emits it today.
+     *
+     * MUTATION NOTE, RUN: change the line back to
+     * `variant.dataset.pricehtml || variant.dataset.price || ''` and this is
+     * red on both assertions.
+     */
+    $code = jsCode('pdp.js');
+
+    expect(preg_match("/dataset\.pricehtml \|\| escapeHtml\(variant\.dataset\.price \|\| ''\)/", $code))
+        ->toBe(1, 'the variant price from a data attribute is no longer escaped before setPrice() writes it to innerHTML');
+
+    // No OTHER data attribute may take the short route into markup.
+    expect(preg_match_all('/innerHTML\s*=\s*[^;]*dataset\./', $code))
+        ->toBe(0, 'a data attribute now reaches innerHTML in pdp.js without an escaper in front of it');
+});
+
 it('has no eval, no new Function and no document.write anywhere in the storefront', function () {
     /*
      * MUTATION NOTE, RUN: add `eval(data.x)` to any file under resources/js
@@ -293,6 +339,12 @@ it('ships a bundle that carries the sweep, not only the source', function () {
     // Before the fix this read `cart-note err">${X.error}` — no parenthesis.
     expect(preg_match('/cart-note err">\$\{[A-Za-z_$]+\(/', $bundle))
         ->toBe(1, 'the shipped bundle still interpolates the cart error raw');
+
+    // The variant price goes through a CALL on the way out of its data
+    // attribute. Before the fix this read `dataset.pricehtml||X.dataset.price`
+    // — the property name survives minification, the escaper's name does not.
+    expect(preg_match('/dataset\.pricehtml\|\|[A-Za-z_$]+\(/', $bundle))
+        ->toBe(1, 'the shipped bundle still writes the variant price into innerHTML unescaped');
 
     // A refused review photo is dropped rather than drawn.
     expect(preg_match('/\.filter\(Boolean\)\.map\([\s\S]{0,40}<img src="/', $bundle))

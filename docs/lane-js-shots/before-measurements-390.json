@@ -61,13 +61,22 @@
   {
     "page": "product",
     "viewport": 390,
-    "scrollWidth": 390,
-    "overflow": 0,
+    "scrollWidth": 1017,
+    "overflow": 627,
     "injectedRequests": 0
   },
   {
-    "page": "review-modal-hostile",
+    "page": "variant-price",
     "injectedRequests": 1,
+    "datasetPrice": "AED<img src=/uploads/js/injected.png onerror=alert(7)>188",
+    "nowHtml": "AED<img src=\"/uploads/js/injected.png\" onerror=\"alert(7)\">188",
+    "nowText": "AED188",
+    "elementsInNow": 1,
+    "injectedImgs": 1
+  },
+  {
+    "page": "review-modal-hostile",
+    "injectedRequests": 0,
     "imgs": 3,
     "srcs": [
       "/uploads/js/photo.png",
@@ -99,8 +108,8 @@
   {
     "page": "cart",
     "viewport": 390,
-    "scrollWidth": 390,
-    "overflow": 0,
+    "scrollWidth": 665,
+    "overflow": 275,
     "injectedRequests": 0
   },
   {
@@ -118,9 +127,9 @@
     "rows": 7,
     "hrefs": [
       "/product/ginseng-essence-water/",
-      "/product/advanced-snail-96-mucin-power-essence/",
-      "/product/dive-in-low-molecular-hyaluronic-acid-serum/",
-      "/product/cellmazing-fit-serum/"
+      "/product/madagascar-centella-ampoule/",
+      "/product/glow-deep-serum-rice-alpha-arbutin/",
+      "/product/peach-niacinamide-30-serum/"
     ]
   },
   {

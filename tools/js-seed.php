@@ -140,6 +140,22 @@ Review::create([
  */
 ModuleToggle::updateOrCreate(['module' => 'cart_coupon_field'], ['enabled' => true]);
 
+/* --------------------------------------------------- currency symbol --- */
+
+/*
+ * PREVIEW ONLY. `currency_symbol` is stored by the admin as free text, and
+ * Money::plain() puts it into `data-price` on every variant row. Blade escapes
+ * that for the attribute and the HTML parser decodes it again, so pdp.js read
+ * the live characters back and wrote them into innerHTML when a bundle was
+ * picked.
+ *
+ * The contrast is the point of the picture: the SERVER-rendered prices on the
+ * same page go through Money::format(), which escapes the symbol itself, so
+ * they are unaffected either way. Only the JavaScript round trip moved.
+ */
+app(\App\Services\SettingsService::class)
+    ->set('currency_symbol', 'AED<img src=/uploads/js/injected.png onerror=alert(7)> ');
+
 \Illuminate\Support\Facades\Cache::flush();
 
 echo "js seed: menu {$menu->id} product {$product->slug}\n";

@@ -141,6 +141,40 @@ const frame = (page, name) => page.evaluate((n) => ({
     out.push({ ...(await frame(page, 'product')), injectedRequests: injected.length });
     await shot('product');
 
+    /* The variant price, which comes out of `data-price` — Money::plain(),
+       carrying the currency_symbol SETTING, which the preview has seeded with
+       markup in it. The server-rendered price above is escaped by
+       Money::format() and is unaffected either way; only what pdp.js writes on
+       a bundle click moves. */
+    injected = [];
+    await page.evaluate(() => {
+        const row = document.querySelector('.variant[data-qty]:not(.oos):nth-of-type(2)')
+            || [...document.querySelectorAll('.variant:not(.oos)')][1]
+            || document.querySelector('.variant:not(.oos)');
+        if (row) row.click();
+    });
+    await wait(page, 800);
+
+    out.push({
+        page: 'variant-price',
+        injectedRequests: injected.length,
+        ...(await page.evaluate(() => {
+            const el = document.getElementById('bbPrice');
+            const now = el ? el.querySelector('.now') : null;
+            return {
+                // The attribute the browser handed JavaScript back, entities
+                // already decoded — this is what the Blade escape did NOT stop.
+                datasetPrice: document.querySelector('.variant.on')?.dataset.price ?? null,
+                nowHtml: now ? now.innerHTML : null,
+                nowText: now ? now.textContent.trim() : null,
+                // One element and no more: an escaped price cannot grow a child.
+                elementsInNow: now ? now.querySelectorAll('*').length : 0,
+                injectedImgs: now ? now.querySelectorAll('img').length : 0,
+            };
+        })),
+    });
+    await shot('variant-price');
+
     // The hostile review first — it is the one seeded with three photo
     // addresses, two of which must never become an <img>.
     const openReview = async (which) => {
