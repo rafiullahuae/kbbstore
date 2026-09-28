@@ -185,6 +185,12 @@ $kbbLineWas = static function ($kbbWasLine): int {
                         // 10000 to 9980 fils. Money::decimalsToDistinguish()
                         // returns the store's usual 0 for every other line.
                         $wasDp = ($was > $line) ? \App\Support\Money::decimalsToDistinguish($was, $line) : null;
+                        // (Lane SET) NONE for every line that is not a set, so
+                        // the row below is byte-identical on every basket in
+                        // this shop today. Priced at THIS line's unit price, so
+                        // a line repriced by a quantity bundle reports the
+                        // saving it actually got.
+                        $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
                     @endphp
                     <div class="ci">
                         <div class="cth" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
@@ -192,7 +198,7 @@ $kbbLineWas = static function ($kbbWasLine): int {
                             @if ($brand)<div class="cbrand">{{ $brand }}</div>@endif
                             <div class="cn"><a href="{{ $p?->url() ?? '#' }}">{{ $name }}</a></div>
                             @if ($attrs)<div class="cvar">{{ $attrs }}</div>@endif
-                            <div class="qty">
+                            @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'cart', 'key' => 'c' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
                                 <button type="button" data-kcpq="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>
                                 <span>{{ $item->quantity }}</span>
                                 <button type="button" data-kcpq="{{ $item->id }}" data-d="1" aria-label="{{ __('store.cart.increase_quantity') }}">+</button>

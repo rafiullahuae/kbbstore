@@ -38,7 +38,10 @@
 @endif
 @if ($item['sku'] !== '')
   {!! __('email.items.sku', ['sku' => $item['sku']]) !!}
-@endif
+@endif{{-- (Lane SET) The same member list the HTML part prints, from the same snapshot, so the two parts of one message cannot say different things about what was in the box. Nothing is emitted for a line that is not a set. ATTACHED TO THE LINE ABOVE, not on one of its own: Blade removes a comment and leaves the newline it sat on, and this file's output is plain text in which one stray newline is a blank line in every receipt this shop sends. --}}
+@foreach ($item['setContents'] ?? [] as $kbbSetLine)
+  * {!! $kbbSetLine !!}
+@endforeach
   {!! __('email.text.item_line', ['quantity' => $item['quantity'], 'unit' => $item['unitPlain'], 'line' => $item['linePlain']]) !!}
 @endforeach
 

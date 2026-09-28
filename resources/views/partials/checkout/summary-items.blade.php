@@ -11,12 +11,15 @@
         $thumb = $img
             ? "background-image:url('" . e($img) . "')"
             : 'background:' . Gradient::for(($p?->brand?->name ?? '') . ($p?->name ?? ''));
+        // (Lane SET) NONE unless the line is a set; members eager-loaded by
+        // CheckoutController::loadCart() and only when one is.
+        $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
     @endphp
         <div class="ci" data-key="{{ $item->id }}">
             <div class="cth" style="{{ $thumb }}"><span class="qb">{{ $item->quantity }}</span></div>
             <div class="cinfo">
                 <div class="n">{{ $name }}</div>
-                <div class="qty">
+                @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'checkout', 'key' => 'o' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
                     <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>
                     <span>{{ $item->quantity }}</span>
                     <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="1" aria-label="{{ __('store.cart.increase_quantity') }}">+</button>

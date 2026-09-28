@@ -173,6 +173,19 @@ class AdminOrderController extends Controller
                 'brand' => $i->brand,
                 'sku' => $i->sku,
                 'variant_attributes' => $i->variant_attributes,
+                /*
+                 * (Lane SET) What was in the box, as one line per member, from
+                 * the order's own snapshot. An EMPTY LIST for every line that is
+                 * not a set, so this payload is unchanged for every order in
+                 * this shop today.
+                 *
+                 * The strings and not the raw column: the raw snapshot carries
+                 * each member's SKU and unit price, and this endpoint is behind
+                 * `orders.view` — which `support` holds. A picking list is what
+                 * the order screen needs; a member's supplier code is not, and
+                 * the narrower answer is the one to publish when both will do.
+                 */
+                'set_contents' => \App\Support\SetContents::lines(\App\Support\SetContents::fromOrderItem($i)),
                 'quantity' => $i->quantity,
                 'unit_price_aed' => Money::toAed($i->unit_price),
                 'total_aed' => Money::toAed($i->total),

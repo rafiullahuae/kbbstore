@@ -104,7 +104,15 @@ Nothing else is read.
                         @endphp
                         @if ($sub !== [])
                             <div class="it-sub" dir="auto">{{ implode(' · ', $sub) }}</div>
-                        @endif
+                        @endif@php if (($item['setContents'] ?? []) !== []) { echo '<div class="it-sub" dir="auto">' . e(implode(' · ', $item['setContents'])) . '</div>'; } @endphp{{-- (Lane SET) What was in the box, from the order's own snapshot. Nothing at all is emitted for a line that is not a set, so every invoice, packing slip and delivery note this shop has already printed is BYTE-IDENTICAL -- which is what PrintedEnglishUnchangedTest measures.
+
+                             THE FORM IS A RAW PHP BLOCK, and both of the obvious alternatives were tried and measured here rather than reasoned about:
+
+                             A conditional directive written hard against the closing one above is NOT COMPILED AT ALL. Blade's statement regex is \B@word, and between the "f" of a closing directive and an "@" there is a word boundary -- so it ships to the page as literal text and the view then dies with "unexpected token endif".
+
+                             An interpolation ({!! ... !!}) compiles with a NEWLINE APPENDED, to keep the compiled file's line numbers matching the source. At the end of a line that is one newline added to every document with an item on it, which turned PrintedEnglishUnchangedTest red on all four sheets. A raw PHP block appends nothing.
+
+                             e() because a member name is a setting, and CLAUDE.md rule 5 is that anything printed unescaped is a constant. --}}
                     </td>
                     <td dir="auto">{{ $item['sku'] !== '' ? $item['sku'] : '—' }}</td>
                     {{-- A box to tick with a pen while picking. --}}

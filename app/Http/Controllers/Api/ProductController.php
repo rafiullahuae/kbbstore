@@ -151,10 +151,18 @@ class ProductController extends Controller
             ->orderBy('position')
             ->orderBy('id')
             ->forPage($page, $limit)
-            ->get()
-            ->map(fn (Product $p) => $p->toApi());
+            ->get();
 
-        return response()->json($rows);
+        /*
+         * (Lane SET) A set publishes what is in the box — Product::toApi() adds
+         * one `set` key, and only on a set. This batches the members for every
+         * set on the page and runs NO QUERY AT ALL when none of the rows is one,
+         * which is every page of this catalogue today. `type` is already in
+         * INDEX_COLUMNS, so isSet() can answer without a second look.
+         */
+        \App\Support\SetEagerLoad::on($rows);
+
+        return response()->json($rows->map(fn (Product $p) => $p->toApi()));
     }
 
     /** GET /api/products/{slug} */
@@ -166,6 +174,10 @@ class ProductController extends Controller
         // not visible means not found.
         $p = Product::visible()->where('slug', $slug)->first();
         if (!$p) return response()->json(['error' => 'not_found'], 404);
+
+        // (Lane SET) The members, in one batch, and no query when this is not a
+        // set — which is every product in this catalogue today.
+        \App\Support\SetEagerLoad::on([$p]);
 
         return response()->json($p->toApi());
     }

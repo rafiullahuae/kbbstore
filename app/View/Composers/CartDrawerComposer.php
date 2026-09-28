@@ -144,6 +144,14 @@ class CartDrawerComposer
             $this->carts->markDisplayLoaded();
         }
 
+        // A set in the bag draws its contents in the panel too. No query when
+        // no line is a set, which is every basket in this shop today. It is
+        // asked outside the branch above because /cart and /checkout have
+        // already loaded the lines and skipped it. (Lane SET)
+        if ($cart !== null) {
+            \App\Support\SetEagerLoad::on($cart->items->pluck('product'));
+        }
+
         $view->with([
             'items' => $cart?->items ?? collect(),
             'totals' => $cart ? $this->carts->totals($cart) : $empty,
@@ -169,8 +177,14 @@ class CartDrawerComposer
             return collect();
         }
 
-        return Product::query()->select(self::LINE_COLUMNS)->visible()
+        $browsed = Product::query()->select(self::LINE_COLUMNS)->visible()
             ->whereIn('id', $ids)->with('brand:id,name,slug')->get()
             ->sortBy(fn ($p) => array_search($p->id, $ids, true))->values();
+
+        // A browsed SET draws its contents too, and costs nothing when none of
+        // the six is one. (Lane SET)
+        \App\Support\SetEagerLoad::on($browsed);
+
+        return $browsed;
     }
 }

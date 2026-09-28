@@ -688,6 +688,33 @@ final class InterfaceStrings
             'cart_drawer.browsed_sold_out' => 'Sold out',
             'cart_drawer.browsed_in_bag' => 'In your bag — add another',
             'cart_drawer.browsed_add' => 'Add to cart',
+            /*
+             * The Set row (Lane SET). Two keys, read by exactly one file --
+             * resources/views/partials/set-row.blade.php, which is the single
+             * partial all seven surfaces draw a set through. Keyed here rather
+             * than typed into the partial because they are customer-facing
+             * sentences and this file is the English source of truth for those;
+             * StorefrontStringsAreKeyedTest is what enforces that.
+             *
+             * `set.contents` is a COUNT, so it is trans_choice() with a named
+             * placeholder: six forms in Arabic, two in English, never
+             * $n . ' items'.
+             *
+             * `set.saving` is the sum of the members' own prices minus the set
+             * price, computed in integer fils by App\Support\SetContents and
+             * formatted by Money::plain() before it gets here. It is printed
+             * only when it is positive -- a set priced above its parts is a
+             * pricing mistake to correct, not a negative saving to advertise.
+             */
+            'set.contents' => 'In this set · :count item|In this set · :count items',
+            'set.saving' => 'You save :amount',
+            /*
+             * The opener on the fanned-stack row. It is the button's visible
+             * text AND the popup's aria-label, so a screen-reader user hears the
+             * same words the button carries rather than a second phrasing of
+             * them.
+             */
+            'set.whats_inside' => 'What\'s inside',
             'checkout.secure_badge' => 'Secure checkout',
         ];
     }
