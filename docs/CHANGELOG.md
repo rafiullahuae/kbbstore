@@ -3,6 +3,88 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.309
+**The Set is now a product type, on the product page itself.** You no longer go
+to a separate screen to build one.
+
+### WHERE IT IS
+
+**Catalog → Product editor → Basics → Product type.** Pick **"Set — made of
+other products"** and one new panel appears: **What is in the box**.
+
+Everything else on that page is the page you already know — the SEO block, the
+gallery, the categories, the brand, the images, visibility, sorting and the
+Arabic fields. None of it is a second copy; it is the same machinery a simple
+product uses, which is exactly why the Set was moved here.
+
+**Catalog → Sets** is still there and is now a **list** — for finding your sets,
+and for the one setting that belongs to all of them rather than to any one of
+them (below). *New set* and *Edit* both open the product editor.
+
+**Catalog → Products** now has a **Sets** chip beside Featured, and a blue
+**Set** pill on each set's row, so you can see what you are looking at without
+pressing anything.
+
+### THE PRICE CAN BE A RULE INSTEAD OF A NUMBER
+
+You asked for this: *"if I reduce the price of any product, it should also take
+effect on the set price."* It does now.
+
+**How the price is decided** offers three answers:
+
+- **A fixed price** — you type it, it stays.
+- **A percentage off the parts total.**
+- **An amount off the parts total.**
+
+With either discount, the set's price is **worked out fresh every time it is
+read**. Drop a member's price by AED 20 and the set drops by AED 20 with nothing
+to press and nothing to re-save.
+
+There is also a **Use this total** button that takes the parts total straight
+into the price box, and three tiles that always show you *Bought separately ·
+Set price · Saving* in real money as you type.
+
+**An order that has already been placed does not move.** The price is frozen
+into the basket and the order when the customer agrees to it, so a set you
+reprice tonight does not change what somebody was charged this morning.
+
+### WHAT IS IN THE BOX
+
+Drag the members into the order you want (the ↑ ↓ arrows still work for anyone
+who prefers them), set a quantity on each, and search the catalogue to add more.
+A set cannot contain another set.
+
+On the shop, the set's own product page gains a section — **The set → What is in
+this set** — listing every member with its brand, quantity and price. A member
+that is not published is listed but not linked, so the page never sends a
+shopper to a page that is not there.
+
+### ▲ ONE SETTING YOU MAY WANT TO CHANGE, AND IT SHIPS AT TODAY'S BEHAVIOUR
+
+**Catalog → Sets → Stock · When a set is sold.** Two answers:
+
+- **Take it off the set's own stock only** — what the shop does today, and what
+  this ships as, so applying this package changes nothing.
+- **Also take each product in the box off its own stock** — what most shops
+  want, and what you should probably switch to once you have thought about it.
+
+It is off because a stock rule that changes itself under a live shop is the kind
+of surprise this project does not ship. **This one is yours to decide.**
+
+### MEASURED
+
+A set's page costs 10 database queries with 3 members and **10 with 12** — flat,
+however big the box. An ordinary product page is unchanged at 7. Nothing on the
+storefront moved for a product that is not a set.
+
+### FILES
+
+`app/Support/SetPricing.php`, `app/Services/StockSetRule.php`,
+`app/Http/Controllers/Admin/ProductEditorApiController.php`,
+`resources/views/admin/partials/product-editor-screen.blade.php`,
+`resources/views/partials/set-contents-panel.blade.php`, two migrations, and the
+Sets screen reduced to a list.
+
 ## 2.60.308
 A web address that came from the old WordPress site is now **checked before the
 shop puts it on a page**. Nothing you can see changes.
