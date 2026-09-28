@@ -655,6 +655,22 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 
 	$meta( 'commentmeta', 'comment_id', 8101, array( 'rating' => '5', 'verified' => '1' ) );
 
+	// HER PHOTOGRAPHS. Two rows under ONE key, which is how the review-photo
+	// plugins store a multi-image upload and the shape a meta pivot keeping
+	// "the last value for this key" silently reduces to one picture.
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'reviews-images' => '9001' ) );
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'reviews-images' => '9002' ) );
+
+	// A key that is NOT a photograph. It is here so the export has something to
+	// leave behind and NAME, rather than a fixture in which everything happens
+	// to be a picture and the unused-key report never fires.
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'wc_review_helpful' => '7' ) );
+
+	// AND SOMEBODY ELSE'S SERVER. A meta value holding an offsite image is the
+	// case that turns "any URL ending in .jpg" into this shop hotlinking a
+	// stranger's file from a product page, so it must NOT come across.
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'imported_avatar' => 'https://evil.test/trophy.jpg' ) );
+
 	// Pre-WooCommerce-3.0: a product review with an EMPTY comment_type.
 	$insert( 'comments', array(
 		'comment_ID' => 8102, 'comment_post_ID' => 4021, 'comment_author' => '',
@@ -665,6 +681,14 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	) );
 
 	$meta( 'commentmeta', 'comment_id', 8102, array( 'rating' => '4' ) );
+
+	// The OTHER storage shape: a PHP-serialised array of uploads URLs rather
+	// than attachment ids, written http:// before this shop moved to https.
+	$meta( 'commentmeta', 'comment_id', 8102, array(
+		'cr_photos' => serialize( array(
+			'http://kbeautybliss.com/wp-content/uploads/2020/01/skincare-category.jpg',
+		) ),
+	) );
 
 	// A customer QUESTION: a product comment with no rating. Not a review.
 	$insert( 'comments', array(
@@ -703,6 +727,49 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		'post_date' => '2019-01-01 09:00:00', 'post_date_gmt' => '2019-01-01 05:00:00',
 		'post_modified' => '2019-01-01 09:00:00',
 	) );
+
+	// A CHILD page, which exists for one reason: its address is /about-us/team/
+	// and not /team/. An old-slug row for it is the case that catches a
+	// reconstruction which reassembles the URL from a base instead of editing
+	// the address WordPress actually reports.
+	$insert( 'posts', array(
+		'ID' => 7003, 'post_author' => 1, 'post_type' => 'page', 'post_status' => 'publish',
+		'post_parent' => 7002,
+		'post_title' => 'Our team', 'post_name' => 'team',
+		'post_content' => 'Six people and a cat.', 'post_excerpt' => '',
+		'post_date' => '2019-01-02 09:00:00', 'post_date_gmt' => '2019-01-02 05:00:00',
+		'post_modified' => '2019-01-02 09:00:00',
+	) );
+
+	// ── Previous addresses ──────────────────────────────────────────────────
+	//
+	// `_wp_old_slug` is what WordPress writes when a PUBLISHED post's slug
+	// changes, and wp_old_slug_redirect() -- core, on every front-end 404 --
+	// has been 301ing these addresses ever since. They are the addresses Google
+	// holds and nothing in this migration had ever read them. A real six-year-
+	// old shop has hundreds; the fixture carries the four shapes that matter.
+	//
+	// meta_id order is the export's cursor, so these are inserted in the order
+	// the rows come out.
+	$meta( 'postmeta', 'post_id', 4021, array( '_wp_old_slug' => 'vitamin-c-serum' ) );
+
+	// A SECOND rename of the same product. One row per rename, not per post --
+	// a reconstruction keyed on the post id would emit one of these and lose
+	// the other.
+	$meta( 'postmeta', 'post_id', 4021, array( '_wp_old_slug' => 'ginseng-elixir' ) );
+
+	// An article. Its address has no base at all under /%postname%/, which is
+	// the structure this shop runs.
+	$meta( 'postmeta', 'post_id', 7001, array( '_wp_old_slug' => 'k-beauty-layering' ) );
+
+	// The child page: /about-us/our-team/, NOT /our-team/.
+	$meta( 'postmeta', 'post_id', 7003, array( '_wp_old_slug' => 'our-team' ) );
+
+	// And one on an ATTACHMENT, which must NOT appear: `attachment` is in
+	// KBB_Export_Stage_Posts::NOT_CONTENT, an attachment address is a media
+	// URL rather than a page this shop serves, and emitting it would propose a
+	// redirect from an image to a product.
+	$meta( 'postmeta', 'post_id', 9001, array( '_wp_old_slug' => 'ginseng-serum-photo-old' ) );
 }
 
 /**

@@ -3,7 +3,7 @@
  * Plugin Name:       KBB Store Exporter
  * Plugin URI:        https://kbeautybliss.com/
  * Description:       Exports this WooCommerce shop as the CSV set the KBB Laravel storefront imports. Batched and resumable from the admin screen, because this host has no shell.
- * Version:           1.5.0
+ * Version:           1.6.0
  * Requires at least: 5.6
  * Requires PHP:      7.4
  * Author:            KBB migration
@@ -63,7 +63,7 @@ defined( 'ABSPATH' ) || exit;
  * is in CHANGELOG.md beside this file, derived from the commits rather than
  * from memory.
  */
-define( 'KBB_EXPORTER_VERSION', '1.5.0' );
+define( 'KBB_EXPORTER_VERSION', '1.6.0' );
 define( 'KBB_EXPORTER_DIR', __DIR__ );
 
 require_once __DIR__ . '/includes/class-kbb-export-csv.php';
