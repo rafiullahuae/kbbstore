@@ -54,7 +54,10 @@ use App\Models\Product;
 use App\Models\Redirect;
 use App\Models\Review;
 use App\Services\Import\RedirectMap;
+use App\Models\AdminUser;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Tests\Support\UrlsMediaAdminRoutes;
 
 /** The export the plugin wrote. Same directory GeWpExporterTest drives. */
 function ieExportDir(): string
@@ -854,4 +857,74 @@ it('leaves the pictures this change is accounted for with', function () {
         expect(is_file($path))->toBeTrue("docs/lane-ie-shots/{$shot} is missing");
         expect(filesize($path))->toBeGreaterThan(1000, "docs/lane-ie-shots/{$shot} is empty");
     }
+});
+
+it('offers the previous addresses on the screen too, not only to the shell', function () {
+    /*
+     * ══════════════════════════════════════════════════════════════════════
+     * THE DOOR THE OWNER ACTUALLY USES.
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * The 301 test above goes through `kbb:import-redirects --permalinks=…`,
+     * and that flag is the part of this lane most likely to be forgotten: the
+     * runbook's copy-pasteable commands did not carry it, because until
+     * exporter 1.6.0 the file only held addresses the map could re-derive
+     * anyway. Now it holds addresses that exist NOWHERE ELSE, so a run without
+     * the flag reads none of them, reports a smaller map, and says nothing
+     * about it. The runbook is corrected; this pins the other door.
+     *
+     * `docs/GP-ADDRESSES-LAND.md` §2.1 is the reason that door matters, and it
+     * is worth quoting because it is the same failure one level up:
+     * `RedirectMap::fromPermalinks()` "has read this exact file shape since the
+     * day it was written, and NOTHING WITH A SCREEN HAD EVER HANDED IT A FILE."
+     *
+     * So: upload `permalinks.csv` the way the screen does, and ask the screen's
+     * own endpoint. If the old-slug rows reach the proposals, the owner gets
+     * them without a shell.
+     *
+     * MUTATION NOTE, RUN: remove the `old_slug` source from the permalinks
+     * stage, regenerate, and this goes red alongside the 301 test — the screen
+     * offers nothing it was not given.
+     */
+    UrlsMediaAdminRoutes::wire($this->app);
+
+    $this->actingAs(AdminUser::create([
+        'name' => 'Addresses Owner',
+        'email' => 'ie-owner-'.uniqid().'@example.test',
+        'password' => 'secret-secret',
+        'role' => 'owner',
+    ]), 'admin');
+
+    ieImportAndMapAddresses();
+
+    $temp = sys_get_temp_dir().'/kbb-ie-'.getmypid().'-'.bin2hex(random_bytes(4)).'-permalinks.csv';
+
+    copy(ieExportDir().'/permalinks.csv', $temp);
+
+    $this->postJson('/admin-api/import/upload', [
+        'file' => new UploadedFile($temp, 'permalinks.csv', null, null, true),
+    ])->assertOk();
+
+    $status = $this->getJson('/admin-api/urls-media/status')->assertOk()->json();
+
+    expect($status['sources']['permalinks']['present'])->toBeTrue();
+
+    // JSON_UNESCAPED_SLASHES again, and it caught me twice in this file: without
+    // it json_encode() writes `\/` and a str_contains() for a PATH never matches,
+    // so the assertions below would read "the screen offers nothing" about a
+    // screen that offers everything.
+    $offered = (string) json_encode($status, JSON_UNESCAPED_SLASHES);
+
+    // The renamed product's old address, offered by the screen with no shell
+    // anywhere in the path.
+    expect(str_contains($offered, '/product/vitamin-c-serum/'))->toBeTrue(
+        'the screen does not offer the previous addresses the export carried, so an owner with no shell never '
+        .'sees them',
+    );
+
+    expect(str_contains($offered, '/product/ginseng-elixir/'))->toBeTrue(
+        'the second rename is missing from the screen',
+    );
+
+    @unlink($temp);
 });

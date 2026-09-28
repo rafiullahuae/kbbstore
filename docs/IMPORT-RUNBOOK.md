@@ -35,8 +35,8 @@ php artisan kbb:import --dir=storage/app/woo
 php artisan kbb:import --dir=storage/app/woo
 
 # 6. The old addresses Google still holds. Look first; --write when it reads right.
-php artisan kbb:import-redirects --csv=storage/app/url-map.csv
-php artisan kbb:import-redirects --write
+php artisan kbb:import-redirects --permalinks=storage/app/import/woo/permalinks.csv --csv=storage/app/url-map.csv
+php artisan kbb:import-redirects --permalinks=storage/app/import/woo/permalinks.csv --write
 
 # 7. The pictures. Read-only, and there is no --write to forget.
 php artisan kbb:import-media --csv=storage/app/images.csv
@@ -563,11 +563,26 @@ carried exactly that shape and 404'd until two packages ago, and those were
 only the ones somebody was looking at.
 
 ```bash
-php artisan kbb:import-redirects                              # look
-php artisan kbb:import-redirects --csv=storage/app/url-map.csv # look, in a spreadsheet
-php artisan kbb:import-redirects --write                       # apply
-php artisan kbb:import-redirects --rollback                    # undo the above
+# ▲ PASS --permalinks. It is no longer an optional improvement; see below.
+P=storage/app/import/woo/permalinks.csv
+
+php artisan kbb:import-redirects --permalinks=$P                              # look
+php artisan kbb:import-redirects --permalinks=$P --csv=storage/app/url-map.csv # look, in a spreadsheet
+php artisan kbb:import-redirects --permalinks=$P --write                       # apply
+php artisan kbb:import-redirects --permalinks=$P --rollback                    # undo the above
 ```
+
+**▲ WITHOUT `--permalinks` YOU SILENTLY LOSE EVERY OLD ADDRESS OF A RENAMED
+PRODUCT.** This changed at exporter 1.6.0 and the commands above changed with
+it. `permalinks.csv` now carries `_wp_old_slug` rows — every address the old
+shop USED to serve, which WordPress core has been answering with a 301 on every
+front-end 404 for years and which nothing else records. They exist in that file
+and nowhere else, so a run without the flag reads none of them, reports a
+smaller map, and says nothing about it. See
+`docs/IE-IMPORT-READINESS.md` §2.1 and §4.
+
+Store → SEO & Meta does NOT need the flag: `UrlsMediaApiController` hands the
+uploaded `permalinks.csv` to the same map. This is the shell-side door only.
 
 It writes nothing without `--write`. Every row lands in one of Phase 13's three
 buckets:
@@ -578,10 +593,12 @@ buckets:
 | `discard` | nothing to do — the address did not move |
 | `ask` | the owner has to decide; never written |
 
-**If the export can give you real permalinks, use them.** A CSV of
-`type,wc_id,permalink` passed as `--permalinks=` replaces guesswork with what
-the old site really served, and wins over the derived rule wherever the two
-disagree.
+**The permalinks file replaces guesswork with measurement.** A CSV of
+`type,wc_id,permalink` passed as `--permalinks=` is what the old site really
+served, and wins over the derived rule wherever the two disagree. Since
+exporter 1.6.0 it is also the ONLY record of an address the old site no longer
+serves — a `status` of `old-slug` marks those rows — so it is required rather
+than preferred.
 
 **What it will not do:** guess a brand-archive base (U-05 says this shop has no
 brand archive at all, and what the old one used depends on which plugin it
