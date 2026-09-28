@@ -7,6 +7,13 @@
  */
 
 import { t } from './i18n.js';
+import { escapeHtml as escHtml, safeSrc } from './safe.js';
+
+/* The shared escaper, with this file's own nullish guard kept in front of it.
+   A review with no title has always rendered as nothing rather than the string
+   "null", and safe.js deliberately does not coalesce — search.js has shipped
+   it uncoalesced since 2.60.306 and moving that would move bytes on a page. */
+const escapeHtml = (s) => escHtml(s ?? '');
 
 const INITIAL_VISIBLE = 8;
 
@@ -77,8 +84,20 @@ function initReviewModal(section) {
 
             const stars = Array.from({ length: 5 }, (_, i) =>
                 `<span class="${i < r.rate ? 'f' : ''}">★</span>`).join('');
-            const photos = (r.imgs || []).map((u) =>
-                `<img src="${escapeHtml(u)}" alt="" loading="lazy" style="width:100%;border-radius:8px">`).join('');
+            /* THE DEFECT: the photo address was escaped and never
+               scheme-checked. A review's `imgs` are shopper-uploaded paths off
+               the `reviews` table — the one table on this shop whose rows are
+               already written by the public — and the WordPress import is
+               about to add thousands more from a database nobody authored.
+               escapeHtml() touches no character in `javascript:` or in
+               `//evil.test/x.png`, so either arrived in the attribute intact.
+               A refused address draws NO <img> at all rather than falling to
+               src="#" or src="": both of those resolve against the document
+               and make the browser fetch this page and try to decode it as a
+               picture. Every real path here is `/storage/...`, which names no
+               scheme, so it comes through byte-identical. */
+            const photos = (r.imgs || []).map((u) => safeSrc(u)).filter(Boolean).map((src) =>
+                `<img src="${src}" alt="" loading="lazy" style="width:100%;border-radius:8px">`).join('');
 
             body.innerHTML = `
                 <div class="sr-ct"><span class="sr-av">${escapeHtml(r.ini)}</span>
@@ -180,6 +199,12 @@ function initReviewSheet(section) {
         selectedFiles = [...fileInput.files].slice(0, 6);
         if (!previews) return;
 
+        /* SAFE, AND IT MUST NOT GO THROUGH cssUrl(). The address here is
+           browser-generated — `blob:<origin>/<uuid>`, from a File the shopper
+           just picked — so it carries no character a page did not put there.
+           cssUrl() would REFUSE it: its allowlist is http/https, and a refused
+           address returns '', which would blank every photo preview on the
+           review sheet. Checked by the sweep and left alone deliberately. */
         previews.innerHTML = selectedFiles.map((file) => {
             const url = URL.createObjectURL(file);
             return `<span class="sr-pv-item" style="background:#fff url('${url}') center/cover;width:56px;height:56px;border-radius:8px;display:inline-block;margin:4px"></span>`;
@@ -233,10 +258,6 @@ function initReviewSheet(section) {
     });
 }
 
-function escapeHtml(s) {
-    return String(s ?? '').replace(/[&<>"']/g, (c) =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
 
 export function initReviews() {
     const section = document.getElementById('sr');

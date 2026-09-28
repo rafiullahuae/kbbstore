@@ -10,10 +10,30 @@
  */
 
 import { open, closeAll } from './overlay.js';
+import { escapeHtml, safeHref, LINK_SCHEMES } from './safe.js';
 
-const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-}[c]));
+/* The shared escaper, with this file's own nullish guard kept in front of it.
+   `escape(item.badge)` has always rendered a missing badge as nothing rather
+   than the string "undefined", and safe.js deliberately does not coalesce —
+   search.js has shipped it uncoalesced since 2.60.306 and moving that would
+   move bytes on a page. One line here is cheaper than a second escaper. */
+const escape = (value) => escapeHtml(value ?? '');
+
+/* A menu row's href.
+ *
+ * THE DEFECT: every href in this drawer was escaped and NONE of them was
+ * scheme-checked, and link() below passes an absolute URL through by name — so
+ * `javascript:alert(1)` in a menu row's url contains no character escape()
+ * touches, arrived in the attribute intact, and ran on tap. The drawer is
+ * built from window.KBB.nav, which the layout serialises out of `menu_items`;
+ * the desktop nav renders the same rows in Blade, where `{{ }}` has exactly
+ * the same blind spot.
+ *
+ * LINK_SCHEMES and not the default: the desktop nav's Url::to() passes mailto
+ * and tel through by name, so refusing them here would break a menu item that
+ * still works ten pixels away on the same page. It is the allowlist
+ * Banners::safeUrl() uses for an operator-typed href, for that same reason. */
+const navHref = (url) => safeHref(link(url), LINK_SCHEMES);
 
 /*
  * U+2192 IS NOT A MIRRORED CHARACTER, so the bidi algorithm will not turn this
@@ -39,11 +59,11 @@ const renderSub = (item) => {
     const groups = (item.children || []).map((child) => {
         if (child.children && child.children.length) {
             const links = child.children
-                .map((l) => `<a href="${escape(link(l.url))}">${escape(l.label)}</a>`)
+                .map((l) => `<a href="${navHref(l.url)}">${escape(l.label)}</a>`)
                 .join('');
             return `<div class="msub-group"><div class="msub-gh">${escape(child.label)}</div>${links}</div>`;
         }
-        return `<a href="${escape(link(child.url))}">${escape(child.label)}</a>`;
+        return `<a href="${navHref(child.url)}">${escape(child.label)}</a>`;
     }).join('');
 
     return `
@@ -51,7 +71,7 @@ const renderSub = (item) => {
             <button class="msub-back" type="button" data-kbb-msub-back>‹</button>
             <b>${escape(item.label)}</b>
         </div>
-        <a class="msub-all" href="${escape(link(item.url))}">Shop all ${escape(item.label)} ${onward()}</a>
+        <a class="msub-all" href="${navHref(item.url)}">Shop all ${escape(item.label)} ${onward()}</a>
         <div class="msub-body">${groups}</div>
     `;
 };
@@ -69,7 +89,7 @@ export function initMobileNav() {
 
         return hasChildren
             ? `<button class="mrow" type="button" data-kbb-msub="${index}">${icon}<span>${escape(item.label)}</span>${badge}<span class="chev">›</span></button>`
-            : `<a class="mrow" href="${escape(link(item.url))}">${icon}<span>${escape(item.label)}</span>${badge}</a>`;
+            : `<a class="mrow" href="${navHref(item.url)}">${icon}<span>${escape(item.label)}</span>${badge}</a>`;
     }).join('');
 
     list.addEventListener('click', (event) => {

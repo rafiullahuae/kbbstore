@@ -1,0 +1,125 @@
+[
+  {
+    "page": "home",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "injectedRequests": 0
+  },
+  {
+    "page": "drawer-top",
+    "rows": 6,
+    "links": [
+      {
+        "label": "Home",
+        "attr": "/",
+        "resolved": "http://127.0.0.1:8991/"
+      },
+      {
+        "label": "New InNEW",
+        "attr": "/shop/?orderby=date",
+        "resolved": "http://127.0.0.1:8991/shop/?orderby=date"
+      },
+      {
+        "label": "JS RowXSS",
+        "attr": "#",
+        "resolved": "http://127.0.0.1:8991/#"
+      },
+      {
+        "label": "Rel Row",
+        "attr": "#",
+        "resolved": "http://127.0.0.1:8991/#"
+      },
+      {
+        "label": "Email Us",
+        "attr": "mailto:hi@shop.ae",
+        "resolved": "mailto:hi@shop.ae"
+      }
+    ]
+  },
+  {
+    "page": "drawer-sub",
+    "rows": 3,
+    "links": [
+      {
+        "label": "Shop all Shop →",
+        "attr": "/shop/",
+        "resolved": "http://127.0.0.1:8991/shop/"
+      },
+      {
+        "label": "All products",
+        "attr": "/shop/",
+        "resolved": "http://127.0.0.1:8991/shop/"
+      },
+      {
+        "label": "Sub JS Row",
+        "attr": "#",
+        "resolved": "http://127.0.0.1:8991/#"
+      }
+    ]
+  },
+  {
+    "page": "product",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "injectedRequests": 0
+  },
+  {
+    "page": "review-modal-hostile",
+    "injectedRequests": 0,
+    "imgs": 1,
+    "srcs": [
+      "/uploads/js/photo.png"
+    ],
+    "resolved": [
+      "http://127.0.0.1:8991/uploads/js/photo.png"
+    ],
+    "complete": [
+      true
+    ]
+  },
+  {
+    "page": "review-modal-ordinary",
+    "injectedRequests": 0,
+    "imgs": 1,
+    "srcs": [
+      "/uploads/js/photo.png"
+    ],
+    "complete": [
+      true
+    ]
+  },
+  {
+    "page": "cart",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "injectedRequests": 0
+  },
+  {
+    "page": "cart-error",
+    "injectedRequests": 0,
+    "dialogs": 0,
+    "html": "<div class=\"cart-note err\">That code is not valid.&lt;img src=/uploads/js/injected.png onerror=alert(9)&gt;</div>",
+    "text": "That code is not valid.<img src=/uploads/js/injected.png onerror=alert(9)>",
+    "elements": 1,
+    "injectedImgs": 0
+  },
+  {
+    "page": "search-panel",
+    "injectedRequests": 0,
+    "rows": 7,
+    "hrefs": [
+      "/product/ginseng-essence-water/",
+      "/product/advanced-snail-96-mucin-power-essence/",
+      "/product/dive-in-low-molecular-hyaluronic-acid-serum/",
+      "/product/cellmazing-fit-serum/"
+    ]
+  },
+  {
+    "page": "TOTALS",
+    "dialogsRaised": 0,
+    "dialogMessages": []
+  }
+]

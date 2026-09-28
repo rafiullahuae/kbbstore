@@ -12,6 +12,7 @@
 import { open, closeAll } from './overlay.js';
 import { toast } from './toast.js';
 import { t } from './i18n.js';
+import { escapeHtml } from './safe.js';
 
 /* Requests are queued, not dropped.
    Adding the same product twice in quick succession used to lose the second
@@ -161,6 +162,11 @@ const apply = (data) => {
 
     if (!data) return;
 
+    /* SAFE. `data.drawer` and `data.page` are whole Blade views the server
+       rendered — every value inside them has already been through `{{ }}`.
+       They are markup on purpose, so escaping them here would print the tags
+       instead of drawing the cart. The same goes for `d.html` in
+       window.kbbRefreshCart below. */
     const frag = fragment();
     if (frag && data.drawer) frag.outerHTML = data.drawer;
 
@@ -174,8 +180,19 @@ const apply = (data) => {
     const lead = document.getElementById('cartLead');
     if (lead) lead.textContent = `(${data.count} ${data.count === 1 ? 'item' : 'items'})`;
 
+    /* THE DEFECT: `data.error` was interpolated into this template string raw,
+       and the result set as innerHTML. It is the ONLY value in this file that
+       is not a server-rendered fragment — `data.drawer`, `data.page` and
+       `d.html` are whole Blade views and are meant to arrive as markup, which
+       is why they are left alone. Every error string the cart endpoints send
+       today is a constant in CartController or CouponService, and none of them
+       contains a character escapeHtml() touches, so this renders byte for byte
+       what it rendered before. The hole is that nothing anywhere said it had
+       to stay that way: a coupon message that ever names the code a shopper
+       typed, or a stock message that names an imported product, lands in
+       innerHTML with the shopper's own tags in it. */
     const notices = document.getElementById('kbbCartNotices');
-    if (notices) notices.innerHTML = data.error ? `<div class="cart-note err">${data.error}</div>` : '';
+    if (notices) notices.innerHTML = data.error ? `<div class="cart-note err">${escapeHtml(data.error)}</div>` : '';
 
     showTab();
 
