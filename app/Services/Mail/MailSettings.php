@@ -277,6 +277,72 @@ class MailSettings
     public const UNCAPPED = PHP_INT_MAX;
 
     /**
+     * The five bands Store → Mail draws, and what is on each —
+     * `tab => [title, description, [keys]]` — Lane MC.
+     *
+     * ── LIFTED, NOT DESIGNED ────────────────────────────────────────────────
+     *
+     * MobileMenu::TABS is the precedent: its groups came out of its controller
+     * verbatim so the module could be enrolled in ModuleFrameworkGuardTest
+     * without the screen moving. The four bands below are
+     * resources/views/admin/app.blade.php's `MAIL_SECTIONS` — same titles, same
+     * descriptions, same keys, flattened out of that table's `rows` in the
+     * order it draws them.
+     *
+     * ── THE FIFTH BAND IS REAL, AND IT IS THE FINDING ───────────────────────
+     *
+     * `MAIL_SECTIONS` names FOURTEEN of this schema's seventeen keys.
+     * `mail_cancelled_refund_note`, `mail_shipped_timing_note` and
+     * `mail_reply_to` are in no band at all, and reach the owner only through
+     * mailSections()'s leftover sweep — the "Other settings" section that
+     * catches whatever no group claimed. They are therefore DRAWN, which is
+     * why they are declared here rather than reported as three values with no
+     * control: mailSections() renders the leftovers on purpose, because a
+     * field missing from the form is a setting the next Save writes blank over.
+     *
+     * But "Other settings / Added to this store after this screen was laid
+     * out" is a bucket named after the mechanism that caught them, not after
+     * what they do — which is the exact shape ModuleFrameworkGuardTest's
+     * "places every ecommerce field in a section rather than leaving it
+     * unreachable" case forbids on the neighbouring screen. Three boxes about
+     * refunds, dispatch timing and replies are findable only by reading all of
+     * them. app.blade.php belongs to no lane this round, so this constant
+     * DESCRIBES the screen as it actually is and the lane report asks the
+     * integrator to move those three keys into named bands. Describing them as
+     * anything else would be this file stating something untrue about that
+     * screen, which is the defect the guard exists to catch.
+     *
+     * ── WHAT THE FIRST BAND'S DESCRIPTION IS ────────────────────────────────
+     *
+     * On the screen it is not a literal: `descFrom: 'mail_transport'` makes the
+     * band borrow that field's own four-sentence help, so the same text is
+     * never printed twice. The sentence below says that rather than copying it,
+     * because a copy here would be a second wording free to drift from the one
+     * in SCHEMA.
+     *
+     * NOTHING RENDERS FROM THIS. GET /admin-api/mail answers a flat `fields`
+     * list and app.blade.php groups it; a screen that started rendering from
+     * here would be a second layout able to disagree with the first.
+     */
+    public const TABS = [
+        'transport' => ['How email leaves this store',
+                        'Which of the three sending modes this store uses. The screen prints mail_transport’s own help here instead of a description of its own.',
+                        ['mail_transport']],
+        'server' => ['Mail server',
+                     'Only needed if you picked the dedicated-SMTP option above. Every value here comes from your hosting control panel.',
+                     ['mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_encryption', 'mail_timeout']],
+        'from' => ['Who the message comes from',
+                   'The name and address customers see on everything the shop sends, and the inbox your own new-order alerts go to.',
+                   ['mail_from_address', 'mail_from_name', 'mail_merchant_address']],
+        'foot' => ['What customers see at the foot',
+                   'Printed under every order email. Leave any of them blank and the storefront’s own details are used instead.',
+                   ['mail_support_email', 'mail_support_whatsapp', 'mail_support_instagram', 'mail_signature']],
+        'other' => ['Other settings',
+                    'Added to this store after this screen was laid out. They save exactly like the rest.',
+                    ['mail_cancelled_refund_note', 'mail_shipped_timing_note', 'mail_reply_to']],
+    ];
+
+    /**
      * The module name ModuleSchema::read()/write() are given.
      *
      * Every field of this screen is `store: setting` — these are rows in

@@ -321,7 +321,35 @@ class EcommerceApiController extends Controller
                     'stockalert' => ['Back-in-stock alerts', 'The notify-me form on sold-out products, and the email it leads to. Leave these empty and nothing appears and nothing is sent, whatever the switch on Store → Modules says.', 'box',
                         ['stock_alert_form_label', 'stock_alert_subject', 'stock_alert_body']],
                     'fbt' => ['Frequently bought together', 'A companion-products block below the buy box.', 'box', ['frequently_bought', 'fbt_title', 'fbt_count']],
-                    'ratings' => ['Ratings', 'How the review score is shown.', 'star', ['review_capsule_style']],
+                    /*
+                     * ── 'ratings' WAS `review_capsule_style` A SECOND TIME ──
+                     *
+                     * A section keyed `ratings` sat here, and its whole field
+                     * list was `['review_capsule_style']` — the same key the
+                     * `badges` section twenty-five lines above already places,
+                     * in the same tab. The loop below places a field once per
+                     * section that names it, so the Product page tab drew TWO
+                     * "Rating display" dropdowns over one settings row: one
+                     * under "Review badges" with its six siblings, one on its
+                     * own under "Ratings". Whichever the owner moved last is
+                     * what was saved, and the other went on showing the value
+                     * from before the save until the screen was reloaded.
+                     *
+                     * It is the third failure ModuleFrameworkGuardTest names in
+                     * its own words — "twice in one tab is not a second
+                     * control, it is the same one drawn twice, and whichever
+                     * the operator filled in last would appear to win" — and it
+                     * had been shipping since the 2.60.41 baseline, on the one
+                     * key that decides whether a product page shows a rating at
+                     * all. Found by Lane MC on enrolling ReviewBadgeSettings,
+                     * which owns that key.
+                     *
+                     * `badges` is the section that keeps it: it is where the
+                     * other six live, and where App\Support\ReviewBadgeSettings'
+                     * own header says all seven are exposed. Nothing else
+                     * referenced `ratings` — its preview has gone with it, and
+                     * ModuleFrameworkGuardEnrolmentTest pins both halves.
+                     */
                     /*
                      * THE TRUST ROW WAS TWO PROMISES WITH NOTHING BEHIND THEM.
                      *
@@ -553,13 +581,14 @@ class EcommerceApiController extends Controller
                 'stage' => $ring('<div style="font-size:12.5px;font-weight:700;margin-bottom:8px">Complete your routine</div><div style="display:flex;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#ffd1e2,#ff9fc1)"></span><span style="color:#7b8697">+</span><span style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#cfe6ff,#8fc0f0)"></span><span style="color:#7b8697">+</span><span style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#ffe9a8,#f3c969)"></span></div>'),
                 'legend' => ['Sits between the buy box and the details. Off by default.'],
             ],
-            'ratings' => [
-                'caption' => 'The two display styles',
-                'stage' => $ring('<span style="display:inline-flex;align-items:center;gap:8px;background:#FFF1F5;border-radius:99px;padding:6px 14px"><span style="width:22px;height:22px;border-radius:50%;background:#fff;display:grid;place-items:center;color:#E0567B">♥</span><span style="color:#E8A33D">★★★★★</span><b>4.9</b><span style="font-size:11.5px;color:#7b8697">3,204 reviews</span></span>')
-                    . '<div style="margin-top:12px;font-size:12.5px;color:#7b8697">★★★★★ 4.9 · <u>3,204 reviews</u> ← the inline line</div>',
-                'legend' => ['Capsule only · inline only · both · hidden. “Both” is what the finalized design uses.'],
-            ],
-
+            /*
+             * The `ratings` preview went with the `ratings` SECTION — see the
+             * note beside where that section used to be. It was a second,
+             * poorer drawing of what `badges` below draws (no sold note), for a
+             * section whose only field was a duplicate. A preview nothing can
+             * reach is a picture of a screen that does not exist, which is the
+             * class of defect ModuleFrameworkGuardTest was written for.
+             */
             'badges' => [
                 'caption' => 'The two badge styles',
                 'stage' => $ring('<span style="display:inline-flex;align-items:center;gap:8px;background:#FFF1F5;border-radius:99px;padding:6px 14px"><span style="width:22px;height:22px;border-radius:50%;background:#fff;display:grid;place-items:center;color:#E0567B">&#10084;</span><span style="color:#E8A33D">&#9733;&#9733;&#9733;&#9733;&#9733;</span><b>4.9</b><span style="font-size:11.5px;color:#7b8697">3,204 reviews</span></span>')

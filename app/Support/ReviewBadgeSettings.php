@@ -89,13 +89,52 @@ final class ReviewBadgeSettings
      * shop on Classic back as "Custom" while the badge drew identically.
      */
     public const SCHEMA = [
-        'review_capsule_style' => ['type' => 'select', 'default' => 'capsule', 'options' => self::STYLES, 'store' => ModuleSchema::STORE_SETTING],
-        'review_badge_heart' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'review_badge_avg' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'review_badge_count' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'review_badge_label' => ['type' => 'text', 'default' => '{n} reviews', 'store' => ModuleSchema::STORE_SETTING],
-        'review_badge_sold' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'review_badge_colour' => ['type' => 'colour', 'default' => '#E8A33D', 'store' => ModuleSchema::STORE_SETTING],
+        'review_capsule_style' => ['type' => 'select', 'label' => 'Rating display', 'default' => 'capsule', 'options' => self::STYLES, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_heart' => ['type' => 'bool', 'label' => 'Heart icon', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_avg' => ['type' => 'bool', 'label' => 'Average score', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_count' => ['type' => 'bool', 'label' => 'Review count', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_label' => ['type' => 'text', 'label' => 'Count wording', 'default' => '{n} reviews', 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_sold' => ['type' => 'bool', 'label' => 'Show units sold', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'review_badge_colour' => ['type' => 'colour', 'label' => 'Star colour', 'default' => '#E8A33D', 'store' => ModuleSchema::STORE_SETTING],
+    ];
+
+    /**
+     * The two tabs of Reviews → Rating Badge, and what is on each —
+     * `tab => [title, description, [keys]]` — Lane MC.
+     *
+     * ── LIFTED, NOT DESIGNED ────────────────────────────────────────────────
+     *
+     * MobileMenu::TABS is the precedent: its groups came out of its controller
+     * verbatim so the module could be enrolled in ModuleFrameworkGuardTest
+     * without the screen moving. The two keys and the two titles below are
+     * review-badges-screen.blade.php's own
+     *
+     *     var TABS = [['themes', 'Badge themes'], ['capsule', 'Rating capsule']];
+     *
+     * copied out of it, and the seven labels added to SCHEMA above are the
+     * first argument of the `field()` / `opt()` call that draws each control on
+     * those tabs. The key lists are the order those calls are made in:
+     * themesTab() draws the colour then the sold note; capsuleTab() draws the
+     * style and the wording, then the three content switches.
+     *
+     * ONE SCREEN, TWO TABS — 'rev-capsule' is an alias of 'rev-badge' since
+     * Lane CL merged them, and admin/partials/review-capsule-screen.blade.php
+     * is now an inert record of where the screen went. There is no third group
+     * to lift.
+     *
+     * NOTHING RENDERS FROM THIS. GET /admin-api/review-badges answers
+     * `settings` + `styles` + `themes`, not `fields` + `groups`, and the
+     * partial builds its own HTML. This exists so the guard can ask whether
+     * every stored value has a control and every control a stored value — the
+     * pairing that catches a `reassure_auth_text`.
+     */
+    public const TABS = [
+        'themes' => ['Badge themes',
+                     'What the badge looks like: the presets, the star colour and the “sold” note.',
+                     ['review_badge_colour', 'review_badge_sold']],
+        'capsule' => ['Rating capsule',
+                      'Where the rating appears and what is in it.',
+                      ['review_capsule_style', 'review_badge_label', 'review_badge_heart', 'review_badge_avg', 'review_badge_count']],
     ];
 
     /**
