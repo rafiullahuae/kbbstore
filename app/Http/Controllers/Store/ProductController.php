@@ -44,6 +44,27 @@ class ProductController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        /*
+         * A SET'S MEMBERS, IN ONE BATCH, AND NOTHING AT ALL OTHERWISE. (Lane SP)
+         *
+         * partials/set-contents-panel.blade.php names what is in a set on the
+         * set's own product page, and it reads App\Support\SetContents -- the
+         * one description of a set's contents in this application.
+         *
+         * SetEagerLoad::on() LOOKS FIRST: handed a product that is not a set --
+         * which is every product in this catalogue but the sets -- it returns
+         * without touching the database, so the product-page budget in
+         * StorefrontQueryBudgetTest does not move by one query for a feature
+         * this shop is not using. Handed a set it costs THREE, batched, whether
+         * the box holds three members or thirty. SetProductPageTest measures
+         * that flatness rather than asserting it.
+         *
+         * Here rather than in the partial because a query belongs in the
+         * controller, and because Api\ProductController already sets this
+         * precedent on the rows it is about to publish.
+         */
+        \App\Support\SetEagerLoad::on([$product]);
+
         $this->rememberViewed($request, $product->id);
 
         $summary = $this->reviewSummary($product->id);

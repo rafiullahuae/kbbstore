@@ -129,7 +129,11 @@
 
   var SCREEN = 'sets';
 
-  var state = { sets: [], categories: [], editing: null, found: [], busy: false, error: null, q: '' };
+  /* `stock` is null until /admin-api/set-stock has answered, and STAYS null on a
+     404 or a 403 -- so the Stock card below simply is not drawn on a shop whose
+     route table does not carry it yet, rather than showing the owner a control
+     that cannot save. (Lane SP) */
+  var state = { sets: [], categories: [], editing: null, found: [], busy: false, error: null, q: '', stock: null };
 
   function base() {
     return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
@@ -251,6 +255,54 @@
       + '</div>'
       + '<div class="kst-list" style="margin-top:14px">'
         + (rows || '<div class="kst-note">No sets yet. <b>New set</b> creates one.</div>')
+      + '</div></div>'
+      + stockCard();
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     STOCK -- Catalog -> Sets -> Stock . When a set is sold. (Lane SP)
+
+     The owner has been asked twice whether selling a set should take one of
+     each product in the box off its own shelf, and there is a real argument
+     either way: a shop that buys ready-made gift boxes counts them separately,
+     and a shop that makes a box up per order does not. So the rule is built and
+     SHIPPED AT WHAT THIS SHOP DOES TODAY -- the set carries its own stock --
+     and this is the one place it changes.
+
+     BOTH OPTION VALUES ARE LITERALS IN THIS FILE and the server validates what
+     arrives against its own list before storing it; SetStockApiController stores
+     one of its own two options or the default, never the string that was posted.
+
+     `state.stock` is null when the endpoint 404'd (the route table has not been
+     cleared) or 403'd (this account does not hold `sets.stock`), and the card
+     is then not drawn at all. A switch that cannot save is worse than no switch.
+     ──────────────────────────────────────────────────────────────────────── */
+  function stockCard() {
+    if (!state.stock) return '';
+
+    var mode = state.stock.mode === 'members' ? 'members' : 'set';
+
+    return '<div class="kst-card">'
+      + '<div class="kst-title">Stock</div>'
+      + '<div class="kst-sub">What happens to the stock of the products inside a set when '
+      + 'the set itself is sold. This ships set to what this shop already does, so nothing '
+      + 'changes until you change it here.</div>'
+      + '<div class="kst-f" style="margin-top:14px;max-width:520px">'
+        + '<label for="kstStockMode">When a set is sold</label>'
+        + '<select id="kstStockMode" data-kst-stock>'
+          + '<option value="set"' + (mode === 'set' ? ' selected' : '') + '>'
+          + 'Take it off the set&rsquo;s own stock only</option>'
+          + '<option value="members"' + (mode === 'members' ? ' selected' : '') + '>'
+          + 'Also take each product in the box off its own stock</option>'
+        + '</select>'
+      + '</div>'
+      + '<div class="kst-note" style="margin-top:12px">'
+      + (mode === 'members'
+          ? 'Selling one Glow Set also takes one of every product in that box off its own '
+            + 'shelf, multiplied by how many of it the box holds. A set whose box has run out '
+            + 'of one product can no longer be bought.'
+          : 'The set is counted on its own, exactly like any other product. The products '
+            + 'inside it keep whatever stock they had. <b>This is what the shop does today.</b>')
       + '</div></div>';
   }
 
@@ -371,6 +423,16 @@
     } catch (e) {
       state.error = explain(e, 'The list of sets could not be loaded.');
     }
+
+    /* SWALLOWED ON PURPOSE, and it is the only swallowed error on this screen.
+       The Stock switch is a second, independent endpoint with a capability of
+       its own: a shop whose route table predates it answers 404 and an account
+       without `sets.stock` answers 403, and NEITHER is a reason to put a red
+       box over the list of sets the operator came here for. The card is simply
+       not drawn -- see stockCard(). (Lane SP) */
+    try { state.stock = await api('/set-stock'); }
+    catch (e) { state.stock = null; }
+
     state.busy = false;
     render();
   }
@@ -458,6 +520,35 @@
   }
 
   /* ------------------------------------------------------------- the events */
+
+  /* The Stock switch saves on change. (Lane SP)
+     A `change` listener and not a Save button: it is one control with two
+     values, and a switch that needs a second press to take effect is a switch
+     an owner walks away from thinking he set it.
+
+     BOUNDED HERE TOO. Only the two values this screen offers are ever sent;
+     anything else falls back to the default, which is exactly what the server
+     does with what arrives. Two guards on the same value, because this one
+     decides whether an order empties three shelves. */
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (!t || !t.closest || !t.closest('[data-kst-stock]')) return;
+
+    var mode = t.value === 'members' ? 'members' : 'set';
+
+    (async function () {
+      try {
+        var body = await api('/set-stock', { mode: mode });
+        state.stock = { mode: body.mode || mode };
+        say(mode === 'members'
+          ? 'Selling a set now takes each product in the box off its own stock.'
+          : 'A set is now counted on its own stock only.');
+      } catch (err) {
+        state.error = explain(err, 'That stock rule could not be saved.');
+      }
+      render();
+    })();
+  });
 
   document.addEventListener('click', function (e) {
     var t = e.target;

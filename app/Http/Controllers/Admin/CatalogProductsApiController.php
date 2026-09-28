@@ -143,8 +143,29 @@ class CatalogProductsApiController extends Controller
      * counts and applyFilter() cannot drift apart.
      */
     private const DERIVED_FILTERS = [
-        'low', 'hidden', 'no_image', 'on_sale', 'no_category', 'no_price', 'featured', 'trashed',
+        'low', 'hidden', 'no_image', 'on_sale', 'no_category', 'no_price', 'featured', 'set', 'trashed',
     ];
+
+    /**
+     * The product type a Set carries. (Lane SP)
+     *
+     * A set IS a product -- a `products` row with `type = 'set'` plus rows in
+     * `product_set_items` -- which is the whole shape Lane SET argued for, and
+     * it is why a set arrives on this screen among the ordinary products with
+     * nothing to mark it. Lane SET's report offered a chip; this is the chip.
+     *
+     * A CONSTANT AND NOT A LITERAL IN TWO PLACES, because it is used twice --
+     * once by applyFilter() to narrow the list and once inside the SUM(CASE ...)
+     * that counts the chip -- and a chip whose count and whose list disagree is
+     * worse than no chip at all. It is the same string App\Models\Product::isSet()
+     * tests for.
+     *
+     * ▲ IT IS A LITERAL IN THE SQL BELOW rather than a binding, and that is
+     *   safe BY CONSTRUCTION rather than by care: it is a private class
+     *   constant, never a request value. The request's own `type` parameter is
+     *   bound, as it always was.
+     */
+    private const SET_TYPE = 'set';
 
     /**
      * Money on the wire, in major units, as a decimal string.
@@ -1369,9 +1390,26 @@ class CatalogProductsApiController extends Controller
             }
         }
 
+        /*
+         * The `type` filter. A pass-through, and it stays one -- but a BOUNDED
+         * one. (Lane SP)
+         *
+         * `products.type` stores an unknown value verbatim (docs/PRODUCT-FIELD-
+         * PARITY.md row 6, for the import), so this cannot be an allowlist of
+         * the four WooCommerce types without hiding whatever the importer
+         * actually wrote. What it CAN be is bounded in shape: a type is a short
+         * identifier, and anything else is a caller probing rather than
+         * filtering. The value was always bound as a parameter, so this is not
+         * an injection fix; it is CLAUDE.md rule 5's "a select stores one of its
+         * own options or the default" applied to a filter -- a 200-character
+         * request value should never reach a WHERE clause on a public-facing
+         * console endpoint, and an unrecognisable one is dropped rather than
+         * answered with an empty list that looks like a fact about the
+         * catalogue.
+         */
         $type = trim((string) $request->query('type', ''));
 
-        if ($type !== '') {
+        if ($type !== '' && preg_match('/^[A-Za-z0-9_-]{1,32}$/', $type) === 1) {
             $query->where('products.type', '=', $type);
         }
 
@@ -1427,6 +1465,25 @@ class CatalogProductsApiController extends Controller
 
         if ($filter === 'no_price') {
             return $query->whereNull('products.price');
+        }
+
+        /*
+         * The Sets chip. (Lane SP)
+         *
+         * A DERIVED chip and not a status: `set` is a value of `products.type`,
+         * and the fall-through at the bottom of this method reads anything it
+         * does not recognise as a `products.status`. Without this branch the
+         * chip would ask for `status = 'set'`, match no row, and show the
+         * operator an empty list under a count that said otherwise -- which is
+         * exactly the shape of the `low`/`hidden` chips above and why they are
+         * branches too.
+         *
+         * MUTATION NOTE for SetCatalogChipTest: delete this branch and the
+         * `set` chip returns every product whose STATUS is 'set', which is none
+         * of them, while the count beside it still reads 1. RUN.
+         */
+        if ($filter === 'set') {
+            return $query->where('products.type', '=', self::SET_TYPE);
         }
 
         if ($filter === 'no_category') {
@@ -1549,18 +1606,40 @@ class CatalogProductsApiController extends Controller
             .' SUM(CASE WHEN products.featured = 1 THEN 1 ELSE 0 END) as featured,'
             ." SUM(CASE WHEN products.image IS NULL OR products.image = '' THEN 1 ELSE 0 END) as no_image,"
             .' SUM(CASE WHEN products.price IS NULL THEN 1 ELSE 0 END) as no_price,'
+            /*
+             * The Sets chip's count (Lane SP), in the same pass as the other
+             * derived chips rather than a seventh statement.
+             *
+             * ▲ THE ALIAS IS `set_type` AND NOT `set`, and that is the whole
+             *   reason this one does not follow the `$key => $key` shape of the
+             *   five above it. SET is a RESERVED WORD in MySQL: `... END as set`
+             *   is error 1064 on the server, and `as "set"` quotes an IDENTIFIER
+             *   on SQLite and a STRING LITERAL on MySQL unless ANSI_QUOTES is
+             *   on. Both spellings pass here and fail on the shop -- which is
+             *   the divergence the MySQL parity run exists for, and which cost
+             *   Lane SET two SQL faults in one round. An alias that is not a
+             *   keyword needs neither quoting rule.
+             *
+             *   SET_TYPE is a private constant, never a request value -- see
+             *   its docblock for why it is a literal here rather than a binding.
+             */
+            ." SUM(CASE WHEN products.type = '".self::SET_TYPE."' THEN 1 ELSE 0 END) as set_type,"
             .' SUM(CASE WHEN COALESCE(ca.category_count, 0) = 0 THEN 1 ELSE 0 END) as no_category,'
             .' SUM(CASE WHEN '.$this->onSaleSql().' THEN 1 ELSE 0 END) as on_sale',
             [$now, $now]
         );
 
         foreach (self::DERIVED_FILTERS as $key) {
-            if ($key === 'trashed') {
+            if ($key === 'trashed' || $key === 'set') {
                 continue;
             }
 
             $counts[$key] = (int) ($derived?->{$key} ?? 0);
         }
+
+        // Read off its own alias for the reserved-word reason above, not off
+        // the loop. (Lane SP)
+        $counts['set'] = (int) ($derived?->set_type ?? 0);
 
         $counts['trashed'] = (int) $this->applyFilter($this->baseQuery($request), 'trashed')
             ->toBase()
@@ -1706,6 +1785,21 @@ class CatalogProductsApiController extends Controller
             'slug' => (string) $p->slug,
             'sku' => $this->blankToNull($p->sku),
             'type' => (string) $p->type,
+            /*
+             * SO THE OPERATOR CAN TELL WHAT HE IS LOOKING AT. (Lane SP)
+             *
+             * `type` has always been on this row and the screen has never drawn
+             * it, so a set sat among the ordinary products with nothing to mark
+             * it -- Lane SET's report, which offered the chip this answers.
+             *
+             * A SECOND, DERIVED KEY rather than asking the screen to compare
+             * `type === 'set'` in JavaScript: the string that means "set" is
+             * decided in ONE place in this application (Product::isSet(), and
+             * self::SET_TYPE beside it), and a second spelling of it in a Blade
+             * script is a second place for it to go wrong. It is additive --
+             * every consumer reading `type` is unaffected.
+             */
+            'is_set' => (string) $p->type === self::SET_TYPE,
             'brand' => $this->blankToNull($p->brand_name ?? null),
             'brand_id' => $p->brand_id === null ? null : (int) $p->brand_id,
             'image' => $image,

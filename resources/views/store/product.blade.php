@@ -509,6 +509,7 @@
     </div>
   </div>
 
+@include('partials.set-contents-panel')
   @unless ($modules->hidden('fbt'))
 @include('partials.fbt')
 @endunless

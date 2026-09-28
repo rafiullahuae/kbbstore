@@ -170,6 +170,21 @@ final class AdminCapabilities
         'sets.view' => ['owner', 'manager', 'editor'],
         'sets.manage' => ['owner', 'manager', 'editor'],
 
+        /*
+         * Catalog -> Sets -> Stock (Lane SP, routes/sp-set-stock-admin.php).
+         * The one switch that decides whether selling a set takes one of each
+         * member off its own shelf. It ships at today's behaviour and moves
+         * nothing until somebody moves it.
+         *
+         * A THIRD CAPABILITY AND NOT `sets.manage`, and NARROWER THAN IT -- no
+         * editor. Creating and repricing sets is a catalogue act; deciding that
+         * selling one empties three other shelves is an INVENTORY act, and it
+         * can oversell the shop or refuse sales it could have filled without
+         * anything on the Sets screen looking different. That is the same
+         * argument `orders.money` is separated from `orders.manage` by.
+         */
+        'sets.stock' => ['owner', 'manager'],
+
         'content.manage' => ['owner', 'manager', 'editor'],
 
         /*
@@ -913,6 +928,18 @@ final class AdminCapabilities
         ['DELETE', 'admin-api/sets/**', 'sets.manage'],
         ['GET', 'admin-api/sets', 'sets.view'],
         ['GET', 'admin-api/sets/**', 'sets.view'],
+
+        /*
+         * Catalog -> Sets -> Stock (Lane SP). A SEPARATE PATH, not a child of
+         * 'admin-api/sets', deliberately: '**' matches one or more whole
+         * segments, so neither of the two lines above can ever claim
+         * 'admin-api/set-stock' and this pair cannot be widened by a change to
+         * them. Both verbs carry the same capability because reading which rule
+         * is live is not sensitive; it is written next to its sibling so the
+         * three Sets capabilities read as one decision.
+         */
+        ['GET', 'admin-api/set-stock', 'sets.stock'],
+        ['POST', 'admin-api/set-stock', 'sets.stock'],
 
         // The redirect ledger sits under /categories/ but is a map of the
         // store's old URLs, so it is content rather than catalogue. Above the

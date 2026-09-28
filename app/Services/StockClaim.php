@@ -120,7 +120,28 @@ final class StockClaim
             );
         }
 
-        foreach ($this->perShelf($lines) as $line) {
+        /*
+         * THE SET RULE, APPLIED BEFORE THE LINES ARE SUMMED PER SHELF. (Lane SP)
+         *
+         * StockSetRule::expand() returns the caller's own array untouched --
+         * and runs no query at all -- unless the owner has switched Catalog →
+         * Sets → Stock · When a set is sold to "members", which is NOT the
+         * shipped default. Today's shop therefore claims exactly what it
+         * claimed before this line existed.
+         *
+         * BEFORE perShelf() AND NOT AFTER, which is the whole reason it is
+         * here rather than in the loop: a basket holding both a Glow Set and
+         * the toner that is inside it must come off the toner's shelf ONCE for
+         * the total. perShelf() is what sums two lines that share a shelf, so
+         * the expansion has to be upstream of it or the same jar is taken twice
+         * and a sale the shop could fill is refused.
+         *
+         * ONE PLACE, because both doors into this shop reach it. Store\Checkout-
+         * Controller::place() and the unauthenticated Api\CheckoutController::
+         * session() both call claim(); a second implementation for the second
+         * door is the drift this class was extracted to end.
+         */
+        foreach ($this->perShelf(app(StockSetRule::class)->expand($lines)) as $line) {
             $this->claimOne($line, $orderId);
         }
     }
