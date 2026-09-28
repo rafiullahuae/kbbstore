@@ -102,7 +102,7 @@
     $grad    = Gradient::for($seed);
     // Gallery entries are now labelled shots, not bare URLs; the partial
     // renders the frame, so this is only kept for anything else referencing it.
-    $mainCss = CssUrl::value($gallery[0]['image'] ?? null);
+    $mainCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) ($gallery[0]['image'] ?? ''), 400));
     $mainBg  = $mainCss !== ''
         ? "#fff url('" . e($mainCss) . "') center/contain no-repeat"
         : $grad;
@@ -299,13 +299,32 @@
               // next to it, sometimes under a "Save 0%" — no, under nothing,
               // because $voff guards that — which left the strike unexplained.
               $vdp   = ($vsale < $vreg) ? Money::decimalsToDistinguish($vreg, $vsale) : null;
+              /*
+               * The 22px option swatch, at 22px rather than at 1000x1000 -- the
+               * worst ratio on the shop before Lane IM. background-image takes
+               * exactly ONE url and image-set() selects on pixel ratio rather
+               * than width, so a srcset cannot say "this box is 22px";
+               * variantUrl() is the single-URL form, and it hands the original
+               * straight back when no copy has been cut.
+               *
+               * RESOLVED HERE AND NOT IN THE @if BELOW, which is where it went
+               * first. Three levels of nested parentheses on one directive line
+               * defeats StorefrontStringsAreKeyedTest's scanner: it stops
+               * matching the condition partway and reads the tail as prose a
+               * shopper is meant to read, then reports the expression itself as
+               * an unkeyed English string. The scanner is not wrong to give up
+               * -- a condition that deep is unreadable to a person too. Inside
+               * this block, which already exists, so no newline is added and
+               * StorefrontEnglishUnchangedTest does not move.
+               */
+              $vImg  = \App\Support\ImageVariants::variantUrl((string) $v->image, 400);
             @endphp
             {{-- Selected by identity, not by index: the highlighted row is the
                  first one that can be bought, which is the same row the hidden
                  field below is set to. `0 === $n` selected nothing at all when
                  option 0 was sold out. --}}
             <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale, $vdp) }}">
-              @if (($vImgCss = CssUrl::value($v->image)) !== '')<span class="vsw" style="background-image:url('{{ $vImgCss }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
+              @if (($vImgCss = CssUrl::value($vImg)) !== '')<span class="vsw" style="background-image:url('{{ $vImgCss }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
             </div>
           @endforeach
         </div>
@@ -352,6 +371,35 @@
           @endforeach
         </div>
         @endif
+
+        {{-- ═══════════════════════════════════════════════════════════════
+             WHAT IS IN THIS SET — IN THE SLOT THE BULK STRIP USED TO FILL.
+             (Lane SF)
+
+             "the Set product will not have bundle purchase, instead of that
+              section, bring the What's inside there, and make it nice list,
+              not grid!"  — with an arrow drawn from the contents section far
+             down the page UP into this exact space.
+
+             So it is HERE: inside the buy column, after the variant/bundle
+             block above and before the stock line and Add to cart below. On a
+             phone the buy column stacks under the gallery, so the list lands
+             in the main flow at the same point in the reading order.
+
+             ▲ THE @if ABOVE AND THIS ARE MUTUALLY EXCLUSIVE BY CONSTRUCTION,
+               NOT BY LUCK. A set is never `$isVar` (a set has no variations)
+               and BundleService::forProduct() now answers an empty array for
+               one, so `$bundles` is falsy and neither branch above draws
+               anything. The panel itself renders NOTHING for a product that is
+               not a set. There is no product for which both appear, and no
+               product for which the old placement and this one both do —
+               SetBuyColumnTest pins all three.
+
+             ▲ AND IT IS INCLUDED EXACTLY ONCE ON THIS PAGE. The section-level
+               @include near the foot of the file was REMOVED in the same edit
+               that added this one; two includes would print the box's contents
+               twice and its saving twice. --}}
+        @include('partials.set-contents-panel')
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the
@@ -511,7 +559,6 @@
     </div>
   </div>
 
-@include('partials.set-contents-panel')
   @unless ($modules->hidden('fbt'))
 @include('partials.fbt')
 @endunless

@@ -211,16 +211,23 @@ it('offers nothing when the original cannot be measured', function () {
 
 it('gives the main photograph the copies AND the original it came from', function () {
     dnWritePhoto('uploads/dn/shot.jpg', 1000);
-    expect(ImageVariants::generate('/uploads/dn/shot.jpg')['made'])->toBe(2);
+    expect(ImageVariants::generate('/uploads/dn/shot.jpg')['made'])->toBe(count(ImageVariants::WIDTHS));
 
     $html = dnPage(['/uploads/dn/shot.jpg']);
     $main = dnTags($html, 'gmain-img')[0];
 
-    expect(dnCandidates(dnAttr($main, 'srcset')))->toBe([
-        '/'.ImageVariants::DIR.'/400/uploads/dn/shot.jpg' => '400w',
-        '/'.ImageVariants::DIR.'/800/uploads/dn/shot.jpg' => '800w',
-        '/uploads/dn/shot.jpg' => '1000w',
-    ]);
+    // (Lane IM) Every copy, in WIDTHS order, and then the original. Built
+    // rather than written out so a new tier is one constant and not a literal
+    // here -- the 200w thumbnail tier turned this red for no reason of its own.
+    $expected = [];
+
+    foreach (ImageVariants::WIDTHS as $width) {
+        $expected['/'.ImageVariants::DIR.'/'.$width.'/uploads/dn/shot.jpg'] = $width.'w';
+    }
+
+    $expected['/uploads/dn/shot.jpg'] = '1000w';
+
+    expect(dnCandidates(dnAttr($main, 'srcset')))->toBe($expected);
 
     // The original is what stops this being a downgrade: the frame is ~562 CSS
     // pixels, so at ratio 2 the browser asks for 1124 and must have something
@@ -253,10 +260,20 @@ it('states the original at its real width, whatever that is', function () {
 
     $candidates = dnCandidates(ImageVariants::detailSrcsetFor('/uploads/dn/mid.jpg'));
 
-    expect($candidates)->toBe([
-        '/'.ImageVariants::DIR.'/400/uploads/dn/mid.jpg' => '400w',
-        '/uploads/dn/mid.jpg' => '800w',
-    ]);
+    // (Lane IM) Every width STRICTLY NARROWER than the 800px original -- that
+    // is generate()'s own rule -- and then the original at its real width. The
+    // 800w slot is the original's, not a copy's, which is the whole point here.
+    $expected = [];
+
+    foreach (ImageVariants::WIDTHS as $width) {
+        if ($width < 800) {
+            $expected['/'.ImageVariants::DIR.'/'.$width.'/uploads/dn/mid.jpg'] = $width.'w';
+        }
+    }
+
+    $expected['/uploads/dn/mid.jpg'] = '800w';
+
+    expect($candidates)->toBe($expected);
 });
 
 it('never lets two candidates claim the same width', function () {

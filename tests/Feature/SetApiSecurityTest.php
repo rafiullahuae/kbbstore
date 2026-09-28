@@ -93,6 +93,28 @@ it('publishes a set through an allowlist and never the member model', function (
     foreach (['wc_id', 'total_sales', 'sku', 'ANUA-HT-150', '4321'] as $forbidden) {
         expect($raw)->not->toContain($forbidden);
     }
+
+    /*
+     * ── THE MERCHANT'S OWN WORKING IS NOT SHOPPER BUSINESS (Lane SP2) ──────
+     *
+     * Three columns on `products` say how a set's price is DECIDED rather than
+     * what it IS: the mode, the discount, and — since a hand-typed price can
+     * follow its members down — the parts total that price was anchored to.
+     *
+     * Published, `set_price_basis` would tell an unauthenticated reader exactly
+     * how much margin every set has given up since it was priced, which is the
+     * same class of thing as the discount percentage beside it and gets the same
+     * answer. ImportProductParityTest's column pin is where that decision is
+     * recorded; this is where it is enforced.
+     *
+     * MUTATION NOTE. Add `'set_price_basis' => $this->set_price_basis` to
+     * Product::toApi() and this is red on the key and on the figure. RUN.
+     */
+    foreach (['set_price_mode', 'set_discount', 'set_price_basis'] as $forbidden) {
+        expect(str_contains($raw, $forbidden))->toBeFalse(
+            'the public feed carries '.$forbidden.', which is how a set is priced and not what it costs'
+        );
+    }
 });
 
 it('adds nothing at all to an ordinary product', function () {

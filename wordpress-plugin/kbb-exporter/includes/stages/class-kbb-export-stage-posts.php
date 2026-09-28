@@ -218,13 +218,69 @@ class KBB_Export_Stage_Posts extends KBB_Export_Stage {
 			}
 		}
 
-		if ( ! empty( $parts ) ) {
-			$this->note(
-				'posts.csv does not carry these WordPress post types, which are either another file\'s job or '
-					. 'WordPress\'s own machinery: ' . implode( ', ', $parts ) . '. `attachment` in that list is '
-					. 'the whole media library; media.csv carries the attachments the catalogue actually '
-					. 'references, which is a smaller set and the one the new shop has to fetch.'
-			);
+		if ( empty( $parts ) ) {
+			return;
 		}
+
+		$this->note(
+			'posts.csv does not carry these WordPress post types, which are either another file\'s job or '
+				. 'WordPress\'s own machinery: ' . implode( ', ', $parts ) . '. `attachment` in that list is '
+				. 'the whole media library; media.csv carries the attachments the catalogue actually '
+				. 'references, which is a smaller set and the one the new shop has to fetch.'
+		);
+
+		$this->report_navigation();
+	}
+
+	/**
+	 * The navigation menu, named as itself instead of as plumbing.
+	 *
+	 * ── A TRUE LIST WITH A FALSE SENTENCE OVER IT ───────────────────────────
+	 *
+	 * The note above is accurate about what it OMITS and wrong about `nav_menu_
+	 * item`, which it sweeps into "another file's job or WordPress's own
+	 * machinery". It is neither. No file carries it, and it is not plumbing: it
+	 * is the owner's header and mobile drawer -- the categories he chose, in the
+	 * order he chose them, with the names he typed.
+	 *
+	 * `docs/GQ-MIGRATION-COMPLETENESS.md` lists `menus` and `menu_items` among
+	 * the tables a clean import leaves untouched, and says the loss is "counted
+	 * in the manifest notes with its row count". That was true only of a shop
+	 * that HAS a menu, and until Lane IE the fixture had none -- so this note
+	 * had never fired with a `nav_menu_item` in it and nobody had ever read the
+	 * sentence it produces. It reads, to the owner, as though his navigation
+	 * were a cache.
+	 *
+	 * GQ §5.4 is the precedent and states the rule: a discard list with false
+	 * entries is worse than a shorter one, because the reader cannot tell which
+	 * of them matters and stops reading all of them.
+	 */
+	private function report_navigation() {
+		global $wpdb;
+
+		$items = (int) $wpdb->get_var(
+			'SELECT COUNT(*) FROM ' . $wpdb->prefix . "posts WHERE post_type = 'nav_menu_item'"
+		);
+
+		if ( 0 === $items ) {
+			return;
+		}
+
+		$menus = (int) $wpdb->get_var(
+			'SELECT COUNT(*) FROM ' . $wpdb->prefix . "term_taxonomy WHERE taxonomy = 'nav_menu'"
+		);
+
+		$this->note(
+			'THE NAVIGATION MENU IS NOT IN THIS EXPORT AND HAS TO BE RE-ENTERED BY HAND: ' . $items
+				. ' menu item' . ( 1 === $items ? '' : 's' ) . ' across ' . $menus . ' menu'
+				. ( 1 === $menus ? '' : 's' ) . '. It is in the list above as `nav_menu_item`, and that list\'s '
+				. 'sentence is wrong about this one entry: a menu item is neither another file\'s job nor '
+				. 'WordPress\'s machinery. It is the header and the mobile drawer -- which categories, in which '
+				. 'order, under which names. WordPress stores a menu as a `nav_menu` taxonomy term whose members '
+				. 'are `nav_menu_item` posts, each with its target in postmeta, and no stage here reads them. The '
+				. 'new shop has `menus` and `menu_items` tables with `source_term_id` and `source_post_id` columns '
+				. 'waiting for exactly this, so it is a gap that can be closed later -- but until it is, the '
+				. 'navigation is retyped, and this is the count of how much retyping.'
+		);
 	}
 }

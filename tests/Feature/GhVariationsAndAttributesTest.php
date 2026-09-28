@@ -193,19 +193,44 @@ it('imports the plugin export cleanly, and lands every count the manifest declar
      * and /faqs/ and which of the two wins is the owner's decision rather than
      * a mapping.
      *
-     * So the expected set is pinned to that ONE row, by its id, not by
+     * So the expected set is pinned to those rows, BY THEIR IDS, not by
      * excusing the `posts` entity. Excusing the entity would make every future
      * post rejection invisible here, which is the shape of exactly the
      * vacuous guard this repository sweeps for -- a second refused article,
-     * or this one refused for a different reason, still fails.
+     * or one of these refused for a different reason, still fails.
+     *
+     * ── AND THERE ARE TWO PAGES NOW, NOT ONE ───────────────────────────────
+     *
+     * Lane IE added a CHILD page to the harness (`team`, under `about-us`),
+     * because /about-us/our-team/ is the case that catches an old-address
+     * reconstruction which rebuilds the URL from a base and flattens it to
+     * /our-team/. It is a WordPress page, so PostImporter declines it for
+     * exactly the same stated reason as 7002.
+     *
+     * Both ids are named individually and the count is still asserted, so this
+     * is a second instance of a decline this file already calls deliberate --
+     * not a loosened guard. A THIRD page, or either of these refused for a
+     * different reason, is still a failure.
      */
+    $pages = ['posts line 3 (id=7002)', 'posts line 4 (id=7003)'];
+
     $expected = array_values(array_filter(
         $rejections,
-        static fn (string $r): bool => str_contains($r, 'posts line 3 (id=7002)')
-            && str_contains($r, "post type 'page' is not an article")
+        static function (string $r) use ($pages): bool {
+            foreach ($pages as $page) {
+                if (str_contains($r, $page) && str_contains($r, "post type 'page' is not an article")) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     ));
 
-    expect(count($expected))->toBe(1, 'the WordPress page in the fixture is no longer being declined by name');
+    expect(count($expected))->toBe(
+        count($pages),
+        'the WordPress pages in the fixture are no longer being declined by name'
+    );
 
     expect(array_values(array_diff($rejections, $expected)))->toBe(
         [],

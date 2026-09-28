@@ -21,9 +21,9 @@ names the existing importers already parse:
 | `orders.csv` | `OrderImporter` | exists |
 | `order_items.csv` | `OrderItemImporter` | exists |
 | `coupons.csv` | `CouponImporter` | exists |
-| `reviews.csv` | `ReviewImporter` | exists |
+| `reviews.csv` | `ReviewImporter` | exists — carries `images` from plugin 1.6.0 |
 | `seo.csv` | `SeoImporter` | exists |
-| `permalinks.csv` | `kbb:import-redirects` | exists |
+| `permalinks.csv` | `kbb:import-redirects` | exists — `status=old-slug` rows from plugin 1.6.0 |
 | `variations.csv` | `VariationImporter` | exists — Lane GH |
 | `refunds.csv` | `RefundImporter` | exists — Lane GI |
 | `order_notes.csv` | `OrderNoteImporter` | exists — Lane GI |
@@ -124,6 +124,39 @@ taken" months later.
 - **Money stays as the decimal string WooCommerce holds.** The importers already
   convert to integer fils and are tested on it; a plugin that pre-converts would
   double it.
+## Two deltas the 1.6.0 plugin introduced
+
+Both are ADDITIVE and both obey the ignore-unknown rule above, so a 1.5.0
+export still imports — it simply carries neither of these facts.
+
+- **`reviews.csv` gains a final column, `images`.** `…,"ip","reply","images"`.
+  A JSON array of the review's photograph paths. `reviews.images` has been a
+  `json` column since the first schema migration — cast on the model, drawn by
+  the product page with its "+n" chip, filtered on by the review wall — and the
+  only thing that had ever written to it was a shopper uploading to the NEW
+  site. On an imported shop the whole feature rendered nothing, which is the
+  quietest kind of gap: every piece built, tested and reachable, and no data.
+  The importer scheme-checks each address (`App\Support\SafeUrl::src()`) rather
+  than trusting the file.
+
+- **`permalinks.csv`'s `status` gains the value `old-slug`**, beside `publish`
+  and `empty`. A row so marked is a PREVIOUS address of the thing it names.
+
+  ▲ THIS ONE IS TIME-LIMITED AND THE DATA CANNOT BE RECOVERED LATER.
+  WordPress writes a `_wp_old_slug` row every time a published post's slug
+  changes, and core's `wp_old_slug_redirect()` has been answering those
+  addresses with a 301 on every front-end 404 for as long as the site has run.
+  A product renamed in 2021 still resolves today; Google holds the address and
+  shoppers have it bookmarked — and nobody notices, because WordPress is doing
+  it silently. Switch WordPress off without carrying these and every one becomes
+  a hard 404 on day one, and the list only ever existed in the database that was
+  turned off. `_wp_old_slug` appeared NOWHERE in this repository before 1.6.0:
+  not in the plugin, not in the importer, not in a document.
+
+  `kbb:import-redirects` therefore requires `--permalinks=` on every run; see
+  `docs/IMPORT-RUNBOOK.md` §10. Store → SEO & Meta does not need the flag —
+  `UrlsMediaApiController` passes the uploaded file itself.
+
 - **The plugin never invents an id.** `wc_id`, `wc_order_id`, `wc_item_id` and
   the WordPress user id are what every importer upserts on; they come from
   WordPress unchanged.

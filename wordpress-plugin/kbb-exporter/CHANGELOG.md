@@ -18,6 +18,81 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.6.0
+
+**Two things a WordPress shop carries that no export had ever read.**
+
+**1. `_wp_old_slug` — every address the shop USED to serve.** WordPress writes
+one of these every time a published post's slug changes, and core's
+`wp_old_slug_redirect()` then answers the old address with a 301 on every
+front-end 404. So a product renamed in 2021 has been quietly redirecting ever
+since: Google still holds the old address, shoppers still have it bookmarked,
+and nobody has noticed, **because it works**.
+
+It works because WordPress is running. Switch the old shop off without carrying
+these rows and every one of those addresses is a hard 404 on day one — and the
+list cannot be recovered afterwards, because it only ever existed in the database
+that was turned off. The string `_wp_old_slug` appeared nowhere in this project:
+not in the plugin, not in the importer, not in a document.
+
+They go into `permalinks.csv` with `status` = `old-slug`, carrying the same
+`type` and `wc_id` as the object's current row, so
+`App\Services\Import\RedirectMap` already does the right thing with them and
+**nothing on the Laravel side had to learn a new word**.
+
+The address is **not assembled from a base**. `_wp_old_slug` stores a slug, and
+this plugin does not guess at bases — the brand-archive note in the permalinks
+stage is there because guessing one would have written 93 redirects from an
+address that may never have existed. So it takes `get_permalink()`'s answer for
+the post and swaps the **last path segment**. A child page's previous address
+comes out as `/about-us/our-team/`, not `/our-team/`. Where the last segment is
+not the post's current slug the address **cannot** be reconstructed, and the row
+says so with an empty `permalink` and a note, rather than inventing one.
+
+The count is in `manifest.json`'s notes, because the number itself is the
+finding: it is how many addresses go from "301, quietly, for years" to "404" on
+cutover day.
+
+**2. Review photographs.** `reviews.images` has been a `json` column on the
+Laravel side since the first schema migration — cast on the model, drawn by the
+product page with a "+n" chip, filtered on by the review wall, scheme-checked by
+`ReviewWall::photos()` on the way out. All of it built and tested, and on an
+imported shop it rendered nothing, because the only writer was a shopper
+uploading to the **new** site. A photograph is the part of a review a shop cannot
+re-create: the owner can retype a review, he cannot retype a customer's picture
+of her own face.
+
+`reviews.csv` now has an `images` column. It recognises a photograph by the
+**value** and never by the key: an attachment id this site resolves, or an
+address under this site's **own uploads directory** with an image extension.
+Review photos are not WooCommerce core — every shop that has them has them from
+one of a dozen plugins, each with its own meta key — and a list of keys to look
+for would be a list of guesses that fails silently on the one shop it is pointed
+at. Both the serialised-array and the id-list storage shapes are handled, and an
+address on somebody else's server is refused so the new shop cannot hotlink a
+stranger's file from a product page.
+
+**And every comment meta key it did not use is named in `manifest.json`, with a
+count.** The value rule can still miss — a plugin storing a bare filename, or a
+path relative to the uploads root, produces no match. If a shop visibly has
+review photographs and the `images` column comes out empty, that note is the
+list of keys to look at, so the answer is a key name rather than a discovery
+after the cutover.
+
+Both are proved end to end, on this plugin's own output through the shop's real
+`ImportRunner` and — for the 301s — through its real HTTP kernel, in
+`tests/Feature/IeLegacyAddressesAndPhotosTest.php`.
+
+**Caught by the fixture before it shipped:** the old-slug query first excluded
+`KBB_Export_Stage_Posts::NOT_CONTENT` verbatim, which reads like the obviously
+right list and is not. That list answers a different question — it is
+`posts.csv`'s account of "post types this file does not carry" — and `product` is
+in it because `products.csv` carries products, **not** because a product has no
+address. Used as-is it dropped every product rename, which is the largest and
+most valuable source of old addresses on a six-year-old catalogue.
+
+---
+
 ## 1.5.0
 
 **Three fields that were on the owner's product edit page and in no export file

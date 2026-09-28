@@ -185,7 +185,16 @@ function geRejections(App\Services\Import\ImportReport $report): array
  */
 function geDeclinedByDesign(): array
 {
-    return ['posts line 3 (id=7002)'];
+    return [
+        'posts line 3 (id=7002)',
+        // Lane IE added a CHILD page (`team`, under `about-us`) to the harness,
+        // because /about-us/our-team/ is the case that catches an old-address
+        // reconstruction which rebuilds the URL from a base and flattens it to
+        // /our-team/. It is a WordPress page, so PostImporter declines it for
+        // exactly the same stated reason as 7002 -- a second instance of a
+        // decline this file already asserts is deliberate, not a new one.
+        'posts line 4 (id=7003)',
+    ];
 }
 
 /**
@@ -2896,6 +2905,45 @@ it('keeps the plugin header and KBB_EXPORTER_VERSION saying the same thing', fun
         $const[1],
         "the plugin header says {$header[1]} and KBB_EXPORTER_VERSION says {$const[1]}; "
         . 'WordPress would show one and manifest.json would record the other'
+    );
+
+    /*
+     * ── AND THE THIRD COPY, WHICH IS THE ONLY ONE THE OWNER EVER SEES ───────
+     *
+     * The two checks above were the whole of this assertion, and neither of
+     * them is what `manifest.json` carries. `KBB_Export_Runner::PLUGIN_VERSION`
+     * is -- it is the value written into `source.plugin_version` -- and it was
+     * still `1.0.0` while the header and the constant both said `1.5.0`.
+     *
+     * So the sentence this test's own docblock is about, "a set of exported
+     * files could not say which build produced it", was still TRUE of every
+     * export the 1.5.0 plugin wrote, and this test passed on it. An assertion
+     * that covers two of the three places a value lives is an assertion that
+     * says the value agrees when it does not.
+     *
+     * MUTATION NOTE, RUN: set `KBB_Export_Runner::PLUGIN_VERSION` back to
+     * '1.0.0' and this is red naming 1.6.0 and 1.0.0 -- and, separately, the
+     * manifest assertion below goes red too, which is the same defect seen
+     * from the deliverable rather than from the source.
+     */
+    $runner = (string) file_get_contents(
+        base_path('wordpress-plugin/kbb-exporter/includes/class-kbb-export-runner.php')
+    );
+
+    expect(preg_match("/const PLUGIN_VERSION = '([0-9]+\.[0-9]+\.[0-9]+)'/", $runner, $written))
+        ->toBe(1, 'KBB_Export_Runner::PLUGIN_VERSION is gone, and it is what manifest.json records');
+
+    expect($written[1])->toBe(
+        $const[1],
+        "KBB_EXPORTER_VERSION says {$const[1]} and the runner writes {$written[1]} into every manifest; "
+        . 'the owner would be told which build produced his export, and be told the wrong one'
+    );
+
+    // And from the other end: the fixture is a real export, so its manifest is
+    // the value as the owner receives it rather than as the source declares it.
+    expect(geManifest()['source']['plugin_version'])->toBe(
+        $const[1],
+        'the checked-in export says it was written by a build that is not this one'
     );
 
     // The history the number is given, so a bump cannot be a number with no

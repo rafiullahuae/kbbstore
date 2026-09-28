@@ -182,6 +182,39 @@
 .peo-settile.is-live{border-color:var(--accent,#15a85a)}
 .peo-settile.is-save .v{color:#15803d}
 
+/* The working-out under a hand-typed set price. (Lane SP2)
+
+   A GRID OF TWO COLUMNS THAT COLLAPSES TO ONE, sized in `ch` and `fr`, with no
+   fixed heights and nothing measured in JavaScript: at 390px the label sits
+   above its figure and the card never exceeds the viewport, which is what the
+   `minmax(0,1fr)` and the `overflow-wrap` are for. */
+.peo-setwork{display:grid;gap:6px;margin:0 0 2px;min-width:0}
+.peo-setwork>div{display:grid;gap:2px 10px;min-width:0;align-items:baseline;
+                 grid-template-columns:minmax(0,1fr) auto;
+                 padding:6px 10px;border-radius:9px;background:var(--surface-2,#f6f7fb);
+                 border:1px solid var(--border,#e6e6e6)}
+.peo-setwork .k{font-size:11px;font-weight:650;color:var(--ink-soft,#6b7280);min-width:0;
+                overflow-wrap:anywhere}
+.peo-setwork .v{font-size:13.5px;font-weight:700;color:var(--ink,#111827);text-align:right;
+                overflow-wrap:anywhere}
+.peo-setwork .v i{display:block;font-style:normal;font-size:10.5px;font-weight:600;
+                  color:var(--ink-soft,#6b7280)}
+.peo-setwork>div.is-cut .v{color:#b8362d}
+.peo-setwork>div.is-now{border-color:var(--accent,#15a85a)}
+.peo-setwork>div.is-now .v{color:#15803d}
+@media (max-width:460px){.peo-setwork>div{grid-template-columns:minmax(0,1fr)}
+                         .peo-setwork .v{text-align:left}}
+
+/* The share image's state line. The thumbnail is a background image on a fixed
+   box, so a 3000px photograph cannot widen the card. (Lane SP2) */
+.peo-ogstate{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.peo-ogstate>span{min-width:0}
+.peo-ogth{flex:none;width:38px;height:38px;border-radius:8px;background-size:cover;
+          background-position:center;background-color:var(--surface-3,#eef0f6);
+          border:1px solid var(--border,#e6e6e6)}
+.peo-ogstate.is-auto{color:var(--ink-2,#374151)}
+.peo-ogstate.is-hand .peo-ogth{border-color:var(--accent,#15a85a)}
+
 .peo-setlist{display:grid;gap:7px;min-width:0;max-height:340px;overflow:auto}
 .peo-setm{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap;
           background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);
@@ -863,6 +896,13 @@
     model = product;
     model.translations = model.translations || {};
     model.ar = {};
+    /* The re-anchor instruction is spent. See collect()'s note: it must not
+       survive into the next save of this product. (Lane SP2) */
+    setReanchor = false;
+    /* And this is the state the anchor the server just sent was taken against.
+       setAnchorDirty() compares against it to decide whether the figures on the
+       panel are live or about to be re-taken. */
+    setSaved = setSnapshot();
 
     var cells = model.translations[ARABIC] || {};
 
@@ -902,6 +942,10 @@
   var setFound = [];
   var setQuery = '';
 
+  /* Pressed, not stored: "start again from today's total" is an instruction for
+     ONE save. NOT on `model`, because it is not part of the product. (Lane SP2) */
+  var setReanchor = false;
+
   function blank(){
     return {
       id: null, name: '', slug: '', sku: null, gtin: null, brand_id: null,
@@ -911,6 +955,12 @@
       type: 'simple', tags: [], set_members: [], price_mode: 'fixed',
       discount_percent: '', discount_amount: '',
       set_parts_total_aed: '', set_effective_aed: '',
+      /* The four figures a hand-typed set price shows its working with, and the
+         count of members that no longer exist. Declared here so a blank form
+         reads '' rather than 'undefined'; they arrive real from the endpoint.
+         (Lane SP2) */
+      set_basis_aed: '', set_adjustment_aed: '', set_sale_now_aed: '',
+      set_members_missing: 0,
       status: 'draft', is_visible: true, featured: false, published_at: null,
       category_ids: [], primary_category_id: null,
       price_aed: '', sale_aed: '', sale_starts_at: null, sale_ends_at: null,
@@ -1044,6 +1094,13 @@
       body.price_mode = model.price_mode || 'fixed';
       body.discount_percent = model.price_mode === 'discount_percent' ? String(model.discount_percent || '0') : null;
       body.discount_amount = model.price_mode === 'discount_amount' ? String(model.discount_amount || '0') : null;
+
+      /* ── "START AGAIN FROM TODAY'S TOTAL" (Lane SP2) ───────────────────
+         An instruction that lives for exactly one save. It is set by the
+         button, sent here, and cleared by adopt() when the answer comes back,
+         so it cannot leak into the next save of the same product -- which
+         would re-anchor a set the operator only opened to fix a typo. */
+      if (setReanchor) body.reanchor = true;
     }
 
     var creating = !model.id;
@@ -1708,7 +1765,7 @@
         model.seo = model.seo || {};
         model.seo.og_image = u;
       } else if (asMain) {
-        model.image = u;
+        setMainImage(u);                           // and the share image follows it
         asMain = false;                            // only the first becomes main
       } else if (model.images.indexOf(u) === -1 && u !== model.image) {
         model.images.push(u);
@@ -2302,8 +2359,34 @@
   function brandView(){
     var brands = (boot && boot.brands) || [];
 
+    /* A SET DOES NOT NEED A BRAND, AND THE SCREEN NOW SAYS SO. (Lane SF)
+
+       "the Set product type will not have any brand, so the brand selection
+        can be optional."
+
+       It already is, and was before this line existed -- `products.brand_id`
+       is nullable in 0001_01_01_000000_create_kbb_schema, the editor's own
+       save validates it 'nullable', and the first option in the list below has
+       always been "No brand". So NOTHING ABOUT THE BEHAVIOUR CHANGES HERE; a
+       set saved with no brand saved fine yesterday.
+
+       What was missing is the sentence. The panel offered a required-looking
+       <select> with no help text, and the owner had no way to tell "optional"
+       from "I have not found where to set it yet" -- which is the question he
+       asked. One line of hint, on the type it is about, is the whole fix.
+
+       Shown only for a set: on an ordinary product a brand is genuinely
+       expected, and a hint telling everybody it is optional would be advice
+       this shop does not want to give. */
+    var hint = (model && (model.type || 'simple') === 'set')
+      ? '<p class="peo-hint">Optional for a set. A box usually holds more than one brand, so leaving this '
+        + 'as <b>No brand</b> is the normal answer &mdash; the set page simply does not print a brand line. '
+        + 'Pick one only if the whole box is one brand\'s.</p>'
+      : '';
+
     return '<div class="peo-card">'
       + '<h3>Brand</h3>'
+      + hint
       + '<select class="peo-sel" data-bind="brand_id">'
       +   '<option value="">No brand</option>'
       +   brands.map(function(b){
@@ -2335,6 +2418,7 @@
       +   '<input class="peo-in" data-bind="seo.canonical" value="' + esc(seo.canonical || '') + '" '
       +     'placeholder="Leave empty unless this page duplicates another"></div>'
       + '<div class="peo-fld peo-ogzone" id="peo-ogzone"><label>Share image</label>'
+      +   '<div id="peo-ogstatehost">' + ogStateView() + '</div>'
       +   '<button class="peo-btn" type="button" id="peo-oglib" style="margin-bottom:7px">Choose from Media Library</button>'
       +   '<input class="peo-in" data-bind="seo.og_image" id="peo-og" value="' + esc(seo.og_image || '') + '" '
       +     'placeholder="Uses the main image if empty">'
@@ -2353,6 +2437,103 @@
       + '<label class="peo-check"><input type="checkbox" data-bind="seo.noindex"'
       +   (seo.noindex ? ' checked' : '') + '><span>Ask Google not to list this product</span></label>'
       + '</div>';
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     THE SHARE IMAGE, AND WHICH OF ITS TWO STATES IT IS IN. (Lane SP2)
+
+     The owner: "the seo image must be taken auto from the main image
+     automatically when i upload the main image of the product or set, and
+     manually also i can change that seo image."
+
+     So it has two states, and the screen has to say which one out loud --
+     otherwise the picture that appears by itself is indistinguishable from one
+     somebody chose, and the operator cannot tell whether changing the main
+     image will move it.
+
+         AUTOMATIC  the box is empty, or holds the main image. It follows the
+                    main image from now on.
+         BY HAND    the box holds anything else. Nothing will ever overwrite it,
+                    and there is a button back to automatic.
+
+     The rule is read off the two values rather than out of a stored flag, for
+     the reasons ProductEditorApiController::followMainImageIntoSeo() sets out.
+     This function and that one are the same three lines, one in each language,
+     so the screen cannot claim a state the server does not act on.
+
+     ▲ A share image is what Facebook, WhatsApp and Google are handed, and this
+       one is a path the operator has already put in the Main image box -- so it
+       goes through the same App\Support\Seo::absolute() and the same
+       imageUrlRule() the main image itself does, and needs no extra size rule
+       of its own: it IS the main image. */
+  function ogStateView(){
+    var og = String((model.seo && model.seo.og_image) || '').trim();
+    var main = String(model.image || '');
+    var auto = og === '' || og === main;
+
+    if (auto && !main) {
+      return '<div class="peo-note peo-ogstate" style="margin:0 0 7px">'
+        + '<b>Automatic.</b> There is no main image yet — add one above and it is used here too.</div>';
+    }
+
+    if (auto) {
+      return '<div class="peo-note peo-ogstate is-auto" style="margin:0 0 7px">'
+        + '<span class="peo-ogth" style="background-image:url(\'' + esc(url(main)) + '\')"></span>'
+        + '<span><b>Automatic — taken from the main image.</b> Change the main image and this changes '
+        + 'with it. Choose or upload one below to pick a different picture.</span></div>';
+    }
+
+    return '<div class="peo-note peo-ogstate is-hand" style="margin:0 0 7px">'
+      + '<span class="peo-ogth" style="background-image:url(\'' + esc(url(og)) + '\')"></span>'
+      + '<span><b>Chosen by hand.</b> Changing the main image will <b>not</b> replace it.'
+      + (main ? ' <button type="button" class="peo-mini" id="peo-ogauto">Use the main image</button>' : '')
+      + '</span></div>';
+  }
+
+  /* The button inside that line, bound wherever the line has just been drawn. */
+  function bindOgAuto(scope){
+    var el = scope && scope.querySelector('#peo-ogauto');
+
+    if (!el) return;
+
+    el.addEventListener('click', function(){
+      collect();
+      model.seo = model.seo || {};
+      model.seo.og_image = model.image || '';
+      dirty = true;
+      render();
+    });
+  }
+
+  /* THE ONE PLACE model.image IS WRITTEN. (Lane SP2)
+
+     Three controls set the main image -- the Media Library, an upload, and
+     Remove -- and the share image has to follow all three or it follows none of
+     them. It used to be an assignment in each, which is exactly how a rule ends
+     up applied on two paths out of three.
+
+     `was` is the main image being replaced, and it is the whole of the test: a
+     share image holding it is one this screen filled in and re-points, a share
+     image holding anything else is the operator's and is left alone. Identical
+     to the server's followMainImageIntoSeo(), which runs again on save and is
+     the half that counts -- this one only means the operator SEES it happen. */
+  function setMainImage(u){
+    var was = String(model.image || '');
+    var now = String(u || '');
+
+    model.seo = model.seo || {};
+
+    var og = String(model.seo.og_image || '').trim();
+
+    model.image = now === '' ? null : now;
+
+    if (og !== '' && og !== was && og !== now) return;   // chosen by hand
+
+    if (now === '') {
+      delete model.seo.og_image;
+    } else {
+      model.seo.og_image = now;
+    }
   }
 
   /* Which of the three this product is, or the honest truth when it is
@@ -2462,8 +2643,7 @@
         + '<input class="peo-in" inputmode="decimal" data-bind="discount_amount" id="peo-setamt" '
         + 'value="' + esc(model.discount_amount || '') + '" placeholder="e.g. 25"></div>';
     } else {
-      rule = '<div class="peo-note" style="margin:-4px 0 12px">The set costs exactly what you type in '
-        + '<b>Price</b>. Change a product&rsquo;s price and this figure stays where it is.</div>';
+      rule = fixedFollowView();
     }
 
     return '<div class="peo-card">'
@@ -2489,7 +2669,9 @@
         + '</select>'
         + '<button type="button" class="peo-btn" id="peo-usetotal" style="margin-top:9px">Use this total</button>'
         + '<div class="peo-note">' + (mode === 'fixed'
-            ? 'Or press <b>Use this total</b> to price the set at what its products cost, and keep it following them.'
+            ? 'You type the price in <b>Price</b>, above. <b>Reduce a product&rsquo;s price and this set drops '
+              + 'by the same amount, on its own</b> — off the price and off the sale price. Or press '
+              + '<b>Use this total</b> to price the set at what its products cost.'
             : 'Worked out fresh every time the price is shown. <b>Reduce a product&rsquo;s price and this set '
               + 'drops by the same amount, on its own.</b> A basket or an order already placed keeps the price '
               + 'it was agreed at.') + '</div></div>'
@@ -2549,7 +2731,11 @@
     } else if (mode === 'discount_amount') {
       price = Math.max(0, parts - Math.max(0, setFils(model.discount_amount || 0)));
     } else {
-      price = setFils(model.price_aed || 0);
+      /* A HAND-TYPED PRICE, LESS WHAT ITS PRODUCTS HAVE COME DOWN BY. The same
+         subtraction and the same clamp App\Support\SetPricing::afterAdjustment()
+         runs on the server, so the figure the owner watches while he types is
+         the figure that is saved. (Lane SP2) */
+      price = setFixedPrice(setFils(model.price_aed || 0), parts);
     }
 
     /* ▲ AN UNPRICED SET IS NOT SAVING ANYBODY ANYTHING. The owner's first set,
@@ -2558,6 +2744,144 @@
        same guard is in App\Support\SetContents, so the screen and the shop say
        the same thing. */
     return { parts: parts, count: count, price: price, saving: price <= 0 ? 0 : Math.max(0, parts - price) };
+  }
+
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     A HAND-TYPED SET PRICE THAT FOLLOWS ITS PRODUCTS DOWN. (Lane SP2)
+
+     The owner: "when i set the price of product set, either total, or
+     discounted percentage or manual set the actual and sale price. For any
+     case, when i change the price of any product from that set, the set price
+     will also reduce that much how much i reduced in that particular product.
+     from the actual price and also from the sale price if any."
+
+     The two discount modes had this already -- they derive the whole price from
+     the parts total. `fixed` is the one where the figure is the operator's own,
+     so it is measured from an ANCHOR: the parts total at the moment he typed
+     it, kept in `products.set_price_basis`. Everything below is that one
+     subtraction, made visible.
+
+     NOTHING HERE MEASURES LAYOUT. Four numbers and three sentences.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* What the anchor was taken against, in fils, or null when this set has none
+     -- which is every set built before this feature, until it is next saved. */
+  function setBasis(){
+    return model.set_basis_aed === '' || model.set_basis_aed === null || model.set_basis_aed === undefined
+      ? null
+      : setFils(model.set_basis_aed);
+  }
+
+  /* The four facts the server re-anchors on, as one comparable string.
+
+     IN FILS, NOT AS TYPED. "180" and "180.00" are the same price, and the
+     server compares integers -- so comparing the strings would tell the owner
+     his set was about to re-anchor when it was not. */
+  function setSnapshot(){
+    return JSON.stringify([
+      model.price_aed === '' || model.price_aed === null ? null : setFils(model.price_aed),
+      model.sale_aed === '' || model.sale_aed === null ? null : setFils(model.sale_aed),
+      (model.set_members || []).map(function(m){
+        return [Number(m.product_id), Number(m.variant_id || 0), Math.max(1, Number(m.quantity || 1))];
+      })
+    ]);
+  }
+
+  var setSaved = null;
+
+  /* Is the anchor about to be re-taken by the save this operator is one button
+     away from pressing? Typing a new price, or changing the box, re-anchors on
+     the server -- so while either is true the preview must show the price he is
+     TYPING and not that price less a reduction that is about to be zeroed. */
+  function setAnchorDirty(){
+    return setReanchor || setSaved === null || setSnapshot() !== setSaved;
+  }
+
+  /* What is coming off the typed figures today, in fils. Never negative, and
+     zero in the three cases the server also declines to move a price in:
+     no anchor, an empty box, and a box with a product missing from it. */
+  function setAdjustment(parts){
+    var basis = setBasis();
+
+    if (basis === null || setAnchorDirty()) return 0;
+    if (!(model.set_members || []).length) return 0;
+    if (Number(model.set_members_missing || 0) > 0) return 0;
+
+    return Math.max(0, basis - parts);
+  }
+
+  /* One typed figure, less today's reduction, clamped -- and never raised:
+     App\Support\SetPricing::MIN_PRICE_FILS and its note. */
+  function setFixedPrice(typed, parts){
+    var adj = setAdjustment(parts);
+
+    if (adj <= 0) return typed;
+
+    return Math.max(Math.min(typed, 1), typed - adj);
+  }
+
+  /* The panel that explains a price nobody typed today.
+
+     A HOST WITH A STABLE ID, because refreshSetMoney() rewrites the inside of
+     it while a quantity box is being typed into and a full render() would take
+     the focus out of that box mid-keystroke. */
+  function fixedFollowView(){
+    return '<div class="peo-setfollow" id="peo-setfollow">' + fixedFollowInner() + '</div>';
+  }
+
+  function fixedFollowInner(){
+    var code = boot ? boot.currency.code : '';
+    var parts = setTotals().parts;
+    var basis = setBasis();
+    var adj = setAdjustment(parts);
+    var typed = setFils(model.price_aed || 0);
+    var sale = model.sale_aed === '' || model.sale_aed === null ? null : setFils(model.sale_aed);
+
+    var money = function(f){ return esc(code) + ' ' + esc(setAed(f)); };
+
+    var rows = '';
+
+    if (Number(model.set_members_missing || 0) > 0) {
+      /* THE ONE STATE THAT IS NOT ARITHMETIC. A product deleted from the
+         catalogue makes the box cheaper in exactly the way a price cut does,
+         and marking the set down for it would be a discount nobody gave on a
+         box that is now missing an item. The server refuses to move the price;
+         this says so, because a reduction that silently stopped happening is as
+         confusing as one that silently started. */
+      rows = '<div class="peo-banner is-bad" style="margin:0 0 10px">'
+        + esc(String(model.set_members_missing)) + ' of the products in this box no longer exist. '
+        + 'The set is holding the price you typed until you fix the box.</div>';
+    }
+
+    if (basis === null || setAnchorDirty()) {
+      return rows
+        + '<div class="peo-note" style="margin:0">The set costs exactly what you type in <b>Price</b>. '
+        + 'Saving takes today&rsquo;s total — <b>' + money(parts) + '</b> — as the starting point, and from '
+        + 'then on <b>every dirham you take off one of these products comes off this set too</b>, off the '
+        + 'price and off the sale price. Prices only ever come <b>down</b>: if a product gets dearer, or a '
+        + 'product&rsquo;s sale ends, the set goes back to the figure you typed and never above it.</div>';
+    }
+
+    return rows
+      + '<div class="peo-setwork">'
+      +   '<div><span class="k">Products cost, when you set the price</span><span class="v">' + money(basis) + '</span></div>'
+      +   '<div><span class="k">They cost now</span><span class="v">' + money(parts) + '</span></div>'
+      +   '<div' + (adj > 0 ? ' class="is-cut"' : '') + '><span class="k">Coming off, automatically</span>'
+      +     '<span class="v">' + (adj > 0 ? '&minus; ' + money(adj) : '&mdash;') + '</span></div>'
+      +   '<div class="is-now"><span class="k">Price now</span><span class="v">'
+      +     money(setFixedPrice(typed, parts)) + (adj > 0 ? ' <i>you typed ' + money(typed) + '</i>' : '') + '</span></div>'
+      +   (sale === null ? '' : '<div class="is-now"><span class="k">Sale price now</span><span class="v">'
+      +     money(setFixedPrice(sale, parts)) + (adj > 0 ? ' <i>you typed ' + money(sale) + '</i>' : '') + '</span></div>')
+      + '</div>'
+      + '<div class="peo-note" style="margin:8px 0 0">Prices only ever come <b>down</b>. A product getting '
+      + 'dearer never raises this set above the figure you typed, and when a product&rsquo;s sale ends the '
+      + 'reduction goes away by itself. A basket or an order already placed keeps the price it was agreed at.</div>'
+      + '<button type="button" class="peo-btn" id="peo-setreanchor" style="margin-top:9px">'
+      + 'Start again from today&rsquo;s total</button>'
+      + '<div class="peo-note">Use this when the products&rsquo; new prices are the ones your typed price '
+      + 'should be measured from. It changes no price today — it moves the starting point to '
+      + money(parts) + '.</div>';
   }
 
   function basicsView(){
@@ -2975,6 +3299,33 @@
     write('parts', code + ' ' + setAed(t.parts));
     write('price', code + ' ' + setAed(t.price));
     write('saving', t.saving > 0 ? code + ' ' + setAed(t.saving) : '—');
+
+    /* And the working-out beneath them, which is four more figures of the same
+       arithmetic. Changing a quantity moves the parts total, which moves the
+       reduction -- and a panel where three tiles updated and the explanation
+       under them did not is worse than one that does not update at all.
+       (Lane SP2) */
+    var follow = document.querySelector('#content #peo-setfollow');
+
+    if (follow) {
+      follow.innerHTML = fixedFollowInner();
+      bindSetReanchor(follow);
+    }
+  }
+
+  /* The button lives inside HTML that refreshSetMoney() rewrites, so binding it
+     is its own function rather than a line in the panel wiring. */
+  function bindSetReanchor(scope){
+    var el = scope && scope.querySelector('#peo-setreanchor');
+
+    if (!el) return;
+
+    el.addEventListener('click', function(){
+      collect();
+      setReanchor = true;
+      dirty = true;
+      render();
+    });
   }
 
   async function setSearch(){
@@ -3036,6 +3387,13 @@
         render();
       });
     }
+
+    /* "Start again from today's total". It changes NO price: it tells the next
+       save to move the anchor to the parts total as it stands, so the figure
+       the operator typed is measured from today rather than from whenever he
+       last typed it. The only way to re-anchor without retyping the same
+       number. (Lane SP2) */
+    bindSetReanchor(panel);
 
     panel.querySelectorAll('[data-peo-mq]').forEach(function(el){
       el.addEventListener('input', function(){
@@ -3456,7 +3814,7 @@
           folder: 'products',
           onPick: function(urls){
             if (!urls.length) return;
-            model.image = urls[0];
+            setMainImage(urls[0]);
             dirty = true;
             render();
           }
@@ -3496,6 +3854,35 @@
             render();
           }
         });
+      });
+    }
+
+    /* BACK TO AUTOMATIC. Setting the box to the main image IS the automatic
+       state -- there is no flag to clear -- so this is one assignment and a
+       re-render, and the state line above it flips to "Automatic". (Lane SP2) */
+    bindOgAuto(document.querySelector('#content'));
+
+    /* AND THE LINE KEEPS UP WITH THE BOX WHILE IT IS BEING TYPED INTO.
+
+       Without this it is correct only after the next full render, so pasting a
+       different picture's address left the screen still saying "Automatic —
+       taken from the main image" about a share image that had just stopped
+       being one. The line is rewritten in place rather than through render(),
+       because render() rebuilds the input and takes the caret out of it
+       mid-keystroke. (Lane SP2) */
+    var ogBox = document.querySelector('#content #peo-og');
+
+    if (ogBox) {
+      ogBox.addEventListener('input', function(){
+        model.seo = model.seo || {};
+        model.seo.og_image = ogBox.value;
+
+        var host = document.querySelector('#content #peo-ogstatehost');
+
+        if (host) {
+          host.innerHTML = ogStateView();
+          bindOgAuto(host);
+        }
       });
     }
 
@@ -3560,7 +3947,13 @@
     if (mainFile) mainFile.addEventListener('change', function(){ takeFiles(mainFile.files, 'main'); });
 
     on('#peo-mainrm', 'click', function(){
-      model.image = null; dirty = true; collect(); render();
+      /* collect() FIRST, then the change. It reads every box on the screen back
+         into `model` -- including the share image box -- so running it after
+         setMainImage() would put the old share image straight back. */
+      collect();
+      setMainImage(null);
+      dirty = true;
+      render();
     });
 
     var galFile = document.querySelector('#content #peo-galfile');

@@ -3,6 +3,205 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.314
+**A set no longer offers "buy 3 and save" — and the box contents take that spot
+instead.** Exactly as you marked up.
+
+### WHAT MOVED
+
+On a set's page, the **1 unit / 2-pack bundle / 3-pack bundle** block is gone,
+and **What is in this set** now sits in that space — in the buy column, right
+above *In stock · ready to ship* and the Add to cart button. It is no longer a
+section you have to scroll down to find.
+
+It is a **list**, one product per row: picture, brand, name, how many, price.
+Underneath: *Bought separately AED 325 · Set price AED 269 · You save AED 56*.
+
+A member that is not published is still listed but not clickable, so the page
+never sends a customer to a page that is not there. A set with no price set says
+nothing about saving rather than claiming a saving of zero.
+
+**Nothing changes on an ordinary product.** It keeps its bundle offers exactly as
+before — measured to the pixel, the same page in every respect.
+
+### ON A PHONE
+
+Designed for it rather than left to reflow. The picture shrinks, the row tightens,
+and the quantity and price share one line instead of stacking — which in the
+narrowest column on the shop saves 16px on every row.
+
+**A box with more than six products shows five and folds the rest** behind *Show
+all*. Twelve rows would put 700px between the price and the Add to cart button,
+which on a phone means the button is off the screen. Folding brings it back up by
+**524px**. The count and the totals always cover every product, folded or not.
+
+### WHERE IT IS IN THE ADMIN
+
+**Catalog → Product editor → Brand** gains one line of help on a set: a box
+usually holds more than one brand, so *No brand* is the normal answer and the set
+page simply does not print a brand line. Brand was already optional on every
+product type — nothing changed, it just now says so.
+
+**No new setting and no new screen.**
+
+### ▲ ONE THING FOR YOU TO DECIDE
+
+**A set bought at quantity 3 still gets the old bulk discount in the basket.**
+The shop no longer *advertises* a bundle on a set, but the basket still *applies*
+one. Changing that alters what a customer in mid-checkout is charged, so it is
+not something to switch on quietly with a package. Say the word and it goes in
+its own patch with a before and after.
+
+### FILES
+
+`app/Services/BundleService.php`, `resources/views/store/product.blade.php`,
+`resources/views/partials/set-contents-panel.blade.php`,
+`resources/views/partials/set-contents-row.blade.php` (new),
+`app/Services/Translation/InterfaceStrings.php`,
+`admin/partials/product-editor-screen.blade.php`, and one cache-clearing
+migration.
+
+## 2.60.313
+**The shoppable-video popup is now the video.** No bands, product boxes on the
+picture, credit on the picture. And the clips screen finally tells you the truth
+about why your covers are not being cut — **which is not what it has been
+telling you.**
+
+### ▲ THE 2.5-SECOND CLIP: YOUR SERVER HAS ffmpeg. PHP IS NOT ALLOWED TO RUN IT.
+
+The screen has been showing you *"No ffmpeg here — you choose the cover"*. **That
+is wrong, and it has been wrong on the first screen of this feature since it
+shipped.** `ffmpeg` is installed on your server. What is blocked is PHP's
+permission to start any program at all (`proc_open` is switched off in your
+PHP pool, which is a normal hardening default on managed hosting).
+
+So you have been told to install something you already have.
+
+**The fix is one line, and it is yours to paste — no support round trip.**
+
+> Cloudways → **Application Settings → Cron Job Management → Add New Cron →
+> Advanced**, and add:
+>
+> ```
+> * * * * * cd /path/to/your/application && php artisan schedule:run >> /dev/null 2>&1
+> ```
+
+The command line does not have that restriction, so from a cron job the shop can
+run ffmpeg perfectly well. Within a minute of adding it, **every clip you have
+already uploaded** gets its cover and its 2.5-second loop — you do not re-upload
+anything.
+
+The clips screen now says exactly this, in place of the old sentence, and only on
+a server where the cut genuinely cannot happen.
+
+### THE POPUP
+
+Tap a clip and the **video fills the frame**. Previously the frame was sized to
+your phone screen while the picture was fitted inside it, so they were different
+rectangles — and everything else is positioned against the *frame*:
+
+- on a phone there was a **75px band above and below**, the creator's name sat up
+  on the top band, and **76 of the product row's 163px hung below the video**;
+- on a desktop there was a **35px band each side** and the product row overhung
+  the picture at both ends.
+
+Now: **no band on any edge**, at any width. The product boxes sit **on the
+video, along its bottom edge, to the pixel**. The creator's name sits **on the
+video**. Nothing else is in the popup. It works the same in Arabic, mirrored.
+
+Escape closes it, Tab stays inside it, and focus returns to the clip you tapped.
+
+### WHY THERE IS STILL A LOOP FILE AT ALL
+
+We measured dropping it and just looping the first 2.5 seconds of the full
+video. On a **slower** connection that costs **10.9 MB per clip** — more than the
+whole video — because the loop keeps re-fetching what the phone has thrown away.
+The 2.5-second file is **97 KB**. With four clips playing at once, that is the
+difference between ~400 KB and ~40 MB of a customer's data for a section they
+have not even tapped.
+
+### ▲ TWO THINGS FOR YOU TO DECIDE
+
+1. **The video's own play/pause bar overlaps the product boxes.** It is switched
+   on at **Appearance → Shoppable video → Motion → "Show the player's own
+   controls"**. Turn it off, or tell us to lift the product row clear of it.
+2. **On a phone there is still dimmed space above and below a tall clip.** That
+   is the **page showing through**, not a black band — the video itself now
+   reaches every edge of its frame. Filling the whole screen would mean cropping
+   about 18% off the sides of every clip, which cuts faces off. TikTok and
+   Instagram do it the way it is now. Say the word if you want it cropped.
+
+### FILES
+
+`resources/views/ugc/assets.blade.php`, `ugc/rail.blade.php`,
+`app/Services/UgcTranscoder.php`, `app/Http/Controllers/Admin/UgcVideoController.php`,
+`admin/partials/ugc-library-screen.blade.php`, `docs/SERVER-PROC-OPEN.md`, and one
+cache-clearing migration.
+
+## 2.60.312
+**▲ READ THIS ONE BEFORE THE IMPORT, NOT AFTER.** Two things your WordPress site
+is carrying can only be collected **while WordPress is still running**, and one
+of them cannot be recovered once it is switched off.
+
+### 1. OLD PRODUCT AND ARTICLE ADDRESSES
+
+Every time you have renamed a product or an article on WordPress, WordPress
+quietly kept the **old address** and has been forwarding it ever since. A product
+you renamed in 2021 still opens today — Google holds that address, and customers
+have it bookmarked.
+
+You have never noticed this, because WordPress does it silently and for free.
+
+**Switch WordPress off without collecting those addresses and every one of them
+becomes a dead page on day one** — and the list only ever existed inside the
+database you turned off. It cannot be rebuilt afterwards from anything.
+
+The exporter now collects them and this shop forwards them properly with a
+permanent redirect, the kind that moves your Google ranking across rather than
+starting again. Measured on a test export: three renamed items, all three
+landing on the right page.
+
+### 2. REVIEW PHOTOGRAPHS
+
+The photographs customers attached to their reviews were not being imported at
+all. Everything to *show* them has been built for months — the product page
+draws them with a "+n" chip, the review wall filters on them — and on an
+imported shop there was simply nothing to draw, because the only thing that had
+ever written a review photo was somebody uploading to the new site.
+
+Now imported, with each address checked before the shop will display it.
+
+### ▲ WHAT YOU MUST DO
+
+**Re-upload the exporter plugin to WordPress — it is version 1.6.0.** The
+plugin zip is attached alongside this package. An export taken with the old
+version carries neither the old addresses nor the photographs, and there is no
+way to add them later.
+
+### STILL DONE BY HAND: THE MENU
+
+Your WordPress navigation menu is **not** imported — you retype it in
+**Appearance → Header → Mega Menu**. That was always true; what changed is that
+the export report now says so in those words. It used to file your menu under
+*"post types, which are either another file's job or WordPress's own
+machinery"* — which told you your header was a cache. It was not true, and you
+were reading it on the one screen that is supposed to tell you what is being
+left behind.
+
+### AND WHAT IMPORTS CLEANLY
+
+Verified field by field on a test export: barcodes, brands, tags, nested
+categories with their images, product variations with their sizes and prices,
+which variant each past order sold, customers with their addresses, coupons,
+refunds, and the SEO title, description and share image from Yoast. **Money is
+exact to the fil at every step** — nothing rounds.
+
+### FILES
+
+`wordpress-plugin/kbb-exporter` (1.6.0), `ReviewImporter`, `RedirectMap`,
+`kbb:import-redirects`, `docs/WP-EXPORT-CONTRACT.md`,
+`docs/IE-IMPORT-READINESS.md`, `docs/IMPORT-RUNBOOK.md`.
+
 ## 2.60.311
 **A Set now says what is in the box on every document the shop produces** — and
 on both admin screens that list an order's items.

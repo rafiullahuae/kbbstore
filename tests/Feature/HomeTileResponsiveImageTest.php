@@ -68,7 +68,12 @@ it('offers the phone-sized copies on the homepage strip once they exist', functi
     htriImage($rel);
     htriProduct($rel);
 
-    expect(ImageVariants::generate($rel)['made'])->toBe(2);
+    // (Lane IM) Counted off WIDTHS. This is a precondition -- "the copies now
+    // exist" -- and not a statement about how many there are, so it should not
+    // have gone red when the 200w thumbnail tier was added. The candidates it
+    // then asserts are still named one by one below, because WHICH copies the
+    // homepage strip offers is the thing this test is actually about.
+    expect(ImageVariants::generate($rel)['made'])->toBe(count(ImageVariants::WIDTHS));
 
     $tags = htriTagsFor($this->get('/')->assertOk()->getContent(), $rel);
 

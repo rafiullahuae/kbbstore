@@ -1,0 +1,855 @@
+{
+  "rail-390": {
+    "viewport": "390x844",
+    "scrollWidth": 390,
+    "tilesOnPage": 6,
+    "tilesPlaying": 2,
+    "perClip": {
+      "ug-bright": {
+        "mounted": true,
+        "hasOwnTeaserFile": false,
+        "samples": 40,
+        "min": 0.12,
+        "max": 2.62,
+        "advances": 37,
+        "wraps": 2,
+        "paused": false,
+        "mediaError": null,
+        "series": [
+          0.39,
+          0.54,
+          0.7,
+          0.86,
+          1.01,
+          1.17,
+          1.33,
+          1.5,
+          1.68,
+          1.84,
+          2,
+          2.16,
+          2.31,
+          2.47,
+          2.62,
+          0.12,
+          0.27,
+          0.43,
+          0.58,
+          0.74,
+          0.89,
+          1.05,
+          1.2,
+          1.36,
+          1.51,
+          1.67,
+          1.84,
+          2,
+          2.16,
+          2.31,
+          2.46,
+          2.62,
+          0.13,
+          0.29,
+          0.44,
+          0.6,
+          0.75,
+          0.9,
+          1.06,
+          1.21
+        ]
+      },
+      "ug-dark": {
+        "mounted": true,
+        "hasOwnTeaserFile": false,
+        "samples": 40,
+        "min": 0.1,
+        "max": 2.61,
+        "advances": 37,
+        "wraps": 2,
+        "paused": false,
+        "mediaError": null,
+        "series": [
+          0.38,
+          0.54,
+          0.69,
+          0.85,
+          1,
+          1.16,
+          1.32,
+          1.49,
+          1.67,
+          1.84,
+          1.99,
+          2.15,
+          2.31,
+          2.46,
+          2.61,
+          0.1,
+          0.25,
+          0.41,
+          0.56,
+          0.72,
+          0.87,
+          1.03,
+          1.18,
+          1.34,
+          1.49,
+          1.65,
+          1.82,
+          1.98,
+          2.14,
+          2.29,
+          2.45,
+          2.6,
+          0.1,
+          0.26,
+          0.41,
+          0.56,
+          0.72,
+          0.87,
+          1.03,
+          1.18
+        ]
+      },
+      "ug-c1": {
+        "mounted": false
+      },
+      "ug-c2": {
+        "mounted": false
+      },
+      "ug-c3": {
+        "mounted": false
+      },
+      "ug-c4": {
+        "mounted": false
+      }
+    }
+  },
+  "player-several-products-390": {
+    "dir": "ltr",
+    "scrollWidth": 390,
+    "frame": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "videoElement": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 390,
+      "height": 693,
+      "top": 75,
+      "left": 0,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 606,
+      "left": 0,
+      "width": 390,
+      "height": 163
+    },
+    "credit": {
+      "top": 89,
+      "left": 14,
+      "width": 74,
+      "height": 20
+    },
+    "productBoxes": 4,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "player-one-product-dark-clip-390": {
+    "dir": "ltr",
+    "scrollWidth": 390,
+    "frame": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "videoElement": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 390,
+      "height": 693,
+      "top": 75,
+      "left": 0,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 606,
+      "left": 0,
+      "width": 390,
+      "height": 163
+    },
+    "credit": {
+      "top": 89,
+      "left": 14,
+      "width": 118,
+      "height": 20
+    },
+    "productBoxes": 1,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "player-bright-clip-390": {
+    "dir": "ltr",
+    "scrollWidth": 390,
+    "frame": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "videoElement": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 390,
+      "height": 693,
+      "top": 75,
+      "left": 0,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 606,
+      "left": 0,
+      "width": 390,
+      "height": 163
+    },
+    "credit": {
+      "top": 89,
+      "left": 14,
+      "width": 129,
+      "height": 20
+    },
+    "productBoxes": 3,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "keyboard-390": {
+    "focusOnOpen": "ugcp-x",
+    "tabStops": [
+      "ugcp-credit",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcp-x",
+      "ugcp-credit",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm"
+    ],
+    "everLeftTheDialog": false,
+    "closedByEscape": true,
+    "focusAfterClose": {
+      "cls": "ugcr-t has-card is-playing",
+      "slug": "ug-c3"
+    }
+  },
+  "player-rtl-390": {
+    "dir": "rtl",
+    "scrollWidth": 390,
+    "frame": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "videoElement": {
+      "top": 75,
+      "left": 0,
+      "width": 390,
+      "height": 693
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 390,
+      "height": 693,
+      "top": 75,
+      "left": 0,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 606,
+      "left": 0,
+      "width": 390,
+      "height": 163
+    },
+    "credit": {
+      "top": 89,
+      "left": 302,
+      "width": 74,
+      "height": 20
+    },
+    "productBoxes": 4,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "rail-1280": {
+    "viewport": "1280x800",
+    "scrollWidth": 1280,
+    "tilesOnPage": 6,
+    "tilesPlaying": 3,
+    "perClip": {
+      "ug-bright": {
+        "mounted": true,
+        "hasOwnTeaserFile": false,
+        "samples": 40,
+        "min": 0,
+        "max": 2.65,
+        "advances": 37,
+        "wraps": 2,
+        "paused": false,
+        "mediaError": null,
+        "series": [
+          0.46,
+          0.62,
+          0.77,
+          0.93,
+          1.09,
+          1.24,
+          1.4,
+          1.57,
+          1.73,
+          1.88,
+          2.04,
+          2.2,
+          2.36,
+          2.51,
+          0,
+          0.14,
+          0.3,
+          0.45,
+          0.61,
+          0.76,
+          0.92,
+          1.08,
+          1.23,
+          1.39,
+          1.54,
+          1.7,
+          1.86,
+          2.02,
+          2.18,
+          2.34,
+          2.49,
+          2.65,
+          0.1,
+          0.25,
+          0.42,
+          0.58,
+          0.73,
+          0.89,
+          1.04,
+          1.2
+        ]
+      },
+      "ug-dark": {
+        "mounted": true,
+        "hasOwnTeaserFile": false,
+        "samples": 40,
+        "min": 0,
+        "max": 2.64,
+        "advances": 37,
+        "wraps": 2,
+        "paused": false,
+        "mediaError": null,
+        "series": [
+          0.45,
+          0.61,
+          0.77,
+          0.93,
+          1.08,
+          1.24,
+          1.4,
+          1.56,
+          1.72,
+          1.88,
+          2.04,
+          2.2,
+          2.35,
+          2.51,
+          0,
+          0.13,
+          0.29,
+          0.44,
+          0.6,
+          0.76,
+          0.91,
+          1.07,
+          1.23,
+          1.38,
+          1.53,
+          1.69,
+          1.85,
+          2.01,
+          2.18,
+          2.33,
+          2.49,
+          2.64,
+          0.08,
+          0.24,
+          0.41,
+          0.57,
+          0.72,
+          0.88,
+          1.03,
+          1.19
+        ]
+      },
+      "ug-c1": {
+        "mounted": true,
+        "hasOwnTeaserFile": true,
+        "samples": 40,
+        "min": 0.05,
+        "max": 7.9,
+        "advances": 38,
+        "wraps": 1,
+        "paused": false,
+        "mediaError": null,
+        "series": [
+          3.03,
+          3.18,
+          3.34,
+          3.5,
+          3.65,
+          3.81,
+          3.97,
+          4.13,
+          4.29,
+          4.45,
+          4.61,
+          4.77,
+          4.93,
+          5.08,
+          5.24,
+          5.39,
+          5.55,
+          5.7,
+          5.86,
+          6.02,
+          6.17,
+          6.33,
+          6.49,
+          6.64,
+          6.79,
+          6.95,
+          7.11,
+          7.27,
+          7.44,
+          7.59,
+          7.75,
+          7.9,
+          0.05,
+          0.2,
+          0.38,
+          0.53,
+          0.69,
+          0.84,
+          1,
+          1.16
+        ]
+      },
+      "ug-c2": {
+        "mounted": false
+      },
+      "ug-c3": {
+        "mounted": false
+      },
+      "ug-c4": {
+        "mounted": false
+      }
+    }
+  },
+  "player-several-products-1280": {
+    "dir": "ltr",
+    "scrollWidth": 1280,
+    "frame": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "videoElement": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 450,
+      "height": 800,
+      "top": 0,
+      "left": 415,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 637,
+      "left": 415,
+      "width": 450,
+      "height": 163
+    },
+    "credit": {
+      "top": 14,
+      "left": 429,
+      "width": 74,
+      "height": 20
+    },
+    "productBoxes": 4,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "player-one-product-dark-clip-1280": {
+    "dir": "ltr",
+    "scrollWidth": 1280,
+    "frame": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "videoElement": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 450,
+      "height": 800,
+      "top": 0,
+      "left": 415,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 637,
+      "left": 415,
+      "width": 450,
+      "height": 163
+    },
+    "credit": {
+      "top": 14,
+      "left": 429,
+      "width": 118,
+      "height": 20
+    },
+    "productBoxes": 1,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "player-bright-clip-1280": {
+    "dir": "ltr",
+    "scrollWidth": 1280,
+    "frame": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "videoElement": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 450,
+      "height": 800,
+      "top": 0,
+      "left": 415,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 637,
+      "left": 415,
+      "width": 450,
+      "height": 163
+    },
+    "credit": {
+      "top": 14,
+      "left": 429,
+      "width": 129,
+      "height": 20
+    },
+    "productBoxes": 3,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "keyboard-1280": {
+    "focusOnOpen": "ugcp-x",
+    "tabStops": [
+      "ugcp-credit",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcp-x",
+      "ugcp-credit",
+      "ugcr-nm",
+      "ugcr-add",
+      "ugcr-nm"
+    ],
+    "everLeftTheDialog": false,
+    "closedByEscape": true,
+    "focusAfterClose": {
+      "cls": "ugcr-t has-card is-playing",
+      "slug": "ug-c3"
+    }
+  },
+  "player-rtl-1280": {
+    "dir": "rtl",
+    "scrollWidth": 1280,
+    "frame": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "videoElement": {
+      "top": 0,
+      "left": 415,
+      "width": 450,
+      "height": 800
+    },
+    "picture": {
+      "objectFit": "cover",
+      "width": 450,
+      "height": 800,
+      "top": 0,
+      "left": 415,
+      "blackBandTopPx": 0,
+      "blackBandSidePx": 0
+    },
+    "productRail": {
+      "top": 637,
+      "left": 415,
+      "width": 450,
+      "height": 163
+    },
+    "credit": {
+      "top": 14,
+      "left": 777,
+      "width": 74,
+      "height": 20
+    },
+    "productBoxes": 4,
+    "clipPixels": [
+      720,
+      1280
+    ],
+    "frameRatioVar": "0.5625",
+    "playing": true,
+    "mediaError": null,
+    "pictureFillsFrame": true,
+    "productsOverVideo": true,
+    "creditOverVideo": true
+  },
+  "admin-clips-ffmpeg-present-390": {
+    "chips": [
+      "6 clips",
+      "Cuts the cover and a 2.5s teaser for you"
+    ],
+    "remedyShown": false,
+    "remedyNamesProcOpen": false,
+    "remedyNamesCron": false,
+    "teaserPills": [
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops from full video",
+      "publishedLoops from full video"
+    ],
+    "scrollWidth": 390
+  },
+  "admin-clips-no-proc-open-390": {
+    "chips": [
+      "6 clips",
+      "ffmpeg is here, but PHP may not start it"
+    ],
+    "remedyShown": true,
+    "remedyNamesProcOpen": true,
+    "remedyNamesCron": true,
+    "teaserPills": [
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops from full video",
+      "publishedLoops from full video"
+    ],
+    "scrollWidth": 390
+  },
+  "admin-clips-ffmpeg-present-1280": {
+    "chips": [
+      "6 clips",
+      "Cuts the cover and a 2.5s teaser for you"
+    ],
+    "remedyShown": false,
+    "remedyNamesProcOpen": false,
+    "remedyNamesCron": false,
+    "teaserPills": [
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops from full video",
+      "publishedLoops from full video"
+    ],
+    "scrollWidth": 1280
+  },
+  "admin-clips-no-proc-open-1280": {
+    "chips": [
+      "6 clips",
+      "ffmpeg is here, but PHP may not start it"
+    ],
+    "remedyShown": true,
+    "remedyNamesProcOpen": true,
+    "remedyNamesCron": true,
+    "teaserPills": [
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops from full video",
+      "publishedLoops from full video"
+    ],
+    "scrollWidth": 1280
+  },
+  "the-upload-the-row-is-of": {
+    "confirmation": [
+      "This clip has its own teaser file, so the tile downloads about 130 KB instead of the whole video. The loop above is that file, played end to end.",
+      "Your video is uploaded. The cover and a 2.5 second teaser were cut from it on the way in, and both are on the clip now — there is nothing left to upload. Cut them again if you would rather they came from a different moment."
+    ]
+  },
+  "admin-row-after-a-real-upload-1280": {
+    "chips": [
+      "7 clips",
+      "Cuts the cover and a 2.5s teaser for you"
+    ],
+    "remedyShown": false,
+    "remedyNamesProcOpen": false,
+    "remedyNamesCron": false,
+    "teaserPills": [
+      "draftno permission yetLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops from full video",
+      "publishedLoops from full video"
+    ],
+    "scrollWidth": 1280
+  },
+  "admin-row-after-a-real-upload-390": {
+    "chips": [
+      "7 clips",
+      "Cuts the cover and a 2.5s teaser for you"
+    ],
+    "remedyShown": false,
+    "remedyNamesProcOpen": false,
+    "remedyNamesCron": false,
+    "teaserPills": [
+      "draftno permission yetLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops its own teaser",
+      "publishedLoops from full video",
+      "publishedLoops from full video"
+    ],
+    "scrollWidth": 390
+  },
+  "problems": []
+}

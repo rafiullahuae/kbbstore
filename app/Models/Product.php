@@ -254,7 +254,13 @@ class Product extends Model
              * applies to the sale window. Adding `type` to that list is what
              * turns this on for the endpoint; that file is another lane's.
              */
-            'price'             => $this->price ?? ($this->effectivePrice() ?: null),
+            // compareAtPrice() and not the raw column: the two are the same
+            // expression for every product that is not a hand-priced set
+            // following its members down, and for one that is, this feed must
+            // quote what the tile and the product page quote. (Lane SP2)
+            'price'             => $this->price === null
+                ? ($this->effectivePrice() ?: null)
+                : $this->compareAtPrice(),
             'sale_price'        => $this->advertisedSalePrice(),
             /*
              * THE FIGURE TO STRIKE THROUGH, OR null WHEN THERE IS NOTHING TO
@@ -560,7 +566,23 @@ class Product extends Model
         $own = $this->ownPrice();
 
         if ($own !== null) {
-            return $own;
+            /*
+             * ── AND A HAND-PRICED SET FOLLOWS ITS MEMBERS DOWN (Lane SP2) ──
+             *
+             * ownPrice() has just decided WHICH typed figure applies today --
+             * the regular one, or the sale one while its window is open. This
+             * takes the same number of fils off whichever it chose, which is
+             * the owner's "from the actual price and also from the sale price
+             * if any" in one line rather than two.
+             *
+             * ▲ IT RETURNS `$own` UNCHANGED for every product that is not a set
+             *   priced by hand against an anchor -- which is every product in
+             *   this shop and every set built before today, because
+             *   `set_price_basis` is NULL on all of them. Not a branch that
+             *   usually does nothing: a branch that CANNOT do anything until an
+             *   operator types a set price on purpose.
+             */
+            return \App\Support\SetPricing::afterAdjustment($this, $own);
         }
 
         $range = app(\App\Services\VariantPricing::class)->range($this);
@@ -649,7 +671,13 @@ class Product extends Model
 
         $effective = $this->effectivePrice();
 
-        return $effective === (int) $this->price ? null : $effective;
+        // Against the COMPARE-AT rather than the raw column, so a hand-priced
+        // set that has followed its members down is not reported as being on
+        // sale against a figure nobody is charged. Identical to
+        // `(int) $this->price` for every product that is not one. (Lane SP2)
+        $compare = \App\Support\SetPricing::afterAdjustment($this, (int) $this->price);
+
+        return $effective === $compare ? null : $effective;
     }
 
     /**
@@ -790,7 +818,23 @@ class Product extends Model
     public function compareAtPrice(): ?int
     {
         if ($this->price !== null) {
-            return (int) $this->price;
+            /*
+             * ▲ THE STRUCK-THROUGH FIGURE COMES DOWN WITH THE CHARGED ONE.
+             *   (Lane SP2)
+             *
+             * A hand-priced set whose members got cheaper is not ON SALE -- it
+             * is simply cheaper. Leaving this at the typed `price` while
+             * effectivePrice() fell would have put a red discount badge and a
+             * "was AED 200" on every set the moment any member was marked down,
+             * quoting a figure the shop no longer charges and never advertised.
+             * Both ends of the comparison move together, so isOnSale() stays
+             * false unless the operator actually typed a sale price -- and when
+             * he did, both his figures are reduced and the badge tells the
+             * truth about HIS markdown.
+             *
+             * Identical to `(int) $this->price` for every other product.
+             */
+            return \App\Support\SetPricing::afterAdjustment($this, (int) $this->price);
         }
 
         return app(\App\Services\VariantPricing::class)->regularLow($this);

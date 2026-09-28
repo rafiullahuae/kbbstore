@@ -177,6 +177,29 @@ class CutUgcCovers extends Command
                 $failed++;
                 $this->warn('   nothing was produced'
                     .($derived['notes'] !== [] ? ' — '.implode(' ', $derived['notes']) : ''));
+
+                /*
+                 * AND WHAT FFMPEG ITSELF SAID, under -v.
+                 *
+                 * The line above is this application's summary of the failure,
+                 * and it is the same sentence whatever went wrong -- it cannot
+                 * tell "the output directory is not writable" from "this file
+                 * is not a video". ffmpeg knows, in one sentence, every time.
+                 * UgcTranscoder::run() used to discard it; it keeps the last
+                 * one now, and an operator at a terminal is exactly who should
+                 * see it.
+                 *
+                 * Behind -v deliberately. The plain run is read by somebody who
+                 * wants to know whether his clips got covers; a C library's
+                 * diagnostics belong to the person who asked for detail.
+                 */
+                $said = $transcoder->lastProcessError();
+
+                if ($said !== null && $this->output->isVerbose()) {
+                    foreach (explode("\n", $said) as $saidLine) {
+                        $this->line('     <comment>'.$saidLine.'</comment>');
+                    }
+                }
             }
         }
 

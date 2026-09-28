@@ -175,11 +175,49 @@ class ImageSizesApiController extends Controller
     /* ------------------------------------------------------------------ */
 
     /**
-     * Every distinct photograph a product tile can render, in a stable order.
+     * Every distinct photograph a product PAGE can render, in a stable order —
+     * the featured image, every shot in the gallery beside it, and every
+     * variant's own picture.
+     *
+     * ── THE GALLERY WAS NEVER IN THIS LIST, AND THAT WAS THE WHOLE BUG ──────
+     *
+     * The owner, with a screenshot arrowing at the thumbnail strip: "the
+     * products gallery thumbnails must load the thumbnail sizes, not the full
+     * image, to reduce the page load."
+     *
+     * He was describing this method. It walked `products.image` and nothing
+     * else. `products.images` — the JSON array that IS the gallery, and where
+     * shots two onwards live — was never looked at, so the batch could run to
+     * completion, report `remaining: 0`, and leave every gallery photograph in
+     * the catalogue with no copies at all. The strip then emitted no srcset
+     * (srcsetFor() lists only what is on disk, which is the right behaviour and
+     * is what made this invisible) and each 66px square downloaded the
+     * full-resolution photograph.
+     *
+     * Measured on a five-shot gallery of 1000x1000 JPEGs, after driving this
+     * very controller to `done: true`: the strip made 5 requests for 1188KB,
+     * of which 4 were untouched originals at ~290KB each painted into a 52px
+     * box. Only shot one — the featured image, the one column this walked —
+     * had copies.
+     *
+     * WHY THE FILTER AND THE ORDER MOVED OUT OF SQL. The cursor is still the
+     * image reference itself walked ascending, and it still has to mean one
+     * thing across the whole work list. A JSON array cannot be ordered or
+     * range-filtered portably (this runs on MySQL in production and SQLite in
+     * the suite), and a gallery shot belonging to a row whose featured image
+     * sorts BEFORE the cursor can itself sort after it — so filtering rows in
+     * SQL would silently skip work. The two columns are therefore read in one
+     * query and merged, de-duplicated and sorted here.
+     *
+     * That is one query, the same as before, over two columns instead of one.
+     * It reads the whole catalogue rather than the tail after the cursor, which
+     * is the price of a correct work list: 671 products at four shots each is a
+     * few thousand short strings, and the request is bounded by MAX_EXAMINED
+     * and MAX_SECONDS as it always was.
      *
      * Distinct because this catalogue reuses images across products, and
      * resizing the same file six hundred times would be six hundred decodes to
-     * write one file. Ordered by the value itself so the cursor means the same
+     * write one file. Sorted by the value itself so the cursor means the same
      * thing on MySQL and on SQLite, neither of which promises an order without
      * being asked.
      *
@@ -187,16 +225,81 @@ class ImageSizesApiController extends Controller
      */
     private function images(string $after = ''): \Illuminate\Support\Collection
     {
-        $query = Product::query()
+        $seen = [];
+
+        // toBase(): a work list is strings, and hydrating a model per row to
+        // read two columns is the expensive way to get them on a shared host.
+        // The cast comes back as raw JSON here, which is why it is decoded
+        // below rather than assumed to be an array.
+        $rows = Product::query()->toBase()->get(['image', 'images']);
+
+        /*
+         * AND THE VARIANTS' OWN PHOTOGRAPHS, which are a third place a small
+         * square is drawn from a big file and were as invisible to this list as
+         * the gallery was.
+         *
+         * `product_variants.image` is what the option swatch on the product
+         * page paints into a 22px circle (.vsw, kbb-product.css:194 -- the
+         * worst ratio on this site), and it is ALSO what every basket and
+         * checkout line prefers over the parent's photograph:
+         * `$item->variant?->image ?: $p?->image`. So a basket full of chosen
+         * options would have gone on pulling full-resolution files however many
+         * copies the products had.
+         *
+         * A second query rather than a join: this is one flat list of strings
+         * and a join would multiply product rows by their variants to produce
+         * the same set. It is an admin request that is about to decode images,
+         * so the query is not the cost here.
+         */
+        $variants = \Illuminate\Support\Facades\DB::table('product_variants')
             ->whereNotNull('image')
             ->where('image', '<>', '')
-            ->distinct()
-            ->orderBy('image');
+            ->pluck('image');
 
-        if ($after !== '') {
-            $query->where('image', '>', $after);
+        $keep = function ($image) use (&$seen, $after): void {
+            if (! is_string($image)) {
+                return;
+            }
+
+            $image = trim($image);
+
+            // `> $after` and not `>=`: the cursor is the last reference this
+            // walk FINISHED, so resuming on it would size it twice — harmless
+            // but wasted, and on a long catalogue it is the difference between
+            // finishing and looping.
+            if ($image === '' || ($after !== '' && strcmp($image, $after) <= 0)) {
+                return;
+            }
+
+            $seen[$image] = true;
+        };
+
+        foreach ($rows as $row) {
+            $keep($row->image ?? null);
+
+            $gallery = $row->images ?? null;
+
+            if (is_string($gallery) && $gallery !== '') {
+                $gallery = json_decode($gallery, true);
+            }
+
+            if (is_array($gallery)) {
+                foreach ($gallery as $shot) {
+                    $keep($shot);
+                }
+            }
         }
 
-        return $query->pluck('image');
+        foreach ($variants as $image) {
+            $keep($image);
+        }
+
+        // strval because PHP casts an array key that looks like an integer, and
+        // a catalogue row holding "123" would otherwise hand the caller an int
+        // where every signature here says string.
+        $images = array_map('strval', array_keys($seen));
+        sort($images, SORT_STRING);
+
+        return collect($images);
     }
 }
