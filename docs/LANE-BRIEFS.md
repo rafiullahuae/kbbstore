@@ -1937,3 +1937,108 @@ safe with the reason; the helpers live in one place; the built bundle carries
 the fix and a test proves it; every normal value renders byte-identically; and
 the report lists what you found site by site, what you fixed, and what you
 judged safe and why.
+
+---
+
+## Lane URL — the address scheme, and an imported URL that lands on the right page
+
+**Briefed 28 September 2026. Researched before it was written — the conclusion
+is NOT "copy Shopify", and the difference saves the whole product catalogue
+from moving.**
+
+### The scheme, and the reasoning
+
+Search-intent research (Google's own ecommerce URL guidance plus the
+singular/plural intent studies) says the same thing consistently: **plural for
+listing pages, singular for detail pages.** A shopper searching a category types
+the plural; a shopper searching one item types the singular.
+
+| today | becomes | why |
+|---|---|---|
+| `/product-category/{path}/` | **`/collections/{path}/`** | a listing page → plural |
+| — | **`/brands/` and `/brands/{slug}/`** | a listing page → plural, and it does not exist yet |
+| `/product/{slug}/` | **unchanged** | a detail page → singular is already correct |
+| `/skincare-guide/` + articles at the site root | **`/blog/` and `/blog/{slug}/`** | closes an open defect, below |
+
+**The product catalogue does not move.** `/product/{slug}/` is already the
+research-correct shape for a detail page, so the largest and most valuable set of
+addresses this shop owns needs no redirect at all. Sets are products and live
+there too — no `/set/` prefix, because a set converted to a simple product would
+otherwise have to change address for an internal bookkeeping change.
+
+**`/brands/` is the biggest win in the table and it is not a rename.**
+`Brand::url()` returns `/shop/?filter_brands={slug}` — a filtered query string,
+not an indexable page. For a K-beauty shop, "medicube uae" is exactly what people
+type and there is currently nothing to rank with. Real brand pages are worth more
+than every other row here combined.
+
+**`/blog/{slug}/` closes a defect the plan already carries.** Articles sit at the
+site root today and `PageController::RESERVED_SLUGS` owns the first segment, so a
+live article slugged `about` or `feed` is an address this shop can never serve.
+The import refuses them and lists them for the owner. Moving them under `/blog/`
+ends that permanently instead of managing it with a discard list.
+
+### The second half: an imported URL must land, not 404
+
+The owner: *"when import the products etc from wordpress, the system should auto
+convert to the new slugs, and keep the old record too, for example if user comes
+from google to specific product url etc, the system must have auto detect and
+proceed to the correct new url instead of showing not found page etc."*
+
+**Most of this machinery exists — verify what it does before building any of
+it.** `App\Services\Import\RedirectMap` writes `redirects` rows from the
+WordPress addresses; `CheckRedirects` is registered in the global pipeline and
+runs before the router, so a row fires even for an address this shop would
+otherwise answer; `permalinks.csv` in the export carries every address the old
+site served; and `LegacyCategoryUrls` already handles WooCommerce's flat
+category shape. **Read `RedirectMap`'s own header first — it opens with two
+stated premises that were checked against a running server and turned out to be
+wrong, and both are kept with their refutations attached.**
+
+So the work is to make that machinery target the NEW scheme:
+
+1. Every imported category writes a redirect from its WordPress address to
+   `/collections/{path}/`.
+2. Every imported article writes one to `/blog/{slug}/`.
+3. Products need none — the shape does not change — **but prove that** rather
+   than assuming it, because the WordPress product base is a setting
+   (`manifest.json` carries `woocommerce_permalinks.product_base`) and a shop
+   whose base was not `/product` DOES need rows.
+4. The flat WooCommerce category shape (`/toners/`) must still land, which is
+   what `LegacyCategoryUrls` is for — check it against the new scheme.
+5. **Re-running the import must not duplicate rows.** The import runs many
+   times by design; `redirects` needs the same idempotence every other importer
+   has.
+6. **A chain must not form.** Old → `/product-category/x/` → `/collections/x/`
+   is two hops and Google follows them grudgingly. Write the row pointing at the
+   FINAL address, and collapse any existing row that would chain.
+
+### The exporter plugin
+
+`permalinks.csv` already carries the old addresses, so the plugin may need no
+change at all — **verify that and say so** rather than editing it for the sake of
+it. If it does need a column, it is a plugin change and therefore a **version
+bump plus a CHANGELOG entry**: `GeWpExporterTest` fails if the header and
+`KBB_EXPORTER_VERSION` disagree or the changelog does not account for the number.
+
+### The rules
+
+- **One move, never two.** Every old address must 301 to its final home in a
+  single hop, and the redirect map is the thing to test hardest.
+- **Nothing that already works may change** beyond the addresses named here.
+  `StorefrontEnglishUnchangedTest` is the instrument.
+- The sitemap, every canonical, the breadcrumb structured data, the internal
+  links and `Url::to()` all follow the new scheme — **a canonical still pointing
+  at the old address is worse than not moving at all.**
+- `/cart/`, `/checkout/`, `/my-account/` are not indexed: leave them alone.
+- `routes/web.php` is the integrator's. Declare routes in your own file, ship a
+  `clear_caches_*` migration, pin the FINISHED state.
+- `toContain()` is variadic; strip comments before scanning source.
+
+### Done when
+
+The four shapes above are served; every old address 301s to its final home in
+one hop; the import writes those rows idempotently and a re-run adds none; the
+sitemap, canonicals and internal links all name the new addresses; brand pages
+exist and are indexable; and the report says whether the exporter needed
+touching and why.
