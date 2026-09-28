@@ -538,12 +538,15 @@ shape** still move nothing. This lane did not fix it: the file that would have
 to change is one this lane may not edit, and the settings that DO reach the grid
 are on Appearance → Site layout, which is where the count now comes from.
 
-**`GeWpExporterTest > it packs and draws the archives` failed once in a full
-run and passes alone (42 passed, 1076 assertions).** That is the collision
-`CLAUDE.md` describes: the WordPress-exporter harness builds its own MySQL
-database and drops every table it uses, and another lane was driving the same
-harness. This lane ran with `KBB_WP_DB=kbb_wp_pg` throughout; the failure is not
-in its diff and not reproducible on its own.
+**`GeWpExporterTest` fails in a full run while another lane is driving the same
+harness, and passes alone — 45 passed, 1,148 assertions, with
+`GnExportScreenTest` beside it.** That is the collision `CLAUDE.md` describes
+verbatim: the WordPress-exporter harness builds its own MySQL database and drops
+every table it uses. This lane ran with `KBB_WP_DB=kbb_wp_pg` throughout, which
+isolates it from the other lanes' *named* databases but not from a lane that has
+not set one; the failure count moved between runs (1, then 16) while the same
+file answered 45/45 in isolation each time, which is the tell. Nothing in this
+lane's diff touches the exporter.
 
 **The `?add-to-cart=` link is relative**, so on a category archive a no-JS click
 lands on `/collections/{cat}/?add-to-cart=7` rather than on `/shop/`. That is
