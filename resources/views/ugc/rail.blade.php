@@ -142,11 +142,35 @@
         $h = (int) $tile['height'];
         $g = ($w > 0 && $h > 0) ? \App\Services\Ugc\Tile::gcd($w, $h) : 0;
         $ratio = $g > 0 ? ($w / $g).' / '.($h / $g) : '9 / 16';
+
+        /*
+         * THE SAME RATIO AS A NUMBER, for the opened player's frame.
+         *
+         * The popup used to size its surface to the VIEWPORT and fit the picture
+         * inside it with object-fit:contain, which is where the owner's "top and
+         * bottom black weird space" came from and why the product boxes and the
+         * credit sat outside the picture. The frame is now built from the clip's
+         * own ratio in CSS — see .ugcp-box in ugc/assets.blade.php — and this is
+         * where that ratio comes from.
+         *
+         * IT COMES OFF THE SAME TWO COLUMNS the aspect-ratio above does, so the
+         * tile and the popup can never disagree about a clip's shape, and NOTHING
+         * MEASURES ANYTHING: the browser is handed a number the server already
+         * knew. Rule 4.
+         *
+         * Clamped to a sane band before it is printed. `width`/`height` are
+         * operator-adjacent columns and a 0 would divide by zero in CSS calc();
+         * 9:16 is the shipped fallback and the shape every clip in this feature
+         * is.
+         */
+        $arNum = ($w > 0 && $h > 0) ? round($w / $h, 4) : 0.5625;
+        $arNum = ($arNum >= 0.2 && $arNum <= 5.0) ? $arNum : 0.5625;
       @endphp
       <div class="ugcr-cell" role="listitem">
         <div class="ugcr-t{{ $p ? ' has-card' : '' }}"
              style="aspect-ratio:{{ $ratio }}"
              data-ugcr-tile
+             data-ugcr-ar="{{ $arNum }}"
              data-ugcr-slug="{{ $tile['slug'] }}"
              @if ($tile['teaser'])data-ugcr-teaser-src="{{ $tile['teaser'] }}"@endif
              @if ($tile['src'])data-ugcr-src="{{ $tile['src'] }}"@endif
