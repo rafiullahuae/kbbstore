@@ -1677,3 +1677,158 @@ unchanged or +1 deliberately; every fix ships with the test that goes red
 without it and a mutation note that was actually run; and the report carries
 screenshots at 390, 768 and 1280 plus `document.documentElement.scrollWidth` at
 each.
+
+---
+
+# Round 7 — three lanes, briefed 28 September 2026
+
+Round 6 (SET, BN) is merged and shipped as 2.60.305. These three finish its
+edges and close one thing that is about to matter more than it did.
+
+---
+
+## Lane SP — the Set's remaining edges
+
+**1. The set's own product page says nothing about what is in it.**
+Lane SET's report, §8: *"It was not one of the seven surfaces and you did not
+name it. The set publishes with its own description, gallery and price; what is
+in the box is not repeated there."* That is a real gap — a shopper who lands on
+`/product/{set-slug}/` from Google sees a price and no contents.
+
+`resources/views/partials/set-row.blade.php` already draws the fanned stack and
+the popup from `SetContents::fromProduct()`. The product page wants something
+FULLER than a basket row, not the same row again: the members named, with their
+own pictures and their own links, because on this page a member is a product the
+shopper may want to open. Reuse `SetContents` — it is the one description of a
+set's contents and a second one is the thing this round most wants to avoid.
+
+**2. A set is indistinguishable in `Catalog → Products`.**
+Same report: `CatalogProductsApiController`'s `type` filter is a pass-through, so
+a set is listed among the ordinary products with nothing to mark it. The lane
+left it deliberately ("a set *is* a product") and offered a chip. Add the chip
+and a filter, so the owner can find his sets and can tell what he is looking at.
+
+**3. Build the stock rule, switched to today's behaviour.**
+The owner has been asked whether selling a set should take one of each member
+off the shelf; he has not answered. **Build it behind a setting whose default is
+exactly what happens today** (the set carries its own stock), so applying the
+package moves nothing, and the answer is one switch away whichever way he goes.
+Say in the report where the switch is.
+
+**Owns.** `resources/views/partials/set-*.blade.php`, a product-page partial of
+your own, `app/Support/SetContents.php`, `app/Http/Controllers/Admin/
+CatalogProductsApiController.php` (the type filter and its chip only),
+`app/Services/Stock*`, `tests/Feature/*Set*`, `tools/sp-*`.
+
+**Must not touch.** `routes/web.php`, `resources/views/admin/app.blade.php`,
+`resources/views/partials/set-row.blade.php`'s design switch (Lane SET's `@if`
+and `SetDesign::CURRENT` — read them, build beside them), the master plan.
+
+**Done when.** A set's product page names its contents; `Catalog → Products`
+marks and filters sets; the stock rule exists and is off; the homepage and every
+existing page render byte-identically; each fix has the test that goes red
+without it and a mutation note that was run; pictures at 390 and 1280.
+
+---
+
+## Lane BP — the banner's remaining edges, and the guard it is not in
+
+**1. `cards_banner` is not enrolled in `ModuleFrameworkGuardTest`.**
+Lane BN's report, §7: *"The integrator may enrol … it passes as written."*
+Enrol it. That guard is what catches a module storing a setting with no control
+to write it — Lane MC found a screen drawing one control twice by doing exactly
+this, and a module that "passes as written" is a module nobody has checked.
+If enrolling it turns something red, **fix the module, never widen the guard.**
+
+**2. The dots do not say which card you are on.**
+Report §7: *":target can style the card but not its dot without :has()
+gymnastics. They navigate; they do not indicate."* `:has()` is available in every
+browser this shop supports — check that yourself before relying on it — so the
+gymnastics may simply be the answer. If it genuinely cannot be done without
+JavaScript, say so with what you tried, and do not add JavaScript: the whole
+section has none and that is the feature.
+
+**3. The arrows are Chrome-only and shipped off.**
+`::scroll-button()` is the only way to move a scroll container from CSS, and
+Safari and Firefox draw nothing. The screen says so. **Decide whether that is
+honest enough** — a control that silently does not exist for half the traffic is
+a setting the owner can switch on and never see. Either make the switch say
+which browsers it reaches, or hide it where it cannot work. Your call, argued.
+
+**4. Each dot adds a history entry**, because they are in-page anchors. Measure
+what that actually does to the back button on a phone and report it; fix it only
+if it is as bad as it sounds.
+
+**Owns.** `app/Services/Banners.php`, `app/Models/Banner*.php`,
+`resources/views/partials/home/cards-banner.blade.php`,
+`resources/views/admin/partials/banners-screen.blade.php`,
+`tests/Feature/CardsBanner*`, `tests/Feature/ModuleFrameworkGuardTest.php`,
+`tools/bp-*`.
+
+**Done when.** The module is in the guard with nothing widened; the dots
+indicate or the report says precisely why they cannot; the arrows' reach is
+honest on the screen; the homepage still costs +1 query and no more; reduced
+motion still stops it dead; `scrollWidth` still equals the viewport at 390, 768
+and 1280 with pictures to prove it.
+
+---
+
+## Lane SX — a product image address becomes CSS, in fifteen places
+
+**The work, and why it is worth a lane now rather than later.**
+
+Fifteen sites across twelve storefront Blade files build a CSS declaration by
+interpolating an image address:
+
+```php
+$thumb = $img ? "background-image:url('" . e($img) . "')" : …
+```
+
+`e()` is the HTML escaper. It turns `'` into `&#39;`, and the HTML parser decodes
+that back to `'` **before CSS ever sees the attribute** — so a single quote in
+the address closes the `url(` and everything after it is CSS the shop did not
+write.
+
+**State the size of it honestly, because overstating it is how a real finding
+gets ignored.** `e()` also escapes `"`, `<` and `>`, so the attribute cannot be
+closed and no tag can be opened: this is **CSS-context injection, not script
+injection.** What it buys an attacker is a rule of their choosing on that
+element — a `background:url(https://theirs/…)` that fires a request from your
+shopper's browser carrying your page as the referrer, or a restyle that covers
+something. Not an XSS. Worth fixing, not worth a panic.
+
+**And it is about to matter more.** Every one of these addresses is a product,
+review, Instagram or set image, and **the WordPress import is about to write
+thousands of them** from a database this shop did not author. Today the values
+are ones the owner typed.
+
+**What the fix is.** One helper that makes a value safe for a CSS `url()` — not
+a second copy of `e()`. It has to answer the CSS question (quotes, parentheses,
+backslashes, newlines, and control characters) and it should refuse an address
+whose scheme is not one this shop serves, the way `Banners::safeUrl()` already
+does for the banner cards. Then every one of the fifteen sites goes through it.
+
+**Find them yourself rather than trusting this list** — it was built with one
+grep and greps miss things. The twelve files it found: `product-reviews`,
+`set-row`, `cart-drawer`, `checkout/received-line`, `checkout/browsed-item`,
+`checkout/thumbs`, `checkout/summary-items`, `address-sheet`,
+`store/cart-inner`, `store/product`, `store/account/order-detail`,
+`instagram/assets`.
+
+**Ship a guard that makes a sixteenth impossible**: a test that sweeps the
+storefront Blade files for a CSS `url(` built by interpolation and fails on any
+that does not go through the helper. Mind the two traps this repo has hit twice
+this week — **strip comments before scanning**, and never pass a message as a
+second argument to `toContain()`, which is variadic.
+
+**Owns.** A new helper under `app/Support/`, the twelve Blade files listed,
+`tests/Feature/*Css*`, `tests/Feature/*Url*`, `tools/sx-*`.
+
+**Must not touch.** `resources/views/admin/**` (a different lane's screens and a
+different threat model), `routes/web.php`, the master plan.
+
+**Done when.** Every storefront CSS `url()` goes through one helper; a guard
+fails on a new one; the rendered HTML is byte-identical for every address that
+was already safe — `StorefrontEnglishUnchangedTest` is the instrument and it
+must stay green without its pin being advanced; and the report names what the
+helper refuses and what it merely escapes.
