@@ -29,6 +29,13 @@ use Illuminate\Support\Facades\DB;
  *   fixed              `products.price` / `products.sale_price`, exactly as
  *                      every other product in this shop. THE DEFAULT, and what
  *                      a NULL column reads as, so no set that exists moves.
+ *                      ▲ AND, ONCE `set_price_basis` IS SET, THOSE TWO FIGURES
+ *                      LESS adjustment() -- the owner's "reduce the set by what
+ *                      I reduced the product by" for the one mode where the
+ *                      price is a number a human typed. Off the regular price
+ *                      AND off the sale price, by the same fils. See
+ *                      adjustment() for the anchor, the down-only decision and
+ *                      the three cases where it declines to move at all.
  *   discount_percent   parts total, less N% of it. `set_discount` is BASIS
  *                      POINTS (percent × 100), the same unit `coupons.amount`
  *                      uses for the same reason.
@@ -94,7 +101,24 @@ final class SetPricing
     /** 100% in basis points, and the ceiling a discount is clamped to. */
     public const FULL_BP = 10000;
 
-    /** @var array<int, int> set id => parts total in fils, for this request. */
+    /**
+     * THE FLOOR A SET'S PRICE MAY NOT FALL THROUGH, IN FILS.
+     *
+     * A set that follows its members down must not follow them to nothing. One
+     * fil is the smallest amount this currency can express, and the point of
+     * the clamp is not the number: it is that `max()` is applied at all, so a
+     * basis anchored against an expensive box and a box that later became cheap
+     * cannot produce a free -- or negative -- published product that anybody can
+     * put in a basket and check out.
+     *
+     * ▲ IT NEVER RAISES A PRICE. afterAdjustment() returns `min($amount, ...)`
+     *   against this floor, so a product genuinely priced at 0 stays at 0 rather
+     *   than being lifted to one fil by a clamp that was meant to protect it.
+     *   A clamp that can move a figure UP is not a clamp, it is a price change.
+     */
+    public const MIN_PRICE_FILS = 1;
+
+    /** @var array<int, array{parts:int,rows:int,missing:int}> set id => tally. */
     private static array $memo = [];
 
     /**
@@ -121,10 +145,20 @@ final class SetPricing
     /**
      * The set's price under its rule, or NULL when the rule is `fixed`.
      *
-     * NULL IS THE IMPORTANT ANSWER. It means "this class has nothing to say
-     * about this product", and Product::effectivePrice() then takes exactly the
-     * branch it took before this class existed — which is what makes every
-     * product in this shop, and every set built before today, byte-identical.
+     * NULL IS THE IMPORTANT ANSWER. It means "this class has no PRICE to give
+     * for this product", and Product::effectivePrice() then takes exactly the
+     * branch it took before this class existed.
+     *
+     * ▲ WHICH IS WHY `fixed` STILL ANSWERS NULL even now that a hand-typed set
+     *   can follow its members down. The sale WINDOW -- starts_at, ends_at, and
+     *   which of the two columns wins today -- is Product::ownPrice()'s
+     *   arithmetic and has been since long before sets existed. Answering a
+     *   price here would mean copying that window logic into this class, and
+     *   two copies of a sale window is how a set ends up on sale a day after
+     *   every other product came off it. So the mode that reduces a TYPED
+     *   figure reduces it where that figure is chosen: effectivePrice() asks
+     *   ownPrice() which column applies, and hands the answer to
+     *   afterAdjustment(). One subtraction, one place, both columns.
      */
     public static function derived(?Product $set): ?int
     {
@@ -182,19 +216,49 @@ final class SetPricing
      */
     public static function partsTotal(?Product $set): int
     {
+        return self::tally($set)['parts'];
+    }
+
+    /**
+     * How many membership rows this set has, and how many of them no longer
+     * name a product anybody can buy. (Lane SP2)
+     *
+     * ── WHY THE COUNT IS TAKEN AT ALL ──────────────────────────────────────
+     *
+     * Because a member DELETED FROM THE CATALOGUE looks exactly like a member
+     * whose price fell to zero, and the two must not be treated alike. Deleting
+     * a product removes its contribution from partsTotal(), which under the
+     * fixed-price rule below reads as "the box got cheaper by the whole price
+     * of that product" and marks the set down by it -- silently, with nobody
+     * having touched the set, and with the box now missing an item.
+     *
+     * So `missing` is counted in the SAME statement as the total, and
+     * adjustment() refuses to move a set that has one. The set holds the price
+     * the operator typed until he fixes the box, and the editor says so in as
+     * many words. Holding a price is a thing an operator can see and correct;
+     * an automatic markdown nobody asked for is a margin leak with no signal.
+     *
+     * A member that is itself a set counts as missing too. It contributes
+     * nothing to the total (the recursion guard) and would otherwise read as
+     * the same reduction; SetApiController and the picker both refuse to create
+     * one, so this is the door for a hand-written row.
+     *
+     * @return array{parts:int,rows:int,missing:int}
+     */
+    public static function tally(?Product $set): array
+    {
+        $none = ['parts' => 0, 'rows' => 0, 'missing' => 0];
+
         if ($set === null || ! $set->isSet()) {
-            return 0;
+            return $none;
         }
 
         if ($set->relationLoaded('setItems')) {
-            $total = 0;
+            $out = $none;
 
             foreach ($set->setItems as $row) {
+                $out['rows']++;
                 $member = $row->member;
-
-                if ($member === null) {
-                    continue;
-                }
 
                 /*
                  * A MEMBER THAT IS ITSELF A SET IS SKIPPED, and that is the
@@ -202,16 +266,22 @@ final class SetPricing
                  * and the picker will not offer one, but this is the method a
                  * hand-written row would reach and a set inside itself is an
                  * infinite box.
+                 *
+                 * `$member === null` is the soft-deleted or hard-deleted one:
+                 * the relation applies the SoftDeletes scope, so a member the
+                 * owner deleted from Catalog → Products arrives here as null.
                  */
-                if ($member->isSet()) {
+                if ($member === null || $member->isSet()) {
+                    $out['missing']++;
+
                     continue;
                 }
 
                 $unit = (int) ($row->variant?->effectivePrice() ?? $member->effectivePrice());
-                $total += $unit * max(1, (int) $row->quantity);
+                $out['parts'] += $unit * max(1, (int) $row->quantity);
             }
 
-            return $total;
+            return $out;
         }
 
         $id = (int) $set->getKey();
@@ -244,20 +314,149 @@ final class SetPricing
             .'  ELSE COALESCE(p.price, 0)'
             .' END';
 
-        $total = (int) (DB::table('product_set_items as psi')
-            ->join('products as p', 'p.id', '=', 'psi.member_product_id')
+        /*
+         * ▲ A LEFT JOIN WITH THE FILTER MOVED INTO A CASE, AND STILL ONE
+         *   STATEMENT. The inner join this replaces dropped a deleted member's
+         *   row from the result entirely, which is the right answer for the
+         *   TOTAL and makes the row uncountable -- and the count is the whole
+         *   point of this method. A missing member now contributes 0 to `parts`
+         *   exactly as it did before, and 1 to `missing`, in one pass.
+         */
+        $gone = "(p.id IS NULL OR p.deleted_at IS NOT NULL OR p.type = 'set')";
+
+        $row = DB::table('product_set_items as psi')
+            ->leftJoin('products as p', 'p.id', '=', 'psi.member_product_id')
             ->leftJoin('product_variants as pv', 'pv.id', '=', 'psi.member_variant_id')
             ->where('psi.set_product_id', '=', $id)
-            // The same recursion guard as the loaded path, one layer down.
-            ->where('p.type', '!=', 'set')
-            ->whereNull('p.deleted_at')
             ->selectRaw(
-                'COALESCE(SUM(('.$sql.') * CASE WHEN psi.quantity < 1 THEN 1 ELSE psi.quantity END), 0) as parts',
+                'COALESCE(SUM(CASE WHEN '.$gone.' THEN 0 ELSE ('.$sql.')'
+                .' * (CASE WHEN psi.quantity < 1 THEN 1 ELSE psi.quantity END) END), 0) as parts,'
+                .' COUNT(*) as rows_count,'
+                .' COALESCE(SUM(CASE WHEN '.$gone.' THEN 1 ELSE 0 END), 0) as missing',
                 [$now, $now, $now, $now]
             )
-            ->value('parts') ?? 0);
+            ->first();
 
-        return self::$memo[$id] = $total;
+        return self::$memo[$id] = [
+            'parts' => (int) ($row->parts ?? 0),
+            'rows' => (int) ($row->rows_count ?? 0),
+            'missing' => (int) ($row->missing ?? 0),
+        ];
+    }
+
+    /**
+     * The parts total this set's HAND-TYPED price was anchored to, or null.
+     *
+     * NULL is every set that existed before this shipped, and every set whose
+     * operator has not typed a price since. It means "no anchor", and no anchor
+     * means nothing moves — which is what makes applying this package a no-op
+     * on the live shop until somebody deliberately prices a set.
+     */
+    public static function basis(?Product $set): ?int
+    {
+        if ($set === null || ! $set->isSet()) {
+            return null;
+        }
+
+        $stored = $set->getAttributes()['set_price_basis'] ?? null;
+
+        return $stored === null ? null : (int) $stored;
+    }
+
+    /**
+     * WHAT TO TAKE OFF A HAND-TYPED SET PRICE TODAY, IN FILS. NEVER NEGATIVE.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * THIS IS THE ANSWER TO "IF I REDUCE A PRODUCT'S PRICE, REDUCE THE SET TOO"
+     * FOR THE ONE MODE WHERE THE PRICE IS A NUMBER THE OPERATOR TYPED.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     *     adjustment = max(0, basis - parts total now)
+     *
+     * `basis` is the parts total at the moment he typed the price: the figure
+     * he was looking at when he decided AED 180 was the right price for a box
+     * worth AED 200. Every fil the box has come down since is a fil off the
+     * set, off the regular price and off the sale price alike.
+     *
+     * ── DOWN ONLY, AND WHY THAT IS NOT A RATCHET THAT EATS THE MARGIN ──────
+     *
+     * `max(0, ...)` is the decision the owner's sentence does not make for us:
+     * he asked for reductions, and a member getting DEARER is the case he did
+     * not mention. Three arguments decided it:
+     *
+     *   A SHOP MUST NOT RAISE ITS OWN PRICES. An automatic increase changes
+     *   the advertised price of a published product with nobody having touched
+     *   it. Charging more than any human typed is the worst failure on this
+     *   list; charging less is bounded by the operator's own figure and is
+     *   visible as a smaller number on the screen he typed it into.
+     *
+     *   IT IS NOT A ONE-WAY RATCHET. The reduction is a function of TODAY'S
+     *   delta, not of the lowest price ever seen. When a member's sale ends,
+     *   the parts total climbs back to the basis, the delta returns to zero and
+     *   the set returns to exactly the price that was typed. So it cannot lose
+     *   margin permanently either: the set is never above the typed price and
+     *   never below it for longer than its members are.
+     *
+     *   AND THE SCREEN SAYS SO. Catalog → Product editor → What is in the box
+     *   prints the basis, today's total, the reduction and the resulting price,
+     *   with the sentence "prices only ever come down" beside them. A price
+     *   that moved on its own is only alarming when nothing explains it.
+     *
+     * ── WHEN IT REFUSES TO MOVE AT ALL ────────────────────────────────────
+     *
+     *   NO ANCHOR (basis null) — every set built before this feature, and every
+     *   set whose operator has not typed a price since. Nothing moves.
+     *
+     *   NOT `fixed` — the two discount modes derive the whole price from the
+     *   parts total already, so an adjustment on top would take the drop twice.
+     *
+     *   AN EMPTY BOX, OR ONE WITH A MEMBER MISSING — see tally(). A product
+     *   deleted from the catalogue is not a price reduction.
+     */
+    public static function adjustment(?Product $set): int
+    {
+        if ($set === null || ! $set->isSet() || self::mode($set) !== self::MODE_FIXED) {
+            return 0;
+        }
+
+        $basis = self::basis($set);
+
+        if ($basis === null) {
+            return 0;
+        }
+
+        $tally = self::tally($set);
+
+        if ($tally['rows'] < 1 || $tally['missing'] > 0) {
+            return 0;
+        }
+
+        return max(0, $basis - $tally['parts']);
+    }
+
+    /**
+     * One of this set's typed figures, less today's adjustment, clamped.
+     *
+     * ANSWERS ITS INPUT UNCHANGED FOR EVERYTHING THAT IS NOT A HAND-PRICED SET
+     * WITH AN ANCHOR — which is every product in this shop, so the three call
+     * sites in App\Models\Product are free and byte-identical for them.
+     *
+     * Integer fils in, integer fils out, one subtraction: there is no rounding
+     * on this path at all, because there is no percentage on it. (The one
+     * percentage this class applies is in derived(), and it is one integer
+     * division with the half carried, for the reason the class header gives.)
+     */
+    public static function afterAdjustment(?Product $set, int $amount): int
+    {
+        $adjustment = self::adjustment($set);
+
+        if ($adjustment <= 0) {
+            return $amount;
+        }
+
+        // Never below the floor, and never ABOVE the figure handed in: a clamp
+        // that can raise a price is not a clamp. See MIN_PRICE_FILS.
+        return max(min($amount, self::MIN_PRICE_FILS), $amount - $adjustment);
     }
 
     /**

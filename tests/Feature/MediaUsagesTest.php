@@ -95,6 +95,18 @@ function uxDerived(Media $media): array
         // the set — the migration header says why.
         $column = match (true) {
             $u['field'] === 'Logo' => 'logo',
+            /*
+             * ▲ THE SHARE IMAGE WAS MISSING FROM THIS MAP, and it was latent
+             *   rather than harmless: App\Support\MediaUsage has recorded
+             *   `seo.og_image` under the column `seo` since it was written, so
+             *   ANY product with a share image made this derivation claim
+             *   `:image` where the table said `:seo`, and uxAgrees() would have
+             *   failed. Nothing had ever set one through the editor until
+             *   Lane SP2 made the share image follow the main image, which is
+             *   how it finally showed up. The map is the test's, not the
+             *   application's; the application was right.
+             */
+            $u['field'] === 'Share image' => 'seo',
             str_starts_with($u['field'], 'Gallery image') => 'images',
             default => 'image',
         };
@@ -505,8 +517,27 @@ it('moves the record when a product image is changed through the real save endpo
         'image' => '/'.$after->path,
     ])->assertOk();
 
+    /*
+     * TWO ASSOCIATIONS, NOT ONE, SINCE Lane SP2 — and the second is the point
+     * of the change rather than a side effect of it.
+     *
+     * The product editor now fills the SEO share image from the main image when
+     * the operator has not chosen one by hand, so this file really is used
+     * twice: once as `products.image` and once as `products.seo.og_image`.
+     * MediaUsage counting both is what stops Media → Library offering to delete
+     * a photograph that is still a product's share image.
+     *
+     * The line above is the half that could regress: the OLD file is released
+     * from both, so swapping a main image does not leave the previous one
+     * pinned by a share image nobody can see. Revert
+     * ProductEditorApiController::followMainImageIntoSeo() and this case goes
+     * red on the `:seo` entry.
+     */
     expect(uxRecorded($before))->toBe([], 'the old association was left behind')
-        ->and(uxRecorded($after))->toBe(['product#'.$product->id.':image']);
+        ->and(uxRecorded($after))->toBe([
+            'product#'.$product->id.':image',
+            'product#'.$product->id.':seo',
+        ]);
 
     uxAgrees('after a save through the editor endpoint');
 });

@@ -299,13 +299,32 @@
               // next to it, sometimes under a "Save 0%" — no, under nothing,
               // because $voff guards that — which left the strike unexplained.
               $vdp   = ($vsale < $vreg) ? Money::decimalsToDistinguish($vreg, $vsale) : null;
+              /*
+               * The 22px option swatch, at 22px rather than at 1000x1000 -- the
+               * worst ratio on the shop before Lane IM. background-image takes
+               * exactly ONE url and image-set() selects on pixel ratio rather
+               * than width, so a srcset cannot say "this box is 22px";
+               * variantUrl() is the single-URL form, and it hands the original
+               * straight back when no copy has been cut.
+               *
+               * RESOLVED HERE AND NOT IN THE @if BELOW, which is where it went
+               * first. Three levels of nested parentheses on one directive line
+               * defeats StorefrontStringsAreKeyedTest's scanner: it stops
+               * matching the condition partway and reads the tail as prose a
+               * shopper is meant to read, then reports the expression itself as
+               * an unkeyed English string. The scanner is not wrong to give up
+               * -- a condition that deep is unreadable to a person too. Inside
+               * this block, which already exists, so no newline is added and
+               * StorefrontEnglishUnchangedTest does not move.
+               */
+              $vImg  = \App\Support\ImageVariants::variantUrl((string) $v->image, 400);
             @endphp
             {{-- Selected by identity, not by index: the highlighted row is the
                  first one that can be bought, which is the same row the hidden
                  field below is set to. `0 === $n` selected nothing at all when
                  option 0 was sold out. --}}
             <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale, $vdp) }}">
-              @if (($vImgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $v->image, 400))) !== '')<span class="vsw" style="background-image:url('{{ $vImgCss }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
+              @if (($vImgCss = CssUrl::value($vImg)) !== '')<span class="vsw" style="background-image:url('{{ $vImgCss }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
             </div>
           @endforeach
         </div>
