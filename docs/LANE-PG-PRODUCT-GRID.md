@@ -388,3 +388,39 @@ This lane added no route, no admin screen and no partial. `routes/web.php`,
 `EnglishRenderWalk::BASE_COMMIT` was advanced to this lane's own commit with the
 thirty-three pages that moved written at it, grouped by why, and the eight that
 did not named as the control.
+
+---
+
+## 10 · Found, not fixed
+
+**`.cbody`, `.addbtn`, `.binit` and `.ph2` are now unused by the storefront and
+were left in the stylesheets.** Only rules whose *every* selector required `.pc`
+were removed, because that is the set that provably cannot match anything. These
+four are bare class selectors, and three of their neighbours — `.cprice`,
+`.cbrand`, `.cname` — are **still rendered**, by
+`partials/checkout/received-line`, `partials/checkout/summary-items`,
+`store/cart-inner` and the admin console. A sweep by name would have reached
+those; a sweep by "can this selector still match" is a bigger piece of work than
+this lane should do to somebody else's sheet on the way past. They are named
+here so the next reader knows it was decided rather than missed.
+
+**`ProductStyles::cssVariables()` still reaches no storefront page.** Lane W1
+recorded it (`docs/W1-SITE-WIDTH.md` §7): `--kbb-cols-t`, `--kbb-gap`,
+`--kbb-radius` and `--kbb-ratio` are written only from
+`resources/views/admin/app.blade.php`, so Appearance → Product styles →
+**Columns · tablet**, **Gap between cards**, **Card roundness** and **Image
+shape** still move nothing. This lane did not fix it: the file that would have
+to change is one this lane may not edit, and the settings that DO reach the grid
+are on Appearance → Site layout, which is where the count now comes from.
+
+**`GeWpExporterTest > it packs and draws the archives` failed once in a full
+run and passes alone (42 passed, 1076 assertions).** That is the collision
+`CLAUDE.md` describes: the WordPress-exporter harness builds its own MySQL
+database and drops every table it uses, and another lane was driving the same
+harness. This lane ran with `KBB_WP_DB=kbb_wp_pg` throughout; the failure is not
+in its diff and not reproducible on its own.
+
+**The `?add-to-cart=` link is relative**, so on a category archive a no-JS click
+lands on `/collections/{cat}/?add-to-cart=7` rather than on `/shop/`. That is
+the behaviour the old `/shop` card already had, byte for byte, and changing it
+is a routing question rather than a grid one.
