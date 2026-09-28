@@ -113,6 +113,12 @@
          data-ugcr-autoplay="{{ ($conf['autoplay_open'] ?? true) ? '1' : '0' }}"
          data-ugcr-controls="{{ ($conf['controls'] ?? true) ? '1' : '0' }}"
          data-ugcr-sound="{{ ($conf['sound_on_open'] ?? false) ? '1' : '0' }}"
+         {{-- The opened player's previous/next labels. They are built in the
+              browser, so their words have to travel with the section — and
+              `store.ugc.next` / `store.ugc.previous` are strings this shop
+              already translates. --}}
+         data-ugcr-prev="{{ __('store.ugc.previous') }}"
+         data-ugcr-next="{{ __('store.ugc.next') }}"
          data-ugcr-like="{{ $likesOn ? ($likeUrl ?? '') : '' }}">
   @if ($heading !== '' || $subheading !== '')
     <header class="ugcr-head">
@@ -172,6 +178,11 @@
              data-ugcr-tile
              data-ugcr-ar="{{ $arNum }}"
              data-ugcr-slug="{{ $tile['slug'] }}"
+             {{-- Placeholder footage, so the rail can rank it BELOW a real clip
+                  rather than let it take a slot first. Absent on every ordinary
+                  tile — see App\Services\Ugc\Tile for why this is a comparison
+                  against one constant and never a guess. --}}
+             @if ($tile['demo'] ?? false)data-ugcr-demo="1"@endif
              @if ($tile['teaser'])data-ugcr-teaser-src="{{ $tile['teaser'] }}"@endif
              @if ($tile['src'])data-ugcr-src="{{ $tile['src'] }}"@endif
              @if ($tile['poster'])data-ugcr-poster="{{ $tile['poster'] }}"@endif

@@ -99,6 +99,27 @@ final class Tile
             'poster' => $poster,
             'src' => $src,
             'teaser' => UgcPath::stored($video->teaser_path),
+            /*
+             * ── IS THIS TILE PLACEHOLDER FOOTAGE ────────────────────────────
+             *
+             * Content -> Demo content writes six `(Demo)` clips that all point
+             * at one generated 270x480 plum gradient, so an owner can see the
+             * screens working before he has uploaded anything. They are
+             * published rows and they render exactly like real ones — which is
+             * the point, and which is also how they came to take every
+             * playback slot on his homepage rail ahead of the two clips he
+             * actually uploaded. The rail's cap was spent in DOCUMENT ORDER and
+             * the demo rows were imported first.
+             *
+             * A COMPARISON AGAINST A CONSTANT, not a heuristic and not a query.
+             * UgcMedia::place() names every real upload
+             * `<kind>-<timestamp>-<10 random chars>.<ext>`, so the only row that
+             * can ever match this is one this application wrote itself. The
+             * storefront then ranks a demo tile BELOW a real one
+             * (ugc/assets.blade.php) instead of refusing it — a shop whose
+             * clips are all demo rows still gets a rail that moves.
+             */
+            'demo' => $src === \App\Support\UgcDemoMedia::CLIP_PATH,
             // The box, from the columns, never from a measurement.
             'width' => (int) ($video->width ?: 720),
             'height' => (int) ($video->height ?: 1280),

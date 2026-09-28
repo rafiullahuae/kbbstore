@@ -49,6 +49,27 @@ final class UgcDemoMedia
      * base64 characters, so any width below 86 makes the false positive
      * impossible rather than merely unlikely.
      */
+    /**
+     * The two fixed names, and the two paths they become.
+     *
+     * THEY ARE PUBLIC BECAUSE THE STOREFRONT NOW HAS TO RECOGNISE THEM. A rail
+     * whose first tiles are demo rows starved the owner's real clips of every
+     * playback slot, because the cap was spent in document order — so
+     * App\Services\Ugc\Tile compares a clip's stored path against CLIP_PATH and
+     * the tile carries `data-ugcr-demo`, which is what stops a placeholder
+     * outranking a real clip. It is a comparison against a constant: no query,
+     * no heuristic, and nothing but a row this application itself wrote can
+     * match it, because UgcMedia::place() names every real upload
+     * `<kind>-<timestamp>-<10 random chars>.<ext>`.
+     */
+    public const CLIP_NAME = 'demo-clip.webm';
+
+    public const POSTER_NAME = 'demo-poster.jpg';
+
+    public const CLIP_PATH = '/'.\App\Services\UgcMedia::DIR.'/'.self::CLIP_NAME;
+
+    public const POSTER_PATH = '/'.\App\Services\UgcMedia::DIR.'/'.self::POSTER_NAME;
+
     private const CLIP_B64 =
         'GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAMCYEU2bdLpNu4tT'.
         'q4QVSalmU6yBoU27i1OrhBZUrmtTrIHhTbuMU6uEElTDZ1OsggExTbuMU6uEHFO7a1OsgsCC7AEA'.
@@ -981,8 +1002,8 @@ final class UgcDemoMedia
             return null;
         }
 
-        $clip = 'demo-clip.webm';
-        $poster = 'demo-poster.jpg';
+        $clip = self::CLIP_NAME;
+        $poster = self::POSTER_NAME;
 
         if (@file_put_contents($dir.'/'.$clip, base64_decode(self::CLIP_B64, true)) === false) {
             return null;
@@ -993,8 +1014,10 @@ final class UgcDemoMedia
         }
 
         return [
-            'clip' => '/'.\App\Services\UgcMedia::DIR.'/'.$clip,
-            'poster' => '/'.\App\Services\UgcMedia::DIR.'/'.$poster,
+            // The constants, so the path the rows store and the path the
+            // storefront recognises as demo footage can never drift apart.
+            'clip' => self::CLIP_PATH,
+            'poster' => self::POSTER_PATH,
         ];
     }
 

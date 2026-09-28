@@ -1,0 +1,578 @@
+{
+  "en-390-first": {
+    "dir": "ltr",
+    "box": {
+      "x": 0,
+      "y": 103,
+      "w": 390,
+      "h": 693
+    },
+    "thumb": {
+      "x": 22,
+      "y": 716,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Relief Sun Rice + Probiotics SPF50+",
+    "nameBox": {
+      "x": 77,
+      "y": 717,
+      "w": 211,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 0,
+      "y": 670,
+      "w": 390,
+      "h": 127
+    },
+    "prev": {
+      "x": 10,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 336,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Next video"
+    },
+    "openSlug": "glass-skin-in-6-steps-demo",
+    "scrollWidth": 390
+  },
+  "en-390-last": {
+    "dir": "ltr",
+    "box": {
+      "x": 0,
+      "y": 103,
+      "w": 390,
+      "h": 693
+    },
+    "thumb": {
+      "x": 22,
+      "y": 724,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 77,
+      "y": 732,
+      "w": 211,
+      "h": 15
+    },
+    "nameLines": 1,
+    "railBox": {
+      "x": 0,
+      "y": 685,
+      "w": 390,
+      "h": 112
+    },
+    "prev": {
+      "x": 10,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 336,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 390
+  },
+  "en-390-last-mutated": {
+    "dir": "ltr",
+    "box": {
+      "x": 0,
+      "y": 103,
+      "w": 390,
+      "h": 693
+    },
+    "thumb": {
+      "x": 22,
+      "y": 646,
+      "w": 129,
+      "h": 129
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 160,
+      "y": 688,
+      "w": 129,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 0,
+      "y": 612,
+      "w": 390,
+      "h": 185
+    },
+    "prev": {
+      "x": 10,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 336,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 390
+  },
+  "en-1280-first": {
+    "dir": "ltr",
+    "box": {
+      "x": 387,
+      "y": 0,
+      "w": 506,
+      "h": 900
+    },
+    "thumb": {
+      "x": 409,
+      "y": 820,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Relief Sun Rice + Probiotics SPF50+",
+    "nameBox": {
+      "x": 464,
+      "y": 820,
+      "w": 229,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 387,
+      "y": 773,
+      "w": 506,
+      "h": 127
+    },
+    "prev": {
+      "x": 333,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 903,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Next video"
+    },
+    "openSlug": "glass-skin-in-6-steps-demo",
+    "scrollWidth": 1280
+  },
+  "en-1280-last": {
+    "dir": "ltr",
+    "box": {
+      "x": 387,
+      "y": 0,
+      "w": 506,
+      "h": 900
+    },
+    "thumb": {
+      "x": 409,
+      "y": 827,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 464,
+      "y": 835,
+      "w": 229,
+      "h": 15
+    },
+    "nameLines": 1,
+    "railBox": {
+      "x": 387,
+      "y": 788,
+      "w": 506,
+      "h": 112
+    },
+    "prev": {
+      "x": 333,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 903,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 1280
+  },
+  "en-1280-last-mutated": {
+    "dir": "ltr",
+    "box": {
+      "x": 387,
+      "y": 0,
+      "w": 506,
+      "h": 900
+    },
+    "thumb": {
+      "x": 409,
+      "y": 741,
+      "w": 138,
+      "h": 138
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 555,
+      "y": 787,
+      "w": 138,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 387,
+      "y": 707,
+      "w": 506,
+      "h": 194
+    },
+    "prev": {
+      "x": 333,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 903,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 1280
+  },
+  "ar-390-first": {
+    "dir": "rtl",
+    "box": {
+      "x": 0,
+      "y": 103,
+      "w": 390,
+      "h": 693
+    },
+    "thumb": {
+      "x": 322,
+      "y": 716,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Relief Sun Rice + Probiotics SPF50+",
+    "nameBox": {
+      "x": 102,
+      "y": 717,
+      "w": 211,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 0,
+      "y": 670,
+      "w": 390,
+      "h": 127
+    },
+    "prev": {
+      "x": 336,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 10,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Next video"
+    },
+    "openSlug": "glass-skin-in-6-steps-demo",
+    "scrollWidth": 390
+  },
+  "ar-390-last": {
+    "dir": "rtl",
+    "box": {
+      "x": 0,
+      "y": 103,
+      "w": 390,
+      "h": 693
+    },
+    "thumb": {
+      "x": 322,
+      "y": 724,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 102,
+      "y": 732,
+      "w": 211,
+      "h": 15
+    },
+    "nameLines": 1,
+    "railBox": {
+      "x": 0,
+      "y": 685,
+      "w": 390,
+      "h": 112
+    },
+    "prev": {
+      "x": 336,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 10,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 390
+  },
+  "ar-390-last-mutated": {
+    "dir": "rtl",
+    "box": {
+      "x": 0,
+      "y": 103,
+      "w": 390,
+      "h": 693
+    },
+    "thumb": {
+      "x": 239,
+      "y": 646,
+      "w": 129,
+      "h": 129
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 102,
+      "y": 688,
+      "w": 129,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 0,
+      "y": 612,
+      "w": 390,
+      "h": 185
+    },
+    "prev": {
+      "x": 336,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 10,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 390
+  },
+  "ar-1280-first": {
+    "dir": "rtl",
+    "box": {
+      "x": 387,
+      "y": 0,
+      "w": 506,
+      "h": 900
+    },
+    "thumb": {
+      "x": 825,
+      "y": 820,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Relief Sun Rice + Probiotics SPF50+",
+    "nameBox": {
+      "x": 587,
+      "y": 820,
+      "w": 229,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 387,
+      "y": 773,
+      "w": 506,
+      "h": 127
+    },
+    "prev": {
+      "x": 903,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 333,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Next video"
+    },
+    "openSlug": "glass-skin-in-6-steps-demo",
+    "scrollWidth": 1280
+  },
+  "ar-1280-last": {
+    "dir": "rtl",
+    "box": {
+      "x": 387,
+      "y": 0,
+      "w": 506,
+      "h": 900
+    },
+    "thumb": {
+      "x": 825,
+      "y": 827,
+      "w": 46,
+      "h": 46
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 587,
+      "y": 835,
+      "w": 229,
+      "h": 15
+    },
+    "nameLines": 1,
+    "railBox": {
+      "x": 387,
+      "y": 788,
+      "w": 506,
+      "h": 112
+    },
+    "prev": {
+      "x": 903,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 333,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 1280
+  },
+  "ar-1280-last-mutated": {
+    "dir": "rtl",
+    "box": {
+      "x": 387,
+      "y": 0,
+      "w": 506,
+      "h": 900
+    },
+    "thumb": {
+      "x": 734,
+      "y": 741,
+      "w": 138,
+      "h": 138
+    },
+    "thumbSquare": true,
+    "name": "Fresh That Lasts Deodorant",
+    "nameBox": {
+      "x": 587,
+      "y": 787,
+      "w": 138,
+      "h": 30
+    },
+    "nameLines": 2,
+    "railBox": {
+      "x": 387,
+      "y": 707,
+      "w": 506,
+      "h": 194
+    },
+    "prev": {
+      "x": 903,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": false,
+      "label": "Previous video"
+    },
+    "next": {
+      "x": 333,
+      "y": 428,
+      "w": 44,
+      "h": 44,
+      "disabled": true,
+      "label": "Next video"
+    },
+    "openSlug": "ug2-medicube",
+    "scrollWidth": 1280
+  }
+}
