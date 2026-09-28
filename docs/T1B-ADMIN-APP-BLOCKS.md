@@ -150,7 +150,13 @@ const LATE_RENDERED=new Set(['media','tax']);
    so the replay's marker inside #content is already destroyed by the time its
    task runs and nothing is drawn twice. That is the rule 'rev-all' fails, which
    awaits rvLoad() before it paints and is in neither armed set. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+/* 'sets' — Catalog → Sets, added when Lane SET merged, by the same rule a
+   fourth time. Its partial wraps window.go and calls render() before load(),
+   synchronously, so the replay's marker is gone before the task runs. Without
+   it ?go=sets and #sets open the DASHBOARD, which is the defect this set was
+   written for and which ugcvideo, ugcsections, ugcstyle and instagram each hit
+   before being armed. */
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 ```
 
 ---

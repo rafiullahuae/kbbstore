@@ -758,6 +758,33 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
 
     $ugcSection->videos()->attach($ugcVideo->id, ['position' => 0]);
 
+    /*
+     * Catalog -> Sets -> open one (Lane SET). A set is a `products` row with
+     * type='set'; what makes it worth driving is the PIVOT read underneath it,
+     * which nothing else on this list does: product_set_items joined to
+     * products AND left-joined to product_variants, ordered by a column on the
+     * pivot, with a nullable variant id on the join. A LEFT JOIN whose ON
+     * column is null on most rows, ordered by a pivot column, is one of the
+     * few shapes MySQL and SQLite plan differently.
+     */
+    $setMember = Product::create([
+        'name' => 'Guard Member', 'slug' => 'guard-member-'.substr(md5(uniqid()), 0, 8),
+        'price' => 5000, 'status' => 'publish', 'stock_status' => 'instock', 'type' => 'simple',
+    ]);
+
+    $setProduct = Product::create([
+        'name' => 'Guard Set', 'slug' => 'guard-set-'.substr(md5(uniqid()), 0, 8),
+        'price' => 9000, 'status' => 'publish', 'stock_status' => 'instock', 'type' => 'set',
+    ]);
+
+    \App\Models\ProductSetItem::create([
+        'set_product_id' => $setProduct->id,
+        'member_product_id' => $setMember->id,
+        'member_variant_id' => null,
+        'quantity' => 1,
+        'position' => 0,
+    ]);
+
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
         'type' => 'percent',
@@ -899,6 +926,22 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * arrives as a json column read on that same row.
          */
         'admin-api/page-editor-load/{id}' => '/admin-api/page-editor-load/' . $page->id,
+        /*
+         * Catalog -> Sets -> open one (Lane SET). Listed here because this walk
+         * caught it: the route landed with no entry on either list the moment
+         * the integrator wired it, and this file went red -- which is exactly
+         * what the walk is for, and the fourth time it has done that job.
+         *
+         * Driven rather than excused, and NOT as "the same shape as
+         * product-editor-load": the list above already records why a route
+         * excused because a sibling is covered is a route nobody drives. The
+         * product editor reads a brand, a categories pivot, a gallery and a
+         * json column; this reads product_set_items joined to products and
+         * LEFT-joined to product_variants on a nullable id, ordered by a column
+         * on the pivot. Nothing else here does that, and it is a shape the two
+         * engines plan differently.
+         */
+        'admin-api/sets/{id}' => '/admin-api/sets/' . $setProduct->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */

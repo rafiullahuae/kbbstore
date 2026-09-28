@@ -109,12 +109,27 @@ it('routes a deep link to the Sets screen instead of the dashboard', function ()
      */
     $shell = setAdminShell();
 
-    expect($shell)->toContain(
-        "'sets':['Catalog','Sets']",
+    /*
+     * str_contains() AND NOT ->toContain($needle, $message).
+     *
+     * Pest's toContain() IS VARIADIC, so the second argument is read as a
+     * SECOND NEEDLE and not as a failure message — the assertion then looks
+     * for the sentence "Add 'sets':['Catalog','Sets'] to the TITLES map…"
+     * inside the admin shell, which is not there and never will be. This case
+     * stayed red AFTER the wiring was done, blaming the thing that had just
+     * been fixed, which is the worst way for a wiring pin to fail.
+     *
+     * It is the third of these in one day — UgcLikeApiTest's own comment names
+     * the trap and GeWpExporterTest walked into it an hour before this — so
+     * the shape is worth spelling out rather than just correcting.
+     */
+    expect(str_contains($shell, "'sets':['Catalog','Sets']"))->toBeTrue(
         "Add 'sets':['Catalog','Sets'] to the TITLES map in resources/views/admin/app.blade.php, "
         ."or ?go=sets and #sets open the dashboard."
-    )->and($shell)->toMatch(
-        '/const LATE_RENDERED=new Set\(\[[^\]]*\x27sets\x27/',
+    );
+
+    expect(preg_match('/const LATE_RENDERED=new Set\(\[[^\]]*\x27sets\x27/', $shell))->toBe(
+        1,
         "Add 'sets' to LATE_RENDERED in resources/views/admin/app.blade.php, or a deep link to the "
         ."Sets screen is not replayed at boot and opens the dashboard."
     );

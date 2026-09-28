@@ -666,6 +666,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // records and accept an uploaded image.
         require __DIR__.'/catalog-admin.php';
 
+        /*
+         * Catalog → Sets. A set is a `products` row with type='set' plus the
+         * product_set_items pivot, so these endpoints create, reprice,
+         * republish and DELETE products — and GET /admin-api/sets/products
+         * lists the whole catalogue by name and SKU. Inside this guarded group
+         * for both of those reasons, beside the rest of Catalog.
+         */
+        require __DIR__.'/sets-admin.php';
+
         // Catalog → Categories & Brands: merge, the redirect ledger, and the
         // brand tree with its reorder. Same guarded group — the redirect
         // ledger is a map of the store's old URLs and the merge endpoint

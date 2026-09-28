@@ -309,3 +309,175 @@ it('gives no variadic matcher a failure message, anywhere in the suite', functio
     expect($checked)->toBeGreaterThan(50);
     expect($offenders)->toBe([], "\n" . implode("\n", $offenders) . "\n");
 });
+
+/**
+ * The POSITIVE half of the same hole, and its calls are parsed here because the
+ * walker above only follows `->not->`.
+ *
+ * Returns every `->toContain(...)` / `->toContainEqual(...)` that is NOT
+ * negated, with the source text of its LAST top-level argument.
+ *
+ * @return list<array{line:int, matcher:string, args:int, last:string}>
+ */
+function positiveContainCalls(string $source): array
+{
+    $tokens = array_values(array_filter(
+        token_get_all($source),
+        fn ($t) => ! is_array($t) || ! in_array($t[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)
+    ));
+
+    $found = [];
+    $count = count($tokens);
+
+    for ($i = 0; $i + 2 < $count; $i++) {
+        if (! (is_array($tokens[$i]) && $tokens[$i][0] === T_OBJECT_OPERATOR)) {
+            continue;
+        }
+        if (! (is_array($tokens[$i + 1]) && $tokens[$i + 1][0] === T_STRING)) {
+            continue;
+        }
+
+        $matcher = $tokens[$i + 1][1];
+
+        if (! in_array($matcher, ['toContain', 'toContainEqual'], true) || $tokens[$i + 2] !== '(') {
+            continue;
+        }
+
+        // Negated calls belong to the walker above; skip `->not->toContain(`.
+        if ($i >= 2 && is_array($tokens[$i - 1]) && $tokens[$i - 1][0] === T_STRING
+            && $tokens[$i - 1][1] === 'not') {
+            continue;
+        }
+
+        $depth = 0;
+        $args = 0;
+        $sawAnything = false;
+        $last = '';
+
+        for ($j = $i + 2; $j < $count; $j++) {
+            $t = $tokens[$j];
+            $text = is_array($t) ? $t[1] : $t;
+
+            if (in_array($text, ['(', '[', '{'], true)) {
+                $depth++;
+                if ($depth > 1) { $last .= $text; }
+
+                continue;
+            }
+
+            if (in_array($text, [')', ']', '}'], true)) {
+                $depth--;
+
+                if ($depth === 0) {
+                    break;
+                }
+
+                $last .= $text;
+
+                continue;
+            }
+
+            $sawAnything = true;
+
+            if ($depth === 1 && $text === ',') {
+                $args++;
+                $last = '';
+
+                continue;
+            }
+
+            $last .= $text;
+        }
+
+        $found[] = [
+            'line' => $tokens[$i + 1][2],
+            'matcher' => $matcher,
+            'args' => $sawAnything ? $args + 1 : 0,
+            'last' => $last,
+        ];
+    }
+
+    return $found;
+}
+
+it('finds a message that was handed to toContain as a second needle', function () {
+    /*
+     * ── THE OTHER HALF OF THE TRAP, AND IT BIT THREE TIMES IN ONE DAY ───────
+     *
+     * The sweep above catches `->not->toContain($needle, $message)`, which can
+     * never fail. The POSITIVE form is the mirror image: `toContain()` is
+     * variadic, so a message passed as the second argument becomes a SECOND
+     * NEEDLE and the assertion looks for the sentence itself inside the
+     * haystack. It therefore ALWAYS fails — loudly, and blaming exactly the
+     * thing that has just been fixed.
+     *
+     * On 28 September 2026, in one day:
+     *
+     *   - GeWpExporterTest's new plugin-version pin went red with
+     *     "CHANGELOG.md does not say what 1.5.0 changed" reported as a missing
+     *     substring, against a changelog that said it.
+     *   - SetRoutesWiredTest's deep-link pin stayed red AFTER the wiring was
+     *     done, telling the integrator to add a TITLES entry that was already
+     *     there.
+     *   - and UgcLikeApiTest's own comment had already written the trap down,
+     *     which is how both were recognised rather than debugged.
+     *
+     * A wiring pin that fails after you wire it is worse than no pin: it trains
+     * people to distrust the message. Hence this.
+     *
+     * THE RULE, and it is deliberately narrow. A real multi-needle call passes
+     * TOKENS — `toContain('Cart', 'Checkout')`. A message is PROSE. So: two or
+     * more arguments, and the last one a plain string literal holding a space
+     * and at least 25 characters. Anything built from a variable, a function
+     * call or an interpolation is left alone, because that is a needle
+     * somebody computed.
+     *
+     * MUTATION NOTE, RUN: put the message back as a second argument in
+     * SetRoutesWiredTest and this names that file and line.
+     */
+    $offences = [];
+    $checked = 0;
+
+    foreach (suiteFiles() as $path) {
+        $relative = ltrim(str_replace(base_path(), '', $path), '/');
+
+        // This file demonstrates the trap on purpose, above.
+        if ($relative === 'tests/Feature/ExpectationsThatCannotFailTest.php') {
+            continue;
+        }
+
+        foreach (positiveContainCalls((string) file_get_contents($path)) as $call) {
+            if ($call['args'] < 2) {
+                continue;
+            }
+
+            $checked++;
+            $last = $call['last'];
+
+            // A plain single-quoted or double-quoted literal, nothing else.
+            if (preg_match('/^([\'"])(.*)\\1$/s', $last, $m) !== 1) {
+                continue;
+            }
+
+            $text = $m[2];
+
+            if (strlen($text) < 25 || ! str_contains($text, ' ')) {
+                continue;
+            }
+
+            $offences[] = sprintf(
+                '%s:%d passes prose as the last argument to %s(), which is variadic — '
+                . 'that sentence is being searched for as a NEEDLE, so the assertion can only fail. '
+                . 'Use expect(str_contains($haystack, $needle))->toBeTrue($message).',
+                $relative,
+                $call['line'],
+                $call['matcher']
+            );
+        }
+    }
+
+    expect($checked)->toBeGreaterThan(0,
+        'the parser found no multi-argument toContain() anywhere, so it is not looking at anything');
+
+    expect($offences)->toBe([]);
+});
