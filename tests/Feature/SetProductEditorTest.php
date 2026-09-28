@@ -446,6 +446,102 @@ it('returns the box and the rule on every product, empty on the ones that are no
 
 /* ══════════════════════════════════════════════════════ the two screens ═══ */
 
+it('puts tags on the product editor, de-duplicated on the slug', function () {
+    /*
+     * ── A FINDING, AND THEN A FIX (Lane SP) ────────────────────────────────
+     *
+     * The merge was briefed as "everything you were about to build separately,
+     * you now get for nothing — the SEO block, the tags, the gallery, the
+     * category picker". Three of those four were true. TAGS WERE NOT: `tags`
+     * and `product_tag` have existed since the original schema and NOTHING in
+     * this application had ever written to them — not the importer, not the
+     * product editor, not the retired Sets editor. The owner had asked for
+     * them by name.
+     *
+     * So they are on the PRODUCT editor rather than on a set's own panel,
+     * because a set is a product and so is everything else on that screen.
+     *
+     * MUTATION NOTE. Key the firstOrCreate() on ['name' => $name] instead of
+     * the slug and the last expectation is red with a duplicate-key error from
+     * `tags.slug`. RUN.
+     */
+    $id = $this->postJson('/admin-api/product-editor-create', spePayload([
+        'tags' => ['Gift Set', 'gift set', '  Korean skincare  ', ''],
+    ]))->assertCreated()->json('product.id');
+
+    $product = Product::find($id);
+
+    expect($product->tags()->count())->toBe(2);
+    expect(\App\Models\Tag::where('slug', 'gift-set')->count())->toBe(1);
+    expect($product->tags()->pluck('slug')->sort()->values()->all())
+        ->toBe(['gift-set', 'korean-skincare']);
+
+    // And omission leaves them alone, so Catalog → Products' inline price cell
+    // cannot strip a product's tags by not knowing about them.
+    $this->postJson('/admin-api/product-editor-save/'.$id, ['name' => 'Renamed'])->assertOk();
+
+    expect(Product::find($id)->tags()->count())->toBe(2);
+});
+
+it('publishes a set\'s tags to Google as keywords, and an ordinary product\'s not at all', function () {
+    /*
+     * "everything for google adoptions etc."
+     *
+     * ▲ A SET'S PAGE ONLY, AND THAT IS A DELIBERATE LIMIT RATHER THAN AN
+     *   OVERSIGHT. Loading tags for EVERY product page would be one more query
+     *   on every product page in the shop — StorefrontQueryBudgetTest's
+     *   `product` ceiling — for a feature that is brand new and, until today,
+     *   had no way of being populated at all. A set already pays for its
+     *   members' eager load, so the query is confined to the pages that have
+     *   something to say. Widening it is one line and a budget decision, and it
+     *   is in the report as such.
+     *
+     * MUTATION NOTE. Delete the `keywords` block from App\Support\Seo's product
+     * node and this is red. RUN.
+     */
+    $toner = speProduct('Toner', 9000);
+
+    $setId = $this->postJson('/admin-api/product-editor-create', spePayload([
+        'name' => 'Keyword Set',
+        'status' => 'publish',
+        'type' => 'set',
+        'tags' => ['gift set', 'korean skincare'],
+        'set_members' => [['product_id' => $toner->id, 'quantity' => 1]],
+    ]))->assertCreated()->json('product.id');
+
+    $set = Product::find($setId);
+    $set->is_visible = true;
+    $set->save();
+
+    $html = $this->get($set->url())->assertOk()->getContent();
+
+    expect(str_contains($html, '"keywords":"gift set, korean skincare"'))->toBeTrue(
+        "A set's page must publish its tags as schema.org keywords."
+    );
+
+    /*
+     * AND THE SET IS DESCRIBED AS A COLLECTION WITHOUT CEASING TO BE A PRODUCT.
+     * schema.org HAS a better-fitting type — ProductCollection — and Google's
+     * product structured data supports Product and ProductGroup only, so
+     * swapping the node's @type would trade a working merchant listing (price,
+     * availability, review stars) for a vocabulary nothing reads. The node says
+     * it is ALSO a collection and carries the box in the collection's own
+     * includesObject shape.
+     *
+     * MUTATION NOTE. Delete the `additionalType` line from Seo and this is red.
+     * RUN.
+     */
+    expect(str_contains($html, '"additionalType":"https:\/\/schema.org\/ProductCollection"'))->toBeTrue(
+        'A set must say it is also a ProductCollection.'
+    );
+    expect(str_contains($html, '"@type":"TypeAndQuantityNode"'))->toBeTrue(
+        "And carry what is in the box in the collection's own shape."
+    );
+
+    // An ordinary product's structured data is exactly what it always was.
+    expect(str_contains($this->get($toner->url())->assertOk()->getContent(), 'keywords'))->toBeFalse();
+});
+
 it('puts the type control and the set panel on the product editor, once each', function () {
     /*
      * MUTATION NOTE. Delete the `setbox` entry from the PANELS registry and the
@@ -458,6 +554,8 @@ it('puts the type control and the set panel on the product editor, once each', f
     expect(substr_count($code, "key: 'setbox'"))->toBe(1);
     expect(substr_count($code, 'function setboxView()'))->toBe(1);
     expect(substr_count($code, "data-bind=\"price_mode\""))->toBe(1);
+    expect(substr_count($code, "key: 'tags'"))->toBe(1);
+    expect(substr_count($code, 'id="peo-tagin"'))->toBe(1);
     expect(substr_count($code, 'id="peo-usetotal"'))->toBe(1);
 
     // The three money tiles the live preview writes into.

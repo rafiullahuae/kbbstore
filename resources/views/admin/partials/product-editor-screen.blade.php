@@ -163,6 +163,15 @@
      item's default min-width is auto and one long product name otherwise
      widens its track past its share and pushes the page sideways at 390.
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Tags. (Lane SP) */
+.peo-tags{display:flex;flex-wrap:wrap;gap:6px;min-width:0;margin-bottom:11px}
+.peo-tag{display:inline-flex;align-items:center;gap:5px;max-width:100%;overflow-wrap:anywhere;
+         background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);border-radius:99px;
+         padding:3px 5px 3px 10px;font-size:12px;color:var(--ink-2,#374151)}
+.peo-tag button{border:0;background:none;cursor:pointer;color:var(--ink-soft,#6b7280);font:inherit;
+                font-size:11px;line-height:1;padding:2px 4px}
+.peo-tag button:hover{color:#b8362d}
+
 .peo-settiles{display:grid;gap:9px;min-width:0;margin-bottom:14px;
               grid-template-columns:repeat(auto-fit,minmax(min(100%,132px),1fr))}
 .peo-settile{background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);
@@ -899,7 +908,7 @@
       /* A new product is a SIMPLE product, which is what this editor has always
          created and what the server's own `$product->type ??= 'simple'` default
          says. Choosing Set is a deliberate act. (Lane SP) */
-      type: 'simple', set_members: [], price_mode: 'fixed',
+      type: 'simple', tags: [], set_members: [], price_mode: 'fixed',
       discount_percent: '', discount_amount: '',
       set_parts_total_aed: '', set_effective_aed: '',
       status: 'draft', is_visible: true, featured: false, published_at: null,
@@ -1012,6 +1021,7 @@
          product would be a request to empty a box the operator may be one
          dropdown away from coming back to. */
       type: isKnownType(model.type) ? model.type : undefined,
+      tags: (model.tags || []).slice(),
 
       /* T4b — THE ARABIC, IN THE SAME REQUEST AS THE ENGLISH.
          Not a second call afterwards: a second call can fail on its own, and a
@@ -2260,6 +2270,35 @@
       + '</div>';
   }
 
+  /* ── TAGS (Lane SP) ──────────────────────────────────────────────────────
+
+     The owner asked for "the proper tags etc on this page". The `tags` and
+     `product_tag` tables have existed since the original schema and NOTHING in
+     this application has ever written to them — not the importer, not either
+     editor — so this is the first control that does, and it is on the PRODUCT
+     editor because a set is a product and so is everything else here.
+
+     Typed as words and sent as words; ProductEditorApiController finds or
+     creates the row. esc() on the chip, because a tag is a string somebody
+     typed and this screen builds its markup by concatenation. */
+  function tagsView(){
+    var tags = model.tags || [];
+
+    return '<div class="peo-card">'
+      + '<h3>Tags</h3>'
+      + '<p class="peo-hint">Words for this product. A set publishes them in its structured data as '
+      + '<b>keywords</b>.</p>'
+      + (tags.length
+          ? '<div class="peo-tags">' + tags.map(function(t, i){
+              return '<span class="peo-tag">' + esc(t)
+                + '<button type="button" data-peo-tagrm="' + i + '" aria-label="Remove tag">&#10005;</button></span>';
+            }).join('') + '</div>'
+          : '')
+      + '<div class="peo-fld" style="margin-bottom:0"><label>Add a tag</label>'
+      + '<input class="peo-in" id="peo-tagin" maxlength="60" placeholder="Type one and press Enter"></div>'
+      + '</div>';
+  }
+
   function brandView(){
     var brands = (boot && boot.brands) || [];
 
@@ -2643,6 +2682,7 @@
     { key: 'publish',    label: 'Publishing',        col: 'side', view: function(){ return publishView(); } },
     { key: 'categories', label: 'Categories',        col: 'side', view: function(){ return categoriesView(); } },
     { key: 'brand',      label: 'Brand',             col: 'side', view: function(){ return brandView(); } },
+    { key: 'tags',       label: 'Tags',              col: 'side', view: function(){ return tagsView(); } },
     { key: 'pricing',    label: 'Price',             col: 'side', view: function(){ return pricingView(); } },
     { key: 'stock',      label: 'Stock',             col: 'side', view: function(){ return stockView(); } }
   ];
@@ -3134,8 +3174,54 @@
     });
   }
 
+  /* A tag is committed on Enter (and on comma, because that is how everyone
+     types a list of tags). preventDefault, or Enter submits nothing and the
+     browser scrolls. (Lane SP) */
+  function bindTags(){
+    var box = document.querySelector('#content #peo-tagin');
+
+    if (box) {
+      box.addEventListener('keydown', function(e){
+        if (e.key !== 'Enter' && e.key !== ',') return;
+        e.preventDefault();
+
+        var name = String(box.value || '').trim();
+        if (name === '') return;
+
+        collect();
+
+        model.tags = model.tags || [];
+
+        var already = model.tags.some(function(x){
+          return String(x).toLowerCase() === name.toLowerCase();
+        });
+
+        if (!already) model.tags.push(name);
+
+        box.value = '';
+        dirty = true;
+        render();
+
+        // Put the cursor back, so a second tag can be typed straight away
+        // rather than hunted for.
+        var again = document.querySelector('#content #peo-tagin');
+        if (again) { try { again.focus(); } catch (err) {} }
+      });
+    }
+
+    document.querySelectorAll('#content [data-peo-tagrm]').forEach(function(b){
+      b.addEventListener('click', function(){
+        collect();
+        (model.tags = model.tags || []).splice(Number(b.getAttribute('data-peo-tagrm')), 1);
+        dirty = true;
+        render();
+      });
+    });
+  }
+
   function bindEditor(){
     bindSetBox();
+    bindTags();
 
     /* ---- the save bar ---- */
     on('#peo-back', 'click', function(){

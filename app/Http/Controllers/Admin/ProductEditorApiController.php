@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductSetItem;
 use App\Models\ProductVariant;
+use App\Models\Tag;
 use App\Support\Gtin;
 use App\Support\MajorUnits;
 use App\Support\Money;
@@ -373,6 +374,9 @@ class ProductEditorApiController extends Controller
              * computes it -- the live preview beside it is the operator's own
              * arithmetic on what he is typing, and this is the server's.
              */
+            'tags' => $product->exists
+                ? $product->tags()->orderBy('name')->pluck('name')->all()
+                : [],
             'set_members' => $this->setMembersPayload($product),
             'price_mode' => SetPricing::mode($product),
             'discount_percent' => SetPricing::mode($product) === SetPricing::MODE_PERCENT
@@ -688,6 +692,29 @@ class ProductEditorApiController extends Controller
             'images.*' => ['string', 'max:500', self::imageUrlRule()],
             'image_alts' => ['sometimes', 'nullable', 'array'],
             'image_alts.*' => ['nullable', 'string', 'max:250'],
+
+            /*
+             * ── TAGS (Lane SP) ─────────────────────────────────────────────
+             *
+             * The owner asked for "the proper tags etc on this page" while the
+             * Sets editor was still its own screen. It is not: the `tags` and
+             * `product_tag` tables have existed since the original schema and
+             * NOTHING IN THIS APPLICATION HAS EVER WRITTEN TO THEM -- not the
+             * importer, not either editor -- which is why this is on the
+             * PRODUCT editor rather than on a set's own panel. A set is a
+             * product; so is everything else on this screen.
+             *
+             * NAMES ON THE WIRE, ROWS IN `tags` ON THE WAY IN. The operator
+             * types words, not ids.
+             *
+             * `nullable` on the items because Laravel's
+             * ConvertEmptyStringsToNull middleware turns an empty chip into
+             * NULL before the validator sees it, and a blank tag is something
+             * to DROP (applyTags() skips it) rather than a 422 on an otherwise
+             * good save. Found by a test, not by reading.
+             */
+            'tags' => ['sometimes', 'nullable', 'array', 'max:40'],
+            'tags.*' => ['nullable', 'string', 'max:60'],
 
             'seo' => ['sometimes', 'nullable', 'array'],
             'seo.title' => ['nullable', 'string', 'max:200'],
@@ -1079,8 +1106,53 @@ class ProductEditorApiController extends Controller
             $product->save();
         }
 
+        /* -------------------------------------------------------- the tags */
+        $this->applyTags($product, $data);
+
         /* --------------------------------------------------------- the box */
         return $this->applySet($product, $data);
+    }
+
+    /**
+     * Tags, on the `product_tag` pivot. (Lane SP)
+     *
+     * FOUND OR CREATED BY SLUG, not by name, so "Gift Set" and "gift set" are
+     * one row rather than two fighting over `tags.slug`'s unique index.
+     *
+     * `sometimes` in the rules and array_key_exists() here: a client that does
+     * not send the key leaves the pivot alone. That matters because this
+     * endpoint takes a whole product on every save, and Catalog → Products'
+     * inline price cell -- a different controller entirely -- must not be able
+     * to strip a product's tags by not knowing about them.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function applyTags(Product $product, array $data): void
+    {
+        if (! array_key_exists('tags', $data)) {
+            return;
+        }
+
+        $ids = [];
+
+        foreach ((array) ($data['tags'] ?? []) as $name) {
+            $name = trim((string) $name);
+
+            if ($name === '') {
+                continue;
+            }
+
+            $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-');
+
+            if ($slug === '') {
+                continue;
+            }
+
+            $tag = Tag::firstOrCreate(['slug' => $slug], ['name' => $name]);
+            $ids[$tag->id] = true;
+        }
+
+        $product->tags()->sync(array_keys($ids));
     }
 
     /* ----------------------------------------------------------- the Set --
