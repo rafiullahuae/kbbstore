@@ -38,12 +38,36 @@
     SetContents::snapshot() and ::toApi() build their rows from explicit key
     lists, so a key added to fromProduct() cannot travel.
 
-    ── THE DESIGN SWITCH IS NOT MINE ──────────────────────────────────────────
+    ── THE DESIGN SWITCH IS NOT set-row's, AND NOW THERE IS ONE HERE TOO ──────
 
     set-row.blade.php's `@if (SetDesign::current() === SetDesign::FAN)` picks
     which BASKET ROW is drawn. This panel is not one of those four drawings and
     is deliberately not behind that switch: whichever row the owner ends up
     with, the product page still has to say what is in the box.
+
+    It has a switch of its OWN, added by Lane SF, because the owner asked to be
+    shown the options for THIS block and to pick from pictures:
+
+        "there should be list of products which are inside the set, present it
+         beautifully. better to preview me the set product front-end preview.
+         so i can choose from."
+
+    App\Support\SetPanelDesign carries the four keys and the argument for the
+    default; partials/set-contents/{grid,list,cards,stack}.blade.php carry the
+    drawings; Appearance -> Set contents is where he chooses. The default is
+    GRID, which is the drawing this file already shipped, so applying the
+    package moves nothing until he moves it.
+
+    ── WHY THE GRID'S CSS DID NOT MOVE OUT WITH THE GRID'S MARKUP ─────────────
+
+    The @once block below is byte-for-byte the one this file has always
+    emitted, including the rules only the compact grid uses. Splitting it
+    per design would have re-ordered the declarations that reach the default
+    page, and CLAUDE.md rule 1 is that nothing which already works may change.
+    Each NEW design adds its own @once block in its own partial, so a shop on
+    `list` ships the list's rules as well -- about 1.4KB of stylesheet that its
+    chosen design does not use, paid once, inline, on set pages only. That is
+    the cheaper of the two mistakes available here.
 
     ── NOTHING HERE MEASURES LAYOUT AND NOTHING HERE IS JAVASCRIPT ────────────
 
@@ -77,12 +101,33 @@
     the flatness rather than asserting it.
 --}}
 @php
-    use App\Support\Gradient;
-    use App\Support\ImageVariants;
-    use App\Support\Money;
     use App\Support\SetContents;
+    use App\Support\SetPanelDesign;
 
     $kbbSetPage = $product->isSet() ? SetContents::fromProduct($product) : SetContents::NONE;
+    /*
+     * WHICH DRAWING. One settings read, off the same whole-table snapshot the
+     * other fifty settings on this page come from -- no query of its own and
+     * none per member. current() answers one of four keys or the default; it
+     * cannot answer anything else, whatever is in the table. (Lane SF)
+     */
+    $kbbSetDesign = SetPanelDesign::valid($kbbSetDesignOverride ?? null)
+        ? (string) $kbbSetDesignOverride
+        : SetPanelDesign::current();
+    /*
+     * $kbbSetDesignOverride IS THE ADMIN PREVIEW'S, AND NOTHING ELSE EVER SETS
+     * IT. Appearance -> Set contents draws the real panel, from a real set, in
+     * each of the four designs, so the owner picks from the page rather than
+     * from a description of it -- the same arrangement Appearance -> Homepage's
+     * Preview uses, and for the same reason: the picture has to be the page.
+     *
+     * It reaches here through @include's parent scope from
+     * resources/views/admin/partials/set-contents-preview.blade.php and from
+     * nowhere else. store/product.blade.php does not define it, so the shop
+     * always takes the branch below, and SetPanelDesign::valid() holds the
+     * override to the same four keys the setting is held to -- a preview
+     * cannot render a design the shop cannot.
+     */
 @endphp
 @if ($kbbSetPage['members'] !== [])
 @once
@@ -139,39 +184,33 @@ a.ksp-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
     <div class="eyebrow">{{ __('store.set.page_eyebrow') }}</div>
     <h2>{{ __('store.set.page_heading') }}</h2>
     <p class="ksp-intro">{{ trans_choice('store.set.contents', $kbbSetPage['count'], ['count' => $kbbSetPage['count']]) }}</p>
-    <div class="ksp-grid">
-        @foreach ($kbbSetPage['members'] as $kbbSetPageMember)
-            @php
-                $kspName = (string) $kbbSetPageMember['name'];
-                $kspBrand = (string) ($kbbSetPageMember['brand'] ?? '');
-                $kspImage = $kbbSetPageMember['image'] ?? null;
-                $kspSrcset = $kspImage ? ImageVariants::srcsetFor($kspImage) : '';
-                $kspLink = ($kbbSetPageMember['visible'] ?? false) && ($kbbSetPageMember['url'] ?? null);
-            @endphp
-            <div class="ksp-m">
-                @if ($kspImage)
-                    <span class="ksp-ph"><img src="{{ $kspImage }}" alt="{{ $kspName }}" width="300" height="300" loading="lazy" decoding="async" @if ($kspSrcset !== '') srcset="{{ $kspSrcset }}" sizes="{{ ImageVariants::setMemberSizesAttribute() }}" @endif></span>
-                @else
-                    <span class="ksp-ph is-blank" style="background:{{ Gradient::for($kspBrand . $kspName) }}"></span>
-                @endif
-                @if ($kspBrand !== '')<span class="ksp-br">{{ $kspBrand }}</span>@endif
-                @if ($kspLink)
-                    <a class="ksp-nm" href="{{ $kbbSetPageMember['url'] }}">{{ $kspName }}</a>
-                @else
-                    <span class="ksp-nm">{{ $kspName }}</span>
-                @endif
-                <span class="ksp-meta">
-                    <span class="ksp-q">{{ (int) $kbbSetPageMember['quantity'] }}&times;</span>
-                    @if (($kbbSetPageMember['variant'] ?? '') !== '')<span>{{ $kbbSetPageMember['variant'] }}</span>@endif
-                    <span class="ksp-pr">{!! Money::format((int) $kbbSetPageMember['unit']) !!}</span>
-                </span>
-            </div>
-        @endforeach
-    </div>
-    <div class="ksp-foot">
-        <span class="ksp-f ksp-was">{{ __('store.set.page_separately') }} <b>{!! Money::format((int) $kbbSetPage['partsTotal']) !!}</b></span>
-        <span class="ksp-f">{{ __('store.set.page_set_price') }} <b>{!! Money::format((int) $kbbSetPage['setPrice']) !!}</b></span>
-        @if ($kbbSetPage['saving'] > 0)<span class="ksp-save">{{ __('store.set.saving', ['amount' => Money::plain((int) $kbbSetPage['saving'])]) }}</span>@endif
-    </div>
+    {{-- FOUR DESIGNS, ONE OF WHICH IS WHAT THIS PAGE ALREADY DREW. (Lane SF)
+
+         AN @if CHAIN AND NOT AN @switch, and not a variable @include either.
+
+         @switch is out for the reason set-row.blade.php records: Blade
+         requires its first @case to follow it with nothing in between, and a
+         comment leaves the newline it sat on, so a switch with an explanation
+         above its first case does not compile at all.
+
+         @include('partials.set-contents.' . $design) is out for a better
+         reason. $design comes from a row in `settings`, and a view name built
+         out of a settings row is a path a stray row chooses -- SetPanelDesign
+         ::current() already refuses anything that is not one of its four keys,
+         but a template that would render whatever it was handed is one edit
+         away from being the sink. Four literal branches cannot be pointed
+         anywhere, whatever is in the table.
+
+         Each branch ends with partials/set-contents/footing.blade.php, which
+         is the only place that decides whether a set claims a saving. --}}
+    @if ($kbbSetDesign === SetPanelDesign::LIST)
+        @include('partials.set-contents.list')
+    @elseif ($kbbSetDesign === SetPanelDesign::CARDS)
+        @include('partials.set-contents.cards')
+    @elseif ($kbbSetDesign === SetPanelDesign::STACK)
+        @include('partials.set-contents.stack')
+    @else
+        @include('partials.set-contents.grid')
+    @endif
 </section>
 @endif

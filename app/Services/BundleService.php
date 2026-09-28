@@ -75,10 +75,58 @@ class BundleService
      * `was` is the plain price for that quantity, so the saving is visible.
      * Returns an empty array when bundles are off or only a single tier exists —
      * one option is not a choice, and rendering it would just add noise.
+     *
+     * ── AND AN EMPTY ARRAY FOR A SET, ALWAYS. (Lane SF) ────────────────────
+     *
+     * The owner: "on desktop set product page, there will be no bulk quantity
+     * purchase strips."
+     *
+     * A Set is a curated box — several real products sold as one boxed product
+     * at one price. "Buy 3 and save 15%" is an offer about buying the SAME
+     * thing repeatedly, and this shop does not make it about a gift box. It
+     * also competed for the exact width the contents list wants: the strip and
+     * partials/set-contents-panel.blade.php are the two blocks under the price
+     * on that page.
+     *
+     * ▲ HERE AND NOT IN THE TEMPLATE, DELIBERATELY. ▲
+     *
+     * Every caller was read before this was placed. `forProduct()` has exactly
+     * one today — Store\ProductController::show(), which hands the array to
+     * store/product.blade.php as $bundles — so a guard in the template would
+     * have been equivalent TODAY and wrong TOMORROW: the next surface that
+     * asks "what quantity offers does this product carry" (a sticky bar, a
+     * cart upsell, a feed) would ask this method, get three tiers for a set,
+     * and re-offer exactly what the owner asked to remove, in a file nobody
+     * thought to change. A question answered once is answered once.
+     *
+     * ▲ AND NOT IN unitFor() / totalFor() / discountFor(), equally
+     *   deliberately. ▲
+     *
+     * Those three are the PRICING path — CartService::add() reprices every
+     * basket line through unitFor() — and they are not asking what to show,
+     * they are deciding what a line costs. Adding a set branch there would
+     * change what a basket that already holds three of a set is charged,
+     * silently, on applying a package, which is the one thing CLAUDE.md rule 1
+     * forbids. What that leaves is stated plainly in this lane's report: a set
+     * bought at quantity 3 still gets the tier rate in the basket, and whether
+     * it should is the owner's call and a separate change, with its own
+     * before/after.
      */
     public function forProduct(Product $product): array
     {
         if (! $this->enabled()) {
+            return [];
+        }
+
+        /*
+         * isSet() reads getAttributes()['type'] rather than the accessor, so a
+         * model loaded with a narrow column list answers FALSE rather than
+         * throwing -- see App\Models\Product::isSet(). False here means "draw
+         * the strip", which is the behaviour every non-set product has always
+         * had, so a caller that selected no `type` column is left exactly where
+         * it was rather than silently losing its bundles.
+         */
+        if ($product->isSet()) {
             return [];
         }
 

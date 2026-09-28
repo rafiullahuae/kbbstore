@@ -454,6 +454,43 @@ final class ImageVariants
     }
 
     /**
+     * The same photograph in the set panel's LIST design. (Lane SF)
+     *
+     * A fixed square, not a track: `.ksl-ph` is 54px at every width and 46px
+     * below 480px, so there is no viewport term to write and no `vw` to get
+     * wrong. 54px declared covers both, and the browser picks a variant for
+     * device-pixel-ratio against it -- which on a 3x phone is a 162px source
+     * for a 46px box, comfortably sharp.
+     *
+     * Its own method rather than reusing setMemberSizesAttribute(): that one
+     * says 45vw below 700px, which on a 390px phone declares 175px for a box
+     * drawn at 46. The browser would fetch a picture nearly four times the
+     * width it draws, on every member of every set, for nothing.
+     */
+    public static function setListSizesAttribute(): string
+    {
+        return '54px';
+    }
+
+    /**
+     * And in the CARDS design, where the picture is the point. (Lane SF)
+     *
+     * `repeat(auto-fill, minmax(min(100%, 232px), 1fr))` inside the same
+     * container the grid design measures above:
+     *
+     *   390px  content width 358, one track           -> 358px = 92vw, rounded up
+     *   1280px about 1180 of .wrap, 16px gaps, 4 up    -> ~283px, 300px declared
+     *
+     * Declared a shade wide on both bands, for the reason the grid's own note
+     * gives: a few kilobytes on one breakpoint costs less than a photograph
+     * drawn larger than the file behind it.
+     */
+    public static function setCardSizesAttribute(): string
+    {
+        return '(max-width: 700px) 92vw, 300px';
+    }
+
+    /**
      * And what a gallery THUMBNAIL will be drawn at: `.gthumb` is a fixed 66px
      * square at every viewport (kbb-product.css:82), so there is no viewport
      * term to write. 400w covers it to device-pixel-ratio 6.
