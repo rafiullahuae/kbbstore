@@ -3,6 +3,102 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.303
+Tamara now captures a shipped order by itself, the cart drawer's two buttons are
+the same height, a partial capture no longer inflates what can be refunded, a
+settings screen stops drawing one control twice, and you can edit a homepage
+section by clicking it in the picture.
+
+### ▲ TAMARA AUTO-CAPTURE IS ON — YOU ASKED FOR THIS ONE
+
+You said yes, so it is on: **an hourly check captures any Tamara order that has
+reached Shipped or Completed and has not been captured yet.** An order that
+ships and is never captured is one Tamara voids after about 180 days, and you
+are never paid for the parcel you sent.
+
+Orders touched in the **last 30 minutes are left alone**, so marking the wrong
+order shipped can still be undone.
+
+Nothing else was turned on. A `processing` order is never captured — the goods
+have not gone. And a Tamara order already reads as `processing` the moment the
+authorisation is confirmed, which is the other half of what you asked for and
+was already true.
+
+**Before it first fires, look at what it would take.** Over SSH:
+
+    php artisan payments:tamara-capture --dry
+
+It lists the orders and calls Tamara about none of them.
+
+**To stop it:** `Store → Payments → Tamara → Settings`, set *"Capture
+automatically when an order ships"* to Off. That sticks — nothing turns it back
+on.
+
+### ▲ A PARTIAL CAPTURE MADE MORE MONEY REFUNDABLE THAN YOU RECEIVED
+
+When a provider had captured only part of an order, this shop recorded the
+**whole order total** as captured — because nothing in the gateway interface
+could say what was actually taken. That figure is the ceiling a refund is
+measured against.
+
+On a 300.00 order captured at 120.00, a **300.00 refund was accepted**: 180.00
+of your own money returned to a buyer who never paid it.
+
+Tabby, Tamara and Stripe now each report the real figure, read from their own
+response. This can only ever **lower** a recorded capture, never raise one, so
+no existing order becomes more refundable when you apply this.
+
+### THE CART DRAWER'S TWO BUTTONS WERE 6px APART
+
+`Cart` was 44px and `Checkout` was 50px — but only on the shop and category
+pages, because that page's stylesheet sets a fixed height on both and a fixed
+height beats the Cart panel's own control. Measured before and after at 1280 and
+390. They match now, and the **Mobile → Button height** slider finally moves them
+on those pages too.
+
+### THE PRODUCT PAGE SETTINGS DREW ONE CONTROL TWICE
+
+`Store → Ecommerce → Product page` had **two "Rating display" dropdowns over one
+setting.** Change one, press Save, and the other kept showing the old value
+until you reloaded — so the screen disagreed with itself about whether a product
+page shows a rating at all. Shipping since 2.60.41; found by enrolling the last
+four settings screens in the guard that looks for exactly this.
+
+### EDIT A HOMEPAGE SECTION BY CLICKING IT
+
+`Appearance → Homepage content → Live preview`. Click a section in the picture —
+or pick it from the row of names — and its own controls open beneath, drawn from
+the same schema every other settings screen uses. Changes show without a reload.
+
+**Nothing moves until you move it.** No new setting, no changed default; Save
+posts to the writer it has always used.
+
+### ALSO
+
+- The clip editor's **"2.5 second loop"** column showed the cover and never the
+  clip. The player was working the whole time — the video was laid out *below*
+  the box that clips it. It plays now.
+- The **WordPress exporter plugin** said 1.0.0 through twelve rounds of changes,
+  so you could not tell which build was on your site and an export could not say
+  which build produced it. It is **1.5.0**, with a changelog. **Re-zip and
+  re-upload it before your next export** — three product fields only exist in
+  that build.
+- Two test guards were green on both engines and meaningless on one, so an N+1
+  in the cart and a redirect check on warm pages were not being guarded at all.
+  Neither was hiding a fault on the shop.
+
+### Files
+
+`app/Services/Payments/**` (SettlementResult, PaymentCapturer, the four
+gateways), `app/Support/{ReviewSettings,CacheSettings,ReviewBadgeSettings}.php`,
+`app/Services/Mail/MailSettings.php`,
+`app/Http/Controllers/Admin/{EcommerceApiController,HomepageApiController}.php`,
+`app/Services/HomepageSections.php`,
+`resources/views/admin/partials/{homepage-content-screen,ugc-library-screen}.blade.php`,
+`resources/css/kbb/kbb.css`, `routes/console.php`, `routes/web.php`,
+`routes/homepage-live-admin.php`, `wordpress-plugin/kbb-exporter/**`,
+two migrations, and their tests.
+
 ## 2.60.302
 A review filed against the wrong customer, Tamara auto-capture ready for your
 decision, and the MySQL suite green for the first time.
