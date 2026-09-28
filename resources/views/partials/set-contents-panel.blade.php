@@ -240,7 +240,7 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
     {{-- The same `.opt-label` line the quantity-bundle strip used, in the same
          slot: the words, then the count in the note span. Not an <h2> -- the
          note at the top of this file argues it. --}}
-    <div class="opt-label">{{ __('store.set.page_heading') }} <span>{{ trans_choice('store.set.contents', $kbbSetPage['count'], ['count' => $kbbSetPage['count']]) }}</span></div>
+    <div class="opt-label">{{ __('store.set.page_heading') }} <span>{{ trans_choice('store.set.count_note', $kbbSetPage['count'], ['count' => $kbbSetPage['count']]) }}</span></div>
     {{-- ONE COPY OF THE ROW, drawn twice. The folded rows and the standing rows
          are the same markup, and a second copy of it inside the <details> is
          the copy that drifts. --}}

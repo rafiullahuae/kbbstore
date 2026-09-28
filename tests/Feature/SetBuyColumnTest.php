@@ -579,8 +579,19 @@ it('counts every member in the figures, folded or not', function () {
     expect(str_contains($foot, 'AED 120'))->toBeTrue(
         'Bought separately must add up every member, including the folded ones. Read: '.$foot
     );
-    expect(str_contains($label, 'In this set · 12 items'))->toBeTrue(
-        'And the count line must say twelve. Read: '.$label
+    /* "12 items" and not "In this set · 12 items": the label beside it already
+       says "What is in this set", and `store.set.contents` said it twice in one
+       line. `store.set.count_note` is the bare count, and it counts PHYSICAL
+       ITEMS rather than rows -- which is the reason to print it beside a list
+       somebody could just count. */
+    expect(str_contains($label, 'What is in this set'))->toBeTrue(
+        'The list must be labelled. Read: '.$label
+    );
+    expect(str_contains($label, '12 items'))->toBeTrue(
+        'And the count beside it must say twelve. Read: '.$label
+    );
+    expect(str_contains($label, 'In this set'))->toBeFalse(
+        'The count must not repeat the label it sits beside. Read: '.$label
     );
 });
 
