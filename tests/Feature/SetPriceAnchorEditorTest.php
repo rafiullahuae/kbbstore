@@ -212,6 +212,46 @@ it('re-anchors when a product is taken out of the box', function () {
         ->and(Product::find($id)->effectivePrice())->toBe(18000);
 });
 
+it('re-anchors when a product is added to the box', function () {
+    /*
+     * CASE 5, the other half of the one above. Adding the milky toner makes the
+     * box worth AED 269 rather than AED 200. Without the re-anchor the box would
+     * simply be worth more than its anchor for ever, the difference would be
+     * permanently negative, and max(0, ...) would hold this set at the typed
+     * price whatever its members did afterwards -- the feature switched off by
+     * an edit that had nothing to do with pricing.
+     *
+     * Re-anchoring keeps the arithmetic honest from today: the typed price
+     * stands, and the NEXT markdown on any member comes off it.
+     */
+    $toner = saxProduct('Toner', 12000);
+    [, $id] = saxSetThroughEditor([$toner, saxProduct('Serum', 8000)]);
+
+    $milky = saxProduct('Milky Toner', 6900);
+
+    test()->postJson('/admin-api/product-editor-save/'.$id, [
+        'type' => 'set',
+        'price_aed' => '180',
+        'price_mode' => 'fixed',
+        'set_members' => [
+            ['product_id' => $toner->id, 'quantity' => 1],
+            ['product_id' => Product::where('name', 'Serum')->latest('id')->first()->id, 'quantity' => 1],
+            ['product_id' => $milky->id, 'quantity' => 1],
+        ],
+    ])->assertOk();
+
+    SetPricing::forget();
+
+    expect(saxBasis($id))->toBe(26900)
+        ->and(Product::find($id)->effectivePrice())->toBe(18000);
+
+    // And it follows from the NEW anchor, not the old one.
+    $milky->update(['price' => 5900]);
+    SetPricing::forget();
+
+    expect(Product::find($id)->effectivePrice())->toBe(17000);
+});
+
 it('re-anchors on the button, without the operator retyping the same number', function () {
     /*
      * "Start again from today's total". The one trigger a human can reach
