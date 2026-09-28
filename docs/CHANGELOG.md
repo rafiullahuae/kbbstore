@@ -3,6 +3,93 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.310
+**▲ THE SHOP'S ADDRESSES CHANGE.** Category, brand and journal pages move to new
+URLs. Every old address forwards to the new one, so nothing you or Google have
+bookmarked breaks — but this is the biggest change in this series and it is
+worth reading before you apply it.
+
+### THE NEW ADDRESSES
+
+| Was | Is now |
+|---|---|
+| `/product-category/toners/` | **`/collections/skincare/toners/`** |
+| a filter on `/shop/` | **`/brands/` and `/brands/round-lab/`** |
+| `/skincare-guide/` | **`/blog/`** |
+| an article at the site root | **`/blog/the-article/`** |
+| `/product/dokdo-toner/` | **unchanged** |
+
+Plural throughout — `collections`, `brands`, `blog` — which is what Google's own
+documentation and every large store spell.
+
+**The product address does not move**, on purpose. It already matches what the
+WordPress site serves, so moving it would buy a redirect on every product page
+and nothing else.
+
+### NOTHING BREAKS, AND IT IS ONE HOP
+
+Every retired address forwards with a **301** — the permanent kind, which is what
+tells Google to move the ranking across rather than treat the new page as a
+duplicate. Measured in a real browser, following the chain:
+
+```
+/product-category/toners/            301 → /collections/skincare/toners/   1 hop
+/toners/                             301 → /collections/skincare/toners/   1 hop
+/korean-skincare-brands/round-lab/   301 → /brands/round-lab/              1 hop
+/skincare-guide/how-to-layer/        301 → /blog/how-to-layer/             1 hop
+```
+
+**One hop, not two.** The old category address goes straight to the full nested
+path rather than bouncing through a halfway address — two hops is a real cost on
+a phone and Google counts them.
+
+An old address that names nothing — a category you deleted, an article that never
+existed — gives a proper **404**, not a redirect to the shop's front page. That
+matters: forwarding everything would turn the whole old namespace into an endless
+supply of pages that look fine to a crawler and are empty to a reader.
+
+### BRAND PAGES ARE REAL PAGES NOW
+
+A brand used to be a *filter* on the shop listing, which told Google the brand
+page did not exist. **`/brands/round-lab/` is a page.** The filterable listing is
+still there and is unchanged — it is what the mega menu, the shop's facets and
+the brand page's own *Shop all* button use.
+
+### WHAT YOU WILL SEE IN THE ADMIN
+
+Nothing new to set. The screens that *print* an address now print the new one:
+**Catalog → Categories** (the path under each row, the slug help, the merge and
+delete warnings), **Catalog → Brands** (the address column and warnings),
+**Store → Pages** (the Category and Journal rows), **Store → Health** (both
+probes), and **Store → SEO & Meta → Row preview**.
+
+The **Mega Menu** URL box used to suggest `/product-category/cleansers/` as the
+example of what to type. It suggests `/collections/cleansers/` now — the old one
+was quietly teaching you to author menu rows that pay a redirect on every page.
+
+### WHEN THE IMPORT RUNS
+
+Old WordPress addresses that this shop cannot work out for itself — a category
+whose flat address is unusual, an article whose slug changed on the way in, a
+brand archive the old site served — get a stored forwarding row. Addresses the
+shop already forwards by itself do **not** get a row, because a stored row does
+not follow a later rename and would go on pointing at a path that has since
+become a 404.
+
+### ▲ WHAT TO DO AFTER APPLYING
+
+1. Open **Store → Health** and check the Category and Journal probes are green.
+2. In Google Search Console, submit the sitemap again. It lists only the new
+   addresses.
+3. Expect Search Console to show the old URLs as *"Page with redirect"* for a few
+   weeks. That is the correct and healthy state, not an error.
+
+### FILES
+
+`app/Support/UrlScheme.php` (new), `CategoryArchiveController`, `BrandController`,
+`PageController`, `Brand::url()`, `CategoryPath`, `RedirectMap`, `Seo`, the
+sitemap, the category/brand/pages/health admin screens, and three migrations.
+
 ## 2.60.309
 **The Set is now a product type, on the product page itself.** You no longer go
 to a separate screen to build one.
