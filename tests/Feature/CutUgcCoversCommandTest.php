@@ -107,9 +107,32 @@ it('names the two worlds apart, so the operator is not sent to the wrong fix', f
  * MUTATION: make `clips()` ignore the poster filter and this is red — the
  * dry run lists the clip that already has one.
  */
-it('leaves alone a clip that already has a cover, so it is safe to run twice', function () {
+it('leaves alone a clip that already has BOTH derivatives, so it is safe to run twice', function () {
+    /*
+     * ── THIS CASE USED TO PIN THE BUG ──────────────────────────────────────
+     *
+     * It gave the second clip a poster and NO TEASER and asserted it was
+     * skipped, because the selection asked about the poster alone. That is
+     * exactly the defect: the two cuts are separate ffmpeg runs, the teaser is
+     * the one that fails, and a clip that got a poster while its teaser failed
+     * was never selected again. One attempt at a teaser, ever, from an
+     * every-minute schedule whose whole purpose is the retry.
+     *
+     * Measured on the owner's live shop on 28 September 2026: a poster written
+     * at 20:34, no teaser beside it, the directory's own mtime at 20:37 (the
+     * failed teaser being cleaned up), and nothing new in the half hour after
+     * that from a cron running sixty times. The rail then looped the FULL clip
+     * — the designed fallback, at about 11 MB a tile on a phone against 97 KB.
+     *
+     * So the clip that must be skipped is the one with BOTH. The stranded
+     * shape gets its own case below.
+     */
     $bare = cucClip(['title' => 'No cover here']);
-    cucClip(['title' => 'Already covered', 'poster_path' => '/uploads/ugc/poster-'.uniqid().'.jpg']);
+    cucClip([
+        'title' => 'Already covered',
+        'poster_path' => '/uploads/ugc/poster-'.uniqid().'.jpg',
+        'teaser_path' => '/uploads/ugc/teaser-'.uniqid().'.mp4',
+    ]);
 
     /*
      * Asserted through --dry-run because this container cannot cut: the
@@ -129,6 +152,34 @@ it('leaves alone a clip that already has a cover, so it is safe to run twice', f
 
     // And it really changed nothing.
     expect($bare->fresh()->poster_path)->toBeNull();
+});
+
+it('picks up a clip whose poster landed and whose teaser did not', function () {
+    /*
+     * THE RETRY THE SCHEDULE EXISTS TO PROVIDE.
+     *
+     * A poster is one frame; a teaser is 2.5 seconds of H.264. The second is
+     * the one that runs out of budget, hits an unwritable directory or meets a
+     * codec it cannot use — and when it did, the old selection never looked at
+     * this clip again.
+     *
+     * MUTATION NOTE. Drop `orWhereNull('teaser_path')->orWhere('teaser_path', '')`
+     * from clips() and this reads "0 clip(s) to cut." and names nothing. RUN —
+     * that is the state the owner's shop was in.
+     */
+    cucClip([
+        'title' => 'Poster yes teaser no',
+        'poster_path' => '/uploads/ugc/poster-'.uniqid().'.jpg',
+    ]);
+
+    $this->mock(\App\Services\UgcTranscoder::class, function ($mock) {
+        $mock->shouldReceive('available')->andReturn(true);
+    });
+
+    $this->artisan('ugc:cut-covers --dry-run')
+        ->expectsOutputToContain('1 clip(s) to cut.')
+        ->expectsOutputToContain('Poster yes teaser no')
+        ->assertExitCode(0);
 });
 
 /*
