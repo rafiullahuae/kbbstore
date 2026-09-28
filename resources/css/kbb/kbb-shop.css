@@ -114,8 +114,23 @@ img{max-width:100%}
 .colsel button+button{border-inline-start:1px solid var(--line)}
 .colsel button.on{background:var(--pink-soft);color:var(--pink-deep)}
 .colsel svg{width:18px;height:18px}
-#showFilters{display:none;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--pink-deep);background:var(--pink-soft);border-radius:10px;padding:9px 15px;white-space:nowrap;flex-shrink:0}
-#showFilters:hover{background:var(--blush)}
+/* ── THE WAY BACK INTO THE FILTERS ──────────────────────────────── Lane PG ──
+   The sidebar starts hidden now (store/shop.blade.php says why), so this button
+   is not an occasional escape hatch any more — it is the ONLY thing on a
+   desktop page telling a shopper that filtering exists at all. It was pink text
+   on a pink-tinted pill, which reads as a quiet secondary control beside the
+   sort box; it is the page's one solid button now, first in the toolbar, at the
+   44px target size the rest of the shop uses. `.fcount` rides on it when
+   filters are actually applied, so a shopper who hid the panel can still see
+   that something is filtering the list. */
+#showFilters{display:none;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#fff;background:var(--pink);border-radius:10px;padding:0 16px;min-height:40px;white-space:nowrap;flex-shrink:0;box-shadow:0 4px 12px rgba(224,86,123,.28)}
+#showFilters:hover{background:var(--pink-deep);box-shadow:0 6px 16px rgba(224,86,123,.34)}
+#showFilters svg{width:16px;height:16px}
+/* The applied-filter count, on both entry points. A number a shopper can see
+   without opening the panel is the difference between "there are no filters"
+   and "there are three and I cannot see them". */
+.fcount{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:#fff;color:var(--pink-deep);font-size:11px;font-weight:800;line-height:1}
+.mobi-filter .fcount{background:var(--pink);color:#fff;margin-inline-start:2px}
 .mobi-filter{white-space:nowrap;flex-shrink:0}
 .eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--pink);margin:6px 0 7px}
 /* colorful filter panel */

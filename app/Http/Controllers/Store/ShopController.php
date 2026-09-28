@@ -217,6 +217,17 @@ class ShopController extends Controller
 
         return view('store.shop', [
             'banner' => $banner,
+            /*
+             * THE ARCHIVE'S CATEGORY, FOR THE TILE'S EYEBROW.          Lane PG
+             *
+             * The unified product card takes its small upper-case line as a
+             * caller's string rather than reading `$product->categories`, so
+             * that this page — and the related rail, and /routines — do not
+             * start paying a `category_product` read they do not pay today.
+             * A category archive knows its own category; /shop, a search and a
+             * brand filter have none, and hand the card null.
+             */
+            'category' => $category,
             'products' => $products,
             'total' => $total,
             'page' => $page,
