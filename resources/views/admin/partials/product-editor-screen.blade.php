@@ -2392,7 +2392,7 @@
       +   '<input class="peo-in" data-bind="seo.canonical" value="' + esc(seo.canonical || '') + '" '
       +     'placeholder="Leave empty unless this page duplicates another"></div>'
       + '<div class="peo-fld peo-ogzone" id="peo-ogzone"><label>Share image</label>'
-      +   ogStateView()
+      +   '<div id="peo-ogstatehost">' + ogStateView() + '</div>'
       +   '<button class="peo-btn" type="button" id="peo-oglib" style="margin-bottom:7px">Choose from Media Library</button>'
       +   '<input class="peo-in" data-bind="seo.og_image" id="peo-og" value="' + esc(seo.og_image || '') + '" '
       +     'placeholder="Uses the main image if empty">'
@@ -2462,6 +2462,21 @@
       + '<span><b>Chosen by hand.</b> Changing the main image will <b>not</b> replace it.'
       + (main ? ' <button type="button" class="peo-mini" id="peo-ogauto">Use the main image</button>' : '')
       + '</span></div>';
+  }
+
+  /* The button inside that line, bound wherever the line has just been drawn. */
+  function bindOgAuto(scope){
+    var el = scope && scope.querySelector('#peo-ogauto');
+
+    if (!el) return;
+
+    el.addEventListener('click', function(){
+      collect();
+      model.seo = model.seo || {};
+      model.seo.og_image = model.image || '';
+      dirty = true;
+      render();
+    });
   }
 
   /* THE ONE PLACE model.image IS WRITTEN. (Lane SP2)
@@ -3819,13 +3834,31 @@
     /* BACK TO AUTOMATIC. Setting the box to the main image IS the automatic
        state -- there is no flag to clear -- so this is one assignment and a
        re-render, and the state line above it flips to "Automatic". (Lane SP2) */
-    on('#peo-ogauto', 'click', function(){
-      collect();
-      model.seo = model.seo || {};
-      model.seo.og_image = model.image || '';
-      dirty = true;
-      render();
-    });
+    bindOgAuto(document.querySelector('#content'));
+
+    /* AND THE LINE KEEPS UP WITH THE BOX WHILE IT IS BEING TYPED INTO.
+
+       Without this it is correct only after the next full render, so pasting a
+       different picture's address left the screen still saying "Automatic —
+       taken from the main image" about a share image that had just stopped
+       being one. The line is rewritten in place rather than through render(),
+       because render() rebuilds the input and takes the caret out of it
+       mid-keystroke. (Lane SP2) */
+    var ogBox = document.querySelector('#content #peo-og');
+
+    if (ogBox) {
+      ogBox.addEventListener('input', function(){
+        model.seo = model.seo || {};
+        model.seo.og_image = ogBox.value;
+
+        var host = document.querySelector('#content #peo-ogstatehost');
+
+        if (host) {
+          host.innerHTML = ogStateView();
+          bindOgAuto(host);
+        }
+      });
+    }
 
     var ogLib = document.querySelector('#content #peo-oglib');
     if (ogLib) {

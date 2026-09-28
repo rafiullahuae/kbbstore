@@ -253,8 +253,16 @@ it('says on the screen which of the two states the share image is in', function 
     expect(str_contains($code, 'id="peo-ogauto"'))
         ->toBeTrue('there is no way back to automatic');
 
-    expect(substr_count($code, "ogStateView()"))
-        ->toBe(2, 'the state line is defined once and drawn exactly once');
+    /* Defined once, drawn once in the panel, and redrawn once while the box is
+       being typed into -- three, and the third is what keeps the line honest
+       between renders. Zero would be a control nobody can see; four would mean
+       the line is in the markup twice and the "Use the main image" button with
+       it. */
+    expect(substr_count($code, 'ogStateView()'))
+        ->toBe(3, 'the state line is defined once, drawn once, and refreshed once');
+
+    expect(substr_count($code, "id=\"peo-ogstatehost\""))
+        ->toBe(1, 'the host the live refresh writes into is not there exactly once');
 });
 
 it('writes the main image through one function, so the share image follows every control', function () {
