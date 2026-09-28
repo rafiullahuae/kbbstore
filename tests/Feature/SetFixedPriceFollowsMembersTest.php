@@ -489,6 +489,61 @@ it('costs no query when the members are loaded, and one when they are not', func
         ->and($afterSecond)->toBe(1, 'the second read is the per-request memo');
 });
 
+it('keeps the set\'s own product page flat, three members or twelve', function () {
+    /*
+     * THE BUDGET, ON THE PAGE ITSELF AND WITH AN ANCHOR IN PLACE.
+     *
+     * SetProductPageTest measures this for a set with no anchor. A hand-priced
+     * set now asks what its parts are worth on every read, which is a new
+     * question on a page that draws the price three times -- so the measurement
+     * is repeated here for the mode that asks it, at three members and at
+     * twelve, and the difference must be ZERO. A ceiling alone could not catch
+     * it: a page doing one query per member passes any ceiling on a small box.
+     *
+     * It is free because App\Support\SetEagerLoad has already batched the
+     * members before the price is asked for, and tally() answers from the
+     * loaded relation without touching the database.
+     *
+     * MUTATION NOTE, AND THE FIRST ONE I WROTE WAS WRONG, WHICH IS WORTH THE
+     * TWO LINES. Disabling tally()'s `relationLoaded('setItems')` fast path
+     * does NOT break this: the SQL fallback is one aggregate PER SET, memoised,
+     * so three members and twelve both cost the same one. Measured, not
+     * assumed. What this actually guards is a per-MEMBER query inside the
+     * loaded path -- change `$row->member` to `$row->member()->first()` and it
+     * is red at 46 queries against 154. RUN (both).
+     */
+    $small = sfxSet(array_map(fn ($i) => [sfxProduct('Flat small '.$i, 1000 + $i), 1], range(1, 3)), [
+        'price' => 18000, 'set_price_basis' => 20000,
+    ]);
+    $large = sfxSet(array_map(fn ($i) => [sfxProduct('Flat large '.$i, 1000 + $i), 1], range(1, 12)), [
+        'price' => 18000, 'set_price_basis' => 20000,
+    ]);
+
+    $count = function (string $slug): int {
+        SetPricing::forget();
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        test()->get('/product/'.$slug.'/')->assertOk();
+        $n = count(DB::getQueryLog());
+        DB::disableQueryLog();
+        DB::flushQueryLog();
+
+        return $n;
+    };
+
+    // Warm whatever a first request in this process warms -- the settings map,
+    // the module registry -- so the two figures compare the page and not the boot.
+    test()->get('/product/'.$small->slug.'/')->assertOk();
+
+    $three = $count($small->slug);
+    $twelve = $count($large->slug);
+
+    expect($twelve)->toBe(
+        $three,
+        "A set of twelve must cost what a set of three costs. Three: {$three}. Twelve: {$twelve}."
+    );
+});
+
 /* ══════════════════════════════════ and a placed order does not move ═══ */
 
 it('leaves a basket and a placed order exactly where they were agreed', function () {
