@@ -180,8 +180,22 @@ it('sizes the popup frame from that ratio and fills it, instead of letterboxing 
      */
     $css = file_get_contents(resource_path('views/ugc/assets.blade.php'));
 
-    expect(str_contains($css, 'width:min(var(--ugcp-w),calc(var(--ugcp-h) * var(--ugcp-ar)))'))->toBeTrue(
+    /*
+     * PIN ADVANCED, and the property it protects is unchanged. That expression
+     * is still exactly the frame's width — it now has a NAME, `--ugcp-fw`,
+     * because the previous/next arrows added beside the frame have to place
+     * themselves against its edge and are not inside it, so they cannot inherit
+     * it from the box. Declared once on the shell, the frame and the arrows
+     * read the same number and cannot disagree about the frame's shape.
+     *
+     * Both halves are pinned, which is stronger than the single literal this
+     * replaced: the definition, and the box actually using it.
+     */
+    expect(str_contains($css, '--ugcp-fw:min(var(--ugcp-w),calc(var(--ugcp-h) * var(--ugcp-ar)))'))->toBeTrue(
         'the frame\'s width comes from the clip\'s ratio, not from the viewport'
+    );
+    expect(str_contains($css, 'width:var(--ugcp-fw)'))->toBeTrue(
+        'the frame is drawn from that width rather than from one of its own'
     );
 
     expect(str_contains($css, 'height:min(var(--ugcp-h),calc(var(--ugcp-w) / var(--ugcp-ar)))'))->toBeTrue(
@@ -222,7 +236,14 @@ it('keeps the credit, the product boxes and the close button inside the video fr
     expect($open)->not->toBeFalse();
 
     $shell = substr($js, (int) $open, 900);
-    $end = strpos($shell, "+ '</div>';");
+    /*
+     * PIN ADVANCED: no semicolon. The box's closing tag used to end the
+     * innerHTML statement, and the statement now continues — the previous/next
+     * buttons are appended after it, as SIBLINGS of the frame, which is the
+     * whole reason they can sit outside it in the dim. Matching the box's close
+     * rather than the statement's end is what this assertion always meant.
+     */
+    $end = strpos($shell, "+ '</div>'");
     expect($end)->not->toBeFalse();
 
     $inside = substr($shell, 0, (int) $end);
@@ -247,7 +268,13 @@ it('holds the keyboard while the popup is open and hands it back on close', func
      */
     $js = file_get_contents(resource_path('views/ugc/assets.blade.php'));
 
-    expect(str_contains($js, "if (e.key === 'Tab') trapTab(e);"))->toBeTrue(
+    /*
+     * PIN ADVANCED for the arrow keys. The listener now handles ArrowLeft and
+     * ArrowRight after Tab, so the Tab branch grew a `return` and stopped being
+     * a one-liner. What is asserted is the thing that mattered: the Tab key
+     * reaches trapTab, and nothing runs after it.
+     */
+    expect(str_contains($js, "if (e.key === 'Tab') { trapTab(e); return; }"))->toBeTrue(
         'Tab is trapped inside the dialog'
     );
     expect(str_contains($js, 'closer.focus()'))->toBeTrue(

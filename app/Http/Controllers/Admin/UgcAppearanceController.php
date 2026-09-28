@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\UgcSection;
 use App\Services\ModuleSchema;
+use App\Services\Ugc\RailPlayback;
 use App\Services\UgcRail;
 use App\Services\UgcSettings;
 use Illuminate\Http\JsonResponse;
@@ -28,7 +29,10 @@ use Illuminate\Http\Request;
  */
 class UgcAppearanceController extends Controller
 {
-    public function __construct(private UgcSettings $settings) {}
+    public function __construct(
+        private UgcSettings $settings,
+        private RailPlayback $playback,
+    ) {}
 
     public function show(): JsonResponse
     {
@@ -45,6 +49,23 @@ class UgcAppearanceController extends Controller
              * this one line prevents.
              */
             'module_on' => $this->settings->enabled(),
+            /*
+             * ── WHAT THE STOREFRONT WILL ACTUALLY DO, IN NUMBERS ────────────
+             *
+             * The owner, three rounds running: "on front-end it still not auto
+             * play". Every round measured a seeded rail, found it looping, and
+             * said so. The rail WAS looping — on that data. On his, four
+             * `(Demo)` clips stood at the head of the section and `max_playing`
+             * is 4, so the two clips he had uploaded were never reached.
+             *
+             * `module_on` above is the precedent and the same argument: a
+             * control that is inert has to say so on the screen that draws it.
+             * This is the same sentence for the case where every control is
+             * correct and the rail still does not move, which is the one nobody
+             * could see. App\Services\Ugc\RailPlayback has the reasoning; it is
+             * read-only and runs nowhere near the storefront.
+             */
+            'playback' => $this->playback->describe(),
             /*
              * ── THE LIST THE HOMEPAGE DROPDOWN IS DRAWN FROM (Lane IG) ──────
              *

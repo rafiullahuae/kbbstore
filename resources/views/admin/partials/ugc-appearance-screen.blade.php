@@ -78,6 +78,11 @@
          color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
 .ugy-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
 .ugy-btn[disabled]{opacity:.45;cursor:default}
+.ugy-pl{margin:9px 0 0;padding-inline-start:18px;display:grid;gap:3px}
+.ugy-pl li{font-size:12.5px;line-height:1.5}
+.ugy-ad{margin:9px 0 0;font-size:12.5px;line-height:1.55}
+.ugy-pill{display:inline-block;border:1px solid var(--border,#e6e6e6);border-radius:999px;
+          padding:0 7px;font-size:11px;line-height:17px;vertical-align:1px}
 .ugy-empty{color:var(--ink-soft,#6b7280);font-size:13px;padding:6px 0}
 </style>
 <script>
@@ -87,6 +92,10 @@
   var SCREEN = 'ugcstyle';
   var tabs = null, values = {}, open = null, banner = null, busy = false, moduleOn = false, seq = 0;
   var sections = [];
+  /* What the storefront will do with the rows and settings this shop has right
+     now — App\Services\Ugc\RailPlayback. Null until the first load, and the
+     Motion tab simply draws nothing while it is. */
+  var playback = null;
 
   function base() {
     return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
@@ -199,6 +208,7 @@
          query on the storefront's hot path), so the endpoint hands the real
          sections over separately and fieldHTML draws a <select> from them. */
       sections = Array.isArray(body.sections) ? body.sections : [];
+      playback = (body.playback && typeof body.playback === 'object') ? body.playback : null;
       values = {};
       tabs.forEach(function (t) { t.fields.forEach(function (f) { values[f.key] = f.value; }); });
       if (!open || !tabs.some(function (t) { return t.key === open; })) {
@@ -314,6 +324,105 @@
       + esc(values[f.key]) + '" autocomplete="off">' + help + '</div>';
   }
 
+  /*
+   * ── THE PANEL THIS WHOLE ROUND IS FOR ───────────────────────────────────
+   *
+   * "on front-end it still not auto play", three rounds running, against a rail
+   * that measured perfectly on seeded data every time. The thing nobody could
+   * see was that his four `(Demo)` clips stood at the head of the section and
+   * `max_playing` is 4, so his own two clips were never reached — and the play
+   * disc, the one visible signal, was being hidden by a class the rail set at
+   * MOUNT rather than at playback, so the picture could not be read either.
+   *
+   * So the screen now says it. Counts, then a line per tile, then what to
+   * change. Every number comes from the server reading HIS rows and HIS
+   * settings — see App\Services\Ugc\RailPlayback, which also explains why the
+   * verdict is stated for a wide screen and why the two shopper-side switches
+   * are named rather than guessed at.
+   */
+  function playbackHTML() {
+    if (!playback) return '';
+
+    var why = {
+      plays: 'will move',
+      cap: 'waiting for a slot',
+      no_media: 'no video file on the clip',
+      no_file: 'its file is missing from this server',
+      teaser_off: 'the loop is switched off'
+    };
+
+    if (!playback.section) {
+      return '<div class="ugy-note"><b>Nothing to describe yet.</b> This shop has no published video '
+        + 'section, so there is no rail for the settings below to act on. Build one in '
+        + '<b>Content → Shoppable video → Sections</b>.</div>';
+    }
+
+    var head = '<b>What your shop will do right now</b>, in the section '
+      + '<b>' + esc(playback.section) + '</b>. ';
+
+    if (!playback.teaser_on) {
+      return '<div class="ugy-note is-bad">' + head
+        + '<b>No tile will move.</b> “Loop the first 2–3 seconds” below is switched off, so every '
+        + 'one of the ' + esc(playback.total) + ' tiles shows its cover picture and its play button '
+        + 'and waits to be tapped. '
+        + (playback.teaser_chosen
+            ? 'That is a choice somebody made on this screen — it is not how this ships. '
+            : '')
+        + 'Switch it back on below and press Save.</div>';
+    }
+
+    var rows = (playback.tiles || []).map(function (t) {
+      /* NO MANUAL NUMBER. The <ol> draws the position, and printing it again
+         gave every row "1. 1. Glass skin in 6 steps". The list is rendered in
+         the section's own order, so the marker IS the tile's place in the rail
+         — which is the number the owner needs to find it by. */
+      return '<li>' + esc(t.title)
+        + (t.demo ? ' <span class="ugy-pill">Demo</span>' : '')
+        + ' — ' + esc(why[t.why] || t.why) + '</li>';
+    }).join('');
+
+    var waiting = (playback.tiles || []).filter(function (t) { return t.why === 'cap'; }).length;
+    var missing = (playback.tiles || []).filter(function (t) { return t.why === 'no_file' || t.why === 'no_media'; }).length;
+
+    var advice = [];
+
+    if (waiting > 0) {
+      advice.push('<b>' + esc(waiting) + '</b> ' + (waiting === 1 ? 'tile is' : 'tiles are')
+        + ' only waiting for a slot. Raise <b>Most clips moving at once</b> — it is <b>'
+        + esc(playback.max) + '</b> — and more of them move at the same time. Each one is another '
+        + 'video the phone has to decode, which is why it has a ceiling.');
+    }
+
+    if (playback.demo_moving > 0) {
+      advice.push('<b>' + esc(playback.demo_moving) + '</b> of the moving tiles '
+        + (playback.demo_moving === 1 ? 'is' : 'are') + ' <b>demo footage</b> this application wrote, '
+        + 'not your own clips. Your own clips are always given a slot first, so demo tiles only take '
+        + 'what is left over — but they are still filling your rail. '
+        + '<b>Content → Demo content → Remove</b> takes them out.');
+    }
+
+    if (missing > 0) {
+      advice.push('<b>' + esc(missing) + '</b> ' + (missing === 1 ? 'tile' : 'tiles')
+        + ' can never move: the video file is not on this server. Those keep their play button and '
+        + 'take no slot from the others. Re-upload them in <b>Content → Shoppable video → All clips</b>.');
+    }
+
+    advice.push('Two things on the <b>shopper’s own device</b> still stop every tile, whatever is set '
+      + 'here: the phone’s <b>Reduce motion</b> accessibility setting, and <b>Data Saver</b>. Both are '
+      + 'deliberate and neither is something this screen can override.');
+
+    advice.push('This counts a screen wide enough to show the whole rail at once. On a phone only about '
+      + 'two tiles are on screen at a time, so a phone moves fewer than this — that is the design.');
+
+    return '<div class="ugy-note' + (playback.moving === 0 ? ' is-bad' : (waiting + missing > 0 ? ' is-warm' : '')) + '">'
+      + head
+      + '<b>' + esc(playback.moving) + ' of ' + esc(playback.total) + '</b> tiles will loop on their own; '
+      + 'the rest show their cover picture and a play button until somebody taps.'
+      + '<ol class="ugy-pl">' + rows + '</ol>'
+      + advice.map(function (a) { return '<p class="ugy-ad">' + a + '</p>'; }).join('')
+      + '</div>';
+  }
+
   function render() {
     var host = document.querySelector('#content');
     if (!host || (document.querySelector('#ptitle') || {}).textContent !== 'Video rail') return;
@@ -380,6 +489,10 @@
       + '<div class="ugy-card">'
       + '<div class="ugy-tabs">' + strip + '</div>'
       + '<p class="ugy-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
+      /* ON MOTION, because every control this panel talks about is on Motion —
+         the loop switch and the cap. Putting it on the tab that owns them is
+         what makes it actionable rather than a notice. */
+      + (current.key === 'motion' ? playbackHTML() : '')
       + '<div class="ugy-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
       + '<div class="ugy-actions">'
       + '<button class="ugy-btn is-primary" data-ugy-save' + (busy ? ' disabled' : '') + '>'

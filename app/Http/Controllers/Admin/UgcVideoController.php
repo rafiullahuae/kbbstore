@@ -1302,6 +1302,21 @@ class UgcVideoController extends Controller
             'height' => $video->height,
             'duration_ms' => $video->duration_ms,
             'media_state' => $video->mediaState(),
+            /*
+             * ── THE COLUMNS SAY THE FILE IS THERE; THIS SAYS WHETHER IT IS ──
+             *
+             * mediaState() above reads three COLUMNS, so a clip whose file has
+             * been deleted off the server still badged "Loops from full video"
+             * on this screen — a clip described as looping with nothing left to
+             * loop. The owner's own cut run named two such rows.
+             *
+             * One of App\Services\Ugc\ClipFile's four constants, which is one
+             * is_file() per row on a bounded admin page. `warnings` above
+             * already carries the sentence; this is the machine-readable half,
+             * so the row's badge can say it at a glance rather than only the
+             * editor panel.
+             */
+            'file_state' => $video->fileState(),
             'blockers' => $video->publishBlockers(),
             /*
              * SAID, NOT ENFORCED. The owner asked to publish without a cover or

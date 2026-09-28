@@ -289,22 +289,24 @@
   overflow:hidden;overscroll-behavior:contain;
   display:none;align-items:center;justify-content:center}
 .ugcp.is-on{display:flex}
+/* THE THREE CUSTOM PROPERTIES MOVED UP ONTO .ugcp, and that is the only reason
+   they are not here any more:
+     --ugcp-ar  the clip's own width/height, set per open(). The shipped value
+                is 9:16 — the shape every clip in this feature is — so a clip
+                whose row lost its dimensions frames exactly as it did before.
+     --ugcp-w   560px keeps a 9:16 clip from becoming a 1000px-wide column on a
+                tall desktop window; on every phone and on 1280x800 the height
+                bound is the one that binds.
+     --ugcp-h   dvh where it exists, because 100vh on mobile Safari is the tall
+                viewport and the frame would run under the toolbar.
+   The previous/next arrows have to place themselves against the frame's edge
+   and they are NOT inside the frame, so they cannot inherit these from it.
+   Declared on the shell, both the frame and the arrows read the same numbers
+   and there is still nothing measured anywhere. */
 .ugcp-box{
-  /* The shipped value is 9:16 — the shape every clip in this feature is — so a
-     clip whose row lost its dimensions frames exactly as it did before. */
-  --ugcp-ar:.5625;
-  /* The two bounds the frame may not exceed. 560px keeps a 9:16 clip from
-     becoming a 1000px-wide column on a tall desktop window; on every phone and
-     on 1280x800 the height bound is the one that binds. */
-  --ugcp-w:min(100vw,560px);
-  /* dvh where it exists, because 100vh on mobile Safari is the tall viewport
-     and the frame would run under the toolbar. The @supports below is the
-     upgrade; this line is what old WebKit reads. */
-  --ugcp-h:100vh;
   position:relative;overflow:hidden;background:#100c10;
-  width:min(var(--ugcp-w),calc(var(--ugcp-h) * var(--ugcp-ar)));
+  width:var(--ugcp-fw);
   height:min(var(--ugcp-h),calc(var(--ugcp-w) / var(--ugcp-ar)))}
-@supports (height:100dvh){ .ugcp-box{--ugcp-h:100dvh} }
 /* COVER, not contain, and only because the line above made them identical: the
    frame already carries this clip's ratio, so cover crops nothing. It is also
    the safe failure — a row whose stored dimensions disagree with the file loses
@@ -345,15 +347,77 @@
 .ugcp-card{scroll-snap-align:center;flex:0 0 auto;width:min(78%,300px);display:flex;gap:9px;
   align-items:center;background:#fff;border-radius:12px;padding:8px;
   box-shadow:0 10px 28px -14px rgba(0,0,0,.6)}
-.ugcp-card > div{min-width:0;flex:1}
+/* ── :not(.ugcp-th) IS THE WHOLE OF THE OWNER'S "THUMBNAIL MUST BE SQUARE" ──
+ *
+ * This read `.ugcp-card > div`, and .ugcp-th IS a div and IS a direct child, so
+ * this rule matched it too. `flex:1` is shorthand for `flex:1 1 0%`, and at
+ * (0,1,1) it out-specifies .ugcp-th's own `flex:0 0 auto` at (0,1,0) — so the
+ * thumbnail stopped being 46px wide and took an equal share of the card
+ * instead. MEASURED, before the fix: 129x46 at 390px and 138x46 at 1280px, a
+ * 2.8:1 letterbox with the product image cropped to a slot in the middle of it,
+ * and the name pushed onto two lines. The owner drew an arrow at it: "the boxes
+ * has product thumbnail must be square, not rectangle etc. so we will have more
+ * space for the product name".
+ *
+ * MUTATION NOTE, RUN, and its result is in the evidence rather than guessed at.
+ * Drop the `:not(.ugcp-th)` and the thumbnail does NOT go back to a rectangle —
+ * `aspect-ratio:1` below survives — it INFLATES: measured 129x129 at 390px
+ * (docs/lane-ug2-shots/player-after.json, `en-390-last-mutated`), taking the
+ * product name's box from 211px wide back down to 129px, which is the same
+ * width the name had before this change and the same harm. UgcPlayerNavTest's
+ * "keeps the player's product thumbnail square" goes red. */
+.ugcp-card > div:not(.ugcp-th){min-width:0;flex:1}
 .ugcp-card .ugcr-bd{gap:6px}
 .ugcp-card .ugcr-nm{font-size:11.5px;-webkit-line-clamp:2;margin-top:1px}
 .ugcp-card .ugcr-now{font-size:12.5px}
 .ugcp-card .ugcr-was{font-size:10.5px}
 .ugcp-card .ugcr-off{font-size:9.5px;padding:1.5px 5px}
 .ugcp-card .ugcr-add{font-size:10.5px;padding:7px 11px}
-.ugcp-th{width:46px;height:46px;flex:0 0 auto;border-radius:8px;overflow:hidden;background:#FFF0F4}
-.ugcp-th img{width:100%;height:100%;object-fit:cover}
+/* SQUARE BY CONSTRUCTION, not by two numbers that happen to match. The
+   aspect-ratio is what survives a future change to the width; `flex:0 0 46px`
+   is the basis restated on the axis that actually decides, so nothing has to
+   out-specify anything for this box to stay a square. `cover` then gives a tall
+   bottle and a wide carton the same square, which is the point. */
+.ugcp-th{flex:0 0 46px;width:46px;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#FFF0F4}
+.ugcp-th img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ── PREVIOUS / NEXT, AND WHY ONE RULE COVERS BOTH WIDTHS ────────────────────
+ *
+ * The owner drew both arrows in the dimmed area OUTSIDE the frame, which is
+ * where a desktop expects them and where they cover none of the clip. On a
+ * phone there IS no outside: .ugcp-box is min(100vw,560px) wide and the frame
+ * reaches both edges, so a button parked outside it would be off screen.
+ *
+ * `max(10px, ...)` is the whole answer and it needs no media query and no
+ * measurement. The inner term is the gap between the frame's edge and the
+ * viewport's — half of (100% - the frame's width) — minus the button's own
+ * room. On a desktop that is a positive number and the arrow sits in the dim;
+ * on a phone it goes negative, the max() clamps it to 10px, and the arrow lands
+ * on the frame's edge instead. One expression, resolved once at layout. Rule 4.
+ *
+ * --ugcp-fw IS the frame's width — .ugcp-box sets its own `width` from it — so
+ * the arrows are placed against the same number the frame is drawn from and the
+ * two can never disagree. --ugcp-ar is set per open() on the shell. */
+.ugcp{--ugcp-ar:.5625;--ugcp-w:min(100vw,560px);--ugcp-h:100vh;
+  --ugcp-fw:min(var(--ugcp-w),calc(var(--ugcp-h) * var(--ugcp-ar)))}
+@supports (height:100dvh){ .ugcp{--ugcp-h:100dvh} }
+.ugcp-nav{position:absolute;top:50%;translate:0 -50%;z-index:8;
+  width:44px;height:44px;border-radius:99px;display:grid;place-items:center;
+  background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  border:0;color:#fff;cursor:pointer}
+.ugcp-nav[hidden]{display:none}
+.ugcp-nav:disabled{opacity:.3;cursor:default}
+.ugcp-nav.is-prev{inset-inline-start:max(10px,calc((100% - var(--ugcp-fw)) / 2 - 54px))}
+.ugcp-nav.is-next{inset-inline-end:max(10px,calc((100% - var(--ugcp-fw)) / 2 - 54px))}
+.ugcp-nav:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* THE GLYPH MIRRORS ITSELF, with no [dir] rule anywhere.
+   A triangle whose ONE solid border is a logical one points toward the opposite
+   logical side, in both directions, because `border-inline-end` IS the left
+   border on an Arabic page. The play disc on the tile is built the same way —
+   and unlike the `transform:scaleX(-1)` it still needs, this needs nothing. */
+.ugcp-nav i{display:block;width:0;height:0;border-block:7px solid transparent}
+.ugcp-nav.is-prev i{border-inline-end:11px solid #fff;margin-inline-end:3px}
+.ugcp-nav.is-next i{border-inline-start:11px solid #fff;margin-inline-start:3px}
 
 /* Nothing moves for a shopper who asked for nothing to move. The script checks
    the same query live through matchMedia, so this is the paint half of one
@@ -477,21 +541,71 @@
     return v;
   }
 
+  /* WHY THIS TILE IS NOT MOVING, written where anybody can read it — the DOM.
+
+     The rail used to have exactly one externally visible fact about a tile
+     ("is-playing"), and it was not even true: the class went on at MOUNT, so a
+     tile whose file 404s looked, to the CSS and to a screenshot, exactly like a
+     tile that was playing. That is how a rail with four dud tiles and two good
+     ones reads as "four playing, two refused" in a picture, and it is why this
+     complaint survived two rounds of somebody measuring a healthy rail.
+
+     `data-ugcr-why` is now set on EVERY tile, every rebalance, and it is the
+     same vocabulary Content -> Shoppable video -> Motion prints in words. */
+  function why(tile, reason) {
+    if (tile.getAttribute('data-ugcr-why') !== reason) tile.setAttribute('data-ugcr-why', reason);
+  }
+
   function playTeaser(tile) {
     if (exclusive) return;
     if (tile.querySelector('video')) return;
 
     var max = parseInt(conf(tile, 'max', MAX_DEFAULT), 10);
     if (!(max > 0)) max = MAX_DEFAULT;
-    if (teasers.length >= max) return;
+    /* The hard backstop. rebalance() already slices the candidate list to the
+       cap; this stays so that no future caller can exceed it by accident. */
+    if (teasers.length >= max) { why(tile, 'cap'); return; }
 
     var teaser = tile.getAttribute('data-ugcr-teaser-src');
     var full = tile.getAttribute('data-ugcr-src');
     var src = teaser || full;
-    if (!src) return;
+    if (!src) { why(tile, 'no-media'); return; }
 
     var v = mount(tile, src, true);
     teasers.push(v);
+
+    /* ── A SLOT IS GIVEN BACK WHEN THE FILE TURNS OUT NOT TO PLAY ──────────
+     *
+     * There was no error handler at all, and that is a second way the cap
+     * starved the rail: a tile whose source 404s, or whose codec this browser
+     * cannot decode, mounted, pushed onto `teasers`, took a slot AND KEPT IT
+     * FOR THE LIFE OF THE PAGE. Nothing ever removed it, because nothing was
+     * listening. On a shop whose first clips were placeholders that is four
+     * permanently-held slots and a rail that never moves.
+     *
+     * The tile is marked rather than silently dropped: `data-ugcr-fault` is
+     * what makes a dud clip visible to a screenshot, to a test, and to the
+     * owner's own eyes — the play disc comes back, because `is-playing` is now
+     * only ever set by the `playing` event below. */
+    v.addEventListener('error', function () {
+      tile.setAttribute('data-ugcr-fault', 'media');
+      why(tile, 'no-media');
+      stopTeaser(tile);
+      rebalance();
+    });
+
+    /* `is-playing` NOW MEANS PLAYING. It used to be set a few lines below this,
+       unconditionally, before a single byte of the clip had arrived — and the
+       one CSS rule that hides the play disc keys off it. So the disc vanished
+       from tiles that were not playing and the owner's screenshot could not be
+       read. Both the class and the video's own opacity now wait for the
+       `playing` event, which is the browser saying it is rendering frames. A
+       tile that never gets there keeps its poster and keeps its disc. */
+    v.addEventListener('playing', function () {
+      tile.classList.add('is-playing');
+      v.classList.add('is-on');
+      why(tile, 'playing');
+    });
 
     /* NO TEASER FILE ON THIS CLIP — the ffmpeg-less case, which is every clip
        on a box with no transcoder. The loop is then cut from the full clip at
@@ -567,16 +681,92 @@
       });
     }
 
-    tile.classList.add('is-playing');
-    v.classList.add('is-on');
+    /* NOT `is-playing` HERE ANY MORE — see the `playing` listener above.
+       A rejected play() is a refusal (an autoplay policy, a decoder this
+       browser will not give us), and it used to be swallowed into a no-op that
+       left the tile claiming to play. It now gives the slot back, so a
+       neighbour that CAN play gets it. */
     var p = v.play();
-    if (p && p.catch) p.catch(function () {});
+    if (p && p.catch) {
+      p.catch(function () {
+        if (tile.querySelector('video') !== v) return;   /* already torn down */
+        tile.setAttribute('data-ugcr-fault', 'blocked');
+        why(tile, 'blocked');
+        stopTeaser(tile);
+        rebalance();
+      });
+    }
+  }
+
+  /* ── WHO GETS A SLOT, AND WHY IT IS NO LONGER "WHOEVER IS FIRST" ─────────
+   *
+   * THE DEFECT, MEASURED. The owner's homepage rail is six tiles: four
+   * `(Demo)` rows that Content -> Demo content wrote, all four pointing at the
+   * same 270x480 plum gradient, followed by the two clips he actually
+   * uploaded. At 1600x1000 all six report `data-ugcr-vis="1"` and 100% on
+   * screen. The four demo tiles mounted, `teasers.length` hit `max_playing`
+   * (4), and the loop below returned for tiles 5 and 6 — the only two he
+   * cares about — WITHOUT LOOKING AT THEM. docs/lane-ug2-shots/ has the run.
+   *
+   * Document order is not a policy, it is an accident of what was imported
+   * first. So the cap is now spent on a RANKING:
+   *
+   *   1. a real clip before a placeholder. `data-ugcr-demo` is printed by
+   *      ugc/rail.blade.php from the server's own comparison against
+   *      UgcDemoMedia's fixed file name — no query, no guess, and the demo
+   *      rows are the only thing it can ever match.
+   *   2. then the tile the shopper can see MOST of. This is the "promote by
+   *      what is actually on screen" half, and it is the reason the ratio is
+   *      recorded on the tile rather than thrown away.
+   *   3. then document order, so the result is stable and a rail of equals
+   *      behaves exactly as it did before this change.
+   *
+   * Ratios are bucketed to 0.05 before they are compared, because a ratio that
+   * wobbles by a thousandth during a smooth scroll must not reorder the rail
+   * and restart two decoders.
+   */
+  function candidates(all) {
+    var out = [];
+
+    Array.prototype.forEach.call(all, function (t, i) {
+      if (t.getAttribute('data-ugcr-vis') !== '1') { why(t, 'offscreen'); return; }
+      if (conf(t, 'teaser', '1') !== '1') { why(t, 'teaser-off'); return; }
+      /* A tile that has already failed is out of the running, and it keeps
+         saying WHICH failure: 'blocked' is a refused play() (an autoplay policy
+         or a phone in low-power mode, which stops every tile and is honest to
+         show as a rail full of play buttons), 'media' is a file that is not
+         there. They are different answers and the tile gives the right one. */
+      var fault = t.getAttribute('data-ugcr-fault');
+      if (fault) { why(t, fault === 'blocked' ? 'blocked' : 'no-media'); return; }
+      if (!(t.getAttribute('data-ugcr-teaser-src') || t.getAttribute('data-ugcr-src'))) {
+        why(t, 'no-media');
+        return;
+      }
+
+      out.push({
+        t: t,
+        i: i,
+        real: t.getAttribute('data-ugcr-demo') === '1' ? 0 : 1,
+        ratio: parseFloat(t.getAttribute('data-ugcr-vis-ratio')) || 0,
+      });
+    });
+
+    out.sort(function (a, b) {
+      if (a.real !== b.real) return b.real - a.real;
+      var ra = Math.round(a.ratio / 0.05);
+      var rb = Math.round(b.ratio / 0.05);
+      if (ra !== rb) return rb - ra;
+      return a.i - b.i;
+    });
+
+    return out;
   }
 
   /* Called whenever the set of on-screen tiles changes, or the OS motion
-     setting moves. It stops what should not run and then promotes waiting tiles
-     IN DOCUMENT ORDER until the cap is reached — so a tile refused because the
-     cap was full starts the moment a neighbour leaves. */
+     setting moves. It stops what should not run, ranks what is left, and hands
+     the cap to the top of that ranking — so a tile refused because the cap was
+     full starts the moment a neighbour leaves OR a better candidate scrolls
+     away, and a placeholder can no longer sit on a slot a real clip wants. */
   function rebalance() {
     var all = tiles();
 
@@ -584,23 +774,68 @@
       if (t.getAttribute('data-ugcr-vis') !== '1') stopTeaser(t);
     });
 
+    /* The two silent switches, now said out loud on the tile. Neither is a
+       fault and neither is a setting the owner can reach — they are the
+       shopper's phone asking for less — so the admin screen names them as
+       "and this can still happen on a shopper's device" rather than as
+       something to go and fix. */
     if (exclusive || reduced.matches || saveData()) {
-      Array.prototype.forEach.call(all, stopTeaser);
+      var reason = exclusive ? 'player-open' : (reduced.matches ? 'reduced-motion' : 'save-data');
+      Array.prototype.forEach.call(all, function (t) { stopTeaser(t); why(t, reason); });
       return;
     }
 
+    var want = candidates(all);
+
+    var max = want.length > 0 ? parseInt(conf(want[0].t, 'max', MAX_DEFAULT), 10) : MAX_DEFAULT;
+    if (!(max > 0)) max = MAX_DEFAULT;
+
+    /* EVICTION, and it is the half that actually rescues his rail. Ranking the
+       waiting list is worthless on its own: the four placeholders had already
+       mounted, and playTeaser() returns early for a tile that holds a video, so
+       without this the losers would keep the decoders they grabbed first. A
+       tile is evicted only when it is NOT in the top `max` of a ranking built
+       from static attributes, so the set converges and cannot oscillate. */
+    var keep = want.slice(0, max);
+
     Array.prototype.forEach.call(all, function (t) {
-      if (t.getAttribute('data-ugcr-vis') === '1' && conf(t, 'teaser', '1') === '1') playTeaser(t);
+      if (!t.querySelector('video')) return;
+
+      for (var k = 0; k < keep.length; k++) {
+        if (keep[k].t === t) return;
+      }
+
+      stopTeaser(t);
     });
+
+    keep.forEach(function (e) { playTeaser(e.t); });
+    want.slice(max).forEach(function (e) { why(e.t, 'cap'); });
   }
+
+  /* ── 0.6 IS THE WRONG GATE FOR A RAIL THAT PEEKS ON PURPOSE ──────────────
+   *
+   * The rail scrolls sideways and its whole design is that the next tile sits
+   * half off the edge — `cols` even offers "2.3 across" and "1.2" by name. A
+   * tile has to be 61% inside the scroller before the old gate let it play, so
+   * a tile the shopper is plainly looking at was refused: measured at 1280px,
+   * tile 6 was 73% on screen, reported vis="0", and never mounted anything.
+   *
+   * 0.35 is the new gate and it is chosen, not rounded down to zero: the
+   * deliberate 2.3-across peek shows 24% of the third tile at 390px, so that
+   * sliver still does NOT spend a slot or a decoder, while anything a shopper
+   * would call "on screen" now does. The extra thresholds exist so the ratio
+   * the ranking sorts on is reported often enough to be worth sorting on.
+   */
+  var VIS_MIN = 0.35;
 
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
-      e.target.setAttribute('data-ugcr-vis',
-        (e.isIntersecting && e.intersectionRatio > 0.6) ? '1' : '0');
+      var r = e.isIntersecting ? e.intersectionRatio : 0;
+      e.target.setAttribute('data-ugcr-vis', r >= VIS_MIN ? '1' : '0');
+      e.target.setAttribute('data-ugcr-vis-ratio', r.toFixed(2));
     });
     rebalance();
-  }, { threshold: [0, 0.6] });
+  }, { threshold: [0, 0.15, 0.35, 0.5, 0.65, 0.8, 1] });
 
   /* Live, not read once at boot. */
   if (reduced.addEventListener) reduced.addEventListener('change', rebalance);
@@ -608,6 +843,10 @@
 
   /* ── the opened player ────────────────────────────────────────────────── */
   var shell = null;
+  /* The tile the player is CURRENTLY showing, which stops being the tile it was
+     opened from the moment the shopper presses next. close() returns focus to
+     this one — see returnFocusTo, which open() now re-points on every step. */
+  var openTile = null;
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -686,33 +925,74 @@
       +   '<i class="ugcr-av" aria-hidden="true"></i><bdi></bdi></a>'
       + '<div class="ugcp-rail"></div>'
       + '<button class="ugcp-x" type="button" data-ugcp-close aria-label="Close">&times;</button>'
-      + '</div>';
+      + '</div>'
+      /* OUTSIDE .ugcp-box ON PURPOSE. The owner drew both arrows in the dimmed
+         area beside the frame, which is where a desktop expects them and where
+         they cover none of the clip; the CSS clamps them onto the frame's edge
+         on a phone, where there is no outside. They are siblings of the frame
+         rather than children of it so that "outside" is expressible at all. */
+      + '<button class="ugcp-nav is-prev" type="button" data-ugcp-nav="-1" hidden>'
+      +   '<i aria-hidden="true"></i></button>'
+      + '<button class="ugcp-nav is-next" type="button" data-ugcp-nav="1" hidden>'
+      +   '<i aria-hidden="true"></i></button>';
     document.body.appendChild(shell);
 
     shell.addEventListener('click', function (e) {
       if (e.target === shell || (e.target.closest && e.target.closest('[data-ugcp-close]'))) close();
     });
 
+    shell.addEventListener('click', function (e) {
+      var nav = e.target && e.target.closest ? e.target.closest('[data-ugcp-nav]') : null;
+      if (!nav) return;
+      /* stopPropagation is belt and braces: the listener above closes only on a
+         click whose target IS the shell, and these buttons are children of it.
+         It stays because they are the first elements ever added directly to the
+         shell, and "a click on the backdrop closes" is one edit away from
+         becoming "a click anywhere outside the frame closes". */
+      e.preventDefault();
+      e.stopPropagation();
+      step(parseInt(nav.getAttribute('data-ugcp-nav'), 10));
+    });
+
     /* On the shell rather than on document, so it can only ever fire while the
        dialog is the thing being typed into. */
     shell.addEventListener('keydown', function (e) {
-      if (e.key === 'Tab') trapTab(e);
+      if (e.key === 'Tab') { trapTab(e); return; }
+
+      /*
+       * ── A PHYSICAL KEY, MAPPED TO A LOGICAL DIRECTION ────────────────────
+       *
+       * ArrowRight means "the next one" on an English page and "the previous
+       * one" on an Arabic one, because the rail itself runs the other way. The
+       * CSS needs no [dir] rule — every offset in this player is logical — but
+       * a keyboard event carries a PHYSICAL key and something has to do the
+       * mapping. Reading the document's direction here is that mapping, and it
+       * is the only place in this file that reads it.
+       */
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+      var rtl = (document.documentElement.getAttribute('dir') || 'ltr') === 'rtl';
+      var forward = rtl ? (e.key === 'ArrowLeft') : (e.key === 'ArrowRight');
+
+      e.preventDefault();
+      step(forward ? 1 : -1);
     });
 
     return shell;
   }
 
-  function close() {
-    if (!shell) return;
+  /* unmount() REMOVES the element, because dropping the src and calling load()
+     is the only thing that hands the decoder back and a detached element cannot
+     be left holding one. So a fresh <video> is put back in its place, ready for
+     the next tap.
 
-    shell.classList.remove('is-on');
-
-    /* unmount() REMOVES the element, because dropping the src and calling load()
-       is the only thing that hands the decoder back and a detached element cannot
-       be left holding one. So a fresh <video> is put back in its place, ready for
-       the next tap. */
+     EXTRACTED so that prev/next uses it too. Moving between clips used to be
+     impossible and the obvious way to add it was to assign a new `.src` over
+     the old one — which is a SECOND teardown path, with its own opinion about
+     what a replaced stream leaves behind. There is one path, and both the close
+     button and the arrows go through it. */
+  function recycleVideo() {
     unmount(shell.querySelector('.ugcp-v'));
-    exclusive = null;
 
     var fresh = document.createElement('video');
     fresh.className = 'ugcp-v';
@@ -720,6 +1000,19 @@
     fresh.setAttribute('webkit-playsinline', '');
     var box = shell.querySelector('.ugcp-box');
     box.insertBefore(fresh, box.firstChild);
+
+    return fresh;
+  }
+
+  function close() {
+    if (!shell) return;
+
+    shell.classList.remove('is-on');
+    shell.removeAttribute('data-ugcp-slug');
+
+    recycleVideo();
+    exclusive = null;
+    openTile = null;
 
     /* BACK TO THE TILE THAT OPENED IT. Without this the focus is on a button
        that has just been hidden, and the next Tab starts again at the top of
@@ -778,6 +1071,80 @@
     return (ar >= 0.2 && ar <= 5) ? ar : 0.5625;
   }
 
+  /*
+   * ── PREVIOUS / NEXT ──────────────────────────────────────────────────────
+   *
+   * The owner: *"i want a nice arrows to move to next or previous video."*
+   *
+   * WITHIN ONE SECTION, AND ONLY OVER CLIPS THAT CAN ACTUALLY OPEN. open()
+   * returns immediately for a tile with no `data-ugcr-src`, so a rail that
+   * carries one of those would have an arrow that visibly did nothing — which
+   * is the exact failure this lane is here to stop being possible. They are
+   * filtered out of the walk instead, so "next" always means "the next clip
+   * that will open".
+   */
+  function walkable(tile) {
+    var sec = tile.closest('.ugcr-sec');
+    if (!sec) return [];
+
+    return Array.prototype.filter.call(
+      sec.querySelectorAll('.ugcr-t[data-ugcr-tile]'),
+      function (t) { return !!t.getAttribute('data-ugcr-src'); }
+    );
+  }
+
+  /*
+   * ── THE ENDS ARE DISABLED, NOT WRAPPED, AND THAT IS A CHOICE ─────────────
+   *
+   * A rail is an ORDER the owner arranged in Content -> Shoppable video, not a
+   * carousel of equals: "the first one" and "the last one" are positions he
+   * picked. A control that wrapped silently would make "have I seen all of
+   * these?" unanswerable — the shopper would have no way to tell the sixth clip
+   * from the first — while a disabled button answers it without a word.
+   *
+   * DISABLED, AND IT LOOKS DISABLED (opacity .3 in the CSS), because a control
+   * that is present, lit and does nothing is the worse answer. `disabled` also
+   * takes it out of the focus trap for free: FOCUSABLE is
+   * `button:not([disabled])`.
+   *
+   * BOTH HIDDEN ENTIRELY when there is only one openable clip, rather than two
+   * permanently dead buttons on every single-clip rail.
+   */
+  function updateNav(tile) {
+    if (!shell) return;
+
+    var list = walkable(tile);
+    var at = Array.prototype.indexOf.call(list, tile);
+    var prev = shell.querySelector('[data-ugcp-nav="-1"]');
+    var next = shell.querySelector('[data-ugcp-nav="1"]');
+    var many = list.length > 1;
+
+    prev.hidden = next.hidden = !many;
+    prev.disabled = !many || at <= 0;
+    next.disabled = !many || at < 0 || at >= list.length - 1;
+
+    /* The words travel on the section, because this markup is built in the
+       browser and an Arabic page needs Arabic labels. */
+    prev.setAttribute('aria-label', conf(tile, 'prev', 'Previous video'));
+    next.setAttribute('aria-label', conf(tile, 'next', 'Next video'));
+  }
+
+  function step(delta) {
+    if (!openTile || !(delta === 1 || delta === -1)) return;
+
+    var list = walkable(openTile);
+    var at = Array.prototype.indexOf.call(list, openTile);
+    var to = list[at + delta];
+
+    /* No wrap: at either end this is undefined and nothing happens, which is
+       the same answer the disabled button gives. The two agree on purpose —
+       ArrowLeft at the first clip must not do what the greyed-out button
+       refuses to do. */
+    if (at < 0 || !to) return;
+
+    open(to);
+  }
+
   function open(tile) {
     var src = tile.getAttribute('data-ugcr-src');
     if (!src) return;
@@ -790,6 +1157,13 @@
     stopAll();
 
     var box = ensureShell();
+
+    /* STEPPING INTO A LIVE SHELL. Assigning a new `.src` over a playing stream
+       is a second teardown with its own opinion about what the old decoder
+       keeps; recycleVideo() is the one close() uses, so there is exactly one.
+       Harmless on a first open — the element it replaces has never had a src. */
+    recycleVideo();
+
     var v = box.querySelector('.ugcp-v');
     var data = {};
     var json = tile.parentNode.querySelector('script[data-ugcr-data]');
@@ -801,8 +1175,12 @@
      * "the popup is the shape of the clip" — see the CSS for the measurements
      * this replaced.
      */
-    var frame = box.querySelector('.ugcp-box');
-    frame.style.setProperty('--ugcp-ar', String(frameRatio(tile)));
+    /* ON THE SHELL, not on .ugcp-box. The frame reads it through inheritance
+       exactly as before; the previous/next arrows, which sit OUTSIDE the frame
+       in the dimmed area, read the same number to place themselves against its
+       edge. One source, so the arrows cannot end up beside a frame of a
+       different shape. */
+    box.style.setProperty('--ugcp-ar', String(frameRatio(tile)));
 
     /* The dialog's name, from the clip's own label. `aria-label` on the tile is
        built by the server from the title or the caption and is already escaped
@@ -835,13 +1213,30 @@
     v.src = src;
     exclusive = v;
 
+    var wasOpen = box.classList.contains('is-on');
     box.classList.add('is-on');
 
+    openTile = tile;
+    box.setAttribute('data-ugcp-slug', tile.getAttribute('data-ugcr-slug') || '');
+    updateNav(tile);
+
     /* FOCUS IN, and remember where it came from. After the class is added,
-       because focus() on a `display:none` subtree does nothing at all. */
+       because focus() on a `display:none` subtree does nothing at all.
+
+       RE-POINTED ON EVERY STEP, and that is the thing prev/next quietly breaks
+       if nobody thinks about it: a shopper who opens the first clip, presses
+       next four times and then Escape must land on the tile they ENDED on. It
+       is also the tile the rail has scrolled to, so returning to the opening
+       one would put focus somewhere off screen. */
     returnFocusTo = tile;
-    var closer = box.querySelector('.ugcp-x');
-    if (closer) { try { closer.focus(); } catch (e) {} }
+
+    /* FOCUS ONLY ON THE FIRST OPEN. Moving it back to the close button on every
+       step would take it off the arrow the shopper is pressing, so the next
+       press would go nowhere. */
+    if (!wasOpen) {
+      var closer = box.querySelector('.ugcp-x');
+      if (closer) { try { closer.focus(); } catch (e) {} }
+    }
 
     if (conf(tile, 'autoplay', '1') === '1') {
       var p = v.play();

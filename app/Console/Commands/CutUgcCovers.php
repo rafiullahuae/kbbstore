@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\UgcVideo;
+use App\Services\Ugc\ClipFile;
 use App\Services\UgcDerivedFiles;
 use App\Services\UgcMedia;
-use App\Services\UgcPath;
 use App\Services\UgcTranscoder;
 use Illuminate\Console\Command;
 
@@ -141,8 +141,12 @@ class CutUgcCovers extends Command
              * answer is the one that counts. See the note below for why "the
              * file is not on disk" is the one failure worth separating out.
              */
-            $stored = UgcPath::stored($clip->file_path);
-            if ($stored === null || ! is_file(public_path(ltrim($stored, '/')))) {
+            // THROUGH THE ONE DECIDER, App\Services\Ugc\ClipFile, which is what
+            // derive() below asks and what the clips screen badges from. This
+            // was a fifth open-coded reading of the same column, and five
+            // readings is how the shop came to describe one row three different
+            // ways in the first place.
+            if ($clip->fileState() !== ClipFile::OK) {
                 $missing++;
             }
 
