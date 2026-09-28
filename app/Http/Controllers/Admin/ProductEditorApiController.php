@@ -391,6 +391,41 @@ class ProductEditorApiController extends Controller
             'set_effective_aed' => $product->isSet()
                 ? $this->editorAmount((int) $product->effectivePrice())
                 : '',
+
+            /*
+             * ── WHY A PRICE MOVED ON ITS OWN, IN FOUR NUMBERS (Lane SP2) ───
+             *
+             * A hand-typed set price that follows its members down is the one
+             * figure on this screen the operator did not last write. So the
+             * screen shows its whole working: what the box was worth when he
+             * typed the price (`set_basis_aed`), what it is worth now
+             * (`set_parts_total_aed`, above), the difference that is coming off
+             * (`set_adjustment_aed`) and the two resulting figures
+             * (`set_effective_aed` and `set_sale_now_aed`).
+             *
+             * '' rather than '0.00' for the basis when there is none: no anchor
+             * is a DIFFERENT state from an anchor of zero, and the panel prints
+             * a different sentence for it. Every set built before this feature
+             * is in that state and stays in it until somebody types a price.
+             *
+             * `set_members_missing` is the count of membership rows that no
+             * longer name a buyable product. It is not decoration -- it is the
+             * reason the reduction is paused, and a paused reduction with
+             * nothing on the screen saying so is precisely the "a price moved
+             * and I do not know why" this block exists to prevent.
+             */
+            'set_basis_aed' => $product->isSet() && SetPricing::basis($product) !== null
+                ? $this->editorAmount((int) SetPricing::basis($product))
+                : '',
+            'set_adjustment_aed' => $product->isSet()
+                ? $this->editorAmount(SetPricing::adjustment($product))
+                : '',
+            'set_sale_now_aed' => $product->isSet() && $product->sale_price !== null
+                ? $this->editorAmount(SetPricing::afterAdjustment($product, (int) $product->sale_price))
+                : '',
+            'set_members_missing' => $product->isSet()
+                ? SetPricing::tally($product)['missing']
+                : 0,
             'sale_starts_at' => $product->sale_starts_at?->format('Y-m-d\TH:i'),
             'sale_ends_at' => $product->sale_ends_at?->format('Y-m-d\TH:i'),
 
@@ -716,6 +751,18 @@ class ProductEditorApiController extends Controller
             'tags' => ['sometimes', 'nullable', 'array', 'max:40'],
             'tags.*' => ['nullable', 'string', 'max:60'],
 
+            /*
+             * ── "START AGAIN FROM TODAY'S TOTAL" (Lane SP2) ────────────────
+             *
+             * An INSTRUCTION, not a field: it carries no value to store and is
+             * never echoed back in the payload. The set panel's button sends it
+             * so the operator can re-anchor a hand-typed price WITHOUT having
+             * to retype the same number -- which is the one way he could not
+             * otherwise reach anchorFixedPrice(), since an unchanged price is
+             * deliberately not a re-anchor.
+             */
+            'reanchor' => ['sometimes', 'boolean'],
+
             'seo' => ['sometimes', 'nullable', 'array'],
             'seo.title' => ['nullable', 'string', 'max:200'],
             'seo.desc' => ['nullable', 'string', 'max:400'],
@@ -775,6 +822,30 @@ class ProductEditorApiController extends Controller
      */
     private function apply(Product $product, array $data): ?JsonResponse
     {
+        /*
+         * ── WHAT THIS ROW SAID BEFORE THIS REQUEST TOUCHED IT (Lane SP2) ───
+         *
+         * Read HERE and not where it is used, because `$product->save()` runs
+         * in the middle of this method and save() syncs the original attributes
+         * -- so by the time applySetPricing() asks, getOriginal('price') is the
+         * value this request just wrote and every comparison against it is
+         * false. Two things downstream need the genuine before-state:
+         *
+         *   the main image, so an auto-filled share image can follow it to its
+         *   new value while a hand-picked one is left exactly where it is; and
+         *
+         *   the typed price, the sale price and the pricing mode, so a set's
+         *   anchor is re-taken when the operator types a NEW price and is left
+         *   alone when he saves a description.
+         */
+        $before = [
+            'image' => (string) ($product->getOriginal('image') ?? ''),
+            'price' => $product->getOriginal('price'),
+            'sale_price' => $product->getOriginal('sale_price'),
+            'mode' => SetPricing::mode($product->exists ? $product : null),
+            'basis' => SetPricing::basis($product->exists ? $product : null),
+        ];
+
         /* ------------------------------------------------------------ money */
         foreach (['price_aed' => ['price', 'Price'], 'sale_aed' => ['sale_price', 'Sale price']] as $field => [$column, $label]) {
             if (! array_key_exists($field, $data)) {
@@ -1021,6 +1092,9 @@ class ProductEditorApiController extends Controller
             $product->published_at = $data['published_at'] ?: null;
         }
 
+        /* ----------------------------------------- the share image follows */
+        $this->followMainImageIntoSeo($product, $before['image']);
+
         /* --------------------------------------------------- the defaults */
         if (! $product->exists) {
             $product->status ??= 'draft';
@@ -1110,7 +1184,86 @@ class ProductEditorApiController extends Controller
         $this->applyTags($product, $data);
 
         /* --------------------------------------------------------- the box */
-        return $this->applySet($product, $data);
+        return $this->applySet($product, $data, $before);
+    }
+
+    /**
+     * THE SEARCH-RESULT SHARE IMAGE IS TAKEN FROM THE MAIN IMAGE, AUTOMATICALLY
+     * — AND NEVER OVER THE TOP OF ONE THE OPERATOR CHOSE. (Lane SP2)
+     *
+     * The owner: "ON THE product edit page and set edit page, the seo image
+     * must be taken auto from the main image automatically when i upload the
+     * main image of the product or set, and manually also i can change that seo
+     * image."
+     *
+     * ── HOW IT TELLS THE TWO APART, AND WHY THERE IS NO FLAG ───────────────
+     *
+     *     AUTOMATIC  ⇔  seo.og_image is empty, or equal to the main image.
+     *     BY HAND    ⇔  anything else.
+     *
+     * That is a rule READ OFF THE DATA, not a second column recording what
+     * somebody once intended, and the difference matters. A stored `og_auto`
+     * boolean can disagree with the two values it describes -- an importer, a
+     * hand-edited row, a restored backup or this screen shipped one version
+     * behind all write one without the other -- and when it does, the screen
+     * says "automatic" about an image that is not following anything, or
+     * refuses to update one that is. The rule above cannot be out of step with
+     * the values, because it IS the values. It also needs no migration, no
+     * validation surface, and nothing from the client that the server would
+     * then have to distrust: the client sends two image paths and the server
+     * decides, which is the whole of rule 5.
+     *
+     * Its one blind spot, stated rather than hidden: an operator who
+     * deliberately picks the SAME file as the main image is indistinguishable
+     * from the automatic case and his choice will follow the main image later.
+     * The outcome is that his share image goes on being the main image, which
+     * is what he asked for; a flag would get this one case "right" at the price
+     * of getting the four above wrong.
+     *
+     * ── WHY `$was` AND NOT JUST THE NEW MAIN IMAGE ────────────────────────
+     *
+     * Because the following happens AT THE MOMENT OF THE CHANGE. When the main
+     * image moves from A to B, a share image still holding A is one this method
+     * put there and re-points to B; a share image holding C is the operator's
+     * and is untouched. Comparing only against B would make every auto-filled
+     * value look hand-picked the instant the main image changed, and the
+     * automatic behaviour would fire exactly once in a product's life.
+     *
+     * ── AND IT PUBLISHES NOTHING NEW ──────────────────────────────────────
+     *
+     * Store\ProductController::show() already reads `$override['og_image'] ??
+     * $product->image`, so the head of a product with no share image ALREADY
+     * carried its main image in og:image, twitter:image and the Product node's
+     * `image`. Writing that same path into the column changes the emitted HTML
+     * by not one byte -- StorefrontEnglishUnchangedTest is the instrument and
+     * it stays green -- while making the value visible, editable and, from now
+     * on, correct after the main image is swapped. App\Support\Seo::absolute()
+     * turns the site-relative path into the full URL Facebook, Twitter and
+     * Google require, exactly as it does for the fallback today.
+     */
+    private function followMainImageIntoSeo(Product $product, string $was): void
+    {
+        $now = trim((string) ($product->image ?? ''));
+        $seo = is_array($product->seo) ? $product->seo : [];
+        $og = trim((string) ($seo['og_image'] ?? ''));
+
+        // Hand-picked: it is neither empty, nor the main image this request is
+        // replacing, nor the one it is replacing it with. Left alone.
+        if ($og !== '' && $og !== $was && $og !== $now) {
+            return;
+        }
+
+        if ($now === '') {
+            // The main image was removed and the share image was following it.
+            // Dropped rather than left pointing at a picture this product no
+            // longer has -- and the page then publishes the sitewide default
+            // share image, which is what it did before either was set.
+            unset($seo['og_image']);
+        } else {
+            $seo['og_image'] = $now;
+        }
+
+        $product->seo = $seo === [] ? null : $seo;
     }
 
     /**
@@ -1168,7 +1321,7 @@ class ProductEditorApiController extends Controller
     /**
      * @param  array<string, mixed>  $data
      */
-    private function applySet(Product $product, array $data): ?JsonResponse
+    private function applySet(Product $product, array $data, array $before): ?JsonResponse
     {
         if (! $product->isSet()) {
             /*
@@ -1200,6 +1353,24 @@ class ProductEditorApiController extends Controller
             return null;
         }
 
+        /*
+         * ── WAS THE BOX ACTUALLY CHANGED? (Lane SP2) ───────────────────────
+         *
+         * NOT "did the request carry a set_members key". THE EDITOR POSTS EVERY
+         * FIELD IT HOLDS ON EVERY SAVE, so that key is present when the owner
+         * fixes a typo in the description -- and a hand-typed set's anchor is
+         * re-taken when the box changes. Treating the key as the signal would
+         * therefore re-anchor on every save, which silently throws away the
+         * accumulated reduction and puts the set back to the full typed price:
+         * the feature undoing itself, invisibly, the next time anybody edits
+         * anything.
+         *
+         * So the rows are compared, before and after. Two cheap indexed reads
+         * on an admin write path, and they are what makes "I only changed the
+         * description" leave the pricing alone.
+         */
+        $membersBefore = $this->memberSignature($product);
+
         if (array_key_exists('set_members', $data)) {
             $failure = $this->writeSetMembers($product, (array) $data['set_members']);
 
@@ -1208,7 +1379,39 @@ class ProductEditorApiController extends Controller
             }
         }
 
-        return $this->applySetPricing($product, $data);
+        return $this->applySetPricing(
+            $product,
+            $data,
+            $before,
+            $this->memberSignature($product) !== $membersBefore
+        );
+    }
+
+    /**
+     * What is in this box, as one comparable string. (Lane SP2)
+     *
+     * Product, variant, quantity and position for every row, in id order. It
+     * answers the only question applySet() asks of it -- "is this the same box
+     * as a moment ago?" -- and it answers it about the four columns a reduction
+     * anchored to the parts total depends on. `position` is in because
+     * reordering the box is an edit the operator made and re-anchoring on it is
+     * harmless; `created_at` is out because rewriting identical rows would
+     * otherwise read as a change on every single save, which is the exact
+     * defect this method exists to avoid.
+     */
+    private function memberSignature(Product $product): string
+    {
+        if (! $product->exists) {
+            return '';
+        }
+
+        return ProductSetItem::where('set_product_id', $product->id)
+            ->orderBy('member_product_id')
+            ->orderBy('member_variant_id')
+            ->get(['member_product_id', 'member_variant_id', 'quantity', 'position'])
+            ->map(static fn ($r) => $r->member_product_id.':'.((int) $r->member_variant_id)
+                .':'.$r->quantity.':'.$r->position)
+            ->implode('|');
     }
 
     /**
@@ -1325,9 +1528,25 @@ class ProductEditorApiController extends Controller
      *
      * @param  array<string, mixed>  $data
      */
-    private function applySetPricing(Product $product, array $data): ?JsonResponse
+    private function applySetPricing(Product $product, array $data, array $before, bool $membersChanged): ?JsonResponse
     {
         if (! array_key_exists('price_mode', $data)) {
+            /*
+             * ▲ AND THE ANCHOR IS STILL RE-TAKEN WHEN THE BOX CHANGED.
+             *
+             * A client that does not send `price_mode` -- anything older than
+             * this screen, or a script -- can still rewrite the membership, and
+             * a box whose contents changed under an anchor taken against the
+             * OLD contents would read the difference as a price reduction and
+             * mark the set down by the whole value of a product that was simply
+             * removed. So the one case that cannot be left to the branch below
+             * is handled here. (Lane SP2)
+             */
+            if ($membersChanged && SetPricing::mode($product) === SetPricing::MODE_FIXED) {
+                $this->anchorFixedPrice($product, true);
+                $product->save();
+            }
+
             return null;
         }
 
@@ -1339,6 +1558,22 @@ class ProductEditorApiController extends Controller
         if ($mode === SetPricing::MODE_FIXED) {
             $product->set_price_mode = SetPricing::MODE_FIXED;
             $product->set_discount = null;
+
+            /*
+             * ── WHEN A HAND-TYPED PRICE IS RE-ANCHORED (Lane SP2) ──────────
+             *
+             * Five triggers, and the reasoning for each is in
+             * anchorFixedPrice(). What matters HERE is that saving the page
+             * WITHOUT one of them must not re-anchor, because re-anchoring is
+             * how an accumulated reduction is thrown away.
+             */
+            $this->anchorFixedPrice($product, $membersChanged
+                || (bool) ($data['reanchor'] ?? false)
+                || $before['mode'] !== SetPricing::MODE_FIXED
+                || $before['basis'] === null
+                || ($before['price'] === null ? null : (int) $before['price']) !== ($product->price === null ? null : (int) $product->price)
+                || ($before['sale_price'] === null ? null : (int) $before['sale_price']) !== ($product->sale_price === null ? null : (int) $product->sale_price));
+
             $product->save();
 
             return null;
@@ -1405,6 +1640,85 @@ class ProductEditorApiController extends Controller
         $product->save();
 
         return null;
+    }
+
+    /**
+     * RE-TAKE THE ANCHOR A HAND-TYPED SET PRICE IS MEASURED FROM. (Lane SP2)
+     *
+     * `products.set_price_basis` is the parts total at the moment the operator
+     * last typed this set's price. App\Support\SetPricing::adjustment() takes
+     * the difference between it and today's total off both of his figures, so
+     * the anchor is the whole of "reduce it by how much I reduced the product".
+     *
+     * ── THE SEVEN THINGS THAT CAN HAPPEN TO A MEMBER, AND THE ANSWER ───────
+     *
+     *   A MEMBER IS REPRICED DOWN — no save happens on the set, the anchor is
+     *   untouched, the parts total falls and the set falls with it by the same
+     *   fils. This is the feature.
+     *
+     *   A MEMBER GOES ON SALE — the parts total is sale-aware, so the set
+     *   follows it down for exactly as long as the sale runs.
+     *
+     *   THAT MEMBER'S SALE ENDS — the total climbs back to the anchor, the
+     *   difference returns to zero and the set returns to the typed price. The
+     *   reduction is a function of today, never of the lowest price ever seen.
+     *
+     *   A MEMBER IS REMOVED FROM THE BOX — a membership change, so this
+     *   re-anchors. The alternative is a set that silently drops by the whole
+     *   price of a product the operator took OUT of it, which is not a price
+     *   reduction and could empty a box down to the floor. His typed price
+     *   stands and the panel shows the new total beside it so he can decide.
+     *
+     *   A MEMBER IS ADDED — the same, in the other direction. Without the
+     *   re-anchor the box would simply be worth more than its anchor, the
+     *   difference would be negative, and max(0, ...) would hold the set at the
+     *   typed price for ever after; re-anchoring keeps the arithmetic honest
+     *   from today.
+     *
+     *   A MEMBER IS DELETED FROM THE CATALOGUE — nobody saves the set, so no
+     *   re-anchor can happen. Handled where it has to be, on the READ side:
+     *   SetPricing::tally() counts membership rows whose product is gone and
+     *   adjustment() refuses to move a set that has one. See its note.
+     *
+     *   THE OPERATOR RE-TYPES THE PRICE — a changed `price` or `sale_price` is
+     *   a trigger. He was looking at today's total when he typed it, so today's
+     *   total is what it means.
+     *
+     * And the two that are not about members at all: switching INTO `fixed`
+     * from a discount mode (he is now typing a number, so it needs a meaning),
+     * and the panel's "Start again from today's total" button, which is the
+     * only way to re-anchor without retyping the same figure.
+     *
+     * ── WHY A NULL ANCHOR IS A TRIGGER ────────────────────────────────────
+     *
+     * `$before['basis'] === null` is every set that existed before this shipped.
+     * The first time one is saved from this screen it takes its anchor, and
+     * because the anchor is today's total the reduction at that instant is
+     * ZERO — the price does not move, on the shop or on the screen. Applying
+     * the package changes no price anywhere; saving a set starts it following
+     * its members from that point on, with the panel printing the anchor it
+     * just took.
+     */
+    private function anchorFixedPrice(Product $product, bool $reanchor): void
+    {
+        if (! $reanchor) {
+            return;
+        }
+
+        /*
+         * The membership rows were rewritten one statement ago and the relation
+         * on this instance is whatever was loaded before that, so both the memo
+         * and the relation are statements about the box as it used to be.
+         */
+        SetPricing::forget((int) $product->id);
+        $product->unsetRelation('setItems');
+
+        $product->set_price_basis = SetPricing::partsTotal($product);
+
+        // Read again by payload() once this is saved, and the write above is
+        // what it must see.
+        SetPricing::forget((int) $product->id);
+        $product->unsetRelation('setItems');
     }
 
     /* --------------------------------------------------------------- slugs */
