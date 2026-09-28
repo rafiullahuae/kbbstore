@@ -167,6 +167,7 @@ class UgcVideoController extends Controller
             'transcoder' => $this->probe($notes, 'the ffmpeg check', [
                 'available' => false,
                 'blocker' => null,
+                'reason' => null,
                 'teaser_seconds' => UgcTranscoder::TEASER_SECONDS,
                 'teaser_size' => UgcTranscoder::TEASER_WIDTH.'x'.UgcTranscoder::TEASER_HEIGHT,
             ], fn () => [
@@ -189,6 +190,20 @@ class UgcVideoController extends Controller
                  * it as prose; it is escaped there regardless.
                  */
                 'blocker' => $this->transcoder->blocker(
+                    $this->transcoder->canSpawn(),
+                    $this->transcoder->binary()
+                ),
+                /*
+                 * THE SAME ANSWER AS A KEY, for the places a paragraph will not
+                 * fit — the chip at the top of the clips list, and the remedy
+                 * note under it. That chip used to hard-code "No ffmpeg here",
+                 * which is the wrong half of the story on this very shop: see
+                 * UgcTranscoder::reason() for what it cost.
+                 *
+                 * ONE OF A CLOSED SET or null. The screen maps it to its own
+                 * words and never prints it.
+                 */
+                'reason' => $this->transcoder->reason(
                     $this->transcoder->canSpawn(),
                     $this->transcoder->binary()
                 ),

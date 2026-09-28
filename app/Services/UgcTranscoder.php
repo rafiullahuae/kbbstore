@@ -166,6 +166,19 @@ class UgcTranscoder
         .'or a teaser, so neither was made. The video itself is uploaded and being served. Press the cut '
         .'button on this clip to try again on a request of its own.';
 
+    /**
+     * The two ways this server can be unable to cut, as keys.
+     *
+     * Constants rather than bare strings because they cross a boundary: the
+     * admin payload carries one and resources/views/admin/partials/
+     * ugc-library-screen.blade.php switches on it. A typo on either side would
+     * fall through to the safe arm and say nothing, which is the failure this
+     * pair exists to end.
+     */
+    public const REASON_NO_FFMPEG = 'no_ffmpeg';
+
+    public const REASON_NO_SPAWN = 'no_spawn';
+
     /** §0b.1: 2.5 seconds, the length the byte table was measured at. */
     public const TEASER_SECONDS = '2.5';
 
@@ -238,6 +251,39 @@ class UgcTranscoder
      */
     public function blocker(bool $canSpawn, ?string $binary): ?string
     {
+        return match ($this->reason($canSpawn, $binary)) {
+            self::REASON_NO_FFMPEG => self::NOTE_NO_FFMPEG,
+            self::REASON_NO_SPAWN => self::NOTE_NO_SPAWN,
+            default => null,
+        };
+    }
+
+    /**
+     * The same question as blocker(), answered as a KEY rather than a sentence.
+     *
+     * ── WHY A SCREEN NEEDS THE KEY AND NOT ONLY THE SENTENCE ────────────────
+     *
+     * blocker() is a paragraph, which is right beside the thing it explains and
+     * wrong in a chip. So the clips list wrote its own three-word summary — and
+     * it wrote `No ffmpeg here — you choose the cover`, HARD-CODED, on every box
+     * that could not cut. On the owner's server that sentence is FALSE:
+     * /usr/bin/ffmpeg is installed and PHP-FPM is not allowed to start it
+     * (docs/SERVER-PROC-OPEN.md §1, reproduced there). The first thing he sees
+     * when he opens Content → Shoppable video → All clips has therefore been
+     * sending him to install a program he already has — which is the exact
+     * mistake blocker() was added to stop, surviving one layer further out
+     * because the screen had a bool and no way to ask which.
+     *
+     * A key, so the screen picks from ITS OWN fixed set of words instead of
+     * guessing or printing a paragraph in a pill. Rule 5's shape: the server
+     * returns one of a closed set, and the client maps that set to markup it
+     * owns — never the other way round.
+     *
+     * PURE, exactly as blocker() is, and blocker() is now defined in terms of
+     * it so the two can never disagree about which world a box is in.
+     */
+    public function reason(bool $canSpawn, ?string $binary): ?string
+    {
         /*
          * ORDER MATTERS, and this is the order that tells the truth. A box with
          * neither ffmpeg nor proc_open is a box whose first job is to get
@@ -246,11 +292,11 @@ class UgcTranscoder
          * reported first and the spawn fault only when there IS something to run.
          */
         if ($binary === null) {
-            return self::NOTE_NO_FFMPEG;
+            return self::REASON_NO_FFMPEG;
         }
 
         if (! $canSpawn) {
-            return self::NOTE_NO_SPAWN;
+            return self::REASON_NO_SPAWN;
         }
 
         return null;
