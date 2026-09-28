@@ -311,3 +311,27 @@
  "workLabelPx": null,
  "workValuePx": null
 }
+{
+ "shot": "seo-image-hand-picked-kept-1280",
+ "viewport": 1280,
+ "scrollWidth": 1280,
+ "overflows": false,
+ "mode": null,
+ "priceBox": "129.00",
+ "saleBox": null,
+ "tiles": null,
+ "working": [],
+ "workingRows": 0,
+ "followNote": null,
+ "reanchorButton": null,
+ "ogState": "Chosen by hand. Changing the main image will not replace it. Use the main image",
+ "ogAuto": 0,
+ "ogHand": 1,
+ "ogBox": "/uploads/products/ceramide-share-card.png",
+ "mainImage": "http://127.0.0.1:8700/uploads/products/ceramid…",
+ "backToAuto": true,
+ "workLabelPx": null,
+ "workValuePx": null
+}
+{"panel":"panel-seo-image-hand-picked-kept-390","width":390,"panelWidthPx":362,"panelHeightPx":885}
+{"panel":"panel-seo-image-hand-picked-kept-1280","width":1280,"panelWidthPx":660,"panelHeightPx":825}
