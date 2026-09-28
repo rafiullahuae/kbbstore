@@ -134,8 +134,43 @@ final class ImageVariants
      * pixels. 800 is the same frame at ratio 3 and a 2x desktop. Nothing
      * larger is generated because no tile frame on this site is wider than
      * 399 CSS pixels, so 800 already covers every case a browser can ask for.
+     *
+     * ── AND 200, WHICH IS THE THUMBNAIL TIER (Lane IM) ─────────────────────
+     *
+     * THE OWNER'S WORDS: "the products gallery thumbnails must load the
+     * thumbnail sizes, not the full image ... our system must be capable to get
+     * only the 100x100 thumbnail size."
+     *
+     * He is right, and the list above is one reason why. The gallery strip is
+     * `.gthumb`, a fixed 66px square on a desktop and 56px on a phone
+     * (kbb-product.css:120, kbb.css:2129) — measured in Chromium, 62 and 52 CSS
+     * pixels of picture once the 2px border is taken off. The SMALLEST thing
+     * this class could offer such a box was a 400px-wide file. At
+     * device-pixel-ratio 2 that box wants 124 real pixels and was handed 400;
+     * the file is about 20KB where 7KB carries every pixel the square can show.
+     * Four times the area, on every thumbnail, forever.
+     *
+     * 200 is chosen against the worst case a browser can ask for, which is
+     * ratio 3: 66 x 3 = 198. So a 200w copy is the exact size of a gallery
+     * thumbnail on the densest handset sold, and no screen can ask for more
+     * than the strip declares in `sizes` (66px). It is also right for the
+     * "frequently bought together" row (a fixed 90px square: 90 x 2 = 180) and
+     * for the shop tile at ratio 1 on a phone (50vw of 390 = 195).
+     *
+     * WHAT IT COSTS. A 200w copy of a 1000x1000 JPEG measured here is 7.4KB —
+     * about 6% of what the 400w and 800w pair already cost together, so the
+     * cache grows by roughly a sixteenth. That is the cheapest width on the
+     * list by a wide margin and the one the most elements on the site resolve
+     * to.
+     *
+     * ADDING A WIDTH MAKES EVERY ALREADY-SIZED PHOTOGRAPH INCOMPLETE AGAIN, on
+     * purpose: isComplete() asks for every width, so Media Library → Image
+     * Sizes will report a fresh backlog after this ships and the owner runs the
+     * batch once more. Nothing breaks in the meantime — srcsetFor() lists only
+     * what is on disk, so a catalogue with 400w and 800w copies and no 200w
+     * ones goes on serving exactly what it serves today.
      */
-    public const WIDTHS = [400, 800];
+    public const WIDTHS = [200, 400, 800];
 
     /** The web-root directory the copies live under. */
     public const DIR = 'img-cache';
@@ -408,7 +443,8 @@ final class ImageVariants
     /**
      * The "frequently bought together" row: `.kbb-fbt-item img` is a fixed 90px
      * square at every viewport, declared inline on the element itself, so there
-     * is no viewport term to write. 400w covers it to device-pixel-ratio 4.
+     * is no viewport term to write. The 200w copy covers it to
+     * device-pixel-ratio 2 and 400w to ratio 4.
      */
     public static function fbtSizesAttribute(): string
     {
@@ -455,8 +491,18 @@ final class ImageVariants
 
     /**
      * And what a gallery THUMBNAIL will be drawn at: `.gthumb` is a fixed 66px
-     * square at every viewport (kbb-product.css:82), so there is no viewport
-     * term to write. 400w covers it to device-pixel-ratio 6.
+     * square at every viewport (kbb-product.css:120), so there is no viewport
+     * term to write.
+     *
+     * 66px is DELIBERATELY A SHADE ABOVE the box. The border is 2px a side and
+     * `box-sizing` is border-box, so Chromium draws 62 CSS pixels of picture on
+     * a desktop and 52 on a phone, where `.pdp .gthumb` narrows to 56px. The
+     * declaration rounds up for the same reason every other one in this class
+     * does: overstating costs at most one step up a candidate list, and
+     * understating serves a file too small for the box.
+     *
+     * With the 200w tier this resolves to the 200w copy at every device-pixel
+     * ratio up to 3 (66 x 3 = 198), which is every screen a shopper can bring.
      *
      * Thumbnails use srcsetFor(), not detailSrcsetFor(): a 66px box has no use
      * for a 1000px original, so there is nothing to read a header for.
@@ -464,6 +510,71 @@ final class ImageVariants
     public static function thumbSizesAttribute(): string
     {
         return '66px';
+    }
+
+    /**
+     * ONE copy of a photograph, at a stated width, for a box that cannot carry
+     * a srcset — or the original unchanged when that copy is not on disk.
+     *
+     * WHY A SINGLE URL AND NOT A SRCSET. Everything else in this class hands
+     * the browser a list and lets it choose, which is free and always better.
+     * It is only available to an <img>. The basket drawer, the basket page, the
+     * checkout's browsed-and-received lines and the order-received summary draw
+     * their line thumbnails as a CSS `background-image` on a 42px square — a
+     * deliberate choice made long before any of this existed, because those
+     * boxes crop with `center/cover` and an <img> would need object-fit and a
+     * positioned wrapper per line. A CSS background takes exactly one URL.
+     * `image-set()` exists, but it selects on device-pixel-ratio rather than on
+     * width, so it cannot express "this box is 42px" — the thing that actually
+     * decides which file is right here.
+     *
+     * So: pick the width once, on the server, from the same files the srcset
+     * would have offered. A basket with five lines was pulling five
+     * full-resolution photographs — ~290KB each measured on this catalogue's
+     * sizes — to paint five 42px squares.
+     *
+     * WHY 400 AND NOT 200 AT THOSE CALL SITES. `.kc-th` is 42px, and 200w is
+     * already five times what it can show; 400w would look like the wrong
+     * choice. It is not, for one reason that is specific to those boxes: their
+     * size is a SETTING. `--cp-thumb` and `--cp-thumb-m` are set from
+     * Appearance → Cart panel, so the owner can make that square 120px without
+     * this file knowing. A single URL has no second candidate to fall back to
+     * when that happens, and a soft basket thumbnail is a defect the shop keeps
+     * forever. 400w covers a 133px square at ratio 3 and still costs about 7%
+     * of the original. The caller states the width; this only refuses to invent
+     * one.
+     *
+     * NEVER RETURNS SOMETHING THAT IS NOT THERE. The original comes back
+     * unchanged unless a real file is found for the width asked for, which is
+     * the same promise srcsetFor() makes and for a stronger reason: with a
+     * background there is no `src` underneath to fall back to, so a URL that
+     * 404s is an empty square.
+     *
+     * AND IT CANNOT BE POINTED AT ANYTHING. $width must be one of WIDTHS —
+     * nothing else names a directory this class writes, and a caller that could
+     * pass an arbitrary integer would be building a path segment out of one.
+     * The image reference goes through the same split() as everything else
+     * here, which rejects "..", a segment that is empty or ".", a NUL, a query
+     * or fragment, another origin, a non-resizable extension, and the cache's
+     * own directory. This adds no new way in.
+     */
+    public static function variantUrl(string $image, int $width): string
+    {
+        if (! in_array($width, self::WIDTHS, true)) {
+            return $image;
+        }
+
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return $image;
+        }
+
+        [$prefix, $rel, $fsRel] = $parts;
+
+        return is_file(public_path(self::DIR.'/'.$width.'/'.$fsRel))
+            ? $prefix.'/'.self::DIR.'/'.$width.'/'.$rel
+            : $image;
     }
 
     /**

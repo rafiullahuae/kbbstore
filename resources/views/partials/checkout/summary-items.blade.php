@@ -8,7 +8,9 @@
         // a line keeps one colour in both languages.
         $name = $p?->t('name');
         $img = $item->variant?->image ?: $p?->image;
-        $imgCss = CssUrl::value($img);
+        // (Lane IM) Order summary line thumbnail: a small square drawn from the
+        // full-size photograph. See ImageVariants::variantUrl().
+        $imgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $img, 400));
         $thumb = $imgCss !== ''
             ? "background-image:url('" . e($imgCss) . "')"
             : 'background:' . Gradient::for(($p?->brand?->name ?? '') . ($p?->name ?? ''));

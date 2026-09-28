@@ -119,7 +119,10 @@ it('makes the copies for a photograph that was already in the shop', function ()
         ->assertOk()
         ->json();
 
-    expect($body['made'])->toBe(2);
+    // (Lane IM) One photograph, every width. `sized` is the count of
+    // PHOTOGRAPHS finished and stays 1 whatever WIDTHS holds, which is the
+    // distinction this pair is here to keep.
+    expect($body['made'])->toBe(count(ImageVariants::WIDTHS));
     expect($body['sized'])->toBe(1);
     expect($body['done'])->toBeTrue('one photograph did not exhaust the catalogue');
 

@@ -3,6 +3,64 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.314
+**A set no longer offers "buy 3 and save" — and the box contents take that spot
+instead.** Exactly as you marked up.
+
+### WHAT MOVED
+
+On a set's page, the **1 unit / 2-pack bundle / 3-pack bundle** block is gone,
+and **What is in this set** now sits in that space — in the buy column, right
+above *In stock · ready to ship* and the Add to cart button. It is no longer a
+section you have to scroll down to find.
+
+It is a **list**, one product per row: picture, brand, name, how many, price.
+Underneath: *Bought separately AED 325 · Set price AED 269 · You save AED 56*.
+
+A member that is not published is still listed but not clickable, so the page
+never sends a customer to a page that is not there. A set with no price set says
+nothing about saving rather than claiming a saving of zero.
+
+**Nothing changes on an ordinary product.** It keeps its bundle offers exactly as
+before — measured to the pixel, the same page in every respect.
+
+### ON A PHONE
+
+Designed for it rather than left to reflow. The picture shrinks, the row tightens,
+and the quantity and price share one line instead of stacking — which in the
+narrowest column on the shop saves 16px on every row.
+
+**A box with more than six products shows five and folds the rest** behind *Show
+all*. Twelve rows would put 700px between the price and the Add to cart button,
+which on a phone means the button is off the screen. Folding brings it back up by
+**524px**. The count and the totals always cover every product, folded or not.
+
+### WHERE IT IS IN THE ADMIN
+
+**Catalog → Product editor → Brand** gains one line of help on a set: a box
+usually holds more than one brand, so *No brand* is the normal answer and the set
+page simply does not print a brand line. Brand was already optional on every
+product type — nothing changed, it just now says so.
+
+**No new setting and no new screen.**
+
+### ▲ ONE THING FOR YOU TO DECIDE
+
+**A set bought at quantity 3 still gets the old bulk discount in the basket.**
+The shop no longer *advertises* a bundle on a set, but the basket still *applies*
+one. Changing that alters what a customer in mid-checkout is charged, so it is
+not something to switch on quietly with a package. Say the word and it goes in
+its own patch with a before and after.
+
+### FILES
+
+`app/Services/BundleService.php`, `resources/views/store/product.blade.php`,
+`resources/views/partials/set-contents-panel.blade.php`,
+`resources/views/partials/set-contents-row.blade.php` (new),
+`app/Services/Translation/InterfaceStrings.php`,
+`admin/partials/product-editor-screen.blade.php`, and one cache-clearing
+migration.
+
 ## 2.60.313
 **The shoppable-video popup is now the video.** No bands, product boxes on the
 picture, credit on the picture. And the clips screen finally tells you the truth

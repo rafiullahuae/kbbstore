@@ -103,9 +103,28 @@
                     $shotImage = $shot['image'] ?? null;
                     $shotAlt = $product->altFor($shotImage, $i, $shotCount);
 
-                    // What the 66px square itself needs: srcsetFor(), because a
-                    // thumbnail has no more use for a 1000px original than a
-                    // shop tile does, and so no header to read.
+                    /* What the 66px square itself needs: srcsetFor(), because a
+                       thumbnail has no more use for a 1000px original than a
+                       shop tile does, and so no header to read.
+
+                       (Lane IM) THIS LIST NOW STARTS AT 200w, and that is the
+                       owner's ask answered: "the products gallery thumbnails
+                       must load the thumbnail sizes, not the full image".
+                       ImageVariants::WIDTHS had no width below 400, so the
+                       smallest thing a 66px square could be offered was a
+                       400px file -- four times the area it can show at
+                       device-pixel-ratio 2. With `sizes` declaring 66px, a
+                       200w copy is what every screen up to ratio 3 now
+                       resolves to.
+
+                       AND IT IS STILL '' FOR A PHOTOGRAPH WITH NO COPIES,
+                       which is the case that mattered more than the width did.
+                       The batch behind these files walked products.image and
+                       nothing else until Lane IM, so shots two onwards had no
+                       copies at all and each 66px square pulled the whole
+                       photograph -- 290KB apiece, measured. Fixing the width
+                       without fixing the batch would have changed nothing on
+                       this shop. See Admin\ImageSizesApiController::images(). */
                     $thumbSrcset = $shotImage ? ImageVariants::srcsetFor($shotImage) : '';
 
                     /* AND WHAT THE MAIN FRAME WILL NEED WHEN THIS THUMBNAIL IS

@@ -14,7 +14,9 @@
 
     $product = $item->product;
     $image = $product?->image;
-    $imageCss = CssUrl::value($image);
+    // (Lane IM) The order-received line thumbnail, drawn from the full-size
+    // photograph. See ImageVariants::variantUrl().
+    $imageCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $image, 400));
     $thumb = $imageCss !== ''
         ? "background-image:url('" . e($imageCss) . "')"
         : 'background:' . Gradient::for((string) ($item->brand ?? '') . (string) $item->name);
