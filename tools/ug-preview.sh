@@ -12,7 +12,7 @@
 # clip as MEDIA_ERR_SRC_NOT_SUPPORTED.
 set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-DIR=$APP/storage/framework/testing/ug-preview
+DIR=$APP/storage/framework/testing/ug-preview${UG_SUFFIX:-}
 ROOT=$DIR/webroot
 DB=$DIR/preview.sqlite
 PORT=${1:-8961}
@@ -42,7 +42,18 @@ php "$APP/artisan" tinker "$APP/tools/ug-seed.php" >>"$DIR/migrate.log" 2>&1 \
   || { tail -40 "$DIR/migrate.log"; exit 1; }
 
 cp "$APP/tools/m1-router.php" "$ROOT/router.php"
-php -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
+
+# UG_NO_PROC_OPEN=1 boots the SAME app on a PHP that cannot start a program --
+# which is the owner's Cloudways box exactly: /usr/bin/ffmpeg is a real file and
+# proc_open is in the FPM pool's disable_functions (docs/SERVER-PROC-OPEN.md §1).
+# UgcTranscoder::canSpawn() then answers false, reason() answers no_spawn, and
+# the clips screen has to say so without guessing. There is no other way to
+# reach that arm on this container.
+if [ "${UG_NO_PROC_OPEN:-}" = "1" ]; then
+  php -d disable_functions=proc_open -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
+else
+  php -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
+fi
 echo $! > "$DIR/server.pid"
 sleep 2
 echo "preview on http://127.0.0.1:$PORT  pid $(cat "$DIR/server.pid")  root $ROOT"

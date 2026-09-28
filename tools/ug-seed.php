@@ -23,6 +23,18 @@ use App\Models\UgcVideo;
 
 app(\App\Services\SettingsService::class)->setModule('shoppable_video', true);
 
+/* Arabic on, so the RTL evidence is the REAL mirrored storefront at /ar/... and
+   not a `dir` attribute flipped by the instrument. The rail's whole geometry is
+   inset-inline-*, and the thing worth a screenshot is a browser resolving those
+   against a page that is genuinely right-to-left. */
+\App\Models\Setting::query()->updateOrCreate(
+    ['key' => \App\Support\Locale::SETTING_ENABLED], ['value' => '1']
+);
+\App\Models\Setting::query()->updateOrCreate(
+    ['key' => \App\Support\Locale::SETTING_RTL], ['value' => '1']
+);
+\App\Services\SettingsService::forgetMemo();
+
 $brand = Brand::updateOrCreate(['slug' => 'ug-brand'], ['name' => 'Beauty of Joseon']);
 $brand2 = Brand::updateOrCreate(['slug' => 'ug-brand-2'], ['name' => 'COSRX']);
 
