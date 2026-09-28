@@ -454,8 +454,15 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
     <div class="qv-slot"><div class="qv-load">{{ __('store.quick_view.loading') }}</div></div>
   </div>
 </div>
+{{-- `.pc .ph{position:relative}` opened the block below and it is GONE, not
+     renamed. Lane PG: the quick-view button is positioned against the tile's
+     photograph frame, that frame is `.kbb-card-thumb` now, and kbb.css already
+     declares it `position:relative` — a second copy in a style element on every
+     page of the shop is a declaration that can drift from the one that matters.
+     The hover selector inside had to move with the card and could not simply be
+     dropped: left as `.pc:hover` the button would never have appeared again,
+     which is why every page of the shop moves by these two lines. --}}
 <style>
-.kbb-card-thumb{position:relative}
 /* RTL-PHYSICAL: centring idiom (left:50% + translate(-50%,...)). */
 .qv-btn{position:absolute;left:50%;bottom:10px;transform:translate(-50%,6px);opacity:0;transition:.18s;background:rgba(255,255,255,.95);border:1px solid #e6dbe0;border-radius:99px;padding:6px 16px;font-size:11px;letter-spacing:.03em;cursor:pointer;color:#5e545a;white-space:nowrap;z-index:3}
 .kbb-tile:hover .qv-btn,.qv-btn:focus-visible{opacity:1;transform:translate(-50%,0)}
