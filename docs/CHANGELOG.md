@@ -3,6 +3,60 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.308
+A web address that came from the old WordPress site is now **checked before the
+shop puts it on a page**. Nothing you can see changes.
+
+### WHAT THIS IS ABOUT
+
+Four places took an address straight out of the database and printed it into the
+page: a **menu row's link**, a **menu row's highlight colour**, a **review
+photograph**, and the **social profiles the shop declares to Google**.
+
+The shop escapes text before printing it, which handles quotes and angle
+brackets. It does not handle an address whose *scheme* is the problem —
+`javascript:` contains no character an escaper touches, so it arrived in the link
+exactly as it was written and the browser would run it on click.
+
+None of these can be typed in by a shopper, and none can be typed in by you: the
+Mega Menu screen already rejects a colour that is not a colour, and a review
+photograph is uploaded by the shop itself. **They come from the import.** The
+WordPress database is not one this shop authored, and this had to land before the
+products and menus come across rather than after.
+
+### WHAT CHANGES ON YOUR SHOP
+
+Nothing, on any value your shop can currently hold. A link, a colour, a
+photograph and a social profile that are ordinary are printed exactly as before,
+byte for byte — that is pinned by a test, because a security fix that quietly
+rewrites a working link is a worse outcome than the hole.
+
+What changes is what happens to a bad one after the import:
+
+- a link the browser should not follow points at the **shop's home page**, and
+  the menu row is still drawn with its own label;
+- a colour that is not a colour draws the row **plain**;
+- a review photograph the shop cannot serve is **not drawn**, and the photo count
+  on the review matches what you see;
+- a social profile that is not a page is **left out** of what the shop tells
+  Google about itself.
+
+An imported photograph still sitting on the old host keeps working. This checks
+the *scheme*, not the host — blocking the old host would empty the review section
+on the day of the import.
+
+### WHERE IT IS IN THE ADMIN
+
+Nowhere new. There is no switch and no setting. **Appearance → Header → Mega
+Menu** and **Appearance → Footer → Social links** behave exactly as they did.
+
+### FILES
+
+`app/Support/SafeUrl.php` (new), `app/Services/NavigationService.php`,
+`app/Support/Seo.php`, `resources/views/partials/reviews.blade.php`,
+`resources/views/partials/footer.blade.php`, plus two test files and the
+screenshot tooling.
+
 ## 2.60.307
 The banner editor now has a **Save button**, a background, button colours and a
 choice of where the title sits — and two settings that had no control at all.
