@@ -101,8 +101,11 @@ return new class extends Migration
                 ."change.\n"
                 ."The opened player also gets previous/next arrows (keyboard arrows too,\n"
                 ."mirrored in Arabic, greyed out at the first and last clip), and its\n"
-                ."product thumbnail is square again instead of a stretched rectangle, which\n"
-                ."gives the product name about 85px more room.\n"
+                ."product thumbnail is square again instead of a stretched rectangle: it\n"
+                ."was 129x46 on a phone and 138x46 on a desktop, and it is 46x46 on both,\n"
+                ."which gives the product name 82px more room on a phone and 91px on a\n"
+                ."desktop -- a name like 'Fresh That Lasts Deodorant' now fits on one line\n"
+                ."instead of two.\n"
                 ."No setting changed. A page with no video rail on it is unchanged.\n";
         }
     }

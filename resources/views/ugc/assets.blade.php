@@ -359,8 +359,13 @@
  * has product thumbnail must be square, not rectangle etc. so we will have more
  * space for the product name".
  *
- * MUTATION NOTE: drop the `:not(.ugcp-th)` and the thumbnail is a rectangle
- * again; UgcPlayerCardTest goes red on the width-equals-height assertion. */
+ * MUTATION NOTE, RUN, and its result is in the evidence rather than guessed at.
+ * Drop the `:not(.ugcp-th)` and the thumbnail does NOT go back to a rectangle —
+ * `aspect-ratio:1` below survives — it INFLATES: measured 129x129 at 390px
+ * (docs/lane-ug2-shots/player-after.json, `en-390-last-mutated`), taking the
+ * product name's box from 211px wide back down to 129px, which is the same
+ * width the name had before this change and the same harm. UgcPlayerNavTest's
+ * "keeps the player's product thumbnail square" goes red. */
 .ugcp-card > div:not(.ugcp-th){min-width:0;flex:1}
 .ugcp-card .ugcr-bd{gap:6px}
 .ugcp-card .ugcr-nm{font-size:11.5px;-webkit-line-clamp:2;margin-top:1px}

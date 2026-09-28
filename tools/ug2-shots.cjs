@@ -25,7 +25,22 @@ const BASE = process.env.BASE || 'http://127.0.0.1:8989';
 const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const OUT = process.env.OUT || 'docs/lane-ug2-shots';
 const TAG = process.env.TAG || 'after';
-const PATHNAME = process.env.PATHNAME || '/about';
+/*
+ * THE HOMEPAGE, AND THE DEFAULT IS PART OF THE INSTRUMENT.
+ *
+ * This read '/about' and that is the WRONG RAIL to measure. A CMS page's
+ * content column is 695px wide, so tiles 4-6 are clipped by the rail's own
+ * overflow and the IntersectionObserver refuses them before the cap is ever
+ * reached — the gate that binds there is visibility, and the gate that binds
+ * on the owner's screenshot is the CAP. Run against /about at 1600 this script
+ * reports tiles 5 and 6 as vis=0 and not playing, which looks exactly like the
+ * defect still being there and is not: it is a different rail.
+ *
+ * It cost one confused run in this lane, with the fix already in the tree. His
+ * rail is the homepage "Shop the look" block (tools/ug2-seed.php sets
+ * `home_section`), so that is what this measures unless told otherwise.
+ */
+const PATHNAME = process.env.PATHNAME || '/';
 
 const VIEWPORTS = [
   { name: '390', width: 390, height: 844 },
