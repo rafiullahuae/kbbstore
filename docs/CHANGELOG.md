@@ -3,6 +3,83 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.313
+**The shoppable-video popup is now the video.** No bands, product boxes on the
+picture, credit on the picture. And the clips screen finally tells you the truth
+about why your covers are not being cut — **which is not what it has been
+telling you.**
+
+### ▲ THE 2.5-SECOND CLIP: YOUR SERVER HAS ffmpeg. PHP IS NOT ALLOWED TO RUN IT.
+
+The screen has been showing you *"No ffmpeg here — you choose the cover"*. **That
+is wrong, and it has been wrong on the first screen of this feature since it
+shipped.** `ffmpeg` is installed on your server. What is blocked is PHP's
+permission to start any program at all (`proc_open` is switched off in your
+PHP pool, which is a normal hardening default on managed hosting).
+
+So you have been told to install something you already have.
+
+**The fix is one line, and it is yours to paste — no support round trip.**
+
+> Cloudways → **Application Settings → Cron Job Management → Add New Cron →
+> Advanced**, and add:
+>
+> ```
+> * * * * * cd /path/to/your/application && php artisan schedule:run >> /dev/null 2>&1
+> ```
+
+The command line does not have that restriction, so from a cron job the shop can
+run ffmpeg perfectly well. Within a minute of adding it, **every clip you have
+already uploaded** gets its cover and its 2.5-second loop — you do not re-upload
+anything.
+
+The clips screen now says exactly this, in place of the old sentence, and only on
+a server where the cut genuinely cannot happen.
+
+### THE POPUP
+
+Tap a clip and the **video fills the frame**. Previously the frame was sized to
+your phone screen while the picture was fitted inside it, so they were different
+rectangles — and everything else is positioned against the *frame*:
+
+- on a phone there was a **75px band above and below**, the creator's name sat up
+  on the top band, and **76 of the product row's 163px hung below the video**;
+- on a desktop there was a **35px band each side** and the product row overhung
+  the picture at both ends.
+
+Now: **no band on any edge**, at any width. The product boxes sit **on the
+video, along its bottom edge, to the pixel**. The creator's name sits **on the
+video**. Nothing else is in the popup. It works the same in Arabic, mirrored.
+
+Escape closes it, Tab stays inside it, and focus returns to the clip you tapped.
+
+### WHY THERE IS STILL A LOOP FILE AT ALL
+
+We measured dropping it and just looping the first 2.5 seconds of the full
+video. On a **slower** connection that costs **10.9 MB per clip** — more than the
+whole video — because the loop keeps re-fetching what the phone has thrown away.
+The 2.5-second file is **97 KB**. With four clips playing at once, that is the
+difference between ~400 KB and ~40 MB of a customer's data for a section they
+have not even tapped.
+
+### ▲ TWO THINGS FOR YOU TO DECIDE
+
+1. **The video's own play/pause bar overlaps the product boxes.** It is switched
+   on at **Appearance → Shoppable video → Motion → "Show the player's own
+   controls"**. Turn it off, or tell us to lift the product row clear of it.
+2. **On a phone there is still dimmed space above and below a tall clip.** That
+   is the **page showing through**, not a black band — the video itself now
+   reaches every edge of its frame. Filling the whole screen would mean cropping
+   about 18% off the sides of every clip, which cuts faces off. TikTok and
+   Instagram do it the way it is now. Say the word if you want it cropped.
+
+### FILES
+
+`resources/views/ugc/assets.blade.php`, `ugc/rail.blade.php`,
+`app/Services/UgcTranscoder.php`, `app/Http/Controllers/Admin/UgcVideoController.php`,
+`admin/partials/ugc-library-screen.blade.php`, `docs/SERVER-PROC-OPEN.md`, and one
+cache-clearing migration.
+
 ## 2.60.312
 **▲ READ THIS ONE BEFORE THE IMPORT, NOT AFTER.** Two things your WordPress site
 is carrying can only be collected **while WordPress is still running**, and one
