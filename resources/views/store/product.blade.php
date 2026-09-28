@@ -353,6 +353,35 @@
         </div>
         @endif
 
+        {{-- ═══════════════════════════════════════════════════════════════
+             WHAT IS IN THIS SET — IN THE SLOT THE BULK STRIP USED TO FILL.
+             (Lane SF)
+
+             "the Set product will not have bundle purchase, instead of that
+              section, bring the What's inside there, and make it nice list,
+              not grid!"  — with an arrow drawn from the contents section far
+             down the page UP into this exact space.
+
+             So it is HERE: inside the buy column, after the variant/bundle
+             block above and before the stock line and Add to cart below. On a
+             phone the buy column stacks under the gallery, so the list lands
+             in the main flow at the same point in the reading order.
+
+             ▲ THE @if ABOVE AND THIS ARE MUTUALLY EXCLUSIVE BY CONSTRUCTION,
+               NOT BY LUCK. A set is never `$isVar` (a set has no variations)
+               and BundleService::forProduct() now answers an empty array for
+               one, so `$bundles` is falsy and neither branch above draws
+               anything. The panel itself renders NOTHING for a product that is
+               not a set. There is no product for which both appear, and no
+               product for which the old placement and this one both do —
+               SetBuyColumnTest pins all three.
+
+             ▲ AND IT IS INCLUDED EXACTLY ONCE ON THIS PAGE. The section-level
+               @include near the foot of the file was REMOVED in the same edit
+               that added this one; two includes would print the box's contents
+               twice and its saving twice. --}}
+        @include('partials.set-contents-panel')
+
         @php
             // Scarcity note, from the configured threshold. Only shown when the
             // count is genuinely known and genuinely low — an invented urgency
@@ -511,7 +540,6 @@
     </div>
   </div>
 
-@include('partials.set-contents-panel')
   @unless ($modules->hidden('fbt'))
 @include('partials.fbt')
 @endunless

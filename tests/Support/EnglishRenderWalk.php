@@ -579,7 +579,43 @@ final class EnglishRenderWalk
      * branch, per the note above about rebases rewriting every SHA behind this
      * constant.
      */
-    public const BASE_COMMIT = '18f6467b62f5eea561f8164b8c5d6f92cc39f061';
+    /*
+     * ── MOVED AGAIN — LANE SF (the set's contents into the buy column) ─────
+     *
+     * ONE PAGE MOVED, AND BY WHITESPACE ONLY. The diff was read before this
+     * constant was touched, and it is this, in its entirety:
+     *
+     *   product/{slug}   at byte 42926
+     *     before:  </div>⏎        ⏎                ⏎        <div class=" stockline out">
+     *     after:   </div>⏎        ⏎        ⏎        ⏎                ⏎        <div class=" stockline out">
+     *
+     * Two blank lines of indentation between two block elements. NOT ONE WORD
+     * of shopper-visible copy changed, no attribute changed, no element moved.
+     *
+     * WHERE IT COMES FROM. This lane moved one `@include` from the foot of
+     * store/product.blade.php into the buy column, where the quantity-bundle
+     * strip used to be. On a product that is NOT a set the panel renders
+     * nothing at all -- which is why the only trace of the move on an ordinary
+     * product page is the newline the include's own line contributes, lost at
+     * the foot and gained in the buy column.
+     *
+     * WHY THE PIN MOVED RATHER THAN THE TEMPLATE. Making this byte-neutral
+     * would mean writing the directive hard against the `@endif` above it,
+     * and CLAUDE.md records that a directive written hard against a closing
+     * directive is not compiled at all. Two blank lines between block elements
+     * is not worth that risk on the page every product in the catalogue is.
+     *
+     * WHAT A SET'S OWN PAGE DOES is not in this walk at all: the seeders make
+     * no sets, so `Product::query()->visible()->first()` is an ordinary
+     * product. The set page's change -- which is large, and deliberate, and
+     * what the owner asked for -- is pinned by SetBuyColumnTest instead, by
+     * position rather than by bytes.
+     *
+     * The commit named below is this lane's own and is reachable from this
+     * branch, per the note above about rebases rewriting every SHA behind this
+     * constant.
+     */
+    public const BASE_COMMIT = '093e18353bd8c6f03f9b9eb2249755d01dc938ca';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

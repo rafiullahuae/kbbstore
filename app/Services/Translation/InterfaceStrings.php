@@ -737,6 +737,47 @@ final class InterfaceStrings
             'set.page_heading' => 'What is in this set',
             'set.page_separately' => 'Bought separately',
             'set.page_set_price' => 'Set price',
+            /*
+             * ── THE LONG BOX'S DISCLOSURE (Lane SF) ─────────────────────────
+             *
+             * The contents list now sits in the BUY COLUMN, in the space the
+             * quantity-bundle strip used to occupy — which is above the stock
+             * line and the Add to cart button. A twelve-member box drawn in
+             * full there is seven hundred pixels between the price and the
+             * button, and on a phone that is the button off the bottom of the
+             * screen. So the list shows the first few and folds the rest into
+             * a <details>.
+             *
+             * BOTH WORDS ARE KEYED because both are printed: <summary> carries
+             * the two labels and CSS swaps them on `details[open]`, which is
+             * how a disclosure changes its own word with no script at all.
+             *
+             * trans_choice, with the count INSIDE the string: Arabic has six
+             * plural forms to English's two and ':count more' concatenated
+             * outside the translation cannot express any of them.
+             */
+            /*
+             * THE COUNT BESIDE THE LABEL, and it is not `set.contents`.
+             *
+             * The list's heading line is the same `.opt-label` the
+             * quantity-bundle strip used: a label, then a note. `set.contents`
+             * -- "In this set · 4 items" -- was written for a paragraph
+             * STANDING ALONE under a heading, and beside a label reading "What
+             * is in this set" it says "in this set" twice in one line. Seen on
+             * the rendered page, not in the source.
+             *
+             * Nor `cart.item_count`, which is the same two English words: it
+             * belongs to the cart, and the rule this file opens with is that a
+             * key is named for the component it lives in. Borrowing it would
+             * make rewording the basket reword the product page.
+             *
+             * The number counts PHYSICAL ITEMS, not rows -- a box of three
+             * products with two of one is four items -- which is why it is
+             * worth printing at all when the rows are right there to count.
+             */
+            'set.count_note' => ':count item|:count items',
+            'set.show_all' => 'Show :count more product|Show :count more products',
+            'set.show_fewer' => 'Show fewer',
             'checkout.secure_badge' => 'Secure checkout',
         ];
     }
