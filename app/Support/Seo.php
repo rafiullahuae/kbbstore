@@ -1291,6 +1291,103 @@ class Seo
             // page when the two are ever cited separately.
             if ($url)                      $node['url'] = $url;
 
+            /*
+             * ═════════════════════════════════════════════════════════════════
+             * A SET — AND WHY THE NODE STAYS A `Product`. (Lane SP)
+             * ═════════════════════════════════════════════════════════════════
+             *
+             * schema.org DOES have a better-fitting type, and it is called
+             * ProductCollection: "a set of products that are listed together,
+             * e.g. in an Offer", with `includesObject` naming what is in it.
+             * That is exactly what a Set is, so the honest answer to "is there
+             * a better type" is YES — and it is still not what this emits as
+             * the node's `@type`, for a reason worth stating rather than
+             * leaving as a preference:
+             *
+             *   GOOGLE'S PRODUCT STRUCTURED DATA SUPPORTS `Product` AND
+             *   `ProductGroup`. A ProductCollection node is valid schema.org
+             *   and is not a product rich result — no price, no availability,
+             *   no review stars in the listing. A set is bought as one unit at
+             *   one price and is exactly the thing those features describe, so
+             *   swapping the type would trade a working merchant listing for a
+             *   more precise vocabulary that nothing reads.
+             *
+             * So the node stays a Product and SAYS it is also a collection,
+             * which is what `additionalType` is for — a schema.org property,
+             * not an invention — and carries the box's contents in the
+             * collection's own `includesObject` / TypeAndQuantityNode shape. A
+             * consumer that understands ProductCollection gets the contents; a
+             * consumer that does not ignores two properties it has never heard
+             * of, which is what every crawler does with unknown properties.
+             *
+             * ▲ ABSENT ON EVERY ORDINARY PRODUCT. `$p['set']` is null unless
+             *   Store\ProductController is rendering a set, so the JSON-LD this
+             *   shop has been publishing is byte-identical for everything else.
+             */
+            $members = is_array($p['set'] ?? null) ? $p['set'] : [];
+
+            if ($members !== []) {
+                $node['additionalType'] = 'https://schema.org/ProductCollection';
+
+                $includes = [];
+
+                foreach ($members as $member) {
+                    $memberName = trim((string) ($member['name'] ?? ''));
+
+                    if ($memberName === '') {
+                        continue;
+                    }
+
+                    $entry = [
+                        '@type' => 'TypeAndQuantityNode',
+                        'amountOfThisGood' => max(1, (int) ($member['quantity'] ?? 1)),
+                        'typeOfGood' => ['@type' => 'Product', 'name' => $memberName],
+                    ];
+
+                    $memberBrand = trim((string) ($member['brand'] ?? ''));
+
+                    if ($memberBrand !== '') {
+                        $entry['typeOfGood']['brand'] = ['@type' => 'Brand', 'name' => $memberBrand];
+                    }
+
+                    $memberUrl = self::absolute(
+                        is_string($member['url'] ?? null) ? $member['url'] : null,
+                        $base
+                    );
+
+                    if ($memberUrl !== null && ($member['visible'] ?? false)) {
+                        // Only a member a crawler can actually FETCH. A URL
+                        // that 404s is worse than no URL: it tells Google this
+                        // shop cites pages that are not there.
+                        $entry['typeOfGood']['url'] = $memberUrl;
+                    }
+
+                    $includes[] = $entry;
+                }
+
+                if ($includes !== []) {
+                    $node['includesObject'] = $includes;
+                }
+            }
+
+            /*
+             * The product's own tags, as `keywords` — a schema.org Thing
+             * property and a comma-separated list, which is the form Google's
+             * own examples use. Absent unless the controller sent it, which it
+             * does for a set alone.
+             */
+            $keywords = array_values(array_filter(
+                array_map(
+                    static fn ($k) => trim((string) $k),
+                    is_array($p['keywords'] ?? null) ? $p['keywords'] : []
+                ),
+                static fn ($k) => $k !== ''
+            ));
+
+            if ($keywords !== []) {
+                $node['keywords'] = implode(', ', $keywords);
+            }
+
             // The price arrives as an exact decimal string built from the
             // integer minor units (see Money::decimalString). price_aed is the
             // older float-valued key, still accepted for the Schema Inspector

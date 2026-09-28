@@ -533,6 +533,30 @@ class Product extends Model
      */
     public function effectivePrice(): int
     {
+        /*
+         * ── A SET WHOSE PRICE IS A RULE RATHER THAN A NUMBER (Lane SP) ─────
+         *
+         * The owner asked for a set price that follows its members down: drop
+         * the toner by AED 5 and the set drops by AED 5. That cannot be a
+         * stored figure -- five different writers change a product's price and
+         * one of them would be missed -- so a set may instead store the RULE,
+         * and the answer is derived here on every read. App\Support\SetPricing
+         * carries the argument, the integer arithmetic and the reason a derived
+         * price still cannot move under a shopper (both baskets and orders
+         * snapshot `unit_price`, which SetPricingTest pins).
+         *
+         * ▲ IT ANSWERS null FOR EVERYTHING ELSE, and that is what makes this
+         *   line free: every product that is not a set, and every set whose
+         *   mode is `fixed` -- which is every set that existed before today,
+         *   because the column is NULL on all of them -- falls straight through
+         *   to ownPrice() below, the body this method has always had.
+         */
+        $ruled = \App\Support\SetPricing::derived($this);
+
+        if ($ruled !== null) {
+            return $ruled;
+        }
+
         $own = $this->ownPrice();
 
         if ($own !== null) {

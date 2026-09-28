@@ -706,6 +706,22 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * `tax_class` after the owner decides has to come here, which is where they
      * will read that the decision includes what the public endpoint may publish.
      * `tax_class` and a supplier's parcel dimensions are not shopper business.
+     *
+     * ── THE PIN WAS ADVANCED ONCE, ON PURPOSE (Lane SP) ────────────────────
+     *
+     * `set_price_mode` and `set_discount` were added by
+     * 2027_04_02_000000_set_pricing_columns: how a SET works its price out, and
+     * the one figure that rule needs. A set is a `products` row, which is the
+     * whole shape Lane SET argued for, so its pricing rule belongs on the table
+     * that already carries `price`, `sale_price` and both sale dates.
+     *
+     * AND THE PUBLIC FEED WAS DECIDED BEFORE THEY WERE ADDED, which is what
+     * this test asks for: NEITHER is in Product::toApi(). The feed publishes
+     * what a set COSTS -- `price`, through effectivePrice(), which already
+     * resolves the rule -- and not the merchant's margin policy for working it
+     * out. A shopper has no use for "10% off the parts total"; a competitor
+     * reading an unauthenticated endpoint does. SetApiSecurityTest asserts both
+     * absences by name.
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
@@ -715,7 +731,8 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
         'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
         'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',
-        'sale_starts_at', 'seo', 'seo_json', 'short_description', 'sku', 'slug', 'status', 'stock',
+        'sale_starts_at', 'seo', 'seo_json', 'set_discount', 'set_price_mode', 'short_description', 'sku',
+        'slug', 'status', 'stock',
         'stock_status', 'total_sales', 'type', 'updated_at', 'wc_id',
     ], 'a column was added to `products`. Decide what Product::toApi() publishes BEFORE adding it, and '
         .'extend tests/Feature/ApiSecurityTest.php -- every case pinned there leaked in production first.');

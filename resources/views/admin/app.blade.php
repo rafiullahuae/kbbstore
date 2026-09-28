@@ -18908,7 +18908,7 @@ buildNav();
   var CP_DERIVED_CHIPS = [
     ['on_sale', 'On sale'], ['low', 'Low stock'], ['no_image', 'No image'],
     ['no_category', 'No category'], ['no_price', 'No price'], ['hidden', 'Hidden'],
-    ['featured', 'Featured'], ['trashed', 'Trash']
+    ['featured', 'Featured'], ['set', 'Sets'], ['trashed', 'Trash']
   ];
 
   var CP_PER_PAGE = [25, 50, 100, 200, 500];
@@ -19186,6 +19186,7 @@ buildNav();
           '<div style="min-width:0">' +
             '<div class="pname" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + sesc(p.name) + '</div>' +
             '<div class="pbrand" style="font-size:11px;color:var(--ink-soft)">' +
+              (p.is_set ? '<span class="pill blue" style="font-size:9px;padding:1px 6px">Set</span> ' : '') +
               (p.is_visible ? '' : '<span class="pill grey" style="font-size:9px;padding:1px 6px">Hidden</span> ') +
               (p.on_sale ? '<span class="pill red" style="font-size:9px;padding:1px 6px">-' + p.discount_percent + '%</span> ' : '') +
               sesc(p.slug) +

@@ -443,6 +443,20 @@ final class ColumnWidths
             'image' => 255,
             'name' => 255,
             'routine_role' => 24,
+            /*
+             * A set's pricing RULE -- 'fixed', 'discount_percent' or
+             * 'discount_amount' (Lane SP, 2027_04_02_000000_set_pricing_columns).
+             * 24 for the same reason `routine_role` above it is 24: it is a
+             * short identifier from a list this application owns, not prose,
+             * and a 255-wide column would say otherwise to the next reader.
+             *
+             * ▲ THE MIGRATION WAS WRITTEN FIRST AND THIS WAS MISSING, and it is
+             *   the MySQL parity run that said so -- the widths are discarded by
+             *   the SQLite grammar, so there is nothing there to compare
+             *   against and a green SQLite suite could not have caught it.
+             *   Exactly what `-c phpunit-mysql.xml` is required for.
+             */
+            'set_price_mode' => 24,
             'sku' => 255,
             'slug' => 255,
             'status' => 255,

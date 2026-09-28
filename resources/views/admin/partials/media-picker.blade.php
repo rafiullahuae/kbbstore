@@ -110,6 +110,33 @@
          overflow:hidden;color:inherit;font:inherit}
 .mp-tile:hover{border-color:var(--accent,#15a85a)}
 .mp-tile.on{border-color:var(--accent,#15a85a);box-shadow:0 0 0 3px rgba(21,168,90,.16)}
+/* ── THE SKELETON (Lane SP) ──────────────────────────────────────────────
+   The dialog used to open on one grey sentence and sit there until /media
+   answered, which on a slow connection reads as a dialog that has not loaded.
+   Now it opens on the SHAPE of the grid, so the frame, the columns and the
+   tile size are all on screen before the first byte comes back and the real
+   tiles land into a layout that is already there instead of pushing one into
+   existence.
+
+   PURE CSS, AND NO ANIMATION THAT IGNORES A PREFERENCE. The shimmer is a
+   background-position keyframe on the placeholder alone -- nothing moves, no
+   layout is measured, and prefers-reduced-motion stops it dead and leaves a
+   plain grey block, which is still the right shape. */
+.mp-skel{border:1.5px solid var(--border,#e6e9f2);border-radius:11px;overflow:hidden;
+         background:var(--surface,#fff)}
+.mp-skel i{display:block;aspect-ratio:1;background:var(--surface-2,#f2f4fb)}
+.mp-skel u{display:block;height:58px;padding:7px 9px 9px;box-sizing:border-box;text-decoration:none}
+.mp-skel u:before{content:"";display:block;height:9px;border-radius:4px;
+                  background:var(--surface-2,#f2f4fb);width:78%}
+.mp-skel u:after{content:"";display:block;height:8px;border-radius:4px;margin-top:7px;
+                 background:var(--surface-2,#f2f4fb);width:46%}
+.mp-skel i,.mp-skel u:before,.mp-skel u:after{
+  background-image:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.72) 50%,rgba(255,255,255,0) 100%);
+  background-size:240px 100%;background-repeat:no-repeat;animation:mp-sheen 1.15s linear infinite}
+@keyframes mp-sheen{from{background-position:-240px 0}to{background-position:calc(100% + 240px) 0}}
+@media (prefers-reduced-motion:reduce){
+  .mp-skel i,.mp-skel u:before,.mp-skel u:after{animation:none;background-image:none}
+}
 .mp-thumb{position:relative;aspect-ratio:1;background:var(--surface-2,#f2f4fb);display:block}
 .mp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .mp-tick{position:absolute;top:6px;right:6px;width:21px;height:21px;border-radius:50%;
@@ -212,6 +239,38 @@
   var chosen = [];        // urls, in the order they were ticked
   var items = [];         // what the grid is showing
   var page = 1, pages = 1, query = '', busy = false, uploads = [];
+
+  /* ── THE WARM RESULT (Lane SP) ─────────────────────────────────────────────
+
+     The owner: "i click on to choose media, the media popup has a little delay
+     while showing, please it should load very immidiate."
+
+     Two things were making the wait, and this is the second of them. The first
+     was that the dialog opened on a sentence rather than on the grid -- see
+     .mp-skel above. The second is that EVERY open refetched page 1 of the
+     library from scratch, including the open two seconds after the last one,
+     while choosing a main image and then a gallery image on the same screen.
+
+     So the FIRST PAGE OF THE UNFILTERED LIBRARY is kept, and a reopen paints it
+     immediately and revalidates behind it. Nothing else is cached: a search, a
+     filter and page 2 all go to the server as they always did.
+
+     ▲ IT IS REVALIDATED, NOT TRUSTED. The tiles are on screen in one frame and
+       the request still goes out; when it answers, the grid is repainted with
+       whatever came back. An upload made in another tab is at most one open
+       stale and never sticks. TTL is short for the same reason.
+
+     ▲ AND IT IS DROPPED THE MOMENT THIS DIALOG CHANGES THE LIBRARY. takeFiles()
+       adds an upload to the library, so warm.at is cleared there -- a cache
+       that outlived the upload the operator just made would show them a grid
+       without it, which is worse than the delay this removes. */
+  var warm = { items: [], pages: 1, at: 0 };
+
+  var WARM_TTL = 45000;
+
+  function warmIsUsable(){
+    return warm.at > 0 && (Date.now() - warm.at) < WARM_TTL && warm.items.length > 0;
+  }
 
   /* The same filters the Media Library screen offers, because the owner asked
      for exactly that and because the endpoint already takes every one of them —
@@ -605,7 +664,17 @@
     var head = dropHTML() + uploadsHTML();
 
     if (busy && !items.length) {
-      body.innerHTML = head + '<p class="mp-note">Loading your images…</p>';
+      /* The SHAPE of the grid, not a sentence about it. One skeleton tile per
+         column-ish; twelve is two full rows at the default width and one at the
+         widest, which is enough to read as "a grid is coming" without being a
+         wall of grey. (Lane SP) */
+      var skeleton = '';
+
+      for (var i = 0; i < 12; i++) skeleton += '<div class="mp-skel"><i></i><u></u></div>';
+
+      body.innerHTML = head + '<div class="mp-grid" aria-busy="true" aria-label="Loading your images">'
+        + skeleton + '</div>';
+      applyCols();
       return;
     }
 
@@ -625,7 +694,21 @@
 
   async function load(append){
     busy = true;
-    if (!append) { items = []; }
+
+    if (!append) {
+      /* PAINT THE LAST RESULT FIRST when this is the plain, unfiltered first
+         page and it is fresh -- the grid is on screen in the same frame the
+         dialog opens in, and the request below repaints it when it answers.
+         Anything filtered, searched or paged clears the grid exactly as it did
+         before. (Lane SP) */
+      items = (page === 1 && query === '' && !filt.attached && !filt.owner && !filt.from && !filt.to
+        && warmIsUsable())
+        ? warm.items.slice()
+        : [];
+
+      if (items.length) { pages = warm.pages; }
+    }
+
     paint();
 
     try {
@@ -647,6 +730,13 @@
       var fresh = (body && body.items) || [];
       items = append ? items.concat(fresh) : fresh;
       pages = (body && body.pages) || 1;
+
+      // Keep only the plain first page. A search result or a filtered page is
+      // not what the next open wants to see. (Lane SP)
+      if (!append && page === 1 && query === ''
+          && !filt.attached && !filt.owner && !filt.from && !filt.to) {
+        warm = { items: fresh.slice(), pages: pages, at: Date.now() };
+      }
     } catch (e) {
       items = append ? items : [];
       el.querySelector('#mp-body').innerHTML =
@@ -1168,6 +1258,12 @@
   async function takeFiles(files){
     var list = Array.prototype.slice.call(files || []);
     if (!list.length) return;
+
+    /* THE WARM RESULT IS DROPPED BEFORE THE FIRST BYTE GOES UP. This dialog is
+       about to change the library, and a cache that outlived the upload the
+       operator just made would show them, on the next open, a grid without the
+       picture they had just put there. (Lane SP) */
+    warm = { items: [], pages: 1, at: 0 };
 
     uploads = list.map(function(f){
       return { name: f.name || 'image', size: f.size || 0, pct: 0, state: 'waiting' };

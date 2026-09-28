@@ -8,17 +8,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductSetItem;
+use App\Models\ProductVariant;
+use App\Models\Tag;
 use App\Support\Gtin;
 use App\Support\MajorUnits;
 use App\Support\Money;
 use App\Support\ProductSeo;
 use App\Support\RichText;
+use App\Support\SetContents;
+use App\Support\SetEagerLoad;
+use App\Support\SetPricing;
 use App\Support\TranslationInput;
 use App\Support\WholeDirhams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Catalog -> Products -> the product editor.  (Lane AO)
@@ -100,6 +107,24 @@ class ProductEditorApiController extends Controller
 
     /** What `products.status` may actually hold. */
     private const COLUMN_STATUSES = ['publish', 'draft', 'private'];
+
+    /**
+     * The three types this editor offers, and the only three it will WRITE.
+     * (Lane SP)
+     *
+     * ▲ A `products.type` OUTSIDE THIS LIST IS LEFT ALONE, NOT REWRITTEN.
+     *   `products.type` stores an unknown value verbatim -- the WooCommerce
+     *   import writes 'grouped' and 'external' and
+     *   docs/PRODUCT-FIELD-PARITY.md row 6 says so -- and an editor that
+     *   silently turned every imported `grouped` row into `simple` the first
+     *   time somebody fixed a typo in its name would be rewriting the
+     *   catalogue by opening it. So the screen shows an unrecognised type as
+     *   itself and does not send it back, and apply() writes only these three.
+     */
+    private const EDITOR_TYPES = ['simple', 'variable', 'set'];
+
+    /** How many products one box may hold. A box, not a catalogue. */
+    private const MAX_SET_MEMBERS = 40;
 
     private const LIKE_ESCAPE = '!';
 
@@ -249,7 +274,57 @@ class ProductEditorApiController extends Controller
             return response()->json(['ok' => false, 'message' => 'That product no longer exists.'], 404);
         }
 
+        // A set's members, in three batched queries, and NOTHING AT ALL for a
+        // product that is not a set -- which is every product but the sets.
+        // (Lane SP)
+        SetEagerLoad::on([$product]);
+
         return response()->json(['ok' => true, 'product' => $this->payload($product)]);
+    }
+
+    /**
+     * What is in the box, for the editor's own panel. (Lane SP)
+     *
+     * Built from App\Support\SetContents -- the one description of a set's
+     * contents in this application -- plus the two ids the panel has to send
+     * back, which SetContents deliberately does not carry because no storefront
+     * surface has any use for them.
+     *
+     * Empty for a product that is not a set, so the screen reads the same shape
+     * whatever it is editing.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function setMembersPayload(Product $product): array
+    {
+        if (! $product->isSet()) {
+            return [];
+        }
+
+        $contents = SetContents::fromProduct($product);
+        $out = [];
+
+        foreach ($product->setItems as $i => $row) {
+            $member = $contents['members'][$i] ?? null;
+
+            if ($member === null || $row->member === null) {
+                continue;
+            }
+
+            $out[] = [
+                'product_id' => (int) $row->member_product_id,
+                'variant_id' => $row->member_variant_id === null ? null : (int) $row->member_variant_id,
+                'quantity' => (int) $member['quantity'],
+                'name' => $member['name'],
+                'brand' => $member['brand'],
+                'sku' => $member['sku'],
+                'variant' => $member['variant'],
+                'image' => $member['image'],
+                'unit_price_aed' => $this->editorAmount((int) $member['unit']),
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -283,6 +358,39 @@ class ProductEditorApiController extends Controller
 
             'price_aed' => $this->editorAmount($product->price === null ? null : (int) $product->price),
             'sale_aed' => $this->editorAmount($product->sale_price === null ? null : (int) $product->sale_price),
+
+            /*
+             * ── THE SET, ON THE PRODUCT EDITOR (Lane SP) ───────────────────
+             *
+             * Present on EVERY product, set or not, and empty for the ones that
+             * are not: the screen decides what to draw from `type`, and a
+             * payload whose shape changed with the type would be a screen that
+             * has to guard every read. `price_mode` reads `fixed` for every
+             * ordinary product and every set built before the rule existed,
+             * which is the value that changes nothing.
+             *
+             * `set_effective_aed` is what a shopper is charged TODAY, derived
+             * from the members' current prices. The screen prints it and never
+             * computes it -- the live preview beside it is the operator's own
+             * arithmetic on what he is typing, and this is the server's.
+             */
+            'tags' => $product->exists
+                ? $product->tags()->orderBy('name')->pluck('name')->all()
+                : [],
+            'set_members' => $this->setMembersPayload($product),
+            'price_mode' => SetPricing::mode($product),
+            'discount_percent' => SetPricing::mode($product) === SetPricing::MODE_PERCENT
+                ? rtrim(rtrim(number_format(((int) ($product->set_discount ?? 0)) / 100, 2, '.', ''), '0'), '.')
+                : '',
+            'discount_amount' => SetPricing::mode($product) === SetPricing::MODE_AMOUNT
+                ? $this->editorAmount((int) ($product->set_discount ?? 0))
+                : '',
+            'set_parts_total_aed' => $product->isSet()
+                ? $this->editorAmount(SetPricing::partsTotal($product))
+                : '',
+            'set_effective_aed' => $product->isSet()
+                ? $this->editorAmount((int) $product->effectivePrice())
+                : '',
             'sale_starts_at' => $product->sale_starts_at?->format('Y-m-d\TH:i'),
             'sale_ends_at' => $product->sale_ends_at?->format('Y-m-d\TH:i'),
 
@@ -487,7 +595,57 @@ class ProductEditorApiController extends Controller
             'sku' => ['sometimes', 'nullable', 'string', 'max:100'],
             'gtin' => ['sometimes', 'nullable', 'string', 'max:20'],
             'brand_id' => ['sometimes', 'nullable', 'integer', Rule::exists('brands', 'id')],
-            'type' => ['sometimes', 'nullable', 'string', 'max:40'],
+            /*
+             * ── THE PRODUCT TYPE, AND THE SET (Lane SP) ────────────────────
+             *
+             * The owner: "can you please merge the Set functionality into the
+             * product itself? i want if i add product, on that page it will
+             * have optin to switch to Set product type, and all options will be
+             * shown for set, with remaing same sections like seo etc."
+             *
+             * A set IS a `products` row with type='set' plus the
+             * product_set_items pivot -- the shape Lane SET argued for at
+             * length, and precisely so a set would carry slug, status,
+             * category, description, images, SEO and position as an ordinary
+             * product. This editor is what that shape was always for.
+             *
+             * ▲ IT IS NO LONGER `nullable`, AND IT IS AN ALLOWLIST. Both halves
+             *   are fixes rather than tidying, and both are reachable from this
+             *   endpoint as it stood:
+             *
+             *     `nullable` let a request send `type: null`, which the plain
+             *     loop below wrote straight to the column -- turning a saved SET
+             *     into a row that Product::isSet() answers false for, silently,
+             *     with its members still in the pivot and its box gone from
+             *     every surface that draws one.
+             *
+             *     `string|max:40` let it be anything at all. CLAUDE.md rule 5 is
+             *     that a select stores one of its own options or the default,
+             *     and this select now has three options.
+             *
+             * OMISSION STILL MEANS "LEAVE IT". `sometimes` plus the
+             * array_key_exists() guard in apply() is what makes a save from a
+             * client that knows nothing about types keep the type it found --
+             * the property SetProductEditorTest pins by name.
+             */
+            'type' => ['sometimes', 'string', Rule::in(self::EDITOR_TYPES)],
+
+            /*
+             * What is in the box. Only read when the product is a set -- see
+             * applySet() -- so an ordinary product may send it and nothing
+             * happens, which is what keeps the pivot intact across a type
+             * switch the operator may be about to undo.
+             */
+            'set_members' => ['sometimes', 'array', 'max:'.self::MAX_SET_MEMBERS],
+            'set_members.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')],
+            'set_members.*.variant_id' => ['nullable', 'integer', Rule::exists('product_variants', 'id')],
+            'set_members.*.quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
+
+            // How the set's price is decided. App\Support\SetPricing carries
+            // the argument for why this is a rule and not a number.
+            'price_mode' => ['sometimes', 'string', Rule::in(SetPricing::MODES)],
+            'discount_percent' => ['sometimes', 'nullable', 'string', 'regex:/^\d{1,3}(\.\d{1,2})?$/'],
+            'discount_amount' => ['sometimes', 'nullable', 'string', MajorUnits::shape()],
 
             'status' => ['sometimes', Rule::in(self::EDITOR_STATUSES)],
             // Required only when the status says scheduled — a date with no
@@ -534,6 +692,29 @@ class ProductEditorApiController extends Controller
             'images.*' => ['string', 'max:500', self::imageUrlRule()],
             'image_alts' => ['sometimes', 'nullable', 'array'],
             'image_alts.*' => ['nullable', 'string', 'max:250'],
+
+            /*
+             * ── TAGS (Lane SP) ─────────────────────────────────────────────
+             *
+             * The owner asked for "the proper tags etc on this page" while the
+             * Sets editor was still its own screen. It is not: the `tags` and
+             * `product_tag` tables have existed since the original schema and
+             * NOTHING IN THIS APPLICATION HAS EVER WRITTEN TO THEM -- not the
+             * importer, not either editor -- which is why this is on the
+             * PRODUCT editor rather than on a set's own panel. A set is a
+             * product; so is everything else on this screen.
+             *
+             * NAMES ON THE WIRE, ROWS IN `tags` ON THE WAY IN. The operator
+             * types words, not ids.
+             *
+             * `nullable` on the items because Laravel's
+             * ConvertEmptyStringsToNull middleware turns an empty chip into
+             * NULL before the validator sees it, and a blank tag is something
+             * to DROP (applyTags() skips it) rather than a 422 on an otherwise
+             * good save. Found by a test, not by reading.
+             */
+            'tags' => ['sometimes', 'nullable', 'array', 'max:40'],
+            'tags.*' => ['nullable', 'string', 'max:60'],
 
             'seo' => ['sometimes', 'nullable', 'array'],
             'seo.title' => ['nullable', 'string', 'max:200'],
@@ -701,8 +882,28 @@ class ProductEditorApiController extends Controller
             }
         }
 
+        /* ------------------------------------------------------- the type */
+        /*
+         * WRITTEN ONLY WHEN IT IS SENT, AND ONLY WHEN IT IS ONE OF THE THREE.
+         * (Lane SP)
+         *
+         * Lifted OUT of the plain loop below, which wrote whatever arrived --
+         * including null, which is how a saved set could be turned back into a
+         * non-set by a request that simply did not know what it was editing.
+         *
+         * `array_key_exists` and not `!empty`: omission means "leave the type
+         * alone", which is what makes a save from any older client -- Catalog →
+         * Products' inline cells, a script, the editor as it shipped this
+         * morning -- keep a set a set. SetProductEditorTest pins that by name,
+         * and pins the `$product->type ??= 'simple'` default below staying
+         * inside `if (! $product->exists)` where it cannot reach a saved row.
+         */
+        if (array_key_exists('type', $data) && in_array($data['type'], self::EDITOR_TYPES, true)) {
+            $product->type = (string) $data['type'];
+        }
+
         /* ----------------------------------------------------------- plain */
-        foreach (['name', 'sku', 'type', 'stock', 'stock_status', 'position'] as $field) {
+        foreach (['name', 'sku', 'stock', 'stock_status', 'position'] as $field) {
             if (array_key_exists($field, $data)) {
                 $product->{$field} = $data[$field];
             }
@@ -904,6 +1105,304 @@ class ProductEditorApiController extends Controller
             $product->category_id = $primary;
             $product->save();
         }
+
+        /* -------------------------------------------------------- the tags */
+        $this->applyTags($product, $data);
+
+        /* --------------------------------------------------------- the box */
+        return $this->applySet($product, $data);
+    }
+
+    /**
+     * Tags, on the `product_tag` pivot. (Lane SP)
+     *
+     * FOUND OR CREATED BY SLUG, not by name, so "Gift Set" and "gift set" are
+     * one row rather than two fighting over `tags.slug`'s unique index.
+     *
+     * `sometimes` in the rules and array_key_exists() here: a client that does
+     * not send the key leaves the pivot alone. That matters because this
+     * endpoint takes a whole product on every save, and Catalog → Products'
+     * inline price cell -- a different controller entirely -- must not be able
+     * to strip a product's tags by not knowing about them.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function applyTags(Product $product, array $data): void
+    {
+        if (! array_key_exists('tags', $data)) {
+            return;
+        }
+
+        $ids = [];
+
+        foreach ((array) ($data['tags'] ?? []) as $name) {
+            $name = trim((string) $name);
+
+            if ($name === '') {
+                continue;
+            }
+
+            $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-');
+
+            if ($slug === '') {
+                continue;
+            }
+
+            $tag = Tag::firstOrCreate(['slug' => $slug], ['name' => $name]);
+            $ids[$tag->id] = true;
+        }
+
+        $product->tags()->sync(array_keys($ids));
+    }
+
+    /* ----------------------------------------------------------- the Set --
+     *
+     * WHAT IS IN THE BOX, AND WHAT THE BOX COSTS. (Lane SP)
+     *
+     * Everything below runs only for a product whose type is `set` AFTER this
+     * request -- `$product->isSet()`, read from the row that has just been
+     * saved, not from what arrived -- so an ordinary product cannot reach one
+     * line of it and nothing about saving one changes.
+     */
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function applySet(Product $product, array $data): ?JsonResponse
+    {
+        if (! $product->isSet()) {
+            /*
+             * ── SET → SIMPLE KEEPS THE PIVOT, DELIBERATELY ─────────────────
+             *
+             * Switching a set back to a simple product does NOT delete its
+             * membership rows. Two reasons, and the first is the one that
+             * decided it:
+             *
+             *   IT IS A SELECT. An operator who changes the type by accident,
+             *   or to see what happens, must be able to change it back and find
+             *   the box as they left it. Emptying a forty-product box on a
+             *   dropdown change is destruction with no undo, from a control
+             *   that looks like every other control on the page.
+             *
+             *   THEY ARE INVISIBLE ANYWAY. Every reader of this pivot goes
+             *   through Product::isSet() first -- SetContents, SetEagerLoad,
+             *   the seven storefront surfaces, Product::toApi(), StockSetRule.
+             *   A simple product carrying membership rows behaves in every way
+             *   like a simple product.
+             *
+             * AND HISTORY IS SAFE EITHER WAY, which was checked rather than
+             * assumed: an order's contents are `order_items.set_contents`, a
+             * JSON snapshot written at checkout, and SetContents::fromOrderItem()
+             * reads it and never the pivot. An order sold as a set still prints
+             * its box after the product stops being one -- SetCheckoutSnapshotTest
+             * rewrites the set and asserts exactly that.
+             */
+            return null;
+        }
+
+        if (array_key_exists('set_members', $data)) {
+            $failure = $this->writeSetMembers($product, (array) $data['set_members']);
+
+            if ($failure !== null) {
+                return $failure;
+            }
+        }
+
+        return $this->applySetPricing($product, $data);
+    }
+
+    /**
+     * Replace the member list with exactly what was sent, in the order it was
+     * sent.
+     *
+     * DELETE-THEN-INSERT inside the caller's transaction, the shape
+     * SetApiController used and for its reasons: a diff would have to answer
+     * "is this the same member row?" for a product chosen twice with two
+     * different options, which is a question the screen does not make the
+     * operator answer. The list is 40 rows at most and is rewritten by one
+     * human pressing Save.
+     *
+     * @param  list<array<string, mixed>>  $members
+     */
+    private function writeSetMembers(Product $product, array $members): ?JsonResponse
+    {
+        ProductSetItem::where('set_product_id', $product->id)->delete();
+
+        $seen = [];
+        $position = 0;
+        $rows = [];
+
+        foreach ($members as $member) {
+            $productId = (int) ($member['product_id'] ?? 0);
+            $variantId = isset($member['variant_id']) && $member['variant_id'] !== null
+                ? (int) $member['variant_id']
+                : null;
+
+            /*
+             * A SET CANNOT CONTAIN ITSELF, and cannot contain another set. The
+             * picker excludes both; this is the door, because the picker is a
+             * screen and this is an endpoint. A set inside itself is an
+             * infinite box, and App\Support\SetPricing::partsTotal() skips a
+             * member that is a set for the same reason one layer down.
+             */
+            if ($productId === (int) $product->id || $productId < 1) {
+                continue;
+            }
+
+            $memberRow = Product::query()->select(['id', 'type'])->find($productId);
+
+            if ($memberRow === null || $memberRow->isSet()) {
+                continue;
+            }
+
+            /*
+             * DUPLICATES ARE REFUSED HERE and not by a unique index, for the
+             * reason the sets migration gives: MySQL and SQLite both treat
+             * NULLs as distinct, so an index on (set, member, variant) would
+             * refuse a duplicate naming a variant and accept one that does not.
+             * A member wanted twice is a quantity of two.
+             */
+            $key = $productId.':'.($variantId ?? 0);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+
+            /*
+             * A VARIANT MUST BELONG TO THE MEMBER IT IS SENT WITH. `exists:`
+             * proves the variant row exists and nothing else -- a request
+             * naming product A with product B's variation would store a box
+             * whose contents contradict themselves, and it is the variant's
+             * price the parts total is built from.
+             */
+            if ($variantId !== null
+                && ! ProductVariant::where('id', $variantId)->where('product_id', $productId)->exists()) {
+                $variantId = null;
+            }
+
+            $rows[] = [
+                'set_product_id' => $product->id,
+                'member_product_id' => $productId,
+                'member_variant_id' => $variantId,
+                'quantity' => max(1, min(99, (int) ($member['quantity'] ?? 1))),
+                'position' => $position++,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if ($rows !== []) {
+            ProductSetItem::insert($rows);
+        }
+
+        // The pivot just changed, so anything the memo remembers about what
+        // this box is worth is a statement about the box before this request.
+        SetPricing::forget((int) $product->id);
+
+        return null;
+    }
+
+    /**
+     * The price, or the RULE that decides it.
+     *
+     * ── WHY `products.price` IS STILL WRITTEN IN A DISCOUNT MODE ───────────
+     *
+     * The authoritative answer is derived on every read by
+     * Product::effectivePrice(), which is the whole point and what makes a
+     * member's price drop reach the set. But `products.price` is also a COLUMN
+     * that SQL sorts, filters and bands on -- Catalog → Products' price range,
+     * the shop's "price, low to high", App\Support\EffectivePrice's buckets --
+     * and none of those can call a PHP method.
+     *
+     * So the column is kept as a CACHE of the derived figure, refreshed here
+     * after the members are written. It is exact at save time and CAN LAG: a
+     * member repriced elsewhere moves the real price immediately and the cached
+     * one at the set's next save. That is a stated limitation rather than an
+     * oversight -- what a shopper is shown and charged is always the derived
+     * figure; what can be a release behind is a sort order.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function applySetPricing(Product $product, array $data): ?JsonResponse
+    {
+        if (! array_key_exists('price_mode', $data)) {
+            return null;
+        }
+
+        // One of its own options or the default, checked again after Rule::in.
+        $mode = in_array($data['price_mode'], SetPricing::MODES, true)
+            ? (string) $data['price_mode']
+            : SetPricing::MODE_FIXED;
+
+        if ($mode === SetPricing::MODE_FIXED) {
+            $product->set_price_mode = SetPricing::MODE_FIXED;
+            $product->set_discount = null;
+            $product->save();
+
+            return null;
+        }
+
+        /*
+         * ▲ A DISCOUNT OFF NOTHING IS A FREE SET. A box with no products in it
+         *   has a parts total of zero, so "10% off the total" prices it at
+         *   AED 0.00 -- published, buyable, and free. Refused out loud, with
+         *   the sentence saying what to do, rather than saved and discovered by
+         *   a customer.
+         */
+        SetPricing::forget((int) $product->id);
+        $product->unsetRelation('setItems');
+
+        if (SetPricing::partsTotal($product) < 1) {
+            /*
+             * ▲ THROWN, NOT RETURNED, AND THAT IS NOT A STYLE CHOICE.
+             *
+             * Every other refusal in apply() happens BEFORE $product->save(),
+             * so returning a JsonResponse from inside DB::transaction() is
+             * harmless: nothing has been written. This one is downstream of the
+             * save -- it has to be, because the parts total is a fact about
+             * membership rows that were written a statement ago -- and
+             * `return` DOES NOT ROLL BACK a Laravel transaction. Returning here
+             * would commit a half-made set and then tell the operator it had
+             * refused. ValidationException unwinds it and answers 422 with the
+             * same shape the validator does.
+             */
+            throw ValidationException::withMessages([
+                'set_members' => ['This set is priced from what is in the box, and the box is empty. '
+                    .'Add the products first, or choose "A price I type".'],
+            ]);
+        }
+
+        $product->set_price_mode = $mode;
+
+        if ($mode === SetPricing::MODE_PERCENT) {
+            /*
+             * BASIS POINTS, BY A ROUNDED MULTIPLICATION OF THE STRING. "12.5"
+             * becomes 1250. Never `(float) $v * 100` assigned to an int: 12.5
+             * is exact in binary and 10.1 is not, and the cast that truncates
+             * it is the defect this repository has already paid for on the bulk
+             * price action.
+             */
+            $bp = (int) round(((float) ($data['discount_percent'] ?? '0')) * 100);
+            $product->set_discount = max(0, min(SetPricing::FULL_BP, $bp));
+        } else {
+            // fils() answers null for a null input; the coalesce is what keeps
+            // max() from being handed one.
+            $product->set_discount = max(0, (int) (MajorUnits::fils((string) ($data['discount_amount'] ?? '0')) ?? 0));
+        }
+
+        /*
+         * NO SALE PRICE UNDER A RULE. The discount IS the markdown, and a
+         * second one underneath it would be two answers to what the set costs
+         * -- which is the defect App\Support\SetPricing exists to prevent.
+         */
+        $product->sale_price = null;
+
+        SetPricing::forget((int) $product->id);
+        $product->unsetRelation('setItems');
+        $product->price = SetPricing::derived($product) ?? 0;
+        $product->save();
 
         return null;
     }

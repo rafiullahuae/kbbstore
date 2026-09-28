@@ -421,8 +421,32 @@ it('keeps the screen\'s panel registry internally consistent', function () {
     $keys = array_column($panels, 1);
     $cols = array_column($panels, 2);
 
-    // Every panel the two-column editor actually has.
-    expect($keys)->toHaveCount(12);
+    /*
+     * Every panel the two-column editor actually has.
+     *
+     * ── THE PIN WAS ADVANCED ONCE, ON PURPOSE (Lane SP) ────────────────────
+     *
+     * Twelve became FOURTEEN when the Set editor was merged into this screen:
+     *
+     *   `setbox`  "What is in the box" — the two things a set has that an
+     *             ordinary product does not, its members and its pricing rule.
+     *             Every other section a set needs is this editor's own, which
+     *             is the whole saving of the merge.
+     *
+     *   `tags`    the `product_tag` pivot, which the original schema created
+     *             and which NOTHING in this application had ever written to.
+     *             The owner asked for tags; a set is a product, so they are
+     *             here rather than on a set's own panel.
+     *
+     * `setbox` is the FIRST panel in this registry to declare `when`, and a
+     * panel whose condition is false is not drawn at all — so an ordinary
+     * product's editor is the twelve panels it was, plus Tags. It stays in the
+     * LAYOUT while it is not drawn, which is what lets the operator arrange it
+     * once and find it where they put it the next time they open a set.
+     */
+    expect($keys)->toHaveCount(14);
+    expect($keys)->toContain('setbox');
+    expect($keys)->toContain('tags');
     expect(array_unique($keys))->toHaveCount(count($keys), 'a panel key is listed twice');
 
     /*

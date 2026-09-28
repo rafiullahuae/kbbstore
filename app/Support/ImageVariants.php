@@ -433,6 +433,27 @@ final class ImageVariants
     }
 
     /**
+     * A SET MEMBER'S photograph on the set's own product page. (Lane SP)
+     *
+     * `.ksp-grid` is `repeat(auto-fill, minmax(min(100%, 150px), 1fr))` inside
+     * `.sec`, and `.ksp-ph` is `aspect-ratio:1` at `width:100%`, so the drawn
+     * width is exactly one grid track:
+     *
+     *   390px  content width 358 (16px gutter a side), 12px gap
+     *          -> 2 tracks of 173px          = 45vw, near enough and above
+     *   1280px .wrap tops out well under 1200 and 14px gaps
+     *          -> 7 tracks of about 150px    = 170px declared, a shade above
+     *
+     * 45vw for the phone band and a flat 170px above it. Declared a touch wide
+     * on both, which costs a few kilobytes on one breakpoint and never serves a
+     * picture too small for the box it is in.
+     */
+    public static function setMemberSizesAttribute(): string
+    {
+        return '(max-width: 700px) 45vw, 170px';
+    }
+
+    /**
      * And what a gallery THUMBNAIL will be drawn at: `.gthumb` is a fixed 66px
      * square at every viewport (kbb-product.css:82), so there is no viewport
      * term to write. 400w covers it to device-pixel-ratio 6.

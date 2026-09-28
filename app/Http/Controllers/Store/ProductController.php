@@ -44,6 +44,27 @@ class ProductController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        /*
+         * A SET'S MEMBERS, IN ONE BATCH, AND NOTHING AT ALL OTHERWISE. (Lane SP)
+         *
+         * partials/set-contents-panel.blade.php names what is in a set on the
+         * set's own product page, and it reads App\Support\SetContents -- the
+         * one description of a set's contents in this application.
+         *
+         * SetEagerLoad::on() LOOKS FIRST: handed a product that is not a set --
+         * which is every product in this catalogue but the sets -- it returns
+         * without touching the database, so the product-page budget in
+         * StorefrontQueryBudgetTest does not move by one query for a feature
+         * this shop is not using. Handed a set it costs THREE, batched, whether
+         * the box holds three members or thirty. SetProductPageTest measures
+         * that flatness rather than asserting it.
+         *
+         * Here rather than in the partial because a query belongs in the
+         * controller, and because Api\ProductController already sets this
+         * precedent on the rows it is about to publish.
+         */
+        \App\Support\SetEagerLoad::on([$product]);
+
         $this->rememberViewed($request, $product->id);
 
         $summary = $this->reviewSummary($product->id);
@@ -197,6 +218,32 @@ class ProductController extends Controller
                          * else's product.
                          */
                         'gtin' => $product->gtin,
+                        /*
+                         * ── A SET, DESCRIBED TO GOOGLE (Lane SP) ────────────
+                         *
+                         * Two keys, both ABSENT on an ordinary product, so the
+                         * structured data every product page in this shop has
+                         * been publishing for months is byte-identical.
+                         *
+                         * `set` is the member list — names and quantities, off
+                         * App\Support\SetContents, the one description of a
+                         * set's contents. App\Support\Seo turns it into
+                         * `additionalType: ProductCollection` and an
+                         * `includesObject` list; the long note there says why
+                         * the node stays a Product.
+                         *
+                         * `keywords` is the product's own tags, which the
+                         * owner asked for on the Sets screen and which are the
+                         * same `product_tag` pivot an ordinary product uses. It
+                         * is loaded ONLY for a set — one query on a set's page
+                         * and none on anybody else's.
+                         */
+                        'set' => $product->isSet()
+                            ? \App\Support\SetContents::fromProduct($product)['members']
+                            : null,
+                        'keywords' => $product->isSet()
+                            ? $product->tags()->orderBy('name')->pluck('name')->all()
+                            : null,
                         /*
                          * EVERY OPTION'S OWN PRICE AND STOCK.
                          *

@@ -676,6 +676,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/sets-admin.php';
 
         /*
+         * Catalog -> Sets: the stock rule. Reads and writes how a set's
+         * availability follows its members' — same group as the rest of
+         * Catalog, for the same reason.
+         */
+        require __DIR__.'/sp-set-stock-admin.php';
+
+        /*
          * Appearance → Banners. Writes banner sets and cards, and accepts image
          * addresses, so it belongs inside this guarded group like every other
          * catalogue-adjacent writer. Its package ships

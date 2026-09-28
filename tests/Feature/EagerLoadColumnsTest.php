@@ -69,6 +69,18 @@ function eagerLoadTables(): array
         'notes' => 'order_notes',
         'refunds' => 'refunds',
         'payments' => 'payments',
+        /*
+         * A set's membership row points at the product in the box. (Lane SP)
+         *
+         * ProductSetItem::member() is a belongsTo(Product::class,
+         * 'member_product_id'), so a constrained load of it selects from
+         * `products` -- which is exactly what this map exists to say, because
+         * the relation NAME does not. App\Support\SetEagerLoad reaches it as
+         * `setItems.member` (the last segment is what is matched);
+         * App\Services\StockSetRule loads it directly.
+         */
+        'member' => 'products',
+        'setItems' => 'product_set_items',
     ];
 }
 

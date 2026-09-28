@@ -31,7 +31,8 @@ use App\Models\Product;
  *   [
  *     'members' => [
  *        ['name' => string, 'brand' => string, 'sku' => string,
- *         'variant' => string, 'quantity' => int, 'unit' => int, 'image' => ?string],
+ *         'variant' => string, 'quantity' => int, 'unit' => int, 'image' => ?string,
+ *         'url' => ?string, 'visible' => bool],
  *        ...
  *     ],
  *     'count'      => int,   // how many physical items are in the box
@@ -128,6 +129,34 @@ final class SetContents
                 'quantity' => $quantity,
                 'unit' => $unit,
                 'image' => $variant?->image ?: $member->image,
+                /*
+                 * ── THE TWO KEYS THE PRODUCT PAGE ADDED (Lane SP) ───────────
+                 *
+                 * A set's own product page names its members with their own
+                 * pictures AND THEIR OWN LINKS, because on that page a member is
+                 * a product the shopper may want to open. That is the only
+                 * surface that wants an address; the fanned row does not, and
+                 * neither does anything printed.
+                 *
+                 * ▲ NEITHER KEY REACHES A SNAPSHOT OR THE PUBLIC FEED, and
+                 *   that is by construction rather than by care: snapshot() and
+                 *   toApi() below both build their rows from an EXPLICIT list of
+                 *   keys, so a key added here cannot travel to `order_items`
+                 *   (where a stored address would go stale the first time a
+                 *   member was renamed) or to /api/* (where it is simply not
+                 *   wanted). tests/Feature/SetApiSecurityTest.php asserts the
+                 *   feed's absent keys by name for exactly this reason.
+                 *
+                 * `visible` FAILS CLOSED, the same rule Product::isSet()
+                 * documents. `status`, `is_visible` and `published_at` are the
+                 * three columns storefrontVisible() needs, and a caller that
+                 * selected a narrower list has not said this member is hidden —
+                 * it has said nothing. Answering `false` there costs a link;
+                 * answering `true` prints one that 404s, which is the worse of
+                 * the two on a page a shopper reached from Google.
+                 */
+                'url' => $member->slug === null || $member->slug === '' ? null : $member->url(),
+                'visible' => self::memberIsLive($member),
             ];
         }
 
@@ -138,7 +167,22 @@ final class SetContents
             'count' => $count,
             'partsTotal' => $partsTotal,
             'setPrice' => $setPrice,
-            'saving' => max(0, $partsTotal - $setPrice),
+            /*
+             * ▲ AN UNPRICED SET IS NOT SAVING ANYBODY ANYTHING. (Lane SP)
+             *
+             * The owner's first set, half filled in, read "Bought separately:
+             * AED 806.00 / Set price: AED 0.00 / You save AED 806.00" -- which
+             * is the arithmetic being right and the sentence being false. A set
+             * with no price is UNPRICED, not free and not a saving of its whole
+             * contents, and the figure was about to be printed on the shop.
+             *
+             * Zero here and not on fromOrderItem() below, deliberately: a SOLD
+             * line at zero really was given away, the customer really did save
+             * what the box was worth, and a receipt that said otherwise would
+             * be wrong in the other direction. This is the shopping path, where
+             * zero means "nobody has typed a price yet".
+             */
+            'saving' => $setPrice <= 0 ? 0 : max(0, $partsTotal - $setPrice),
         ];
     }
 
@@ -277,6 +321,45 @@ final class SetContents
         }
 
         return $out;
+    }
+
+    /**
+     * Is this member a page a shopper can actually open? (Lane SP)
+     *
+     * The same three conditions as Product::scopeVisible() — `status`,
+     * `is_visible` and the scheduled-publish window — asked of a model in hand
+     * rather than of the database, because the members are already loaded and
+     * one query per member is exactly what StorefrontQueryBudgetTest is a budget
+     * against.
+     *
+     * READS getAttributes() AND NOT THE ACCESSORS, so a column that was never
+     * selected is ABSENT rather than null, and absent means "this caller did not
+     * ask" rather than "this product is hidden". Both answer false here, which
+     * is the fail-closed direction: no link.
+     */
+    private static function memberIsLive(Product $member): bool
+    {
+        $row = $member->getAttributes();
+
+        foreach (['status', 'is_visible', 'published_at'] as $column) {
+            if (! array_key_exists($column, $row)) {
+                return false;
+            }
+        }
+
+        if ((string) $row['status'] !== 'publish' || ! (bool) $row['is_visible']) {
+            return false;
+        }
+
+        // published_at NULL means "not scheduled", which is every row that
+        // existed before the column did — see App\Support\ProductVisibility.
+        $published = $row['published_at'] ?? null;
+
+        if ($published === null || $published === '') {
+            return true;
+        }
+
+        return strtotime((string) $published) <= time();
     }
 
     /**

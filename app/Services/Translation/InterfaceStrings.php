@@ -715,6 +715,28 @@ final class InterfaceStrings
              * them.
              */
             'set.whats_inside' => 'What\'s inside',
+            /*
+             * ── THE SET'S OWN PRODUCT PAGE (Lane SP) ────────────────────────
+             *
+             * Three keys, read by exactly one file --
+             * resources/views/partials/set-contents-panel.blade.php, the panel
+             * that names a set's contents on /product/{set-slug}/. A shopper
+             * who lands there from Google used to see a price and no contents.
+             *
+             * `set.contents` above is REUSED for the count line rather than a
+             * fourth key of its own: it is the same sentence about the same
+             * number, and two keys saying "In this set - 4 items" is two
+             * translations to keep in step for nothing.
+             *
+             * `set.page_separately` labels the members' own prices added up --
+             * what the box would cost bought one at a time. It is the figure
+             * the saving is measured FROM, so the two words have to agree with
+             * `set.saving` above; they are deliberately next to it.
+             */
+            'set.page_eyebrow' => 'The set',
+            'set.page_heading' => 'What is in this set',
+            'set.page_separately' => 'Bought separately',
+            'set.page_set_price' => 'Set price',
             'checkout.secure_badge' => 'Secure checkout',
         ];
     }

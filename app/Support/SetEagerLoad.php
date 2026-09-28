@@ -62,7 +62,18 @@ final class SetEagerLoad
      */
     private const RELATIONS = [
         'setItems',
-        'setItems.member:id,slug,name,brand_id,sku,price,sale_price,sale_starts_at,sale_ends_at,image,type',
+        /*
+         * ▲ `status`, `is_visible` AND `published_at` ARE LANE SP'S, and they
+         *   are three columns rather than a fourth query. The set's own product
+         *   page links each member to its own page, and a link to a draft, a
+         *   hidden row or a product scheduled for next week is a 404 on a page a
+         *   shopper reached from Google. SetContents::memberIsLive() asks the
+         *   same three conditions Product::scopeVisible() asks, off the model in
+         *   hand — and answers FALSE (no link) when a caller selected a narrower
+         *   list, so a surface that does not need them costs nothing and gets
+         *   nothing wrong.
+         */
+        'setItems.member:id,slug,name,brand_id,sku,price,sale_price,sale_starts_at,sale_ends_at,image,type,status,is_visible,published_at',
         'setItems.member.brand:id,name,slug',
         /*
          * ▲ NO `sale_starts_at`/`sale_ends_at` HERE, and that is not a trim —
