@@ -16,7 +16,7 @@ declare(strict_types=1);
  *
  *   /ar/shop/            canonical -> https://…/shop/        (the ENGLISH page)
  *   /ar/new-in/          canonical -> https://…/new-in/
- *   /ar/skincare-guide/  canonical -> https://…/skincare-guide/ , no hreflang
+ *   /ar/blog/  canonical -> https://…/blog/ , no hreflang
  *   /ar/reviews/         canonical -> https://…/reviews/        , no hreflang
  *   /ar/skin-quiz/       canonical -> https://…/skin-quiz/      , no hreflang
  *   /sitemap.xml         54 English URLs, no /ar, no xhtml:link
@@ -150,15 +150,15 @@ function sblPageTypes(): array
         '/',
         '/shop/',
         '/new-in/',
-        '/skincare-guide/',
+        '/blog/',
         '/reviews/',
         '/skin-quiz/',
         '/about/',
-        '/korean-skincare-brands/',
-        '/korean-skincare-brands/sbl-anua/',
-        '/product-category/sbl-cleansers/',
+        '/brands/',
+        '/brands/sbl-anua/',
+        '/collections/sbl-cleansers/',
         '/product/sbl-heartleaf-toner/',
-        '/sbl-heartleaf-explained/',
+        '/blog/sbl-heartleaf-explained/',
         '/cart/',
     ];
 }
@@ -184,7 +184,7 @@ it('canonicalises an Arabic page to its Arabic address on every page type', func
          * And the Arabic page canonicalises to ITSELF.
          *
          * Five of these named the English address before this lane: /ar/shop/,
-         * the four curated collections, /ar/skincare-guide/, /ar/reviews/ and
+         * the four curated collections, /ar/blog/, /ar/reviews/ and
          * /ar/skin-quiz/ each built their SEO url as
          * `$siteBase . '/a/literal/path/'`, a string rather than a link, so
          * Url::to() never saw it and no locale segment was ever added. A
@@ -538,7 +538,7 @@ it('tells an agent which languages this shop is published in, and only when ther
 
     expect($body)->toContain('## Languages')
         ->and($body)->toContain(SBL_BASE . '/ar/shop/')
-        ->and($body)->toContain(SBL_BASE . '/ar/skincare-guide/')
+        ->and($body)->toContain(SBL_BASE . '/ar/blog/')
         ->and($body)->toContain('العربية');
 
     // And every address it offers answers, in both languages.
@@ -624,7 +624,7 @@ it('retracts the cluster on a document the owner marked noindex, and only that k
     $brand->seo = ['noindex' => true];
     $brand->save();
 
-    $html = test()->get('/ar/korean-skincare-brands/sbl-anua/')->assertOk()->getContent();
+    $html = test()->get('/ar/brands/sbl-anua/')->assertOk()->getContent();
 
     expect($html)->toContain('<meta name="robots" content="noindex, nofollow">')
         ->and(sblAlternates($html))->toBe([]);

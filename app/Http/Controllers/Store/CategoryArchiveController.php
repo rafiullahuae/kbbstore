@@ -7,56 +7,73 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Support\CategoryPath;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 
 /**
- * /product-category/{nested/path}/ — the category archive.
+ * /collections/{nested/path}/ — the category archive — and the 301 that brings
+ * every visitor of the old address there in ONE hop.
  *
- * INTEGRATOR — ONE LINE. routes/web.php line 97 currently registers this URL as
- * a closure:
+ * ── THE ADDRESS MOVED, AND `show()` IS NOW THE OLD DOOR ─────────────────────
  *
- *     Route::get('/product-category/{path}', function (Request $request, string $path) {
- *         $slug = basename(trim($path, '/'));
- *         return app(ShopController::class)->index($request, $slug);
- *     })->where('path', '.*')->name('category');
+ * The archive used to be served at `/product-category/{path}/`. The address
+ * scheme (App\Support\UrlScheme) moved it to `/collections/{path}/` — a
+ * listing page, so the address is plural — and this class carries both ends:
  *
- * Replace it with:
+ *   collection()  serves the archive at its new address
+ *   show()        301s the old address onto the new one, in one hop
  *
- *     Route::get('/product-category/{path}', [\App\Http\Controllers\Store\CategoryArchiveController::class, 'show'])
- *         ->where('path', '.*')->name('category');
+ * WHY THE ARCHIVE IS THE METHOD THAT WAS RENAMED, AND NOT THE REDIRECT.
+ * `routes/web.php` is the integrator's file and this lane may not edit it. The
+ * line it already carries reads
  *
- * CLAUDE.md forbids this lane from editing routes/web.php, which is why the
- * swap is described here rather than made. Everything else stays: same
- * ShopController, same filters, same grid, same `category` route name, same
- * `.*` constraint. The behaviour that changes is only what happens when the
- * path does not name a live category.
+ *     Route::get('/product-category/{path}', [CategoryArchiveController::class, 'show'])
  *
- * WHAT THE CLOSURE DOES TODAY, and why it is worth a controller.
+ * so leaving `show()` as the archive would have meant asking for a web.php edit
+ * before the old address redirected at all — and until that edit landed the
+ * shop would have served the SAME page at two addresses while its canonical
+ * named only one, which is the duplicate-content shape this whole lane exists
+ * to end. Repurposing `show()` as the 301 makes that existing line correct on
+ * the day this merges, with no edit to web.php anywhere in the change.
  *
- * `basename()` throws away every segment but the last, and ShopController
- * treats a category it cannot find as "no category filter". Three live
- * consequences, all of them pinned in CategoryPathContractTest against the
- * closure as well as against this class, so the test says what changed:
+ * ── ONE HOP, WHICH IS THE WHOLE POINT AND IS EASY TO GET WRONG ──────────────
  *
- *   1. /product-category/does-not-exist/ answers 200 and renders the entire
+ * `show()` does NOT redirect `/product-category/toners/` to
+ * `/collections/toners/`. It RESOLVES the path first, so a `toners` nested
+ * under `skincare` goes straight to `/collections/skincare/toners/`. The naive
+ * version costs two hops — old base to new base, then leaf to nested path —
+ * and Google follows a chain grudgingly. `CategoryPath::resolve()` already
+ * knows the canonical path, including through a `category_redirects` row left
+ * by a rename, so one lookup answers it.
+ *
+ * ── WHAT THE CONTROLLER FIXED WHEN IT REPLACED A CLOSURE, WHICH STILL HOLDS ─
+ *
+ * routes/web.php once resolved the archive inline with `basename()` and handed
+ * the last segment to ShopController, which falls back to the whole catalogue
+ * for a slug it does not recognise. Three live consequences, all pinned in
+ * CategoryPathContractTest:
+ *
+ *   1. /product-category/does-not-exist/ answered 200 and rendered the entire
  *      catalogue under the heading "Shop all". Every dead, mistyped or
- *      hallucinated category URL is a soft 404 serving duplicate content, and
+ *      hallucinated category URL was a soft 404 serving duplicate content, and
  *      there is an unbounded supply of them for a crawler to find.
  *
- *   2. /product-category/complete/nonsense/cleansers/ answers 200 with the
- *      Cleansers archive. The nested path is decoration — any prefix at all
- *      validates — so every category on the site has infinitely many addresses.
+ *   2. /product-category/complete/nonsense/cleansers/ answered 200 with the
+ *      Cleansers archive. The nested path was decoration — any prefix at all
+ *      validated — so every category on the site had infinitely many addresses.
  *
- *   3. Because a missing category silently becomes "Shop all", renaming a slug
- *      breaks nothing visibly. The old URL goes on answering 200 with the wrong
- *      page, indefinitely, and nobody finds out.
- *
- * Point 3 is why this ships alongside the redirect table rather than after it:
- * recording redirects is pointless while the old URL still answers 200 on its
- * own, because the redirect is never consulted.
+ *   3. Because a missing category silently became "Shop all", renaming a slug
+ *      broke nothing visibly. The old URL went on answering 200 with the wrong
+ *      page, indefinitely, and nobody found out.
  */
 class CategoryArchiveController extends Controller
 {
-    public function show(Request $request, string $path)
+    /**
+     * The archive itself, at `/collections/{path}/`.
+     *
+     * Registered in routes/kbb-brands-blog.php, which is required from the very
+     * end of web.php.
+     */
+    public function collection(Request $request, string $path)
     {
         $verdict = CategoryPath::resolve($path);
 
@@ -68,19 +85,15 @@ class CategoryArchiveController extends Controller
          *
          * This line used to read `redirect($verdict['to'], …)`, and that handed
          * a root-relative path to Laravel's UrlGenerator, WHICH STRIPS THE
-         * TRAILING SLASH. So `/product-category/toners/` 301'd to
-         * `/product-category/skincare/toners` — an address that answers 200 and
+         * TRAILING SLASH. So `/collections/toners/` 301'd to
+         * `/collections/skincare/toners` — an address that answers 200 and
          * whose own `<link rel="canonical">` points at the slashed form. The
          * shop 301'd to an address that then declared a different one canonical,
          * which costs a crawler a redirect hop and then a canonical hop and
          * consolidates the link equity onto neither.
          *
          * Same defect, same fix as `docs/GP-ADDRESSES-LAND.md` §5.3 made for
-         * the redirects TABLE: `Url::redirect()`. That package left this
-         * controller as the last producer of a 301 in the application still
-         * doing it the other way, and `tests/Feature/RedirectMiddlewareTest.php`
-         * pinned the defect as-is with the reason written on it. This closes it;
-         * the pin is advanced there with the old assertion quoted.
+         * the redirects TABLE: `Url::redirect()`.
          *
          * It also fixes the language. `Url::redirect()` goes through
          * `Url::to()`, so an Arabic reader following a stale category link now
@@ -114,5 +127,39 @@ class CategoryArchiveController extends Controller
         // the identical `where slug = ?` a second time on every category
         // archive on the site.
         return app(ShopController::class)->index($request, $verdict['category']->slug, $verdict['category']);
+    }
+
+    /**
+     * The retired `/product-category/{path}/` address.
+     *
+     * ONE HOP TO THE FINAL ADDRESS. resolve() is what makes that true: the
+     * destination is the category's CANONICAL collections path, so a nested
+     * category, a renamed one and a top-level one all cost the visitor exactly
+     * one 301. Redirecting to `/collections/{the path as asked}/` instead would
+     * be correct-looking and would chain through collection()'s own 301 for
+     * every category that has a parent — which on this catalogue is most of
+     * them.
+     *
+     * A path naming no category at all 404s here rather than being sent to
+     * `/collections/{nonsense}/` to 404 there. A 301 onto a 404 tells a search
+     * engine the address was replaced by nothing, which is strictly worse than
+     * the 404 it replaces, and it is the same rule collection() applies above.
+     */
+    public function show(Request $request, string $path): RedirectResponse
+    {
+        $verdict = CategoryPath::resolve($path);
+
+        $target = match ($verdict['status']) {
+            'ok' => CategoryPath::canonicalPath($verdict['category']),
+            'redirect' => (string) ($verdict['to_path'] ?? ''),
+            default => '',
+        };
+
+        abort_if($target === '', 404);
+
+        // Url::redirect() through CategoryPath, for the trailing slash, the base
+        // path and the reader's language — the three things redirect() on a bare
+        // relative path gets wrong. UrlScheme::collection() is the shape it builds.
+        return redirect(CategoryPath::redirectUrl($target), 301);
     }
 }

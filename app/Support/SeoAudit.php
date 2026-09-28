@@ -598,11 +598,11 @@ final class SeoAudit
             }
 
             $path = $kind === 'Category'
-                ? '/product-category/' . trim((string) ($r->path ?? ''), '/') . '/'
-                : '/korean-skincare-brands/' . ($r->slug ?? '') . '/';
+                ? UrlScheme::collection((string) ($r->path ?? ''))
+                : UrlScheme::brand((string) ($r->slug ?? ''));
 
             if ($kind === 'Category' && trim((string) ($r->path ?? ''), '/') === '') {
-                $path = '/product-category/' . ($r->slug ?? '') . '/';
+                $path = UrlScheme::collection((string) ($r->slug ?? ''));
             }
 
             $count++;
@@ -743,10 +743,10 @@ final class SeoAudit
      *
      * kbeautybliss.com served its category archives flat at the site root,
      * because that is what its WooCommerce permalink settings produced. This
-     * application serves them at /product-category/{path}/ (URL Contract
+     * application serves them at /collections/{path}/ (URL Contract
      * U-03). App\Support\LegacyCategoryUrls::PATHS is the exact, closed list
      * of the fifteen, and its docblock explains why the flat roots that DO
-     * have routes here -- /new-arrivals/, /best-sellers/, /skincare-guide/ --
+     * have routes here -- /new-arrivals/, /best-sellers/, /blog/ --
      * are deliberately not in it.
      *
      * Two of the fifteen are confirmed indexed today, with their live titles:
@@ -981,7 +981,7 @@ final class SeoAudit
                  * NECESSARILY A PAGE.
                  *
                  * toCategoryPath('/toners/') is the FLAT form,
-                 * /product-category/toners/. For a category nested under a
+                 * /collections/toners/. For a category nested under a
                  * parent that address is itself a 301 (CategoryPath::resolve
                  * via CategoryArchiveController), so the audit was advertising
                  * a two-hop answer; and for a slug this shop does not carry at

@@ -526,7 +526,7 @@ class AppServiceProvider extends ServiceProvider
             if (\App\Support\ProductVisibility::isLive($product)) {
                 $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
                 if ($base !== '') {
-                    \App\Services\Seo\IndexNow::submitOne($base . '/product/' . $product->slug . '/');
+                    \App\Services\Seo\IndexNow::submitOne($base . \App\Support\UrlScheme::product($product->slug));
                 }
             }
         });
@@ -535,7 +535,13 @@ class AppServiceProvider extends ServiceProvider
             if (($post->status ?? null) === 'published' && $post->slug) {
                 $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
                 if ($base !== '') {
-                    \App\Services\Seo\IndexNow::submitOne($base . '/' . $post->slug . '/');
+                    /*
+                     * /blog/{slug}/, which is where the address scheme serves
+                     * an article. Submitting the site-root form would ping a
+                     * URL that 301s -- a wasted crawl and, worse, a hint to the
+                     * index that the address it just fetched is not the one.
+                     */
+                    \App\Services\Seo\IndexNow::submitOne($base . \App\Support\UrlScheme::article($post->slug));
                 }
             }
         });
@@ -650,7 +656,10 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            \App\Support\RedirectManager::autoCreate('/product/' . $oldSlug . '/', '/product/' . $product->slug . '/');
+            \App\Support\RedirectManager::autoCreate(
+                \App\Support\UrlScheme::product($oldSlug),
+                \App\Support\UrlScheme::product($product->slug),
+            );
         });
 
         \App\Models\Post::updating(function (\App\Models\Post $post) {
@@ -663,7 +672,30 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            \App\Support\RedirectManager::autoCreate('/' . $oldSlug . '/', '/' . $post->slug . '/');
+            /*
+             * BOTH SPELLINGS OF THE OLD ADDRESS, AND THE NEW ONE IS /blog/.
+             *
+             * This wrote '/' . $oldSlug . '/' -> '/' . $post->slug . '/', which
+             * was right while articles were served from the site root. They are
+             * at /blog/{slug}/ now, so a row written the old way pointed at an
+             * address that itself 301s -- two hops for every renamed article,
+             * for ever, and growing a link each time it is renamed again.
+             *
+             * The ROOT form of the old slug is still written, because that is
+             * the address Google holds for an article the WordPress site
+             * published, and PageController::rootArticle() 404s it the moment
+             * the slug stops naming a post. Without the row the old root
+             * address is simply gone.
+             */
+            \App\Support\RedirectManager::autoCreate(
+                '/' . $oldSlug . '/',
+                \App\Support\UrlScheme::article($post->slug),
+            );
+
+            \App\Support\RedirectManager::autoCreate(
+                \App\Support\UrlScheme::article($oldSlug),
+                \App\Support\UrlScheme::article($post->slug),
+            );
         });
     }
 }

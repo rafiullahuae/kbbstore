@@ -164,12 +164,12 @@ it('does move the site name on a page that does not', function () {
      */
     ttrSettings(['seo_title_template' => '{title} {sep} {sitename}']);
 
-    expect(ttrTitle('/korean-skincare-brands/'))->toBe('All brands | K-Beauty Bliss');
+    expect(ttrTitle('/brands/'))->toBe('All brands | K-Beauty Bliss');
     expect(ttrTitle('/my-account/'))->toBe('Sign in | K-Beauty Bliss');
 
     ttrSettings(['seo_title_template' => '{sitename} {sep} {title}']);
 
-    expect(ttrTitle('/korean-skincare-brands/'))->toBe('K-Beauty Bliss | All brands');
+    expect(ttrTitle('/brands/'))->toBe('K-Beauty Bliss | All brands');
     expect(ttrTitle('/my-account/'))->toBe('K-Beauty Bliss | Sign in');
 });
 

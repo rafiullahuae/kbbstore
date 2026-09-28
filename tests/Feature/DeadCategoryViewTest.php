@@ -38,7 +38,7 @@ declare(strict_types=1);
  *
  * ── WHAT ANSWERS THE URL IT WOULD HAVE SERVED ───────────────────────────────
  *
- * /product-category/{path}/ — Store\CategoryArchiveController::show(), which
+ * /collections/{path}/ — Store\CategoryArchiveController::show(), which
  * hands off to ShopController and renders `store.shop`. Pinned below, because
  * "this file is dead" is only safe to act on if something else is demonstrably
  * alive at the address.
@@ -184,7 +184,7 @@ it('serves the category archive from the controller that is actually wired up', 
         'category_id' => $category->id,
     ])->categories()->attach($category->id);
 
-    $response = test()->get('/product-category/' . $category->slug)->assertOk();
+    $response = test()->get('/collections/' . $category->slug)->assertOk();
 
     $response->assertViewIs('store.shop');
 
@@ -201,7 +201,7 @@ it('leaves the description on that page to the one engine that owns it', functio
      */
     $category = Category::create(['name' => 'Toners', 'slug' => 'dcv-toners']);
 
-    $html = test()->get('/product-category/' . $category->slug)->assertOk()->getContent();
+    $html = test()->get('/collections/' . $category->slug)->assertOk()->getContent();
 
     expect(substr_count($html, '<meta name="description"'))->toBeLessThan(2);
 

@@ -1,6 +1,6 @@
 {{--
-    Brands — the directory at /korean-skincare-brands/, and a single brand's
-    landing page at /korean-skincare-brands/{slug}/.
+    Brands — the directory at /brands/, and a single brand's
+    landing page at /brands/{slug}/.
 
     One view, two modes, keyed on $brand. They share the breadcrumb, the
     heading block and the stylesheet below, and splitting them into two files
@@ -29,7 +29,7 @@
     @if ($brand)
         <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">
             <a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> <span>&rsaquo;</span>
-            <a href="{{ Url::to('/korean-skincare-brands/') }}">{{ __('store.breadcrumb.brands') }}</a> <span>&rsaquo;</span>
+            <a href="{{ Url::to(\App\Support\UrlScheme::brandIndex()) }}">{{ __('store.breadcrumb.brands') }}</a> <span>&rsaquo;</span>
             <span aria-current="page">{{ $brand->t('name') }}</span>
         </nav>
 
@@ -65,11 +65,13 @@
                     @endif
                 @endunless
                 {{--
-                    The listing, not a second archive. Built from Brand::url()
-                    so this link and the directory's tiles can never drift
-                    apart, and so U-05 has exactly one place to change.
+                    The LISTING, not a second archive, and not this page.
+                    Brand::filterUrl() -- /shop/?filter_brands={slug}, URL
+                    Contract U-05 -- because Brand::url() is now this landing
+                    page itself and linking a page to itself is a dead button.
+                    One place to change, still.
                 --}}
-                <a class="brw-cta" href="{{ $brand->url() }}">{{ __('store.brands.shop_all', ['brand' => $brand->t('name')]) }}</a>
+                <a class="brw-cta" href="{{ $brand->filterUrl() }}">{{ __('store.brands.shop_all', ['brand' => $brand->t('name')]) }}</a>
             </div>
         </div>
 
@@ -77,7 +79,7 @@
             <p class="brw-empty">{{ __('store.brands.brand_empty') }}</p>
         @else
             <x-product-grid :products="$products" :heading="__('store.brands.popular_heading')"
-                            :more-url="$brand->url()" :more-label="__('store.product_grid.view_all')" />
+                            :more-url="$brand->filterUrl()" :more-label="__('store.product_grid.view_all')" />
         @endif
     @else
         <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">
@@ -124,7 +126,7 @@
                         to.
                     --}}
                     <a class="brw-card{{ $n === 0 ? ' is-empty' : '' }}"
-                       href="{{ Url::to('/korean-skincare-brands/' . $item->slug . '/') }}">
+                       href="{{ Url::to(\App\Support\UrlScheme::brand($item->slug)) }}">
                         @if ($showLogo || $showInitial)
                             <span class="brw-logo">
                                 @if ($showLogo)

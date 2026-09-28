@@ -263,7 +263,7 @@ it('serves a placed block to a shopper inside a post', function () {
         'published_at' => now(),
     ]);
 
-    $this->get('/winter-routine')
+    $this->get('/blog/winter-routine')
         ->assertOk()
         ->assertSee('Free delivery over AED 200.', false)
         ->assertDontSee('[kbb_block', false);

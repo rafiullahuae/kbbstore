@@ -47,7 +47,7 @@ final class CategoryLaneRoutes
     /**
      * Register the archive route as this lane proposes it, shadowing web.php's.
      *
-     * web.php line 97 already registers /product-category/{path}. Laravel
+     * routes/kbb-brands-blog.php already registers /collections/{path}. Laravel
      * matches the FIRST route that fits, so a second registration alone would
      * never be reached. This drops the original out of the collection and adds
      * the proposed one in its place, which is what lets the path-contract tests
@@ -64,7 +64,7 @@ final class CategoryLaneRoutes
         $kept = new RouteCollection();
 
         foreach ($router->getRoutes() as $route) {
-            if ($route->uri() === 'product-category/{path}') {
+            if ($route->uri() === 'collections/{path}') {
                 continue;
             }
 
@@ -78,9 +78,9 @@ final class CategoryLaneRoutes
         // same way here so the tests exercise the real registration rather than
         // a copy of its logic.
         RouteFacade::middleware('web')
-            ->get('/product-category/{path}', [\App\Http\Controllers\Store\CategoryArchiveController::class, 'show'])
+            ->get('/collections/{path}', [\App\Http\Controllers\Store\CategoryArchiveController::class, 'collection'])
             ->where('path', '.*')
-            ->name('category');
+            ->name('collection');
 
         $router->getRoutes()->refreshNameLookups();
         $router->getRoutes()->refreshActionLookups();

@@ -135,8 +135,8 @@ it('states the language of a document on the node that describes the document', 
 
     Category::firstOrCreate(['slug' => 'sap-cat'], ['name' => 'SAP Cat', 'path' => 'sap-cat']);
 
-    expect(sapNode('/product-category/sap-cat/', 'CollectionPage')['inLanguage'] ?? null)->toBe('en');
-    expect(sapNode('/ar/product-category/sap-cat/', 'CollectionPage')['inLanguage'] ?? null)->toBe('ar');
+    expect(sapNode('/collections/sap-cat/', 'CollectionPage')['inLanguage'] ?? null)->toBe('en');
+    expect(sapNode('/ar/collections/sap-cat/', 'CollectionPage')['inLanguage'] ?? null)->toBe('ar');
 });
 
 it('states the language of an article on the Article node', function () {
@@ -147,8 +147,8 @@ it('states the language of an article on the Article node', function () {
         'body' => 'Body copy long enough to render.', 'published_at' => now(),
     ]);
 
-    expect(sapNode('/sap-layering/', 'Article')['inLanguage'] ?? null)->toBe('en');
-    expect(sapNode('/ar/sap-layering/', 'Article')['inLanguage'] ?? null)->toBe('ar');
+    expect(sapNode('/blog/sap-layering/', 'Article')['inLanguage'] ?? null)->toBe('en');
+    expect(sapNode('/ar/blog/sap-layering/', 'Article')['inLanguage'] ?? null)->toBe('ar');
 });
 
 it('says which languages the SITE is published in, not which one the page is', function () {
@@ -372,7 +372,7 @@ it('lands this lane\'s own legacy addresses on an Arabic page that says it is Ar
         ['name' => 'Toners', 'parent_id' => $parent->id, 'path' => 'skincare/toners']
     );
 
-    expect(LegacyCategoryUrls::landingPath('/toners/'))->toBe('/product-category/skincare/toners/');
+    expect(LegacyCategoryUrls::landingPath('/toners/'))->toBe('/collections/skincare/toners/');
 
     $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
     $hop = $kernel->handle(\Illuminate\Http\Request::create(SAP_BASE . '/ar/toners/', 'GET'));
@@ -381,14 +381,14 @@ it('lands this lane\'s own legacy addresses on an Arabic page that says it is Ar
 
     $landing = (string) $hop->headers->get('Location');
 
-    expect($landing)->toContain('/ar/product-category/skincare/toners/');
+    expect($landing)->toContain('/ar/collections/skincare/toners/');
 
     $page = $kernel->handle(\Illuminate\Http\Request::create($landing, 'GET'));
     $html = $page->getContent();
 
     expect($page->getStatusCode())->toBe(200);
     expect($html)->toContain('<html lang="ar"');
-    expect($html)->toContain('<link rel="canonical" href="' . SAP_BASE . '/ar/product-category/skincare/toners/">');
+    expect($html)->toContain('<link rel="canonical" href="' . SAP_BASE . '/ar/collections/skincare/toners/">');
 });
 
 it('serves no crawl file under a locale prefix, so a cached one cannot be the wrong language', function () {

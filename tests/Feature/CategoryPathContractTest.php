@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Support\CategoryLaneRoutes;
 
 /**
- * /product-category/{nested/path}/ is an indexed URL with inbound links, so
+ * /collections/{nested/path}/ is an indexed URL with inbound links, so
  * what it does with a path it does not recognise is a contract, not an
  * implementation detail.
  *
@@ -63,7 +63,7 @@ function aqProduct(string $slug, Category $cat, string $status = 'publish', bool
  *     ->assertRedirect(CategoryPath::url('aq-skincare/aq-cleansers'));
  *
  * and every one of them PASSED against a Location of
- * `http://localhost/product-category/aq-skincare/aq-cleansers` — no trailing
+ * `http://localhost/collections/aq-skincare/aq-cleansers` — no trailing
  * slash — while `CategoryPath::url()` returns the slashed form. That is not a
  * tolerance, it is blindness: `assertRedirect()` puts BOTH sides through the
  * same `UrlGenerator`, which strips a trailing slash off a relative path, so
@@ -71,8 +71,8 @@ function aqProduct(string $slug, Category $cat, string $status = 'publish', bool
  * §5.5 found the identical hole in `SeoEngineToolsTest` and fixed it the same
  * way.
  *
- * What the defect was on the shop: `/product-category/aq-cleansers/` 301'd to
- * `/product-category/aq-skincare/aq-cleansers`, an address that answers 200 and
+ * What the defect was on the shop: `/collections/aq-cleansers/` 301'd to
+ * `/collections/aq-skincare/aq-cleansers`, an address that answers 200 and
  * whose own `<link rel="canonical">` points at the slashed form. The shop
  * redirected to an address that then declared a different one canonical, so
  * every stale category URL cost a crawler a 301 and then a canonical hop and
@@ -114,13 +114,13 @@ it('404s an unknown archive path on the SHIPPED route, not just the lane one', f
      * 404.
      *
      * Verified against a running server before and after the repoint:
-     * /product-category/zz-nope/ went 200 -> 404, /product-category/cleansers/
+     * /collections/zz-nope/ went 200 -> 404, /collections/cleansers/
      * stayed 200.
      */
     aqCategory('aq-live-cat', 'AQ Live Cat');
 
     // A category that does not exist must not render the whole catalogue.
-    $this->get('/product-category/aq-totally-invented/')->assertStatus(404);
+    $this->get('/collections/aq-totally-invented/')->assertStatus(404);
 
     /*
      * A real leaf under an invented parent CONSOLIDATES rather than 404s, and
@@ -131,12 +131,12 @@ it('404s an unknown archive path on the SHIPPED route, not just the lane one', f
      * canonical path keeps any inbound link working and lets Google collapse
      * the duplicates, which a 404 would simply discard.
      */
-    $this->get('/product-category/utter/nonsense/aq-live-cat/')
+    $this->get('/collections/utter/nonsense/aq-live-cat/')
         ->assertStatus(301)
-        ->assertRedirectContains('/product-category/aq-live-cat');
+        ->assertRedirectContains('/collections/aq-live-cat');
 
     // The real path still answers, so this is a narrowing and not a blackout.
-    $this->get('/product-category/aq-live-cat/')->assertStatus(200);
+    $this->get('/collections/aq-live-cat/')->assertStatus(200);
 });
 
 /* ------------------------------------------------------------- the resolver */
@@ -144,8 +144,8 @@ it('404s an unknown archive path on the SHIPPED route, not just the lane one', f
 it('404s a path whose leaf names no category', function () {
     CategoryLaneRoutes::wireStorefront($this->app);
 
-    $this->get('/product-category/aq-no-such-thing/')->assertStatus(404);
-    $this->get('/product-category/aq-no/aq-such/aq-thing/')->assertStatus(404);
+    $this->get('/collections/aq-no-such-thing/')->assertStatus(404);
+    $this->get('/collections/aq-no/aq-such/aq-thing/')->assertStatus(404);
 });
 
 it('serves a real nested path and 301s a path with the wrong ancestry', function () {
@@ -155,17 +155,17 @@ it('serves a real nested path and 301s a path with the wrong ancestry', function
     aqCategory('aq-cleansers', 'AQ Cleansers', (int) $parent->id);
 
     // The canonical address.
-    $this->get('/product-category/aq-skincare/aq-cleansers/')->assertStatus(200);
+    $this->get('/collections/aq-skincare/aq-cleansers/')->assertStatus(200);
 
     // The leaf is real, the ancestry is invented: one page, one address.
     aqAssertLands(
-        $this->get('/product-category/made-up/aq-cleansers/')->assertStatus(301),
+        $this->get('/collections/made-up/aq-cleansers/')->assertStatus(301),
         'aq-skincare/aq-cleansers',
     );
 
     // The bare leaf of a nested category is also non-canonical.
     aqAssertLands(
-        $this->get('/product-category/aq-cleansers/')->assertStatus(301),
+        $this->get('/collections/aq-cleansers/')->assertStatus(301),
         'aq-skincare/aq-cleansers',
     );
 });
@@ -174,8 +174,8 @@ it('301s to an address that serves, rather than to one that 301s again', functio
     /*
      * THE DEFECT THIS FILE SHIPPED WITH, stated as the visitor experiences it.
      *
-     * `/product-category/aq-cleansers/` 301'd to
-     * `/product-category/aq-skincare/aq-cleansers` — no trailing slash. That
+     * `/collections/aq-cleansers/` 301'd to
+     * `/collections/aq-skincare/aq-cleansers` — no trailing slash. That
      * address answers 200, so nothing looked broken, and its own
      * `<link rel="canonical">` points at the slashed form. One 301 and then a
      * canonical hop, to an address the shop does not consider its own, for
@@ -198,12 +198,12 @@ it('301s to an address that serves, rather than to one that 301s again', functio
     $parent = aqCategory('aq-hop-parent', 'AQ Hop Parent');
     aqCategory('aq-hop-leaf', 'AQ Hop Leaf', (int) $parent->id);
 
-    $first = $this->get('/product-category/aq-hop-leaf/')->assertStatus(301);
+    $first = $this->get('/collections/aq-hop-leaf/')->assertStatus(301);
 
     $location = (string) $first->headers->get('Location');
 
     expect($location)->toBe(CategoryPath::redirectUrl('aq-hop-parent/aq-hop-leaf'))
-        ->and($location)->toEndWith('/product-category/aq-hop-parent/aq-hop-leaf/');
+        ->and($location)->toEndWith('/collections/aq-hop-parent/aq-hop-leaf/');
 
     /*
      * Follow it. The path is taken out of the absolute URL the header carries,
@@ -234,7 +234,7 @@ it('does not move a URL when only the display name changes', function () {
     expect($cat->fresh()->slug)->toBe('aq-sun-care');
 
     // The indexed URL is untouched and still 200s.
-    $this->get('/product-category/aq-sun-care/')->assertStatus(200);
+    $this->get('/collections/aq-sun-care/')->assertStatus(200);
 });
 
 it('301s the old path when the slug really changes, instead of breaking it', function () {
@@ -250,12 +250,12 @@ it('301s the old path when the slug really changes, instead of breaking it', fun
         ])
         ->assertOk();
 
-    $this->get('/product-category/aq-new-slug/')->assertStatus(200);
+    $this->get('/collections/aq-new-slug/')->assertStatus(200);
 
     // The indexed address survives as a 301 rather than 404ing — and, more to
     // the point, rather than going on answering 200 with "Shop all".
     aqAssertLands(
-        $this->get('/product-category/aq-old-slug/')->assertStatus(301),
+        $this->get('/collections/aq-old-slug/')->assertStatus(301),
         'aq-new-slug',
     );
 });
@@ -281,16 +281,16 @@ it('redirects every descendant URL when a parent is re-parented', function () {
     // asserted hardest: a whole branch of indexed URLs moved, not just the row
     // the operator edited.
     aqAssertLands(
-        $this->get('/product-category/aq-root/aq-mid/aq-leaf/')->assertStatus(301),
+        $this->get('/collections/aq-root/aq-mid/aq-leaf/')->assertStatus(301),
         'aq-mid/aq-leaf',
     );
 
     aqAssertLands(
-        $this->get('/product-category/aq-root/aq-mid/')->assertStatus(301),
+        $this->get('/collections/aq-root/aq-mid/')->assertStatus(301),
         'aq-mid',
     );
 
-    $this->get('/product-category/aq-mid/aq-leaf/')->assertStatus(200);
+    $this->get('/collections/aq-mid/aq-leaf/')->assertStatus(200);
 });
 
 /* ------------------------------------------------------------------ deletes */
@@ -323,7 +323,7 @@ it('points a deleted category at its parent, and 404s one deleted from the top l
         ->assertOk();
 
     aqAssertLands(
-        $this->get('/product-category/aq-keep/aq-goes/')->assertStatus(301),
+        $this->get('/collections/aq-keep/aq-goes/')->assertStatus(301),
         'aq-keep',
     );
 
@@ -332,7 +332,7 @@ it('points a deleted category at its parent, and 404s one deleted from the top l
         ->assertOk();
 
     // Nowhere sensible to send it, so the honest answer.
-    $this->get('/product-category/aq-lonely/')->assertStatus(404);
+    $this->get('/collections/aq-lonely/')->assertStatus(404);
 });
 
 /* ------------------------------------------------------------------- merges */
@@ -361,7 +361,7 @@ it('merges a category into another, moving its products and 301ing its URL', fun
     expect($inTarget)->toBe(2);
 
     aqAssertLands(
-        $this->get('/product-category/aq-from/')->assertStatus(301),
+        $this->get('/collections/aq-from/')->assertStatus(301),
         'aq-to',
     );
 });

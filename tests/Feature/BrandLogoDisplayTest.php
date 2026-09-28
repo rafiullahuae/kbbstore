@@ -67,7 +67,7 @@ it('defaults to auto, drawing the logo when there is one and the initial when th
     // must look exactly as it did before this shipped.
     expect(Setting::query()->where('key', 'brands_display')->exists())->toBeFalse();
 
-    $this->get('/korean-skincare-brands/')
+    $this->get('/brands/')
         ->assertOk()
         ->assertSee('https://cdn.example.test/t-hasalogo.png', escape: false)
         ->assertSee('class="brw-name"', escape: false)
@@ -85,7 +85,7 @@ it('shows the logo alone in logos mode', function () {
 
     setBrandsDisplay('logos');
 
-    $html = $this->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = $this->get('/brands/')->assertOk()->getContent();
 
     expect($html)->toContain('https://cdn.example.test/t-hasalogo.png')
         // The name is still the img's alt text — dropping that would make the
@@ -102,7 +102,7 @@ it('falls back to the name for a brand with no logo in logos mode', function () 
 
     setBrandsDisplay('logos');
 
-    $html = $this->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = $this->get('/brands/')->assertOk()->getContent();
 
     expect($html)->toContain('T Nologo')
         ->toContain('class="brw-name"')
@@ -117,7 +117,7 @@ it('shows the name alone in names mode, with no logo and no initial circle', fun
 
     setBrandsDisplay('names');
 
-    $html = $this->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = $this->get('/brands/')->assertOk()->getContent();
 
     expect($html)->toContain('T Hasalogo')
         ->toContain('T Nologo')
@@ -132,7 +132,7 @@ it('ignores an unrecognised mode rather than rendering an empty directory', func
 
     setBrandsDisplay('sideways');
 
-    $this->get('/korean-skincare-brands/')
+    $this->get('/brands/')
         ->assertOk()
         ->assertSee('T Hasalogo')
         ->assertSee('class="brw-initial"', escape: false);
@@ -144,7 +144,7 @@ it('escapes an operator-supplied brand name wherever it lands', function () {
         'logo' => 'https://cdn.example.test/"onerror="alert(1)',
     ]);
 
-    $html = $this->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = $this->get('/brands/')->assertOk()->getContent();
 
     expect($html)->not->toContain('<script>alert(1)</script>')
         ->not->toContain('onerror="alert(1)')
@@ -161,7 +161,7 @@ it('widens the grid floor for a handful of brands and narrows it for many', func
         Brand::create(['slug' => 't-small-' . $i, 'name' => 'T Small ' . $i]);
     }
 
-    $this->get('/korean-skincare-brands/')
+    $this->get('/brands/')
         ->assertOk()
         ->assertSee('--brw-count-min:240px', escape: false);
 
@@ -169,7 +169,7 @@ it('widens the grid floor for a handful of brands and narrows it for many', func
         Brand::create(['slug' => 't-many-' . $i, 'name' => 'T Many ' . $i]);
     }
 
-    $this->get('/korean-skincare-brands/')
+    $this->get('/brands/')
         ->assertOk()
         ->assertSee('--brw-count-min:148px', escape: false)
         ->assertDontSee('--brw-count-min:240px', escape: false);
@@ -193,7 +193,7 @@ it('caps the grid width so three brands are not stretched across the container',
 
     // 3 × (240 + 12px gap). max-width is min(100%, cap), so it only ever
     // narrows the grid — the layout still reflows on a narrow screen.
-    $this->get('/korean-skincare-brands/')
+    $this->get('/brands/')
         ->assertOk()
         ->assertSee('--brw-count-cap:756px', escape: false);
 });
@@ -201,7 +201,7 @@ it('caps the grid width so three brands are not stretched across the container',
 it('keeps the grid rule CSS-driven, with no script deciding the column count', function () {
     seedBrandPair();
 
-    $html = $this->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = $this->get('/brands/')->assertOk()->getContent();
 
     expect($html)->toContain('repeat(auto-fill,minmax(min(var(--brw-min),100%),1fr))')
         // Phone width overrides the floor rather than the whole rule.
@@ -395,7 +395,7 @@ describe('signed in as an admin', function () {
         // And it reaches the storefront, which is the only reason to save it.
         Brand::create(['slug' => 't-saved', 'name' => 'T Saved']);
 
-        $this->get('/korean-skincare-brands/')
+        $this->get('/brands/')
             ->assertOk()
             ->assertDontSee('class="brw-initial"', escape: false);
     });

@@ -36,7 +36,7 @@
  * Four tests here moved onto a different ADDRESS, and one changed its expected
  * decision. Nothing about the map's logic changed with them.
  *
- * `/product-category/{leaf}/` can no longer reach the migrate bucket: the
+ * `/collections/{leaf}/` can no longer reach the migrate bucket: the
  * archive controller 301s that address itself, and the redirects table is
  * consulted only from the 404 handler, so a row stored for it is never read.
  * Proved against a running server with a deliberately wrong row in place. The
@@ -94,7 +94,7 @@ it('derives the nested address correctly and then declines to write it, because 
      * was the whole point of this file: these two rows used to be MIGRATE.
      *
      * The derivation was right and is still asserted. What was wrong was the
-     * conclusion. `/product-category/face-cleansers/` does not 404 — the archive
+     * conclusion. `/collections/face-cleansers/` does not 404 — the archive
      * controller 301s it to the nested path on its own, through
      * `CategoryPath::resolve()` — and the redirects table is consulted ONLY
      * from the 404 handler. So the rows this rule put in the migrate bucket
@@ -135,8 +135,8 @@ it('derives the nested address correctly and then declines to write it, because 
      * NOW IT DISCARDS AGAIN, and for a reason neither of the first two had.
      * The question that was being asked was "the shop already redirects this —
      * should a row override it?", and the honest answer was never in doubt:
-     * the shop sends /product-category/face-cleansers/ to
-     * /product-category/skincare/face-cleansers/, which is EXACTLY what this
+     * the shop sends /collections/face-cleansers/ to
+     * /collections/skincare/face-cleansers/, which is EXACTLY what this
      * rule proposes. Asking is asking the owner to confirm a redirect against
      * itself, once per category, and docs/FV-IMPORT-AT-VOLUME.md §10 is
      * explicit about what a list of those is worth.
@@ -152,11 +152,11 @@ it('derives the nested address correctly and then declines to write it, because 
      */
     expect($child)->not->toBeNull()
         ->and($child['decision'])->toBe(RedirectMap::DISCARD)
-        ->and($child['target'])->toBe('/product-category/skincare/face-cleansers/')
+        ->and($child['target'])->toBe('/collections/skincare/face-cleansers/')
         ->and($child['reason'])->toContain('already sends this address to exactly this destination')
         ->and($grandchild)->not->toBeNull()
         ->and($grandchild['decision'])->toBe(RedirectMap::DISCARD)
-        ->and($grandchild['target'])->toBe('/product-category/skincare/face-cleansers/makeup-removers/');
+        ->and($grandchild['target'])->toBe('/collections/skincare/face-cleansers/makeup-removers/');
 
     /*
      * ▲ AND THE FLAT ROOT FORM IS NOW DISCARDED TOO, which is the round-1
@@ -176,7 +176,7 @@ it('derives the nested address correctly and then declines to write it, because 
 
     expect($root)->not->toBeNull()
         ->and($root['decision'])->toBe(RedirectMap::DISCARD)
-        ->and($root['target'])->toBe('/product-category/skincare/face-cleansers/')
+        ->and($root['target'])->toBe('/collections/skincare/face-cleansers/')
         ->and($root['reason'])->toContain('already sends this address to exactly this destination');
 });
 
@@ -203,10 +203,30 @@ it('never writes the base path into a redirect, because getPathInfo strips it', 
     $child = proposalFor('/product-category/face-cleansers/', $proposals);
 
     expect($child)->not->toBeNull()
-        ->and($child['target'])->toStartWith('/product-category/');
+        ->and($child['target'])->toStartWith('/collections/');
 });
 
-it('refuses to point a top-level category at itself', function () {
+it('writes no self-redirect, and discards a top-level category for the right reason', function () {
+    /*
+     * ── PIN ADVANCED, AND THE OLD REASON IS NOW UNREACHABLE ───────────────
+     *
+     * This asserted `reason` contained "point at itself", from the branch in
+     * fromCategoryNesting() that caught a top-level category whose flat address
+     * and nested address were the same string — both `/product-category/…`.
+     *
+     * The address scheme made the source the RETIRED base and the target
+     * `/collections/…`, so the two can never be equal and that branch could
+     * never fire again. A filter that matches nothing is the shape this
+     * repository has already paid for once in `Api\ProductController`, so the
+     * branch was deleted rather than annotated, and the row is discarded by
+     * reachable() instead — on the ground that the shop already sends this
+     * address to exactly this destination, from
+     * CategoryArchiveController::show(), in one hop.
+     *
+     * The INVARIANT the test was really protecting is unchanged and is the
+     * second half below: nothing in the migrate bucket may be a self-redirect,
+     * ever, because CheckRedirects would serve one as a loop.
+     */
     urlMapImport();
 
     $proposals = (new RedirectMap)->propose();
@@ -215,7 +235,7 @@ it('refuses to point a top-level category at itself', function () {
 
     expect($top)->not->toBeNull()
         ->and($top['decision'])->toBe(RedirectMap::DISCARD)
-        ->and($top['reason'])->toContain('point at itself');
+        ->and($top['reason'])->toContain('already sends this address to exactly this destination');
 
     // Nothing in the migrate bucket may be a self-redirect, ever.
     foreach (proposalsFor(RedirectMap::MIGRATE, $proposals) as $proposal) {
@@ -228,7 +248,7 @@ it('gives each old address exactly one destination', function () {
      * The ambiguity worry, settled by the schema rather than by a guard.
      *
      * The flat address is built from the leaf slug, so the question is whether
-     * two categories can both claim `/product-category/serums/`. They cannot:
+     * two categories can both claim `/collections/serums/`. They cannot:
      * `categories.slug` is unique, so the source is unique by construction. A
      * `$leafCounts[$slug] > 1` branch was written in RedirectMap first and the
      * database refuses to produce a row that reaches it — dead code of exactly
@@ -262,7 +282,7 @@ it('sends two rules claiming one address to the owner rather than picking one', 
     /*
      * MOVED ONTO A ROOT-FLAT SOURCE BY LANE GB. The collision logic is
      * unchanged and is what is under test; the address had to change because
-     * `/product-category/face-cleansers/` does not 404, so BOTH claims on it
+     * `/collections/face-cleansers/` does not 404, so BOTH claims on it
      * are now discarded before a human ever sees them — which would have made
      * this test assert the collision rule against two rows that no longer
      * disagree about anything that matters.

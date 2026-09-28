@@ -208,7 +208,7 @@ function dpPages(): array
             $category->update(['path' => 'dp-cat']);
             dpProduct('dp-cat-product', $category);
 
-            return test()->get('/product-category/dp-cat/')->assertOk()->getContent();
+            return test()->get('/collections/dp-cat/')->assertOk()->getContent();
         },
 
         'product' => function () {
@@ -305,7 +305,7 @@ it('does not emit a second loader from the legacy SEO analytics setting', functi
 it('loads analytics on the standalone documents too, and only once', function () {
     dpConfigureEverything();
 
-    // /skincare-guide/ is the blog index (routes/web.php names it `blog`;
+    // /blog/ is the blog index (routes/web.php names it `blog`;
     // /blog 301s to it). Asserted at 200 rather than skipped on anything else,
     // so a renamed route fails this test instead of quietly emptying it.
     /*
@@ -325,7 +325,7 @@ it('loads analytics on the standalone documents too, and only once', function ()
         'role' => 'owner',
     ]);
 
-    foreach (['/skincare-guide/', '/skin-quiz/', '/reviews/', '/app/'] as $path) {
+    foreach (['/blog/', '/skin-quiz/', '/reviews/', '/app/'] as $path) {
         $html = test()->actingAs($admin, 'admin')->get($path)->assertOk()->getContent();
 
         expect(dpGaLoaders($html))->toBe(1, "{$path}: Google's tag must be loaded exactly once");

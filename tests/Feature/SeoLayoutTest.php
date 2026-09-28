@@ -44,7 +44,7 @@ it('applies the title template to an ordinary page', function () {
         'seo_title_template' => '{title} {sep} {sitename}',
     ]);
 
-    $html = $this->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = $this->get('/brands/')->assertOk()->getContent();
 
     // resources/views/store/brands.blade.php yields the bare title "All brands".
     expect($html)->toContain('<title>All brands – Glow Lab</title>');
@@ -53,12 +53,12 @@ it('applies the title template to an ordinary page', function () {
 it('emits an absolute canonical on a listing page', function () {
     layoutSettings(['site_url' => 'https://kbeautybliss.test']);
 
-    $html = $this->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = $this->get('/brands/')->assertOk()->getContent();
 
     // No trailing slash asserted HERE: Laravel's test client trims it from the
     // URI (MakesHttpRequests::prepareUrlForRequest), so getPathInfo() never
     // carries one under the harness. The layout's slash-preservation is proven
     // directly in SeoRenderTest instead.
-    expect($html)->toContain('<link rel="canonical" href="https://kbeautybliss.test/korean-skincare-brands')
+    expect($html)->toContain('<link rel="canonical" href="https://kbeautybliss.test/brands')
         ->not->toContain('<link rel="canonical" href="/');
 });

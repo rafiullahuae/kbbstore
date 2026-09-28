@@ -229,7 +229,7 @@ class MegaMenuApiController extends Controller
             // but rendered with one column empty and looked broken.
             // Confirmed by actually rendering it before deciding: this flat
             // version is the one that looks right.
-            $brands = $top(['label' => 'Brands', 'url' => '/korean-skincare-brands/']);
+            $brands = $top(['label' => 'Brands', 'url' => '/brands/']);
             $p = 0;
             foreach ([
                 'Anua' => 'anua', 'Axis-Y' => 'axis-y', 'Beauty of Joseon' => 'beauty-of-joseon',
@@ -243,7 +243,7 @@ class MegaMenuApiController extends Controller
             }
 
             /*
-             * Category addresses are /product-category/{slug}/ — URL Contract
+             * Category addresses are /collections/{slug}/ — URL Contract
              * U-03 — not the flat /toners/ form the live WordPress site used.
              * Seeded flat, every one of these fell through routes/
              * kbb-brands-blog.php's `/{slug}/` catch-all to PageController@post,
@@ -256,19 +256,19 @@ class MegaMenuApiController extends Controller
              * LegacyCategoryUrls for why remapping at seed time is the unsafe
              * direction.
              */
-            $skincare = $top(['label' => 'Skincare', 'url' => '/product-category/skincare/']);
+            $skincare = $top(['label' => 'Skincare', 'url' => '/collections/skincare/']);
             $p = 0;
             foreach ([
-                'Cleansing Oils' => '/product-category/cleansing-oils/',
-                'Face Washes' => '/product-category/face-washes/',
-                'Exfoliators' => '/product-category/exfoliators/',
-                'Toners' => '/product-category/toners/',
-                'Face Serums' => '/product-category/face-serums/',
-                'Eye Care' => '/product-category/eye-care/',
-                'Face Masks' => '/product-category/face-masks/',
-                'Moisturizers' => '/product-category/moisturizers/',
-                'Lip Care' => '/product-category/lip-care/',
-                'Sunscreens' => '/product-category/sunscreens/',
+                'Cleansing Oils' => '/collections/cleansing-oils/',
+                'Face Washes' => '/collections/face-washes/',
+                'Exfoliators' => '/collections/exfoliators/',
+                'Toners' => '/collections/toners/',
+                'Face Serums' => '/collections/face-serums/',
+                'Eye Care' => '/collections/eye-care/',
+                'Face Masks' => '/collections/face-masks/',
+                'Moisturizers' => '/collections/moisturizers/',
+                'Lip Care' => '/collections/lip-care/',
+                'Sunscreens' => '/collections/sunscreens/',
             ] as $label => $url) {
                 $child($skincare->id, $p, ['label' => $label, 'url' => $url]);
             }
@@ -278,16 +278,16 @@ class MegaMenuApiController extends Controller
             // shortcut in addition to their place in the Skincare dropdown,
             // not instead of it. That duplication is real and intentional
             // on kbeautybliss.com itself, not a mistake being copied here.
-            $top(['label' => 'Sunscreens', 'url' => '/product-category/sunscreens/']);
-            $top(['label' => 'Moisturizers', 'url' => '/product-category/moisturizers/']);
-            $top(['label' => 'Toners', 'url' => '/product-category/toners/']);
-            $top(['label' => 'Lip Care', 'url' => '/product-category/lip-care/']);
-            $top(['label' => 'Hair Care', 'url' => '/product-category/hair-care/']);
-            $top(['label' => 'Skincare Sets', 'url' => '/product-category/skincare-sets/']);
+            $top(['label' => 'Sunscreens', 'url' => '/collections/sunscreens/']);
+            $top(['label' => 'Moisturizers', 'url' => '/collections/moisturizers/']);
+            $top(['label' => 'Toners', 'url' => '/collections/toners/']);
+            $top(['label' => 'Lip Care', 'url' => '/collections/lip-care/']);
+            $top(['label' => 'Hair Care', 'url' => '/collections/hair-care/']);
+            $top(['label' => 'Skincare Sets', 'url' => '/collections/skincare-sets/']);
             $top(['label' => 'Super Sale', 'url' => '/super-sale/', 'highlight_color' => '#E23A4E']);
-            $top(['label' => 'Beauty Devices', 'url' => '/product-category/beauty-devices/']);
+            $top(['label' => 'Beauty Devices', 'url' => '/collections/beauty-devices/']);
             $top(['label' => 'Everything Under 54 AED', 'url' => '/everything-under-54-aed/']);
-            $top(['label' => 'Blog', 'url' => '/skincare-guide/']);
+            $top(['label' => 'Blog', 'url' => '/blog/']);
 
             $this->nav->flush();
 

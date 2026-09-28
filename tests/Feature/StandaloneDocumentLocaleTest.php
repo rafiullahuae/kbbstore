@@ -13,7 +13,7 @@ declare(strict_types=1);
  * skin quiz, the review wall and the app preview -- and each carries its own
  * <html> element with the language written in as the literal "en".
  *
- * So /ar/skincare-guide/, /ar/skin-quiz/, /ar/reviews/ and an Arabic article
+ * So /ar/blog/, /ar/skin-quiz/, /ar/reviews/ and an Arabic article
  * all answered 200 and all four declared themselves English. Lane FJ reported
  * the Journal; fetching the other four against a running preview with Arabic
  * switched on found the same literal in all of them.
@@ -88,8 +88,8 @@ function sdlPost(): Post
 function sdlDocuments(): array
 {
     return [
-        '/skincare-guide/' => 'the Journal index',
-        '/' . sdlPost()->slug . '/' => 'an article',
+        '/blog/' => 'the Journal index',
+        '/blog/' . sdlPost()->slug . '/' => 'an article',
         '/skin-quiz/' => 'the skin quiz',
         '/reviews/' => 'the review wall',
         '/app/' => 'the app preview',

@@ -68,10 +68,10 @@ class HealthApiController extends Controller
             'Home' => '/',
             'Shop' => '/shop/',
             'Product' => $product ? "/product/{$product}/" : null,
-            'Category' => $category ? "/product-category/{$category}/" : null,
+            'Category' => $category ? \App\Support\UrlScheme::collection($category) : null,
             'Cart' => '/cart/',
             'Checkout' => '/checkout/',
-            'Journal' => '/skincare-guide/',
+            'Journal' => \App\Support\UrlScheme::blogIndex(),
             'Reviews' => '/reviews/',
         ]);
 

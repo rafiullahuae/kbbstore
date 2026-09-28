@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Support\HasTranslations;
 use App\Support\Url;
+use App\Support\UrlScheme;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
@@ -51,10 +52,17 @@ class Category extends Model
         return implode('/', $segments);
     }
 
-    /** URL contract U-03: /product-category/{nested/path}/ with a trailing slash. */
+    /**
+     * URL contract U-03, as the scheme now states it:
+     * /collections/{nested/path}/ with a trailing slash.
+     *
+     * The shape lives in App\Support\UrlScheme rather than in a literal here.
+     * A category archive is a LISTING page, so the address is plural, and the
+     * old /product-category/ form 301s onto this one in a single hop.
+     */
     public function url(): string
     {
-        return Url::to('/product-category/' . ($this->path ?: $this->buildPath()) . '/');
+        return Url::to(UrlScheme::collection((string) ($this->path ?: $this->buildPath())));
     }
 
 }

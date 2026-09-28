@@ -160,11 +160,11 @@ it('reads the shop back, not the map: a nested category already 301s its own fla
      * REAL ROUTER rather than by calling CategoryPath directly, because the
      * question is what a visitor gets.
      */
-    $this->get('/product-category/'.$child->slug.'/')
+    $this->get('/collections/'.$child->slug.'/')
         ->assertStatus(301)
-        ->assertRedirectContains('/product-category/skincare-gb/face-cleansers-gb');
+        ->assertRedirectContains('/collections/skincare-gb/face-cleansers-gb');
 
-    expect((new SourceReachability)->verdict('/product-category/'.$child->slug.'/')['status'])
+    expect((new SourceReachability)->verdict('/collections/'.$child->slug.'/')['status'])
         ->toBe(SourceReachability::MOVED);
 });
 
@@ -172,7 +172,7 @@ it('proves a redirect row for an address the shop already moves is never read', 
     [, $child] = gbTree();
 
     Redirect::query()->create([
-        'source' => '/product-category/'.$child->slug.'/',
+        'source' => '/collections/'.$child->slug.'/',
         'target' => '/a-place-no-row-should-reach/',
         'code' => 301,
         'enabled' => true,
@@ -184,12 +184,12 @@ it('proves a redirect row for an address the shop already moves is never read', 
      * changes nothing, because CategoryArchiveController answers first and the
      * 404 handler — the only place the table is consulted — is never reached.
      */
-    $response = $this->get('/product-category/'.$child->slug.'/');
+    $response = $this->get('/collections/'.$child->slug.'/');
 
     $response->assertStatus(301);
 
     expect($response->headers->get('Location'))
-        ->toContain('/product-category/skincare-gb/face-cleansers-gb')
+        ->toContain('/collections/skincare-gb/face-cleansers-gb')
         ->not->toContain('a-place-no-row-should-reach');
 });
 
@@ -201,7 +201,7 @@ it('proves a redirect row for an address that 404s IS read', function () {
 
     Redirect::query()->create([
         'source' => '/'.$child->slug.'/',
-        'target' => '/product-category/skincare-gb/face-cleansers-gb/',
+        'target' => '/collections/skincare-gb/face-cleansers-gb/',
         'code' => 301,
         'enabled' => true,
         'auto_created' => true,
@@ -214,7 +214,7 @@ it('proves a redirect row for an address that 404s IS read', function () {
      * `CheckRedirects` hands the stored target to Laravel's `redirect()`, whose
      * UrlGenerator strips a trailing slash — the same behaviour
      * `docs/FQ-ROUTES.md` records for `route()`. So a row stored as
-     * `/product-category/skincare-gb/face-cleansers-gb/` sends the visitor to
+     * `/collections/skincare-gb/face-cleansers-gb/` sends the visitor to
      * the slash-less spelling, which answers 200 and is not the canonical form
      * U-01 defines. Asserted as it really is rather than as it ought to be;
      * `docs/GB-MEDIA-AND-REDIRECTS.md` carries the one-line fix and why this
@@ -222,7 +222,7 @@ it('proves a redirect row for an address that 404s IS read', function () {
      */
     expect($moved->getStatusCode())->toBe(301)
         ->and($moved->headers->get('Location'))
-        ->toContain('/product-category/skincare-gb/face-cleansers-gb');
+        ->toContain('/collections/skincare-gb/face-cleansers-gb');
 });
 
 it('tells served, moved and not-found apart on the addresses that decide the map', function () {
@@ -231,11 +231,11 @@ it('tells served, moved and not-found apart on the addresses that decide the map
     $reach = new SourceReachability;
 
     expect($reach->verdict('/shop/')['status'])->toBe(SourceReachability::SERVED)
-        ->and($reach->verdict('/product-category/skincare-gb/face-cleansers-gb/')['status'])
+        ->and($reach->verdict('/collections/skincare-gb/face-cleansers-gb/')['status'])
             ->toBe(SourceReachability::SERVED)
-        ->and($reach->verdict('/product-category/'.$child->slug.'/')['status'])
+        ->and($reach->verdict('/collections/'.$child->slug.'/')['status'])
             ->toBe(SourceReachability::MOVED)
-        ->and($reach->verdict('/product-category/no-such-leaf-at-all/')['status'])
+        ->and($reach->verdict('/collections/no-such-leaf-at-all/')['status'])
             ->toBe(SourceReachability::NOT_FOUND)
         ->and($reach->verdict('/'.$child->slug.'/')['status'])
             ->toBe(SourceReachability::NOT_FOUND);
@@ -259,7 +259,24 @@ it('calls a root address served once a post is published at it', function () {
      * an article at a slug a category used to hold and the article wins, with
      * the row still sitting in the table looking correct.
      */
-    expect($reach->verdict('/gb-published-article/')['status'])->toBe(SourceReachability::SERVED);
+    /*
+     * ── PIN ADVANCED: SERVED -> MOVED, AND THE POINT OF THE TEST SURVIVES ──
+     *
+     * It asserted SERVED, which was right while an article was served AT the
+     * site root. The address scheme moved articles to /blog/{slug}/ and left
+     * PageController::rootArticle() at the root as a 301 onto it, so the shop
+     * now FORWARDS this address rather than rendering it.
+     *
+     * What the test is for is unchanged and is still the interaction worth
+     * stating: publish an article at a slug a category used to hold and the
+     * article wins, with the row still sitting in the table looking correct.
+     * MOVED says that as precisely as SERVED did — and it carries the
+     * destination, so reachable() can compare it with the map's own.
+     */
+    $verdict = $reach->verdict('/gb-published-article/');
+
+    expect($verdict['status'])->toBe(SourceReachability::MOVED)
+        ->and($verdict['to'])->toBe('/blog/gb-published-article/');
 });
 
 it('reads a literal page route back off the pages table, not off the route alone', function () {
@@ -313,6 +330,10 @@ it('discards every category-nesting row, because the shop already serves that mo
     // ->not->toContain($needle, $message) call passes vacuously.
     expect(array_column($migrating, 'source'))->toBe([]);
 
+    // THE SOURCE, which is still the retired base. The address scheme moved
+    // the archive to /collections/{path}/ and left the SOURCE half of every row
+    // alone -- a source is a fact about the OLD site, and no change here can
+    // alter what Google already holds.
     $child = gbProposalFor('/product-category/face-cleansers-gb/', $proposals);
 
     /*
@@ -356,15 +377,15 @@ it('proposes the flat root address the old site really published, and it is one 
     expect($flat)->not->toBeNull()
         ->and($flat['decision'])->toBe(RedirectMap::MIGRATE)
         ->and($flat['rule'])->toBe('legacy-root-category')
-        ->and($flat['target'])->toBe('/product-category/skincare-gb/face-cleansers-gb/');
+        ->and($flat['target'])->toBe('/collections/skincare-gb/face-cleansers-gb/');
 
     // Even the top-level one moves under this rule: /skincare-gb/ is not
-    // /product-category/skincare-gb/, so it is a real redirect and not a loop.
+    // /collections/skincare-gb/, so it is a real redirect and not a loop.
     $top = gbProposalFor('/skincare-gb/', $proposals);
 
     expect($top)->not->toBeNull()
         ->and($top['decision'])->toBe(RedirectMap::MIGRATE)
-        ->and($top['target'])->toBe('/product-category/'.$parent->slug.'/');
+        ->and($top['target'])->toBe('/collections/'.$parent->slug.'/');
 
     // And the addresses it proposes really do 404 before it writes anything.
     $this->get('/'.$child->slug.'/')->assertStatus(404);
@@ -442,7 +463,7 @@ it('never writes the base path into a redirect, in either column', function () {
     expect($offenders)->toBe([]);
 
     expect(gbProposalFor('/face-cleansers-gb/', $proposals)['target'])
-        ->toBe('/product-category/skincare-gb/face-cleansers-gb/');
+        ->toBe('/collections/skincare-gb/face-cleansers-gb/');
 });
 
 it('writes, is idempotent, and rolls back only its own rows', function () {
@@ -469,7 +490,7 @@ it('writes, is idempotent, and rolls back only its own rows', function () {
 
         expect($moved->getStatusCode())->toBe(301)
             ->and($moved->headers->get('Location'))
-            ->toContain('/product-category/skincare-gb/face-cleansers-gb');
+            ->toContain('/collections/skincare-gb/face-cleansers-gb');
     }
 
     $this->artisan('kbb:import-redirects --rollback')->assertExitCode(0);
@@ -938,7 +959,7 @@ it('writes the redirects from the screen and they answer for a real request', fu
 
     expect($moved->getStatusCode())->toBe(301)
         ->and($moved->headers->get('Location'))
-        ->toContain('/product-category/skincare-gb/face-cleansers-gb');
+        ->toContain('/collections/skincare-gb/face-cleansers-gb');
 
     $this->actingAs(gbAdmin(), 'admin')
         ->postJson('/admin-api/urls-media/redirects', ['action' => 'rollback'])

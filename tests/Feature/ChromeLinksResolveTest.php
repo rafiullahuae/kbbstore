@@ -175,7 +175,7 @@ function chromeRouteFor(string $path): ?\Illuminate\Routing\Route
  * PATHS. The header's mega menu is seeded from menu_items by
  * 2026_09_09_040000_seed_kbeautybliss_menu, carrying the LIVE SITE'S category
  * URLs — /toners/, /sunscreens/, /cleansing-oils/ and eleven more — and the
- * home page's routine strip links /product-category/{slug}/ for six slugs
+ * home page's routine strip links /collections/{slug}/ for six slugs
  * hard-coded in Store\HomeController. Every one of those resolves to a
  * catalogue lookup, and this test database has no catalogue: the suite runs
  * migrations, and the products, brands and categories arrive by import.
@@ -193,7 +193,7 @@ function chromeRouteFor(string $path): ?\Illuminate\Routing\Route
  *
  * The paragraph that stood here said this was NOT a clean bill of health: that
  * fourteen mega-menu items pointed at WooCommerce-era flat category URLs while
- * the application serves categories at /product-category/{path}/, and that the
+ * the application serves categories at /collections/{path}/, and that the
  * root catch-all answering them looked up a POST. That was correct, and it has
  * been fixed at the source — 2026_11_07_000000_repoint_menu_category_urls
  * repoints the rows, and MenuDemo and MegaMenuApiController::loadDemo() no
@@ -433,7 +433,7 @@ it('emits nothing in the header or mobile chrome that 500s or points nowhere', f
      *
      * TWELVE, down from twenty — Lane DS. All twelve are menu items whose
      * category this shop has not imported yet, reached through a correctly
-     * shaped /product-category/ URL. The mega menu's flat category URLs are
+     * shaped /collections/ URL. The mega menu's flat category URLs are
      * gone, and the home page's routine steps resolve for real now (they are
      * not in this region anyway; they are pinned in MenuUrlsResolveTest).
      *

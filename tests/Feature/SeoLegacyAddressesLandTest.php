@@ -23,7 +23,7 @@ use Tests\Support\SqlShape;
  * /toners/, /skincare-sets/, /sunscreens/ -- because `woocommerce_permalinks
  * ['category_base']` was the empty string on that install (the exporter reads
  * that setting and writes it into manifest.json; docs/GE-WP-EXPORTER.md §5).
- * This application serves them nested, at /product-category/{path}/ (U-03).
+ * This application serves them nested, at /collections/{path}/ (U-03).
  * App\Support\LegacyCategoryUrls::PATHS is the closed list of the fifteen,
  * copied off the live navigation.
  *
@@ -55,7 +55,7 @@ use Tests\Support\SqlShape;
  *  1. The defect itself, in English and in Arabic, asserted as a 404 first on
  *     a slug this shop does NOT carry so the test cannot pass by accident.
  *  2. ONE HOP. The destination is the canonical nested path, not the flat
- *     /product-category/{slug}/ form, which is itself a 301.
+ *     /collections/{slug}/ form, which is itself a 301.
  *  3. NEVER INVENT. A legacy address whose category does not exist stays a 404.
  *  4. The shop's own published article wins over a derived redirect.
  *  5. The table wins over the derived rule, in both directions.
@@ -169,20 +169,20 @@ it('lands a legacy flat category address on its canonical archive, in one hop', 
     legTree();
 
     // The nested leaf. ONE hop, straight to the canonical path -- NOT to
-    // /product-category/toners/, which CategoryArchiveController would then
+    // /collections/toners/, which CategoryArchiveController would then
     // 301 again. Two hops leak ranking and burn crawl budget for nothing.
-    expect(legLocation('/toners/'))->toBe('http://localhost/product-category/skincare/toners/');
+    expect(legLocation('/toners/'))->toBe('http://localhost/collections/skincare/toners/');
 
     // MUTATION NOTE, RUN: swapping landingPath()'s `redirect` branch to the
     // flat form -- LegacyCategoryUrls::toCategoryPath() -- makes this Location
-    // '/product-category/toners/', which answers 301 and not 200, so the line
+    // '/collections/toners/', which answers 301 and not 200, so the line
     // below is red -- 6 failed across the file.
     $first = legLocation('/toners/');
     expect(legStatus((string) $first))->toBe(200, 'the 301 does not land on a page: it lands on another redirect');
 
     // A root-level category: the flat and canonical forms are the same string.
-    expect(legLocation('/skincare-sets/'))->toBe('http://localhost/product-category/skincare-sets/');
-    expect(legLocation('/skincare/'))->toBe('http://localhost/product-category/skincare/');
+    expect(legLocation('/skincare-sets/'))->toBe('http://localhost/collections/skincare-sets/');
+    expect(legLocation('/skincare/'))->toBe('http://localhost/collections/skincare/');
 });
 
 it('uses 301 and not 302, because the old domain is being retired', function () {
@@ -206,7 +206,7 @@ it('matches the address without its trailing slash as well', function () {
      */
     legTree();
 
-    expect(legLocation('/toners'))->toBe('http://localhost/product-category/skincare/toners/');
+    expect(legLocation('/toners'))->toBe('http://localhost/collections/skincare/toners/');
 });
 
 // ---------------------------------------------------------------------------
@@ -224,7 +224,7 @@ it('leaves a legacy address whose category this shop does not carry as an honest
      *
      * MUTATION NOTE, RUN: making landingPath() fall back to the flat form
      * when resolve() answers `notfound` turns this into a 301 to
-     * /product-category/lip-care/ -- which is itself a 404, a redirect ending
+     * /collections/lip-care/ -- which is itself a 404, a redirect ending
      * on a not-found page -- and this block goes red on both lines -- 2
      * failed.
      */
@@ -263,7 +263,7 @@ it('serves a published article at a legacy slug instead of redirecting it away',
      * because the table was read only on a 404. It is not harmless now.
      *
      * MUTATION NOTE, RUN: deleting the Post guard from landingPath() makes
-     * this a 301 to /product-category/hair-care/, so the article is reachable
+     * this a 301 to /collections/hair-care/, so the article is reachable
      * at no address at all -- 2 failed.
      */
     legCategory('hair-care', 'Hair Care', null, 'hair-care', 0);
@@ -275,8 +275,21 @@ it('serves a published article at a legacy slug instead of redirecting it away',
         'body' => 'Body copy.',
     ]);
 
-    expect(legStatus('/hair-care/'))->toBe(200);
-    expect(legLocation('/hair-care/'))->toBeNull();
+    /*
+     * ── PIN ADVANCED: 200 -> 301 ONTO THE ARTICLE, AND THE RULE IS THE SAME ─
+     *
+     * It asserted 200 and no Location, because an article used to be SERVED at
+     * the site root. The address scheme moved articles to /blog/{slug}/ and
+     * left PageController::rootArticle() at the root as a 301 onto it, so this
+     * address forwards to the article rather than rendering it.
+     *
+     * What the test is for is untouched and is the whole reason the Post guard
+     * exists in landingPath(): the shop's own PAGE wins the address, and the
+     * derived category redirect must stand aside. The destination says which
+     * won, which is a stronger statement than a bare 200 was.
+     */
+    expect(legStatus('/hair-care/'))->toBe(301);
+    expect(legLocation('/hair-care/'))->toBe('http://localhost/blog/hair-care/');
 });
 
 it('goes back to redirecting once that article is unpublished', function () {
@@ -288,11 +301,13 @@ it('goes back to redirecting once that article is unpublished', function () {
         'title' => 'Hair Care', 'slug' => 'hair-care', 'status' => 'published', 'body' => 'x',
     ]);
 
-    expect(legLocation('/hair-care/'))->toBeNull();
+    // The article wins the address while it is published -- it forwards to
+    // /blog/hair-care/ rather than to the category archive.
+    expect(legLocation('/hair-care/'))->toBe('http://localhost/blog/hair-care/');
 
     $post->update(['status' => 'draft']);
 
-    expect(legLocation('/hair-care/'))->toBe('http://localhost/product-category/hair-care/');
+    expect(legLocation('/hair-care/'))->toBe('http://localhost/collections/hair-care/');
 });
 
 // ---------------------------------------------------------------------------
@@ -364,7 +379,7 @@ it('lets that row govern the slashless spelling of its own address too', functio
     // is deliberately not made here, so this 404s exactly as it does today —
     // what matters is that it does not 301 somewhere else.
     expect(legLocation('/toners'))->not->toBe(
-        'http://localhost/product-category/skincare/toners/',
+        'http://localhost/collections/skincare/toners/',
         'the derived rule overrode a decision the owner made about this address'
     );
 });
@@ -379,7 +394,7 @@ it('falls back to the derived answer when the owner switches that row off', func
         'enabled' => false, 'auto_created' => false,
     ]);
 
-    expect(legLocation('/toners/'))->toBe('http://localhost/product-category/skincare/toners/');
+    expect(legLocation('/toners/'))->toBe('http://localhost/collections/skincare/toners/');
 });
 
 // ---------------------------------------------------------------------------
@@ -390,7 +405,7 @@ it('refuses a cycle that runs through the derived rule', function () {
     /*
      * THE FAILURE MODE THE GLOBAL REGISTRATION INTRODUCED. A row pointing the
      * canonical archive back at /toners/ closes a cycle with the derived hop:
-     * /toners/ → /product-category/skincare/toners/ → /toners/ → … on a page
+     * /toners/ → /collections/skincare/toners/ → /toners/ → … on a page
      * the shop was serving correctly a moment ago, for ever.
      *
      * MUTATION NOTE, RUN: putting loops()'s walk back to
@@ -402,7 +417,7 @@ it('refuses a cycle that runs through the derived rule', function () {
     legTree();
 
     Redirect::query()->create([
-        'source' => '/product-category/skincare/toners/', 'target' => '/toners/',
+        'source' => '/collections/skincare/toners/', 'target' => '/toners/',
         'code' => 301, 'enabled' => true, 'auto_created' => false,
     ]);
 
@@ -414,7 +429,7 @@ it('sees a derived hop while walking a chain for a loop', function () {
     /*
      * RED ON THE OLD WALK. loops() used to step with claimed()+row(), so it
      * could only see STORED rows. A cycle whose middle hop is derived --
-     * /leg-a/ (row) → /toners/ (derived) → /product-category/skincare/toners/
+     * /leg-a/ (row) → /toners/ (derived) → /collections/skincare/toners/
      * (row) → /leg-a/ -- was invisible to it and the visitor bounced.
      *
      * MUTATION NOTE, RUN: replacing self::step($next) with
@@ -429,7 +444,7 @@ it('sees a derived hop while walking a chain for a loop', function () {
         'enabled' => true, 'auto_created' => false,
     ]);
     Redirect::query()->create([
-        'source' => '/product-category/skincare/toners/', 'target' => '/leg-a/',
+        'source' => '/collections/skincare/toners/', 'target' => '/leg-a/',
         'code' => 301, 'enabled' => true, 'auto_created' => false,
     ]);
 
@@ -522,7 +537,7 @@ it('costs a warm storefront page nothing at all', function () {
         . 'so every zero it reports below would be vacuous'
     );
 
-    foreach (['/shop/', '/product-category/skincare/toners/', '/product/budget-serum/'] as $page) {
+    foreach (['/shop/', '/collections/skincare/toners/', '/product/budget-serum/'] as $page) {
         // Categories are queried by the page itself; what must be zero is the
         // REDIRECTS table, which is what this middleware owns.
         expect($redirectReads(fn () => test()->get($page)))->toBe(
@@ -564,15 +579,15 @@ it('keeps an Arabic visitor in Arabic, with the prefix exactly once', function (
     legTree();
     legArabicOn();
 
-    expect(legLocation('/ar/toners/'))->toBe('http://localhost/ar/product-category/skincare/toners/');
-    expect(legLocation('/ar/toners'))->toBe('http://localhost/ar/product-category/skincare/toners/');
-    expect(legLocation('/ar/skincare-sets/'))->toBe('http://localhost/ar/product-category/skincare-sets/');
+    expect(legLocation('/ar/toners/'))->toBe('http://localhost/ar/collections/skincare/toners/');
+    expect(legLocation('/ar/toners'))->toBe('http://localhost/ar/collections/skincare/toners/');
+    expect(legLocation('/ar/skincare-sets/'))->toBe('http://localhost/ar/collections/skincare-sets/');
 
     // The English answer is unchanged by Arabic being switched on.
-    expect(legLocation('/toners/'))->toBe('http://localhost/product-category/skincare/toners/');
+    expect(legLocation('/toners/'))->toBe('http://localhost/collections/skincare/toners/');
 
     // And the destination is a real Arabic page, not a second redirect.
-    expect(legStatus('/ar/product-category/skincare/toners/'))->toBe(200);
+    expect(legStatus('/ar/collections/skincare/toners/'))->toBe(200);
 });
 
 it('keeps the locale on an Arabic address whose category does not exist as a 404, not an English page', function () {
@@ -612,24 +627,32 @@ it('runs the locale middleware before the redirect check, which is what makes on
 // 9. Nothing that already works may change
 // ---------------------------------------------------------------------------
 
-it('leaves the ten shipped journal redirects exactly as they were', function () {
+it('ships a redirects table that claims no address the shop serves', function () {
     /*
-     * The pin for rule 7. These ten rows are the entire redirects table as it
-     * ships -- five articles, both slash spellings -- and they were measured
-     * at 301 with these exact Location headers before this lane touched
-     * anything.
+     * ── PIN ADVANCED, AND THE OLD ONE WAS A LOOP ───────────────────────────
+     *
+     * It read "leaves the ten shipped journal redirects exactly as they were"
+     * and asserted ten rows, every source under `/blog/`. Those are
+     * 2026_09_14_160000_seed_phase9_post_url_redirects', written when `/blog/`
+     * was a dead prefix and the article lived at the site root.
+     *
+     * `/blog/{slug}/` is the article's canonical address now and CheckRedirects
+     * runs BEFORE the router, so each row sent the canonical address to the
+     * site root and PageController::rootArticle() sent it straight back.
+     * CheckRedirects::loops() cannot see that: it walks the TABLE, and the
+     * second hop is a route. 2027_04_05_000100_url_scheme_redirect_rows removes
+     * them.
+     *
+     * The rule this is the pin FOR is unchanged, and is stated directly rather
+     * than through a row count: nothing the package ships may claim an address
+     * the shop answers.
      */
-    $rows = Redirect::query()->orderBy('source')->get();
+    foreach (Redirect::query()->orderBy('source')->get() as $row) {
+        expect(str_starts_with((string) $row->source, '/blog/'))
+            ->toBeFalse((string) $row->source . ' claims an address the shop serves');
 
-    expect($rows)->toHaveCount(10, 'the shipped redirects table is no longer ten rows');
-
-    foreach ($rows as $row) {
-        expect(str_starts_with((string) $row->source, '/blog/'))->toBeTrue('a shipped row is not a journal row');
-        expect($row->code)->toBe(301);
-
-        $location = legLocation((string) $row->source);
-
-        expect($location)->toBe('http://localhost' . $row->target, (string) $row->source . ' no longer lands where it did');
+        expect(legStatus((string) $row->source))->not->toBe(200,
+            (string) $row->source . ' is both a redirect source and a page');
     }
 });
 
@@ -643,8 +666,8 @@ it('leaves every address that is not one of the fifteen untouched', function () 
 
     test()->get('/shop/')->assertStatus(200);
     test()->get('/product/untouched/')->assertStatus(200);
-    test()->get('/product-category/skincare/toners/')->assertStatus(200);
-    test()->get('/skincare-guide/')->assertStatus(200);
+    test()->get('/collections/skincare/toners/')->assertStatus(200);
+    test()->get('/blog/')->assertStatus(200);
 
     // The curated listings that ARE flat root addresses and are deliberately
     // not in the list -- rewriting one of these would break a live page.
@@ -694,8 +717,8 @@ it('makes the batched resolver agree with the per-path one on all fifteen', func
 
     // And the fixture really did exercise all four shapes, so the loop above
     // cannot pass by comparing fifteen nulls.
-    expect($batch['/toners/'])->toBe('/product-category/skincare/toners/');
-    expect($batch['/skincare-sets/'])->toBe('/product-category/skincare-sets/');
+    expect($batch['/toners/'])->toBe('/collections/skincare/toners/');
+    expect($batch['/skincare-sets/'])->toBe('/collections/skincare-sets/');
     expect($batch['/lip-care/'])->toBeNull();
     expect($batch['/hair-care/'])->toBeNull();
 });

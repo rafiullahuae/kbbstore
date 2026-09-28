@@ -203,7 +203,7 @@
   <nav class="nav-links">
     <a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a>
     <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a>
-    <a href="{{ \App\Support\Url::to('/skincare-guide/') }}" class="on">{{ __('store.journal.nav_journal') }}</a>
+    <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}" class="on">{{ __('store.journal.nav_journal') }}</a>
   </nav>
   <div class="tools">
     <a class="tool" href="{{ \App\Support\Url::to('/shop/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg></a>
@@ -214,12 +214,12 @@
 <div class="navov" id="navov" onclick="this.classList.remove('on');document.getElementById('mnav').classList.remove('on')"></div>
 <nav class="mnav" id="mnav">
   <button class="mnav-x" onclick="document.getElementById('mnav').classList.remove('on');document.getElementById('navov').classList.remove('on')">✕</button>
-  <a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a><a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a><a href="{{ \App\Support\Url::to('/skincare-guide/') }}">{{ __('store.journal.nav_journal') }}</a>
+  <a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a><a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a><a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a>
 </nav>
 
 <article id="article">
   
-  <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ \App\Support\Url::to('/skincare-guide/') }}">{{ __('store.journal.nav_journal') }}</a></div>
+  <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a></div>
   @if($post->tag)<span class="atag">{{ $post->tag }}</span>@endif
   <h1>{{ $post->t('title') }}</h1>
   <div class="ameta"><span>{{ $post->author ?: 'K-Beauty Bliss' }}</span> · <span>{{ optional($post->published_at)->format('j F Y') }}</span></div>
@@ -260,7 +260,7 @@
 @endverbatim
 {{-- Straight to the index. "/blog" only 301s here, and a hardcoded root path
      drops the base prefix the staging subdirectory needs. --}}
-<div class="backrow"><a href="{{ \App\Support\Url::to('/skincare-guide/') }}">&larr; {{ __('store.journal.back_to_index') }}</a></div>
+<div class="backrow"><a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">&larr; {{ __('store.journal.back_to_index') }}</a></div>
 @verbatim
 
 <div class="wrap">
@@ -272,7 +272,7 @@
     <div class="mgrid" id="mgrid">
   
   @foreach($related as $r)
-    <a class="mcard" href="{{ \App\Support\Url::to('/' . $r->slug . '/') }}">
+    <a class="mcard" href="{{ \App\Support\Url::to(\App\Support\UrlScheme::article($r->slug)) }}">
       @php
         $relSrc = \App\Support\CoverImage::src($r->cover);
       @endphp
@@ -296,7 +296,7 @@
 
 <footer><div class="wrap fin">
   <div>{{ __('store.journal.footer_line') }}</div>
-  <div><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a> · <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a> · <a href="{{ \App\Support\Url::to('/skincare-guide/') }}">{{ __('store.journal.nav_journal') }}</a></div>
+  <div><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a> · <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a> · <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a></div>
 </div></footer>@verbatim
 </body>
 </html>

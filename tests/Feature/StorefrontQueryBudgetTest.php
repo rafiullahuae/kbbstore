@@ -398,7 +398,9 @@ function budgetPages(array $seed): array
         'shop'              => ['/shop', null, 8],
         'shop sorted'       => ['/shop?orderby=price', null, 8],
         'shop filtered'     => ['/shop?filter_brands=' . $seed['brand']->slug, null, 9],
-        'category'          => ['/product-category/' . $seed['category']->slug, null, 9],
+        // The address scheme moved the archive to /collections/{path}/. Same
+        // controller, same queries, same ceiling — only the door changed.
+        'category'          => ['/collections/' . $seed['category']->slug, null, 9],
         /*
          * 14 -> 8 (Lane CW).
          *
@@ -420,11 +422,16 @@ function budgetPages(array $seed): array
          * the floor at 6. At 8 the old MySQL count of 8 still fits, so a
          * ceiling set by the usual rule would pass against the very code this
          * entry was tightened for. Proven by reverting raw(): at 8 the suite is
-         * green, at 7 it fails with "brand index (/korean-skincare-brands) ran
+         * green, at 7 it fails with "brand index (/brands) ran
          * 8 queries, budget 7". One of slack on the engine that governs it.
          */
-        'brand index'       => ['/korean-skincare-brands', null, 7],
-        'brand page'        => ['/korean-skincare-brands/' . $seed['brand']->slug, null, 9],
+        // The address scheme moved the directory and the landing pages onto
+        // /brands/. Both ceilings are unchanged and deliberately so: the pages
+        // are the same controller actions reached through a different route, so
+        // a number that moved here would be a real regression rather than a
+        // consequence of the move — which is exactly what this entry is for.
+        'brand index'       => ['/brands', null, 7],
+        'brand page'        => ['/brands/' . $seed['brand']->slug, null, 9],
         'product'           => ['/product/' . $seed['product']->slug, null, 13],
         'quick view'        => ['/quick-view/' . $seed['product']->id, null, 4],
         'collection new-in' => ['/new-in', null, 8],
@@ -463,8 +470,8 @@ function budgetPages(array $seed): array
         'checkout'          => ['/checkout', null, 17, $seed['cart']->token],
         'cart drawer'       => ['/api/cart/drawer', null, 3],
         'checkout success'  => ['/checkout/success', null, 5],
-        'journal'           => ['/skincare-guide', null, 3],
-        'article'           => ['/budget-article-0', null, 4],
+        'journal'           => ['/blog', null, 3],
+        'article'           => ['/blog/budget-article-0', null, 4],
         'search suggest'    => ['/api/search?q=serum', null, 3],
         'wishlist'          => ['/my-wishlist', null, 5],
         /*

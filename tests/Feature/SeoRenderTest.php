@@ -326,7 +326,7 @@ it('serves llms.txt when the toggle was saved blank', function () {
 /*
  * Every storefront route is declared with a trailing slash and every internal
  * link carries one, but Url::to() trims it (UrlGenerator::format does). Left
- * alone, the page served at /korean-skincare-brands/ canonicalises to
+ * alone, the page served at /brands/ canonicalises to
  * /korean-skincare-brands -- pointing search engines one redirect away from the
  * page they are already on. The layout puts it back; this proves the SEO layer
  * does not strip it again on the way through.
@@ -334,10 +334,10 @@ it('serves llms.txt when the toggle was saved blank', function () {
 it('preserves a trailing slash on the canonical', function () {
     $html = App\Support\Seo::render([
         'title' => 'All brands',
-        'url' => 'https://kbeautybliss.test/korean-skincare-brands/',
+        'url' => 'https://kbeautybliss.test/brands/',
     ]);
 
-    expect($html)->toContain('<link rel="canonical" href="https://kbeautybliss.test/korean-skincare-brands/">');
+    expect($html)->toContain('<link rel="canonical" href="https://kbeautybliss.test/brands/">');
 });
 
 it('leaves a path that has no trailing slash alone', function () {

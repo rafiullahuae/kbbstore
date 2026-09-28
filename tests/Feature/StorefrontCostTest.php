@@ -93,7 +93,7 @@ it('does not spend the brand index on schema introspection', function () {
     $this->seed(\Database\Seeders\DatabaseSeeder::class);
 
     // Warm first: the page's own caches are not what is being measured.
-    $this->get('/korean-skincare-brands')->assertSuccessful();
+    $this->get('/brands')->assertSuccessful();
 
     $introspection = 0;
 
@@ -106,7 +106,7 @@ it('does not spend the brand index on schema introspection', function () {
         }
     });
 
-    $this->get('/korean-skincare-brands')->assertSuccessful();
+    $this->get('/brands')->assertSuccessful();
 
     expect($introspection)->toBeLessThanOrEqual(1,
         "The brand index ran {$introspection} schema-introspection queries. It ran four before "

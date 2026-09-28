@@ -1454,8 +1454,8 @@ it('issues portable SQL on the rest of the storefront', function (string $url) {
     expect($captured)->not->toBeEmpty("no SQL was issued for {$url}");
     expect(SqlShape::violations($captured))->toBe([], "portability violations on {$url}");
 })->with([
-    '/korean-skincare-brands',
-    '/product-category/{category}',
+    '/brands',
+    '/collections/{category}',
     '/new-in',
     '/best-sellers',
     '/super-sale',

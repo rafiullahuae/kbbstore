@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  * The menu rows seeded by 2026_09_09_070000_fix_kbeautybliss_menu_structure
  * carry the live WordPress site's own category addresses: /toners/,
  * /sunscreens/, /cleansing-oils/ and eleven more, flat at the site root. This
- * application serves category archives at /product-category/{path}/ — URL
+ * application serves category archives at /collections/{path}/ — URL
  * Contract U-03 — and has never served them anywhere else.
  *
  * Nothing 404'd cleanly. routes/kbb-brands-blog.php ends in `/{slug}/`, the
@@ -41,7 +41,7 @@ use Illuminate\Support\Facades\DB;
  * ── THE THREE PROPERTIES THIS FILE IS WRITTEN FOR ───────────────────────────
  *
  * IDEMPOTENT. It recognises rows by their exact legacy URL. After it runs,
- * those rows hold /product-category/… paths, which are not legacy URLs, so a
+ * those rows hold /collections/… paths, which are not legacy URLs, so a
  * second run matches nothing and changes nothing. Re-applying the package, or
  * running `migrate` twice, is a no-op rather than a second rewrite.
  *
@@ -115,7 +115,7 @@ return new class extends Migration
         if ($rewritten === 0) {
             echo "Menu category URLs: nothing to repoint (already corrected, or edited by hand).\n";
         } else {
-            echo "Menu category URLs: repointed {$rewritten} item(s) to /product-category/…\n";
+            echo "Menu category URLs: repointed {$rewritten} item(s) to /collections/…\n";
 
             foreach ($byUrl as $from => $info) {
                 echo "  {$from} -> {$info['to']}  ({$info['rows']} item(s))\n";
@@ -163,7 +163,7 @@ return new class extends Migration
         echo "\n  These menu items now point at a category this shop does not have yet:\n";
 
         foreach ($missing as $slug) {
-            echo "    /product-category/{$slug}/\n";
+            echo '    '.LegacyCategoryUrls::toCategoryPath('/'.$slug.'/')."\n";
         }
 
         echo "  Each will answer 404 until the category exists, and will start\n";
@@ -174,7 +174,7 @@ return new class extends Migration
 
     /**
      * Reversible, and only for rows this migration would itself have written.
-     * A row the owner has since edited away from the /product-category/ form is
+     * A row the owner has since edited away from the category-archive form is
      * not restored to an address that never worked.
      */
     public function down(): void

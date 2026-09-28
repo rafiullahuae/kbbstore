@@ -47,7 +47,7 @@ it('accepts the shapes a real redirect table needs', function (string $target) {
         ->assertOk();
 })->with([
     'a site-relative path' => '/shop/',
-    'a nested path' => '/product-category/skincare/toners/',
+    'a nested path' => '/collections/skincare/toners/',
     'the site root' => '/',
     // Off-site is allowed on purpose: moving a policy page to a parent
     // company's domain is a normal thing for a shop to do.

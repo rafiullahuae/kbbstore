@@ -81,7 +81,7 @@ function peProduct(array $attributes = []): Product
 function peOnCategoryPage(Product $product, Category $category): bool
 {
     return str_contains(
-        (string) test()->get('/product-category/'.$category->slug.'/')->getContent(),
+        (string) test()->get('/collections/'.$category->slug.'/')->getContent(),
         $product->slug
     );
 }

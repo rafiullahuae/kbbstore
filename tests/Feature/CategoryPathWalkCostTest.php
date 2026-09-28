@@ -47,9 +47,9 @@ declare(strict_types=1);
  *     on an absent key, answers null WITHOUT A QUERY, and the walk stops at the
  *     leaf. Ten walks, nought queries, and ten paths that are missing every
  *     ancestor. Measured on a real `GET /`: the tile for a category nested two
- *     deep links to `/product-category/zzh-mists/`, which
+ *     deep links to `/collections/zzh-mists/`, which
  *     `CategoryPath::resolve()` answers `redirect` → 301 →
- *     `/product-category/zzh-skincare/zzh-toners/zzh-mists/`.
+ *     `/collections/zzh-skincare/zzh-toners/zzh-mists/`.
  *
  *     THE SAME OMISSION CAUSES THE SPEED AND THE WRONGNESS. That is why it
  *     looked free.
@@ -182,7 +182,7 @@ it('walks the ancestry once per archive page, and not at all when the path colum
             $path = CategoryPath::canonicalPath(Category::findOrFail($leaf->id));
 
             [$categories, $response] = q11Cats(
-                fn () => test()->get('/product-category/' . $path . '/')
+                fn () => test()->get('/collections/' . $path . '/')
             );
 
             // WHAT THE PAGE ACTUALLY DID, before any count is compared. A 301 or
@@ -243,7 +243,7 @@ it('links the homepage category tile at the full path, and still walks nothing',
      * old assertions, verbatim:
      *
      *     expect($verdict['status'])->toBe('redirect', …);
-     *     expect($href)->toContain('/product-category/'.$leaf->slug.'/');
+     *     expect($href)->toContain('/collections/'.$leaf->slug.'/');
      *     expect($href)->not->toContain($root->slug);
      *
      * Nothing on the shop as shipped was affected — every seeded category is a
@@ -328,7 +328,7 @@ it('links the homepage category tile at the full path, and still walks nothing',
      * string-matching the href, because what matters is what the router does
      * with it, not how it is spelt.
      */
-    $verdict = CategoryPath::resolve(trim(str_replace('/product-category/', '', $href), '/'));
+    $verdict = CategoryPath::resolve(trim(str_replace('/collections/', '', $href), '/'));
 
     expect($verdict['status'])->toBe(
         'ok',
@@ -337,7 +337,7 @@ it('links the homepage category tile at the full path, and still walks nothing',
     );
 
     // The ancestor really is in the href, which is the thing `path` buys.
-    expect($href)->toContain('/product-category/' . $root->slug . '/' . $leaf->slug . '/');
+    expect($href)->toContain('/collections/' . $root->slug . '/' . $leaf->slug . '/');
 
     /*
      * And the reason nobody noticed: the ten walks are FREE. `parent_id` is not
@@ -398,7 +398,7 @@ it('shows the walk answering nothing when the row was fetched without parent_id'
            app/Http/Controllers/Store/HomeController.php:133
            ->select('id', 'name', 'slug')  →  ->select('id', 'name', 'slug', 'path')
        RUN: 1 failed, and it prints the instruction:
-           "the homepage category tile now links at /product-category/
+           "the homepage category tile now links at /collections/
             q11h-skincare-…/q11h-mists-…/, which resolves straight through —
             HomeController's select has gained `path` and this defect is closed.
             Advance this pin: expect 'ok', and quote the old assertion in the

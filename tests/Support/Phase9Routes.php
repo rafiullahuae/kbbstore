@@ -41,15 +41,21 @@ final class Phase9Routes
      * web.php registration the Phase 9 routes replace.
      */
     private const SUPERSEDED = [
-        // Was the brand directory; the owner moved that to
-        // /korean-skincare-brands/, so this becomes a 301.
+        /*
+         * Every URI here is registered by routes/kbb-brands-blog.php and by
+         * nothing in web.php, so dropping and re-adding them is a no-op TODAY.
+         * The list is kept because it is the record of which registrations this
+         * file replaced, and because the drop is what keeps these tests honest
+         * if web.php ever claims one of them again.
+         *
+         * The address scheme swapped which of the first two is the real page:
+         * /brands/ is the directory now and /korean-skincare-brands/ is the 301.
+         */
         'brands',
-        // Was a 301 to /brands/; this is now the directory itself.
         'korean-skincare-brands',
-        // Was a 301 to the filtered shop listing; now points at the brand's
-        // own landing page.
+        // A 301 onto the brand's own landing page.
         'brand/{slug}',
-        // Was the article itself; articles moved to the site root.
+        // A 301 onto /blog/{slug}/, which is where the article is now.
         'skincare-guide/{slug}',
     ];
 

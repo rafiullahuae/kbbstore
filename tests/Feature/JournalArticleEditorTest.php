@@ -101,8 +101,10 @@ it('writes an article the storefront then serves at its own address', function (
         // published_at and prints no date at all.
         ->and($post->published_at)->not->toBeNull();
 
-    // And the shop serves it, which is the only claim that matters.
-    $this->get('/'.$post->slug.'/')
+    // And the shop serves it, which is the only claim that matters. Under
+    // /blog/, which is where the address scheme serves an article; the site
+    // root 301s onto it.
+    $this->get('/blog/'.$post->slug.'/')
         ->assertOk()
         ->assertSee('Heartleaf is the calming one.', false);
 });
@@ -121,6 +123,8 @@ it('keeps a draft off the shop', function () {
     $this->postJson('/admin-api/post-editor-create', jaArticle(['status' => 'draft']))
         ->assertStatus(201);
 
+    $this->get('/blog/'.Post::query()->value('slug').'/')->assertNotFound();
+    // And the WordPress root address must not 301 into that 404 either.
     $this->get('/'.Post::query()->value('slug').'/')->assertNotFound();
 });
 
@@ -259,14 +263,14 @@ it('normalises a slug the route could never match rather than losing the article
         ->assertStatus(201)
         ->assertJsonPath('post.slug', 'spf-50-every-day');
 
-    $this->get('/spf-50-every-day/')->assertOk();
+    $this->get('/blog/spf-50-every-day/')->assertOk();
 });
 
 /* --------------------------------------------- 3. the address is a contract */
 
 it('will not move an article that has already been published somewhere', function () {
     /*
-     * THE DEFECT: /{slug}/ is a link Google holds and a line in a reader's
+     * THE DEFECT: /blog/{slug}/ is a link Google holds and a line in a reader's
      * bookmarks. A slug field on the save form is a one-keystroke way to drop
      * an article's ranking and leave a 404 behind, with no 301 written.
      *
@@ -457,9 +461,9 @@ it('serves the Arabic article at /ar/{slug}/ from the same request that wrote it
 
     $slug = Post::query()->value('slug');
 
-    $this->get('/'.$slug.'/')->assertOk()->assertSee('Heartleaf is the calming one.', false);
+    $this->get('/blog/'.$slug.'/')->assertOk()->assertSee('Heartleaf is the calming one.', false);
 
-    $this->get('/ar/'.$slug.'/')
+    $this->get('/ar/blog/'.$slug.'/')
         ->assertOk()
         ->assertSee('ورقة القلب هي المهدّئة.', false)
         ->assertSee('ورقة القلب، وما تفعله فعلًا', false);
@@ -467,7 +471,7 @@ it('serves the Arabic article at /ar/{slug}/ from the same request that wrote it
 
 /* ----------------------------------------------------- 6. the CollectionPage */
 
-it('says what /skincare-guide/ is, in both languages', function () {
+it('says what /blog/ is, in both languages', function () {
     /*
      * docs/SEO-MODULE-ROUND-4.md §5, the one edit that lane could not make:
      * the Journal index is a listing of articles and said NOTHING ABOUT ITSELF
@@ -480,15 +484,15 @@ it('says what /skincare-guide/ is, in both languages', function () {
      */
     ArabicShop::on();
 
-    $english = $this->get('/skincare-guide/')->assertOk()->getContent();
+    $english = $this->get('/blog/')->assertOk()->getContent();
 
     expect($english)->toContain('"@type":"CollectionPage"')
         ->and($english)->toContain('"name":"The Glow Journal"')
         // Its own address, not the site's: a CollectionPage naming the home
         // page describes the wrong document.
-        ->and($english)->toContain('/skincare-guide/');
+        ->and($english)->toContain('/blog/');
 
-    $arabic = $this->get('/ar/skincare-guide/')->assertOk()->getContent();
+    $arabic = $this->get('/ar/blog/')->assertOk()->getContent();
 
     // inLanguage is this document's own, which is what stops the Arabic index
     // inheriting the English one's claim.
@@ -586,5 +590,5 @@ it('publishes nothing by existing', function () {
      */
     expect(Post::query()->count())->toBe(0);
 
-    $this->get('/skincare-guide/')->assertOk();
+    $this->get('/blog/')->assertOk();
 });

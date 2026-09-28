@@ -13,6 +13,7 @@ use App\Services\SettingsService;
 use App\Support\ReviewWall;
 use App\Support\Seo;
 use App\Support\Url;
+use App\Support\UrlScheme;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -58,7 +59,7 @@ class PageController extends Controller
          */
         'import-chain',
         // Catalogue
-        'shop', 'product', 'product-category', 'cart', 'checkout', 'quick-view',
+        'shop', 'product', 'collections', 'product-category', 'cart', 'checkout', 'quick-view',
         'new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed',
         /*
          * `concern` is the first segment of /concern/{concern}/ (Lane S), and
@@ -443,16 +444,35 @@ class PageController extends Controller
     }
 
     /**
-     * The blog listing — same missing-method 500 as post() below, and the
-     * same root cause: the view fetched a nonexistent /api/posts endpoint
-     * and silently fell back to three hardcoded demo posts regardless of
-     * what was actually in the database. Rebuilt server-rendered, same as
-     * the fix below.
+     * /skincare-guide/ — the journal index's retired address.
      *
-     * The index stays at /skincare-guide/, which is what the nav, the homepage
-     * and the admin Pages screen all publish. Only the *article* URL moved.
+     * ── WHY THE 301 IS `blog()` AND THE PAGE IS `journal()` ────────────────
+     *
+     * routes/web.php is the integrator's file and this lane may not edit it.
+     * The line it already carries reads
+     *
+     *     Route::get('/skincare-guide/', [PageController::class, 'blog'])
+     *
+     * so renaming the METHOD is what makes that existing line correct on the
+     * day this merges. Leaving `blog()` as the page would have meant asking for
+     * a web.php edit before the old address redirected at all, and until it
+     * landed the shop would serve one index at two addresses while its
+     * canonical named only one.
      */
-    public function blog()
+    public function blog(): RedirectResponse
+    {
+        return redirect(Url::redirect(UrlScheme::blogIndex()), 301);
+    }
+
+    /**
+     * The journal index, at /blog/ — the address scheme's listing shape.
+     *
+     * Same missing-method 500 as post() below, and the same root cause: the
+     * view fetched a nonexistent /api/posts endpoint and silently fell back to
+     * three hardcoded demo posts regardless of what was actually in the
+     * database. Rebuilt server-rendered, same as the fix below.
+     */
+    public function journal()
     {
         $posts = Post::query()
             ->where('status', 'published')
@@ -470,7 +490,7 @@ class PageController extends Controller
         /*
          * `collection`, not `website` — docs/SEO-MODULE-ROUND-4.md §5.
          *
-         * Lane S4 found this and could not make the edit: /skincare-guide/ is a
+         * Lane S4 found this and could not make the edit: the journal index is a
          * listing of articles and said NOTHING ABOUT ITSELF in the graph, in
          * either language, because `type: website` emits the site-wide WebSite
          * node and no node for this document. Every category archive in this
@@ -495,10 +515,10 @@ class PageController extends Controller
             'collection' => ['name' => 'The Glow Journal'],
             'title' => 'The Glow Journal',
             'description' => 'Skincare tips and the K-beauty edit — honest guides on routines, ingredients and sun care, written for the UAE.',
-            'url' => $base . '/skincare-guide/',
+            'url' => $base . UrlScheme::blogIndex(),
             'breadcrumb' => [
                 ['name' => 'Home', 'url' => $base . '/'],
-                ['name' => 'Journal', 'url' => $base . '/skincare-guide/'],
+                ['name' => 'Journal', 'url' => $base . UrlScheme::blogIndex()],
             ],
         ]);
 
@@ -510,17 +530,29 @@ class PageController extends Controller
     }
 
     /**
-     * A single article, served from the site root: /{slug}/.
+     * A single article, at /blog/{slug}/.
      *
-     * The owner settled this in Phase 9: posts live at the root with no prefix,
-     * one slug per post, exactly as the live WordPress site serves them —
-     * kbeautybliss.com/heartleaf-extract-transforming-k-beauty-skincare/. The
-     * /skincare-guide/{slug}/ form this app invented is now a 301.
+     * ── WHY IT MOVED OFF THE SITE ROOT ────────────────────────────────────
      *
-     * The route reaching here is constrained by slugPattern(), so an unknown
-     * slug that got this far is genuinely unknown rather than a storefront page
-     * being shadowed. firstOrFail() 404s it, and the exception handler's
-     * redirect check (AppServiceProvider) still gets its turn at that 404.
+     * Phase 9 put articles at the root with no prefix, matching the live
+     * WordPress addresses — kbeautybliss.com/heartleaf-extract-transforming-
+     * k-beauty-skincare/. That is where Google holds them, and the root form
+     * still 301s here (rootArticle() below), so nothing is lost.
+     *
+     * What it cost was an address this shop can never fully own.
+     * RESERVED_SLUGS holds the first segment for every storefront page there
+     * is, so a live article slugged `about`, `feed`, `brands` or `blog` is an
+     * address this application is structurally unable to serve: the import
+     * refuses those slugs and lists them for the owner, and the list can only
+     * grow, because every route this shop ever adds takes another word out of
+     * the article namespace. /blog/{slug}/ ends that permanently instead of
+     * managing it with a discard list — a detail page under a listing prefix,
+     * which is the scheme's own shape.
+     *
+     * The route reaching here is constrained to a slug shape, so an unknown
+     * slug that got this far is genuinely unknown. firstOrFail() 404s it, and
+     * the exception handler's redirect check (AppServiceProvider) still gets
+     * its turn at that 404.
      */
     public function post(string $slug = '')
     {
@@ -550,7 +582,7 @@ class PageController extends Controller
 
         $base = self::siteBase();
         $seoOverride = is_array($post->seo) ? $post->seo : [];
-        $canonical = $base . '/' . $post->slug . '/';
+        $canonical = $base . UrlScheme::article((string) $post->slug);
 
         $seo = Seo::render([
             'type' => 'article',
@@ -615,7 +647,7 @@ class PageController extends Controller
             // already prints the same two.
             'breadcrumb' => [
                 ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
-                ['name' => __('store.journal.nav_journal'), 'url' => $base . '/skincare-guide/'],
+                ['name' => __('store.journal.nav_journal'), 'url' => $base . UrlScheme::blogIndex()],
                 ['name' => $post->t('title'), 'url' => $canonical],
             ],
         ]);
@@ -629,18 +661,24 @@ class PageController extends Controller
     }
 
     /**
-     * The retired /skincare-guide/{slug}/ article URL.
+     * The two retired article prefixes: /skincare-guide/{slug}/ and
+     * /post/{slug}, plus each one's empty-slug form.
      *
      * A route rather than rows in the redirects table, because it has to cover
-     * every post — including the ones written after the seeding migration ran,
+     * every post — including the ones written after any seeding migration ran,
      * which no seeded row could know about. The redirects table still gets its
      * turn: an unknown slug 404s from here, and the exception handler checks
      * the table on every 404.
+     *
+     * ONE HOP. The destination is /blog/{slug}/, the article's FINAL address —
+     * not /{slug}/, which is what this returned before the scheme moved and
+     * which would now 301 again from rootArticle(). Two hops for every indexed
+     * /skincare-guide/ URL, and Google follows a chain grudgingly.
      */
     public function legacyPost(string $slug = ''): RedirectResponse
     {
         if ($slug === '') {
-            return redirect(Url::redirect('/skincare-guide/'), 301);
+            return redirect(Url::redirect(UrlScheme::blogIndex()), 301);
         }
 
         abort_unless(
@@ -652,7 +690,40 @@ class PageController extends Controller
         // trailing slash off a registered URI, and redirect() resolves a
         // relative path against APP_URL — which already carries the base path
         // on staging, so Url::to() there produces /kbb-upgrade/kbb-upgrade/…
-        return redirect(Url::redirect('/' . $slug . '/'), 301);
+        return redirect(Url::redirect(UrlScheme::article($slug)), 301);
+    }
+
+    /**
+     * /{slug}/ at the site root — the address the live WordPress site serves
+     * every article at, and the one Google holds for all of them.
+     *
+     * 301 onto /blog/{slug}/, which is ONE hop and is the only hop: the target
+     * is the article's final address, so nothing here chains.
+     *
+     * ── WHY AN UNKNOWN SLUG 404s RATHER THAN REDIRECTING ──────────────────
+     *
+     * This route matches a single path segment at the site root, which is the
+     * shape of every storefront URL there is. Redirecting whatever it catches
+     * would turn the whole root namespace into a 301 onto /blog/, and every
+     * mistyped or hallucinated address on the site would be a soft 404 wearing
+     * a 301 — the exact defect CategoryArchiveController was written to end on
+     * the category archives. So the post has to exist, and a slug that names no
+     * published article gets the honest 404. The redirects table still gets its
+     * turn on that 404, and a row there wins, because CheckRedirects runs
+     * before the router.
+     *
+     * The published check is the same one legacyPost() makes, and it is what
+     * stops a draft's address answering a 301 that a shopper can follow to a
+     * 404.
+     */
+    public function rootArticle(string $slug = ''): RedirectResponse
+    {
+        abort_unless(
+            Post::query()->where('slug', $slug)->where('status', 'published')->exists(),
+            404
+        );
+
+        return redirect(Url::redirect(UrlScheme::article($slug)), 301);
     }
 
     /**

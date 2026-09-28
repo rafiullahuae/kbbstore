@@ -124,7 +124,7 @@ const CLC_INVOCATIONS = [
 ];
 
 const CLC_COVERED = [
-    'resources/views/store/brands.blade.php' => 'the brand landing page, /korean-skincare-brands/{slug}/',
+    'resources/views/store/brands.blade.php' => 'the brand landing page, /brands/{slug}/',
     'app/Support/Shortcodes.php' => 'a CMS page carrying [kbb_products]',
     'resources/views/store/shop.blade.php' => '/shop',
     'resources/views/store/product.blade.php' => 'the related rail on a product page',
@@ -619,7 +619,7 @@ it('renders every page that calls a contracted template without one lazy load', 
 
     $pages = [
         '/shop' => [],
-        '/korean-skincare-brands/clc-house/' => [],
+        '/brands/clc-house/' => [],
         '/product/' . $fixture['product']->slug => [],
         '/routines/acne' => [],
         '/concern/acne/' => [],

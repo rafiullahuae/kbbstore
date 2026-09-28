@@ -108,7 +108,7 @@ function apwProduct(array $attributes = [], ?Category $category = null): Product
 /** Is this product on its category page right now? */
 function apwOnCategoryPage(Product $product, Category $category): bool
 {
-    $html = test()->get('/product-category/'.$category->slug.'/')->getContent();
+    $html = test()->get('/collections/'.$category->slug.'/')->getContent();
 
     return str_contains((string) $html, $product->slug);
 }

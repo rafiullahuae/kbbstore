@@ -11,8 +11,8 @@ namespace App\Support;
  *
  * Switching the module off makes BrandController abort 404 for every action,
  * which covers the pages. It does not cover the LINKS TO them, and the nav is
- * full of them: the primary menu's "Brands" item points at
- * /korean-skincare-brands/ on every page of the shop. A module switched off
+ * full of them: the primary menu's "Brands" item points at the brand directory
+ * on every page of the shop. A module switched off
  * that leaves a dead link in the header has not left no trace — it has left the
  * worst kind, one the shopper finds by clicking.
  *
@@ -38,9 +38,9 @@ final class BrandUrls
 {
     /** @var list<string> */
     public const PREFIXES = [
-        '/korean-skincare-brands/',
-        '/brands/',
-        '/brand/',
+        UrlScheme::BRAND_BASE,
+        UrlScheme::LEGACY_BRAND_INDEX,
+        UrlScheme::LEGACY_BRAND_BASE,
     ];
 
     /**

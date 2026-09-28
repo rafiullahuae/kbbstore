@@ -105,7 +105,7 @@ function bdirNodes(string $html): array
 /** The directory's CollectionPage node, or null. */
 function bdirCollection(): ?array
 {
-    $html = test()->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = test()->get('/brands/')->assertOk()->getContent();
 
     foreach (bdirNodes($html) as $node) {
         if (($node['@type'] ?? null) === 'CollectionPage') {
@@ -207,7 +207,7 @@ it('points each entry at the landing page, never at the filtered shop listing', 
      */
     bdirProduct(bdirBrand('bd-skin', 'SKIN1004'));
 
-    $html = test()->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = test()->get('/brands/')->assertOk()->getContent();
 
     foreach (bdirNodes($html) as $node) {
         if (($node['@type'] ?? null) !== 'CollectionPage') {
@@ -217,7 +217,7 @@ it('points each entry at the landing page, never at the filtered shop listing', 
         foreach ($node['mainEntity']['itemListElement'] as $entry) {
             $url = $entry['item']['url'];
 
-            expect($url)->toStartWith(BD_BASE.'/korean-skincare-brands/');
+            expect($url)->toStartWith(BD_BASE.'/brands/');
             expect(str_contains($url, '?'))->toBeFalse("Entry url carries a query string: {$url}");
             // The href the page actually draws for the same brand.
             expect($html)->toContain('href="'.substr($url, strlen(BD_BASE)).'"');
@@ -237,7 +237,7 @@ it('keeps the title it was already serving', function () {
      */
     bdirProduct(bdirBrand('bd-iso', 'Isntree'));
 
-    $html = test()->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = test()->get('/brands/')->assertOk()->getContent();
 
     expect(preg_match('#<title>(.*?)</title>#s', $html, $m))->toBe(1);
     expect(trim($m[1]))->toBe('All brands | KBB');
@@ -258,7 +258,7 @@ it('describes itself with its own sentence, not the store-wide default', functio
     bdirProduct(bdirBrand('bd-med', 'Medicube'));
     bdirBrand('bd-empty', 'Empty House');
 
-    $html = test()->get('/korean-skincare-brands/')->assertOk()->getContent();
+    $html = test()->get('/brands/')->assertOk()->getContent();
 
     expect(preg_match('#<p class="brw-sub">(.*?)</p>#s', $html, $paragraph))->toBe(1);
     expect(preg_match('#<meta name="description" content="([^"]*)">#', $html, $meta))->toBe(1);
@@ -335,7 +335,7 @@ it('publishes the base path exactly once in every item url', function () {
      * (empty) base path cannot see any of this, which is why this case sets it.
      *
      * MUTATION: write the builder's url as the bare literal
-     * '/korean-skincare-brands/' . $slug . '/' with no Url::to(). Red — the
+     * '/brands/' . $slug . '/' with no Url::to(). Red — the
      * prefix disappears entirely and the published canonical 404s on the live
      * host. MUTATION 2: return $row['url'] unchanged instead of calling
      * self::canonical() in Seo's collection branch. Red — /kbb-upgrade appears
@@ -369,7 +369,7 @@ it('publishes the base path exactly once in every item url', function () {
 
         $entry = bdirEntryNamed('Base Path House');
 
-        expect($entry['url'])->toBe(BD_BASE.'/kbb-upgrade/korean-skincare-brands/bd-base/');
+        expect($entry['url'])->toBe(BD_BASE.'/kbb-upgrade/brands/bd-base/');
         expect(substr_count($entry['url'], '/kbb-upgrade'))->toBe(1);
     } finally {
         config(['kbb.base_path' => '']);
@@ -407,7 +407,7 @@ it('still carries the base path when site_url does not', function () {
         bdirProduct(bdirBrand('bd-base2', 'Half Base House'));
 
         expect(bdirEntryNamed('Half Base House')['url'])
-            ->toBe(BD_BASE.'/kbb-upgrade/korean-skincare-brands/bd-base2/');
+            ->toBe(BD_BASE.'/kbb-upgrade/brands/bd-base2/');
     } finally {
         config(['kbb.base_path' => '']);
         \App\Support\Url::forgetBase();

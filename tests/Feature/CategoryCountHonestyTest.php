@@ -71,7 +71,7 @@ it('labels a category with the number its archive page actually lists', function
             ->getJson('/admin-api/categories')->json('categories')
     )->firstWhere('slug', 'aq-count');
 
-    $pageTotal = $this->get('/product-category/aq-count/')
+    $pageTotal = $this->get('/collections/aq-count/')
         ->assertStatus(200)
         ->viewData('total');
 

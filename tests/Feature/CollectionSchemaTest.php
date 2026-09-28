@@ -179,17 +179,17 @@ beforeEach(function () {
 it('gives a category archive a CollectionPage rather than a plain web page', function () {
     csProduct('cs-snail-essence', 'Snail Essence', 9600);
 
-    $node = csCollection('/product-category/cs-serums/');
+    $node = csCollection('/collections/cs-serums/');
 
     expect($node)->not->toBeNull('A category archive published no CollectionPage at all.');
     expect($node['name'])->toBe('Serums');
-    expect($node['url'])->toBe(CS_BASE . '/product-category/cs-serums/');
+    expect($node['url'])->toBe(CS_BASE . '/collections/cs-serums/');
 });
 
 it('names the listing rather than repeating the site name from the title', function () {
     csProduct('cs-snail-essence', 'Snail Essence', 9600);
 
-    $html = test()->get('/product-category/cs-serums/')->assertOk()->getContent();
+    $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
 
     expect(preg_match('#<title>(.*?)</title>#s', $html, $m))->toBe(1);
 
@@ -199,13 +199,13 @@ it('names the listing rather than repeating the site name from the title', funct
     // the listing. If they are ever the same string the template has changed
     // and this deserves a second look rather than a silent pass.
     expect($title)->toContain('Serums');
-    expect(csCollection('/product-category/cs-serums/')['name'])->toBe('Serums');
+    expect(csCollection('/collections/cs-serums/')['name'])->toBe('Serums');
 });
 
 it('leaves og:type alone — a collection is still a website to Open Graph', function () {
     csProduct('cs-snail-essence', 'Snail Essence', 9600);
 
-    $html = test()->get('/product-category/cs-serums/')->assertOk()->getContent();
+    $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
 
     expect($html)->toContain('<meta property="og:type" content="website">');
 });
@@ -217,7 +217,7 @@ it('lists the products actually on the page, in the order they appear', function
     csProduct('cs-b-essence', 'B Essence', 6000);
     csProduct('cs-c-serum', 'C Serum', 7000);
 
-    $node = csCollection('/product-category/cs-serums/');
+    $node = csCollection('/collections/cs-serums/');
     $list = $node['mainEntity'];
 
     expect($list['@type'])->toBe('ItemList');
@@ -230,7 +230,7 @@ it('lists the products actually on the page, in the order they appear', function
 
     // The same order the grid draws, read off the page rather than assumed:
     // the tiles carry data-name, so the two orders are compared directly.
-    $html = test()->get('/product-category/cs-serums/')->assertOk()->getContent();
+    $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
     preg_match_all('#data-name="([^"]+)"#', $html, $m);
 
     $onPage = array_values(array_unique($m[1]));
@@ -241,7 +241,7 @@ it('lists the products actually on the page, in the order they appear', function
 it('points each entry at the product page URL, absolute', function () {
     csProduct('cs-a-toner', 'A Toner', 5000);
 
-    $item = csCollection('/product-category/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
+    $item = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
 
     expect($item['url'])->toBe(CS_BASE . '/product/cs-a-toner/');
     expect($item['offers']['url'])->toBe(CS_BASE . '/product/cs-a-toner/');
@@ -253,7 +253,7 @@ it('publishes the price in dirhams, never the fils column', function () {
     // 12600 fils is AED 126.00. The number that must never appear is 12600.
     csProduct('cs-relief-sun', 'Relief Sun', 12600);
 
-    $node = csCollection('/product-category/cs-serums/');
+    $node = csCollection('/collections/cs-serums/');
     $offer = $node['mainEntity']['itemListElement'][0]['item']['offers'];
 
     expect($offer['price'])->toBe('126.00');
@@ -274,7 +274,7 @@ it('publishes the sale price a shopper is actually offered', function () {
         'sale_ends_at' => now()->addDay(),
     ]);
 
-    $offer = csCollection('/product-category/cs-serums/')['mainEntity']['itemListElement'][0]['item']['offers'];
+    $offer = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item']['offers'];
 
     expect($offer['price'])->toBe('60.20');
 });
@@ -282,11 +282,11 @@ it('publishes the sale price a shopper is actually offered', function () {
 it('agrees with the price the tile prints', function () {
     csProduct('cs-relief-sun', 'Relief Sun', 12600);
 
-    $html = test()->get('/product-category/cs-serums/')->assertOk()->getContent();
+    $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
 
     expect(preg_match('#data-price="([^"]+)"#', $html, $m))->toBe(1);
 
-    $node = csCollection('/product-category/cs-serums/');
+    $node = csCollection('/collections/cs-serums/');
 
     expect($node['mainEntity']['itemListElement'][0]['item']['offers']['price'])->toBe($m[1]);
 });
@@ -294,7 +294,7 @@ it('agrees with the price the tile prints', function () {
 it('says out of stock when the product is', function () {
     csProduct('cs-gone', 'Gone', 5000, ['stock_status' => 'outofstock']);
 
-    $offer = csCollection('/product-category/cs-serums/')['mainEntity']['itemListElement'][0]['item']['offers'];
+    $offer = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item']['offers'];
 
     expect($offer['availability'])->toBe('https://schema.org/OutOfStock');
 });
@@ -305,10 +305,10 @@ it('publishes no list on a sorted view, which canonicalises elsewhere', function
     csProduct('cs-a-toner', 'A Toner', 5000);
     csProduct('cs-b-essence', 'B Essence', 6000);
 
-    $node = csCollection('/product-category/cs-serums/?orderby=price');
+    $node = csCollection('/collections/cs-serums/?orderby=price');
 
     expect($node)->not->toBeNull();
-    expect($node['url'])->toBe(csCanonical('/product-category/cs-serums/?orderby=price'));
+    expect($node['url'])->toBe(csCanonical('/collections/cs-serums/?orderby=price'));
     expect(array_key_exists('mainEntity', $node))
         ->toBeFalse('A sorted view canonicalises to the clean archive and published its own rows as that archive\'s list.');
 });
@@ -348,7 +348,7 @@ it('publishes no list when the owner has canonicalised the archive elsewhere', f
     $category->forceFill(['seo' => ['canonical' => CS_BASE . '/shop/']])->save();
     csSettings();
 
-    $node = csCollection('/product-category/cs-serums/');
+    $node = csCollection('/collections/cs-serums/');
 
     expect($node['url'])->toBe(CS_BASE . '/shop/');
     expect(array_key_exists('mainEntity', $node))
@@ -365,15 +365,15 @@ it('numbers page two by its place in the whole listing, not from one again', fun
         csProduct('cs-p-' . $letter, strtoupper($letter) . ' Product', 5000 + $i * 100);
     }
 
-    $one = csCollection('/product-category/cs-serums/');
-    $two = csCollection('/product-category/cs-serums/?paged=2');
+    $one = csCollection('/collections/cs-serums/');
+    $two = csCollection('/collections/cs-serums/?paged=2');
 
     expect(array_column($one['mainEntity']['itemListElement'], 'position'))->toBe([1, 2, 3]);
     expect(array_column($two['mainEntity']['itemListElement'], 'position'))->toBe([4, 5]);
 
     // Page two is its own document and its node says so.
-    expect($two['url'])->toBe(CS_BASE . '/product-category/cs-serums/?paged=2');
-    expect($two['url'])->toBe(csCanonical('/product-category/cs-serums/?paged=2'));
+    expect($two['url'])->toBe(CS_BASE . '/collections/cs-serums/?paged=2');
+    expect($two['url'])->toBe(csCanonical('/collections/cs-serums/?paged=2'));
 
     // And the two lists name different products.
     $namesOne = array_map(static fn ($e) => $e['item']['name'], $one['mainEntity']['itemListElement']);
@@ -390,11 +390,11 @@ it('gives a brand landing page a CollectionPage naming that brand only', functio
     csProduct('cs-mucin', 'Mucin Essence', 9600, ['brand_id' => $brand->id]);
     csProduct('cs-other', 'Other Brand Thing', 4000);
 
-    $node = csCollection('/korean-skincare-brands/cs-cosrx/');
+    $node = csCollection('/brands/cs-cosrx/');
 
     expect($node)->not->toBeNull('A brand landing page published no CollectionPage.');
     expect($node['name'])->toBe('COSRX');
-    expect($node['url'])->toBe(CS_BASE . '/korean-skincare-brands/cs-cosrx/');
+    expect($node['url'])->toBe(CS_BASE . '/brands/cs-cosrx/');
 
     $names = array_map(static fn ($e) => $e['item']['name'], $node['mainEntity']['itemListElement']);
 
@@ -439,9 +439,9 @@ it('keeps the Arabic archive and its list on Arabic addresses', function () {
 
     csProduct('cs-a-toner', 'A Toner', 5000);
 
-    $node = csCollection('/ar/product-category/cs-serums/');
+    $node = csCollection('/ar/collections/cs-serums/');
 
-    expect($node['url'])->toBe(CS_BASE . '/ar/product-category/cs-serums/');
+    expect($node['url'])->toBe(CS_BASE . '/ar/collections/cs-serums/');
 
     // The whole cluster, not just the page: an ItemList of English product URLs
     // on an Arabic archive is the same defect as an English canonical on an
@@ -484,7 +484,7 @@ it('does not double the deployment base path into every entry URL', function () 
     app(SettingsService::class)->flush();
     \Illuminate\Support\Facades\Cache::flush();
 
-    $node = csCollection('/product-category/cs-serums/');
+    $node = csCollection('/collections/cs-serums/');
 
     expect($node)->not->toBeNull();
 
@@ -554,11 +554,11 @@ it('publishes exactly the image the tile draws', function () {
      */
     csProduct('cs-shot', 'Shot', 5000, ['image' => '/storage/media/2026/01/shot.jpg']);
 
-    $html = test()->get('/product-category/cs-serums/')->assertOk()->getContent();
+    $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
 
     expect(preg_match('#<img class="ph-img" src="([^"]+)"#', $html, $m))->toBe(1);
 
-    $item = csCollection('/product-category/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
+    $item = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
 
     expect($item['image'])->toBe(CS_BASE . $m[1]);
 });

@@ -182,8 +182,8 @@ it('builds every hreflang by swapping the prefix on ONE path, so a second slug w
 
     foreach ([
         '/product/asp-toner/',
-        '/product-category/skincare/toners/',
-        '/korean-skincare-brands/anua/',
+        '/collections/skincare/toners/',
+        '/brands/anua/',
         '/asp-article/',
     ] as $path) {
         $alternates = Locale::alternatePaths($path);
@@ -230,12 +230,12 @@ it('can route an Arabic product and category slug, and cannot route an Arabic br
     // Reachable — neither route constrains its parameter.
     expect(aspFetch('/product/'.$slug.'/')->getStatusCode())->toBe(200)
         ->and(aspFetch('/product/'.$encoded.'/')->getStatusCode())->toBe(200)
-        ->and(aspFetch('/product-category/'.$slug.'/')->getStatusCode())->toBe(200)
-        ->and(aspFetch('/product-category/'.$encoded.'/')->getStatusCode())->toBe(200);
+        ->and(aspFetch('/collections/'.$slug.'/')->getStatusCode())->toBe(200)
+        ->and(aspFetch('/collections/'.$encoded.'/')->getStatusCode())->toBe(200);
 
     // Unreachable — the route regex refuses it, in either spelling.
-    expect(aspFetch('/korean-skincare-brands/'.$slug.'/')->getStatusCode())->toBe(404)
-        ->and(aspFetch('/korean-skincare-brands/'.$encoded.'/')->getStatusCode())->toBe(404)
+    expect(aspFetch('/brands/'.$slug.'/')->getStatusCode())->toBe(404)
+        ->and(aspFetch('/brands/'.$encoded.'/')->getStatusCode())->toBe(404)
         ->and(aspFetch('/'.$slug.'/')->getStatusCode())->toBe(404)
         ->and(aspFetch('/'.$encoded.'/')->getStatusCode())->toBe(404);
 
@@ -247,8 +247,8 @@ it('can route an Arabic product and category slug, and cannot route an Arabic br
         'body' => 'Body copy long enough to render.', 'published_at' => now(),
     ]);
 
-    expect(aspFetch('/korean-skincare-brands/asp-anua/')->getStatusCode())->toBe(200)
-        ->and(aspFetch('/asp-latin/')->getStatusCode())->toBe(200);
+    expect(aspFetch('/brands/asp-anua/')->getStatusCode())->toBe(200)
+        ->and(aspFetch('/blog/asp-latin/')->getStatusCode())->toBe(200);
 });
 
 it('transliterates Arabic into Latin nobody can read, which is option 2 measured rather than imagined', function () {

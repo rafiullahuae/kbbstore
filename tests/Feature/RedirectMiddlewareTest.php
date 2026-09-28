@@ -218,7 +218,7 @@ it('beats a 301 the application issues for itself', function () {
      */
     rmTree();
 
-    $unredirected = rmFetch('/product-category/rm-toners/');
+    $unredirected = rmFetch('/collections/rm-toners/');
     expect($unredirected->getStatusCode())->toBe(301);
 
     /*
@@ -240,7 +240,7 @@ it('beats a 301 the application issues for itself', function () {
      *     changing that hop is a separate, visible decision.
      *
      *     expect((string) $unredirected->headers->get('Location'))
-     *         ->toEndWith('/product-category/rm-skincare/rm-toners');
+     *         ->toEndWith('/collections/rm-skincare/rm-toners');
      *
      * That decision has now been made and made visibly: `CategoryArchive-
      * Controller::show()` issues its 301 through `CategoryPath::redirectUrl()`
@@ -255,14 +255,14 @@ it('beats a 301 the application issues for itself', function () {
      * untouched. `tests/Feature/CategoryPathContractTest.php` owns the slash
      * itself.
      */
-    expect((string) $unredirected->headers->get('Location'))->toEndWith('/product-category/rm-skincare/rm-toners/');
+    expect((string) $unredirected->headers->get('Location'))->toEndWith('/collections/rm-skincare/rm-toners/');
 
-    rmRow('/product-category/rm-toners/', '/product-category/rm-skincare/');
+    rmRow('/collections/rm-toners/', '/collections/rm-skincare/');
 
-    $response = rmFetch('/product-category/rm-toners/');
+    $response = rmFetch('/collections/rm-toners/');
 
     expect($response->getStatusCode())->toBe(301);
-    expect((string) $response->headers->get('Location'))->toEndWith('/product-category/rm-skincare/');
+    expect((string) $response->headers->get('Location'))->toEndWith('/collections/rm-skincare/');
 });
 
 it('counts the hit on a row that fires, which used to stay at zero for ever', function () {
@@ -399,7 +399,7 @@ it('leaves every address no row claims exactly as it was', function () {
     expect(rmFetch('/')->getStatusCode())->toBe(200);
     expect(rmFetch('/shop/')->getStatusCode())->toBe(200);
     expect(rmFetch('/product/rm-untouched/')->getStatusCode())->toBe(200);
-    expect(rmFetch('/product-category/rm-skincare/')->getStatusCode())->toBe(200);
+    expect(rmFetch('/collections/rm-skincare/')->getStatusCode())->toBe(200);
 });
 
 it('ignores a row that is switched off', function () {

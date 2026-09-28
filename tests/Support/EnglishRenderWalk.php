@@ -545,7 +545,41 @@ final class EnglishRenderWalk
      * The commit named below is reachable from this branch and stays reachable,
      * per the note above about rebases rewriting every SHA behind this constant.
      */
-    public const BASE_COMMIT = '73332adf128068a59c29af8b65624969075f6887';
+    /*
+     * ── MOVED AGAIN — LANE URL (the address scheme) ────────────────────────
+     *
+     * FIVE PAGES MOVED, THIRTY-SIX DID NOT, AND THE DIFF WAS READ PAGE BY PAGE
+     * BEFORE THIS CONSTANT WAS TOUCHED. Every byte of it is an ADDRESS. Not one
+     * word of shopper-visible copy changed on any page of the shop:
+     *
+     *   /                       the Journal link in the routine strip,
+     *                           href="/skincare-guide/" -> href="/blog/".
+     *
+     *   brands                  each directory tile,
+     *                           href="/korean-skincare-brands/anua/" ->
+     *                           href="/brands/anua/".
+     *
+     *   brands/{slug}           the breadcrumb's "Brands" crumb, the same move.
+     *
+     *   blog                    the standalone document's own nav,
+     *   blog/{slug}             href="/skincare-guide/" -> href="/blog/", once
+     *                           on each. Both documents are also reached at a
+     *                           new URI, which is why they are listed under
+     *                           `blog` and `blog/{slug}` rather than
+     *                           `skincare-guide` and `{slug}`.
+     *
+     * ▲ AND THE CATEGORY ARCHIVE IS NOT IN THAT LIST, which is worth stating
+     * because it moved further than any of them. This walk rolls
+     * resources/views back and renders; the archive's own links come from
+     * Category::url(), which is PHP, so the old views render the new addresses
+     * and the page is byte-identical. The archive's move is pinned by
+     * UrlSchemeTest against the router instead, which is where it can be seen.
+     *
+     * The commit named below is this lane's own and is reachable from this
+     * branch, per the note above about rebases rewriting every SHA behind this
+     * constant.
+     */
+    public const BASE_COMMIT = '18f6467b62f5eea561f8164b8c5d6f92cc39f061';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
@@ -779,7 +813,16 @@ final class EnglishRenderWalk
             '/' => ['render' => true],
             'shop' => ['render' => true],
             'shop/page/{page}' => ['params' => ['page' => '2']] + $redirect,
-            'product-category/{path}' => ['params' => ['path' => $catSlug], 'render' => true],
+            /*
+             * The address scheme moved the category archive to
+             * /collections/{path}/ and made the old base a 301 that resolves
+             * the canonical path first. Same controller, same template, same
+             * English — only the door changed, which is why the archive is
+             * still `render => true` and the retired address is now a redirect
+             * with no body to pin.
+             */
+            'collections/{path}' => ['params' => ['path' => $catSlug], 'render' => true],
+            'product-category/{path}' => ['params' => ['path' => $catSlug]] + $redirect,
             'product/{slug}' => ['params' => ['slug' => $product->slug], 'render' => true],
             'product' => $redirect,
             'quick-view/{id}' => ['params' => ['id' => (string) $product->id], 'render' => true],
@@ -827,16 +870,33 @@ final class EnglishRenderWalk
             ],
 
             // --- brands ------------------------------------------------------
-            'korean-skincare-brands' => ['render' => true],
-            'korean-skincare-brands/{slug}' => ['params' => ['slug' => $brandSlug], 'render' => true],
-            'brands' => $redirect,
+            /*
+             * The scheme swapped which way round these go: /brands/ is the
+             * directory now — a listing page, so the address is plural and
+             * short — and /korean-skincare-brands/ is the 301. The PAGES are
+             * unchanged, which is what these two `render => true` entries are
+             * here to keep true: the same controller actions reached through a
+             * different route.
+             */
+            'brands' => ['render' => true],
+            'brands/{slug}' => ['params' => ['slug' => $brandSlug], 'render' => true],
+            'korean-skincare-brands' => $redirect,
+            'korean-skincare-brands/{slug}' => ['params' => ['slug' => $brandSlug]] + $redirect,
             'brand/{slug}' => ['params' => ['slug' => $brandSlug]] + $redirect,
 
             // --- journal -----------------------------------------------------
-            'skincare-guide' => ['render' => true],
+            /*
+             * Articles moved off the site root and under /blog/, which closes
+             * the defect that RESERVED_SLUGS owned the first segment there — an
+             * article slugged `about` or `feed` was an address this shop could
+             * never serve. The root form is now the redirect and carries no
+             * body; the index and the article are the same two templates.
+             */
+            'blog' => ['render' => true],
+            'blog/{slug}' => ['params' => ['slug' => 'walk-article'], 'render' => true],
+            'skincare-guide' => $redirect,
             'skincare-guide/{slug}' => ['params' => ['slug' => 'walk-article']] + $redirect,
-            '{slug}' => ['params' => ['slug' => 'walk-article'], 'render' => true],
-            'blog' => $redirect,
+            '{slug}' => ['params' => ['slug' => 'walk-article']] + $redirect,
             'post/{slug?}' => ['params' => ['slug' => 'walk-article']] + $redirect,
 
             // --- editable content pages --------------------------------------

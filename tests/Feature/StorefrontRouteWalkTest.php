@@ -188,7 +188,10 @@ function walkExpectations(array $seed): array
         'shop'                     => ['status' => 200],
         // U-07: the indexed /shop/page/2/ address 301s onto ?paged=.
         'shop/page/{page}'         => ['params' => ['page' => '2'], 'status' => 301],
-        'product-category/{path}'  => ['params' => ['path' => $catSlug], 'status' => 200],
+        'collections/{path}'       => ['params' => ['path' => $catSlug], 'status' => 200],
+        // The retired category base, which resolves the canonical path first so
+        // the visitor makes exactly one hop.
+        'product-category/{path}'  => ['params' => ['path' => $catSlug], 'status' => 301],
         'product/{slug}'           => ['params' => ['slug' => $product->slug], 'status' => 200],
         // The legacy ?slug= form with no slug falls back to the shop.
         'product'                  => ['status' => 302],
@@ -207,16 +210,23 @@ function walkExpectations(array $seed): array
         'concern/{concern}'        => ['params' => ['concern' => 'acne'], 'status' => 404],
 
         // --- Brands -----------------------------------------------------
-        'korean-skincare-brands'         => ['status' => 200],
-        'korean-skincare-brands/{slug}'  => ['params' => ['slug' => $brandSlug], 'status' => 200],
-        'brands'                         => ['status' => 301],
-        'brand/{slug}'                   => ['params' => ['slug' => $brandSlug], 'status' => 301],
+        // The address scheme made /brands/ the directory — a listing page, so
+        // plural and short — and turned the two older spellings into 301s.
+        'brands'                            => ['status' => 200],
+        'brands/{slug}'                     => ['params' => ['slug' => $brandSlug], 'status' => 200],
+        'korean-skincare-brands'            => ['status' => 301],
+        'korean-skincare-brands/{slug}'     => ['params' => ['slug' => $brandSlug], 'status' => 301],
+        'brand/{slug}'                      => ['params' => ['slug' => $brandSlug], 'status' => 301],
 
         // --- Journal ----------------------------------------------------
-        'skincare-guide'           => ['status' => 200],
+        // Articles moved under /blog/, which closes the defect that
+        // RESERVED_SLUGS owned the first segment at the site root. The root
+        // form and both retired prefixes are 301s onto the article.
+        'blog'                     => ['status' => 200],
+        'blog/{slug}'              => ['params' => ['slug' => 'walk-article'], 'status' => 200],
+        'skincare-guide'           => ['status' => 301],
         'skincare-guide/{slug}'    => ['params' => ['slug' => 'walk-article'], 'status' => 301],
-        '{slug}'                   => ['params' => ['slug' => 'walk-article'], 'status' => 200],
-        'blog'                     => ['status' => 301],
+        '{slug}'                   => ['params' => ['slug' => 'walk-article'], 'status' => 301],
         'post/{slug?}'             => ['params' => ['slug' => 'walk-article'], 'status' => 301],
 
         // --- Editable content pages -------------------------------------

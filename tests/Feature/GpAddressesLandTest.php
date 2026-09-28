@@ -542,7 +542,9 @@ it('writes a redirect for an article whose slug changed on import', function () 
     $row = collect($proposals)->firstWhere('source', '/the-old-slug/');
 
     expect($row['decision'])->toBe(RedirectMap::MIGRATE);
-    expect($row['target'])->toBe('/gp-renamed-on-import/');
+    // /blog/{slug}/ since the address scheme moved articles there; the source
+    // is still the WordPress root address, which is what Google holds.
+    expect($row['target'])->toBe('/blog/gp-renamed-on-import/');
 });
 
 /* ==========================================================================
@@ -567,7 +569,7 @@ it('sends a visitor to the canonical address, trailing slash and all', function 
      */
     Redirect::query()->create([
         'source' => '/gp-old-address/',
-        'target' => '/product-category/skincare-gp/toners-gp/',
+        'target' => '/collections/skincare-gp/toners-gp/',
         'code' => 301,
         'enabled' => true,
         'auto_created' => true,
@@ -581,7 +583,7 @@ it('sends a visitor to the canonical address, trailing slash and all', function 
 
     $location = (string) $response->headers->get('Location');
 
-    expect(str_ends_with($location, '/product-category/skincare-gp/toners-gp/'))
+    expect(str_ends_with($location, '/collections/skincare-gp/toners-gp/'))
         ->toBeTrue('the 301 landed on '.$location.', which is not the canonical spelling');
 });
 
@@ -600,7 +602,7 @@ it('makes the unregistered middleware copy answer the same, so the two cannot dr
      * static findMatch() and issues its own redirect.
      *
      * Re-established by fetching, not taken on trust: three rows pointing at
-     * /PROOF-INERT/ were written for /shop/, /product-category/toners/ and a
+     * /PROOF-INERT/ were written for /shop/, /collections/toners/ and a
      * product address, all enabled, all matching getPathInfo() byte for byte.
      * /shop/ still answered 200, the category still 301'd to its own nested
      * path, the product still answered 200. Not one of the three fired.

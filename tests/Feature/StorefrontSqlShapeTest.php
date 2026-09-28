@@ -137,9 +137,9 @@ function shapePages(array $seed): array
         // shape that behaves differently on the two engines without an
         // explicit ESCAPE clause.
         'shop search wild'    => ['/shop?s=' . rawurlencode('50%_off\\back'), null],
-        'category'            => ['/product-category/' . $category, null],
-        'brand index'         => ['/korean-skincare-brands', null],
-        'brand page'          => ['/korean-skincare-brands/' . $brand, null],
+        'category'            => ['/collections/' . $category, null],
+        'brand index'         => ['/brands', null],
+        'brand page'          => ['/brands/' . $brand, null],
         'product'             => ['/product/' . $product, null],
         'quick view'          => ['/quick-view/' . $seed['product']->id, null],
         'collection new-in'   => ['/new-in', null],
@@ -172,8 +172,8 @@ function shapePages(array $seed): array
          * to read the result.
          */
         'checkout success'    => ['/checkout/success?order=' . $seed['order']->order_number, null],
-        'journal'             => ['/skincare-guide', null],
-        'article'             => ['/shape-article', null],
+        'journal'             => ['/blog', null],
+        'article'             => ['/blog/shape-article', null],
         'search suggest'      => ['/api/search?q=serum', null],
         'search suggest wild' => ['/api/search?q=' . rawurlencode('50%_off\\back'), null],
         'search starter'      => ['/api/search/starter', null],

@@ -33,8 +33,8 @@ $kbbRawTitle = trim(strip_tags($__env->yieldContent('title', '')));
 /*
  * Url::to() trims a trailing slash (UrlGenerator::format does), but every
  * storefront route is declared with one and every internal link carries one.
- * Left alone, the page served at /korean-skincare-brands/ canonicalises to
- * /korean-skincare-brands, pointing search engines at a URL one redirect away
+ * Left alone, the page served at /brands/ canonicalises to
+ * /brands, pointing search engines at a URL one redirect away
  * from the page they are already on. Put the slash back.
  *
  * The slash is now put back whether or not the REQUEST carried one, and that
@@ -217,7 +217,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 
     NOT FIXED HERE, and out of this lane: store/blog.blade.php and
     store/post.blade.php are standalone layouts that hard-code <html lang="en">
-    with no dir attribute, so /ar/skincare-guide/ serves an English-tagged,
+    with no dir attribute, so /ar/blog/ serves an English-tagged,
     left-to-right page with no Cairo link at all. Nothing in this block reaches
     them. store/app.blade.php (the admin-only /app preview) is the same.
     Whoever owns those views has to give them <html lang>/<html dir> before any

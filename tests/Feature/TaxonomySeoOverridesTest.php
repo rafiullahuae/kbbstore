@@ -17,7 +17,7 @@
  * default meta description, while every category archive went on taking its
  * <title> from the bare category name. Dead schema on one side, a missing
  * feature on the other. Reproduced against a running preview before the fix by
- * saving a brand SEO title and fetching /korean-skincare-brands/round-lab/.
+ * saving a brand SEO title and fetching /brands/round-lab/.
  *
  * ── THE KEY-NAME TRAP, WHICH IS WHY normalise() IS ON THE READ
  *
@@ -115,12 +115,12 @@ function tsoHead(string $html): array
 
 function tsoBrandHead(Brand $brand): array
 {
-    return tsoHead(test()->get('/korean-skincare-brands/' . $brand->slug . '/')->assertOk()->getContent());
+    return tsoHead(test()->get('/brands/' . $brand->slug . '/')->assertOk()->getContent());
 }
 
 function tsoCategoryHead(Category $category, string $query = ''): array
 {
-    return tsoHead(test()->get('/product-category/' . $category->path . '/' . $query)->assertOk()->getContent());
+    return tsoHead(test()->get('/collections/' . $category->path . '/' . $query)->assertOk()->getContent());
 }
 
 /** Turn Arabic on the way the Translation settings screen does. */
@@ -166,7 +166,7 @@ it('leaves a brand with no overrides exactly as it was', function () {
     expect($head['title'])->toContain('Round Lab');
     expect($head['title'])->not->toBe('Round Lab');
     expect($head['robots'])->toBe('index, follow');
-    expect($head['canonical'])->toContain('/korean-skincare-brands/tso-roundlab/');
+    expect($head['canonical'])->toContain('/brands/tso-roundlab/');
 });
 
 it('lets a brand canonical override replace the computed one, absolutely', function () {
@@ -210,7 +210,7 @@ it('noindexes a brand on the page AND drops it from the sitemap', function () {
     // The page saying noindex while the sitemap submits the same URL is what
     // Search Console reports as "Submitted URL marked noindex" — an error
     // against the property, not a quietly honoured instruction.
-    expect($sitemap)->not->toContain('/korean-skincare-brands/' . $brand->slug . '/');
+    expect($sitemap)->not->toContain('/brands/' . $brand->slug . '/');
 });
 
 it('still lists an ordinary brand in the sitemap', function () {
@@ -218,7 +218,7 @@ it('still lists an ordinary brand in the sitemap', function () {
     $brand = tsoBrand(null);
 
     expect(test()->get('/sitemap.xml')->assertOk()->getContent())
-        ->toContain('/korean-skincare-brands/' . $brand->slug . '/');
+        ->toContain('/brands/' . $brand->slug . '/');
 });
 
 /* ────────────────────────────── categories ───────────────────────────────── */
@@ -243,7 +243,7 @@ it('leaves a category with no overrides exactly as it was', function () {
     expect($head['robots'])->toBe('index, follow');
     // ShopController::seoDescription()'s sentence, unchanged.
     expect($head['description'])->toContain('Shop Serums at K-Beauty Bliss');
-    expect($head['canonical'])->toContain('/product-category/tso-serums/');
+    expect($head['canonical'])->toContain('/collections/tso-serums/');
 });
 
 it('keeps pagination self-canonical under a category canonical override', function () {
@@ -289,14 +289,14 @@ it('noindexes a category on the page AND drops it from the sitemap', function ()
     expect(tsoCategoryHead($category)['robots'])->toBe('noindex, nofollow');
 
     expect(test()->get('/sitemap.xml')->assertOk()->getContent())
-        ->not->toContain('/product-category/' . $category->path . '/');
+        ->not->toContain('/collections/' . $category->path . '/');
 });
 
 it('still lists an ordinary category in the sitemap', function () {
     $category = tsoCategory(null);
 
     expect(test()->get('/sitemap.xml')->assertOk()->getContent())
-        ->toContain('/product-category/' . $category->path . '/');
+        ->toContain('/collections/' . $category->path . '/');
 });
 
 /* ───────────────────────────── hreflang, once ────────────────────────────── */

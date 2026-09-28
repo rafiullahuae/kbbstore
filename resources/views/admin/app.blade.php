@@ -5630,7 +5630,7 @@ function mgmOpenForm(parentId, depth, editing){
       <input type="text" id="mgmfLabel" maxlength="60" value="${escAttr(editing?.label || '')}" placeholder="e.g. Skincare"></div>
     ${mgmArabicLabel(editing)}
     <div class="mmrow"><div class="mmlbl"><b>Link</b><span>${depth < 2 ? 'Leave blank for a heading that only opens a panel.' : ''}</span></div>
-      <input type="text" id="mgmfUrl" maxlength="255" value="${escAttr(editing?.url || '')}" placeholder="/product-category/cleansers/"></div>
+      <input type="text" id="mgmfUrl" maxlength="255" value="${escAttr(editing?.url || '')}" placeholder="/collections/cleansers/"></div>
     ${depth === 0 ? `<div class="mmrow"><div class="mmlbl"><b>Badge</b><span>Optional — small pill next to the label, e.g. NEW</span></div>
       <input type="text" id="mgmfBadge" maxlength="20" value="${escAttr(editing?.badge || '')}" placeholder="NEW"></div>` : ''}
     ${depth === 2 ? `<div class="mmrow"><div class="mmlbl"><b>Icon</b><span>Optional — shown before the link</span></div>
@@ -18205,7 +18205,7 @@ buildNav();
     var mode=SETTINGS.brands_display||'auto';
     body.innerHTML=
       '<div class="card pad" style="margin-bottom:14px"><b style="font-size:13px">Directory display</b>'+
-      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">How each tile is drawn on the storefront brands page (/korean-skincare-brands/). Brands with no logo always fall back to their name, so “Logos only” can never leave an empty tile.</p>'+
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">How each tile is drawn on the storefront brands page (/brands/). Brands with no logo always fall back to their name, so “Logos only” can never leave an empty tile.</p>'+
       '<div class="fld" style="max-width:420px;margin:0"><label>Show</label>'+
       '<select class="inp" id="brd_display" style="width:100%">'+BRAND_DISPLAY_OPTS.map(function(o){
         return '<option value="'+o[0]+'"'+(o[0]===mode?' selected':'')+'>'+o[1]+'</option>';
@@ -18252,7 +18252,7 @@ buildNav();
           maxlength:255, from:'#brd_name'
         }) : '')+'</div>'+
       '<div class="fld"><label>Slug</label><input id="brd_slug" value="'+sesc(brand.slug)+'" placeholder="left blank, made from the name">'+
-      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Used in /korean-skincare-brands/{slug}/ and the shop filter. Lower case, hyphens.</p></div>'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Used in /brands/{slug}/ and the shop filter. Lower case, hyphens.</p></div>'+
       imgUploadField('brd_logo', brand.logo||'', 'Logo', 'brands')+
       '<div class="fld"><label>Description</label><textarea id="brd_desc" class="inp" rows="3">'+sesc(brand.description)+'</textarea>'+
         (window.KBBArabic ? KBBArabic.boxIf((brand&&brand.translations)||BRANDS_ARABIC, {
@@ -18411,7 +18411,7 @@ buildNav();
     CATEGORIES.forEach(function(c){ if(!drawn[c.id]) rows.push({cat:c, depth:0, orphan:true}); });
 
     body.innerHTML=
-      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:13px">Categories are the archive pages at /product-category/…/ and the shop filter. Nesting is real — a sub-category’s URL is its whole chain of slugs, rebuilt whenever you rename or move one.</p>'+
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:13px">Categories are the archive pages at /collections/…/ and the shop filter. Nesting is real — a sub-category’s URL is its whole chain of slugs, rebuilt whenever you rename or move one.</p>'+
       '<div class="between" style="margin-bottom:12px"><span class="pill grey">'+CATEGORIES.length+' categor'+(CATEGORIES.length===1?'y':'ies')+'</span>'+
       '<button class="btn sm" id="cat_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add category</button></div>'+
       (rows.length?
@@ -18493,7 +18493,7 @@ buildNav();
           maxlength:255, from:'#cat_name'
         }) : '')+'</div>'+
       '<div class="fld"><label>Slug</label><input id="cat_slug" value="'+sesc(cat.slug)+'" placeholder="left blank, made from the name">'+
-      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">One segment of /product-category/…/. Lower case, hyphens. The full path is built from the parents.</p></div>'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">One segment of /collections/…/. Lower case, hyphens. The full path is built from the parents.</p></div>'+
       '<div class="fld"><label>Parent</label><select class="inp" id="cat_parent" style="width:100%">'+opts+'</select>'+
       (isNew?'':'<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">This category and anything under it are not offered — a category cannot sit inside itself.</p>')+'</div>'+
       imgUploadField('cat_image', cat.image||'', 'Image', 'categories')+

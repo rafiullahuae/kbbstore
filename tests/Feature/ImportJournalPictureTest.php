@@ -9,7 +9,7 @@ declare(strict_types=1);
  *
  * WHAT THE DEFECT LOOKED LIKE ON THE SHOP.
  *
- * An article whose body carried a `<picture>` block arrived on /skincare-guide/
+ * An article whose body carried a `<picture>` block arrived on /blog/
  * with a hole where the photograph had been. Not a broken frame, not an alt
  * text, not a line in the import report saying a picture had gone — nothing at
  * all, because the markup was removed rather than broken. The owner's only way

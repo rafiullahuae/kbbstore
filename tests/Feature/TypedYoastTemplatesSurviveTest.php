@@ -165,11 +165,11 @@ it('resolves %%title%% in a brand SEO title instead of deleting it', function ()
      * Hard-coding the site name would pin the test environment's APP_NAME
      * instead of the behaviour.
      */
-    $expected = tytTitle('/korean-skincare-brands/' . tytBrand(null)->slug . '/');
+    $expected = tytTitle('/brands/' . tytBrand(null)->slug . '/');
 
     $brand = tytBrand(['title' => '%%title%% %%sep%% %%sitename%%']);
 
-    $title = tytTitle('/korean-skincare-brands/' . $brand->slug . '/');
+    $title = tytTitle('/brands/' . $brand->slug . '/');
 
     // The brand's own name is what %%title%% means on a brand archive.
     expect($title)->toBe($expected)
@@ -183,7 +183,7 @@ it('resolves %%title%% in a brand SEO title instead of deleting it', function ()
 it('resolves %%title%% in a category SEO title instead of deleting it', function () {
     $category = tytCategory(['title' => 'Buy %%title%% %%sep%% %%sitename%%']);
 
-    $title = tytTitle('/product-category/' . $category->path . '/');
+    $title = tytTitle('/collections/' . $category->path . '/');
 
     // Every token resolved: the category's own name for %%title%%, the stored
     // separator for %%sep%%, the site name for %%sitename%%. Without the fix
@@ -194,13 +194,13 @@ it('resolves %%title%% in a category SEO title instead of deleting it', function
 it('resolves %%title%% in an article SEO title instead of deleting it', function () {
     $post = tytPost(['title' => '%%title%% %%sep%% %%sitename%%']);
 
-    $title = tytTitle('/' . $post->slug . '/');
+    $title = tytTitle('/blog/' . $post->slug . '/');
 
     $post->forceFill(['seo' => null])->save();
 
     // Same comparison as the brand case: Yoast's default and this store's
     // default are the same three tokens, so they must render the same bytes.
-    expect($title)->toBe(tytTitle('/' . $post->slug . '/'))
+    expect($title)->toBe(tytTitle('/blog/' . $post->slug . '/'))
         ->and($title)->toStartWith('Heartleaf extract, transforming K-beauty skincare');
 });
 
@@ -209,7 +209,7 @@ it('still deletes a token nothing knows about', function () {
     // rather than reaching the browser tab as literal percent signs.
     $brand = tytBrand(['title' => '%%title%% %%sitnam%%']);
 
-    expect(tytTitle('/korean-skincare-brands/' . $brand->slug . '/'))->toBe('Round Lab');
+    expect(tytTitle('/brands/' . $brand->slug . '/'))->toBe('Round Lab');
 });
 
 /* ─────────────────────── and nothing else may move ───────────────────────── */
@@ -217,7 +217,7 @@ it('still deletes a token nothing knows about', function () {
 it('leaves a brand with no SEO title on the template it always used', function () {
     $brand = tytBrand(null);
 
-    $title = tytTitle('/korean-skincare-brands/' . $brand->slug . '/');
+    $title = tytTitle('/brands/' . $brand->slug . '/');
 
     // Through `seo_title_template`, site name appended — NOT the verbatim name.
     expect($title)->toStartWith('Round Lab ')
@@ -227,7 +227,7 @@ it('leaves a brand with no SEO title on the template it always used', function (
 it('leaves a category with no SEO title on the template it always used', function () {
     $category = tytCategory(null);
 
-    $title = tytTitle('/product-category/' . $category->path . '/');
+    $title = tytTitle('/collections/' . $category->path . '/');
 
     expect($title)->toStartWith('Serums ')
         ->and($title)->not->toBe('Serums');
@@ -236,7 +236,7 @@ it('leaves a category with no SEO title on the template it always used', functio
 it('leaves an article with no SEO title on the template it always used', function () {
     $post = tytPost(null);
 
-    $title = tytTitle('/' . $post->slug . '/');
+    $title = tytTitle('/blog/' . $post->slug . '/');
 
     expect($title)->toStartWith('Heartleaf extract, transforming K-beauty skincare ')
         ->and($title)->not->toBe('Heartleaf extract, transforming K-beauty skincare');
@@ -247,6 +247,6 @@ it('leaves a plain typed SEO title verbatim, with no site name appended', functi
     // the whole title. Adding `title_token` must not start appending anything.
     $brand = tytBrand(['title' => 'Round Lab UAE — Dokdo cleansing line']);
 
-    expect(tytTitle('/korean-skincare-brands/' . $brand->slug . '/'))
+    expect(tytTitle('/brands/' . $brand->slug . '/'))
         ->toBe('Round Lab UAE — Dokdo cleansing line');
 });

@@ -11,6 +11,7 @@ use App\Models\Post;
 use App\Models\Product;
 use App\Models\Redirect;
 use App\Support\LegacyCategoryUrls;
+use App\Support\UrlScheme;
 
 /**
  * The URL map: old WordPress addresses to this shop's.
@@ -81,12 +82,22 @@ use App\Support\LegacyCategoryUrls;
  *
  * WHAT THIS DELIBERATELY DOES NOT GUESS:
  *
- *  - BRAND ARCHIVES. U-05 says this shop has no brand archive path at all —
- *    brands are a query parameter on /shop/. What the OLD shop used depends on
- *    which brand plugin it ran (`/brand/`, `/product-brand/`, `/marca/` …) and
- *    inventing one writes 93 redirects from an address that may never have
- *    existed. Asked once, as a question the owner can answer, rather than
- *    guessed 93 times.
+ *  - BRAND ARCHIVES, and THE FIRST HALF OF THIS IS NOW WRONG. It read: "U-05
+ *    says this shop has no brand archive path at all — brands are a query
+ *    parameter on /shop/." It has one: the address scheme put a real brand
+ *    landing page at /brands/{slug}/, and `currentPathFor()` sends a brand
+ *    permalink there instead of at a filtered shop listing that canonicalises
+ *    to /shop/. U-05 is untouched — the filterable LISTING is still
+ *    /shop/?filter_brands={slug}, which is Brand::filterUrl().
+ *
+ *    THE SECOND HALF STILL HOLDS AND IS THE REASON THIS ENTRY SURVIVES. What
+ *    the OLD shop published a brand archive at depends on which brand plugin it
+ *    ran (`/brand/`, `/product-brand/`, `/marca/` …); this class still does not
+ *    invent one. It reads the address out of `permalinks.csv`, where the
+ *    exporter recorded what `get_term_link()` really answered — and on the
+ *    reference export that is an EMPTY permalink with a note saying the
+ *    taxonomy had no public archive, which never reaches fromPermalinks() at
+ *    all. Read, not guessed, 93 times or none.
  *
  *  - QUERY-STRING PERMALINKS. `/?p=123` and `/?post_type=product&p=123` are
  *    real WordPress addresses and this shop CANNOT redirect them:
@@ -101,6 +112,53 @@ use App\Support\LegacyCategoryUrls;
  *    product's address is byte-for-byte the one it had. That is a FINDING and
  *    is reported with its count, because "we checked 671 products and none of
  *    them moved" is the answer, and silence is not.
+ *
+ *    THE ADDRESS SCHEME DID NOT CHANGE THIS AND THAT IS THE POINT OF IT. A
+ *    product page is a DETAIL page, `/product/{slug}/` is already the singular
+ *    shape the research says a detail page wants, and so the largest and most
+ *    valuable set of addresses this shop owns needs no redirect at all — while
+ *    the category archives, the brand directory and the journal all moved.
+ *
+ *    IT IS STILL CHECKED RATHER THAN ASSUMED. The product base is a SETTING:
+ *    `woocommerce_permalinks['product_base']`, carried verbatim in
+ *    `manifest.json`, and a shop that ran `/shop/{slug}/` DOES need a row for
+ *    every product it ever sold. fromPermalinks() compares each product's real
+ *    exported permalink against `currentPathFor()` and proposes a row whenever
+ *    the two differ, so a moved base produces rows with nothing here to change;
+ *    `UrlScheme::productBaseMoved()` is what lets the REPORT say which of the
+ *    two happened.
+ *
+ * THE ADDRESS SCHEME, AND WHICH HALF OF A ROW IT MOVED. Every DESTINATION in
+ * this class comes from `App\Support\UrlScheme`:
+ *
+ *     category   /collections/{path}/     (was /product-category/{path}/)
+ *     brand      /brands/{slug}/          (was a query string on /shop/)
+ *     article    /blog/{slug}/            (was /{slug}/ at the site root)
+ *     product    /product/{slug}/         unchanged, deliberately
+ *     page       /{slug}/                 unchanged — these are literal routes
+ *
+ * SOURCES did not move, because a source is a fact about the OLD site and no
+ * change here can alter what Google already holds. `/product-category/{leaf}/`
+ * is still built — by legacyCategoryPath() — and is still the address
+ * WooCommerce published a category at.
+ *
+ * ONE CONSEQUENCE WORTH STATING PLAINLY, because it makes the migrate bucket
+ * SMALLER rather than bigger and that reads like a regression until it is
+ * understood. The scheme shipped a route for every retired address —
+ * /product-category/…/, /skincare-guide/…, /korean-skincare-brands/…,
+ * /brand/{slug}/ and /{slug}/ at the root — so the shop now forwards most old
+ * addresses in one hop with no row at all. `reachable()` sees MOVED, compares
+ * the destination with this map's, finds them identical and DISCARDS, saying so
+ * on the row. A written row would restate a hop the application already makes,
+ * and unlike the application's the row does not follow a rename: it would go on
+ * pointing at import day's path after that path had become a 404.
+ *
+ * What still needs a row is exactly what the routes cannot derive: a category
+ * whose flat root address is not one of the fifteen in
+ * `LegacyCategoryUrls::PATHS`, an article whose slug CHANGED on import (a
+ * SlugGuard collision with a reserved slug is the real case), a page, and a
+ * product on a shop whose product base was not `/product`. Those are the rows
+ * this map exists to write, and they are the ones nothing else can produce.
  *
  * THE PREFIX TRAP, which is the thing most likely to be silently wrong here.
  * `redirects.source` is compared against `getPathInfo()`, which EXCLUDES the
@@ -758,7 +816,7 @@ final class RedirectMap
                  * not a redirect.
                  */
                 $out[] = [
-                    'source' => $this->categoryPath($slug),
+                    'source' => $this->legacyCategoryPath($slug),
                     'target' => '',
                     'rule' => 'category-nesting',
                     'decision' => self::ASK,
@@ -771,37 +829,35 @@ final class RedirectMap
                 continue;
             }
 
-            $source = $this->categoryPath($slug);
+            $source = $this->legacyCategoryPath($slug);
             $target = $this->categoryPath($path);
 
-            if ($source === $target) {
-                /*
-                 * A top-level category: its flat address and its nested address
-                 * are the same string. Writing this would be a redirect from a
-                 * page to itself, which CheckRedirects would serve as an
-                 * infinite loop. Discarded, and counted, so the report can say
-                 * how many categories needed nothing.
-                 */
-                $out[] = [
-                    'source' => $source,
-                    'target' => $target,
-                    'rule' => 'category-nesting',
-                    'decision' => self::DISCARD,
-                    'reason' => 'top-level category — its old address and its new one are the same, so a redirect '
-                        .'would point at itself',
-                    'subject' => 'category '.$category->id.' ('.$slug.')',
-                ];
-
-                continue;
-            }
-
+            /*
+             * ▲ A `$source === $target` BRANCH USED TO SIT HERE AND IT IS
+             * DELETED RATHER THAN ANNOTATED, because there is no reading of this
+             * file in which it can still fire.
+             *
+             * It read: "A top-level category: its flat address and its nested
+             * address are the same string. Writing this would be a redirect from
+             * a page to itself." That was true while BOTH halves were
+             * `/product-category/…`. The source is now the retired base and the
+             * target is `/collections/…`, so the two strings can never be equal,
+             * and a branch that matches nothing is the dead-filter shape this
+             * repository has already paid for once in `Api\ProductController`.
+             *
+             * Nothing is lost by its going. A top-level category's proposal is
+             * `/product-category/skincare/` -> `/collections/skincare/`, which is
+             * a real move; `reachable()` then discards it because the shop
+             * already makes exactly that hop from `CategoryArchiveController::
+             * show()`, and it says so on the row.
+             */
             $out[] = [
                 'source' => $source,
                 'target' => $target,
                 'rule' => 'category-nesting',
                 'decision' => self::MIGRATE,
-                'reason' => 'WooCommerce published this category at its leaf slug; this shop serves it at its full '
-                    .'nested path (U-03)',
+                'reason' => 'WooCommerce published this category at its leaf slug under its product-category '
+                    .'base; this shop serves it at its full nested path under /collections/ (U-03)',
                 'subject' => 'category '.$category->id.' ('.$path.')',
             ];
         }
@@ -958,7 +1014,7 @@ final class RedirectMap
         if (in_array($type, ['product', 'products', 'simple', 'variable'], true)) {
             $product = Product::query()->where('wc_id', $wcId)->first(['slug']);
 
-            return $product === null ? null : '/product/'.$product->slug.'/';
+            return $product === null ? null : UrlScheme::product((string) $product->slug);
         }
 
         if (in_array($type, ['category', 'categories', 'product_cat'], true)) {
@@ -1015,7 +1071,10 @@ final class RedirectMap
         if (in_array($type, ['post', 'posts'], true)) {
             $post = Post::query()->where('source_post_id', $wcId)->first(['slug']);
 
-            return $post === null ? null : '/'.$post->slug.'/';
+            // /blog/{slug}/ since the address scheme moved articles off the
+            // site root. The root form is where the OLD site served them, which
+            // is the SOURCE half of this row, not the destination.
+            return $post === null ? null : UrlScheme::article((string) $post->slug);
         }
 
         if (in_array($type, ['page', 'pages'], true)) {
@@ -1028,12 +1087,25 @@ final class RedirectMap
             $brand = Brand::query()->where('source_term_id', $wcId)->first(['slug']);
 
             /*
-             * U-05: no brand archive path exists to send them to. The shop page
-             * filtered by the brand is the closest real address, and it is a
-             * query parameter, which is fine in a TARGET — only the source has
-             * to be a bare path.
+             * ▲ THIS RETURNED `/shop/?filter_brands={slug}` AND THAT IS NO
+             * LONGER THE BEST ADDRESS THIS SHOP HAS — the note it replaces read
+             * "U-05: no brand archive path exists to send them to. The shop page
+             * filtered by the brand is the closest real address."
+             *
+             * There is one now. The address scheme put a real brand landing page
+             * at /brands/{slug}/ — the brand's own name, logo, description and a
+             * preview of its catalogue — and it is indexable, is in the sitemap
+             * and is what Brand::url() returns. U-05 is untouched: the
+             * filterable LISTING is still /shop/?filter_brands={slug}, and the
+             * landing page links onward to it.
+             *
+             * The difference this makes to an old brand archive arriving from
+             * WordPress is the whole point of the change. A 301 onto a filtered
+             * shop listing lands on a page that canonicalises to /shop/, which
+             * tells Google the brand page does not exist; a 301 onto
+             * /brands/{slug}/ lands on a page that canonicalises to itself.
              */
-            return $brand === null ? null : '/shop/?filter_brands='.$brand->slug;
+            return $brand === null ? null : UrlScheme::brand((string) $brand->slug);
         }
 
         return null;
@@ -1060,10 +1132,32 @@ final class RedirectMap
         ], true) || str_starts_with($type, 'pa_');
     }
 
-    /** `/product-category/{path}/` — U-03, trailing slash and all. */
+    /**
+     * Where this shop serves a category archive TODAY — `/collections/{path}/`,
+     * U-03 as the address scheme now states it, trailing slash and all.
+     *
+     * Always the destination half of a row. The old addresses are built by
+     * legacyCategoryPath() below, and keeping the two apart is what stopped this
+     * class proposing `/collections/x/` -> `/collections/x/` when the archive
+     * moved.
+     */
     private function categoryPath(string $path): string
     {
-        return '/product-category/'.trim($path, '/').'/';
+        return UrlScheme::collection($path);
+    }
+
+    /**
+     * The address WooCommerce published a category at under its product-category
+     * base — `/product-category/{path}/`.
+     *
+     * Only ever a SOURCE. This shop no longer serves it: it 301s onto the
+     * collections address, which is why reachable() answers MOVED for every one
+     * of these and the map discards its own proposal rather than writing a row
+     * that restates a hop the application already makes for itself.
+     */
+    private function legacyCategoryPath(string $path): string
+    {
+        return UrlScheme::legacyCollection($path);
     }
 
     /**

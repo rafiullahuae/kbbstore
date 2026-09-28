@@ -17,12 +17,12 @@ use Illuminate\Support\Facades\Route as RouteFacade;
  * Applies the routing change Lane GA cannot make itself.
  *
  * CLAUDE.md forbids this lane editing routes/web.php, so the corrected
- * registrations for /blog and /post/{slug?} live in
+ * registration for /post/{slug?} lives in
  * routes/kbb-journal-legacy.php and the integrator applies them. The exact
  * anchor and replacement are in that file's header and in
  * docs/GA-SKINCARE-GUIDE.md §5.
  *
- * This drops exactly the two superseded URIs and then loads the new file,
+ * This drops exactly the superseded URI and then loads the new file,
  * which is the state web.php is in once the integrator has made the edit. Same
  * shape as Tests\Support\Phase9Routes, which is the precedent for how this repo
  * tests a web.php edit a lane may not make.
@@ -55,10 +55,23 @@ final class JournalLegacyRoutes
      * is worth a red suite rather than a quiet pass.
      */
     private const SUPERSEDED = [
-        // 301 to the Journal index, built with route() — which drops the
-        // trailing slash and knows nothing about /ar.
-        'blog',
-        // 301 to the article, same two faults.
+        /*
+         * ▲ 'blog' USED TO BE ON THIS LIST AND ITS REMOVAL IS THE ADDRESS
+         * SCHEME'S, not an oversight.
+         *
+         * It was here because web.php once registered `/blog` as a 301 to
+         * /skincare-guide/ and routes/kbb-journal-legacy.php replaced that
+         * registration with a corrected one. The scheme reverses the pair:
+         * /blog/ is the journal INDEX now and /skincare-guide/ is the 301 onto
+         * it, so kbb-journal-legacy.php registers nothing for /blog at all and
+         * routes/kbb-brands-blog.php serves it.
+         *
+         * Leaving it here would have DROPPED the index from the router and put
+         * nothing back — every test that wires this helper would have found
+         * /blog/ 404ing, which is not a state web.php is ever in.
+         */
+        // 301 to the article, built with route() — which drops the trailing
+        // slash and knows nothing about /ar.
         'post/{slug?}',
     ];
 

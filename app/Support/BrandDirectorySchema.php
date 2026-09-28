@@ -32,7 +32,7 @@ use App\Models\Brand;
  * two shapes for an ItemList — the "summary page" form, where each ListItem
  * carries only a position and a url pointing at a page of its own, and the
  * "all-in-one" form, where the ListItem carries the item itself. This page is
- * the first kind: every tile links onward to /korean-skincare-brands/{slug}/,
+ * the first kind: every tile links onward to /brands/{slug}/,
  * which is a real page with its own CollectionPage node. Naming the entity at
  * that URL as a Brand is both permitted in that form and truer than a WebPage,
  * because the thing the shopper is choosing between is a brand.
@@ -105,7 +105,7 @@ final class BrandDirectorySchema
                  */
                 'name' => (string) $brand->t('name'),
                 /*
-                 * The LANDING page, /korean-skincare-brands/{slug}/, which is
+                 * The LANDING page, /brands/{slug}/, which is
                  * where the tile links and which canonicalises to itself.
                  *
                  * NOT Brand::url(). URL Contract U-05 keeps that pointing at
@@ -120,7 +120,7 @@ final class BrandDirectorySchema
                  * landing page builds its own canonical rather than as a bare
                  * literal.
                  */
-                'url' => $base . Url::to('/korean-skincare-brands/' . $slug . '/'),
+                'url' => $base . Url::to(UrlScheme::brand($slug)),
                 'logo' => $withLogos && is_string($brand->logo) && trim($brand->logo) !== ''
                     ? trim($brand->logo)
                     : null,

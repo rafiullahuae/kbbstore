@@ -7,6 +7,7 @@ use App\Services\Seo\SeoSettings;
 use App\Support\ConcernCollections;
 use App\Support\Locale;
 use App\Support\Url;
+use App\Support\UrlScheme;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -431,13 +432,15 @@ class SeoFilesController extends Controller
             }
         }
         $add($base . '/skin-quiz/', null, '0.5', 'monthly');
-        // /brands/ 301s to /korean-skincare-brands/ (BrandController::legacyIndex,
-        // and the owner confirmed the long address is the live one). Submitting
-        // the redirect asked Google to fetch a URL it is then sent away from --
-        // exactly the defect the /shop -> /shop/ entry above was corrected for,
-        // one line below where it was corrected.
-        $add($base . '/korean-skincare-brands/', null, '0.5', 'weekly');
-        $add($base . '/skincare-guide/', null, '0.6', 'weekly');
+        // The brand directory and the journal index, at the addresses the
+        // scheme serves them from. /korean-skincare-brands/ and
+        // /skincare-guide/ are now the 301s, and submitting a redirect asks
+        // Google to fetch a URL it is then sent away from -- exactly the defect
+        // the /shop -> /shop/ entry above was corrected for, one line below
+        // where it was corrected. App\Support\UrlScheme is the one writer of
+        // both shapes, so this file cannot drift from the router.
+        $add($base . UrlScheme::brandIndex(), null, '0.5', 'weekly');
+        $add($base . UrlScheme::blogIndex(), null, '0.6', 'weekly');
 
         /*
          * The curated listings — /new-in/, /best-sellers/, /super-sale/ and
@@ -643,7 +646,7 @@ class SeoFilesController extends Controller
         // Categories.
         //
         // These were listed under /category/{slug}, which has never been a
-        // route -- the real one is /product-category/{path}/, and Category::url()
+        // route -- the real one is /collections/{path}/, and Category::url()
         // builds it from the full nested path, not the bare slug. Every
         // category URL in the sitemap was a 404.
         if (Schema::hasTable('categories')) {
@@ -674,13 +677,13 @@ class SeoFilesController extends Controller
                 // archive itself; this is the other half of the same decision.
                 if (self::isNoindex($c->seo ?? null)) continue;
 
-                $add($base . '/product-category/' . $path . '/', $c->updated_at ?? null, '0.6', 'weekly');
+                $add($base . UrlScheme::collection($path), $c->updated_at ?? null, '0.6', 'weekly');
             }
         }
 
         // Brand landing pages.
         //
-        // /korean-skincare-brands/{slug}/ has been a real, indexable page since
+        // A brand landing page has been a real, indexable page since
         // Phase 9 and not one of them has ever been in the sitemap -- the file
         // listed the brand INDEX (at its redirecting address, above) and
         // nothing else, so on a catalogue of ninety-three brands the only crawl
@@ -723,14 +726,15 @@ class SeoFilesController extends Controller
                     continue;
                 }
 
-                $add($base . '/korean-skincare-brands/' . $b->slug . '/', $b->updated_at ?? null, '0.5', 'weekly');
+                $add($base . UrlScheme::brand((string) $b->slug), $b->updated_at ?? null, '0.5', 'weekly');
             }
         }
 
-        // Articles live at the site root since 2.60.109; /post/{slug} and
-        // /skincare-guide/{slug}/ both 301 to /{slug}/, so only the canonical
-        // form belongs in the sitemap.
-        // as of 2.60.93, so the redirect target is listed directly.
+        // Articles live at /blog/{slug}/ since the address scheme moved them
+        // there. The site root, /post/{slug} and /skincare-guide/{slug}/ all
+        // 301 onto that, so only the canonical form belongs in the sitemap --
+        // submitting any of the three would ask Google to fetch a URL it is
+        // then sent away from.
         if (Schema::hasTable('posts')) {
             $q = DB::table('posts')->select('slug', 'updated_at');
 
@@ -740,7 +744,7 @@ class SeoFilesController extends Controller
 
             foreach ($q->get() as $post) {
                 if (empty($post->slug)) continue;
-                $add($base . '/' . $post->slug . '/', $post->updated_at ?? null, '0.6', 'monthly');
+                $add($base . UrlScheme::article((string) $post->slug), $post->updated_at ?? null, '0.6', 'monthly');
             }
         }
 
@@ -1063,7 +1067,7 @@ class SeoFilesController extends Controller
      * file, which is the audience least able to check it against the shop.
      *
      * Both "key pages" named a URL the site does not serve at that address.
-     * `/blog` is a 301 to /skincare-guide/ (routes/web.php), and `/shop` is
+     * `/blog` was a 301 to /skincare-guide/ (routes/web.php), and `/shop` is
      * the unslashed form the shop canonicalises away from — so the two links
      * this file offers were a redirect and a redirect. That is the same defect
      * sitemap() above was corrected for twice, in a file that shares its
@@ -1097,7 +1101,7 @@ class SeoFilesController extends Controller
             // all — the same form the sitemap submits and the canonical
             // declares, never the one the site redirects from.
             "- [Shop]({$base}/shop/)",
-            "- [Journal]({$base}/skincare-guide/)",
+            "- [Journal]({$base}" . UrlScheme::blogIndex() . ")",
         ];
 
         /*
@@ -1134,7 +1138,7 @@ class SeoFilesController extends Controller
                     // localised paths, not Url::raw(), which would print
                     // /kbb-upgrade twice.
                     . ': [Shop](' . $base . Locale::withSegment('/shop/', $code) . ')'
-                    . ', [Journal](' . $base . Locale::withSegment('/skincare-guide/', $code) . ')';
+                    . ', [Journal](' . $base . Locale::withSegment(UrlScheme::blogIndex(), $code) . ')';
             }
         }
 

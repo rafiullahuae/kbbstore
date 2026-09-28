@@ -144,10 +144,10 @@ it('knows the shop forwards a legacy flat address by itself', function () {
     $sr = new SourceReachability;
 
     foreach ([
-        '/toners/' => '/product-category/skincare/toners/',
-        '/cleansing-oils/' => '/product-category/skincare/face-cleansers/cleansing-oils/',
-        '/skincare-sets/' => '/product-category/skincare-sets/',
-        '/hair-care/' => '/product-category/hair-care/',
+        '/toners/' => '/collections/skincare/toners/',
+        '/cleansing-oils/' => '/collections/skincare/face-cleansers/cleansing-oils/',
+        '/skincare-sets/' => '/collections/skincare-sets/',
+        '/hair-care/' => '/collections/hair-care/',
     ] as $path => $to) {
         $v = $sr->verdict($path);
 
@@ -241,11 +241,11 @@ it('still asks when the shop sends the address somewhere else', function () {
      * reported rather than worked around, and it turned out for the better,
      * because this disagreement is one a real shop produces:
      *
-     *   The old site published Toners at /product-category/old-toners/.
+     *   The old site published Toners at /collections/old-toners/.
      *   Since the import the owner has MERGED a category called `old-toners`
      *   into Hair Care, which writes a `category_redirects` row.
      *
-     * So the shop, asked for /product-category/old-toners/, sends it to Hair
+     * So the shop, asked for /collections/old-toners/, sends it to Hair
      * Care — CategoryPath::resolve() follows that row. The permalinks file
      * says the address belonged to the term that is now Toners. Two different
      * destinations for one address, from two sources that are both right about
@@ -269,10 +269,10 @@ it('still asks when the shop sends the address somewhere else', function () {
 
     // The shop's own answer, established before the map is asked.
     $sr = new SourceReachability;
-    $v = $sr->verdict('/product-category/old-toners/');
+    $v = $sr->verdict('/collections/old-toners/');
 
     expect($v['status'])->toBe(SourceReachability::MOVED);
-    expect($v['to'])->toBe('/product-category/hair-care/', 'the merge row is not being followed, so this proves nothing');
+    expect($v['to'])->toBe('/collections/hair-care/', 'the merge row is not being followed, so this proves nothing');
 
     // And the map, reading the export, wants to send it to Toners instead.
     $proposals = (new RedirectMap)->propose([
@@ -282,7 +282,7 @@ it('still asks when the shop sends the address somewhere else', function () {
     $row = r2Find($proposals, '/product-category/old-toners/');
 
     expect($row)->not->toBeNull();
-    expect($row['target'])->toBe('/product-category/skincare/toners/');
+    expect($row['target'])->toBe('/collections/skincare/toners/');
     expect($row['decision'])->toBe(RedirectMap::ASK, 'a real disagreement was decided for the owner');
     expect($row['question'])->toBe(RedirectMap::Q_ALREADY_REDIRECTS);
     expect($row['reason'])->toContain('NOT to where this rule would send it');
@@ -335,7 +335,7 @@ it('says out loud that a written row would rot where the derived one does not', 
     r2Tree();
 
     $wasAt = LegacyCategoryUrls::landingPath('/toners/');
-    expect($wasAt)->toBe('/product-category/skincare/toners/');
+    expect($wasAt)->toBe('/collections/skincare/toners/');
 
     // The row the import would have written before this branch.
     $row = Redirect::query()->create([
@@ -356,11 +356,11 @@ it('says out loud that a written row would rot where the derived one does not', 
     $toners->forceFill(['path' => 'skin-care/toners'])->save();
 
     // The shop's own answer moved with it, on its own, with nothing applied.
-    expect(LegacyCategoryUrls::landingPath('/toners/'))->toBe('/product-category/skin-care/toners/');
+    expect(LegacyCategoryUrls::landingPath('/toners/'))->toBe('/collections/skin-care/toners/');
 
     // The row did not — and the row is the one that wins, because the table is
     // read before the router.
-    expect((string) $row->fresh()->target)->toBe('/product-category/skincare/toners/');
+    expect((string) $row->fresh()->target)->toBe('/collections/skincare/toners/');
 
     /*
      * And its destination now costs a SECOND hop: CategoryPath::resolve() finds
@@ -369,13 +369,13 @@ it('says out loud that a written row would rot where the derived one does not', 
      * nothing on any screen says so.
      */
     $sr = new SourceReachability;
-    $stale = $sr->verdict('/product-category/skincare/toners/');
+    $stale = $sr->verdict('/collections/skincare/toners/');
 
     expect($stale['status'])->toBe(
         SourceReachability::MOVED,
         'the stale row still points straight at a live page, so this proves nothing'
     );
-    expect($stale['to'])->toBe('/product-category/skin-care/toners/');
+    expect($stale['to'])->toBe('/collections/skin-care/toners/');
 
     /*
      * The worse case, and it is one edit further: the LEAF is renamed too, so
@@ -384,7 +384,7 @@ it('says out loud that a written row would rot where the derived one does not', 
     $toners->slug = 'toner';
     $toners->forceFill(['path' => 'skin-care/toner'])->save();
 
-    expect($sr->verdict('/product-category/skincare/toners/')['status'])
+    expect($sr->verdict('/collections/skincare/toners/')['status'])
         ->toBe(SourceReachability::NOT_FOUND, 'a row pointing at a renamed leaf still resolves');
 });
 
@@ -508,7 +508,7 @@ it('writes the same rows twice and changes nothing the second time', function ()
     // No destination contains a doubled segment, which is the shape a
     // non-idempotent rewrite produces.
     foreach ($rowsAfterSecond as $row) {
-        expect($row['target'])->not->toContain('/product-category/product-category/');
+        expect($row['target'])->not->toContain('/collections/product-category/');
         expect($row['target'])->not->toContain('//product');
     }
 });
@@ -571,7 +571,7 @@ it('lets an article body keep linking to the old address, because the shop lands
      *
      *   A DERIVED REDIRECT FOLLOWS THE CATEGORY. A REWRITTEN BODY DOES NOT.
      *
-     * Rewriting `/toners/` to `/product-category/skincare/toners/` freezes
+     * Rewriting `/toners/` to `/collections/skincare/toners/` freezes
      * today's nesting into the owner's own prose. Re-parent the category
      * tomorrow and the body points at an address that is a 404, and a body is
      * the one artefact of this migration that cannot be re-derived from
@@ -605,7 +605,7 @@ it('lets an article body keep linking to the old address, because the shop lands
     $response = $kernel->handle(\Illuminate\Http\Request::create('http://localhost/toners/', 'GET'));
 
     expect($response->getStatusCode())->toBe(301);
-    expect($response->headers->get('Location'))->toBe('http://localhost/product-category/skincare/toners/');
+    expect($response->headers->get('Location'))->toBe('http://localhost/collections/skincare/toners/');
 
     $landed = $kernel->handle(\Illuminate\Http\Request::create((string) $response->headers->get('Location'), 'GET'));
     expect($landed->getStatusCode())->toBe(200, 'the link in the article body does not reach a page');
@@ -637,18 +637,38 @@ it('leaves a genuine slug change as a row that must still be written', function 
 
     expect($row)->not->toBeNull('the slug change produced no proposal at all');
     expect($row['decision'])->toBe(RedirectMap::MIGRATE);
-    expect($row['target'])->toBe('/heartleaf-extract-2/');
+    // /blog/{slug}/, which is where the address scheme serves an article. The
+    // OLD address is the site root, which is the source half of this row.
+    expect($row['target'])->toBe('/blog/heartleaf-extract-2/');
 });
 
-it('leaves the ten shipped journal redirects exactly as they were', function () {
-    $rows = Redirect::query()->orderBy('source')->get();
+it('leaves no shipped row shadowing the article namespace', function () {
+    /*
+     * ── PIN ADVANCED, AND THE OLD ASSERTION IS NOW A LOOP ─────────────────
+     *
+     * This read "leaves the ten shipped journal redirects exactly as they were"
+     * and asserted ten rows whose source began `/blog/`. Those are
+     * 2026_09_14_160000_seed_phase9_post_url_redirects', written when `/blog/`
+     * was a dead prefix and the article lived at the site root.
+     *
+     * `/blog/{slug}/` is the article's canonical address now and CheckRedirects
+     * runs BEFORE the router, so each of those rows sends the canonical address
+     * to the site root and PageController::rootArticle() sends it straight back
+     * — a loop CheckRedirects::loops() cannot see, because it walks the TABLE
+     * and the second hop is a route. There is no version of the old assertion
+     * that is both true and safe, so it is replaced rather than adjusted.
+     *
+     * 2027_04_05_000100_url_scheme_redirect_rows removes them, matched on shape
+     * rather than on the posts table so a fresh install is covered too.
+     *
+     * MUTATION NOTE. Delete deleteSeededArticleLoops() from that migration and
+     * this is red, with ten rows under /blog/.
+     */
+    $shadowing = Redirect::query()
+        ->where('source', 'like', '/blog/%')
+        ->get();
 
-    expect($rows)->toHaveCount(10);
-
-    foreach ($rows as $row) {
-        expect(str_starts_with((string) $row->source, '/blog/'))->toBeTrue();
-        expect($row->code)->toBe(301);
-    }
+    expect($shadowing)->toHaveCount(0, 'a stored row claims an address the shop now serves');
 });
 
 it('compares destinations as raw paths, so a subfolder mount does not undo the discard', function () {
@@ -667,8 +687,8 @@ it('compares destinations as raw paths, so a subfolder mount does not undo the d
      * every path in the file is assembled from raw strings for that reason. So
      * on a subfolder mount the comparison would read
      *
-     *     '/kbb-upgrade/product-category/skincare/toners/'   (the shop)
-     *  vs '/product-category/skincare/toners/'               (the proposal)
+     *     '/kbb-upgrade/collections/skincare/toners/'   (the shop)
+     *  vs '/collections/skincare/toners/'               (the proposal)
      *
      * decide they DISAGREE, and put all fifteen back into the ask bucket — on
      * the one deployment shape where nobody would think to re-check, and with
@@ -686,14 +706,14 @@ it('compares destinations as raw paths, so a subfolder mount does not undo the d
 
     // The precondition: the prefixed and raw spellings really do differ here,
     // or this test asserts nothing.
-    expect(\App\Support\Url::to('/product-category/skincare/toners/'))
-        ->toBe('/kbb-upgrade/product-category/skincare/toners/');
+    expect(\App\Support\Url::to('/collections/skincare/toners/'))
+        ->toBe('/kbb-upgrade/collections/skincare/toners/');
 
-    $v = (new SourceReachability)->verdict('/product-category/toners/');
+    $v = (new SourceReachability)->verdict('/collections/toners/');
 
     expect($v['status'])->toBe(SourceReachability::MOVED);
     expect($v['to'])->toBe(
-        '/product-category/skincare/toners/',
+        '/collections/skincare/toners/',
         'the verdict is carrying the base path, which redirects.target never does'
     );
 

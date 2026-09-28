@@ -90,7 +90,7 @@ it('paginates a category archive within that category, not into the whole shop',
     $category = scsCatalogue(4);
     scsSettings(['products_per_page' => 2]);
 
-    $html = scsGet('/product-category/' . $category->slug . '/');
+    $html = scsGet('/collections/' . $category->slug . '/');
 
     // Facets::build() hard-coded /shop/ as the base for every URL it made,
     // including the paginator's. The "next page" control on a category archive
@@ -99,9 +99,9 @@ it('paginates a category archive within that category, not into the whole shop',
     // path from any category archive to anything past its first page. Every
     // product that only appears on page two of its category lost its only
     // categorical crawl path, while Facets::canonicalUrl() was meanwhile
-    // publishing /product-category/{slug}/?paged=2 as a canonical URL that
+    // publishing /collections/{slug}/?paged=2 as a canonical URL that
     // nothing on the site linked to.
-    expect($html)->toContain('href="/product-category/' . $category->slug . '/?paged=2"')
+    expect($html)->toContain('href="/collections/' . $category->slug . '/?paged=2"')
         ->not->toContain('href="/shop/?paged=2"');
 });
 
@@ -117,10 +117,10 @@ it('sends the paginator to the URL the next page canonicalises to', function () 
     // its own canonical.
     //
     // Asserting the canonical literally would not have caught the defect:
-    // canonicalUrl() was already publishing /product-category/{slug}/?paged=2
+    // canonicalUrl() was already publishing /collections/{slug}/?paged=2
     // correctly. It was the link that pointed somewhere else, so the canonical
     // named a URL nothing linked to.
-    $page1 = scsGet('/product-category/' . $category->slug . '/');
+    $page1 = scsGet('/collections/' . $category->slug . '/');
 
     preg_match('#href="([^"]*paged=2)"#', $page1, $m);
 
@@ -132,11 +132,11 @@ it('sends the paginator to the URL the next page canonicalises to', function () 
     // by two different methods off two different bases, which is how they came
     // to disagree. Asserting the canonical alone would not have caught the
     // defect — canonicalUrl() was already publishing
-    // /product-category/{slug}/?paged=2 correctly, and it was the LINK that
+    // /collections/{slug}/?paged=2 correctly, and it was the LINK that
     // pointed at /shop/?paged=2, so the canonical named a URL nothing on the
     // site linked to. Both halves are checked here: the link has to stay
     // inside the archive, and the page it reaches has to name it back.
-    expect($next)->toStartWith('/product-category/' . $category->slug . '/');
+    expect($next)->toStartWith('/collections/' . $category->slug . '/');
 
     expect(scsHead(scsGet($next)))->toContain('<link rel="canonical" href="' . SCS_BASE . $next . '">');
 });
@@ -158,7 +158,7 @@ it('404s a listing page number past the last page instead of re-serving page one
         test()->get($path)->assertNotFound();
     }
 
-    test()->get('/product-category/scs-cleansers/?paged=9')->assertNotFound();
+    test()->get('/collections/scs-cleansers/?paged=9')->assertNotFound();
 
     // The page that does exist is untouched.
     test()->get('/shop')->assertOk();
@@ -206,7 +206,7 @@ it('keeps the pages that are meant to rank indexable', function () {
         'published_at' => now()->subDay(),
     ]);
 
-    foreach (['/', '/shop', '/product-category/scs-cleansers/', '/product/scs-product-0/', '/cartons-of-cleanser/'] as $path) {
+    foreach (['/', '/shop', '/collections/scs-cleansers/', '/product/scs-product-0/', '/blog/cartons-of-cleanser/'] as $path) {
         expect(scsHead(scsGet($path)))
             ->toContain('<meta name="robots" content="index, follow">');
     }
@@ -265,12 +265,13 @@ it('gives each curated listing its own description and a self-referencing canoni
 it('submits the brand index at the address that answers rather than the one that redirects', function () {
     $sitemap = test()->get('/sitemap.xml')->assertOk()->getContent();
 
-    // /brands/ 301s to /korean-skincare-brands/ (BrandController::legacyIndex).
+    // /korean-skincare-brands/ 301s to /brands/ (BrandController::legacyIndex)
+    // since the address scheme made the short, plural form the directory.
     // Submitting the redirect asks Google to fetch a URL it is then sent away
     // from — the same defect the /shop -> /shop/ entry was corrected for, one
     // line below where it was corrected.
-    expect($sitemap)->toContain('<loc>' . SCS_BASE . '/korean-skincare-brands/</loc>')
-        ->not->toContain('<loc>' . SCS_BASE . '/brands/</loc>');
+    expect($sitemap)->toContain('<loc>' . SCS_BASE . '/brands/</loc>')
+        ->not->toContain('<loc>' . SCS_BASE . '/korean-skincare-brands/</loc>');
 });
 
 it('submits the brand landing pages and the curated listings', function () {
@@ -278,12 +279,12 @@ it('submits the brand landing pages and the curated listings', function () {
 
     $sitemap = test()->get('/sitemap.xml')->assertOk()->getContent();
 
-    // /korean-skincare-brands/{slug}/ has been a real, indexable page since
+    // /brands/{slug}/ has been a real, indexable page since
     // Phase 9 and not one of them was ever in the sitemap; on a catalogue of
     // ninety-three brands the only crawl path to a brand page was the A-Z
     // listing. The four curated listings are linked from the site header and
     // were missing too.
-    expect($sitemap)->toContain('<loc>' . SCS_BASE . '/korean-skincare-brands/scs-anua/</loc>');
+    expect($sitemap)->toContain('<loc>' . SCS_BASE . '/brands/scs-anua/</loc>');
 
     foreach (['new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed'] as $collection) {
         expect($sitemap)->toContain('<loc>' . SCS_BASE . '/' . $collection . '/</loc>');
@@ -298,7 +299,7 @@ it('leaves a brand with nothing live out of the sitemap', function () {
     // A brand page with an empty grid is a thin page, and asking Google to
     // fetch a set of them is the same crawl-budget tax the noindex-product
     // skip in this file already avoids.
-    expect($sitemap)->not->toContain('/korean-skincare-brands/scs-empty/');
+    expect($sitemap)->not->toContain('/brands/scs-empty/');
 });
 
 it('submits only the content pages that are published and routed', function () {
@@ -349,7 +350,7 @@ it('serves exactly one h1 on an article whose body carries its own', function ()
         'published_at' => now()->subDay(),
     ]);
 
-    $html = scsGet('/heartleaf-explained/');
+    $html = scsGet('/blog/heartleaf-explained/');
 
     // RichText::clean() already documents the rule — h1 is absent from both of
     // its allowlists because "the page template owns the page's single h1" —

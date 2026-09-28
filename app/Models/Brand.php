@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Support\HasTranslations;
 use App\Support\Url;
+use App\Support\UrlScheme;
 use Illuminate\Database\Eloquent\Model;
 
 class Brand extends Model
@@ -45,10 +46,45 @@ class Brand extends Model
     }
 
     /**
-     * URL contract U-05: production filters brands with a query parameter on /shop/,
-     * not a brand archive path. This must not be "improved" into a pretty URL.
+     * The brand's own page — /brands/{slug}/.
+     *
+     * ── THIS USED TO RETURN THE FILTERED SHOP LISTING, AND THAT WAS THE BUG ─
+     *
+     * It read `Url::to('/shop/') . '?filter_brands=' . $this->slug`, under a
+     * docblock saying URL Contract U-05 forbade "improving" it into a pretty
+     * URL. U-05 is about the LISTING, and the listing has not moved — see
+     * filterUrl() below, which is the same string and is what the mega menu and
+     * the shop's own facets still use.
+     *
+     * What was wrong is that url() is the address this application publishes
+     * when it means "this brand": the search suggestions link it, and
+     * `RedirectMap` hands it to every brand permalink the old site served. A
+     * query string on /shop/ is not an indexable page, so a brand archive
+     * arriving from the old install was redirected onto a filtered listing that
+     * canonicalises to /shop/ — which tells Google the brand page does not
+     * exist. For a K-beauty shop "medicube uae" is exactly what people type,
+     * and there was nothing to rank with.
+     *
+     * /brands/{slug}/ is a real page with the brand's own copy, logo and
+     * product grid (Store\BrandController::show), it is in the sitemap, and it
+     * links onward to filterUrl() for the filterable listing.
      */
     public function url(): string
+    {
+        return Url::to(UrlScheme::brand((string) $this->slug));
+    }
+
+    /**
+     * The brand's filterable, sortable, paginated product listing — URL
+     * Contract U-05, unchanged: /shop/?filter_brands={slug}.
+     *
+     * Kept as its own method rather than deleted because it is a different
+     * thing from url() and both are wanted: the landing page is what a search
+     * engine should hold, and this is what a shopper narrowing the shop is
+     * actually looking at. Byte-for-byte what url() used to return, so every
+     * caller that means "the listing" reads the same string it always did.
+     */
+    public function filterUrl(): string
     {
         return Url::to('/shop/') . '?filter_brands=' . $this->slug;
     }

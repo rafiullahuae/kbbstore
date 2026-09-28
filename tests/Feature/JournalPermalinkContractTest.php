@@ -7,20 +7,20 @@ declare(strict_types=1);
  *
  * KBB-Master-Plan.md Phase 9 still carries this as an open, flagged item:
  *
- *   ▲ /skincare-guide/ — a permalink structure, not one page: the homepage
- *     builds /skincare-guide/{slug}/, the router serves /blog and /post/{slug}
+ *   ▲ /blog/ — a permalink structure, not one page: the homepage
+ *     builds /blog/{slug}/, the router serves /blog and /post/{slug}
  *
  * None of that is true any more, and this file is why the next reader does not
  * have to take that on trust. Established by fetching against a running server
  * before a line of it was written — the transcript is in
  * docs/GA-SKINCARE-GUIDE.md §3:
  *
- *   /skincare-guide/            200, canonical .../skincare-guide/
+ *   /blog/            200, canonical .../blog/
  *   /{slug}/                    200, canonical .../{slug}/
- *   /skincare-guide/{slug}/     301 -> .../{slug}/
+ *   /blog/{slug}/     301 -> .../{slug}/
  *   /blog, /post/{slug}         301, they serve nothing
  *
- * and no producer anywhere in the tree builds /skincare-guide/{slug}/: the
+ * and no producer anywhere in the tree builds /blog/{slug}/: the
  * homepage rail, the Journal index, the sitemap, IndexNow and the admin's
  * Blog Posts screen all publish /{slug}/.
  *
@@ -29,14 +29,14 @@ declare(strict_types=1);
  * prefix's 301, the seeded /blog/{slug}/ rows and the sitemap's article entry.
  * That is not repeated. This file adds the four things it does not cover: the
  * exact canonical STRING on both of the shop's own addresses, the homepage
- * rail, /skincare-guide/<anything> as a census rather than one known slug, and
+ * rail, /blog/<anything> as a census rather than one known slug, and
  * the Arabic half — which is where the defect this lane found actually lives.
  *
  * WHAT THIS FILE IS FOR. The plan has been wrong about this item for a release
  * and a half, and the cost of being wrong the other way — repointing the
  * canonical at an address the live WordPress site does not serve — is the
  * shop's existing search traffic landing on a 404. So the contract is pinned
- * here rather than described anywhere: /skincare-guide/ is the Journal INDEX
+ * here rather than described anywhere: /blog/ is the Journal INDEX
  * and nothing else, an article is /{slug}/ and nothing else, and every retired
  * form 301s to one of those two.
  */
@@ -106,7 +106,7 @@ function jpcCanonical(string $html): ?string
 }
 
 /**
- * Every /skincare-guide/<something> address a page links to.
+ * Every /blog/<something> address a page links to.
  *
  * array_values(array_unique(...)) rather than expect()->not->toContain():
  * toContain is variadic, so its second argument is read as a second needle and
@@ -135,20 +135,35 @@ beforeEach(function () {
 |------------------------------------------------------------------------------
 */
 
-it('serves the Journal index at /skincare-guide/ and canonicalises it to itself', function () {
+it('serves the Journal index at /blog/ and canonicalises it to itself', function () {
     jpcPost();
 
-    $res = $this->get('/skincare-guide/')->assertOk();
+    $res = $this->get('/blog/')->assertOk();
 
-    expect(jpcCanonical((string) $res->getContent()))->toBe(JPC_BASE . '/skincare-guide/');
+    expect(jpcCanonical((string) $res->getContent()))->toBe(JPC_BASE . '/blog/');
 });
 
-it('serves an article at the site root and canonicalises it to itself', function () {
+it('serves an article at /blog/{slug}/ and canonicalises it to itself', function () {
+    /*
+     * THE ADDRESS MOVED, and the sentence this replaces was "serves an article
+     * at the site root". The root form is a 301 now — pinned below — because
+     * PageController::RESERVED_SLUGS owns the first segment there, so a live
+     * article slugged `about` or `feed` was an address this shop could never
+     * serve.
+     */
     jpcPost();
 
-    $res = $this->get('/' . JPC_SLUG . '/')->assertOk();
+    $res = $this->get('/blog/' . JPC_SLUG . '/')->assertOk();
 
-    expect(jpcCanonical((string) $res->getContent()))->toBe(JPC_BASE . '/' . JPC_SLUG . '/');
+    expect(jpcCanonical((string) $res->getContent()))->toBe(JPC_BASE . '/blog/' . JPC_SLUG . '/');
+});
+
+it('301s the article\'s WordPress root address onto /blog/, in one hop', function () {
+    jpcPost();
+
+    $this->get('/' . JPC_SLUG . '/')
+        ->assertStatus(301)
+        ->assertRedirect(jpcOrigin() . '/blog/' . JPC_SLUG . '/');
 });
 
 /*
@@ -168,7 +183,7 @@ it('keeps the reader in Arabic when it 301s /ar/skincare-guide/{slug}/', functio
     // not ask for: they clicked an /ar/ link.
     $this->get('/ar/skincare-guide/' . JPC_SLUG . '/')
         ->assertStatus(301)
-        ->assertRedirect(jpcOrigin() . '/ar/' . JPC_SLUG . '/');
+        ->assertRedirect(jpcOrigin() . '/ar/blog/' . JPC_SLUG . '/');
 });
 
 it('404s an unknown slug under the retired prefix rather than bouncing it to the index', function () {
@@ -178,29 +193,30 @@ it('404s an unknown slug under the retired prefix rather than bouncing it to the
     // misspelling is a real URL, and would hide the redirects table's turn at
     // the 404 (AppServiceProvider's renderable).
     $this->get('/skincare-guide/no-such-article/')->assertNotFound();
+    $this->get('/blog/no-such-article/')->assertNotFound();
 });
 
 /*
 |------------------------------------------------------------------------------
-| 3. Nothing publishes /skincare-guide/{slug}/ any more
+| 3. Nothing publishes /blog/{slug}/ any more
 |------------------------------------------------------------------------------
 */
 
-it('links articles from the Journal index at the site root, not under the index', function () {
+it('links articles from the Journal index at /blog/{slug}/', function () {
     jpcPost();
 
-    $html = (string) $this->get('/skincare-guide/')->assertOk()->getContent();
+    $html = (string) $this->get('/blog/')->assertOk()->getContent();
 
-    expect($html)->toContain('href="/' . JPC_SLUG . '/"');
+    expect($html)->toContain('href="/blog/' . JPC_SLUG . '/"');
     expect(jpcArticleUnderGuide($html))->toBe([]);
 });
 
-it('links articles from the homepage rail at the site root, not under the index', function () {
+it('links articles from the homepage rail at /blog/{slug}/', function () {
     jpcPost();
 
     $html = (string) $this->get('/')->assertOk()->getContent();
 
-    expect($html)->toContain('href="/' . JPC_SLUG . '/"');
+    expect($html)->toContain('href="/blog/' . JPC_SLUG . '/"');
     expect(jpcArticleUnderGuide($html))->toBe([]);
 });
 
@@ -209,11 +225,13 @@ it('submits only the root article URL to the sitemap', function () {
 
     $xml = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
 
-    expect($xml)->toContain('<loc>' . JPC_BASE . '/' . JPC_SLUG . '/</loc>');
+    expect($xml)->toContain('<loc>' . JPC_BASE . '/blog/' . JPC_SLUG . '/</loc>');
+    // And NOT the site-root form, which 301s now.
+    expect(str_contains($xml, '<loc>' . JPC_BASE . '/' . JPC_SLUG . '/</loc>'))->toBeFalse();
     // The index belongs there; an article under it does not, and neither does
     // a /post/ address. A sitemap entry that 301s is a Search Console warning
     // and a wasted crawl.
-    expect($xml)->toContain('<loc>' . JPC_BASE . '/skincare-guide/</loc>');
+    expect($xml)->toContain('<loc>' . JPC_BASE . '/blog/</loc>');
     expect(jpcArticleUnderGuide($xml))->toBe([]);
     expect(str_contains($xml, '/post/' . JPC_SLUG))->toBeFalse();
 });
@@ -256,23 +274,37 @@ it('wires the replacement in place of web.php, not behind it', function () {
         ->toContain('PageController@legacyPost');
 });
 
-it('sends /blog to the canonical index address once replaced', function () {
+it('serves /blog as the index rather than 301ing it once replaced', function () {
+    /*
+     * ▲ THIS READ "sends /blog to the canonical index address once replaced"
+     * AND THE PAIR IS NOW THE OTHER WAY ROUND. /blog WAS a 301 onto
+     * /skincare-guide/; the address scheme made /blog/ the index itself, and
+     * routes/kbb-journal-legacy.php had to STOP registering /blog at all —
+     * Laravel normalises the trailing slash away, so the old line would have
+     * shadowed the real page and 301'd it to an address that 301s straight
+     * back. The loop is the reason the line was deleted rather than edited.
+     *
+     * MUTATION NOTE. Put `Route::get('/blog', fn () => redirect(...))` back
+     * into routes/kbb-journal-legacy.php and this is red with a 301.
+     */
     JournalLegacyRoutes::wire($this->app);
+    jpcPost();
 
-    $this->get('/blog')->assertStatus(301)->assertRedirect(jpcOrigin() . '/skincare-guide/');
+    $this->get('/blog')->assertOk();
+    $this->get('/skincare-guide')->assertStatus(301)->assertRedirect(jpcOrigin() . '/blog/');
 });
 
 it('sends /post/{slug} to the canonical article address once replaced', function () {
     JournalLegacyRoutes::wire($this->app);
     jpcPost();
 
-    $this->get('/post/' . JPC_SLUG)->assertStatus(301)->assertRedirect(jpcOrigin() . '/' . JPC_SLUG . '/');
+    $this->get('/post/' . JPC_SLUG)->assertStatus(301)->assertRedirect(jpcOrigin() . '/blog/' . JPC_SLUG . '/');
 });
 
 it('sends bare /post/ to the index once replaced', function () {
     JournalLegacyRoutes::wire($this->app);
 
-    $this->get('/post/')->assertStatus(301)->assertRedirect(jpcOrigin() . '/skincare-guide/');
+    $this->get('/post/')->assertStatus(301)->assertRedirect(jpcOrigin() . '/blog/');
 });
 
 it('keeps the reader in Arabic through /ar/blog and /ar/post/{slug} once replaced', function () {
@@ -283,8 +315,8 @@ it('keeps the reader in Arabic through /ar/blog and /ar/post/{slug} once replace
     // Today both of these land on the English page: route() cannot know about
     // the language segment, and Url::redirect() does. This is the half of the
     // defect a reader notices.
-    $this->get('/ar/blog')->assertStatus(301)->assertRedirect(jpcOrigin() . '/ar/skincare-guide/');
-    $this->get('/ar/post/' . JPC_SLUG)->assertStatus(301)->assertRedirect(jpcOrigin() . '/ar/' . JPC_SLUG . '/');
+    $this->get('/ar/skincare-guide')->assertStatus(301)->assertRedirect(jpcOrigin() . '/ar/blog/');
+    $this->get('/ar/post/' . JPC_SLUG)->assertStatus(301)->assertRedirect(jpcOrigin() . '/ar/blog/' . JPC_SLUG . '/');
 });
 
 it('404s an unknown slug under /post/ once replaced', function () {

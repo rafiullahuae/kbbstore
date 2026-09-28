@@ -23,49 +23,79 @@ beforeEach(function () {
     ]);
 });
 
-it('resolves a blog post at its root-level slug', function () {
-    $this->get('/' . LIVE_SLUG . '/')
+it('resolves a blog post under /blog/', function () {
+    /*
+     * THE ADDRESS MOVED. This read "resolves a blog post at its root-level
+     * slug" and fetched /{slug}/, which is where Phase 9 put articles and where
+     * the WordPress site served them. The address scheme moved them to
+     * /blog/{slug}/ — a detail page under its listing's prefix — because
+     * PageController::RESERVED_SLUGS owns the first segment at the root, so a
+     * live article slugged `about`, `feed` or `brands` was an address this
+     * application could never serve. The root form still 301s here, which the
+     * test below pins.
+     */
+    $this->get('/blog/' . LIVE_SLUG . '/')
         ->assertOk()
         ->assertSee('Heartleaf extract: transforming K-beauty skincare')
         ->assertSee('Heartleaf is the quiet workhorse of a calming routine.', escape: false);
 });
 
 it('resolves the same post without a trailing slash', function () {
-    $this->get('/' . LIVE_SLUG)->assertOk();
+    $this->get('/blog/' . LIVE_SLUG)->assertOk();
 });
 
 it('canonicalises the article to the root URL, not the old prefix', function () {
     // Canonicals are absolute since 2.60.109 (Seo::canonical passes them through
     // Url::to), so this asserts the path host-agnostically rather than pinning
     // the origin. What matters is that the article no longer claims the old
-    // /skincare-guide/ prefix.
-    $html = $this->get('/' . LIVE_SLUG . '/')->assertOk()->getContent();
+    // /blog/ prefix.
+    $html = $this->get('/blog/' . LIVE_SLUG . '/')->assertOk()->getContent();
 
-    expect($html)->toMatch('#rel="canonical" href="(https?://[^"/]+)?/' . preg_quote(LIVE_SLUG, '#') . '/?"#')
-        ->and($html)->not->toContain('/skincare-guide/' . LIVE_SLUG);
+    expect($html)->toMatch('#rel="canonical" href="(https?://[^"/]+)?/blog/' . preg_quote(LIVE_SLUG, '#') . '/?"#')
+        ->and($html)->not->toContain('"/' . LIVE_SLUG . '/"');
 });
 
 it('keeps the Journal index where the nav already points', function () {
-    // Only the article URL moved. Four places publish /skincare-guide/ for the
+    // Only the article URL moved. Four places publish /blog/ for the
     // index — the homepage, MenuDemo, MegaMenuApiController and the admin
     // Pages screen — and none of them were part of the owner's answer.
-    $this->get('/skincare-guide/')
+    $this->get('/blog/')
         ->assertOk()
         ->assertSee('Heartleaf extract: transforming K-beauty skincare');
 });
 
-it('links each index card at the root slug', function () {
-    $this->get('/skincare-guide/')
+it('links each index card at the article address', function () {
+    $this->get('/blog/')
         ->assertOk()
-        ->assertSee('href="/' . LIVE_SLUG . '/"', escape: false)
-        ->assertDontSee('/skincare-guide/' . LIVE_SLUG, escape: false);
+        ->assertSee('href="/blog/' . LIVE_SLUG . '/"', escape: false)
+        ->assertDontSee('href="/' . LIVE_SLUG . '/"', escape: false);
 });
 
-it('301s the retired /skincare-guide/{slug}/ article URL to the root', function () {
+it('301s the article\'s WordPress root address to /blog/', function () {
+    /*
+     * The address Google holds for every article the old site published.
+     * PageController::rootArticle() answers it, in ONE hop, and 404s a slug
+     * that names no published post rather than forwarding blindly.
+     *
+     * MUTATION NOTE. Remove the abort_unless from rootArticle() and the last
+     * test in this file ("404s an unknown root slug") goes red instead.
+     */
+    $response = $this->get('/' . LIVE_SLUG . '/');
+
+    $response->assertStatus(301);
+    expect($response->headers->get('Location'))->toEndWith('/blog/' . LIVE_SLUG . '/');
+});
+
+it('301s the retired /skincare-guide/{slug}/ article URL straight to /blog/', function () {
+    /*
+     * ONE HOP, not two. This used to point at the site root, which is itself a
+     * 301 now — so left alone it would have cost every indexed
+     * /skincare-guide/ URL two hops.
+     */
     $response = $this->get('/skincare-guide/' . LIVE_SLUG . '/');
 
     $response->assertStatus(301);
-    expect($response->headers->get('Location'))->toEndWith('/' . LIVE_SLUG . '/');
+    expect($response->headers->get('Location'))->toEndWith('/blog/' . LIVE_SLUG . '/');
 });
 
 it('301s a post written after the seeding migration ran', function () {
@@ -77,57 +107,63 @@ it('301s a post written after the seeding migration ran', function () {
         'published_at' => now(),
     ]);
 
-    expect(Redirect::where('source', '/skincare-guide/t-written-after-the-migration/')->exists())
+    expect(Redirect::where('source', '/t-written-after-the-migration/')->exists())
         ->toBeFalse();
 
-    $response = $this->get('/skincare-guide/t-written-after-the-migration/');
+    $response = $this->get('/t-written-after-the-migration/');
 
     $response->assertStatus(301);
-    expect($response->headers->get('Location'))->toEndWith('/t-written-after-the-migration/');
+    expect($response->headers->get('Location'))->toEndWith('/blog/t-written-after-the-migration/');
 });
 
-it('301s the seeded WordPress /blog/{slug} URL to the root slug', function () {
-    // This prefix has no route; the seeded row and the 404 handler serve it.
-    // Note the test client normalises a trailing slash away before dispatch,
-    // so this exercises the slash-less row — which is exactly why both forms
-    // are seeded.
-    $response = $this->get('/blog/' . LIVE_SLUG . '/');
+it('leaves no seeded row shadowing the article\'s own address', function () {
+    /*
+     * ── THE TWO TESTS THIS REPLACES, AND WHY THEY COULD NOT BE ADVANCED ────
+     *
+     * They read "301s the seeded WordPress /blog/{slug} URL to the root slug"
+     * and "seeds the /blog/ redirect map by migration, in both slash forms".
+     * Both described 2026_09_14_160000_seed_phase9_post_url_redirects, which
+     * wrote ten rows shaped /blog/{slug}/ -> /{slug}/ back when /blog/ was a
+     * dead prefix.
+     *
+     * /blog/{slug}/ is the article's CANONICAL address now, and CheckRedirects
+     * runs BEFORE the router, so those rows would have sent the canonical
+     * address to the site root and rootArticle() would have sent it straight
+     * back — an infinite loop that CheckRedirects::loops() cannot see, because
+     * it walks the TABLE and the second hop is a route. There is no version of
+     * the old assertions that is both true and safe.
+     *
+     * 2027_04_05_000100_url_scheme_redirect_rows removes them, matched on
+     * shape rather than on the posts table so a fresh install (where the seed
+     * runs before any article exists) is covered too.
+     *
+     * MUTATION NOTE. Delete deleteSeededArticleLoops() from that migration and
+     * this is red on the first expectation, and the article's own address
+     * starts answering 301.
+     */
+    foreach ([
+        '/blog/' . LIVE_SLUG . '/',
+        '/blog/' . LIVE_SLUG,
+        '/blog/k-beauty-bliss-a-beginners-guide-to-korean-skincare/',
+    ] as $source) {
+        expect(Redirect::where('source', $source)->exists())
+            ->toBeFalse($source . ' still carries a row, which would loop against rootArticle()');
+    }
 
-    $response->assertStatus(301);
-
-    // Compared with the trailing slash normalised off. CheckRedirects hands
-    // the stored target to redirect() as a relative path, and Laravel's
-    // UrlGenerator::format() trims a trailing slash off every relative path it
-    // is given — so a target stored as "/slug/" is emitted as "/slug". The
-    // route matches either spelling, so this lands on the article either way;
-    // it is a canonical wart shared by every redirect the table serves, and is
-    // flagged for the integrator rather than worked around in the seed data.
-    expect(rtrim((string) parse_url((string) $response->headers->get('Location'), PHP_URL_PATH), '/'))
-        ->toBe('/' . LIVE_SLUG);
+    $this->get('/blog/' . LIVE_SLUG . '/')->assertOk();
 });
 
-it('seeds the /blog/ redirect map by migration, in both slash forms', function () {
-    // CheckRedirects matches `source` by exact string, so a row only ever
-    // catches the spelling it was stored under.
-    expect(Redirect::where('source', '/blog/' . LIVE_SLUG . '/')->value('target'))
-        ->toBe('/' . LIVE_SLUG . '/')
-        ->and(Redirect::where('source', '/blog/' . LIVE_SLUG)->value('target'))
-        ->toBe('/' . LIVE_SLUG . '/');
-
-    expect(Redirect::where('source', '/blog/k-beauty-bliss-a-beginners-guide-to-korean-skincare/')->value('target'))
-        ->toBe('/k-beauty-bliss-a-beginners-guide-to-korean-skincare/');
-});
-
-it('follows an old article URL through to a 200', function () {
-    $this->followingRedirects()
-        ->get('/skincare-guide/' . LIVE_SLUG . '/')
-        ->assertOk()
-        ->assertSee('Heartleaf extract: transforming K-beauty skincare');
-
-    $this->followingRedirects()
-        ->get('/blog/' . LIVE_SLUG . '/')
-        ->assertOk()
-        ->assertSee('Heartleaf extract: transforming K-beauty skincare');
+it('follows every old article URL through to a 200', function () {
+    foreach ([
+        '/' . LIVE_SLUG . '/',
+        '/skincare-guide/' . LIVE_SLUG . '/',
+        '/post/' . LIVE_SLUG,
+    ] as $old) {
+        $this->followingRedirects()
+            ->get($old)
+            ->assertOk()
+            ->assertSee('Heartleaf extract: transforming K-beauty skincare');
+    }
 });
 
 it('hides an unpublished post from the index and from its own URL', function () {
@@ -137,9 +173,10 @@ it('hides an unpublished post from the index and from its own URL', function () 
         'status' => 'draft',
     ]);
 
-    $this->get('/skincare-guide/')->assertOk()->assertDontSee('T Not ready yet');
+    $this->get('/blog/')->assertOk()->assertDontSee('T Not ready yet');
+    $this->get('/blog/t-not-ready-yet/')->assertNotFound();
+    // And no old URL may 301 to a 404 either.
     $this->get('/t-not-ready-yet/')->assertNotFound();
-    // And the old URL must not 301 to a 404 either.
     $this->get('/skincare-guide/t-not-ready-yet/')->assertNotFound();
 });
 
@@ -147,20 +184,21 @@ it('404s an unknown root slug that has no redirect', function () {
     $this->get('/t-never-was-a-page/')->assertNotFound();
 });
 
-it('keeps web.php\'s /post/{slug} line working through the renamed route', function () {
-    // routes/web.php redirects /post/{slug} with route('post', ...). That name
-    // moves onto the new root-level route, so this line needs no edit — but it
-    // only stays correct while the name does, which is what this pins.
+it('sends the retired /post/{slug} prefix straight to the article', function () {
+    // ONE HOP. legacyPost() answers the final address rather than the site
+    // root, which is itself a redirect now.
     $response = $this->get('/post/' . LIVE_SLUG);
 
     $response->assertStatus(301);
     expect(rtrim((string) parse_url((string) $response->headers->get('Location'), PHP_URL_PATH), '/'))
-        ->toBe('/' . LIVE_SLUG);
+        ->toBe('/blog/' . LIVE_SLUG);
 });
 
-it('sends bare /post and /blog to the Journal index', function () {
+it('sends bare /post and /skincare-guide to the Journal index', function () {
     $this->followingRedirects()->get('/post')->assertOk()->assertSee('The Glow Journal');
-    $this->followingRedirects()->get('/blog')->assertOk()->assertSee('The Glow Journal');
+    $this->followingRedirects()->get('/skincare-guide')->assertOk()->assertSee('The Glow Journal');
+    // And /blog IS the index rather than a hop onto one.
+    $this->get('/blog')->assertOk()->assertSee('The Glow Journal');
 });
 
 /*
@@ -169,13 +207,18 @@ it('sends bare /post and /blog to the Journal index', function () {
  * meant to stop. Lane B moved the article route but these four callers kept
  * building the old shape.
  */
-it('lists articles in the sitemap at their root URL, not the retired prefix', function () {
+it('lists articles in the sitemap at /blog/, not at any retired address', function () {
     $xml = $this->get('/sitemap.xml')->assertOk()->getContent();
 
-    expect($xml)->toContain('/' . LIVE_SLUG . '/')
-        ->not->toContain('/skincare-guide/' . LIVE_SLUG);
+    expect(str_contains($xml, '/blog/' . LIVE_SLUG . '/'))
+        ->toBeTrue('the sitemap does not list the article at its own address');
+    expect(str_contains($xml, '<loc>http://localhost/' . LIVE_SLUG . '/</loc>'))
+        ->toBeFalse('the sitemap still submits the article at the site root, which now 301s');
+    expect(str_contains($xml, '/skincare-guide/'))
+        ->toBeFalse('the sitemap still submits the retired journal index');
 });
 
-it('still lists the Journal index, which did not move', function () {
-    expect($this->get('/sitemap.xml')->getContent())->toContain('/skincare-guide/');
+it('lists the Journal index at its new address', function () {
+    expect(str_contains($this->get('/sitemap.xml')->getContent(), '<loc>http://localhost/blog/</loc>'))
+        ->toBeTrue('the sitemap does not list the Journal index');
 });

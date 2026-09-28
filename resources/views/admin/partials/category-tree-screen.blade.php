@@ -405,7 +405,7 @@
             + countPill(c)
             + (r.orphan ? ' <span class="ct-pill is-warn">parent missing</span>' : '')
             + (Number(c.children_count || 0) ? ' <span class="ct-pill">' + esc(c.children_count) + ' sub</span>' : '')
-            + '<span class="ct-path">/product-category/' + esc(c.path || c.slug) + '/</span>'
+            + '<span class="ct-path">/collections/' + esc(c.path || c.slug) + '/</span>'
           + '</div>'
           + '<div class="ct-acts">'
             + '<button class="ct-btn" data-edit="' + esc(c.id) + '">Edit</button>'
@@ -693,7 +693,7 @@
         + '</div>'
       + '<div class="ct-fld"><label for="ct-slug">URL slug</label>'
         + '<input id="ct-slug" value="' + esc(cat.slug) + '" placeholder="left blank, made from the name">'
-        + '<p class="ct-note">One segment of /product-category/…/. Lower case, numbers and single hyphens. '
+        + '<p class="ct-note">One segment of /collections/…/. Lower case, numbers and single hyphens. '
         + 'The full path is built from the parents.</p></div>'
       + '<div class="ct-fld"><label for="ct-parent">Parent</label>'
         + '<select id="ct-parent">' + opts + '</select>'
@@ -920,7 +920,7 @@
       + ' will be moved into the category you choose'
       + (kids ? ', and <b>' + esc(kids) + '</b> sub-categor' + (kids === 1 ? 'y' : 'ies') + ' will move up a level' : '')
       + '. <b>' + esc(cat.name) + '</b> is then deleted, and its address '
-      + '<code>/product-category/' + esc(cat.path || cat.slug) + '/</code> redirects to the one you pick. '
+      + '<code>/collections/' + esc(cat.path || cat.slug) + '/</code> redirects to the one you pick. '
       + 'No product is deleted.</div>'
       + '<div class="ct-fld"><label for="ct-mtarget">Merge into</label>'
       + '<select id="ct-mtarget">' + opts + '</select></div>'
@@ -965,7 +965,7 @@
       body = '<div class="ct-danger">Deleting <b>' + esc(cat.name) + '</b> affects ' + bits.join(', ') + '.<br><br>'
         + 'Its archive page stops existing. Products are <b>not</b> deleted — they are unfiled from this category. '
         + (kids ? 'Sub-categories move up a level, and each of their addresses becomes a redirect. ' : '')
-        + 'The address <code>/product-category/' + esc(cat.path || cat.slug) + '/</code> will '
+        + 'The address <code>/collections/' + esc(cat.path || cat.slug) + '/</code> will '
         + (parent
             ? 'redirect to <b>' + esc(parent.name) + '</b>.'
             : '<b>return 404</b>, because there is no parent to send it to.')
@@ -974,7 +974,7 @@
         + 'and sends the old address somewhere real.</div>';
     } else {
       body = '<div class="ct-warn">Nothing is attached to <b>' + esc(cat.name) + '</b>. '
-        + 'Its address <code>/product-category/' + esc(cat.path || cat.slug) + '/</code> will '
+        + 'Its address <code>/collections/' + esc(cat.path || cat.slug) + '/</code> will '
         + (parent ? 'redirect to <b>' + esc(parent.name) + '</b>.' : '<b>return 404</b>.')
         + ' This cannot be undone.</div>';
     }
