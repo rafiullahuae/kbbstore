@@ -1171,3 +1171,230 @@ Each change has the test that goes red without it and a mutation note; the two
 owner questions are in your report in one line each; no customer-facing email
 changes wording without it being called out; and `df -h /` was checked before
 debugging any intermittent database error.
+
+---
+
+# Round 5 — three lanes, briefed 28 September 2026
+
+Every fact below was checked in the tree at `dee937c` before it was written.
+Where a line of `KBB-Master-Plan.md` is quoted and the code says otherwise, the
+brief says so — **do not take the plan's word for anything; it has gone stale
+in at least one place this round already.** If you find a brief is wrong, say
+so in your report and fix the real thing, not the thing the brief describes.
+
+---
+
+## Lane PC — a partial capture inflates the refund ceiling
+
+**The work.** `PaymentCapturer::capture()` writes
+
+```php
+'captured_total' => $amountFils,      // PaymentCapturer.php:235
+```
+
+where `$amountFils = (int) $order->total` (line 168). It writes that figure on
+**every** success, including the successes where the gateway did not capture
+that amount — because `SettlementResult` has no field in which a gateway could
+say what was actually taken. Read `app/Services/Payments/SettlementResult.php`:
+`ok(string $code, ?string $reference, array $summary, ?string $message)` and
+nothing else.
+
+Three of the four gateways return an `already_captured` ok() on a state the
+provider reached without us, and each can be a **partial**:
+
+- `TamaraGateway::capture()` (line 1002) treats `partially_captured` as
+  `already_captured` — and its own docblock at line 960 says so in as many
+  words: *"a partial capture on the account came from elsewhere and silently
+  topping it up would be the wrong guess to make with money."* It is right not
+  to top it up. It is wrong that `PaymentCapturer` then records the **whole
+  order total** as captured.
+- `TabbyGateway::capture()` (line 817) returns `already_captured` on `CLOSED`
+  with a non-empty `captures[]`. It reads the last capture's **id** and never
+  its amount.
+- `StripeGateway::capture()` (line 987) returns `already_captured` on a
+  `succeeded` intent without reading `amount_received`, which is what a
+  partially-captured intent reports.
+- `CashOnDelivery::capture()` (line 144) has no provider and no figure. It must
+  keep behaving exactly as it does now.
+
+**Why it costs money.** `captured_total` is the ceiling
+`PaymentRefunder::capturedFils()` measures a refund against — the same ceiling
+whose two other defects are already written up in `KBB-Master-Plan.md` lines
+1387 and 2191. An order captured at 120.00 out of 300.00 records 300.00 and
+accepts a 300.00 refund: **180.00 of the shop's own money returned to a buyer
+who never paid it.** That is the same shape as the Tabby void defect the
+gateway's own comment at line 815 describes, one step further along.
+
+**Shape of the fix, and the part that is yours to decide.** `SettlementResult`
+wants an optional captured amount — a nullable integer in fils, `null` meaning
+"the provider named no figure, use what was requested". Four gateways implement
+the interface; three can fill it from the provider's own response and one
+cannot. `PaymentCapturer` writes the gateway's figure when there is one and the
+requested amount otherwise, so **COD and every ordinary full capture keep
+writing exactly what they write today** — prove that, do not assert it.
+
+Do not invent the provider field names. Read the code that already parses each
+response (`TabbyGateway::lastId()` and `hasCapture()`, `TamaraGateway::
+existingCaptureId()`, `StripeGateway::stripeAttempt()`) and take the figure from
+the same body those read. If a provider's response genuinely does not carry an
+amount on the path in question, return `null` and say so in your report rather
+than guessing a key.
+
+**Integer fils everywhere. No floats on this path, at any point, including in a
+test fixture.** `Money::toAed()` is for display and nothing else.
+
+**Where it sits.** `Store → Orders → <an order> → Payment`, the captured figure
+and the refundable ceiling beneath it. Screenshot the panel on an order whose
+provider reported a partial, at 390 and 1280.
+
+**Owns.** `app/Services/Payments/**`, `tests/Feature/*Capture*`,
+`tests/Feature/*Refund*`, `tests/Feature/*Tabby*`, `*Tamara*`, `*Stripe*`.
+
+**Must not touch.** `PaymentRefunder::ceilingFrom()` — changed by the integrator
+in 2.60.301 for the released-authorisation defect. Read it, build on it, do not
+re-litigate it. Not `routes/web.php`, not `KBB-Master-Plan.md`.
+
+**Done when.** A test fails without the fix for each of the three providers that
+can report a partial; a fourth test proves COD and a plain full capture write
+the same `captured_total` they write today; every test carries the mutation note
+(*"change X back and this is red"*); and the report names, per provider, the
+exact response key the figure came from.
+
+---
+
+## Lane MC — four settings modules the framework guard cannot see
+
+**Read this first: the master-plan line for this item is STALE.**
+`KBB-Master-Plan.md:430` says *"Eight modules still carry hand-written
+`cast()`s — CartPage, CheckoutPage, SecurityModule, HomepageContent,
+MailSettings, ReviewSettings, CacheSettings, ReviewBadgeSettings."* Checked at
+`dee937c`:
+
+- `cart_page`, `checkout_page`, `security` and `homepage_content` are **already
+  enrolled** in `ModuleFrameworkGuardTest::MODULES` (lines 530, 531, 532, 541
+  of that file) with their `SCHEMA` and `TABS`.
+- Only three of the eight still define a `cast()` at all: `CartPage.php:889`,
+  `CheckoutPage.php:1181`, `SecurityModule.php:482` — and all three are inside
+  the guard, which is the point of the guard.
+- The four that are genuinely outside it are **`MailSettings`,
+  `ReviewSettings`, `CacheSettings`, `ReviewBadgeSettings`**. Every one has a
+  `SCHEMA`; **none has a `TABS`**, and `TABS` is what enrolment needs.
+
+So the work is not eight `cast()`s. Verify all of that yourself before you
+write a line — if my reading is wrong, your report says so and the plan gets
+corrected.
+
+**The work.** Give those four modules a `TABS` constant lifted out of whatever
+draws their screen today, and enrol them in `ModuleFrameworkGuardTest`. The
+precedent is in the file itself, at the comment above line 452: `MobileMenu`
+was excluded for having no `TABS`, its groups came out of its controller into
+`MobileMenu::TABS`, and it was enrolled. Follow that, not a new pattern.
+
+**The value, and what you should expect to find.** The plan records that this
+guard *"caught a module storing a setting with no control to write it"* and that
+`AdminConsoleWriteTokenTest` was written after a third settings screen was found
+with a box no writer stood behind. Four un-enrolled modules is four screens
+nobody has swept. **Expect to find at least one real defect** — a key in
+`SCHEMA` with no control, or a control writing a key not in `SCHEMA`. When you
+find one, it is a bug with a fix and a test, not a line in the report.
+
+**The rule that decides your scope.** A value stored by these screens must be
+one of its own options or the default, and anything printed unescaped must be a
+constant. If enrolling a module turns a setting red, fix the setting — do not
+widen the guard to accept it.
+
+**Nothing that already works may change**, and that is sharper here than usual:
+a `TABS` constant is a description of a screen that already exists, so the
+screen must render byte-identically after your change. `Storefront-
+EnglishUnchangedTest` and `AdminNavAndIdsTest` are the instruments.
+
+**Where it sits.** Four admin screens — name each one's exact path in your
+report (`Settings → …` / `Store → …`), and screenshot any screen you changed at
+390 and 1280.
+
+**Owns.** `app/Support/ReviewSettings.php`, `app/Support/CacheSettings.php`,
+`app/Support/ReviewBadgeSettings.php`, `app/Services/Mail/MailSettings.php`,
+their four controllers and four screen partials, and
+`tests/Feature/ModuleFrameworkGuardTest.php`.
+
+**Must not touch.** `CartPage`, `CheckoutPage`, `SecurityModule`,
+`HomepageContent` — all four are enrolled and Lane CP has just been through the
+cart panel. Not `routes/web.php`, not `KBB-Master-Plan.md`.
+
+**Done when.** The four modules are in `ModuleFrameworkGuardTest::MODULES` and
+the guard is green without any exemption being widened; each defect the
+enrolment exposed has its own test and mutation note; and the report states,
+module by module, what the guard found — including "nothing" where it found
+nothing.
+
+---
+
+## Lane HL — editing a homepage section from the preview
+
+**The work.** `KBB-Master-Plan.md:2717`, the last unticked line of Phase 15's
+original scope: *"Live editing of homepage sections, reusing the settings
+schemas."* The two halves it needs both exist already:
+
+- The preview: `POST /admin-api/homepage/preview`, declared in
+  `routes/homepage-preview-admin.php` and mounted at `routes/web.php:842`. Read
+  the whole header comment of that file before you start — it is the previous
+  lane's handover and it names the cache trap.
+- The schemas: the module framework's `SCHEMA` / `TABS` / `POLICY` triple, which
+  is how every other settings screen in this console is rendered. **Reuse it.**
+  A second, parallel way of describing a control is the thing this brief most
+  wants to avoid.
+
+So the lane is the join: a section in the preview is selectable, and selecting
+it opens that section's own schema-rendered controls, and a change is reflected
+without a full page reload.
+
+**Ships OFF, or ships inert.** Rule 1 of `CLAUDE.md` is not negotiable and this
+is the most visible screen in the console: **every new setting ships at the
+value the page already has**, so applying the package moves nothing until the
+owner moves something. The homepage itself must render byte-identically before
+anybody touches a control — `StorefrontEnglishUnchangedTest` is the instrument,
+and if it goes red you read the diff rather than advancing the pin.
+
+**Two traps already paid for on this exact screen**, both in the plan at lines
+2700–2712 — read them:
+
+- Hero visibility used to set `display:none` on the band containing the delivery
+  strip and the ticker, silently overriding two other switches. The band's
+  visibility is now the OR of what it contains. Do not undo that.
+- `site_title` had a box on the screen and no writer behind it in either console
+  block. `AdminConsoleWriteTokenTest` now sweeps for that shape. Your new
+  controls will be swept by it; make sure each one has its writer.
+
+**No JavaScript that measures layout.** Two tests forbid the element-measuring
+APIs by name, and this project sizes with `calc()` for a reason. A selectable
+section is a CSS answer with a class, not a `getBoundingClientRect()` loop.
+
+**Routes are the integrator's.** Declare anything new in your own file beside
+`routes/homepage-preview-admin.php` and say in the report what to wire. Pin the
+**finished** state, never the absence of the require — `substr_count($web,
+"require __DIR__.'/my-file.php';") === 1`. Three lanes have lost a round to the
+other assertion. Your package ships a `clear_caches_*` migration if it adds a
+route.
+
+**Security.** Every new admin endpoint gets its own capability and fails closed.
+`/api/*` is unauthenticated — nothing you add goes there. A URL that arrives
+from a setting is scheme-checked before it becomes an `href`.
+
+**Where it sits.** `Appearance → Homepage` (confirm the exact path yourself and
+give it in full in the report). Screenshots at 390 and 1280 of the preview
+before selection, with a section selected, and with its controls open; plus
+`document.documentElement.scrollWidth` at both widths.
+
+**Owns.** `app/Http/Controllers/Admin/HomepageApiController.php`,
+`resources/views/admin/partials/homepage-content-screen.blade.php`, a new routes
+file of your own, `tests/Feature/HomepagePreview*`, `tests/Support/Homepage*`.
+
+**Must not touch.** `routes/web.php`, `resources/views/admin/app.blade.php`,
+`app/Services/HomepageContent.php`'s `SCHEMA` shape without saying why in the
+report, `KBB-Master-Plan.md`, `KBB-Progress-Dashboard.html`.
+
+**Done when.** A section can be selected in the preview and edited through its
+own schema; the homepage renders identically until a control is moved; every new
+control has a writer and a capability; the query budget is unchanged or raised
+deliberately; and the report names the admin path and carries the four
+screenshots.
