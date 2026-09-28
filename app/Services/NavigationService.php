@@ -7,7 +7,9 @@ namespace App\Services;
 use App\Models\Menu;
 use App\Services\Translation\TranslationStore;
 use App\Support\BrandUrls;
+use App\Support\Color;
 use App\Support\Locale;
+use App\Support\SafeUrl;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -55,6 +57,45 @@ class NavigationService
 
     /** Flat rows to a nested tree, preserving position ordering.
      *
+     * ── TWO IMPORTED VALUES ARE MADE SAFE HERE, AND HERE ON PURPOSE ─────────
+     *
+     * EIGHT href sites and SEVEN style sites read this tree — four links and
+     * four colours in nav-bar.blade.php, three links and four colours in
+     * mobile-menu-item.blade.php, one link in footer.blade.php. Gating them in
+     * the templates means writing the same conditional eight times and getting
+     * it right eight times; the first cut of this fix did exactly one of them
+     * and called the hole closed. So it happens at the one place every one of
+     * those sites reads from, which is here.
+     *
+     * The URL: `{{ }}` escapes &, <, >, " and ', and `javascript:alert(1)`
+     * holds none of them, so it reaches an href BYTE FOR BYTE and the browser
+     * runs it. `//evil.test/x` is somebody else's host wearing this page's
+     * scheme. SafeUrl::href() reads the scheme the way a browser does —
+     * entities decoded and controls stripped first — and answers '/' for one
+     * this shop will not follow, which the templates' own `Url::to($url ?? '/')`
+     * then turns into this shop's home. A path, a query or a fragment comes
+     * back unchanged, so every address a real menu carries renders byte for
+     * byte as it did before.
+     *
+     * The colour: a `style=` attribute is a CSS context, not an HTML one. The
+     * escaper turns `'` into `&#39;` and the HTML parser hands the `'` straight
+     * back before CSS reads the attribute, so a stored colour can close the
+     * declaration and open its own. Color::isValidHex() is the gate the
+     * Appearance screens already use; a value it refuses draws the row plain.
+     *
+     * WHERE THESE COME FROM, which sets the severity: not from a shopper.
+     * MegaMenuApiController validates both on save (`regex:/^#[0-9a-fA-F]{6}$/`
+     * for the colour), so the admin cannot type either one in. They come from
+     * the WORDPRESS IMPORT, which writes menu_items straight from a database
+     * this shop did not author — which is why this landed before the import
+     * rather than after it.
+     *
+     * Inside the cached closure deliberately, unlike `visibility` and the
+     * label translation below: this answer does not depend on who is asking or
+     * what language they read, so caching it cannot bake one visitor's state
+     * into another's. It also means the scheme probe runs once per five
+     * minutes per menu rather than once per item per request.
+     *
      * `visibility` rides along unfiltered here on purpose — this whole tree
      * is cached for five minutes across every visitor. Filtering by auth
      * state inside the cached closure would bake whichever visitor's login
@@ -70,10 +111,10 @@ class NavigationService
             ->map(fn ($item) => [
                 'id' => $item->id,
                 'label' => $item->label,
-                'url' => $item->url,
+                'url' => SafeUrl::href($item->url, '/'),
                 'icon' => $item->icon,
                 'badge' => $item->badge,
-                'highlight_color' => $item->highlight_color,
+                'highlight_color' => Color::isValidHex($item->highlight_color) ? $item->highlight_color : null,
                 'visibility' => $item->visibility ?? 'always',
                 'new_tab' => (bool) ($item->new_tab ?? false),
                 'columns' => $item->columns,

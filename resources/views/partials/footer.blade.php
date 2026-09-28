@@ -63,16 +63,32 @@
              falling back, because blank is an answer: see SupportContact's
              header on why an empty row is not an absent one. --}}
         @php
+            /*
+             * SafeUrl::href($u, '') AND NOT ($u, '#').
+             *
+             * A refused address answers the EMPTY STRING here, so the filter
+             * below — which is already the "the owner cleared this" rule — drops
+             * the icon entirely. '#' would pass that filter and draw an
+             * Instagram icon that links to the page it sits on, which is worse
+             * than no icon: it looks like a working control.
+             *
+             * These three are operator-typed rather than imported, so this is
+             * the weaker of the two cases. It is still worth the call: the
+             * Appearance field takes free text, `javascript:` holds no
+             * character {{ }} escapes and so reaches the href byte for byte,
+             * and a shipped default is returned unchanged by href() — so every
+             * footer that renders today renders the same bytes.
+             */
             $fsoc = array_filter([
                 ['Instagram', 'IG', $kbbSettings->get('social_instagram', 'https://www.instagram.com/kbeauty.bliss/')],
                 ['TikTok',    'TT', $kbbSettings->get('social_tiktok',    'https://www.tiktok.com/@kbeauty.bliss')],
                 ['Facebook',  'FB', $kbbSettings->get('social_facebook',  'https://www.facebook.com/kbeautyblissuae')],
-            ], static fn (array $s) => trim((string) $s[2]) !== '');
+            ], static fn (array $s) => \App\Support\SafeUrl::href((string) $s[2], '') !== '');
         @endphp
         @if ($fsoc !== [])
         <div class="fsoc">
             @foreach ($fsoc as [$label, $short, $url])
-            <a href="{{ trim((string) $url) }}" aria-label="{{ $label }}">{{ $short }}</a>
+            <a href="{{ \App\Support\SafeUrl::href((string) $url, '') }}" aria-label="{{ $label }}">{{ $short }}</a>
             @endforeach
         </div>
         @endif

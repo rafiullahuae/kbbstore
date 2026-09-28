@@ -1,0 +1,188 @@
+{
+  "390": {
+    "links": [
+      {
+        "label": "Home",
+        "href": "/",
+        "style": null
+      },
+      {
+        "label": "Shop",
+        "href": "/shop/",
+        "style": null
+      },
+      {
+        "label": "New In",
+        "href": "/shop/?orderby=date",
+        "style": null
+      },
+      {
+        "label": "Super Sale",
+        "href": "/super-sale/",
+        "style": "background:#E23A4E;color:#fff;border-radius:8px;padding:4px 10px"
+      },
+      {
+        "label": "JS Row",
+        "href": "/",
+        "style": null
+      },
+      {
+        "label": "Rel Row",
+        "href": "/",
+        "style": null
+      },
+      {
+        "label": "CSS Row",
+        "href": "/toners/",
+        "style": null
+      },
+      {
+        "label": "Email Us",
+        "href": "mailto:hi@shop.ae",
+        "style": null
+      }
+    ],
+    "social": [
+      {
+        "label": "TikTok",
+        "href": "https://www.tiktok.com/@kbeauty.bliss"
+      },
+      {
+        "label": "Facebook",
+        "href": "https://www.facebook.com/kbeautyblissuae"
+      }
+    ],
+    "sameAs": [
+      "https://www.facebook.com/kbeautyblissuae",
+      "https://www.tiktok.com/@kbeauty.bliss"
+    ],
+    "scrollWidth": 390,
+    "drawer": [
+      {
+        "label": "Home",
+        "href": "/"
+      },
+      {
+        "label": "Shop",
+        "href": null
+      },
+      {
+        "label": "All products",
+        "href": "/shop/"
+      },
+      {
+        "label": "Sub JS Row",
+        "href": "/"
+      },
+      {
+        "label": "New In",
+        "href": "/shop/?orderby=date"
+      },
+      {
+        "label": "Super Sale",
+        "href": "/super-sale/"
+      },
+      {
+        "label": "JS Row",
+        "href": "/"
+      },
+      {
+        "label": "Rel Row",
+        "href": "/"
+      },
+      {
+        "label": "CSS Row",
+        "href": "/toners/"
+      },
+      {
+        "label": "Email Us",
+        "href": "mailto:hi@shop.ae"
+      },
+      {
+        "label": "Sign in",
+        "href": "/my-account/"
+      },
+      {
+        "label": "Create an account",
+        "href": "/my-account/?action=register"
+      },
+      {
+        "label": "Wishlist",
+        "href": "/my-wishlist/"
+      }
+    ],
+    "reviewPhotos": [
+      "/uploads/js/photo.png",
+      "/uploads/js/photo.png",
+      "/uploads/js/photo.png"
+    ],
+    "injectedRequests": 0,
+    "dialogs": 0
+  },
+  "1280": {
+    "links": [
+      {
+        "label": "Home",
+        "href": "/",
+        "style": null
+      },
+      {
+        "label": "Shop",
+        "href": "/shop/",
+        "style": null
+      },
+      {
+        "label": "New In",
+        "href": "/shop/?orderby=date",
+        "style": null
+      },
+      {
+        "label": "Super Sale",
+        "href": "/super-sale/",
+        "style": "background:#E23A4E;color:#fff;border-radius:8px;padding:4px 10px"
+      },
+      {
+        "label": "JS Row",
+        "href": "/",
+        "style": null
+      },
+      {
+        "label": "Rel Row",
+        "href": "/",
+        "style": null
+      },
+      {
+        "label": "CSS Row",
+        "href": "/toners/",
+        "style": null
+      },
+      {
+        "label": "Email Us",
+        "href": "mailto:hi@shop.ae",
+        "style": null
+      }
+    ],
+    "social": [
+      {
+        "label": "TikTok",
+        "href": "https://www.tiktok.com/@kbeauty.bliss"
+      },
+      {
+        "label": "Facebook",
+        "href": "https://www.facebook.com/kbeautyblissuae"
+      }
+    ],
+    "sameAs": [
+      "https://www.facebook.com/kbeautyblissuae",
+      "https://www.tiktok.com/@kbeauty.bliss"
+    ],
+    "scrollWidth": 1280,
+    "reviewPhotos": [
+      "/uploads/js/photo.png",
+      "/uploads/js/photo.png",
+      "/uploads/js/photo.png"
+    ],
+    "injectedRequests": 0,
+    "dialogs": 0
+  }
+}

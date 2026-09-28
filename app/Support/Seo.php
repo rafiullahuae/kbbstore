@@ -1095,14 +1095,29 @@ class Seo
         // sameAs: official social profiles, confirming to Google these
         // really are the same business — helps Knowledge Panel and brand
         // search results. Only genuinely-filled-in ones are included.
-        $sameAs = array_values(array_filter([
-            $s['social_facebook'] ?? null,
-            $s['social_instagram'] ?? null,
-            $s['social_tiktok'] ?? null,
-            $s['social_pinterest'] ?? null,
-            $s['social_linkedin'] ?? null,
-            $s['social_youtube'] ?? null,
-        ]));
+        /*
+         * SCHEME-CHECKED, and found by a screenshot rather than by reading.
+         * With the menu and the footer social icon both gated, the home page
+         * still carried `"sameAs":[…,"javascript:alert(4)",…]`. These six are
+         * free-text Appearance fields, and a sameAs entry is a PAGE about this
+         * business — http or https, never mailto:, tel: or anything
+         * executable. SafeUrl::web() answers '' for everything else, which the
+         * existing array_filter then drops, so a refused profile is treated
+         * exactly like an unfilled one. Every real address is returned
+         * unchanged, so the emitted JSON-LD is byte-identical on any shop whose
+         * settings are ordinary.
+         */
+        $sameAs = array_values(array_filter(array_map(
+            static fn ($u) => \App\Support\SafeUrl::web(is_string($u) ? $u : null),
+            [
+                $s['social_facebook'] ?? null,
+                $s['social_instagram'] ?? null,
+                $s['social_tiktok'] ?? null,
+                $s['social_pinterest'] ?? null,
+                $s['social_linkedin'] ?? null,
+                $s['social_youtube'] ?? null,
+            ]
+        )));
         if (!empty($sameAs)) $org['sameAs'] = $sameAs;
 
         /*

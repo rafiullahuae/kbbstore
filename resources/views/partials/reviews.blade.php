@@ -76,7 +76,35 @@
     <div class="sr-grid">
         @forelse ($reviews as $r)
             @php
-                $imgs = is_array($r->images) ? array_values(array_filter($r->images)) : [];
+                /*
+                 * SafeUrl::src() HERE, at the source, and not at the <img>.
+                 *
+                 * The markup below draws the photo strip inside a @foreach, and
+                 * gating it there would need an @if whose @endif sits hard
+                 * against the @endforeach -- which Blade does not compile at
+                 * all (its statement regex is \B@word, and there IS a word
+                 * boundary between `f` and `@`). The first cut did exactly that
+                 * and every storefront page answered a ParseError. Filtering
+                 * the array instead leaves the markup untouched, so the count
+                 * in the badge, the `one`/`multi` class and the popup payload
+                 * all stay consistent with what is drawn -- which gating at the
+                 * <img> would have silently broken.
+                 *
+                 * WHY IT NEEDS GATING AT ALL: {{ }} escapes &, <, >, " and ',
+                 * and `javascript:alert(1)` contains none of them, so it
+                 * reaches the src attribute byte for byte. A review photo's
+                 * address is not visitor-supplied -- ReviewController uploads
+                 * the file and writes /uploads/reviews/{uuid} itself -- but the
+                 * WordPress import writes these from a database this shop did
+                 * not author. Lane JS measured the offsite file being FETCHED
+                 * before any JavaScript ran.
+                 */
+                $imgs = is_array($r->images)
+                    ? array_values(array_filter(array_map(
+                        static fn ($u) => \App\Support\SafeUrl::src(is_string($u) ? $u : ''),
+                        $r->images
+                    )))
+                    : [];
                 $nph  = count($imgs);
                 $ini  = mb_strtoupper(mb_substr((string) $r->author_name, 0, 1));
                 $date = ($showDate && $r->created_at) ? $r->created_at->format('d M Y') : '';
