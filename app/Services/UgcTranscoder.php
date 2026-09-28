@@ -649,6 +649,32 @@ class UgcTranscoder
      * @param  int  $timeout  seconds, already bounded against PHP's own limit
      * @param  list<string>  $command
      */
+    /**
+     * What ffmpeg SAID the last time it refused, and why this exists.
+     *
+     * run() used to discard the process's stderr entirely -- it read the exit
+     * code and whether a file appeared, and threw the reason away. So a clip
+     * that would not cut produced, on the owner's screen and in his terminal,
+     * "ffmpeg could not read a poster frame out of that clip" and NOTHING ELSE,
+     * while ffmpeg itself had printed a precise sentence a moment earlier.
+     *
+     * It cost a support round trip over SSH. ffmpeg turned out to be a full
+     * Debian build with libx264; `ffmpeg -v error -i <clip> -f null -` decoded
+     * both of the owner's clips with ZERO output; and the shop still would not
+     * cut them. The one party that knew why was the one whose output was being
+     * dropped on the floor.
+     *
+     * The LAST failure only, and never shown to a shopper: it is read by
+     * `ugc:cut-covers -v`, which is an operator at a terminal.
+     */
+    private ?string $lastProcessError = null;
+
+    /** ffmpeg's own words from the last refusal, or null if it did not speak. */
+    public function lastProcessError(): ?string
+    {
+        return $this->lastProcessError;
+    }
+
     private function run(array $command, int $timeout): bool
     {
         $destination = $command[count($command) - 1];
@@ -658,7 +684,9 @@ class UgcTranscoder
             $process->setTimeout($timeout);
             $process->run();
             $exit = $process->getExitCode();
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->lastProcessError = 'the process layer refused: '.trim($e->getMessage());
+
             /*
              * \Throwable rather than ProcessException, for the reason spelt out
              * on durationMs(): the narrow catch was right about a timeout and a
@@ -680,6 +708,22 @@ class UgcTranscoder
         $wrote = is_file($destination) && (int) @filesize($destination) > 0;
 
         if ($exit !== 0 || ! $wrote) {
+            /*
+             * ffmpeg's OWN sentence, captured before the evidence is deleted
+             * below. The last few lines only: ffmpeg prints its whole build
+             * configuration on every run and the reason is always at the end.
+             * The exit code and the wrote/did-not-write distinction are both
+             * recorded, because "exited 0 and produced nothing" and "exited 1"
+             * are different faults and the message alone does not say which.
+             */
+            $stderr = trim($process->getErrorOutput());
+            $this->lastProcessError = sprintf(
+                "exit %s, %s. ffmpeg said:\n%s",
+                $exit === null ? 'none' : (string) $exit,
+                $wrote ? 'wrote a file' : 'wrote nothing',
+                $stderr === '' ? '(ffmpeg printed nothing)' : implode("\n", array_slice(explode("\n", $stderr), -6))
+            );
+
             // Whatever it left behind goes with it. A half-written derivative
             // that nothing recorded is a file nobody will ever delete.
             if (is_file($destination)) {
@@ -688,6 +732,8 @@ class UgcTranscoder
 
             return false;
         }
+
+        $this->lastProcessError = null;
 
         return true;
     }
