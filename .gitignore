@@ -86,3 +86,7 @@ public/wp-content/
 # PackageSigningTest's `it holds no private key in this tree` scan, which is how
 # this one was found.
 /database/ig-preview.sqlite
+
+# Built update packages, dropped at the repo root so the owner can download one
+# from the app. The durable copy is storage/app/packages/.
+/kbb-update-*.zip
