@@ -338,7 +338,12 @@ it('never offers a variant wider than the original', function () {
     $path = ivPublic($relative);
     @mkdir(\dirname($path), 0755, true);
 
-    $im = imagecreatetruecolor(300, 300);
+    // (Lane IM) Narrower than the smallest width on offer, whatever that is.
+    // A fixed 300 stopped meaning "too small for any copy" when the 200w
+    // thumbnail tier was added, and the test went red asserting an upscale that
+    // had not happened.
+    $side = min(ImageVariants::WIDTHS) - 50;
+    $im = imagecreatetruecolor($side, $side);
     imagejpeg($im, $path, 85);
     imagedestroy($im);
 

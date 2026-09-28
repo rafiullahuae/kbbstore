@@ -221,9 +221,13 @@ it('offers only the widths that exist, not every width it could have made', func
     $tag = tilePhotos((string) test()->get('/shop')->getContent())[0];
     $candidates = srcsetCandidates((string) tagAttribute($tag, 'srcset'));
 
-    expect(count($candidates))->toBe(1, 'the missing copy is still being offered: '.$tag);
-    expect($candidates[0][1])->toBe('400w');
-    expect(str_contains($candidates[0][0], '/800/'))->toBeFalse('the deleted 800px copy is in the srcset');
+    // (Lane IM) Counted off WIDTHS rather than written as a literal, because
+    // this assertion is about ONE COPY BEING GONE and not about how many the
+    // list has -- it went red when the 200w thumbnail tier was added, which is
+    // the one change it should have been indifferent to.
+    expect(count($candidates))->toBe(count(ImageVariants::WIDTHS) - 1, 'the missing copy is still being offered: '.$tag);
+    expect(str_contains((string) tagAttribute($tag, 'srcset'), '/800/'))
+        ->toBeFalse('the deleted 800px copy is in the srcset');
 });
 
 it('offers nothing for a photograph on another domain', function () {
@@ -239,16 +243,20 @@ it('offers nothing for a photograph on another domain', function () {
 
 it('gives the tile a srcset and a sizes once the copies exist', function () {
     writePhoto('uploads/products/shot.jpg', 1000);
-    expect(ImageVariants::generate('/uploads/products/shot.jpg')['made'])->toBe(2);
+    expect(ImageVariants::generate('/uploads/products/shot.jpg')['made'])->toBe(count(ImageVariants::WIDTHS));
 
     seedCatalogueWithPhoto('/uploads/products/shot.jpg');
 
     $tag = tilePhotos((string) test()->get('/shop')->getContent())[0];
 
-    expect(srcsetCandidates((string) tagAttribute($tag, 'srcset')))->toBe([
-        ['/'.ImageVariants::DIR.'/400/uploads/products/shot.jpg', '400w'],
-        ['/'.ImageVariants::DIR.'/800/uploads/products/shot.jpg', '800w'],
-    ]);
+    // (Lane IM) Built from WIDTHS, smallest first, so adding a tier is a change
+    // to one constant and not to a literal in every test that names a copy.
+    // The ORDER is still asserted: srcsetFor() walks WIDTHS in order and a
+    // browser is entitled to take the first candidate that satisfies `sizes`.
+    expect(srcsetCandidates((string) tagAttribute($tag, 'srcset')))->toBe(array_map(
+        fn (int $w) => ['/'.ImageVariants::DIR.'/'.$w.'/uploads/products/shot.jpg', $w.'w'],
+        ImageVariants::WIDTHS
+    ));
 
     // Without `sizes` a `w` srcset is resolved against 100vw, which on a phone
     // means the largest candidate every time -- the opposite of the point.
@@ -274,15 +282,25 @@ it('keeps the copies smaller than the original they came from', function () {
 });
 
 it('never makes a copy larger than the photograph it came from', function () {
-    // A 300px logo has no honest 400px version. Upscaling it would put a
+    // A 150px logo has no honest 200px version. Upscaling it would put a
     // candidate in the srcset whose width descriptor promises detail that is
     // not in the file.
-    writePhoto('uploads/products/tiny.jpg', 300);
+    //
+    // (Lane IM) 150 and not the 300 this used to be. The fixture has to be
+    // narrower than the SMALLEST width on offer or the test is asserting
+    // something else, and 300 stopped being that the moment the 200w thumbnail
+    // tier arrived -- it went red claiming a 300px original "was blown up",
+    // when what had happened was an honest 200px copy of it.
+    writePhoto('uploads/products/tiny.jpg', min(ImageVariants::WIDTHS) - 50);
 
     $result = ImageVariants::generate('/uploads/products/tiny.jpg');
 
-    expect($result['made'])->toBe(0, 'a 300px original was blown up to 400px');
-    expect(is_file(public_path(ImageVariants::DIR.'/400/uploads/products/tiny.jpg')))->toBeFalse();
+    expect($result['made'])->toBe(0, 'an original narrower than every width was blown up');
+
+    foreach (ImageVariants::WIDTHS as $width) {
+        expect(is_file(public_path(ImageVariants::DIR.'/'.$width.'/uploads/products/tiny.jpg')))
+            ->toBeFalse('a '.$width.'px copy was made of a narrower original');
+    }
 
     // And it is not left in the backlog for ever, being counted as work.
     expect(ImageVariants::isComplete('/uploads/products/tiny.jpg'))
@@ -406,9 +424,9 @@ it('is idempotent, so an interrupted batch can simply be run again', function ()
     writePhoto('uploads/products/shot.jpg', 1000);
 
     expect(ImageVariants::generate('/uploads/products/shot.jpg'))
-        ->toMatchArray(['made' => 2, 'skipped' => 0]);
+        ->toMatchArray(['made' => count(ImageVariants::WIDTHS), 'skipped' => 0]);
     expect(ImageVariants::generate('/uploads/products/shot.jpg'))
-        ->toMatchArray(['made' => 0, 'skipped' => 2]);
+        ->toMatchArray(['made' => 0, 'skipped' => count(ImageVariants::WIDTHS)]);
 });
 
 it('leaves no half-written file behind when it cannot finish', function () {
@@ -442,7 +460,7 @@ it('gives a newly uploaded photograph its copies in the same request', function 
     ], ['Accept' => 'application/json']);
 
     $response->assertOk();
-    expect($response->json('sized'))->toBe(2, 'the upload made no smaller copies');
+    expect($response->json('sized'))->toBe(count(ImageVariants::WIDTHS), 'the upload made no smaller copies');
 
     $filename = (string) $response->json('filename');
 
