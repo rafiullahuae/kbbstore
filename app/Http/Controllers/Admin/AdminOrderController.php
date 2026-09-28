@@ -1362,6 +1362,24 @@ class AdminOrderController extends Controller
                 'items' => $order->items->map(fn ($i) => [
                     'name' => $i->name,
                     'sku' => $i->sku,
+                    /*
+                     * (Lane SE) WHAT WAS IN THE BOX, as one line per member.
+                     *
+                     * ManualOrderBuilder already writes `set_contents` on a Set
+                     * line it creates, so this receipt was the one place an
+                     * operator could build a Set order BY HAND and be shown a
+                     * single anonymous name back — on the very screen whose job
+                     * is to read the order back to them before they act on it.
+                     *
+                     * The STRINGS and not the raw column, and an empty list for
+                     * every ordinary line, exactly as the order-detail payload
+                     * a few hundred lines above does it and for the same
+                     * reasons: the raw snapshot carries each member's supplier
+                     * code and unit price, and the narrower answer is the one to
+                     * publish when both will do. It costs no query — it reads
+                     * one JSON column already loaded on the row.
+                     */
+                    'set_contents' => \App\Support\SetContents::lines(\App\Support\SetContents::fromOrderItem($i)),
                     'quantity' => (int) $i->quantity,
                     'unit_price_fils' => (int) $i->unit_price,
                     'line_total_fils' => (int) $i->total,

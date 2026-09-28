@@ -1087,8 +1087,19 @@
 
         '<div class="mo-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>' +
         o.items.map(function(i){
+          /* (Lane SE) What is in the Set, one member per line, under the name
+             it belongs to. An EMPTY LIST on every ordinary line — which is
+             every line of an order with no Set in it — so this table is
+             unchanged for every manual order this shop has taken.
+
+             esc() on each line: a member name is a product name and this
+             string is being concatenated into markup. */
+          var members = (i.set_contents || []).length
+            ? '<div style="margin-top:3px;padding-inline-start:7px;border-inline-start:2px solid var(--line-2,#eadfe4);color:var(--ink-soft);font-size:11px">' +
+              (i.set_contents || []).map(function (line) { return esc(line); }).join('<br>') + '</div>'
+            : '';
           return '<tr><td><b>' + esc(i.name) + '</b><br><span style="color:var(--ink-soft);font-size:11px">' +
-            esc(i.sku || '') + '</span></td><td>' + i.quantity + '</td><td>' +
+            esc(i.sku || '') + '</span>' + members + '</td><td>' + i.quantity + '</td><td>' +
             aed(i.unit_price_fils) + '</td><td><b>' + aed(i.line_total_fils) + '</b></td></tr>';
         }).join('') + '</tbody></table></div>' +
 

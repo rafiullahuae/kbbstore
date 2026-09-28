@@ -1,0 +1,43 @@
+Thank you, Aisha Khan
+
+Your order is in and we are packing it with care. Everything you chose is
+listed below, exactly as it was when you ordered — keep this email, it is
+your receipt.
+
+Order KBB-10531 — placed 15 September 2026
+
+WHAT YOU ORDERED
+- Glow Starter Set
+  SKU KBB-SET-001
+  * 1 × Heartleaf 77 Soothing Toner 250ml
+  * 2 × Azelaic Acid 10 Serum 30ml
+  * 1 × Relief Sun Rice + Probiotics SPF50
+  QTY 1  ·  AED 269 each  ·  line total AED 269
+- Rice Daily Moisturizing Toner 150ml (Beauty of Joseon)
+  SKU BOJ-RICE-150
+  QTY 1  ·  AED 49 each  ·  line total AED 49
+
+TOTALS
+Subtotal: AED 318
+Delivery: AED 20
+Total: AED 338
+
+DELIVERY ADDRESS
+Aisha Khan
+Apartment 1204, Marina Heights
+Dubai Dubai
+AE
++971 50 123 4567
+
+Delivery method: Delivery Charges
+Payment method: Cash on delivery
+
+TRACK YOUR ORDER
+http://localhost/checkout/success?order=KBB-10531
+
+That link opens on the device you ordered from. Anywhere else, sign in to your
+account and your orders are all listed there under KBB-10531:
+http://localhost/my-account/orders
+
+With love,
+the KBB team

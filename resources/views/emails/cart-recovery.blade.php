@@ -48,7 +48,17 @@
                             {{ $item['name'] }}
                         @endif
                         <span style="color:#888;">&times; {{ $item['quantity'] }}</span>
-                    </td>
+                    @php if (($item['setContents'] ?? []) !== []) { echo '<div style="margin-top:5px;padding-inline-start:9px;border-inline-start:2px solid #eee;">' . implode('', array_map(fn ($l) => '<div style="font-size:12.5px;line-height:1.5;color:#666;">' . e($l) . '</div>', $item['setContents'])) . '</div>'; } @endphp{{-- (Lane SE) WHAT IS IN THE SET, one member per line.
+
+                         A Set is one basket line at one price, so this table chased a shopper with a single anonymous name and no way to see what they had left behind — the same defect the order documents had, on the one message whose entire job is to make somebody want the basket back.
+
+                         THE LIVE PIVOT, DELIBERATELY. CartRecovery::basket() reads the set as it is NOW, because this message is built at SEND time so that it describes the basket as it is now. That is the OPPOSITE of every order document, which reads the `order_items` snapshot; basket()'s docblock says why at length.
+
+                         NO MONEY FROM THE MEMBERS. The figure in the cell beside this one is still the cart line's own `unit_price * quantity`. These lines carry a quantity and a name and nothing else.
+
+                         ▲ THE BLOCK SITS AT THE START OF THE </td> LINE AND NOT AT THE END OF THE ONE ABOVE, and that is measured rather than reasoned. `@endphp` compiles to a PHP CLOSE TAG and PHP swallows the newline immediately after one — so appended to the `</span>` line it ate that line's newline and changed a byte in EVERY reminder this shop has ever sent, set or no set. PrintedEnglishUnchangedTest went red on `cart-recovery (html)` for exactly that, before this paragraph existed. Here the twenty spaces of indent are the ones that were always there, the block emits nothing for an ordinary line, and `</td>` follows on the same line so there is no newline left for the close tag to eat.
+
+                         (emails/partials/items.blade.php can attach its own copy of this block to an `@endif` because a directive ALREADY ate that newline; there is no directive to hide behind here.) --}}</td>
                     <td style="padding:8px 0;border-bottom:1px solid #eee;font-size:14px;text-align:right;white-space:nowrap;">
                         {!! \App\Support\Money::format($item['unit_price'] * $item['quantity']) !!}
                     </td>

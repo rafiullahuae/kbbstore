@@ -1,0 +1,42 @@
+{
+  "admin-manual-order @ 390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflowsSideways": false,
+    "state": "created",
+    "itemRows": 2,
+    "rowText": [
+      "Glow Starter Set 2 × Heartleaf 77% Soothing Toner 250ml 1 × Azelaic Acid 10 Serum 30ml 1 × Rice 70 Glow Milky Toner 250ml 1 AED 199.00 AED 199.00",
+      "Ceramide Daily Moisturiser DEMO-0024 1 AED 214.00 AED 214.00"
+    ],
+    "memberLines": [
+      [
+        "2 × Heartleaf 77% Soothing Toner 250ml",
+        "1 × Azelaic Acid 10 Serum 30ml",
+        "1 × Rice 70 Glow Milky Toner 250ml"
+      ]
+    ],
+    "memberFontSize": 11,
+    "ordinaryLineHasMembers": false
+  },
+  "admin-manual-order @ 1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "overflowsSideways": false,
+    "state": "created",
+    "itemRows": 2,
+    "rowText": [
+      "Glow Starter Set 2 × Heartleaf 77% Soothing Toner 250ml 1 × Azelaic Acid 10 Serum 30ml 1 × Rice 70 Glow Milky Toner 250ml 1 AED 199.00 AED 199.00",
+      "Ceramide Daily Moisturiser DEMO-0024 1 AED 214.00 AED 214.00"
+    ],
+    "memberLines": [
+      [
+        "2 × Heartleaf 77% Soothing Toner 250ml",
+        "1 × Azelaic Acid 10 Serum 30ml",
+        "1 × Rice 70 Glow Milky Toner 250ml"
+      ]
+    ],
+    "memberFontSize": 11,
+    "ordinaryLineHasMembers": false
+  }
+}

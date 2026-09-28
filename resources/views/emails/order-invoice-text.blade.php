@@ -66,7 +66,16 @@
 @endif
 @if ($item['sku'] !== '')
   {!! __('email.items.sku', ['sku' => $item['sku']]) !!}
-@endif
+@endif{{-- (Lane SE) The same member list the HTML half of this message prints, from the same snapshot, so the two parts of one invoice cannot say different things about what was in the box. This is the half a plain-text client and a screen reader get, and it was the half that had nothing.
+
+     ATTACHED TO THE @endif ABOVE and not on a line of its own: Blade removes a comment and LEAVES THE NEWLINE it sat on, and this file's output is text/plain in which one stray newline is a blank line on every invoice the shop sends, set or no set. The directives below are each alone on their own line, which is the form that emits nothing -- Blade compiles a directive to a PHP close tag and PHP swallows the newline straight after one. So a line that is not a set is byte-identical here.
+
+     {!! !!} AND NOT {{ }}, for the reason this file's header gives: there is no markup context in a text part, so escaping is not a safety measure but a corruption -- a member called "Ben & Jerry's Balm" would be invoiced as "Ben &amp; Jerry&#039;s Balm". The HTML half, which does have a markup context, escapes every one of these same strings.
+
+     THE "  * " BULLET AND THE INDENT ARE emails/partials/body-text.blade.php's, character for character. The confirmation and the invoice are two documents describing one order and a reader may have both open. --}}
+@foreach ($item['setContents'] ?? [] as $kbbSetLine)
+  * {!! $kbbSetLine !!}
+@endforeach
   {!! $item['quantity'] !!} x {!! $item['unitPlain'] !!} = {!! $item['linePlain'] !!}
 @endforeach
 

@@ -90,7 +90,51 @@
                     @endphp
                     @if ($sub !== [])
                         <div style="font-size:12px;color:#9096a1;margin-top:2px;">{{ implode(' · ', $sub) }}</div>
-                    @endif
+                    @endif@php if (($item['setContents'] ?? []) !== []) { echo '<div style="margin-top:4px;padding-inline-start:9px;border-inline-start:2px solid #eceff3;">' . implode('', array_map(fn ($l) => '<div style="font-size:12px;line-height:1.5;color:#4b5563;">' . e($l) . '</div>', $item['setContents'])) . '</div>'; } @endphp{{-- (Lane SE) WHAT WAS IN THE BOX, one member per line.
+
+                         THIS DOCUMENT WAS THE LAST ONE THAT DID NOT SAY. Every
+                         other order document in this shop draws its lines from a
+                         shared partial -- emails/partials/items.blade.php for the
+                         confirmation, the status mail and the merchant alert, and
+                         invoices/partials/sheet-*.blade.php for the three printed
+                         sheets -- and all six gained the member list together. The
+                         emailed invoice is the ONLY one that builds its own table,
+                         off the same $doc['items'] array, so it was handed
+                         `setContents` by InvoiceDocument and simply never read the
+                         key. A customer who asked for an invoice got less than the
+                         confirmation had already told them.
+
+                         THE SNAPSHOT AND NEVER THE LIVE SET. The value is
+                         App\Support\SetContents::lines(fromOrderItem($item)),
+                         built by the presenter off `order_items.set_contents` -- one
+                         JSON column written at checkout. No relation is consulted
+                         here or there, so an invoice reprinted next year lists what
+                         was in the box, an invoice for a set that has since been
+                         DELETED still renders, and no money is re-derived: the
+                         member prices are not printed at all, and the only figures
+                         on this row remain the order's own snapshotted unit and
+                         line totals.
+
+                         THE FORM IS A RAW PHP BLOCK ATTACHED TO @endif, which is
+                         the idiom emails/partials/items.blade.php arrived at by
+                         measurement and states in full. In short: a directive
+                         written hard against a closing directive is not compiled at
+                         all, and a {{ }} interpolation compiles with a newline
+                         appended -- which would change a byte on every invoice this
+                         shop has ever sent. A raw block appends nothing, and a line
+                         that is not a set emits nothing, so an invoice with no set
+                         in it is the invoice it always was. PrintedEnglishUnchanged-
+                         Test measures that; SetInDocumentsTest measures this.
+
+                         GREY AND NOT BLUSH. items.blade.php insets its member list
+                         against the brand pink because a receipt is a friendly
+                         document; this one uses #eceff3, the rule this table
+                         already draws between its rows, because an invoice is a
+                         formal one and nothing else on this page is pink.
+
+                         e() ON EVERY LINE: a member name is a setting, and
+                         CLAUDE.md rule 5 is that anything printed unescaped is a
+                         constant. --}}
                 </td>
                 <td align="right" style="padding:9px 6px;border-bottom:1px solid #eceff3;font-size:14px;color:#4b5563;white-space:nowrap;">{{ $item['quantity'] }}</td>
                 <td align="right" style="padding:9px 6px;border-bottom:1px solid #eceff3;font-size:14px;color:#4b5563;white-space:nowrap;">{!! $item['unitHtml'] !!}</td>

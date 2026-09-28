@@ -1,0 +1,174 @@
+{
+  "email-cart-recovery @ 390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflowsSideways": false,
+    "memberBlocks": 3,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml",
+      "2 × Azelaic Acid 10 Serum 30ml",
+      "1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 13,
+    "memberLineHeight": 19,
+    "memberWidth": 307,
+    "memberRightEdge": 318,
+    "setNameFontSize": 14,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "email-cart-recovery @ 1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "overflowsSideways": false,
+    "memberBlocks": 3,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml",
+      "2 × Azelaic Acid 10 Serum 30ml",
+      "1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 13,
+    "memberLineHeight": 19,
+    "memberWidth": 1032,
+    "memberRightEdge": 1043,
+    "setNameFontSize": 14,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "email-order-confirmation @ 390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflowsSideways": false,
+    "memberBlocks": 3,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml",
+      "2 × Azelaic Acid 10 Serum 30ml",
+      "1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 13,
+    "memberLineHeight": 19,
+    "memberWidth": 147,
+    "memberRightEdge": 194,
+    "setNameFontSize": 15,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "email-order-confirmation @ 1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "overflowsSideways": false,
+    "memberBlocks": 3,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml",
+      "2 × Azelaic Acid 10 Serum 30ml",
+      "1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 13,
+    "memberLineHeight": 19,
+    "memberWidth": 381,
+    "memberRightEdge": 756,
+    "setNameFontSize": 15,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "email-order-invoice @ 390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflowsSideways": false,
+    "memberBlocks": 3,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml",
+      "2 × Azelaic Acid 10 Serum 30ml",
+      "1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 12,
+    "memberLineHeight": 18,
+    "memberWidth": 133,
+    "memberRightEdge": 180,
+    "setNameFontSize": 14,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "email-order-invoice @ 1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "overflowsSideways": false,
+    "memberBlocks": 3,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml",
+      "2 × Azelaic Acid 10 Serum 30ml",
+      "1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 12,
+    "memberLineHeight": 18,
+    "memberWidth": 310,
+    "memberRightEdge": 685,
+    "setNameFontSize": 14,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "print-invoice @ 390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflowsSideways": false,
+    "memberBlocks": 1,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml · 2 × Azelaic Acid 10 Serum 30ml · 1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 12,
+    "memberLineHeight": 18,
+    "memberWidth": 334,
+    "memberRightEdge": 362,
+    "setNameFontSize": 13,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "print-invoice @ 1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "overflowsSideways": false,
+    "memberBlocks": 1,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml · 2 × Azelaic Acid 10 Serum 30ml · 1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 12,
+    "memberLineHeight": 18,
+    "memberWidth": 498,
+    "memberRightEdge": 794,
+    "setNameFontSize": 13,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "print-packing-slip @ 390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflowsSideways": false,
+    "memberBlocks": 1,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml · 2 × Azelaic Acid 10 Serum 30ml · 1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 12,
+    "memberLineHeight": 18,
+    "memberWidth": 334,
+    "memberRightEdge": 362,
+    "setNameFontSize": 13,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  },
+  "print-packing-slip @ 1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "overflowsSideways": false,
+    "memberBlocks": 1,
+    "memberLines": [
+      "1 × Heartleaf 77 Soothing Toner 250ml · 2 × Azelaic Acid 10 Serum 30ml · 1 × Relief Sun Rice + Probiotics SPF50"
+    ],
+    "memberFontSize": 12,
+    "memberLineHeight": 18,
+    "memberWidth": 415,
+    "memberRightEdge": 779,
+    "setNameFontSize": 13,
+    "ordinaryLinePresent": true,
+    "ordinaryLineHasMembers": false
+  }
+}

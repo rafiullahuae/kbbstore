@@ -13297,6 +13297,34 @@ buildNav();
       (it.image?'<img src="'+sesc(it.image)+'" alt="" loading="lazy">':sesc(mark))+'</div>';
   }
 
+  /* What is in a Set, on an order line, for the TWO admin surfaces that list
+     order items -- the order-detail screen and the quick-view modal.
+
+     ONE FUNCTION AND NOT TWO COPIES. Lane SE named the order-detail line and
+     wired six order documents; the modal has the same gap and a different
+     payload shape (qty/unit_aed/line_aed rather than quantity/unit_price_aed),
+     which is exactly why it was missed -- a search for the first cell's text
+     does not find the second. Two copies would drift, and the one that drifts
+     is the one nobody photographs.
+
+     sesc() on every line: `set_contents` is a list of strings built from an
+     order's own snapshot, and a member's NAME came from the catalogue, which
+     came from the WordPress import. It is printed into innerHTML.
+
+     The snapshot is the source and no relation is consulted, so an order whose
+     Set has since been rewritten -- or deleted -- still prints the box the
+     customer actually bought. */
+  function odSetContents(it){
+    var lines = (it && it.set_contents) || [];
+
+    if (!lines.length) return '';
+
+    return '<div class="pbrand" style="margin-top:3px;padding-inline-start:7px;'
+      + 'border-inline-start:2px solid var(--line-2,#eadfe4)">'
+      + lines.map(function(l){ return sesc(l); }).join('<br>')
+      + '</div>';
+  }
+
   function odItemsCard(o){
     var editable = !!o.editable;
     var rows = o.items.map(function(it){
@@ -13314,7 +13342,8 @@ buildNav();
         ? '<button class="btn ghost sm oditemdel" data-itemid="'+it.id+'" style="color:var(--sale,#c0392b);padding:4px 9px">Remove</button>'
         : '';
       return '<tr><td style="width:44px">'+odItemThumb(it)+'</td>'+
-        '<td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc(it.brand||'')+'</div></td>'+
+        '<td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc(it.brand||'')+'</div>'+
+          odSetContents(it)+'</td>'+
         '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
     }).join('');
 
@@ -13772,7 +13801,7 @@ buildNav();
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div></td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+

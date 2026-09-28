@@ -1026,6 +1026,14 @@ class AdminController extends Controller
         $items = OrderItem::where('order_id', $o->id)->get()->map(fn (OrderItem $i) => [
             'name'       => $i->name,
             'brand'      => $i->brand,
+            /*
+             * The DERIVED LINES and never the raw snapshot, which is the shape
+             * AdminOrderController already publishes. The snapshot carries a
+             * member's id, sku and unit price; a picking list needs the name
+             * and the quantity, and the narrower answer is the one to publish
+             * when both will do.
+             */
+            'set_contents' => \App\Support\SetContents::lines(\App\Support\SetContents::fromOrderItem($i)),
             'qty'        => (int) ($i->quantity ?? 0),
             'unit_aed'   => (int) round(($i->unit_price ?? 0) / 100),
             'line_aed'   => (int) round((((int) ($i->unit_price ?? 0)) * ((int) ($i->quantity ?? 0))) / 100),
