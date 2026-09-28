@@ -9,6 +9,7 @@ use App\Services\CartPage;
 use App\Services\CartService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\SqlShape;
 
 /**
  * THE CART WENT SILENT ABOUT A SAVING THE SHOPPER WAS ACTUALLY GETTING.
@@ -510,7 +511,15 @@ it('costs no query per basket line', function () {
 
         $n = 0;
         DB::listen(function ($event) use (&$n): void {
-            if (str_contains($event->sql, 'from "products"')) {
+            /*
+             * SqlShape::portable() and not the raw statement, because the
+             * needle is spelled the SQLite way and MySQL wraps the same
+             * identifier in backticks instead. This counter fed
+             * expect($five)->toBe($one) -- and on the engine the shop actually
+             * runs, $five and $one were both 0, so the N+1 guard compared
+             * nothing with nothing and passed whatever the cart did.
+             */
+            if (str_contains(SqlShape::portable($event->sql), 'from "products"')) {
                 $n++;
             }
         });
@@ -528,6 +537,20 @@ it('costs no query per basket line', function () {
 
     $productReads($cart->fresh());          // warm-up, discarded
     $one = $productReads($cart->fresh());
+
+    /*
+     * THE NEEDLE, PROVED BEFORE THE COMPARISON BELOW IS BELIEVED.
+     *
+     * expect($five)->toBe($one) is satisfied by 0 === 0, and 0 === 0 is what
+     * this counted on MySQL for months: the needle was spelled the SQLite
+     * way and MySQL wraps the identifier in backticks, so the N+1 guard
+     * compared nothing with nothing and would have passed with the cart
+     * asking the parent once per variation. SqlShape::portable() fixes the spelling; this
+     * line makes sure a future respelling cannot quietly re-empty it.
+     */
+    expect($one)->toBeGreaterThan(0,
+        'one variable basket line read `products` zero times, so the comparison below '
+        . 'compares nothing with nothing');
 
     foreach (array_slice($variants, 1) as $variant) {
         $cart->items()->create([

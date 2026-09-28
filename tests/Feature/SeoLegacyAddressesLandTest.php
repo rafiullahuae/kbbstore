@@ -12,6 +12,7 @@ use App\Services\SettingsService;
 use App\Support\LegacyCategoryUrls;
 use App\Support\Locale;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\SqlShape;
 
 /**
  * =============================================================================
@@ -484,29 +485,50 @@ it('costs a warm storefront page nothing at all', function () {
     // Warm the caches the first request builds, exactly as the budget test does.
     test()->get('/shop/');
 
-    foreach (['/shop/', '/product-category/skincare/toners/', '/product/budget-serum/'] as $page) {
-        $seen = 0;
-        DB::listen(function ($q) use (&$seen) {
-            if (str_contains(strtolower($q->sql), 'from "redirects"') || str_contains(strtolower($q->sql), 'from "categories"')) {
-                $seen++;
+    /*
+     * READS OF `redirects` WHILE $do RUNS.
+     *
+     * ── WHY THE NEEDLE IS PROVED BEFORE IT IS TRUSTED ──────────────────────
+     *
+     * This block used to match `from "redirects"` against the raw statement.
+     * Illuminate quotes identifiers per driver, so on MySQL -- the engine the
+     * shop runs -- the logged statement wraps the identifier in backticks
+     * instead, and that needle matched NOTHING. The assertion is toBe(0), so it was satisfied by
+     * every page whether CheckRedirects queried the table or not: green on
+     * both engines, meaningless on one. SqlShape::portable() normalises the
+     * spelling; the self-check below proves it did, on whatever engine this
+     * run is using, before any zero is believed.
+     *
+     * The dead $seen/$before pair that stood here counted nothing and was
+     * never asserted.
+     */
+    $redirectReads = function (callable $do): int {
+        $n = 0;
+
+        DB::listen(function ($q) use (&$n) {
+            if (str_contains(strtolower(SqlShape::portable($q->sql)), 'from "redirects"')) {
+                $n++;
             }
         });
 
-        $before = $seen;
-        test()->get($page);
+        $do();
 
+        return $n;
+    };
+
+    expect($redirectReads(fn () => DB::table('redirects')->count()))->toBe(
+        1,
+        'the needle did not see a statement that reads `redirects` on this engine, '
+        . 'so every zero it reports below would be vacuous'
+    );
+
+    foreach (['/shop/', '/product-category/skincare/toners/', '/product/budget-serum/'] as $page) {
         // Categories are queried by the page itself; what must be zero is the
         // REDIRECTS table, which is what this middleware owns.
-        $redirectQueries = 0;
-        DB::listen(function ($q) use (&$redirectQueries) {
-            if (str_contains(strtolower($q->sql), 'from "redirects"')) {
-                $redirectQueries++;
-            }
-        });
-
-        test()->get($page);
-
-        expect($redirectQueries)->toBe(0, $page . ' queried the redirects table on a warm page');
+        expect($redirectReads(fn () => test()->get($page)))->toBe(
+            0,
+            $page . ' queried the redirects table on a warm page'
+        );
     }
 });
 
