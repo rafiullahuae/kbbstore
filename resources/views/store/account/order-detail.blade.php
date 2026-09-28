@@ -222,7 +222,9 @@
             // The one thing on this page that looks at the catalogue, and the
             // one thing that degrades when the product is gone.
             $image = $item->product?->image;
-            $imageCss = CssUrl::value($image);
+            // (Lane IM) The account order line thumbnail, drawn from the
+            // full-size photograph. See ImageVariants::variantUrl().
+            $imageCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $image, 400));
             $thumb = $imageCss !== ''
                 ? "background-image:url('" . e($imageCss) . "')"
                 : 'background:' . Gradient::for((string) ($item->brand ?? '') . (string) $item->name);

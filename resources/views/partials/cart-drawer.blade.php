@@ -84,7 +84,13 @@
                         $name = $p?->t('name');
                         $seed = ($p?->brand?->name ?? '') . ($p?->name ?? '');
                         $img = $item->variant?->image ?: $p?->image;
-                        $imgCss = CssUrl::value($img);
+                        // (Lane IM) THE 42px SQUARE WAS DOWNLOADING THE FULL PHOTOGRAPH. A
+                        // CSS background takes one URL and cannot carry a srcset, so the
+                        // width is picked here instead -- ImageVariants::variantUrl() says
+                        // why 400 and not 200, and hands back the original unchanged when
+                        // no copy of it is on disk, which is every photograph that has not
+                        // been through Media Library -> Image Sizes.
+                        $imgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $img, 400));
                         $thumb = $imgCss !== ''
                             ? "background:#fff url('" . e($imgCss) . "') center/cover"
                             : 'background:' . Gradient::for($seed);
@@ -133,7 +139,8 @@
                         $bname  = $bp->t('name');
                         $bseed  = ($bp->brand?->name ?? '') . $bp->name;
                         $bimg   = $bp->image;
-                        $bimgCss = CssUrl::value($bimg);
+                        // (Lane IM) Same 42px square, same reason as the basket line above.
+                        $bimgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $bimg, 400));
                         $bthumb = $bimgCss !== ''
                             ? "background:#fff url('" . e($bimgCss) . "') center/cover"
                             : 'background:' . Gradient::for($bseed);

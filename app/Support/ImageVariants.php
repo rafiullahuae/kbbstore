@@ -513,6 +513,71 @@ final class ImageVariants
     }
 
     /**
+     * ONE copy of a photograph, at a stated width, for a box that cannot carry
+     * a srcset — or the original unchanged when that copy is not on disk.
+     *
+     * WHY A SINGLE URL AND NOT A SRCSET. Everything else in this class hands
+     * the browser a list and lets it choose, which is free and always better.
+     * It is only available to an <img>. The basket drawer, the basket page, the
+     * checkout's browsed-and-received lines and the order-received summary draw
+     * their line thumbnails as a CSS `background-image` on a 42px square — a
+     * deliberate choice made long before any of this existed, because those
+     * boxes crop with `center/cover` and an <img> would need object-fit and a
+     * positioned wrapper per line. A CSS background takes exactly one URL.
+     * `image-set()` exists, but it selects on device-pixel-ratio rather than on
+     * width, so it cannot express "this box is 42px" — the thing that actually
+     * decides which file is right here.
+     *
+     * So: pick the width once, on the server, from the same files the srcset
+     * would have offered. A basket with five lines was pulling five
+     * full-resolution photographs — ~290KB each measured on this catalogue's
+     * sizes — to paint five 42px squares.
+     *
+     * WHY 400 AND NOT 200 AT THOSE CALL SITES. `.kc-th` is 42px, and 200w is
+     * already five times what it can show; 400w would look like the wrong
+     * choice. It is not, for one reason that is specific to those boxes: their
+     * size is a SETTING. `--cp-thumb` and `--cp-thumb-m` are set from
+     * Appearance → Cart panel, so the owner can make that square 120px without
+     * this file knowing. A single URL has no second candidate to fall back to
+     * when that happens, and a soft basket thumbnail is a defect the shop keeps
+     * forever. 400w covers a 133px square at ratio 3 and still costs about 7%
+     * of the original. The caller states the width; this only refuses to invent
+     * one.
+     *
+     * NEVER RETURNS SOMETHING THAT IS NOT THERE. The original comes back
+     * unchanged unless a real file is found for the width asked for, which is
+     * the same promise srcsetFor() makes and for a stronger reason: with a
+     * background there is no `src` underneath to fall back to, so a URL that
+     * 404s is an empty square.
+     *
+     * AND IT CANNOT BE POINTED AT ANYTHING. $width must be one of WIDTHS —
+     * nothing else names a directory this class writes, and a caller that could
+     * pass an arbitrary integer would be building a path segment out of one.
+     * The image reference goes through the same split() as everything else
+     * here, which rejects "..", a segment that is empty or ".", a NUL, a query
+     * or fragment, another origin, a non-resizable extension, and the cache's
+     * own directory. This adds no new way in.
+     */
+    public static function variantUrl(string $image, int $width): string
+    {
+        if (! in_array($width, self::WIDTHS, true)) {
+            return $image;
+        }
+
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return $image;
+        }
+
+        [$prefix, $rel, $fsRel] = $parts;
+
+        return is_file(public_path(self::DIR.'/'.$width.'/'.$fsRel))
+            ? $prefix.'/'.self::DIR.'/'.$width.'/'.$rel
+            : $image;
+    }
+
+    /**
      * Make the missing copies of one photograph.
      *
      * Idempotent: a variant that is already there is left alone, so a batch
