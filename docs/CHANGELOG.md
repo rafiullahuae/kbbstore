@@ -3,6 +3,69 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.311
+**A Set now says what is in the box on every document the shop produces** — and
+on both admin screens that list an order's items.
+
+### THE EMAILS AND THE PRINTED SHEETS
+
+A customer who bought a set used to get one anonymous line — *"Glow Set × 1"* —
+and no way to see what they had actually bought. The member list now appears on:
+
+- the **order confirmation**, the **status update**, the **new-order alert** and
+  the **refund note**, in both the pretty and the plain-text versions;
+- the **emailed invoice** — the document a customer keeps, forwards and files,
+  and the only one that was still silent;
+- the **printed invoice**, the **packing slip** and the **delivery note**;
+- the **abandoned-basket reminder**.
+
+**The packing slip matters most.** A set that does not list its members there is
+a mis-picked order — whoever packs the box had nothing telling them what goes
+in it.
+
+### THE TWO ADMIN SCREENS
+
+**Store → Orders → (an order)** and the **quick-view popup** that opens when you
+click an order in the list both show the box contents under the set's line now.
+The quick-view one was a second, separate gap: the two screens are built by
+different code with differently-named fields, so fixing one did not fix the
+other.
+
+**Store → Orders → New Order** shows it on the receipt after you place an order.
+
+### WHAT AN OLD ORDER SHOWS
+
+What the customer actually bought. Every document reads the box that was
+**recorded with the order**, not the set as it is today — so an order still
+prints correctly after you have changed that set, or deleted it entirely.
+
+The one exception is deliberate: the **abandoned-basket reminder** describes the
+basket *as it is now*, because that message is written at the moment it is sent
+and chasing somebody about something they have already removed is worse than not
+chasing them at all.
+
+### ▲ ONE THING FOR YOU TO DECIDE
+
+The packing slip's **ITEMS** count and its **PICKED** tick are per order line, so
+a set is **one tick** even though the box holds several things. The member list
+now tells the picker what to put in. Whether each member should earn its own
+tick is a change to how your staff work, so it is not something to alter without
+asking.
+
+### BEHIND THE SCENES
+
+The admin console is about 20,000 lines of JavaScript and nothing checked that it
+parsed. A single missing bracket there is a **blank admin screen** — with the
+fix only reachable through the screen that is blank. It is checked now, on every
+test run.
+
+### FILES
+
+`emails/order-invoice.blade.php` and its text twin, `emails/cart-recovery.*`,
+`app/Services/CartRecovery.php`, `AdminController`, `AdminOrderController`,
+`admin/app.blade.php`, `admin/partials/manual-order-screen.blade.php`, plus
+`tools/blade-js-check.php` and four test files.
+
 ## 2.60.310
 **▲ THE SHOP'S ADDRESSES CHANGE.** Category, brand and journal pages move to new
 URLs. Every old address forwards to the new one, so nothing you or Google have
