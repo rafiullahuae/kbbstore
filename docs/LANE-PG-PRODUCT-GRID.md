@@ -593,6 +593,35 @@ not set one; the failure count moved between runs (1, then 16) while the same
 file answered 45/45 in isolation each time, which is the tell. Nothing in this
 lane's diff touches the exporter.
 
+**▲ AND THE SECOND HALF OF THAT STORY, FOUND ON THE FINAL RUN: the MySQL server
+on this machine goes DOWN, and while it is down it looks like several different
+bugs at once.** The `-c phpunit-mysql.xml` run failed *every test in every file*
+— `AccountAreaTest`, `SeoLayoutTest`, `StableOrderingTest`, the lot — which is
+not a shape any code change makes. `mysqld` was simply not running: no process,
+`ERROR 2003 … 127.0.0.1:3306 (111)`, and `/var/log/mysql/error.log` whose last
+line was three days old, so it had not even logged its own shutdown. Restarting
+it (`/usr/sbin/mysqld --user=mysql`) brought back all forty lane databases
+untouched and the run went green.
+
+Three things follow, and they are why this is written down rather than fixed
+and forgotten:
+
+- **A blanket failure is an environment failure.** Before reading a single
+  assertion, check `mysqld` is up — the same reflex `CLAUDE.md` already
+  prescribes for `df -h /` on an intermittent SQLite error. The two look nothing
+  alike (all tests versus one flaky test) and both are the machine.
+- **The default SQLite suite goes GREEN while MySQL is down**, because
+  `GeWpExporterTest` and the rest `markTestSkipped('no MySQL here: …')` rather
+  than failing. The first green run this lane took on the merged tree reported
+  *22 skipped* for exactly that reason, and was re-run with the server up so the
+  exporter actually ran. **A skip count is worth reading;** a suite that skips
+  the tests that need a service is not evidence the service works.
+- **So the collision note above is now one of two candidate explanations, not a
+  conclusion.** A WordPress harness whose database vanishes under it and a MySQL
+  server that dies mid-run produce the same symptom — a failure count that moves
+  between runs while the file passes alone. This lane cannot tell them apart
+  after the fact and does not claim to.
+
 **The `?add-to-cart=` link is relative**, so on a category archive a no-JS click
 lands on `/collections/{cat}/?add-to-cart=7` rather than on `/shop/`. That is
 the behaviour the old `/shop` card already had, byte for byte, and changing it
