@@ -421,8 +421,25 @@ it('keeps the screen\'s panel registry internally consistent', function () {
     $keys = array_column($panels, 1);
     $cols = array_column($panels, 2);
 
-    // Every panel the two-column editor actually has.
-    expect($keys)->toHaveCount(12);
+    /*
+     * Every panel the two-column editor actually has.
+     *
+     * ── THE PIN WAS ADVANCED ONCE, ON PURPOSE (Lane SP) ────────────────────
+     *
+     * Twelve became THIRTEEN when the Set editor was merged into this screen:
+     * `setbox` — "What is in the box" — which is the two things a set has that
+     * an ordinary product does not, its members and its pricing rule. Every
+     * other section a set needs is this editor's own, which is the whole
+     * saving of the merge.
+     *
+     * It is the FIRST panel in this registry to declare `when`, and a panel
+     * whose condition is false is not drawn at all — so an ordinary product's
+     * editor is exactly the twelve panels it was. It stays in the LAYOUT while
+     * it is not drawn, which is what lets the operator arrange it once and find
+     * it where they put it the next time they open a set.
+     */
+    expect($keys)->toHaveCount(13);
+    expect($keys)->toContain('setbox');
     expect(array_unique($keys))->toHaveCount(count($keys), 'a panel key is listed twice');
 
     /*

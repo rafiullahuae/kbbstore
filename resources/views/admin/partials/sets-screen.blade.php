@@ -1,40 +1,66 @@
 {{--
-    Catalog → Sets. (Lane SET)
+    Catalog → Sets. (Lane SET, rebuilt as a LIST by Lane SP)
 
-    The owner's words:
+    ═══════════════════════════════════════════════════════════════════════════
+    THIS SCREEN NO LONGER EDITS ANYTHING. A SET IS EDITED ON THE PRODUCT EDITOR.
+    ═══════════════════════════════════════════════════════════════════════════
 
-      "I have a new product type, which called Set. ... Under Catalog, there will
-       be Sets, and upon creating new set, the system will ask to choose the
-       products, and will ask for set price, category, description etc, the same
-       as in product edit page. and it will be published same like other products
-       and display."
+    The owner, after building his first set:
 
-    So this screen creates a PRODUCT. A set is a row in `products` with
-    `type = 'set'` plus rows in `product_set_items` for what is in the box — not
-    a table of its own, and not a folder. Everything a published product needs
-    it therefore already has: a slug, a status, a category, a description,
-    images, a price, a sale price and its SEO row. See
-    database/migrations/2027_04_01_000000_sets_schema.php for the shape and for
-    the first-hand sweep of everything in this application that branches on
-    `products.type`.
+      "can you please merge the Set functionality into the product itself? i want
+       if i add product, on that page it will have optin to switch to Set product
+       type, and all options will be shown for set, with remaing same sections
+       like seo etc. ... so in this case i will have most of things ready made,
+       like sorting etc on the same page instead of making such all options
+       separately for set product type."
+
+    He is right, and the data model already agreed with him: a set IS a
+    `products` row with `type = 'set'` plus the `product_set_items` pivot —
+    Lane SET chose that shape precisely so a set would carry slug, status,
+    category, description, images, SEO, tags and position as an ordinary
+    product. Catalog → Product editor now has a TYPE CONTROL, and choosing Set
+    reveals one extra panel ("What is in the box") beside every section a
+    product already has.
+
+    ── SO WHY DOES THIS SCREEN STILL EXIST ────────────────────────────────────
+
+    Because "where are my sets?" is a real question with no other answer, and
+    the owner asked it before he asked for the merge. This is the list: every
+    set, what is in it, what it costs, and the two doors out —
+
+      New set  → window.peoNew({ type: 'set' })   the product editor, blank,
+                                                  already switched to a set
+      Edit     → window.peoEdit(id)               the product editor, on it
+
+    ▲ THERE IS NO SECOND EDITOR. Nothing on this screen writes a product. The
+      only write it makes is Delete, which is the same act Catalog → Products
+      offers on any product and is not editing. SetProductEditorTest pins that
+      by asserting this file carries no save path at all.
+
+    Catalog → Products also answers the question, from the other direction: it
+    now carries a Sets chip and marks each set's row. Two ways to the same place
+    is fine; two ways to CHANGE the same thing is what this rebuild removed.
+
+    ── AND THE ONE SETTING THAT IS NOT A PRODUCT'S ────────────────────────────
+
+    Stock · When a set is sold. Whether selling a set takes one of each product
+    in the box off its own shelf is a SHOP-WIDE rule, not a property of any one
+    set, so it belongs on a screen about sets rather than on one product's page.
+    It ships switched to what this shop does today — see App\Services\StockSetRule.
 
     ── HOW THIS FILE JOINS THE CONSOLE ────────────────────────────────────────
 
     Pulled into resources/views/admin/app.blade.php at the very end, after that
     file closes its raw block, so this runs once the console's own script has
-    defined window.go, window.kbbAddNavEntry, window.kbbPickMedia and toast().
-    It registers its OWN sidebar entry and wraps window.go, exactly as the
-    screens beside it do, so ONE @include is the whole of the change to that
-    file. The integrator's note is in the report.
+    defined window.go, window.kbbAddNavEntry and toast(). It registers its OWN
+    sidebar entry and wraps window.go, exactly as the screens beside it do, so
+    ONE @include is the whole of the change to that file.
 
     ── NOTHING HERE UPLOADS A FILE ────────────────────────────────────────────
 
-    There is no file input in this screen at all. Both the main image and the
-    gallery go through window.kbbPickMedia, which is the owner's standing rule —
-    "on any upload media on the whole backend, the media library is a must to
-    show" — and AdminMediaPickerEverywhereTest is what enforces it. It also
-    means one upload path in the application and one place where the type, size
-    and SVG rules live.
+    There is no file input in this screen at all, and now not even an image
+    field: pictures are the product editor's, which goes through
+    window.kbbPickMedia like every other image in this console.
 
     ── NOTHING BELOW MAY NAME BLADE'S RAW-BLOCK DIRECTIVES ────────────────────
 
@@ -52,11 +78,13 @@
 
     EVERY CLASS IS PREFIXED kst- AND EVERY data- ATTRIBUTE data-kst-, and both
     appear nowhere else in the console: app.blade.php binds delegated listeners
-    to `document` itself, each claiming a bare attribute name.
+    to `document` itself, each claiming a bare attribute name. That includes
+    DESCENDANT selectors — `.kst-card .k` would be a rule on a bare class name
+    and would restyle other screens, which is what SetAdminScreenTest checks.
 
-    esc() ON EVERY INTERPOLATION of a product name, a brand, a category and a
-    server error. CLAUDE.md rule 5: anything printed unescaped is a constant,
-    never a setting.
+    esc() ON EVERY INTERPOLATION of a product name, a category and a server
+    error. CLAUDE.md rule 5: anything printed unescaped is a constant, never a
+    setting.
 --}}
 @verbatim
 <style>
@@ -79,49 +107,35 @@
          font-weight:600;cursor:pointer;max-width:100%}
 .kst-btn:hover{background:var(--surface-2,#f2f4fb)}
 .kst-btn.is-primary{background:var(--accent,#15a85a);border-color:var(--accent,#15a85a);color:#fff}
-.kst-btn.is-danger{color:var(--red,#e3493f)}
-.kst-btn[disabled]{opacity:.45;cursor:default}
-.kst-btn:focus-visible,.kst-mini:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
-.kst-mini{padding:4px 8px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+.kst-btn.is-primary:hover{filter:brightness(1.05)}
+.kst-mini{padding:5px 10px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
           background:var(--surface,#fff);color:var(--ink-2,#3c465c);font:inherit;font-size:11.5px;
-          font-weight:600;cursor:pointer;line-height:1.2}
+          font-weight:600;cursor:pointer;flex:none}
+.kst-mini:hover{background:var(--surface-2,#f2f4fb)}
 .kst-mini.is-danger{color:var(--red,#e3493f)}
 
-/* The form. minmax(0,...) and not 1fr — a grid child's default min-width is
-   auto, which is what made three other screens in this console overflow at
-   390px before they were fixed. */
-.kst-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));min-width:0}
+/* One field, for the Stock switch. The only control left on this screen. */
 .kst-f{display:grid;gap:5px;min-width:0}
 .kst-f label{font-size:11.5px;font-weight:650;color:var(--ink-soft,#626c80);letter-spacing:.02em}
-.kst-f input,.kst-f select,.kst-f textarea{width:100%;box-sizing:border-box;font:inherit;font-size:13px;
+.kst-f select{width:100%;box-sizing:border-box;font:inherit;font-size:13px;
   padding:8px 10px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
   background:var(--surface,#fff);color:var(--ink,#101729);min-width:0}
-.kst-f textarea{min-height:90px;resize:vertical}
-.kst-help{font-size:11.5px;color:var(--ink-soft,#626c80);line-height:1.5}
 
-/* The member list and the picker. One column on a phone, two above it. */
-.kst-two{display:grid;gap:14px;grid-template-columns:minmax(0,1fr);min-width:0}
-@media (min-width:860px){.kst-two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
-.kst-row{display:flex;align-items:center;gap:9px;padding:8px 0;
-         border-bottom:1px solid var(--border,#e6e9f2);min-width:0;flex-wrap:wrap}
-.kst-th{width:38px;height:38px;border-radius:9px;flex:none;background-size:cover;
-        background-position:center;background-color:var(--surface-2,#f2f4fb)}
+/* The list. */
+.kst-list{display:grid;gap:8px;min-width:0}
+.kst-row{display:flex;align-items:center;gap:10px;padding:9px 11px;min-width:0;flex-wrap:wrap;
+         background:var(--surface-2,#f2f4fb);border:1px solid var(--border,#e6e9f2);
+         border-radius:var(--r-sm,12px)}
+.kst-th{width:44px;height:44px;border-radius:10px;flex:none;background-size:cover;
+        background-position:center;background-color:var(--surface,#fff);
+        border:1px solid var(--border,#e6e9f2)}
+.kst-mid{min-width:0;flex:1 1 150px}
 .kst-nm{font-size:12.5px;font-weight:620;color:var(--ink,#101729);line-height:1.3;
         min-width:0;overflow-wrap:anywhere}
 .kst-meta{font-size:11.5px;color:var(--ink-soft,#626c80);line-height:1.4;overflow-wrap:anywhere}
-.kst-mid{min-width:0;flex:1 1 120px}
-.kst-qty{width:56px;flex:none}
-.kst-sel{max-width:130px;flex:none}
-.kst-list{max-height:360px;overflow:auto;min-width:0}
-.kst-sum{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--ink-soft,#626c80)}
-.kst-sum b{color:var(--ink,#101729)}
-.kst-save{color:#15803d}
-.kst-imgs{display:flex;flex-wrap:wrap;gap:10px;min-width:0}
-.kst-img{width:60px;height:60px;border-radius:9px;background-size:cover;background-position:center;
-         background-color:var(--surface-2,#f2f4fb);position:relative;flex:none}
-.kst-img button{position:absolute;inset-block-start:-6px;inset-inline-end:-6px;width:20px;height:20px;
-  border-radius:50%;border:1px solid var(--border,#e6e9f2);background:#fff;cursor:pointer;
-  font-size:11px;line-height:1;color:var(--red,#e3493f);padding:0}
+.kst-pill{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+          border-radius:99px;padding:2px 8px;background:var(--surface-3,#e9ecf6);
+          color:var(--ink-soft,#626c80);flex:none}
 </style>
 <script>
 (function () {
@@ -130,10 +144,10 @@
   var SCREEN = 'sets';
 
   /* `stock` is null until /admin-api/set-stock has answered, and STAYS null on a
-     404 or a 403 -- so the Stock card below simply is not drawn on a shop whose
-     route table does not carry it yet, rather than showing the owner a control
-     that cannot save. (Lane SP) */
-  var state = { sets: [], categories: [], editing: null, found: [], busy: false, error: null, q: '', stock: null };
+     404 or a 403 — so the Stock card is not drawn at all on a shop whose route
+     table does not carry it yet, rather than showing the owner a control that
+     cannot save. (Lane SP) */
+  var state = { sets: [], busy: false, error: null, stock: null };
 
   function base() {
     return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
@@ -195,28 +209,12 @@
     return fallback;
   }
 
-  /* ------------------------------------------------------------------ money */
-
-  /* Two decimals in, two decimals out, and the SERVER does the conversion to
-     fils. Nothing on this screen multiplies a price by 100 — that arithmetic
-     happens once, in SetApiController::filsFromMajor(), where it is a rounded
-     integer and never a float. A second copy here is a second answer to what a
-     set costs. */
+  /* Two decimals in, two decimals out, and the SERVER decides every figure on
+     this screen. Nothing here multiplies a price by anything — a set's price is
+     worked out by App\Support\SetPricing and arrives already resolved. */
   function money(v) {
     var n = Number(v);
     return isFinite(n) ? n.toFixed(2) : '0.00';
-  }
-
-  function totals() {
-    var set = state.editing;
-    if (!set) return { parts: 0, count: 0, saving: 0 };
-    var parts = 0, count = 0;
-    set.members.forEach(function (m) {
-      parts += Number(m.unit_price_aed || 0) * Number(m.quantity || 1);
-      count += Number(m.quantity || 1);
-    });
-    var price = Number(set.price_aed || 0);
-    return { parts: parts, count: count, saving: Math.max(0, parts - price) };
   }
 
   /* ----------------------------------------------------------------- render */
@@ -226,20 +224,31 @@
     if (!el) return;
     el.innerHTML = '<div class="wrap kst-wrap">'
       + (state.error ? '<div class="kst-note is-bad">' + esc(state.error) + '</div>' : '')
-      + (state.editing ? editor() : list())
+      + list()
+      + stockCard()
       + '</div>';
+  }
+
+  /* A set whose price is a RULE rather than a number says so on its row, because
+     "AED 179.00" means something different when it is going to follow its
+     products down. */
+  function ruleLabel(mode) {
+    return (mode === 'discount_percent' || mode === 'discount_amount') ? 'Priced from the box' : '';
   }
 
   function list() {
     var rows = state.sets.map(function (s) {
+      var rule = ruleLabel(s.price_mode);
+
       return '<div class="kst-row">'
         + '<span class="kst-th" style="' + (s.image ? 'background-image:url(\'' + esc(s.image) + '\')' : '') + '"></span>'
         + '<div class="kst-mid">'
           + '<div class="kst-nm">' + esc(s.name) + '</div>'
-          + '<div class="kst-meta">' + esc(s.status) + (s.category ? ' · ' + esc(s.category) : '')
-            + ' · ' + s.member_count + ' product' + (s.member_count === 1 ? '' : 's')
-            + ' · AED ' + esc(money(s.price_aed)) + '</div>'
+          + '<div class="kst-meta">' + esc(s.status) + (s.category ? ' &middot; ' + esc(s.category) : '')
+            + ' &middot; ' + s.member_count + ' product' + (s.member_count === 1 ? '' : 's')
+            + ' &middot; AED ' + esc(money(s.price_aed)) + '</div>'
         + '</div>'
+        + (rule ? '<span class="kst-pill">' + esc(rule) + '</span>' : '')
         + '<button class="kst-mini" data-kst-edit="' + s.id + '">Edit</button>'
         + '<button class="kst-mini is-danger" data-kst-del="' + s.id + '">Delete</button>'
         + '</div>';
@@ -249,33 +258,34 @@
       + '<div class="kst-actions" style="justify-content:space-between">'
         + '<div><div class="kst-title">Sets</div>'
         + '<div class="kst-sub">A set is a product made of other products. It has its own price, '
-        + 'category, description and images, and it publishes and displays exactly like any other '
-        + 'product — it appears in the shop, on its own page, in search and in the basket.</div></div>'
+        + 'category, description, pictures and search appearance, and it publishes and displays exactly '
+        + 'like any other product. <b>Sets are built on the product editor</b> &mdash; this page is the '
+        + 'list of them, and both buttons here open that editor.</div></div>'
         + '<button class="kst-btn is-primary" data-kst-new>New set</button>'
       + '</div>'
       + '<div class="kst-list" style="margin-top:14px">'
-        + (rows || '<div class="kst-note">No sets yet. <b>New set</b> creates one.</div>')
-      + '</div></div>'
-      + stockCard();
+        + (rows || '<div class="kst-note">No sets yet. <b>New set</b> opens the product editor with the '
+          + 'type already set to Set.</div>')
+      + '</div></div>';
   }
 
   /* ────────────────────────────────────────────────────────────────────────
-     STOCK -- Catalog -> Sets -> Stock . When a set is sold. (Lane SP)
+     STOCK — Catalog → Sets → Stock · When a set is sold. (Lane SP)
 
      The owner has been asked twice whether selling a set should take one of
      each product in the box off its own shelf, and there is a real argument
      either way: a shop that buys ready-made gift boxes counts them separately,
      and a shop that makes a box up per order does not. So the rule is built and
-     SHIPPED AT WHAT THIS SHOP DOES TODAY -- the set carries its own stock --
-     and this is the one place it changes.
+     SHIPPED AT WHAT THIS SHOP DOES TODAY — the set carries its own stock — and
+     this is the one place it changes.
+
+     IT IS ON THIS SCREEN AND NOT ON A PRODUCT'S PAGE because it is a shop-wide
+     rule rather than a property of any one set. A switch repeated on every set's
+     editor would be four hundred copies of one decision.
 
      BOTH OPTION VALUES ARE LITERALS IN THIS FILE and the server validates what
      arrives against its own list before storing it; SetStockApiController stores
      one of its own two options or the default, never the string that was posted.
-
-     `state.stock` is null when the endpoint 404'd (the route table has not been
-     cleared) or 403'd (this account does not hold `sets.stock`), and the card
-     is then not drawn at all. A switch that cannot save is worse than no switch.
      ──────────────────────────────────────────────────────────────────────── */
   function stockCard() {
     if (!state.stock) return '';
@@ -306,120 +316,14 @@
       + '</div></div>';
   }
 
-  function editor() {
-    var s = state.editing;
-    var t = totals();
-
-    var members = s.members.map(function (m, i) {
-      return '<div class="kst-row">'
-        + '<span class="kst-th" style="' + (m.image ? 'background-image:url(\'' + esc(m.image) + '\')' : '') + '"></span>'
-        + '<div class="kst-mid">'
-          + '<div class="kst-nm">' + esc(m.name) + '</div>'
-          + '<div class="kst-meta">' + (m.brand ? esc(m.brand) + ' · ' : '')
-            + 'AED ' + esc(money(m.unit_price_aed)) + '</div>'
-        + '</div>'
-        + '<input class="kst-qty" type="number" min="1" max="99" value="' + Number(m.quantity || 1) + '" data-kst-mq="' + i + '" aria-label="Quantity">'
-        + '<button class="kst-mini" data-kst-up="' + i + '" ' + (i === 0 ? 'disabled' : '') + ' aria-label="Move up">&uarr;</button>'
-        + '<button class="kst-mini" data-kst-down="' + i + '" ' + (i === s.members.length - 1 ? 'disabled' : '') + ' aria-label="Move down">&darr;</button>'
-        + '<button class="kst-mini is-danger" data-kst-rm="' + i + '" aria-label="Remove">&#10005;</button>'
-        + '</div>';
-    }).join('');
-
-    var found = state.found.map(function (p) {
-      var options = p.variants.length
-        ? '<select class="kst-sel" data-kst-var="' + p.id + '" aria-label="Option">'
-            + '<option value="">Whole product</option>'
-            + p.variants.map(function (v) { return '<option value="' + v.id + '">' + esc(v.label) + '</option>'; }).join('')
-          + '</select>'
-        : '';
-      return '<div class="kst-row">'
-        + '<span class="kst-th" style="' + (p.image ? 'background-image:url(\'' + esc(p.image) + '\')' : '') + '"></span>'
-        + '<div class="kst-mid">'
-          + '<div class="kst-nm">' + esc(p.name) + '</div>'
-          + '<div class="kst-meta">' + (p.brand ? esc(p.brand) + ' · ' : '') + 'AED ' + esc(money(p.price_aed)) + '</div>'
-        + '</div>' + options
-        + '<button class="kst-mini" data-kst-add="' + p.id + '">Add</button>'
-        + '</div>';
-    }).join('');
-
-    var cats = '<option value="">No category</option>' + state.categories.map(function (c) {
-      return '<option value="' + c.id + '"' + (String(c.id) === String(s.category_id || '') ? ' selected' : '') + '>' + esc(c.name) + '</option>';
-    }).join('');
-
-    var gallery = s.images.map(function (u, i) {
-      return '<span class="kst-img" style="background-image:url(\'' + esc(u) + '\')">'
-        + '<button type="button" data-kst-img-rm="' + i + '" aria-label="Remove image">&#10005;</button></span>';
-    }).join('');
-
-    return '<div class="kst-card">'
-      + '<div class="kst-actions" style="justify-content:space-between">'
-        + '<div class="kst-title">' + (s.id ? 'Edit set' : 'New set') + '</div>'
-        + '<div class="kst-actions">'
-          + '<button class="kst-btn" data-kst-back>Back</button>'
-          + '<button class="kst-btn is-primary" data-kst-save ' + (state.busy ? 'disabled' : '') + '>Save set</button>'
-        + '</div>'
-      + '</div>'
-      + '<div class="kst-grid" style="margin-top:14px">'
-        + field('Set name', '<input type="text" data-kst-f="name" value="' + esc(s.name) + '" maxlength="200">')
-        + field('Status', '<select data-kst-f="status">'
-            + ['publish', 'draft', 'private'].map(function (v) {
-                return '<option value="' + v + '"' + (s.status === v ? ' selected' : '') + '>' + v + '</option>';
-              }).join('') + '</select>')
-        + field('Category', '<select data-kst-f="category_id">' + cats + '</select>')
-        + field('Set price (AED)', '<input type="text" inputmode="decimal" data-kst-f="price_aed" value="' + esc(s.price_aed) + '">')
-        + field('Sale price (AED)', '<input type="text" inputmode="decimal" data-kst-f="sale_price_aed" value="' + esc(s.sale_price_aed) + '">')
-        + field('Visible in the shop', '<select data-kst-f="is_visible">'
-            + '<option value="1"' + (s.is_visible ? ' selected' : '') + '>Yes</option>'
-            + '<option value="0"' + (s.is_visible ? '' : ' selected') + '>No</option></select>')
-      + '</div>'
-      + '<div class="kst-f" style="margin-top:12px"><label>Short description</label>'
-        + '<textarea data-kst-f="short_description" style="min-height:60px">' + esc(s.short_description) + '</textarea></div>'
-      + '<div class="kst-f" style="margin-top:12px"><label>Description</label>'
-        + '<textarea data-kst-f="description">' + esc(s.description) + '</textarea>'
-        + '<div class="kst-help">Printed on the set\'s own product page, exactly as a product description is.</div></div>'
-      + '<div class="kst-f" style="margin-top:12px"><label>Images</label>'
-        + '<div class="kst-imgs">'
-          + '<span class="kst-img" style="' + (s.image ? 'background-image:url(\'' + esc(s.image) + '\')' : '') + '"></span>'
-          + gallery
-        + '</div>'
-        + '<div class="kst-actions" style="margin-top:8px">'
-          + '<button class="kst-mini" data-kst-pick-main>Choose main image</button>'
-          + '<button class="kst-mini" data-kst-pick-gallery>Add gallery images</button>'
-        + '</div>'
-        + '<div class="kst-help">Both open the Media Library. There is no file box on this screen '
-        + 'on purpose — every upload in this back office goes through the library.</div></div>'
-      + '</div>'
-
-      + '<div class="kst-card"><div class="kst-title">What is in the box</div>'
-        + '<div class="kst-sum" style="margin-top:8px">'
-          + '<span>Items: <b>' + t.count + '</b></span>'
-          + '<span>Bought separately: <b>AED ' + esc(money(t.parts)) + '</b></span>'
-          + '<span>Set price: <b>AED ' + esc(money(s.price_aed)) + '</b></span>'
-          + '<span class="kst-save">Saving: <b>AED ' + esc(money(t.saving)) + '</b></span>'
-        + '</div>'
-        + '<div class="kst-two" style="margin-top:14px">'
-          + '<div><div class="kst-meta" style="margin-bottom:6px">In this set</div>'
-            + '<div class="kst-list">' + (members || '<div class="kst-note">Nothing chosen yet.</div>') + '</div></div>'
-          + '<div><div class="kst-meta" style="margin-bottom:6px">Choose products</div>'
-            + '<input type="search" placeholder="Search by name or SKU" data-kst-q value="' + esc(state.q) + '" '
-            + 'style="width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:8px 10px;'
-            + 'border:1px solid var(--border,#e6e9f2);border-radius:9px">'
-            + '<div class="kst-list" style="margin-top:8px">' + (found || '<div class="kst-note">Search for a product.</div>') + '</div></div>'
-        + '</div></div>';
-  }
-
-  function field(label, control) {
-    return '<div class="kst-f"><label>' + esc(label) + '</label>' + control + '</div>';
-  }
-
   /* ------------------------------------------------------------------ reads */
 
   async function load() {
     state.busy = true; state.error = null; render();
+
     try {
       var body = await api('/sets');
       state.sets = body.sets || [];
-      state.categories = body.categories || [];
     } catch (e) {
       state.error = explain(e, 'The list of sets could not be loaded.');
     }
@@ -429,7 +333,7 @@
        its own: a shop whose route table predates it answers 404 and an account
        without `sets.stock` answers 403, and NEITHER is a reason to put a red
        box over the list of sets the operator came here for. The card is simply
-       not drawn -- see stockCard(). (Lane SP) */
+       not drawn — see stockCard(). (Lane SP) */
     try { state.stock = await api('/set-stock'); }
     catch (e) { state.stock = null; }
 
@@ -437,103 +341,20 @@
     render();
   }
 
-  async function search() {
-    /* ▲ COLLECT BEFORE THE RE-RENDER, and this is a real defect that a
-       screenshot found rather than a reader.
-
-       The search box re-renders the screen when its results land, and a
-       re-render rewrites every field from `state`. Without this line the name,
-       the price, the category and both descriptions were rewritten from
-       whatever `state` held BEFORE the operator typed them -- so searching for
-       a product to put in the set silently emptied the price box above it. Seen
-       on the create shot: "Set price: AED 0.00" under a box that had just been
-       filled with 179.00. */
-    collect();
-
-    try {
-      var body = await api('/sets/products?q=' + encodeURIComponent(state.q));
-      state.found = body.products || [];
-    } catch (e) {
-      state.found = [];
-      state.error = explain(e, 'That search could not be run.');
-    }
-    render();
-  }
-
-  function blank() {
-    return {
-      id: null, name: '', slug: '', status: 'draft', is_visible: true, category_id: '',
-      short_description: '', description: '', price_aed: '0.00', sale_price_aed: '',
-      image: null, images: [], members: []
-    };
-  }
-
-  /* ----------------------------------------------------------------- writes */
-
-  function collect() {
-    if (!state.editing) return;
-    document.querySelectorAll('[data-kst-f]').forEach(function (el) {
-      var k = el.getAttribute('data-kst-f');
-      state.editing[k] = k === 'is_visible' ? el.value === '1' : el.value;
-    });
-  }
-
-  async function save() {
-    collect();
-    var s = state.editing;
-
-    if (!s.members.length) { say('A set has to contain at least one product.'); return; }
-
-    var payload = {
-      name: s.name, status: s.status, is_visible: s.is_visible,
-      category_id: s.category_id === '' ? null : Number(s.category_id),
-      short_description: s.short_description, description: s.description,
-      price: String(s.price_aed || '0'),
-      sale_price: String(s.sale_price_aed || '') === '' ? null : String(s.sale_price_aed),
-      image: s.image, images: s.images,
-      members: s.members.map(function (m) {
-        return { product_id: m.product_id, variant_id: m.variant_id || null, quantity: Number(m.quantity || 1) };
-      })
-    };
-
-    state.busy = true; state.error = null; render();
-    try {
-      var body = s.id
-        ? await api('/sets/' + s.id, payload, 'PUT')
-        : await api('/sets', payload, 'POST');
-      say('Set saved.');
-      await load();
-      state.editing = body.set;
-    } catch (e) {
-      state.error = explain(e, 'That set could not be saved.');
-    }
-    state.busy = false;
-    render();
-  }
-
-  function move(i, d) {
-    var list = state.editing.members;
-    var j = i + d;
-    if (j < 0 || j >= list.length) return;
-    var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
-    render();
-  }
-
   /* ------------------------------------------------------------- the events */
 
-  /* The Stock switch saves on change. (Lane SP)
-     A `change` listener and not a Save button: it is one control with two
-     values, and a switch that needs a second press to take effect is a switch
-     an owner walks away from thinking he set it.
-
-     BOUNDED HERE TOO. Only the two values this screen offers are ever sent;
-     anything else falls back to the default, which is exactly what the server
-     does with what arrives. Two guards on the same value, because this one
-     decides whether an order empties three shelves. */
   document.addEventListener('change', function (e) {
     var t = e.target;
     if (!t || !t.closest || !t.closest('[data-kst-stock]')) return;
 
+    /* Saved on change. It is one control with two values, and a switch that
+       needs a second press to take effect is a switch an owner walks away from
+       thinking he set it.
+
+       BOUNDED HERE TOO. Only the two values this screen offers are ever sent;
+       anything else falls back to the default, which is exactly what the server
+       does with what arrives. Two guards on the same value, because this one
+       decides whether an order empties three shelves. */
     var mode = t.value === 'members' ? 'members' : 'set';
 
     (async function () {
@@ -555,19 +376,20 @@
     if (!t || !t.closest) return;
     var hit = function (a) { var n = t.closest('[' + a + ']'); return n ? n.getAttribute(a) : null; };
 
-    if (t.closest('[data-kst-new]')) { state.editing = blank(); state.found = []; state.q = ''; render(); return; }
-    if (t.closest('[data-kst-back]')) { state.editing = null; render(); return; }
-    if (t.closest('[data-kst-save]')) { save(); return; }
+    /* BOTH DOORS LEAD TO THE PRODUCT EDITOR, and that is the whole point of the
+       rebuild: there is exactly one screen in this console that can change what
+       a set is. window.peoNew and window.peoEdit are the product editor's own
+       entry points — the same two Catalog → Products already uses. (Lane SP) */
+    if (t.closest('[data-kst-new]')) {
+      if (typeof window.peoNew === 'function') window.peoNew({ type: 'set' });
+      else say('The product editor is not on this page.');
+      return;
+    }
 
     var edit = hit('data-kst-edit');
     if (edit) {
-      (async function () {
-        try {
-          var body = await api('/sets/' + edit);
-          state.editing = body.set; state.found = []; state.q = '';
-        } catch (err) { state.error = explain(err, 'That set could not be opened.'); }
-        render();
-      })();
+      if (typeof window.peoEdit === 'function') window.peoEdit(Number(edit));
+      else say('The product editor is not on this page.');
       return;
     }
 
@@ -580,96 +402,15 @@
       })();
       return;
     }
-
-    if (!state.editing) return;
-
-    var add = hit('data-kst-add');
-    if (add) {
-      var p = state.found.filter(function (x) { return String(x.id) === String(add); })[0];
-      if (!p) return;
-      var sel = document.querySelector('[data-kst-var="' + p.id + '"]');
-      var variantId = sel && sel.value ? Number(sel.value) : null;
-      var already = state.editing.members.some(function (m) {
-        return String(m.product_id) === String(p.id) && String(m.variant_id || '') === String(variantId || '');
-      });
-      if (already) { say('That product is already in this set. Raise its quantity instead.'); return; }
-      collect();
-      state.editing.members.push({
-        product_id: p.id, variant_id: variantId, quantity: 1,
-        name: p.name, brand: p.brand, sku: p.sku, image: p.image, unit_price_aed: p.price_aed
-      });
-      render(); return;
-    }
-
-    var rm = hit('data-kst-rm');
-    if (rm !== null) { collect(); state.editing.members.splice(Number(rm), 1); render(); return; }
-
-    var up = hit('data-kst-up');
-    if (up !== null) { collect(); move(Number(up), -1); return; }
-
-    var down = hit('data-kst-down');
-    if (down !== null) { collect(); move(Number(down), 1); return; }
-
-    var imgRm = hit('data-kst-img-rm');
-    if (imgRm !== null) { collect(); state.editing.images.splice(Number(imgRm), 1); render(); return; }
-
-    if (t.closest('[data-kst-pick-main]')) {
-      collect();
-      window.kbbPickMedia({ title: 'Set image', onPick: function (picked) {
-        var one = Array.isArray(picked) ? picked[0] : picked;
-        state.editing.image = (one && (one.url || one)) || null;
-        render();
-      } });
-      return;
-    }
-
-    if (t.closest('[data-kst-pick-gallery]')) {
-      collect();
-      window.kbbPickMedia({ multiple: true, title: 'Set gallery', onPick: function (picked) {
-        var many = Array.isArray(picked) ? picked : [picked];
-        many.forEach(function (one) {
-          var url = one && (one.url || one);
-          if (url && state.editing.images.indexOf(url) === -1) state.editing.images.push(url);
-        });
-        render();
-      } });
-      return;
-    }
   });
 
-  /* The quantity boxes and the search box. `input`, not `change`: a number
-     typed and then immediately Saved would otherwise never fire. */
-  document.addEventListener('input', function (e) {
-    var t = e.target;
-    if (!t || !t.getAttribute || !state.editing) return;
-
-    var mq = t.getAttribute('data-kst-mq');
-    if (mq !== null) {
-      state.editing.members[Number(mq)].quantity = Math.max(1, Math.min(99, Number(t.value) || 1));
-      var sum = document.querySelector('.kst-sum');
-      if (sum) {
-        /* The totals line is rewritten in place rather than re-rendering the
-           screen, because re-rendering would take the focus out of the box the
-           operator is still typing in. */
-        var tt = totals();
-        sum.innerHTML = '<span>Items: <b>' + tt.count + '</b></span>'
-          + '<span>Bought separately: <b>AED ' + esc(money(tt.parts)) + '</b></span>'
-          + '<span>Set price: <b>AED ' + esc(money(state.editing.price_aed)) + '</b></span>'
-          + '<span class="kst-save">Saving: <b>AED ' + esc(money(tt.saving)) + '</b></span>';
-      }
-      return;
-    }
-
-    if (t.hasAttribute('data-kst-q')) {
-      state.q = t.value;
-      clearTimeout(window.__kstSearch);
-      window.__kstSearch = setTimeout(search, 220);
-    }
-  });
-
-  /* ---------------------------------------------------------------- routing */
+  /* --------------------------------------------------------------- the nav */
 
   function addNavEntry() {
+    if (typeof window.kbbAddNavEntry !== 'function') return;
+
+    /* Keyed on the screen id, so a second call replaces the row rather than
+       adding another one. */
     window.kbbAddNavEntry({
       screen: SCREEN,
       label: 'Sets',
@@ -698,7 +439,6 @@
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
 
-    state.editing = null;
     /* render() BEFORE load(), synchronously. That is the condition
        LATE_RENDERED carries in app.blade.php: the deep-link replay's marker
        inside #content has to be destroyed by the time its task runs, or the

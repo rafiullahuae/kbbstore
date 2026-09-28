@@ -219,6 +219,32 @@ class ProductController extends Controller
                          */
                         'gtin' => $product->gtin,
                         /*
+                         * ── A SET, DESCRIBED TO GOOGLE (Lane SP) ────────────
+                         *
+                         * Two keys, both ABSENT on an ordinary product, so the
+                         * structured data every product page in this shop has
+                         * been publishing for months is byte-identical.
+                         *
+                         * `set` is the member list — names and quantities, off
+                         * App\Support\SetContents, the one description of a
+                         * set's contents. App\Support\Seo turns it into
+                         * `additionalType: ProductCollection` and an
+                         * `includesObject` list; the long note there says why
+                         * the node stays a Product.
+                         *
+                         * `keywords` is the product's own tags, which the
+                         * owner asked for on the Sets screen and which are the
+                         * same `product_tag` pivot an ordinary product uses. It
+                         * is loaded ONLY for a set — one query on a set's page
+                         * and none on anybody else's.
+                         */
+                        'set' => $product->isSet()
+                            ? \App\Support\SetContents::fromProduct($product)['members']
+                            : null,
+                        'keywords' => $product->isSet()
+                            ? $product->tags()->orderBy('name')->pluck('name')->all()
+                            : null,
+                        /*
                          * EVERY OPTION'S OWN PRICE AND STOCK.
                          *
                          * The page prints a price on every `.variant` row and

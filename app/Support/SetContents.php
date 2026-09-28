@@ -167,7 +167,22 @@ final class SetContents
             'count' => $count,
             'partsTotal' => $partsTotal,
             'setPrice' => $setPrice,
-            'saving' => max(0, $partsTotal - $setPrice),
+            /*
+             * ▲ AN UNPRICED SET IS NOT SAVING ANYBODY ANYTHING. (Lane SP)
+             *
+             * The owner's first set, half filled in, read "Bought separately:
+             * AED 806.00 / Set price: AED 0.00 / You save AED 806.00" -- which
+             * is the arithmetic being right and the sentence being false. A set
+             * with no price is UNPRICED, not free and not a saving of its whole
+             * contents, and the figure was about to be printed on the shop.
+             *
+             * Zero here and not on fromOrderItem() below, deliberately: a SOLD
+             * line at zero really was given away, the customer really did save
+             * what the box was worth, and a receipt that said otherwise would
+             * be wrong in the other direction. This is the shopping path, where
+             * zero means "nobody has typed a price yet".
+             */
+            'saving' => $setPrice <= 0 ? 0 : max(0, $partsTotal - $setPrice),
         ];
     }
 

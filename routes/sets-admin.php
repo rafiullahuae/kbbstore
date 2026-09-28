@@ -12,13 +12,23 @@ declare(strict_types=1);
 | in the box. See database/migrations/2027_04_01_000000_sets_schema.php for the
 | shape and the first-hand sweep of everything that branches on `products.type`.
 |
-| Resulting paths, all under the existing admin-api prefix:
+| ── THREE ROUTES, NOT SIX, SINCE THE MERGE (Lane SP) ────────────────────────
+|
+| The owner asked for the Set editor to become part of the PRODUCT editor, and
+| it has: Catalog → Product editor carries a type control, and choosing Set
+| reveals the members panel and the pricing rule beside every section a product
+| already has. So the three endpoints that CREATED and SAVED a set are gone,
+| along with the screen that called them --
+|
+|     POST /admin-api/sets        create        -> ProductEditorApiController::store
+|     GET  /admin-api/sets/{id}   read one      -> ProductEditorApiController::show
+|     PUT  /admin-api/sets/{id}   save          -> ProductEditorApiController::save
+|
+| -- because two screens that can both edit a set is exactly the shape the merge
+| exists to remove. What is left is the LIST, the picker's search and delete:
 |
 |     GET    /admin-api/sets                   every set, with its member count
-|     POST   /admin-api/sets                   create one
 |     GET    /admin-api/sets/products          the member picker's search
-|     GET    /admin-api/sets/{id}              one set and its members
-|     PUT    /admin-api/sets/{id}              save the fields and the members
 |     DELETE /admin-api/sets/{id}              delete it
 |
 | ── WHAT THE INTEGRATOR MUST WIRE ───────────────────────────────────────────
@@ -94,26 +104,19 @@ Route::get('/sets', [SetApiController::class, 'index'])
     ->middleware('throttle:60,1')
     ->name('admin.sets.index');
 
-Route::post('/sets', [SetApiController::class, 'store'])
-    ->middleware('throttle:60,1')
-    ->name('admin.sets.store');
-
 /*
  * ▲ ABOVE /sets/{id}. See the note on route order in the header.
+ *
+ * THE MEMBER PICKER'S SEARCH, AND IT IS NOW THE PRODUCT EDITOR'S. (Lane SP)
+ * When the Sets editor was merged into Catalog → Product editor, this endpoint
+ * did not move with it: it is a catalogue search that excludes sets, one
+ * implementation, and the product editor's "What is in the box" panel calls it
+ * exactly as the retired screen did. A second search would be a second answer
+ * to "what may go in a box".
  */
 Route::get('/sets/products', [SetApiController::class, 'products'])
     ->middleware('throttle:120,1')
     ->name('admin.sets.products');
-
-Route::get('/sets/{id}', [SetApiController::class, 'show'])
-    ->where('id', '[0-9]+')
-    ->middleware('throttle:60,1')
-    ->name('admin.sets.show');
-
-Route::put('/sets/{id}', [SetApiController::class, 'update'])
-    ->where('id', '[0-9]+')
-    ->middleware('throttle:60,1')
-    ->name('admin.sets.update');
 
 Route::delete('/sets/{id}', [SetApiController::class, 'destroy'])
     ->where('id', '[0-9]+')

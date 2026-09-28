@@ -9,13 +9,11 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductSetItem;
 use App\Models\ProductVariant;
-use App\Support\RichText;
-use App\Support\SetContents;
 use App\Support\SetEagerLoad;
+use App\Support\SetPricing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 /**
  * Catalog → Sets. (Lane SET)
@@ -123,6 +121,18 @@ class SetApiController extends Controller
             ->limit(200)
             ->get();
 
+        /*
+         * THE LIST PRINTS THE DERIVED PRICE, AND IT IS FLAT. (Lane SP)
+         *
+         * A set priced as a discount off its parts works its price out from the
+         * members' current prices, and `products.price` is only a cache of that
+         * which can lag when a member is repriced elsewhere. So the list asks
+         * for the real figure — and asks for every set's members in THREE
+         * batched queries rather than one per set, which is what SetEagerLoad
+         * is for. Two hundred sets cost three statements, not two hundred.
+         */
+        SetEagerLoad::on($sets);
+
         return response()->json([
             'ok' => true,
             'sets' => $sets->map(fn (Product $s) => [
@@ -131,8 +141,9 @@ class SetApiController extends Controller
                 'slug' => (string) $s->slug,
                 'status' => (string) $s->status,
                 'is_visible' => (bool) $s->is_visible,
-                'price_aed' => $this->majorFromFils((int) $s->price),
+                'price_aed' => $this->majorFromFils((int) $s->effectivePrice()),
                 'sale_price_aed' => $s->sale_price === null ? '' : $this->majorFromFils((int) $s->sale_price),
+                'price_mode' => SetPricing::mode($s),
                 'category' => $s->category?->name,
                 'member_count' => (int) $s->set_items_count,
                 'image' => $s->image,
@@ -205,69 +216,23 @@ class SetApiController extends Controller
         ]);
     }
 
-    /* ----------------------------------------------------------------- show */
+    /* ─────────────────────────────────────────────────────────────────────
+       WHAT USED TO BE HERE, AND WHERE IT WENT. (Lane SP)
 
-    public function show(int $id): JsonResponse
-    {
-        $set = $this->find($id);
+       show(), store() and update() -- read one set, create one, save one --
+       are gone, with the Catalog → Sets editor that called them. A set is now
+       created and saved on Catalog → Product editor, because a set IS a
+       `products` row and that editor already owns every other thing one has:
+       the slug, the status, the category, the descriptions, the images, the
+       search appearance, the tags, the brand and the position.
 
-        if ($set === null) {
-            return $this->missing();
-        }
+       ProductEditorApiController::store() and ::save() carry the members and
+       the pricing rule; ::show() returns them. Two endpoints that can both
+       write a set is the same defect as two screens that can both edit one.
 
-        SetEagerLoad::on([$set]);
-
-        return response()->json(['ok' => true, 'set' => $this->payload($set)]);
-    }
-
-    /* ---------------------------------------------------------------- store */
-
-    public function store(Request $request): JsonResponse
-    {
-        $data = $this->validated($request, creating: true);
-
-        $set = DB::transaction(function () use ($data) {
-            $set = new Product();
-
-            // THE ONE LINE THAT MAKES THIS A SET. Written here and nowhere else,
-            // and never from request input: `type` is not in validated()'s rules
-            // at all, so no request can turn a set into a simple product or the
-            // other way round through this endpoint.
-            $set->type = 'set';
-            $set->slug = $this->uniqueSlug($data['name']);
-
-            $this->apply($set, $data);
-            $this->members($set, $data['members']);
-
-            return $set;
-        });
-
-        SetEagerLoad::on([$set = $set->fresh()]);
-
-        return response()->json(['ok' => true, 'created' => true, 'set' => $this->payload($set)], 201);
-    }
-
-    /* ----------------------------------------------------------------- save */
-
-    public function update(Request $request, int $id): JsonResponse
-    {
-        $set = $this->find($id);
-
-        if ($set === null) {
-            return $this->missing();
-        }
-
-        $data = $this->validated($request, creating: false);
-
-        DB::transaction(function () use ($set, $data) {
-            $this->apply($set, $data);
-            $this->members($set, $data['members']);
-        });
-
-        SetEagerLoad::on([$set = $set->fresh()]);
-
-        return response()->json(['ok' => true, 'set' => $this->payload($set)]);
-    }
+       WHAT REMAINS is the list, the member picker's catalogue search -- which
+       the product editor now calls -- and delete.
+       ───────────────────────────────────────────────────────────────────── */
 
     /* -------------------------------------------------------------- destroy */
 
@@ -311,255 +276,19 @@ class SetApiController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validated(Request $request, bool $creating): array
-    {
-        $rules = [
-            'name' => ['required', 'string', 'max:200'],
-            'status' => ['required', Rule::in(self::STATUSES)],
-            'is_visible' => ['nullable', 'boolean'],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'short_description' => ['nullable', 'string', 'max:2000'],
-            'description' => ['nullable', 'string', 'max:200000'],
-            // Major units on the wire, converted once below. The regex is the
-            // one CatalogProductsApiController's price band uses, for the same
-            // reason: a price is a number a human typed and nothing else.
-            'price' => ['required', 'string', 'regex:/^\d{1,9}(\.\d{1,4})?$/'],
-            'sale_price' => ['nullable', 'string', 'regex:/^\d{1,9}(\.\d{1,4})?$/'],
-            'image' => ['nullable', 'string', 'max:2000'],
-            'images' => ['nullable', 'array', 'max:20'],
-            'images.*' => ['string', 'max:2000'],
-            'members' => ['required', 'array', 'min:1', 'max:' . self::MAX_MEMBERS],
-            'members.*.product_id' => ['required', 'integer', 'exists:products,id'],
-            'members.*.variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
-            'members.*.quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
-        ];
+    /* ─────────────────────────────────────────────────────────────────────
+       AND THE HELPERS THAT WENT WITH THEM. (Lane SP)
 
-        if (! $creating) {
-            // The slug is a live URL contract once a set is published — Google
-            // holds it and it sits in customers' order history — so it is set
-            // at create time and never rewritten here. Same rule, same reason,
-            // as ProductEditorApiController.
-            unset($rules['slug']);
-        }
+       validated(), apply(), members(), applyPricing(), syncDerivedPrice(),
+       tags(), payload(), safeUrl(), filsFromMajor() and uniqueSlug() were all
+       reachable only from store() and update(). Deleted rather than left behind
+       a flag: dead code that still compiles is code the next reader has to
+       decide about, and two implementations of "save a set" is the exact shape
+       this merge removed. Every one of them now has a single home in
+       Admin\ProductEditorApiController, which was already doing the same job
+       for every other kind of product.
+       ───────────────────────────────────────────────────────────────────── */
 
-        return $request->validate($rules, [
-            'members.required' => 'A set has to contain at least one product.',
-            'members.min' => 'A set has to contain at least one product.',
-            'price.regex' => 'The set price is a number, such as 129 or 129.50.',
-            'sale_price.regex' => 'The sale price is a number, such as 99 or 99.50.',
-        ]);
-    }
-
-    /**
-     * Everything but the members. Never `type`, and never `slug` after create.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    private function apply(Product $set, array $data): void
-    {
-        $set->name = trim((string) $data['name']);
-
-        /*
-         * `status` IS ONE OF ITS OWN OPTIONS OR THE DEFAULT. CLAUDE.md rule 5.
-         * It is already validated against Rule::in above; this second test is
-         * the one that survives somebody widening the rule, and it is the shape
-         * ProductEditorApiController uses on the same column.
-         */
-        $set->status = in_array($data['status'], self::STATUSES, true) ? $data['status'] : 'draft';
-        $set->is_visible = (bool) ($data['is_visible'] ?? true);
-        $set->category_id = $data['category_id'] ?? null;
-        $set->short_description = $data['short_description'] ?? null;
-
-        /*
-         * THROUGH THE SAME SANITISER THE PRODUCT EDITOR USES, and not because
-         * it is tidy: a set's description is printed by
-         * resources/views/partials/product-tabs.blade.php with `{!! !!}`,
-         * because a set IS a product and that is the page it publishes on. An
-         * unsanitised description here is stored XSS on the storefront.
-         */
-        $set->description = RichText::clean($data['description'] ?? null);
-
-        $set->price = $this->filsFromMajor((string) $data['price']);
-        $set->sale_price = trim((string) ($data['sale_price'] ?? '')) === ''
-            ? null
-            : $this->filsFromMajor((string) $data['sale_price']);
-
-        $set->image = $this->safeUrl($data['image'] ?? null);
-
-        $images = [];
-
-        foreach (($data['images'] ?? []) as $url) {
-            $clean = $this->safeUrl($url);
-
-            if ($clean !== null) {
-                $images[] = $clean;
-            }
-        }
-
-        $set->images = $images;
-
-        $set->save();
-    }
-
-    /**
-     * Replace the member list with exactly what was sent, in the order it was
-     * sent, and refuse a member twice.
-     *
-     * DELETE-THEN-INSERT inside the caller's transaction. A diff would be
-     * cleverer and would have to answer "is this the same member row?" for a
-     * member chosen twice with two different variants, which is a question the
-     * screen does not make the operator answer. The whole list is small (40 at
-     * most) and it is rewritten by one human pressing Save.
-     *
-     * @param  list<array<string, mixed>>  $members
-     */
-    private function members(Product $set, array $members): void
-    {
-        ProductSetItem::where('set_product_id', $set->id)->delete();
-
-        $seen = [];
-        $position = 0;
-        $rows = [];
-
-        foreach ($members as $member) {
-            $productId = (int) $member['product_id'];
-            $variantId = isset($member['variant_id']) ? (int) $member['variant_id'] : null;
-
-            /*
-             * A SET CANNOT CONTAIN ITSELF, and cannot contain another set.
-             * The picker already excludes both; this is the door, because the
-             * picker is a screen and this is an endpoint. A set inside itself
-             * is an infinite box.
-             */
-            if ($productId === $set->id) {
-                continue;
-            }
-
-            /*
-             * DUPLICATES ARE REFUSED HERE and not by a unique index, for the
-             * reason the migration gives: MySQL and SQLite both treat NULLs as
-             * distinct, so an index on (set, member, variant) would refuse a
-             * duplicate that names a variant and accept one that does not. This
-             * can see both halves. A member wanted twice is a quantity of two.
-             */
-            $key = $productId . ':' . ($variantId ?? 0);
-
-            if (isset($seen[$key])) {
-                continue;
-            }
-
-            $seen[$key] = true;
-
-            /*
-             * A VARIANT MUST BELONG TO THE MEMBER IT IS SENT WITH. `exists:`
-             * above proves the variant row exists and nothing else — a request
-             * naming product A with product B's variation would otherwise store
-             * a box whose contents contradict themselves, and it is the
-             * variant's price that the saving is computed from.
-             */
-            if ($variantId !== null
-                && ! ProductVariant::where('id', $variantId)->where('product_id', $productId)->exists()) {
-                $variantId = null;
-            }
-
-            $rows[] = [
-                'set_product_id' => $set->id,
-                'member_product_id' => $productId,
-                'member_variant_id' => $variantId,
-                'quantity' => max(1, min(99, (int) ($member['quantity'] ?? 1))),
-                'position' => $position++,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-
-        if ($rows !== []) {
-            ProductSetItem::insert($rows);
-        }
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function payload(Product $set): array
-    {
-        $contents = SetContents::fromProduct($set);
-
-        return [
-            'id' => $set->id,
-            'name' => (string) $set->name,
-            'slug' => (string) $set->slug,
-            'status' => (string) $set->status,
-            'is_visible' => (bool) $set->is_visible,
-            'category_id' => $set->category_id,
-            'short_description' => (string) ($set->short_description ?? ''),
-            'description' => (string) ($set->description ?? ''),
-            'price_aed' => $this->majorFromFils((int) $set->price),
-            'sale_price_aed' => $set->sale_price === null ? '' : $this->majorFromFils((int) $set->sale_price),
-            'image' => $set->image,
-            'images' => is_array($set->images) ? array_values($set->images) : [],
-            'url' => '/product/' . $set->slug . '/',
-            'members' => $set->setItems->map(fn (ProductSetItem $row) => [
-                'product_id' => $row->member_product_id,
-                'variant_id' => $row->member_variant_id,
-                'quantity' => (int) $row->quantity,
-                'name' => (string) ($row->member?->name ?? ''),
-                'brand' => (string) ($row->member?->brand?->name ?? ''),
-                'sku' => (string) ($row->variant?->sku ?? $row->member?->sku ?? ''),
-                'image' => $row->variant?->image ?: $row->member?->image,
-                'unit_price_aed' => $this->majorFromFils(
-                    (int) ($row->variant?->effectivePrice() ?? $row->member?->effectivePrice() ?? 0)
-                ),
-            ])->all(),
-            // Fils on the wire for these three, because the screen prints them
-            // as a single computed sentence and does no arithmetic of its own.
-            'parts_total_aed' => $this->majorFromFils((int) $contents['partsTotal']),
-            'saving_aed' => $this->majorFromFils((int) $contents['saving']),
-            'item_count' => (int) $contents['count'],
-        ];
-    }
-
-    /**
-     * A URL that is safe to put in an `src`. (CLAUDE.md rule 5.)
-     *
-     * SCHEME-CHECKED BEFORE IT IS STORED, not before it is printed: a value
-     * that reaches the column is printed by the product page, the tile, the
-     * cart, the Meta feed and the sitemap, and only one of those is going to
-     * remember to check. `javascript:` and `data:` are the two that matter and
-     * neither is a picture. A root-relative path is what
-     * /admin-api/media/upload returns and is allowed as itself.
-     */
-    private function safeUrl(mixed $value): ?string
-    {
-        $url = trim((string) ($value ?? ''));
-
-        if ($url === '') {
-            return null;
-        }
-
-        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
-            return $url;
-        }
-
-        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
-
-        return in_array($scheme, ['http', 'https'], true) ? $url : null;
-    }
-
-    /**
-     * Major units to integer fils, and the ONLY conversion on this path.
-     *
-     * `round()` on a string scaled by 100 rather than `(int) ($v * 100)`:
-     * 129.95 is not representable in binary floating point and the cast
-     * truncates it to 12994. This shop has already been bitten by a price that
-     * was one fil short of what the page said.
-     */
-    private function filsFromMajor(string $major): int
-    {
-        return (int) round(((float) $major) * 100);
-    }
-
-    /** Integer fils back to the string the price box holds. Never a float out. */
     private function majorFromFils(int $fils): string
     {
         return number_format($fils / 100, 2, '.', '');

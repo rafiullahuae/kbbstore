@@ -149,6 +149,57 @@
 .peo-in:focus,.peo-sel:focus,.peo-ta:focus{outline:0;border-color:#1f7d52;box-shadow:0 0 0 3px rgba(31,125,82,.14)}
 
 .peo-row{display:flex;gap:10px;flex-wrap:wrap;min-width:0}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SET PANEL. (Lane SP)
+
+   Every colour, radius and shadow below is one of this editor's own tokens --
+   --surface, --surface-2, --border, --ink/-2/-soft, --accent -- because this is
+   the SAME SCREEN as the rest of the product editor and must not become a
+   second design language. Nothing here names a font.
+
+   ▲ AND NOTHING HERE IS MEASURED. Two tiles across on a phone and three above
+     it, by auto-fit and min(); every track is minmax(0,1fr) because a grid
+     item's default min-width is auto and one long product name otherwise
+     widens its track past its share and pushes the page sideways at 390.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.peo-settiles{display:grid;gap:9px;min-width:0;margin-bottom:14px;
+              grid-template-columns:repeat(auto-fit,minmax(min(100%,132px),1fr))}
+.peo-settile{background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);
+             border-radius:11px;padding:9px 11px;min-width:0;display:grid;gap:3px}
+.peo-settile .k{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+                color:var(--ink-soft,#6b7280)}
+.peo-settile .v{font-size:15px;font-weight:700;color:var(--ink,#111827);overflow-wrap:anywhere}
+.peo-settile.is-live{border-color:var(--accent,#15a85a)}
+.peo-settile.is-save .v{color:#15803d}
+
+.peo-setlist{display:grid;gap:7px;min-width:0;max-height:340px;overflow:auto}
+.peo-setm{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap;
+          background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);
+          border-radius:11px;padding:8px 10px}
+.peo-setm.is-find{background:var(--surface,#fff)}
+.peo-setm.is-drag{opacity:.45}
+/* The drop marker is a BORDER on the row the pointer is over -- never a
+   measured position. Where the row is, is the browser's business. */
+.peo-setm.is-over{border-color:var(--accent,#15a85a);box-shadow:0 0 0 3px rgba(21,168,90,.16)}
+.peo-grip{flex:none;width:16px;text-align:center;cursor:grab;user-select:none;
+          color:var(--ink-soft,#6b7280);font-size:13px;line-height:1}
+.peo-setth{flex:none;width:42px;height:42px;border-radius:9px;background-size:cover;
+           background-position:center;background-color:var(--surface-3,#eef0f6);
+           border:1px solid var(--border,#e6e6e6)}
+.peo-setmid{flex:1 1 140px;min-width:0;display:grid;gap:2px}
+.peo-setmid b{font-size:12.5px;font-weight:650;color:var(--ink,#111827);line-height:1.3;
+              overflow-wrap:anywhere}
+.peo-setmid i{font-style:normal;font-size:11px;color:var(--ink-soft,#6b7280);line-height:1.35;
+              overflow-wrap:anywhere}
+.peo-setq{flex:none;width:58px;padding:6px 8px;text-align:center}
+.peo-setvar{flex:none;max-width:130px}
+.peo-mini{flex:none;font:inherit;font-size:11.5px;font-weight:600;padding:5px 9px;border-radius:8px;
+          border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);
+          color:var(--ink-2,#374151);cursor:pointer}
+.peo-mini:hover:not(:disabled){background:var(--surface-2,#f6f7fb)}
+.peo-mini:disabled{opacity:.4;cursor:default}
+.peo-mini.is-bad{color:#b8362d}
 .peo-row > *{flex:1 1 140px;min-width:0}
 
 .peo-check{display:flex;align-items:flex-start;gap:9px;font-size:13px;cursor:pointer;
@@ -715,8 +766,13 @@
 
   /* Opened straight onto a blank product, for the Catalog header's Add
      product button. */
-  window.peoNew = function(){
-    intent = { kind: 'new' };
+  window.peoNew = function(preset){
+    /* `preset` is optional and is additive: every existing caller (the Catalog
+       header's Add product button) passes nothing and gets exactly what it
+       always got. Catalog → Sets passes { type: 'set' } so "New set" opens this
+       editor already switched to a set, rather than making the operator find
+       the type control first. (Lane SP) */
+    intent = { kind: 'new', preset: preset || null };
     window.go(SCREEN);
   };
 
@@ -739,6 +795,9 @@
 
     if (want && want.kind === 'new') {
       model = blank();
+
+      if (want.preset && isKnownType(want.preset.type)) model.type = want.preset.type;
+
       dirty = false;
       banner = null;
       render();
@@ -828,9 +887,21 @@
     return (model && model.translations) || null;
   }
 
+  /* The Set panel's own two pieces of screen state: what the member search
+     last found, and what was typed into it. NOT on `model`, because neither is
+     part of the product and neither is saved. (Lane SP) */
+  var setFound = [];
+  var setQuery = '';
+
   function blank(){
     return {
       id: null, name: '', slug: '', sku: null, gtin: null, brand_id: null,
+      /* A new product is a SIMPLE product, which is what this editor has always
+         created and what the server's own `$product->type ??= 'simple'` default
+         says. Choosing Set is a deliberate act. (Lane SP) */
+      type: 'simple', set_members: [], price_mode: 'fixed',
+      discount_percent: '', discount_amount: '',
+      set_parts_total_aed: '', set_effective_aed: '',
       status: 'draft', is_visible: true, featured: false, published_at: null,
       category_ids: [], primary_category_id: null,
       price_aed: '', sale_aed: '', sale_starts_at: null, sale_ends_at: null,
@@ -928,6 +999,20 @@
       image_alts: model.image_alts || {},
       seo: model.seo || {},
 
+      /* ── THE TYPE, AND THE SET (Lane SP) ─────────────────────────────────
+
+         `type` is sent only when it is one this editor offers. A product whose
+         type came across from WooCommerce as 'grouped' has a DISABLED select
+         with no data-bind, so model.type is still that word and omitting it is
+         what leaves the column alone -- the server's own array_key_exists()
+         guard is the other half of the same promise.
+
+         The box and the rule go up on every save of a SET and on no other,
+         because a payload that carried an empty member list for a simple
+         product would be a request to empty a box the operator may be one
+         dropdown away from coming back to. */
+      type: isKnownType(model.type) ? model.type : undefined,
+
       /* T4b — THE ARABIC, IN THE SAME REQUEST AS THE ENGLISH.
          Not a second call afterwards: a second call can fail on its own, and a
          product that saved while its Arabic did not is exactly the half-state
@@ -936,6 +1021,20 @@
          server to delete the row. */
       translations: arabicPayload()
     };
+
+    if ((model.type || 'simple') === 'set') {
+      body.set_members = (model.set_members || []).map(function(m){
+        return {
+          product_id: m.product_id,
+          variant_id: m.variant_id || null,
+          quantity: Math.max(1, Math.min(99, Number(m.quantity || 1)))
+        };
+      });
+
+      body.price_mode = model.price_mode || 'fixed';
+      body.discount_percent = model.price_mode === 'discount_percent' ? String(model.discount_percent || '0') : null;
+      body.discount_amount = model.price_mode === 'discount_amount' ? String(model.discount_amount || '0') : null;
+    }
 
     var creating = !model.id;
     if (creating) body.slug = model.slug;
@@ -2217,6 +2316,211 @@
       + '</div>';
   }
 
+  /* Which of the three this product is, or the honest truth when it is
+     something the importer wrote. (Lane SP) */
+  var PEO_TYPES = [
+    ['simple', 'Simple product'],
+    ['variable', 'Variable product — has options'],
+    ['set', 'Set — made of other products']
+  ];
+
+  function isKnownType(t){
+    for (var i = 0; i < PEO_TYPES.length; i++) { if (PEO_TYPES[i][0] === t) return true; }
+    return false;
+  }
+
+  function typeField(){
+    var t = model.type || 'simple';
+
+    if (!isKnownType(t)) {
+      return '<div class="peo-fld"><label>Product type</label>'
+        + '<select class="peo-sel" disabled><option>' + esc(t) + '</option></select>'
+        + '<div class="peo-note">This type came across from WooCommerce and this editor does not '
+        + 'change it. Everything else on this page still saves normally.</div></div>';
+    }
+
+    return '<div class="peo-fld"><label>Product type</label>'
+      + '<select class="peo-sel" data-bind="type" id="peo-type">'
+      +   PEO_TYPES.map(function(o){
+            return '<option value="' + o[0] + '"' + (t === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+          }).join('')
+      + '</select>'
+      + '<div class="peo-note">' + (t === 'set'
+          ? 'A set is sold as one product at one price, and the shop shows what is in the box.'
+          : 'Choose <b>Set</b> to build a product out of other products.') + '</div></div>';
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     WHAT IS IN THE BOX — the Set panel. (Lane SP)
+
+     ONE panel, drawn only when the type is `set`, holding the two things a set
+     has that an ordinary product does not: its members and its pricing rule.
+     Everything else a set needs -- SEO, images, categories, brand, visibility,
+     stock, position, the description editors -- is this editor's own machinery
+     and is not copied here. That is the whole point of the merge.
+
+     NOTHING BELOW MEASURES LAYOUT. The member rows are dragged with the HTML5
+     drag events, whose targets the BROWSER supplies; there is no
+     getBoundingClientRect, no offsetTop and no scroll maths. The arrows stay
+     beside the drag handle because drag is a mouse gesture and this console is
+     used by keyboard every day.
+     ════════════════════════════════════════════════════════════════════════ */
+  function setboxView(){
+    var t = setTotals();
+    var mode = model.price_mode || 'fixed';
+
+    var rows = (model.set_members || []).map(function(m, i){
+      /* ▲ `data-peo-setdrag` AND NOT `data-peo-drag`. The panel ARRANGE bar
+         already owns `data-peo-drag` (see arrangeBar()), and this screen's drag
+         handlers find their row with closest('[…]') -- so sharing the name meant
+         a member row's drop could resolve to a panel and a panel's to a member.
+         Caught by a test counting the attribute, not by reading. (Lane SP) */
+      return '<div class="peo-setm" draggable="true" data-peo-setdrag="' + i + '">'
+        + '<span class="peo-grip" aria-hidden="true">&#8942;&#8942;</span>'
+        + '<span class="peo-setth"' + (m.image ? ' style="background-image:url(\'' + esc(m.image) + '\')"' : '') + '></span>'
+        + '<span class="peo-setmid">'
+          + '<b>' + esc(m.name) + '</b>'
+          + '<i>' + (m.brand ? esc(m.brand) + ' &middot; ' : '')
+            + (m.variant ? esc(m.variant) + ' &middot; ' : '')
+            + esc(boot ? boot.currency.code : '') + ' ' + esc(m.unit_price_aed || '0') + ' each</i>'
+        + '</span>'
+        + '<input class="peo-in peo-setq" inputmode="numeric" value="' + Number(m.quantity || 1) + '" '
+          + 'data-peo-mq="' + i + '" aria-label="How many of this in the box">'
+        + '<button type="button" class="peo-mini" data-peo-up="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">&uarr;</button>'
+        + '<button type="button" class="peo-mini" data-peo-down="' + i + '"' + (i === (model.set_members || []).length - 1 ? ' disabled' : '') + ' aria-label="Move down">&darr;</button>'
+        + '<button type="button" class="peo-mini is-bad" data-peo-rm="' + i + '" aria-label="Remove from the box">&#10005;</button>'
+        + '</div>';
+    }).join('');
+
+    var found = (setFound || []).map(function(p){
+      var options = (p.variants && p.variants.length)
+        ? '<select class="peo-sel peo-setvar" data-peo-var="' + p.id + '" aria-label="Option">'
+            + '<option value="">Whole product</option>'
+            + p.variants.map(function(v){ return '<option value="' + v.id + '">' + esc(v.label) + '</option>'; }).join('')
+          + '</select>'
+        : '';
+
+      return '<div class="peo-setm is-find">'
+        + '<span class="peo-setth"' + (p.image ? ' style="background-image:url(\'' + esc(p.image) + '\')"' : '') + '></span>'
+        + '<span class="peo-setmid"><b>' + esc(p.name) + '</b>'
+        + '<i>' + (p.brand ? esc(p.brand) + ' &middot; ' : '') + esc(boot ? boot.currency.code : '')
+        + ' ' + esc(p.price_aed || '0') + '</i></span>'
+        + options
+        + '<button type="button" class="peo-mini" data-peo-add="' + p.id + '">Add</button>'
+        + '</div>';
+    }).join('');
+
+    var code = boot ? boot.currency.code : '';
+
+    var rule = '';
+
+    if (mode === 'discount_percent') {
+      rule = '<div class="peo-fld"><label>Discount off the total (%)</label>'
+        + '<input class="peo-in" inputmode="decimal" data-bind="discount_percent" id="peo-setpct" '
+        + 'value="' + esc(model.discount_percent || '') + '" placeholder="e.g. 10"></div>';
+    } else if (mode === 'discount_amount') {
+      rule = '<div class="peo-fld"><label>Discount off the total (' + esc(code) + ')</label>'
+        + '<input class="peo-in" inputmode="decimal" data-bind="discount_amount" id="peo-setamt" '
+        + 'value="' + esc(model.discount_amount || '') + '" placeholder="e.g. 25"></div>';
+    } else {
+      rule = '<div class="peo-note" style="margin:-4px 0 12px">The set costs exactly what you type in '
+        + '<b>Price</b>. Change a product&rsquo;s price and this figure stays where it is.</div>';
+    }
+
+    return '<div class="peo-card">'
+      + '<h3>What is in the box</h3>'
+      + '<p class="peo-hint">A set is sold as one product at one price. Everything else on this page — '
+      + 'the pictures, the description, the categories, search appearance — works exactly as it does '
+      + 'for any other product.</p>'
+
+      + '<div class="peo-settiles">'
+        + '<div class="peo-settile"><span class="k">Bought separately</span>'
+          + '<span class="v" data-peo-money="parts">' + esc(code) + ' ' + esc(setAed(t.parts)) + '</span></div>'
+        + '<div class="peo-settile is-live"><span class="k">Set price</span>'
+          + '<span class="v" data-peo-money="price">' + esc(code) + ' ' + esc(setAed(t.price)) + '</span></div>'
+        + '<div class="peo-settile is-save"><span class="k">Saving</span>'
+          + '<span class="v" data-peo-money="saving">' + (t.saving > 0 ? esc(code) + ' ' + esc(setAed(t.saving)) : '&mdash;') + '</span></div>'
+      + '</div>'
+
+      + '<div class="peo-fld"><label>How the price is decided</label>'
+        + '<select class="peo-sel" data-bind="price_mode" id="peo-pricemode">'
+        +   '<option value="fixed"' + (mode === 'fixed' ? ' selected' : '') + '>A price I type</option>'
+        +   '<option value="discount_percent"' + (mode === 'discount_percent' ? ' selected' : '') + '>A percentage off the total</option>'
+        +   '<option value="discount_amount"' + (mode === 'discount_amount' ? ' selected' : '') + '>An amount off the total</option>'
+        + '</select>'
+        + '<button type="button" class="peo-btn" id="peo-usetotal" style="margin-top:9px">Use this total</button>'
+        + '<div class="peo-note">' + (mode === 'fixed'
+            ? 'Or press <b>Use this total</b> to price the set at what its products cost, and keep it following them.'
+            : 'Worked out fresh every time the price is shown. <b>Reduce a product&rsquo;s price and this set '
+              + 'drops by the same amount, on its own.</b> A basket or an order already placed keeps the price '
+              + 'it was agreed at.') + '</div></div>'
+      + rule
+
+      + '<div class="peo-fld"><label>Products in this box</label>'
+        + '<div class="peo-setlist">'
+        + (rows || '<div class="peo-note" style="margin:0">Nothing in the box yet. Search below.</div>')
+        + '</div>'
+        + '<div class="peo-note">Drag a row to reorder it, or use the arrows.</div></div>'
+
+      + '<div class="peo-fld" style="margin-bottom:0"><label>Add a product</label>'
+        + '<input class="peo-in" type="search" id="peo-setq" value="' + esc(setQuery) + '" '
+        + 'placeholder="Search by name or SKU">'
+        + '<div class="peo-setlist" style="margin-top:9px">'
+        + (found || '<div class="peo-note" style="margin:0">Type to search your catalogue.</div>')
+        + '</div></div>'
+      + '</div>';
+  }
+
+  /* ── THE SET'S OWN ARITHMETIC, IN INTEGER FILS ───────────────────────────
+
+     THE SCREEN DOES NOT DECIDE WHAT A SET COSTS -- App\Support\SetPricing does,
+     on the server, and hands the answer back as `set_effective_aed`. What this
+     computes is the LIVE PREVIEW the owner asked for, so the figure moves as he
+     types rather than after he presses Save.
+
+     And it is the same three lines the server runs: whole fils in, integer
+     multiplication, one division with the half rounded up. A preview built as
+     `parts * (1 - pct/100)` is a float chain that lands a fil under what the
+     server then saves, and a preview that disagrees with the saved price by one
+     fil is a preview nobody trusts again. */
+  function setFils(aed){
+    var n = Number(aed);
+    return isFinite(n) ? Math.round(n * 100) : 0;
+  }
+
+  function setAed(fils){
+    return (Math.round(Number(fils) || 0) / 100).toFixed(2);
+  }
+
+  function setTotals(){
+    var parts = 0, count = 0;
+
+    (model.set_members || []).forEach(function(m){
+      var q = Math.max(1, Number(m.quantity || 1));
+      parts += setFils(m.unit_price_aed || 0) * q;
+      count += q;
+    });
+
+    var mode = model.price_mode || 'fixed';
+    var price;
+
+    if (mode === 'discount_percent') {
+      var bp = Math.max(0, Math.min(10000, Math.round(Number(model.discount_percent || 0) * 100)));
+      price = Math.max(0, Math.floor((parts * (10000 - bp) + 5000) / 10000));
+    } else if (mode === 'discount_amount') {
+      price = Math.max(0, parts - Math.max(0, setFils(model.discount_amount || 0)));
+    } else {
+      price = setFils(model.price_aed || 0);
+    }
+
+    /* ▲ AN UNPRICED SET IS NOT SAVING ANYBODY ANYTHING. The owner's first set,
+       half filled in, read "Bought separately AED 806.00 / Set price AED 0.00 /
+       You save AED 806.00" -- the arithmetic right and the sentence false. The
+       same guard is in App\Support\SetContents, so the screen and the shop say
+       the same thing. */
+    return { parts: parts, count: count, price: price, saving: price <= 0 ? 0 : Math.max(0, parts - price) };
+  }
+
   function basicsView(){
     var creating = !model.id;
 
@@ -2229,6 +2533,30 @@
          requirement in his own words: the Arabic is entered at the moment of
          creation, not on a screen someone has to remember to visit. */
       + arabicField('name', 'Product name', '#content #peo-name', 200)
+      /* ── THE TYPE CONTROL (Lane SP) ──────────────────────────────────────
+
+         The owner: "i want if i add product, on that page it will have optin to
+         switch to Set product type, and all options will be shown for set, with
+         remaing same sections like seo etc. ... so in this case i will have most
+         of things ready made ... instead of making such all options separately
+         for set product type."
+
+         A set IS a `products` row with type='set' plus the product_set_items
+         pivot -- the shape Lane SET chose precisely so a set would carry slug,
+         status, category, description, images, SEO, tags and position as an
+         ordinary product. Choosing Set here reveals ONE extra panel; every
+         other section on this page is this editor's own, unchanged, and a set
+         uses it because a set is a product.
+
+         ▲ AN UNRECOGNISED TYPE IS SHOWN AS ITSELF AND IS NOT SENT BACK.
+           `products.type` stores an unknown value verbatim -- the WooCommerce
+           import writes 'grouped' and 'external' -- and an editor that quietly
+           turned one of those into 'simple' the first time somebody fixed a
+           typo in its name would be rewriting the catalogue by opening it. The
+           select is then disabled and carries no data-bind at all, so collect()
+           never sees it and the server's array_key_exists() guard leaves the
+           column alone. */
+      + typeField()
       + (creating
           ? '<div class="peo-fld"><label>Web address</label>'
             + '<input class="peo-in" data-bind="slug" id="peo-slug" value="' + esc(model.slug) + '" placeholder="anua-heartleaf-toner">'
@@ -2304,6 +2632,13 @@
         return rte('how_to_use', 'How to use',
           'Shown as its own tab. A short routine works best.',
           'After cleansing, apply to a cotton pad and sweep over the face…', model.how_to_use); } },
+    /* The Set panel. Registered like any other, so the operator can move it
+       and the arrange controls, the persistence and the reconciliation all
+       know about it for free -- and HIDDEN unless the product is a set, by the
+       one `when` below. (Lane SP) */
+    { key: 'setbox',     label: 'What is in the box', col: 'main',
+      when: function(){ return (model.type || 'simple') === 'set'; },
+      view: function(){ return setboxView(); } },
     { key: 'seo',        label: 'Search appearance', col: 'main', view: function(){ return seoView(); } },
     { key: 'publish',    label: 'Publishing',        col: 'side', view: function(){ return publishView(); } },
     { key: 'categories', label: 'Categories',        col: 'side', view: function(){ return categoriesView(); } },
@@ -2434,6 +2769,17 @@
   function panelHtml(p, col, i){
     if (!p) return '';
 
+    /* A panel may declare `when`, and a panel whose condition is false is not
+       drawn at all -- not hidden with CSS, not drawn empty. The Set panel is
+       the only one that has one today: it is the two things a set has and an
+       ordinary product does not, and on an ordinary product there is nothing
+       to show.
+
+       It stays IN the layout while it is not drawn, which is what lets the
+       operator arrange it once and find it where they put it the next time
+       they open a set. (Lane SP) */
+    if (typeof p.when === 'function' && !p.when()) return '';
+
     if (!arranging) {
       return '<div class="peo-panel" data-peo-panel="' + esc(p.key) + '">' + p.view() + '</div>';
     }
@@ -2562,7 +2908,235 @@
     if (add) add.onclick = function(){ model = blank(); dirty = false; banner = null; render(); };
   }
 
+  /* ════════════════════════════════════════════════════════════════════════
+     THE SET PANEL'S OWN WIRING. (Lane SP)
+
+     Every listener below is installed by bindEditor() on the elements the last
+     render() produced, which is how the rest of this screen works; nothing here
+     is delegated to `document`, so nothing here is left behind when the panel
+     is not drawn.
+     ════════════════════════════════════════════════════════════════════════ */
+
+  /* In-place, so the three figures move as the operator types without a render
+     taking the focus out of the box. It writes text into boxes that already
+     exist and asks the DOM nothing except which element carries an attribute --
+     no size, no position, no computed style. */
+  function refreshSetMoney(){
+    if (!model || (model.type || 'simple') !== 'set') return;
+
+    var t = setTotals();
+    var code = boot ? boot.currency.code : '';
+
+    var write = function(key, text){
+      var box = document.querySelector('#content [data-peo-money="' + key + '"]');
+      if (box) box.textContent = text;
+    };
+
+    write('parts', code + ' ' + setAed(t.parts));
+    write('price', code + ' ' + setAed(t.price));
+    write('saving', t.saving > 0 ? code + ' ' + setAed(t.saving) : '—');
+  }
+
+  async function setSearch(){
+    /* COLLECT BEFORE THE RESULTS LAND. The render below rewrites every field
+       from `model`, and the Sets screen shipped this exact defect: typing a
+       product name into the picker silently emptied the name, the price and
+       both descriptions above it. Found by a screenshot, not by a reader. */
+    collect();
+
+    try {
+      var body = await api('/sets/products?q=' + encodeURIComponent(setQuery));
+      setFound = (body && body.products) || [];
+    } catch (e) {
+      setFound = [];
+      banner = { kind: 'bad', text: message(e, 'That search could not be run.') };
+    }
+
+    render();
+  }
+
+  /* MOVE, not swap: dropping row 1 onto row 4 puts it AT 4 and shuffles the
+     rest up, which is what dragging a thing onto a place means. The arrows
+     still swap with the neighbour, which is what an arrow means. */
+  var setDragFrom = null;
+
+  function setMemberIndex(node){
+    var row = node && node.closest ? node.closest('[data-peo-setdrag]') : null;
+    return row ? Number(row.getAttribute('data-peo-setdrag')) : null;
+  }
+
+  function bindSetBox(){
+    var panel = document.querySelector('#content [data-peo-panel="setbox"]');
+    if (!panel) return;
+
+    var q = panel.querySelector('#peo-setq');
+
+    if (q) {
+      q.addEventListener('input', function(){
+        setQuery = q.value;
+        clearTimeout(bindSetBox._t);
+        bindSetBox._t = setTimeout(setSearch, 220);
+      });
+    }
+
+    /* ── "USE THIS TOTAL" ─────────────────────────────────────────────────
+       NOT a button that copies the parts total into the price box. It switches
+       the rule to "the parts total, less nothing", which keeps following the
+       members afterwards -- a copied figure would go stale the first time a
+       product in the box was repriced, which is precisely what the owner asked
+       it not to do. */
+    var use = panel.querySelector('#peo-usetotal');
+
+    if (use) {
+      use.addEventListener('click', function(){
+        collect();
+        model.price_mode = 'discount_amount';
+        model.discount_amount = '0';
+        dirty = true;
+        render();
+      });
+    }
+
+    panel.querySelectorAll('[data-peo-mq]').forEach(function(el){
+      el.addEventListener('input', function(){
+        var i = Number(el.getAttribute('data-peo-mq'));
+        var m = (model.set_members || [])[i];
+        if (!m) return;
+        m.quantity = Math.max(1, Math.min(99, parseInt(el.value, 10) || 1));
+        dirty = true;
+        refreshSetMoney();
+      });
+    });
+
+    panel.querySelectorAll('[data-peo-rm]').forEach(function(el){
+      el.addEventListener('click', function(){
+        collect();
+        (model.set_members || []).splice(Number(el.getAttribute('data-peo-rm')), 1);
+        dirty = true;
+        render();
+      });
+    });
+
+    var swap = function(i, d){
+      var list = model.set_members || [];
+      var j = i + d;
+      if (j < 0 || j >= list.length) return;
+      var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+      dirty = true;
+      render();
+    };
+
+    panel.querySelectorAll('[data-peo-up]').forEach(function(el){
+      el.addEventListener('click', function(){ collect(); swap(Number(el.getAttribute('data-peo-up')), -1); });
+    });
+
+    panel.querySelectorAll('[data-peo-down]').forEach(function(el){
+      el.addEventListener('click', function(){ collect(); swap(Number(el.getAttribute('data-peo-down')), 1); });
+    });
+
+    panel.querySelectorAll('[data-peo-add]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var id = Number(el.getAttribute('data-peo-add'));
+        var found = (setFound || []).filter(function(x){ return Number(x.id) === id; })[0];
+        if (!found) return;
+
+        var sel = panel.querySelector('[data-peo-var="' + id + '"]');
+        var variantId = sel && sel.value ? Number(sel.value) : null;
+
+        collect();
+
+        model.set_members = model.set_members || [];
+
+        var already = model.set_members.some(function(m){
+          return Number(m.product_id) === id && Number(m.variant_id || 0) === Number(variantId || 0);
+        });
+
+        if (already) {
+          banner = { kind: 'bad', text: 'That product is already in the box. Raise its quantity instead.' };
+          render();
+          return;
+        }
+
+        model.set_members.push({
+          product_id: id,
+          variant_id: variantId,
+          quantity: 1,
+          name: found.name,
+          brand: found.brand,
+          sku: found.sku,
+          variant: (sel && sel.selectedOptions && sel.selectedOptions[0] && sel.value)
+            ? sel.selectedOptions[0].textContent : '',
+          image: found.image,
+          unit_price_aed: found.price_aed
+        });
+
+        dirty = true;
+        render();
+      });
+    });
+
+    /* ── DRAG AND DROP, AND WHAT IT DELIBERATELY DOES NOT DO ──────────────
+       HTML5 drag events and nothing else. dragstart records which row picked
+       up, dragover marks the row under the pointer, drop moves it. There is no
+       pointermove handler, no scroll maths and NOTHING READS AN ELEMENT
+       RECTANGLE: which row the pointer is over is a question the browser
+       answers by firing the event on that row, and asking it any other way
+       would be the layout measurement CLAUDE.md rule 4 forbids. */
+    panel.querySelectorAll('[data-peo-setdrag]').forEach(function(row){
+      row.addEventListener('dragstart', function(e){
+        collect();
+        setDragFrom = Number(row.getAttribute('data-peo-setdrag'));
+        row.classList.add('is-drag');
+        try {
+          e.dataTransfer.effectAllowed = 'move';
+          // Firefox will not start a drag at all unless something is set.
+          e.dataTransfer.setData('text/plain', String(setDragFrom));
+        } catch (err) {}
+      });
+
+      row.addEventListener('dragover', function(e){
+        if (setDragFrom === null) return;
+        e.preventDefault();            // without this the browser refuses the drop
+        try { e.dataTransfer.dropEffect = 'move'; } catch (err) {}
+        if (Number(row.getAttribute('data-peo-setdrag')) !== setDragFrom) row.classList.add('is-over');
+      });
+
+      row.addEventListener('dragleave', function(){ row.classList.remove('is-over'); });
+
+      row.addEventListener('drop', function(e){
+        if (setDragFrom === null) return;
+        e.preventDefault();
+
+        var to = setMemberIndex(e.target);
+        var from = setDragFrom;
+
+        setDragFrom = null;
+
+        var list = model.set_members || [];
+
+        if (to === null || from === to || from < 0 || from >= list.length || to < 0 || to >= list.length) {
+          render();
+          return;
+        }
+
+        list.splice(to, 0, list.splice(from, 1)[0]);
+        dirty = true;
+        render();
+      });
+
+      row.addEventListener('dragend', function(){
+        setDragFrom = null;
+        panel.querySelectorAll('.peo-setm').forEach(function(n){
+          n.classList.remove('is-drag');
+          n.classList.remove('is-over');
+        });
+      });
+    });
+  }
+
   function bindEditor(){
+    bindSetBox();
+
     /* ---- the save bar ---- */
     on('#peo-back', 'click', function(){
       if (dirty && !window.confirm('You have unsaved changes. Leave without saving?')) return;
@@ -2582,6 +3156,32 @@
 
       el.addEventListener(ev, function(){
         dirty = true;
+
+        /* ── THE TYPE AND THE PRICING RULE BOTH CHANGE WHAT IS ON SCREEN ───
+           so both re-render, and both collect() FIRST. A render rebuilds every
+           panel from `model`, so anything typed since the last one and not yet
+           collected would be thrown away with the markup -- which is the defect
+           the Sets screen's own search box shipped with and a screenshot, not a
+           reader, found. (Lane SP)
+
+           A full render is safe HERE and not on the `input` events above: this
+           is a `change` on a <select>, which fires once, when the operator has
+           finished choosing. */
+        if (el.dataset.bind === 'type' || el.dataset.bind === 'price_mode') {
+          collect();
+          render();
+          return;
+        }
+
+        /* The live preview the owner asked for -- "it will auto set the price"
+           -- written in place rather than by re-rendering, because a render
+           would take the focus out of the box being typed in. */
+        if (el.dataset.bind === 'discount_percent' || el.dataset.bind === 'discount_amount'
+            || el.dataset.bind === 'price_aed') {
+          collect();
+          refreshSetMoney();
+          return;
+        }
 
         if (el.dataset.bind === 'status') {
           // Re-render only this one control's dependent field, rather than the

@@ -18,6 +18,7 @@ use App\Support\Facets;
 use App\Support\SiteHost;
 use App\Support\Money;
 use App\Support\Shortcodes;
+use App\Support\SetPricing;
 use App\Support\Url;
 
 /**
@@ -122,6 +123,19 @@ final class StaticMemos
              * write a column that is not there and fail pointing at the import.
              */
             Checkpoint::class => static fn () => Checkpoint::forgetColumnMemo(),
+            /*
+             * A set's parts total, memoised per request so one page render does
+             * not ask the same question three times -- the price, the schema
+             * offer and the saving all read it. (Lane SP)
+             *
+             * The memo is keyed by PRODUCT ID, and RefreshDatabase hands the
+             * next test the same ids over a different catalogue: without this
+             * reset, the first test to price a set fixes what set #1 costs for
+             * every test after it, including one that builds set #1 out of
+             * entirely different products. Exactly the shape this file exists
+             * for.
+             */
+            SetPricing::class => static fn () => SetPricing::forget(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {
