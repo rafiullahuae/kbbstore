@@ -73,7 +73,11 @@ use App\Services\SlimFooter;
 use App\Services\MarketingPixels;
 use App\Services\ModuleRegistry;
 use App\Services\ModuleSchema;
+use App\Services\Mail\MailSettings;
 use App\Services\PayShipRules;
+use App\Support\CacheSettings;
+use App\Support\ReviewBadgeSettings;
+use App\Support\ReviewSettings;
 use Illuminate\Support\Facades\Hash;
 
 /* ─────────────────────────── finding the readers ─────────────────────────── */
@@ -539,6 +543,51 @@ function ehSchemaModules(): array
          * stating something untrue about itself.
          */
         'homepage_content' => ['schema' => HomepageContent::SCHEMA, 'tabs' => HomepageContent::TABS],
+
+        /*
+         * ── LANE MC: the four settings modules this guard could not see ─────
+         *
+         * KBB-Master-Plan.md:430 named eight modules "still carrying
+         * hand-written cast()s" and listed these four among them. Half of that
+         * line was already stale when it was written down: none of these four
+         * has had a cast() of its own since Lane M3/M4 moved every one onto
+         * ModuleSchema::cast(). What was true is that all four were OUTSIDE
+         * this list — each had a SCHEMA and none had a TABS, and TABS is what
+         * enrolment needs, because the pairing below is the whole guarantee:
+         * a value with no control, and a control with no value, are only
+         * findable by comparing the two constants against each other.
+         *
+         * Each TABS was lifted out of whatever draws that screen today, the
+         * way MobileMenu::TABS was lifted out of MobileMenuApiController —
+         * see the note above, and each constant's own docblock for which file
+         * and which lines. No screen moved to buy these four lines: not one of
+         * these endpoints answers `fields` + `groups`, so nothing renders from
+         * a TABS, and StorefrontEnglishUnchangedTest plus AdminNavAndIdsTest
+         * are the instruments that say so.
+         *
+         * `review_settings`, `cache` and `review_badges` had no `label` on any
+         * field either, which this file refuses — a field with no label is a
+         * box nobody can name. Every label added is copied verbatim off the
+         * control that already draws it; none is invented.
+         *
+         * WHAT THE ENROLMENT FOUND, module by module, is written up in
+         * tests/Feature/ModuleFrameworkGuardEnrolmentTest.php beside the cases
+         * that pin it.
+         */
+        'review_settings' => ['schema' => ReviewSettings::SCHEMA, 'tabs' => ReviewSettings::TABS, 'policy' => ReviewSettings::POLICY],
+        'cache' => ['schema' => CacheSettings::SCHEMA, 'tabs' => CacheSettings::TABS, 'policy' => CacheSettings::POLICY],
+        'review_badges' => ['schema' => ReviewBadgeSettings::SCHEMA, 'tabs' => ReviewBadgeSettings::TABS, 'policy' => ReviewBadgeSettings::POLICY],
+        /*
+         * The METHOD, not the constant. MailSettings::SCHEMA is
+         * `[type, label, HELP]` where every other schema in this application is
+         * `[type, label, DEFAULT, help, options]`, so reading it positionally
+         * would take four paragraphs of help for the shipped default of the
+         * box. MailSettings::schema() is the one place that conversion is done
+         * and it is what MailApiController renders from, so it is what this
+         * guard must check. There is no separate POLICY: that class resolves
+         * every axis per field inside schema().
+         */
+        'mail' => ['schema' => MailSettings::schema(), 'tabs' => MailSettings::TABS],
     ];
 }
 

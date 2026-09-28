@@ -120,9 +120,44 @@ final class CacheSettings
      * the parent revision in tests/Fixtures/module-settings-baseline.txt.
      */
     public const SCHEMA = [
-        self::ENABLED => ['type' => 'bool', 'default' => false, 'store' => ModuleSchema::STORE_SETTING],
-        self::HTML_MAX_AGE => ['type' => 'int', 'default' => 0, 'options' => ['min' => 0, 'max' => self::HTML_MAX_AGE_CEILING], 'store' => ModuleSchema::STORE_SETTING],
-        self::ASSET_MAX_AGE => ['type' => 'int', 'default' => self::ASSET_MAX_AGE_CEILING, 'options' => ['min' => 0, 'max' => self::ASSET_MAX_AGE_CEILING], 'store' => ModuleSchema::STORE_SETTING],
+        self::ENABLED => ['type' => 'bool', 'label' => 'Let the shop state its own caching rules', 'default' => false, 'store' => ModuleSchema::STORE_SETTING],
+        self::HTML_MAX_AGE => ['type' => 'int', 'label' => 'Shop pages may be reused for', 'default' => 0, 'options' => ['min' => 0, 'max' => self::HTML_MAX_AGE_CEILING], 'store' => ModuleSchema::STORE_SETTING],
+        self::ASSET_MAX_AGE => ['type' => 'int', 'label' => 'Browsers may keep them for', 'default' => self::ASSET_MAX_AGE_CEILING, 'options' => ['min' => 0, 'max' => self::ASSET_MAX_AGE_CEILING], 'store' => ModuleSchema::STORE_SETTING],
+    ];
+
+    /**
+     * The two cards on Platform → Cache that carry a control, and what is on
+     * each — `tab => [title, description, [keys]]` — Lane MC.
+     *
+     * ── LIFTED, NOT DESIGNED ────────────────────────────────────────────────
+     *
+     * MobileMenu::TABS is the precedent: its groups came out of its controller
+     * verbatim so the module could be enrolled in ModuleFrameworkGuardTest
+     * without the screen moving. Every title and description below is the
+     * `.cch-title` / `.cch-sub` pair of the card that already draws those
+     * controls in resources/views/admin/partials/cache-screen.blade.php, and
+     * the three labels added to SCHEMA above are that card's own `<label>`
+     * text, verbatim.
+     *
+     * THE SCREEN'S OTHER TWO CARDS ARE DELIBERATELY NOT TABS. "What your shop
+     * is doing right now" is the live probe and "Compiled caches on this
+     * server" is three buttons; neither stores anything, and a tab declaring
+     * fields it does not have is a screen stating something untrue about
+     * itself, which is the defect this whole guard exists for.
+     *
+     * NOTHING RENDERS FROM THIS. GET /admin-api/cache answers `settings` keyed
+     * by CacheSettings::FIELDS, not `fields` + `groups`, and the partial builds
+     * its own HTML. It is here so the guard can ask its two questions of this
+     * screen: does every stored value have a control, and does every control
+     * store a value.
+     */
+    public const TABS = [
+        'browser' => ['What visitors’ browsers may keep',
+                      'Off as your shop ships, and deliberately: turning it on changes the Cache-Control header on every page of a shop that is taking orders, so it is your decision and not a side effect of an update.',
+                      [self::ENABLED, self::HTML_MAX_AGE]],
+        'assets' => ['Pictures, styles and scripts',
+                     'These files are handed out by the web server directly and never reach your shop’s code, so no setting in here can put a header on them. The number below only changes the text in the box.',
+                     [self::ASSET_MAX_AGE]],
     ];
 
     /**

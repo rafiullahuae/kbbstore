@@ -78,10 +78,29 @@ final class ReviewSettings
      * bounds, and the answers are pinned call by call against 347 calls
      * recorded off the parent revision
      * (tests/Fixtures/module-settings-baseline.txt, replayed by
-     * ModuleSettingsEquivalenceTest). No label or help is invented: this
-     * screen draws its own controls in its own partial and has never read a
-     * label off here, and inventing eleven would be eleven strings nothing
-     * displays that the next reader would take for the wording on the page.
+     * ModuleSettingsEquivalenceTest).
+     *
+     * ── THE LABELS, AND WHY THEY ARE NOT INVENTED (Lane MC) ─────────────────
+     *
+     * This constant used to carry no `label` at all, and said why: "inventing
+     * eleven would be eleven strings nothing displays that the next reader
+     * would take for the wording on the page." The fear was right and the
+     * eleven below are not inventions — each is copied VERBATIM out of the
+     * `row(key, label, hint, control)` call that draws that setting today in
+     * resources/views/admin/partials/review-settings-screen.blade.php. The
+     * string here IS the wording on the page, which is the thing the old note
+     * was afraid of getting wrong.
+     *
+     * Nothing reads them yet: the screen draws its own labels from its own
+     * literals, and GET /admin-api/review-settings returns values rather than
+     * fields, so no pixel moves. What they buy is enrolment in
+     * ModuleFrameworkGuardTest, which refuses a field with no label to draw —
+     * an unlabelled control being the shape of a box nobody can name.
+     *
+     * `help` is deliberately still absent. The screen's hints are HTML
+     * fragments (`&ldquo;`, `<b>`) belonging to the partial that prints them,
+     * and a plain-text copy here would be a second wording free to drift from
+     * the first.
      *
      * ── THE THREE THINGS THIS SCREEN ASKS OF THE SCHEMA ─────────────────────
      *
@@ -104,17 +123,54 @@ final class ReviewSettings
      * always carried is now true of the whole schema instead of only here.
      */
     public const SCHEMA = [
-        'sr_show_stars' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'sr_show_tabs' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'sr_show_date' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'sr_grid_cols' => ['type' => 'int', 'default' => 4, 'options' => ['min' => 1, 'max' => 6], 'store' => ModuleSchema::STORE_SETTING],
-        'sr_sort' => ['type' => 'select', 'default' => 'newest', 'options' => self::SORTS, 'store' => ModuleSchema::STORE_SETTING],
-        'sr_max_reviews' => ['type' => 'int', 'default' => 200, 'options' => ['min' => 4, 'max' => 500], 'store' => ModuleSchema::STORE_SETTING],
-        'sr_empty_text' => ['type' => 'text', 'default' => 'Be the first to share your thoughts ♡', 'store' => ModuleSchema::STORE_SETTING],
-        'sr_allow_submit' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'sr_allow_photos' => ['type' => 'bool', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
-        'sr_max_photos' => ['type' => 'int', 'default' => 4, 'options' => ['min' => 1, 'max' => self::PHOTO_CEILING], 'store' => ModuleSchema::STORE_SETTING],
-        'sr_rate_limit' => ['type' => 'int', 'default' => 5, 'options' => ['min' => 1, 'max' => 50], 'store' => ModuleSchema::STORE_SETTING],
+        'sr_show_stars' => ['type' => 'bool', 'label' => 'Score summary', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_show_tabs' => ['type' => 'bool', 'label' => 'Filter chips', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_show_date' => ['type' => 'bool', 'label' => 'Dates on reviews', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_grid_cols' => ['type' => 'int', 'label' => 'Columns', 'default' => 4, 'options' => ['min' => 1, 'max' => 6], 'store' => ModuleSchema::STORE_SETTING],
+        'sr_sort' => ['type' => 'select', 'label' => 'Order', 'default' => 'newest', 'options' => self::SORTS, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_max_reviews' => ['type' => 'int', 'label' => 'Most reviews to load', 'default' => 200, 'options' => ['min' => 4, 'max' => 500], 'store' => ModuleSchema::STORE_SETTING],
+        'sr_empty_text' => ['type' => 'text', 'label' => 'Empty-state line', 'default' => 'Be the first to share your thoughts ♡', 'store' => ModuleSchema::STORE_SETTING],
+        'sr_allow_submit' => ['type' => 'bool', 'label' => 'Accept new reviews', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_allow_photos' => ['type' => 'bool', 'label' => 'Allow photos', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        'sr_max_photos' => ['type' => 'int', 'label' => 'Photos per review', 'default' => 4, 'options' => ['min' => 1, 'max' => self::PHOTO_CEILING], 'store' => ModuleSchema::STORE_SETTING],
+        'sr_rate_limit' => ['type' => 'int', 'label' => 'Submissions per hour', 'default' => 5, 'options' => ['min' => 1, 'max' => 50], 'store' => ModuleSchema::STORE_SETTING],
+    ];
+
+    /**
+     * The three cards Store → Reviews → Review Settings draws, and what is on
+     * each — `tab => [title, description, [keys]]` — Lane MC.
+     *
+     * ── LIFTED, NOT DESIGNED ────────────────────────────────────────────────
+     *
+     * The precedent is MobileMenu::TABS, whose groups came out of
+     * MobileMenuApiController verbatim so the module could be enrolled in
+     * ModuleFrameworkGuardTest without the screen moving. This is the same
+     * move with the same rule: every title and every description below is the
+     * `.rvs-legend` / `.rvs-legend-sub` pair of the card that already draws
+     * those controls in review-settings-screen.blade.php, and the key lists
+     * are that card's `row()` calls in the order it makes them.
+     *
+     * NOTHING RENDERS FROM THIS. That partial builds its own HTML and the
+     * endpoint answers `settings` + option lists, not `fields` + `groups`; a
+     * screen that started rendering from here would be a second layout able to
+     * disagree with the first. It exists so the guard can ask the two
+     * questions it was written for — does every stored value have a control,
+     * and does every control store a value — of this screen as well.
+     *
+     * So a key added to SCHEMA and not named here fails the guard, which is
+     * the point: `reassure_auth_text` shipped a default that was the only
+     * value it ever had because nothing asked that question of it.
+     */
+    public const TABS = [
+        'page' => ['On the product page',
+                   'The review section itself — what it shows and how it is laid out.',
+                   ['sr_show_stars', 'sr_show_tabs', 'sr_show_date', 'sr_grid_cols', 'sr_sort', 'sr_max_reviews']],
+        'empty' => ['When a product has no reviews',
+                    'Printed in place of the grid. Plain text — any markup is stripped when it is saved.',
+                    ['sr_empty_text']],
+        'submit' => ['Writing a review',
+                     'These govern the form and the endpoint behind it — turning something off here refuses it on the server, not just in the page.',
+                     ['sr_allow_submit', 'sr_allow_photos', 'sr_max_photos', 'sr_rate_limit']],
     ];
 
     /**
