@@ -95,7 +95,7 @@ it('offers the phone-sized copies on the homepage strip once they exist', functi
                 '/sizes="(?:'
                 . preg_quote(ImageVariants::homeTileSizesAttribute(), '/')
                 . '|'
-                . preg_quote(ImageVariants::skinGridSizesAttribute(), '/')
+                . preg_quote(ImageVariants::tileSizesAttribute(), '/')
                 . ')"/'
             );
     }

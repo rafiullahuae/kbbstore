@@ -204,7 +204,7 @@ it('falls back to English per field, and never renders a blank where a name goes
      * THE CONTRACT THE PROGRESS COUNTER DEPENDS ON. A blank box deletes the row
      * (see HasTranslations::saveTranslations), so "untranslated" is "no row" —
      * and the page has to read that as English, not as an empty string. A card
-     * with an empty <a class="cname"> would be a shop nobody can navigate, and
+     * with an empty <a class="cn"> would be a shop nobody can navigate, and
      * the owner would be halfway through his 55 hours when he found out.
      */
     fpArabicOn();
@@ -622,7 +622,7 @@ it('costs no query per card on an Arabic grid, whatever the catalogue holds', fu
     };
 
     $cards = static function (): int {
-        return substr_count((string) test()->get('/ar/shop/')->getContent(), 'class="cname"');
+        return substr_count((string) test()->get('/ar/shop/')->getContent(), 'class="cn"');
     };
 
     $seed(0, 6);

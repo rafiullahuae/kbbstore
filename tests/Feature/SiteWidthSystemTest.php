@@ -306,10 +306,18 @@ it('pins an exact count with a rule, never with a custom property', function () 
      * shopper's desktop choice of four columns applying to a 390px phone, 88px a
      * card. A mutation run found it.
      */
+    /*
+     * ▲ FOUR PINS, NOT THREE.                                         Lane PG
+     * The shopper's row is 2 / 3 / 4 / 5 now, because five is the count the
+     * grid derives by default and a pin row that stopped at four could not put
+     * the page back the way it found it — every position on it was a step down
+     * from what the shopper was already looking at.
+     */
     expect($shop)->toContain('@media(min-width:901px){
   #grid[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
   #grid[data-cols="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
   #grid[data-cols="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #grid[data-cols="5"]{grid-template-columns:repeat(5,minmax(0,1fr))}
 }');
     expect($shop)->not->toContain('--kbb-count');
 
@@ -407,7 +415,13 @@ it('leaves /shop automatic until the shopper picks a column count', function () 
 
     $auto = $this->get('/shop/')->assertOk()->getContent();
 
-    expect($auto)->toContain('<div class="grid" id="grid">');
+    /*
+     * The shop grid carries `kbb-pgrid` and a skin now (Lane PG): it draws the
+     * same tile as every other grid on the shop, so it answers to the same
+     * styling and the same 28 skins. What this case is about is `data-cols`,
+     * which is the PIN — and it is still absent until the shopper chooses.
+     */
+    expect($auto)->toContain('<div class="grid kbb-pgrid" id="grid" data-skin="classic">');
     expect($auto)->not->toContain('data-cols');
 
     // And no button claims to be the current choice.
@@ -415,7 +429,7 @@ it('leaves /shop automatic until the shopper picks a column count', function () 
 
     $picked = $this->get('/shop/?cols=3')->assertOk()->getContent();
 
-    expect($picked)->toContain('id="grid" data-cols="3"');
+    expect($picked)->toContain('id="grid" data-skin="classic" data-cols="3"');
     expect($picked)->toContain('data-c="3" class="on"');
 
     // A value outside the allowlist is not a choice, so the grid stays automatic.
@@ -549,7 +563,9 @@ it('ships every setting at the value the page already had, except the ones the o
         'gutter' => 22,
         'gutter_wide' => 22,
         'header_follows' => true,  // <- the second deliberate change (Lane H1)
-        'tile' => 260,
+        // 220 since Lane PG: "by default 5 columns on desktop and 2 columns on
+        // mobile", a default the owner asked for in as many words.
+        'tile' => 220,
         'tile_shop' => 220,
         'cols_floor' => 2,
         'cols_cap' => 8,

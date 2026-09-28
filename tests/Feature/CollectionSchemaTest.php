@@ -556,7 +556,7 @@ it('publishes exactly the image the tile draws', function () {
 
     $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
 
-    expect(preg_match('#<img class="ph-img" src="([^"]+)"#', $html, $m))->toBe(1);
+    expect(preg_match('#<img class="kbb-card-img" src="([^"]+)"#', $html, $m))->toBe(1);
 
     $item = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
 

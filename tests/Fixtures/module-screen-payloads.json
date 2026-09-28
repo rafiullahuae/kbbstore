@@ -2905,8 +2905,8 @@
             "type": "select",
             "label": "Image shape",
             "help": "",
-            "default": "portrait",
-            "value": "portrait",
+            "default": "square",
+            "value": "square",
             "options": {
               "square": "Square",
               "portrait": "Portrait",

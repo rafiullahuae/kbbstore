@@ -183,7 +183,7 @@
 @media (max-width: 640px){.skinprev .kbb-pgrid[data-skin="horizontal"]{grid-template-columns:1fr !important}}
 .skinprev .kbb-pgrid{gap:var(--kbb-gap,16px)}
 .skinprev .kbb-pgrid .kbb-card{border-radius:var(--kbb-radius,14px)}
-.skinprev .kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1.02)}
+.skinprev .kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1)}
 .skinprev .kbb-pgrid .cn{display:-webkit-box;-webkit-line-clamp:var(--kbb-name-lines,2);-webkit-box-orient:vertical;overflow:hidden}
 .skinprev .kbb-pgrid .kbb-badge-sale{background:var(--kbb-sale,#E23B57)}
 .skinprev .kbb-pgrid .kbb-badge-new{background:var(--kbb-new,#1F9D55)}
@@ -215,7 +215,7 @@
 .skinprev{width:132px;display:block}
 .skinprev .kbb-pgrid{display:block !important;gap:0 !important;grid-template-columns:none !important}
 .skinprev .kbb-card{width:132px;height:auto !important}
-.skinprev .kbb-card-thumb{aspect-ratio:1/1.02;position:relative;overflow:hidden;display:block}
+.skinprev .kbb-card-thumb{aspect-ratio:1/1;position:relative;overflow:hidden;display:block}
 .skinprev .kbb-card-ph,.skinprev .ph2{position:absolute;inset:0;display:block;background:linear-gradient(150deg,#FFE0E8,#EFA3B8)}
 .skinprev .kbb-card{display:block;text-decoration:none;color:#2A2228;overflow:hidden;background:#fff}
 .skinprev .cb{display:block;padding:10px}

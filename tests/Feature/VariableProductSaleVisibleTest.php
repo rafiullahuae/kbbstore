@@ -161,7 +161,7 @@ function svShop(string $query = ''): string
 /** The one `.pc` tile block for $slug, or '' when the page has no such tile. */
 function svTile(string $html, string $slug): string
 {
-    foreach (preg_split('#<div class="pc">#', $html) as $card) {
+    foreach (preg_split('#<div class="kbb-card kbb-tile">#', $html) as $card) {
         if (str_contains($card, '/product/' . $slug . '/')) {
             return $card;
         }
@@ -346,10 +346,16 @@ it('keeps the facet and the badge saying the same thing', function () {
     $html = svShop('?sale=1');
 
     expect(svTile($html, 'sv-cushion'))->not->toBe('', 'the facet dropped the product this case is about');
-    expect(svCell($html, 'sv-cushion', '#<span class="lbl"[^>]*>(.*?)</span>#s'))->toBe('-25% OFF');
+    /*
+     * `-25%` in the theme's own `.kbb-badge-sale` pill.               Lane PG
+     * The one product card draws the owner's reference badge now — `.lbl` is
+     * what Growth & Marketing → Product Labels prints when that module is ON,
+     * and this case has it off.
+     */
+    expect(svCell($html, 'sv-cushion', '#<span class="kbb-badge kbb-badge-sale">(.*?)</span>#s'))->toBe('-25%');
     // And the price cell still prints the RANGE, which is what it printed
     // before: a badge is added beside it, nothing is replaced.
-    expect(svCell($html, 'sv-cushion', '#<div class="cprice">(.*?)</div>#s'))->toBe('AED 90 – AED 140');
+    expect(svCell($html, 'sv-cushion', '#<div class="cp">(.*?)</div>#s'))->toBe('AED 90 – AED 140');
 });
 
 it('draws no sale badge on a variable product that is not marked down', function () {
@@ -360,7 +366,7 @@ it('draws no sale badge on a variable product that is not marked down', function
     $html = svShop();
 
     expect(svCell($html, 'sv-tile-plain', '#<span class="lbl"[^>]*>(.*?)</span>#s'))->toBe('');
-    expect(svCell($html, 'sv-tile-plain', '#<div class="cprice">(.*?)</div>#s'))->toBe('AED 120 – AED 190');
+    expect(svCell($html, 'sv-tile-plain', '#<div class="cp">(.*?)</div>#s'))->toBe('AED 120 – AED 190');
 });
 
 it('never prints AED 0 as the price a variable product was marked down from', function () {

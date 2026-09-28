@@ -23,7 +23,11 @@ class ProductStyles
         'grid_columns_mobile'=> ['range',  'Columns · phone', 2, 'Two is the most a narrow screen holds comfortably.', ['min' => 1, 'max' => 2, 'step' => 1, 'unit' => '']],
         'grid_gap'           => ['range',  'Gap between cards', 16, '', ['min' => 6, 'max' => 32, 'step' => 2, 'unit' => 'px']],
         'card_radius'        => ['range',  'Card roundness', 14, '', ['min' => 0, 'max' => 26, 'step' => 2, 'unit' => 'px']],
-        'image_ratio'        => ['select', 'Image shape', 'portrait', '', ['square' => 'Square', 'portrait' => 'Portrait', 'tall' => 'Tall', 'landscape' => 'Landscape']],
+        // ▲ SQUARE, NOT PORTRAIT — a default the owner asked for in as many
+        // words: "i need the same, with square image thumbnail". Lane PG. The
+        // fallback in the match() below moved with it, so the sheet and this
+        // screen cannot disagree about what "default" means.
+        'image_ratio'        => ['select', 'Image shape', 'square', '', ['square' => 'Square', 'portrait' => 'Portrait', 'tall' => 'Tall', 'landscape' => 'Landscape']],
 
         // ── What the card shows ──
         'show_brand'         => ['bool',   'Brand name', true, ''],
@@ -152,7 +156,8 @@ class ProductStyles
             'square' => '1/1',
             'tall' => '1/1.25',
             'landscape' => '1.2/1',
-            default => '1/1.02',
+            'portrait' => '1/1.02',
+            default => '1/1',
         };
 
         return implode(';', [

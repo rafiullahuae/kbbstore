@@ -582,7 +582,7 @@
   <section class="sec">
     <div class="eyebrow">{{ __('store.product.related_eyebrow') }}</div>
     <h2>{{ __('store.product.related_heading') }}</h2>
-    <div class="{{ $modules->classFor('related') }} rel" id="related">@foreach ($related as $item)<x-product-card :product="$item" />@endforeach</div>
+    <div class="{{ $modules->classFor('related') }} rel kbb-pgrid" data-skin="{{ \App\Support\GridSkins::resolve(null) }}" id="related">@foreach ($related as $item)<x-product-card :product="$item" />@endforeach</div>
   </section>
   @endif
 </div>

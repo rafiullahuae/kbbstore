@@ -137,8 +137,26 @@ return Application::configure(basePath: dirname(__DIR__))
          * Everything else stays encrypted: the session, the cart token and the
          * remembered-login cookie are all written by the server and all carry
          * something worth protecting.
+         *
+         * ── AND A SECOND ONE, FOR THE SAME REASON ──────────────────── Lane PG
+         *
+         * `kbb_filters` is whether the shopper has opened the filter rail on
+         * /shop or a category archive. It ships HIDDEN (the owner asked for
+         * that in as many words), the Hide and Show buttons write the cookie in
+         * the click that toggles the class, and store/shop.blade.php reads it on
+         * the server so the answer is in the <body> tag as it is sent — a class
+         * added by script after load paints the sidebar and then takes it away,
+         * which is a layout shift on the largest block of the page.
+         *
+         * SAFE TO EXEMPT, and in the same narrow way. The value is compared
+         * against the single string 'open' and is NEVER PRINTED, so it cannot
+         * reach the page in any form; anything else — no cookie, a stale value,
+         * a forged one — is the shipped default. Nothing is authorised, priced
+         * or filtered on the strength of it: it decides one CSS class, and a
+         * visitor who forges it has done no more than press the button beside
+         * it.
          */
-        $middleware->encryptCookies(except: ['kbb_tz']);
+        $middleware->encryptCookies(except: ['kbb_tz', 'kbb_filters']);
 
         // Baseline security headers on every web response.
         $middleware->web(append: [

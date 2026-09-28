@@ -197,7 +197,7 @@
   function railCols(w) {
     var pin = String(values.pin || 'auto');
     if (pin !== 'auto' && w >= SHOP_RAIL_FROM) return Number(pin);
-    return columns(railRow(w), num('tile', 260), num('gap', 16));
+    return columns(railRow(w), num('tile', 220), num('gap', 16));
   }
 
   function shopCols(w) {

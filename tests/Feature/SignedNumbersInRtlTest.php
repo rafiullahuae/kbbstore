@@ -140,39 +140,33 @@ it('isolates every signed number the rendered Arabic storefront prints, not only
      * than outliving the defect.
      */
     /*
-     * INTEGRATOR: `-30%` IS GONE FROM THIS LIST BECAUSE IT WAS FIXED, and the
-     * staleness check above is what told me to delete it rather than leave it
-     * covering something else. Lane FS's two blocks for the .off and .qv-off
-     * ribbons are applied; both now print an isolated number and the sweep
-     * sees them as clean.
+     * INTEGRATOR: `-30%` WAS REMOVED FROM THIS LIST BECAUSE IT WAS FIXED, and
+     * the staleness check below is what told me to delete it rather than leave
+     * it covering something else. Lane FS's two blocks for the .off and .qv-off
+     * ribbons are applied; both print an isolated number and the sweep sees
+     * them as clean.
      *
-     * `-30% OFF` STAYS, and not because it is unfixed. The card's whole label
-     * is one translatable string, so it is wrapped in <bdi> rather than given
-     * an isolate — and <bdi> is MARKUP, which puts nothing into the text node
-     * this sweep reads. So the text still leads with a sign and this sweep will
-     * still see it. The entry records that, so the next person does not "fix"
-     * a badge that is already right and end up with an isolate forcing an
-     * Arabic label left-to-right.
-     */
-    /*
-     * KEYED ON THE SHAPE, NOT ON THE NUMBER, and that correction was forced
-     * rather than chosen. This entry read `-30% OFF` — a literal that held only
-     * while a seeded demo product happened to be discounted by exactly thirty
-     * per cent. Lane FV's fix to DemoCatalogueSeeder (rounding a demo sale
-     * price down to a whole dirham, because 70% of a whole dirham is not one)
-     * moved that product to 31% off, the literal stopped matching, and this
-     * sweep reported the product card as a NEW offender on a change that had
-     * nothing to do with bidi.
+     * ── AND SO IS `-\d+% OFF` NOW, FOR THE SAME REASON ──────────────── Lane PG
      *
-     * The percentage is fixture data. What identifies this site is the badge's
-     * shape — a sign, a number, a per-cent sign and the word OFF — so that is
-     * what the key is now, as a pattern. It stays exactly as narrow: it still
-     * names one badge in one view, and a second unisolated node anywhere on
-     * these three pages still fails, which is the property this list exists for.
+     * That entry was the shop grid's sale badge. It said the badge was right
+     * and unseeable: the whole label was one translatable string, so it was
+     * wrapped in `<bdi>` — markup, which puts nothing into the text node this
+     * sweep reads — and the text therefore still led with a sign.
+     *
+     * There is one product card on this shop now, and its theme sale badge is
+     * the `-N%` pill from the owner's reference grid, printed through
+     * App\Support\Bidi::number(). That wraps the token in U+2066/U+2069, which
+     * ARE characters in the text node, so this sweep can see the isolate and
+     * the badge passes on its own merits. The `OFF` wording only appears now
+     * when Growth & Marketing → Product Labels is switched on and configured
+     * with it, which is not the shipped state and is not what these three pages
+     * render.
+     *
+     * The list is EMPTY, which is the state it was always meant to reach. An
+     * empty array is not a disabled guard: `$offenders` below is what fails,
+     * and it fails on any unisolated signed number on any of the three pages.
      */
-    $handedOff = [
-        '/^-\d+% OFF$/' => 'components/product-card.blade.php — handled by <bdi>, which this text-node sweep cannot see',
-    ];
+    $handedOff = [];
 
     $offenders = [];
     $seenHandedOff = [];

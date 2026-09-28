@@ -92,17 +92,38 @@ use Tests\Support\BuildMyRoutineRoutes;
  * appearing here.
  */
 const CLC_CONTRACTS = [
-    'resources/views/components/product-grid.blade.php' => ['brand', 'categories'],
+    /*
+     * ▲ `brand` LEFT THIS LIST AND `categories` STAYED.               Lane PG
+     *
+     * The grid no longer draws a card: it renders <x-product-card>, and the
+     * card is the thing that reads `brand`. What this file still does itself is
+     * resolve the eyebrow — `$p->categories->first()` — and pass it to the card
+     * as a string, which is exactly why the card does NOT read the relation and
+     * /shop does not start paying for it. So the DECLARED contract is the
+     * relation this template reads, and the CALLER still has to eager-load both
+     * because it renders both templates. The render-with-preventLazyLoading
+     * cases below are what hold the caller to that; they are the ones that
+     * would have gone red if `brand` had been dropped from the brand page's
+     * query when it left this line.
+     */
+    'resources/views/components/product-grid.blade.php' => ['categories'],
     'resources/views/components/product-card.blade.php' => ['brand'],
     /*
      * NOT under components/, and included here anyway. It is a component in
      * every sense that matters to this file — handed a collection of models,
-     * reads a relation off each one, used by three unrelated pages — and
-     * leaving it out would mean this guard's boundary was a directory name
-     * rather than the defect. Not edited by this lane: `partials/home/` is
-     * another lane's ground, so its contract is declared here only.
+     * used by three unrelated pages.
+     *
+     * ▲ IT READS NO RELATION AT ALL NOW, and the empty list is the honest
+     * declaration rather than a deleted entry.                        Lane PG
+     * It draws no card any more; it renders <x-product-card>, which reads
+     * `brand`. Deleting the row would have taken its THREE CALL SITES out of
+     * CLC_INVOCATIONS and CLC_COVERED with it — the homepage, /concern and
+     * /my-wishlist would have stopped being rendered under
+     * preventLazyLoading(), which is the only check that would notice one of
+     * them dropping `->with('brand:id,name,slug')`. So the row stays and says
+     * what it now is.
      */
-    'resources/views/partials/home/grid.blade.php' => ['brand'],
+    'resources/views/partials/home/grid.blade.php' => [],
 ];
 
 /**
@@ -313,9 +334,16 @@ function clcPage(string $path, array $cookies = []): array
 
     return [
         'violations' => $violations,
-        // Both tiles at once: <x-product-card> renders `<div class="pc">`,
-        // the skinned grid and partials/home/grid render `<a class="kbb-card"`.
-        'tiles' => substr_count($html, '<div class="pc">') + substr_count($html, '<a class="kbb-card"'),
+        /*
+         * ONE NEEDLE, BECAUSE THERE IS ONE TILE.                      Lane PG
+         *
+         * This counted two: `<div class="pc">` for <x-product-card> and
+         * `<a class="kbb-card"` for the skinned grid, because the shop had two
+         * different cards. Every product grid draws
+         * components/product-card.blade.php now and it renders
+         * `<div class="kbb-card kbb-tile">`.
+         */
+        'tiles' => substr_count($html, '<div class="kbb-card kbb-tile">'),
     ];
 }
 
@@ -553,7 +581,7 @@ it('reports the grid reading brand and categories off a query that loaded neithe
         $html = view('components.product-grid', ['products' => $bare])->render();
     });
 
-    expect(substr_count($html, '<a class="kbb-card"'))->toBe(6, 'the grid rendered nothing, so this case measured nothing');
+    expect(substr_count($html, '<div class="kbb-card kbb-tile">'))->toBe(6, 'the grid rendered nothing, so this case measured nothing');
 
     expect($violations)->toBe([
         'App\Models\Product::$brand' => 6,
@@ -587,7 +615,7 @@ it('costs one statement per tile for each relation the caller did not load', fun
         $html = view('components.product-grid', ['products' => $rows])->render();
 
         return [
-            'rendered' => substr_count($html, '<a class="kbb-card"'),
+            'rendered' => substr_count($html, '<div class="kbb-card kbb-tile">'),
             'pivot' => count(array_filter($sql, static fn (string $s): bool => str_contains($s, 'category_product'))),
         ];
     };
@@ -619,6 +647,20 @@ it('renders every page that calls a contracted template without one lazy load', 
 
     $pages = [
         '/shop' => [],
+        /*
+         * THE CATEGORY ARCHIVE, LISTED SEPARATELY FROM /shop ON PURPOSE.
+         *                                                            Lane PG
+         * CategoryArchiveController::collection() delegates straight into
+         * ShopController::index(), so today these two run the SAME eager load
+         * and this row cannot fail while the row above passes. It is here for
+         * the ONE thing that differs: the archive passes the category's name
+         * into the tile as `catLabel`, and the whole reason the eyebrow is a
+         * PROP rather than something the card reads off `$product->categories`
+         * is that reading the relation would cost a query per tile. A later
+         * change that resolved the label inside the card would be invisible on
+         * /shop, which passes null, and caught here.
+         */
+        '/collections/clc-cat/' => [],
         '/brands/clc-house/' => [],
         '/product/' . $fixture['product']->slug => [],
         '/routines/acne' => [],

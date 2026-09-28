@@ -62,93 +62,94 @@ class DemoContent
         return $real->concat($this->{$kind}()->take($want - $real->count()))->values();
     }
 
+    /**
+     * ONE STAND-IN CARD, AND IT IS A REAL `Product` NOW.              Lane PG
+     *
+     * ── WHAT IT WAS, AND WHY IT STOPPED WORKING ─────────────────────────────
+     *
+     * It was an anonymous class carrying the six properties and four methods
+     * partials/home/grid.blade.php happened to read. That worked for exactly as
+     * long as the home rails drew their own card. They draw
+     * components/product-card.blade.php now — the ONE product tile — and that
+     * card asks two SERVICES about the product it is handed:
+     * ProductLabels::for(Product) and VariantPricing::range(Product), both
+     * type-hinted. A duck-typed stand-in is a TypeError on the home page the
+     * moment demo content is switched on, which is exactly what it was:
+     *
+     *     App\Services\ProductLabels::for(): Argument #1 ($product) must be of
+     *     type App\Models\Product, class@anonymous given
+     *
+     * ── WHY A SUBCLASS AND NOT A DUCK WITH MORE FEATHERS ────────────────────
+     *
+     * Adding the missing members one at a time is how the previous two
+     * failures here were fixed (`t()`, then `brand->t()`, both recorded above),
+     * and each time the next thing the card learned to read broke it again. A
+     * stand-in that IS a Product cannot fall behind the card, and it is not a
+     * larger object: it is unsaved, it never reaches the database, and the only
+     * thing it overrides is where it links to.
+     *
+     * NOT `exists`, and never saved. forceFill() puts the fixture on the model
+     * without touching `$fillable`; `exists` stays false, so nothing here can
+     * be written by anything that mistakes it for a row.
+     *
+     * `stock_status` IS DELIBERATELY ABSENT, and that decides the button.
+     * Product::isDirectlyBuyable() is `stock_status === 'instock'`, so a
+     * stand-in answers false and its tile renders "View product" pointing at
+     * /shop/ instead of an Add to cart bound to product id 0. The old fixture
+     * bound one, and pressing it could only fail.
+     *
+     * `review_count` and `rating` stay at zero for the reason the old fixture
+     * gave: no such product, no such reviews, no such customers. The tile draws
+     * NO rating row at all for an unreviewed product now, which is the owner's
+     * own instruction and the honest reading of a fixture.
+     */
     private function product(array $row): object
     {
-        return new class($row) {
-            public int $id = 0;
-            public string $name, $slug;
-            public ?string $image = null;
-            public int $price, $sale_price;
-            public object $brand;
+        [$name, $brandName, $price, $salePrice] = $row;
+
+        $brand = new \App\Models\Brand();
+        $brand->forceFill([
+            'id' => 0,
+            'name' => $brandName,
+            'slug' => \Illuminate\Support\Str::slug($brandName),
+        ]);
+
+        $product = new class extends \App\Models\Product
+        {
+            /** The table the parent would derive from an anonymous class name. */
+            protected $table = 'products';
+
+            /** Read by store/home.blade.php to tell a fixture from a row. */
             public bool $demo = true;
 
-            /*
-             * ZERO, AND NOT A FIGURE FROM THE FIXTURE.
-             *
-             * These two used to be supplied per row — 4.9 stars over 3,204
-             * reviews for the first card, and so on down the list. The home
-             * rails print them through partials/home/grid.blade.php, which
-             * renders a filled star row and "(3204)" beside it. No such
-             * product, no such reviews, no such customers.
-             *
-             * The properties stay because grid.blade.php reads both on every
-             * card and a plain object has no null for a property that is not
-             * there — the same trap the posts() fixture below records. At zero
-             * the card takes the template's existing `@elseif (! $p->review_count)`
-             * branch and shows its "New" badge, which is the honest reading of
-             * a product nobody has reviewed and a state the markup already
-             * handles.
-             */
-            public int $review_count = 0;
-            public float $rating = 0.0;
-
-            public function __construct(array $r)
+            /* A stand-in links to the shop rather than to a product page that
+               does not exist — a 404 from a preview aid would be worse than
+               useless. */
+            public function url(): string
             {
-                [$this->name, $brand, $this->price, $this->sale_price] =
-                    [$r[0], $r[1], $r[2], $r[3]];
-                $this->slug = \Illuminate\Support\Str::slug($r[0]);
-
-                /*
-                 * The brand is read as `$p->brand?->t('name')` by every card on
-                 * the storefront now, so a bare stdClass here is a fatal on the
-                 * home page with demo content on. Same fixture, same two
-                 * properties, plus the one method the templates call.
-                 */
-                $this->brand = new class($brand) {
-                    public string $name, $slug;
-
-                    public function __construct(string $name)
-                    {
-                        $this->name = $name;
-                        $this->slug = \Illuminate\Support\Str::slug($name);
-                    }
-
-                    public function t(string $field, ?string $locale = null): mixed
-                    {
-                        return property_exists($this, $field) ? $this->{$field} : null;
-                    }
-                };
+                return \App\Support\Url::to('/shop/');
             }
-
-            /*
-             * t(), FOR THE SAME REASON THE PROPERTY NAMES ARE THE REAL COLUMN
-             * NAMES — see the note in posts() below.
-             *
-             * fill() concatenates these fixtures onto a collection of real
-             * models and one expression in the template has to serve both. The
-             * storefront reads catalogue text through HasTranslations::t() now,
-             * so a stand-in that answers only `->name` is a fatal
-             * "Call to undefined method" on the home page the moment demo
-             * content is switched on — exactly the failure the `cover`/`body`
-             * note records, one method along.
-             *
-             * It answers the fixture's own English and nothing else, which is
-             * the truthful answer: a fixture is not a row, it has no id, and
-             * there is nothing in `translations` that could ever be about it.
-             * property_exists() rather than ?? because a plain object has no
-             * null for a property it does not declare.
-             */
-            public function t(string $field, ?string $locale = null): mixed
-            {
-                return property_exists($this, $field) ? $this->{$field} : null;
-            }
-
-            public function effectivePrice(): int { return $this->sale_price ?: $this->price; }
-            public function isOnSale(): bool { return $this->sale_price > 0 && $this->sale_price < $this->price; }
-            /* Demo items link to the shop rather than a product page that does
-               not exist — a 404 from a preview aid would be worse than useless. */
-            public function url(): string { return \App\Support\Url::to('/shop/'); }
         };
+
+        $product->forceFill([
+            'id' => 0,
+            'name' => $name,
+            'slug' => \Illuminate\Support\Str::slug($name),
+            'image' => null,
+            'price' => $price,
+            'sale_price' => $salePrice,
+            'review_count' => 0,
+            'rating' => 0.0,
+            'type' => 'simple',
+            'featured' => false,
+            'created_at' => null,
+            'updated_at' => null,
+        ]);
+
+        $product->setRelation('brand', $brand);
+        $product->setRelation('categories', collect());
+
+        return $product;
     }
 
     /**

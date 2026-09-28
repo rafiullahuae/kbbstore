@@ -1759,7 +1759,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .skinprev{width:132px;display:block}
 .skinprev .kbb-pgrid{display:block !important;gap:0 !important;grid-template-columns:none !important}
 .skinprev .kbb-card{width:132px;height:auto !important}
-.skinprev .kbb-card-thumb{aspect-ratio:1/1.02;position:relative;overflow:hidden;display:block}
+.skinprev .kbb-card-thumb{aspect-ratio:1/1;position:relative;overflow:hidden;display:block}
 .skinprev .kbb-card-ph,.skinprev .ph2{position:absolute;inset:0;display:block;background:linear-gradient(150deg,#FFE0E8,#EFA3B8)}
 .skinprev .kbb-card{display:block;text-decoration:none;color:#2A2228;overflow:hidden;background:#fff}
 .skinprev .cb{display:block;padding:10px}
@@ -3695,7 +3695,7 @@ function skinCard(skin, cartLabel){
      Element types matter: .cb, .cn, .cp and .kbb-card-thumb never set display,
      so building the preview from spans left them inline and the card collapsed. */
   return `<div class="kbb-pgrid" data-skin="${skin}">
-    <a class="kbb-card" href="#" onclick="return false">
+    <a class="kbb-card kbb-tile" href="#" onclick="return false">
       <div class="kbb-card-thumb">
         <span class="kbb-card-ph"></span>
         <span class="kbb-badge kbb-badge-new">New</span>
@@ -3703,7 +3703,7 @@ function skinCard(skin, cartLabel){
       </div>
       <div class="cb">
         <div class="kbb-card-cat">Sun care</div>
-        <div class="cn"><span class="kbb-card-brand">BEAUTY OF JOSEON</span> Relief Sun Rice + Probiotics SPF50+</div>
+        <div class="cn"><span class="kbb-card-brand">BEAUTY OF JOSEON</span><span class="kbb-card-nm">Relief Sun Rice + Probiotics SPF50+</span></div>
         <div class="kbb-card-rate"><span class="kbb-crate"><span class="kbb-cstar on">★</span><span class="kbb-cstar on">★</span><span class="kbb-cstar on">★</span><span class="kbb-cstar on">★</span><span class="kbb-cstar on">★</span></span> <span class="kbb-card-rc">(3204)</span></div>
         <div class="cp"><span class="kbb-card-reg">&#1583;.&#1573;102</span> <span class="kbb-card-price">&#1583;.&#1573;71</span></div>
         <span class="kbb-card-cart">${escHtml(cartLabel || 'Add to cart')}</span>

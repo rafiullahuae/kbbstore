@@ -148,7 +148,7 @@ function pdtCard(Product $product): string
      * array_slice, rather than a tighter needle, because the defect is the
      * chunk and not the needle: chunk 0 is never a card whatever is in it.
      */
-    foreach (array_slice(explode('<div class="pc">', $html), 1) as $card) {
+    foreach (array_slice(explode('<div class="kbb-card kbb-tile">', $html), 1) as $card) {
         if (str_contains($card, $product->slug)) {
             return $card;
         }
@@ -199,7 +199,7 @@ it('never widens past what the stored integers can express', function () {
 it('never prints a struck-through price equal to the price beside it on the shop grid', function () {
     $product = pdtProduct(['price' => 10000, 'sale_price' => 9980]);
 
-    $figures = pdtAmountsIn(pdtCard($product), 'class="cprice"');
+    $figures = pdtAmountsIn(pdtCard($product), 'class="cp"');
 
     expect($figures)->toHaveCount(2);
     expect($figures[0])->not->toBe($figures[1]);
@@ -212,7 +212,7 @@ it('leaves an honest sale on the grid exactly as it was', function () {
     // whole dirhams.
     $product = pdtProduct(['price' => 10000, 'sale_price' => 9000]);
 
-    expect(pdtAmountsIn(pdtCard($product), 'class="cprice"'))->toBe(['AED 100', 'AED 90']);
+    expect(pdtAmountsIn(pdtCard($product), 'class="cp"'))->toBe(['AED 100', 'AED 90']);
 });
 
 it('shows a real half-price markdown that whole dirhams was hiding', function () {
@@ -222,8 +222,16 @@ it('shows a real half-price markdown that whole dirhams was hiding', function ()
 
     $card = pdtCard($product);
 
-    expect($card)->toContain('-50% OFF');
-    expect(pdtAmountsIn($card, 'class="cprice"'))->toBe(['AED 1.00', 'AED 0.50']);
+    /*
+     * `-50%`, NOT `-50% OFF`.                                        Lane PG
+     * The theme's own sale badge is the -N% pill from the owner's reference
+     * grid now (`.kbb-badge-sale`), not the old card's `.lbl` reading
+     * "-50% OFF". Growth & Marketing → Product Labels still prints whatever
+     * text is configured — ProductLabelsRenderTest covers that — and this is
+     * the shipped, module-off badge.
+     */
+    expect($card)->toContain('-50%');
+    expect(pdtAmountsIn($card, 'class="cp"'))->toBe(['AED 1.00', 'AED 0.50']);
 });
 
 it('never prints the same figure twice on the product page', function () {
@@ -282,7 +290,9 @@ it('falls through to the bestseller badge when the markdown cannot state a perce
     $card = pdtCard($product);
 
     expect($card)->toContain('Bestseller');
-    expect($card)->not->toContain('% OFF');
+    // No percentage anywhere: a markdown that rounds to nothing draws no pill,
+    // which is what lets the Bestseller one through.
+    expect($card)->not->toContain('kbb-badge-sale');
 });
 
 it('still gives a real sale its badge and not the bestseller one', function () {
@@ -294,7 +304,8 @@ it('still gives a real sale its badge and not the bestseller one', function () {
 
     $card = pdtCard($product);
 
-    expect($card)->toContain('-10% OFF');
+    // -N%, the theme's own badge; see the note on the half-price case above.
+    expect($card)->toContain('-10%');
     expect($card)->not->toContain('Bestseller');
 });
 

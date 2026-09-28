@@ -245,12 +245,15 @@ it('keeps the admin preview arithmetic identical to this file\'s', function () {
 
     // The two tile defaults, so the table cannot quietly start showing a
     // different shop than the stylesheet does.
-    expect($screen)->toContain("num('tile', 260)");
+    expect($screen)->toContain("num('tile', 220)");
     expect($screen)->toContain("num('tile_shop', 220)");
 
     // And those two defaults are the schema's, not a second opinion.
     $fields = SiteLayout::SCHEMA;
 
-    expect($fields['tile'][2])->toBe(260);
+    // 220, not 260: the shipped tile minimum moved when the owner asked for
+    // "5 columns on desktop and 2 on mobile". Lane PG — the arithmetic behind
+    // the number is in kbb.css beside the declaration.
+    expect($fields['tile'][2])->toBe(220);
     expect($fields['tile_shop'][2])->toBe(220);
 });

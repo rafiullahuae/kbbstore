@@ -1,21 +1,80 @@
 {{--
-    Product card — ported verbatim from kbb_product_card() in functions.php.
+    THE PRODUCT TILE. There is exactly one, and this is it.            Lane PG
 
-    Classes are the theme's: .pc / .ph / .cbody / .cbrand / .cname / .crate /
-    .cprice / .addbtn. My earlier version invented .pb / .pbrand / .pname /
-    .prate / .pprice, so almost none of the card CSS matched and every grid on
-    the site rendered unstyled.
+    ── WHAT THIS REPLACED, AND WHY THIS SHAPE WON ──────────────────────────────
 
-    -- WHAT THIS COMPONENT NEEDS ALREADY LOADED ----------------------------
+    This shop had FIVE product grids and TWO different cards:
+
+        .kbb-pgrid via <x-product-grid>        the skinned card  (brand page,
+                                                                  [kbb_products])
+        .kbb-pgrid via partials/home/grid      the skinned card  (home rails,
+                                                                  a category,
+                                                                  the wishlist)
+        .grid on /shop via <x-product-card>    THIS FILE's old card (the shop
+                                               listing AND every category
+                                               archive -- CategoryArchiveController
+                                               delegates to ShopController::index())
+        .rel on a product page                 THIS FILE's old card
+        .brw-grid on the brand landing         not a product grid at all: it
+                                               lists BRANDS, so it is left alone
+
+    The owner picked the SKINNED card's look (docs/OWNER-GRID-REFERENCE.webp):
+    photo, category eyebrow, brand, name, rating, price with a strikethrough,
+    full-width Add to cart, NEW and -% badges. So the markup below is the
+    skinned card's -- `.kbb-card` / `.kbb-card-thumb` / `.cb` / `.cn` / `.cp`,
+    the classes 28 skins in kbb-grid-skins.css are written against.
+
+    IT LIVES IN THIS FILE, not in components/product-grid.blade.php, because
+    THREE of the four product grids already call `<x-product-card>` -- including
+    the related rail in store/product.blade.php, which belongs to another lane.
+    Putting the one card here converts that rail without editing a file this
+    lane does not own, and leaves ONE template to change next time instead of
+    two that must be kept in step. components/product-grid.blade.php and
+    partials/home/grid.blade.php are now loops around this tag.
+
+    ── WHAT CAME ACROSS FROM THE OLD CARD, DELIBERATELY ────────────────────────
+
+    The skinned card never had these and /shop did. Dropping them to "match the
+    screenshot" would have been a regression in four working things, so they are
+    here:
+
+        the wishlist heart        Catalogue -> Wishlist, off by default
+        the quick-view button     Catalogue -> Quick view, ON by default
+        Product Labels            Growth & Marketing -> Product Labels, off by
+                                  default; when ON it takes the badge over
+                                  entirely, including deciding there is none.
+                                  ProductLabelsRenderTest reads `.lbl` off
+                                  /shop, and still does.
+        the no-JS Add to cart     a real `?add-to-cart=` href, not a <span>
+
+    ── WHY THE ROOT IS A <div> AND NOT AN <a> ──────────────────────────────────
+
+    The skinned card wrapped the whole tile in `<a class="kbb-card" href=…>`.
+    That cannot hold the four things above: `<a>` inside `<a>` is the ONE
+    nesting the HTML parser actively breaks apart, so the no-JS Add to cart
+    would have been hoisted out of the card by the browser, and `<button>`
+    inside `<a>` is invalid interactive content.
+
+    So the root is a `<div>`, the photograph and the name are real links, and
+    the REST of the tile is made clickable by a stretched pseudo-element on the
+    name (`.cn::after{position:absolute;inset:0}`) -- no JavaScript, no
+    measurement, and the same "click anywhere on the tile" behaviour. The
+    controls sit above it on z-index. See kbb.css, "THE STRETCHED LINK".
+
+    ── WHAT THIS COMPONENT NEEDS ALREADY LOADED ────────────────────────────────
 
         brand   `$product->brand?->t('name')` and the placeholder's seed
 
-    AND NOTHING ELSE, which is worth stating rather than leaving to be
-    rediscovered: this card does NOT read `categories` -- the skinned grid in
-    components/product-grid.blade.php does -- and it does not touch `variants`
-    either. App\Services\VariantPricing answers the range for a variable
-    parent from one grouped query per request, taken only when a tile like this
-    is on the page, so a catalogue of simple products costs nothing for it.
+    AND NOTHING ELSE, which is the reason the category eyebrow arrives as the
+    `catLabel` PROP rather than being read off `$product->categories` here.
+    Reading the relation would put `categories` in this component's contract and
+    therefore in every caller's eager load -- one extra query on /shop, on every
+    category archive, on the product page and on /routines, none of which pay it
+    today. StorefrontQueryBudgetTest is a budget, not a suggestion.
+
+    The two callers that DO have `categories` loaded (the skinned grid) resolve
+    the label themselves and pass it in; the pages that know their own category
+    pass that; /shop passes null.
 
     `brand` has to arrive loaded. A `loadMissing` here would be WORSE than the
     lazy load it replaces: this component is handed ONE model, so it would be
@@ -24,13 +83,20 @@
 
         ->with('brand:id,name,slug')
 
-    THREE CALLERS TODAY: store/shop.blade.php, the related rail in
-    store/product.blade.php, and store/routines.blade.php. All three are named
-    in tests/Feature/ComponentLoadContractTest.php, which renders each of them
-    with `Model::preventLazyLoading()` on; a fourth caller reddens that file
-    until it is named there too.
+    Every caller is named in tests/Feature/ComponentLoadContractTest.php, which
+    renders each of them with `Model::preventLazyLoading()` on; a new caller
+    reddens that file until it is named there too.
 --}}
-@props(['product', 'eager' => false])
+@props([
+    'product',
+    'eager' => false,
+    // The small upper-case line above the name. The owner's reference calls it
+    // SKINCARE SETS on a bundles rail -- it is the SECTION's label there, not
+    // the product's own category, which is why this is a caller's string.
+    'catLabel' => null,
+    // `#1`, `#2`… on the bestsellers rail. Takes the top-start badge slot.
+    'rank' => null,
+])
 
 @php
     // Catalogue → Wishlist. The heart is markup only until the module is on.
@@ -40,234 +106,241 @@
     $kbbQuickView = app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', true);
 
     // t(), not the column. On English these two ARE the column — t() returns
-    // early for the default locale — so an English card is the same bytes it
-    // was. On /ar they are the Arabic the owner typed, and blank still means
-    // untranslated, which falls back to the English name rather than to a gap
-    // where a product name should be.
-    $brand  = $product->brand?->t('name') ?? '';
-    $name   = $product->t('name');
+    // early for the default locale — so an English card reads the same words it
+    // always did. On /ar they are the Arabic the owner typed, and blank still
+    // means untranslated, which falls back to the English name rather than to a
+    // gap where a product name should be.
+    $brand = $product->brand?->t('name') ?? '';
+    $name = $product->t('name');
 
     // THE TILE'S COLOUR IS SEEDED FROM THE ENGLISH, DELIBERATELY. Gradient::for
     // hashes the string it is given, so seeding it with the translated name
     // would give a product one colour on /shop and a different one on /ar/shop
-    // — the same shop repainted, for a value nobody reads. Nothing below is
-    // printed from this; the initials and the words in the placeholder come
-    // from $brand and $name above and are translated.
-    $seed   = ($product->brand?->name ?? '') . $product->name;
-    $link   = $product->url();
-    $rating = (float) $product->rating;
-    $rc     = (int) $product->review_count;
-    $img    = $product->image;
+    // — the same shop repainted, for a value nobody reads.
+    $seed = ($product->brand?->name ?? '') . $product->name;
+    $link = $product->url();
+    $img = $product->image;
+    $rc = (int) $product->review_count;
+    $rating = (int) round((float) $product->rating);
 
-    // Catalogue → Product Labels takes over the badge entirely when it is on —
-    // including deciding there should not be one. That is the plugin's behaviour:
-    // its filter returns an empty string rather than falling back to the theme's
-    // badge, so turning the module on and matching nothing means no badge.
+    /*
+     * THE BADGES.
+     *
+     * Catalogue → Product Labels takes the badge over ENTIRELY when it is on —
+     * including deciding there should not be one. That is the plugin's
+     * behaviour: its filter returns an empty string rather than falling back to
+     * the theme's badge, so turning the module on and matching nothing means no
+     * badge. Unchanged from the card this replaces, and ProductLabelsRenderTest
+     * reads exactly this `.lbl` span off /shop.
+     *
+     * With the module OFF — which is how it ships — the tile draws the pair the
+     * owner's reference shows: a NEW pill at the top start and a -N% pill at the
+     * top end, both of them `.kbb-badge`.
+     *
+     * `$kbbOff >= 1` rather than isOnSale(), and the two are not the same thing:
+     * a markdown that rounds to nothing took the sale branch on the old card,
+     * emitted nothing, and a featured product marked down from AED 100.00 to
+     * AED 99.80 lost its Bestseller badge to a sale badge that was never drawn.
+     * ProductLabels::for() falls THROUGH to the next rule in exactly this case.
+     */
     $kbbLabel = app(\App\Services\ProductLabels::class)->for($product);
+    $kbbLabelsOn = app(\App\Services\SettingsService::class)->moduleEnabled('product_labels', false);
+    $kbbOff = $product->isOnSale() ? $product->discountPercent() : 0;
 
-    if ($kbbLabel !== null) {
-        $label = '<span class="lbl" style="background:' . e($kbbLabel['colour']) . '">'
-               . e($kbbLabel['text']) . '</span>';
-    } elseif (app(\App\Services\SettingsService::class)->moduleEnabled('product_labels', false)) {
-        $label = '';
-    } else {
-        // The theme's own, unchanged, for as long as the module is off.
-        $label = '';
+    // The top-START pill, as one decided string. A rank beats everything: it is
+    // the rail's own numbering, and how new a product is is not what that row is
+    // about.
+    $kbbStart = null;
 
-        // `$off >= 1` rather than `isOnSale()` then a guard INSIDE the branch,
-        // which is what this said. The two are not the same thing: a markdown
-        // that rounds to nothing took the sale branch, emitted the empty string
-        // and then stopped, so a featured product marked down from AED 100.00
-        // to AED 99.80 lost its Bestseller badge to a sale badge that was never
-        // drawn. ProductLabels::for() falls THROUGH to the next rule in exactly
-        // this case and says so in its own comment; the theme's copy now does
-        // the same, so turning the module on and off cannot change which badge
-        // a card carries.
-        $off = $product->isOnSale() ? $product->discountPercent() : 0;
-
-        if ($off >= 1) {
-            $label = '<span class="lbl" style="background:#E23A4E">'
-                   . '<bdi>' . e(__('store.product_card.label_off', ['percent' => $off])) . '</bdi>'
-                   . '</span>';
-        } elseif ($product->featured) {
-            $label = '<span class="lbl" style="background:#1b9e77">' . e(__('store.product_card.label_bestseller')) . '</span>';
+    if ($rank !== null) {
+        $kbbStart = '<span class="kbb-badge kbb-badge-new">#' . (int) $rank . '</span>';
+    } elseif ($kbbLabel !== null) {
+        $kbbStart = '<span class="lbl" style="background:' . e($kbbLabel['colour']) . '">' . e($kbbLabel['text']) . '</span>';
+    } elseif (! $kbbLabelsOn) {
+        if ($product->created_at && $product->created_at->gt(now()->subDays(30))) {
+            $kbbStart = '<span class="kbb-badge kbb-badge-new">' . e(__('store.product_card.badge_new')) . '</span>';
+        } elseif ($product->featured && $kbbOff < 1) {
+            /*
+             * BESTSELLER DEFERS TO A REAL MARKDOWN, and NEW does not.
+             *
+             * That is the precedence ProductLabels::for() applies and the old
+             * card applied: a featured product with a live sale shows the sale.
+             * `$kbbOff < 1` and not `! isOnSale()` — a markdown that rounds to
+             * nothing draws no -N% pill, so deferring to it would leave the
+             * tile with no badge at all, which is the defect
+             * PriceDisplayTruthTest was written for.
+             *
+             * NEW sits beside the -N% instead of under it, because they are
+             * different corners and the owner's reference shows both on one
+             * tile.
+             */
+            $kbbStart = '<span class="kbb-badge kbb-badge-best">' . e(__('store.product_card.label_bestseller')) . '</span>';
         }
     }
 
-    // The photograph is a real <img> now, not a CSS background on .ph.
-    //
-    // It was a white background with the photograph painted over it by the
-    // background shorthand, centred and contained. The same three things were
-    // wrong with it that were already fixed on the product page (see
-    // partials/product-gallery.blade.php, which this now matches):
-    //
-    //  * loading="lazy" has no background-image equivalent, so every photograph
-    //    in the grid was fetched the moment the page opened. Measured on /shop
-    //    against a 671-product catalogue: 21 photographs, 4.4MB, of which four
-    //    are above the fold on a 390px phone. The other seventeen were paid for
-    //    by a shopper who may never scroll to them.
-    //  * the preload scanner cannot see a URL that exists only inside a style
-    //    attribute, so the largest element in the grid was undiscoverable until
-    //    the stylesheet had been parsed.
-    //  * a crawler treats a background as decoration, so no product photograph
-    //    in any grid on this site could be indexed by Google Images, and a
-    //    screen reader was told nothing at all.
-    //
-    // .ph keeps its own background for the no-photograph case and stays a
-    // CSS-sized box -- a fixed 180-pixel frame -- which is what reserves the
-    // space; the <img> is absolutely positioned inside it and therefore cannot
-    // move anything, whatever order the bytes arrive in. Containing the image
-    // inside that frame is the exact equivalent of the shorthand it replaces,
-    // so the framing is unchanged: letterboxed, never cropped.
-    $phStyle = $img
-        ? 'background:#fff'
-        : 'background:' . \App\Support\Gradient::for($seed);
-
-    $binit = $img
-        ? ''
-        : '<span class="binit">' . e(\App\Support\Gradient::initials($brand ?: $name)) . '<br>' . e($brand ?: $name) . '</span>';
-
-    // Product::isDirectlyBuyable() rather than the two tests spelt out here,
-    // which is what this line was. Same answer, but it is now the SAME
-    // EXPRESSION the skinned grid reads and the same predicate
-    // CartService::add() refuses on, so the button a shopper sees and the door
-    // the request goes through cannot disagree. The grid had no copy of this
-    // rule at all and sold variable products for AED 0.
-    $canAdd = $product->isDirectlyBuyable();
+    // The top-END pill. Only the theme draws it: when Product Labels is on the
+    // module owns the badge, and a second one beside it would be the theme
+    // arguing with the setting.
+    $kbbEnd = (! $kbbLabelsOn && $kbbOff >= 1)
+        ? '<span class="kbb-badge kbb-badge-sale">' . e(\App\Support\Bidi::number('-' . $kbbOff . '%')) . '</span>'
+        : null;
 
     /*
-     * A VARIABLE PRODUCT'S PRICE IS ON ITS VARIATIONS, AND THIS TILE PRINTED
-     * AED 0 FOR IT.
+     * CAN THIS TILE PUT IT IN THE BASKET ON ITS OWN?
      *
-     * `products.price` is NULL on a variable parent — WooCommerce keeps the
-     * figures on the variations, which is the same fact $canAdd above is about
-     * — and Product::effectivePrice() ends `return (int) $this->price`, which
-     * makes that 0. So every tile for a variable product advertised AED 0,
-     * while the product page beside it published a correct AggregateOffer
-     * built from those same variations.
+     * Product::isDirectlyBuyable() is one expression read by this tile AND by
+     * the refusal in CartService::add(), so the button a shopper sees and the
+     * door the request goes through cannot give different answers. A VARIABLE
+     * parent is bought by its variation and carries no price of its own:
+     * `products.price` is NULL, effectivePrice() casts that to 0, and the
+     * skinned tile used to take a basket line at AED 0 that the checkout would
+     * then collect.
+     */
+    $kbbCanAdd = $product->isDirectlyBuyable();
+
+    /*
+     * A VARIABLE PRODUCT'S PRICE IS ON ITS VARIATIONS.
      *
      * App\Services\VariantPricing reads the range where this tile reads: ONE
-     * grouped query per request, taken only when a tile like this is actually
-     * on the page, and null for every other product — so a catalogue of simple
-     * products renders byte for byte what it rendered before, at no extra
-     * query.
-     *
-     * THE ZERO IS NOT FIXED, ONLY THE LIE. effectivePrice() still answers 0 for
-     * these rows, so the price SORT and the price FACET still file them first
-     * and cheapest. Correcting that means backfilling the column or changing
-     * the importer, and both are somebody else's file; this is the half that
-     * could be done without deciding it.
+     * grouped query per request, taken only when a tile like this is actually on
+     * the page, and null for every other product — so a catalogue of simple
+     * products costs nothing for it.
      *
      * COMPUTED HERE, IN THE BLOCK THAT EMITS NOTHING, AND NOT BESIDE THE MARKUP
      * THAT USES IT. A `@php` line of its own down in the body adds its own
      * indentation and newline to the rendered page, and
-     * StorefrontEnglishUnchangedTest compares BYTES: it caught exactly that,
-     * on /shop, on a category archive and on the product page's related rail,
-     * for a tile whose visible content had not changed at all.
+     * StorefrontEnglishUnchangedTest compares BYTES.
      */
     $kbbRange = app(\App\Services\VariantPricing::class)->range($product);
 
     /*
-     * THE WHOLE PRICE STRING, BUILT HERE. Both ends at ONE precision, and the
-     * precision that separates them -- the same rule as the sale pair below,
-     * and for the same reason: two figures the reader is invited to compare
-     * must not round into the same string. Every option at the same money is a
-     * single price, not a range of one; Seo::aggregateOffer() declines to
-     * publish a lowPrice equal to its highPrice for that reason.
+     * THE WHOLE PRICE CELL, BUILT HERE AND NOT IN THE MARKUP, for two reasons
+     * that both cost a red suite before this shape was found: the byte-for-byte
+     * one above, and that a nested `@else@if … @endif @endif` inside one line
+     * does not compile at all — "syntax error, unexpected token endif", which
+     * reaches the browser as a 500 on every page carrying a grid.
+     *
+     * BOTH FIGURES AT ONE PRECISION, AND A PRECISION THAT SEPARATES THEM.
+     * Money::format() rounds to whole dirhams, so a markdown from AED 100.00 to
+     * AED 99.80 printed a struck-through price identical to the one beside it,
+     * which reads as a sale that took nothing off. Money::decimalsToDistinguish()
+     * returns the store's usual 0 whenever the rounded figures already differ
+     * and the currency's own precision only for the pair that would collide.
+     *
+     * $kbbWas is compareAtPrice(), not `(int) $product->price`: a variable
+     * parent keeps its money on its variations and that column is NULL, so a
+     * marked-down variable product would quote `AED 0` as the regular price.
      */
-    $kbbRangeHtml = null;
-
     if ($kbbRange !== null) {
         $kbbRangeDp = \App\Support\Money::decimalsToDistinguish($kbbRange[0], $kbbRange[1]);
 
-        $kbbRangeHtml = \App\Services\VariantPricing::isSpread($kbbRange)
+        // Every option at the same money is a single price, not a range of one.
+        // Seo::aggregateOffer() declines to publish a lowPrice equal to its
+        // highPrice for the same reason.
+        $kbbPriceHtml = '<span class="kbb-card-price">' . (\App\Services\VariantPricing::isSpread($kbbRange)
             ? __('store.product_card.price_range', [
                 'low' => \App\Support\Money::format($kbbRange[0], $kbbRangeDp),
                 'high' => \App\Support\Money::format($kbbRange[1], $kbbRangeDp),
             ])
-            : \App\Support\Money::format($kbbRange[0]);
+            : \App\Support\Money::format($kbbRange[0])) . '</span>';
+    } elseif ($product->isOnSale()) {
+        $kbbWas = (int) $product->compareAtPrice();
+        $kbbDp = \App\Support\Money::decimalsToDistinguish($kbbWas, $product->effectivePrice());
+
+        $kbbPriceHtml = '<span class="kbb-card-reg">' . \App\Support\Money::format($kbbWas, $kbbDp) . '</span> '
+            . '<span class="kbb-card-price">' . \App\Support\Money::format($product->effectivePrice(), $kbbDp) . '</span>';
+    } else {
+        $kbbPriceHtml = '<span class="kbb-card-price">' . \App\Support\Money::format($product->effectivePrice()) . '</span>';
     }
 
-    // A 1000x1000 photograph painted into a frame that is never wider than 399
-    // CSS pixels. What the tile can offer instead is whatever phone-sized copy
-    // of that photograph is on disk right now -- see App\Support\ImageVariants
-    // for why the copies are made when an image is uploaded rather than when a
-    // page asks for one, and why the answer is read off the filesystem.
-    //
-    // '' WHEN THERE IS NO COPY, AND THAT IS THE IMPORTANT CASE. Most of this
-    // catalogue predates the copies, and some of it will never have any -- a
-    // photograph hosted on another domain, an SVG, an original already smaller
-    // than 400px. A srcset listing a file that is not there is worse than no
-    // srcset at all: with `w` descriptors the browser picks a candidate and
-    // never looks at src, so one 404 is a blank tile with nothing to fall back
-    // to. So the attribute is emitted only when a real file backs every
-    // candidate in it, and a tile with nothing to offer renders exactly the
-    // markup it renders today.
-    $srcset = $img ? \App\Support\ImageVariants::srcsetFor($img) : '';
+    /*
+     * A 1000x1000 photograph painted into a frame that is never wider than
+     * ~240 CSS pixels at five columns. '' when no phone-sized copy is on disk,
+     * and that is the important case: with `w` descriptors the browser picks a
+     * candidate and never looks at src, so one 404 is a blank tile with nothing
+     * to fall back to. See App\Support\ImageVariants.
+     */
+    $kbbSrcset = $img ? \App\Support\ImageVariants::srcsetFor($img) : '';
 @endphp
 
-<div class="pc">
-    <div class="ph" style="{{ $phStyle }}" onclick="location.href='{{ $link }}'">
+{{-- `kbb-tile` AS WELL AS `kbb-card`, and the second class is load-bearing.
+
+     `.kbb-card` is not unique to a product: partials/checkout/stripe-card.blade.php
+     uses the same class for the card-payment box, and kbb.css — which every
+     page loads, checkout included — already carries unconditional `.kbb-card`
+     rules. So the tile's own rules (the equal-height flex column, the two-line
+     name clamp, the stretched link) hang off `.kbb-tile`, which nothing else
+     has, instead of off a container class. That is what lets this ONE tile work
+     inside `.kbb-pgrid`, inside `#grid`, inside the product page's `.rel` and
+     on its own in a routine step, without four selector lists to keep in step
+     and without reaching into the checkout. --}}
+<div class="kbb-card kbb-tile">
+    <div class="kbb-card-thumb">
+        {{-- THE PHOTOGRAPH IS A LINK, AND IT IS OUT OF THE TAB ORDER. The name
+             below is the tile's real link and carries the words; a second tab
+             stop to the same place on every tile is forty extra stops on a
+             /shop page. It keeps its alt, so it is still a described image for
+             a screen reader and still indexable by Google Images. --}}
         @if ($img)
-            {{-- `eager` is passed by the page that knows this card is the first
+            {{-- NO width/height ATTRIBUTES, and that is not an omission.
+                 `.kbb-card-thumb` is the CSS-sized box — `aspect-ratio:1` — and
+                 the <img> is `position:absolute;inset:0` inside it, so it is out
+                 of flow: layout never asks the file how big it is, which is why
+                 the frame is reserved before a byte of the photograph arrives
+                 and why srcset cannot move anything either. An intrinsic ratio
+                 stated here could only disagree with the frame.
+
+                 `eager` is passed by the page that knows this card is the first
                  one in its grid, which is the LCP candidate at both widths.
                  Everything else is lazy: a browser still fetches a lazy image
                  that is already inside the viewport, so the cards beside this
-                 one are not delayed -- what lazy buys is the rest of the page,
-                 which is most of it. Related products and every other grid get
-                 the default, because none of them is ever the LCP. --}}
-            <img class="ph-img" src="{{ $img }}" alt="{{ $product->altFor($img) }}"
-                 @if ($srcset !== '') srcset="{{ $srcset }}" sizes="{{ \App\Support\ImageVariants::sizesAttribute() }}" @endif
+                 one are not delayed — what lazy buys is the rest of the page,
+                 which is most of it. --}}
+            <a class="kbb-card-shot" href="{{ $link }}" tabindex="-1"><img class="kbb-card-img" src="{{ $img }}" alt="{{ $product->altFor($img) }}"
+                 @if ($kbbSrcset !== '') srcset="{{ $kbbSrcset }}" sizes="{{ \App\Support\ImageVariants::tileSizesAttribute() }}" @endif
                  @if ($eager) loading="eager" fetchpriority="high" @else loading="lazy" @endif
-                 decoding="async">
-            {{-- No width/height here, unchanged from the conversion that made
-                 this an <img>: .ph is height:180px at a fractional grid width,
-                 so there is no intrinsic ratio that would be true, and the
-                 image is position:absolute;inset:0 and therefore out of flow.
-                 The CSS box reserves the space; layout never asks the file how
-                 big it is, which is why srcset cannot move anything either. --}}
+                 decoding="async"></a>
+        @else
+            {{-- Same gradient fallback the rest of the site uses, so a product
+                 without a photograph still fills the frame. --}}
+            <a class="kbb-card-shot" href="{{ $link }}" tabindex="-1"><span class="kbb-card-ph" style="background:{{ \App\Support\Gradient::for($seed) }}">{{ \App\Support\Gradient::initials($brand ?: $name) }}</span></a>
         @endif
-        {!! $binit !!}
-        {!! $label !!}
-        @if ($kbbQuickView)
-        <button class="qv-btn" type="button" aria-label="{{ __('store.product_card.quick_view') }}" data-kbb-qv="{{ $product->id }}" onclick="event.stopPropagation()">{{ __('store.product_card.quick_view') }}</button>
-        @endif
+        @if ($kbbStart !== null){!! $kbbStart !!}@endif
+        @if ($kbbEnd !== null){!! $kbbEnd !!}@endif
+        @if ($kbbQuickView)<button class="qv-btn" type="button" aria-label="{{ __('store.product_card.quick_view') }}" data-kbb-qv="{{ $product->id }}">{{ __('store.product_card.quick_view') }}</button>@endif
         @if ($kbbWishlist)<button class="heart" type="button" aria-label="{{ __('store.product_card.save_label') }}" data-kbb-wish="{{ $product->id }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg></button>@endif
     </div>
-    <div class="cbody">
-        @if ($brand)<div class="cbrand">{{ $brand }}</div>@endif
-        <a class="cname" href="{{ $link }}">{{ $name }}</a>
+    <div class="cb">
+        @if ($catLabel)<div class="kbb-card-cat">{{ $catLabel }}</div>@endif
+        {{-- THE NAME IS THE STRETCHED LINK. Its ::after covers the whole tile,
+             so a click on the card's white space follows it. The clamp that
+             holds the name to two lines whatever it says — so one long title
+             cannot make its row taller than every other row — is in kbb.css,
+             and it is a `calc()` reservation rather than anything measured. --}}
+        <a class="cn" href="{{ $link }}">@if ($brand)<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span>@endif<span class="kbb-card-nm">{{ $name }}</span></a>
         @if ($rc > 0)
-            <div class="crate"><span class="st">{{ str_repeat('★', max(1, (int) round($rating))) }}</span> {{ number_format($rating, 1) }} · {{ $rc > 999 ? __('store.product_card.count_thousands', ['count' => round($rc / 1000, 1)]) : $rc }}</div>
-        @else
-            <div class="crate" style="visibility:hidden">·</div>
+            {{-- NO REVIEWS, NO BAR. The old skinned tile drew five empty stars
+                 and a `(0)` for every unreviewed product, which reads as "rated
+                 badly" rather than "not rated yet" — it is on every tile of the
+                 owner's own reference screenshot. The height it used to take is
+                 not reserved with an invisible row: `.cp` carries margin-top
+                 auto, so the price and the button sit on the card's bottom edge
+                 whatever is above them and every tile in a row lines up. --}}
+            <div class="kbb-card-rate"><span class="kbb-crate">@for ($s = 1; $s <= 5; $s++)<span class="kbb-cstar{{ $s <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $rc }})</span></div>
         @endif
-        {{-- BOTH FIGURES AT ONE PRECISION, AND A PRECISION THAT SEPARATES THEM.
-             Money::format() rounds to whole dirhams here, so a markdown from
-             AED 100.00 to AED 99.80 printed `<del>AED 100</del> <ins>AED 100</ins>`
-             — a struck-through price identical to the one beside it, which
-             reads as a sale that took nothing off. Money::decimalsToDistinguish()
-             returns the store's usual 0 whenever the rounded figures already
-             differ (so every honest sale renders byte-for-byte as before) and
-             the currency's own precision only for the pair that would collide.
-             Both calls take the SAME width, or the two numbers would be quoted
-             on different scales, which is the same lie in a new shape. --}}
-        <div class="cprice">
-            @if ($kbbRangeHtml !== null)
-                {!! $kbbRangeHtml !!}
-            @elseif ($product->isOnSale())
-                @php $kbbSaleDp = \App\Support\Money::decimalsToDistinguish((int) $product->price, $product->effectivePrice()); @endphp
-                <del>{!! \App\Support\Money::format((int) $product->price, $kbbSaleDp) !!}</del> <ins>{!! \App\Support\Money::format($product->effectivePrice(), $kbbSaleDp) !!}</ins>
-            @else
-                {!! \App\Support\Money::format($product->effectivePrice()) !!}
-            @endif
-        </div>
-        @if ($canAdd)
-            <a class="addbtn add_to_cart_button ajax_add_to_cart" href="?add-to-cart={{ $product->publicId() }}" data-quantity="1" data-product_id="{{ $product->id }}" data-kbb-add="{{ $product->id }}" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}" rel="nofollow">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg> {{ __('store.product_card.add_to_cart') }}
-            </a>
+        <div class="cp">{!! $kbbPriceHtml !!}</div>
+        @if ($kbbCanAdd)
+            {{-- A REAL href, so the tile still works with JavaScript off — this
+                 is the one thing the skinned card's <span> gave up. cart.js
+                 calls preventDefault() on [data-kbb-add] and opens the drawer
+                 instead; the WooCommerce classes are the theme's and are what
+                 the imported markup expects. --}}
+            <a class="kbb-card-cart add_to_cart_button ajax_add_to_cart" href="?add-to-cart={{ $product->publicId() }}" data-quantity="1" data-product_id="{{ $product->id }}" data-kbb-add="{{ $product->id }}" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}" rel="nofollow">{{ __('store.product_card.add_to_cart') }}</a>
         @else
-            <a class="addbtn" href="{{ $link }}">{{ __('store.product_card.view_product') }}</a>
+            {{-- No data-kbb-add and no data-price: this product is bought by its
+                 variation, so the tile sends the shopper to the page where the
+                 option is chosen rather than binding an add nothing can price. --}}
+            <a class="kbb-card-cart" href="{{ $link }}">{{ __('store.product_card.view_product') }}</a>
         @endif
     </div>
 </div>

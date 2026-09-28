@@ -2837,9 +2837,9 @@ product_styles|card_radius|range|""|0
 product_styles|card_radius|range|null|0
 product_styles|card_radius|range|"3.7"|3
 product_styles|image_ratio|select|"square"|'square'
-product_styles|image_ratio|select|"nope"|'portrait'
-product_styles|image_ratio|select|""|'portrait'
-product_styles|image_ratio|select|null|'portrait'
+product_styles|image_ratio|select|"nope"|'square'
+product_styles|image_ratio|select|""|'square'
+product_styles|image_ratio|select|null|'square'
 product_styles|show_brand|bool|true|true
 product_styles|show_brand|bool|false|false
 product_styles|show_brand|bool|"1"|true

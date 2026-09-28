@@ -26,6 +26,38 @@
     @endif
 @endpush
 
+{{-- ── THE FILTER SIDEBAR STARTS HIDDEN ───────────────────────── Lane PG ──
+
+     The owner, in as many words: "keep off the left filters hidden by default.
+     and user can view the filters by the option." This is a visible change to a
+     page that already works, so it is the CLAUDE.md rule-1 exception — a
+     default he asked for — and it is called out in the commit rather than
+     buried. It reaches /shop AND every category archive, because
+     CategoryArchiveController delegates to ShopController::index() and both
+     render this one view.
+
+     IT IS A COOKIE, AND NOT A CLASS A SCRIPT ADDS, for two reasons.
+
+     A preference that resets on every navigation is worse than no preference: a
+     shopper who opens the filters, ticks a brand and lands on the filtered page
+     would find them shut again, every time, on the one page whose whole purpose
+     is filtering. The choice has to survive the click that uses it. The two
+     buttons below write the cookie beside the class they toggle.
+
+     And it has to be decided ON THE SERVER. A script that adds the class after
+     the document loads paints the sidebar and then takes it away, which is a
+     layout shift on the largest block of the page. The class is in the <body>
+     tag as it is sent.
+
+     `=== 'open'` and not `!== 'hidden'`: hidden is the default, so anything
+     that is not the one value meaning "the shopper opened them" — no cookie, a
+     stale value, a forged one — lands on the shipped answer. The cookie is
+     compared, never printed.
+
+     WRITTEN HERE, above the section that uses it, because @section inside
+     @section does not nest: the inner one closes the outer. --}}
+@section('body-class', request()->cookie('kbb_filters') === 'open' ? '' : 'filters-hidden')
+
 @section('content')
 @php
     $ck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>';
@@ -42,8 +74,10 @@
      * grid products will show 1 column extra".
      *
      * So the attribute is emitted only when the shopper has actually chosen,
-     * and otherwise the grid takes the automatic answer from --kbb-track, which
-     * gives four at 1280 (unchanged) and five at 1680. A click still pins,
+     * and otherwise the grid takes the automatic answer from the one track rule
+     * in kbb.css -- which, since Lane PG moved the tile minimum to 220px and
+     * the filter rail started hidden, is FIVE at 1280 and six at 1680 rather
+     * than the four and five this comment used to name. A click still pins,
      * instantly: resources/js/kbb/shop.js sets the attribute itself and the CSS
      * keyed on it applies without a reload.
      *
@@ -59,7 +93,33 @@
      * `?cols=99` pinned the grid at four columns, which is neither what the URL
      * asked for nor the automatic answer. A mutation run found it.
      */
-    $colsChosen = in_array((string) request()->query('cols'), ['2', '3', '4'], true);
+    /*
+     * -- AND FIVE IS ON THE BUTTON ROW ----------------------------- Lane PG --
+     *
+     * The row offered 2, 3 and 4 while the grid derives FIVE. Every position on
+     * it was a step DOWN from the page the shopper was already looking at, and
+     * there was no way back to the default except editing the URL -- a control
+     * lying about the page it sits above, which is the defect the note above
+     * removed from the HIGHLIGHT and left in the OPTIONS.
+     *
+     * Widened rather than removed, because the owner asked for five AND uses
+     * these buttons; deleting the control would answer half his sentence by
+     * deleting the other half. Facets::columns() carries '5' on its allowlist
+     * and as its fallback, and kbb-shop.css has the matching pin.
+     *
+     * THE COMMENT IS HERE AND NOT BESIDE THE BUTTON, for the reason this file
+     * records twice already: a Blade comment on its own line down in the markup
+     * leaves its indentation and its newline in the rendered page, and
+     * StorefrontEnglishUnchangedTest compares BYTES.
+     */
+    $colsChosen = in_array((string) request()->query('cols'), ['2', '3', '4', '5'], true);
+
+    /*
+     * The tile's own skin, so /shop and every category archive draw the SAME
+     * card as the homepage rails, the wishlist and a brand page. Appearance →
+     * Product styles → Grid skin reaches this listing for the first time.
+     */
+    $kbbSkin = \App\Support\GridSkins::resolve(null);
 @endphp
 
 {{--
@@ -87,7 +147,7 @@
         <div class="fpanel">
             <div class="fhead">
                 <span class="ftitle">{{ __('store.shop.filters_heading') }}</span>
-                <button class="fhide" type="button" onclick="document.body.classList.add('filters-hidden')">{{ __('store.shop.filters_hide') }}</button>
+                <button class="fhide" type="button" onclick="document.body.classList.add('filters-hidden');document.cookie='kbb_filters=hidden;path=/;max-age=31536000;samesite=lax'">{{ __('store.shop.filters_hide') }}</button>
                 <button class="fclose" type="button" onclick="document.body.classList.remove('filters-open')">✕</button>
             </div>
             <div id="filters">
@@ -132,14 +192,15 @@
 
     <main>
         <div class="gtop">
-            <button class="mobi-filter" type="button" onclick="document.body.classList.add('filters-open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_heading') }}</button>
-            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}</button>
+            <button class="mobi-filter" type="button" onclick="document.body.classList.add('filters-open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_heading') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>
+            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden');document.cookie='kbb_filters=open;path=/;max-age=31536000;samesite=lax'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>
             <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>
             <div class="gright">
                 <div class="colsel" id="colsel">
                     <button type="button" data-c="2"@if ($colsChosen && '2' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>
                     <button type="button" data-c="3"@if ($colsChosen && '3' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 3) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="4.5" height="14" rx="1.3"/><rect x="9.75" y="5" width="4.5" height="14" rx="1.3"/><rect x="16.5" y="5" width="4.5" height="14" rx="1.3"/></svg></button>
                     <button type="button" data-c="4"@if ($colsChosen && '4' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 4) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
+                    <button type="button" data-c="5"@if ($colsChosen && '5' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 5) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="2.7" height="14" rx=".9"/><rect x="6.3" y="5" width="2.7" height="14" rx=".9"/><rect x="10.6" y="5" width="2.7" height="14" rx=".9"/><rect x="14.9" y="5" width="2.7" height="14" rx=".9"/><rect x="19.2" y="5" width="2.7" height="14" rx=".9"/></svg></button>
                 </div>
                 <div class="sortsel">{{ __('store.shop.sort_label') }}
                     <select id="sort" onchange="var u=new URL(location.href);u.searchParams.set('orderby',this.value);u.searchParams.delete('paged');location.href=u.toString()">
@@ -161,13 +222,31 @@
             </div>
         @endif
 
-        <div class="grid" id="grid"@if ($colsChosen) data-cols="{{ $cols }}"@endif>
+        {{-- `kbb-pgrid` AND `data-skin` ON THE SHOP'S OWN GRID.        Lane PG
+
+             This listing drew a different card from the rest of the shop and
+             therefore answered to none of the skins. It draws the same tile as
+             the homepage rails now, so it gets the class those tiles are styled
+             against — the equal-height flex column, the two-line name clamp and
+             whichever of the 28 skins Appearance → Product styles is set to.
+
+             `#grid` keeps its own --kbb-tile-shop and 18px gap (kbb-shop.css),
+             and both selectors carry the SAME track declaration in kbb.css, so
+             adding the class changes no column arithmetic. --}}
+        <div class="grid kbb-pgrid" id="grid" data-skin="{{ $kbbSkin }}"@if ($colsChosen) data-cols="{{ $cols }}"@endif>
             @forelse ($products as $product)
                 {{-- The first tile is the Largest Contentful Paint element on
                      this page at 1280 and the first thing in the grid on a
                      phone, so its photograph is the one request worth
-                     prioritising. Every other card is lazy. --}}
-                <x-product-card :product="$product" :eager="$loop->first" />
+                     prioritising. Every other card is lazy.
+
+                     `catLabel` is the ARCHIVE's category, which is exactly what
+                     the eyebrow says on the owner's reference: the section this
+                     row belongs to. /shop itself has no single category, so it
+                     passes null and the tile simply has no eyebrow — which
+                     costs no query, where reading each product's own categories
+                     would have cost one on this page and on three others. --}}
+                <x-product-card :product="$product" :eager="$loop->first" :cat-label="($category ?? null)?->t('name')" />
             @empty
                 <div class="empty" style="grid-column:1/-1"><b>{{ __('store.shop.empty_heading') }}</b>{{ __('store.shop.empty_body') }}</div>
             @endforelse
