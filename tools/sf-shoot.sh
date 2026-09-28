@@ -3,19 +3,25 @@
 #
 # ── WHY THIS SCRIPT EXISTS RATHER THAN ONE node CALL ────────────────────────
 #
-# Two of the shots cannot be taken against the branch as it stands, and both
-# are taken by TEMPORARILY changing a file and PUTTING IT BACK:
+# The BEFORE shot cannot be taken against the branch as it stands, and this is
+# the half of the evidence that actually shows what changed. The owner marked
+# up a screenshot of the page as it WAS -- the bundle strip struck through, an
+# arrow from the contents grid up into its place -- so "the strip is gone and
+# the list is there instead" has to be a pair of pictures of one page, not a
+# picture and a claim.
 #
-#   1. bundle-before. The whole point of half of this lane is that a set page
-#      no longer draws the quantity-bundle strip. "It is gone" is a claim; a
-#      before and an after of the same page is evidence. So the guard in
-#      App\Services\BundleService::forProduct() is disabled for one pass.
+# So this backs out exactly the two edits that make the change, shoots, and
+# puts them back:
 #
-#   2. admin-screen. resources/views/admin/app.blade.php is the INTEGRATOR's
-#      file and this lane may not edit it, so the console does not include
-#      admin/partials/set-contents-screen.blade.php yet and window.go
-#      ('setcontents') would reach nothing. This applies exactly the one line
-#      the integrator is asked for, shoots, and removes it.
+#   1. the `if ($product->isSet())` guard in BundleService::forProduct(), so
+#      the strip renders again;
+#   2. the @include in store/product.blade.php moves back out of the buy
+#      column to where it stood, so the contents draw as a section near the
+#      foot. The PANEL itself is not reverted -- it would mean restoring a
+#      deleted file -- so the "before" shot shows the old PLACE with the new
+#      list in it. That is the honest limit of the reconstruction and it is
+#      recorded here rather than left for a reader to work out: what the pair
+#      proves is the STRIP and the PLACE, which is what the arrow was about.
 #
 # ── AND WHY THAT IS SAFE HERE ───────────────────────────────────────────────
 #
@@ -33,7 +39,7 @@ export SF_BASE="http://127.0.0.1:$PORT"
 export SF_OUT="$APP/docs/lane-sf-shots"
 
 BUNDLE="$APP/app/Services/BundleService.php"
-CONSOLE="$APP/resources/views/admin/app.blade.php"
+PRODUCT="$APP/resources/views/store/product.blade.php"
 
 dirty() {
     git -C "$APP" status --porcelain -- "$1" | grep -q . && return 0
@@ -42,63 +48,51 @@ dirty() {
 
 restore() {
     git -C "$APP" checkout -- "$BUNDLE" 2>/dev/null || true
-    git -C "$APP" checkout -- "$CONSOLE" 2>/dev/null || true
+    git -C "$APP" checkout -- "$PRODUCT" 2>/dev/null || true
 }
 
 trap 'restore' INT TERM
 
-if dirty "$BUNDLE"; then
-    echo "REFUSING: $BUNDLE has uncommitted changes. Commit them first —" >&2
-    echo "this script reverts that file and would throw them away." >&2
-    exit 1
-fi
-
-if dirty "$CONSOLE"; then
-    echo "REFUSING: $CONSOLE has uncommitted changes." >&2
-    exit 1
-fi
+for f in "$BUNDLE" "$PRODUCT"; do
+    if dirty "$f"; then
+        echo "REFUSING: $f has uncommitted changes. Commit them first --" >&2
+        echo "this script reverts that file and would throw them away." >&2
+        exit 1
+    fi
+done
 
 mkdir -p "$SF_OUT"
 
-echo "── the four designs, the unpriced set and the Arabic mirror ──"
-SF_ONLY=designs node "$APP/tools/sf-shots.cjs"
+echo "── AFTER: the list in the buy column, the strip gone ──"
+SF_TAG=after node "$APP/tools/sf-shots.cjs"
 
-echo "── the set page WITHOUT the strip (this lane) ──"
-SF_ONLY=bundle SF_BUNDLE=bundle-after node "$APP/tools/sf-shots.cjs"
-
-echo "── an ordinary product, whose strip must be untouched ──"
-SF_ONLY=plain node "$APP/tools/sf-shots.cjs"
-
-echo "── the set page WITH the strip (the branch point) ──"
-python3 - "$BUNDLE" <<'PATCH'
+echo "── BEFORE: the strip back, the contents back near the foot ──"
+python3 - "$BUNDLE" "$PRODUCT" <<'PATCH'
 import sys
-p = sys.argv[1]
-s = open(p).read()
+bundle, product = sys.argv[1], sys.argv[2]
+
+s = open(bundle).read()
 old = "        if ($product->isSet()) {\n            return [];\n        }\n"
 assert s.count(old) == 1, 'the set guard is not where this script expects it'
-open(p, 'w').write(s.replace(old, "        if (false) {\n            return [];\n        }\n", 1))
-PATCH
-SF_ONLY=bundle SF_BUNDLE=bundle-before node "$APP/tools/sf-shots.cjs"
-git -C "$APP" checkout -- "$BUNDLE"
+open(bundle, 'w').write(s.replace(old, "        if (false) {\n            return [];\n        }\n", 1))
 
-echo "── Appearance → Set contents ──"
-python3 - "$CONSOLE" <<'PATCH'
-import sys
-p = sys.argv[1]
-s = open(p).read()
-anchor = "@include('admin.partials.set-contents-screen')"
-assert anchor not in s, 'the integrator has already wired this; drop this block'
-old = "@include('admin.partials.banners-screen')"
-assert s.count(old) == 1, 'the console changed shape; find a new anchor'
-open(p, 'w').write(s.replace(old, old + "\n" + anchor, 1))
+t = open(product).read()
+inc = "        @include('partials.set-contents-panel')\n"
+assert t.count(inc) == 1, 'the buy-column include is not where this script expects it'
+t = t.replace(inc, '', 1)
+anchor = "  @unless ($modules->hidden('fbt'))"
+assert t.count(anchor) == 1, 'the old section anchor moved'
+open(product, 'w').write(t.replace(anchor, "@include('partials.set-contents-panel')\n" + anchor, 1))
 PATCH
-SF_ONLY=admin node "$APP/tools/sf-shots.cjs"
-git -C "$APP" checkout -- "$CONSOLE"
+SF_TAG=before node "$APP/tools/sf-shots.cjs"
+restore
 
-if dirty "$BUNDLE" || dirty "$CONSOLE"; then
-    echo "FAILED TO RESTORE. Check:" >&2
-    git -C "$APP" status --porcelain -- "$BUNDLE" "$CONSOLE" >&2
-    exit 1
-fi
+for f in "$BUNDLE" "$PRODUCT"; do
+    if dirty "$f"; then
+        echo "FAILED TO RESTORE. Check:" >&2
+        git -C "$APP" status --porcelain -- "$f" >&2
+        exit 1
+    fi
+done
 
 echo "shots in $SF_OUT; tree is clean"

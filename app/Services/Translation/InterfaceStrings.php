@@ -737,6 +737,27 @@ final class InterfaceStrings
             'set.page_heading' => 'What is in this set',
             'set.page_separately' => 'Bought separately',
             'set.page_set_price' => 'Set price',
+            /*
+             * ── THE LONG BOX'S DISCLOSURE (Lane SF) ─────────────────────────
+             *
+             * The contents list now sits in the BUY COLUMN, in the space the
+             * quantity-bundle strip used to occupy — which is above the stock
+             * line and the Add to cart button. A twelve-member box drawn in
+             * full there is seven hundred pixels between the price and the
+             * button, and on a phone that is the button off the bottom of the
+             * screen. So the list shows the first few and folds the rest into
+             * a <details>.
+             *
+             * BOTH WORDS ARE KEYED because both are printed: <summary> carries
+             * the two labels and CSS swaps them on `details[open]`, which is
+             * how a disclosure changes its own word with no script at all.
+             *
+             * trans_choice, with the count INSIDE the string: Arabic has six
+             * plural forms to English's two and ':count more' concatenated
+             * outside the translation cannot express any of them.
+             */
+            'set.show_all' => 'Show :count more product|Show :count more products',
+            'set.show_fewer' => 'Show fewer',
             'checkout.secure_badge' => 'Secure checkout',
         ];
     }

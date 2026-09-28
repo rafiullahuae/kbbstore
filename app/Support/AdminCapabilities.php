@@ -311,13 +311,6 @@ final class AdminCapabilities
         // two above.
         'slimfooter.manage' => ['owner', 'manager', 'editor'],
 
-        // Which of four drawings a set's product page uses for the block that
-        // names what is in the box, and the rendered preview of each.
-        // Storefront appearance again, and its own capability for the same
-        // reason as the three above: narrowing one must not silently narrow
-        // another from a different file. (Lane SF)
-        'setcontents.manage' => ['owner', 'manager', 'editor'],
-
         // The site width, the side gutter and the product column count: one
         // screen, nine numbers, and every one of them printed into a stylesheet
         // on every page of the shop. Storefront appearance again, and its own
@@ -1181,15 +1174,6 @@ final class AdminCapabilities
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/checkout-page', 'checkoutpage.manage'],
         ['*', 'admin-api/slim-footer', 'slimfooter.manage'],
-        /*
-         * TWO LINES AND NOT ONE. The exact rule governs the screen's own GET
-         * and POST; the '/**' sibling is what governs `admin-api/set-contents/
-         * preview`, because an exact pattern does not match a sub-path -- the
-         * cart-page pair above says the same thing, and this map fails closed,
-         * so the preview would 403 on a shop whose owner has no shell. (Lane SF)
-         */
-        ['*', 'admin-api/set-contents', 'setcontents.manage'],
-        ['*', 'admin-api/set-contents/**', 'setcontents.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/site-layout', 'sitelayout.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],

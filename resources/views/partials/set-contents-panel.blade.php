@@ -1,84 +1,103 @@
 {{--
  ═══════════════════════════════════════════════════════════════════════════════
-  WHAT IS IN THIS SET — the set's OWN PRODUCT PAGE. (Lane SP)
+  WHAT IS IN THIS SET — in the buy column, where the bulk strip used to be.
+  (Lane SP, moved and rebuilt by Lane SF)
  ═══════════════════════════════════════════════════════════════════════════════
 
-    Lane SET's report, §8:
+    The owner, with a marked-up screenshot — the "Choose your option / 1 unit /
+    2-pack bundle / 3-pack bundle" block struck through with a red X, and an
+    arrow drawn from the contents section far down the page UP into the space
+    it occupied:
 
-      "It was not one of the seven surfaces and you did not name it. The set
-       publishes with its own description, gallery and price; what is in the box
-       is not repeated there."
+      "the Set product will not have bundle purchase, instead of that section,
+       bring the What's inside there, and make it nice list, not grid! also the
+       mobile screen will adjust that list nicely and display."
 
-    So a shopper who lands on /product/{set-slug}/ from Google saw a price and
-    no contents. This is that page's answer.
+    So this is a SWAP and not two changes that happen to be in one release.
+    App\Services\BundleService::forProduct() answers an empty list for a set,
+    which empties that slot in store/product.blade.php's buy column, and this
+    partial is included into the slot it empties. The space the strip freed is
+    the space the list fills — which is what the arrow on the screenshot means.
 
-    ── WHY THIS IS NOT partials/set-row.blade.php AGAIN ───────────────────────
+    ── WHAT THIS REPLACED, AND WHAT WAS THROWN AWAY ──────────────────────────
 
-    The fanned row is a BASKET row: circles, a button, a tiny popup. It is right
-    where the shopper has already chosen and the row has 42px of height to live
-    in. This page is the surface where the shopper is DECIDING, and on it a
-    member is a product they may want to open — so each member gets its own
-    picture at a size worth looking at, its own name, its own brand, its own
-    option label, its own price, and ITS OWN LINK.
+    A grid: `repeat(auto-fill, minmax(min(100%, 150px), 1fr))`, five square
+    tiles across, in a section of its own near the foot of the page. "not grid!"
+    — so the grid is gone, and so are the three alternative designs and the
+    Appearance screen that would have chosen between them. He chose. A picker
+    over a decision already taken is a screen nobody opens and four drawings to
+    keep working.
 
-    ── AND WHY IT IS STILL App\Support\SetContents ────────────────────────────
+    ── A LIST, AND THE SAME LIST AT EVERY WIDTH ──────────────────────────────
 
-    ▲ THERE IS EXACTLY ONE DESCRIPTION OF A SET'S CONTENTS IN THIS APPLICATION
-      AND THIS FILE DOES NOT ADD A SECOND. ▲
+    `.buybox` is 346px at a 390px viewport, 582px at 1280 and 778px at 1680 —
+    measured in Chromium, not assumed. All three are narrow, so there is no
+    width at which a grid of tiles is the right answer here and none at which
+    this list has to become something else. One shape, three sizes of it:
 
-    Every figure below comes out of SetContents::fromProduct() — the same array
+        [ photo ] [ brand / name / option ] [ xN / price ]
+
+    Three grid tracks, laid along the INLINE axis, so in an Arabic document the
+    photograph is on the right and the price on the left from the same
+    declaration — no [dir] selector in this file. `minmax(0,1fr)` on the middle
+    track and min-width:0 everywhere, because a grid item's default min-width is
+    the width of its longest unbreakable word, and "Revive Eye Serum Ginseng
+    Retinal 30ml" in a 346px column is how a page comes to scroll sideways.
+
+    ── MOBILE IS DESIGNED, NOT INHERITED ─────────────────────────────────────
+
+    He asked for it by name. Below 480px the photograph goes from 56 to 48, the
+    row padding from 11 to 9, the name from 14 to 13.5, and the quantity and
+    price stop stacking and sit on ONE line at the end of the row — a two-line
+    right-hand column costs 16px of row height twelve times over in the
+    narrowest column this shop has, and "2x AED 90" is shorter than the space
+    that costs. Nothing is measured to decide it; it is one media query.
+
+    ── AND THE LIST CANNOT PUSH ADD TO CART OFF THE SCREEN ───────────────────
+
+    This is the cost of the new position and the one thing the old one did not
+    have. Twelve rows is about seven hundred pixels sitting between the price
+    and the button. So a box of more than six members shows the first five and
+    folds the rest into a <details>:
+
+      - HTML's own disclosure, so it is keyboard-operable, reachable by the
+        browser's own find-in-page, and present in the markup for a crawler
+        that runs no script;
+      - NOT ONE LINE OF JAVASCRIPT, which is the rule the rest of this project
+        sizes by. The summary carries both labels and CSS swaps them on
+        `details[open]`;
+      - the honest figures below the list count EVERY member, folded or not,
+        because they come from App\Support\SetContents and never from what
+        happens to be on screen.
+
+    ── THERE IS STILL EXACTLY ONE DESCRIPTION OF A SET'S CONTENTS ────────────
+
+    Every figure here comes out of SetContents::fromProduct() — the same array
     the cart row, the checkout summary, the invoice and the order email read.
-    Nothing here re-reads the pivot, re-adds the parts total or re-derives the
-    saving; a second adder is how two surfaces come to disagree about what a set
-    costs, which is a defect this shop has already paid for twice.
+    Nothing re-reads the pivot, re-adds the parts total or re-derives the
+    saving. `url` and `visible` are keys on that array rather than decisions
+    made here, and neither reaches an order snapshot or /api/*.
 
-    Two keys were ADDED to that array rather than computed here — `url` and
-    `visible` — because both are facts about a member product and both belong
-    beside the name they describe. Neither reaches an order snapshot or /api/*:
-    SetContents::snapshot() and ::toApi() build their rows from explicit key
-    lists, so a key added to fromProduct() cannot travel.
+    ── THE HEADING IS A LABEL NOW, NOT AN <h2> ───────────────────────────────
 
-    ── THE DESIGN SWITCH IS NOT set-row's, AND NOW THERE IS ONE HERE TOO ──────
+    The old placement had an eyebrow ("The set") and an <h2> ("What is in this
+    set") because it was a SECTION of the document. In the buy column it is
+    not one: an <h2> between the price and the Add to cart button claims a
+    major division of the page in the document outline that a 346px column has
+    not earned, and a screen reader announces it as one. So it is the same
+    `.opt-label` line the block it replaces used — the words, then the count in
+    the note span, exactly where "Choose your option / Save more with bundles"
+    sat. Same slot, same typography, same job.
 
-    set-row.blade.php's `@if (SetDesign::current() === SetDesign::FAN)` picks
-    which BASKET ROW is drawn. This panel is not one of those four drawings and
-    is deliberately not behind that switch: whichever row the owner ends up
-    with, the product page still has to say what is in the box.
+    `store.set.page_eyebrow` is left in InterfaceStrings rather than deleted:
+    it is a translated key and the Arabic against it may already be typed.
 
-    It has a switch of its OWN, added by Lane SF, because the owner asked to be
-    shown the options for THIS block and to pick from pictures:
+    ── NOTHING HERE MEASURES LAYOUT AND NOTHING HERE IS JAVASCRIPT ───────────
 
-        "there should be list of products which are inside the set, present it
-         beautifully. better to preview me the set product front-end preview.
-         so i can choose from."
+    No getBoundingClientRect, no offsetWidth, no ResizeObserver. Every number
+    below is a constant, a calc() or a media query.
 
-    App\Support\SetPanelDesign carries the four keys and the argument for the
-    default; partials/set-contents/{grid,list,cards,stack}.blade.php carry the
-    drawings; Appearance -> Set contents is where he chooses. The default is
-    GRID, which is the drawing this file already shipped, so applying the
-    package moves nothing until he moves it.
-
-    ── WHY THE GRID'S CSS DID NOT MOVE OUT WITH THE GRID'S MARKUP ─────────────
-
-    The @once block below is byte-for-byte the one this file has always
-    emitted, including the rules only the compact grid uses. Splitting it
-    per design would have re-ordered the declarations that reach the default
-    page, and CLAUDE.md rule 1 is that nothing which already works may change.
-    Each NEW design adds its own @once block in its own partial, so a shop on
-    `list` ships the list's rules as well -- about 1.4KB of stylesheet that its
-    chosen design does not use, paid once, inline, on set pages only. That is
-    the cheaper of the two mistakes available here.
-
-    ── NOTHING HERE MEASURES LAYOUT AND NOTHING HERE IS JAVASCRIPT ────────────
-
-    Not one line of script. The grid is `repeat(auto-fill, minmax(min(100%,
-    150px), 1fr))`, which is the CSS answer to "as many columns as fit": two at
-    390px, seven or eight at 1280px, and no getBoundingClientRect anywhere.
-    `min(100%, 150px)` and not `150px` is what keeps the page honest below
-    150px of content width -- a bare 150px minimum makes the track wider than
-    its container and the whole page scrolls sideways.
-
-    ── ESCAPING ───────────────────────────────────────────────────────────────
+    ── ESCAPING ──────────────────────────────────────────────────────────────
 
     Every interpolation is escaped. A member name, a brand and an option label
     are settings. The only {!! !!} is Money::format(), which returns markup this
@@ -86,13 +105,13 @@
     slug by App\Support\Url — never a value out of the settings table, so there
     is no scheme to check.
 
-    ── THE STYLE BLOCK IS @once AND INLINE ────────────────────────────────────
+    ── THE STYLE BLOCK IS @once AND INLINE ───────────────────────────────────
 
-    Same reasoning as set-row.blade.php: resources/css/kbb/kbb.css is compiled
-    by Vite, package.json defines no `build` script, and a rule added there
-    would not reach the server until somebody ran `npx vite build` by hand.
+    resources/css/kbb/kbb.css is compiled by Vite, package.json defines no
+    `build` script, and a rule added there would not reach the server until
+    somebody ran `npx vite build` by hand.
 
-    ── AND IT COSTS NO QUERY ──────────────────────────────────────────────────
+    ── AND IT COSTS NO QUERY ─────────────────────────────────────────────────
 
     Store\ProductController::show() calls SetEagerLoad::on([$product]), which
     runs NOTHING AT ALL when the product is not a set — which is every product
@@ -101,116 +120,146 @@
     the flatness rather than asserting it.
 --}}
 @php
+    use App\Support\Money;
     use App\Support\SetContents;
-    use App\Support\SetPanelDesign;
 
     $kbbSetPage = $product->isSet() ? SetContents::fromProduct($product) : SetContents::NONE;
+
     /*
-     * WHICH DRAWING. One settings read, off the same whole-table snapshot the
-     * other fifty settings on this page come from -- no query of its own and
-     * none per member. current() answers one of four keys or the default; it
-     * cannot answer anything else, whatever is in the table. (Lane SF)
-     */
-    $kbbSetDesign = SetPanelDesign::valid($kbbSetDesignOverride ?? null)
-        ? (string) $kbbSetDesignOverride
-        : SetPanelDesign::current();
-    /*
-     * $kbbSetDesignOverride IS THE ADMIN PREVIEW'S, AND NOTHING ELSE EVER SETS
-     * IT. Appearance -> Set contents draws the real panel, from a real set, in
-     * each of the four designs, so the owner picks from the page rather than
-     * from a description of it -- the same arrangement Appearance -> Homepage's
-     * Preview uses, and for the same reason: the picture has to be the page.
+     * HOW MANY ROWS STAND BEFORE THE FOLD.
      *
-     * It reaches here through @include's parent scope from
-     * resources/views/admin/partials/set-contents-preview.blade.php and from
-     * nowhere else. store/product.blade.php does not define it, so the shop
-     * always takes the branch below, and SetPanelDesign::valid() holds the
-     * override to the same four keys the setting is held to -- a preview
-     * cannot render a design the shop cannot.
+     * Five, and the number lives here rather than in the CSS because the fold
+     * is a SERVER decision: the rows past it are inside a <details> in the
+     * markup, which is what lets the disclosure work with no script at all.
+     * Five rows is about 370px of list, which leaves the Add to cart button on
+     * a 667px phone screen with the price still above it.
+     *
+     * A box of exactly six would fold ONE row, which is a disclosure that
+     * saves nothing and costs a click -- so the fold applies from seven
+     * upward and a six-member box is drawn whole.
      */
+    $kbbSetFold = 5;
+    $kbbSetRows = $kbbSetPage['members'];
+    $kbbSetFolds = count($kbbSetRows) > $kbbSetFold + 1;
+    $kbbSetShown = $kbbSetFolds ? array_slice($kbbSetRows, 0, $kbbSetFold) : $kbbSetRows;
+    $kbbSetHidden = $kbbSetFolds ? array_slice($kbbSetRows, $kbbSetFold) : [];
 @endphp
 @if ($kbbSetPage['members'] !== [])
 @once
 <style>
 /* ═══════════════════════════════════════════════════════════════════════════
-   WHAT IS IN THIS SET. calc(), min() and auto-fill only — nothing measured.
+   WHAT IS IN THIS SET — the buy column's list. calc(), min() and one media
+   query; nothing measured, no script.
    ═══════════════════════════════════════════════════════════════════════════ */
-.ksp-intro{margin:0 0 14px;font-size:13px;color:var(--ink-2,#5E545A)}
-.ksp-grid{display:grid;gap:14px;min-width:0;
-          grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr))}
-.ksp-m{display:flex;flex-direction:column;gap:7px;min-width:0;text-align:start}
+.ksl{display:block;min-width:0;margin:0 0 16px}
+.ksl-rows{display:block;min-width:0}
 
-/* The picture. A square box the track decides the width of, so the row of
-   photographs lines up whatever shape the originals are. */
-.ksp-ph{position:relative;display:block;width:100%;aspect-ratio:1;border-radius:12px;
-        overflow:hidden;background:var(--line-2,rgba(42,34,40,.06))}
-.ksp-ph img{width:100%;height:100%;object-fit:cover;display:block}
-.ksp-ph.is-blank{background-size:cover;background-position:center}
+/* The row. Photograph, words, money — three tracks along the inline axis, so
+   Arabic mirrors without a second rule. */
+.ksl-r{display:grid;gap:0 12px;min-width:0;align-items:center;padding:11px 0;
+       grid-template-columns:56px minmax(0,1fr) auto}
+.ksl-r + .ksl-r{border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
 
-.ksp-br{font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+/* A fixed square, so every name in the column starts at the same place --
+   which is the whole reason to draw a list rather than a grid. */
+.ksl-ph{position:relative;display:block;width:56px;height:56px;
+        border-radius:10px;overflow:hidden;background:var(--line-2,rgba(42,34,40,.06))}
+.ksl-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ksl-ph.is-blank{background-size:cover;background-position:center}
+
+.ksl-w{min-width:0;display:flex;flex-direction:column;gap:2px;text-align:start}
+.ksl-br{font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
         color:var(--ink-2,#5E545A);opacity:.72;overflow-wrap:anywhere}
-.ksp-nm{font-size:13.5px;line-height:1.35;font-weight:640;color:var(--ink,#2A2228);
+.ksl-nm{font-size:14px;line-height:1.35;font-weight:640;color:var(--ink,#2A2228);
         overflow-wrap:anywhere}
 /* A REAL LINK, so it is a link for a keyboard and for a crawler as well as for
    a mouse. A member that is not published is the same words without an <a> --
    see SetContents::memberIsLive(): a href to a draft is a 404 on the one page
    a shopper reached from Google. */
-a.ksp-nm{color:inherit;text-decoration:none;border-bottom:1px solid var(--line,rgba(42,34,40,.10))}
-a.ksp-nm:hover{border-bottom-color:currentColor}
-a.ksp-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a.ksl-nm{color:inherit;text-decoration:none;border-bottom:1px solid var(--line,rgba(42,34,40,.10))}
+a.ksl-nm:hover{border-bottom-color:currentColor}
+a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.ksl-var{font-size:12px;color:var(--ink-2,#5E545A);overflow-wrap:anywhere}
 
-.ksp-meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;min-width:0;
-          font-size:12px;color:var(--ink-2,#5E545A)}
-.ksp-q{font-weight:700;color:var(--ink,#2A2228);white-space:nowrap}
-.ksp-pr{white-space:nowrap}
+.ksl-end{display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+         min-width:0;text-align:end}
+.ksl-q{font-size:12px;font-weight:700;color:var(--ink,#2A2228);white-space:nowrap}
+.ksl-pr{font-size:13px;color:var(--ink-2,#5E545A);white-space:nowrap}
+
+/* ── THE DISCLOSURE ──────────────────────────────────────────────────────
+   HTML's own, so there is no script. Both labels are in the markup and this
+   swaps them; the default marker is removed because every browser draws a
+   different triangle and the row already reads as a control. */
+.ksl-more{display:block;min-width:0}
+.ksl-more > summary{list-style:none;cursor:pointer;display:block;min-width:0;
+  padding:11px 0 0;font-size:12.5px;font-weight:700;color:var(--ink,#2A2228);
+  text-align:start;border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
+.ksl-more > summary::-webkit-details-marker{display:none}
+.ksl-more > summary:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.ksl-more > summary span{border-bottom:1px solid var(--line,rgba(42,34,40,.10))}
+.ksl-more > summary .ksl-less{display:none}
+.ksl-more[open] > summary .ksl-less{display:inline}
+.ksl-more[open] > summary .ksl-all{display:none}
+/* The first folded row carries its own hairline, so it is separated from the
+   summary the way every other row is separated from the one above it. */
+.ksl-more .ksl-r:first-of-type{border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
 
 /* The footing. Bought separately, the set's own price, and the saving -- the
    same three integers SetContents already computed, printed rather than
-   recomputed. */
-.ksp-foot{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;min-width:0;
-          margin-top:16px;padding-top:14px;border-top:1px solid var(--line,rgba(42,34,40,.10))}
-.ksp-f{display:flex;gap:6px;align-items:baseline;min-width:0;font-size:13px;
+   recomputed, and counting every member whether or not it is folded away. */
+.ksl-foot{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;min-width:0;
+          margin-top:12px;padding-top:12px;border-top:1px solid var(--line,rgba(42,34,40,.10))}
+.ksl-f{display:flex;gap:6px;align-items:baseline;min-width:0;font-size:13px;
        color:var(--ink-2,#5E545A)}
-.ksp-f b{font-weight:700;color:var(--ink,#2A2228);white-space:nowrap}
-.ksp-was b{font-weight:600;text-decoration:line-through;color:var(--ink-2,#5E545A)}
-.ksp-save{font-size:13px;font-weight:700;color:#1c7a4a;white-space:nowrap}
-@media (max-width:700px){
-  .ksp-grid{gap:12px}
-  .ksp-nm{font-size:13px}
+.ksl-f b{font-weight:700;color:var(--ink,#2A2228);white-space:nowrap}
+.ksl-was b{font-weight:600;text-decoration:line-through;color:var(--ink-2,#5E545A)}
+.ksl-save{font-size:13px;font-weight:700;color:#1c7a4a;white-space:nowrap}
+
+/* ── THE PHONE ───────────────────────────────────────────────────────────
+   "also the mobile screen will adjust that list nicely and display."
+
+   The photograph comes down 8px, the row padding 2, the name half a step --
+   and the quantity and the price stop stacking. */
+@media (max-width:480px){
+  .ksl-r{grid-template-columns:48px minmax(0,1fr) auto;gap:0 10px;padding:9px 0}
+  .ksl-ph{width:48px;height:48px;border-radius:9px}
+  .ksl-nm{font-size:13.5px}
+  .ksl-end{flex-direction:row;align-items:baseline;gap:7px}
+  .ksl-foot{gap:5px 14px}
 }
 </style>
 @endonce
-<section class="sec ksp">
-    <div class="eyebrow">{{ __('store.set.page_eyebrow') }}</div>
-    <h2>{{ __('store.set.page_heading') }}</h2>
-    <p class="ksp-intro">{{ trans_choice('store.set.contents', $kbbSetPage['count'], ['count' => $kbbSetPage['count']]) }}</p>
-    {{-- FOUR DESIGNS, ONE OF WHICH IS WHAT THIS PAGE ALREADY DREW. (Lane SF)
-
-         AN @if CHAIN AND NOT AN @switch, and not a variable @include either.
-
-         @switch is out for the reason set-row.blade.php records: Blade
-         requires its first @case to follow it with nothing in between, and a
-         comment leaves the newline it sat on, so a switch with an explanation
-         above its first case does not compile at all.
-
-         @include('partials.set-contents.' . $design) is out for a better
-         reason. $design comes from a row in `settings`, and a view name built
-         out of a settings row is a path a stray row chooses -- SetPanelDesign
-         ::current() already refuses anything that is not one of its four keys,
-         but a template that would render whatever it was handed is one edit
-         away from being the sink. Four literal branches cannot be pointed
-         anywhere, whatever is in the table.
-
-         Each branch ends with partials/set-contents/footing.blade.php, which
-         is the only place that decides whether a set claims a saving. --}}
-    @if ($kbbSetDesign === SetPanelDesign::LIST)
-        @include('partials.set-contents.list')
-    @elseif ($kbbSetDesign === SetPanelDesign::CARDS)
-        @include('partials.set-contents.cards')
-    @elseif ($kbbSetDesign === SetPanelDesign::STACK)
-        @include('partials.set-contents.stack')
-    @else
-        @include('partials.set-contents.grid')
+<div class="ksl">
+    {{-- The same `.opt-label` line the quantity-bundle strip used, in the same
+         slot: the words, then the count in the note span. Not an <h2> -- the
+         note at the top of this file argues it. --}}
+    <div class="opt-label">{{ __('store.set.page_heading') }} <span>{{ trans_choice('store.set.contents', $kbbSetPage['count'], ['count' => $kbbSetPage['count']]) }}</span></div>
+    {{-- ONE COPY OF THE ROW, drawn twice. The folded rows and the standing rows
+         are the same markup, and a second copy of it inside the <details> is
+         the copy that drifts. --}}
+    <div class="ksl-rows">
+        @foreach ($kbbSetShown as $kbbSetPageMember)
+            @include('partials.set-contents-row')
+        @endforeach
+    </div>
+    @if ($kbbSetHidden !== [])
+        <details class="ksl-more">
+            <summary><span class="ksl-all">{{ trans_choice('store.set.show_all', count($kbbSetHidden), ['count' => count($kbbSetHidden)]) }}</span><span class="ksl-less">{{ __('store.set.show_fewer') }}</span></summary>
+            @foreach ($kbbSetHidden as $kbbSetPageMember)
+                @include('partials.set-contents-row')
+            @endforeach
+        </details>
     @endif
-</section>
+    <div class="ksl-foot">
+        <span class="ksl-f ksl-was">{{ __('store.set.page_separately') }} <b>{!! Money::format((int) $kbbSetPage['partsTotal']) !!}</b></span>
+        <span class="ksl-f">{{ __('store.set.page_set_price') }} <b>{!! Money::format((int) $kbbSetPage['setPrice']) !!}</b></span>
+        {{-- ▲ AN UNPRICED SET IS NOT SAVING ANYBODY ANYTHING. The owner's first
+             set, half filled in, read "Bought separately: AED 806.00 / Set
+             price: AED 0.00 / You save AED 806.00" -- the arithmetic right and
+             the sentence false. SetContents::fromProduct() floors it to zero on
+             the shopping path, and this is the one place that decides whether
+             the sentence is printed at all. --}}
+        @if ($kbbSetPage['saving'] > 0)<span class="ksl-save">{{ __('store.set.saving', ['amount' => Money::plain((int) $kbbSetPage['saving'])]) }}</span>@endif
+    </div>
+</div>
 @endif

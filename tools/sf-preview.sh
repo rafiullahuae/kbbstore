@@ -17,42 +17,17 @@ mkdir -p "$ROOT"
 ln -sfn "$APP" "$DIR/kbb-upgrade-app"
 cp "$APP/public-web-root/index.php" "$ROOT/index.php"
 
-# ── THE PREVIEW REGISTERS THIS LANE'S ROUTE FILE FOR ITSELF ─────────────────
+# ── NO ROUTE FILE TO MOUNT ──────────────────────────────────────────────────
 #
-# routes/web.php is the INTEGRATOR's file and this lane may not edit it, so
-# routes/set-contents-admin.php is not in a fresh checkout's compiled route
-# table. Without it Appearance -> Set contents loads and answers "not in this
-# server's compiled route table yet" -- the screenshots would be of the error
-# banner rather than of the feature.
+# An earlier draft of this lane added an admin screen and mounted its route
+# file here, because routes/web.php is the INTEGRATOR's file and a lane may not
+# edit it. The owner then chose the design outright, the screen went, and so
+# did the block -- it is recorded here because the pattern is the right one the
+# next time a lane needs a route the integrator has not wired yet. See
+# tools/sp-preview.sh, which still does it.
 #
-# So the PREVIEW's COPY of the front controller -- a file under
-# storage/framework/testing, never the repository's own -- mounts it, with the
-# real middleware stack the integrator's require will give it: `web`,
-# `auth:admin` and NoStoreAdminApi, under the admin-api prefix. It is the same
-# mounting tests/Support/SetContentsAdminRoutes.php does for the suite.
-#
-# The moment routes/web.php carries the require this block is dead weight and
-# can go; SetContentsDesignTest's "mounts its routes exactly once" is the pin
-# that says when.
-python3 - "$ROOT/index.php" <<'PATCH'
-import sys
-p = sys.argv[1]
-s = open(p).read()
-old = "(require_once $base.'/bootstrap/app.php')\n    ->handleRequest(Request::capture());"
-new = """$kbbApp = require_once $base.'/bootstrap/app.php';
-
-$kbbApp->booted(function ($app) {
-    foreach (['set-contents-admin.php'] as $file) {
-        \\Illuminate\\Support\\Facades\\Route::middleware(['web', 'auth:admin', \\App\\Http\\Middleware\\NoStoreAdminApi::class])
-            ->prefix('admin-api')
-            ->group(base_path('routes/'.$file));
-    }
-});
-
-$kbbApp->handleRequest(Request::capture());"""
-assert s.count(old) == 1, 'front controller shape changed'
-open(p, 'w').write(s.replace(old, new, 1))
-PATCH
+# This lane changes only storefront Blade and one service, so the preview needs
+# nothing but the repository's own routes.
 cp -r "$APP/public/build" "$ROOT/build" 2>/dev/null || true
 mkdir -p "$ROOT/uploads"
 : > "$DB"
