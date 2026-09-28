@@ -1,7 +1,7 @@
 {
     "format": "kbb-export/1",
-    "export_id": "9ede0410-8adf-46bc-bc1b-c51cd2ab457f",
-    "generated_at": "2026-09-28T20:41:54+04:00",
+    "export_id": "56bad62b-c743-4b7f-b316-366278555be0",
+    "generated_at": "2026-09-28T20:48:03+04:00",
     "source": {
         "site_url": "https://kbeautybliss.com",
         "home_url": "https://kbeautybliss.com",
@@ -19,6 +19,7 @@
         },
         "taxonomies": {
             "category": 1,
+            "nav_menu": 1,
             "pa_brands": 2,
             "pa_size": 2,
             "product_cat": 3,
@@ -29,6 +30,9 @@
         "post_types": {
             "attachment": {
                 "inherit": 6
+            },
+            "nav_menu_item": {
+                "publish": 3
             },
             "page": {
                 "publish": 2
@@ -209,7 +213,8 @@
         "1 comment on products carries no star rating and is NOT in reviews.csv -- these are customer questions, not reviews. ReviewImporter refuses a rating-less row rather than defaulting it to five stars, so exporting them would only produce refusals. The shop has nowhere to put a product question, so this is a real loss and it is named here rather than left silent.",
         "Review photographs were read from 2 comment meta key(s): `reviews-images`, `cr_photos`. They are in reviews.csv's `images` column, pipe-separated, and land in `reviews.images`. Recognised by the VALUE being an attachment id this site resolves or an address under its own uploads directory -- not by the key being one this plugin had heard of.",
         "These comment meta keys are on reviews and are NOT in reviews.csv: `wc_review_helpful` (1), `imported_avatar` (1). Most will be a plugin's bookkeeping and no loss at all. But if this shop shows customer PHOTOGRAPHS on its reviews and the `images` column came out empty, the plugin storing them is one of these keys in a shape this export did not recognise (a bare filename, or a path relative to the uploads root). That is the list to look at, and it is here so the answer is a key name rather than a discovery after the cutover.",
-        "posts.csv does not carry these WordPress post types, which are either another file's job or WordPress's own machinery: 6 attachment. `attachment` in that list is the whole media library; media.csv carries the attachments the catalogue actually references, which is a smaller set and the one the new shop has to fetch.",
+        "posts.csv does not carry these WordPress post types, which are either another file's job or WordPress's own machinery: 6 attachment, 3 nav_menu_item. `attachment` in that list is the whole media library; media.csv carries the attachments the catalogue actually references, which is a smaller set and the one the new shop has to fetch.",
+        "THE NAVIGATION MENU IS NOT IN THIS EXPORT AND HAS TO BE RE-ENTERED BY HAND: 3 menu items across 1 menu. It is in the list above as `nav_menu_item`, and that list's sentence is wrong about this one entry: a menu item is neither another file's job nor WordPress's machinery. It is the header and the mobile drawer -- which categories, in which order, under which names. WordPress stores a menu as a `nav_menu` taxonomy term whose members are `nav_menu_item` posts, each with its target in postmeta, and no stage here reads them. The new shop has `menus` and `menu_items` tables with `source_term_id` and `source_post_id` columns waiting for exactly this, so it is a gap that can be closed later -- but until it is, the navigation is retyped, and this is the count of how much retyping.",
         "4 previous addresses (`_wp_old_slug`) are in permalinks.csv with status `old-slug`. WordPress core answers these with a 301 on every front-end 404 (wp_old_slug_redirect), which is why they still work today and why nobody has noticed them. That is a WordPress feature and it stops when WordPress does: without these rows every one of these addresses 404s on the new shop, and the list cannot be recovered afterwards because it only ever existed in the old database.",
         "This site's permalink settings, which produced every address in permalinks.csv: WordPress structure \"/%postname%/\"; WooCommerce product base \"/product\", category base \"\", tag base \"product-tag\", attribute base \"\". The category base is EMPTY, which means product category archives were served flat at the site root -- /toners/, not /product-category/toners/. That is the shape App\\Support\\LegacyCategoryUrls describes and this export confirms it from the setting itself rather than from the navigation menu."
     ]

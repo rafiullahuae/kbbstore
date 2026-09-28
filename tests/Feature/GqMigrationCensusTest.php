@@ -510,6 +510,25 @@ function gqPostTypeCensus(): array
         'post' => 'posts.csv -> posts (the Journal)',
         'page' => 'posts.csv, and REFUSED BY NAME: this shop ships its own /about/, /delivery/, /faqs/, /privacy-policy/ and /terms-and-conditions/',
         'attachment' => 'media.csv -- the referenced sizes only, and NOTHING OPENS IT; the rest of the media library is a manifest note',
+
+        /*
+         * ── LANE IE: THE NAVIGATION, WHICH NOTHING CARRIES ─────────────────
+         *
+         * §4.4 of the verdict already lists `menus` and `menu_items` among the
+         * tables a clean import leaves untouched, and says the loss is
+         * "counted in the manifest notes with its row count". That was true
+         * only of a shop that HAS a menu, and this fixture had none until Lane
+         * IE, so the note had never fired with a nav_menu_item in it.
+         *
+         * When it did fire it swept the owner's header in with `attachment`
+         * under "another file's job or WordPress's own machinery", which is
+         * false about this one entry and false in the expensive direction:
+         * it reads as though his navigation were a cache. The posts stage now
+         * names it as itself, with the count of how much retyping it is.
+         */
+        'nav_menu_item' => 'NOTHING CARRIES IT. No stage reads a menu; `menus` and `menu_items` here keep the '
+            .'count they had before the import. NAMED, with its item and menu counts, in the posts stage\'s '
+            .'navigation note in manifest.json -- and re-entered by hand',
     ];
 }
 
@@ -524,6 +543,7 @@ function gqTaxonomyCensus(): array
         'product_type' => 'products.csv `type` -> products.type',
         'product_visibility' => 'products.csv `featured` and `is_visible`',
         'category' => 'posts.csv `categories` -> posts.tag',
+        'nav_menu' => 'NOTHING CARRIES IT -- one row per menu; see `nav_menu_item` above',
     ];
 }
 
@@ -1191,6 +1211,20 @@ function gqMetaKeyCensus(): array
         'imported_avatar' => 'NOT exported: it holds an image address on somebody ELSE\'s server, and a review '
             .'photograph is only taken from this site\'s own uploads directory -- otherwise the new shop '
             .'hotlinks a stranger\'s file from a product page. NAMED in the same note',
+
+        /*
+         * The menu item's five meta keys. Together they ARE the navigation --
+         * what each row points at and where it sits -- and no stage reads any
+         * of them. They are classified here as a loss rather than left
+         * unclassified, because unclassified is the state this census exists
+         * to make impossible and "nothing carries it" is a real answer.
+         */
+        '_menu_item_type' => 'NOT exported -- `taxonomy`, `post_type` or `custom`. NAMED whole by the navigation '
+            .'note in manifest.json; the menu is re-entered by hand',
+        '_menu_item_object' => 'NOT exported -- which taxonomy or post type the row points at. Same note',
+        '_menu_item_object_id' => 'NOT exported -- WHICH category or page the row points at. Same note',
+        '_menu_item_menu_item_parent' => 'NOT exported -- the drawer\'s nesting. Same note',
+        '_menu_item_url' => 'NOT exported -- a hand-typed address on a custom row. Same note',
     ];
 }
 

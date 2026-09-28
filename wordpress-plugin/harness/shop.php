@@ -741,6 +741,53 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		'post_modified' => '2019-01-02 09:00:00',
 	) );
 
+	// ── The navigation menu ─────────────────────────────────────────────────
+	//
+	// WordPress keeps a menu as a `nav_menu` TAXONOMY term whose members are
+	// `nav_menu_item` POSTS, each carrying its target in postmeta. No stage
+	// exports it: `nav_menu_item` is on posts.csv's NOT_CONTENT list, so the
+	// whole navigation is meant to be "counted and named in the manifest
+	// notes" and re-entered by hand.
+	//
+	// THE FIXTURE HAD NO MENU, so that note had never fired and nobody had
+	// ever seen whether it says anything. A gap that is only named on a shop
+	// nothing tests is a gap that is not named.
+	$insert( 'terms', array( 'term_id' => 950, 'name' => 'Main menu', 'slug' => 'main-menu' ) );
+	$insert( 'term_taxonomy', array(
+		'term_taxonomy_id' => 950, 'term_id' => 950, 'taxonomy' => 'nav_menu',
+		'description' => '', 'parent' => 0, 'count' => 3,
+	) );
+
+	$menu_items = array(
+		// A category link, a page link and a hand-typed URL: the three kinds a
+		// real header carries, and three different things to re-enter.
+		array( 'id' => 7501, 'title' => 'Skincare', 'order' => 1, 'type' => 'taxonomy', 'object' => 'product_cat', 'object_id' => 15, 'url' => '' ),
+		array( 'id' => 7502, 'title' => 'About us', 'order' => 2, 'type' => 'post_type', 'object' => 'page', 'object_id' => 7002, 'url' => '' ),
+		array( 'id' => 7503, 'title' => 'Sale', 'order' => 3, 'type' => 'custom', 'object' => 'custom', 'object_id' => 0, 'url' => 'https://kbeautybliss.com/super-sale/' ),
+	);
+
+	foreach ( $menu_items as $item ) {
+		$insert( 'posts', array(
+			'ID' => $item['id'], 'post_author' => 1, 'post_type' => 'nav_menu_item', 'post_status' => 'publish',
+			'post_title' => $item['title'], 'post_name' => (string) $item['id'],
+			'post_content' => '', 'post_excerpt' => '',
+			'post_date' => '2019-02-01 09:00:00', 'post_date_gmt' => '2019-02-01 05:00:00',
+			'post_modified' => '2019-02-01 09:00:00', 'menu_order' => $item['order'],
+		) );
+
+		$meta( 'postmeta', 'post_id', $item['id'], array(
+			'_menu_item_type'             => $item['type'],
+			'_menu_item_object'           => $item['object'],
+			'_menu_item_object_id'        => (string) $item['object_id'],
+			'_menu_item_menu_item_parent' => '0',
+			'_menu_item_url'              => $item['url'],
+		) );
+
+		$insert( 'term_relationships', array(
+			'object_id' => $item['id'], 'term_taxonomy_id' => 950, 'term_order' => 0,
+		) );
+	}
+
 	// ── Previous addresses ──────────────────────────────────────────────────
 	//
 	// `_wp_old_slug` is what WordPress writes when a PUBLISHED post's slug

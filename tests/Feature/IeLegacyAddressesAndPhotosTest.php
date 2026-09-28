@@ -668,3 +668,79 @@ it('refuses an executable address in a reviews.csv that did not come from this p
         'the good photograph in the same cell was discarded along with the bad ones: '.$stored,
     );
 });
+
+/* ══════════════════════════════════ 4. the navigation, named as what it is */
+
+it('names the navigation menu as a loss instead of as WordPress plumbing', function () {
+    /*
+     * `docs/GQ-MIGRATION-COMPLETENESS.md` §4.4 lists `menus` and `menu_items`
+     * among the tables a clean import leaves at exactly the count they had, and
+     * says the loss is "counted in the manifest notes with its row count".
+     *
+     * THAT SENTENCE HAD NEVER BEEN TRUE OF ANYTHING. The note it refers to only
+     * fires on a shop that HAS a menu, and this fixture had none — no
+     * `nav_menu` term, no `nav_menu_item` post — so in every run of this suite
+     * the note listed `attachment` and stopped. Nobody had read the sentence it
+     * produces for a menu.
+     *
+     * When the fixture was given one, it produced this:
+     *
+     *     posts.csv does not carry these WordPress post types, WHICH ARE EITHER
+     *     ANOTHER FILE'S JOB OR WORDPRESS'S OWN MACHINERY: 6 attachment,
+     *     3 nav_menu_item.
+     *
+     * Both halves of that sentence are false about `nav_menu_item`. No file
+     * carries it, and it is not machinery: it is the header and the mobile
+     * drawer — which categories, in which order, under which names. The owner
+     * reading his one approved discard list is told his navigation is a cache.
+     *
+     * GQ §5.4 already states the rule this breaks: "A discard list with false
+     * entries is worse than a shorter one — he cannot tell which of the seven
+     * matters, so he stops reading all seven."
+     *
+     * MUTATION NOTE, RUN: delete the `$this->report_navigation();` call from
+     * `KBB_Export_Stage_Posts::report_skipped_types()`, regenerate the fixture,
+     * and this goes red — the export goes back to describing the owner's
+     * navigation as WordPress's own machinery and saying nothing else about it.
+     */
+    $manifest = json_decode((string) file_get_contents(ieExportDir().'/manifest.json'), true);
+
+    $navigation = '';
+
+    foreach ($manifest['notes'] as $note) {
+        if (str_contains($note, 'NAVIGATION MENU')) {
+            $navigation = $note;
+        }
+    }
+
+    expect($navigation)->not->toBe(
+        '',
+        'the export counts nav_menu_item among "another file\'s job or WordPress\'s own machinery" and says '
+        .'nothing else about it. The navigation is neither, and it is retyped by hand.',
+    );
+
+    // The COUNT, which is the whole usefulness of the note: it is how much
+    // retyping, and the owner cannot plan a cutover evening without it.
+    expect(str_contains($navigation, '3 menu items across 1 menu'))->toBeTrue(
+        'the navigation note carries no count: '.$navigation,
+    );
+
+    // And it must say the tables are waiting, because that is what makes this
+    // a gap somebody can close rather than a decision already taken.
+    expect(str_contains($navigation, 'source_post_id'))->toBeTrue();
+
+    /*
+     * AND THE TABLES REALLY ARE UNTOUCHED, asserted rather than described. A
+     * note claiming the menu is not imported, on a shop where something quietly
+     * imported it, would be the same defect pointing the other way.
+     */
+    $before = [
+        'menus' => \App\Models\Menu::query()->count(),
+        'menu_items' => \DB::table('menu_items')->count(),
+    ];
+
+    ieImportAndMapAddresses();
+
+    expect(\App\Models\Menu::query()->count())->toBe($before['menus']);
+    expect(\DB::table('menu_items')->count())->toBe($before['menu_items']);
+});
