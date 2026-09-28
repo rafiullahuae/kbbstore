@@ -14,6 +14,10 @@
  * The photographs are already on disk under the preview web root; this only
  * points products at them. tools/im-photos.php wrote them.
  */
+\App\Models\AdminUser::updateOrCreate(['email' => 'owner@preview.test'], [
+    'name' => 'Preview Owner', 'password' => 'preview-secret-1', 'role' => 'owner',
+]);
+
 $brand = \App\Models\Brand::updateOrCreate(['slug' => 'im-anua'], ['name' => 'Anua']);
 $category = \App\Models\Category::updateOrCreate(['slug' => 'im-cleansers'], ['name' => 'Cleansers']);
 
