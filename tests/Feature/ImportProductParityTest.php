@@ -722,6 +722,23 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * out. A shopper has no use for "10% off the parts total"; a competitor
      * reading an unauthenticated endpoint does. SetApiSecurityTest asserts both
      * absences by name.
+     *
+     * ── AND ADVANCED A SECOND TIME, FOR THE SAME REASON (Lane SP2) ─────────
+     *
+     * `set_price_basis` was added by 2027_04_06_000000_set_price_basis: the
+     * parts total at the moment an operator typed a set's price by hand, which
+     * is the figure "reduce the set by what I reduced the product by" is
+     * measured from.
+     *
+     * IT IS NOT IN Product::toApi() EITHER, and that is the same decision taken
+     * again rather than a repetition of it. The feed publishes what a set COSTS
+     * -- `price`, through compareAtPrice(), which already has the reduction in
+     * it. The basis is the merchant's own working: what his box was worth on the
+     * day he priced it. Published, it would tell an unauthenticated reader
+     * exactly how much margin every set has given up since, which is the same
+     * class of thing as the discount percentage and gets the same answer.
+     * ApiSecurityTest's product-feed case is the guard that catches a change of
+     * mind made by accident.
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
@@ -731,7 +748,8 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
         'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
         'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',
-        'sale_starts_at', 'seo', 'seo_json', 'set_discount', 'set_price_mode', 'short_description', 'sku',
+        'sale_starts_at', 'seo', 'seo_json', 'set_discount', 'set_price_basis', 'set_price_mode',
+        'short_description', 'sku',
         'slug', 'status', 'stock',
         'stock_status', 'total_sales', 'type', 'updated_at', 'wc_id',
     ], 'a column was added to `products`. Decide what Product::toApi() publishes BEFORE adding it, and '
