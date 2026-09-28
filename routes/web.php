@@ -675,6 +675,14 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/sets-admin.php';
 
+        /*
+         * Appearance → Banners. Writes banner sets and cards, and accepts image
+         * addresses, so it belongs inside this guarded group like every other
+         * catalogue-adjacent writer. Its package ships
+         * 2027_03_22_000200_clear_caches_cards_banner.
+         */
+        require __DIR__.'/banners-admin.php';
+
         // Catalog → Categories & Brands: merge, the redirect ledger, and the
         // brand tree with its reorder. Same guarded group — the redirect
         // ledger is a map of the store's old URLs and the merge endpoint

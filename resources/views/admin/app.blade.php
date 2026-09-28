@@ -2824,7 +2824,7 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
    safe. Breadcrumbs match what each partial's own go() writes into #crumb and
    #ptitle, because two answers for one screen is how a heading ends up
    disagreeing with the page under it. */
-'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'sets':['Catalog','Sets'],
+'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'sets':['Catalog','Sets'],'banners':['Appearance','Banners'],
 /* And the seven the new guard found alongside them, every one with a sidebar row
    the owner clicks every day and no deep link at all: a link to any of these
    opened the dashboard. Same fix, same condition, and the strings are copied
@@ -7200,7 +7200,10 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    it ?go=sets and #sets open the DASHBOARD, which is the defect this set was
    written for and which ugcvideo, ugcsections, ugcstyle and instagram each hit
    before being armed. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+/* 'banners' — Appearance → Banners, added when Lane BN merged, on the same
+   condition: its partial wraps window.go and calls render() before load(),
+   synchronously. */
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','banners','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -21989,6 +21992,7 @@ buildNav();
      the exact line — and the setting ships at the value that needs nothing. --}}
 @include('admin.partials.instagram-screen')
 @include('admin.partials.sets-screen')
+@include('admin.partials.banners-screen')
 
 @verbatim
 <script>

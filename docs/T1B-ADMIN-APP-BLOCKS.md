@@ -156,7 +156,10 @@ const LATE_RENDERED=new Set(['media','tax']);
    it ?go=sets and #sets open the DASHBOARD, which is the defect this set was
    written for and which ugcvideo, ugcsections, ugcstyle and instagram each hit
    before being armed. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+/* 'banners' — Appearance → Banners, added when Lane BN merged, on the same
+   condition: its partial wraps window.go and calls render() before load(),
+   synchronously. */
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','banners','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 ```
 
 ---

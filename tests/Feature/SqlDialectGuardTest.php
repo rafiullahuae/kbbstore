@@ -785,6 +785,31 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'position' => 0,
     ]);
 
+    /*
+     * Appearance -> Banners (Lane BN). Two reads, and they are a different
+     * shape again: the set row joined to its cards, ordered by a position
+     * column on the CARD, filtered on the card's own status -- and the preview
+     * route runs the same join and then renders. An INNER JOIN whose ordering
+     * and filtering both sit on the joined side is what is being covered.
+     */
+    $bannerSet = \App\Models\BannerSet::create([
+        'name' => 'Guard Banner',
+        'slug' => 'guard-banner-'.substr(md5(uniqid()), 0, 8),
+        'status' => 'publish',
+    ]);
+
+    \App\Models\BannerCard::create([
+        'banner_set_id' => $bannerSet->id,
+        'image' => '/uploads/media/guard-banner.jpg',
+        'alt' => 'Guard banner',
+        'heading' => 'Guard heading',
+        'body' => 'One line beneath it.',
+        'button_label' => 'Shop',
+        'button_url' => '/shop/',
+        'position' => 0,
+        'status' => 'publish',
+    ]);
+
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
         'type' => 'percent',
@@ -942,6 +967,17 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * engines plan differently.
          */
         'admin-api/sets/{id}' => '/admin-api/sets/' . $setProduct->id,
+        /*
+         * Appearance -> Banners -> open a set, and its live preview (Lane BN).
+         * Both caught by this walk on the day they were wired, and both driven
+         * rather than excused as "the same shape" -- the set read joins its
+         * cards and orders and filters on the JOINED side, which nothing else
+         * on this list does, and the preview runs that join and then renders,
+         * so a dialect fault in it surfaces as a 500 on a screen rather than as
+         * a wrong list.
+         */
+        'admin-api/banners/sets/{set}' => '/admin-api/banners/sets/' . $bannerSet->id,
+        'admin-api/banners/sets/{set}/preview' => '/admin-api/banners/sets/' . $bannerSet->id . '/preview',
     ];
 
     /** Route URI => why driving it here would prove nothing. */
