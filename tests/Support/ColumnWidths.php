@@ -159,13 +159,30 @@ final class ColumnWidths
             'image' => 400,
             'status' => 16,
         ],
+        /*
+         * Lane BP adds seven. The four colour columns are NINE, which is
+         * `#rrggbb` plus two, and that is deliberate rather than round: a hex
+         * is the only thing that may ever be stored in one of them —
+         * Banners::hex() is the gate on the way in and on the way out — so a
+         * width that could hold anything else would be a width inviting
+         * somebody to store it. `bg_image` is 400 like the card's `image`, for
+         * the reason above. `bg_mode` and `title_pos` are 16, like the other
+         * enum tokens beside them.
+         */
         'banner_sets' => [
             'animation' => 24,
+            'bg_color' => 9,
+            'bg_image' => 400,
+            'bg_mode' => 16,
+            'btn_bg' => 9,
+            'btn_hover' => 9,
+            'btn_text' => 9,
             'name' => 190,
             'ratio' => 16,
             'shadow' => 16,
             'slug' => 190,
             'status' => 16,
+            'title_pos' => 16,
         ],
         'blocks' => [
             'name' => 255,

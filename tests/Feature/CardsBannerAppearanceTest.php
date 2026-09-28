@@ -187,10 +187,19 @@ it('falls back to no background when the mode says colour and the colour is not 
      *
      * MUTATION, run: make BannerSet::bgMode() return $this->bg_mode unchecked
      * and this is red twice — once on the empty colour and once on the
-     * injection, which would then print `--kbbn-bg:red;}` into the attribute.
+     * injection, which would then print `--kbbn-bg:#f;}b{c` into the attribute.
+     *
+     * ▲ THE INJECTION IS EIGHT CHARACTERS AND THAT IS NOT A WEAKER TEST, IT IS
+     *   THE ONLY ONE THIS COLUMN CAN CARRY. `bg_color` is varchar(9), so MySQL
+     *   refuses a longer string outright with SQLSTATE[22001] — the first
+     *   version of this case stored a 22-character payload, passed on SQLite,
+     *   which enforces no width at all, and threw a QueryException on the MySQL
+     *   config. Tests\Support\ColumnWidths exists for exactly that gap and now
+     *   carries these seven columns. Eight characters is enough to close a
+     *   declaration and open a rule, which is the whole attack.
      */
     expect(str_contains(bpaMarkup(['bg_mode' => 'color', 'bg_color' => '']), 'has-bg'))->toBeFalse()
-        ->and(str_contains(bpaMarkup(['bg_mode' => 'color', 'bg_color' => 'red;}body{display:none']), 'has-bg'))->toBeFalse()
+        ->and(str_contains(bpaMarkup(['bg_mode' => 'color', 'bg_color' => '#f;}b{c']), 'has-bg'))->toBeFalse()
         ->and(str_contains(bpaMarkup(['bg_mode' => 'image', 'bg_image' => '']), 'has-bg'))->toBeFalse()
         ->and(str_contains(bpaMarkup(['bg_mode' => 'wormhole']), 'has-bg'))->toBeFalse();
 });
@@ -333,13 +342,20 @@ it('refuses a colour that is not a colour, in the service that prints it', funct
         ->and(Banners::hex('#fff'))->toBe('#fff')
         ->and(Banners::hex('red'))->toBe('')
         ->and(Banners::hex('#ff'))->toBe('')
-        ->and(Banners::hex('#E0567B;}body{display:none'))->toBe('')
+        ->and(Banners::hex('#E0567B;}b{'))->toBe('')
         ->and(Banners::hex('url(x)'))->toBe('')
         ->and(Banners::hex(null))->toBe('')
         ->and(Banners::hex(''))->toBe('');
 
-    // And a refused colour never reaches the attribute, however it was stored.
-    expect(str_contains(bpaMarkup(['btn_bg' => 'red;}body{display:none']), 'display:none'))->toBeFalse();
+    /*
+     * And a refused colour never reaches the attribute, however it was stored.
+     * Eight characters, for the width reason set out in the background case
+     * above: `btn_bg` is varchar(9) and MySQL refuses anything longer, so a
+     * longer payload here tests the database's limit rather than this shop's
+     * escaping.
+     */
+    expect(str_contains(bpaMarkup(['btn_bg' => 'red;}b{c']), 'red;}b{c'))->toBeFalse()
+        ->and(str_contains(bpaMarkup(['btn_bg' => 'red;}b{c']), '--kbbn-btn-bg'))->toBeFalse();
 });
 
 /* ═══════════════════════ 4. where the title sits ══════════════════════════ */
