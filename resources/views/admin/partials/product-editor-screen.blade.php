@@ -2302,8 +2302,34 @@
   function brandView(){
     var brands = (boot && boot.brands) || [];
 
+    /* A SET DOES NOT NEED A BRAND, AND THE SCREEN NOW SAYS SO. (Lane SF)
+
+       "the Set product type will not have any brand, so the brand selection
+        can be optional."
+
+       It already is, and was before this line existed -- `products.brand_id`
+       is nullable in 0001_01_01_000000_create_kbb_schema, the editor's own
+       save validates it 'nullable', and the first option in the list below has
+       always been "No brand". So NOTHING ABOUT THE BEHAVIOUR CHANGES HERE; a
+       set saved with no brand saved fine yesterday.
+
+       What was missing is the sentence. The panel offered a required-looking
+       <select> with no help text, and the owner had no way to tell "optional"
+       from "I have not found where to set it yet" -- which is the question he
+       asked. One line of hint, on the type it is about, is the whole fix.
+
+       Shown only for a set: on an ordinary product a brand is genuinely
+       expected, and a hint telling everybody it is optional would be advice
+       this shop does not want to give. */
+    var hint = (model && (model.type || 'simple') === 'set')
+      ? '<p class="peo-hint">Optional for a set. A box usually holds more than one brand, so leaving this '
+        + 'as <b>No brand</b> is the normal answer &mdash; the set page simply does not print a brand line. '
+        + 'Pick one only if the whole box is one brand\'s.</p>'
+      : '';
+
     return '<div class="peo-card">'
       + '<h3>Brand</h3>'
+      + hint
       + '<select class="peo-sel" data-bind="brand_id">'
       +   '<option value="">No brand</option>'
       +   brands.map(function(b){

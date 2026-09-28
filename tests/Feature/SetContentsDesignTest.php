@@ -459,3 +459,407 @@ it('draws the design that is chosen and none of the others, in design: {0}', fun
         );
     }
 })->with(['grid', 'list', 'cards', 'stack']);
+
+/* ═══════════════════════════════════════════════════ 4. the admin screen ═══ */
+
+it('is mounted exactly once by the admin console', function () {
+    /*
+     * ▲ THE FINISHED STATE, NOT AN ABSENCE. ▲
+     *
+     * CLAUDE.md at length: a lane that cannot edit admin/app.blade.php wants to
+     * prove it did not quietly wire itself up, and the obvious assertion —
+     * `not->toContain('set-contents-screen')` — is correct in this worktree and
+     * GOES RED THE MOMENT THE INTEGRATOR DOES THE ONE THING THIS LANE ASKED
+     * FOR. It happened three times in one day.
+     *
+     * So this pins ONE, which is the state that can actually regress in both
+     * directions: zero is "built, never wired up", and two registers the
+     * sidebar entry twice and wraps window.go around its own wrapper.
+     *
+     * It is SKIPPED until the integrator wires it, so this lane's suite is
+     * green today and this case starts asserting the moment the include lands.
+     *
+     * MUTATION NOTE. Paste the @include line twice into app.blade.php and this
+     * is red at 2. RUN.
+     */
+    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    $mounts = substr_count($app, "@include('admin.partials.set-contents-screen')");
+
+    if ($mounts === 0) {
+        $this->markTestSkipped(
+            'Appearance → Set contents is not wired into admin/app.blade.php yet. '
+            ."The integrator adds exactly one line:\n"
+            ."    @include('admin.partials.set-contents-screen')"
+        );
+    }
+
+    expect($mounts)->toBe(1, 'The Set contents screen must be included exactly once.');
+});
+
+it('mounts its routes exactly once', function () {
+    /*
+     * The same shape for routes/web.php, and the same reason. Skipped until the
+     * integrator wires it; pinned at ONE once he has. Laravel takes the LAST
+     * registration of a path, so a file required twice is not an error that
+     * shows — it is three duplicate rows in the route table.
+     */
+    $web = (string) file_get_contents(base_path('routes/web.php'));
+
+    $mounts = substr_count($web, "require __DIR__.'/set-contents-admin.php';");
+
+    if ($mounts === 0) {
+        $this->markTestSkipped(
+            "routes/set-contents-admin.php is not required from routes/web.php yet. "
+            ."The integrator adds exactly one line, inside the admin-api group:\n"
+            ."    require __DIR__.'/set-contents-admin.php';"
+        );
+    }
+
+    expect($mounts)->toBe(1, 'The Set contents route file must be required exactly once.');
+});
+
+it('registers its capability and fails closed on both of its paths', function () {
+    /*
+     * CLAUDE.md rule 5: "Every new admin endpoint gets its own capability and
+     * fails closed." AdminCapabilities::RULES is an ordered map and an exact
+     * pattern does not match a sub-path, so the '/**' sibling is what covers
+     * /preview — without it the preview 403s on a shop whose owner has no
+     * shell to fix it from.
+     *
+     * MUTATION NOTE. Delete either RULES line and this is red on that path.
+     * Delete the 'setcontents.manage' => [...] entry and it is red on the role
+     * list. RUN.
+     */
+    $caps = \App\Support\AdminCapabilities::class;
+
+    expect($caps::CAPABILITIES['setcontents.manage'] ?? null)->toBe(
+        ['owner', 'manager', 'editor'],
+        'setcontents.manage must be a declared capability held by the same three roles as its Appearance siblings.'
+    );
+
+    $paths = [];
+
+    foreach ($caps::RULES as $rule) {
+        $paths[$rule[1]] = $rule[2];
+    }
+
+    expect($paths['admin-api/set-contents'] ?? null)->toBe('setcontents.manage');
+    expect($paths['admin-api/set-contents/**'] ?? null)->toBe('setcontents.manage');
+});
+
+/* ═══════════════════════════════════════ 5. a set with no brand at all ═══ */
+
+it('renders a brandless set correctly everywhere the brand is printed', function () {
+    /*
+     * ── WHAT WAS ASKED, AND WHAT WAS ALREADY TRUE ─────────────────────────
+     *
+     * "the Set product type will not have any brand, so the brand selection
+     *  can be optional."
+     *
+     * It already was, and this lane changed nothing about it: `brand_id` is
+     * nullable in 0001_01_01_000000_create_kbb_schema, the product editor's
+     * save validates it 'nullable', and the editor's first option has always
+     * been "No brand". So this case is not a fix — it is the VERIFICATION the
+     * brief asked for, done first-hand and then pinned, so the day somebody
+     * makes the brand required the shop says so here rather than on the shop.
+     *
+     * Three places print a brand on a product page and all three are checked:
+     * the brand line under the title (@if ($brand), so it is not drawn), the
+     * <title> through App\Support\ProductTitle::full() (which returns the name
+     * alone rather than a name with a leading space), and the structured data
+     * (App\Support\Seo emits `brand` only for a non-empty one).
+     *
+     * MUTATION NOTE. Make Product::$fillable refuse a null brand_id, or drop
+     * the `@if ($brand)` guard in store/product.blade.php, and this is red.
+     * RUN.
+     */
+    $set = sfSet(14000, [[sfProduct('Brandless toner', 9000), 1]], [
+        'name' => 'Quiet Ritual Box',
+        'brand_id' => null,
+    ]);
+
+    expect($set->brand_id)->toBeNull('A set must be storable with no brand at all.');
+
+    $html = $this->get('/product/'.$set->slug.'/')->assertOk()->getContent();
+
+    expect(str_contains($html, 'class="bb-brand"'))->toBeFalse(
+        'A product with no brand must not draw an empty brand line.'
+    );
+    preg_match('/<title>(.*?)<\/title>/s', $html, $kbbTitle);
+    expect(str_starts_with(trim($kbbTitle[1] ?? ''), 'Quiet Ritual Box'))->toBeTrue(
+        'A brandless product\'s title must be the name alone, with no leading space.'
+    );
+    expect(str_contains($html, '"brand"'))->toBeFalse(
+        'The structured data must not claim a brand the product does not have.'
+    );
+});
+
+it('tells the owner in the Brand panel that a set needs no brand', function () {
+    /*
+     * The useful half of "make the brand optional": it already is, so the
+     * change is the SENTENCE. The panel offered a required-looking <select>
+     * with no help text, and the owner had no way to tell "optional" from "I
+     * have not found where to set it yet" — which is the question he asked.
+     *
+     * Shown only for a set: on an ordinary product a brand is expected, and a
+     * hint telling everybody it is optional would be advice this shop does not
+     * want to give. Both halves are asserted, because a hint rendered
+     * unconditionally is the easy mistake.
+     *
+     * MUTATION NOTE. Drop the `(model.type || 'simple') === 'set'` condition in
+     * brandView() and the second expectation is red. Remove the hint and the
+     * first is. RUN.
+     */
+    $src = (string) file_get_contents(resource_path('views/admin/partials/product-editor-screen.blade.php'));
+
+    $brandView = substr($src, (int) strpos($src, 'function brandView()'));
+    $brandView = substr($brandView, 0, (int) strpos($brandView, 'function seoView()'));
+
+    expect(str_contains($brandView, 'Optional for a set'))->toBeTrue(
+        "The Brand panel must say that a set does not need one."
+    );
+    expect(str_contains($brandView, "=== 'set'"))->toBeTrue(
+        'That hint must be shown for a set and not for every product.'
+    );
+});
+
+/* ═════════════════════════════════════════ 6. the three admin endpoints ═══ */
+
+/**
+ * An admin of a given role, for the capability cases.
+ *
+ * Its own maker rather than a shared one: the other route-harness tests in
+ * this suite each carry theirs, and a helper shared across files is a helper
+ * one lane changes and another lane's suite goes red over.
+ */
+function sfAdmin(string $role = 'owner'): \App\Models\AdminUser
+{
+    return \App\Models\AdminUser::create([
+        'name' => ucfirst($role),
+        'email' => 'sfc-'.Str::random(10).'@example.com',
+        'password' => bcrypt('secret'),
+        'role' => $role,
+    ]);
+}
+
+it('hands a signed-out request nothing on any of its three routes', function () {
+    /*
+     * ▲ EVERY NEW ADMIN ENDPOINT FAILS CLOSED. CLAUDE.md rule 5. ▲
+     *
+     * /api/* on this shop is unauthenticated, so an admin endpoint that
+     * answered without a session would be a public one. All three are inside
+     * the group that carries `web`, `auth:admin` and NoStoreAdminApi, and this
+     * asserts it against the real middleware stack rather than against the
+     * route file's comment about it.
+     *
+     * MUTATION NOTE. Drop 'auth:admin' from SetContentsAdminRoutes::STACK —
+     * which is a copy of the stack routes/web.php applies — and all three
+     * expectations are red. RUN.
+     */
+    \Tests\Support\SetContentsAdminRoutes::wire($this->app);
+
+    $this->getJson('/admin-api/set-contents')->assertStatus(401);
+    $this->postJson('/admin-api/set-contents', ['design' => 'list'])->assertStatus(401);
+    $this->postJson('/admin-api/set-contents/preview', ['design' => 'list'])->assertStatus(401);
+});
+
+it('answers an owner with the four designs and stores the one he picks', function () {
+    /*
+     * MUTATION NOTE. Make save() write $data['design'] without asking
+     * SetPanelDesign::valid() and the junk case below is red. Make show()
+     * return the raw setting instead of current() and the first is. RUN.
+     */
+    \Tests\Support\SetContentsAdminRoutes::wire($this->app);
+
+    sfSet(14000, [[sfProduct('Api toner', 9000), 1], [sfProduct('Api serum', 7550), 1]]);
+
+    $owner = sfAdmin('owner');
+
+    $body = $this->actingAs($owner, 'admin')->getJson('/admin-api/set-contents')->assertOk()->json();
+
+    expect($body['current'])->toBe('grid')
+        ->and($body['default'])->toBe('grid')
+        ->and(array_column($body['designs'], 'key'))->toBe(['grid', 'list', 'cards', 'stack'])
+        ->and($body['sets'])->toHaveCount(1);
+
+    // ▲ THE ALLOWLIST. A set row may say four things and `products` carries
+    //   wc_id, sku and total_sales. Asserted by name, not by count.
+    expect(array_keys($body['sets'][0]))->toBe(['id', 'name', 'slug', 'members']);
+
+    $this->actingAs($owner, 'admin')
+        ->postJson('/admin-api/set-contents', ['design' => 'stack'])
+        ->assertOk()
+        ->assertJson(['ok' => true, 'current' => 'stack']);
+
+    SettingsService::forgetMemo();
+    expect(SetPanelDesign::current())->toBe('stack');
+});
+
+it('refuses a design that is not one of its own options', function () {
+    /*
+     * CLAUDE.md rule 5: "A select stores one of its own options or the
+     * default." Refused at the door with a 422, and NOTHING WRITTEN — the
+     * second half is the one that matters, because a rejected request that
+     * still wrote would leave the shop drawing the default while the screen
+     * showed something else.
+     *
+     * MUTATION NOTE. Remove the SetPanelDesign::valid() branch from save() and
+     * this is red on both counts. RUN.
+     */
+    \Tests\Support\SetContentsAdminRoutes::wire($this->app);
+
+    $owner = sfAdmin('owner');
+
+    /*
+     * 'grid ' is deliberately NOT in this list. Laravel's global TrimStrings
+     * middleware turns it into 'grid' before the controller sees it, so it is
+     * a valid request rather than a refused one — and the shop draws the grid,
+     * which is the right answer to a trailing space.
+     */
+    foreach (['GRID', 'fan', '../grid', '<script>', 'partials.set-contents.grid'] as $junk) {
+        $this->actingAs($owner, 'admin')
+            ->postJson('/admin-api/set-contents', ['design' => $junk])
+            ->assertStatus(422);
+    }
+
+    SettingsService::forgetMemo();
+    expect(SetPanelDesign::current())->toBe('grid', 'A refused design must not have been stored.');
+});
+
+it('previews a design without storing it, and draws the shop\'s own panel', function () {
+    /*
+     * The preview is the reason this screen exists — "better to preview me the
+     * set product front-end preview. so i can choose from." Two properties:
+     * what comes back is the SHOP'S template (so the picture is the page), and
+     * asking for it CHANGES NOTHING (so the owner can look at all four without
+     * committing to any).
+     *
+     * MUTATION NOTE. Have preview() call $this->settings->set() as well and
+     * the last expectation is red. Point the view at a mock instead of
+     * admin.partials.set-contents-preview and the class assertions are. RUN.
+     */
+    \Tests\Support\SetContentsAdminRoutes::wire($this->app);
+
+    $set = sfSet(14000, [[sfProduct('Preview toner', 9000), 2], [sfProduct('Preview serum', 7550), 1]]);
+    $owner = sfAdmin('owner');
+
+    $body = $this->actingAs($owner, 'admin')
+        ->postJson('/admin-api/set-contents/preview', ['design' => 'stack', 'set_id' => $set->id])
+        ->assertOk()
+        ->json();
+
+    expect($body['design'])->toBe('stack')
+        ->and($body['set']['id'])->toBe($set->id);
+
+    // The stack's own class, the set's real members, and the real prices.
+    expect(str_contains($body['html'], 'class="kss-chain"'))->toBeTrue(
+        'The preview must render the chosen design, from the shop\'s own partial.'
+    );
+    expect(str_contains($body['html'], 'Preview toner'))->toBeTrue(
+        "The preview must be drawn from the owner's real set, not from a mock."
+    );
+    expect(str_contains($body['html'], 'You save'))->toBeTrue(
+        'The preview must show the same saving the shop would.'
+    );
+
+    // And the shop is untouched.
+    SettingsService::forgetMemo();
+    expect(SetPanelDesign::current())->toBe('grid', 'Previewing must store nothing.');
+});
+
+it('prints only ltr or rtl into the preview document, never what was sent', function () {
+    /*
+     * The one value on the preview path that reaches an HTML attribute.
+     * `dir` decides one attribute on <html>, and it is refused twice over:
+     * anything longer than three characters never reaches the controller at
+     * all, and what does reach it is compared against 'rtl' and turned into
+     * one of two LITERALS. CLAUDE.md rule 5: "Anything printed unescaped is a
+     * constant, never a setting."
+     *
+     * MUTATION NOTE. Change the controller's `$dir = (... === 'rtl') ? 'rtl' :
+     * 'ltr'` to `$dir = $data['dir'] ?? 'ltr'` and the SECOND block is red —
+     * 'xy>' lands in the document. Drop the `max:3` rule as well and the first
+     * is too. RUN, both.
+     */
+    \Tests\Support\SetContentsAdminRoutes::wire($this->app);
+
+    sfSet(14000, [[sfProduct('Dir toner', 9000), 1]]);
+    $owner = sfAdmin('owner');
+
+    // Too long to be a direction: refused before the controller runs.
+    $this->actingAs($owner, 'admin')
+        ->postJson('/admin-api/set-contents/preview', ['design' => 'grid', 'dir' => 'ltr" onload="x'])
+        ->assertStatus(422);
+
+    // Short enough to arrive, and still not what gets printed.
+    $body = $this->actingAs($owner, 'admin')
+        ->postJson('/admin-api/set-contents/preview', ['design' => 'grid', 'dir' => 'xy>'])
+        ->assertOk()
+        ->json();
+
+    /*
+     * ASSERTED ON THE ATTRIBUTE AND NOT ON THE RAW STRING, and that is the
+     * difference between a test and a test that passes.
+     *
+     * The first draft looked for the sent value verbatim -- `xy>` -- and the
+     * mutation below STAYED GREEN, because Blade escapes the interpolation and
+     * the document carried `dir="xy&gt;"`: the value did reach it, escaped.
+     * Escaping is why this is not an injection; the literal in the controller
+     * is why the attribute is never anything but a direction. Both are worth
+     * having, and only the second is what this case is about, so it looks for
+     * the attribute's opening bytes.
+     */
+    expect(str_contains($body['html'], 'dir="xy'))->toBeFalse('A dir value must never reach the document.');
+    expect(str_contains($body['html'], 'dir="ltr"'))->toBeTrue('An unrecognised dir falls back to ltr.');
+
+    // And the real Arabic case works, because the designs have to hold up
+    // mirrored and the owner has to be able to see that they do.
+    $rtl = $this->actingAs($owner, 'admin')
+        ->postJson('/admin-api/set-contents/preview', ['design' => 'grid', 'dir' => 'rtl'])
+        ->assertOk()
+        ->json();
+
+    expect(str_contains($rtl['html'], 'dir="rtl"'))->toBeTrue('Arabic must be previewable.');
+});
+
+it('costs the preview three batched queries whatever the box holds', function () {
+    /*
+     * The admin screen asks for four renders when it opens. One query per
+     * member on each of them is the same N+1 StorefrontQueryBudgetTest exists
+     * to stop, and it is no more acceptable here than on the shop.
+     *
+     * MUTATION NOTE. Delete the `SetEagerLoad::on([$set])` line from
+     * SetContentsApiController::preview() and this is red by nine. RUN.
+     */
+    \Tests\Support\SetContentsAdminRoutes::wire($this->app);
+
+    $small = sfSet(10000, array_map(fn ($i) => [sfProduct('Pv small '.$i, 1000 + $i), 1], range(1, 3)));
+    $large = sfSet(10000, array_map(fn ($i) => [sfProduct('Pv large '.$i, 1000 + $i), 1], range(1, 12)));
+
+    $owner = sfAdmin('owner');
+
+    $ask = function (Product $set) use ($owner): int {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->actingAs($owner, 'admin')
+            ->postJson('/admin-api/set-contents/preview', ['design' => 'cards', 'set_id' => $set->id])
+            ->assertOk();
+        $n = count(DB::getQueryLog());
+        DB::disableQueryLog();
+        DB::flushQueryLog();
+
+        return $n;
+    };
+
+    // Warm whatever a first request in this process warms.
+    $ask($small);
+
+    $three = $ask($small);
+    $twelve = $ask($large);
+
+    expect($twelve)->toBe(
+        $three,
+        "A twelve-member preview must cost what a three-member one costs. Three: {$three}. Twelve: {$twelve}."
+    );
+});
