@@ -12,6 +12,19 @@ The owner's request, verbatim:
 
 The card he pointed at is `docs/OWNER-GRID-REFERENCE.webp`.
 
+He then sent a second screenshot — a category archive — and sharpened it:
+
+> "on the categories / shop page, the grid style is still coming different. i
+> need the same, with square image thumbnail. which is on the super sale page,
+> but on category / shop pages by default 5 columns will be there and hidden
+> filter sidebar by default."
+
+Five things were visibly wrong in that shot. Each is answered below and each is
+measured in §8: the image was landscape (§4a), the Add to cart was the other
+card's near-black (§2), there were four columns (§3), the filter rail was open
+(§6), and the tile drew no rating row at all while the reference drew an empty
+one (§5).
+
 ---
 
 ## 1 · What was there
@@ -173,9 +186,54 @@ filter rail beside it). With the rail hidden by default its row is the full
 **Admin:** Appearance → Site layout → Product grid → **Smallest card** moves it
 back. The preview table on that screen moved with it.
 
+### The 2 / 3 / 4 switcher, and what happened to it
+
+The toolbar's column buttons offered **2, 3 and 4** while the grid derived
+**five**. Every position on that control was a step DOWN from what the shopper
+was already looking at, and there was no way back to the default except editing
+the URL — a control lying about the page it sits above, which is the same defect
+Lane W1 removed when it stopped highlighting "4" unconditionally.
+
+**Widened to 2 / 3 / 4 / 5, not removed.** The owner asked for five *and* he
+uses these buttons; taking the control away would answer half his sentence by
+deleting the other half. `Facets::columns()`'s allowlist and its fallback both
+carry '5', the view renders a fifth button, and `kbb-shop.css` gains
+`#grid[data-cols="5"]`. A `?cols` that is not on the list is still no pin at
+all, so the automatic answer is unchanged.
+
 ---
 
-## 4 · A long name cannot make its row taller
+## 4a · Square thumbnails
+
+> "i need the same, with square image thumbnail."
+
+**Two separate things made it not square, and both are fixed.**
+
+The first is the card. `/shop` and every category archive drew the other card,
+whose frame was `.pc .ph{height:180px}` — a fixed 180-pixel box inside a ~240px
+column, which is landscape. That is the 4:3 in his screenshot. The one tile's
+frame is `.kbb-card-thumb`.
+
+The second is subtler and is why the Super Sale page looked *nearly* right
+rather than right: the skinned grid's own frame was
+`aspect-ratio: var(--kbb-ratio, 1/1.02)` — a shade **taller** than square. Two
+per cent is exactly the kind of not-quite that gets reported as "the grid style
+is still coming different". The fallback is `1/1` now, in both copies of that
+sheet, and **Appearance → Product styles → Image shape ships at Square** so the
+setting and the stylesheet say the same thing. (It shipped at *Portrait*, which
+is what mapped to 1/1.02.)
+
+`object-fit: cover` is what makes it work for real photographs: a portrait
+bottle and a landscape box both fill the same square, cropped, instead of being
+letterboxed into different heights.
+
+Measured on **every tile of every one of the twenty-one shots**: the frame's
+width equals its height. 231×231 at 1280 with the rail hidden, 224×224 with it
+open, 171×171 at 390.
+
+---
+
+## 4b · A long name cannot make its row taller
 
 `-webkit-line-clamp:2` cuts the name off and `height:calc(2 * 1.32em)` reserves
 both lines whether or not the text fills them, so a one-word name and a
@@ -274,34 +332,42 @@ Real Chromium, `docs/lane-pg-shots/`, numbers in `measurements.json`, produced b
 `tools/pg-grid-shots.cjs`. `cols` is read off the grid's computed
 `grid-template-columns` — the resolved track list, not a breakpoint anybody
 guessed at. Card heights are `getBoundingClientRect().height`, per tile, in DOM
-order; a row's worth are equal in every single shot.
+order; a row's worth are equal in every single shot. `image box` is
+`.kbb-card-thumb`'s own rectangle, and `square` is width equal to height on
+**every** tile in the shot, not only the first.
 
-| shot | vw | scrollWidth / clientWidth | cols | `.wrap` pad | card heights (first six) | rated / tiles |
-| --- | --- | --- | --- | --- | --- | --- |
-| shop-390 | 390 | 390 / 390 | 2 | 16px | 324, 324, 302, 302, 302, 302 | 12 / 25 |
-| shop-1280 | 1280 | 1280 / 1280 | **5** | 22px | 388 × 6 | 12 / 25 |
-| category-390 | 390 | 390 / 390 | 2 | 16px | 341, 341, 319, 319, 319, 319 | 2 / 6 |
-| category-1280 | 1280 | 1280 / 1280 | **5** | 22px | 405, 405, 405, 405, 405, 383 | 2 / 6 |
-| category-filters-open-1280 | 1280 | 1280 / 1280 | 4 | 22px | 398, 398, 398, 398, 376, 376 | 2 / 6 |
-| category-filters-open-390 | 390 | 390 / 390 | 2 | 16px | 341, 341, 319, 319, 319, 319 | 2 / 6 |
-| brand-390 | 390 | 390 / 390 | 2 | 12px | 338, 338, 315 | 2 / 3 |
-| brand-1280 | 1280 | 1280 / 1280 | **5** | 22px | 411, 411, 411 | 2 / 3 |
-| home-rail-390 | 390 | 390 / 390 | 2 | 12px | 345, 345, 322, 322, 345, 345 | 4 / 8 |
-| home-rail-1280 | 1280 | 1280 / 1280 | **5** | 22px | 403 × 6 | 4 / 8 |
-| wishlist-390 | 390 | 390 / 390 | 2 | 12px | 322, 322, 345, 345 | 2 / 4 |
-| wishlist-1280 | 1280 | 1280 / 1280 | **5** | 22px | 403 × 6 | 2 / 6 |
-| product-related-1280 | 1280 | 1280 / 1280 | **5** | 22px | 388, 388, 388, 388 | 1 / 4 |
-| product-related-390 | 390 | 390 / 390 | 2 | 12px | 297, 297, 319, 319 | 1 / 4 |
-| titles-short-vs-long-1280 | 1280 | 1280 / 1280 | **5** | 22px | **366, 366** | 0 / 2 |
-| titles-short-vs-long-390 | 390 | 390 / 390 | 2 | 16px | **302, 302** | 0 / 2 |
-| rated-vs-unrated-1280 | 1280 | 1280 / 1280 | **5** | 22px | 405, 405, 405, 405, 405, 383 | 2 / 6 |
-| rated-vs-unrated-390 | 390 | 390 / 390 | 2 | 16px | 341, 341, 319, 319, 319, 319 | 2 / 6 |
-| ar-shop-1280 | 1280 | 1280 / 1280 | **5** | 22px | 388 × 6 | 12 / 25 |
-| ar-shop-390 | 390 | 390 / 390 | 2 | 16px | 324, 324, 302, 302, 302, 302 | 12 / 25 |
-| ar-category-filters-open-1280 | 1280 | 1280 / 1280 | 4 | 22px | 398, 398, 398, 398, 376, 376 | 2 / 6 |
+The `category-*` rows are `/collections/sunscreens/` — the exact page in the
+owner's second screenshot, collapsed and expanded, at both widths.
+
+| shot | vw | scrollWidth / clientWidth | cols | image box | square | card heights (first five) | rated / tiles |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| shop-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 324, 324, 302, 302, 302 | 12 / 25 |
+| shop-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388, 388 | 12 / 25 |
+| category-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 341, 341, 319, 319 | 2 / 4 |
+| category-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 405, 405, 405, 405 | 2 / 4 |
+| category-filters-open-1280 | 1280 | 1280 / 1280 | 4 | 224×224 | yes | 398, 398, 398, 398 | 2 / 4 |
+| category-filters-open-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 341, 341, 319, 319 | 2 / 4 |
+| brand-390 | 390 | 390 / 390 | 2 | 163×163 | yes | 338, 338, 315 | 2 / 3 |
+| brand-1280 | 1280 | 1280 / 1280 | 5 | 232×232 | yes | 411, 411, 411 | 2 / 3 |
+| home-rail-390 | 390 | 390 / 390 | 2 | 173×173 | yes | 342, 342, 319, 319, 342 | 4 / 8 |
+| home-rail-1280 | 1280 | 1280 / 1280 | 5 | 226×226 | yes | 398, 398, 398, 398, 398 | 4 / 8 |
+| wishlist-390 | 390 | 390 / 390 | 2 | 173×173 | yes | 319, 319, 342, 342 | 2 / 4 |
+| wishlist-1280 | 1280 | 1280 / 1280 | 5 | 226×226 | yes | 398, 398, 398, 398, 398 | 2 / 6 |
+| product-related-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388 | 1 / 4 |
+| product-related-390 | 390 | 390 / 390 | 2 | 166×166 | yes | 297, 297, 319, 319 | 1 / 4 |
+| titles-short-vs-long-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 366, 366 | 0 / 2 |
+| titles-short-vs-long-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 302, 302 | 0 / 2 |
+| rated-vs-unrated-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 405, 405, 405, 405 | 2 / 4 |
+| rated-vs-unrated-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 341, 341, 319, 319 | 2 / 4 |
+| ar-shop-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388, 388 | 12 / 25 |
+| ar-shop-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 324, 324, 302, 302, 302 | 12 / 25 |
+| ar-category-filters-open-1280 | 1280 | 1280 / 1280 | 4 | 224×224 | yes | 398, 398, 398, 398 | 2 / 4 |
 
 `scrollWidth == clientWidth` on every row: nothing overflows at either width, in
-either direction.
+either direction. **`square` is `yes` on every row, and it is not the first
+tile's box — it is every tile's**, width against height. The Add to cart button
+computes to `rgb(224, 86, 123)` on all twenty-one, which is the shop's pink and
+not the other card's near-black.
 
 **RTL.** `/ar` with `language_rtl_enabled` on: the filter rail moves to the
 right, the NEW pill to the top-right and the −N% to the top-left, the heart to

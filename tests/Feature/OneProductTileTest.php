@@ -638,3 +638,122 @@ it('leaves /shop the same side gutter as every other page', function () {
             ->toBeNull('.shop declares '.$property.', which overrides .wrap\'s side gutter on /shop and on every category archive');
     }
 });
+
+/* ═══════ 7 · the owner's follow-up: square thumbnails, and a control that
+             can reach the page it sits above ═══════════════════════════════ */
+
+it('draws the product photograph in an exactly square frame', function () {
+    /*
+     * ── THE OWNER, LOOKING AT A CATEGORY ARCHIVE ───────────────────────────
+     *
+     * "on the categories / shop page, the grid style is still coming different.
+     *  i need the same, with square image thumbnail."
+     *
+     * TWO separate things made it not square, and both are fixed:
+     *
+     *  1. /shop and every category archive drew the OTHER card, whose frame was
+     *     `.pc .ph{height:180px}` — a fixed 180px box inside a ~240px column,
+     *     which is landscape. That card is gone; the one tile's frame is
+     *     `.kbb-card-thumb`.
+     *  2. The skinned grid's own frame was `aspect-ratio:var(--kbb-ratio,1/1.02)`
+     *     — a shade TALLER than square. 1.02 is 2%, which is exactly the kind of
+     *     not-quite that gets reported as "the grid style is still coming
+     *     different". The fallback is 1/1 now, in both copies of that sheet, and
+     *     Appearance → Product styles → Image shape ships at Square so the
+     *     setting and the stylesheet agree.
+     *
+     * `object-fit:cover` is what makes it work for real photographs: a portrait
+     * bottle and a landscape box both fill the same square, cropped, rather than
+     * letterboxed into different heights.
+     *
+     * MUTATION: put either fallback back to 1/1.02, or ProductStyles'
+     * `image_ratio` default back to 'portrait', and one expectation here is red.
+     * The browser numbers are in docs/lane-pg-shots/measurements.json, where
+     * every tile on every page reports width === height.
+     */
+    foreach (['kbb.css', 'kbb-grid-skins.css'] as $sheet) {
+        $css = (string) file_get_contents(base_path('resources/css/kbb/'.$sheet));
+        $css = (string) preg_replace('#/\*.*?\*/#s', '', $css);
+
+        expect(str_contains($css, '1/1.02'))
+            ->toBeFalse($sheet.' still declares the 1/1.02 frame, which is not square');
+    }
+
+    // `1` and `1/1` are the same ratio; this sheet spells it both ways, and
+    // the browser numbers below the assertion are what actually settle it.
+    expect(optCssValue(optCssBlock('.kbb-card-thumb'), 'aspect-ratio'))
+        ->toBeIn(['1', '1/1'], 'the tile frame is not square');
+    expect(optCssValue(optCssBlock('.kbb-card-img'), 'object-fit'))
+        ->toBe('cover', 'the photograph is letterboxed rather than filling its square');
+
+    // And the owner's own control agrees with the sheet.
+    expect(\App\Services\ProductStyles::SCHEMA['image_ratio'][2])->toBe('square');
+    expect(app(\App\Services\ProductStyles::class)->cssVariables())->toContain('--kbb-ratio:1/1');
+});
+
+it('offers every column count the grid can show, including the default', function () {
+    /*
+     * ── A CONTROL THAT CANNOT REACH ITS OWN PAGE ───────────────────────────
+     *
+     * The toolbar's switcher offered 2, 3 and 4 while the grid derived FIVE.
+     * Every position on it was a step DOWN from what the shopper was already
+     * looking at, and there was no way back to the default except editing the
+     * URL — a control lying about the page it sits above, which is the same
+     * defect Lane W1 removed when it stopped highlighting "4" unconditionally.
+     *
+     * WIDENED RATHER THAN REMOVED, and that was the choice: the owner asked for
+     * five AND uses these buttons, so taking the control away would answer half
+     * his sentence by deleting the other half.
+     *
+     * MUTATION: drop '5' from Facets::columns()' allowlist and the pin stops
+     * applying; drop the `#grid[data-cols="5"]` rule and the click changes
+     * nothing on screen. Either is red here.
+     */
+    optProduct('opt-cols');
+
+    $html = optGet('/shop/');
+
+    foreach (['2', '3', '4', '5'] as $n) {
+        expect(str_contains($html, 'data-c="'.$n.'"'))
+            ->toBeTrue('the column switcher cannot offer '.$n.' columns');
+    }
+
+    // The URL is honoured, and the pin reaches the grid.
+    expect(str_contains(optGet('/shop/?cols=5'), 'id="grid" data-skin="classic" data-cols="5"'))
+        ->toBeTrue('?cols=5 does not pin the grid at five');
+
+    // A value that is not on the list is not a pin at all — the automatic
+    // answer, not a silent fall back to some other number.
+    expect(str_contains(optGet('/shop/?cols=99'), 'data-cols'))
+        ->toBeFalse('an unusable ?cols pinned the grid');
+
+    $pin = optCssBlock('#grid[data-cols="5"]', 'kbb-shop.css');
+    expect(optCssValue($pin, 'grid-template-columns'))->toBe('repeat(5,minmax(0,1fr))');
+});
+
+it('gives every grid on the shop the same pink Add to cart', function () {
+    /*
+     * The owner's second screenshot showed a near-black Add to cart on the
+     * category page against the reference card's pink. That was never a colour
+     * decision — it was `.addbtn{background:var(--ink)}` on the /shop card and
+     * `.kbb-card-cart{background:#E0567B}` on the skinned one, two cards with
+     * two buttons. One card, one button, one colour.
+     *
+     * Asserted on the CLASS rather than on a colour, because the colour is the
+     * owner's (Appearance → Product styles → Cart button): what must be true is
+     * that every grid reaches the same rule. Measured in Chromium at
+     * rgb(224, 86, 123) on all twenty-one shots in docs/lane-pg-shots.
+     *
+     * MUTATION: give the tile `class="addbtn"` again and this is red.
+     */
+    optProduct('opt-button');
+
+    foreach (['/shop/', '/collections/opt-care/', '/brands/opt-house/', '/'] as $uri) {
+        $html = optGet($uri);
+
+        expect(str_contains($html, 'class="kbb-card-cart'))
+            ->toBeTrue($uri.' does not draw the one tile\'s Add to cart');
+        expect(str_contains($html, 'class="addbtn'))
+            ->toBeFalse($uri.' still draws the old card\'s button');
+    }
+});

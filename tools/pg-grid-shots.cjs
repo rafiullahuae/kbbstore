@@ -36,6 +36,23 @@ const probe = () => {
       heights: tiles.map((t) => Math.round(t.getBoundingClientRect().height)),
       widths: tiles.map((t) => Math.round(t.getBoundingClientRect().width)),
       rated: tiles.filter((t) => t.querySelector('.kbb-card-rate')).length,
+      /*
+       * The photograph's box, per tile. The owner asked for a SQUARE thumbnail
+       * ("i need the same, with square image thumbnail"), so the number that
+       * answers him is width vs height on each tile's own frame -- not the
+       * file's dimensions, which vary, and not a CSS rule read out of a sheet.
+       */
+      imgBox: tiles.map((t) => {
+        const f = t.querySelector('.kbb-card-thumb');
+        if (!f) return null;
+        const r = f.getBoundingClientRect();
+        return [Math.round(r.width), Math.round(r.height)];
+      }),
+      cartBg: (() => {
+        const b = tiles[0]?.querySelector('.kbb-card-cart');
+        return b ? getComputedStyle(b).backgroundColor : null;
+      })(),
+
       names: tiles.map((t) => (t.querySelector('.kbb-card-nm')?.textContent || '').slice(0, 40)),
       nameBox: tiles.map((t) => {
         const n = t.querySelector('.kbb-card-nm');
@@ -73,6 +90,7 @@ const probe = () => {
       const cs = getComputedStyle(el);
       return { x: Math.round(r.x), w: Math.round(r.width), padL: cs.paddingLeft, padR: cs.paddingRight };
     })(),
+    colsel: [...document.querySelectorAll('#colsel [data-c]')].map((b) => b.dataset.c),
     grids: rows,
   };
 };
@@ -101,6 +119,7 @@ const probe = () => {
   fs.writeFileSync(`${OUT}/measurements.json`, JSON.stringify(results, null, 2));
   for (const r of results) {
     const g = r.grids[0] || {};
-    console.log(`${r.name.padEnd(34)} vw=${String(r.viewport).padStart(4)} scrollW=${r.scrollWidth} clientW=${r.clientWidth} cols=${g.cols} tiles=${g.tiles} rated=${g.rated} heights=[${(g.heights||[]).slice(0,6).join(',')}]`);
+    const box = (g.imgBox || [])[0];
+  console.log(`${r.name.padEnd(30)} vw=${String(r.viewport).padStart(4)} sw=${r.scrollWidth}/${r.clientWidth} cols=${g.cols} rated=${g.rated}/${g.tiles} h=[${(g.heights||[]).slice(0,5).join(',')}] img=${box ? box.join('x') : '-'} square=${(g.imgBox||[]).every((b) => b && b[0] === b[1])} cart=${g.cartBg} colsel=${(r.colsel||[]).join('/')}`);
   }
 })();

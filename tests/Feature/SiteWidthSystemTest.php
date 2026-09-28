@@ -306,10 +306,18 @@ it('pins an exact count with a rule, never with a custom property', function () 
      * shopper's desktop choice of four columns applying to a 390px phone, 88px a
      * card. A mutation run found it.
      */
+    /*
+     * ▲ FOUR PINS, NOT THREE.                                         Lane PG
+     * The shopper's row is 2 / 3 / 4 / 5 now, because five is the count the
+     * grid derives by default and a pin row that stopped at four could not put
+     * the page back the way it found it — every position on it was a step down
+     * from what the shopper was already looking at.
+     */
     expect($shop)->toContain('@media(min-width:901px){
   #grid[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
   #grid[data-cols="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
   #grid[data-cols="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #grid[data-cols="5"]{grid-template-columns:repeat(5,minmax(0,1fr))}
 }');
     expect($shop)->not->toContain('--kbb-count');
 

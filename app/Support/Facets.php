@@ -205,11 +205,30 @@ final class Facets
         return array_key_exists($v, self::SORTS) ? $v : 'featured';
     }
 
+    /**
+     * The shopper's own column count, from `?cols`.
+     *
+     * ▲ FIVE IS ON THE LIST AND IS THE FALLBACK.                      Lane PG
+     *
+     * The buttons offered 2, 3 and 4 while the grid's own default became FIVE,
+     * which is a control that cannot reach the page it sits above: every
+     * position on it was a step DOWN from what the shopper was already looking
+     * at, and there was no way back to the default except editing the URL. The
+     * owner asked for five by default and he uses these buttons, so the control
+     * is widened rather than removed.
+     *
+     * The fallback moved with it for the same reason it existed: this method
+     * answers for a `?cols` that is absent or unusable, and that answer is the
+     * count the page actually shows. store/shop.blade.php still tests the RAW
+     * query value before it emits `data-cols`, so a missing `?cols` is still
+     * "automatic" rather than "pinned at five" — this string only decides which
+     * button is highlighted once one has been chosen.
+     */
     public static function columns(): string
     {
-        $c = (string) Request::query('cols', '4');
+        $c = (string) Request::query('cols', '5');
 
-        return in_array($c, ['2', '3', '4'], true) ? $c : '4';
+        return in_array($c, ['2', '3', '4', '5'], true) ? $c : '5';
     }
 
     public static function page(): int

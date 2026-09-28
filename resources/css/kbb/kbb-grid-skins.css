@@ -403,7 +403,13 @@
 /* ═══ Card settings from Appearance → Product styles ═══
    Emitted as custom properties on the grid, so this sheet stays static. */
 .kbb-pgrid .kbb-card{border-radius:var(--kbb-radius,14px)}
-.kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1.02)}
+/* ── SQUARE, EXACTLY SQUARE ──────────────────────────────────── Lane PG ──
+   The fallback was `1/1.02`, a shade taller than square, and that 2% is what
+   the owner was looking at when he asked for "square image thumbnail" beside
+   the Super Sale card. `--kbb-ratio` is still the owner's own control
+   (Appearance -> Product styles -> Image shape), and its shipped value is
+   Square now, so the setting and the sheet agree. */
+.kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1)}
 .kbb-pgrid .cn{display:-webkit-box;-webkit-line-clamp:var(--kbb-name-lines,99);-webkit-box-orient:vertical;overflow:hidden}
 .kbb-pgrid .kbb-badge-sale{background:var(--kbb-sale,#E23B57)}
 .kbb-pgrid .kbb-badge-new{background:var(--kbb-new,#1F9D55)}

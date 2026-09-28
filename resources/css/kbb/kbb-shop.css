@@ -219,10 +219,16 @@ img{max-width:100%}
    --kbb-tile-shop, so the two can be tuned apart. */
 #grid{--kbb-gap:18px;--kbb-tile:var(--kbb-tile-shop,220px)}
 @media(max-width:680px){#grid{--kbb-gap:12px}}
+/* THE SHOPPER'S OWN PIN, 2 / 3 / 4 / 5.
+   Five joined the row when five became the count the grid derives by default:
+   a pin row that stopped at four could not put the page back the way it found
+   it, and every position on it was a step DOWN from what the shopper was
+   already looking at.                                               Lane PG */
 @media(min-width:901px){
   #grid[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
   #grid[data-cols="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
   #grid[data-cols="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #grid[data-cols="5"]{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
 .lbl{position:absolute;display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;color:#fff;padding:4px 8px;border-radius:7px;box-shadow:0 3px 9px rgba(0,0,0,.16);white-space:nowrap;z-index:2}
 .heart{position:absolute;top:9px;inset-inline-end:9px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.9);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:3;transition:.14s;box-shadow:var(--sh-s)}

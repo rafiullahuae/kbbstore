@@ -1218,7 +1218,7 @@ body{padding-bottom:46px}
    --kbb-cols-floor gives the phone its two columns now, and the gap comes from
    --kbb-gap, which the grid-skins sheet already narrows to 10px under 400px. */
 .kbb-card{border-radius:14px}
-.kbb-card-thumb{aspect-ratio:1/1.02}
+.kbb-card-thumb{aspect-ratio:1/1}
 .kbb-home .cb{padding:9px 10px 11px}
 .kbb-home .cn{font-size:12px;line-height:1.35}
 .kbb-card-brand{font-size:9.5px}
