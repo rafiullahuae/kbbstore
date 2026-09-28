@@ -26,7 +26,7 @@ use App\Support\ImageVariants;
  *
  * WHY THE HTML IS READ WITH preg_match_all AND NOT WITH toContain. A class-name
  * search over a rendered page also matches the inlined stylesheet, which
- * mentions .ph-img by name. Everything here is asserted about <img> ELEMENTS
+ * mentions .kbb-card-img by name. Everything here is asserted about <img> ELEMENTS
  * pulled out of the document, for the same reason GridPhotoLoadingTest strips
  * comments before reading CSS.
  */
@@ -38,7 +38,7 @@ function tilePhotos(string $html): array
 
     return array_values(array_filter(
         $m[0],
-        fn (string $tag) => preg_match('/\bclass\s*=\s*"[^"]*\bph-img\b[^"]*"/i', $tag) === 1
+        fn (string $tag) => preg_match('/\bclass\s*=\s*"[^"]*\bkbb-card-img\b[^"]*"/i', $tag) === 1
     ));
 }
 
@@ -252,7 +252,7 @@ it('gives the tile a srcset and a sizes once the copies exist', function () {
 
     // Without `sizes` a `w` srcset is resolved against 100vw, which on a phone
     // means the largest candidate every time -- the opposite of the point.
-    expect(tagAttribute($tag, 'sizes'))->toBe(ImageVariants::sizesAttribute());
+    expect(tagAttribute($tag, 'sizes'))->toBe(ImageVariants::tileSizesAttribute());
     expect(str_contains((string) tagAttribute($tag, 'sizes'), 'vw'))
         ->toBeTrue('sizes must follow the viewport below the two-column breakpoint');
 });

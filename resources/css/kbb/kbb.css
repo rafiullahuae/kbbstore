@@ -3737,3 +3737,92 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
     font-size:calc(var(--mh-stsize,16px) * max(1, var(--mh-sfit,1)));
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE ONE PRODUCT TILE.                                              Lane PG
+
+   Every product grid on this shop draws components/product-card.blade.php now,
+   and every tile carries `.kbb-tile` as well as `.kbb-card`. The second class
+   is what these rules hang off, and it is load-bearing rather than decorative:
+   `.kbb-card` is ALSO the card-payment box in
+   partials/checkout/stripe-card.blade.php, and this sheet is loaded on the
+   checkout too. A container-scoped selector list would have needed four
+   entries kept in step (.kbb-pgrid, #grid, .rel and a routine step); one class
+   on the tile itself needs none and cannot reach the checkout.
+
+   NOTHING HERE MEASURES ANYTHING. The equal height is `height:100%` inside a
+   grid row; the two-line name is a `calc()` reservation. There is no script.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── EQUAL HEIGHT, WHATEVER THE TILE HAS IN IT ──────────────────────────────
+   A grid item stretches to its row by default, so `height:100%` makes the card
+   fill it; `.cb` is the column that grows and `.cp` takes `margin-top:auto`, so
+   the price and the Add to cart button sit on the tile's bottom edge and line
+   up across the row whether or not a product has a brand, a category eyebrow
+   or a rating. That is what replaces the old card's invisible placeholder row:
+   the space is held by the layout instead of by an empty element. */
+.kbb-tile{position:relative;display:flex;flex-direction:column;height:100%}
+.kbb-tile>.kbb-card-thumb{flex:none}
+.kbb-tile>.cb{flex:1;display:flex;flex-direction:column}
+.kbb-tile>.cb>.cp{margin-top:auto}
+
+/* ── THE PHOTOGRAPH ─────────────────────────────────────────────────────────
+   `.kbb-card-thumb` is the CSS-sized box — aspect-ratio 1, declared above —
+   and it is what reserves the space, so nothing the image does can move the
+   page whatever order the bytes arrive in. The <a> around it is taken out of
+   flow so the `height:100%` on the <img> has something to resolve against. */
+.kbb-card-shot{position:absolute;inset:0;display:block;z-index:2}
+.kbb-card-img{width:100%;height:100%;object-fit:cover;display:block}
+.kbb-card-ph{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:20px;color:rgba(255,255,255,.92);letter-spacing:.04em}
+
+/* ── THE STRETCHED LINK ─────────────────────────────────────────────────────
+   The tile used to be one big `<a>`. It cannot be any more: it now holds a
+   no-JS `?add-to-cart=` link, and `<a>` inside `<a>` is the one nesting the
+   HTML parser actively breaks apart — the browser would have hoisted the Add
+   to cart button out of the card. So the NAME is the link, and its ::after
+   covers the whole tile, which is the same "click anywhere" behaviour with no
+   script and no invalid markup.
+
+   Everything a shopper can press sits above it on z-index. Order matters: the
+   ::after is z-index 1 and the controls are 2. */
+.kbb-tile .cn{position:static;display:block}
+.kbb-tile .cn::after{content:"";position:absolute;inset:0;z-index:1}
+.kbb-tile .qv-btn,.kbb-tile .heart,.kbb-tile .kbb-card-cart{position:relative;z-index:2}
+
+/* ── A LONG NAME MUST NOT MAKE ITS ROW TALLER ───────────────────────────────
+   The owner: "if the product titles goes long, still the product grid height
+   must remain equal and adjusted."
+
+   Two lines, ALWAYS two lines: `-webkit-line-clamp` cuts a long name off and
+   `height:calc(2 * <line-height>)` reserves both lines whether or not the text
+   fills them, so a one-word name and a ninety-character name occupy exactly the
+   same box. `em` resolves against the element's own font size, which the skins
+   change — so the reservation follows the skin instead of being a pixel figure
+   that stops being true under half of them.
+
+   The brand goes on its own line, which is what the owner's reference shows,
+   and is also what keeps the name's budget constant: with the brand inline, a
+   long brand would spend one of the name's two lines. */
+.kbb-tile .kbb-card-brand{display:block;line-height:1.3}
+.kbb-tile .kbb-card-nm{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.32;height:calc(2 * 1.32em)}
+
+/* ── THE MODULE BADGE ───────────────────────────────────────────────────────
+   Growth & Marketing → Product Labels prints `.lbl`, and its position used to
+   come from `.pc .lbl` — a selector for a card that no longer exists. It takes
+   the same corner the NEW pill takes, because it replaces it. */
+.kbb-tile .lbl{position:absolute;top:9px;inset-inline-start:9px;font-size:10px;font-weight:700;color:#fff;border-radius:99px;padding:4px 10px;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+
+/* Bestseller keeps the corner and the shape of the NEW pill and says which it
+   is by colour, so a featured product does not silently lose the badge it had
+   on the old /shop card. */
+.kbb-badge-best{inset-inline-start:9px;background:linear-gradient(135deg,#b48bff,#7a4fd6)}
+
+/* ── THE WISHLIST HEART ─────────────────────────────────────────── Lane PG ──
+   Catalogue → Wishlist, off by default. It used to be `.pc .heart`, positioned
+   top-end on a card with nothing else up there. This tile puts the -% pill in
+   that corner, so the heart takes the bottom-end one — where it collides with
+   neither badge, in either direction, at any tile width the grid produces. */
+.kbb-tile .heart{position:absolute;top:auto;bottom:9px;inset-inline-end:9px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);display:grid;place-items:center;color:var(--ink);z-index:3;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.kbb-tile .heart svg{width:17px;height:17px}
+.kbb-tile .heart.on{color:var(--pink)}
+.kbb-tile .heart.on svg{fill:var(--pink)}

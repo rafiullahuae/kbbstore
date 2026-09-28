@@ -29,7 +29,7 @@ use App\Models\Product;
  *    mechanisms rather than as a score, because a score is a thing you
  *    measured once on one machine.
  *
- *    The tile: .pc .ph is a fixed-height box and .pc .ph-img is taken out of
+ *    The tile: .pc .ph is a fixed-height box and .pc .kbb-card-img is taken out of
  *    flow inside it, so the photograph's own dimensions never reach layout.
  *    The old background got this right by accident and the conversion had to
  *    keep it.
@@ -63,7 +63,7 @@ function cssSource(): string
 /**
  * The declaration block of one rule, by exact selector.
  *
- * Exact, not "contains": `.pc .ph` and `.pc .ph-img` are different rules and a
+ * Exact, not "contains": `.pc .ph` and `.pc .kbb-card-img` are different rules and a
  * substring match would hand back whichever came first.
  *
  * @return string the text between { and }, or '' when the selector is absent
@@ -163,7 +163,9 @@ function imagesWithClass(string $html, string $class): array
 /** @return list<string> the style attribute of every .ph frame on the page */
 function frameStyles(string $html): array
 {
-    preg_match_all('/<div\b[^>]*\bclass\s*=\s*"ph"[^>]*>/i', $html, $m);
+    // `.kbb-card-thumb`, not `.ph`: there is ONE product tile now and the
+    // frame it reserves is that box. Lane PG.
+    preg_match_all('/<div\b[^>]*\bclass\s*=\s*"kbb-card-thumb"[^>]*>/i', $html, $m);
 
     return array_map(
         fn (string $tag) => preg_match('/\bstyle\s*=\s*"([^"]*)"/i', $tag, $s) === 1 ? $s[1] : '',
@@ -194,7 +196,7 @@ it('paints every product tile photograph as an img and not as a CSS background',
             ->toBeFalse('a product tile still paints its photograph as a CSS background: ' . $style);
     }
 
-    $photos = imagesWithClass($html, 'ph-img');
+    $photos = imagesWithClass($html, 'kbb-card-img');
     expect(count($photos))
         ->toBe(count($frames), 'every tile has a photograph, so every frame should carry one <img>');
 
@@ -207,7 +209,7 @@ it('paints every product tile photograph as an img and not as a CSS background',
 it('loads only the first tile of the shop grid eagerly and lazies the rest', function () {
     seedPhotographedCatalogue();
 
-    $photos = imagesWithClass((string) test()->get('/shop')->getContent(), 'ph-img');
+    $photos = imagesWithClass((string) test()->get('/shop')->getContent(), 'kbb-card-img');
     expect(count($photos))->toBeGreaterThan(1, 'need more than one tile to tell eager from lazy');
 
     $first = array_shift($photos);
@@ -231,7 +233,7 @@ it('never gives a related-products tile priority over the product page shot', fu
     $product = Product::query()->visible()->firstOrFail();
     $html = (string) test()->get('/product/' . $product->slug . '/')->getContent();
 
-    $photos = imagesWithClass($html, 'ph-img');
+    $photos = imagesWithClass($html, 'kbb-card-img');
     expect($photos)->not->toBeEmpty('the product page rendered no related-products grid');
 
     foreach ($photos as $tag) {
@@ -243,20 +245,47 @@ it('never gives a related-products tile priority over the product page shot', fu
 });
 
 it('reserves the tile photograph frame in CSS and keeps the img out of flow', function () {
-    $frame = cssBlock('.pc .ph');
-    expect($frame)->not->toBe('', 'the .pc .ph rule has gone from kbb.css');
+    /*
+     * ── THE FRAME IS `.kbb-card-thumb` AND IT RESERVES ITS SPACE BY RATIO ───
+     *
+     * `.pc .ph` was a fixed 180px box and that rule is gone with the card it
+     * belonged to. The one tile's frame declares `aspect-ratio`, which reserves
+     * the box just as completely and does it at every column count — a fixed
+     * 180px height under a 229px-wide five-column tile would have been a frame
+     * that no longer matches its own photograph.                     Lane PG
+     *
+     * Either answer is acceptable to this case and a frame with NEITHER is not:
+     * that is the defect being guarded, and it is what "the tile sizes itself
+     * from the photograph" means.
+     */
+    $frame = cssBlock('.kbb-card-thumb');
+    expect($frame)->not->toBe('', 'the .kbb-card-thumb rule has gone from kbb.css');
 
     $height = cssValue($frame, 'height');
-    expect($height)->not->toBeNull('.pc .ph must declare a height, or the tile sizes itself from the photograph');
-    expect(preg_match('/^\d+(\.\d+)?px$/', (string) $height))
-        ->toBe(1, '.pc .ph height must be a fixed length so the space is reserved before the bytes arrive, got: ' . $height);
+    $ratio = cssValue($frame, 'aspect-ratio');
 
-    $img = cssBlock('.pc .ph-img');
-    expect($img)->not->toBe('', 'the .pc .ph-img rule has gone from kbb.css');
-    expect(cssValue($img, 'position'))
+    expect($ratio !== null || ($height !== null && preg_match('/^\d+(\.\d+)?px$/', (string) $height) === 1))
+        ->toBeTrue('.kbb-card-thumb must reserve its box with an aspect-ratio or a fixed height, or the tile '
+            . 'sizes itself from the photograph; got height=' . var_export($height, true)
+            . ' aspect-ratio=' . var_export($ratio, true));
+
+    /*
+     * And the photograph is out of flow INSIDE it. The <img> is 100%/100% of
+     * the link that wraps it, and that link is what is absolutely positioned —
+     * so the rule to read is `.kbb-card-shot`. An <img> filling an out-of-flow
+     * box is itself out of flow; what matters is that nothing it does can reach
+     * the page's layout.
+     */
+    $shot = cssBlock('.kbb-card-shot');
+    expect($shot)->not->toBe('', 'the .kbb-card-shot rule has gone from kbb.css');
+    expect(cssValue($shot, 'position'))
         ->toBe('absolute', 'the tile photograph must be out of flow, or its dimensions reach layout');
-    expect(cssValue($img, 'inset'))
+    expect(cssValue($shot, 'inset'))
         ->toBe('0', 'the tile photograph must fill its reserved frame');
+
+    $img = cssBlock('.kbb-card-img');
+    expect($img)->not->toBe('', 'the .kbb-card-img rule has gone from kbb.css');
+    expect(cssValue($img, 'height'))->toBe('100%', 'the photograph must fill the frame it was given');
 });
 
 it('keeps the nav bar height independent of the scale nav-fit applies', function () {

@@ -142,7 +142,7 @@ it('filters the shop for real behind every brand link it emits', function () {
     expect(count($slugs))->toBeGreaterThan(4, 'MenuDemo emitted almost no brand links; this test is measuring nothing.');
 
     $unfiltered = $this->get('/shop/')->assertOk()->getContent();
-    $everything = preg_match_all('#<div[^>]*\sclass="pc"[^>]*>#i', $unfiltered);
+    $everything = preg_match_all('#<div[^>]*\sclass="kbb-card kbb-tile"[^>]*>#i', $unfiltered);
 
     expect($everything)->toBeGreaterThan(
         4,
@@ -154,7 +154,7 @@ it('filters the shop for real behind every brand link it emits', function () {
 
     foreach ($slugs as $slug) {
         $html = $this->get('/shop/?filter_brands=' . $slug)->assertOk()->getContent();
-        $cards = preg_match_all('#<div[^>]*\sclass="pc"[^>]*>#i', $html);
+        $cards = preg_match_all('#<div[^>]*\sclass="kbb-card kbb-tile"[^>]*>#i', $html);
 
         // Counted with preg_match_all over the ELEMENTS: the storefront inlines
         // its stylesheet, so a substring search for `pc` also matches CSS text.

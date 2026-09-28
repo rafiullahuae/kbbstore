@@ -90,11 +90,11 @@ function vptTile(string $html, string $slug): string
     // The card links to /product/{slug}/ and the price sits in the same .pc
     // block. Cut the block out and hand back its .cprice, so an assertion
     // cannot accidentally read a neighbouring tile's money.
-    $cards = preg_split('#<div class="pc">#', $html);
+    $cards = preg_split('#<div class="kbb-card kbb-tile">#', $html);
 
     foreach ($cards as $card) {
         if (str_contains($card, '/product/' . $slug . '/')
-            && preg_match('#<div class="cprice">(.*?)</div>#s', $card, $m)) {
+            && preg_match('#<div class="cp">(.*?)</div>#s', $card, $m)) {
             return trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES, 'UTF-8'));
         }
     }

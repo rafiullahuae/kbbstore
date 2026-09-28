@@ -455,10 +455,10 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
   </div>
 </div>
 <style>
-.pc .ph{position:relative}
+.kbb-card-thumb{position:relative}
 /* RTL-PHYSICAL: centring idiom (left:50% + translate(-50%,...)). */
 .qv-btn{position:absolute;left:50%;bottom:10px;transform:translate(-50%,6px);opacity:0;transition:.18s;background:rgba(255,255,255,.95);border:1px solid #e6dbe0;border-radius:99px;padding:6px 16px;font-size:11px;letter-spacing:.03em;cursor:pointer;color:#5e545a;white-space:nowrap;z-index:3}
-.pc:hover .qv-btn,.qv-btn:focus-visible{opacity:1;transform:translate(-50%,0)}
+.kbb-tile:hover .qv-btn,.qv-btn:focus-visible{opacity:1;transform:translate(-50%,0)}
 @media (hover:none){.qv-btn{display:none}}
 .qv-back{position:fixed;inset:0;background:rgba(40,30,36,.5);display:grid;place-items:center;z-index:9999;padding:18px}
 .qv-back[hidden]{display:none}

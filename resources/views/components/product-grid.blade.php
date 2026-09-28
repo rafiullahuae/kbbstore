@@ -84,7 +84,8 @@
     /*
      * A CALLER'S COUNT IS BOUNDED AND A NON-POSITIVE ONE IS NOT A COUNT.
      *
-     * These reach `grid-template-columns:repeat(N,…)` in a <style> element, so an
+     * These reach `grid-template-columns:repeat(N,…)` in the style element below,
+     * so an
      * unbounded N is a shortcode that can emit `repeat(999999,minmax(0,1fr))` and
      * stop the page laying out. `max(1, min(8, …))` was the first draft and it
      * turned `columns="-4"` into a pin of ONE full-width column, which is neither
@@ -116,137 +117,21 @@
 @endif
 <div class="kbb-pgrid" data-skin="{{ $skin }}"@if ($pinCols || $pinMobile) id="{{ $pinId }}"@endif>
     @foreach ($products as $p)
-        @php
-            // See product-card.blade.php: t() is the column on English and the
-            // owner's Arabic on /ar, and $seed stays English so a product keeps
-            // one colour in both languages.
-            $brand = $p->brand?->t('name') ?? '';
-            $cat = $p->categories->first()?->t('name');
-            $name = $p->t('name');
-            $seed = ($p->brand?->name ?? '') . $p->name;
-            $onSale = $p->isOnSale();
-            $off = $onSale ? $p->discountPercent() : 0;
-            // See Money::decimalsToDistinguish(): 0 for every markdown the
-            // rounded display can already tell apart, the currency's precision
-            // for the pair that would otherwise print the same string twice.
-            // $kbbWas, not `(int) $p->price`: a variable parent keeps its money
-            // on its variations and that column is NULL, so a marked-down
-            // variable product would quote `AED 0` as the regular price the
-            // moment isOnSale() started answering true for one. See
-            // Product::compareAtPrice() -- for anything with a price of its own
-            // it is that same `(int) $p->price` and this line is unchanged.
-            $kbbWas = (int) $p->compareAtPrice();
-            $kbbDp = $onSale ? \App\Support\Money::decimalsToDistinguish($kbbWas, $p->effectivePrice()) : null;
-            $isNew = $p->created_at && $p->created_at->gt(now()->subDays(30));
-            $rating = (int) round((float) $p->rating);
-            // See components/product-card.blade.php: a variable parent carries
-            // no price of its own, effectivePrice() answers 0 for it, and this
-            // skinned tile printed AED 0 exactly as the other one did. Null for
-            // every product that is not one, which is almost all of them.
-            $kbbRange = app(\App\Services\VariantPricing::class)->range($p);
+        {{-- THE CARD IS <x-product-card> NOW, AND THIS FILE NO LONGER DRAWS ONE.
 
-            /*
-             * THE WHOLE PRICE CELL, BUILT HERE AND NOT IN THE MARKUP, for two
-             * reasons that both cost a red suite before this shape was found.
-             *
-             * A Blade directive on a line of its own contributes its
-             * indentation and its newline to the rendered page, and
-             * StorefrontEnglishUnchangedTest compares BYTES: an `@php` line and
-             * a `{{-- --}}` line beside the markup moved /shop, a category
-             * archive and the product page's related rail without changing one
-             * visible character on any of them.
-             *
-             * And a nested `@else@if ... @endif @endif` inside one line does
-             * not compile at all -- "syntax error, unexpected token endif",
-             * which reaches the browser as a 500 on every brand page. One
-             * value, decided here, leaves the markup a flat @if/@elseif/@else.
-             */
-            $kbbRangeHtml = null;
+             It used to carry a complete second copy of the tile -- the same one
+             /shop drew through <x-product-card>, with different class names, a
+             different rating rule and a different set of bugs fixed in each.
+             That is the state Lane PG was given to end. The markup, the badges,
+             the price cell and the buyability test all live in
+             components/product-card.blade.php; this file decides the GRID.
 
-            if ($kbbRange !== null) {
-                // Both ends at ONE precision, and the precision that separates
-                // them -- the same rule as the sale pair beside it, and for the
-                // same reason: two figures the reader is invited to compare
-                // must not round into the same string.
-                $kbbRangeDp = \App\Support\Money::decimalsToDistinguish($kbbRange[0], $kbbRange[1]);
-
-                $kbbRangeHtml = \App\Services\VariantPricing::isSpread($kbbRange)
-                    ? __('store.product_card.price_range', [
-                        'low' => \App\Support\Money::format($kbbRange[0], $kbbRangeDp),
-                        'high' => \App\Support\Money::format($kbbRange[1], $kbbRangeDp),
-                    ])
-                    // Every option the same money is a single price, not a
-                    // range of one. Seo::aggregateOffer() declines to publish a
-                    // lowPrice equal to its highPrice for the same reason.
-                    : \App\Support\Money::format($kbbRange[0]);
-            }
-
-            /*
-             * CAN THIS TILE PUT IT IN THE BASKET ON ITS OWN?
-             *
-             * THIS TILE NEVER ASKED, AND THAT IS THE DEFECT. It drew an
-             * `Add to cart` on every product, including a VARIABLE one, which
-             * is bought by its variation and carries no price of its own:
-             * CartService::add() priced the parent
-             * `$variant?->effectivePrice() ?? $product->effectivePrice()`,
-             * a NULL `price` column casts to 0, and the basket took a line at
-             * AED 0 that the checkout would then collect.
-             * components/product-card.blade.php has had this test since it was
-             * written -- as `$canAdd` -- and this template simply did not.
-             *
-             * Product::isDirectlyBuyable() is that one expression, now read by
-             * both tiles AND by the refusal in CartService::add(), so the
-             * button a shopper sees and the door the request goes through
-             * cannot give different answers.
-             */
-            $kbbCanAdd = $p->isDirectlyBuyable();
-
-            /*
-             * AND THE BUTTON IS BRANCHED INSIDE ITS ONE LINE, never across
-             * several. A Blade directive on a line of its own contributes its
-             * indentation and its newline to the rendered page, and
-             * StorefrontEnglishUnchangedTest compares BYTES -- that is how the
-             * same mistake moved /shop, a category archive and the related rail
-             * last round without changing one visible character. A product that
-             * CAN be added renders exactly the bytes it rendered before.
-             *
-             * WHAT THE OTHER ANSWER IS. The whole tile is already wrapped in
-             * `<a class="kbb-card" href="{product url}">`, so a span carrying no
-             * data-kbb-add simply follows that link to the page where the
-             * option is chosen. No new markup, no new CSS -- resources/css/kbb
-             * belongs to another lane -- and no new string: `View product` is
-             * the word components/product-card.blade.php already uses for this
-             * exact case.
-             *
-             * data-kbb-add AND data-price GO WITH IT, deliberately. data-price
-             * was the AED 0; data-kbb-add is what cart.js binds and what
-             * MarketingPixels' capture listener counts an add-to-cart on, and
-             * no add happens here any more.
-             */
-        @endphp
-        <a class="kbb-card" href="{{ $p->url() }}">
-            <div class="kbb-card-thumb">
-                @if ($p->image)
-                    @php $pgSrcset = \App\Support\ImageVariants::srcsetFor($p->image); @endphp
-                    <img src="{{ $p->image }}" alt="{{ $name }}" loading="lazy" width="400" height="500"
-                         @if ($pgSrcset !== '') srcset="{{ $pgSrcset }}" sizes="{{ \App\Support\ImageVariants::skinGridSizesAttribute() }}" @endif>
-                @else
-                    {{-- Same gradient fallback the rest of the site uses, so a
-                         product without a photo still fills the frame. --}}
-                    <span class="kbb-card-ph" style="background:{{ \App\Support\Gradient::for($seed) }}">{{ \App\Support\Gradient::initials($brand ?: $name) }}</span>
-                @endif
-                @if ($isNew)<span class="kbb-badge kbb-badge-new">{{ __('store.product_card.badge_new') }}</span>@endif
-                @if ($off)<span class="kbb-badge kbb-badge-sale">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
-            </div>
-            <div class="cb">
-                @if ($cat)<div class="kbb-card-cat">{{ $cat }}</div>@endif
-                <div class="cn">@if ($brand)<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span> @endif{{ $name }}</div>
-                @if ($p->review_count)
-                    <div class="kbb-card-rate"><span class="kbb-crate">@for ($i = 1; $i <= 5; $i++)<span class="kbb-cstar{{ $i <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $p->review_count }})</span></div>
-                @endif
-                <div class="cp">@if ($kbbRangeHtml !== null)<span class="kbb-card-price">{!! $kbbRangeHtml !!}</span>@elseif ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format($kbbWas, $kbbDp) !!}</span> <span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span>@else<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span>@endif</div>
-                <span class="kbb-card-cart"@if ($kbbCanAdd) data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}"@endif>@if ($kbbCanAdd){{ __('store.product_card.add_to_cart') }}@else{{ __('store.product_card.view_product') }}@endif</span>
-            </div>
-        </a>
+             `catLabel` is resolved HERE and passed in, and that is the whole
+             reason the eyebrow is a prop rather than something the card reads.
+             This component's callers eager-load `categories` (see the contract
+             above); /shop's do not, and making the card read the relation would
+             have put one more query on /shop, on every category archive, on the
+             product page and on /routines. --}}
+        <x-product-card :product="$p" :cat-label="$p->categories->first()?->t('name')" />
     @endforeach
 </div>

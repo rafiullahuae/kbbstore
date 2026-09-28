@@ -426,7 +426,7 @@ it('leaves a simple product page headline exactly as it was', function () {
 /** The `.pc` card for one slug, as markup. */
 function vbnCard(string $html, string $slug): string
 {
-    foreach (preg_split('#<div class="pc">#', $html) as $card) {
+    foreach (preg_split('#<div class="kbb-card kbb-tile">#', $html) as $card) {
         if (str_contains($card, '/product/' . $slug . '/')) {
             return $card;
         }
@@ -435,10 +435,20 @@ function vbnCard(string $html, string $slug): string
     return '';
 }
 
-/** The `.kbb-card` tile for one slug, as markup. */
+/**
+ * The skinned tile for one slug, as markup.
+ *
+ * ▲ THE TWO HELPERS ABOVE AND BELOW ARE THE SAME HELPER NOW.        Lane PG
+ * There were two cards on this shop — `<div class="pc">` on /shop and
+ * `<a class="kbb-card">` in the skinned grid — and this file split on each. The
+ * card is one template now and renders `<div class="kbb-card kbb-tile">`
+ * everywhere, so both split on the same needle. They are kept as two names
+ * because the CASES are still two: one is about /shop and one about a brand
+ * page, and a reader of either should not have to know they now agree.
+ */
 function vbnSkinTile(string $html, string $slug): string
 {
-    foreach (preg_split('#<a class="kbb-card"#', $html) as $tile) {
+    foreach (preg_split('#<div class="kbb-card kbb-tile">#', $html) as $tile) {
         if (str_contains($tile, '/product/' . $slug . '/')) {
             return $tile;
         }

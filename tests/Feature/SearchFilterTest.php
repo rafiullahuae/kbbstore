@@ -75,7 +75,7 @@ function namesOn(string $url): array
 {
     $html = test()->get($url)->assertOk()->getContent();
 
-    preg_match_all('/<a class="cname" href="[^"]*">([^<]*)<\/a>/', $html, $m);
+    preg_match_all('/<span class="kbb-card-nm">([^<]*)<\/span>/', $html, $m);
 
     return array_map('html_entity_decode', $m[1]);
 }

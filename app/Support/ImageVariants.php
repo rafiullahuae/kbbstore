@@ -197,28 +197,6 @@ final class ImageVariants
     }
 
     /**
-     * What the tile tells the browser about how wide the photograph will be
-     * drawn, so it can choose between the candidates before layout exists.
-     *
-     * Measured, not guessed. The frame is .pc .ph, a fixed 180px-tall box whose
-     * width is the grid column's:
-     *
-     *   viewport   360  390  430  600  680  768  820 | 821  900 1000 1024 1080 1200 1280+
-     *   frame px   172  187  207  292  332  373  399 | 260  286  227  235  253  215  225
-     *
-     * Two columns at or below 820, three or four above it, and the width above
-     * 820 is not monotonic because the filter sidebar appears and disappears —
-     * which is precisely why a single flat figure is wrong below that
-     * breakpoint and right above it. 300px is above every measured frame from
-     * 821 upwards, so the declaration never understates the box; 50vw is the
-     * two-column rule the CSS actually applies below it.
-     */
-    public static function sizesAttribute(): string
-    {
-        return '(max-width: 820px) 50vw, 300px';
-    }
-
-    /**
      * The srcset for a photograph shown BIG — the product page's main frame —
      * or '' when there is nothing safe to offer.
      *
@@ -317,7 +295,7 @@ final class ImageVariants
      * photograph will be drawn.
      *
      * Measured off the stylesheet rather than guessed, the same way
-     * sizesAttribute() is. `.wrap` is max-width:1180px with 20px of padding a
+     * tileSizesAttribute() is. `.wrap` is max-width:1180px with 20px of padding a
      * side, and `.pdp` is `grid-template-columns:1.05fr 1fr` with a 42px gap
      * until it collapses to one column at 880px (kbb-product.css:55-56).
      *
@@ -374,35 +352,43 @@ final class ImageVariants
     }
 
     /**
-     * The SKIN GRID (`.kbb-pgrid .kbb-card-thumb img`) — the tile markup used by
-     * components/product-grid.blade.php and partials/home/grid.blade.php.
+     * THE PRODUCT TILE. One shape, because there is one card.          Lane PG
      *
-     * A SECOND tile shape, and not the one sizesAttribute() describes. That one
-     * was measured against `.pc` cards and declares 300px above 820px of
-     * viewport; this grid is wider at every band and bottoms out two columns
-     * later, so borrowing that declaration would UNDERSTATE the frame across
-     * 820-900px — the direction that makes a browser choose a file too small
-     * and leaves the photograph visibly soft. Measured instead
-     * (kbb-grid-skins-BYV5y8gk.css, `.wrap` 1200 max with 20px padding a side):
+     * There were two of these — `sizesAttribute()` for `.pc` on /shop and this
+     * one for `.kbb-pgrid` — because the shop drew two different cards at two
+     * different widths. components/product-card.blade.php is the only tile now
+     * and every grid derives its column count from the same rule in kbb.css, so
+     * there is one frame to describe and the second method is gone.
      *
-     *   >= 1200    4 cols, 14px gap  (1160 - 3x14) / 4     = 279px
-     *   1181-1199  4 cols            (100vw - 40 - 42) / 4 = 25vw - 20px
-     *   901-1180   3 cols            (100vw - 40 - 28) / 3 = 33.3vw - 23px
-     *   <= 900     2 cols, 10px gap  (100vw - 40 - 10) / 2 = 50vw - 25px
+     * MEASURED AGAINST THE ARITHMETIC THAT DECIDES THE COUNT, not against a
+     * breakpoint. The tile minimum is 220px and the gap 16px (18 on /shop), the
+     * page container is `min(100vw, 1680px)` less a 22px gutter a side, and the
+     * count is the largest N with `row >= N * (tile + gap) - gap`:
      *
-     * Declared a shade above each, the same direction the others round.
+     *   screen     cols   row        tile                        declared
+     *   <= 735px    2     100vw-44   (100vw - 60) / 2  ~= 46vw      50vw
+     *   736-971     3     100vw-44   (100vw - 76) / 3  ~= 31vw      35vw
+     *   972-1207    4     100vw-44   (100vw - 92) / 4  ~= 25vw      26vw
+     *   1208-1443   5     100vw-44   (100vw - 108) / 5 ~= 19vw
+     *   >= 1444     6     capped     220px .. 255px               260px
      *
-     * The column counts are themselves overridable per skin through
-     * `--kbb-cols`, `--kbb-cols-t` and `--kbb-cols-m`, so a shop configured to
-     * fewer columns draws WIDER tiles than this says. That is the understating
-     * direction, and it is why the top band is declared 290px against a 279px
-     * measurement rather than trimmed to fit: a `sizes` value is a hint a
-     * browser resolves against candidates that stop at 800w, and the cost of
-     * the whole error is at most one step up the candidate list.
+     * The last two bands are one declaration: above 1208 the tile is between
+     * 220 and 255 CSS pixels at every width, including 2560 where the container
+     * has stopped growing, so a single 260px figure is above all of them.
+     *
+     * DECLARED A SHADE ABOVE EVERY MEASUREMENT, which is the direction that
+     * cannot hurt: overstating makes a browser choose the LARGER candidate, and
+     * understating makes it choose one too small and leaves the photograph
+     * visibly soft. The candidates stop at 800w (see srcsetFor), so the whole
+     * cost of the error is at most one step up a two-item list.
+     *
+     * A per-caller `:columns` pin, or Appearance -> Site layout -> Or pin an
+     * exact count, can draw WIDER tiles than this says. That is the overstating
+     * direction again.
      */
-    public static function skinGridSizesAttribute(): string
+    public static function tileSizesAttribute(): string
     {
-        return '(max-width: 900px) 50vw, (max-width: 1180px) 34vw, 290px';
+        return '(max-width: 735px) 50vw, (max-width: 971px) 35vw, (max-width: 1207px) 26vw, 260px';
     }
 
     /**
