@@ -54,6 +54,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\SiteSearchApiController;
 use App\Models\AdminUser;
 use App\Services\AccountPanel;
+use App\Services\Banners;
 use App\Services\BuildMyRoutine;
 use App\Services\CartPage;
 use App\Services\CartPanel;
@@ -588,6 +589,24 @@ function ehSchemaModules(): array
          * every axis per field inside schema().
          */
         'mail' => ['schema' => MailSettings::schema(), 'tabs' => MailSettings::TABS],
+
+        /*
+         * ── LANE BP: the cards banner, enrolled one round after it shipped ──
+         *
+         * Lane BN's report said this module "passes as written" and left the
+         * line to the integrator. A module that passes as written is a module
+         * nobody has run the guard over, and the round before found
+         * `review_capsule_style` drawn twice over one settings row by doing
+         * exactly this.
+         *
+         * `overrides` is mandatory here and not decoration: `set` is a select
+         * whose option set is the banner sets that exist, and
+         * ModuleSchema::normalise() REFUSES a select with no options — so
+         * enrolling this module without Banners::overrides() does not weaken
+         * the guard, it makes it throw. It costs one query inside the test and
+         * the storefront never calls it (Banners' own header says why).
+         */
+        'cards_banner' => ['schema' => Banners::SCHEMA, 'tabs' => Banners::TABS, 'policy' => Banners::POLICY, 'overrides' => Banners::overrides()],
     ];
 }
 

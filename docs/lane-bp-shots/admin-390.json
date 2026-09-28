@@ -1,0 +1,93 @@
+{
+  "step": "editor-clean",
+  "width": 390,
+  "viewport": 390,
+  "scrollWidth": 390,
+  "sections": [
+    "Motion",
+    "Cards & shape",
+    "Behind the row",
+    "The button",
+    "The words on a card",
+    "How a shopper moves the row",
+    "This set",
+    "Cards",
+    "How it looks"
+  ],
+  "labels": [
+    "Which set shows",
+    "Speed",
+    "Animation",
+    "Card shape",
+    "Shadow",
+    "Cards across on desktop",
+    "How much of the next card shows",
+    "Space between cards",
+    "Corner radius",
+    "Background",
+    "Background colour",
+    "Background picture",
+    "Button colour",
+    "Button text",
+    "Button when the mouse is over it",
+    "Where the words sit",
+    "Name",
+    "Published",
+    "Order in the list above"
+  ],
+  "switches": [
+    "Scroll by itself",
+    "Pause when the mouse is over it",
+    "Use the shop’s own colour",
+    "Use the shop’s own colour",
+    "Use the shop’s own colour",
+    "Use the shop’s own colour",
+    "Show the heading and the line under it",
+    "Show the button",
+    "Show dots under the row",
+    "Show arrows"
+  ],
+  "speedHelp": "Medium — 4.0s per card, so 24s for one full loop of 6 cards. (4000 ms per card)",
+  "saveButton": "Saved",
+  "saveDisabled": true,
+  "marker": "",
+  "cards": 6,
+  "frame": true
+}
+{
+  "step": "editor-dirty",
+  "width": 390,
+  "viewport": 390,
+  "scrollWidth": 390,
+  "marker": "5 unsaved changes. Nothing has reached the shop yet. The picture below shows them; press Save to keep them.",
+  "saveButton": "Save 5 changes",
+  "saveDisabled": false,
+  "footDirty": true,
+  "speedHelp": "Fast — 2.6s per card, so 16s for one full loop of 6 cards. (2600 ms per card)",
+  "framed": {
+    "cards": 12,
+    "rootClass": "kbbn is-auto is-hoverpause is-arrows has-bg is-over has-btnhover",
+    "headings": [
+      "Typed, not saved",
+      "Barrier repair"
+    ],
+    "buttonBackground": "rgb(124, 58, 237)",
+    "cardRadius": "2px"
+  }
+}
+{
+  "step": "leave-guard",
+  "width": 390,
+  "asked": [
+    "You have 5 unsaved change(s) to this set.\n\nLeave this screen and lose them?\n\nPress Cancel to go back and press Save first."
+  ],
+  "stillOnBanners": true
+}
+{
+  "step": "saved",
+  "width": 390,
+  "marker": "",
+  "saveButton": "Saved",
+  "saveDisabled": true,
+  "state": "Saved."
+}

@@ -32,6 +32,8 @@ class BannerSet extends Model
         'autoplay', 'speed_ms', 'animation', 'per_view', 'peek', 'gap',
         'card_radius', 'show_arrows', 'show_dots', 'pause_on_hover',
         'ratio', 'show_text', 'show_button', 'shadow',
+        // Lane BP, round 7. Every one ships at what the page already draws.
+        'bg_mode', 'bg_color', 'bg_image', 'btn_bg', 'btn_text', 'btn_hover', 'title_pos',
     ];
 
     protected $casts = [
@@ -96,6 +98,34 @@ class BannerSet extends Model
 
     public const STATUSES = ['publish' => 'Published', 'draft' => 'Draft'];
 
+    /**
+     * What sits behind the whole row, `token => label`.
+     *
+     * `none` FIRST and it is the default, because it is what every set drew
+     * before this control existed — rule 1, on the most visible page in the
+     * shop. The other two read a column each, and a mode whose column is empty
+     * falls back to `none` rather than painting a black band.
+     */
+    public const BG_MODES = [
+        'none' => 'None — the page’s own background shows through',
+        'color' => 'A colour',
+        'image' => 'A picture',
+    ];
+
+    /**
+     * Where the heading and its line sit, `token => label`.
+     *
+     * `below` is the band under the picture, which is what shipped. `over`
+     * lays the same band on the bottom of the picture with a scrim behind it —
+     * the card is the same height either way, because the height comes from
+     * `aspect-ratio` and from nothing else, which is the rule the whole section
+     * is built on.
+     */
+    public const TITLE_POSITIONS = [
+        'below' => 'Below the picture — a band under it',
+        'over' => 'On the picture — over the bottom of it',
+    ];
+
     /** The bounds every numeric control is clamped to, `column => [min, max]`. */
     public const LIMITS = [
         'speed_ms' => [600, 20000],
@@ -146,5 +176,39 @@ class BannerSet extends Model
     public function animates(): bool
     {
         return $this->autoplay && $this->animationCss() !== '';
+    }
+
+    /**
+     * The background mode this set will really draw, or 'none'.
+     *
+     * THE FOURTH DOOR, and the same one `ratioCss()` opens for the ratio: a row
+     * whose `bg_mode` was edited straight in the database to something that is
+     * not one of its own options gets `none`. A mode whose own column is empty
+     * also gets `none`, because "colour: (nothing)" is not a colour and painting
+     * the fallback would be the section deciding something the owner did not.
+     */
+    public function bgMode(): string
+    {
+        $mode = (string) $this->bg_mode;
+
+        if (! isset(self::BG_MODES[$mode])) {
+            return 'none';
+        }
+
+        if ($mode === 'color' && ! \App\Support\Color::isValidHex((string) $this->bg_color)) {
+            return 'none';
+        }
+
+        if ($mode === 'image' && trim((string) $this->bg_image) === '') {
+            return 'none';
+        }
+
+        return $mode;
+    }
+
+    /** `below` or `over`, and anything else is `below`. */
+    public function titlePosition(): string
+    {
+        return isset(self::TITLE_POSITIONS[(string) $this->title_pos]) ? (string) $this->title_pos : 'below';
     }
 }

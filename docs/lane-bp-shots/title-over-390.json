@@ -1,0 +1,109 @@
+{
+  "label": "title-over",
+  "width": 390,
+  "reduced": true,
+  "viewport": 390,
+  "scrollWidth": 390,
+  "horizontalScroll": false,
+  "rootClass": "kbbn is-auto is-hoverpause is-over",
+  "cards": 12,
+  "per": "1",
+  "peek": ".5",
+  "gap": "16px",
+  "duration": "24.00s",
+  "firstCard": {
+    "w": 233.33,
+    "h": 311.09
+  },
+  "distinctCardSizes": [
+    "233.3x311.1",
+    "0.0x0.0"
+  ],
+  "band": {
+    "box": {
+      "w": 233.33,
+      "h": 72
+    },
+    "position": "absolute",
+    "backgroundImage": "linear-gradient(to top, rgba(18, 12, 16, 0.8) 0%, rgba(18, 1"
+  },
+  "background": {
+    "color": "rgba(0, 0, 0, 0)",
+    "image": "none",
+    "box": {
+      "w": 366,
+      "h": 331.09
+    },
+    "wrap": {
+      "w": 390,
+      "h": 363.09
+    }
+  },
+  "button": {
+    "background": "rgb(224, 86, 123)",
+    "color": "rgb(255, 255, 255)",
+    "box": {
+      "w": 58.61,
+      "h": 30
+    }
+  },
+  "dots": 6,
+  "scrollButtonsSupported": true,
+  "hasSelector": true,
+  "trackAnimation": {
+    "name": "none",
+    "transform": "none",
+    "overflowX": "auto"
+  },
+  "duplicatesInLayout": 0,
+  "scripts": 5,
+  "dotState": {
+    "before": {
+      "history": 2,
+      "hash": "",
+      "widths": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ]
+    },
+    "afterOne": {
+      "history": 3,
+      "hash": "#kbbn-3-2",
+      "widths": [
+        8,
+        8,
+        20,
+        8,
+        8,
+        8
+      ]
+    },
+    "afterFour": {
+      "history": 5,
+      "hash": "#kbbn-3-1",
+      "widths": [
+        8,
+        20,
+        8,
+        8,
+        8,
+        8
+      ]
+    },
+    "entriesPerDot": 0.75,
+    "activeWidths": [
+      8,
+      8,
+      20,
+      8,
+      8,
+      8
+    ],
+    "activeColour": "rgb(224, 86, 123)",
+    "inactiveColour": "rgba(42, 34, 40, 0.1)"
+  }
+}

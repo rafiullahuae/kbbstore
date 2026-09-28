@@ -22,6 +22,8 @@ declare(strict_types=1);
 |     POST   /admin-api/banners/sets/{set}/duplicate   copy it, as a draft
 |     DELETE /admin-api/banners/sets/{set}             delete it and its cards
 |     GET    /admin-api/banners/sets/{set}/preview     the row as the shop draws it
+|     POST   /admin-api/banners/sets/{set}/preview     the row from the UNSAVED buffer
+|     PUT    /admin-api/banners/sets/{set}/all         the Save button: set + cards, one write
 |     POST   /admin-api/banners/sets/{set}/cards       add a card
 |     PUT    /admin-api/banners/cards/{card}           edit a card
 |     DELETE /admin-api/banners/cards/{card}           delete a card
@@ -118,6 +120,32 @@ Route::get('/banners/sets/{set}/preview', [BannerApiController::class, 'preview'
     ->middleware('throttle:60,1')
     ->whereNumber('set')
     ->name('admin.banners.preview');
+
+/*
+ * The SAME path as a POST: the row drawn from the editor's unsaved buffer.
+ * Lane BP, and it is what the Save button costs — see the controller's header.
+ *
+ * A POST rather than a GET with a body, so it is `admin-api/banners/**` under
+ * the WRITE half of AdminCapabilities' first-match-wins list and therefore
+ * `banners.manage`. That is the stricter of the two and it is the right one:
+ * the payload is a draft of what the set is about to become, and a reader who
+ * may not write the set has no business composing one.
+ */
+Route::post('/banners/sets/{set}/preview', [BannerApiController::class, 'previewDraft'])
+    ->middleware('throttle:120,1')
+    ->whereNumber('set')
+    ->name('admin.banners.preview.draft');
+
+/*
+ * THE SAVE BUTTON. One request, one transaction, the set and every card in it.
+ * The per-field PUTs above are still there and still used by nothing on the
+ * screen — they are the narrow door a script or a later screen can use to move
+ * one value without sending the whole editor.
+ */
+Route::put('/banners/sets/{set}/all', [BannerApiController::class, 'saveAll'])
+    ->middleware('throttle:60,1')
+    ->whereNumber('set')
+    ->name('admin.banners.sets.save-all');
 
 Route::get('/banners/sets/{set}', [BannerApiController::class, 'showSet'])
     ->middleware('throttle:60,1')

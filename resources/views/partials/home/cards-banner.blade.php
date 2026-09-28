@@ -93,6 +93,25 @@
     $bnDots = (bool) $set->show_dots;
     $bnArrows = (bool) $set->show_arrows;
     $bnUid = 'kbbn-'.(int) $set->id;
+
+    /*
+     * ── LANE BP: three appearance switches, each OFF at the shipped value ──
+     *
+     * `bgMode()` and `titlePosition()` are the model's, not this template's, and
+     * both answer the SHIPPED behaviour for anything they do not recognise — a
+     * mode edited into the table by hand, a colour that is not a colour, a
+     * picture column that is empty. So the worst a bad row can do is draw what
+     * the section drew before these columns existed.
+     *
+     * The hover colour gets a class of its own rather than a fallback, because
+     * the two hovers cannot both apply: today's is `filter:brightness(.94)`, a
+     * RELATIVE darkening, and leaving it on under a flat custom colour would
+     * darken the operator's choice on top of itself.
+     */
+    $bnBgMode = $set->bgMode();
+    $bnBgVars = Banners::sectionVariables($set);
+    $bnOver = $set->titlePosition() === 'over';
+    $bnBtnHover = Banners::hex($set->btn_hover) !== '';
 @endphp
 <style>
 /* Prefix kbbn-, used nowhere else in this application. */
@@ -177,11 +196,98 @@
 
 /* "right side small beautiful button". flex:0 0 auto so it never shrinks into
    an ellipsis, and the text beside it gives way instead. */
+/* ── THE SECTION'S OWN BACKGROUND ───────────────────────────────────────────
+   Lane BP. "background color pick, no background or image background of the
+   section". THE CLASS IS ONLY ON THE ELEMENT WHEN THE SET ASKS FOR ONE, so a
+   set that ships at `none` has no padding, no negative margin and no paint —
+   the same element it was before this rule existed.
+
+   The bleed is the shop's own rail idiom and THE SAME PAIR the scroller below
+   already uses, deliberately: `margin-inline:-gutter` widens the box so the
+   colour reaches the page's edge instead of stopping short of it, and
+   `padding-inline:gutter` puts the contents back where they were. The two are
+   equal and opposite, so the CONTENT is where it was and only the paint moved.
+
+   ▲ AND `--site-gutter` IS NOT `.wrap`'s ACTUAL PADDING, which is worth knowing
+   before anybody "tidies" this. Measured in Chromium on this shop:
+   `--site-gutter` is `clamp(22px,2.2vw,22px)` = 22px at every width, while
+   `.wrap`'s computed padding-inline is 12px at 390, 18px at 768 and 25.6px at
+   1280 — so the bled box overhangs the viewport by 10px a side at 390 and stops
+   9px short of the wrap's border box at 1280. That is the SCROLLER'S EXISTING
+   behaviour, not something this rule introduced; the background simply shares
+   it, so the band and the cards start and end together. The page's own scroll
+   width still equals its client width at all three widths in all four
+   background modes — measured, in docs/lane-bp-shots. A background that used
+   the wrap's real padding instead would end a gutter inside the cards, which
+   is worse than either.
+
+   Longhands, not the `background` shorthand: the shorthand resets
+   `background-image`, so `background:var(--kbbn-bg)` on a set whose mode is a
+   picture would silently erase the picture. */
+.kbbn.has-bg{background-color:var(--kbbn-bg,transparent);
+  background-image:var(--kbbn-bgimg,none);background-size:cover;
+  background-position:center;background-repeat:no-repeat;
+  margin-inline:calc(var(--kbbn-gut) * -1);
+  padding-inline:var(--kbbn-gut);padding-block:18px}
+
+/* ── THE TITLE ON THE PICTURE ───────────────────────────────────────────────
+   "give option to make title on the banner or below the banner nicely."
+
+   THE CARD IS THE SAME HEIGHT IN BOTH PLACEMENTS, which is the one rule this
+   whole section is built on: the height comes from `aspect-ratio` and from
+   nothing else. Taking the band out of flow does not change it — it only stops
+   the band from taking a slice of the picture.
+
+   ▲ THE SCRIM IS NOT DECORATION. Text laid over an arbitrary photograph is
+   unreadable on a light one and merely low-contrast on a dark one, so the band
+   carries its own gradient — opaque enough at the baseline to hold white text
+   over a pale photograph, fading to nothing before the middle of the card so it
+   never reads as a grey box — and the two lines carry a shadow underneath for
+   the pathological case of white-on-white. That is why this variant needs no
+   "is your picture dark enough" control: it works over both, and the
+   screenshots show it over both. */
+.kbbn.is-over .kbbn-c{position:relative}
+.kbbn.is-over .kbbn-bd{position:absolute;inset-inline:0;bottom:0;
+  height:calc(var(--kbbn-band,58px) + 20px);flex-basis:auto;
+  align-items:flex-end;padding-bottom:11px;background:none;
+  background-image:linear-gradient(to top,rgba(18,12,16,.80) 0%,rgba(18,12,16,.46) 52%,rgba(18,12,16,0) 100%)}
+.kbbn.is-over .kbbn-h{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.kbbn.is-over .kbbn-b{color:rgba(255,255,255,.93);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+
+/* ▲ THE TWO COLOURS ARE `var(--x, <what it drew before>)` AND THAT IS RULE 1.
+   Banners::cssVariables() OMITS the custom property when the set has no colour
+   stored — it does not write an empty one — so the fallback here is what a set
+   built before these controls existed still draws, to the byte. */
+/* ▲ `.kbbn .kbbn-btn` AND NOT `.kbbn-btn`, FOR THE COLOUR — a fix, and a
+   VISIBLE ONE, called out here and in the commit rather than buried.
+
+   kbb.css:852 is `.kbb-home a{text-decoration:none;color:inherit}`. That is
+   (0,1,1); `.kbbn-btn` is (0,1,0), and this button is an <a> inside
+   `.kbb-home`. So the `color:#fff` this rule has declared since the section
+   shipped NEVER APPLIED ON THE SHOP: every card button drew its label in
+   `--ink`, dark on pink, while the admin preview — an iframe with none of
+   kbb.css in it, so no `.kbb-home` to match — drew it white and said
+   underneath that it was showing what the homepage draws.
+
+   It had to be fixed rather than frozen, because the OWNER'S NEW BUTTON-TEXT
+   COLOUR WOULD HAVE LOST THE SAME CASCADE: `--kbbn-btn-tx` is read by this
+   declaration, so a control that could not win here would have been a control
+   that did nothing, which is the defect ModuleFrameworkGuardTest exists for
+   wearing different clothes.
+
+   `#fff` is the shop's own answer for a pink pill — kbb.css:446,
+   `.btn-primary{background:var(--pink);color:#fff}` — so this is the colour
+   the section was always written to draw, now drawn. */
 .kbbn-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
   height:30px;padding:0 13px;border-radius:999px;font-size:11.5px;font-weight:650;
   text-decoration:none;white-space:nowrap;
-  background:var(--pink,#E8919F);color:#fff;transition:.2s}
+  background:var(--kbbn-btn-bg,var(--pink,#E8919F));transition:.2s}
+.kbbn .kbbn-btn{color:var(--kbbn-btn-tx,#fff)}
 .kbbn-btn:hover{filter:brightness(.94)}
+/* A stored hover colour REPLACES the brightness filter rather than joining it:
+   `filter` is relative, so a flat colour under it would be darkened as well and
+   the owner would never get the colour he picked. */
+.kbbn.has-btnhover .kbbn-btn:hover{filter:none;background:var(--kbbn-btn-hv)}
 .kbbn-btn:focus-visible{outline:2px solid var(--ink,#2A2228);outline-offset:2px}
 
 /* ── THE NAVIGATION, AND IT IS ALSO SCRIPTLESS ──────────────────────────────
@@ -202,6 +308,35 @@
   transition:.2s}
 .kbbn-dot:hover,.kbbn-dot:focus-visible{background:var(--pink,#E8919F);outline:none}
 
+/* ── AND THE DOT THAT SAYS WHICH CARD YOU ARE ON — Lane BP ──────────────────
+   Lane BN's report, §7: ":target can style the card but not its dot without
+   :has() gymnastics. They navigate; they do not indicate." The gymnastics are
+   the answer, and they are two selectors long.
+
+   A dot's href is its card's id, so following it makes that card `:target`.
+   `:has()` is the only way to look from the row back down at which card that
+   is, and `:nth-child()` names the dot that points at it — so ONE rule per
+   card, emitted by the loop below, and still not a line of JavaScript.
+
+   WHAT IT MARKS, EXACTLY, AND WHAT IT DOES NOT: the card the shopper NAVIGATED
+   to. `:target` is a function of the URL fragment, which changes when a dot is
+   followed and not when the row is swiped by hand — so after a manual swipe the
+   mark stays on the last dot pressed. Following the scroll itself needs
+   `::scroll-marker` and `:target-current`, which is the same Chrome-only
+   surface as the arrows below and would make the dots stop working in Safari
+   and Firefox to gain that. The dots' job is navigation; this says where the
+   navigation went, in every browser that has `:has()`.
+
+   ▲ AND IT DEGRADES TO EXACTLY TODAY'S DOTS. An unsupported selector makes the
+   whole rule invalid and the browser drops it, so a browser without `:has()`
+   draws the dots it drew before — no @supports, no second code path, nothing to
+   keep in step. kbb.css:3521 makes the same bet for the toast. */
+@if ($bnDots && count($cards) > 1)
+@foreach ($cards as $bnI => $bnCard)
+.kbbn:has(#{{ $bnUid }}-{{ $bnI }}:target) .kbbn-dot:nth-child({{ $bnI + 1 }}){width:20px;border-radius:999px;background:var(--kbbn-btn-bg,var(--pink,#E8919F))}
+@endforeach
+@endif
+
 /* ── ARROWS: THE BROWSER'S OWN SCROLL BUTTONS, OR NONE AT ALL ───────────────
    ::scroll-button() is the only way to move a scroll container from CSS. Where
    the browser has it the arrows are real; where it does not, @supports fails
@@ -217,13 +352,23 @@
    ships on is a default nobody chose, and the first picture of this section
    caught it. */
 @supports selector(::scroll-button(inline-start)){
-  .kbbn.is-arrows .kbbn-vp::scroll-button(inline-start),
-  .kbbn.is-arrows .kbbn-vp::scroll-button(inline-end){
+  /* ▲ `:not(.is-auto)` — Lane BP, and it is a FIX, not a tidy-up.
+     The screen's own help text has said since it shipped that "dots and arrows
+     only appear while the row is not scrolling by itself". Half of that was
+     true: `.kbbn.is-auto .kbbn-nav{display:none}` hides the dots. Nothing hid
+     the arrows. `overflow-x:hidden` does not stop an element being a scroll
+     container — it only stops the SHOPPER scrolling it — so Chrome drew both
+     scroll buttons over a marquee and pressing one scrolled a box whose
+     contents are being translated by an animation at the same time, which
+     leaves the row somewhere neither the animation nor the scroll offset
+     agrees about. CardsBannerNavigationTest pins it. */
+  .kbbn.is-arrows:not(.is-auto) .kbbn-vp::scroll-button(inline-start),
+  .kbbn.is-arrows:not(.is-auto) .kbbn-vp::scroll-button(inline-end){
     content:'‹' / '';width:34px;height:34px;border-radius:50%;border:0;
     background:#fff;color:var(--ink,#2A2228);font-size:19px;line-height:1;
     box-shadow:0 6px 18px -8px rgba(42,34,40,.5);cursor:pointer}
-  .kbbn.is-arrows .kbbn-vp::scroll-button(inline-end){content:'›' / ''}
-  .kbbn.is-arrows .kbbn-vp::scroll-button(*):disabled{opacity:.35;cursor:default}
+  .kbbn.is-arrows:not(.is-auto) .kbbn-vp::scroll-button(inline-end){content:'›' / ''}
+  .kbbn.is-arrows:not(.is-auto) .kbbn-vp::scroll-button(*):disabled{opacity:.35;cursor:default}
 }
 
 /* ── RESPONSIVE: THREE MEDIA QUERIES, TWO NUMBERS EACH ──────────────────────
@@ -253,12 +398,26 @@
   .kbbn-tr{animation:none;transform:none}
   .kbbn.is-auto .kbbn-vp{overflow-x:auto;scroll-snap-type:x mandatory}
   .kbbn.is-auto .kbbn-nav{display:flex}
+  /* The arrows come back with the dots and for the same reason: under this
+     query the row is a hand-scrolled rail, so a control that scrolls it has
+     something real to do again. Written as the pair of full selectors rather
+     than by relaxing the `:not(.is-auto)` above, because a media query cannot
+     un-say a `:not()`. */
+  @supports selector(::scroll-button(inline-start)){
+    .kbbn.is-arrows.is-auto .kbbn-vp::scroll-button(inline-start),
+    .kbbn.is-arrows.is-auto .kbbn-vp::scroll-button(inline-end){
+      content:'‹' / '';width:34px;height:34px;border-radius:50%;border:0;
+      background:#fff;color:var(--ink,#2A2228);font-size:19px;line-height:1;
+      box-shadow:0 6px 18px -8px rgba(42,34,40,.5);cursor:pointer}
+    .kbbn.is-arrows.is-auto .kbbn-vp::scroll-button(inline-end){content:'›' / ''}
+    .kbbn.is-arrows.is-auto .kbbn-vp::scroll-button(*):disabled{opacity:.35;cursor:default}
+  }
   .kbbn-dup{display:none}
   .kbbn-vp{scroll-behavior:auto}
   .kbbn-btn{transition:none}
 }
 </style>
-<div class="kbbn{{ $bnAnimates ? ' is-auto' : '' }}{{ $set->pause_on_hover ? ' is-hoverpause' : '' }}{{ $bnArrows ? ' is-arrows' : '' }}">
+<div class="kbbn{{ $bnAnimates ? ' is-auto' : '' }}{{ $set->pause_on_hover ? ' is-hoverpause' : '' }}{{ $bnArrows ? ' is-arrows' : '' }}{{ $bnBgMode === 'none' ? '' : ' has-bg' }}{{ $bnOver ? ' is-over' : '' }}{{ $bnBtnHover ? ' has-btnhover' : '' }}"@if ($bnBgVars !== '') style="{{ $bnBgVars }}"@endif>
   <div class="kbbn-vp" style="{{ Banners::cssVariables($set, $cards) }}">
     <div class="kbbn-tr" style="--kbbn-anim:{{ $bnAnim === '' ? 'none' : $bnAnim }}">
       @for ($bnCopy = 0; $bnCopy < ($bnAnimates ? 2 : 1); $bnCopy++)

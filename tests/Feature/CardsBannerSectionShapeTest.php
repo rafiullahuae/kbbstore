@@ -32,6 +32,30 @@ function bnsPartial(): string
     return (string) file_get_contents($path);
 }
 
+/**
+ * The partial with every comment removed — Lane BP.
+ *
+ * ── WHY A SCAN OF THE SOURCE HAS TO DO THIS ─────────────────────────────────
+ *
+ * CLAUDE.md's framework guard makes the same point about tokenising app/ for
+ * module readers: "a source-text search reads comments and quoted strings as
+ * code ... a row could be 'proved' live by prose about it." The same thing
+ * happened here, and it went the other way — the arrows check below scans for
+ * every `::scroll-button` selector and demands each one be under the set's own
+ * switch, and the file's own explanatory note says "`::scroll-button()` is the
+ * only way to move a scroll container from CSS". That sentence is not a rule
+ * and has no selector in front of it, so the check failed on a paragraph.
+ *
+ * Blade comments first, then CSS/PHP block comments, because a `{{-- --}}` can
+ * contain either.
+ */
+function bnsCss(): string
+{
+    $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '', bnsPartial());
+
+    return (string) preg_replace('#/\*.*?\*/#s', '', $src);
+}
+
 /** One set with $n published cards, rendered as the homepage draws it. */
 function bnsRender(array $setAttributes = [], int $n = 3, array $cardOverrides = []): string
 {
@@ -502,10 +526,37 @@ it('draws the dots only when the set asks, and the arrows never as a fake contro
      * chose. The first picture of this section at 1280 had two arrows in the
      * corner of it and that is how it was found.
      *
-     * MUTATION: drop `.kbbn.is-arrows ` from the four scroll-button selectors
-     * and this goes red on the first expectation. Run, red, put back.
+     * MUTATION: drop `.kbbn.is-arrows` from the scroll-button selectors and
+     * this goes red on the first expectation. Run, red, put back.
+     *
+     * ── ADVANCED BY LANE BP, AND THE PIN MOVED FOR A REASON ─────────────────
+     *
+     * Every one of these selectors now also carries `:not(.is-auto)` (outside
+     * the reduced-motion query) or `.is-auto` (inside it), because the arrows
+     * were being drawn over a marquee — see CardsBannerNavigationTest, which
+     * holds that defect and its own mutation note. What this assertion is for
+     * is unchanged and is checked the same way: EVERY scroll-button selector in
+     * the file is under the set's own `is-arrows` switch, none is bare.
      */
-    expect(substr_count($partial, '.kbbn.is-arrows .kbbn-vp::scroll-button'))->toBe(4)
-        ->and(bnsMarkup(['show_arrows' => false]))->not->toContain('is-arrows')
+    // The whole selector, not its last compound: a rule is a comma-separated
+    // list and what matters is what stands in front of `::scroll-button` all
+    // the way back to the start of that selector.
+    preg_match_all('/([^{},\n]*)::scroll-button/', bnsCss(), $bnsButtons);
+
+    expect($bnsButtons[1])->not->toBeEmpty();
+
+    foreach ($bnsButtons[1] as $bnsSelector) {
+        // The @supports test itself names the pseudo-element with no selector
+        // in front of it; that is the feature detection, not a rule.
+        if (str_contains($bnsSelector, '@supports')) {
+            continue;
+        }
+
+        expect(str_contains($bnsSelector, '.is-arrows'))->toBeTrue(
+            "a ::scroll-button rule is not under the set's own switch: {$bnsSelector}"
+        );
+    }
+
+    expect(bnsMarkup(['show_arrows' => false]))->not->toContain('is-arrows')
         ->and(bnsMarkup(['show_arrows' => true]))->toContain('is-arrows');
 });
