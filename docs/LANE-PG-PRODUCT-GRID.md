@@ -463,6 +463,22 @@ root can stay an `<a>` — the reason the real tile could not is the no-JS
 rest of the preview's own toggles are unaffected; they key on classes that did
 not move.
 
+**And one more line in the same file, which is cosmetic rather than wrong.**
+`admin/app.blade.php` inlines a copy of `admin-skin-preview.css`, and line 1762
+of it still reads
+
+```
+.skinprev .kbb-card-thumb{aspect-ratio:1/1.02;position:relative;overflow:hidden;display:block}
+```
+
+which should be `aspect-ratio:1/1;` to match the shop. Line 1730 —
+`.skinprev .kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1.02)}` —
+does **not** need changing: it is more specific, `ProductStyles::cssVariables()`
+sets `--kbb-ratio:1/1` on that page now, and the fallback therefore never
+applies inside a `.kbb-pgrid` preview. The tracked sheet
+`resources/css/kbb/admin-skin-preview.css` is already updated; only the inlined
+copy is behind.
+
 ### Nothing else to wire
 
 This lane added no route, no admin screen and no partial. `routes/web.php`,
