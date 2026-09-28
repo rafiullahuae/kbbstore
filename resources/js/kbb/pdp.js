@@ -12,6 +12,7 @@
 
 import { addToCart } from './cart.js';
 import { t } from './i18n.js';
+import { escapeHtml } from './safe.js';
 
 export function initPdp() {
     const form = document.querySelector('.kbb-cart-form');
@@ -67,7 +68,23 @@ export function initPdp() {
             /* Write into the .now span rather than replacing the whole block.
                Replacing it dropped the span, and with it the larger price
                styling — which is why the size jumped when a bundle was picked. */
-            const price = variant.dataset.pricehtml || variant.dataset.price || '';
+            /* THE DEFECT: `dataset.price` is Money::plain() -- TEXT, not
+               markup -- and it carries the `currency_symbol` SETTING, which
+               the admin stores as free text ('text' in AdminController's
+               field map). Blade prints it through `{{ }}`, and THAT ESCAPE IS
+               UNDONE BEFORE THIS LINE EVER SEES IT: the HTML parser decodes
+               the entities while it builds the attribute, so `dataset.price`
+               hands back the live characters and setPrice() writes them
+               straight into innerHTML. Measured in node: a symbol containing
+               `<img src=x onerror=...>` comes back out of the attribute byte
+               for byte. CLAUDE.md rule 5 -- anything printed unescaped is a
+               constant, never a setting.
+
+               `pricehtml` stays raw BY NAME: it is the branch that means "the
+               server composed this as markup", which is what Money::format()
+               returns. Nothing emits that attribute today, so escaping it
+               would be wrong for the day something does. */
+            const price = variant.dataset.pricehtml || escapeHtml(variant.dataset.price || '');
             setPrice(document.getElementById('bbPrice'), price);
             setPrice(document.getElementById('stickyPrice'), price);
             return;
@@ -159,6 +176,9 @@ export function initPdp() {
  * is touched; the struck-through original and the badge stay where they are.
  */
 function setPrice(el, html) {
+    /* `html` IS markup here and is meant to be -- the caller decides. The one
+       caller that passes a value out of a data attribute escapes it first; see
+       the comment above `const price` in initPdp(). */
     if (!el || !html) return;
 
     const now = el.querySelector('.now');
@@ -225,6 +245,13 @@ export function initGallery() {
                (partials/product-gallery.blade.php) rather than leaving this to
                guess at a URL, because whether a copy exists is a question only
                the filesystem can answer. */
+            /* SAFE. These are PROPERTY assignments, not an HTML context:
+               nothing is parsed, so no quote can close an attribute. The
+               addresses come from this page's own Blade
+               (partials/product-gallery.blade.php) rather than from a fetch,
+               and a `javascript:` URL in an <img> src is inert in every
+               browser -- src is fetched, never executed. Checked by the sweep
+               and left alone. */
             img.srcset = thumb.dataset.srcset || '';
             img.sizes = thumb.dataset.sizes || '';
             img.src = image;

@@ -265,6 +265,16 @@ export function initCheckout() {
                 });
             }
 
+            // SAFE. Every *Html value on this endpoint is a Blade view the
+            // server rendered, and `shipping` / `total` / `subtotal` /
+            // `totalWithFee` / `vat.formatted` are Money::format() output,
+            // which IS markup — `<span class="woocommerce-Price-amount">` with
+            // an already-escaped currency symbol inside it. Escaping any of
+            // them here would print the tags. The two values on this endpoint
+            // that are NOT markup — `vat.label` and `deliveryText`, both
+            // operator copy out of the settings table — go through textContent
+            // above, which is the rule this file already follows.
+            //
             // Two copies of the totals exist on this page — the summary
             // column and the mobile box — so every match is updated, not just
             // the first found.

@@ -7,6 +7,7 @@
  */
 
 import { t, esc } from './i18n.js';
+import { escapeHtml, safeHref, cssUrl } from './safe.js';
 
 /*
  * U+2192 IS NOT A MIRRORED CHARACTER. Measured in Chromium, each glyph centred
@@ -205,15 +206,10 @@ export function initSearch() {
     });
 }
 
-function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
 /* ═══════════════════════════════════════════════════════════════
    THIS PANEL BUILDS HTML OUT OF /api/search AND SETS innerHTML.
 
-   Every value below reaches the page through a template string, so an
+   Every value above reaches the page through a template string, so an
    address carrying a double quote closed the attribute it sat in and the
    next token was read as a new attribute -- an event handler, on a panel
    every shopper opens. That is SCRIPT injection and not the CSS-context
@@ -225,61 +221,13 @@ function escapeHtml(s) {
    thousands of them from a database this shop did not author, which is why
    it is fixed now rather than noted.
 
-   The two helpers below are the JavaScript twins of App\Support\CssUrl,
-   and they answer the same questions in the same order for the same
-   reasons; that file carries the full argument. Keep them in step.
+   escapeHtml / schemeIsServed / safeHref / cssUrl WERE DEFINED HERE and now
+   live in ./safe.js, unchanged. The sweep that followed this fix found the
+   same three contexts in three more files, and four copies of a security
+   helper is four things to keep in step with App\Support\CssUrl rather than
+   one. Only the definitions moved; every call site above is the same call it
+   was, and safe.js carries the argument the block here used to.
    ═══════════════════════════════════════════════════════════════ */
-
-/* Is the scheme one this shop serves, read the way a browser will?
-
-   Decode entities FIRST, then strip whitespace and control characters, and
-   only then match -- a browser resolves `jav&#x09;ascript:` to a javascript
-   URL, so a check run on the raw string sees something starting "jav&" and
-   waves it through. `//evil.test/x.png` is refused too: it is somebody
-   else's host wearing this page's scheme. */
-function schemeIsServed(url) {
-    const probe = String(url)
-        .replace(/&#x([0-9a-f]+);?/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
-        .replace(/&#(\d+);?/g, (_, d) => String.fromCharCode(parseInt(d, 10)))
-        .replace(/[\s\u0000-\u001F\u007F-\u009F]+/g, '')
-        .toLowerCase();
-
-    if (probe.startsWith('//')) return false;
-
-    const m = probe.match(/^([a-z][a-z0-9+.-]*):/);
-
-    // No scheme is a path, a query or a fragment: it cannot name one this
-    // shop does not serve.
-    return m ? (m[1] === 'http' || m[1] === 'https') : true;
-}
-
-/* A URL that is about to become an `href`. Refused ones become '#', never
-   '' -- an empty href is the current page, so a refused link would silently
-   reload the shop instead of doing nothing. */
-function safeHref(url) {
-    return (url && schemeIsServed(url)) ? escapeHtml(url) : '#';
-}
-
-/* A URL that is about to sit inside a CSS `url('…')` INSIDE an HTML
-   attribute, so it needs both escapes, CSS first.
-
-   One replace() pass for the five delimiters, not five passes: a second
-   pass would re-scan the backslashes the first one wrote and turn \' into
-   \\'  -- an escaped backslash and a LIVE quote, which is the bug rather
-   than the fix. Then the C0 controls as hex escapes, because a raw newline
-   ends a CSS string and hands what follows to the parser as a fresh
-   declaration. Refused addresses return '' so the caller draws its
-   gradient. */
-function cssUrl(url) {
-    if (!url || !schemeIsServed(url)) return '';
-
-    const escaped = String(url)
-        .replace(/[\\'"()]/g, (c) => '\\' + c)
-        .replace(/[\u0000-\u001F\u007F]/g,
-            (c) => '\\' + c.charCodeAt(0).toString(16) + ' ');
-
-    return escapeHtml(escaped);
-}
 
 
 /* ═══════════════════════════════════════════════════════════════

@@ -80,6 +80,25 @@ function searchPanelCode(): string
     return (string) preg_replace('~(^|\s)//[^\n]*~m', '$1', $src);
 }
 
+/**
+ * The escapers themselves, which now live in `resources/js/kbb/safe.js`.
+ *
+ * THEY MOVED, THEY DID NOT CHANGE. The sweep that grew out of this fix (Lane
+ * JS, tests/Feature/StorefrontJsEscapingTest.php) found the same three contexts
+ * in three more files, and four copies of a security helper is four things to
+ * keep in step with App\Support\CssUrl rather than one. The definitions were
+ * lifted verbatim; every call site in search.js is the call it was, which is
+ * what the first case below still checks against search.js itself.
+ *
+ * Comments stripped for the same reason searchPanelCode() strips them.
+ */
+function searchEscaperCode(): string
+{
+    $src = (string) preg_replace('~/\*.*?\*/~s', '', (string) file_get_contents(resource_path('js/kbb/safe.js')));
+
+    return (string) preg_replace('~(^|\s)//[^\n]*~m', '$1', $src);
+}
+
 it('escapes every value it interpolates into the suggestion markup', function () {
     /*
      * MUTATION NOTE, RUN: change `href="${safeHref(it.url)}"` back to
@@ -99,6 +118,11 @@ it('escapes every value it interpolates into the suggestion markup', function ()
     }
 
     expect($raw)->toBe([], 'these API values reach innerHTML unescaped: ' . implode(', ', $raw));
+
+    // And the escapers it calls are the shared ones, imported rather than
+    // redefined — the panel cannot escape with a helper it does not have.
+    expect(preg_match("/import \{[^}]*\bescapeHtml\b[^}]*\bsafeHref\b[^}]*\bcssUrl\b[^}]*\} from '\.\/safe\.js'/", $code))
+        ->toBe(1, 'search.js no longer imports escapeHtml/safeHref/cssUrl from ./safe.js');
 });
 
 it('carries the three escapers, and they refuse a scheme this shop does not serve', function () {
@@ -108,10 +132,10 @@ it('carries the three escapers, and they refuse a scheme this shop does not serv
      * `jav&#x09;ascript:` passes. Both were confirmed in node before this was
      * written.
      */
-    $code = searchPanelCode();
+    $code = searchEscaperCode();
 
     foreach (['function schemeIsServed(', 'function safeHref(', 'function cssUrl('] as $fn) {
-        expect(str_contains($code, $fn))->toBeTrue("{$fn} is gone from the search panel");
+        expect(str_contains($code, $fn))->toBeTrue("{$fn} is gone from resources/js/kbb/safe.js");
     }
 
     // The order the browser resolves in: entities, then controls, then scheme.
@@ -134,7 +158,7 @@ it('escapes the CSS delimiters in one pass, not several', function () {
      * MUTATION NOTE, RUN: split the character class into two replace() calls
      * and this is red.
      */
-    $code = searchPanelCode();
+    $code = searchEscaperCode();
 
     expect(preg_match('/replace\(\/\[\\\\\\\\\\\\\\\\\\x27"\(\)\]\/g/', $code) === 1
         || str_contains($code, "replace(/[\\\\'\"()]/g"))
