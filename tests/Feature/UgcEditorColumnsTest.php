@@ -659,3 +659,51 @@ it('gates the cut on the same answer the server gives about its own ffmpeg', fun
     expect(str_contains(editorCode(), "transcoder = body.transcoder || null;"))->toBeTrue();
     expect(str_contains(editorCode(), 'transcoder && transcoder.available && v.id'))->toBeTrue();
 });
+
+it('offers a re-cut control whenever there is a video to cut from', function () {
+    /*
+     * THE OWNER'S ASK: *"i need option to re-generate the clip from the video
+     * button there somewhere. so i will have always control for it."*
+     *
+     * The cover was taken automatically on upload and only there, so there was
+     * no way back from a frame that caught a blink, from a video swapped
+     * through the Media Library, or from a clip that arrived before this shop
+     * could cut anything.
+     *
+     * Three things this pins, and each is a way the control could be built and
+     * be useless:
+     *
+     *   1. It calls the SAME cutter the automatic path calls. A second copy
+     *      would drift from the progress bar and from the 0.6s the shop's own
+     *      server-side cutter uses.
+     *   2. It is passed `false`, the loud mode. The automatic call passes
+     *      `true` and finishes silently, which is right when nobody pressed
+     *      anything and wrong when somebody did.
+     *   3. It is inside the `clip ?` arm, so it is drawn only when there IS a
+     *      video. A button whose only possible answer is "there is no video on
+     *      this clip" teaches people not to press buttons.
+     *
+     * It must also be in the delegated click list — this screen has one
+     * listener and a control missing from that selector is inert markup, which
+     * is the failure that looks most like "it does nothing".
+     *
+     * MUTATION NOTE, RUN: drop `[data-ugs-recut]` from the delegation selector
+     * and the third assertion is red; change `cutCoverHere(false)` to
+     * `cutCoverHere()` and the second is red.
+     */
+    $code = editorCode();
+
+    expect(str_contains($code, 'data-ugs-recut="1"'))
+        ->toBeTrue('the cover box has no re-cut control');
+
+    expect(preg_match('/data-ugs-recut.{0,80}?cutCoverHere\(false\)/s', $code))
+        ->toBe(1, 're-cut does not call the shared cutter in its loud mode');
+
+    expect(str_contains($code, '[data-ugs-recut]'))
+        ->toBeTrue('the re-cut button is not in the delegated click list, so it is inert markup');
+
+    // Drawn only where there is a video: the button sits inside the `clip ?`
+    // arm of coverBody, so the ternary has to be between them.
+    expect(preg_match('/\+ \(clip\s*\n\s*\?\s*\'<button class="ugs-btn" data-ugs-recut/', $code))
+        ->toBe(1, 're-cut is offered on a clip that has no video to cut from');
+});

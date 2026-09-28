@@ -3,6 +3,53 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.304
+The rail's auto-loop stops stuttering, and you can re-cut a cover whenever you
+like.
+
+### THE AUTO-LOOP HUNG BECAUSE IT WAS ASKING FOR THE SAME REWIND OVER AND OVER
+
+A clip with no separate teaser file loops by being rewound while it plays — and
+that is every clip on your host, because ffmpeg cannot be started from the web
+server there.
+
+The rewind was hung on `timeupdate`, which fires about four times a second **and
+keeps firing while a seek is still running.** A seek back to zero in a long clip
+is not instant, so the handler ran again, saw a position still past the mark, and
+asked for the rewind a second and a third time. Every ask is another seek, they
+queue, and up to four tiles were doing it at once. That is the stutter.
+
+One rewind at a time now, and on Firefox and Safari it uses the cheap seek that
+lands on the nearest keyframe instead of decoding forward to an exact frame.
+
+**The real answer is still a teaser file** — a clip that has one loops natively
+and never seeks at all. `php artisan ugc:cut-covers` cuts them over SSH.
+
+### RE-CUT THE COVER, WHENEVER YOU WANT
+
+`Content → All clips → a clip → Video & cover`, in the cover box:
+**"Re-cut the cover from the video"**.
+
+The cover was taken automatically when an upload finished and only then, so there
+was no way back from a frame that caught a blink, from a video swapped through
+the Media Library, or from a clip that arrived before this shop could cut
+anything. It is the same cutter and the same progress bar as the automatic one,
+and it appears only on a clip that has a video to cut from.
+
+### AND THE 2.5 SECOND LOOP COLUMN
+
+Fixed in **2.60.303** and verified in the real screen this round by driving it in
+a browser: the `<video>` mounts, sits exactly on its box, and its position
+advances. If that column still shows a still on your shop, **2.60.303 has not
+been applied yet** — this package contains it either way.
+
+### Files
+
+`resources/views/ugc/assets.blade.php`,
+`resources/views/admin/partials/ugc-library-screen.blade.php`,
+`tools/m1-router.php`, `tools/ugcloop-preview.sh`, `tools/ugcloop-seed.php`,
+`tools/ugcloop-check.cjs`, and their tests.
+
 ## 2.60.303
 Tamara now captures a shipped order by itself, the cart drawer's two buttons are
 the same height, a partial capture no longer inflates what can be refunded, a

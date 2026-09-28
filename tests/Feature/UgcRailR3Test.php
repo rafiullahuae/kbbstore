@@ -428,3 +428,82 @@ it('renders nothing at all while the module is off', function () {
 
     expect($html)->toBe('');
 });
+
+it('rewinds the teaser once per loop instead of stacking seeks', function () {
+    /*
+     * ── THE HANG THE OWNER SAW ──────────────────────────────────────────────
+     *
+     * *"on front-end, it's now playing auto, please make sure the auto loop
+     * play must be smooth without hanging etc."*
+     *
+     * A clip with NO teaser file — which is every clip on this shop's host,
+     * because ffmpeg cannot be started from PHP-FPM there — loops by being
+     * rewound at playback. The handler was:
+     *
+     *     v.addEventListener('timeupdate', function () {
+     *       if (v.currentTime * 1000 >= ms) v.currentTime = 0;
+     *     });
+     *
+     * `timeupdate` fires about four times a second AND KEEPS FIRING WHILE A
+     * SEEK IS IN FLIGHT. A seek to zero in a long clip is not instant: the
+     * decoder flushes and re-seeks to a keyframe. So the handler ran again,
+     * saw a currentTime still past the mark, and assigned zero again — and
+     * again. Each assignment is another seek, they queue, and up to four tiles
+     * are doing it at once. That is the stutter, and it is worst on exactly the
+     * clips this shop has.
+     *
+     * Two guards, neither costing a byte:
+     *
+     *   - `rewinding`, plus the browser's own `v.seeking`, so only ONE rewind
+     *     is ever in flight. `seeked` clears the flag.
+     *   - `fastSeek(0)` where it exists — it lands on the nearest keyframe
+     *     rather than decoding forward to an exact frame, and an exact frame is
+     *     worth nothing when the target is zero. Chromium has not implemented
+     *     it; Firefox and Safari have, and that is where a long seek hurts.
+     *
+     * WHAT THIS PINS IS THE GUARD, not the rewind: a loop that never rewinds is
+     * not a loop. The real answer is still a teaser file, where `loop = true`
+     * is native and nothing seeks at all — this branch is the fallback.
+     *
+     * MUTATION NOTE, RUN: take the `if (rewinding || v.seeking) return;` line
+     * out and the first assertion is red; drop the `seeked` listener and the
+     * second is red, which is the one that would leave it stuck after a single
+     * rewind.
+     */
+    $js = (string) file_get_contents(resource_path('views/ugc/assets.blade.php'));
+
+    expect(preg_match('/if \(rewinding \|\| v\.seeking\) return;/', $js))
+        ->toBe(1, 'the rewind no longer refuses to start while one is already in flight');
+
+    expect(preg_match("/addEventListener\('seeked', function \(\) \{ rewinding = false; \}\)/", $js))
+        ->toBe(1, 'nothing clears the in-flight flag, so the teaser rewinds once and never again');
+
+    expect(preg_match('/typeof v\.fastSeek === \'function\'/', $js))
+        ->toBe(1, 'the cheap seek is gone');
+
+    // And the guard has to come BEFORE the assignment, or it guards nothing.
+    expect(preg_match('/if \(rewinding \|\| v\.seeking\) return;.*?v\.currentTime = 0;/s', $js))
+        ->toBe(1, 'the guard is not in front of the rewind it is meant to guard');
+
+    /*
+     * Rule 4 still holds in this file: the fix added no measuring API.
+     *
+     * COMMENTS ARE STRIPPED FIRST, and that is not tidiness. This file's own
+     * header declares its compliance in prose — "No getBoundingClientRect, no
+     * offsetHeight, no clientHeight, no scrollY" — so a scan of the raw text
+     * finds every banned name in the sentence saying they are not used, and
+     * the first cut of this assertion went red on exactly that. A guard that
+     * cannot tell code from the comment about the code is a guard that gets
+     * deleted rather than fixed.
+     */
+    $code = (string) preg_replace(['~/\*.*?\*/~s', '~^\s*//.*$~m'], '', $js);
+
+    expect(strlen($code))->toBeGreaterThan(2000,
+        'stripping comments left almost nothing, so this scan is looking at nothing');
+
+    foreach (['getBoundingClientRect', 'offsetWidth', 'offsetHeight', 'clientWidth',
+        'clientHeight', 'requestAnimationFrame'] as $banned) {
+        expect(str_contains($code, $banned))
+            ->toBeFalse("the rail now calls {$banned}, which rule 4 forbids in shipped code");
+    }
+});

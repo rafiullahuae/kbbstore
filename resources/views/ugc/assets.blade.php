@@ -413,10 +413,66 @@
       var ms = parseInt(conf(tile, 'teaser-ms', 2500), 10);
       if (!(ms >= 500)) ms = 2500;
       v.loop = false;
+
+      /*
+       * ── THE REWIND STACKED, AND THAT IS WHAT THE HANG WAS ────────────────
+       *
+       * This read, in full:
+       *
+       *     v.addEventListener('timeupdate', function () {
+       *       if (v.currentTime * 1000 >= ms) v.currentTime = 0;
+       *     });
+       *
+       * `timeupdate` fires about four times a second AND KEEPS FIRING WHILE A
+       * SEEK IS IN FLIGHT. A seek to 0 on a long clip is not instant — the
+       * decoder flushes and re-seeks to a keyframe — so the handler ran again,
+       * saw a currentTime still past the mark, and assigned 0 a second and a
+       * third time. Every assignment is another seek, and they queue.
+       *
+       * The owner: *"on front-end, it's now playing auto, please make sure the
+       * auto loop play must be smooth without hanging etc."* This is the hang.
+       * It is worst in exactly the case this shop is in — no teaser file,
+       * because ffmpeg cannot be started from PHP-FPM on that host, so the loop
+       * is cut from the WHOLE clip at playback and every rewind is a real seek
+       * through a real file. Up to four tiles do it at once.
+       *
+       * Two changes, and neither costs a byte:
+       *
+       *   - ONE seek in flight at a time. `v.seeking` is the browser's own
+       *     answer to "are you still doing the last one", and `rewinding`
+       *     covers the window before it flips true.
+       *   - `fastSeek()` where the browser has it. It lands on the nearest
+       *     keyframe instead of decoding forward to an exact frame, which is
+       *     the whole cost of an accurate seek and buys nothing when the target
+       *     is zero. Chromium does not implement it yet; Firefox and Safari do,
+       *     and they are where a long seek hurts most.
+       *
+       * THE REAL FIX IS STILL A TEASER FILE, and it is a paragraph up: a clip
+       * with its own 2.5-second file uses `v.loop = true` and never seeks at
+       * all. `php artisan ugc:cut-covers` cuts them over SSH, and the clip
+       * editor now has a button that re-cuts one on demand. This branch is the
+       * fallback for clips that have not been cut yet, and it should stutter on
+       * none of them.
+       */
+      var rewinding = false;
+
+      v.addEventListener('seeked', function () { rewinding = false; });
+
       v.addEventListener('timeupdate', function () {
-        if (v.currentTime * 1000 >= ms) v.currentTime = 0;
+        if (rewinding || v.seeking) return;
+        if (v.currentTime * 1000 < ms) return;
+
+        rewinding = true;
+
+        if (typeof v.fastSeek === 'function') {
+          try { v.fastSeek(0); return; } catch (e) { /* fall through */ }
+        }
+
+        v.currentTime = 0;
       });
+
       v.addEventListener('ended', function () {
+        rewinding = false;
         v.currentTime = 0;
         var again = v.play();
         if (again && again.catch) again.catch(function () {});

@@ -3354,6 +3354,32 @@
           + '<p class="ugs-path">' + esc(poster) + ' · '
           + (v.width && v.height ? esc(v.width + '×' + v.height) : 'size unread') + '</p>'
         : '')
+      /*
+       * RE-CUT, AND IT IS A CONTROL RATHER THAN SOMETHING THAT ONLY EVER
+       * HAPPENS BY ITSELF.
+       *
+       * The cover is taken automatically the moment an upload finishes, which
+       * is right and is what the panel below says. But automatic-only means
+       * there is no way back: swap the video for a different one through the
+       * Media Library, decide the frame at 0.6s caught a blink, or arrive at a
+       * clip somebody else uploaded before this shop could cut anything, and
+       * the screen offered nothing to press. The owner asked for exactly this:
+       * *"i need option to re-generate the clip from the video button there
+       * somewhere. so i will have always control for it."*
+       *
+       * It is the SAME function the automatic path calls -- cutCoverHere() --
+       * so there is one cutter and one progress bar, not a second copy that
+       * can drift. Passing `false` makes it loud: it draws the bar and says
+       * what it did, where the automatic call passes `true` and stays quiet.
+       *
+       * Shown only when there is a video to cut from, because a button that
+       * can only ever answer "there is no video on this clip" is a button that
+       * teaches people not to press buttons.
+       */
+      + (clip
+          ? '<button class="ugs-btn" data-ugs-recut="1"' + (locked ? ' disabled' : '') + '>'
+            + icon(ICON_CUT) + 'Re-cut the cover from the video</button>'
+          : '')
       + '<button class="ugs-btn is-primary" data-ugs-poster="1"' + (locked ? ' disabled' : '') + '>'
       +   icon(ICON_PLUS) + 'Choose from the Media Library</button>'
       + posterDropHTML(locked);
@@ -4228,7 +4254,7 @@
       + '[data-ugs-save],[data-ugs-back],[data-ugs-derive],[data-ugs-untag],[data-ugs-up],'
       + '[data-ugs-down],[data-ugs-add],[data-ugs-poster],[data-ugs-step],[data-ugs-next],'
       + '[data-ugs-upcancel],[data-ugs-upretry],[data-ugs-draftrestore],[data-ugs-draftdiscard],'
-      + '[data-ugs-retrysave],[data-ugs-cuthere]') : null;
+      + '[data-ugs-retrysave],[data-ugs-cuthere],[data-ugs-recut]') : null;
     if (!t) return;
 
     if (t.hasAttribute('data-ugs-new')) { e.preventDefault(); blank(); return; }
@@ -4283,6 +4309,10 @@
     }
     if (t.hasAttribute('data-ugs-derive')) { e.preventDefault(); derive(); return; }
     if (t.hasAttribute('data-ugs-cuthere')) { e.preventDefault(); cutCoverHere(); return; }
+    /* The always-available control in the cover box. Same function, same
+       progress bar; `false` is the loud mode, so a press the owner made says
+       what it did rather than finishing in silence like the automatic one. */
+    if (t.hasAttribute('data-ugs-recut')) { e.preventDefault(); cutCoverHere(false); return; }
     if (t.hasAttribute('data-ugs-poster')) { e.preventDefault(); choosePoster(); return; }
 
     if (t.hasAttribute('data-ugs-del')) {
