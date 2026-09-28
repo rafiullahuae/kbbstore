@@ -1398,3 +1398,138 @@ own schema; the homepage renders identically until a control is moved; every new
 control has a writer and a capability; the query budget is unchanged or raised
 deliberately; and the report names the admin path and carries the four
 screenshots.
+
+---
+
+## Lane SET — the Set: a product type, not a folder of products
+
+**Briefed 28 September 2026.** The owner's words:
+
+> "I have a new product type, which called Set. currently we just combine the
+> prices and images etc as 1 product, and call it as set. but in our new
+> website, i want this thing very different. Under Catalog, there will be Sets,
+> and upon creating new set, the system will ask to choose the products, and
+> will ask for set price, category, description etc, the same as in product
+> edit page. and it will be published same like other products and display.
+> When user add to cart this set product, it will display as set box on the
+> cart, on the checkout summary and everywhere on the users side, like email,
+> invoice, dashboard etc."
+
+### The shape, decided rather than left to you — and the evidence for it
+
+**A Set IS a row in `products`, with `products.type = 'set'`, plus one pivot
+table for its members.** Not its own table. Checked at `c602d3f` before this
+was written:
+
+- The owner requires a set to be *"published same like other products"* — so it
+  needs `slug`, `status`, `is_visible`, `category_id`, `description`,
+  `short_description`, `image`, `images`, `price`, `sale_price`, `position`,
+  `created_at`, plus its SEO row and its category pivot. Every one of those is a
+  `products` column today. A separate table duplicates all of them **and** every
+  screen, sitemap entry, search index and API allowlist that reads `products`.
+- `cart_items.product_id` and `order_items.product_id` are foreign keys to
+  `products` (`0001_01_01_000000_create_kbb_schema.php:266` and `:437`). A set
+  that is a product needs **no schema change on either table** to be added to a
+  basket or sold.
+- `products.type` already stores an unknown value verbatim — that is written
+  down in `docs/PRODUCT-FIELD-PARITY.md` row 6, for the import. And only
+  **three** files in the whole application branch on the value: `Product.php`,
+  `VariantPricing.php`, `RedirectMap.php`. Nothing does an exclusive
+  `type === 'simple'` test that a third value would fall out of. **Verify that
+  sweep yourself before you rely on it** — it is the single assumption this
+  brief makes that would be expensive if it were wrong.
+
+The pivot: **`product_set_items`** — `set_product_id`, `member_product_id`,
+`member_variant_id` (nullable, so a set can name the 50ml), `quantity`,
+`position`. Foreign keys to `products` and `product_variants`.
+
+### The one thing that is harder than it looks: what an order remembers
+
+A set's contents WILL change. An order sold last month must still print what was
+actually in the box, so **the member list has to be snapshotted onto the order,
+not read back through the pivot.** `order_items` already snapshots for exactly
+this reason — read the comment at `0001_01_01_000000_create_kbb_schema.php:439`,
+*"Snapshots, so an order still reads correctly after a product is renamed or
+deleted"* — and it already carries one JSON snapshot column,
+`variant_attributes`.
+
+**Do it the same way: one `set_contents` JSON column on `order_items`**, holding
+name, brand, sku, quantity and the member's own unit price at the time of sale.
+Not child rows: child `order_items` would be counted by every total, every
+report, every refund ceiling and every invoice line in this shop, and each of
+those is a place to get it wrong. A JSON snapshot is read by the things that
+print a set and invisible to the things that add money up.
+
+The same snapshot is what the **invoice**, the **order-confirmation email**, the
+**customer's order page** and the **admin order screen** print. One writer, four
+readers — do not let a second description of a set's contents exist.
+
+### The seven surfaces, and the design the owner chose
+
+The set row is drawn in seven places. The owner has been shown four options and
+picks one; **the answer is in the integrator's message to you — build the
+option he names and nothing else.**
+
+1. Cart panel (`resources/views/partials/cart-drawer.blade.php`, the `.kc-item`
+   row at line 91)
+2. Cart page (`resources/views/store/cart-inner.blade.php`)
+3. Checkout summary (`resources/views/store/checkout.blade.php`)
+4. The browsed rail (the second tab of the cart panel)
+5. Order confirmation email (`app/Mail/`)
+6. Invoice (`app/Services/Invoices/InvoiceDocument.php`)
+7. The customer's own order page (`resources/views/store/account/`)
+
+Read `resources/css/kbb/kbb.css` for `.kc-item`, `.kc-th`, `.kc-mid`, `.kc-nm`,
+`.kc-pr` before you draw anything: the row you are extending has a fixed
+geometry and a Mobile control set behind it (`--cp-*`), and a set row that
+ignores those is a set row the owner cannot resize.
+
+### What is NOT yours, and goes in the report as a question
+
+- **Stock.** Does selling a set decrement each member's stock? There is a real
+  argument either way and it is a commercial decision. Build whichever leaves
+  today's behaviour unchanged, put the question in one line.
+- **The saving.** The "you save AED 63" figure is the sum of the members' own
+  prices minus the set price. Compute it, but only SHOW it where the owner's
+  chosen design has it.
+
+### Rules that apply without exception
+
+- **Money is integer fils.** The set price, every member price and the saving.
+  No floats anywhere on this path, including in a fixture.
+- **`/api/*` is unauthenticated.** A set returned there goes through an explicit
+  allowlist like `Product::toApi()`, and the member list is a second allowlist —
+  a member is a product and carries `wc_id`, `sku` and `total_sales`. Read
+  `tests/Feature/ApiSecurityTest.php` first.
+- **Nothing that already works may change.** A shop with no sets in it must
+  render byte-identically. `StorefrontEnglishUnchangedTest` is the instrument.
+- **`StorefrontQueryBudgetTest` is a budget.** A cart holding one set must not
+  cost one query per member — the members are eager-loaded or they are in the
+  snapshot. Measure it; do not assert it.
+- **Every new admin endpoint gets its own capability and fails closed.**
+- **`routes/web.php` is the integrator's.** Declare routes in your own file, say
+  what to wire, ship a `clear_caches_*` migration, and pin the FINISHED state
+  (`substr_count(...) === 1`) — never the absence of the require.
+- **`resources/views/admin/app.blade.php` is the integrator's.** If the Sets
+  screen needs a sidebar entry, say so; do not add it.
+
+### Owns
+
+`app/Models/ProductSet*.php` and the set pivot model, a `SetImporter` if you add
+one, `app/Http/Controllers/Admin/SetApiController.php`,
+`resources/views/admin/partials/sets-screen.blade.php`, your own routes file,
+`database/migrations/*_sets_*`, `tests/Feature/*Set*`, `tools/set-*`.
+
+You will also have to touch `cart-drawer.blade.php`, `cart-inner.blade.php`,
+`checkout.blade.php`, `InvoiceDocument.php`, the order email and the account
+order page. **Those are shared.** Touch only the lines a set needs, say in the
+report exactly which lines, and leave the non-set path byte-identical.
+
+### Done when
+
+Catalog → Sets creates a set from chosen products with its own price, category,
+description and images; it publishes and displays like any other product; adding
+it to the basket draws the chosen set row in all seven places; an order sold and
+then edited still prints what was in the box; every fix ships with the test that
+goes red without it and a mutation note that was actually run; the pictures are
+at 390 and 1280; and the report names the admin path in full.
