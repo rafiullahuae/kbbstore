@@ -202,13 +202,24 @@
    set that ships at `none` has no padding, no negative margin and no paint —
    the same element it was before this rule existed.
 
-   The bleed is the shop's own rail idiom and the SAME pair the scroller below
-   already uses: `margin-inline:-gutter` widens the box to `.wrap`'s border box
-   so the colour reaches the page's content edge instead of stopping short of
-   it, and `padding-inline:gutter` puts the contents back where they were. The
-   two are EQUAL AND OPPOSITE, which is why this cannot give the page horizontal
-   scroll at any width — and why the scroller's own identical pair still lands
-   exactly on that same edge rather than one gutter past it.
+   The bleed is the shop's own rail idiom and THE SAME PAIR the scroller below
+   already uses, deliberately: `margin-inline:-gutter` widens the box so the
+   colour reaches the page's edge instead of stopping short of it, and
+   `padding-inline:gutter` puts the contents back where they were. The two are
+   equal and opposite, so the CONTENT is where it was and only the paint moved.
+
+   ▲ AND `--site-gutter` IS NOT `.wrap`'s ACTUAL PADDING, which is worth knowing
+   before anybody "tidies" this. Measured in Chromium on this shop:
+   `--site-gutter` is `clamp(22px,2.2vw,22px)` = 22px at every width, while
+   `.wrap`'s computed padding-inline is 12px at 390, 18px at 768 and 25.6px at
+   1280 — so the bled box overhangs the viewport by 10px a side at 390 and stops
+   9px short of the wrap's border box at 1280. That is the SCROLLER'S EXISTING
+   behaviour, not something this rule introduced; the background simply shares
+   it, so the band and the cards start and end together. The page's own scroll
+   width still equals its client width at all three widths in all four
+   background modes — measured, in docs/lane-bp-shots. A background that used
+   the wrap's real padding instead would end a gutter inside the cards, which
+   is worse than either.
 
    Longhands, not the `background` shorthand: the shorthand resets
    `background-image`, so `background:var(--kbbn-bg)` on a set whose mode is a
