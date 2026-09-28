@@ -1,0 +1,738 @@
+{
+  "gallery": [
+    {
+      "slug": "im-full-gallery",
+      "width": 390,
+      "dprAsked": 1,
+      "dpr": 1,
+      "scrollWidth": 390,
+      "viewport": 390,
+      "main": [
+        {
+          "currentSrc": "/img-cache/400/uploads/im/shot-1.jpg",
+          "src": "/uploads/im/shot-1.jpg",
+          "srcset": "/img-cache/400/uploads/im/shot-1.jpg 400w, /img-cache/800/uploads/im/shot-1.jpg 800w, /uploads/im/shot-1.jpg 1000w",
+          "sizes": "(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px",
+          "loading": "eager",
+          "fetchpriority": "high",
+          "natural": [
+            349,
+            349
+          ],
+          "css": [
+            344,
+            344
+          ],
+          "complete": true,
+          "bytes": 20345
+        }
+      ],
+      "thumbs": [
+        {
+          "currentSrc": "/img-cache/400/uploads/im/shot-1.jpg",
+          "src": "/uploads/im/shot-1.jpg",
+          "srcset": "/img-cache/400/uploads/im/shot-1.jpg 400w, /img-cache/800/uploads/im/shot-1.jpg 800w",
+          "sizes": "66px",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            66,
+            66
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 20345
+        },
+        {
+          "currentSrc": "/uploads/im/shot-2.jpg",
+          "src": "/uploads/im/shot-2.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 300183
+        },
+        {
+          "currentSrc": "/uploads/im/shot-3.jpg",
+          "src": "/uploads/im/shot-3.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 295517
+        },
+        {
+          "currentSrc": "/uploads/im/shot-4.jpg",
+          "src": "/uploads/im/shot-4.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 291549
+        },
+        {
+          "currentSrc": "/uploads/im/shot-5.jpg",
+          "src": "/uploads/im/shot-5.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 309066
+        }
+      ],
+      "stripRequests": 5,
+      "stripBytes": 1216660,
+      "mainBytes": 20345
+    },
+    {
+      "slug": "im-full-gallery",
+      "width": 390,
+      "dprAsked": 2,
+      "dpr": 2,
+      "scrollWidth": 390,
+      "viewport": 390,
+      "main": [
+        {
+          "currentSrc": "/img-cache/800/uploads/im/shot-1.jpg",
+          "src": "/uploads/im/shot-1.jpg",
+          "srcset": "/img-cache/400/uploads/im/shot-1.jpg 400w, /img-cache/800/uploads/im/shot-1.jpg 800w, /uploads/im/shot-1.jpg 1000w",
+          "sizes": "(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px",
+          "loading": "eager",
+          "fetchpriority": "high",
+          "natural": [
+            349,
+            349
+          ],
+          "css": [
+            344,
+            344
+          ],
+          "complete": true,
+          "bytes": 115197
+        }
+      ],
+      "thumbs": [
+        {
+          "currentSrc": "/img-cache/400/uploads/im/shot-1.jpg",
+          "src": "/uploads/im/shot-1.jpg",
+          "srcset": "/img-cache/400/uploads/im/shot-1.jpg 400w, /img-cache/800/uploads/im/shot-1.jpg 800w",
+          "sizes": "66px",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            66,
+            66
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 20345
+        },
+        {
+          "currentSrc": "/uploads/im/shot-2.jpg",
+          "src": "/uploads/im/shot-2.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 300183
+        },
+        {
+          "currentSrc": "/uploads/im/shot-3.jpg",
+          "src": "/uploads/im/shot-3.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 295517
+        },
+        {
+          "currentSrc": "/uploads/im/shot-4.jpg",
+          "src": "/uploads/im/shot-4.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 291549
+        },
+        {
+          "currentSrc": "/uploads/im/shot-5.jpg",
+          "src": "/uploads/im/shot-5.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 309066
+        }
+      ],
+      "stripRequests": 5,
+      "stripBytes": 1216660,
+      "mainBytes": 115197
+    },
+    {
+      "slug": "im-full-gallery",
+      "width": 1280,
+      "dprAsked": 1,
+      "dpr": 1,
+      "scrollWidth": 1280,
+      "viewport": 1280,
+      "main": [
+        {
+          "currentSrc": "/img-cache/800/uploads/im/shot-1.jpg",
+          "src": "/uploads/im/shot-1.jpg",
+          "srcset": "/img-cache/400/uploads/im/shot-1.jpg 400w, /img-cache/800/uploads/im/shot-1.jpg 800w, /uploads/im/shot-1.jpg 1000w",
+          "sizes": "(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px",
+          "loading": "eager",
+          "fetchpriority": "high",
+          "natural": [
+            563,
+            563
+          ],
+          "css": [
+            609.5,
+            609.5
+          ],
+          "complete": true,
+          "bytes": 115197
+        }
+      ],
+      "thumbs": [
+        {
+          "currentSrc": "/img-cache/400/uploads/im/shot-1.jpg",
+          "src": "/uploads/im/shot-1.jpg",
+          "srcset": "/img-cache/400/uploads/im/shot-1.jpg 400w, /img-cache/800/uploads/im/shot-1.jpg 800w",
+          "sizes": "66px",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            66,
+            66
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 20345
+        },
+        {
+          "currentSrc": "/uploads/im/shot-2.jpg",
+          "src": "/uploads/im/shot-2.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 300183
+        },
+        {
+          "currentSrc": "/uploads/im/shot-3.jpg",
+          "src": "/uploads/im/shot-3.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 295517
+        },
+        {
+          "currentSrc": "/uploads/im/shot-4.jpg",
+          "src": "/uploads/im/shot-4.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 291549
+        },
+        {
+          "currentSrc": "/uploads/im/shot-5.jpg",
+          "src": "/uploads/im/shot-5.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 309066
+        }
+      ],
+      "stripRequests": 5,
+      "stripBytes": 1216660,
+      "mainBytes": 115197
+    },
+    {
+      "slug": "im-no-variants",
+      "width": 390,
+      "dprAsked": 1,
+      "dpr": 1,
+      "scrollWidth": 390,
+      "viewport": 390,
+      "main": [
+        {
+          "currentSrc": "/uploads/im/shot-6.jpg",
+          "src": "/uploads/im/shot-6.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "eager",
+          "fetchpriority": "high",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            344,
+            344
+          ],
+          "complete": true,
+          "bytes": 301745
+        }
+      ],
+      "thumbs": [
+        {
+          "currentSrc": "/uploads/im/shot-6.jpg",
+          "src": "/uploads/im/shot-6.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 301745
+        },
+        {
+          "currentSrc": "/uploads/im/shot-7.jpg",
+          "src": "/uploads/im/shot-7.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 296400
+        },
+        {
+          "currentSrc": "/uploads/im/shot-8.jpg",
+          "src": "/uploads/im/shot-8.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 291922
+        }
+      ],
+      "stripRequests": 3,
+      "stripBytes": 890067,
+      "mainBytes": 301745
+    },
+    {
+      "slug": "im-no-variants",
+      "width": 390,
+      "dprAsked": 2,
+      "dpr": 2,
+      "scrollWidth": 390,
+      "viewport": 390,
+      "main": [
+        {
+          "currentSrc": "/uploads/im/shot-6.jpg",
+          "src": "/uploads/im/shot-6.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "eager",
+          "fetchpriority": "high",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            344,
+            344
+          ],
+          "complete": true,
+          "bytes": 301745
+        }
+      ],
+      "thumbs": [
+        {
+          "currentSrc": "/uploads/im/shot-6.jpg",
+          "src": "/uploads/im/shot-6.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 301745
+        },
+        {
+          "currentSrc": "/uploads/im/shot-7.jpg",
+          "src": "/uploads/im/shot-7.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 296400
+        },
+        {
+          "currentSrc": "/uploads/im/shot-8.jpg",
+          "src": "/uploads/im/shot-8.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            52,
+            52
+          ],
+          "complete": true,
+          "bytes": 291922
+        }
+      ],
+      "stripRequests": 3,
+      "stripBytes": 890067,
+      "mainBytes": 301745
+    },
+    {
+      "slug": "im-no-variants",
+      "width": 1280,
+      "dprAsked": 1,
+      "dpr": 1,
+      "scrollWidth": 1280,
+      "viewport": 1280,
+      "main": [
+        {
+          "currentSrc": "/uploads/im/shot-6.jpg",
+          "src": "/uploads/im/shot-6.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "eager",
+          "fetchpriority": "high",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            609.5,
+            609.5
+          ],
+          "complete": true,
+          "bytes": 301745
+        }
+      ],
+      "thumbs": [
+        {
+          "currentSrc": "/uploads/im/shot-6.jpg",
+          "src": "/uploads/im/shot-6.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 301745
+        },
+        {
+          "currentSrc": "/uploads/im/shot-7.jpg",
+          "src": "/uploads/im/shot-7.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 296400
+        },
+        {
+          "currentSrc": "/uploads/im/shot-8.jpg",
+          "src": "/uploads/im/shot-8.jpg",
+          "srcset": "",
+          "sizes": "",
+          "loading": "lazy",
+          "fetchpriority": "",
+          "natural": [
+            1000,
+            1000
+          ],
+          "css": [
+            62,
+            62
+          ],
+          "complete": true,
+          "bytes": 291922
+        }
+      ],
+      "stripRequests": 3,
+      "stripBytes": 890067,
+      "mainBytes": 301745
+    }
+  ],
+  "cart": [
+    {
+      "slug": "cart",
+      "width": 390,
+      "dprAsked": 2,
+      "squares": [
+        {
+          "cls": "cth",
+          "css": [
+            52,
+            52
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-6.jpg\")"
+        },
+        {
+          "cls": "cth",
+          "css": [
+            52,
+            52
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-1.jpg\")"
+        },
+        {
+          "cls": "kc-th",
+          "css": [
+            38,
+            38
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-6.jpg\")"
+        },
+        {
+          "cls": "kc-th",
+          "css": [
+            38,
+            38
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-1.jpg\")"
+        }
+      ],
+      "requests": 2,
+      "bytes": 608797,
+      "responses": [
+        {
+          "path": "/uploads/im/shot-1.jpg",
+          "bytes": 307052
+        },
+        {
+          "path": "/uploads/im/shot-6.jpg",
+          "bytes": 301745
+        }
+      ]
+    },
+    {
+      "slug": "cart",
+      "width": 1280,
+      "dprAsked": 1,
+      "squares": [
+        {
+          "cls": "cth",
+          "css": [
+            56,
+            56
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-6.jpg\")"
+        },
+        {
+          "cls": "cth",
+          "css": [
+            56,
+            56
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-1.jpg\")"
+        },
+        {
+          "cls": "kc-th",
+          "css": [
+            42,
+            42
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-6.jpg\")"
+        },
+        {
+          "cls": "kc-th",
+          "css": [
+            42,
+            42
+          ],
+          "background": "url(\"http://127.0.0.1:8977/uploads/im/shot-1.jpg\")"
+        }
+      ],
+      "requests": 2,
+      "bytes": 608797,
+      "responses": [
+        {
+          "path": "/uploads/im/shot-1.jpg",
+          "bytes": 307052
+        },
+        {
+          "path": "/uploads/im/shot-6.jpg",
+          "bytes": 301745
+        }
+      ]
+    }
+  ]
+}
