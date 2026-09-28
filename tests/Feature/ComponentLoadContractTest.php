@@ -647,6 +647,20 @@ it('renders every page that calls a contracted template without one lazy load', 
 
     $pages = [
         '/shop' => [],
+        /*
+         * THE CATEGORY ARCHIVE, LISTED SEPARATELY FROM /shop ON PURPOSE.
+         *                                                            Lane PG
+         * CategoryArchiveController::collection() delegates straight into
+         * ShopController::index(), so today these two run the SAME eager load
+         * and this row cannot fail while the row above passes. It is here for
+         * the ONE thing that differs: the archive passes the category's name
+         * into the tile as `catLabel`, and the whole reason the eyebrow is a
+         * PROP rather than something the card reads off `$product->categories`
+         * is that reading the relation would cost a query per tile. A later
+         * change that resolved the label inside the card would be invisible on
+         * /shop, which passes null, and caught here.
+         */
+        '/collections/clc-cat/' => [],
         '/brands/clc-house/' => [],
         '/product/' . $fixture['product']->slug => [],
         '/routines/acne' => [],
