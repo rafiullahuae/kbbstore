@@ -1,0 +1,104 @@
+[
+  {
+    "page": "product-quote",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "swatches": 2,
+    "swatchBackgrounds": [
+      "url(\"http://127.0.0.1:8988/uploads/sx/injected.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner-large.png\")"
+    ],
+    "swatchBox": [
+      "22x22",
+      "22x22"
+    ],
+    "thumbs": 0,
+    "thumbBackgrounds": [],
+    "fontSizes": [
+      "13.5px"
+    ],
+    "injectedRequests": 1
+  },
+  {
+    "page": "product-plain",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "swatches": 0,
+    "swatchBackgrounds": [],
+    "swatchBox": [],
+    "thumbs": 1,
+    "thumbBackgrounds": [
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner.png&#039;);background:url(/uploads/sx/injected.png)%20center/cover;x:url(&#039;\")"
+    ],
+    "fontSizes": [
+      "13.5px",
+      "13px"
+    ],
+    "injectedRequests": 0
+  },
+  {
+    "page": "cart-drawer",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "swatches": 0,
+    "swatchBackgrounds": [],
+    "swatchBox": [],
+    "thumbs": 3,
+    "thumbBackgrounds": [
+      "url(\"http://127.0.0.1:8988/uploads/sx/serum.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/serum.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner.png&#039;);background:url(/uploads/sx/injected.png)%20center/cover;x:url(&#039;\")"
+    ],
+    "fontSizes": [
+      "13.5px",
+      "13px"
+    ],
+    "injectedRequests": 0
+  },
+  {
+    "page": "cart",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "swatches": 0,
+    "swatchBackgrounds": [],
+    "swatchBox": [],
+    "thumbs": 4,
+    "thumbBackgrounds": [
+      "url(\"http://127.0.0.1:8988/uploads/sx/serum.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner.png&#039;);background:url(/uploads/sx/injected.png)%20center/cover;x:url(&#039;\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/serum.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner.png&#039;);background:url(/uploads/sx/injected.png)%20center/cover;x:url(&#039;\")"
+    ],
+    "fontSizes": [
+      "12.5px",
+      "13px"
+    ],
+    "injectedRequests": 0
+  },
+  {
+    "page": "checkout",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "swatches": 0,
+    "swatchBackgrounds": [],
+    "swatchBox": [],
+    "thumbs": 6,
+    "thumbBackgrounds": [
+      "url(\"http://127.0.0.1:8988/uploads/sx/serum.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner.png&#039;);background:url(/uploads/sx/injected.png)%20center/cover;x:url(&#039;\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/serum.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner.png&#039;);background:url(/uploads/sx/injected.png)%20center/cover;x:url(&#039;\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/serum.png\")",
+      "url(\"http://127.0.0.1:8988/uploads/sx/toner.png&#039;);background:url(/uploads/sx/injected.png)%20center/cover;x:url(&#039;\")"
+    ],
+    "fontSizes": [
+      "13px"
+    ],
+    "injectedRequests": 0
+  }
+]

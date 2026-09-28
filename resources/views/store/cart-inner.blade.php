@@ -4,6 +4,7 @@
     exactly; only the data expressions are translated to Eloquent.
 --}}
 @php
+    use App\Support\CssUrl;
     use App\Support\Gradient;
     use App\Support\Url;
 
@@ -166,7 +167,8 @@ $kbbLineWas = static function ($kbbWasLine): int {
                         $name  = $p?->t('name');
                         $seed  = ($p?->brand?->name ?? '') . ($p?->name ?? '');
                         $img   = $item->variant?->image ?: $p?->image;
-                        $thumb = $img ? "background-image:url('" . e($img) . "')" : 'background:' . Gradient::for($seed);
+                        $imgCss = CssUrl::value($img);
+                        $thumb = $imgCss !== '' ? "background-image:url('" . e($imgCss) . "')" : 'background:' . Gradient::for($seed);
                         $attrs = $item->variant?->label();
                         $line  = $item->lineTotal();
                         // $kbbLineWas(), defined once at the top of this file
@@ -193,7 +195,7 @@ $kbbLineWas = static function ($kbbWasLine): int {
                         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
                     @endphp
                     <div class="ci">
-                        <div class="cth" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
+                        <div class="cth" style="{{ $thumb }}">{{ $imgCss !== '' ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
                         <div class="cmid">
                             @if ($brand)<div class="cbrand">{{ $brand }}</div>@endif
                             <div class="cn"><a href="{{ $p?->url() ?? '#' }}">{{ $name }}</a></div>
@@ -243,8 +245,9 @@ $kbbLineWas = static function ($kbbWasLine): int {
                     @php
                         $recSeed  = ($recProduct->brand?->name ?? '') . $recProduct->name;
                         $recImg   = $recProduct->image;
-                        $recStyle = $recImg
-                            ? "background-image:url('" . e($recImg) . "')"
+                        $recImgCss = CssUrl::value($recImg);
+                        $recStyle = $recImgCss !== ''
+                            ? "background-image:url('" . e($recImgCss) . "')"
                             : 'background:' . Gradient::for($recSeed);
                         // Same substitution as the basket line above, and here
                         // it does print: a recommended variable product that is
@@ -264,7 +267,7 @@ $kbbLineWas = static function ($kbbWasLine): int {
                          the loading shimmer is set and cleared by the same code
                          that does every other cart write on this page. --}}
                     <div class="cpg-card">
-                        <span class="im" style="{{ $recStyle }}">{{ $recImg ? '' : Gradient::initials($recProduct->brand?->name ?: $recProduct->t('name')) }}<button class="kc-badd" type="button" data-add="{{ $recProduct->id }}" aria-label="{{ __('store.cart_drawer.browsed_add') }}">+</button></span>
+                        <span class="im" style="{{ $recStyle }}">{{ $recImgCss !== '' ? '' : Gradient::initials($recProduct->brand?->name ?: $recProduct->t('name')) }}<button class="kc-badd" type="button" data-add="{{ $recProduct->id }}" aria-label="{{ __('store.cart_drawer.browsed_add') }}">+</button></span>
                         <a class="lk" href="{{ $recProduct->url() }}">
                             <span class="nm">{{ $recProduct->t('name') }}</span>
                             <span class="pr">{!! \App\Support\Money::format($recNow) !!}@if ($recWas > $recNow)<span class="cwas">{!! \App\Support\Money::format($recWas) !!}</span>@endif</span>

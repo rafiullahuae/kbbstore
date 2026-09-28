@@ -8,6 +8,7 @@
 --}}
 @extends('layouts.store')
 @php
+    use App\Support\CssUrl;
     use App\Support\Gradient;
     use App\Support\Money;
     use App\Support\ProductTitle;
@@ -101,8 +102,9 @@
     $grad    = Gradient::for($seed);
     // Gallery entries are now labelled shots, not bare URLs; the partial
     // renders the frame, so this is only kept for anything else referencing it.
-    $mainBg  = ! empty($gallery[0]['image'])
-        ? "#fff url('" . e($gallery[0]['image']) . "') center/contain no-repeat"
+    $mainCss = CssUrl::value($gallery[0]['image'] ?? null);
+    $mainBg  = $mainCss !== ''
+        ? "#fff url('" . e($mainCss) . "') center/contain no-repeat"
         : $grad;
 
     $variants = $product->variants;
@@ -303,7 +305,7 @@
                  field below is set to. `0 === $n` selected nothing at all when
                  option 0 was sold out. --}}
             <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale, $vdp) }}">
-              @if ($v->image)<span class="vsw" style="background-image:url('{{ $v->image }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
+              @if (($vImgCss = CssUrl::value($v->image)) !== '')<span class="vsw" style="background-image:url('{{ $vImgCss }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
             </div>
           @endforeach
         </div>
