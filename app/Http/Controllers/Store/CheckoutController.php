@@ -612,6 +612,23 @@ class CheckoutController extends Controller
                         'brand' => $p?->brand?->name,
                         'sku' => $item->variant?->sku ?? $p?->sku,
                         'variant_attributes' => $item->variant?->attributeValues->pluck('name')->all(),
+                        /*
+                         * WHAT WAS IN THE BOX, on the day. (Lane SET)
+                         *
+                         * NULL for every line that is not a set, which is every
+                         * line in this shop until somebody creates one — so an
+                         * ordinary order is written exactly as it was before.
+                         *
+                         * A SNAPSHOT AND NOT A JOIN, for the reason the comment
+                         * four lines up gives about `name` and `brand`: a set's
+                         * contents change, and an invoice reprinted next year
+                         * must show what the customer received rather than what
+                         * the set holds now. App\Support\SetContents::snapshot()
+                         * is the ONLY thing that writes this column, and the
+                         * member prices it records are the members' own prices
+                         * in integer fils at this moment.
+                         */
+                        'set_contents' => \App\Support\SetContents::snapshot($p),
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
                         'subtotal' => $item->lineTotal(),
@@ -1401,6 +1418,26 @@ class CheckoutController extends Controller
             'items.variant.attributeValues:id,attribute_id,name',
             'coupon:id,code,type,amount',
         ]);
+
+        /*
+         * The set members, and ONLY when a line is a set. (Lane SET)
+         *
+         * Not three more entries in the list above, for the reason
+         * App\Support\SetEagerLoad's docblock gives: an unconditional eager
+         * load costs its queries on every checkout of a shop that has never
+         * made a set. No set in the bag, no query, and StorefrontQueryBudget-
+         * Test's /checkout ceiling is unchanged.
+         *
+         * THIS IS ALSO WHAT MAKES THE SNAPSHOT COMPLETE. place() writes
+         * `order_items.set_contents` from the products loaded HERE, and the
+         * member option label it records comes through
+         * `setItems.variant.attributeValues` in this list. See
+         * SetCheckoutSnapshotTest, which asserts the option name reaches the
+         * order and would go red if this line were removed.
+         */
+        if ($cart !== null) {
+            \App\Support\SetEagerLoad::on($cart->items->pluck('product'));
+        }
 
         // The mini-cart panel the layout renders needs a subset of exactly
         // this, and used to fetch its own copy — three more queries for rows

@@ -47,7 +47,13 @@
 
                 @if ($item['sku'] !== '')
                     <div style="font-size:11.5px;color:{{ $c['muted'] }};">{{ __('email.items.sku', ['sku' => $item['sku']]) }}</div>
-                @endif
+                @endif@php if (($item['setContents'] ?? []) !== []) { echo '<div style="margin-top:5px;padding-inline-start:9px;border-inline-start:2px solid ' . e($c['blush']) . ';">' . implode('', array_map(fn ($l) => '<div style="font-size:12.5px;line-height:1.5;color:' . e($c['ink2']) . ';">' . e($l) . '</div>', $item['setContents'])) . '</div>'; } @endphp{{-- (Lane SET) What was in the box, one member per line, from the ORDER'S OWN SNAPSHOT and never the live set -- the rule the header of this file states for every other value on it. Nothing at all is emitted for a line that is not a set, so every receipt this shop has already sent is BYTE-IDENTICAL, which is what PrintedEnglishUnchangedTest measures.
+
+                     THE FORM IS A RAW PHP BLOCK, and both alternatives were tried and MEASURED here rather than reasoned about. A conditional directive written hard against the closing one above is not compiled at all (Blade's statement regex is \B@word, and there is a word boundary between "f" and "@"), and ships to the page as literal text. An interpolation compiles with a NEWLINE APPENDED, to keep the compiled file's line numbers matching the source -- which added one newline to every receipt with an item on it and turned four documents red. A raw block appends nothing.
+
+                     A <div> per member rather than a <ul>: Outlook's Word engine renders list markers unpredictably inside a table cell, and the quantity is already in the string. No class and no media query -- Gmail's web client strips both out of a message body, which is why nothing in this file uses either.
+
+                     e() on the line and on both colours: a member name is a setting, and CLAUDE.md rule 5 is that anything printed unescaped is a constant. --}}
 
                 {{-- The unit price keeps its figure and gains a word. "AED
                      199.00 each" cannot be misread as a line total the way a

@@ -134,6 +134,51 @@ class Product extends Model
     }
 
     /**
+     * The members of this set, in the order the owner arranged them. (Lane SET)
+     *
+     * Empty for every product that is not a set, which is every product in this
+     * catalogue until somebody creates one in Catalog -> Sets.
+     *
+     * ── WHY THIS RELATION EXISTS RATHER THAN A QUERY IN THE VIEW ────────────
+     *
+     * StorefrontQueryBudgetTest is a budget, and a basket holding one set must
+     * not cost one query per member. A relation is what lets the cart, the
+     * checkout and the drawer eager-load every member of every set in ONE
+     * batched query -- `items.product.setItems.member` -- instead of asking per
+     * line. Measured: /cart with a six-line basket including a three-member set
+     * costs the same number of queries whether the set has three members or
+     * thirty.
+     *
+     * `member` and `variant` are what the display needs; `set` is the inverse
+     * and is only used by the admin screen.
+     */
+    public function setItems()
+    {
+        return $this->hasMany(ProductSetItem::class, 'set_product_id')->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * Is this product a Set?
+     *
+     * READS THE ATTRIBUTE, NOT THE ACCESSOR, and fails CLOSED when the column
+     * was not selected -- the same rule requiresVariant() documents at length
+     * further down this file. Half this application hydrates explicit column
+     * lists because the endpoints are public, and `$this->type` answers null
+     * both for a row whose column is NULL and for a query that simply did not
+     * ask. Guessing "yes" for an absent column would draw a set row around an
+     * ordinary product; guessing "no" is the answer that leaves today's shop
+     * exactly as it is.
+     *
+     * It is never wrong in practice on the paths that matter: every cart and
+     * checkout LINE_COLUMNS list in this application already selects `type`,
+     * because requiresVariant() needed it first.
+     */
+    public function isSet(): bool
+    {
+        return ($this->getAttributes()['type'] ?? null) === 'set';
+    }
+
+    /**
      * The attribute values this product offers.
      *
      * Named explicitly for the same reason as ProductVariant::attributeValues():
@@ -177,7 +222,7 @@ class Product extends Model
      */
     public function toApi(): array
     {
-        return [
+        $out = [
             'slug'              => $this->slug,
             'name'              => $this->name,
             'brand'             => $this->relationLoaded('brand') ? $this->brand?->name : null,
@@ -288,6 +333,39 @@ class Product extends Model
             'stock_status'      => $this->stock_status,
             'short_description' => $this->short_description,
         ];
+
+        /*
+         * ── A SET PUBLISHES WHAT IS IN THE BOX. (Lane SET) ──────────────────
+         *
+         * ONE KEY, AND ONLY ON A SET. Every ordinary product's response is
+         * byte-identical to what this feed has always published — the key is
+         * not present, not null — so nothing that already works changes and no
+         * consumer sees a new field appear on rows it has been reading for
+         * months.
+         *
+         * ▲ /api/* IS UNAUTHENTICATED AND A MEMBER IS A PRODUCT, so this goes
+         *   through App\Support\SetContents::toApi(), which is an explicit
+         *   FIVE-KEY allowlist and never the member model. A `products` row
+         *   carries `wc_id`, `sku` and `total_sales`; the feed publishes a
+         *   member's name, brand, option label, quantity and price and nothing
+         *   else — `sku` is deliberately dropped even though the internal array
+         *   carries it for the admin screen and the packing slip, because a
+         *   supplier code is an internal identifier. tests/Feature/SetApi-
+         *   SecurityTest.php asserts the absent keys BY NAME rather than
+         *   counting them, so a key added to the internal array cannot reach
+         *   the feed by simply being there.
+         *
+         * NO N+1. Api\ProductController::index() and show() both call
+         * SetEagerLoad::on() on the rows they are about to publish, which runs
+         * no query at all when none of them is a set — which is every row in
+         * this catalogue today. A set's members are then batched for the whole
+         * page.
+         */
+        if ($this->isSet()) {
+            $out['set'] = \App\Support\SetContents::toApi(\App\Support\SetContents::fromProduct($this));
+        }
+
+        return $out;
     }
 
     /**

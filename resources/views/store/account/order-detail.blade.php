@@ -228,6 +228,10 @@
             $variant = is_array($item->variant_attributes)
                 ? implode(' · ', array_filter(array_map('strval', $item->variant_attributes)))
                 : '';
+            // (Lane SET) The snapshot, not the pivot: this page prints what was
+            // in the box on the day. One JSON column, no query, and NONE for
+            // every line that is not a set.
+            $kbbSet = \App\Support\SetContents::fromOrderItem($item);
           @endphp
           <div class="kbbod-line">
             <div class="kbbod-thumb" style="{{ $thumb }}"><span class="kbbod-qty">{{ (int) $item->quantity }}</span></div>
@@ -236,7 +240,7 @@
               <b>{{ $item->name_localised ?: $item->name }}</b>{{-- The customer's own order page, so the customer's own language: the snapshot OrderLocale::listen() took at checkout, falling back to the English one, which is what every row holds while this shop serves one language. The Gradient seed above stays $item->name deliberately -- the tile colour is a hash of the string it is given, so translating the seed would repaint a shopper's order history between languages for a value nobody reads. ONE LINE, and at the END of this one: Blade removes a comment but leaves the newline it sat on, so a comment on its own line here adds a blank line per order line and turns StorefrontEnglishUnchangedTest red. --}}
               <span class="kbbod-meta">{{ (int) $item->quantity }} × {!! $receiptMoney((int) $item->unit_price) !!}@if ($variant !== '') · {{ $variant }}@endif</span>
             </div>
-            <div class="kbbod-linetotal">{!! $receiptMoney((int) $item->total) !!}</div>
+            @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'order', 'key' => 'a' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="kbbod-linetotal">{!! $receiptMoney((int) $item->total) !!}</div>
           </div>
         @endforeach
       </div>

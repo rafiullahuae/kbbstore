@@ -365,6 +365,11 @@ class ManualOrderBuilder
             'origin' => $input['channel'] ?? 'other',
         ]);
 
+        // (Lane SET) The set members, in one batch and only when a line is a
+        // set, so snapshot() below has them in hand. No query when the basket
+        // holds no set, which is every back-office order in this shop today.
+        \App\Support\SetEagerLoad::on($cart->items->pluck('product'));
+
         foreach ($cart->items as $item) {
             $product = $item->product;
 
@@ -378,6 +383,13 @@ class ManualOrderBuilder
                 'brand' => $product?->brand?->name,
                 'sku' => $item->variant?->sku ?? $product?->sku,
                 'variant_attributes' => $item->variant?->attributeValues->pluck('name')->all(),
+                // (Lane SET) What was in the box, snapshotted the same way and
+                // in the same position as Store\CheckoutController::place().
+                // NULL for every line that is not a set. A back-office order
+                // and a web order have to remember a set identically, or the
+                // invoice for one of them prints nothing where the other prints
+                // the contents.
+                'set_contents' => \App\Support\SetContents::snapshot($product),
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'subtotal' => $item->lineTotal(),

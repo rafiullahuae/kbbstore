@@ -148,6 +148,28 @@ final class AdminCapabilities
         'catalog.view' => ['owner', 'manager', 'editor'],
         'catalog.manage' => ['owner', 'manager', 'editor'],
         'catalog.export' => ['owner', 'manager', 'editor'],
+
+        /*
+         * Catalog -> Sets (Lane SET, routes/sets-admin.php). A Set is a
+         * `products` row with type='set' plus the product_set_items pivot: the
+         * screen creates a product, prices it, categorises it and publishes it.
+         *
+         * TWO, AND NEITHER IS catalog.manage, although all three hold the same
+         * three roles as this ships. That is the whole point of per-capability
+         * gating: granting somebody the Sets screen must not hand them the
+         * product editor, the category tree and the brands editor -- and the
+         * day catalog.manage is narrowed, which is a reasonable thing to want,
+         * this must not narrow with it from another file with nothing to
+         * notice.
+         *
+         * SPLIT IN TWO for the reason reviews.view is split from
+         * reviews.manage: reading which sets exist is not the same act as
+         * repricing and republishing six products at once. `sets.manage` is the
+         * half that writes to `products`.
+         */
+        'sets.view' => ['owner', 'manager', 'editor'],
+        'sets.manage' => ['owner', 'manager', 'editor'],
+
         'content.manage' => ['owner', 'manager', 'editor'],
 
         /*
@@ -843,6 +865,35 @@ final class AdminCapabilities
         ['GET', 'admin-api/products/*', 'catalog.view'],
         ['PUT', 'admin-api/products/*', 'catalog.manage'],
         ['POST', 'admin-api/inventory', 'catalog.manage'],
+
+        /*
+         * Catalog -> Sets (Lane SET). THE WRITES ABOVE THE READS, because RULES
+         * is first-match-wins and a `GET admin-api/sets/**` rule listed first
+         * would resolve PUT /sets/7 -- which reprices and republishes a live
+         * product -- to `sets.view`. That is the shape of the quiz-leads and
+         * coupons/manage mistakes this file names further down, and
+         * AdminCapabilityMapTest pins pairs like this one by name.
+         *
+         * The exact 'admin-api/sets' lines are SIBLINGS of the '/**' ones and
+         * neither shadows the other: '**' matches one or more whole segments,
+         * so 'admin-api/sets/**' does not match the bare 'admin-api/sets'.
+         *
+         * GET admin-api/sets/products is the member picker's search and falls
+         * correctly to `sets.view` through the read wildcard below it -- it
+         * reads the catalogue, it writes nothing.
+         *
+         * ABOVE the catalogue block that follows, not below it: nothing there
+         * matches 'admin-api/sets' today, and keeping these together is what
+         * makes the pair readable as one decision.
+         */
+        ['POST', 'admin-api/sets', 'sets.manage'],
+        ['POST', 'admin-api/sets/**', 'sets.manage'],
+        ['PUT', 'admin-api/sets/**', 'sets.manage'],
+        ['PATCH', 'admin-api/sets/**', 'sets.manage'],
+        ['DELETE', 'admin-api/sets/**', 'sets.manage'],
+        ['GET', 'admin-api/sets', 'sets.view'],
+        ['GET', 'admin-api/sets/**', 'sets.view'],
+
         // The redirect ledger sits under /categories/ but is a map of the
         // store's old URLs, so it is content rather than catalogue. Above the
         // categories rules because those would otherwise claim it.

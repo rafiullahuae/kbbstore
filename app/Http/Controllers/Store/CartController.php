@@ -282,6 +282,22 @@ class CartController extends Controller
             'coupon:id,code,type,amount',
         ]);
 
+        /*
+         * The set members, and ONLY when a line is a set. (Lane SET)
+         *
+         * Deliberately not three more entries in the list above: Laravel runs a
+         * relation's query whether or not any parent needs it, so that would
+         * cost three queries on every cart render of a shop that has never made
+         * a set. This looks first and returns without a query when there is no
+         * set in the bag, which is every basket in this shop today — the
+         * ceilings in StorefrontQueryBudgetTest do not move. With a set in the
+         * bag it is three queries for the whole page, whether the set holds two
+         * members or thirty. See App\Support\SetEagerLoad.
+         */
+        if ($cart !== null) {
+            \App\Support\SetEagerLoad::on($cart->items->pluck('product'));
+        }
+
         // Said AFTER the load, and unconditionally: this method always fetches,
         // so whatever a mutation changed a moment ago is in hand before the
         // drawer is told it need not look.
@@ -423,7 +439,7 @@ class CartController extends Controller
             return collect();
         }
 
-        return Product::query()
+        $browsed = Product::query()
             ->select(self::LINE_COLUMNS)
             ->visible()
             ->whereIn('id', $ids)
@@ -432,6 +448,12 @@ class CartController extends Controller
             // Preserve most-recently-viewed order, which the SQL IN() does not.
             ->sortBy(fn ($p) => array_search($p->id, $ids, true))
             ->values();
+
+        // A browsed SET draws its contents too. No query when none of the six
+        // is a set, which is every browsed list in this shop today. (Lane SET)
+        \App\Support\SetEagerLoad::on($browsed);
+
+        return $browsed;
     }
 
     private function fragments($cart, Request $request, ?string $toast = null, ?string $error = null): JsonResponse

@@ -404,6 +404,21 @@ class InvoiceDocument
                 'brand' => trim((string) $item->brand),
                 'sku' => trim((string) $item->sku),
                 'variant' => implode(', ', $variant),
+                /*
+                 * (Lane SET) WHAT WAS IN THE BOX, as one line per member —
+                 * "2 × Anua Heartleaf Toner". An empty list on every line that
+                 * is not a set, which is every line in this shop today, so a
+                 * receipt that has no set in it is the receipt it always was.
+                 *
+                 * THE SNAPSHOT AND NEVER THE LIVE SET. It is
+                 * App\Support\SetContents::fromOrderItem(), which reads one JSON
+                 * column written at checkout and consults no relation — the same
+                 * rule every other value in this array follows, and the reason a
+                 * receipt sent once cannot be rewritten by an edit to the set.
+                 * It also costs no query, which is what
+                 * OrderEmailQuerySlopeTest measures.
+                 */
+                'setContents' => \App\Support\SetContents::lines(\App\Support\SetContents::fromOrderItem($item)),
                 'quantity' => (int) $item->quantity,
                 'unitFils' => (int) $item->unit_price,
                 'unitHtml' => self::money((int) $item->unit_price, $w),
