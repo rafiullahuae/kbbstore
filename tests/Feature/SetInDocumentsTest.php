@@ -437,3 +437,163 @@ it('prints nothing at all for an order placed before sets existed', function () 
     expect(str_contains($withSet['order-invoice (html)'], 'border-inline-start:2px solid #eceff3'))->toBeTrue();
     expect(str_contains($withSet['order-invoice (text)'], "\n  * "))->toBeTrue();
 });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * THE ABANDONED-BASKET REMINDER. (Lane SE)
+ *
+ * Not an order document — a BASKET one, and the last message in this shop that
+ * described a Set as a single anonymous name. It is also the only surface in
+ * this sweep that correctly reads the LIVE set rather than a snapshot, because
+ * it is built at send time in order to describe the basket as it is now.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/** A live basket holding a set and an ordinary product. */
+function setDocBasket(): array
+{
+    $toner = setDocProduct('Heartleaf Toner', 9000);
+    $serum = setDocProduct('Azelaic Serum', 5000);
+
+    $set = Product::create([
+        'slug' => 'basket-set-'.Str::random(6),
+        'name' => 'Glow Set',
+        'type' => 'set',
+        'status' => 'publish',
+        'is_visible' => true,
+        'price' => 12000,
+        'stock_status' => 'instock',
+    ]);
+
+    ProductSetItem::create(['set_product_id' => $set->id, 'member_product_id' => $toner->id, 'quantity' => 1, 'position' => 0]);
+    ProductSetItem::create(['set_product_id' => $set->id, 'member_product_id' => $serum->id, 'quantity' => 2, 'position' => 1]);
+
+    $cart = Cart::create([
+        'token' => Str::random(32),
+        'currency' => 'AED',
+        'status' => 'active',
+        'shipping_country' => 'AE',
+        'last_activity_at' => now(),
+    ]);
+    $cart->items()->create(['product_id' => $set->id, 'quantity' => 1, 'unit_price' => 12000]);
+    $cart->items()->create(['product_id' => setDocProduct('Rice Cleanser', 7000)->id, 'quantity' => 1, 'unit_price' => 7000]);
+
+    return ['cart' => $cart, 'set' => $set];
+}
+
+/** Render both halves of the reminder for a basket. */
+function setDocReminder(array $items): array
+{
+    $mailable = new \App\Mail\CartRecoveryReminder(
+        'Your basket is waiting',
+        'You left something behind.',
+        $items,
+        'https://kbeautybliss.test/cart/',
+        'https://kbeautybliss.test/mail-preferences/cart/1',
+    );
+
+    $content = $mailable->content();
+
+    return [
+        'cart-recovery (html)' => (string) $mailable->render(),
+        'cart-recovery (text)' => (string) view($content->text, array_merge($mailable->buildViewData(), $content->with))->render(),
+    ];
+}
+
+it('tells an abandoned shopper what is inside the set they left behind', function () {
+    /*
+     * MUTATION NOTE — RUN, both directions, 2026-09-28. Delete the
+     * `'setContents' => $sets[...] ?? []` line from CartRecovery::basket() and
+     * both halves fail with "is missing member"; delete only the raw-PHP block
+     * from emails/cart-recovery.blade.php and the (html) half fails alone;
+     * delete only the @foreach from cart-recovery-text.blade.php and the (text)
+     * half fails alone. Restore each and it is green.
+     */
+    $fixture = setDocBasket();
+
+    $items = app(\App\Services\CartRecovery::class)->basket((int) $fixture['cart']->id);
+
+    expect($items)->toHaveCount(2)
+        ->and($items[0]['setContents'])->toBe(['1 × Heartleaf Toner', '2 × Azelaic Serum'])
+        // The ordinary line carries the empty list, which is what keeps every
+        // reminder this shop has already sent byte-identical.
+        ->and($items[1]['setContents'])->toBe([]);
+
+    foreach (setDocReminder($items) as $name => $body) {
+        expect(str_contains($body, 'Glow Set'))->toBeTrue("{$name} does not show the set line at all");
+        expect(str_contains($body, '1 × Heartleaf Toner'))->toBeTrue("{$name} is missing member: Heartleaf Toner");
+        expect(str_contains($body, '2 × Azelaic Serum'))->toBeTrue("{$name} is missing member: Azelaic Serum");
+        expect(str_contains($body, 'Rice Cleanser'))->toBeTrue("{$name} does not show the ordinary line");
+        expect(str_contains($body, '1 × Rice Cleanser'))->toBeFalse("{$name} drew a member list on an ordinary line");
+    }
+});
+
+it('reads the set as it is now, because a basket is not a record', function () {
+    /*
+     * The one place in this sweep where the LIVE pivot is the right answer, and
+     * a test that says so — otherwise the next reader, having seen five
+     * surfaces insist on the snapshot, would "fix" this one into reading a
+     * snapshot that does not exist for a basket at all.
+     *
+     * MUTATION NOTE — RUN. Point CartRecovery::basket() at a stored list
+     * instead of SetContents::fromProduct() and this is red: the reminder keeps
+     * chasing the shopper about a serum the set no longer contains.
+     */
+    $fixture = setDocBasket();
+
+    ProductSetItem::where('set_product_id', $fixture['set']->id)
+        ->whereHas('member', fn ($q) => $q->where('name', 'Azelaic Serum'))
+        ->delete();
+
+    $items = app(\App\Services\CartRecovery::class)->basket((int) $fixture['cart']->id);
+
+    expect($items[0]['setContents'])->toBe(['1 × Heartleaf Toner']);
+});
+
+it('costs a basket with no set in it not one extra query', function () {
+    /*
+     * CLAUDE.md rule 1 and rule 4 together: a shop that has never created a set
+     * must pay nothing for this feature. The Eloquent lookup is behind a check
+     * on ids gathered from the statement that was already running, so a basket
+     * of ordinary products reaches the database exactly ONCE — the number it
+     * reached before this lane touched the method.
+     *
+     * MEASURED, NOT ASSERTED, and the set basket is measured beside it so the
+     * figure below is a real ceiling rather than a tautology.
+     *
+     * MUTATION NOTE — RUN. Hoist the `Product::whereKey($setIds)->get()` out
+     * from behind `if ($setIds !== [])` and the plain basket costs 2 queries
+     * and this is red; batch the members with a `foreach` calling
+     * SetEagerLoad::on() per product instead of once for the collection and the
+     * set basket's count climbs with every member.
+     */
+    $plainCart = Cart::create([
+        'token' => Str::random(32), 'currency' => 'AED', 'status' => 'active',
+        'shipping_country' => 'AE', 'last_activity_at' => now(),
+    ]);
+    $plainCart->items()->create(['product_id' => setDocProduct('Plain Toner', 9000)->id, 'quantity' => 1, 'unit_price' => 9000]);
+    $plainCart->items()->create(['product_id' => setDocProduct('Plain Serum', 5000)->id, 'quantity' => 1, 'unit_price' => 5000]);
+
+    $recovery = app(\App\Services\CartRecovery::class);
+
+    $count = static function (callable $fn): int {
+        \Illuminate\Support\Facades\DB::flushQueryLog();
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+        $fn();
+        $n = count(\Illuminate\Support\Facades\DB::getQueryLog());
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+
+        return $n;
+    };
+
+    $plain = $count(fn () => $recovery->basket((int) $plainCart->id));
+
+    expect($plain)->toBe(1, 'a basket with no set in it must still cost exactly the one statement it always cost');
+
+    // And a basket WITH a set is flat in the number of members: the ceiling is
+    // the seven statements SetEagerLoad documents, not one per member.
+    $setCart = setDocBasket()['cart'];
+
+    expect($count(fn () => $recovery->basket((int) $setCart->id)))
+        ->toBeLessThanOrEqual(8, 'the set lookup is not batched — this is the N+1 SetEagerLoad exists to stop');
+});

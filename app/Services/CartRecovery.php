@@ -512,27 +512,88 @@ class CartRecovery
      * what is in the cart NOW. A shopper who removed the expensive thing must
      * not be chased about the expensive thing.
      *
-     * @return list<array{name: string, slug: string, quantity: int, unit_price: int}>
+     * ── AND WHAT IS INSIDE A SET (Lane SE) ────────────────────────────────
+     *
+     * A Set is ONE cart line at ONE price, so a basket holding one was chased
+     * with a single anonymous name — "Glow Set" — and the shopper being asked
+     * to come back could not see what they had left behind. `setContents` is
+     * the member list, one string per member, from the same
+     * App\Support\SetContents every other surface in this application reads.
+     *
+     * ▲ THE LIVE PIVOT HERE, AND THAT IS THE OPPOSITE OF THE ORDER RULE, ON
+     *   PURPOSE. Every ORDER document reads the `order_items.set_contents`
+     *   SNAPSHOT, because an order is a record of a day. A basket is not: it is
+     *   read at send time precisely so the message says what is in the cart NOW
+     *   — the paragraph above this one is the whole reason this method exists —
+     *   and a set whose contents the owner changed this morning should be
+     *   described as it is this morning. fromProduct() is the right reader for
+     *   the same reason the cart drawer and the checkout summary use it.
+     *
+     * ▲ NO MONEY COMES FROM THE MEMBERS. SetContents::lines() prints a quantity
+     *   and a name and nothing else; the figure in the message stays
+     *   `unit_price * quantity` off the cart line, exactly as before. A set is
+     *   sold as one product at one price and this email does not re-derive it.
+     *
+     * ▲ NOT ONE EXTRA QUERY FOR A SHOP WITH NO SETS. The flat join below is
+     *   unchanged apart from two more columns on the same statement; the
+     *   Eloquent lookup underneath runs only when a set is actually in the
+     *   basket, and SetEagerLoad then batches the members for all of them at
+     *   once rather than one query per member. A basket of twenty ordinary
+     *   products costs exactly what it cost before this paragraph was written.
+     *
+     * @return list<array{name: string, slug: string, quantity: int, unit_price: int, setContents: list<string>}>
      */
     public function basket(int $cartId): array
     {
         try {
-            return DB::table('cart_items')
+            $rows = DB::table('cart_items')
                 ->leftJoin('products', 'products.id', '=', 'cart_items.product_id')
                 ->where('cart_items.cart_id', $cartId)
                 ->orderBy('cart_items.id')
                 ->limit(20)
                 ->get([
+                    'products.id as product_id',
+                    'products.type as product_type',
                     'products.name',
                     'products.slug',
                     'cart_items.quantity',
                     'cart_items.unit_price',
-                ])
+                ]);
+
+            /*
+             * The ids of the SETS only, so a basket with none of them never
+             * reaches the database a second time. `whereKey` and not a fresh
+             * filter: these ids came from the statement above.
+             */
+            $setIds = $rows
+                ->filter(fn ($row) => (string) ($row->product_type ?? '') === 'set' && $row->product_id !== null)
+                ->pluck('product_id')
+                ->unique()
+                ->all();
+
+            $sets = [];
+
+            if ($setIds !== []) {
+                $products = \App\Models\Product::whereKey($setIds)->get();
+                \App\Support\SetEagerLoad::on($products);
+
+                foreach ($products as $product) {
+                    $sets[(int) $product->getKey()] = \App\Support\SetContents::lines(
+                        \App\Support\SetContents::fromProduct($product)
+                    );
+                }
+            }
+
+            return $rows
                 ->map(fn ($row) => [
                     'name' => (string) ($row->name ?? 'Item'),
                     'slug' => (string) ($row->slug ?? ''),
                     'quantity' => (int) $row->quantity,
                     'unit_price' => (int) $row->unit_price,
+                    // An EMPTY LIST for every ordinary line, which is every line
+                    // in a basket with no set in it — so the message such a
+                    // basket produces is byte-for-byte the message it was.
+                    'setContents' => $sets[(int) ($row->product_id ?? 0)] ?? [],
                 ])
                 ->all();
         } catch (\Throwable) {
