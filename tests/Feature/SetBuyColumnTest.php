@@ -292,8 +292,17 @@ it('draws nothing at all on a product that is not a set', function () {
     /*
      * CLAUDE.md rule 1, on the page 99% of this catalogue is.
      *
-     * MUTATION NOTE. Remove the `$product->isSet()` test from the panel's @php
-     * block and every ordinary product page grows an empty list. RUN.
+     * MUTATION NOTE. Replace the panel's `@if ($kbbSetPage['members'] !== [])`
+     * with `@if (true)` and every ordinary product page grows an empty list
+     * with an empty footing under it. RUN.
+     *
+     * ▲ AND NOT the `$product->isSet()` on the line above it, which was this
+     *   note's first version and STAYED GREEN under mutation. That guard is
+     *   belt and braces: SetContents::fromProduct() asks isSet() itself and
+     *   answers SetContents::NONE, so removing the panel's copy changes
+     *   nothing at all. Worth knowing, and worth not claiming otherwise --
+     *   a mutation note that names a lever which does not move is a test
+     *   asserting less than its comment says it does.
      */
     $plain = sfProduct('Plain Ceramide Cream', 12900);
 

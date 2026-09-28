@@ -167,7 +167,14 @@
 .ksl-ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ksl-ph.is-blank{background-size:cover;background-position:center}
 
-.ksl-w{min-width:0;display:flex;flex-direction:column;gap:2px;text-align:start}
+/* align-items:flex-start, and it is load-bearing rather than tidy. The name is
+   an <a> with a bottom border, and a flex child in a column stretches to the
+   full cross size by DEFAULT -- so the underline ran the whole width of the
+   words column and sat under the empty space past the end of the name. Caught
+   in Chromium at 1280 and at 390; `flex-start` is the logical value, so it is
+   the right-hand edge in Arabic from the same declaration. */
+.ksl-w{min-width:0;display:flex;flex-direction:column;align-items:flex-start;
+       gap:2px;text-align:start}
 .ksl-br{font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
         color:var(--ink-2,#5E545A);opacity:.72;overflow-wrap:anywhere}
 .ksl-nm{font-size:14px;line-height:1.35;font-weight:640;color:var(--ink,#2A2228);
