@@ -71,7 +71,41 @@
        repeated here because that service emits it nowhere on the storefront
        (see docs/W1-SITE-WIDTH.md §"found, not fixed"). */
     --kbb-gap:16px;
-    --kbb-tile:260px;
+    /* ── FIVE COLUMNS ON A DESKTOP, TWO ON A PHONE ───────────────── Lane PG ──
+       260px was the figure that reproduced the FOUR-column shop W1 inherited.
+       The owner asked for "by default 5 columns on desktop and 2 columns on
+       mobile", so the tile minimum moves and nothing else does: the count is
+       still derived from the row by the one rule below, and there is still no
+       breakpoint anywhere in it.
+
+       The arithmetic, at gap 16: a row holds N tiles when
+       row >= N * (tile + gap) - gap. At a 1280px screen the page container is
+       1256 and a grid's row is 1212 (the rails' is 1203), so
+
+           260px  ->  (1203 + 16) / 276 = 4.4   four columns
+           220px  ->  (1203 + 16) / 236 = 5.1   five columns
+
+       and 220 is inside the only window that gives five and not six there
+       (187.2 < tile <= 227.8). The ladder it produces, all of it derived and
+       none of it declared — row widths, so subtract ~44px of gutter to read
+       them as screens:
+
+           row  <  692px    2 columns   (the floor below, which holds even where
+                                         the tiles would be narrower than this)
+           row >=  692px    3 columns   ~736px screen
+           row >=  928px    4 columns   ~972px screen
+           row >= 1164px    5 columns   ~1208px screen   <- 1280 lands here
+           row >= 1400px    6 columns   ~1444px screen
+
+       SIX AT 1680 IS NOT A MISTAKE. "on 1680px the grid products will show 1
+       column extra" is the owner's earlier request, and it is the same request:
+       five at a desktop, one more on the big screen. The container is capped at
+       --site-max, so the answer stops moving above 1680 rather than climbing.
+
+       /shop keeps its own --kbb-tile-shop at 220 (it was already 220, for the
+       filter rail beside it) — and with the rail now hidden by default its row
+       is the full 1212, so it lands on five at 1280 as well. */
+    --kbb-tile:220px;
     --kbb-cols-floor:2;
     --kbb-cols-cap:8;
 

@@ -72,12 +72,20 @@ namespace App\Services;
  * it — 200px a tile. A viewport breakpoint cannot know about the rail.
  * `100%` inside `grid-template-columns` cannot NOT know about it.
  *
- * So the number the owner sets here is a TILE MINIMUM, not a count. `tile`
- * ships at 260px, which is the value that reproduces today's rendered count at
- * 320, 360, 390, 414, 480, 600, 768, 834, 1024, 1280 and 1366 — and gives
- * FIVE at 1680 where today gives four, which is the one extra column he asked
- * for, arrived at by arithmetic rather than by a new breakpoint. Every cell
- * that moves is in docs/W1-SITE-WIDTH.md, with the width it moved at.
+ * So the number the owner sets here is a TILE MINIMUM, not a count. It shipped
+ * at 260px, the value that reproduced the four-column shop W1 inherited.
+ *
+ * ▲ IT SHIPS AT 220px NOW, AND THAT IS A DEFAULT THE OWNER ASKED FOR IN AS MANY
+ * WORDS: "by default 5 columns on desktop and 2 columns on mobile".     Lane PG
+ *
+ * Nothing about the mechanism changed — the count is still derived from the row
+ * by one declaration with no breakpoint in it. 220 is the tile minimum that
+ * gives FIVE columns and not six in the 1203px row a 1280px screen has, and the
+ * phone's two come from `cols_floor` exactly as before. The full derived ladder,
+ * and the arithmetic behind the number, are in the :root comment in
+ * resources/css/kbb/kbb.css beside the declaration itself, so the default and
+ * its reason cannot drift apart. SiteLayoutDefaultsMatchCssTest pins that the
+ * two copies agree.
  *
  * ── WHAT SHIPS CHANGED, AND IT IS EXACTLY TWO THINGS ────────────────────────
  *
@@ -133,7 +141,7 @@ class SiteLayout
             'On: the header is exactly as wide as the page. Off: the header keeps its own Content width from Appearance → Header, which is 1280px.'],
 
         // ── Product grid ──
-        'tile' => ['range', 'Smallest card', 260,
+        'tile' => ['range', 'Smallest card', 220,
             'The column count is worked out from this and the width the grid actually has. Smaller means more columns, sooner.',
             ['min' => 120, 'max' => 420, 'step' => 10, 'unit' => 'px']],
         'tile_shop' => ['range', 'Smallest card · shop listing', 220,
