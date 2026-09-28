@@ -120,7 +120,7 @@ export function initSearch() {
 
         if (!data.total) {
             paintLeft(`<div class="sgh">No matches</div>`
-                + `<a data-sg-row href="${data.all_url}"><span class="sn">Search anyway for “${escapeHtml(data.query)}”</span></a>`);
+                + `<a data-sg-row href="${safeHref(data.all_url)}"><span class="sn">Search anyway for “${escapeHtml(data.query)}”</span></a>`);
             panel.classList.add('on');
             index = -1;
             return;
@@ -134,17 +134,26 @@ export function initSearch() {
             ? data.groups.filter((g) => g.key !== 'brands')
             : data.groups;
 
-        paintLeft(groups.map((g) => `<div class="sgh">${g.label}</div>`
-            + g.items.map((it) => `<a data-sg-row href="${it.url}">`
-                + `<span class="si" style="${it.image
-                        ? `background:#fff url('${it.image}') center/cover`
-                        : `background:${it.colour || 'linear-gradient(135deg,#ffd1e2,#ff9fc1)'}`}">${it.image ? '' : escapeHtml(it.initials || '')}</span>`
+        paintLeft(groups.map((g) => `<div class="sgh">${escapeHtml(g.label)}</div>`
+            + g.items.map((it) => {
+                /* The image goes through cssUrl(), which may refuse it — and a
+                   refused address must fall to the gradient rather than draw
+                   `url('')`, which makes the browser fetch this very page and
+                   try to decode it as a picture. So the decision is made once,
+                   here, and not inside the template. */
+                const bg = cssUrl(it.image);
+
+                return `<a data-sg-row href="${safeHref(it.url)}">`
+                + `<span class="si" style="${bg
+                        ? `background:#fff url('${bg}') center/cover`
+                        : `background:${escapeHtml(it.colour || 'linear-gradient(135deg,#ffd1e2,#ff9fc1)')}`}">${bg ? '' : escapeHtml(it.initials || '')}</span>`
                 + `<span class="sn">${escapeHtml(it.label)}`
                 + (it.meta ? `<small>${escapeHtml(it.meta)}</small>` : '')
                 + `</span>`
                 + (it.price ? `<span class="sp">${escapeHtml(it.price)}</span>` : '')
-                + `</a>`).join('')).join('')
-            + `<a class="viewall" data-sg-row href="${data.all_url}">View all results <b>(${data.total} found)</b> <i>${onward()}</i></a>`);
+                + `</a>`;
+            }).join('')).join('')
+            + `<a class="viewall" data-sg-row href="${safeHref(data.all_url)}">View all results <b>(${escapeHtml(data.total)} found)</b> <i>${onward()}</i></a>`);
 
         panel.classList.add('on');
         index = -1;
@@ -201,6 +210,77 @@ function escapeHtml(s) {
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   THIS PANEL BUILDS HTML OUT OF /api/search AND SETS innerHTML.
+
+   Every value below reaches the page through a template string, so an
+   address carrying a double quote closed the attribute it sat in and the
+   next token was read as a new attribute -- an event handler, on a panel
+   every shopper opens. That is SCRIPT injection and not the CSS-context
+   kind the Blade surfaces had; it was found while fixing those and is the
+   bigger of the two.
+
+   Nothing here was ever attacker-controlled while the owner typed his own
+   product names and image paths. The WordPress import is about to write
+   thousands of them from a database this shop did not author, which is why
+   it is fixed now rather than noted.
+
+   The two helpers below are the JavaScript twins of App\Support\CssUrl,
+   and they answer the same questions in the same order for the same
+   reasons; that file carries the full argument. Keep them in step.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Is the scheme one this shop serves, read the way a browser will?
+
+   Decode entities FIRST, then strip whitespace and control characters, and
+   only then match -- a browser resolves `jav&#x09;ascript:` to a javascript
+   URL, so a check run on the raw string sees something starting "jav&" and
+   waves it through. `//evil.test/x.png` is refused too: it is somebody
+   else's host wearing this page's scheme. */
+function schemeIsServed(url) {
+    const probe = String(url)
+        .replace(/&#x([0-9a-f]+);?/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+        .replace(/&#(\d+);?/g, (_, d) => String.fromCharCode(parseInt(d, 10)))
+        .replace(/[\s\u0000-\u001F\u007F-\u009F]+/g, '')
+        .toLowerCase();
+
+    if (probe.startsWith('//')) return false;
+
+    const m = probe.match(/^([a-z][a-z0-9+.-]*):/);
+
+    // No scheme is a path, a query or a fragment: it cannot name one this
+    // shop does not serve.
+    return m ? (m[1] === 'http' || m[1] === 'https') : true;
+}
+
+/* A URL that is about to become an `href`. Refused ones become '#', never
+   '' -- an empty href is the current page, so a refused link would silently
+   reload the shop instead of doing nothing. */
+function safeHref(url) {
+    return (url && schemeIsServed(url)) ? escapeHtml(url) : '#';
+}
+
+/* A URL that is about to sit inside a CSS `url('…')` INSIDE an HTML
+   attribute, so it needs both escapes, CSS first.
+
+   One replace() pass for the five delimiters, not five passes: a second
+   pass would re-scan the backslashes the first one wrote and turn \' into
+   \\'  -- an escaped backslash and a LIVE quote, which is the bug rather
+   than the fix. Then the C0 controls as hex escapes, because a raw newline
+   ends a CSS string and hands what follows to the parser as a fresh
+   declaration. Refused addresses return '' so the caller draws its
+   gradient. */
+function cssUrl(url) {
+    if (!url || !schemeIsServed(url)) return '';
+
+    const escaped = String(url)
+        .replace(/[\\'"()]/g, (c) => '\\' + c)
+        .replace(/[\u0000-\u001F\u007F]/g,
+            (c) => '\\' + c.charCodeAt(0).toString(16) + ' ');
+
+    return escapeHtml(escaped);
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    The panel before anything is typed.
@@ -239,9 +319,16 @@ async function loadStarter() {
 const chipRow = (items) =>
     `<div class="chips">${items.map((t) => `<a class="chip" data-sg-term="${escapeHtml(t)}">${escapeHtml(t)}</a>`).join('')}</div>`;
 
-const productRow = (p) =>
-    `<a class="sgi" href="${escapeHtml(p.url)}"><i${p.image ? ` style="background-image:url('${escapeHtml(p.image)}')"` : ''}></i>
-       <span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.brand || '')} · ${p.price}</small></span></a>`;
+/* escapeHtml() alone was not enough on the image: it turns `'` into `&#39;`,
+   which the HTML parser decodes back to a live quote BEFORE CSS reads the
+   attribute — so the quote closed the url() and the rest of the address became
+   declarations this shop did not write. cssUrl() escapes for CSS first. */
+const productRow = (p) => {
+    const bg = cssUrl(p.image);
+
+    return `<a class="sgi" href="${safeHref(p.url)}"><i${bg ? ` style="background-image:url('${bg}')"` : ''}></i>
+       <span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.brand || '')} · ${escapeHtml(p.price)}</small></span></a>`;
+};
 
 function renderStarter(panel, data) {
     if (!data) return false;
