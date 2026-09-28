@@ -841,6 +841,16 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/homepage-preview-admin.php';
 
+        /*
+         * Live editing of a homepage section, from the picture of it -- Lane HL.
+         * Beside the preview above because it is built on it: the same reader,
+         * the same renderHome(), with the selection hook switched on. Its
+         * package ships 2027_03_21_000000_clear_caches_homepage_live, because
+         * a route this file adds does nothing until the compiled route cache
+         * is cleared.
+         */
+        require __DIR__.'/homepage-live-admin.php';
+
         // Storefront settings, grouped into tabs.
         Route::get('/ecommerce',  [\App\Http\Controllers\Admin\EcommerceApiController::class, 'show']);
         Route::post('/ecommerce', [\App\Http\Controllers\Admin\EcommerceApiController::class, 'save']);
