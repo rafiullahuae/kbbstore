@@ -135,6 +135,38 @@ final class ColumnWidths
             'subject' => 191,
             'summary' => 255,
         ],
+        /*
+         * The cards banner's two tables — Lane BN. Every width here is the
+         * migration's own, read back off information_schema rather than copied
+         * from the Blueprint, which is the only way this fingerprint means
+         * anything: ColumnWidthGuardTest compares it against a live MySQL
+         * schema in both directions and fails the build for a column added,
+         * dropped, widened or narrowed without this being touched.
+         *
+         * `image` and `button_url` are the two wide ones and both are 400 on
+         * purpose: a stored upload path under wp-content/uploads/ with a date
+         * folder and a long original name gets close to 200, and a campaign URL
+         * with UTM parameters passes 255 routinely. On SQLite an over-long one
+         * of either is invisible; on the live shop it is a 500 when the owner
+         * saves a card.
+         */
+        'banner_cards' => [
+            'alt' => 255,
+            'body' => 255,
+            'button_label' => 80,
+            'button_url' => 400,
+            'heading' => 190,
+            'image' => 400,
+            'status' => 16,
+        ],
+        'banner_sets' => [
+            'animation' => 24,
+            'name' => 190,
+            'ratio' => 16,
+            'shadow' => 16,
+            'slug' => 190,
+            'status' => 16,
+        ],
         'blocks' => [
             'name' => 255,
             'slug' => 255,
