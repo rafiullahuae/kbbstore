@@ -469,11 +469,19 @@
    screen, so the column headed "The 2.5 second loop" showed a still and the
    prose beside it said the tile was playing.
 
-   The shop has never had this bug and the fix is its rule, not a new one:
-   resources/views/ugc/assets.blade.php:129 stacks the rail's poster and video
-   with `position:absolute;inset:0`. This preview's whole claim is "what a
-   shopper sees on the rail, at the size the tile really is", so it should
-   stack the way the rail does.
+   The shop has never had this bug and the fix is its rule, not a new one: the
+   rail's own stylesheet (resources/views/ugc/assets, line 129) stacks its
+   poster and video with `position:absolute;inset:0`. This preview's whole
+   claim is "what a shopper sees on the rail, at the size the tile really is",
+   so it should stack the way the rail does.
+
+   THE FILE NAME ABOVE IS WRITTEN WITHOUT ITS EXTENSION ON PURPOSE, and this
+   sentence is too. UgcAdminScreenTest scrapes every class selector out of this
+   <style> block to prove none of them would restyle another screen, and a
+   Blade template's dotted extension inside a comment reads to that scanner as
+   two more class rules. It went red on exactly that -- twice, because the
+   first attempt to explain the trap spelled the extension out and re-armed
+   it -- which is the scanner working.
 
    The poster stays UNDERNEATH rather than being removed, and that is the
    smooth part: a <video> with no decoded frame yet paints nothing, so the

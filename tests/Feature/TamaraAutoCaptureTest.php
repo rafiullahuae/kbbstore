@@ -251,11 +251,35 @@ it('offers the switch on the payments screen as a bool in the settings column', 
 
     expect($type)->toBe('bool')
         ->and($group)->toBe('settings')
-        ->and($label)->not->toBe('')
-        // The help has to say what the default is, because "off by default" is
-        // the only reason the owner can trust the update not to have moved money
-        // before he read this screen.
-        ->and(strtolower($help))->toContain('off by default');
+        ->and($label)->not->toBe('');
+
+    /*
+     * ── THE PIN WAS ADVANCED, NOT DELETED, AND HERE IS WHY ──────────────────
+     *
+     * This read `toContain('off by default')`, and the reasoning beside it was
+     * right: the help has to say what the default is, because that sentence is
+     * the only reason the owner can trust an update not to have moved money
+     * before he read this screen.
+     *
+     * On 28 September 2026 he answered the question this lane deliberately left
+     * him — *"yes"* — so the default is ON and the migration
+     * 2027_03_21_000000_tamara_auto_capture_on_by_default writes it. The old
+     * needle then pinned a sentence that would have been FALSE. Deleting the
+     * assertion would have thrown away the rule with the needle; keeping it
+     * would have kept a help text that lied.
+     *
+     * So the RULE is what is pinned, and it is pinned harder than before: the
+     * help must state the default AND say how to stop it, because a switch that
+     * takes money on its own and does not say how to turn it off is worse than
+     * one that never moved.
+     */
+    $lower = strtolower($help);
+
+    expect(str_starts_with($lower, 'on.'))
+        ->toBeTrue('the help no longer opens by saying what the default is');
+
+    expect(str_contains($lower, 'set this to off'))
+        ->toBeTrue('the help does not tell the owner how to stop it capturing on its own');
 });
 
 /* ══════════════════════════════════════════ 2. switched on, it captures ═════ */
