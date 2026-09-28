@@ -64,7 +64,24 @@ final class SetEagerLoad
         'setItems',
         'setItems.member:id,slug,name,brand_id,sku,price,sale_price,sale_starts_at,sale_ends_at,image,type',
         'setItems.member.brand:id,name,slug',
-        'setItems.variant:id,product_id,sku,price,sale_price,sale_starts_at,sale_ends_at,image',
+        /*
+         * ▲ NO `sale_starts_at`/`sale_ends_at` HERE, and that is not a trim —
+         *   `product_variants` HAS NO SUCH COLUMNS. The first draft of this list
+         *   copied them from the products line above it, which made every query
+         *   for a set with a chosen option fail with SQLSTATE[42S22] "Unknown
+         *   column 'sale_starts_at'". It reached the MySQL parity run before it
+         *   was caught, which is the run that exists for exactly this: SQLite
+         *   let the statement through and MySQL did not.
+         *
+         *   The sale WINDOW a variant honours is its PARENT PRODUCT's -- see
+         *   ProductVariant::saleWindowOpen(), which reads
+         *   `$this->product->sale_starts_at`. That is why the parent is loaded
+         *   on the line below, with the four columns that method touches: a
+         *   variant-priced member would otherwise cost one query per member to
+         *   ask whether its parent's markdown is running.
+         */
+        'setItems.variant:id,product_id,sku,price,sale_price,image,stock_status',
+        'setItems.variant.product:id,price,sale_price,sale_starts_at,sale_ends_at',
         'setItems.variant.attributeValues:id,attribute_id,name',
     ];
 

@@ -218,6 +218,40 @@ it('refuses a set that contains no products', function () {
         ->assertStatus(422);
 });
 
+it('searches for members without letting a wildcard match everything', function () {
+    /*
+     * ── TWO DEFECTS IN ONE CASE, AND THE MYSQL RUN FOUND THE FIRST ─────────
+     *
+     * 1. THE ESCAPE CHARACTER. This shipped with `ESCAPE '\'`, which is a
+     *    SYNTAX ERROR on MySQL — the backslash escapes the closing quote — so
+     *    the member picker answered 500 to every search on the real database
+     *    while a green SQLite suite said nothing. It is `!` now, the character
+     *    every other search in this back office already uses. This case is red
+     *    under `-c phpunit-mysql.xml` without that fix and green on SQLite
+     *    either way, which is exactly why the parity run is required.
+     *
+     * 2. THE WILDCARDS. `%` and `_` are LIKE metacharacters, so a search for
+     *    "%" unescaped matches the WHOLE CATALOGUE — an operator typing a
+     *    stray % would be offered every product in the shop as a member.
+     *
+     * MUTATION NOTE. Delete escapeLike()'s body (return $term) and the second
+     * half is red: the "%" search returns the toner. RUN.
+     */
+    $this->actingAs(setAdmin('owner'), 'admin');
+
+    $toner = setMemberProduct('Heartleaf Toner', 9000);
+
+    $hit = $this->getJson('/admin-api/sets/products?q=Heartleaf')->assertOk()->json('products');
+    expect(collect($hit)->pluck('id')->all())->toContain($toner->id);
+
+    // A bare wildcard is a literal, not "everything".
+    $wild = $this->getJson('/admin-api/sets/products?q=%25')->assertOk()->json('products');
+    expect(collect($wild)->pluck('id')->all())->not->toContain($toner->id);
+
+    $under = $this->getJson('/admin-api/sets/products?q=Heartleaf_Toner')->assertOk()->json('products');
+    expect(collect($under)->pluck('id')->all())->not->toContain($toner->id);
+});
+
 it('refuses a set that contains a set, and one that contains itself', function () {
     /*
      * A set inside a set is an infinite box: SetContents would have to recurse

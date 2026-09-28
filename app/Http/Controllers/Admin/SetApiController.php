@@ -83,10 +83,25 @@ class SetApiController extends Controller
     /** How many members one set may hold. A box, not a catalogue. */
     private const MAX_MEMBERS = 40;
 
-    /** The escape character for a LIKE search, and its SQL twin. */
-    private const LIKE_ESCAPE = '\\';
+    /**
+     * The escape character for a LIKE search, and its SQL twin.
+     *
+     * ▲ `!` AND NOT A BACKSLASH, which is what this shipped with and what the
+     *   MySQL parity run caught. `ESCAPE '\\'` is a syntax error on MySQL —
+     *   the backslash escapes the closing quote, and the server answers
+     *   SQLSTATE[42000] 1064 on every search, so the member picker 500'd for
+     *   every operator. SQLite accepts it, which is why a green SQLite suite
+     *   said nothing.
+     *
+     *   `!` is the character every other search in this back office already
+     *   uses — CatalogProductsApiController, ProductEditorApiController,
+     *   ReviewAssignApiController and ReviewBulkApiController all declare
+     *   exactly this pair — so this is the convention rather than a second
+     *   answer to the same question.
+     */
+    private const LIKE_ESCAPE = '!';
 
-    private const LIKE_ESCAPE_SQL = "'\\'";
+    private const LIKE_ESCAPE_SQL = "'!'";
 
     /* ---------------------------------------------------------------- index */
 
