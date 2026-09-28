@@ -29,13 +29,13 @@ class PagesApiController extends Controller
         ['key' => 'home',      'name' => 'Home',            'path' => '/',              'note' => 'Hero, rails, brands, routine builder'],
         ['key' => 'shop',      'name' => 'Shop',            'path' => '/shop/',         'note' => 'Server-side filters, indexable URLs'],
         ['key' => 'product',   'name' => 'Product',         'path' => '/product/{slug}/','note' => 'Gallery, variants, reviews'],
-        ['key' => 'category',  'name' => 'Category',        'path' => '/product-category/{path}/', 'note' => 'Nested to four levels'],
+        ['key' => 'category',  'name' => 'Category',        'path' => '/collections/{path}/', 'note' => 'Nested to four levels'],
         ['key' => 'cart',      'name' => 'Cart',            'path' => '/cart/',         'note' => 'Page and mini-cart drawer'],
         ['key' => 'checkout',  'name' => 'Checkout',        'path' => '/checkout/',     'note' => 'Contact, delivery, payment'],
         ['key' => 'account',   'name' => 'My Account',      'path' => '/my-account/',   'note' => 'Orders, addresses, details'],
         ['key' => 'quiz',      'name' => 'Skin Quiz',       'path' => '/skin-quiz/',    'note' => 'Funnel and lead capture'],
         ['key' => 'reviews',   'name' => 'Review Wall',     'path' => '/reviews/',      'note' => 'All approved reviews'],
-        ['key' => 'blog',      'name' => 'Journal',         'path' => '/skincare-guide/','note' => 'Blog index'],
+        ['key' => 'blog',      'name' => 'Journal',         'path' => '/blog/','note' => 'Blog index'],
     ];
 
     public function store(): JsonResponse

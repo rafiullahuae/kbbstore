@@ -119,7 +119,7 @@ function coverShapes(): array
 function pagesUnderTest(): array
 {
     return ['/', '/new-in', '/best-sellers', '/super-sale', '/everything-under-54-aed',
-        '/skin-quiz', '/skincare-guide/', '/cover-plain-url/'];
+        '/skin-quiz', '/blog/', '/blog/cover-plain-url/'];
 }
 
 it('renders exactly one h1 on every storefront page', function () {
@@ -154,7 +154,7 @@ it('gives every rendered image a non-empty alt', function () {
 it('renders the article hero as a real img rather than a background', function () {
     seedIndexableStorefront();
 
-    $html = (string) test()->get('/cover-plain-url/')->getContent();
+    $html = (string) test()->get('/blog/cover-plain-url/')->getContent();
     $images = renderedImages($html);
 
     $hero = array_values(array_filter(
@@ -178,7 +178,7 @@ it('renders journal and product photographs as img elements', function () {
     seedIndexableStorefront();
 
     // Journal index covers.
-    $blog = renderedImages((string) test()->get('/skincare-guide/')->getContent());
+    $blog = renderedImages((string) test()->get('/blog/')->getContent());
     expect($blog)->not->toBeEmpty('the journal index renders no <img>');
 
     $home = (string) test()->get('/')->getContent();
@@ -214,7 +214,7 @@ it('keeps the placeholder for covers that are not photographs', function () {
     seedIndexableStorefront();
 
     // A gradient cover is decoration: no <img> for it, and the emoji stays.
-    $html = (string) test()->get('/cover-gradient/')->getContent();
+    $html = (string) test()->get('/blog/cover-gradient/')->getContent();
 
     expect($html)->toContain('background:linear-gradient(135deg,#FFF0F4,#FCE0E8)')
         ->toContain('✍️');
@@ -230,7 +230,7 @@ it('keeps the placeholder for covers that are not photographs', function () {
      * where a card used to have something in it. Testing only the article page
      * missed this entirely: they are different templates.
      */
-    $index = (string) test()->get('/skincare-guide/')->getContent();
+    $index = (string) test()->get('/blog/')->getContent();
 
     expect($index)->toContain('background:linear-gradient(135deg,#FFF0F4,#FCE0E8)')
         ->toContain('✍️');
@@ -244,7 +244,7 @@ it('publishes og:image only when the cover is a photograph', function () {
     seedIndexableStorefront();
 
     $ogImage = function (string $slug): ?string {
-        $html = (string) test()->get('/cover-' . $slug . '/')->getContent();
+        $html = (string) test()->get('/blog/cover-' . $slug . '/')->getContent();
 
         return preg_match('#<meta property="og:image" content="([^"]*)"#i', $html, $m) === 1
             ? $m[1]

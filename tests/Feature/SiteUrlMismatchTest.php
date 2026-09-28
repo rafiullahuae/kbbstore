@@ -214,7 +214,7 @@ it('never lets a forged Host header into a canonical tag', function () {
     Setting::updateOrCreate(['key' => 'site_url'], ['value' => 'https://real-shop.test']);
     Setting::flushMap();
 
-    $html = $this->get('https://attacker.test/korean-skincare-brands/')->getContent();
+    $html = $this->get('https://attacker.test/brands/')->getContent();
 
     expect($html)->toContain('<link rel="canonical" href="https://real-shop.test/');
 
@@ -292,7 +292,7 @@ it('reports the mismatch, naming both addresses, when the shop has moved', funct
     expect($data['current_host'])->toBe('moved-shop.test');
 
     // And the storefront is still a storefront on the new host.
-    $this->get('https://moved-shop.test/korean-skincare-brands/')->assertOk();
+    $this->get('https://moved-shop.test/brands/')->assertOk();
 });
 
 it('names the things a domain move breaks that writing APP_URL does not fix', function () {

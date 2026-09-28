@@ -248,7 +248,7 @@ it('keeps the brand directory link on a panel whose leaves have all been dropped
 
     expect(brandMenuSlugs($urls))->toBe([], 'A brand filter survived the brands table being emptied.');
 
-    expect(in_array('/korean-skincare-brands/', $urls, true))
+    expect(in_array('/brands/', $urls, true))
         ->toBeTrue('The Brands node lost its own link to the directory.');
 
     // And the rest of the menu is untouched — the category leaves do not depend
@@ -269,12 +269,12 @@ it('redirects the retired /brand/{slug}/ address to the canonical brand page', f
 
     expect($response->getStatusCode())->toBe(301, '/brand/cosrx/ no longer redirects; an indexed URL has gone dead.');
 
-    expect(str_ends_with((string) $response->headers->get('Location'), '/korean-skincare-brands/cosrx/'))
+    expect(str_ends_with((string) $response->headers->get('Location'), '/brands/cosrx/'))
         ->toBeTrue('/brand/cosrx/ redirects somewhere other than the canonical brand page: '
             . $response->headers->get('Location'));
 
     // And the target is really there, so the 301 is not a hop to a 404.
-    $this->get('/korean-skincare-brands/cosrx/')->assertOk();
+    $this->get('/brands/cosrx/')->assertOk();
 });
 
 it('answers 404 rather than a soft landing for a brand this shop does not carry', function () {

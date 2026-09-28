@@ -72,7 +72,7 @@ it('shows a newly created category on the storefront without waiting for a cache
     // And the category is reachable at its real path immediately.
     syncProduct('aq-fresh-p', Category::find($created['id']));
 
-    $this->get('/product-category/' . $created['slug'] . '/')
+    $this->get('/collections/' . $created['slug'] . '/')
         ->assertStatus(200)
         ->assertSee('AQ Fresh Category', false);
 });

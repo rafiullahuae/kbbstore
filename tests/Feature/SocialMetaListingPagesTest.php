@@ -14,7 +14,7 @@
  * homepage and the cart publish — the store-wide default share image, and no
  * breadcrumb. The brand's own `description` and `logo` columns, both rendered
  * on the page itself, reached the <head> of nothing. Verified by fetching
- * /korean-skincare-brands/round-lab/ from a running preview before the change.
+ * /brands/round-lab/ from a running preview before the change.
  *
  * ShopController passed a description, a canonical and a breadcrumb but no
  * image, so a category with its own banner photograph — the picture at the top
@@ -107,7 +107,7 @@ it('gives a brand page the brand\'s own description, not the store\'s', function
         'description' => 'Round Lab bottles the mineral water of Dokdo into barrier-first suncare.',
     ]);
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
     expect(socialMeta($html, 'og:description'))
         ->toBe('Round Lab bottles the mineral water of Dokdo into barrier-first suncare.');
@@ -124,7 +124,7 @@ it('falls back to the store description rather than inventing one for a brand wi
 
     $brand = socialBrand(['description' => null]);
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
     // The honest answer for a brand the owner has not written about is the
     // store's own sentence, which is true of it — not a generated claim about
@@ -135,7 +135,7 @@ it('falls back to the store description rather than inventing one for a brand wi
 it('shares a brand page with the brand\'s logo, absolute', function () {
     $brand = socialBrand(['logo' => '/wp-content/uploads/2024/03/round-lab.png']);
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
     expect(socialMeta($html, 'og:image'))
         ->toBe(SOCIAL_BASE . '/wp-content/uploads/2024/03/round-lab.png');
@@ -158,7 +158,7 @@ it('prefers the banner photograph over the logo when the owner has turned one on
         ],
     ]);
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
     // The share card and the top of the page show the same picture.
     expect(socialMeta($html, 'og:image'))->toBe(SOCIAL_BASE . '/wp-content/uploads/round-lab-hero.jpg');
@@ -178,7 +178,7 @@ it('does not publish a banner image the page itself does not draw', function () 
         ],
     ]);
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
     expect(socialMeta($html, 'og:image'))->toBe(SOCIAL_BASE . '/wp-content/uploads/share-default.jpg');
 });
@@ -186,7 +186,7 @@ it('does not publish a banner image the page itself does not draw', function () 
 it('falls back to the store share image for a brand with no picture of its own', function () {
     $brand = socialBrand(['logo' => null]);
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
     expect(socialMeta($html, 'og:image'))->toBe(SOCIAL_BASE . '/wp-content/uploads/share-default.jpg');
 });
@@ -194,9 +194,9 @@ it('falls back to the store share image for a brand with no picture of its own',
 it('canonicalises a brand page to itself, with a breadcrumb that resolves', function () {
     $brand = socialBrand();
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
-    $expected = SOCIAL_BASE . '/korean-skincare-brands/' . $brand->slug . '/';
+    $expected = SOCIAL_BASE . '/brands/' . $brand->slug . '/';
 
     expect(socialCanonical($html))->toBe($expected);
     expect(socialMeta($html, 'og:url'))->toBe($expected);
@@ -224,9 +224,9 @@ it('keeps the base path exactly once in everything it publishes', function () {
 
     $brand = socialBrand(['logo' => '/wp-content/uploads/round-lab.png']);
 
-    $html = test()->get('/korean-skincare-brands/' . $brand->slug)->assertOk()->getContent();
+    $html = test()->get('/brands/' . $brand->slug)->assertOk()->getContent();
 
-    $expected = SOCIAL_BASE . '/kbb-upgrade/korean-skincare-brands/' . $brand->slug . '/';
+    $expected = SOCIAL_BASE . '/kbb-upgrade/brands/' . $brand->slug . '/';
 
     expect(socialCanonical($html))->toBe($expected);
     expect(socialMeta($html, 'og:url'))->toBe($expected);
@@ -263,7 +263,7 @@ it('shares a category with its own banner photograph', function () {
     ]);
     $product->categories()->syncWithoutDetaching([$category->id]);
 
-    $html = test()->get('/product-category/' . $category->slug)->assertOk()->getContent();
+    $html = test()->get('/collections/' . $category->slug)->assertOk()->getContent();
 
     expect(socialMeta($html, 'og:image'))->toBe(SOCIAL_BASE . '/wp-content/uploads/sunscreens-hero.jpg');
     expect(socialMeta($html, 'twitter:image'))->toBe(socialMeta($html, 'og:image'));
@@ -291,8 +291,8 @@ it('publishes nothing from the settings table that is not meant to be public', f
     $brand = socialBrand(['logo' => '/wp-content/uploads/round-lab.png']);
 
     $pages = [
-        '/korean-skincare-brands/' . $brand->slug,
-        '/korean-skincare-brands',
+        '/brands/' . $brand->slug,
+        '/brands',
         '/shop',
         '/',
     ];

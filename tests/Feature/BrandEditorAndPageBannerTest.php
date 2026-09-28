@@ -82,7 +82,7 @@ function bwBrand(?array $banner = null): Brand
 /** The archive for a category, which is where its banner has to appear. */
 function bwCategoryHtml(Category $c): string
 {
-    return test()->get('/product-category/' . $c->path . '/')->assertOk()->getContent();
+    return test()->get('/collections/' . $c->path . '/')->assertOk()->getContent();
 }
 
 /**
@@ -102,7 +102,7 @@ function bwBrandListingHtml(Brand $b): string
 /** The brand's own landing page — the other surface U-05 leaves room for. */
 function bwBrandPageHtml(Brand $b): string
 {
-    return test()->get('/korean-skincare-brands/' . $b->slug . '/')->assertOk()->getContent();
+    return test()->get('/brands/' . $b->slug . '/')->assertOk()->getContent();
 }
 
 /** True when a <section> element on the page carries the banner class. */

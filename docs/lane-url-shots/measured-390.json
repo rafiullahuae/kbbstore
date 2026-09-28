@@ -1,0 +1,80 @@
+[
+  {
+    "page": "collection",
+    "asked": "/collections/skincare/toners/",
+    "landed": "/collections/skincare/toners/",
+    "hops": 0,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "h1": "Toners",
+    "h1FontSize": "32px",
+    "canonical": "http://localhost/collections/skincare/toners/",
+    "retiredLinks": []
+  },
+  {
+    "page": "brand-directory",
+    "asked": "/brands/",
+    "landed": "/brands/",
+    "hops": 0,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "h1": "All brands",
+    "h1FontSize": "26px",
+    "canonical": "http://localhost/brands/",
+    "retiredLinks": []
+  },
+  {
+    "page": "brand-page",
+    "asked": "/brands/round-lab/",
+    "landed": "/brands/round-lab/",
+    "hops": 0,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "h1": "Round Lab",
+    "h1FontSize": "26px",
+    "canonical": "http://localhost/brands/round-lab/",
+    "retiredLinks": []
+  },
+  {
+    "page": "blog-index",
+    "asked": "/blog/",
+    "landed": "/blog/",
+    "hops": 0,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "h1": "Skincare tips & the K-beauty edit",
+    "h1FontSize": "29px",
+    "canonical": "http://localhost/blog/",
+    "retiredLinks": []
+  },
+  {
+    "page": "article",
+    "asked": "/blog/heartleaf-extract-transforming-k-beauty-skincare/",
+    "landed": "/blog/heartleaf-extract-transforming-k-beauty-skincare/",
+    "hops": 0,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "h1": "Heartleaf extract: transforming K-beauty skincare",
+    "h1FontSize": "26px",
+    "canonical": "http://localhost/blog/heartleaf-extract-transforming-k-beauty-skincare/",
+    "retiredLinks": []
+  },
+  {
+    "page": "old-category-lands",
+    "asked": "/product-category/toners/",
+    "landed": "/collections/skincare/toners/",
+    "hops": 1,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": 0,
+    "h1": "Toners",
+    "h1FontSize": "32px",
+    "canonical": "http://localhost/collections/skincare/toners/",
+    "retiredLinks": []
+  }
+]

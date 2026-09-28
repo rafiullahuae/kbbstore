@@ -757,7 +757,7 @@
        NOT true here, which is why this says something different rather than
        the same words.
 
-       A category slug is a path segment inside /product-category/{path}/, so
+       A category slug is a path segment inside /collections/{path}/, so
        renaming it moves an indexed URL and the category screen records a
        redirect. A brand slug is not a path: the listing is
        /shop/?filter_brands={slug}, a query parameter (URL contract U-05), and
@@ -765,11 +765,11 @@
        worth naming precisely: any saved or shared link carrying the old value
        stops matching any brand, and the shop answers with the unfiltered grid
        rather than an error. The brand's own landing page at
-       /korean-skincare-brands/{slug}/ does move, and does 404 afterwards. */
+       /brands/{slug}/ does move, and does 404 afterwards. */
     var slugWarn = isNew ? '' :
       '<div class="bz-warn">Changing the slug changes how this brand is found in links. '
       + 'Its listing is <code>/shop/?filter_brands=' + esc(brand.slug) + '</code> and its page is '
-      + '<code>/korean-skincare-brands/' + esc(brand.slug) + '/</code>. '
+      + '<code>/brands/' + esc(brand.slug) + '/</code>. '
       + 'Old links with the previous slug will not redirect — the listing one quietly shows '
       + '<b>every</b> product instead of this brand’s, and the page one stops existing. '
       + 'Changing only the <b>name</b> leaves both addresses exactly as they are.</div>';
@@ -942,12 +942,12 @@
         + ' with <b>no brand</b> — ' + (n === 1 ? 'it is' : 'they are') + ' <b>not</b> deleted, '
         + (n === 1 ? 'it' : 'they') + ' just stop showing a brand name and stop appearing under this brand’s filter.'
         + '<br><br>The address <code>/shop/?filter_brands=' + esc(brand.slug) + '</code> stops filtering and '
-        + 'shows every product instead, and <code>/korean-skincare-brands/' + esc(brand.slug) + '/</code> will 404. '
+        + 'shows every product instead, and <code>/brands/' + esc(brand.slug) + '/</code> will 404. '
         + 'This cannot be undone.</div>'
         + '<div class="bz-warn">If you only want to retire the brand, move those products to another brand first — '
         + 'then this delete affects nothing.</div>'
       : '<div class="bz-warn">Nothing is attached to <b>' + esc(brand.name) + '</b>. '
-        + 'Its page <code>/korean-skincare-brands/' + esc(brand.slug) + '/</code> stops existing. '
+        + 'Its page <code>/brands/' + esc(brand.slug) + '/</code> stops existing. '
         + 'This cannot be undone.</div>';
 
     openModal(
@@ -989,8 +989,8 @@
     if (!row) return;
     var isBrand = kind === 'brand';
     var where = isBrand
-      ? '<code>/shop/?filter_brands=' + esc(row.slug) + '</code> and <code>/korean-skincare-brands/' + esc(row.slug) + '/</code>'
-      : '<code>/product-category/' + esc(row.path || row.slug) + '/</code>';
+      ? '<code>/shop/?filter_brands=' + esc(row.slug) + '</code> and <code>/brands/' + esc(row.slug) + '/</code>'
+      : '<code>/collections/' + esc(row.path || row.slug) + '/</code>';
 
     openModal(
       '<div class="bz-modal-h"><b>Banner — ' + esc(row.name) + '</b><button class="bz-x" data-close>✕</button></div>'

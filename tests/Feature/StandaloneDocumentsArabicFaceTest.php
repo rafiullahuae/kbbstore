@@ -16,7 +16,7 @@ use Tests\Support\CssDirection;
  * ArabicFaceTest pins the same contract for layouts/store.blade.php. This file
  * pins it for store/blog, store/post, store/skin-quiz, store/app and
  * store/review-wall, which do not use that layout and got none of it:
- * /ar/skincare-guide/, /ar/<post>/, /ar/skin-quiz/ and /ar/reviews/ linked
+ * /ar/blog/, /ar/<post>/, /ar/skin-quiz/ and /ar/reviews/ linked
  * Poppins only, /ar/app/ linked Fraunces and Hanken Grotesk, and all five named
  * Cairo ZERO times against five font-family rules on the /ar/shop/ control
  * (docs/rtl-standalone-documents.md §2, reproduced before this change).
@@ -60,8 +60,8 @@ beforeEach(function () {
 function fsFaceDocuments(): array
 {
     return [
-        '/skincare-guide/' => 'store/blog',
-        '/fs-face-post/' => 'store/post',
+        '/blog/' => 'store/blog',
+        '/blog/fs-face-post/' => 'store/post',
         '/skin-quiz/' => 'store/skin-quiz',
         '/app/' => 'store/app',
         '/reviews/' => 'store/review-wall',
@@ -370,8 +370,8 @@ it('asks each document for the weights its own Latin link asks for', function ()
     // no font bytes, and the right list is the one the document actually styles
     // text at rather than a padded union.
     $expected = [
-        '/skincare-guide/' => '400;500;600;700',
-        '/fs-face-post/' => '400;500;600;700',
+        '/blog/' => '400;500;600;700',
+        '/blog/fs-face-post/' => '400;500;600;700',
         '/skin-quiz/' => '300;400;500;600;700;800',
         '/app/' => '400;500;600;700',
         '/reviews/' => '400;500;600;700;800',

@@ -779,7 +779,16 @@ final class EnglishRenderWalk
             '/' => ['render' => true],
             'shop' => ['render' => true],
             'shop/page/{page}' => ['params' => ['page' => '2']] + $redirect,
-            'product-category/{path}' => ['params' => ['path' => $catSlug], 'render' => true],
+            /*
+             * The address scheme moved the category archive to
+             * /collections/{path}/ and made the old base a 301 that resolves
+             * the canonical path first. Same controller, same template, same
+             * English — only the door changed, which is why the archive is
+             * still `render => true` and the retired address is now a redirect
+             * with no body to pin.
+             */
+            'collections/{path}' => ['params' => ['path' => $catSlug], 'render' => true],
+            'product-category/{path}' => ['params' => ['path' => $catSlug]] + $redirect,
             'product/{slug}' => ['params' => ['slug' => $product->slug], 'render' => true],
             'product' => $redirect,
             'quick-view/{id}' => ['params' => ['id' => (string) $product->id], 'render' => true],
@@ -827,16 +836,33 @@ final class EnglishRenderWalk
             ],
 
             // --- brands ------------------------------------------------------
-            'korean-skincare-brands' => ['render' => true],
-            'korean-skincare-brands/{slug}' => ['params' => ['slug' => $brandSlug], 'render' => true],
-            'brands' => $redirect,
+            /*
+             * The scheme swapped which way round these go: /brands/ is the
+             * directory now — a listing page, so the address is plural and
+             * short — and /korean-skincare-brands/ is the 301. The PAGES are
+             * unchanged, which is what these two `render => true` entries are
+             * here to keep true: the same controller actions reached through a
+             * different route.
+             */
+            'brands' => ['render' => true],
+            'brands/{slug}' => ['params' => ['slug' => $brandSlug], 'render' => true],
+            'korean-skincare-brands' => $redirect,
+            'korean-skincare-brands/{slug}' => ['params' => ['slug' => $brandSlug]] + $redirect,
             'brand/{slug}' => ['params' => ['slug' => $brandSlug]] + $redirect,
 
             // --- journal -----------------------------------------------------
-            'skincare-guide' => ['render' => true],
+            /*
+             * Articles moved off the site root and under /blog/, which closes
+             * the defect that RESERVED_SLUGS owned the first segment there — an
+             * article slugged `about` or `feed` was an address this shop could
+             * never serve. The root form is now the redirect and carries no
+             * body; the index and the article are the same two templates.
+             */
+            'blog' => ['render' => true],
+            'blog/{slug}' => ['params' => ['slug' => 'walk-article'], 'render' => true],
+            'skincare-guide' => $redirect,
             'skincare-guide/{slug}' => ['params' => ['slug' => 'walk-article']] + $redirect,
-            '{slug}' => ['params' => ['slug' => 'walk-article'], 'render' => true],
-            'blog' => $redirect,
+            '{slug}' => ['params' => ['slug' => 'walk-article']] + $redirect,
             'post/{slug?}' => ['params' => ['slug' => 'walk-article']] + $redirect,
 
             // --- editable content pages --------------------------------------

@@ -37,9 +37,20 @@ dataset('reserved paths', [
     ['/best-sellers', 'CollectionController'],
     ['/skin-quiz', 'PageController'],
     ['/about', 'PageController@show'],
+    /*
+     * The address scheme swapped which of each pair is the page and which is
+     * the 301, and the METHOD names moved with it rather than the routes —
+     * which is what lets routes/web.php stay exactly as it is. `blog()` is the
+     * /skincare-guide/ redirect and `journal()` is the index; `index()` is the
+     * directory at /brands/ and `legacyIndex()` is the redirect off the long
+     * address.
+     */
+    ['/blog', 'PageController@journal'],
     ['/skincare-guide', 'PageController@blog'],
-    ['/korean-skincare-brands', 'BrandController@index'],
-    ['/brands', 'BrandController@legacyIndex'],
+    ['/collections/toners', 'CategoryArchiveController@collection'],
+    ['/product-category/toners', 'CategoryArchiveController@show'],
+    ['/brands', 'BrandController@index'],
+    ['/korean-skincare-brands', 'BrandController@legacyIndex'],
 ]);
 
 it('leaves storefront routes with their own controllers', function (string $path, string $expected) {

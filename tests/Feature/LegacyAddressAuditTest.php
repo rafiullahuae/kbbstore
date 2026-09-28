@@ -14,7 +14,7 @@
  *     kbeautybliss.com/skincare-sets/  "Best Korean Skin Care Sets for Women
  *                                       in 2024"
  *
- * This application serves those categories at /product-category/{path}/ and
+ * This application serves those categories at /collections/{path}/ and
  * answers the flat address with a 404 — deliberately, and
  * App\Support\LegacyCategoryUrls explains why preserving the slug rather than
  * guessing a category is the safe transformation.
@@ -215,7 +215,7 @@ it('stops reporting an address once an enabled redirect covers it', function () 
 
     // And the row it points at is the one the URL contract says it should be.
     expect(LegacyCategoryUrls::toCategoryPath('/skincare-sets/'))
-        ->toBe('/product-category/skincare-sets/');
+        ->toBe('/collections/skincare-sets/');
 });
 
 it('still reports an address whose redirect row is switched off', function () {

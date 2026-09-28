@@ -353,7 +353,7 @@ it('offers View product rather than Add to cart on the skinned grid', function (
     SettingsService::forgetMemo();
     app()->forgetScopedInstances();
 
-    $html = $this->get('/korean-skincare-brands/vbn-brand/')->assertOk()->getContent();
+    $html = $this->get('/brands/vbn-brand/')->assertOk()->getContent();
 
     $variableTile = vbnSkinTile($html, 'vbn-grid');
     $simpleTile = vbnSkinTile($html, 'vbn-grid-simple');

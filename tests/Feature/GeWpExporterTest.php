@@ -275,7 +275,7 @@ it('imports the plugin export cleanly, with nothing refused that should not be',
      * AND THE ARTICLE IN THE SAME FILE IS IN THE JOURNAL. The round trip is
      * only proved by the rows that landed: posts.csv was a file the contract
      * marked as a gap, written by the plugin and opened by nothing, and
-     * /skincare-guide/ rendered an empty index because of it.
+     * /blog/ rendered an empty index because of it.
      */
     expect(App\Models\Post::query()->where('source_post_id', 7001)->value('slug'))
         ->toBe('how-to-layer-a-k-beauty-routine');
@@ -635,7 +635,7 @@ it('hands permalinks.csv to the redirect map without it having to learn a new wo
     $toners = $bySubject['category 31'][0];
 
     expect($toners['source'])->toBe('/toners/');
-    expect($toners['target'])->toBe('/product-category/toners/');
+    expect($toners['target'])->toBe('/collections/toners/');
 
     // The brand rows carry an EMPTY permalink, because no brand archive was
     // ever served. fromPermalinks() skips a row with no URL, so they produce no

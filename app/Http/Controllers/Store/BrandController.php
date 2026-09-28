@@ -9,28 +9,41 @@ use App\Models\Brand;
 use App\Models\Product;
 use App\Services\SettingsService;
 use App\Support\Url;
+use App\Support\UrlScheme;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
 /**
  * Brand directory and brand landing pages.
  *
+ * ── THE ADDRESSES, AND WHICH WAY ROUND THEY NOW GO ────────────────────────
+ *
  * Three brand URLs existed in the app and none of them resolved. The homepage
  * linked to /brands/ twice -- "All brands" in the brand strip and "Shop all
  * brands" in a section button -- and MenuDemo built /korean-skincare-brands/
  * for the mega menu's Brands node with /brand/{slug}/ for each leaf.
  *
- * An earlier pass picked /brands/ as the real page because the homepage was
- * already treating it as one. The owner has since settled the question the
- * other way round: /korean-skincare-brands/ is the live address. That is the
- * one served here; /brands/ and /brand/{slug}/ are 301s.
+ * Phase 9 made /korean-skincare-brands/ the real page and 301'd /brands/ onto
+ * it. The address scheme (App\Support\UrlScheme) reverses that, and the
+ * reasoning is search intent rather than taste: a directory is a LISTING page,
+ * so the address is plural and short, and "brands" is the word a shopper types.
  *
- * URL Contract U-05 is untouched. A brand's filterable, sortable, paginated
- * *product listing* is still /shop/?filter_brands={slug} -- what Brand::url()
- * returns, and what the shop's filters actually run on. The per-brand page
- * added here is a landing page: the brand's name, logo and description, with a
- * preview of its catalogue and a link onward to that listing. It does not
- * reimplement the listing and Brand::url() has deliberately not been changed.
+ *   /brands/                 the directory        index()
+ *   /brands/{slug}/          one brand's page     show()
+ *   /korean-skincare-brands/         301 ->       legacyIndex()
+ *   /korean-skincare-brands/{slug}/  301 ->       legacyShow()
+ *   /brand/{slug}/                   301 ->       legacyShow()
+ *
+ * Every one of those is a single hop onto the final address. None of them
+ * passes through another redirect.
+ *
+ * URL Contract U-05 is untouched: a brand's filterable, sortable, paginated
+ * *product listing* is still /shop/?filter_brands={slug}. That string moved to
+ * Brand::filterUrl(), which is what the mega menu, the shop's facets and this
+ * page's own "Shop all" button use. Brand::url() now returns this landing page,
+ * because that is the address this application should publish when it means
+ * "this brand" -- a query string on /shop/ is not an indexable page, and a
+ * brand archive arriving from the old install used to be pointed at one.
  */
 class BrandController extends Controller
 {
@@ -311,12 +324,12 @@ class BrandController extends Controller
             // second one is this page, which is why it has no third entry.
             'breadcrumb' => [
                 ['name' => __('store.breadcrumb.home'), 'url' => $base . Url::to('/')],
-                ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to('/korean-skincare-brands/')],
+                ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to(UrlScheme::brandIndex())],
             ],
         ];
     }
 
-    /** One brand's landing page, at /korean-skincare-brands/{slug}/. */
+    /** One brand's landing page, at /brands/{slug}/. */
     public function show(string $slug): View
     {
         $brand = Brand::query()->where('slug', $slug)->firstOrFail();
@@ -390,7 +403,7 @@ class BrandController extends Controller
      * the homepage and the cart publish), the store-wide default share image,
      * and no breadcrumb. Pasting a brand page into WhatsApp produced a card
      * that did not name the brand anywhere except in the title. Verified by
-     * fetching /korean-skincare-brands/round-lab/ against a running preview
+     * fetching the brand landing page against a running preview
      * before the change.
      *
      * Three things go in, and each is a value this page already has:
@@ -416,14 +429,16 @@ class BrandController extends Controller
      *    KBB_BASE_PATH, and Seo::canonical() is what reconciles the two ends:
      *    Url::to() adds the /kbb-upgrade prefix and site_url already carries
      *    it, and canonical() collapses the one duplicate. Writing the path as a
-     *    bare '/korean-skincare-brands/…' literal instead would publish a
+     *    bare '/brands/…' literal instead would publish a
      *    canonical that 404s on the live host — which is exactly the class of
      *    bug a test on the default base path cannot see.
      *
-     *    Brand::url() is deliberately NOT used: U-05 keeps it pointing at the
-     *    filterable shop listing (/shop/?filter_brands={slug}), and this page
-     *    is the landing page, not that listing. Canonicalising one to the other
-     *    would tell Google this page does not exist.
+     *    Brand::url() would now return exactly this address, and it is still
+     *    not used here: it goes through Url::to() alone, and this canonical
+     *    needs site_url in front of it. Brand::filterUrl() -- the U-05
+     *    listing at /shop/?filter_brands={slug} -- is emphatically NOT the
+     *    canonical: canonicalising this page to that one would tell Google this
+     *    page does not exist.
      *
      * SeoSettings::get() rather than Setting::map(), for the reason
      * CollectionController::seoCtx() carries in full: the latter memoises in a
@@ -436,7 +451,7 @@ class BrandController extends Controller
     private function seoCtx(Brand $brand, ?array $banner, \Illuminate\Support\Collection $products): array
     {
         $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
-        $url = $base . Url::to('/korean-skincare-brands/' . $brand->slug . '/');
+        $url = $base . Url::to(UrlScheme::brand((string) $brand->slug));
 
         /*
          * PER-BRAND SEO OVERRIDES — `brands.seo`, which nothing read until now.
@@ -574,7 +589,7 @@ class BrandController extends Controller
             // defaults are 'Home' and 'Brands', which is what these literals were.
             'breadcrumb' => [
                 ['name' => __('store.breadcrumb.home'), 'url' => $base . Url::to('/')],
-                ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to('/korean-skincare-brands/')],
+                ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to(UrlScheme::brandIndex())],
                 ['name' => $brand->t('name'), 'url' => $url],
             ],
         ], static fn ($v) => $v !== null);
@@ -622,32 +637,34 @@ class BrandController extends Controller
     }
 
     /**
-     * /brands/ -- the address the homepage publishes, and the one an earlier
-     * pass had made the real page before the owner settled on the other.
+     * /korean-skincare-brands/ -- the directory's Phase 9 address.
+     *
+     * Url::redirect() rather than route(): Laravel strips the trailing slash
+     * when it registers a URI, so route('brands.index') hands back /brands and
+     * the 301 would land on a URL that is not the canonical one. U-01 keeps the
+     * slash, and Url::redirect() also applies the staging base path exactly
+     * once and the reader's language segment.
      */
     public function legacyIndex(): RedirectResponse
     {
-        // Url::redirect() rather than route(): Laravel strips the trailing
-        // slash when it registers a URI, so route('brands.index') hands back
-        // /korean-skincare-brands and the 301 would land on a URL that is not
-        // the canonical one. U-01 keeps the slash, and Url::redirect() also
-        // applies the staging base path exactly once.
-        return redirect(Url::redirect('/korean-skincare-brands/'), 301);
+        return redirect(Url::redirect(UrlScheme::brandIndex()), 301);
     }
 
     /**
-     * /brand/{slug}/ -- the mega menu's per-brand leaf.
+     * /brand/{slug}/ and /korean-skincare-brands/{slug}/ -- the mega menu's
+     * per-brand leaf and the landing page's Phase 9 address.
      *
-     * Now points at the brand's own landing page rather than straight at the
-     * filtered shop listing: the landing page is the canonical brand URL, and
-     * it is the thing that links on to the listing. An unknown slug 404s rather
-     * than dumping the shopper on an unfiltered shop page that looks like it
-     * worked.
+     * ONE HOP. The destination is the brand's final address, never the other
+     * legacy spelling, so neither of these chains through the other. An unknown
+     * slug 404s rather than dumping the shopper on an unfiltered shop page that
+     * looks like it worked -- and rather than 301ing onto a /brands/ page that
+     * would 404 in its turn, which tells a search engine the address was
+     * replaced by nothing.
      */
     public function legacyShow(string $slug): RedirectResponse
     {
         $brand = Brand::query()->where('slug', $slug)->firstOrFail();
 
-        return redirect(Url::redirect('/korean-skincare-brands/' . $brand->slug . '/'), 301);
+        return redirect(Url::redirect(UrlScheme::brand((string) $brand->slug)), 301);
     }
 }

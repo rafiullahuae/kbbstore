@@ -231,13 +231,13 @@ it('a noindex set through the brand screen reaches the page and leaves the sitem
     $brand = tseBrand();
 
     // Before: listed, and indexable.
-    expect($this->get('/sitemap.xml')->getContent())->toContain('/korean-skincare-brands/t-tse-brand/');
+    expect($this->get('/sitemap.xml')->getContent())->toContain('/brands/t-tse-brand/');
 
     $this->putJson('/admin-api/brands/' . $brand->id, tseBrandBody([
         'title' => '', 'description' => '', 'noindex' => true,
     ]))->assertOk();
 
-    $html = $this->get('/korean-skincare-brands/t-tse-brand/')->assertOk()->getContent();
+    $html = $this->get('/brands/t-tse-brand/')->assertOk()->getContent();
 
     preg_match('#<meta name="robots" content="([^"]+)">#', $html, $m);
 
@@ -246,7 +246,7 @@ it('a noindex set through the brand screen reaches the page and leaves the sitem
         // "page says noindex, sitemap submits it" as an error against the
         // property rather than quietly honouring the page.
         ->and($this->get('/sitemap.xml')->getContent())
-        ->not->toContain('/korean-skincare-brands/t-tse-brand/');
+        ->not->toContain('/brands/t-tse-brand/');
 });
 
 /*
@@ -297,6 +297,6 @@ it('refuses a canonical that is not a full address', function () {
     $brand = tseBrand();
 
     $this->putJson('/admin-api/brands/' . $brand->id, tseBrandBody([
-        'canonical' => '/korean-skincare-brands/t-tse-brand/',
+        'canonical' => '/brands/t-tse-brand/',
     ]))->assertStatus(422)->assertJsonValidationErrors('seo.canonical');
 });

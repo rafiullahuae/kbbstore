@@ -129,7 +129,7 @@ function chpDirectives(string $header): array
 it('never lets a storefront page be held by a shared cache', function () {
     chpRegister();
 
-    foreach (['/', '/shop/', '/skincare-guide/', '/reviews/'] as $uri) {
+    foreach (['/', '/shop/', '/blog/', '/reviews/'] as $uri) {
         $header = chpCacheControl($uri);
 
         expect(chpDirectives($header))
@@ -211,9 +211,10 @@ it('leaves a stricter header that something closer to the route already set', fu
 it('changes nothing about a page it does not own', function () {
     chpRegister();
 
-    // A redirect is cacheable by its own rules and is not a document. /blog
-    // 301s to the Journal.
-    $response = test()->get('/blog');
+    // A redirect is cacheable by its own rules and is not a document.
+    // /skincare-guide 301s to the Journal, which is at /blog/ since the address
+    // scheme moved it — the pair used to go the other way round.
+    $response = test()->get('/skincare-guide');
 
     expect($response->getStatusCode())->toBe(301);
     expect((string) $response->headers->get('Cache-Control'))->not->toBe(CacheHeaders::REVALIDATE);

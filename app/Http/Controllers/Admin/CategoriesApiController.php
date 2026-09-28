@@ -656,7 +656,7 @@ class CategoriesApiController extends Controller
             'slug' => [
                 'required', 'string', 'max:255',
                 // Lower-case words joined by single hyphens. The slug is a URL
-                // segment inside /product-category/{nested/path}/, so anything
+                // segment inside /collections/{nested/path}/, so anything
                 // else either does not round-trip or has to be encoded at every
                 // use site.
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',

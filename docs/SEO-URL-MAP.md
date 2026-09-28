@@ -1,5 +1,18 @@
 # The real URL map · what moved, what did not, and where every old address lands
 
+> **SUPERSEDED IN PART, 28 September 2026 — read `docs/URL-SCHEME.md` first.**
+> Everything below about what the OLD site served is unchanged and is still the
+> evidence the scheme rests on. The "This shop" column is not: the address
+> scheme moved category archives to `/collections/{path}/`, put a real brand
+> page at `/brands/{slug}/`, and moved the journal to `/blog/` and
+> `/blog/{slug}/`. `/product/{slug}/` is unchanged, which §0 below already
+> argued for and which the scheme's research confirmed.
+>
+> Section 0's warning still stands and is worth reading twice: `/new-in`,
+> `/best-sellers`, `/super-sale`, `/everything-under-54-aed` and
+> `/concern/{slug}/` are CURATED listings with their own routes and were not
+> touched. `/collections/` is the category archive base and nothing else.
+
 Lane SEO, round 1. Written for the owner, and it starts by correcting the
 sentence this round was asked for.
 

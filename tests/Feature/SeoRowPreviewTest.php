@@ -121,7 +121,7 @@ it('previews a category exactly as the category page renders it', function () {
         ],
     ]);
 
-    $page = test()->get('/product-category/sun-care/');
+    $page = test()->get('/collections/sun-care/');
     $page->assertStatus(200);
     $html = $page->getContent();
 
@@ -157,7 +157,7 @@ it('previews an EMPTY category title box as the tag the page really publishes', 
         'seo' => null,
     ]);
 
-    $page = test()->get('/product-category/toners-s7/');
+    $page = test()->get('/collections/toners-s7/');
     $page->assertStatus(200);
     $html = $page->getContent();
 
@@ -191,7 +191,7 @@ it('previews a brand exactly as the brand page renders it', function () {
         ],
     ]);
 
-    $page = test()->get('/korean-skincare-brands/boj-s7/');
+    $page = test()->get('/brands/boj-s7/');
     $page->assertStatus(200);
     $html = $page->getContent();
 
@@ -227,7 +227,7 @@ it('resolves a Yoast token in a typed title the way the page does', function () 
         'seo' => ['title' => '%%title%% %%sep%% %%sitename%%'],
     ]);
 
-    $page = test()->get('/korean-skincare-brands/cosrx-s7/');
+    $page = test()->get('/brands/cosrx-s7/');
     $page->assertStatus(200);
 
     $preview = s7Preview([
@@ -255,7 +255,7 @@ it('previews an article exactly as the article page renders it', function () {
         'published_at' => now()->subDay(),
     ]);
 
-    $page = test()->get('/s7-double-cleansing/');
+    $page = test()->get('/blog/s7-double-cleansing/');
     $page->assertStatus(200);
     $html = $page->getContent();
 
@@ -401,7 +401,7 @@ it('previews a row that does not exist yet from the boxes on the form', function
     expect($preview['title'])->toContain('Cleansing Balms');
     // The slug is reduced to what a slug may hold, so the grey address line is
     // an address this shop could serve rather than a sentence with spaces in it.
-    expect($preview['url'])->toBe('https://kbb.test/product-category/cleansing-balms-oils/');
+    expect($preview['url'])->toBe('https://kbb.test/collections/cleansing-balms-oils/');
 
     /*
      * AND IT SAYS IT IS NOT THE FINISHED ANSWER. There is no page to read for a

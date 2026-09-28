@@ -266,8 +266,8 @@ class HomeController extends Controller
          * exists wins. Three of the six steps hard-coded a slug no category has
          * ever carried — verified on a migrated database, not inferred:
          *
-         *   step 01 / 02  'cleansing'     -> /product-category/cleansing/    404
-         *   step 05       'moisturizers'  -> /product-category/moisturizers/ 404
+         *   step 01 / 02  'cleansing'     -> /collections/cleansing/    404
+         *   step 05       'moisturizers'  -> /collections/moisturizers/ 404
          *
          * Both halves of the step were broken by it, and the second half hid
          * the first. The link 404'd, AND `whereHas` matched nothing, so those
@@ -344,7 +344,7 @@ class HomeController extends Controller
          */
         foreach ($routine as $i => $step) {
             $slug = $step['slug'] ?? null;
-            $routine[$i]['url'] = $slug === null ? '/shop/' : '/product-category/' . $slug . '/';
+            $routine[$i]['url'] = $slug === null ? '/shop/' : \App\Support\UrlScheme::collection($slug);
         }
 
         $routineTotal = collect($routine)->sum(fn ($s) => $s['pick']?->effectivePrice() ?? 0);

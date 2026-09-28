@@ -113,7 +113,7 @@ function fjArabicJournal(): string
 
     fjJournalPosts();
 
-    return (string) test()->get('/ar/skincare-guide/')->assertOk()->getContent();
+    return (string) test()->get('/ar/blog/')->assertOk()->getContent();
 }
 
 it('renders the All chip\'s label in the shopper\'s language', function () {

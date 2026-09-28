@@ -318,10 +318,10 @@ it('translates a category, a brand, a page, an article and a menu label too', fu
     app('cache')->forget('kbb.nav.primary');
 
     $expectations = [
-        '/ar/product-category/fp-toners/' => ['ZZSENTINELCAT', 'ZZSENTINELCATDESC'],
-        '/ar/korean-skincare-brands/fp-anua/' => ['ZZSENTINELBRAND', 'ZZSENTINELBRANDDESC'],
+        '/ar/collections/fp-toners/' => ['ZZSENTINELCAT', 'ZZSENTINELCATDESC'],
+        '/ar/brands/fp-anua/' => ['ZZSENTINELBRAND', 'ZZSENTINELBRANDDESC'],
         '/ar/about/' => ['ZZSENTINELPAGE', 'ZZSENTINELPAGEBODY'],
-        '/ar/fp-article/' => ['ZZSENTINELPOST', 'ZZSENTINELPOSTBODY'],
+        '/ar/blog/fp-article/' => ['ZZSENTINELPOST', 'ZZSENTINELPOSTBODY'],
     ];
 
     foreach ($expectations as $path => $needles) {
@@ -345,11 +345,11 @@ it('translates a category, a brand, a page, an article and a menu label too', fu
      * standalone documents onto the shared layout is a change to the RTL and
      * SEO lanes' surface, not a line in this diff.
      */
-    foreach (['/ar/product-category/fp-toners/', '/ar/korean-skincare-brands/fp-anua/', '/ar/about/'] as $path) {
+    foreach (['/ar/collections/fp-toners/', '/ar/brands/fp-anua/', '/ar/about/'] as $path) {
         expect((string) test()->get($path)->getContent())->toContain('ZZSENTINELMENU');
     }
 
-    expect((string) test()->get('/ar/fp-article/')->getContent())->toContain('<html lang="en">');
+    expect((string) test()->get('/ar/blog/fp-article/')->getContent())->toContain('<html lang="en">');
 
     /*
      * The journal INDEX, which reads its tiles from a narrowed select. `id` had
@@ -358,7 +358,7 @@ it('translates a category, a brand, a page, an article and a menu label too', fu
      * English for ever on a page that is translated everywhere else. It is the
      * quietest way for this whole lane to be wrong, because nothing errors.
      */
-    $index = (string) test()->get('/ar/skincare-guide/')->assertOk()->getContent();
+    $index = (string) test()->get('/ar/blog/')->assertOk()->getContent();
 
     expect($index)->toContain('ZZSENTINELPOST')
         ->and(str_contains($index, 'English article title'))->toBeFalse(

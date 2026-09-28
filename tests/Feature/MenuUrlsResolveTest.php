@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
  * The menu rows seeded by 2026_09_09_070000_fix_kbeautybliss_menu_structure
  * carried kbeautybliss.com's own WooCommerce category addresses — flat at the
  * site root: /toners/, /sunscreens/, /cleansing-oils/ and eleven more. This
- * application serves category archives at /product-category/{path}/ (URL
+ * application serves category archives at /collections/{path}/ (URL
  * Contract U-03) and never served them anywhere else.
  *
  * None of them 404'd in a way anybody could follow. routes/kbb-brands-blog.php
@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Route;
  * not-found page by way of a lookup in the wrong table.
  *
  * The home page's routine strip had the same defect in a different shape: it
- * published /product-category/{slug}/ for six slugs hard-coded in
+ * published /collections/{slug}/ for six slugs hard-coded in
  * Store\HomeController, and THREE of the six named a category that has never
  * existed — `cleansing` twice and `moisturizers` once, against a seeded
  * taxonomy that spells them `cleansers` and `moisturisers`. Those three steps
@@ -102,7 +102,7 @@ function menuIsInternal(string $href): bool
  * THE TOLERANCE, AND WHY IT IS THIS NARROW.
  *
  * Exactly one thing is tolerated: a correctly shaped category archive URL —
- * /product-category/{path}/, reaching CategoryArchiveController — whose
+ * /collections/{path}/, reaching CategoryArchiveController — whose
  * category is not in the `categories` table.
  *
  * That is a genuine data gap and not a link defect. The only categories a
@@ -440,7 +440,7 @@ it('publishes one address per category across the header and the mobile drawer',
      * Both chromes render from the same menu, so a category must not appear at
      * two different addresses. Compared by the LAST PATH SEGMENT: the defect
      * this guards against is one chrome keeping /toners/ while the other moves
-     * to /product-category/toners/, which is the same category published twice.
+     * to /collections/toners/, which is the same category published twice.
      */
     $byLeaf = [];
 
@@ -532,5 +532,5 @@ it('leaves a URL the owner has edited by hand alone', function () {
         ->toBe('/shop/?orderby=popularity', 'The migration overwrote a URL the owner had edited by hand.');
 
     expect(DB::table('menu_items')->where('id', $stale)->value('url'))
-        ->toBe('/product-category/toners/', 'The migration failed to repoint a row still holding the seeded URL.');
+        ->toBe('/collections/toners/', 'The migration failed to repoint a row still holding the seeded URL.');
 });

@@ -8,7 +8,7 @@ use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 
 /**
- * What /product-category/{path}/ should actually do with a path.
+ * What /collections/{path}/ should actually do with a path.
  *
  * THE BUG THIS EXISTS TO FIX
  *
@@ -40,7 +40,7 @@ use Illuminate\Support\Facades\DB;
  * A verdict, not a response — the caller owns the HTTP layer:
  *
  *   ['status' => 'ok',       'category' => Category]  render the archive
- *   ['status' => 'redirect', 'to' => '/product-category/real/path/',
+ *   ['status' => 'redirect', 'to' => '/collections/real/path/',
  *                            'to_path' => 'real/path', 'code' => 301]
  *   ['status' => 'notfound']                          404
  *
@@ -188,10 +188,18 @@ final class CategoryPath
         return Url::redirect(self::archivePath($path));
     }
 
-    /** The one place the archive's address shape is written down. */
+    /**
+     * The archive's address shape, which is now `App\Support\UrlScheme`'s to
+     * state rather than this class's to spell.
+     *
+     * It used to read `'/product-category/' . $path . '/'` and it was one of
+     * ten writers of that string. The scheme moved the archive to
+     * `/collections/{path}/` (a listing page, so plural) and a literal here
+     * would have been the ninth place to miss.
+     */
     private static function archivePath(string $path): string
     {
-        return '/product-category/' . $path . '/';
+        return UrlScheme::collection($path);
     }
 
     /**

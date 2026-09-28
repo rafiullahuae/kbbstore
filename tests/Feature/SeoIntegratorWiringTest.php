@@ -266,7 +266,7 @@ it('publishes no FAQ node on a product or an article, flag on', function () {
         'published_at' => now()->subDay(),
     ]);
 
-    expect(siwNodes('/siw-questions/', 'FAQPage'))->toBe([]);
+    expect(siwNodes('/blog/siw-questions/', 'FAQPage'))->toBe([]);
 });
 
 /* ──────── S6 section 5.1 — the Article node's url and dateModified ──────── */
@@ -293,13 +293,13 @@ it('gives an Article a url and a dateModified', function () {
 
     $post->forceFill(['updated_at' => now()->subDay()])->saveQuietly();
 
-    $article = siwNodes('/siw-dated/', 'Article');
+    $article = siwNodes('/blog/siw-dated/', 'Article');
 
     expect($article)->toHaveCount(1);
 
     expect($article[0])->toHaveKeys(['url', 'datePublished', 'dateModified']);
 
-    expect($article[0]['url'])->toBe('https://kbeautybliss.test/siw-dated/');
+    expect($article[0]['url'])->toBe('https://kbeautybliss.test/blog/siw-dated/');
 
     // Atom, the same format datePublished is already in, and genuinely the row's
     // own value rather than "now".

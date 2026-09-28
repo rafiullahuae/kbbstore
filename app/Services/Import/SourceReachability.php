@@ -9,6 +9,7 @@ use App\Models\Post;
 use App\Models\Product;
 use App\Support\CategoryPath;
 use App\Support\LegacyCategoryUrls;
+use App\Support\UrlScheme;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -121,6 +122,19 @@ final class SourceReachability
     /** A real page answers here. Pointing it away is a change to a working page. */
     public const SERVED = 'served';
 
+    /**
+     * Routes that take no parameter and render nothing — they forward.
+     *
+     * Keyed on `Class@method` so the destination is stated once beside the
+     * route that produces it. Both are the address scheme's retired doors.
+     *
+     * @var array<string, string>
+     */
+    private const PARAMETERLESS_REDIRECTS = [
+        'PageController@blog' => UrlScheme::BLOG_BASE,
+        'BrandController@legacyIndex' => UrlScheme::BRAND_BASE,
+    ];
+
     /** A parameterised route claims it and this cannot say what it answers. */
     public const UNKNOWN = 'unknown';
 
@@ -142,8 +156,33 @@ final class SourceReachability
         // what a redirect matches and not part of what the router sees either.
         $path = (string) (parse_url($path, PHP_URL_PATH) ?: $path);
 
-        if (preg_match('#^/product-category/(.*)$#', $path, $m) === 1) {
-            return $this->categoryVerdict((string) $m[1]);
+        /*
+         * THE ARCHIVE, AT BOTH OF ITS ADDRESSES.
+         *
+         * The scheme moved category archives from /product-category/{path}/ to
+         * /collections/{path}/. Both are asked here and they get DIFFERENT
+         * answers, which is the whole point:
+         *
+         *   /collections/…      the archive. Served, moved (a non-canonical
+         *                       nesting, or a category_redirects row) or gone.
+         *
+         *   /product-category/… the retired address.
+         *                       CategoryArchiveController::show() 301s it onto
+         *                       the canonical collections path, so it is MOVED
+         *                       whenever the category resolves at all — never
+         *                       SERVED. RedirectMap then DISCARDS its own
+         *                       proposal for it with "this shop already sends
+         *                       this address to exactly this destination",
+         *                       which is the right answer: the shop's hop is
+         *                       derived and follows a rename, and a written row
+         *                       would go on pointing at import day's path.
+         */
+        if (str_starts_with($path, UrlScheme::COLLECTION_BASE)) {
+            return $this->categoryVerdict(substr($path, strlen(UrlScheme::COLLECTION_BASE)));
+        }
+
+        if (str_starts_with($path, UrlScheme::LEGACY_COLLECTION_BASE)) {
+            return $this->legacyCategoryVerdict(substr($path, strlen(UrlScheme::LEGACY_COLLECTION_BASE)));
         }
 
         /*
@@ -234,7 +273,7 @@ final class SourceReachability
 
             return [
                 'status' => self::MOVED,
-                'to' => $toPath === '' ? '' : '/product-category/'.$toPath.'/',
+                'to' => $toPath === '' ? '' : UrlScheme::collection($toPath),
                 'why' => 'CategoryArchiveController already answers 301 here on its own, to '
                     .((string) ($resolved['to'] ?? '')).' — the leaf category exists and CategoryPath::resolve() '
                     .'sends the request to its canonical nested path without consulting the redirects table',
@@ -245,6 +284,46 @@ final class SourceReachability
             'status' => self::NOT_FOUND,
             'why' => 'no category has this leaf and no category_redirects row covers the path, so the archive '
                 .'404s and the 404 handler reaches the redirects table',
+        ];
+    }
+
+    /**
+     * The RETIRED archive address, /product-category/{path}/.
+     *
+     * Never SERVED: the shop no longer renders a page there under any
+     * circumstances. It resolves the category and 301s onto the canonical
+     * /collections/ path in one hop, or it 404s.
+     *
+     * `to` is the bare path, for the reason categoryVerdict() gives above: it
+     * is compared against a proposal's target, and the prefixed form would look
+     * like a different destination on a subfolder mount.
+     *
+     * @return array{status: string, why: string, to?: string}
+     */
+    private function legacyCategoryVerdict(string $rest): array
+    {
+        $resolved = CategoryPath::resolve($rest);
+
+        $canonical = match ($resolved['status']) {
+            'ok' => CategoryPath::canonicalPath($resolved['category']),
+            'redirect' => trim((string) ($resolved['to_path'] ?? ''), '/'),
+            default => '',
+        };
+
+        if ($canonical === '') {
+            return [
+                'status' => self::NOT_FOUND,
+                'why' => 'no category has this leaf and no category_redirects row covers the path, so the '
+                    .'retired archive address 404s and the 404 handler reaches the redirects table',
+            ];
+        }
+
+        return [
+            'status' => self::MOVED,
+            'to' => UrlScheme::collection($canonical),
+            'why' => 'this is the retired category address and CategoryArchiveController::show() already answers '
+                .'301 here on its own, to '.UrlScheme::collection($canonical).' — it resolves the category first, '
+                .'so the visitor makes one hop and lands on the canonical nested path',
         ];
     }
 
@@ -260,6 +339,45 @@ final class SourceReachability
                 'status' => self::NOT_FOUND,
                 'why' => 'no route in this application matches this address, so it reaches the 404 handler and '
                     .'the redirect is consulted',
+            ];
+        }
+
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * Route::fallback() IS NOT A ROUTE THAT ANSWERS, AND IT WAS BEING READ
+         * AS ONE
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * `RouteCollection::match()` returns the fallback route when nothing
+         * else matched, and the fallback takes `{fallbackPlaceholder}` — a
+         * parameter. So every address with more than one segment that this shop
+         * does not serve fell through to the branch at the bottom of this
+         * method and was answered UNKNOWN, "cannot tell what this address does":
+         *
+         *     /product-brand/anua/     an old brand archive  -> cannot tell
+         *     /category/news/          an old post category  -> cannot tell
+         *     /2019/04/some-post/      an old dated permalink -> cannot tell
+         *
+         * Every one of those 404s, plainly and observably, and NOT_FOUND is the
+         * verdict that lets `RedirectMap` write the row. Instead they became
+         * questions — and `docs/FV-IMPORT-AT-VOLUME.md` §10 is explicit that a
+         * question list which is mostly noise is a question list nobody
+         * finishes. On a real export that is every multi-segment address the old
+         * site ever published under a prefix this shop does not have.
+         *
+         * Found by the brand archive: /product-brand/{slug}/ is exactly this
+         * shape, and it is the one address family the address scheme most needs
+         * a row for, because /brands/{slug}/ is a page that did not exist before.
+         *
+         * `isFallback` is Laravel's own flag on the route, set by
+         * Route::fallback(), so this cannot drift from what the router means by
+         * it.
+         */
+        if ($route->isFallback) {
+            return [
+                'status' => self::NOT_FOUND,
+                'why' => 'only Route::fallback() matches this address, which is the router saying no route '
+                    .'claims it — the request 404s and the redirect is consulted',
             ];
         }
 
@@ -288,6 +406,26 @@ final class SourceReachability
                     'PageController::show() throws a 404 when no published page carries the slug this route '
                         .'defaults to, so the redirect is reached',
                 );
+            }
+
+            /*
+             * A PARAMETERLESS ROUTE THAT IS ITSELF A 301, which the address
+             * scheme created two of: /skincare-guide/ and
+             * /korean-skincare-brands/ are registered routes that render
+             * nothing and redirect onto /blog/ and /brands/. Answering SERVED
+             * for either would tell the owner a page answers at an address the
+             * shop forwards, and RedirectMap would ask him whether to move a
+             * page that is not there.
+             */
+            $forwards = self::PARAMETERLESS_REDIRECTS[$this->actionMethod($route)] ?? null;
+
+            if ($forwards !== null) {
+                return [
+                    'status' => self::MOVED,
+                    'to' => $forwards,
+                    'why' => 'the route "'.($route->uri() === '' ? '/' : $route->uri()).'" renders no page: it is '
+                        .'a 301 onto '.$forwards.', which the address scheme made the canonical address',
+                ];
             }
 
             return [
@@ -321,6 +459,71 @@ final class SourceReachability
          * point is `/some-old-article-slug/`, which matches the same catch-all
          * and 404s when no post carries the slug.
          */
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * THE ROUTES THAT ARE THEMSELVES A 301, MATCHED ON THE CONTROLLER
+         * METHOD RATHER THAN ON A ROUTE NAME
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * The address scheme left three parameterised routes whose whole job is
+         * to forward: /{slug}/ at the site root, /skincare-guide/{slug}/ with
+         * /post/{slug}, and /brand/{slug}/ with /korean-skincare-brands/{slug}/.
+         * None of them renders anything.
+         *
+         * They are told apart by their ACTION and not by `->name()`, and that is
+         * deliberate: only one of the five carries a name at all, and a name is
+         * a thing a later lane can move between routes without noticing this
+         * file. The action is the method that does the work.
+         *
+         * The verdict is MOVED with a destination, not SERVED and not UNKNOWN,
+         * because both of those are false in a way that costs the owner
+         * something: SERVED would say a page answers at an address that
+         * forwards, and UNKNOWN would put a settled address on his question
+         * list. A slug naming nothing is NOT_FOUND — these routes 404 rather
+         * than forwarding blindly.
+         */
+        $method = $this->actionMethod($route);
+        $slug = $this->lastSegment($path);
+
+        if ($method === 'PageController@rootArticle' || $method === 'PageController@legacyPost') {
+            if ($slug === '' || $slug === 'post' || $slug === 'skincare-guide') {
+                return [
+                    'status' => self::MOVED,
+                    'to' => UrlScheme::blogIndex(),
+                    'why' => 'this retired journal address renders no page: it is a 301 onto '
+                        .UrlScheme::blogIndex(),
+                ];
+            }
+
+            return Post::query()->where('slug', $slug)->where('status', 'published')->exists()
+                ? [
+                    'status' => self::MOVED,
+                    'to' => UrlScheme::article($slug),
+                    'why' => 'this is a retired article address and the shop already forwards it by itself, in '
+                        .'one hop, to '.UrlScheme::article($slug),
+                ]
+                : [
+                    'status' => self::NOT_FOUND,
+                    'why' => 'no published article carries this slug, so this address 404s rather than '
+                        .'forwarding, and the redirect is reached',
+                ];
+        }
+
+        if ($method === 'BrandController@legacyShow') {
+            return \App\Models\Brand::query()->where('slug', $slug)->exists()
+                ? [
+                    'status' => self::MOVED,
+                    'to' => UrlScheme::brand($slug),
+                    'why' => 'this is a retired brand address and the shop already forwards it by itself, in one '
+                        .'hop, to '.UrlScheme::brand($slug),
+                ]
+                : [
+                    'status' => self::NOT_FOUND,
+                    'why' => 'no brand carries this slug, so this address 404s rather than forwarding, and the '
+                        .'redirect is reached',
+                ];
+        }
+
         $name = (string) $route->getName();
 
         if ($name === 'post') {
@@ -363,6 +566,27 @@ final class SourceReachability
             // that 404s is reached by the table from the 404 handler AND from
             // the global pipeline. Nothing about this half moved.
             : ['status' => self::NOT_FOUND, 'why' => $whenMissing];
+    }
+
+    /**
+     * "PageController@rootArticle" from a matched route's action.
+     *
+     * The bare class name and the method, so this file does not carry a
+     * namespace that a move would silently invalidate into a branch that never
+     * fires — the dead-filter shape `Api\ProductController` already cost this
+     * repository once.
+     */
+    private function actionMethod(\Illuminate\Routing\Route $route): string
+    {
+        $action = (string) $route->getActionName();
+
+        if (! str_contains($action, '@')) {
+            return '';
+        }
+
+        [$class, $method] = explode('@', $action, 2);
+
+        return class_basename($class).'@'.$method;
     }
 
     private function lastSegment(string $path): string

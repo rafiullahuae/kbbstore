@@ -14,7 +14,7 @@ use App\Support\Locale;
  * store/blog, store/post, store/skin-quiz, store/app and store/review-wall do
  * not extend layouts/store.blade.php. They are whole documents, and each of
  * them opened with a hard-coded `<html lang="en">` and no `dir` at all — so
- * once /ar/ existed, /ar/skincare-guide/ served Arabic chrome, an Arabic
+ * once /ar/ existed, /ar/blog/ served Arabic chrome, an Arabic
  * canonical and an Arabic hreflang set inside a document that declared itself
  * English. That is wrong for every screen reader, hyphenator, spell checker and
  * translation tool that reads the attribute, on the pages a shopper is most
@@ -65,8 +65,8 @@ function langState(bool $arabic, bool $mirrored): void
 function standaloneDocuments(): array
 {
     return [
-        '/skincare-guide/' => 'store/blog',
-        '/lang-guide-post/' => 'store/post',
+        '/blog/' => 'store/blog',
+        '/blog/lang-guide-post/' => 'store/post',
         '/skin-quiz/' => 'store/skin-quiz',
         '/app/' => 'store/app',
         '/reviews/' => 'store/review-wall',

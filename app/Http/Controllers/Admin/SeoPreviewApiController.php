@@ -435,7 +435,7 @@ class SeoPreviewApiController extends Controller
             return $brand === null ? null : [
                 'name' => (string) $brand->t('name'),
                 'description' => (string) ($brand->t('description') ?? ''),
-                'path' => Url::to('/korean-skincare-brands/'.$brand->slug.'/'),
+                'path' => Url::to(\App\Support\UrlScheme::brand((string) $brand->slug)),
                 'stored' => ProductSeo::normalise($brand->seo) ?? [],
             ];
         }
@@ -713,7 +713,7 @@ class SeoPreviewApiController extends Controller
      * appears is the address the row will get, and showing "Sun Care & SPF"
      * inside a URL would be a preview of something the shop never serves.
      *
-     * A category being created shows /product-category/<slug>/ without its
+     * A category being created shows /collections/<slug>/ without its
      * ancestors, because the parent is a select on the same form and resolving
      * the whole path would mean reading the tree here. The one thing that would
      * be worse than a short path is a wrong one, so the note beside the box
@@ -730,8 +730,8 @@ class SeoPreviewApiController extends Controller
         }
 
         return match ($kind) {
-            'category' => Url::to('/product-category/'.$slug.'/'),
-            'brand' => Url::to('/korean-skincare-brands/'.$slug.'/'),
+            'category' => Url::to(\App\Support\UrlScheme::collection($slug)),
+            'brand' => Url::to(\App\Support\UrlScheme::brand($slug)),
             'article' => '/'.$slug.'/',
             // A content page is never created (PageEditorApiController's header
             // says why), so this is only ever reached by a caller that sent a

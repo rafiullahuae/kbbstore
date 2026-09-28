@@ -137,7 +137,7 @@ function phonePages(): array
         '/my-account/',
         '/track-my-order/',
         '/my-wishlist/',
-        '/korean-skincare-brands/',
+        '/brands/',
         '/delivery/',
         '/faqs/',
         '/refund_returns/',

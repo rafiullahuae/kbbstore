@@ -240,7 +240,7 @@ it('corrects the host and the path in one hop, not two', function () {
     foreach (['/toners', '/toners/'] as $source) {
         Redirect::query()->updateOrCreate(
             ['source' => $source],
-            ['target' => '/product-category/skincare/toners/', 'enabled' => true, 'code' => 301]
+            ['target' => '/collections/skincare/toners/', 'enabled' => true, 'code' => 301]
         );
     }
 
@@ -256,7 +256,7 @@ it('corrects the host and the path in one hop, not two', function () {
     $response = $this->get('http://kbeautybliss.com/toners/');
 
     expect($response->status())->toBe(301);
-    expect($response->headers->get('Location'))->toContain('/product-category/skincare/toners/');
+    expect($response->headers->get('Location'))->toContain('/collections/skincare/toners/');
 });
 
 it('serves an unlisted host rather than forwarding it, and marks it noindex', function () {

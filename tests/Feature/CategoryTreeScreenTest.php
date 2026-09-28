@@ -88,7 +88,7 @@ it('lets the longest strings on the row wrap rather than stretch it', function (
     $css = catTreeSource();
 
     // A category path is the longest token on the screen —
-    // /product-category/skincare/cleansers-and-makeup-removers/oil-based-.../
+    // /collections/skincare/cleansers-and-makeup-removers/oil-based-.../
     // is one unbroken string, and without overflow-wrap it sets the row's
     // minimum width single-handedly.
     expect($css)->toMatch('/\.ct-path\{[^}]*overflow-wrap:anywhere/')

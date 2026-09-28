@@ -77,10 +77,10 @@ final class LocaleSlugs
      * The groups this may address, and the URL each one lives at.
      *
      * NOT every table with a slug. `brands` and `posts` are absent because
-     * their ROUTES cannot carry a non-ASCII slug: `/korean-skincare-brands/
-     * {slug}/` is constrained to `[A-Za-z0-9\-_]+` and the site-root article
-     * route to `PageController::slugPattern()`, whose character class is
-     * `[a-z0-9]`. Both 404 an Arabic slug in either spelling — measured in
+     * their ROUTES cannot carry a non-ASCII slug: `/brands/{slug}/` and
+     * `/blog/{slug}/` are both constrained to `[A-Za-z0-9\-_]+`, and the
+     * site-root article redirect to `PageController::slugPattern()`, whose
+     * character class is `[a-z0-9]`. Both 404 an Arabic slug in either spelling — measured in
      * ArabicSlugPolicyTest — and widening either regex also widens what the
      * root catch-all will swallow, which is what RESERVED_SLUGS and
      * RootSlugCollisionTest rest on. Listing them here would offer the owner a
@@ -89,8 +89,8 @@ final class LocaleSlugs
      * @var array<string, string> group => the path prefix its slug sits under
      */
     public const ADDRESSABLE = [
-        'products' => '/product/',
-        'categories' => '/product-category/',
+        'products' => UrlScheme::PRODUCT_BASE,
+        'categories' => UrlScheme::COLLECTION_BASE,
     ];
 
     /** Cleared by the same clear_caches migration that ships this. */

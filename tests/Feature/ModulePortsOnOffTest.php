@@ -223,11 +223,12 @@ it('serves the brand directory and a brand page while brands is on', function ()
 
     ehModule('brands', true);
 
-    test()->get('/korean-skincare-brands/')->assertOk();
-    test()->get('/korean-skincare-brands/'.$brand->slug.'/')->assertOk();
+    test()->get('/brands/')->assertOk();
+    test()->get('/brands/'.$brand->slug.'/')->assertOk();
 
     // The legacy addresses still redirect rather than 404ing.
-    test()->get('/brands/')->assertRedirect();
+    test()->get('/korean-skincare-brands/')->assertRedirect();
+    test()->get('/korean-skincare-brands/'.$brand->slug.'/')->assertRedirect();
 });
 
 it('404s every brand address, redirects included, when brands is switched off', function () {
@@ -235,8 +236,8 @@ it('404s every brand address, redirects included, when brands is switched off', 
 
     ehModule('brands', false);
 
-    test()->get('/korean-skincare-brands/')->assertNotFound();
-    test()->get('/korean-skincare-brands/'.$brand->slug.'/')->assertNotFound();
+    test()->get('/brands/')->assertNotFound();
+    test()->get('/brands/'.$brand->slug.'/')->assertNotFound();
 
     /*
      * The two 301s go with them, and that is the point of gating in the
@@ -244,13 +245,14 @@ it('404s every brand address, redirects included, when brands is switched off', 
      * send the shopper to a page that 404s, which is a worse answer than either
      * end giving the same one.
      */
-    test()->get('/brands/')->assertNotFound();
+    test()->get('/korean-skincare-brands/')->assertNotFound();
+    test()->get('/korean-skincare-brands/'.$brand->slug.'/')->assertNotFound();
     test()->get('/brand/'.$brand->slug.'/')->assertNotFound();
 
     // And back on restores all of it.
     ehModule('brands', true);
 
-    test()->get('/korean-skincare-brands/')->assertOk();
+    test()->get('/brands/')->assertOk();
 });
 
 it('takes the home page brand strip down with the module, not just the brand pages', function () {
@@ -272,7 +274,14 @@ it('takes the home page brand strip down with the module, not just the brand pag
      * Counted off the strip's own link, not off a class name: the class appears
      * in this page's inlined stylesheet whether the section renders or not.
      */
-    $count = fn (string $html) => preg_match_all('~href="[^"]*/korean-skincare-brands/"~', $html);
+    /*
+     * The STRIP's own "All brands" link, told apart from the hero slide's by
+     * its class. Both point at /brands/ since the address scheme moved the
+     * directory there, and the hero is not gated by this module — see the note
+     * in the test below, which records that as a finding rather than fixing it
+     * from here.
+     */
+    $count = fn (string $html) => preg_match_all('~class="lnk" href="[^"]*/brands/"~', $html);
 
     expect($count($on))->toBeGreaterThan(0);
     expect($count($off))->toBe(0);
@@ -283,7 +292,7 @@ it('stops the header linking to brand pages it would now 404', function () {
      * FOUND BY THE TEST ABOVE, which is why it is its own test now.
      *
      * Gating BrandController was not enough. The primary menu's "Brands" item
-     * is authored menu data pointing at /korean-skincare-brands/, and it kept
+     * is authored menu data pointing at /brands/, and it kept
      * rendering in the header of EVERY page with the module off — a link
      * straight to a 404. The page count matters more than the home page did:
      * this one was on all of them.
@@ -292,22 +301,46 @@ it('stops the header linking to brand pages it would now 404', function () {
 
     ehModule('brands', false);
 
-    foreach (['/', '/shop'] as $url) {
-        $html = test()->get($url)->assertOk()->getContent();
+    /*
+     * ── /shop ONLY FOR THE STRICT COUNT, AND A FINDING ON / ────────────────
+     *
+     * This loop read ['/', '/shop'] and counted
+     * `href="…/korean-skincare-brands/?"`. The address scheme made the
+     * directory /brands/, and the same count on the HOME PAGE then found ONE —
+     * which is not the header. It is HomepageContent::DEFAULT_SLIDES' second
+     * hero slide, "Shop all brands", whose `url` has been the literal
+     * '/brands/' since it was written.
+     *
+     * That link was ALREADY broken with the module off: /brands/ used to 301 to
+     * /korean-skincare-brands/, which the gate 404s. The old regex simply could
+     * not see it, because the slide names the short address and the regex named
+     * the long one. Lane URL found it and did NOT fix it: the hero's default
+     * copy is homepage content and gating it is the brands module's job, not
+     * the address scheme's. It is in the lane report as found-and-not-fixed.
+     *
+     * The chrome itself is what this test is for and is identical on every
+     * page, so /shop proves it without the homepage's own content in the way.
+     */
+    $html = test()->get('/shop')->assertOk()->getContent();
 
-        // Matched on the href rather than on a class name: the class appears in
-        // this page's inlined stylesheet whether the item renders or not.
-        expect(preg_match_all('~href="[^"]*/korean-skincare-brands/?"~', $html))
-            ->toBe(0, "a brand link survives in the chrome of {$url}");
-        expect(preg_match_all('~href="[^"]*/brand/[^"]*"~', $html))
-            ->toBe(0, "a per-brand link survives in the chrome of {$url}");
-    }
+    // Matched on the href rather than on a class name: the class appears in
+    // this page's inlined stylesheet whether the item renders or not.
+    expect(preg_match_all('~href="[^"]*/brands/?"~', $html))
+        ->toBe(0, 'a brand link survives in the chrome of /shop');
+    expect(preg_match_all('~href="[^"]*/brand/[^"]*"~', $html))
+        ->toBe(0, 'a per-brand link survives in the chrome of /shop');
+
+    // And the home page carries exactly the one that is not chrome. Counted
+    // rather than ignored, so the day somebody gates the slide this goes red
+    // and says so.
+    expect(preg_match_all('~href="[^"]*/brands/?"~', test()->get('/')->assertOk()->getContent()))
+        ->toBe(1, 'the home page brand links changed; see the hero-slide note above');
 
     // On, the nav item is back — the filter hides it, it does not delete the
     // owner's menu row.
     ehModule('brands', true);
 
-    expect(preg_match_all('~href="[^"]*/korean-skincare-brands/?"~', test()->get('/shop')->assertOk()->getContent()))
+    expect(preg_match_all('~href="[^"]*/brands/?"~', test()->get('/shop')->assertOk()->getContent()))
         ->toBeGreaterThan(0);
 });
 
@@ -324,8 +357,8 @@ it('leaves the shop’s own brand filter alone, which is not a brand page', func
 
     // And the four addresses the module really owns are all matched, with or
     // without a trailing slash, so the gate and the nav filter cannot disagree.
-    expect(\App\Support\BrandUrls::matches('/korean-skincare-brands/'))->toBeTrue();
-    expect(\App\Support\BrandUrls::matches('/korean-skincare-brands/cosrx/'))->toBeTrue();
+    expect(\App\Support\BrandUrls::matches('/brands/'))->toBeTrue();
+    expect(\App\Support\BrandUrls::matches('/brands/cosrx/'))->toBeTrue();
     expect(\App\Support\BrandUrls::matches('/brands'))->toBeTrue();
     expect(\App\Support\BrandUrls::matches('/brand/cosrx/'))->toBeTrue();
 });

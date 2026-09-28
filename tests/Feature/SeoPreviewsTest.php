@@ -361,8 +361,8 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $shapes = [
         'home' => ['label' => 'The home page', 'path' => '/'],
         'product' => ['label' => 'A product page', 'path' => '/product/' . $product->slug . '/'],
-        'category' => ['label' => 'A category archive', 'path' => '/product-category/beauty-devices/'],
-        'article' => ['label' => 'A journal article', 'path' => '/' . $seed['post']->slug . '/'],
+        'category' => ['label' => 'A category archive', 'path' => '/collections/beauty-devices/'],
+        'article' => ['label' => 'A journal article', 'path' => '/blog/' . $seed['post']->slug . '/'],
         'concern' => ['label' => 'A concern collection', 'path' => '/concern/acne/'],
         'page' => ['label' => 'A content page', 'path' => '/faqs/'],
     ];
@@ -875,7 +875,7 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'SEO-URL-MAP §2 — fixed, 15 of 15',
         spCheck(count(LegacyCategoryUrls::PATHS) === 15
             && test()->call('GET', '/beauty-devices/')->getStatusCode() === 301),
-        'LegacyCategoryUrls::PATHS holds 15 paths. /beauty-devices/ → 301 → /product-category/beauty-devices/ with no redirect row written. An address with no matching category still 404s (measured: /skincare-sets/ with no such category → 404), deliberately — a confident redirect to the wrong listing is worse than a 404 somebody can see.',
+        'LegacyCategoryUrls::PATHS holds 15 paths. /beauty-devices/ → 301 → /collections/beauty-devices/ with no redirect row written. An address with no matching category still 404s (measured: /skincare-sets/ with no such category → 404), deliberately — a confident redirect to the wrong listing is worse than a 404 somebody can see.',
         'app/Support/LegacyCategoryUrls.php');
 
     $rows[] = spRow($A,
@@ -914,7 +914,7 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'llms.txt, which neither Shopify nor the competitor publishes.',
         'SEO-GAP §1 — Have',
         spCheck(str_contains($llms, '# K-Beauty Bliss') && str_contains($llms, '/shop/')),
-        strlen($llms) . ' bytes, ' . count(preg_split('/\R/', trim($llms)) ?: []) . ' lines. It names the shop, its description, /shop/ and /skincare-guide/, and with a second language live it names each language and its localised addresses. Thin against what an answer engine could use — see "Not fixed" on the report.',
+        strlen($llms) . ' bytes, ' . count(preg_split('/\R/', trim($llms)) ?: []) . ' lines. It names the shop, its description, /shop/ and /blog/, and with a second language live it names each language and its localised addresses. Thin against what an answer engine could use — see "Not fixed" on the report.',
         'app/Http/Controllers/Store/SeoFilesController.php:1036');
 
     $rows[] = spRow($B,
@@ -954,8 +954,8 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'SEO-GAP §2 — Have, all five',
         spCheck($locsEn > 12
             && str_contains($sitemapEn, '/product/' . $product->slug . '/')
-            && str_contains($sitemapEn, '/product-category/beauty-devices/')
-            && str_contains($sitemapEn, '/korean-skincare-brands/')
+            && str_contains($sitemapEn, '/collections/beauty-devices/')
+            && str_contains($sitemapEn, '/brands/')
             && str_contains($sitemapEn, '/' . $seed['post']->slug . '/')
             && str_contains($sitemapEn, '/faqs/')
             && str_contains($sitemapEn, '/new-in/')
@@ -1213,8 +1213,8 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $rows[] = spRow($D,
         '"The Journal index emits no CollectionPage node, in either language."',
         'SEO-ARABIC-PARITY §7, SEO-MODULE-ROUND-4 §5 — found, not fixed',
-        spCheck(in_array('CollectionPage', spTypes('/skincare-guide/'), true), 'STALE'),
-        'FIXED and merged. Measured: /skincare-guide/ nodes are ' . implode(' · ', spTypes('/skincare-guide/')) . '. The exact ANCHOR/REPLACEMENT round 4 handed over was applied.',
+        spCheck(in_array('CollectionPage', spTypes('/blog/'), true), 'STALE'),
+        'FIXED and merged. Measured: /blog/ nodes are ' . implode(' · ', spTypes('/blog/')) . '. The exact ANCHOR/REPLACEMENT round 4 handed over was applied.',
         'app/Http/Controllers/Store/PageController.php');
 
     $rows[] = spRow($D,
@@ -1473,8 +1473,8 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
     $rows[] = spRow($G,
         'Brand landing pages, sitemap-listed, with a brand with nothing live left out.',
         'SEO-GAP §6 — Have, 93 of them',
-        spCheck(str_contains($sitemapEn, '/korean-skincare-brands/')),
-        'Live at /korean-skincare-brands/{slug}/ with the A-Z index submitted at the address that answers rather than the one that redirects (/brands/ 301s to it). A brand with no live product is left out of the sitemap.',
+        spCheck(str_contains($sitemapEn, '/brands/')),
+        'Live at /brands/{slug}/ with the A-Z index submitted at the address that answers rather than the one that redirects (/brands/ 301s to it). A brand with no live product is left out of the sitemap.',
         'routes/kbb-brands-blog.php');
 
     /*
@@ -1526,7 +1526,7 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'An ingredient/concern article cluster, in both languages, linking down to the concern pages and up to the pillar.',
         'SEO-GAP §12, SEO-BUILD-PLAN Part II item 6',
         'OWNER',
-        'The engine is not the gap and the volume is. Five articles exist; Article markup, the /ar/ pipeline and the pillar (/skincare-guide/) are all built and idle. Three of the five articles serve `sensitivity` directly, which is why the mapping document recommends launching that concern first. The word counts in the research are practitioner convention, not Google documentation, and are deliberately not in any test.',
+        'The engine is not the gap and the volume is. Five articles exist; Article markup, the /ar/ pipeline and the pillar (/blog/) are all built and idle. Three of the five articles serve `sensitivity` directly, which is why the mapping document recommends launching that concern first. The word counts in the research are practitioner convention, not Google documentation, and are deliberately not in any test.',
         'docs/SEO-GAP.md §12');
 
     $rows[] = spRow($G,

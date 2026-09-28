@@ -474,7 +474,7 @@
 @unless ($sections->hidden('routine'))
 <section class="sec tinted {{ $sections->classFor('routine') }}" style="padding-top:0"><div class="wrap">
   <div class="sh"><div><h2>{{ __('store.home.routine_heading') }} <span class="cnt">{{ trans_choice('store.home.routine_steps', 6) }}</span></h2></div>
-    <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">{{ __('store.home.routine_link') }}</a></div>
+    <a class="lnk" href="{{ Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.home.routine_link') }}</a></div>
   <div class="rsteps">
     @foreach ($routine as $step)
       <a class="rstep" href="{{ Url::to($step['url']) }}">
@@ -530,7 +530,7 @@
 
      `moduleEnabled('brands')` is the module on Store → Modules: "does this shop
      have brands at all", which also decides whether the directory at
-     /korean-skincare-brands/ and the per-brand landing pages answer. A module
+     /brands/ and the per-brand landing pages answer. A module
      switched off has to leave NO trace on the storefront, and a brand strip
      still sitting on the home page — every tile linking to a page that now
      404s — is the loudest trace there is.
@@ -742,10 +742,10 @@
 @if ($posts->isNotEmpty())
 <section class="sec tinted {{ $sections->classFor('blog') }}" style="padding-top:0"><div class="wrap">
   <div class="sh"><div><h2>{{ __('store.home.journal_heading') }} <span class="cnt">{{ __('store.home.journal_badge') }}</span></h2><p>{{ __('store.home.journal_subtitle') }}</p></div>
-    <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">{{ __('store.home.journal_link') }}</a></div>
+    <a class="lnk" href="{{ Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.home.journal_link') }}</a></div>
   <div class="blog">
     @foreach ($posts as $post)
-      <a class="bl" href="{{ Url::to('/' . $post->slug . '/') }}">
+      <a class="bl" href="{{ Url::to(\App\Support\UrlScheme::article($post->slug)) }}">
         {{-- `cover`, not `image`. There is no posts.image column — see the
              Post::saved hook in AppServiceProvider, which says so for the same
              reason — and Eloquent returns null for a missing attribute instead

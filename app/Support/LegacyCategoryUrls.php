@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  * kbeautybliss.com served its category archives at the site root — /toners/,
  * /sunscreens/, /cleansing-oils/ — because that is what its WooCommerce
  * permalink settings produced. This application serves them at
- * /product-category/{path}/ (URL Contract U-03), and nothing was ever taught
+ * /collections/{path}/ (URL Contract U-03), and nothing was ever taught
  * the difference. The menu rows seeded by
  * 2026_09_09_070000_fix_kbeautybliss_menu_structure kept the old shape, so
  * fifteen addresses in the header and the mobile drawer pointed at a URL
@@ -54,7 +54,7 @@ use Illuminate\Support\Facades\DB;
  *
  * CategoryPath::resolve() makes this better still. A leaf slug whose category
  * is nested under a parent does not 404 — it 301s to the canonical nested
- * path. So /product-category/cleansing-oils/ keeps working even if the
+ * path. So /collections/cleansing-oils/ keeps working even if the
  * imported category turns out to live at skincare/cleansers/cleansing-oils.
  *
  * Categories the shop genuinely does not have are therefore REPORTED rather
@@ -79,7 +79,7 @@ final class LegacyCategoryUrls
      * /everything-under-54-aed/, /new-in/ and /best-sellers/ are flat root
      * URLs too, but they are COLLECTIONS with their own registered routes
      * (CollectionController) and they answer 200 today. /korean-skincare-brands/
-     * and /skincare-guide/ likewise. Rewriting those would break them.
+     * and /blog/ likewise. Rewriting those would break them.
      *
      * @var list<string>
      */
@@ -115,7 +115,7 @@ final class LegacyCategoryUrls
      */
     public static function toCategoryPath(string $url): string
     {
-        return '/product-category/' . trim(self::normalise($url), '/') . '/';
+        return UrlScheme::collection(trim(self::normalise($url), '/'));
     }
 
     /** The category slug a legacy path names. */
@@ -178,12 +178,12 @@ final class LegacyCategoryUrls
      *    one of the fifteen cannot build a cycle out of this.
      *
      * 3. ONE HOP. The destination is the CANONICAL nested path, not the flat
-     *    /product-category/{slug}/ form that toCategoryPath() returns. Those
+     *    /collections/{slug}/ form that toCategoryPath() returns. Those
      *    two differ the moment a category has a parent: a nested `toners`
-     *    under `skincare` makes /product-category/toners/ a 301 in its own
+     *    under `skincare` makes /collections/toners/ a 301 in its own
      *    right (CategoryPath::resolve, via CategoryArchiveController), so
-     *    handing that address out would cost /toners/ -> /product-category/
-     *    toners/ -> /product-category/skincare/toners/ -- two hops, which
+     *    handing that address out would cost /toners/ -> /collections/
+     *    toners/ -> /collections/skincare/toners/ -- two hops, which
      *    leaks ranking and burns crawl budget for nothing. canonicalPath() is
      *    the one-hop answer and is what this returns.
      *
@@ -251,7 +251,7 @@ final class LegacyCategoryUrls
             return null;
         }
 
-        return '/product-category/' . $path . '/';
+        return UrlScheme::collection($path);
     }
 
     /**
@@ -338,7 +338,7 @@ final class LegacyCategoryUrls
 
             $canonical = CategoryPath::canonicalPath($category);
 
-            $out[$path] = $canonical === '' ? null : '/product-category/' . $canonical . '/';
+            $out[$path] = $canonical === '' ? null : UrlScheme::collection($canonical);
         }
 
         return $out;

@@ -555,12 +555,41 @@ a count of rows written.
 
 ### `kbb:import-redirects` — the addresses Google already has
 
-WooCommerce commonly publishes a category at its leaf slug,
-`/product-category/serums/`. This shop's URL contract U-03 is the full nested
-path, `/product-category/skincare/treatments/serums/`. Every indexed flat URL
-therefore 404s after the import. This is not hypothetical: fourteen menu links
-carried exactly that shape and 404'd until two packages ago, and those were
-only the ones somebody was looking at.
+**The address scheme, first, because every row below points at it.** Listing
+pages are plural and detail pages are singular — the researched split, and the
+reason the product catalogue does not move:
+
+| the old site | this shop |
+|---|---|
+| `/product-category/{path}/` and the flat root form `/toners/` | **`/collections/{path}/`** |
+| a brand archive, whatever base its plugin used | **`/brands/{slug}/`** — a real page, not `/shop/?filter_brands=` |
+| `/product/{slug}/` | **`/product/{slug}/`** — unchanged |
+| an article at the site root, `/{slug}/` | **`/blog/{slug}/`** |
+
+`App\Support\UrlScheme` is where those shapes are written down; nothing else
+spells one out.
+
+kbeautybliss.com published its category archives FLAT AT THE SITE ROOT —
+`/toners/`, `/sunscreens/` — because `woocommerce_permalinks['category_base']`
+was the empty string, which `manifest.json` carries verbatim. Every one of those
+addresses 404'd after the import. This is not hypothetical: fourteen menu links
+carried exactly that shape and 404'd until two packages ago, and those were only
+the ones somebody was looking at.
+
+**Most old addresses now need no row at all, and that is the point.** The
+scheme shipped a forwarding route for each retired address — `/product-category/…`,
+`/korean-skincare-brands/…`, `/brand/{slug}/`, `/skincare-guide/…` and `/{slug}/`
+at the site root — so the shop makes the hop itself, in ONE hop, and follows a
+rename while doing it. The map sees that, compares the destination with its own,
+and puts the proposal in `discard` with the reason on the row. A written row
+would restate a hop the application already makes and would then rot: it goes on
+pointing at import-day's path after that path has become a 404.
+
+What is left in `migrate` is what no route can derive, and it is the list worth
+reading: a category whose flat root address is not one of the fifteen in
+`LegacyCategoryUrls::PATHS`, an article whose SLUG CHANGED on import (a
+`SlugGuard` collision with a reserved slug is the real case), a WordPress page,
+and every product on a shop whose `product_base` was not `/product`.
 
 ```bash
 php artisan kbb:import-redirects                              # look
@@ -583,11 +612,13 @@ buckets:
 the old site really served, and wins over the derived rule wherever the two
 disagree.
 
-**What it will not do:** guess a brand-archive base (U-05 says this shop has no
-brand archive at all, and what the old one used depends on which plugin it
-ran), or redirect `/?p=123` — `CheckRedirects::findMatch()` matches on
-`getPathInfo()`, which excludes the query string, so such a row would be stored
-and never match.
+**What it will not do:** guess a brand-archive BASE. This shop has a brand page
+now — `/brands/{slug}/`, which is where a brand permalink is pointed — but what
+the OLD site published one at depends on which plugin it ran (`/brand/`,
+`/product-brand/`, `/marca/` …), so the source is read out of `permalinks.csv`
+and never invented. It also will not redirect `/?p=123`:
+`CheckRedirects::findMatch()` matches on `getPathInfo()`, which excludes the
+query string, so such a row would be stored and never match.
 
 **It is reversible**, which the row import is not. `--rollback` removes only
 rows whose source is in the current map, whose target is still the one this

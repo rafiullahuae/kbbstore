@@ -260,7 +260,7 @@ it('prints the range on the skinned grid as well', function () {
     SettingsService::forgetMemo();
     app()->forgetScopedInstances();
 
-    $html = test()->get('/korean-skincare-brands/vpt-brand/')->assertOk()->getContent();
+    $html = test()->get('/brands/vpt-brand/')->assertOk()->getContent();
 
     expect(vptSkinTile($html))->toBe('AED 35 – AED 60');
 });

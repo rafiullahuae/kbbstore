@@ -219,7 +219,7 @@ final class PostImporter extends EntityImporter
              */
             $report->adjusted(
                 "a WordPress status this shop does not serve -- imported as a draft, so the article is in "
-                .'the shop and is not on /skincare-guide/ until it is published',
+                .'the shop and is not on /blog/ until it is published',
                 $row->line,
                 $this->identify($row),
                 'status',

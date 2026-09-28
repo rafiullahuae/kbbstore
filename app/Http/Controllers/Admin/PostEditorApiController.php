@@ -173,7 +173,7 @@ class PostEditorApiController extends Controller
         return response()->json([
             'statuses' => self::STATUSES,
             'translations' => (new Post)->translationsForEditor(),
-            'journal_url' => Url::to('/skincare-guide/'),
+            'journal_url' => Url::to(\App\Support\UrlScheme::blogIndex()),
             'site_base' => rtrim(Url::base(), '/'),
         ]);
     }

@@ -5,7 +5,7 @@
  *
  * docs/GA-SKINCARE-GUIDE.md §6 measured the hole this closes, against a running
  * server: the permalink structure for the Journal is finished and serving
- * nothing. `/skincare-guide/` renders an index with no cards, every `/{slug}/`
+ * nothing. `/blog/` renders an index with no cards, every `/{slug}/`
  * is a 404, the homepage rail links three addresses that 404, and the reason is
  * that `posts` is empty with no seeder, no importer and a read-only admin
  * screen. `posts.csv` was one of the seven files docs/WP-EXPORT-CONTRACT.md
@@ -84,7 +84,7 @@ it('fills the Journal from an export, and the index has cards in it', function (
      * 404. A before/after table whose "before" is a citation is a table that
      * goes stale without anybody noticing.
      */
-    $empty = $this->get('/skincare-guide/');
+    $empty = $this->get('/blog/');
     $empty->assertOk();
 
     expect(str_contains($empty->getContent(), 'Heartleaf extract'))->toBeFalse();
@@ -107,12 +107,12 @@ it('fills the Journal from an export, and the index has cards in it', function (
         ->and($article->published_at->toDateTimeString())->toBe('2021-05-04 09:00:00');
 
     // And the page GA found empty now renders the article.
-    $index = $this->get('/skincare-guide/');
+    $index = $this->get('/blog/');
 
     $index->assertOk();
     expect($index->getContent())->toContain('Heartleaf extract, and why it is everywhere');
 
-    $page = $this->get('/heartleaf-extract-transforming-k-beauty-skincare/');
+    $page = $this->get('/blog/heartleaf-extract-transforming-k-beauty-skincare/');
 
     $page->assertOk();
     expect($page->getContent())->toContain('Heartleaf is');
@@ -187,7 +187,7 @@ it('reads the reserved list off the router rather than keeping a second copy of 
     // The router agrees: the refused address is the shop's, and the imported
     // one is the article's.
     expect($this->get('/my-wishlist/')->status())->not->toBe(404);
-    $this->get('/heartleaf-extract-transforming-k-beauty-skincare/')->assertOk();
+    $this->get('/blog/heartleaf-extract-transforming-k-beauty-skincare/')->assertOk();
 });
 
 /* --------------------------------------------------- slugs of the wrong shape */
@@ -208,7 +208,7 @@ it('normalises a slug this application cannot serve rather than losing the artic
     $arabic = Post::query()->where('source_post_id', 7006)->firstOrFail();
     expect($arabic->slug)->toBe('skin-care-in-the-gulf-summer');
 
-    $this->get('/spf-50-every-day/')->assertOk();
+    $this->get('/blog/spf-50-every-day/')->assertOk();
 
     /*
      * AND IT IS AN ADJUSTMENT AND NOT A SILENT REWRITE. The old address is
@@ -277,9 +277,9 @@ it('never publishes a draft or a scheduled post on the owner\'s behalf', functio
     /*
      * `future` is the one that would bite. PageController::blog() filters on
      * status and NOT on published_at, so a scheduled post imported as published
-     * would be on /skincare-guide/ the moment the import finished.
+     * would be on /blog/ the moment the import finished.
      */
-    $index = $this->get('/skincare-guide/')->getContent();
+    $index = $this->get('/blog/')->getContent();
 
     expect(str_contains($index, 'The winter edit'))->toBeFalse('a scheduled post reached the index')
         ->and(str_contains($index, 'Retinol for beginners'))->toBeFalse('a draft reached the index');
@@ -322,7 +322,7 @@ it('strips what a browser would execute, and keeps the heading it would have fla
     expect($body)->toContain('<h2>Why twice</h2>');
 
     // The page serves exactly one h1 — its own.
-    $page = $this->get('/double-cleansing-explained/')->getContent();
+    $page = $this->get('/blog/double-cleansing-explained/')->getContent();
 
     expect(substr_count($page, '<h1'))->toBe(1);
 

@@ -273,7 +273,7 @@ it('promises no delivery window on any page that falls back to the sitewide desc
     );
     dvProduct();
 
-    foreach (['/', '/delivery/', '/about/', '/skin-quiz/', '/korean-skincare-brands/'] as $path) {
+    foreach (['/', '/delivery/', '/about/', '/skin-quiz/', '/brands/'] as $path) {
         $html = test()->get($path)->assertOk()->getContent();
 
         foreach ([['name', 'description'], ['property', 'og:description'], ['name', 'twitter:description']] as [$attr, $key]) {
@@ -317,7 +317,7 @@ it('promises no delivery window in llms.txt', function () {
 it('lists no key page in llms.txt that the site then redirects or 404s', function () {
     /*
      * Both links this file offered were redirects: /blog 301s to
-     * /skincare-guide/ and /shop canonicalises to /shop/. The same sweep
+     * /blog/ and /shop canonicalises to /shop/. The same sweep
      * SeoCrawlSurfaceTest runs over the sitemap, applied to the other generated
      * file, which shares the sitemap's helper and sits forty lines from it.
      *

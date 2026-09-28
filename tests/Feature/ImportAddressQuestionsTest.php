@@ -61,8 +61,8 @@ use Tests\Support\UrlsMediaAdminRoutes;
  * real router and the real reachability check rather than a stub.
  *
  *   /shop/                      SERVED  — the shop answers this address today
- *   /product-category/qa-toners/ MOVED  — the archive controller 301s it itself
- *   /product-category/qa-orphan/ no target — stranded with no computed path
+ *   /collections/qa-toners/ MOVED  — the archive controller 301s it itself
+ *   /collections/qa-orphan/ no target — stranded with no computed path
  */
 function qaTree(): array
 {
@@ -93,7 +93,7 @@ function qaTree(): array
      * ▲ A MERGED CATEGORY, ADDED SO `already-redirects` IS STILL REACHABLE.
      *
      * That question used to be produced by the nesting rule alone:
-     * /product-category/qa-toners/ is 301'd by the shop on its own, so every
+     * /collections/qa-toners/ is 301'd by the shop on its own, so every
      * nesting proposal was one. Since Lane SEO round 2 the map compares the
      * shop's destination with its own and discards when they AGREE — and a
      * nesting proposal always agrees, because both are the category's canonical
@@ -157,11 +157,11 @@ it('gives every question it asks a code, and never asks one it has no heading fo
 
     /*
      * The permalink row is what makes the merged address a DISAGREEMENT: the
-     * shop sends /product-category/qa-merged/ to QA Skincare, and the export
+     * shop sends /collections/qa-merged/ to QA Skincare, and the export
      * says the address belonged to QA Toners.
      */
     $proposals = (new RedirectMap)->propose([
-        ['type' => 'category', 'wc_id' => 77001, 'permalink' => 'https://old.test/product-category/qa-merged/'],
+        ['type' => 'category', 'wc_id' => 77001, 'permalink' => 'https://old.test/collections/qa-merged/'],
     ]);
     $asking = array_values(array_filter($proposals, fn ($p) => $p['decision'] === RedirectMap::ASK));
 
@@ -304,7 +304,7 @@ it('asks again when what an approval pointed at has moved', function () {
 
     expect($stale['decision'])->toBe(RedirectMap::ASK)
         ->and($stale['answered'])->toBe(RedirectDecisions::STALE)
-        ->and($stale['target'])->toBe('/product-category/qa-bath/shop/')
+        ->and($stale['target'])->toBe('/collections/qa-bath/shop/')
         ->and(str_contains($stale['reason'], $approved['target']))->toBeTrue()
         ->and(str_contains($stale['reason'], 'something moved after you answered'))->toBeTrue();
 
@@ -711,7 +711,7 @@ it('asks about a dead destination even when the shop already answers the old add
     $before = qaProposal('/shop/', (new RedirectMap)->propose());
 
     expect($before['question'])->toBe(RedirectMap::Q_STILL_ANSWERS)
-        ->and($before['target'])->toBe('/product-category/qa-skincare/shop/');
+        ->and($before['target'])->toBe('/collections/qa-skincare/shop/');
 
     $collides->forceFill(['path' => 'qa-skincare/gone-away'])->save();
 

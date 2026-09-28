@@ -585,7 +585,7 @@ it('carries the Arabic through the menu item editor in the same request', functi
     $created = test()->postJson('/admin-api/mega-menu', [
         'menu_id' => $menu->id,
         'label' => 'Skincare',
-        'url' => '/product-category/skincare/',
+        'url' => '/collections/skincare/',
         'translations' => ['ar' => ['label' => 'العناية بالبشرة']],
     ]);
 

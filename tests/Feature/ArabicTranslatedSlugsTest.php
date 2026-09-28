@@ -196,9 +196,9 @@ it('serves the Arabic address and declares it canonical once the policy is on', 
 
     // The nested category keeps its ancestry and translates only the leaf, which
     // is the only segment that has a row.
-    expect(atsFetch('/ar/product-category/ats-skincare/'.ATS_AR_CAT.'/')->getStatusCode())->toBe(200)
-        ->and(atsCanonical('/ar/product-category/ats-skincare/'.ATS_AR_CAT.'/'))
-        ->toBe(ATS_BASE.'/ar/product-category/ats-skincare/'.ATS_AR_CAT.'/');
+    expect(atsFetch('/ar/collections/ats-skincare/'.ATS_AR_CAT.'/')->getStatusCode())->toBe(200)
+        ->and(atsCanonical('/ar/collections/ats-skincare/'.ATS_AR_CAT.'/'))
+        ->toBe(ATS_BASE.'/ar/collections/ats-skincare/'.ATS_AR_CAT.'/');
 });
 
 it('keeps the hreflang cluster reciprocal across two different slugs', function () {
@@ -393,8 +393,8 @@ it('reports what would move before anything is written', function () {
     expect($byGroup['products']['from'])->toBe('/product/ats-heartleaf-toner/')
         ->and($byGroup['products']['to'])->toBe('/product/'.ATS_AR_TONER.'/')
         // The nested category's ancestry is kept and only the leaf moves.
-        ->and($byGroup['categories']['from'])->toBe('/product-category/ats-skincare/ats-face-cleansers/')
-        ->and($byGroup['categories']['to'])->toBe('/product-category/ats-skincare/'.ATS_AR_CAT.'/');
+        ->and($byGroup['categories']['from'])->toBe('/collections/ats-skincare/ats-face-cleansers/')
+        ->and($byGroup['categories']['to'])->toBe('/collections/ats-skincare/'.ATS_AR_CAT.'/');
 });
 
 /* ==========================================================================
@@ -477,7 +477,7 @@ it('refuses a second row the same address, and refuses one the shop could not se
 it('does not offer a policy for the two page shapes whose routes refuse Arabic', function () {
     /*
      * `brands` and `posts` are deliberately absent from ADDRESSABLE.
-     * `/korean-skincare-brands/{slug}/` is constrained to `[A-Za-z0-9\-_]+` and the
+     * `/brands/{slug}/` is constrained to `[A-Za-z0-9\-_]+` and the
      * site-root article route to PageController::slugPattern(), whose character
      * class is `[a-z0-9]` — both 404 an Arabic slug in either spelling
      * (ArabicSlugPolicyTest measures it). Offering the owner a box whose value

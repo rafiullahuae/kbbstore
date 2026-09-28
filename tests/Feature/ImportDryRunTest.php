@@ -515,7 +515,7 @@ it('does not ask the owner about two rules that propose the same redirect', func
     /*
      * MOVED ONTO THE ROOT-FLAT ADDRESS BY LANE GB. The collapse rule this test
      * owns is unchanged; the address had to move because
-     * `/product-category/serums-fd/` no longer reaches the migrate bucket at
+     * `/collections/serums-fd/` no longer reaches the migrate bucket at
      * all — the archive controller 301s it itself, so a stored row could never
      * fire and both claims on it are discarded before anybody reads them. On
      * `/serums-fd/`, which does 404, the two rules genuinely agree about a row
@@ -541,7 +541,7 @@ it('does not ask the owner about two rules that propose the same redirect', func
     // The surviving one still points where it should.
     $migrate = array_values(array_filter($mine, static fn (array $p): bool => $p['decision'] === RedirectMap::MIGRATE));
 
-    expect($migrate[0]['target'])->toBe('/product-category/skincare-fd/serums-fd/');
+    expect($migrate[0]['target'])->toBe('/collections/skincare-fd/serums-fd/');
 
     unset($leaf);
 });

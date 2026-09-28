@@ -352,7 +352,7 @@ it('hands the visitor\'s own threshold to the browser on every page', function (
         'is_visible' => true, 'price' => 13000, 'stock_status' => 'instock', 'category_id' => $category->id,
     ]);
 
-    foreach (['/', '/shop', '/product-category/cz-cleansers'] as $path) {
+    foreach (['/', '/shop', '/collections/cz-cleansers'] as $path) {
         expect(czJsThreshold($path, 'SA'))
             ->toBe(160000, "{$path} handed the browser the wrong country's threshold.");
         expect(czJsThreshold($path, 'AE'))
@@ -611,7 +611,7 @@ it('runs the same number of queries whoever the visitor is', function () {
         return $n;
     };
 
-    foreach (['/', '/product-category/cz-serums'] as $path) {
+    foreach (['/', '/collections/cz-serums'] as $path) {
         // Warm the process-level caches first — see StorefrontQueryBudgetTest's
         // header for why a cold-then-warm comparison measures the wrong thing.
         foreach ([null, 'AE', 'SA'] as $code) {
@@ -677,7 +677,7 @@ it('promises no delivery window in a listing page\'s meta description', function
         ]);
     }
 
-    foreach (['/product-category/cz-toners', '/shop', '/shop?s=toner', '/new-in'] as $path) {
+    foreach (['/collections/cz-toners', '/shop', '/shop?s=toner', '/new-in'] as $path) {
         foreach (['AE', 'SA', null] as $code) {
             $desc = czMeta(czPage($path, $code));
 
@@ -700,7 +700,7 @@ it('still describes the listing its meta description is on', function () {
         'stock_status' => 'instock', 'category_id' => $category->id,
     ]);
 
-    $desc = (string) czMeta(czPage('/product-category/cz-toners'));
+    $desc = (string) czMeta(czPage('/collections/cz-toners'));
 
     expect($desc)->toContain('Toners');
     expect($desc)->toContain('K-Beauty Bliss');

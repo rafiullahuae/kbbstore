@@ -190,7 +190,7 @@
   <nav class="nav-links">
     <a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a>
     <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a>
-    <a href="{{ \App\Support\Url::to('/skincare-guide/') }}" class="on">{{ __('store.journal.nav_journal') }}</a>
+    <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}" class="on">{{ __('store.journal.nav_journal') }}</a>
   </nav>
   <div class="tools">
     <a class="tool" href="{{ \App\Support\Url::to('/shop/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg></a>
@@ -201,7 +201,7 @@
 <div class="navov" id="navov" onclick="this.classList.remove('on');document.getElementById('mnav').classList.remove('on')"></div>
 <nav class="mnav" id="mnav">
   <button class="mnav-x" onclick="document.getElementById('mnav').classList.remove('on');document.getElementById('navov').classList.remove('on')">✕</button>
-  <a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a><a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a><a href="{{ \App\Support\Url::to('/skincare-guide/') }}">{{ __('store.journal.nav_journal') }}</a>
+  <a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a><a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a><a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a>
 </nav>
 
 <section class="hero"><div class="wrap hero-in">
@@ -215,8 +215,8 @@
 
 @forelse($posts as $p)
   {{-- Posts live at the site root, one slug per post — the Phase 9 decision.
-       The /skincare-guide/{slug}/ form this app used is now a 301. --}}
-  <a class="post" data-tag="{{ $p->tag }}" href="{{ \App\Support\Url::to('/' . $p->slug . '/') }}">
+       The /skincare-guide/{slug}/ form and the site-root form are both 301s. --}}
+  <a class="post" data-tag="{{ $p->tag }}" href="{{ \App\Support\Url::to(\App\Support\UrlScheme::article($p->slug)) }}">
     {{-- A real <img> so the cover photographs are indexable, with the emoji
          placeholder kept for the posts that have no photograph. The <img>
          comes before .ptag in the DOM on purpose: both are absolutely

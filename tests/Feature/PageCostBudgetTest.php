@@ -166,7 +166,7 @@ it('keeps the grid and the product page inside a hard query ceiling', function (
      */
     $pages = [
         '/shop' => [19, 16],
-        '/product-category/'.$seed['category']->slug => [19, 16],
+        '/collections/'.$seed['category']->slug => [19, 16],
         '/product/'.$seed['product']->slug => [22, 19],
     ];
 
