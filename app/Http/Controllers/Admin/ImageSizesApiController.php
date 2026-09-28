@@ -176,7 +176,8 @@ class ImageSizesApiController extends Controller
 
     /**
      * Every distinct photograph a product PAGE can render, in a stable order —
-     * the featured image and every shot in the gallery beside it.
+     * the featured image, every shot in the gallery beside it, and every
+     * variant's own picture.
      *
      * ── THE GALLERY WAS NEVER IN THIS LIST, AND THAT WAS THE WHOLE BUG ──────
      *
@@ -230,8 +231,51 @@ class ImageSizesApiController extends Controller
         // read two columns is the expensive way to get them on a shared host.
         // The cast comes back as raw JSON here, which is why it is decoded
         // below rather than assumed to be an array.
-        foreach (Product::query()->toBase()->get(['image', 'images']) as $row) {
-            $candidates = [$row->image ?? null];
+        $rows = Product::query()->toBase()->get(['image', 'images']);
+
+        /*
+         * AND THE VARIANTS' OWN PHOTOGRAPHS, which are a third place a small
+         * square is drawn from a big file and were as invisible to this list as
+         * the gallery was.
+         *
+         * `product_variants.image` is what the option swatch on the product
+         * page paints into a 22px circle (.vsw, kbb-product.css:194 -- the
+         * worst ratio on this site), and it is ALSO what every basket and
+         * checkout line prefers over the parent's photograph:
+         * `$item->variant?->image ?: $p?->image`. So a basket full of chosen
+         * options would have gone on pulling full-resolution files however many
+         * copies the products had.
+         *
+         * A second query rather than a join: this is one flat list of strings
+         * and a join would multiply product rows by their variants to produce
+         * the same set. It is an admin request that is about to decode images,
+         * so the query is not the cost here.
+         */
+        $variants = \Illuminate\Support\Facades\DB::table('product_variants')
+            ->whereNotNull('image')
+            ->where('image', '<>', '')
+            ->pluck('image');
+
+        $keep = function ($image) use (&$seen, $after): void {
+            if (! is_string($image)) {
+                return;
+            }
+
+            $image = trim($image);
+
+            // `> $after` and not `>=`: the cursor is the last reference this
+            // walk FINISHED, so resuming on it would size it twice — harmless
+            // but wasted, and on a long catalogue it is the difference between
+            // finishing and looping.
+            if ($image === '' || ($after !== '' && strcmp($image, $after) <= 0)) {
+                return;
+            }
+
+            $seen[$image] = true;
+        };
+
+        foreach ($rows as $row) {
+            $keep($row->image ?? null);
 
             $gallery = $row->images ?? null;
 
@@ -241,30 +285,19 @@ class ImageSizesApiController extends Controller
 
             if (is_array($gallery)) {
                 foreach ($gallery as $shot) {
-                    $candidates[] = $shot;
+                    $keep($shot);
                 }
-            }
-
-            foreach ($candidates as $image) {
-                if (! is_string($image)) {
-                    continue;
-                }
-
-                $image = trim($image);
-
-                // `> $after` and not `>=`: the cursor is the last reference
-                // this walk FINISHED, so resuming on it would size it twice —
-                // harmless but wasted, and on a long catalogue it is the
-                // difference between finishing and looping.
-                if ($image === '' || ($after !== '' && strcmp($image, $after) <= 0)) {
-                    continue;
-                }
-
-                $seen[$image] = true;
             }
         }
 
-        $images = array_keys($seen);
+        foreach ($variants as $image) {
+            $keep($image);
+        }
+
+        // strval because PHP casts an array key that looks like an integer, and
+        // a catalogue row holding "123" would otherwise hand the caller an int
+        // where every signature here says string.
+        $images = array_map('strval', array_keys($seen));
         sort($images, SORT_STRING);
 
         return collect($images);

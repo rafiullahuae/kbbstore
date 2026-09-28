@@ -65,7 +65,11 @@ use Illuminate\Support\Str;
  * the basket line thumbnail a copy instead of the photograph" goes red with
  * "a square on /cart is not drawing the 400px copy" — 1 where 2 is expected.
  *
- * All four were run, in this worktree, on 28 September 2026.
+ * Drop the product_variants query from ImageSizesApiController::images() and
+ * "it sizes a variant's own photograph too" goes red with "the variant's
+ * photograph has no 200px copy".
+ *
+ * All five were run, in this worktree, on 28 September 2026.
  */
 
 /** A real JPEG of a given size, written into this process's own public root. */
@@ -290,6 +294,41 @@ it('finishes, whatever order the gallery sorts in against the featured images', 
     // And a second run does nothing at all, which is what "idempotent" has to
     // mean for a batch the owner may click twice.
     expect(imRunBatch()['made'])->toBe(0, 'a finished catalogue was sized again');
+});
+
+it("sizes a variant's own photograph too", function () {
+    /*
+     * The third place a small square is drawn from a big file, and it was as
+     * invisible to the work list as the gallery was.
+     *
+     * `product_variants.image` is the option swatch on the product page — a
+     * 22px circle, the worst ratio on this site — and it is ALSO what every
+     * basket and checkout line prefers over the parent's photograph
+     * (`$item->variant?->image ?: $p?->image`). Without this a basket full of
+     * chosen options goes on pulling full-resolution files however many copies
+     * the products themselves have.
+     *
+     * MUTATION: drop the product_variants query from images() and this is red
+     * with "the variant's photograph has no 200px copy".
+     */
+    imPhoto('uploads/im/parent.jpg');
+    imPhoto('uploads/im/option.jpg');
+
+    $product = imProduct(['/uploads/im/parent.jpg']);
+
+    \Illuminate\Support\Facades\DB::table('product_variants')->insert([
+        'product_id' => $product->id,
+        'price' => 9900,
+        'stock_status' => 'instock',
+        'image' => '/uploads/im/option.jpg',
+    ]);
+
+    imRunBatch();
+
+    foreach (ImageVariants::WIDTHS as $width) {
+        expect(is_file(public_path(ImageVariants::DIR.'/'.$width.'/uploads/im/option.jpg')))
+            ->toBeTrue("the variant's photograph has no ".$width.'px copy');
+    }
 });
 
 it('does not size the same photograph twice when two products share it', function () {
