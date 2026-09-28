@@ -269,9 +269,14 @@ and the Add to cart button sit on the tile's bottom edge whatever is above them
 — a tile with a rating and one without line up, and so does one with a brand
 beside one without.
 
-Measured on a category archive holding both (`rated-vs-unrated-*`): 2 of 6 tiles
-draw a `.kbb-card-rate`, and every tile in a row is the same height —
-405/405/405/405/405 at 1280, 341/341 then 319/319/319/319 at 390.
+Measured on a category archive holding both (`rated-vs-unrated-*`): 2 of 4 tiles
+draw a `.kbb-card-rate`, and every tile in a ROW is the same height —
+405/405/405/405 at 1280 (one row of four, two of them rated), and at 390, where
+the four tiles make two rows of two, **341/341 then 319/319**. The step between
+the rows is the point rather than a flaw: the first row's two tiles are the
+rated ones and they are 22px taller than the unrated pair below them. Equal
+heights are a per-row property — a grid row is as tall as its tallest tile — and
+the owner's complaint was tiles in the SAME row disagreeing.
 
 ---
 
@@ -339,28 +344,51 @@ order; a row's worth are equal in every single shot. `image box` is
 The `category-*` rows are `/collections/sunscreens/` — the exact page in the
 owner's second screenshot, collapsed and expanded, at both widths.
 
+**RE-SHOT ON THE MERGED TREE.** The whole set below was taken again after
+merging `origin/claude/kind-mayer-rpqesv`, which brought Lanes SF, IM and SP2
+in — SF and IM both changed `store/product.blade.php`, which is the page
+`product-related-*` photographs. Every number that describes the GRID came back
+the same: five columns at 1280 and two at 390, four with the rail open, `square`
+yes on every tile of all twenty-one, `rgb(224, 86, 123)` on all twenty-one, and
+`scrollWidth == clientWidth` everywhere. The tile heights that repeat across
+shots are identical to the figures this document carried before the merge —
+405/405/405/405 on a category at 1280, 398 with the rail open, 411 on the brand
+page, 398 on a homepage rail, 366/366 on the long-title row, 302/302 at 390.
+
+Two rows read differently, and **both are the fixture, not the merge**. The
+preview database was rebuilt from `migrate:fresh --seed` for this run, and
+`ProductRating::refresh()` deliberately excludes demo-seeded reviews (see
+`DemoReviews::excludeQuery()`), so a freshly seeded shop has `review_count = 0`
+on EVERY product and the first re-shoot reported `rated 0/N` on all
+twenty-one — no rating row anywhere, which is the card behaving correctly on a
+shop with no real reviews. Real (non-demo) reviews were then written for twelve
+products, two of them sunscreens, which is what the rows below are measured on.
+The residual differences are `shop` at 11/25 rather than 12/25 and
+`product-related` showing three tiles rather than four, both because this
+fixture's rows are not byte-identical to the earlier one.
+
 | shot | vw | scrollWidth / clientWidth | cols | image box | square | card heights (first five) | rated / tiles |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| shop-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 324, 324, 302, 302, 302 | 12 / 25 |
-| shop-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388, 388 | 12 / 25 |
+| shop-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 324, 324, 324, 324, 324 | 11 / 25 |
+| shop-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388, 388 | 11 / 25 |
 | category-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 341, 341, 319, 319 | 2 / 4 |
 | category-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 405, 405, 405, 405 | 2 / 4 |
 | category-filters-open-1280 | 1280 | 1280 / 1280 | 4 | 224×224 | yes | 398, 398, 398, 398 | 2 / 4 |
 | category-filters-open-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 341, 341, 319, 319 | 2 / 4 |
 | brand-390 | 390 | 390 / 390 | 2 | 163×163 | yes | 338, 338, 315 | 2 / 3 |
 | brand-1280 | 1280 | 1280 / 1280 | 5 | 232×232 | yes | 411, 411, 411 | 2 / 3 |
-| home-rail-390 | 390 | 390 / 390 | 2 | 173×173 | yes | 342, 342, 319, 319, 342 | 4 / 8 |
-| home-rail-1280 | 1280 | 1280 / 1280 | 5 | 226×226 | yes | 398, 398, 398, 398, 398 | 4 / 8 |
-| wishlist-390 | 390 | 390 / 390 | 2 | 173×173 | yes | 319, 319, 342, 342 | 2 / 4 |
-| wishlist-1280 | 1280 | 1280 / 1280 | 5 | 226×226 | yes | 398, 398, 398, 398, 398 | 2 / 6 |
-| product-related-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388 | 1 / 4 |
-| product-related-390 | 390 | 390 / 390 | 2 | 166×166 | yes | 297, 297, 319, 319 | 1 / 4 |
+| home-rail-390 | 390 | 390 / 390 | 2 | 173×173 | yes | 342, 342, 342, 342, 342 | 5 / 8 |
+| home-rail-1280 | 1280 | 1280 / 1280 | 5 | 226×226 | yes | 398, 398, 398, 398, 398 | 5 / 8 |
+| wishlist-390 | 390 | 390 / 390 | 2 | 173×173 | yes | 342, 342, 342, 342 | 4 / 4 |
+| wishlist-1280 | 1280 | 1280 / 1280 | 5 | 226×226 | yes | 398, 398, 398, 398, 398 | 5 / 6 |
+| product-related-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388 | 3 / 3 |
+| product-related-390 | 390 | 390 / 390 | 2 | 166×166 | yes | 319, 319, 319 | 3 / 3 |
 | titles-short-vs-long-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 366, 366 | 0 / 2 |
 | titles-short-vs-long-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 302, 302 | 0 / 2 |
 | rated-vs-unrated-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 405, 405, 405, 405 | 2 / 4 |
 | rated-vs-unrated-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 341, 341, 319, 319 | 2 / 4 |
-| ar-shop-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388, 388 | 12 / 25 |
-| ar-shop-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 324, 324, 302, 302, 302 | 12 / 25 |
+| ar-shop-1280 | 1280 | 1280 / 1280 | 5 | 231×231 | yes | 388, 388, 388, 388, 388 | 11 / 25 |
+| ar-shop-390 | 390 | 390 / 390 | 2 | 171×171 | yes | 324, 324, 324, 324, 324 | 11 / 25 |
 | ar-category-filters-open-1280 | 1280 | 1280 / 1280 | 4 | 224×224 | yes | 398, 398, 398, 398 | 2 / 4 |
 
 `scrollWidth == clientWidth` on every row: nothing overflows at either width, in
