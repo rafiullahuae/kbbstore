@@ -3,6 +3,68 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.305
+Two new things you asked for: **Sets** under Catalog, and the **cards banner**
+under Appearance. Both ship switched off and neither moves anything until you
+turn it on.
+
+### CATALOG → SETS
+
+Build a set by choosing products. It gets its own price, category, description
+and images, and it publishes and displays **like any other product** — its own
+address, its own place in the sitemap and the search index.
+
+In the basket it draws as your **fanned stack**: the members' pictures as
+overlapping circles under the name, with **no label on any thumbnail**, and a
+**"What's inside"** button that opens a tiny popup listing the product names.
+Cart panel, cart page and checkout summary all draw it, and so do the order
+email, the invoice and your customer's own order page.
+
+**An order remembers what was in the box.** The member list is written onto the
+order when it is placed, so changing a set later does not rewrite what an old
+order says was sold. That is the part worth knowing: every document reads that
+record, not today's set.
+
+A shop with no sets pays nothing for this — no extra query anywhere.
+
+**One question for you:** selling a set does **not** currently take one of each
+member off the shelf; the set has its own stock like any other product. Do you
+want it to? (It would also mean a set going out of stock the moment any one
+member does.)
+
+### APPEARANCE → BANNERS
+
+Named banner sets, each holding cards with an image, one or two lines beneath it
+and a small button. Pick which set the homepage shows, how many cards are across,
+how fast it scrolls, the corner radius, the shadow, the shape of the card, and
+whether the bottom text shows at all.
+
+**Four full cards on a desktop with the fifth and sixth sliced, and a half-cut
+card on a phone**, exactly as you asked. Every card in a row is the same size
+whatever is in it, and with the bottom text off the card stays the same size
+rather than leaving a gap.
+
+**There is no JavaScript in it at all.** The scroll is one CSS animation, so the
+browser runs it on its own compositor and it costs nothing to keep going. The
+card width is a single calculation, which is why it adjusts from a large screen
+to a small one without any code watching the window.
+
+Reduced motion stops it **dead** — not slowed — and leaves it scrollable by hand.
+The first image loads eagerly with its size declared so nothing jumps; every
+other one waits.
+
+Costs the homepage **one** extra query when it is on, and that number does not
+move whether the set has 3 cards or 24.
+
+### Files
+
+`app/Models/{BannerSet,BannerCard,ProductSetItem}.php`,
+`app/Support/{SetContents,SetEagerLoad,SetDesign}.php`, `app/Services/Banners.php`,
+two admin controllers, two routes files, `resources/views/partials/set-row.blade.php`,
+`resources/views/partials/home/cards-banner.blade.php`, two admin screens, the
+five basket and document surfaces, `routes/web.php`,
+`resources/views/admin/app.blade.php`, five migrations, and their tests.
+
 ## 2.60.304
 The rail's auto-loop stops stuttering, and you can re-cut a cover whenever you
 like.
