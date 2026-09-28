@@ -3,6 +3,62 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.316
+**One product card, everywhere.** Square pictures, five across on a desktop, two
+on a phone, and the filter sidebar folded away until you want it.
+
+### ▲ THIS CHANGES HOW YOUR SHOP LOOKS. READ THIS BIT.
+
+Your shop was drawing **five different product cards** in five places — the shop
+listing, category pages, the homepage rails, the brand page and *You may also
+like* — each with its own column count and its own styling. That is why the
+category page never matched the Super Sale page however often it was asked to.
+
+They are one card now. It is the card you picked.
+
+**Three defaults move, and all three are things you asked for:**
+
+1. **Five columns on a desktop**, two on a phone. It was four.
+2. **Square pictures.** A tall bottle and a wide box now produce the same square
+   tile, so every card in a row lines up.
+3. **The filter sidebar starts hidden** on the shop and on every category page.
+   A **Show filters** button sits where the sidebar was; open it once and it
+   stays open as you move between pages.
+
+The 2/3/4 column switcher could not even reach the new default. It offers
+**2/3/4/5** now.
+
+### THE SMALLER THINGS YOU ASKED FOR
+
+- **A long product name no longer makes its card taller.** Measured: a one-word
+  name and a 90-character name sit in the same row at **366px each** on a
+  desktop and **302px each** on a phone.
+- **No rating row on a product nobody has reviewed.** It used to draw five empty
+  stars and "(0)". The space is still held, so the heights still match.
+
+### ALSO FIXED WHILE IN THERE
+
+**Appearance → Product styles** shows a sample card so you can see a skin before
+choosing it. That sample had drifted and was showing you a card shape your shop
+no longer draws — a slightly non-square picture and a different name layout. It
+matches the real card again.
+
+### WHAT DID NOT CHANGE
+
+The **brand directory** still has its own tiles — those list brands, not
+products: no price, no rating, nothing to add to a basket. Converting them would
+have been change for its own sake.
+
+Arabic was checked by looking at it, not just by measuring: the card mirrors
+correctly, badges and heart included.
+
+### FILES
+
+`resources/views/components/product-card.blade.php`,
+`components/product-grid.blade.php`, `partials/home/grid.blade.php`,
+`store/shop.blade.php`, `store/product.blade.php`, `resources/css/kbb/*`,
+`admin/app.blade.php`, and the rebuilt asset bundle.
+
 ## 2.60.315
 **▲ THE 2.5-SECOND LOOPS WILL NOW ACTUALLY GET CUT.** This is the fix for the
 clips that never got their loop — and it is our bug, not your server's.
