@@ -1,6 +1,7 @@
 {{-- Ported from kbb_checkout_thumbs_html(). Seven styles; "badges" is default
      and is the one with the ×n count on each circle. --}}
 @php
+    use App\Support\CssUrl;
     use App\Support\Gradient;
     use App\Support\Money;
 
@@ -16,8 +17,9 @@
         $img = $item->variant?->image ?: $p?->image;
         // The seed is the English pair, so the circle is the same colour in
         // both languages; the initials inside it are read and are translated.
-        $st = $img ? "background-image:url('" . e($img) . "')" : 'background:' . Gradient::for(($p?->brand?->name ?? '') . ($p?->name ?? ''));
-        $init = $img ? '' : e(Gradient::initials($brand ?: ($name ?? '?')));
+        $imgCss = CssUrl::value($img);
+        $st = $imgCss !== '' ? "background-image:url('" . e($imgCss) . "')" : 'background:' . Gradient::for(($p?->brand?->name ?? '') . ($p?->name ?? ''));
+        $init = $imgCss !== '' ? '' : e(Gradient::initials($brand ?: ($name ?? '?')));
         $q = $withQty ? '<span class="kthumb-q">&times;' . (int) $item->quantity . '</span>' : '';
         return '<span class="kthumb" style="' . e($st) . '" aria-hidden="true">' . $init . $q . '</span>';
     };

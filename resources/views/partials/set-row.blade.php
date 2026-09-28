@@ -106,6 +106,7 @@
     finding. @once emits them for the first set on the page and for no other.
 --}}
 @php
+    use App\Support\CssUrl;
     use App\Support\Gradient;
     use App\Support\Money;
 
@@ -281,7 +282,7 @@
         <div class="kset">
             <div class="kset-fan" aria-hidden="true">{{-- aria-hidden: the circles are decoration. Every name they stand for is in the popup, which is the accessible answer, so a screen reader is not read a row of empty divs. --}}
                 @foreach ($kbbSetMembers as $kbbSetMember)
-                    <span class="kset-c" style="{{ ($kbbSetMember['image'] ?? null) ? "background-image:url('" . e($kbbSetMember['image']) . "')" : 'background:' . Gradient::for(($kbbSetMember['brand'] ?? '') . ($kbbSetMember['name'] ?? '')) }}"></span>{{-- NO LABEL OF ANY KIND on a member circle: no initials, no quantity badge, no overlay. The owner asked for the picture and nothing else, and Gradient::initials() is deliberately not called here even for a member with no picture -- that is the label he is asking not to see. --}}
+                    <span class="kset-c" style="{{ ($kbbSetMemberCss = CssUrl::value($kbbSetMember['image'] ?? null)) !== '' ? "background-image:url('" . e($kbbSetMemberCss) . "')" : 'background:' . Gradient::for(($kbbSetMember['brand'] ?? '') . ($kbbSetMember['name'] ?? '')) }}"></span>{{-- NO LABEL OF ANY KIND on a member circle: no initials, no quantity badge, no overlay. The owner asked for the picture and nothing else, and Gradient::initials() is deliberately not called here even for a member with no picture -- that is the label he is asking not to see. --}}
                 @endforeach
             </div>
             <button type="button" class="kset-btn" data-kset-toggle aria-expanded="false" aria-controls="{{ $kbbSetKey }}">{{ __('store.set.whats_inside') }}</button>

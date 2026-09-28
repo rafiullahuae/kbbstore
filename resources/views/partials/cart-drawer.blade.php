@@ -7,6 +7,7 @@
     fragment contract.
 --}}
 @php
+    use App\Support\CssUrl;
     use App\Support\Gradient;
     use App\Support\Url;
 
@@ -83,8 +84,9 @@
                         $name = $p?->t('name');
                         $seed = ($p?->brand?->name ?? '') . ($p?->name ?? '');
                         $img = $item->variant?->image ?: $p?->image;
-                        $thumb = $img
-                            ? "background:#fff url('" . e($img) . "') center/cover"
+                        $imgCss = CssUrl::value($img);
+                        $thumb = $imgCss !== ''
+                            ? "background:#fff url('" . e($imgCss) . "') center/cover"
                             : 'background:' . Gradient::for($seed);
                         // (Lane SET) NONE for every line that is not a set, so
                         // the row below is byte-identical on every basket in
@@ -94,7 +96,7 @@
                         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
                     @endphp
                     <div class="kc-item">
-                        <div class="kc-th" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
+                        <div class="kc-th" style="{{ $thumb }}">{{ $imgCss !== '' ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
                         <div class="kc-mid">
                             <div class="kc-nm">{{ $name }}</div>
                             @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'drawer', 'key' => 'd' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="kc-qty">
@@ -131,8 +133,9 @@
                         $bname  = $bp->t('name');
                         $bseed  = ($bp->brand?->name ?? '') . $bp->name;
                         $bimg   = $bp->image;
-                        $bthumb = $bimg
-                            ? "background:#fff url('" . e($bimg) . "') center/cover"
+                        $bimgCss = CssUrl::value($bimg);
+                        $bthumb = $bimgCss !== ''
+                            ? "background:#fff url('" . e($bimgCss) . "') center/cover"
                             : 'background:' . Gradient::for($bseed);
                         // (Lane SET) The browsed rail is the fourth of the seven
                         // surfaces. NONE for an ordinary product, so this tab is
@@ -140,7 +143,7 @@
                         $kbbBSet = \App\Support\SetContents::fromProduct($bp);
                     @endphp
                     <div class="kc-item" data-brow="{{ $bp->id }}">
-                        <a class="kc-th" href="{{ $bp->url() }}" style="{{ $bthumb }}">{{ $bimg ? '' : Gradient::initials($bbrand ?: $bname) }}</a>
+                        <a class="kc-th" href="{{ $bp->url() }}" style="{{ $bthumb }}">{{ $bimgCss !== '' ? '' : Gradient::initials($bbrand ?: $bname) }}</a>
                         <div class="kc-mid">
                             <div class="kc-nm">{{ $bname }}</div>
                             @if ($kbbBSet['members'])@include('partials.set-row', ['contents' => $kbbBSet, 'surface' => 'browsed', 'key' => 'b' . $bp->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="kc-pr" style="font-size:12.5px">{!! \App\Support\Money::format($bp->effectivePrice()) !!}</div>

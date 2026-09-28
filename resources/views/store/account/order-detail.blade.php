@@ -23,7 +23,7 @@
     order-received page once already.
 --}}
 @extends('layouts.store')
-@php use App\Support\Countries; use App\Support\Gradient; use App\Support\Money; use App\Support\Url; @endphp
+@php use App\Support\Countries; use App\Support\CssUrl; use App\Support\Gradient; use App\Support\Money; use App\Support\Url; @endphp
 
 {{--
     RECEIPT PRECISION, NOT THE STOREFRONT'S ROUNDED DISPLAY.
@@ -222,8 +222,9 @@
             // The one thing on this page that looks at the catalogue, and the
             // one thing that degrades when the product is gone.
             $image = $item->product?->image;
-            $thumb = $image
-                ? "background-image:url('" . e($image) . "')"
+            $imageCss = CssUrl::value($image);
+            $thumb = $imageCss !== ''
+                ? "background-image:url('" . e($imageCss) . "')"
                 : 'background:' . Gradient::for((string) ($item->brand ?? '') . (string) $item->name);
             $variant = is_array($item->variant_attributes)
                 ? implode(' · ', array_filter(array_map('strval', $item->variant_attributes)))

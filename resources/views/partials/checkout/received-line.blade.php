@@ -8,13 +8,15 @@
     row and the only thing that degrades when the product is gone.
 --}}
 @php
+    use App\Support\CssUrl;
     use App\Support\Gradient;
     use App\Support\Money;
 
     $product = $item->product;
     $image = $product?->image;
-    $thumb = $image
-        ? "background-image:url('" . e($image) . "')"
+    $imageCss = CssUrl::value($image);
+    $thumb = $imageCss !== ''
+        ? "background-image:url('" . e($imageCss) . "')"
         : 'background:' . Gradient::for((string) ($item->brand ?? '') . (string) $item->name);
 
     $variant = is_array($item->variant_attributes)
