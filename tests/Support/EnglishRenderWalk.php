@@ -724,7 +724,33 @@ final class EnglishRenderWalk
      * branch, per the note above about rebases rewriting every SHA behind this
      * constant.
      */
-    public const BASE_COMMIT = '6ecc5a451192ca2f15cf376a35b27541d838ef66';
+    /*
+     * ── ADVANCED ONCE MORE, AT THE MERGE OF THE TWO PINS ABOVE ────────────
+     *
+     * Lane PG and Lane SF each advanced this constant, on separate branches,
+     * for the separate sets of pages each of them moved. Merging the two put
+     * both blocks of prose above this line and left ONE value to choose, and
+     * neither lane's own commit is the right one: PG's views do not contain
+     * SF's include move, and SF's do not contain PG's one card. Whichever of
+     * the two was kept, the walk would re-report the OTHER lane's already-read,
+     * already-approved diff as though it were new.
+     *
+     * SO THE PIN SITS AT THE MERGE, which is the first commit that contains
+     * both. It was not chosen blind: the walk was run at the merge with PG's
+     * value still in place, and it reported EXACTLY ONE page, which is exactly
+     * the one SF's block above describes, to the byte --
+     *
+     *   product/{slug}   at byte 42926
+     *     before:  </div>⏎        ⏎                ⏎        <div class=" stockline out">
+     *     after:   </div>⏎        ⏎        ⏎        ⏎                ⏎        <div class=" stockline out">
+     *
+     * -- and nothing else. Not one of the thirty-three pages PG's own advance
+     * listed came back, which is the useful half: it says the merge took both
+     * lanes' view changes intact rather than dropping one side's. The two
+     * blocks of prose above are kept in full because they, not this value, are
+     * the record of what moved and why.
+     */
+    public const BASE_COMMIT = 'fe1ab3e05b7257ea7736bdf6333470f2a29d1202';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
