@@ -1533,3 +1533,147 @@ it to the basket draws the chosen set row in all seven places; an order sold and
 then edited still prints what was in the box; every fix ships with the test that
 goes red without it and a mutation note that was actually run; the pictures are
 at 390 and 1280; and the report names the admin path in full.
+
+---
+
+## Lane BN — the homepage cards banner
+
+**Briefed 28 September 2026.** The owner's words:
+
+> "I need multiple cards type with auto scroll smooth scroll, each card will have
+> image banner and downside 1-2 lines text with right side small beautiful
+> button. need full backend controls under Appearance > Banners > cards banner,
+> we can turn on off card banners, and inside each banner section we can create
+> multiple cards and the whole section will have full control options to choose
+> which banner will show on homepage, how many cards, scroll speed, animation
+> etc. please i need it super beautiful and super light optimized and without
+> bugs and responsive across devices with auto adjustment from large screens to
+> small."
+
+### What it is, in one sentence
+
+A NEW homepage section — **not** the existing `hero` slider, which stays exactly
+as it is — holding a horizontally auto-scrolling row of cards. Each card is a
+banner image with one or two lines of text beneath it and a small button to the
+right of that text. The owner builds any number of named banner sets, each with
+its own cards and its own controls, and chooses which set the homepage shows.
+
+### The data shape, decided, with the reasoning
+
+**Two tables plus two module settings. Not one and not four.**
+
+- **`banner_sets`** — `id`, `name`, `slug`, `status` (`publish`/`draft`),
+  `position`, and **its own control columns**, because the owner asked for the
+  controls to be *"inside each banner section"*: `autoplay` (bool),
+  `speed_ms`, `animation` (an enum of your own named options), `per_view`
+  (how many cards are visible at once), `gap`, `card_radius`, `show_arrows`,
+  `show_dots`, `pause_on_hover`. Every one ships at the value that makes a
+  freshly created set look like the shop already looks.
+- **`banner_cards`** — `banner_set_id`, `image`, `alt`, `heading`, `body`,
+  `button_label`, `button_url`, `position`, `status`.
+- **Two module settings only**, in the module framework so they get the guard,
+  the screen renderer and the policy allowlist: the section's on/off, and
+  **which set id the homepage shows**.
+
+Why not put the controls in the module framework too: they are **per set**, and
+`SCHEMA` holds one value per key for the whole shop. Why not put the cards in a
+JSON column: they carry images, ordering and their own publish state, and the
+Media Library has to be able to see the images (`MediaRegistrar` — read what
+Lane MB did for imported files, and register on write).
+
+### The carousel: a CSS answer, not a JavaScript one
+
+**This is the part that decides whether it is "super light" or not, and it is
+where a carousel normally goes wrong.**
+
+`CLAUDE.md` rule 4: *"No JavaScript that measures layout — this project sizes
+with `calc()` for a reason, and two tests forbid the element-measuring APIs by
+name."* A carousel that advances by reading `offsetWidth` is exactly the shape
+that rule exists to stop.
+
+**Build the auto-scroll as a CSS animation over a doubled track.** The row holds
+the cards twice and translates by `-50%` over `speed_ms`, so it loops seamlessly
+with **no JavaScript at all** and the browser can run it on the compositor. The
+speed is a CSS custom property the server writes; the animation name is the
+owner's `animation` choice. The shop already sizes its rails this way —
+`kbb.css:947`, `flex:0 0 clamp(178px,17vw,220px)` — so **the card width is a
+`clamp()`, never a measurement**, and "auto adjustment from large screens to
+small" falls out of that one declaration rather than out of a resize listener.
+
+Required, and each has already cost this project or is about to:
+
+- **`prefers-reduced-motion: reduce` stops it dead.** Not slower — stopped, with
+  the cards laid out as a static row the shopper can still scroll by hand. The
+  UGC rail does this at `resources/views/ugc/assets.blade.php:273`; follow it.
+- **Pause on hover and on focus-within**, so a keyboard user can reach the
+  buttons.
+- **Every card's button is a real `<a href>`**, and the URL comes from a
+  setting, so it is **scheme-checked before it becomes an `href`** — rule 5.
+- **The first card's image is the LCP element on the homepage.** It gets
+  explicit `width`/`height` (no layout shift), `fetchpriority="high"` and no
+  `loading="lazy"`; every later card gets `loading="lazy"` and
+  `decoding="async"`. A carousel that lazy-loads its first image is a carousel
+  that made the homepage slower.
+- **Arrows and dots are optional and off unless the set asks for them.**
+
+### Where it sits
+
+**`Appearance → Banners → Cards banner`** — a new screen. The Appearance sidebar
+group is in `resources/views/admin/app.blade.php`, which is the integrator's
+file: **build the screen as your own partial, and say in the report what entry
+to add.** Do not edit that file.
+
+The screen wants: a list of banner sets; create/rename/duplicate/delete a set;
+inside a set, the cards with drag-free ordering (a position number is fine) and
+the set's own controls; and a **live preview of the row as the homepage will
+draw it**, because every other Appearance screen in this console has one and the
+owner uses them daily.
+
+### Ships OFF, and nothing on the homepage moves
+
+Rule 1, and on the most visible page in the shop. The module ships **off**, no
+set is chosen, and the homepage renders byte-identically until the owner turns
+it on. `StorefrontEnglishUnchangedTest` is the instrument: if it goes red you
+read the diff and revert the accident — you never advance a pin to make it
+green.
+
+### The rules that apply without exception
+
+- **`StorefrontQueryBudgetTest` is a budget.** The homepage must cost the SAME
+  number of queries with the section off, and at most one more with it on — one
+  query for the chosen set and its cards, eager-loaded. Not one per card.
+  Measure it; do not assert it.
+- **`/api/*` is unauthenticated.** If a banner reaches it, an explicit allowlist
+  — never the model.
+- **Every new admin endpoint gets its own capability and fails closed.**
+- **Anything printed unescaped is a constant, never a setting.** The heading and
+  body are settings: escape them.
+- **`routes/web.php` is the integrator's.** Your own routes file, a
+  `clear_caches_*` migration, and pin the FINISHED state
+  (`substr_count(...) === 1`) — never the absence of the require.
+- **`resources/views/admin/app.blade.php` and `KBB-Master-Plan.md` are the
+  integrator's.**
+
+### Owns
+
+`app/Models/BannerSet.php`, `app/Models/BannerCard.php`,
+`app/Http/Controllers/Admin/BannerApiController.php`,
+`app/Services/Banners.php`, `resources/views/admin/partials/banners-screen.blade.php`,
+`resources/views/partials/home/cards-banner.blade.php`, your own routes file,
+`database/migrations/*_banner_*`, `tests/Feature/*Banner*`, `tools/bn-*`,
+`docs/lane-bn-shots/`.
+
+`resources/views/store/home.blade.php` and `app/Services/HomepageSections.php`
+are shared: add the section and nothing else, name the lines you touched, and
+leave every other section byte-identical.
+
+### Done when
+
+The owner can build a set, add cards, choose it, and see it on the homepage;
+the row scrolls smoothly and stops entirely under reduced motion; it is
+responsive from 390px to 1920px with no horizontal page scroll at any width;
+the homepage is byte-identical with the module off; the query budget is
+unchanged or +1 deliberately; every fix ships with the test that goes red
+without it and a mutation note that was actually run; and the report carries
+screenshots at 390, 768 and 1280 plus `document.documentElement.scrollWidth` at
+each.
