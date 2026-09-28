@@ -197,6 +197,45 @@ class HomepageSections
     public const SECTION_POLICY = ['bool' => 'cast', 'invalid' => 'default'];
 
     /**
+     * The one group the three controls are drawn in — the `TABS` shape
+     * ModuleSchema::tabs() reads (Lane HL).
+     *
+     * NINETEEN SECTIONS SHARE ONE GROUP, because they share one schema: a tab
+     * here is a heading and a sentence over a set of keys, and there is exactly
+     * one set. It exists so the live panel is drawn by the same
+     * SCHEMA/TABS/POLICY call as every other settings screen in this console
+     * rather than by a heading the screen writes out for itself — which is the
+     * thing that goes stale the day a field is added.
+     *
+     * `skin` is named here for every section and DROPPED by sectionTabs() for
+     * the fifteen that have no product grid, the same way castRow() nulls it
+     * for them. One statement of which controls exist, one statement of which
+     * sections carry them.
+     */
+    public const SECTION_TABS = [
+        'placement' => [
+            'Where it appears',
+            'Which devices draw this section, and which card template its grid uses. A section off for both is not rendered at all, so it costs no queries either.',
+            ['desktop', 'mobile', 'skin'],
+        ],
+    ];
+
+    /**
+     * The class a section wrapper carries when it is drawn INTO A PREVIEW THE
+     * CONSOLE CAN SELECT IN (Lane HL).
+     *
+     * Emitted by frameClass() and only on an annotating proposal — see
+     * proposing() — so the shop, and the preview that promises to be
+     * byte-identical to it, never carry it. The screen matches on
+     * `SELECT_CLASS.'-'.$key` to learn which section a click landed in, which
+     * is what lets selection be a class rather than a measurement: rule 4
+     * forbids JavaScript that measures layout, and an outline drawn by a
+     * stylesheet inside the frame follows its element at either viewport with
+     * nothing to recompute.
+     */
+    public const SELECT_CLASS = 'kbb-pvsec';
+
+    /**
      * A configuration this instance answers from INSTEAD of the stored one.
      *
      * Null on every instance the storefront and the console build, which is
@@ -206,6 +245,19 @@ class HomepageSections
      * @var array<string, mixed>|null
      */
     private ?array $proposed = null;
+
+    /**
+     * Whether this reader marks what it classes, for a console that has to
+     * select in it (Lane HL).
+     *
+     * FALSE BY DEFAULT AND SETTABLE ONLY THROUGH proposing(), which is the
+     * whole safety of it: the storefront never builds a proposal, so the shop
+     * cannot emit a hook however this is called, and /admin-api/homepage/preview
+     * does not opt in either — its document is still byte-identical to GET /,
+     * which HomepagePreviewTest §1 asserts and HomepageLiveEditTest asserts
+     * again from the other side.
+     */
+    private bool $annotate = false;
 
     public function __construct(private SettingsService $settings) {}
 
@@ -230,13 +282,22 @@ class HomepageSections
      * the preview would be a third dialect, and this project has paid for every
      * dialect it has.
      *
+     * `$annotate` IS THE LIVE EDITOR'S HALF AND IS OPT-IN (Lane HL). With it,
+     * every wrapper this reader classes also carries SELECT_CLASS and a class
+     * naming its section, so the console can tell which section a click inside
+     * the preview landed in without measuring anything. It defaults to false
+     * because the caller that must NOT have it — preview(), whose document is
+     * pinned byte-identical to the shop's — is the caller that would get it by
+     * accident.
+     *
      * @param  array<string, mixed>  $proposed  the saved-payload shape:
      *         key => [desktop, mobile, skin, order]
      */
-    public static function proposing(SettingsService $settings, array $proposed): self
+    public static function proposing(SettingsService $settings, array $proposed, bool $annotate = false): self
     {
         $reader = new self($settings);
         $reader->proposed = $proposed;
+        $reader->annotate = $annotate;
 
         return $reader;
     }
@@ -616,7 +677,24 @@ class HomepageSections
             ? 'kbb-ord-' . $s['order'] . ' '
             : '';
 
-        return trim($ord . ($desktop ? '' : 'd-off ') . ($mobile ? '' : 'm-off ') . $mark);
+        $class = trim($ord . ($desktop ? '' : 'd-off ') . ($mobile ? '' : 'm-off ') . $mark);
+
+        /*
+         * THE SELECTION HOOK, AND ONLY ON AN ANNOTATING PROPOSAL (Lane HL).
+         *
+         * It is appended here rather than in the template because all
+         * nineteen sections already call this — the same argument the divider
+         * and order classes above are added on — so no section can be missed
+         * and store/home.blade.php needed no edit for it.
+         *
+         * BYTE-NEUTRAL EVERYWHERE ELSE, which is the point: $annotate is false
+         * on every reader but the one /admin-api/homepage/live builds, so the
+         * shop and the byte-identical preview return exactly the string this
+         * method returned before the hook existed.
+         */
+        return $this->annotate
+            ? trim($class . ' ' . self::SELECT_CLASS . ' ' . self::SELECT_CLASS . '-' . $key)
+            : $class;
     }
 
     public function skinFor(string $key): ?string
@@ -642,9 +720,66 @@ class HomepageSections
             self::class.':'.$defaultSkin,
             self::SECTION_SCHEMA,
             self::SECTION_POLICY,
-            // The option set lives in another registry, which is what the
-            // `overrides` channel is for, and the default is the section's own.
-            ['skin' => ['options' => GridSkins::ALL, 'default' => $defaultSkin]],
+            self::overridesFor($key),
+        );
+    }
+
+    /**
+     * What the schema cannot say about this section on its own.
+     *
+     * ONE DEFINITION, TWO CONSUMERS — the cast above and the RENDER below.
+     * The option set lives in another registry, which is what ModuleSchema's
+     * `overrides` channel is for, and the default is the section's own. Written
+     * out twice it would be the shape docs/M-PHASE3-SETTINGS-SCHEMA.md §1
+     * measured: the picker offering a skin the cast refuses, or the cast
+     * falling back to a default the picker does not show.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function overridesFor(string $key): array
+    {
+        return ['skin' => [
+            'options' => GridSkins::ALL,
+            'default' => (string) (self::REGISTRY[$key][3] ?? ''),
+        ]];
+    }
+
+    /**
+     * One section's controls, as ModuleSchema::tabs() emits them (Lane HL).
+     *
+     * ── WHY THIS IS HERE AND NOT IN THE CONTROLLER ──────────────────────────
+     *
+     * The live editor draws a section's controls from the same three constants
+     * the shop casts them through — SECTION_SCHEMA, SECTION_TABS,
+     * SECTION_POLICY — and the same overrides. Building that call anywhere else
+     * would be a second description of these controls in the one project that
+     * has already paid for four copies of three rules; building it here means
+     * a field added to SECTION_SCHEMA appears on the screen, is cast on the way
+     * in, and is drawn from one statement of what it is.
+     *
+     * THE GRID CONTROL IS DROPPED FOR A SECTION WITH NO GRID, which is
+     * castRow()'s rule restated on the render side: such a section stores
+     * `skin => null`, so a picker for it would be a control whose value is
+     * discarded on the way in — a box with no writer behind it, which is the
+     * shape AdminConsoleWriteTokenTest was written after.
+     *
+     * @param  array<string, mixed>  $row  a row as all() answers it
+     * @return list<array<string, mixed>>
+     */
+    public static function sectionTabs(string $key, array $row): array
+    {
+        $schema = self::SECTION_SCHEMA;
+
+        if (! (self::REGISTRY[$key][2] ?? false)) {
+            unset($schema['skin']);
+        }
+
+        return ModuleSchema::tabs(
+            $schema,
+            self::SECTION_TABS,
+            $row,
+            self::SECTION_POLICY,
+            self::overridesFor($key),
         );
     }
 

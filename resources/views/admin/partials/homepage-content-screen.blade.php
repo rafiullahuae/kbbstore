@@ -157,6 +157,73 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
 .hpc-note.is-bad{border-color:#b4443c;color:#8f332d;background:rgba(180,68,60,.08)}
 .hpc-note ul{margin:6px 0 0;padding-inline-start:18px}
 
+/* ── THE LIVE PREVIEW (Lane HL, Phase 15) ───────────────────────────────────
+   The storefront's own homepage, rendered from the controls on this screen,
+   with every section in it selectable. Everything is prefixed hpe- so it
+   cannot reach another screen in this one-document console.
+
+   SIZED WITH calc() AND A DECLARED SCALE, NOT BY MEASURING. Rule 4 forbids
+   JavaScript that measures layout and two tests sweep for the element-measuring
+   APIs by name, so nothing here asks how wide the column is. `--hpe-s` is a
+   literal per breakpoint and the frame's height is calc()'d FROM it, so the
+   stage and the page inside it cannot come to disagree the way two hand-kept
+   numbers would. The steps leave the frame narrower than its column at every
+   width; overflow:hidden is the guard, not the plan.
+
+   The page inside is laid out at 1280px in Desktop and at 390px in Mobile,
+   which is the point: `d-off` and `m-off` are media queries in the STOREFRONT's
+   own stylesheet, so the only honest way to show what a Desktop or Mobile
+   switch does is to give the document a viewport of that width and let its own
+   CSS answer.
+
+   ONE COLUMN UNTIL 1040px, picture first. On a phone the thing being described
+   belongs above the boxes describing it — the same rule .hpc-slide above
+   already follows for a slide and its preview. */
+.hpe{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}
+.hpe > *{min-width:0}
+@media (min-width:1040px){.hpe{grid-template-columns:minmax(0,1fr) minmax(0,340px)}}
+
+.hpe-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.hpe-hd b{font-size:14px;font-weight:650;margin-inline-end:auto}
+.hpe-dev{display:inline-flex;border:1px solid var(--border,#e6e6e6);border-radius:10px;overflow:hidden}
+.hpe-dev button{border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;
+                padding:7px 12px;cursor:pointer;color:inherit}
+.hpe-dev button.on{background:rgba(127,127,127,.14)}
+
+.hpe-stage{--hpe-s:.24;position:relative;overflow:hidden;height:520px;border:1px solid var(--border,#e6e6e6);
+           border-radius:12px;background:#fff;min-width:0}
+.hpe-frame{width:1280px;height:calc(520px / var(--hpe-s));border:0;display:block;
+           transform:scale(var(--hpe-s));transform-origin:top left}
+@media(min-width:760px){.hpe-stage{--hpe-s:.40}}
+@media(min-width:1040px){.hpe-stage{--hpe-s:.40}}
+@media(min-width:1280px){.hpe-stage{--hpe-s:.48}}
+@media(min-width:1440px){.hpe-stage{--hpe-s:.58}}
+/* Mobile is drawn at its true size — 390px needs no reduction at any console
+   width, so the one view an owner reviews on a phone is the one that is exact. */
+.hpe-stage.is-mob{--hpe-s:1}
+.hpe-stage.is-mob .hpe-frame{width:390px;margin:0 auto}
+.hpe-empty{display:grid;place-items:center;height:100%;font-size:12.5px;
+           color:var(--ink-soft,#6b7280);text-align:center;padding:0 18px}
+
+.hpe-note{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:9px 0 0}
+.hpe-note.is-bad{color:#8f332d}
+
+/* The same nineteen sections as buttons. The picture is the fast way to
+   choose one; this is the way that works with a keyboard, and the way to
+   reach a section that is switched off and therefore not in the picture. */
+.hpe-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.hpe-pick{padding:6px 10px;border:1px solid var(--border,#e6e6e6);border-radius:8px;background:transparent;
+          color:inherit;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.hpe-pick.on{background:rgba(127,127,127,.14);border-color:rgba(127,127,127,.45)}
+.hpe-pick.off{opacity:.6}
+.hpe-pick.off::after{content:' · off';color:var(--ink-soft,#6b7280);font-weight:500}
+.hpe-pick:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:1px}
+
+.hpe-panel{align-self:start}
+@media (min-width:1040px){.hpe-panel{position:sticky;top:12px}}
+.hpe-sel{display:block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+         color:var(--ink-soft,#6b7280)}
+
 .hpc-save{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .hpc-dirty{color:var(--ink-soft,#6b7280);font-size:12.5px;margin-inline-end:auto}
 </style>
@@ -267,6 +334,23 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
              + esc(f.options[k]) + '</option>';
       }).join('');
       ctl = '<select class="hpc-in' + badCls + '" id="' + id + '" data-hpc-set="' + esc(onsetName) + '">' + opts + '</select>';
+    } else if (f.type === 'skin') {
+      /*
+       * A TYPE WHOSE OPTION SET LIVES IN ANOTHER REGISTRY, which is why it is
+       * its own branch and not a `select`. ModuleSchema::fields() deliberately
+       * emits `options: null` for it -- its own docblock says so: the module's
+       * SCHEMA declares the type, App\Support\GridSkins declares the cards, and
+       * the screen is handed that list once at the top of the payload rather
+       * than repeated inside nineteen fields. Without this branch the field
+       * would fall through to the text box below and an owner could type a skin
+       * name the cast then refuses -- a control that looks writable and is not,
+       * which is the shape this framework exists to end.
+       */
+      var sopts = (live.skins || []).map(function(s){
+        return '<option value="' + esc(s.key) + '"' + (String(s.key) === String(v) ? ' selected' : '') + '>'
+             + esc(s.label) + '</option>';
+      }).join('');
+      ctl = '<select class="hpc-in' + badCls + '" id="' + id + '" data-hpc-set="' + esc(onsetName) + '">' + sopts + '</select>';
     } else if (f.type === 'textarea') {
       ctl = '<textarea class="hpc-in' + badCls + '" id="' + id + '" data-hpc-set="' + esc(onsetName) + '">'
           + esc(v) + '</textarea>';
@@ -351,6 +435,489 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
     if (el) el.innerHTML = previewBody(slides[i], i);
   }
 
+  /* ------------------------------------------------------------ live edit */
+  /*
+   * ── LIVE EDITING OF HOMEPAGE SECTIONS (Lane HL, Phase 15) ────────────────
+   *
+   * Phase 15's last unticked line is "Live editing of homepage sections,
+   * reusing the settings schemas", and both halves of it already existed with
+   * nothing joining them:
+   *
+   *   · the PICTURE — POST /admin-api/homepage/preview renders the real
+   *     storefront homepage from an arrangement nobody has saved (Lane P1);
+   *   · the CONTROLS — App\Services\HomepageSections::SECTION_SCHEMA is the
+   *     ModuleSchema description of the three controls a section carries, and
+   *     SECTION_POLICY is how they cast. The same triple every other settings
+   *     screen in this console is drawn from.
+   *
+   * What was missing was the SEAM: pointing at a section in the picture and
+   * getting that section's own controls. That is all this tab is.
+   *
+   * IT NAMES NOT ONE SETTING. Every control below is drawn by field() — the
+   * renderer this screen already had — from a field payload the server built
+   * with ModuleSchema::tabs(). Add a field to SECTION_SCHEMA and it appears
+   * here without a line of this file changing, which is the difference between
+   * reusing a schema and copying one.
+   *
+   * IT ADDS NO SETTING AND NO WRITER. The three controls are the three
+   * HomepageSections has always stored, and Save posts them to
+   * POST /admin-api/homepage — the endpoint that has always written them. So
+   * applying this release moves nothing on the shop until somebody moves a
+   * control here and presses Save.
+   *
+   * SELECTION IS A CLASS, NOT A MEASUREMENT. The server renders the preview
+   * with a hook on every section wrapper; this file outlines the selected one
+   * with a stylesheet it puts inside the frame. Nothing here asks an element
+   * how big it is — rule 4, and two tests sweep for those APIs by name.
+   *
+   * THE FRAME IS SANDBOXED WITHOUT allow-scripts, as the Appearance → Homepage
+   * preview card next door is. The storefront's own JavaScript has no business
+   * running inside the console. allow-same-origin is what lets this file reach
+   * in to outline a section; the two flags that together defeat a sandbox —
+   * allow-scripts AND allow-same-origin — are never both set.
+   */
+  var live = {
+    loading: false,   // fetching the section list
+    loaded: false,    // the list has arrived at least once
+    busy: false,      // a redraw is in flight
+    again: false,     // ...and another was asked for while it was
+    err: '',
+    html: '',         // the last document the server drew
+    dev: 'desk',
+    sel: null,        // the selected section key
+    rows: [],         // the working copy the controls edit
+    sections: [],     // what the server last answered: labels, notes, controls
+    skins: [],        // the grid-skin option set, which lives in its own registry
+    mark: 'kbb-pvsec',
+    dirty: false,
+    reach: true       // false when the browser will not let us into the frame
+  };
+
+  /** The class the console adds to the one section that is selected. */
+  var LIVE_ON = 'kbb-pvsel';
+
+  function liveBase(){
+    return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/homepage';
+  }
+
+  /*
+   * THE STYLESHEET THE PREVIEW IS DECORATED WITH, AND WHY IT IS A STYLESHEET.
+   *
+   * An outline that follows the element needs no recomputation when the frame
+   * is redrawn, when the viewport switches between 1280 and 390, or when a
+   * section changes height — which is what rule 4 means by preferring a
+   * rendered-once CSS answer to a scripted one.
+   *
+   * `pointer-events:none` on the shop's own links and controls is the other
+   * half. The frame is sandboxed without allow-scripts, but a plain <a> still
+   * navigates, and a preview that wandered off to a product page when you
+   * clicked a card would be useless. With the anchors inert the click lands on
+   * the section behind them, which is the thing being selected anyway.
+   */
+  function liveCss(){
+    var m = '.' + live.mark;
+
+    return m + '{cursor:pointer}'
+      + m + ':hover{outline:2px dashed rgba(193,62,99,.55);outline-offset:-2px}'
+      + '.' + LIVE_ON + '{outline:3px solid #C13E63;outline-offset:-3px}'
+      + 'a,button,input,select,textarea,label,video{pointer-events:none}';
+  }
+
+  /** Why a request did not land, in words that name the likely cause. */
+  function liveWhy(e){
+    var why = String((e && e.message) || e);
+
+    return why === '404'
+      ? 'The live-preview route is not registered. The cache-clearing migration for this release may not have run — check Store → Core Updates.'
+      : why === '500'
+        ? 'The server errored while drawing the homepage. Check storage/logs/laravel.log for the last entry.'
+        : 'The request did not complete (' + why + ').';
+  }
+
+  function liveRowOf(s){
+    return {key: s.key, desktop: !!s.desktop, mobile: !!s.mobile, skin: s.skin};
+  }
+
+  function liveRow(key){
+    for (var i = 0; i < live.rows.length; i++) { if (live.rows[i].key === key) return live.rows[i]; }
+    return null;
+  }
+
+  function liveSection(key){
+    for (var i = 0; i < live.sections.length; i++) { if (live.sections[i].key === key) return live.sections[i]; }
+    return null;
+  }
+
+  function liveValue(key, field){
+    var row = liveRow(key);
+    return row ? row[field] : undefined;
+  }
+
+  /** The section list and the grid-skin registry, from the endpoint that owns them. */
+  function loadLive(){
+    live.loading = true;
+    live.err = '';
+    render();
+
+    fetch(liveBase(), {credentials:'same-origin', headers:{Accept:'application/json'}})
+      .then(function(r){ if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(function(j){
+        live.skins = j.skins || [];
+        live.rows = (j.sections || []).map(liveRowOf);
+        live.loading = false;
+        live.loaded = true;
+        drawLive(false);
+      })
+      .catch(function(e){
+        live.loading = false;
+        live.err = liveWhy(e);
+        render();
+      });
+  }
+
+  /*
+   * Redraw the picture from the rows as they stand. WRITES NOTHING.
+   *
+   * `quiet` is the difference between a structural repaint and a keystroke,
+   * and it is load-bearing rather than an optimisation: replacing #content
+   * while the control somebody just used is focused THROWS ("the node to be
+   * removed is no longer a child of this node") and leaves the screen half
+   * painted — the same fault previewBody() above records being caught in a
+   * browser. So a change made in the panel patches the frame and the list and
+   * leaves the panel alone; only a tab change, a selection, an error or a save
+   * repaints.
+   */
+  function drawLive(quiet){
+    if (live.busy) { live.again = true; return; }
+
+    live.busy = true;
+    live.err = '';
+
+    if (quiet) { liveNotePaint(); } else { render(); }
+
+    fetch(liveBase() + '/live', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type':'application/json', 'X-XSRF-TOKEN': window.uToken ? window.uToken() : '', Accept:'application/json'},
+      body: JSON.stringify({sections: live.rows})
+    })
+      .then(function(r){
+        /* A 422 carries the server's OWN sentence -- the section key it could
+           not place -- and throwing on the status would replace it with a
+           number. Every other failure has no body worth reading. */
+        if (r.status === 422) { return r.json(); }
+        if (!r.ok) { throw new Error(String(r.status)); }
+
+        return r.json();
+      })
+      .then(function(j){
+        live.busy = false;
+
+        if (!j.ok) {
+          live.err = j.error || 'The server refused to draw that arrangement.';
+          /* A refusal during a quiet redraw is reported in the line under the
+             picture and NOT by repainting: the control that caused it is the
+             one the owner is standing on, and replacing #content under it both
+             loses their place and throws. */
+          if (quiet) { liveNotePaint(); } else { render(); }
+          return;
+        }
+
+        live.html = j.html;
+        live.mark = j.select_class || live.mark;
+        live.sections = j.sections || [];
+
+        /* The order the server SETTLED, not the order that was posted: a
+           nested row is put back behind its host on read, so adopting the
+           answer keeps the list under the picture agreeing with the picture. */
+        live.rows = live.sections.map(liveRowOf);
+
+        if (live.sel && !liveSection(live.sel)) { live.sel = null; }
+
+        if (live.again) { live.again = false; drawLive(quiet); return; }
+
+        if (quiet) { liveMount(); liveListPaint(); liveNotePaint(); } else { render(); }
+      })
+      .catch(function(e){
+        live.busy = false;
+        live.again = false;
+        live.err = liveWhy(e);
+        if (quiet) { liveNotePaint(); } else { render(); }
+      });
+  }
+
+  /* ------------------------------------------------------------ the frame */
+  function liveFrame(){
+    return document.querySelector('#hpe-frame');
+  }
+
+  function liveDoc(){
+    var f = liveFrame();
+    try { return f && f.contentDocument ? f.contentDocument : null; } catch (e) { return null; }
+  }
+
+  function liveMount(){
+    var f = liveFrame();
+    if (!f || !live.html) return;
+
+    f.onload = function(){ liveDecorate(); };
+
+    /* THE DOCUMENT IS ASSIGNED, NEVER INTERPOLATED. Eighty-odd kilobytes of
+       the shop's own HTML dropped into a string that is being built is one
+       stray quote away from taking the whole paint with it; assigning it to
+       .srcdoc after the paint puts it somewhere it is a value and not source. */
+    f.srcdoc = live.html;
+  }
+
+  function liveDecorate(){
+    var doc = liveDoc();
+
+    if (!doc || !doc.head || !doc.body) {
+      /* Said out loud rather than swallowed: without reach into the frame the
+         picture still draws and only the clicking is lost, and the note below
+         it points at the list of names instead. */
+      live.reach = false;
+      liveNotePaint();
+      return;
+    }
+
+    live.reach = true;
+
+    var st = doc.createElement('style');
+    st.appendChild(doc.createTextNode(liveCss()));
+    doc.head.appendChild(st);
+
+    doc.addEventListener('click', function(e){
+      // The preview is a picture, not a shop.
+      e.preventDefault();
+
+      var t = e.target;
+      var el = t && t.closest ? t.closest('.' + live.mark) : null;
+      if (!el) return;
+
+      var key = liveKeyOf(el);
+      if (key) selectSection(key);
+    }, true);
+
+    liveHighlight();
+  }
+
+  /** Which section an element in the frame belongs to, read off its class. */
+  function liveKeyOf(el){
+    var m = new RegExp('(?:^|\\s)' + live.mark + '-([a-z0-9_-]+)(?:\\s|$)').exec(el.className || '');
+    return m ? m[1] : null;
+  }
+
+  function liveHighlight(){
+    var doc = liveDoc();
+    if (!doc || !doc.body) return;
+
+    var on = doc.querySelectorAll('.' + LIVE_ON);
+    for (var i = 0; i < on.length; i++) { on[i].classList.remove(LIVE_ON); }
+
+    if (!live.sel) return;
+
+    var el = doc.querySelector('.' + live.mark + '-' + live.sel);
+    if (el) { el.classList.add(LIVE_ON); }
+  }
+
+  function selectSection(key){
+    live.sel = key;
+    liveHighlight();
+    livePanelPaint();
+    liveListPaint();
+  }
+
+  /* ------------------------------------------------------------- painting */
+  function liveNoteText(){
+    var where = live.dev === 'mob'
+      ? 'Drawn at 390px, its true size.'
+      : 'Laid out at 1280px and drawn reduced to fit this column.';
+
+    if (live.err) return live.err;
+    if (live.busy) return 'Redrawing the homepage from these controls… ' + where;
+
+    if (!live.reach) {
+      return 'The picture is drawn, but this browser will not let the console reach inside the frame, '
+        + 'so clicking a section in it does nothing. Pick one from the names below instead. ' + where;
+    }
+
+    return 'This is the storefront’s own homepage, rendered from the controls on this screen — not a diagram of it. '
+      + 'Nothing is saved by looking, and the shop still shows what it showed before. ' + where;
+  }
+
+  function liveNotePaint(){
+    var n = document.querySelector('#hpe-note');
+    if (!n) return;
+    n.textContent = liveNoteText();
+    n.className = 'hpe-note' + (live.err ? ' is-bad' : '');
+  }
+
+  function liveListHTML(){
+    return live.sections.map(function(s){
+      var row = liveRow(s.key) || s;
+      var off = !row.desktop && !row.mobile;
+
+      return '<button type="button" class="hpe-pick' + (live.sel === s.key ? ' on' : '') + (off ? ' off' : '') + '"'
+        + ' data-hpe-pick="' + esc(s.key) + '" aria-pressed="' + (live.sel === s.key ? 'true' : 'false') + '">'
+        + esc(s.label) + '</button>';
+    }).join('');
+  }
+
+  function liveListPaint(){
+    var l = document.querySelector('#hpe-list');
+    if (!l) return;
+    l.innerHTML = liveListHTML();
+    bind();
+  }
+
+  /** The label this screen gives a tab of its own, for the wording link. */
+  function liveTabLabel(key){
+    if (key === 'hero') return 'Hero slider';
+
+    var found = 'Other wording';
+    (data.tabs || []).forEach(function(t){ if (t.key === key) found = t.label; });
+
+    return found;
+  }
+
+  function livePanelHTML(){
+    var s = live.sel ? liveSection(live.sel) : null;
+
+    if (!s) {
+      return '<div class="hpc-card"><p class="hpc-h">Nothing selected</p>'
+        + '<p class="hpc-sub">Click any section in the picture — or pick one from the names under it — and that section’s own '
+        + 'controls open here. They are the same controls <b>Appearance → Homepage</b> carries, drawn from the same schema.</p>'
+        + '<p class="hpc-sub">Nothing is saved by looking or by moving a control. The shop changes when you press '
+        + '<b>Save changes</b> and not before.</p></div>';
+    }
+
+    var controls = (s.tabs || []).map(function(t){
+      return '<p class="hpc-sub" style="margin:0 0 6px">' + esc(t.description) + '</p>'
+        + (t.fields || []).map(function(f){
+            return field(f, liveValue(s.key, f.key), 'sec.' + s.key + '.' + f.key, false);
+          }).join('');
+    }).join('');
+
+    var note = s.note ? '<p class="hpc-sub" style="margin-top:10px">' + esc(s.note) + '</p>' : '';
+
+    /* THE WORDS ARE LINKED TO, NOT REPEATED. copyTab() below states the rule
+       this follows: one sentence with two boxes is a sentence that changes
+       depending on which box you touched last. Each of these has exactly one
+       control and one writer already, on a tab of this same screen. */
+    var words = s.words
+      ? '<div class="hpc-note" style="margin-top:12px"><b>What it says</b>'
+        + 'The wording of this section — ' + esc(s.words.label) + ' — is edited on the <b>'
+        + esc(liveTabLabel(s.words.tab)) + '</b> tab of this screen, where it already has one box and one writer. '
+        + 'It is not repeated here.'
+        + '<div style="margin-top:8px"><button class="hpc-btn" data-hpe-words="'
+        + esc(s.words.tab) + '|' + esc(s.words.key || '') + '">Edit the wording</button></div></div>'
+      : '';
+
+    return '<div class="hpc-card">'
+      + '<span class="hpe-sel">Selected section</span>'
+      + '<p class="hpc-h" style="margin-top:4px">' + esc(s.label) + '</p>'
+      + '<p class="hpc-sub" style="margin-bottom:8px">' + esc(s.description) + '</p>'
+      + controls + note + words
+      + '</div>'
+      + '<div class="hpc-card" style="margin-top:16px"><div class="hpc-save">'
+      + '<span class="hpc-dirty hpe-dirty">' + (live.dirty ? 'Unsaved changes' : 'Saved') + '</span>'
+      + '<button class="hpc-btn" data-hpe-discard>Discard</button>'
+      + '<button class="hpc-btn is-primary" data-hpe-save>Save changes</button>'
+      + '</div></div>';
+  }
+
+  function livePanelPaint(){
+    var p = document.querySelector('#hpe-panel');
+    if (!p) return;
+    p.innerHTML = livePanelHTML();
+    bind();
+  }
+
+  function liveTab(){
+    if (live.loading) {
+      return '<div class="hpc-card"><p class="hpc-sub">Drawing the homepage&hellip;</p></div>';
+    }
+
+    if (live.err && !live.html) {
+      return '<div class="hpc-note is-bad"><b>Could not draw the homepage</b>' + esc(live.err) + '</div>'
+        + '<div class="hpc-card"><button class="hpc-btn" data-hpe-reload>Try again</button></div>';
+    }
+
+    var stage = live.html
+      ? '<iframe class="hpe-frame" id="hpe-frame" title="Homepage preview" sandbox="allow-same-origin"></iframe>'
+      : '<div class="hpe-empty">Nothing drawn yet.</div>';
+
+    return '<div class="hpe">'
+      + '<div class="hpc-card">'
+      +   '<div class="hpe-hd"><b>The homepage, as these controls would leave it</b>'
+      +     '<span class="hpe-dev">'
+      +       '<button type="button" data-hpe-dev="desk" class="' + (live.dev === 'desk' ? 'on' : '') + '">Desktop · 1280</button>'
+      +       '<button type="button" data-hpe-dev="mob" class="' + (live.dev === 'mob' ? 'on' : '') + '">Mobile · 390</button>'
+      +     '</span>'
+      +     '<button class="hpc-btn" data-hpe-redraw' + (live.busy ? ' disabled' : '') + '>'
+      +       (live.busy ? 'Drawing…' : 'Redraw') + '</button>'
+      +   '</div>'
+      +   '<div class="hpe-stage' + (live.dev === 'mob' ? ' is-mob' : '') + '">' + stage + '</div>'
+      +   '<p class="hpe-note' + (live.err ? ' is-bad' : '') + '" id="hpe-note">' + esc(liveNoteText()) + '</p>'
+      +   '<div class="hpe-list" id="hpe-list">' + liveListHTML() + '</div>'
+      + '</div>'
+      + '<div class="hpe-panel" id="hpe-panel">' + livePanelHTML() + '</div>'
+      + '</div>';
+  }
+
+  /* ---------------------------------------------------------------- saving */
+  /*
+   * THE WRITER IS THE ONE THAT WAS ALREADY THERE.
+   *
+   * POST /admin-api/homepage is the endpoint Appearance → Homepage has always
+   * saved these three values through — same validation, same
+   * SECTION_SCHEMA cast, same four cache keys forgotten afterwards. This tab
+   * adds a way to reach the controls, not a second way to store them, which is
+   * what keeps AdminConsoleWriteTokenTest's question ("which writer stands
+   * behind this box?") answerable for every control it draws.
+   */
+  function liveSave(button){
+    button.disabled = true;
+    banner = null;
+
+    fetch(liveBase(), {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type':'application/json', 'X-XSRF-TOKEN': window.uToken ? window.uToken() : '', Accept:'application/json'},
+      body: JSON.stringify({sections: live.rows})
+    })
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        button.disabled = false;
+
+        if (!res.ok || !res.body.ok) {
+          banner = {kind:'is-bad', title:'Not saved', lines:[
+            (res.body && res.body.error) ? res.body.error : 'The server refused the change.'
+          ]};
+          render();
+          return;
+        }
+
+        /* Adopt what the server STORED, not what was sent: a refused skin falls
+           back to the section's own default on the way in, and a screen that
+           went on showing the rejected value would be telling the owner their
+           change is live when it is not. */
+        live.rows = (res.body.sections || []).map(liveRowOf);
+        live.dirty = false;
+
+        banner = {kind:'', title:'Saved', lines:['The homepage is live with these sections now.']};
+        if (window.toast) window.toast('Homepage sections saved');
+
+        drawLive(false);
+      })
+      .catch(function(e){
+        button.disabled = false;
+        banner = {kind:'is-bad', title:'Not saved', lines:['The request did not complete: ' + String(e.message || e)]};
+        render();
+      });
+  }
+
   /* ------------------------------------------------------------------ paint */
   function heroTab(){
     if (!slides.length) {
@@ -418,7 +985,8 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
     el.innerHTML = '<div class="wrap"><div class="hpc-wrap">'
       + '<div class="hpc-card"><p class="hpc-h">Homepage content</p>'
       + '<p class="hpc-sub">The words on the homepage. Which sections appear, and on which devices, is set next door on '
-      + '<b>Appearance &rarr; Homepage</b>; this screen decides what the ones you keep actually say.</p>'
+      + '<b>Appearance &rarr; Homepage</b>; this screen decides what the ones you keep actually say &mdash; and the '
+      + '<b>Live preview</b> tab shows the real page, where clicking a section opens that section&rsquo;s own controls.</p>'
       + '<p class="hpc-sub">Everything here starts as the wording the shop shipped with, so leaving it alone changes nothing. '
       + 'Clearing a box means <b>say nothing</b>: the line is dropped rather than printed empty.</p></div>'
       + bannerHTML()
@@ -427,16 +995,25 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
       +   data.tabs.map(function(t){
             return '<button class="hpc-tab' + (tab === t.key ? ' on' : '') + '" data-hpc-tab="' + esc(t.key) + '">' + esc(t.label) + '</button>';
           }).join('')
+      +   '<button class="hpc-tab' + (tab === 'live' ? ' on' : '') + '" data-hpc-tab="live">Live preview</button>'
       + '</div>'
-      + (tab === 'hero' ? heroTab() : copyTab())
-      + '<div class="hpc-card"><div class="hpc-save">'
-      +   '<span class="hpc-dirty">' + (dirty ? 'Unsaved changes' : 'Saved') + '</span>'
-      +   '<button class="hpc-btn" data-hpc-reload>Discard</button>'
-      +   '<button class="hpc-btn is-primary" data-hpc-save>Save changes</button>'
-      + '</div></div>'
+      + (tab === 'hero' ? heroTab() : tab === 'live' ? liveTab() : copyTab())
+      /* The live tab carries its OWN save bar, beside the controls it saves and
+         posting to the endpoint that owns those three values. Drawing this one
+         under it as well would put two Save buttons on one screen writing two
+         different things, which is how an owner comes to press the wrong one. */
+      + (tab === 'live' ? '' :
+          '<div class="hpc-card"><div class="hpc-save">'
+        +   '<span class="hpc-dirty">' + (dirty ? 'Unsaved changes' : 'Saved') + '</span>'
+        +   '<button class="hpc-btn" data-hpc-reload>Discard</button>'
+        +   '<button class="hpc-btn is-primary" data-hpc-save>Save changes</button>'
+        + '</div></div>')
       + '</div></div>';
 
     bind();
+
+    // The preview document is assigned after the paint, never built into it.
+    if (tab === 'live') { liveMount(); }
   }
 
   function bannerHTML(){
@@ -455,6 +1032,33 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
    * go through a repaint.
    */
   function setValue(name, value){
+    if (name.indexOf('sec.') === 0) {
+      /*
+       * A SECTION CONTROL, WHICH IS A THIRD PLACE A VALUE CAN LIVE.
+       *
+       * Named `sec.<key>.<field>` and handled FIRST, because the slide branch
+       * below reads its first segment as an index: `slides[+'sec']` is
+       * `slides[NaN]`, which is undefined, and assigning through it throws and
+       * takes the handler with it. slideIndexOf() is the same guard on the
+       * other two readers of this name.
+       */
+      var s = name.split('.');
+      var row = liveRow(s[1]);
+      if (row) row[s[2]] = value;
+
+      live.dirty = true;
+
+      var word = document.querySelector('.hpe-dirty');
+      if (word) word.textContent = 'Unsaved changes';
+
+      /* THE "LIVE" IN LIVE EDITING: the picture is redrawn from the controls
+         as they now stand, quietly -- the panel is not repainted, so the
+         control that was just used keeps the focus and its place. */
+      drawLive(true);
+
+      return;
+    }
+
     if (name.indexOf('copy.') === 0) {
       copy[name.slice(5)] = value;
     } else {
@@ -468,17 +1072,46 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
     if (el) el.textContent = 'Unsaved changes';
   }
 
+  /**
+   * The slide a control name belongs to, or null for one that belongs to no
+   * slide -- a `copy.<key>` name and a `sec.<key>.<field>` name alike.
+   *
+   * NOTE THE SHAPE OF THE EXAMPLES. This screen may not NAME a setting, even
+   * in prose: HomepageContentEditorTest scans the script for every key the
+   * server sends and fails if one appears, because a key in this file is how a
+   * second list of controls starts. Risk ▒31 in the other direction -- a scan
+   * that reads prose as code -- and the answer is to write the placeholder
+   * rather than to weaken the scan.
+   *
+   * Written as a test on the first segment rather than as "not copy.", which is
+   * what stood here: that form answered NaN for anything that was neither, and
+   * NaN reached slides[] and refreshPreview() as an index.
+   */
+  function slideIndexOf(name){
+    var head = String(name).split('.')[0];
+
+    return /^[0-9]+$/.test(head) ? +head : null;
+  }
+
   function bind(){
     var el = document.querySelector('#content');
     if (!el) return;
 
     el.querySelectorAll('[data-hpc-tab]').forEach(function(b){
-      b.onclick = function(){ tab = b.dataset.hpcTab; render(); };
+      b.onclick = function(){
+        tab = b.dataset.hpcTab;
+        render();
+
+        /* The picture is fetched the first time the tab is opened and not
+           before: it is a whole homepage render on the server, and a screen
+           that is here for the wording should not pay for one. */
+        if (tab === 'live' && !live.loaded && !live.loading) { loadLive(); }
+      };
     });
 
     el.querySelectorAll('[data-hpc-set]').forEach(function(input){
       var name = input.dataset.hpcSet;
-      var slide = name.indexOf('copy.') === 0 ? null : +name.split('.')[0];
+      var slide = slideIndexOf(name);
 
       input.oninput = function(){
         setValue(name, input.value);
@@ -499,7 +1132,7 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
         var name = b.dataset.hpcToggle;
         var now = b.getAttribute('aria-checked') === 'true';
         setValue(name, !now);
-        var slide = name.indexOf('copy.') === 0 ? null : +name.split('.')[0];
+        var slide = slideIndexOf(name);
         b.classList.toggle('is-primary', !now);
         b.setAttribute('aria-checked', now ? 'false' : 'true');
         b.textContent = now ? 'Off' : 'On';
@@ -551,6 +1184,49 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
 
     var save = el.querySelector('[data-hpc-save]');
     if (save) save.onclick = function(){ submit(save); };
+
+    /* ---- the live-preview tab (Lane HL) ---------------------------------
+       Bound from the same place as everything else, and re-run whole by the
+       two partial repaints below: these handlers are assignments rather than
+       addEventListener, so binding twice is binding once. */
+    el.querySelectorAll('[data-hpe-dev]').forEach(function(b){
+      b.onclick = function(){ live.dev = b.dataset.hpeDev; render(); };
+    });
+
+    el.querySelectorAll('[data-hpe-redraw]').forEach(function(b){
+      b.onclick = function(){ drawLive(false); };
+    });
+
+    el.querySelectorAll('[data-hpe-reload]').forEach(function(b){
+      b.onclick = function(){ loadLive(); };
+    });
+
+    el.querySelectorAll('[data-hpe-pick]').forEach(function(b){
+      b.onclick = function(){ selectSection(b.dataset.hpePick); };
+    });
+
+    el.querySelectorAll('[data-hpe-words]').forEach(function(b){
+      b.onclick = function(){
+        var parts = b.dataset.hpeWords.split('|');
+        tab = parts[0];
+        render();
+
+        /* Land ON the box rather than near it. The id is the one field()
+           builds, so there is no second spelling of it to drift. */
+        if (parts[1]) {
+          var box = document.getElementById('hpc-f-' + ('copy.' + parts[1]).replace(/[^a-z0-9]+/gi, '-'));
+          if (box) { box.focus(); }
+        }
+      };
+    });
+
+    el.querySelectorAll('[data-hpe-discard]').forEach(function(b){
+      b.onclick = function(){ live.dirty = false; loadLive(); };
+    });
+
+    el.querySelectorAll('[data-hpe-save]').forEach(function(b){
+      b.onclick = function(){ liveSave(b); };
+    });
   }
 
   /* ------------------------------------------------------------------- save */
