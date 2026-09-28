@@ -3,6 +3,50 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.306
+A security fix on the search panel, and one helper for every image address that
+becomes CSS. **Apply this one — it matters more than its size suggests.**
+
+### ▲ THE SEARCH SUGGESTION PANEL COULD BE MADE TO RUN SOMEBODY ELSE'S CODE
+
+The panel that drops down when a shopper types built its rows out of four values
+and escaped **none** of them: the product link, the product image, the group
+heading and the "view all" link.
+
+A double quote in any one of them closes the attribute it sits in, and the next
+thing the browser reads is a new attribute — an event handler. On the panel
+every shopper opens.
+
+**Nothing was exploitable while you type your own product names and image
+paths.** What changes that is the import: it is about to write thousands of
+these from a WordPress database this shop did not author. That is why this is
+fixed now rather than noted.
+
+A normal address comes through **unchanged**, so no picture that draws today
+stops drawing. `javascript:` addresses and addresses pointing at somebody else's
+host are refused outright.
+
+### AND THE SMALLER VERSION OF THE SAME THING, IN TEN FILES
+
+Thirteen places on the shop build a CSS background out of an image address. They
+now go through one helper that escapes for CSS before the HTML escaping already
+there.
+
+**Honest about the size of it:** eleven of the thirteen were never reachable —
+they escape twice by accident of how they are built, which was measured rather
+than assumed, on a real page with a hostile address in the basket. One was dead
+code. **The one that was live is the size/shade swatch on the product page**,
+and it was counted: a hostile option image fired one request to an outside
+address before, and none after.
+
+It is worth doing anyway, because those eleven are safe by an accident that one
+settings change would undo for all of them at once.
+
+### Files
+
+`resources/js/kbb/search.js`, `app/Support/CssUrl.php`, ten storefront Blade
+files, the rebuilt `public/build`, and their tests.
+
 ## 2.60.305
 Two new things you asked for: **Sets** under Catalog, and the **cards banner**
 under Appearance. Both ship switched off and neither moves anything until you
