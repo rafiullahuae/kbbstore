@@ -3,6 +3,69 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.315
+**▲ THE 2.5-SECOND LOOPS WILL NOW ACTUALLY GET CUT.** This is the fix for the
+clips that never got their loop — and it is our bug, not your server's.
+
+### WHAT WAS WRONG
+
+The scheduled job that cuts covers and loops picked up **only clips with no
+cover**. But the cover and the loop are two separate operations, and the loop is
+the one that fails — it encodes 2.5 seconds of video, where the cover just grabs
+a single frame. So:
+
+- **Minute 1** — no cover, so the clip is picked up. Cover made. Loop fails.
+- **Minute 2** — the clip has a cover now, so it is skipped.
+- **Every minute after that** — skipped.
+
+**One attempt at the loop, ever**, from a schedule that runs sixty times an hour
+for exactly that purpose.
+
+Seen on your own shop: a cover written at 20:34, no loop file beside it, and
+nothing new in the half hour after that.
+
+The job now picks up a clip that is missing **either** file. A clip that has both
+is still skipped, so it is still safe to run over and over.
+
+### ▲ WHAT YOU DO
+
+**Nothing but apply this.** Within a minute of the next scheduled run, every clip
+you have already uploaded gets its 2.5-second loop. You do not re-upload
+anything.
+
+Without the loop file the rail still plays — it loops the *whole* video instead.
+That works, and it costs a customer on a phone about **11 MB per clip** where the
+loop file is **97 KB**. With four clips playing at once, that is the difference
+between half a megabyte and forty.
+
+### AND WHEN IT STILL CANNOT
+
+Until now, every failure produced the same sentence — *"ffmpeg could not read a
+poster frame out of that clip"* — whether the real cause was a folder it could not
+write to, a missing codec, a time limit or a file that had been deleted. The
+program doing the work prints a precise reason every time, and the shop was
+throwing it away.
+
+It keeps it now. Run this over SSH and it tells you the actual reason:
+
+```
+php artisan ugc:cut-covers --limit=5 -v
+```
+
+That turns a support conversation into one line.
+
+### WHAT THIS WAS NOT
+
+Checked on your server rather than assumed, so it never has to be checked again:
+ffmpeg is a full build with H.264; your clip files are intact and decode without
+a single error; and the loop command itself, run by hand, produced a 107 KB file
+in under a second.
+
+### FILES
+
+`app/Console/Commands/CutUgcCovers.php`, `app/Services/UgcTranscoder.php`, and
+two test files.
+
 ## 2.60.314
 **A set no longer offers "buy 3 and save" — and the box contents take that spot
 instead.** Exactly as you marked up.

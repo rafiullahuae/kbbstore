@@ -256,12 +256,41 @@ class CutUgcCovers extends Command
             ->where('file_path', '!=', '')
             ->when($ids !== [], fn ($q) => $q->whereIn('id', $ids))
             /*
-             * Without --force, only clips that have no cover. That is what
-             * makes this safe to run twice, and safe to put on a schedule: a
-             * second run finds nothing rather than re-cutting the shop.
+             * Without --force, any clip MISSING EITHER DERIVATIVE. That is what
+             * makes this safe to run twice and safe to schedule: a clip that
+             * has both is skipped, so a second run finds nothing rather than
+             * re-cutting the shop.
+             *
+             * ── IT USED TO ASK ABOUT THE POSTER ALONE, AND THAT STRANDED THE
+             *    TEASER PERMANENTLY ──────────────────────────────────────────
+             *
+             * The two cuts are separate ffmpeg runs and the teaser is the one
+             * that fails: it encodes 2.5 seconds of H.264 where the poster
+             * grabs one frame. So the real sequence on a server where the
+             * teaser cannot be made was:
+             *
+             *   minute 1   no poster -> SELECTED. Poster written. Teaser fails.
+             *   minute 2   HAS a poster -> not selected.
+             *   for ever   not selected.
+             *
+             * One attempt at the teaser, ever, and the retry the every-minute
+             * schedule exists to provide never came. Measured on the owner's
+             * live shop on 28 September 2026: `poster-20260928-203448.jpg` in
+             * the uploads directory, no `teaser-*.mp4` beside it, the directory
+             * mtime three minutes later than the poster (the failed teaser
+             * being cleaned up), and nothing new in the half hour after that
+             * from a cron running sixty times. The rail then loops the FULL
+             * clip instead, which is the fallback working exactly as designed
+             * and costing about 11 MB a tile on a phone instead of 97 KB.
+             *
+             * A clip that can never produce a teaser is now retried each run.
+             * That is bounded by --limit (20 on the schedule) and is the right
+             * trade against a silent permanent gap: a retry costs one ffmpeg
+             * start, and the alternative cost the shop every teaser it has.
              */
             ->when(! $this->option('force'), fn ($q) => $q->where(function ($q) {
-                $q->whereNull('poster_path')->orWhere('poster_path', '');
+                $q->whereNull('poster_path')->orWhere('poster_path', '')
+                    ->orWhereNull('teaser_path')->orWhere('teaser_path', '');
             }))
             // Oldest first: the backlog before the clip uploaded a minute ago.
             // `id` after it because this query is SLICED — StableOrderingTest
