@@ -1,0 +1,18 @@
+{
+ "viewport": 390,
+ "scrollWidth": 390,
+ "contentScrollWidth": 390,
+ "totalsRows": [
+  "SubtotalAED 300",
+  "ShippingAED 0",
+  "Order totalAED 300",
+  "CapturedAED 120"
+ ],
+ "capturedPanel": "Captured · AED 120 on 27 Sept 2026 at 08:16 · ref cap_preview_pc-after",
+ "capturedPanelHeight": 60,
+ "capturedPanelFontSize": 13,
+ "refundableLine": "AED 120 still refundable",
+ "refundableFontSize": 12,
+ "cardWidth": 362,
+ "latestNote": "Order notesCaptured 120.00 AED via tamara. Capture reference cap_preview_pc-after. PARTIAL: tamara reports 120.00 taken against an order of 300.00, so only the captured amount is refundable.Admin · 28 Sept 2026 at 08:16Add"
+}

@@ -140,6 +140,14 @@ class CashOnDelivery implements PaymentGateway, SettlesPayments
      * cash on delivery is recording that the cash arrived; PaymentCapturer
      * writes `captured_at`, `captured_total` and the order note, and this
      * method's only job is to agree that it may.
+     *
+     * IT NAMES NO CAPTURED AMOUNT, and that is an answer rather than a gap.
+     * SettlementResult::$capturedFils is what a PROVIDER says it took, and
+     * there is no provider here — the courier's hand is the API. Leaving it
+     * null is what tells PaymentCapturer to record the amount it asked for,
+     * which is the fil this gateway has always written and must keep writing.
+     * Filling it in with `$amountFils` would be this class manufacturing a
+     * confirmation nobody gave.
      */
     public function capture(Order $order, int $amountFils): SettlementResult
     {

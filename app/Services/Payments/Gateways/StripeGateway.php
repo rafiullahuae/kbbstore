@@ -986,11 +986,37 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $status = (string) ($read['body']['status'] ?? '');
 
         if ($status === 'succeeded') {
+            /*
+             * `amount_received`, NOT `amount`, AND NOT THE AMOUNT WE ASKED FOR.
+             *
+             * The same distinction handleWebhook() makes on
+             * `payment_intent.succeeded`, and for the same reason written out
+             * there: `amount` is what the intent asked for, `amount_received`
+             * is what was actually taken, and on a partially captured intent
+             * the two differ. A manual-capture intent captured short — from the
+             * Stripe dashboard, by the merchant's own tooling, by anything that
+             * is not this button — reaches `succeeded` and lands here.
+             *
+             * Until this figure travelled, PaymentCapturer wrote the whole
+             * order total against this ok(), and `captured_total` is the
+             * ceiling PaymentRefunder measures a refund against: 120.00 taken
+             * of a 300.00 order, 300.00 refundable, 180.00 of the shop's own
+             * money paid to a buyer who never paid it.
+             *
+             * Already integer minor units, which is how this schema stores
+             * money — no conversion here, so none to get wrong. A body with no
+             * numeric `amount_received` reports null rather than zero, and
+             * PaymentCapturer then writes the requested amount exactly as it
+             * always has.
+             */
+            $received = $read['body']['amount_received'] ?? null;
+
             return SettlementResult::ok(
                 'already_captured',
                 $intentId,
                 ['provider' => $this->id(), 'payment_intent' => $intentId, 'status' => $status],
                 'Stripe captured this card payment at authorisation; there was nothing left to take.',
+                capturedFils: is_numeric($received) ? (int) $received : null,
             );
         }
 

@@ -1,0 +1,18 @@
+{
+ "viewport": 390,
+ "scrollWidth": 390,
+ "contentScrollWidth": 390,
+ "totalsRows": [
+  "SubtotalAED 300",
+  "ShippingAED 0",
+  "Order totalAED 300",
+  "CapturedAED 300"
+ ],
+ "capturedPanel": "Captured · AED 300 on 27 Sept 2026 at 08:16 · ref cap_preview_pc-before",
+ "capturedPanelHeight": 60,
+ "capturedPanelFontSize": 13,
+ "refundableLine": "AED 300 still refundable",
+ "refundableFontSize": 12,
+ "cardWidth": 362,
+ "latestNote": "Order notesCaptured 300.00 AED via tamara. Capture reference cap_preview_pc-before.Admin · 28 Sept 2026 at 08:16Add"
+}

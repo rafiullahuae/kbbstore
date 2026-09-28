@@ -1001,11 +1001,30 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $status = strtolower((string) ($remote['status'] ?? ''));
 
         if (in_array($status, ['fully_captured', 'partially_captured'], true)) {
+            /*
+             * `partially_captured` REACHES HERE ON PURPOSE, AND THE FIGURE HAS
+             * TO TRAVEL WITH IT.
+             *
+             * Not topping the capture up is right, for the reason the status
+             * table above gives. What was wrong is what happened next:
+             * PaymentCapturer recorded the whole order total against this ok(),
+             * and `captured_total` is the ceiling PaymentRefunder measures a
+             * refund against. A Tamara order captured at 120.00 out of 300.00
+             * read as 300.00 captured and accepted a 300.00 refund — 180.00 of
+             * the shop's own money paid to a buyer who never paid it, on the
+             * one status this branch was written to be careful about.
+             *
+             * capturedSumFils() reads the same `transactions.captures[]` list
+             * existingCaptureId() takes the id out of, and answers null when
+             * Tamara volunteered no amount — which leaves PaymentCapturer
+             * writing the requested figure, exactly as before.
+             */
             return SettlementResult::ok(
                 'already_captured',
                 $this->existingCaptureId($remote),
                 ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId, 'status' => $status],
                 'Tamara had already captured this order.',
+                capturedFils: $this->capturedSumFils($remote),
             );
         }
 
@@ -1728,6 +1747,57 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             $remote['transactions']['captures'][0]['capture_id']
                 ?? ($remote['capture_id'] ?? null)
         );
+    }
+
+    /**
+     * How much Tamara has actually taken against this order, in integer fils.
+     *
+     * THE KEYS ARE NOT GUESSED. `transactions.captures[]` is the list
+     * existingCaptureId() takes the capture id out of, and
+     * `total_amount.amount` with an `amount` fallback is exactly the pair
+     * tamaraRefundsToTxns() already reads off the sibling
+     * `transactions.refunds[]` entries on this same body — it is also the shape
+     * this class SENDS on a capture (`'total_amount' => $this->money(...)`,
+     * which is `{amount, currency}`). Major units on this API, through toFils()
+     * and its round(), never an (int) cast on a float.
+     *
+     * THE SUM OF THE LIST, not `[0]`. existingCaptureId() takes the first
+     * entry because one id is all a refund needs to be pointed at; the money
+     * question is different, and `partially_captured` is precisely the status
+     * on which Tamara may hold more than one capture against one order.
+     *
+     * NULL, NOT ZERO, when no entry carried an amount: zero would assert that
+     * this order holds no captured money, and null means "Tamara named no
+     * figure", which the caller turns back into the amount it asked for. A body
+     * we cannot read must not pass itself off as a measurement.
+     */
+    private function capturedSumFils(array $remote): ?int
+    {
+        $captures = $remote['transactions']['captures'] ?? null;
+
+        if (! is_array($captures)) {
+            return null;
+        }
+
+        $sum = 0;
+        $seen = false;
+
+        foreach ($captures as $capture) {
+            if (! is_array($capture)) {
+                continue;
+            }
+
+            $amount = $capture['total_amount']['amount'] ?? ($capture['amount'] ?? null);
+
+            if ($amount === null) {
+                continue;
+            }
+
+            $seen = true;
+            $sum += $this->toFils($amount);
+        }
+
+        return $seen ? $sum : null;
     }
 
     private function stringOrNull(mixed $value): ?string
