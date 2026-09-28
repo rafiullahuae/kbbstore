@@ -141,6 +141,26 @@ Row widths — subtract ~44px of gutter to read them as screen widths:
 | ≥ 1164px | **5** | ~1208 — **1280 lands here** |
 | ≥ 1400px | 6 | ~1444 |
 
+### Measured, not predicted
+
+The ladder above is arithmetic; this is Chromium reading each grid's computed
+`grid-template-columns` at eight widths between a phone and 1680. The shop
+listing and the homepage rails now agree at **every** width, which they did not
+before Lane W1 and agree on more closely now that the rail is hidden by default
+and both rows are the page width:
+
+| screen | `/shop` | homepage rails | fits |
+| --- | --- | --- | --- |
+| 390 | 2 | 2 | 390 / 390 |
+| 600 | 2 | — | 600 / 600 |
+| 768 | **3** | **3** | 768 / 768 |
+| 1024 | **4** | **4** | 1024 / 1024 |
+| 1280 | **5** | **5** | 1280 / 1280 |
+| 1440 | 5 | — | 1440 / 1440 |
+| 1680 | **6** | **6** | 1680 / 1680 |
+
+`fits` is `document.documentElement.scrollWidth` against `clientWidth`.
+
 **Six at 1680 is not a mistake.** *"on 1680px the grid products will show 1
 column extra"* is the owner's earlier request and this is the same request one
 step along: five at a desktop, one more on the big screen, and no further,
