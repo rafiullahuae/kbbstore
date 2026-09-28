@@ -1832,3 +1832,108 @@ fails on a new one; the rendered HTML is byte-identical for every address that
 was already safe — `StorefrontEnglishUnchangedTest` is the instrument and it
 must stay green without its pin being advanced; and the report names what the
 helper refuses and what it merely escapes.
+
+---
+
+## Lane JS — the storefront's JavaScript has never had a security sweep
+
+**Briefed 28 September 2026, straight off a finding.**
+
+`resources/js/kbb/search.js` was building its suggestion rows out of `/api/search`
+and setting `innerHTML` with **four values escaped by nothing at all** — the
+product link, the product image, the group heading and the view-all link. A
+double quote in any of them closed the attribute it sat in and the next token
+was read as a new attribute: an event handler, on a panel every shopper opens.
+**Script injection, on the storefront.** It is fixed, in 2.60.306, with
+`schemeIsServed()` / `safeHref()` / `cssUrl()` — read them, they are the
+JavaScript twins of `App\Support\CssUrl` and they are the pattern for this lane.
+
+**Nothing about that was special to search.js.** It was found by accident, by a
+lane sent to fix a smaller problem in Blade. There are **eighteen files** under
+`resources/js/kbb/` and **38 `innerHTML` sites** among them, and nobody has ever
+looked at the rest.
+
+### The work
+
+**Sweep every file under `resources/js/`.** For each site where a value that did
+not originate in this page's own source reaches the DOM, decide what it is and
+fix it:
+
+- **`innerHTML` / `outerHTML` / `insertAdjacentHTML`** built by template string —
+  every `${…}` must be escaped for the context it lands in. An attribute, an
+  HTML body and a CSS `url()` are three different contexts and `escapeHtml()`
+  is only correct for two of them; the third is what `cssUrl()` exists for.
+- **`href` / `src` / `action`** — escaped AND scheme-checked, so `javascript:`
+  cannot land in one. A refused href is `'#'`, never `''`: an empty href is the
+  current page, so a refused link would silently reload the shop.
+- **`style` attributes and `el.style.x =`** — the CSS context.
+- **`eval`, `new Function`, `setTimeout('string')`, `document.write`** — if any
+  exist, they are their own finding.
+- **`location` assignments** built from a response.
+
+`reviews.js:185` uses `URL.createObjectURL()`, which is browser-generated and
+safe — that one has been checked. Everything else has not.
+
+### Where the values come from, which is what decides the severity
+
+Most of these are fed by `/api/*`, which reads the `products`, `reviews` and
+`ugc_videos` tables. **Today those values are ones the owner typed.** The
+WordPress import is about to write thousands of them from a database this shop
+did not author, and an imported product name, image path or slug is exactly the
+kind of value nobody inspects. That is the whole reason this is a lane now and
+not a note.
+
+### What NOT to do
+
+- **Do not add a sanitiser library.** One small helper per context, in one
+  place, imported by the files that need it — the three in `search.js` are the
+  shape; lift them somewhere shared rather than copying them eighteen times.
+- **Do not rewrite a file's structure to fix an escape.** The smallest change
+  that closes the hole, so the diff is readable and `StorefrontEnglish-
+  UnchangedTest` stays green.
+- **Do not convert `innerHTML` to DOM building wholesale.** It is the right
+  answer in the abstract and a rewrite of the whole storefront in practice.
+  Where one site is small and obviously better as `textContent`, take it; say
+  so; otherwise escape.
+
+### The thing that makes a JS fix real
+
+**A fix that lives only in `resources/` is a fix the shop does not have** — the
+storefront loads the compiled bundle from `public/build`. Run `npx vite build`,
+ship the built asset, and **pin it**: `SearchPanelEscapingTest`'s fourth case is
+the pattern, and read its comment first — its own first cut looked for the
+function NAMES in the bundle and went red against a bundle that *did* carry the
+fix, because esbuild renames every local function. Fingerprint string and regex
+literals instead.
+
+### Rules
+
+- **Nothing that already works may change.** A normal address must come through
+  byte-identical. Prove it, the way the search fix did: exercise the helpers in
+  node against real attack strings AND a plain path, and put the measured table
+  in the test's comment.
+- Every fix ships with the test that goes red without it and a **mutation note
+  you actually ran**.
+- `CLAUDE.md` rule 4 forbids shipped JavaScript that measures layout. You are
+  editing shipped JavaScript: do not add a measuring API while you are in there.
+- **Do not touch** `routes/web.php`, `resources/views/admin/**`,
+  `KBB-Master-Plan.md`. Admin JavaScript is a different threat model and a
+  different lane.
+- **Two traps this repo hit four times this week.** `toContain()` is variadic —
+  a message as its second argument becomes a second needle. And a source scan
+  finds prose: strip comments before scanning, or the comment explaining your
+  fix satisfies the check the fix was meant to pass.
+
+### Owns
+
+`resources/js/**`, a shared helper module of your own under `resources/js/`,
+`public/build/**` (rebuilt, not hand-edited), `tests/Feature/*Escap*`,
+`tests/Feature/*Js*`, `tools/js-*`, `docs/lane-js-shots/`.
+
+### Done when
+
+Every site in `resources/js/` is either escaped for its context or recorded as
+safe with the reason; the helpers live in one place; the built bundle carries
+the fix and a test proves it; every normal value renders byte-identically; and
+the report lists what you found site by site, what you fixed, and what you
+judged safe and why.
