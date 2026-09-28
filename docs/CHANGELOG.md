@@ -3,6 +3,70 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.312
+**▲ READ THIS ONE BEFORE THE IMPORT, NOT AFTER.** Two things your WordPress site
+is carrying can only be collected **while WordPress is still running**, and one
+of them cannot be recovered once it is switched off.
+
+### 1. OLD PRODUCT AND ARTICLE ADDRESSES
+
+Every time you have renamed a product or an article on WordPress, WordPress
+quietly kept the **old address** and has been forwarding it ever since. A product
+you renamed in 2021 still opens today — Google holds that address, and customers
+have it bookmarked.
+
+You have never noticed this, because WordPress does it silently and for free.
+
+**Switch WordPress off without collecting those addresses and every one of them
+becomes a dead page on day one** — and the list only ever existed inside the
+database you turned off. It cannot be rebuilt afterwards from anything.
+
+The exporter now collects them and this shop forwards them properly with a
+permanent redirect, the kind that moves your Google ranking across rather than
+starting again. Measured on a test export: three renamed items, all three
+landing on the right page.
+
+### 2. REVIEW PHOTOGRAPHS
+
+The photographs customers attached to their reviews were not being imported at
+all. Everything to *show* them has been built for months — the product page
+draws them with a "+n" chip, the review wall filters on them — and on an
+imported shop there was simply nothing to draw, because the only thing that had
+ever written a review photo was somebody uploading to the new site.
+
+Now imported, with each address checked before the shop will display it.
+
+### ▲ WHAT YOU MUST DO
+
+**Re-upload the exporter plugin to WordPress — it is version 1.6.0.** The
+plugin zip is attached alongside this package. An export taken with the old
+version carries neither the old addresses nor the photographs, and there is no
+way to add them later.
+
+### STILL DONE BY HAND: THE MENU
+
+Your WordPress navigation menu is **not** imported — you retype it in
+**Appearance → Header → Mega Menu**. That was always true; what changed is that
+the export report now says so in those words. It used to file your menu under
+*"post types, which are either another file's job or WordPress's own
+machinery"* — which told you your header was a cache. It was not true, and you
+were reading it on the one screen that is supposed to tell you what is being
+left behind.
+
+### AND WHAT IMPORTS CLEANLY
+
+Verified field by field on a test export: barcodes, brands, tags, nested
+categories with their images, product variations with their sizes and prices,
+which variant each past order sold, customers with their addresses, coupons,
+refunds, and the SEO title, description and share image from Yoast. **Money is
+exact to the fil at every step** — nothing rounds.
+
+### FILES
+
+`wordpress-plugin/kbb-exporter` (1.6.0), `ReviewImporter`, `RedirectMap`,
+`kbb:import-redirects`, `docs/WP-EXPORT-CONTRACT.md`,
+`docs/IE-IMPORT-READINESS.md`, `docs/IMPORT-RUNBOOK.md`.
+
 ## 2.60.311
 **A Set now says what is in the box on every document the shop produces** — and
 on both admin screens that list an order's items.
