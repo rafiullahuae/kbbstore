@@ -434,6 +434,10 @@ function gqCensus(): array
             'user_id' => GQ_LANDS.'reviews.customer_id',
             'ip' => GQ_LANDS.'reviews.ip',
             'reply' => GQ_LANDS.'reviews.reply',
+            // Lane IE. The column existed on this side from the first schema
+            // migration -- cast on the model, drawn by the product page, filtered
+            // on by the review wall -- and no export had ever put anything in it.
+            'images' => GQ_LANDS.'reviews.images',
             'comment_date_gmt' => GQ_CONSOLIDATED.": the same instant as comment_date, which IS read -- the date crosses, and this line of the discard list overstates the loss",
         ]],
 
@@ -1153,6 +1157,40 @@ function gqMetaKeyCensus(): array
         '_line_tax' => 'order_items.csv -> order_items.tax_total',
         'discount_amount' => 'a coupon LINE ITEM -- the exporter turns it into orders.csv `coupon_code`',
         '_refunded_item_id' => 'refunds.csv `refunded_items` -- NAMED in the discard list',
+
+        /*
+         * ── LANE IE ───────────────────────────────────────────────────────
+         *
+         * `_wp_old_slug` is the address record nothing in this migration had
+         * ever read. WordPress writes one per rename of a published post and
+         * core's wp_old_slug_redirect() has been 301ing those addresses ever
+         * since -- which is why they still work and why nobody noticed them.
+         * That redirect is a WordPress feature and it stops when WordPress
+         * does.
+         */
+        '_wp_old_slug' => 'permalinks.csv, status `old-slug` -> redirects.source, via RedirectMap -- a previous '
+            .'address of this post, which WordPress core is 301ing today and nothing would after the cutover',
+
+        /*
+         * The review-photograph keys. These are the shape of key a real shop
+         * carries: every review-photo plugin invents its own, which is why the
+         * export recognises a photograph by the VALUE (an attachment id this
+         * site resolves, or an address under its own uploads directory) and
+         * names in manifest.json every key it did not use.
+         */
+        'reviews-images' => 'reviews.csv `images` -> reviews.images -- attachment ids, two rows under one key',
+        'cr_photos' => 'reviews.csv `images` -> reviews.images -- a PHP-serialised array of uploads URLs',
+
+        /*
+         * And the two that are NOT photographs, which are here because the
+         * export has to leave something behind and NAME it. Both are reported
+         * by the reviews stage in manifest.json, by key and with a count.
+         */
+        'wc_review_helpful' => 'NOT exported: a plugin\'s own bookkeeping, no column here. NAMED in the reviews '
+            .'stage\'s unused-key note in manifest.json',
+        'imported_avatar' => 'NOT exported: it holds an image address on somebody ELSE\'s server, and a review '
+            .'photograph is only taken from this site\'s own uploads directory -- otherwise the new shop '
+            .'hotlinks a stranger\'s file from a product page. NAMED in the same note',
     ];
 }
 
