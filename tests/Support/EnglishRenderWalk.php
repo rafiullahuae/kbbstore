@@ -545,7 +545,41 @@ final class EnglishRenderWalk
      * The commit named below is reachable from this branch and stays reachable,
      * per the note above about rebases rewriting every SHA behind this constant.
      */
-    public const BASE_COMMIT = '73332adf128068a59c29af8b65624969075f6887';
+    /*
+     * ── MOVED AGAIN — LANE URL (the address scheme) ────────────────────────
+     *
+     * FIVE PAGES MOVED, THIRTY-SIX DID NOT, AND THE DIFF WAS READ PAGE BY PAGE
+     * BEFORE THIS CONSTANT WAS TOUCHED. Every byte of it is an ADDRESS. Not one
+     * word of shopper-visible copy changed on any page of the shop:
+     *
+     *   /                       the Journal link in the routine strip,
+     *                           href="/skincare-guide/" -> href="/blog/".
+     *
+     *   brands                  each directory tile,
+     *                           href="/korean-skincare-brands/anua/" ->
+     *                           href="/brands/anua/".
+     *
+     *   brands/{slug}           the breadcrumb's "Brands" crumb, the same move.
+     *
+     *   blog                    the standalone document's own nav,
+     *   blog/{slug}             href="/skincare-guide/" -> href="/blog/", once
+     *                           on each. Both documents are also reached at a
+     *                           new URI, which is why they are listed under
+     *                           `blog` and `blog/{slug}` rather than
+     *                           `skincare-guide` and `{slug}`.
+     *
+     * ▲ AND THE CATEGORY ARCHIVE IS NOT IN THAT LIST, which is worth stating
+     * because it moved further than any of them. This walk rolls
+     * resources/views back and renders; the archive's own links come from
+     * Category::url(), which is PHP, so the old views render the new addresses
+     * and the page is byte-identical. The archive's move is pinned by
+     * UrlSchemeTest against the router instead, which is where it can be seen.
+     *
+     * The commit named below is this lane's own and is reachable from this
+     * branch, per the note above about rebases rewriting every SHA behind this
+     * constant.
+     */
+    public const BASE_COMMIT = '18f6467b62f5eea561f8164b8c5d6f92cc39f061';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
