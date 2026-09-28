@@ -74,20 +74,48 @@ it('does not blame the missing transcoder when the clip itself is missing', func
      * here reads as "ffmpeg is missing" and sends somebody to the wrong
      * problem — to an SSH session and an apt-get that was never the answer.
      *
-     * MUTATION NOTE. Move the binary() check above the is_file() check in
-     * derive() and this is red on a box with no ffmpeg. RUN.
+     * MUTATION NOTE. The is_file() this used to name now lives behind
+     * App\Services\Ugc\ClipFile::state(), which derive() asks FIRST. Move that
+     * block below the ffmpeg-blocker's own early return and this is red — but
+     * ONLY on a box with no ffmpeg, so the run needs one: `putenv(
+     * 'KBB_FFMPEG=/nonexistent/ffmpeg')` around the derive() call below
+     * reproduces it here. RUN, both ways: mutated it answers "This server has
+     * no ffmpeg…", which is the wrong problem and an SSH session and an apt-get
+     * that were never the answer.
      */
     $video = new UgcVideo(['file_path' => '/uploads/ugc/clip-that-is-not-there-aaaa.mp4']);
 
     $notes = implode(' ', app(UgcTranscoder::class)->derive($video)['notes']);
 
-    expect($notes)->toContain('missing from the server');
+    /*
+     * PIN ADVANCED: "this server", not "the server". The words moved into
+     * App\Services\Ugc\ClipFile so that this command, the clips screen and the
+     * sections screen cannot describe one row three different ways — the
+     * defect that class is named after. The PROPERTY is unchanged and is now
+     * asserted more tightly than the old fragment was: the note says the file
+     * is missing, it quotes the path back so it can be searched for, and it
+     * does not say "ffmpeg" at all.
+     */
+    expect($notes)->toContain('missing from this server')
+        ->and($notes)->toContain('/uploads/ugc/clip-that-is-not-there-aaaa.mp4');
+
+    expect(str_contains($notes, 'ffmpeg'))->toBeFalse(
+        'a missing file must never be reported as an ffmpeg failure: '.$notes
+    );
 });
 
 it('says there is nothing to cut from when no clip has been uploaded', function () {
     $notes = implode(' ', app(UgcTranscoder::class)->derive(new UgcVideo)['notes']);
 
-    expect($notes)->toContain('no uploaded clip');
+    /*
+     * PIN ADVANCED, and to the sentence UgcVideo::publishBlockers() already
+     * used for this exact state. It said "There is no uploaded clip to cut from
+     * yet." for TWO different rows — this one, and a row recording a path this
+     * shop will not serve, which HAS a clip. Those are told apart now
+     * (UgcMissingFileIsNamedTest measures the second), and an empty row keeps
+     * the one sentence the whole admin gives it.
+     */
+    expect($notes)->toContain('No video file has been uploaded yet.');
 });
 
 it('cuts a 2.5 second silent 360x640 loop and nothing longer', function () {
