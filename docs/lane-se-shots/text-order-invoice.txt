@@ -1,0 +1,42 @@
+INVOICE
+Order KBB-10531
+Ordered 15 September 2026
+
+FROM
+K Beauty Bliss Trading LLC
+Office 1902, Burlington Tower
+Business Bay, Dubai
+United Arab Emirates
+TRN 100123456700003
+
+BILL TO
+Aisha Khan
+Apartment 1204, Marina Heights
+Dubai
+United Arab Emirates
++971 50 123 4567
+
+DELIVER TO
+Same as the billing address
+
+ITEMS
+- Glow Starter Set
+  SKU KBB-SET-001
+  * 1 × Heartleaf 77 Soothing Toner 250ml
+  * 2 × Azelaic Acid 10 Serum 30ml
+  * 1 × Relief Sun Rice + Probiotics SPF50
+  1 x AED 269 = AED 269
+- Rice Daily Moisturizing Toner 150ml (Beauty of Joseon)
+  SKU BOJ-RICE-150
+  1 x AED 49 = AED 49
+
+TOTALS
+Subtotal: AED 318
+Delivery: AED 20
+Total: AED 338
+
+Payment method: Cash on delivery
+Delivery method: Delivery Charges
+
+With love,
+the KBB team
