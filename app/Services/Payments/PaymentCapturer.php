@@ -229,27 +229,108 @@ class PaymentCapturer
             return $result;
         }
 
+        $capturedFils = self::settledFils($result, $amountFils);
+
         Order::query()
             ->whereKey($order->getKey())
             ->update([
-                'captured_total' => $amountFils,
+                'captured_total' => $capturedFils,
                 'capture_ref' => $result->reference,
                 'updated_at' => now(),
             ]);
 
-        $this->ledger->record($order, $providerId, 'capture', $amountFils, $result->reference, $result->summary);
+        $this->ledger->record($order, $providerId, 'capture', $capturedFils, $result->reference, $result->summary);
 
         $this->ledger->note($order, sprintf(
-            'Captured %s %s via %s.%s',
-            Money::amount($amountFils, 2),
+            'Captured %s %s via %s.%s%s',
+            Money::amount($capturedFils, 2),
             strtoupper((string) ($order->currency ?: 'AED')),
             $providerId,
             $result->reference !== null ? ' Capture reference ' . $result->reference . '.' : '',
+            // Only ever appended when the provider named a SHORTER figure than
+            // the one asked for, so the sentence an operator reads on every
+            // ordinary capture is byte-identical to the one this shop has
+            // always written.
+            $capturedFils < $amountFils ? sprintf(
+                ' PARTIAL: %s reports %s taken against an order of %s, so only the captured amount is refundable.',
+                $providerId,
+                Money::amount($capturedFils, 2),
+                Money::amount($amountFils, 2),
+            ) : '',
         ), $by);
 
         $order->refresh();
 
         return $result;
+    }
+
+    /**
+     * How much money to record as taken: the provider's figure when it gave
+     * one, the amount we asked for when it did not.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ── THE DEFECT THIS EXISTS FOR ─────────────────────────────────────────
+     *
+     * `captured_total` was written as `$amountFils` on EVERY success. That is
+     * right for the successes this shop causes — it asks for the whole order
+     * total and the provider either takes it or refuses — and wrong for the
+     * successes it merely finds. Three of the four gateways answer
+     * `already_captured` on a captured state the provider reached without us,
+     * and on all three that state can be a PARTIAL capture:
+     *
+     *   Tamara   `partially_captured`, which TamaraGateway::capture()
+     *            deliberately does not top up ("silently topping it up would be
+     *            the wrong guess to make with money") — and which this method
+     *            then recorded at full value anyway.
+     *   Tabby    CLOSED with a short `captures[]`.
+     *   Stripe   a `succeeded` intent whose `amount_received` is below its
+     *            `amount`.
+     *
+     * `captured_total` is the ceiling PaymentRefunder::capturedFils() measures
+     * a refund against. An order captured at 120.00 out of 300.00 recorded
+     * 300.00 and accepted a 300.00 refund: 180.00 of the shop's own money paid
+     * to a buyer who never paid it.
+     *
+     * ── THE RULE, AND WHY IT CANNOT MAKE ANYTHING WORSE ────────────────────
+     *
+     * A figure is used only when the gateway names one AND it is a positive
+     * integer AND it is no larger than the amount requested. So the value
+     * written here is always `<= $amountFils`, which is exactly what was
+     * written before this method existed: cash on delivery (no provider, no
+     * figure, null) and every ordinary full capture write the identical fil
+     * they have always written, and the only orders that move are the ones
+     * that were over-stating the shop's exposure.
+     *
+     * The three clamps are each load-bearing:
+     *
+     *   null        the provider named nothing on this path. Not zero, not
+     *               "all of it" — see SettlementResult::$capturedFils.
+     *   <= 0        a zero would put `captured_total` at 0 with `captured_at`
+     *               set, and PaymentRefunder::ceilingFrom() falls THROUGH its
+     *               capture branch on a zero (`$captured && $capturedTotal > 0`)
+     *               into the confirmed-payments branch — which sums the
+     *               AUTHORISATION and hands back the very inflated ceiling this
+     *               method is here to remove. A provider that reports a capture
+     *               and no money is a response we do not understand, and the
+     *               safe reading of one of those is the amount we asked for.
+     *   > requested a provider cannot capture more than it authorised, so this
+     *               is a response shape we have misread rather than money the
+     *               shop is holding. Capping it keeps a parsing mistake in this
+     *               lane from RAISING a refund ceiling, which is the one
+     *               direction this change must never be able to move.
+     *
+     * Integer fils throughout. Nothing here divides, multiplies or casts a
+     * float — the gateways convert, through RemoteGateway::toFils().
+     */
+    private static function settledFils(SettlementResult $result, int $amountFils): int
+    {
+        $reported = $result->capturedFils;
+
+        if ($reported === null || $reported <= 0) {
+            return $amountFils;
+        }
+
+        return min($reported, $amountFils);
     }
 
     /**

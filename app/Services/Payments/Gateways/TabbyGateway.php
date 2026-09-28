@@ -842,11 +842,31 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
                 );
             }
 
+            /*
+             * AND IT MAY HAVE BEEN A PARTIAL ONE.
+             *
+             * CLOSED says the authorisation is finished with, NOT that it was
+             * finished with in full. Tabby's capture endpoint takes an amount
+             * (this method sends one a few lines down), so a capture made
+             * anywhere other than this button — the merchant portal, the
+             * WooCommerce plugin this store is migrating off — can have taken
+             * part of it and closed the payment. PaymentCapturer recorded the
+             * whole order total against this ok(), and `captured_total` is the
+             * ceiling PaymentRefunder measures a refund against: a 120.00
+             * capture on a 300.00 order made 300.00 refundable, which is 180.00
+             * of the shop's own money going to a buyer who never paid it.
+             *
+             * capturedSumFils() reads `captures[].amount` off the SAME body
+             * lastId() and hasCapture() read, and returns null when no entry
+             * carried one — in which case PaymentCapturer writes what it asked
+             * for, exactly as it always has.
+             */
             return SettlementResult::ok(
                 'already_captured',
                 $existing,
                 ['provider' => $this->id(), 'payment_id' => $paymentId, 'status' => $status, 'captured' => 'yes'],
                 'Tabby had already captured this payment.',
+                capturedFils: $this->capturedSumFils($payment),
             );
         }
 
@@ -1814,6 +1834,53 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         }
 
         return false;
+    }
+
+    /**
+     * How much of this payment Tabby has actually taken, in integer fils.
+     *
+     * THE KEY IS `captures[].amount`, and it is not a guess: it is the field
+     * this class SENDS on a capture (`$body = ['amount' => ...]` in capture()),
+     * and the field tabbyRefundsToTxns() already reads back off the sibling
+     * `refunds[]` list on this same payment object. Major-unit decimal string
+     * on this API, through toFils() and its round() — never an (int) cast on a
+     * float, because (int) (10.10 * 100) is 1009 and that is a one-fil lie
+     * about a perfectly correct capture.
+     *
+     * THE SUM, NOT THE LAST ENTRY. lastId() takes the last id because that is
+     * the transaction a call just created; the money question is a different
+     * one — Tabby may capture a payment in more than one go, and the figure
+     * `captured_total` wants is everything taken against this payment, not the
+     * most recent slice of it.
+     *
+     * NULL, NOT ZERO, when no entry carried an amount. Zero would mean "this
+     * payment holds no captured money", and the caller's contract turns null
+     * into "use what was requested" — the behaviour this shop has always had.
+     * A response we cannot read must not be allowed to pass itself off as a
+     * measurement. (Callers reach this only once hasCapture() is true, so an
+     * unreadable list here is a response shape, not a void.)
+     */
+    private function capturedSumFils(array $payment): ?int
+    {
+        $captures = $payment['captures'] ?? null;
+
+        if (! is_array($captures)) {
+            return null;
+        }
+
+        $sum = 0;
+        $seen = false;
+
+        foreach ($captures as $capture) {
+            if (! is_array($capture) || ! array_key_exists('amount', $capture)) {
+                continue;
+            }
+
+            $seen = true;
+            $sum += $this->toFils($capture['amount']);
+        }
+
+        return $seen ? $sum : null;
     }
 
     /* -------------------------------------------------------------- helpers */
