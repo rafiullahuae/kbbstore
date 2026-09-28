@@ -604,3 +604,37 @@ it('keeps the shipped tile minimum identical in the stylesheet and the schema', 
     expect((int) $m[1])->toBe(220);
     expect(\App\Services\SiteLayout::SCHEMA['tile'][2])->toBe(220);
 });
+
+it('leaves /shop the same side gutter as every other page', function () {
+    /*
+     * ── THE DEFECT, MEASURED IN CHROMIUM ON A CATEGORY ARCHIVE AT 1280 ─────
+     *
+     * `.shop` declared `padding:22px 0 60px`. The `0` in that shorthand is a
+     * HORIZONTAL padding, and kbb-shop.css loads after kbb.css, so it beat
+     * `.wrap{padding-inline:var(--site-gutter)}`: `.wrap.shop` computed
+     * padding-left 0, the product grid ran 0..1280 while the <h1> above it
+     * started at x=22, and the first and last tiles sat flush against the edges
+     * of the window with the page's own heading inset from them.
+     *
+     * Pre-existing, and this lane owns it because this lane made it visible:
+     * with the filter rail shown, the thing flush to the left edge was the
+     * rail, and nobody reads a sidebar's gutter. Hiding the rail by default put
+     * the product grid there instead.
+     *
+     * MUTATION: put `padding:22px 0 60px` back and this is red on the
+     * shorthand; the browser evidence in docs/lane-pg-shots is where the tiles
+     * can be seen touching the window.
+     */
+    $block = optCssBlock('.shop', 'kbb-shop.css');
+
+    expect($block)->not->toBe('', 'the .shop rule has gone from kbb-shop.css');
+
+    expect(optCssValue($block, 'padding-block'))
+        ->toBe('22px 60px', '.shop must set only its block padding, or it overrides the site gutter');
+
+    foreach (['padding', 'padding-inline', 'padding-left', 'padding-right',
+              'padding-inline-start', 'padding-inline-end'] as $property) {
+        expect(optCssValue($block, $property))
+            ->toBeNull('.shop declares '.$property.', which overrides .wrap\'s side gutter on /shop and on every category archive');
+    }
+});

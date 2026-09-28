@@ -69,7 +69,23 @@ img{max-width:100%}
 .ptitle{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.08}
 .psub{color:var(--ink-2);font-size:14px;margin-top:3px}
 
-.shop{display:grid;grid-template-columns:250px 1fr;gap:28px;padding:22px 0 60px}
+/* ── `padding-block`, NOT THE `padding` SHORTHAND ──────────────── Lane PG ──
+   This said `padding:22px 0 60px`, and the `0` in it is a horizontal padding
+   that OVERRODE `.wrap{padding-inline:var(--site-gutter)}` -- this sheet loads
+   after kbb.css, so the shorthand won. Measured at 1280 on a category archive:
+   `.wrap.shop` computed padding-left 0, the grid ran 0..1280 while the <h1>
+   above it started at x=22, and the first and last product tiles sat flush
+   against the edges of the window with the page's own heading inset from them.
+
+   PRE-EXISTING, and this lane owns it because this lane made it obvious: with
+   the filter rail shown, the thing flush to the left edge was the rail, and
+   nobody reads a sidebar's gutter. Hiding the rail by default put the product
+   grid there instead.
+
+   `padding-block` sets the two this rule is actually about and leaves the
+   inline pair to the site gutter, so /shop lines up with every other page at
+   every width, including the one the gutter slider is moved to. */
+.shop{display:grid;grid-template-columns:250px 1fr;gap:28px;padding-block:22px 60px}
 
 /* filters */
 .filtercol{align-self:start;position:sticky;top:82px;max-height:calc(100vh - 100px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
