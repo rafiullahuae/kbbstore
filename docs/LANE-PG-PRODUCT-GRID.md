@@ -339,6 +339,44 @@ Keep it on ONE line — a Blade directive on a line of its own contributes its
 indentation and its newline to the rendered page, and
 `StorefrontEnglishUnchangedTest` compares bytes.
 
+### The admin skin preview, which lives in a file this lane may not edit
+
+`resources/views/admin/app.blade.php`'s `skinCard()` builds the preview card for
+Appearance → Product styles, and its own comment says it uses *"the storefront's
+own markup so a preview cannot drift from what ships"*. It has now drifted: it
+still builds the pre-PG tile, so the preview does not get the two-line name
+clamp or the equal-height column, and it shows a rating row on a card it also
+calls new.
+
+**The minimum that stops the drift is two edits, both on the one line each.**
+
+```
+      <a class="kbb-card" href="#" onclick="return false">
+```
+to
+```
+      <a class="kbb-card kbb-tile" href="#" onclick="return false">
+```
+
+and
+
+```
+        <div class="cn"><span class="kbb-card-brand">BEAUTY OF JOSEON</span> Relief Sun Rice + Probiotics SPF50+</div>
+```
+to
+```
+        <div class="cn"><span class="kbb-card-brand">BEAUTY OF JOSEON</span><span class="kbb-card-nm">Relief Sun Rice + Probiotics SPF50+</span></div>
+```
+
+That is enough: `.kbb-tile` is what every rule this lane added hangs off, and
+`.kbb-card-nm` is the element the clamp reserves two lines of. The preview's
+root can stay an `<a>` — the reason the real tile could not is the no-JS
+`?add-to-cart=` link and the two buttons inside it, and the preview has neither.
+
+`.skinprev .pc-norate .kbb-card-rate`, `.pc-nobrand .kbb-card-brand` and the
+rest of the preview's own toggles are unaffected; they key on classes that did
+not move.
+
 ### Nothing else to wire
 
 This lane added no route, no admin screen and no partial. `routes/web.php`,
