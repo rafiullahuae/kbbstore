@@ -43,7 +43,15 @@ return new class extends Migration
     {
         Schema::table('menu_items', function (Blueprint $t) {
             if (! Schema::hasColumn('menu_items', 'source_parent_post_id')) {
-                $t->unsignedBigInteger('source_parent_post_id')->nullable()->after('source_post_id');
+                /*
+                 * NO ->after(). Column order is cosmetic and
+                 * MigrationConventionTest forbids it by name: on MySQL,
+                 * ALTER ... AFTER a column that does not exist is an error,
+                 * and under a Schema::hasColumn guard the failure looks like a
+                 * clean no-op while the rest of the chain is gone. SQLite
+                 * ignores AFTER, so the suite would stay green.
+                 */
+                $t->unsignedBigInteger('source_parent_post_id')->nullable();
                 $t->index('source_parent_post_id');
             }
         });

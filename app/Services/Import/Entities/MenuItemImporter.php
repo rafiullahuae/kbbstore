@@ -242,7 +242,6 @@ final class MenuItemImporter extends EntityImporter
             );
         }
 
-
         $attributes = [
             'source_post_id' => $id,
             'menu_id' => $menuId,
