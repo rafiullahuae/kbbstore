@@ -243,8 +243,15 @@
    a percentage would resolve against the TRACK — which is the width of all of
    them together — and `100%` would be the whole slider. */
 .kbbs-s{flex:0 0 100cqi;width:100cqi;height:100%;scroll-snap-align:start}
-.kbbs-a{display:block;width:100%;height:100%;text-decoration:none}
-.kbbs-a img{display:block;width:100%;height:100%;object-fit:cover}
+.kbbs-a{display:block;width:100%;height:100%;text-decoration:none;-webkit-user-select:none;user-select:none}
+/* ▲ THE PICTURE MUST NOT BE DRAGGABLE, and this is a FIX rather than a polish.
+   An <img> is draggable by default: pressing on one and moving starts the
+   browser's own drag-and-drop, which swallows the `pointerup` the swipe handler
+   is waiting for. Measured with a real pointer drag across the frame — the
+   slider did not move, and the handler had never run. The attribute on the tag
+   and this declaration are the two halves browsers actually honour. */
+.kbbs-a img{display:block;width:100%;height:100%;object-fit:cover;
+  -webkit-user-drag:none;user-select:none;pointer-events:none}
 .kbbs-a:focus-visible{outline:3px solid var(--ink,#2A2228);outline-offset:-3px}
 
 /* ── THE CONTROL LAYER ───────────────────────────────────────────────────────
@@ -457,7 +464,13 @@
           @endphp
           <div class="kbbs-s" role="group" aria-roledescription="slide"
                aria-label="{{ __('store.home.banner_slider_slide', ['n' => $bsI + 1, 'total' => $bsCount]) }}">
-            <a class="kbbs-a"@if ($bsHref !== '') href="{{ Url::to($bsHref) }}"@endif>
+            {{-- `draggable="false"` ON THE ANCHOR AS WELL AS ON THE PICTURE.
+                 A link is draggable by default too, and it was the ANCHOR that
+                 was still starting a drag after the <img> had been stopped:
+                 measured, `dragstart` fired and the browser sent
+                 `pointercancel`, so the swipe handler never saw its
+                 `pointerup` and the slider did not move. --}}
+            <a class="kbbs-a" draggable="false"@if ($bsHref !== '') href="{{ Url::to($bsHref) }}"@endif>
               {{-- THE FIRST PICTURE IS EAGER AND HIGH PRIORITY and every other
                    one is lazy: a slider that lazy-loads its own first picture
                    is a slider that made the page slower.
@@ -473,6 +486,7 @@
                    read out as a filename. The box on the screen says so. --}}
               <img src="{{ Banners::imageUrl($bsCard->image) }}"
                    alt="{{ $bsAlt }}"
+                   draggable="false"
                    @if ($bsCard->image_w && $bsCard->image_h) width="{{ (int) $bsCard->image_w }}" height="{{ (int) $bsCard->image_h }}" @endif
                    @if ($bsI === 0) fetchpriority="high" @else loading="lazy" @endif
                    decoding="async">
