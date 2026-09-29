@@ -1,0 +1,226 @@
+{
+  "en-set-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3843,
+    "pdpHeight": 1282,
+    "pdpClass": "pdp",
+    "addToCartY": 1158,
+    "galleryFrame": [
+      346,
+      346
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      344,
+      344
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        346,
+        56
+      ]
+    },
+    "setRows": 3,
+    "titleFontSize": "25px"
+  },
+  "en-set-1280": {
+    "dir": "ltr",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2550,
+    "pdpHeight": 762,
+    "pdpClass": "pdp",
+    "addToCartY": 637,
+    "galleryFrame": [
+      612,
+      612
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      610,
+      610
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        612,
+        66
+      ]
+    },
+    "setRows": 3,
+    "titleFontSize": "25px"
+  },
+  "en-product-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3853,
+    "pdpHeight": 1292,
+    "pdpClass": "pdp",
+    "addToCartY": 1168,
+    "galleryFrame": [
+      346,
+      346
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      344,
+      344
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        346,
+        56
+      ]
+    },
+    "setRows": 0,
+    "titleFontSize": "25px"
+  },
+  "en-product-1280": {
+    "dir": "ltr",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2550,
+    "pdpHeight": 762,
+    "pdpClass": "pdp",
+    "addToCartY": 614,
+    "galleryFrame": [
+      612,
+      612
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      610,
+      610
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        612,
+        66
+      ]
+    },
+    "setRows": 0,
+    "titleFontSize": "25px"
+  },
+  "ar-set-390": {
+    "dir": "rtl",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3843,
+    "pdpHeight": 1282,
+    "pdpClass": "pdp",
+    "addToCartY": 1158,
+    "galleryFrame": [
+      346,
+      346
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      344,
+      344
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        346,
+        56
+      ]
+    },
+    "setRows": 3,
+    "titleFontSize": "25px"
+  },
+  "ar-set-1280": {
+    "dir": "rtl",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2550,
+    "pdpHeight": 762,
+    "pdpClass": "pdp",
+    "addToCartY": 637,
+    "galleryFrame": [
+      612,
+      612
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      610,
+      610
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        612,
+        66
+      ]
+    },
+    "setRows": 3,
+    "titleFontSize": "25px"
+  },
+  "ar-product-390": {
+    "dir": "rtl",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3853,
+    "pdpHeight": 1292,
+    "pdpClass": "pdp",
+    "addToCartY": 1168,
+    "galleryFrame": [
+      346,
+      346
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      344,
+      344
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        346,
+        56
+      ]
+    },
+    "setRows": 0,
+    "titleFontSize": "25px"
+  },
+  "ar-product-1280": {
+    "dir": "rtl",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2550,
+    "pdpHeight": 762,
+    "pdpClass": "pdp",
+    "addToCartY": 614,
+    "galleryFrame": [
+      612,
+      612
+    ],
+    "galleryAspect": "1 / 1",
+    "galleryPainted": [
+      610,
+      610
+    ],
+    "galleryFillPct": 99,
+    "thumbStrip": {
+      "tiles": 4,
+      "box": [
+        612,
+        66
+      ]
+    },
+    "setRows": 0,
+    "titleFontSize": "25px"
+  }
+}

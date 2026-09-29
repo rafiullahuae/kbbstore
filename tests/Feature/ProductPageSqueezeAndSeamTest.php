@@ -346,78 +346,103 @@ it('gives the short description a bottom margin that actually applies', function
     }
 });
 
-/* ══════════════════════════ 4. the three proposed layouts ═════════════════ */
+/* ═════════════ 4. the three proposed layouts are gone, and so is 4:5 ══════ */
 
-it('renders the shipped layout when nobody has asked for a proposal', function () {
+/*
+ * ▲ WHAT THIS SECTION USED TO ASSERT, AND WHY IT NOW ASSERTS THE OPPOSITE. ▲
+ *
+ * Lane PP shipped three previewable layouts -- `?layout=focus|editorial|compact`,
+ * about 240 lines of `.pp-lay*` in kbb-product.css -- for the owner to choose
+ * from, and three cases here pinned them: that an unmarked page was
+ * `class="pdp"`, that each parameter marked the page and nothing else could,
+ * and that all three reached the built bundle.
+ *
+ * He looked at all three and answered that they were not three choices, and
+ * that the main image is to be square in any case. Read side by side, Focus and
+ * Editorial differed by a card border against two hairline rules, one type step
+ * and the capitalisation of one button. So the feature is DELETED rather than
+ * differentiated, and those three cases are replaced by the one below.
+ *
+ * IT PINS THE FINISHED STATE, not the absence of a half-built thing: `.pdp`
+ * carries no layout class, no query string can put one there, and the selectors
+ * are in neither the source nor the bundle. Each of those is green today and
+ * stays green -- CLAUDE.md's rule about pinning the finished shape rather than
+ * "my work is not wired up yet".
+ */
+it('has no layout proposals left, in the markup or in either stylesheet', function () {
     /*
-     * ▲ THE PROPOSALS MUST NOT MOVE THE SHOP. ▲
+     * MUTATION NOTE, RUN, ALL FOUR WAYS:
      *
-     * StorefrontEnglishUnchangedTest renders without a query string, so this is
-     * the assertion that says WHY that stays green: with no `layout` parameter
-     * the element is `class="pdp"`, character for character.
-     *
-     * MUTATION NOTE. Give the map in store/product.blade.php a default other
-     * than '' -- `?? ' pp-lay pp-lay-focus'` -- and this is red. RUN.
+     *   1. Put the map back in store/product.blade.php -- `<div class="pdp{{
+     *      $kbbLayoutClass }}">` with a 'focus' entry -- and the ?layout=focus
+     *      expectation is red.
+     *   2. Give that map a non-empty default and the plain `<div class="pdp">`
+     *      expectation is red.
+     *   3. Paste `.pp-lay .gmain{aspect-ratio:4/5}` back into
+     *      resources/css/kbb/kbb-product.css and the "(source)" half is red.
+     *   4. Paste it back AND run `npx vite build`, and both stylesheet halves
+     *      are red -- which is also what proves the bundle committed on this
+     *      branch was rebuilt after the deletion rather than left stale.
      */
-    $html = sqzGet(sqzProduct('Default layout product', 9900)->slug);
+    $slug = sqzProduct('Square frame product', 9900)->slug;
 
-    expect(str_contains($html, '<div class="pdp">'))->toBeTrue(
-        'An ordinary request renders the shipped page, unmarked.'
+    // The shipped page, unmarked.
+    expect(str_contains(sqzGet($slug), '<div class="pdp">'))->toBeTrue(
+        'The product page carries no layout class at all.'
     );
-    expect(str_contains($html, 'pp-lay'))->toBeFalse('And carries no proposal class at all.');
-});
 
-it('marks the page for each of the three proposals, and for nothing else', function () {
     /*
-     * CLAUDE.md rule 5, on a page anybody can reach with a URL bar: the query
-     * string is a KEY into a map written in the template, never a value that is
-     * printed. A parameter that is not one of the three finds no key and gets
-     * the empty string, so there is no character a visitor can put into that
-     * attribute.
-     *
-     * MUTATION NOTE. Replace the map lookup with
-     * `' pp-lay pp-lay-'.request()->query('layout')` and the last two
-     * expectations are red -- the injected string lands inside class="". RUN.
+     * AND THE QUERY STRING IS DEAD, which is the half a deletion can get wrong.
+     * `?layout=` is an unread parameter now, like any other: the three names
+     * that used to mean something, one that never did, and an injection attempt
+     * all render the same unmarked element.
      */
-    $slug = sqzProduct('Preview layout product', 9900)->slug;
-
-    foreach (['focus', 'editorial', 'compact'] as $name) {
-        expect(str_contains(sqzGet($slug, '?layout='.$name), 'class="pdp pp-lay pp-lay-'.$name.'"'))
-            ->toBeTrue("?layout={$name} must mark the page for that proposal.");
+    foreach (['focus', 'editorial', 'compact', 'nonsense'] as $name) {
+        expect(str_contains(sqzGet($slug, '?layout='.$name), '<div class="pdp">'))->toBeTrue(
+            "?layout={$name} must render the shipped page, unmarked."
+        );
     }
 
-    expect(str_contains(sqzGet($slug, '?layout=nonsense'), 'pp-lay'))->toBeFalse(
-        'A layout nobody proposed renders the shipped page.'
-    );
     $injected = sqzGet($slug, '?layout='.urlencode('" onmouseover=alert(1) x="'));
-    expect(str_contains($injected, 'pp-lay'))->toBeFalse('And so does an injection attempt.');
+    expect(str_contains($injected, 'pp-lay'))->toBeFalse('No proposal class from a query string.');
     expect(str_contains($injected, 'onmouseover'))->toBeFalse(
         'Nothing from the query string reaches the markup.'
     );
-});
 
-it('ships all three proposals in the built stylesheet', function () {
     /*
-     * The three are CSS and nothing else -- there is no markup behind them, so
-     * a bundle built before they were written is a preview URL that renders the
-     * shipped page and looks like the proposal was never made.
-     *
-     * MUTATION NOTE. Edit resources/css/kbb/kbb-product.css without running
-     * `npx vite build` and the "(built bundle)" half is red while the source
-     * half passes -- which is the exact failure this shape exists to catch. RUN.
+     * NO DEAD SELECTORS, IN EITHER HALF. Both, because this repo's signature
+     * failure is a stylesheet change that is real in the source and stale in
+     * the bundle -- `npx vite build` is manual here and CI does not run it. A
+     * deletion has precisely the same failure mode as an addition: the rules go
+     * on being served to every shopper until somebody rebuilds.
      */
-    $halves = phoneBothHalves('resources/css/kbb/kbb-product.css');
+    foreach (phoneBothHalves('resources/css/kbb/kbb-product.css') as $where => $css) {
+        /*
+         * ▲ THE COMMENTS COME OUT BEFORE THE SELECTORS ARE SCANNED, and that is
+         *   not convenience -- it is the lesson SetRowSurfacesTest records and
+         *   UgcRailR3Test paid for twice. The stylesheet carries a tombstone
+         *   explaining WHICH selectors were deleted and why, so it names
+         *   `.pp-lay-focus` in prose; the built bundle has no comments at all.
+         *   Scanned raw, the source half is red for its own explanation while
+         *   the bundle half passes, which says nothing about either.
+         *
+         *   Deleting the tombstone would also turn this green, and that is the
+         *   wrong repair: the next reader of this file is owed the reason.
+         */
+        $rules = (string) preg_replace('#/\*.*?\*/#s', '', $css);
 
-    foreach ($halves as $where => $css) {
-        foreach (['focus', 'editorial', 'compact'] as $name) {
-            expect(str_contains($css, '.pp-lay-'.$name))->toBeTrue(
-                "Proposal {$name} is missing from {$where}."
-            );
-        }
-        // The one thing all three share, and the one finding they all answer:
-        // a 1:1 frame around a 4:5 photograph is 21% white.
-        expect(phoneHas($css, '.pp-lay .gmain{aspect-ratio:4/5}'))->toBeTrue(
-            "The frame that matches the photograph is missing from {$where}."
+        expect(str_contains($rules, '.pp-lay'))->toBeFalse(
+            "The deleted proposal selectors are still in {$where}."
+        );
+        expect(phoneHas($rules, 'aspect-ratio:4/5'))->toBeFalse(
+            "A 4:5 gallery frame is still in {$where}; the owner asked for square in any case."
+        );
+
+        // And the square frame it went back to is untouched. Read off the RULES
+        // for the same reason, so a stylesheet that merely talks about the
+        // square frame cannot satisfy it.
+        expect(phoneHas($rules, '.gmain{position:relative;aspect-ratio:1;'))->toBeTrue(
+            "The square gallery frame is missing from {$where}."
         );
     }
 });

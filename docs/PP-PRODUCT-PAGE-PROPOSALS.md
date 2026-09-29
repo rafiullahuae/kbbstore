@@ -148,3 +148,75 @@ Borrow two things into it:
 **Nothing in this round ships any of it.** All three are CSS scoped under
 `.pp-lay-*`, reached only by a query parameter, costing the same seven queries
 as the page without one. Pick one and the next round builds it properly.
+
+---
+
+# THE ANSWER: none of them. (Lane PP2, 29 September 2026)
+
+> *"all three options are exactly same, what's this? and the image will come
+> square in any case and along with gallery images as thumnails."*
+
+## He is right about the three
+
+Read side by side, Focus and Editorial differ by a card border against two
+hairline rules, one type step, and the capitalisation of one button. That is a
+variation, not a choice. Three proposals a person cannot tell apart are one
+proposal shown three times, and the fault is the round's, not the reader's.
+
+So the feature is **deleted, not differentiated**: about 240 lines of
+`.pp-lay`, `.pp-lay-focus`, `.pp-lay-editorial` and `.pp-lay-compact` are gone
+from `resources/css/kbb/kbb-product.css`, and the three-entry map that emitted
+the class is gone from `resources/views/store/product.blade.php`. `?layout=` is
+an unread query parameter on this shop now; `.pdp` carries no class but `pdp`.
+
+## And about the frame
+
+`.pp-lay .gmain{aspect-ratio:4/5}` went with them, along with the two
+`.pp-lay-compact .gmain{max-block-size:NNvh}` caps. **`.gmain{aspect-ratio:1}`
+is untouched and is once again the only frame this shop has.**
+
+The measurement above stands and is not in dispute — a 612×612 box paints a
+488×610 picture at 1280, so a fifth of the largest element on the page is white.
+It is kept here rather than left half-applied in a stylesheet, because it is a
+fact about *this catalogue's current photographs*, and the person who
+commissions the next shoot is the one who gets to decide whether the frame moves
+or the photograph does. A square frame also has a property 4:5 does not: every
+product page is the same height whatever shape its shot is.
+
+## What was measured after the deletion
+
+On a set carrying a main image, **three** gallery images and three pictured
+members, plus the ordinary-product control (`tools/pp2-seed.php`,
+`tools/pp2-shots.cjs`, shots in `docs/lane-pp2-shots/`):
+
+| | scrollWidth | frame | fill | thumbnails | `.pdp` class |
+|---|---|---|---|---|---|
+| set, 390 | 390 | 346×346 | 99% | **4** | `pdp` |
+| set, 1280 | 1280 | 612×612 | 99% | **4** | `pdp` |
+| product, 390 | 390 | 346×346 | 99% | 4 | `pdp` |
+| product, 1280 | 1280 | 612×612 | 99% | 4 | `pdp` |
+
+`/ar` mirrors all four at identical geometry, `dir="rtl"`, `scrollWidth` equal
+to the viewport at both widths.
+
+**The 99% is the fixture, not a repair.** These seeded shots are square, so they
+fill a square frame. On this catalogue's real 4:5 photographs the figure is the
+79% measured at the top of this document. Nothing in this round moved it in
+either direction.
+
+## Gallery thumbnails on a set: there was no bug
+
+The strip was missing from all six of the earlier shots because **the fixture
+set carried one image**, and `partials/product-gallery.blade.php:99` renders
+`.gthumbs` only `@if ($shotCount > 1)`. Nothing in the code path distinguishes a
+set from any other product:
+
+- `Store\ProductController::gallery()` (line 429) merges `[$product->image]`
+  with `$product->images` and never looks at `type`;
+- a set is a `products` row edited on the merged product editor, which owns the
+  gallery field exactly as it does for a simple product
+  (`Admin\ProductEditorApiController` lines 1091–1112 — no set branch);
+- so a set with four shots draws four thumbnails, which is what the table above
+  is, rendered.
+
+The fix was the screenshot, not the code.
