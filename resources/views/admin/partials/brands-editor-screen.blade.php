@@ -352,8 +352,13 @@
 
   function rowHtml(b){
     return '<div class="bz-row" data-brow="' + esc(b.id) + '">'
+      /* (Lane IM2) `logo_thumb` is the 200w copy when one is on disk and IS
+         `logo` when there is not, so a shop that has never run Make phone-sized
+         copies -- or whose logos are already under 200px, which is most of them
+         -- draws exactly what it drew before. `b.logo` still decides whether
+         there IS a logo. */
       + (b.logo
-          ? '<img class="bz-logo" src="' + esc(b.logo) + '" alt="">'
+          ? '<img class="bz-logo" src="' + esc(b.logo_thumb || b.logo) + '" alt="">'
           : '<span class="bz-initial">' + esc(String(b.name || '?').charAt(0).toUpperCase()) + '</span>')
       + '<div class="bz-main">'
         + '<span class="bz-name">' + esc(b.name) + '</span>'

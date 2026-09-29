@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
+use App\Support\ImageVariants;
 use App\Support\PageBanner;
 use App\Support\ProductSeo;
 use App\Support\TranslationInput;
@@ -75,6 +76,31 @@ class BrandsApiController extends Controller
         // there is no such column, so these instances are read-only from here.
         foreach ($brands as $brand) {
             $brand->setAttribute('translations', $translations[(int) $brand->id] ?? null);
+
+            /*
+             * (Lane IM2) THE COPY THE ROW SHOULD DRAW, beside the logo itself.
+             *
+             * `.bz-logo` is a 34px square and this endpoint returns every brand
+             * in the shop -- ninety-three of them on the live catalogue -- so
+             * the list was pulling ninety-three full-size logo files to fill
+             * ninety-three 34px boxes. 200w covers that at device-pixel-ratio 3
+             * five times over, and unlike the media grid this box is not a
+             * setting.
+             *
+             * Set as an attribute so it rides along in the JSON, the same way
+             * `translations` above does and with the same read-only caveat.
+             * `logo` itself is untouched: the editor's own field, the preview
+             * and the save payload all mean the file.
+             *
+             * variantUrl() returns the original when no copy is on disk, and a
+             * logo narrower than 200px is `complete` without one (isComplete()
+             * never asks for a width the original cannot fill), so a shop of
+             * small logos is unchanged and stays out of the backlog.
+             */
+            $brand->setAttribute(
+                'logo_thumb',
+                ImageVariants::variantUrl((string) ($brand->logo ?? ''), 200)
+            );
         }
 
         return response()->json([

@@ -339,3 +339,51 @@ it('gives the manual-order product search the same copy the picker already reads
         ->toBeTrue('the manual-order picker is still pointing at the original: '.($row['thumb'] ?? '(absent)'))
         ->and($row['image'])->toBe('/uploads/ad2/mo.jpg', 'the image field moved');
 });
+
+it('gives the brands list a copy of each logo', function () {
+    /*
+     * This endpoint returns EVERY brand in the shop — ninety-three on the live
+     * catalogue — and `.bz-logo` is a 34px square.
+     *
+     * MUTATION: delete the setAttribute('logo_thumb', …) from
+     * BrandsApiController::index() and this is red with "the brands row carries
+     * no logo_thumb"; take `b.logo_thumb ||` out of the screen and the
+     * substr_count assertion goes red.
+     */
+    ad2Photo('uploads/ad2/logo.jpg', 1000, 1000);
+
+    $brand = Brand::firstOrCreate(['slug' => 'ad2-logoed'], ['name' => 'Logoed']);
+    $brand->update(['logo' => '/uploads/ad2/logo.jpg']);
+
+    Product::create([
+        'slug' => 'ad2-logo-holder', 'name' => 'Holder', 'brand_id' => $brand->id,
+        'status' => 'publish', 'is_visible' => true, 'price' => 1100, 'stock_status' => 'instock',
+        'image' => '/uploads/ad2/logo.jpg', 'images' => [],
+    ]);
+
+    $this->actingAs(AdminUser::create([
+        'name' => 'Owner', 'email' => 'ad2d@preview.test',
+        'password' => 'ad2-secret-11', 'role' => 'owner',
+    ]), 'admin');
+
+    // Before the batch the copy IS the original — the promise every one of
+    // these fields makes, and the one that lets them ship.
+    $cold = collect($this->getJson('/admin-api/brands')->json('brands'))->firstWhere('slug', 'ad2-logoed');
+
+    expect($cold)->not->toBeNull('the brand is not in the list at all');
+    expect(array_key_exists('logo_thumb', $cold))->toBeTrue('the brands row carries no logo_thumb')
+        ->and($cold['logo_thumb'])->toBe('/uploads/ad2/logo.jpg', 'an unsized shop is not getting its original back');
+
+    ad2RunBatch();
+
+    $warm = collect($this->getJson('/admin-api/brands')->json('brands'))->firstWhere('slug', 'ad2-logoed');
+
+    expect($warm['logo_thumb'])->toBe('/'.ImageVariants::DIR.'/200/uploads/ad2/logo.jpg',
+        'the brands row is still pointing at the original: '.$warm['logo_thumb'])
+        ->and($warm['logo'])->toBe('/uploads/ad2/logo.jpg', 'the logo field moved');
+
+    $screen = (string) file_get_contents(base_path('resources/views/admin/partials/brands-editor-screen.blade.php'));
+
+    expect(substr_count($screen, 'b.logo_thumb || b.logo'))
+        ->toBe(1, 'the brands row is still drawing the original');
+});
