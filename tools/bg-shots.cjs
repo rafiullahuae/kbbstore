@@ -67,8 +67,20 @@ const MEASURE = () => {
     const el = document.querySelector(sel.split('::')[0]);
     return el ? getComputedStyle(el, '::' + sel.split('::')[1]).getPropertyValue(p) : null;
   };
+  /* NAMED SURFACES, ONE SELECTOR EACH.
+   *
+   * This was a list of four alternatives in one querySelector -- the first
+   * element in DOM order matching ANY of them -- and it reported the home page
+   * card "changing" from rgba(255,255,255,.94) to transparent under all four
+   * treatments AND under the signed-out control, which emits no wash at all.
+   * That is the tell: the selector had matched a different element, not the
+   * element had changed. A measurement that moves on a page nothing changed on
+   * is worse than no measurement, because it reads as a regression. */
   const header = document.querySelector('header');
-  const card = document.querySelector('.kbb-card, .pc, .sec > .wrap, .card');
+  const card = document.querySelector('.kbb-home .sec > .wrap');
+  const productCard = document.querySelector('.kbb-card');
+  const drawer = document.querySelector('#kbbCart, .cart-drawer, .qv-modal');
+  const panel = document.querySelector('.kbb-cart .wrap, .kbb-checkout .co-grid');
   const tabbar = document.querySelector('.tabbar');
   return {
     scrollWidth: document.documentElement.scrollWidth,
@@ -87,6 +99,9 @@ const MEASURE = () => {
     headerOpacity: cs(header, 'opacity'),
     cardBg: cs(card, 'background-color'),
     cardOpacity: cs(card, 'opacity'),
+    productCardBg: cs(productCard, 'background-color'),
+    drawerBg: cs(drawer, 'background-color'),
+    panelBg: cs(panel, 'background-color'),
     tabbarBg: cs(tabbar, 'background-color'),
     bodyFontSize: cs(document.body, 'font-size'),
     /* Every running animation on the document, by name. Under reduced motion

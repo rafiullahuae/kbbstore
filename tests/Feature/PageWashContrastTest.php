@@ -162,7 +162,8 @@ it('animates opacity and nothing else, on layers the compositor owns', function 
     }
 
     foreach (['background-position', 'background-image:linear', 'filter:', 'width:', 'height:100%', 'margin'] as $banned) {
-        expect($css)->not->toContain($banned, $banned.' is in the emitted stylesheet');
+        expect(str_contains($css, $banned))
+            ->toBeFalse($banned.' is in the emitted stylesheet');
     }
 
     /*
@@ -211,8 +212,8 @@ it('takes the wash off a printed page', function () {
      * cannot happen" is the sentence this repository keeps paying for.
      */
     foreach (glob(resource_path('views/invoices/*.blade.php')) ?: [] as $file) {
-        expect((string) file_get_contents($file))
-            ->not->toContain('page-wash-css', basename($file).' includes the wash');
+        expect(str_contains((string) file_get_contents($file), 'page-wash-css'))
+            ->toBeFalse(basename($file).' includes the wash, so a printed document would carry it');
     }
 });
 
