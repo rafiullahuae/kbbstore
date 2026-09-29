@@ -478,8 +478,10 @@
 
     var preview = '<div class="sap-card"><div class="sap-title">Live preview</div>'
       + '<p class="sap-sub">Drawn from what you have typed, not from what is saved — nothing here writes '
-      + 'anything. It is the real set row the cart and the checkout draw, in a frame, so the phone and '
-      + 'desktop sizes resolve against the frame’s width the way they do on a real screen. '
+      + 'anything. It is the real set row the cart and the checkout draw AND the real “What is in this '
+      + 'set” panel the product page draws, in a frame, so the phone and desktop sizes resolve against '
+      + 'the frame’s width the way they do on a real screen. The third block is the buy column, capped '
+      + 'at the measure it really gets — 346px on a phone, 582px on a laptop. '
       + 'Press “What’s inside” in the frame: the popup really opens.</p>'
       + '<div class="sap-widths">'
       + '<button type="button" class="sap-btn' + (frameW === 390 ? ' is-primary' : '') + '" data-sap-w="390">Phone · 390</button>'
@@ -487,7 +489,7 @@
       + '<button type="button" class="sap-btn' + (frameW === 1280 ? ' is-primary' : '') + '" data-sap-w="1280">Desktop · 1280</button>'
       + '</div>'
       + '<div class="sap-stage"><iframe class="sap-frame" id="sap-frame" title="Set preview" '
-      + 'style="width:' + frameW + 'px;height:340px" sandbox="allow-scripts"></iframe></div></div>';
+      + 'style="width:' + frameW + 'px;height:620px" sandbox="allow-scripts"></iframe></div></div>';
 
     var where = '<div class="sap-card"><div class="sap-title">Where these controls land on the shop</div>'
       + '<p class="sap-path"><b>Cart page rows</b> — every product row on /cart, set or not. '

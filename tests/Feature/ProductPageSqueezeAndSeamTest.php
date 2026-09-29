@@ -233,18 +233,35 @@ it('ships the squeezed sizes, on the desktop and on the phone', function () {
          The assertion is advanced rather than deleted: it is still the only
          thing that says the row is photograph / words / quantity in that inline
          order, and it still fails if somebody reorders the tracks or drops the
-         phone's own size. (Lane SA) */
-    expect(str_contains($html, 'grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr) auto'))->toBeTrue(
-        'The desktop row is a 40px thumbnail, down from 56.'
+         phone's own size. (Lane SA)
+
+       ▲ AND ADVANCED AGAIN BY LANE SA2, WHERE THE NUMBERS REALLY DID MOVE —
+         but they moved on 29 September, when the "hanging photos" box shipped,
+         and not here. That treatment squeezed the row to a 36px photograph with
+         3px of padding (32 and 3 on a phone) by HARD-CODING those values in a
+         later rule, which overrode the `var(--ksl-…)` this case was reading and
+         left four numbers in this file describing a page that had stopped
+         drawing them. The literals are one per property now and they are the
+         schema's, so this reads what the shop renders again. Measured in
+         Chromium at both widths: 36px and 32px photographs, 3px of row padding
+         at both, unchanged by this release to the pixel.
+
+         The two phone assertions change shape rather than value: row padding is
+         3px on BOTH screens, so the phone block — which carries only what
+         DIFFERS — must not declare it, and asserting it there would pin a byte
+         that has to be absent. SetListPanelControlsTest walks every `_m` default
+         against that block, which is the general form of what these four say. */
+    expect(str_contains($html, 'grid-template-columns:var(--ksl-ph,36px) minmax(0,1fr) auto'))->toBeTrue(
+        'The desktop row is a 36px thumbnail, down from 56.'
     );
-    expect(str_contains($html, 'padding:var(--ksl-rowpad,6px) 0'))->toBeTrue(
-        'The desktop row is padded 6px, down from 11.'
+    expect(str_contains($html, 'padding:var(--ksl-rowpad,3px) 0'))->toBeTrue(
+        'The desktop row is padded 3px, down from 11.'
     );
-    expect(str_contains($html, '--ksl-ph:36px'))->toBeTrue(
-        'The phone row is a 36px thumbnail, down from 48.'
+    expect(str_contains($html, '--ksl-ph:32px'))->toBeTrue(
+        'The phone row is a 32px thumbnail, down from 48.'
     );
-    expect(str_contains($html, '--ksl-rowpad:5px'))->toBeTrue(
-        "A phone's row must be padded less than a desktop's."
+    expect(str_contains($html, '--ksl-pps:16px'))->toBeTrue(
+        "A phone's panel must be inset less than a desktop's."
     );
 });
 

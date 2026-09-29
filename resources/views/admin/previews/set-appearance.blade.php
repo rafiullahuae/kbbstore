@@ -31,6 +31,23 @@
     or a forced display, because a simulated popup is one that can be right in
     the preview and wrong on the shop.
 
+    ── AND THE THIRD BLOCK IS THE PRODUCT PAGE'S LIST ─────────────────────────
+
+    Sixty of this screen's controls are the "What is in this set" panel in the
+    buy column — its fill, its radius, its four paddings, the overhang, the ring
+    and the drop under each chip — and until Lane SA2 the preview drew none of
+    them. It includes `partials.set-contents-panel`, the same file
+    store/product.blade.php includes, handed the SAME `$setContents` the two
+    rows above are drawn from, so the preview cannot describe a set differently
+    from the page.
+
+    IT IS WRAPPED IN A COLUMN OF THE BUY COLUMN'S OWN WIDTH, because that is the
+    one thing about this list that is not obvious from the controls: `.buybox`
+    is 346px at a 390px viewport and 582px at 1280, so the list is narrow at
+    every width and a preview drawn at the frame's full width would show the
+    owner a measure the shop never gives it. The frame's Phone and Desktop
+    buttons still drive the media query; this only caps the column.
+
     ── TWO ROWS, AND THE SECOND ONE OPENS UPWARD ──────────────────────────────
 
     `surface` decides that: the cart surfaces hang the popup below the button
@@ -69,6 +86,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sap-nm{font-size:13px;font-weight:600;line-height:1.35;color:var(--ink)}
 .sap-tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
          color:var(--ink-soft);margin-bottom:8px}
+/* The buy column's real measure, so the list is judged at the width it is
+   drawn at. min() and not a media query: one declaration, and it tracks the
+   frame at every width rather than at two. */
+.sap-buy{inline-size:min(100%,582px);margin-block-start:10px}
+:root{--pink-soft:#FFF0F4;--pink-deep:#C13E63;--muted:#8a7c83}
+/* `.opt-label` belongs to kbb-product.css, which this document does not load.
+   The heading's own controls override it from inside `.ksl`; this is the base
+   they override, copied from that sheet so the preview starts where the page
+   starts. */
+.opt-label{font-size:12.5px;font-weight:700;margin-bottom:9px;display:flex;justify-content:space-between}
+.opt-label span{font-weight:500;color:var(--muted)}
 </style>
 {{-- The owner's own numbers, from what he has typed. Emitted BEFORE the
      partial's @once block, which is where the shop emits it too — see the note
@@ -87,6 +115,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
         <div class="sap-tag">Checkout summary &middot; order &mdash; the popup opens upward</div>
         <div class="sap-nm">Glass Skin Starter Set</div>
         @include('partials.set-row', ['contents' => $setContents, 'surface' => 'checkout', 'key' => 'preview-checkout'])
+    </div>
+    <div class="sap-line">
+        <div class="sap-tag">Product page &middot; the buy column's list</div>
+        <div class="sap-buy">
+            @include('partials.set-contents-panel', ['kbbSetPreviewContents' => $setContents])
+        </div>
     </div>
 </div>
 </body>

@@ -169,7 +169,29 @@
      */
     $kbbSetAp = app(\App\Services\SetAppearance::class)->all();
 
-    $kbbSetPage = ($product->isSet() && $kbbSetAp['p_on']) ? SetContents::fromProduct($product) : SetContents::NONE;
+    /*
+     * ▲ `$kbbSetPreviewContents` IS THE ADMIN PREVIEW'S DOOR AND NOTHING ELSE.
+     *   Appearance → Set has sixty-odd controls for this list and, until this
+     *   release, a live preview that drew only the cart's set BOX — so the
+     *   owner dragged the panel's fill, its four paddings and the overhang
+     *   against a frame that could not show any of them. The preview includes
+     *   THIS partial rather than a second copy of it, for the reason
+     *   SetAppearanceApiController's docblock gives about the box: a copy
+     *   disagrees with the shop the first time either is touched.
+     *
+     *   It is checked with isset() BEFORE `$product`, which is deliberate:
+     *   `$product` does not exist in the preview at all, and PHP evaluates a
+     *   ternary left to right, so the storefront branch is never reached there
+     *   and the preview never touches the database for a set it was handed.
+     *   On the product page the variable is not defined and this reads exactly
+     *   as it did — `p_on` first, so a list the owner has switched off does not
+     *   do SetContents::fromProduct()'s work and then throw the answer away.
+     */
+    $kbbSetPage = ! $kbbSetAp['p_on']
+        ? SetContents::NONE
+        : (isset($kbbSetPreviewContents)
+            ? $kbbSetPreviewContents
+            : ($product->isSet() ? SetContents::fromProduct($product) : SetContents::NONE));
     /* ▲ `p_on` IS TESTED HERE AND NOT AS A WRAPPER `@if` FURTHER DOWN, which is
          not tidiness: SetContents::fromProduct() is the work, and a panel the
          owner has switched off should not do it and then throw the answer away.
@@ -210,7 +232,7 @@
    WHAT IS IN THIS SET — the buy column's list. calc(), min() and one media
    query; nothing measured, no script.
    ═══════════════════════════════════════════════════════════════════════════ */
-/* ── EVERY NUMBER BELOW IS `var(--ksl-x, <the literal it has always been>)`.
+/* ── EVERY NUMBER BELOW IS `var(--ksl-x, <THE SHIPPED DEFAULT OF ITS CONTROL>)`.
    ────────────────────────────────────────────────────────────────────────
    NOTHING DECLARES THOSE PROPERTIES HERE, which is what makes Appearance ->
    Set possible without a specificity fight: the owner's values are declared
@@ -218,22 +240,41 @@
    the <head>, and every rule below simply reads them. A shop that has moved
    nothing emits no such block at all, so these fallbacks ARE the shop, byte
    for byte, and every one of them is the number that was here before.
-                                                                  (Lane SA) */
+                                                                  (Lane SA)
+
+   ▲ AND THERE IS EXACTLY ONE FALLBACK PER PROPERTY IN THIS FILE, which is a
+     rule and not an accident. Five of the numbers below used to be the BARE
+     list's originals (a 40px photograph, 6px of row padding) while the panel
+     section further down carried the box's own (36px, 3px) — two literals for
+     one custom property, decided by source order, and the schema's shipped
+     default agreeing with neither reading of the file. They are the panel's
+     now, which is what the shop draws; the bare list is only reachable by
+     saving `p_panel_on = false`, and a saved setting emits the property anyway,
+     so nothing renders differently. SetAppearanceTest walks every
+     `var(--ksl-…,…)` in this file and fails if one property carries two
+     different fallbacks, or if a fallback and its control's shipped default
+     disagree.                                                     (Lane SA2) */
 .ksl{display:block;min-width:0;margin:0 0 var(--ksl-block,14px)}
 .ksl-rows{display:block;min-width:0}
+/* The heading. `.opt-label` is the product page's own class -- it is the slot
+   the quantity-bundle strip used -- so these are scoped INSIDE .ksl at (0,2,0)
+   and change nothing anywhere else on the page that uses it. */
+.ksl .opt-label{font-size:var(--ksl-headf,12.5px);font-weight:var(--ksl-headw,700);
+                color:var(--ksl-headc,inherit);margin-bottom:var(--ksl-headgap,7px)}
+.ksl-nocount .opt-label span{display:none}
 
 /* The row. Photograph, words, money — three tracks along the inline axis, so
    Arabic mirrors without a second rule. */
-.ksl-r{display:grid;gap:0 var(--ksl-gap,10px);min-width:0;align-items:center;
-       padding:var(--ksl-rowpad,6px) 0;
-       grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr) auto}
+.ksl-r{display:grid;gap:0 var(--ksl-gap,12px);min-width:0;align-items:center;
+       padding:var(--ksl-rowpad,3px) 0;
+       grid-template-columns:var(--ksl-ph,36px) minmax(0,1fr) auto}
 .ksl-r + .ksl-r{border-block-start:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)))}
 /* The three track layouts the on/off switches produce. A custom property can
    change a number inside a rule; it cannot take a track out of a grid, so
    these are classes — put on `.ksl` by App\Services\SetAppearance::panelClass()
    and therefore present from the first byte, so nothing reflows after paint. */
 .ksl-noph .ksl-r{grid-template-columns:minmax(0,1fr) auto}
-.ksl-noq .ksl-r{grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr)}
+.ksl-noq .ksl-r{grid-template-columns:var(--ksl-ph,36px) minmax(0,1fr)}
 .ksl-noph.ksl-noq .ksl-r{grid-template-columns:minmax(0,1fr)}
 .ksl-noph .ksl-ph,.ksl-nobr .ksl-br,.ksl-novar .ksl-var,.ksl-noq .ksl-q{display:none}
 .ksl-norule .ksl-r + .ksl-r,.ksl-norule .ksl-more .ksl-r:first-of-type,
@@ -241,11 +282,13 @@
 .ksl-noul a.ksl-nm{border-bottom:0}
 .ksl-nofoot .ksl-foot,.ksl-nowas .ksl-was,.ksl-noprice .ksl-price,
 .ksl-nosave .ksl-save{display:none}
+/* (0,3,0), so it beats BOTH the bare footing rule and the panel's own. */
+.ksl.ksl-nofootrule .ksl-foot{border-top:0}
 
 /* A fixed square, so every name in the column starts at the same place --
    which is the whole reason to draw a list rather than a grid. */
-.ksl-ph{position:relative;display:block;width:var(--ksl-ph,40px);height:var(--ksl-ph,40px);
-        border-radius:var(--ksl-phr,8px);overflow:hidden;
+.ksl-ph{position:relative;display:block;width:var(--ksl-ph,36px);height:var(--ksl-ph,36px);
+        border-radius:var(--ksl-phr,10px);overflow:hidden;
         background:var(--ksl-phbg,var(--line-2,rgba(42,34,40,.06)))}
 .ksl-ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ksl-ph.is-blank{background-size:cover;background-position:center}
@@ -261,8 +304,12 @@
 .ksl-br{font-size:var(--ksl-br,10px);letter-spacing:var(--ksl-brls,.04em);
         text-transform:uppercase;font-weight:var(--ksl-brw,700);
         color:var(--ksl-brc,var(--ink-2,#5E545A));opacity:var(--ksl-brop,.72);
-        overflow-wrap:anywhere;line-height:var(--ksl-lh,1.3)}
-.ksl-nm{font-size:var(--ksl-nm,13.5px);line-height:var(--ksl-lh,1.3);
+        overflow-wrap:anywhere;line-height:var(--ksl-brlh,1.3)}
+/* THREE LEADINGS AND NOT ONE. They were one property until the panel shipped,
+   and the panel's phone block set the name to 1.24 and the brand to 1.15 while
+   leaving the option on 1.3 -- so a single control would have had to ship
+   already disagreeing with two of the three elements it claimed to drive. */
+.ksl-nm{font-size:var(--ksl-nm,13.5px);line-height:var(--ksl-nmlh,1.3);
         font-weight:var(--ksl-nmw,640);color:var(--ksl-nmc,var(--ink,#2A2228));
         overflow-wrap:anywhere}
 /* A REAL LINK, so it is a link for a keyboard and for a crawler as well as for
@@ -296,7 +343,7 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    different triangle and the row already reads as a control. */
 .ksl-more{display:block;min-width:0}
 .ksl-more > summary{list-style:none;cursor:pointer;display:block;min-width:0;
-  padding:var(--ksl-morept,8px) 0 var(--ksl-morepb,6px);
+  padding:var(--ksl-morept,8px) 0 var(--ksl-morepb,4px);
   font-size:var(--ksl-more,12.5px);font-weight:var(--ksl-morew,700);
   color:var(--ksl-morec,var(--ink,#2A2228));
   text-align:start;border-block-start:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)))}
@@ -320,9 +367,18 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .ksl-f{display:flex;gap:6px;align-items:baseline;min-width:0;font-size:var(--ksl-foot,13px);
        color:var(--ksl-footc,var(--ink-2,#5E545A))}
 .ksl-f b{font-weight:var(--ksl-footw,700);color:var(--ksl-footbc,var(--ink,#2A2228));white-space:nowrap}
+/* ONE SIZE PER FIGURE. All three ship at 13px, which is what `.ksl-f` alone
+   used to give all three -- the owner asked for them separately, and the reason
+   to have them is that the saving is the figure a shopper is meant to read
+   across the aisle while the struck-through total is the one he reads past.
+   These come AFTER `.ksl-f` and are the same (0,1,0), so source order is what
+   decides -- which is fine for two rules eight lines apart and stated here so
+   nobody moves one of them. */
+.ksl-was{font-size:var(--ksl-wasf,13px)}
+.ksl-price{font-size:var(--ksl-pricef,13px)}
 .ksl-was b{font-weight:var(--ksl-wasw,600);text-decoration:line-through;
            color:var(--ksl-footc,var(--ink-2,#5E545A))}
-.ksl-save{font-size:var(--ksl-foot,13px);font-weight:var(--ksl-savew,700);
+.ksl-save{font-size:var(--ksl-savef,13px);font-weight:var(--ksl-savew,700);
           color:var(--ksl-savec,#1c7a4a);white-space:nowrap}
 
 /* ── THE PHONE ───────────────────────────────────────────────────────────
@@ -344,10 +400,10 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
  *   this one — so his numbers win wherever his query matches, and these are
  *   what a shop that has touched nothing renders.                  (Lane SA)
  */
-@media (max-width:480px){
-  .ksl{--ksl-ph:36px;--ksl-phr:7px;--ksl-rowpad:5px;--ksl-gap:9px;--ksl-nm:13px;
-       --ksl-footgy:4px;--ksl-footgx:12px}
-}
+/* The phone's numbers are declared ONCE now, in the block at the foot of this
+   style element — see the note there. Two @media blocks declaring the same
+   custom properties is how the panel's phone sizes and the bare list's came to
+   disagree about the photograph and the row padding in the first place. */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    THE BOX — "Hanging photos", the treatment the owner chose, 29 September.
@@ -364,62 +420,120 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    this is a change of drawing only.
    ═══════════════════════════════════════════════════════════════════════════ */
 /* ── THE OBJECT ─────────────────────────────────────────────────────────── */
-.ksl{
-  background:var(--pink-soft,#FFF0F4);
-  border-radius:18px;
-  /* Asymmetric on purpose. The inline-start padding is the words' inset; the
-     chip's negative margin is 10px BIGGER than it, and that difference is the
-     overhang. The two numbers are the design. */
-  padding:12px 14px 11px 20px;
+/* ▲ EVERY RULE BELOW IS SCOPED TO `.ksl-panel`, which is what the owner's
+     "Draw the list inside a panel" switch puts on or leaves off.
+     App\Services\SetAppearance::panelClass() writes it, so it is on the element
+     from the first byte and nothing reflows after paint. OFF is not nine
+     declarations undone — it is nine rules that do not select, and the bare
+     list above stands exactly as it was written.                 (Lane SA2) */
+/* ▲ AND EVERY NUMBER IS `var(--ksl-x, <the literal the box shipped with>)`,
+     for the same reason the bare list's are: nothing declares these properties
+     here, App\Services\SetAppearance declares them on `.ksl.ksl` once the owner
+     has moved something, and a shop that has moved nothing emits no block at
+     all — so these fallbacks ARE the box, pixel for pixel. Until this release
+     the whole of this section was literals, which meant the panel silently
+     OVERRODE thirteen of the controls Appearance → Set had just shipped: the
+     photograph's size and radius and backing, the row's padding and gap, the
+     hairline between rows, the disclosure's padding and colour, the footing's
+     spacing and its rule. They were sliders that moved nothing. */
+.ksl-panel{
+  background:var(--ksl-pbg,var(--pink-soft,#FFF0F4));
+  border-radius:var(--ksl-pr,18px);
+  /* ── FOUR LOGICAL PADDINGS, AND THE SHORTHAND WAS A BUG THIS BOX SHIPPED.
+     ──────────────────────────────────────────────────────────────────────
+     It was `padding:12px 14px 11px 20px`. A `padding` shorthand is PHYSICAL:
+     its fourth value is the LEFT edge in every language. The chips' pull and
+     the footing's pull-back are both `*-inline-start`, so in English the three
+     agreed and on /ar they did not — inline-start is the right-hand edge there,
+     where the panel's padding was 14 and not 20.
+
+     Measured in Chromium before the fix, three-member set, /ar/product/…:
+
+                                 1280        390
+       chips hang past panel      16px       17px     (10px is the design)
+       footing past panel          6px        7px     (0 is the design)
+
+     The footing's rule and all three money figures stuck out THROUGH the blush
+     panel's own edge — it is visible in docs/lane-sa2-shots/before-ar-product-
+     set-1280.jpg. The RTL guard did not catch it because `padding` is not in
+     CssDirection::MAP: only the longhands are, and a shorthand hides four of
+     them. Four logical longhands make the inline-start inset one value that
+     both pulls read, so the three cannot disagree in either direction. */
+  padding-block-start:var(--ksl-ppt,12px);
+  padding-block-end:var(--ksl-ppb,11px);
+  padding-inline-end:var(--ksl-ppe,14px);
+  padding-inline-start:var(--ksl-pps,20px);
 }
-.ksl .opt-label{margin-bottom:7px}
 
 /* ── THE SQUEEZE ────────────────────────────────────────────────────────── */
-.ksl-r{
-  grid-template-columns:36px minmax(0,1fr) auto;
-  gap:0 12px;
-  padding:3px 0;
+.ksl-panel .ksl-r{
+  grid-template-columns:var(--ksl-ph,36px) minmax(0,1fr) auto;
+  gap:0 var(--ksl-gap,12px);
+  padding:var(--ksl-rowpad,3px) 0;
 }
+/* The three track layouts again, one class more specific, because the rule
+   above is (0,2,0) and so are `.ksl-noph .ksl-r` and `.ksl-noq .ksl-r` — and
+   this one comes LATER in the file, so without these three the photograph's
+   track would come back the moment the owner switched the photograph off.
+   MUTATION: delete the `.ksl-panel.ksl-noph .ksl-r` line and the case in
+   SetAppearanceTest that renders the panel with the photograph off goes red on
+   a 36px empty column. */
+.ksl-panel.ksl-noph .ksl-r{grid-template-columns:minmax(0,1fr) auto}
+.ksl-panel.ksl-noq .ksl-r{grid-template-columns:var(--ksl-ph,36px) minmax(0,1fr)}
+.ksl-panel.ksl-noph.ksl-noq .ksl-r{grid-template-columns:minmax(0,1fr)}
 
 /* ── THE HANG ───────────────────────────────────────────────────────────── */
-.ksl-ph{
-  width:36px;height:36px;border-radius:10px;
-  margin-inline-start:-30px;
-  background:#fff;
-  /* A white ring and a small drop, so the chip reads as sitting ON the blush
-     rather than cut out of it. The ring is a spread shadow and not a border:
-     a border would grow the square and push the words. */
-  box-shadow:0 0 0 3px #fff, 0 2px 6px -1px rgba(42,34,40,.22);
+.ksl-panel .ksl-ph{
+  width:var(--ksl-ph,36px);height:var(--ksl-ph,36px);
+  border-radius:var(--ksl-phr,10px);
+  /* ▲ THE CONTROL IS THE OVERHANG AND THE PULL IS ARITHMETIC ON IT.
+       `padding + overhang`, never a raw pull, so the chip stands outside the
+       panel by exactly `--ksl-over` whatever the padding is set to — equal
+       would be a gutter and less would be an indent, and both are one drag
+       away if a slider sets the pull directly. The overhang's floor is 1px in
+       App\Services\SetAppearance and that is the whole of the guarantee: there
+       is no pair of values these two sliders can take that makes this
+       expression smaller than the padding it is measured from.
+       SetContentsBoxTreatmentsTest pins `pull > padding` on this rule and
+       SetAppearanceTest pins it at both ends of both sliders' ranges. */
+  margin-inline-start:calc(-1 * (var(--ksl-pps,20px) + var(--ksl-over,10px)));
+  background:var(--ksl-phbg,#fff);
+  /* A ring and a small drop, so the chip reads as sitting ON the blush rather
+     than cut out of it. The ring is a spread shadow and not a border: a border
+     would grow the square and push the words along. */
+  box-shadow:0 0 0 var(--ksl-ring,3px) var(--ksl-ringc,#fff),
+             0 var(--ksl-shy,2px) var(--ksl-shb,6px) -1px rgba(42,34,40,var(--ksl-sha,.22));
 }
 
-/* NO ROW RULES ANYWHERE. */
-.ksl-r + .ksl-r{border-block-start:0}
-.ksl-more .ksl-r:first-of-type{border-block-start:0}
+/* NO ROW RULES — and it is the `p_rule_on` SETTING that says so now, shipped
+   OFF, rather than the `border-block-start:0` that used to sit here and made
+   that control a no-op. `ksl-norule` above does the work, so turning the
+   hairlines back on from the admin actually turns them on. */
 
 /* ── THE DISCLOSURE ─────────────────────────────────────────────────────── */
 /* The summary is NOT a row and must not hang: it carries no negative margin at
    all, so it starts at the panel's own inline-start padding and lines up with
    the names rather than with the chips. The chips are the only thing in this
    treatment that crosses the panel's edge — one exception, stated once. */
-.ksl-more > summary{
-  border-block-start:0;
-  padding:8px 0 4px;
-  color:var(--pink-deep,#C13E63);
+.ksl-panel .ksl-more > summary{
+  padding:var(--ksl-morept,8px) 0 var(--ksl-morepb,4px);
+  color:var(--ksl-morec,var(--pink-deep,#C13E63));
 }
-.ksl-more > summary span{border-bottom-color:currentColor;opacity:.85}
+.ksl-panel .ksl-more > summary span{border-bottom-color:currentColor;opacity:.85}
 
 /* ── THE FOOTING ────────────────────────────────────────────────────────── */
 /* Pulled back to the panel's real inline-start edge so the three figures — and
    the rule above them — are not indented into the words column. They are about
-   the box, not about a row, so they use the PANEL's padding (20) and not the
-   chip's pull (30): the rule stops at the panel's edge and the chips are the
-   only thing that crosses it. Logical axis, so it is the other edge on /ar. */
-.ksl-foot{
-  margin-top:9px;
-  margin-inline-start:-20px;
-  padding-top:9px;
-  padding-inline-start:20px;
-  border-top:1px solid rgba(42,34,40,.09);
+   the box, not about a row, so they use the PANEL's padding and not the chip's
+   pull: the rule stops at the panel's edge and the chips are the only thing
+   that crosses it. ONE variable for the pull and for the inset, so they cannot
+   drift apart, and logical on both, so it is the other edge on /ar. */
+.ksl-panel .ksl-foot{
+  margin-top:var(--ksl-footsp,9px);
+  padding-top:var(--ksl-footsp,9px);
+  margin-inline-start:calc(-1 * var(--ksl-pps,20px));
+  padding-inline-start:var(--ksl-pps,20px);
+  border-top:1px solid var(--ksl-footrule,rgba(42,34,40,.09));
 }
 
 /* ── THE PHONE ──────────────────────────────────────────────────────────── */
@@ -434,28 +548,46 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    whatever the row padding says.
 
    So on the phone the panel's inline padding comes down to 9px and the gap
-   between the photograph and the words to 8, which together hand back 17px of
-   measure — more than the padding took. Measured, both widths, in the table in
-   docs/SET-BOX-SQUEEZE.md. */
+   between the photograph and the words to 9, which together hand back measure —
+   more than the padding took. Measured, both widths, in docs/SET-BOX-SQUEEZE.md.
+
+   THE ROWS' HEIGHT AT 390 IS SET BY THE WORDS, NOT BY THE PHOTOGRAPH, and that
+   is the finding this treatment had to be re-cut around. At 1280 the names fit
+   on one line and the photograph decides the row. At 390 every second name in
+   this catalogue wraps to two lines and a 32px photograph is already shorter
+   than they are — shrinking it further buys nothing at all. What does buy
+   height there is the leading: 1.3 → 1.24 on a two-line name and 1.3 → 1.15 on
+   the brand is ~2px a row, five rows of it, and neither goes near the legible
+   floor.
+
+   ▲ THIS BLOCK IS NOW THE ONE PLACE THE PHONE'S SHIPPED NUMBERS LIVE, and it
+     declares VARIABLES rather than properties — which is what lets a shop that
+     has moved nothing render the panel at these sizes while the panel's rules
+     above stay var-driven and un-duplicated. There were TWO such blocks until
+     this release, one for the bare list and one for the panel, and they
+     disagreed about the photograph (36 against 32) and the row padding (5
+     against 3); the panel's won because it came later, which is not a thing to
+     leave to source order.
+
+     It carries every `_m` default that DIFFERS from its laptop twin and nothing
+     else; the ones that match fall through to the fallbacks above.
+     SetAppearanceDefaultsTest walks both lists and asserts the EFFECTIVE phone
+     value of every `_m` key against the schema, so a number added here without
+     a control, or a control added without its number, is caught.
+
+   ▲ A SHOP THAT HAS MOVED A SLIDER GETS THESE FROM
+     partials/set-appearance-css.blade.php INSTEAD, whose media query uses the
+     owner's own breakpoint and whose selector `.ksl.ksl` is one class more
+     specific than this one — so his numbers win wherever his query matches, and
+     these are what a shop that has touched nothing renders. */
 @media (max-width:480px){
-  .ksl{padding:8px 9px 8px 16px;border-radius:16px}
-  .ksl .opt-label{margin-bottom:5px}
-  .ksl-r{grid-template-columns:32px minmax(0,1fr) auto;gap:0 9px;padding:3px 0}
-  .ksl-ph{width:32px;height:32px;border-radius:9px;margin-inline-start:-26px;
-          box-shadow:0 0 0 2.5px #fff, 0 2px 5px -1px rgba(42,34,40,.22)}
-  .ksl-foot{margin-top:7px;padding-top:7px;margin-inline-start:-16px;padding-inline-start:16px}
-  /* THE ROWS' HEIGHT AT 390 IS SET BY THE WORDS, NOT BY THE PHOTOGRAPH, and
-     that is the finding this treatment had to be re-cut around. At 1280 the
-     names fit on one line and the photograph decides the row, so 40 -> 34 is
-     worth 10px a row. At 390 every second name in this catalogue wraps to two
-     lines and a 32px photograph is already shorter than they are — shrinking it
-     further buys nothing at all. What does buy height there is the leading:
-     1.3 -> 1.24 on a two-line name and 1.3 -> 1.15 on the brand is ~2px a row,
-     five rows of it, and neither goes near the legible floor. Measured both
-     ways in docs/SET-BOX-SQUEEZE.md. */
-  .ksl-nm{line-height:1.24}
-  .ksl-br{line-height:1.15}
+  .ksl{--ksl-ph:32px;--ksl-phr:9px;--ksl-gap:9px;--ksl-nm:13px;
+       --ksl-footgy:4px;--ksl-footgx:12px;
+       --ksl-pr:16px;--ksl-ppt:8px;--ksl-ppe:9px;--ksl-ppb:8px;--ksl-pps:16px;
+       --ksl-ring:2.5px;--ksl-shb:5px;--ksl-headgap:5px;--ksl-footsp:7px;
+       --ksl-nmlh:1.24;--ksl-brlh:1.15}
 }
+
 
 </style>
 @endonce

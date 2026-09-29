@@ -199,7 +199,7 @@ it('draws the contents inside the buy form, not in a section near the foot', fun
 
     $price = $at('id="bbPrice"');
     $form = $at('kbb-cart-form');
-    $list = $at('class="ksl"');
+    $list = $at('class="ksl ');
     $stock = $at('stockline');
     $formEnd = (int) strpos($html, '</form>', $form);
 
@@ -226,7 +226,14 @@ it('includes the contents panel exactly once', function () {
 
     $html = $this->get('/product/'.$set->slug.'/')->assertOk()->getContent();
 
-    expect(substr_count($html, 'class="ksl"'))->toBe(1, 'The contents list must be drawn once.');
+    /* ▲ `class="ksl ksl-panel ksl-norule"` now, ADVANCED DELIBERATELY BY LANE
+         SA2 — the panel and the hairline between rows are both settings, and
+         SetAppearance::panelClass() writes what is on. What this case is about
+         is the COUNT and never the exact attribute: a second @include is the
+         defect it was written for. Matching the opening of the attribute keeps
+         it counting the same element without pinning a class list that every
+         new switch would move. */
+    expect(substr_count($html, 'class="ksl '))->toBe(1, 'The contents list must be drawn once.');
     expect(substr_count($html, 'class="ksl-foot"'))->toBe(1, 'The saving must be printed once.');
 });
 
@@ -269,7 +276,14 @@ it('is a list and not a grid', function () {
          thing that says the row is photograph / words / quantity in that inline
          order, and it still fails if somebody reorders the tracks or drops the
          phone's own size. (Lane SA) */
-    expect(str_contains($html, 'grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr) auto'))->toBeTrue(
+    /* ▲ AND ADVANCED AGAIN BY LANE SA2, for the same reason one step further
+         on: the shipped photograph is 36px, not 40. It was 36 on the page and
+         40 in this fallback the whole time the "hanging photos" panel carried a
+         hard-coded `grid-template-columns:36px …` that overrode it — two
+         numbers for one track, decided by source order. There is one now, and
+         it is the schema's. The case still fails if somebody reorders the
+         tracks or drops the phone's own size. */
+    expect(str_contains($html, 'grid-template-columns:var(--ksl-ph,36px) minmax(0,1fr) auto'))->toBeTrue(
         'The row must be photograph / words / quantity, in that order along the inline axis.'
     );
 });
@@ -300,11 +314,19 @@ it('gives a phone its own sizes rather than reflowing the desktop list', functio
          36px photograph with a 7px radius, 5px of row padding and a 13px name at
          390. This case is still about the phone HAVING numbers of its own, and
          it still goes red if the block is deleted. */
-    expect(str_contains($html, '--ksl-ph:36px'))->toBeTrue(
+    /* ▲ AND ADVANCED AGAIN BY LANE SA2. The phone's numbers are 32px and 3px:
+         they always were, because the panel's own @media block declared them
+         and came later, while THIS block declared 36 and 5 and lost. Two media
+         queries setting the same custom properties is the fault; there is one
+         now. Row padding is no longer here at all — the phone's 3px and the
+         laptop's 3px are the same number, and the block carries only what
+         DIFFERS, so pinning it here would pin a declaration that must not
+         exist. SetAppearanceTest asserts every `_m` default against it. */
+    expect(str_contains($html, '--ksl-ph:32px'))->toBeTrue(
         "A phone's thumbnail must be smaller than a desktop's."
     );
-    expect(str_contains($html, '--ksl-rowpad:5px'))->toBeTrue(
-        "A phone's row must be padded less than a desktop's."
+    expect(str_contains($html, '--ksl-pps:16px'))->toBeTrue(
+        "A phone's panel must be inset less than a desktop's."
     );
     expect(str_contains($html, '--ksl-nm:13px'))->toBeTrue(
         "A phone's name must be smaller than a desktop's."
@@ -317,11 +339,21 @@ it('gives a phone its own sizes rather than reflowing the desktop list', functio
          is really about is that the phone has numbers of its own, and the row
          padding is the one that buys height back twelve times over. */
     /* ▲ ADVANCED BY LANE SA, same reason as the three above: the phone's
-         numbers are one declaration block of custom properties now, and 5px is
-         still 5px. Already asserted above as `--ksl-rowpad:5px`; kept here as
+         numbers are one declaration block of custom properties now.
+       ▲ AND AGAIN BY LANE SA2, where the sentence has to change rather than the
+         number. The phone's row padding is 3px and so is the laptop's — the
+         panel squeezed both to 3 when it shipped, and this case's premise
+         ("more tightly than a desktop's") stopped being true the day the
+         treatment landed while the assertion stayed green against a declaration
+         the page had already overridden. What the phone really pads less is the
+         PANEL: 8/9/8/16 against 12/14/11/20, which is the squeeze that buys a
+         346px column its measure back. That is what is asserted now, and it is
          the sentence this case was written to say. */
-    expect(str_contains($html, '--ksl-rowpad:5px'))->toBeTrue(
-        "A phone's row must be padded more tightly than a desktop's."
+    expect(str_contains($html, '--ksl-ppe:9px'))->toBeTrue(
+        "A phone's panel must be padded more tightly than a desktop's."
+    );
+    expect(str_contains($html, 'var(--ksl-rowpad,3px)'))->toBeTrue(
+        'The row padding must still be a control rather than a literal.'
     );
 });
 
