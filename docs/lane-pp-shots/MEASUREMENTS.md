@@ -138,6 +138,19 @@ On a twelve-member set the squeeze alone (shipped, after) beats every
 proposal at 390, because the proposals all trade some of it back for a 4:5
 gallery. `scrollWidth == viewport` in all six.
 
+### The sticky buy row, on the page that needs it
+
+390x844, twelve-member set, disclosure opened so the form is taller than the
+window, scrolled to the top of the list — `phone844-sticky-*-set12.png`:
+
+| | Add to cart in the window? | at viewport y |
+|---|---|---|
+| shipped | **no** | 1034 |
+| compact | **yes** | 780 |
+
+`position:sticky;bottom:0` — the same button, in the same place in the document,
+pinned to the bottom edge on the way past. No second bar and no second price.
+
 ---
 
 ## 4 · Cost, and the mirror
