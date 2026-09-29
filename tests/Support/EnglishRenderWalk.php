@@ -773,7 +773,41 @@ final class EnglishRenderWalk
      * -- and nothing else. Not one of the pages the two blocks above list came
      * back, which is what says the merge and this edit both took cleanly.
      */
-    public const BASE_COMMIT = '936a8ee08729ad4302e4ecd3d63f2a84f0e9c014';
+    /*
+     * ADVANCED BY LANE AD, and here is the diff it was advanced for.
+     *
+     * The previous pin rendered a <body> whose style attribute was
+     *
+     *     --kbb-name-lines:99;--kbb-name-min:0;--dv-col:#C13E63;...
+     *
+     * because layouts/store.blade.php emitted ProductStyles::cardVariables()
+     * and nothing else. It now emits ::cssVariables() and ::bodyClass(), so it
+     * is
+     *
+     *     --kbb-radius:14px;--kbb-ratio:1/1;--kbb-sale:#E23B57;
+     *     --kbb-new:#1F9D55;--kbb-price:#2A2228;--kbb-star:#E8A33D;
+     *     --kbb-cart-bg:#E0567B;--kbb-cart-fg:#FFFFFF;
+     *     --kbb-name-lines:99;--kbb-name-min:0;--dv-col:#C13E63;...
+     *
+     * THE CLASS ATTRIBUTE IS BYTE-IDENTICAL and that is the half worth saying:
+     * all seven "what the card shows" toggles ship on, so bodyClass() is the
+     * empty string and no `.pc-no*` class appears. NO OTHER BYTE OF ANY PAGE
+     * CHANGED - the diff was read page by page before this line moved, and it
+     * was this attribute on every one of them and nothing else.
+     *
+     * AND NO PIXEL MOVED EITHER, which is the point of the change. Every
+     * property written here is the value kbb-grid-skins.css was ALREADY falling
+     * back to (14px, 1/1, #E23B57, #1F9D55, #2A2228, #E8A33D, #E0567B, #FFFFFF)
+     * - it has declared var(--kbb-radius,14px) and the rest for releases while
+     * nothing wrote them. ProductStylesReachTheShopTest reads those fallbacks
+     * out of the stylesheet and asserts the schema still ships them, so a later
+     * lane changing one without the other is red there rather than here.
+     *
+     * The reason the attribute exists at all: twenty controls on Appearance ->
+     * Product styles moved no byte of the shop, because the only caller of
+     * cssVariables() and bodyClass() was the admin preview.
+     */
+    public const BASE_COMMIT = '2e15f2a5990a53ce191aa67285e7bcb3a58bdf97';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

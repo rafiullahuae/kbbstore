@@ -21,10 +21,30 @@ class MobileMenu
         'radius'        => ['range',  'Corner radius',       20, '', ['min' => 0, 'max' => 34, 'step' => 2, 'unit' => 'px']],
         'slide_speed'   => ['range',  'Slide duration',     380, '', ['min' => 150, 'max' => 700, 'step' => 10, 'unit' => 'ms']],
         'scrim'         => ['range',  'Backdrop darkness',   50, '', ['min' => 0, 'max' => 80, 'step' => 5, 'unit' => '%']],
-        'icon_style'    => ['select', 'Menu icon',      'default', 'How the icon animates when the menu opens.',
-                             ['default' => 'Cross', 'ico-spin' => 'Spin cross', 'ico-arrow' => 'Down arrow',
-                              'ico-collapse' => 'Collapse', 'ico-pinch' => 'Slow pinch', 'ico-pink' => 'Cross in pink',
-                              'ico-taper' => 'Tapered']],
+        /*
+         * 'icon_style' WAS HERE, AND IT HAD NEVER DONE ANYTHING.        Lane AD
+         *
+         * It was a select of seven — Cross, Spin cross, Down arrow, Collapse,
+         * Slow pinch, Cross in pink, Tapered — whose values are the CSS classes
+         * `ico-spin`, `ico-arrow` and so on. Those rules are real and are still
+         * in kbb.css (`.burger.ico-spin span{...}`). What never existed is
+         * anything that PUT one of those classes on an element: bodyClass()
+         * below emits mm-card-*, mm-rule-* and mm-nocounts, and has never
+         * emitted this one. So the owner could pick any of the seven and the
+         * icon did exactly what it did before.
+         *
+         * REMOVED RATHER THAN WIRED, because the question it asks now has a
+         * better answer somewhere else. partials/menu-icon.blade.php says it in
+         * its own comment — "Deliberately not .burger: that class carries the
+         * old bar styling" — and renders `kbbmi kbbmi-{menu_icon}` from
+         * HeaderSettings instead. Appearance → Header → Icon is where the menu
+         * icon is chosen now, and it is a richer control than this one: a
+         * family (tiles, dots, bars), an effect speed, a size and three
+         * colours, all of which reach the element. Wiring this back would put a
+         * second, poorer answer to one question on a second screen, and the
+         * `.burger` rules it targets are the old markup that partial was
+         * written to stop using.
+         */
         'show_grab'     => ['bool',   'Grab handle',       true, 'The small bar at the top edge.'],
         'show_close'    => ['bool',   'Close button',      true, ''],
 
@@ -82,7 +102,7 @@ class MobileMenu
      */
     public const TABS = [
         'panel' => ['Panel', 'Size and motion of the sheet.',
-                    ['icon_style', 'height', 'radius', 'slide_speed', 'scrim', 'show_grab', 'show_close']],
+                    ['height', 'radius', 'slide_speed', 'scrim', 'show_grab', 'show_close']],
         'top' => ['Top of the sheet', 'What sits above the menu itself.',
                   ['show_search', 'search_text', 'show_heading', 'heading_text']],
         'rows' => ['Rows', 'Density and layout of the items.',

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Services\Media\UploadFault;
 use App\Support\ImageVariants;
 use App\Support\MediaRegistrar;
 use Illuminate\Http\JsonResponse;
@@ -130,14 +131,59 @@ class MediaUploadController extends Controller
         $filename = date('Ymd-His') . '-' . Str::random(8) . '.' . $ext;
         $dir = public_path('uploads/' . $folder);
 
-        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
-            return response()->json(['ok' => false, 'message' => 'Could not create upload directory.'], 500);
+        /*
+         * SAY WHICH FAULT IT WAS, NOT WHICH ONE IS COMMONEST.
+         *
+         * These two guards used to answer 'Could not create upload directory.'
+         * and 'Upload failed — check folder permissions.' A full disk, a
+         * read-only mount and a missing upload_tmp_dir all arrived as the
+         * second one, which names PERMISSIONS — correct in one of those four
+         * cases and a wild goose chase in the other three. App\Services\Media\
+         * UploadFault turns the system's own errno into a key, and the key into
+         * a sentence, so the owner is sent to the right place the first time.
+         *
+         * THE WARNING IS CAUGHT WITH A HANDLER, NOT READ OFF error_get_last().
+         * mkdir() returns a bool and the strerror() text — "File exists", "No
+         * space left on device" — exists ONLY in the diagnostic it raises. Under
+         * `@` that diagnostic is normally still recoverable through
+         * error_get_last(), but this application installs an error handler, and
+         * a handled error never reaches PHP's internal last-error slot. Measured:
+         * error_get_last() answered an unrelated earlier warning here and the
+         * fault classified as UNKNOWN. So the handler is swapped for the length
+         * of the call, which is exactly what Symfony's own UploadedFile::move()
+         * does two lines before it throws.
+         */
+        if (!is_dir($dir) && !$this->makeDirectory($dir, $why) && !is_dir($dir)) {
+            return $this->uploadFailed(UploadFault::classify($why), 'folder', $why);
         }
 
         $destination = $dir . '/' . $filename;
 
-        if (!$file->move($dir, $filename) || !is_file($destination)) {
-            return response()->json(['ok' => false, 'message' => 'Upload failed — check folder permissions.'], 500);
+        /*
+         * THE MOVE IS WRAPPED, BECAUSE THE GUARD THAT WAS HERE COULD NOT FIRE.
+         *
+         * This read `if (!$file->move($dir, $filename) || !is_file(...))`.
+         * UploadedFile::move() never returns false — it returns a File or
+         * throws FileException — so `!$file->move(...)` was always false and the
+         * only live term was the is_file() check on a move that had already
+         * succeeded. Every REAL failure went out of this method uncaught and
+         * reached the Media Library as a bare "Server Error", with debug off.
+         *
+         * So the exception is caught rather than tested for, and the typed
+         * subclasses Symfony raises for each UPLOAD_ERR_* constant are what
+         * UploadFault::fromThrowable() reads. The is_file() check stays as a
+         * belt-and-braces third arm: a move that returns without writing is not
+         * a shape any of this can explain, and it should not be reported as a
+         * success.
+         */
+        try {
+            $file->move($dir, $filename);
+        } catch (\Throwable $e) {
+            return $this->uploadFailed(UploadFault::fromThrowable($e), 'file', $e->getMessage());
+        }
+
+        if (!is_file($destination)) {
+            return $this->uploadFailed(UploadFault::UNKNOWN, 'file', 'the file was moved and is not at its destination');
         }
 
         $path = 'uploads/' . $folder . '/' . $filename;
@@ -205,6 +251,66 @@ class MediaUploadController extends Controller
      * upload; the library simply re-acquires anything missing on the next
      * backfill.
      */
+    /**
+     * One refusal, built the same way every time.
+     *
+     * The KEY decides the sentence; the system's own words are appended after
+     * it, redacted, because classify() cannot know every errno a host can
+     * produce and UNKNOWN must not be another dead end. `detail` is carried as
+     * its own field as well so a future screen can show it separately without
+     * this method having to change shape.
+     *
+     * 500 for every one of them, deliberately. These are all server-side faults
+     * — the operator's file was fine and nothing they can retype will help — and
+     * the 4xx refusals above (wrong type, unsafe SVG, too large) are what a
+     * fixable mistake looks like on this endpoint.
+     */
+    private function uploadFailed(string $key, string $stage, string $systemMessage): JsonResponse
+    {
+        $detail = UploadFault::redact($systemMessage);
+
+        return response()->json([
+            'ok' => false,
+            'message' => UploadFault::sentence($key, $stage)
+                . ($detail === '' ? '' : ' The server said: ' . $detail),
+            // The key, so the screen can branch without parsing prose -- the
+            // shape UgcTranscoder::reason() established for the clips screen.
+            'fault' => $key,
+            'detail' => $detail,
+        ], 500);
+    }
+
+    /**
+     * Make a directory, and hand back WHY if it could not be made.
+     *
+     * The handler is installed for the length of the one call and restored in a
+     * `finally`, so nothing else in the request loses its own error handling
+     * even if mkdir() raises something unexpected. `$why` is an out-parameter
+     * rather than a return value because the caller needs both facts — whether
+     * it worked, and the system's words — and a bool-or-string return would put
+     * the burden of telling '' from false on every caller.
+     *
+     * Only the MESSAGE is kept. The handler is also handed the file and line the
+     * warning came from, which are absolute paths into this application and have
+     * no business on a screen.
+     */
+    private function makeDirectory(string $dir, ?string &$why = null): bool
+    {
+        $why = '';
+
+        set_error_handler(static function (int $type, string $message) use (&$why): bool {
+            $why = $message;
+
+            return true;
+        });
+
+        try {
+            return mkdir($dir, 0755, true);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
     private function record(string $path, string $filename, string $mime, string $destination, string $clientName): bool
     {
         /*

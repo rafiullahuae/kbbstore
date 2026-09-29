@@ -393,7 +393,21 @@
     try {
       V = await api('/manual-orders/bootstrap');
     } catch (e) {
-      banner = {kind:'bad', text:'Could not load the order form. Reload the console and try again.'};
+      /* "Reload and try again" is the wrong instruction for the fault this
+         shop hits most: a package that added a route without its clear_caches
+         migration having run leaves the compiled route table without these
+         paths, and reloading forever will not put them there. A 404 with no
+         JSON body is that fault exactly -- Laravel answers its own HTML 404 --
+         while every other failure here really is worth a reload. */
+      /* A route-cache 404 answers `{"message": ""}` to an Accept:
+         application/json request -- NOT Laravel's HTML page, which is what it
+         answers a browser. Measured; the first version of this tested `!e.body`
+         and never fired. A controller's own 404 carries an `error` or a
+         `message`, so "says nothing at all" is what separates them. */
+      var silent = !e.body || (!e.body.message && !e.body.error);
+      banner = {kind:'bad', text: (e && e.status === 404 && silent)
+        ? 'The Manual order endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
+        : 'Could not load the order form. Reload the console and try again.'};
       render();
       return;
     }

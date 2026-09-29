@@ -346,7 +346,37 @@
     var r = await fetch(apiBase() + path, o);
     var body = null;
     try { body = await r.json(); } catch (e) { body = null; }
-    if (!r.ok) { var err = new Error('media ' + r.status); err.body = body; throw err; }
+    if (!r.ok) {
+      /* err.status was never set here, so no caller could tell one failure
+         from another even where it wanted to. It is set now, and a 404 with no
+         JSON body -- the compiled route table not knowing these paths after a
+         package shipped without its clear_caches migration -- gets the sentence
+         that names it rather than the developer string 'media 404'. */
+      /* WHAT A ROUTE-CACHE 404 REALLY LOOKS LIKE, MEASURED.
+
+         The first version of this tested `!body`, on the reasoning that
+         Laravel answers its own HTML 404 page when a path is not in the
+         compiled route table. It does -- but only to a browser. These requests
+         send `Accept: application/json`, and to those the handler answers
+
+             {"message": ""}
+
+         a JSON body with nothing in it. So `!body` was never true and this
+         branch never fired. Caught by the screenshot run, not by reading it.
+
+         A CONTROLLER's own 404 -- the row is genuinely gone -- answers
+         `{"error": "not_found"}` or a body with a `message`. So the honest
+         discriminator is not whether there IS a body but whether the body says
+         ANYTHING: no message and no error is the route table, and either one
+         present is the controller speaking for itself. */
+      var silent = !body || (!body.message && !body.error);
+      var err = new Error(r.status === 404 && silent
+        ? 'The Media Library endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
+        : ('media ' + r.status));
+      err.status = r.status;
+      err.body = body;
+      throw err;
+    }
     return body;
   }
 

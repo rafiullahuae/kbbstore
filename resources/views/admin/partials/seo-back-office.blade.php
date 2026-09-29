@@ -173,6 +173,33 @@
     return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
   }
 
+  /* WHY A 404 IS SINGLED OUT, and why it is not a status ladder.
+
+     Every package that adds a route ships a clear_caches migration, because the
+     compiled route table takes priority over routes/web.php until it is
+     cleared. When that migration does not run -- which is the fault this shop
+     keeps paying for, packages being applied by hand -- these paths are simply
+     unknown and Laravel answers its own 404 HTML PAGE, which carries no
+     `message`. "Request failed (404)" is true and sends nobody anywhere.
+
+     A 404 that DOES carry a message is the controller's own ("no such page"),
+     and it is shown in the server's words exactly as a 403 is. So the
+     discriminator is the message, not the status. */
+  function failure(r, j) {
+    if (j && j.message) return new Error(j.message);
+
+    if (j && j.error) return new Error(j.error);
+
+    /* A route-cache 404 answers `{"message": ""}` to Accept: application/json
+       -- measured. A body that says anything at all is the controller. */
+    if (r.status === 404 && !(j && (j.message || j.error))) {
+      return new Error('The SEO endpoints are not in this server\'s compiled route table yet. '
+        + 'Clear the route cache (Platform \u2192 Cache) and reload.');
+    }
+
+    return new Error('Request failed (' + r.status + ')');
+  }
+
   async function apiGet(path) {
     var r = await fetch(apiBase() + path, {
       credentials: 'same-origin',
@@ -184,7 +211,7 @@
        is shown in the words the server chose: "you do not have this capability"
        and "the scan broke" are different problems and an operator has to be
        able to tell them apart. Same reasoning as the SEO Audit tab. */
-    if (!r.ok) throw new Error(j && j.message ? j.message : ('Request failed (' + r.status + ')'));
+    if (!r.ok) throw failure(r, j);
     return j;
   }
 
@@ -201,7 +228,7 @@
     });
     var j = {};
     try { j = await r.json(); } catch (e) {}
-    if (!r.ok) throw new Error(j && j.message ? j.message : ('Request failed (' + r.status + ')'));
+    if (!r.ok) throw failure(r, j);
     return j;
   }
 

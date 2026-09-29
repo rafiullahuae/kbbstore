@@ -334,7 +334,18 @@ window.KBBArabic = (function(){
 
           var d = await r.json().catch(function(){ return {}; });
 
-          if (!r.ok) { note(btn, d.message || 'Could not translate that.'); return; }
+          /* A 404 with no JSON body is the compiled route table, not the
+             translation service: every package that adds a route ships a
+             clear_caches migration, and when it does not run these paths are
+             unknown and Laravel answers its own HTML 404. "Could not translate
+             that" sends the owner to look at his API key for a fault that has
+             nothing to do with it. */
+          if (!r.ok) {
+            note(btn, d.message || d.error || (r.status === 404 && !(d && (d.message || d.error))
+              ? 'The translate endpoint is not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
+              : 'Could not translate that.'));
+            return;
+          }
 
           if (!d.translation) {
             note(btn, 'Nothing came back for that — formatted text is never sent to a machine.');

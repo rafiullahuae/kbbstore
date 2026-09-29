@@ -365,8 +365,48 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
     $kbbCards = app(\App\Services\ProductStyles::class);
     $kbbDiv   = app(\App\Services\SectionDividers::class);
 @endphp
-<body class="@yield('body-class') {{ $kbbDiv->bodyClass() }}"
-      style="{{ $kbbCards->cardVariables() }};{{ $kbbDiv->cssVariables() }}">
+{{--
+    THE PRODUCT-CARD SETTINGS REACH THE SHOP FROM HERE.             Lane AD
+
+    This line carried cardVariables() — two properties, the name clamp — and
+    nothing else. ProductStyles::cssVariables() and ::bodyClass(), which carry
+    the other fifteen controls on Appearance → Product styles, were called from
+    resources/views/admin/app.blade.php AND NOWHERE ELSE, so the card roundness,
+    the image shape, the six colours and the seven "what the card shows"
+    toggles had never moved a pixel of the shop. Measured rather than read:
+    ProductStylesReachTheShopTest moves every key in the schema and re-renders
+    the storefront.
+
+    THE STYLESHEET WAS ALREADY WAITING. kbb-grid-skins.css has declared
+    `border-radius:var(--kbb-radius,14px)`, `aspect-ratio:var(--kbb-ratio,1/1)`,
+    the six colour properties and the seven `.pc-no*` rules for releases. Only
+    the writer was missing, which is why this is one line and not a stylesheet.
+
+    ON <body>, NOT ON EACH GRID, for the reason cardVariables() was already
+    here: a shortcode grid, a homepage rail, /shop, the related-products rail
+    and a lone <x-product-card> must trim and colour their cards the same way,
+    and `.pc-nobrand .kbb-card-brand` is a descendant selector that only works
+    from an ancestor. :root declares --kbb-gap and friends; body is a nearer
+    ancestor than :root for everything inside it, so these win where they are
+    set and the sheet's own fallbacks stand where they are not.
+
+    NOTHING MOVES ON THE SHOP WHEN THIS PACKAGE IS APPLIED. Every default in
+    SCHEMA equals the fallback the stylesheet already used (14px, 1/1, #E23B57,
+    #1F9D55, #2A2228, #E8A33D, #E0567B, #FFFFFF, and all seven toggles on, so
+    bodyClass() is the empty string). And because these controls have never had
+    an effect, any value stored against them is a value the owner has never
+    seen; the migration beside this change clears them, so the screen and the
+    shop agree for the first time instead of the shop jumping to a year-old
+    slider position.
+
+    cardVariables() is NOT called any more: cssVariables() emits
+    --kbb-name-lines and --kbb-name-min itself, so calling both would declare
+    the clamp twice in one attribute. The method stays on the class — see the
+    note there — because a stale compiled copy of THIS file, served after a
+    package whose migration did not run, would otherwise be "Call to undefined
+    method" on every storefront page.
+--}}<body class="@yield('body-class') {{ $kbbDiv->bodyClass() }}{{ $kbbCards->bodyClass() === '' ? '' : ' ' . $kbbCards->bodyClass() }}"
+      style="{{ $kbbCards->cssVariables() }};{{ $kbbDiv->cssVariables() }}">
 
 {{--
     Bare pages render no site header.

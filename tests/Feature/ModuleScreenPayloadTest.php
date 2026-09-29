@@ -222,7 +222,37 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // `desktop`/`mobile`), two labels that had a device suffix which the tab now
     // says for them, and two help sentences that were empty. All of it was read
     // off the diff rather than regenerated on trust.
-    expect($compared)->toBe(525, 'the number of controls drawn changed');
+    //
+    // 520 AFTER LANE AD, which is 525 less the five controls removed from
+    // Appearance → Product styles. They are removals and nothing else: the
+    // fixture entry was edited by CUTTING those five field objects out of it,
+    // byte for byte, so every surviving control still carries the key, type,
+    // label, help, value, default and options it carried before. The only other
+    // edit in that file is the Layout tab's description, which named columns and
+    // spacing that the tab no longer has.
+    //
+    // Each of the five moved nothing on the shop and each was a SECOND ANSWER to
+    // a question another screen already owns — the column count belongs to
+    // Appearance → Site layout, the gap is set per grid on purpose, and the
+    // button's words are in Content → Translations. The reasoning is recorded in
+    // full in ProductStyles::SCHEMA, and ProductStylesReachTheShopTest is the
+    // measurement it rests on.
+    //
+    // STILL 520 after Appearance → Mobile menu lost "Menu icon", and the reason
+    // is the same one the Lane M3 note above gives: mobile-menu's payload
+    // carries `fields` and `groups` rather than `tabs`, so its controls are
+    // compared OUTRIGHT, key by key, in the loop above and contribute nothing
+    // to this walk. Its field object and its name in the panel group were both
+    // cut from the fixture, byte for byte, and the outright comparison is what
+    // holds them.
+    //
+    // (Why it went: the seven options are CSS class names — `ico-spin`,
+    // `ico-arrow` and the rest — whose rules are real and still in kbb.css, but
+    // MobileMenu::bodyClass() has never emitted one of them onto anything, so
+    // all seven did the same nothing. The menu icon is chosen on Appearance →
+    // Header → Icon now, which reaches the element and offers a family, a
+    // speed, a size and three colours besides.)
+    expect($compared)->toBe(520, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

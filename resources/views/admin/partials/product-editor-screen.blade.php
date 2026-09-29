@@ -1019,6 +1019,25 @@
     }
     if (b && b.message) return b.message;
     if (e && e.status === 401) return 'Your session expired. Sign in again.';
+    /* A 404 from one of this screen's own endpoints almost always means the
+       package shipped without its clear_caches migration having run, so the
+       compiled route table does not know the path. Said plainly rather than
+       falling through to "Could not load the editor.", which is the same
+       sentence for a route that is missing, a product that is gone and a
+       server that is down -- three faults with three different remedies, and
+       the route-cache one is the one this shop keeps hitting because packages
+       are applied by hand. Banners, Coupons and Reviews.io already answer a
+       404 this way; this screen did not. */
+    /* ONLY WHEN THE BODY SAYS NOTHING. A route-cache 404 answers
+       `{"message": ""}` to an Accept: application/json request -- measured; it
+       is Laravel's HTML page only for a browser. This screen's OWN 404 is
+       `{"error": "not_found"}` for a product somebody else deleted, and telling
+       him to clear his route cache for that would be a new wrong answer in
+       place of the old one. */
+    if (e && e.status === 404 && !(b && (b.message || b.error || b.errors))) {
+      return 'The Product editor endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.';
+    }
+    if (b && b.error) return b.error;
     return fallback;
   }
 

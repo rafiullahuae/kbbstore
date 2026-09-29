@@ -1727,7 +1727,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 @media (max-width: 640px){.skinprev .kbb-pgrid[data-skin="horizontal"]{grid-template-columns:1fr !important}}
 .skinprev .kbb-pgrid{gap:var(--kbb-gap,16px)}
 .skinprev .kbb-pgrid .kbb-card{border-radius:var(--kbb-radius,14px)}
-.skinprev .kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1.02)}
+.skinprev .kbb-pgrid .kbb-card-thumb{aspect-ratio:var(--kbb-ratio,1/1)}
 .skinprev .kbb-pgrid .cn{display:-webkit-box;-webkit-line-clamp:var(--kbb-name-lines,2);-webkit-box-orient:vertical;overflow:hidden}
 .skinprev .kbb-pgrid .kbb-badge-sale{background:var(--kbb-sale,#E23B57)}
 .skinprev .kbb-pgrid .kbb-badge-new{background:var(--kbb-new,#1F9D55)}
@@ -4207,16 +4207,24 @@ function paintProdStyles(){
   else psShortcode();
 }
 
+/* Image shape -> aspect-ratio, the SAME four pairs ProductStyles::cssVariables()
+   matches on, because the preview and the shop must not disagree about what a
+   word means. Lane AD wired that setting to the storefront this round; until
+   then the preview emitted no --kbb-ratio at all and fell back to the rule at
+   line 1730, which is why nobody noticed the two had drifted. An unknown value
+   falls to 1/1 here exactly as `default` does there. */
+const PS_RATIO={square:'1/1',portrait:'1/1.02',tall:'1/1.25',landscape:'1.2/1'};
+
 function psPreview(){
   const el=$('#psPrev'); if(!el) return;
   el.className='skinprev ' + ['show_brand|pc-nobrand','show_category|pc-nocat','show_rating|pc-norate',
-    'show_was_price|pc-nowas','show_discount|pc-nodisc','show_cart|pc-nocart']
+    'show_was_price|pc-nowas','show_discount|pc-nodisc','show_new|pc-nonew','show_cart|pc-nocart']
     .filter(p=>!psGet(p.split('|')[0])).map(p=>p.split('|')[1]).join(' ');
   el.setAttribute('style',`--kbb-sale:${psGet('sale_colour')};--kbb-new:${psGet('new_colour')};
     --kbb-price:${psGet('price_colour')};--kbb-star:${psGet('star_colour')};
     --kbb-cart-bg:${psGet('cart_bg')};--kbb-cart-fg:${psGet('cart_fg')};
-    --kbb-radius:${psGet('card_radius')}px;--kbb-name-lines:${psGet('name_lines')}`);
-  el.innerHTML=skinCard(psGet('grid_skin'), psGet('cart_label'));
+    --kbb-radius:${psGet('card_radius')}px;--kbb-ratio:${PS_RATIO[psGet('image_ratio')] || '1/1'};--kbb-name-lines:${psGet('name_lines')}`);
+  el.innerHTML=skinCard(psGet('grid_skin'));
 }
 
 /* ---- shortcode builder ---- */

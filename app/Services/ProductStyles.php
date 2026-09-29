@@ -18,10 +18,62 @@ class ProductStyles
     public const SCHEMA = [
         // ── Layout ──
         'grid_skin'          => ['skin',   'Default card style', 'classic', 'Used wherever a grid does not choose its own.'],
-        'grid_columns'       => ['range',  'Columns · desktop', 4, '', ['min' => 2, 'max' => 6, 'step' => 1, 'unit' => '']],
-        'grid_columns_tablet'=> ['range',  'Columns · tablet', 3, '', ['min' => 2, 'max' => 4, 'step' => 1, 'unit' => '']],
-        'grid_columns_mobile'=> ['range',  'Columns · phone', 2, 'Two is the most a narrow screen holds comfortably.', ['min' => 1, 'max' => 2, 'step' => 1, 'unit' => '']],
-        'grid_gap'           => ['range',  'Gap between cards', 16, '', ['min' => 6, 'max' => 32, 'step' => 2, 'unit' => 'px']],
+        /*
+         * ── FIVE CONTROLS ARE GONE FROM HERE, AND WHY EACH ONE ────── Lane AD ──
+         *
+         * Measured, not reasoned: every key in this schema was moved off its
+         * default and the whole storefront re-rendered, and twenty of them
+         * changed no byte of it. ProductStylesReachTheShopTest is that
+         * measurement, kept as a test. The other fifteen are wired up in
+         * layouts/store.blade.php now. These five are not, because each is a
+         * SECOND ANSWER to a question something else already answers, and a
+         * screen that offers two answers to one question is the thing this shop
+         * keeps paying for.
+         *
+         *   Columns · desktop   grid_columns. The count comes from --kbb-track
+         *                       in kbb.css, derived from the row the grid really
+         *                       has, and from Appearance → Site layout's tile
+         *                       minimum — which reaches all five product grids
+         *                       where this reached one. It is ALSO still offered
+         *                       on two other screens (the Ecommerce panel's
+         *                       Catalogue layout, and LayoutApiController's skin
+         *                       + columns save), so it was dead in triplicate.
+         *                       The key is left in the settings table because
+         *                       those two still write it; it is this screen that
+         *                       had no business offering it.
+         *   Columns · tablet    grid_columns_tablet. Never reached anything at
+         *                       all, on any grid, in any release — --kbb-cols-t
+         *                       had exactly one writer and that writer was only
+         *                       ever called from the admin preview. There is no
+         *                       tablet ladder to wire it to any more: the count
+         *                       rises with the row.
+         *   Columns · phone     grid_columns_mobile. --kbb-cols-floor:2 in
+         *                       kbb.css guarantees two on a phone from the
+         *                       grid's own width, which is the same answer
+         *                       arrived at from the thing that matters.
+         *   Gap between cards   grid_gap. THE GAP IS NOT ONE NUMBER ON THIS SHOP
+         *                       AND DELIBERATELY SO: /shop sits beside a 250px
+         *                       filter rail and declares 18px (12px under 680),
+         *                       the related-products rail declares 18px (10px
+         *                       under 600), and the shared rails use 16px. Those
+         *                       are three documented decisions about three
+         *                       different row widths, each made on its own
+         *                       element, and an inherited custom property cannot
+         *                       reach past any of them. A slider that silently
+         *                       governed three grids of five would be the same
+         *                       inconsistency again. It is worse than that:
+         *                       --kbb-gap is a TERM IN THE TRACK ARITHMETIC
+         *                       (kbb.css: `(100% - (floor - 1) * var(--kbb-gap))
+         *                       / floor`), so "Gap between cards" would also
+         *                       silently change the COLUMN COUNT — the question
+         *                       Appearance → Site layout now owns. If a gap
+         *                       control is ever wanted it belongs there, beside
+         *                       the tile minimum, as one number for all five.
+         *   Button wording      cart_label, below. The card's button text is
+         *                       __('store.product_card.add_to_cart') and has
+         *                       been for as long as the tile has been shared;
+         *                       Content → Translations is where it is edited.
+         */
         'card_radius'        => ['range',  'Card roundness', 14, '', ['min' => 0, 'max' => 26, 'step' => 2, 'unit' => 'px']],
         // ▲ SQUARE, NOT PORTRAIT — a default the owner asked for in as many
         // words: "i need the same, with square image thumbnail". Lane PG. The
@@ -37,7 +89,6 @@ class ProductStyles
         'show_discount'      => ['bool',   'Discount badge', true, ''],
         'show_new'           => ['bool',   'New badge', true, 'On products with no reviews yet.'],
         'show_cart'          => ['bool',   'Add to cart button', true, ''],
-        'cart_label'         => ['text',   'Button wording', 'Add to cart', ''],
         'name_lines'         => ['range',  'Product name lines', 0, 'Zero shows the whole name, however long. One to four trims it.', ['min' => 0, 'max' => 4, 'step' => 1, 'unit' => '']],
 
         // ── Colour ──
@@ -67,10 +118,10 @@ class ProductStyles
     ];
 
     public const TABS = [
-        'layout'  => ['Layout', 'Columns, spacing and card shape.',
-                      ['grid_skin', 'grid_columns', 'grid_columns_tablet', 'grid_columns_mobile', 'grid_gap', 'card_radius', 'image_ratio']],
+        'layout'  => ['Layout', 'Card shape and corners.',
+                      ['grid_skin', 'card_radius', 'image_ratio']],
         'content' => ['Card content', 'What each card shows.',
-                      ['show_brand', 'show_category', 'show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_cart', 'cart_label', 'name_lines']],
+                      ['show_brand', 'show_category', 'show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_cart', 'name_lines']],
         'colour'  => ['Colour', 'Badges, price and the button.',
                       ['sale_colour', 'new_colour', 'price_colour', 'star_colour', 'cart_bg', 'cart_fg']],
         'sticky'  => ['Sticky Add to Cart', 'The bar that follows the shopper down the product page.',
@@ -161,10 +212,12 @@ class ProductStyles
         };
 
         return implode(';', [
-            '--kbb-cols:' . $c['grid_columns'],
-            '--kbb-cols-t:' . $c['grid_columns_tablet'],
-            '--kbb-cols-m:' . $c['grid_columns_mobile'],
-            '--kbb-gap:' . $c['grid_gap'] . 'px',
+            /*
+             * --kbb-cols, --kbb-cols-t, --kbb-cols-m and --kbb-gap used to head
+             * this list. They are gone with the controls that fed them; see the
+             * note in SCHEMA. Emitting a column count here would now FIGHT the
+             * track arithmetic in kbb.css rather than feed it.
+             */
             '--kbb-radius:' . $c['card_radius'] . 'px',
             '--kbb-ratio:' . $ratio,
             '--kbb-sale:' . $c['sale_colour'],
@@ -182,12 +235,35 @@ class ProductStyles
     }
 
     /**
-     * Card variables that belong to the page rather than to one grid.
+     * The name clamp on its own — KEPT ON PURPOSE, AND NO LONGER CALLED HERE.
      *
-     * Emitted on <body> so a shortcode grid, a homepage rail and a lone
-     * <x-product-card> all trim their titles the same way. They were previously
-     * declared in the stylesheet with a two-line fallback and emitted by
-     * nothing, so the setting could not take effect anywhere.
+     * This was the whole of what this class reached the storefront with: two
+     * properties on <body>, while cssVariables()' other ten went only to the
+     * admin preview. layouts/store.blade.php emits cssVariables() itself now,
+     * which has always carried --kbb-name-lines and --kbb-name-min as well, so
+     * calling both would declare the clamp twice in one style attribute.
+     *
+     * ── WHY IT IS STILL HERE, WHICH IS NOT SENTIMENT ────────────────────────
+     *
+     * A method with no caller is exactly the shape this lane was sent to find,
+     * and deleting it was the first version of this change. It is back because
+     * of how code reaches this server. A package ships PHP and Blade together,
+     * but storage/framework/views keys a compiled view by its SOURCE PATH and
+     * decides staleness on file times — and an unzip's timestamps are not
+     * reliably newer than what is already on disk. So the window where the new
+     * ProductStyles.php is loaded and the OLD compiled store.blade.php is still
+     * being served is real, and it is exactly the window the migration beside
+     * this change exists to close.
+     *
+     * If that migration does not run — and CLAUDE.md's landmine list records
+     * five packages whose migrations were shipped and never ran — then deleting
+     * this method turns a stale compiled view into "Call to undefined method"
+     * on EVERY STOREFRONT PAGE. Keeping four lines is cheap; a shop that 500s
+     * until somebody with a shell clears a cache is not, on a host whose owner
+     * applies packages by hand.
+     *
+     * It can go in a later release, once no compiled view anywhere can still
+     * name it.
      */
     public function cardVariables(): string
     {

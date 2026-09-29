@@ -1155,10 +1155,6 @@ mobile_menu|scrim|range|"abc"|0
 mobile_menu|scrim|range|""|0
 mobile_menu|scrim|range|null|0
 mobile_menu|scrim|range|"3.7"|3
-mobile_menu|icon_style|select|"default"|'default'
-mobile_menu|icon_style|select|"nope"|'default'
-mobile_menu|icon_style|select|""|'default'
-mobile_menu|icon_style|select|null|'default'
 mobile_menu|show_grab|bool|true|true
 mobile_menu|show_grab|bool|false|false
 mobile_menu|show_grab|bool|"1"|true
@@ -2791,42 +2787,6 @@ slim_footer|pay_tamara|bool|null|false
 product_styles|grid_skin|skin|"classic"|'classic'
 product_styles|grid_skin|skin|"nope"|'classic'
 product_styles|grid_skin|skin|null|'classic'
-product_styles|grid_columns|range|5|5
-product_styles|grid_columns|range|"5"|5
-product_styles|grid_columns|range|0|2
-product_styles|grid_columns|range|-10|2
-product_styles|grid_columns|range|99999|6
-product_styles|grid_columns|range|"abc"|2
-product_styles|grid_columns|range|""|2
-product_styles|grid_columns|range|null|2
-product_styles|grid_columns|range|"3.7"|3
-product_styles|grid_columns_tablet|range|5|4
-product_styles|grid_columns_tablet|range|"5"|4
-product_styles|grid_columns_tablet|range|0|2
-product_styles|grid_columns_tablet|range|-10|2
-product_styles|grid_columns_tablet|range|99999|4
-product_styles|grid_columns_tablet|range|"abc"|2
-product_styles|grid_columns_tablet|range|""|2
-product_styles|grid_columns_tablet|range|null|2
-product_styles|grid_columns_tablet|range|"3.7"|3
-product_styles|grid_columns_mobile|range|5|2
-product_styles|grid_columns_mobile|range|"5"|2
-product_styles|grid_columns_mobile|range|0|1
-product_styles|grid_columns_mobile|range|-10|1
-product_styles|grid_columns_mobile|range|99999|2
-product_styles|grid_columns_mobile|range|"abc"|1
-product_styles|grid_columns_mobile|range|""|1
-product_styles|grid_columns_mobile|range|null|1
-product_styles|grid_columns_mobile|range|"3.7"|2
-product_styles|grid_gap|range|5|6
-product_styles|grid_gap|range|"5"|6
-product_styles|grid_gap|range|0|6
-product_styles|grid_gap|range|-10|6
-product_styles|grid_gap|range|99999|32
-product_styles|grid_gap|range|"abc"|6
-product_styles|grid_gap|range|""|6
-product_styles|grid_gap|range|null|6
-product_styles|grid_gap|range|"3.7"|6
 product_styles|card_radius|range|5|5
 product_styles|card_radius|range|"5"|5
 product_styles|card_radius|range|0|0
@@ -2917,12 +2877,6 @@ product_styles|show_cart|bool|"no"|true
 product_styles|show_cart|bool|1|true
 product_styles|show_cart|bool|0|false
 product_styles|show_cart|bool|null|false
-product_styles|cart_label|text|"abc"|'abc'
-product_styles|cart_label|text|""|'Add to cart'
-product_styles|cart_label|text|"  sp  "|'sp'
-product_styles|cart_label|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-product_styles|cart_label|text|null|'Add to cart'
-product_styles|cart_label|text|"<b>x<\/b>"|'<b>x</b>'
 product_styles|name_lines|range|5|4
 product_styles|name_lines|range|"5"|4
 product_styles|name_lines|range|0|0
