@@ -139,16 +139,18 @@ foreach (range(1, 4) as $i) {
         \App\Support\ImageVariants::generate('/'.$poster);
     }
 
-    /* A REAL mp4, cut by ffmpeg when it is here.
-       Without one every tile's <video> is a 404 of its own, and a 404 hunt
-       that turns up the video file rather than the cover is a 404 hunt that
-       proves nothing about the cover. */
+    /* A REAL mp4, copied from the one this shop already carries.
+       App\Support\UgcDemoMedia holds a genuine H.264 clip as base64 for the
+       Content -> Demo content screen, and materialise() writes it into
+       /uploads/ugc/. Without a playable file every tile's <video> is a 404 of
+       its own, and a 404 hunt that turns up the video rather than the cover is
+       a 404 hunt that proves nothing about the cover. (The container's ffmpeg
+       has no `lavfi`, so there is nothing to synthesise one with.) */
     $clip = 'uploads/ugc/perf-clip-'.$i.'.mp4';
-    $ff = '/opt/pw-browsers/ffmpeg-1011/ffmpeg-linux';
+    $demo = \App\Support\UgcDemoMedia::materialise();
 
-    if (is_file($ff) && ! is_file(public_path($clip))) {
-        @shell_exec(escapeshellarg($ff).' -y -f lavfi -i color=c=0x2A2228:s=360x640:d=2 -c:v libx264 '
-            .'-pix_fmt yuv420p -movflags +faststart '.escapeshellarg(public_path($clip)).' 2>/dev/null');
+    if ($demo !== null && ! is_file(public_path($clip))) {
+        @copy(public_path(ltrim($demo['clip'], '/')), public_path($clip));
     }
 
     $video = UgcVideo::updateOrCreate(['slug' => 'perf-clip-'.$i], [

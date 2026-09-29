@@ -41,7 +41,23 @@ else
   done
   cp -a "$APP/app" "$SRC/app"
 fi
-ln -sfn "$APP/vendor" "$SRC/vendor"
+# ── vendor IS HARDLINK-COPIED, NOT SYMLINKED, AND THAT IS NOT A DETAIL ──────
+#
+# Every other preview in tools/ symlinks it, and for a copy of the CURRENT tree
+# that is right and free. It is wrong the moment this script is given a git ref.
+# Composer's autoloader resolves App\ from `vendor/composer/`'s own __DIR__, so
+# through a symlink it maps `App\Services\Ugc\Tile` to the WORKTREE's file —
+# and the "before" preview then runs the new PHP against the old Blade.
+#
+# Measured, 29 September: the before tree dropped a UGC cover whose file is
+# missing, which is this lane's own change and is supposed to be the thing the
+# after tree does and the before tree does not. A before/after that silently
+# shares half its code is worse than no before/after.
+#
+# `cp -al` is hardlinks: 570 MB of vendor costs a few thousand directory
+# entries and no data blocks.
+rm -rf "$SRC/vendor"
+cp -al "$APP/vendor" "$SRC/vendor"
 mkdir -p "$SRC/storage/framework/views" "$SRC/storage/framework/sessions" \
          "$SRC/storage/framework/cache/data" "$SRC/storage/logs" "$SRC/storage/app/public" \
          "$SRC/bootstrap/cache"
