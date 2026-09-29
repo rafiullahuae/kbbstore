@@ -153,24 +153,104 @@ not a grep — and fails on a physical direction property or a `[dir]` selector.
 
 ## Found and not fixed — one line that looks like a bug on the phone
 
-On a **wrapped** member name the link's underline draws under the FIRST line
-only, so at 390px a two-line name reads as though a rule has been drawn through
-the middle of it. It is visible in every column of `contact-sheet-390.png`
-including **Today's** — it pre-dates all three treatments and none of them makes
-it worse or better.
+> **Corrected 29 September by Lane FIN2, measured rather than read.** The
+> symptom below is real and still open. The *diagnosis* under it was wrong, and
+> the one-line repair it offered would have taken two live controls off the shop.
+> Both corrections are in this section; the paragraph that was here is quoted so
+> the change is visible rather than silent.
 
-The cause is that `a.ksl-nm` is underlined with `border-bottom`, and a border on
-an inline box is drawn on its first fragment rather than on every line of it.
-The one-line fix is to underline with the text decoration instead:
+On a **wrapped** member name the underline is one hairline under the WHOLE name,
+drawn at the width of its LONGEST line — so at 390px, where seven of this
+fixture's eight names wrap, it sits under the second line and runs well past the
+end of it, and reads as a stray rule in a box whose whole idea is that it has no
+rules. It is pre-existing: it is in today's drawing exactly as it is in the
+three treatments, and none of them makes it worse or better.
 
-    a.ksl-nm{border-bottom:0;
+**What was written here before, and why it is wrong:**
+
+> "the link's underline draws under the FIRST line only … a border on an inline
+> box is drawn on its first fragment rather than on every line of it."
+
+`a.ksl-nm` is not an inline box. `.ksl-w` is `display:flex;flex-direction:column`
+and the link is one of its children, so it is **blockified** — one block box,
+one `border-bottom`, at the bottom of the whole name. Measured in Chromium at
+390 with `Range.getClientRects()`, which returns one rect per line box
+(`tools/fin2-underline-shots.cjs`, `storage/fin2-logs/fin2-underline-before.json`):
+
+| | first line bottom | last line bottom | painted border |
+|---|---|---|---|
+| today | 849.3 | 865.4 | **870.5** — 5.1px BELOW the last line |
+
+Under the old reading the border would have been at ~849. It is not. Anyone who
+"fixes the first-line underline" is fixing something that is not happening, and
+`box-decoration-break` — the property the old reading points at — would change
+nothing here.
+
+**The repair is still `text-decoration`**, because a decoration underlines every
+line at each line's own width and says "link" where a full-width hairline says
+"row rule". But it is **three rules and not one**, and the one-line version that
+used to stand here is the dangerous part of this section:
+
+    a.ksl-nm{border-bottom:0;                          ← WRONG, do not paste
              text-decoration:underline;
              text-decoration-color:var(--line,rgba(42,34,40,.10));
              text-underline-offset:2px}
 
-It is left out of the three treatments deliberately: it changes a link style on
-a shipped page and it is not the thing he asked for. It belongs in the same
-commit that ships whichever treatment he picks, called out on its own.
+Pasted as written that snippet kills two controls that did not exist when it was
+drafted, silently, with no error anywhere:
+
+* `.ksl-noul a.ksl-nm{border-bottom:0}` is the storefront half of
+  **Appearance → Set → Desktop / Mobile · "Underline the linked names"**
+  (`SetAppearance::SCHEMA['p_underline_on']`, emitted as the class `ksl-noul` by
+  `SetAppearance::panelClass()`). Cancelling a border that is no longer drawn
+  cancels nothing, and the switch reports success and moves the page not at all.
+* `var(--line, …)` reaches past `--ksl-linec`, which is that same screen's line
+  colour. The slider stays on the screen and stops reaching the shop.
+
+**The whole repair, all three rules, in the partial's `@once` `<style>`:**
+
+    a.ksl-nm{color:inherit;
+             text-decoration:underline;
+             text-decoration-color:var(--ksl-linec,var(--line,rgba(42,34,40,.10)));
+             text-decoration-thickness:1px;text-underline-offset:2px;
+             padding-block:3px;margin-block:-3px}
+    a.ksl-nm:hover{text-decoration-color:currentColor}
+    .ksl-noul a.ksl-nm{text-decoration:none}
+
+Note that `text-decoration:none` comes OFF the base rule as well — leaving it
+there would cancel the `underline` on the same rule.
+
+**Measured cost of making the change** (Chromium, `tools/fin2-underline-shots.cjs`,
+the eight-member fixture):
+
+| | 390 | 1280 |
+|---|---|---|
+| panel height, today | 387px | 328px |
+| panel height, repaired | **382px** | **328px** |
+| `scrollWidth` | 390 → 390 | 1280 → 1280 |
+| names wrapping to two lines | 7 of 8 | 0 of 8 |
+
+The 5px at 390 is the border's own pixel plus the rounding under it, eight rows
+of it; the box gets slightly SHORTER, which is the direction this whole document
+is arguing for. `StorefrontEnglishUnchangedTest` does **not** move — measured
+with the repair applied, 46 passed across that pin, `SetAppearanceTest`,
+`SetBuyColumnTest` and `SetContentsBoxTreatmentsTest` — because the English walk
+seeds no set product, so the panel's style block never reaches a pinned page.
+That is worth knowing in both directions: the pin does not cover this box at all.
+
+`tests/Feature/SetContentsUnderlineTest.php` is the guard. It does not pin
+`border-bottom`; it reads which property actually draws the underline and then
+requires the OFF switch and the `:hover` rule to name that same property, so it
+is green today, green after the repair above, and red on the half-repair. Proved
+both ways: pasting the old one-line snippet turns three of its four cases red.
+
+Pictures: `docs/lane-fin2-shots/setbox-before-390.png` and `-after-390.png`
+(and the 1280 pair), with the per-name line-box geometry beside them in
+`underline-before.json` / `underline-after.json`.
+
+**Whose it is.** `resources/views/partials/set-contents-panel.blade.php` is Lane
+SA2's this round, so Lane FIN2 did not make the edit. The three rules above are
+the whole change.
 
 ## To ship the one he picks
 
