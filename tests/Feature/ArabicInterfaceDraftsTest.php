@@ -14,7 +14,7 @@ use Tests\Support\ArabicShop;
  * THE ARABIC THIS LANE WROTE, AND THE THREE WAYS IT COULD HAVE BEEN WRONG.
  *
  * Before this lane the repository shipped no Arabic at all, so every one of the
- * 1,026 interface strings fell back to English on every /ar page. These pin
+ * 1,035 interface strings fell back to English on every /ar page. These pin
  * what was done about it and, more importantly, what was NOT: the shop does not
  * move until the owner presses a button.
  */
@@ -379,13 +379,40 @@ it('counts them as drafts awaiting review and not as work already done', functio
      *
      * `translated` is still 0, all three are DRAFTS, and the strip renders its
      * English on /ar until somebody approves them.
+     * ── 1,023 -> 1,032, ADVANCED THE SAME WAY — Lane BN2, round 8 ──────────
+     *
+     * Nine keys landed with the picture slider, and they are the whole of the
+     * difference: store.home.banner_slider_label, _prev, _next, _bars, _go,
+     * _slide, _live, _pause and _play. Every one of them is an ACCESSIBLE NAME
+     * or a live-region sentence for an icon-only control, so all nine are read
+     * aloud and none of them is drawn — which is why they had to exist in
+     * Arabic at all.
+     *
+     * Read the diff rather than the number: the sibling case
+     * `it translates everything except the eight paragraphs it says it left`
+     * still enumerates the untranslated set by NAME, is unchanged and is still
+     * green, which is what says no tenth key crept in behind these. All nine
+     * are drafts like the 1,023 before them, and `translated` is still 0.
+     * ── AND THE TWO ABOVE LANDED IN THE SAME ROUND: 1,023 -> 1,035 ────────
+     *
+     * Lane FB and Lane BN2 each advanced this from 1,023 in their own branch
+     * and neither could see the other. FB added three and wrote 1,026; BN2
+     * added nine and wrote 1,032; the merged truth is 1,023 + 3 + 9 = 1,035.
+     * Both notes are kept above, because each still explains its own keys and
+     * neither is wrong about them — only the running total was, and only after
+     * they met.
+     *
+     * The sibling case that enumerates the untranslated set BY NAME is the
+     * check that matters here: it is untouched and green, which is what says
+     * twelve keys is the WHOLE of the difference and no thirteenth crept in
+     * with the merge.
      */
     ArabicShop::on();
 
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1026, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1035, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

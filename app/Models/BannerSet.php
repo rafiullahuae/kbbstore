@@ -34,6 +34,9 @@ class BannerSet extends Model
         'ratio', 'show_text', 'show_button', 'shadow',
         // Lane BP, round 7. Every one ships at what the page already draws.
         'bg_mode', 'bg_color', 'bg_image', 'btn_bg', 'btn_text', 'btn_hover', 'title_pos',
+        // Lane BN2, round 8. `kind` ships at `cards`, which is what every row
+        // in this table already is; the other three are read only by a slider.
+        'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
     ];
 
     protected $casts = [
@@ -97,6 +100,82 @@ class BannerSet extends Model
     ];
 
     public const STATUSES = ['publish' => 'Published', 'draft' => 'Draft'];
+
+    /* ══════════════════════ LANE BN2 — THE SECOND KIND ═══════════════════════ */
+
+    /**
+     * What a set IS, `token => label`.
+     *
+     * `cards` FIRST and it is the default, because it is what every row in this
+     * table was before this column existed — rule 1, and the reason applying
+     * the package moves nothing. `kind()` below is the third door: a row edited
+     * straight in the database to a kind nobody issued draws `cards`.
+     *
+     * The two kinds share this table deliberately rather than getting one each.
+     * The owner's words were "another banner type", not "another screen": the
+     * sets list, the homepage picker, the module switch, the preview, the
+     * publish flag and the background are the same facts about the same thing,
+     * and a second table would have meant a second copy of all six.
+     */
+    public const KINDS = [
+        'cards' => 'Cards — a row of picture cards that scrolls itself',
+        'slider' => 'Slider — pictures only, one at a time, with arrows and bars',
+    ];
+
+    /** The partial each kind draws through. CONSTANTS, never a built string. */
+    public const KIND_PARTIALS = [
+        'cards' => 'partials.home.cards-banner',
+        'slider' => 'partials.home.slider-banner',
+    ];
+
+    /**
+     * The four treatments of the slider, `token => [label, the note]`.
+     *
+     * The owner asked for "some nice previews to chooose from" and has twice
+     * sent back options that were too alike. These four vary the three things
+     * that actually read at thumbnail size — WHERE THE ARROWS SIT, HOW THE BARS
+     * READ, and WHETHER THE BARS ARE ON THE PICTURE OR UNDER IT — rather than
+     * the radius and the shade of white.
+     *
+     * Every one of them is the SAME MARKUP. The token becomes one class on the
+     * outer element and the stylesheet does the rest, so there is no fourth
+     * template to keep in step and no treatment that quietly has a feature the
+     * others do not.
+     */
+    public const SLIDER_STYLES = [
+        'inset' => ['On the picture — round arrows, full-width bars',
+            'Round arrows over the picture at each edge, and the bars are segments running the whole width along the bottom of it. The boldest of the four.'],
+        'outside' => ['Beside the picture — arrows outside, ticks below',
+            'The arrows sit outside the picture so nothing covers it, and the bars are short ticks centred underneath. The quietest of the four.'],
+        'veil' => ['Clean — arrows on hover, one filling rail',
+            'Nothing over the picture until the mouse is on it; underneath, one thin rail whose current segment fills as the picture rests. On a phone the arrows are always there, because there is no hover.'],
+        'corner' => ['Cornered — a joined pair, bars opposite',
+            'Both arrows together as one capsule in the bottom corner, with the bars as short thick ticks in the other. The most compact of the four.'],
+    ];
+
+    /**
+     * The frame shapes a SLIDER may take, `token => [label, the aspect-ratio]`.
+     *
+     * Its own list rather than RATIOS, and that is not duplication. RATIOS is
+     * the CARD shape — portrait, because a row of six cards is portrait — and
+     * it has no entry wider than 16:9 because a card never is. A banner is the
+     * other way round: 21:9 and 3:1 are the ordinary shapes and 3:4 is the odd
+     * one. Sharing the list would have meant either a banner with no wide
+     * option or a card list with two entries that make no sense in it.
+     *
+     * The value on the right is written into `aspect-ratio` as-is and is a
+     * literal in this file, exactly as RATIOS' is.
+     */
+    public const SLIDER_RATIOS = [
+        '3/1' => ['Ultra-wide — 3 : 1', '3 / 1'],
+        '21/9' => ['Cinematic — 21 : 9', '21 / 9'],
+        '2/1' => ['Wide — 2 : 1', '2 / 1'],
+        '16/9' => ['Widescreen — 16 : 9', '16 / 9'],
+        '3/2' => ['Photo — 3 : 2', '3 / 2'],
+        '4/3' => ['Classic — 4 : 3', '4 / 3'],
+        '1/1' => ['Square — 1 : 1', '1 / 1'],
+        '4/5' => ['Portrait — 4 : 5', '4 / 5'],
+    ];
 
     /**
      * What sits behind the whole row, `token => label`.
@@ -210,5 +289,81 @@ class BannerSet extends Model
     public function titlePosition(): string
     {
         return isset(self::TITLE_POSITIONS[(string) $this->title_pos]) ? (string) $this->title_pos : 'below';
+    }
+
+    /* ══════════════════════ LANE BN2 — THE SECOND KIND ═══════════════════════ */
+
+    /**
+     * `cards` or `slider`, and ANYTHING ELSE IS `cards`.
+     *
+     * The same third door `ratioCss()` and `bgMode()` open, and here it is the
+     * one that carries rule 1: a row whose `kind` column is null — which is
+     * every row on a server where the migration added the column without a
+     * backfill, and every row hydrated by a test that predates it — draws the
+     * cards banner it has always drawn. There is no state of this table in
+     * which a set silently becomes a slider.
+     */
+    public function kind(): string
+    {
+        return isset(self::KINDS[(string) $this->kind]) ? (string) $this->kind : 'cards';
+    }
+
+    public function isSlider(): bool
+    {
+        return $this->kind() === 'slider';
+    }
+
+    /**
+     * The Blade partial this set draws through.
+     *
+     * ── A LOOKUP IN A CONSTANT, NEVER A BUILT STRING ────────────────────────
+     *
+     * `'partials.home.'.$this->kind.'-banner'` would be shorter and it would be
+     * a template name assembled from a database column, which is a file path
+     * assembled from a database column. `kind()` has already narrowed the value
+     * to one of two literals and this maps those two literals to two literals,
+     * so the set of view names this method can ever return is fixed at two and
+     * is visible in this file.
+     *
+     * The homepage, the stored preview and the buffered preview all ask this
+     * one method, so a set cannot be drawn as a slider in the admin and as
+     * cards on the shop.
+     */
+    public function homePartial(): string
+    {
+        return self::KIND_PARTIALS[$this->kind()];
+    }
+
+    /** One of SLIDER_STYLES' keys, or the default. */
+    public function sliderStyle(): string
+    {
+        return isset(self::SLIDER_STYLES[(string) $this->slider_style]) ? (string) $this->slider_style : 'inset';
+    }
+
+    /**
+     * Does this treatment's current bar FILL as the picture rests?
+     *
+     * One token does, and the answer lives here rather than as
+     * `$set->sliderStyle() === 'veil'` in the template — for the reason this
+     * class's own header gives about the enums: a treatment renamed, or a
+     * second filling one added, would otherwise need finding in a Blade file.
+     * SLIDER_STYLES is the list; this is the one property of it the markup
+     * needs to ask about.
+     */
+    public function sliderFills(): bool
+    {
+        return $this->sliderStyle() === 'veil';
+    }
+
+    /** The desktop `aspect-ratio` value for a slider, or the default's. */
+    public function sliderRatioCss(): string
+    {
+        return (self::SLIDER_RATIOS[$this->slider_ratio] ?? self::SLIDER_RATIOS['16/9'])[1];
+    }
+
+    /** The same, below 768px. */
+    public function sliderRatioMobileCss(): string
+    {
+        return (self::SLIDER_RATIOS[$this->slider_ratio_m] ?? self::SLIDER_RATIOS['4/3'])[1];
     }
 }
