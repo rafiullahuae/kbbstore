@@ -1,0 +1,1944 @@
+{
+  "ledger-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2761,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 292
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 652
+    },
+    "brandY": 732,
+    "title": {
+      "w": 244,
+      "h": 82,
+      "y": 757
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 86,
+      "h": 59,
+      "y": 757
+    },
+    "moneyFont": "22px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 346,
+      "h": 19,
+      "y": 870
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 943
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 1015
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1401
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1401
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 34,
+      "y": 1524
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 240,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "ledger-390-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "dossier-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2598,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 306
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 662
+    },
+    "brandY": 717,
+    "title": {
+      "w": 210,
+      "h": 78,
+      "y": 742
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 82,
+      "h": 58,
+      "y": 742
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 308,
+      "h": 19,
+      "y": 851
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 308,
+      "h": 66,
+      "y": 884
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 955
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 182,
+      "h": 52,
+      "y": 1277
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1277
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 57,
+      "y": 1382
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 333,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "dossier-390-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "counter-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2675,
+    "galleryFrame": {
+      "w": 318,
+      "h": 318,
+      "y": 318
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 318,
+      "h": 68,
+      "y": 648
+    },
+    "brandY": 730,
+    "title": {
+      "w": 346,
+      "h": 49,
+      "y": 765
+    },
+    "titleFont": "19px",
+    "money": {
+      "w": 346,
+      "h": 33,
+      "y": 865
+    },
+    "moneyFont": "29px",
+    "priceBesideTitle": null,
+    "ratingBar": {
+      "w": 346,
+      "h": 19,
+      "y": 924
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 959
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 1031
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1335
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1335
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 47,
+      "y": 1417
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 282,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "counter-390-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "deck-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2659,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 304
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 660
+    },
+    "brandY": 728,
+    "title": {
+      "w": 248,
+      "h": 82,
+      "y": 753
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 82,
+      "h": 58,
+      "y": 753
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 346,
+      "h": 19,
+      "y": 866
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 898
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 970
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 198,
+      "h": 52,
+      "y": 781
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 781
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 339,
+      "y": 1374
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 160,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 0,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "deck-390-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 0,
+    "visiblePanelIndex": -1
+  },
+  "marquee-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2698,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 304
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 660
+    },
+    "brandY": 746,
+    "title": {
+      "w": 248,
+      "h": 52,
+      "y": 771
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 82,
+      "h": 58,
+      "y": 771
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 346,
+      "h": 19,
+      "y": 860
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 893
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 964
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1328
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1328
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 48,
+      "y": 1436
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 214,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "marquee-390-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "ledger-set-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2529,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 292
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 652
+    },
+    "brandY": 732,
+    "title": {
+      "w": 229,
+      "h": 27,
+      "y": 757
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 101,
+      "h": 25,
+      "y": 757
+    },
+    "moneyFont": "22px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 860
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 932
+    },
+    "bundleBars": 0,
+    "setRows": 3,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1319
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1319
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 34,
+      "y": 1442
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 240,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "ledger-soldout-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2555,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 292
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 652
+    },
+    "brandY": 732,
+    "title": {
+      "w": 244,
+      "h": 55,
+      "y": 757
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 86,
+      "h": 25,
+      "y": 757
+    },
+    "moneyFont": "22px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 887
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 959
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1345
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1345
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 34,
+      "y": 1468
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 240,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "dossier-set-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2365,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 306
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 662
+    },
+    "brandY": 717,
+    "title": {
+      "w": 196,
+      "h": 26,
+      "y": 742
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 96,
+      "h": 24,
+      "y": 742
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 308,
+      "h": 66,
+      "y": 803
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 874
+    },
+    "bundleBars": 0,
+    "setRows": 3,
+    "addToCart": {
+      "w": 182,
+      "h": 52,
+      "y": 1193
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1193
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 57,
+      "y": 1298
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 333,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "dossier-soldout-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2393,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 306
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 662
+    },
+    "brandY": 717,
+    "title": {
+      "w": 210,
+      "h": 52,
+      "y": 742
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 82,
+      "h": 24,
+      "y": 742
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 308,
+      "h": 66,
+      "y": 829
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 900
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 182,
+      "h": 52,
+      "y": 1222
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1222
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 57,
+      "y": 1327
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 333,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "counter-set-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2449,
+    "galleryFrame": {
+      "w": 318,
+      "h": 318,
+      "y": 318
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 318,
+      "h": 68,
+      "y": 648
+    },
+    "brandY": 730,
+    "title": {
+      "w": 346,
+      "h": 25,
+      "y": 765
+    },
+    "titleFont": "19px",
+    "money": {
+      "w": 346,
+      "h": 33,
+      "y": 840
+    },
+    "moneyFont": "29px",
+    "priceBesideTitle": null,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 906
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 977
+    },
+    "bundleBars": 0,
+    "setRows": 3,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1283
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1283
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 47,
+      "y": 1365
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 282,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "counter-soldout-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2448,
+    "galleryFrame": {
+      "w": 318,
+      "h": 318,
+      "y": 318
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 318,
+      "h": 68,
+      "y": 648
+    },
+    "brandY": 730,
+    "title": {
+      "w": 346,
+      "h": 25,
+      "y": 765
+    },
+    "titleFont": "19px",
+    "money": {
+      "w": 346,
+      "h": 33,
+      "y": 840
+    },
+    "moneyFont": "29px",
+    "priceBesideTitle": null,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 906
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 977
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1282
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1282
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 47,
+      "y": 1364
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 282,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "deck-set-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2453,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 304
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 660
+    },
+    "brandY": 728,
+    "title": {
+      "w": 234,
+      "h": 27,
+      "y": 753
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 96,
+      "h": 24,
+      "y": 753
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 815
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 887
+    },
+    "bundleBars": 0,
+    "setRows": 3,
+    "addToCart": {
+      "w": 198,
+      "h": 52,
+      "y": 781
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 781
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 216,
+      "y": 1292
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 160,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 0,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "deck-soldout-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2479,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 304
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 660
+    },
+    "brandY": 728,
+    "title": {
+      "w": 248,
+      "h": 55,
+      "y": 753
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 82,
+      "h": 24,
+      "y": 753
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 842
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 914
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 198,
+      "h": 52,
+      "y": 781
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 781
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 216,
+      "y": 1318
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 160,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 0,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "marquee-set-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2522,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 304
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 660
+    },
+    "brandY": 746,
+    "title": {
+      "w": 234,
+      "h": 26,
+      "y": 771
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 96,
+      "h": 24,
+      "y": 771
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 832
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 903
+    },
+    "bundleBars": 0,
+    "setRows": 3,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1303
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1303
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 48,
+      "y": 1411
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 214,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "marquee-soldout-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2513,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 304
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 660
+    },
+    "brandY": 746,
+    "title": {
+      "w": 248,
+      "h": 52,
+      "y": 771
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 82,
+      "h": 24,
+      "y": 771
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": null,
+    "ratingFillPct": null,
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 858
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 929
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1294
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1294
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 48,
+      "y": 1402
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 214,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "ledger-1280": {
+    "dir": "ltr",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 1654,
+    "galleryFrame": {
+      "w": 640,
+      "h": 640,
+      "y": 169
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 640,
+      "h": 68,
+      "y": 823
+    },
+    "brandY": 191,
+    "title": {
+      "w": 470,
+      "h": 78,
+      "y": 216
+    },
+    "titleFont": "30px",
+    "money": {
+      "w": 86,
+      "h": 59,
+      "y": 216
+    },
+    "moneyFont": "22px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 572,
+      "h": 19,
+      "y": 325
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 572,
+      "h": 66,
+      "y": 398
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 470
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 446,
+      "h": 52,
+      "y": 817
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 817
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 1236,
+      "h": 34,
+      "y": 962
+    },
+    "tabRowScrolls": false,
+    "tabRowOverflowPx": 0,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "ledger-1280-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "dossier-1280": {
+    "dir": "ltr",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 1580,
+    "galleryFrame": {
+      "w": 618,
+      "h": 618,
+      "y": 183
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 618,
+      "h": 68,
+      "y": 811
+    },
+    "brandY": 196,
+    "title": {
+      "w": 405,
+      "h": 70,
+      "y": 221
+    },
+    "titleFont": "27px",
+    "money": {
+      "w": 102,
+      "h": 64,
+      "y": 221
+    },
+    "moneyFont": "26px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 522,
+      "h": 19,
+      "y": 322
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 522,
+      "h": 66,
+      "y": 354
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 426
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 396,
+      "h": 52,
+      "y": 691
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 691
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 1236,
+      "h": 57,
+      "y": 909
+    },
+    "tabRowScrolls": false,
+    "tabRowOverflowPx": 0,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "dossier-1280-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "counter-1280": {
+    "dir": "ltr",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 1433,
+    "galleryFrame": {
+      "w": 425,
+      "h": 425,
+      "y": 195
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 425,
+      "h": 68,
+      "y": 631
+    },
+    "brandY": 169,
+    "title": {
+      "w": 425,
+      "h": 25,
+      "y": 186
+    },
+    "titleFont": "19px",
+    "money": {
+      "w": 246,
+      "h": 70,
+      "y": 191
+    },
+    "moneyFont": "33px",
+    "priceBesideTitle": null,
+    "ratingBar": {
+      "w": 425,
+      "h": 19,
+      "y": 293
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 425,
+      "h": 66,
+      "y": 328
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 399
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 120,
+      "h": 52,
+      "y": 312
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 312
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 1236,
+      "h": 47,
+      "y": 743
+    },
+    "tabRowScrolls": false,
+    "tabRowOverflowPx": 0,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "counter-1280-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "deck-1280": {
+    "dir": "ltr",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 1729,
+    "galleryFrame": {
+      "w": 618,
+      "h": 618,
+      "y": 181
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 618,
+      "h": 68,
+      "y": 809
+    },
+    "brandY": 169,
+    "title": {
+      "w": 455,
+      "h": 27,
+      "y": 194
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 102,
+      "h": 64,
+      "y": 194
+    },
+    "moneyFont": "26px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 572,
+      "h": 19,
+      "y": 288
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 572,
+      "h": 66,
+      "y": 321
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 393
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 446,
+      "h": 52,
+      "y": 654
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 654
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 1236,
+      "h": 306,
+      "y": 907
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 75,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.5",
+        "0.5",
+        "0.5",
+        "0.5"
+      ]
+    },
+    "openPanels": 0,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "deck-1280-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 0,
+    "visiblePanelIndex": -1
+  },
+  "marquee-1280": {
+    "dir": "ltr",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 1644,
+    "galleryFrame": {
+      "w": 534,
+      "h": 534,
+      "y": 181
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 72,
+      "h": 290,
+      "y": 181
+    },
+    "brandY": 187,
+    "title": {
+      "w": 455,
+      "h": 26,
+      "y": 212
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 102,
+      "h": 64,
+      "y": 212
+    },
+    "moneyFont": "26px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 572,
+      "h": 19,
+      "y": 306
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 572,
+      "h": 66,
+      "y": 339
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 104,
+      "h": 18,
+      "y": 411
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 446,
+      "h": 52,
+      "y": 736
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 736
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 210,
+      "h": 256,
+      "y": 845
+    },
+    "tabRowScrolls": false,
+    "tabRowOverflowPx": 0,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "marquee-1280-open3": {
+    "checked": "pvtab3",
+    "visiblePanels": 1,
+    "visiblePanelIndex": 3
+  },
+  "ar-ledger-390": {
+    "dir": "rtl",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2803,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 292
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 652
+    },
+    "brandY": 732,
+    "title": {
+      "w": 244,
+      "h": 55,
+      "y": 757
+    },
+    "titleFont": "21px",
+    "money": {
+      "w": 86,
+      "h": 59,
+      "y": 757
+    },
+    "moneyFont": "22px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 346,
+      "h": 19,
+      "y": 847
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 921
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 80,
+      "h": 18,
+      "y": 992
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1379
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1379
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 34,
+      "y": 1502
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 157,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "ar-counter-390": {
+    "dir": "rtl",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2715,
+    "galleryFrame": {
+      "w": 318,
+      "h": 318,
+      "y": 318
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 318,
+      "h": 68,
+      "y": 648
+    },
+    "brandY": 730,
+    "title": {
+      "w": 346,
+      "h": 25,
+      "y": 765
+    },
+    "titleFont": "19px",
+    "money": {
+      "w": 346,
+      "h": 33,
+      "y": 840
+    },
+    "moneyFont": "29px",
+    "priceBesideTitle": null,
+    "ratingBar": {
+      "w": 346,
+      "h": 19,
+      "y": 900
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 935
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 80,
+      "h": 18,
+      "y": 1006
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1310
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1310
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 346,
+      "h": 47,
+      "y": 1392
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 282,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  },
+  "ar-marquee-390": {
+    "dir": "rtl",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 2762,
+    "galleryFrame": {
+      "w": 346,
+      "h": 346,
+      "y": 304
+    },
+    "galleryAspect": "1 / 1",
+    "galleryFillPct": 100,
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 346,
+      "h": 68,
+      "y": 660
+    },
+    "brandY": 746,
+    "title": {
+      "w": 248,
+      "h": 52,
+      "y": 771
+    },
+    "titleFont": "20px",
+    "money": {
+      "w": 82,
+      "h": 58,
+      "y": 771
+    },
+    "moneyFont": "21px",
+    "priceBesideTitle": true,
+    "ratingBar": {
+      "w": 346,
+      "h": 19,
+      "y": 860
+    },
+    "ratingFillPct": "96%",
+    "blurb": {
+      "w": 346,
+      "h": 66,
+      "y": 893
+    },
+    "blurbLineHeight": "21.87px",
+    "blurbMasked": true,
+    "readMore": {
+      "w": 80,
+      "h": 18,
+      "y": 964
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "addToCart": {
+      "w": 220,
+      "h": 52,
+      "y": 1328
+    },
+    "qty": {
+      "w": 116,
+      "h": 52,
+      "y": 1328
+    },
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 48,
+      "y": 1436
+    },
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 133,
+    "openTabOpacity": {
+      "open": "1",
+      "others": [
+        "0.45",
+        "0.45",
+        "0.45",
+        "0.45"
+      ]
+    },
+    "openPanels": 1,
+    "assurances": 2,
+    "payChips": 5,
+    "inlineScriptsInPv": 0
+  }
+}

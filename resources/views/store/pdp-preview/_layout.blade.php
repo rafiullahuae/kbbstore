@@ -35,7 +35,7 @@
 
 @section('content')
 <div class="pv pv-{{ $pvLetter }}">
-    <div class="pv-bar">
+    <div class="pv-switch">
         <b>{{ $pvName }}</b>
         @foreach ($pvAll as $pvKey => $pvMeta)
             <a class="{{ $pvKey === $pvCandidate ? 'on' : '' }}" href="{{ $pvLinks[$pvKey] }}">{{ $pvMeta['name'] }}</a>

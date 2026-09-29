@@ -132,6 +132,41 @@ class PdpPreviewController extends Controller
         }
 
         /*
+         * ── LOOKING AT A CANDIDATE IN ARABIC ────────────────────────────────
+         *
+         * `?lang=ar`, and it is the one query parameter these pages read.
+         *
+         * WHY IT IS NOT `/ar/...`. App\Support\Locale's own header says it:
+         * "The admin is deliberately NOT localised ... /ar/admin-api/... would
+         * be a second address for every authenticated endpoint in the back
+         * office." SetLocaleFromPath therefore never strips a prefix here and
+         * /ar in front of this route is a 404, correctly. So the preview asks
+         * for the language directly.
+         *
+         * ▲ IT IS CHECKED AGAINST Locale::isSupported() AND NOTHING ELSE.
+         *   CLAUDE.md rule 5 — a select stores one of its own options or the
+         *   default. `setLocale()` with an unchecked string is a filename
+         *   handed to the translation loader.
+         *
+         * ▲ AND IT HAPPENS BEFORE THE CONTROLLER RUNS, not after. Every t()
+         *   read in Store\ProductController and in ProductTabs::forProduct()
+         *   resolves against the locale that is current at the moment it is
+         *   asked; setting it afterwards would give an Arabic page an English
+         *   set of tabs and an English breadcrumb.
+         *
+         * ▲ IT IS A PREVIEW-ONLY SWITCH ON A PREVIEW-ONLY ROUTE. It is not a
+         *   `?layout=`-style parameter on the shipped product page, which is the
+         *   thing this lane exists not to repeat: /product/{slug}/ reads no
+         *   query string this lane put there, because this lane did not touch
+         *   that template.
+         */
+        $lang = (string) $request->query('lang', '');
+
+        if ($lang !== '' && \App\Support\Locale::isSupported($lang)) {
+            app()->setLocale($lang);
+        }
+
+        /*
          * The real controller, run for real. firstOrFail() inside it is what
          * answers a slug that is not a product, so an unknown slug 404s here
          * exactly as it does on the shop.

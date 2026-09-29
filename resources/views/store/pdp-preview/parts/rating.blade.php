@@ -32,7 +32,13 @@
     <div class="pv-rate">
         <span class="pv-stars" style="color:{{ $pvBadgeColour }}">@for ($i = 1; $i <= 5; $i++){!! $i <= round($rating) ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span>
         <span class="pv-avg">{{ number_format($rating, 1) }}</span>
-        <span class="pv-bar"><i style="inline-size:{{ $pvFill }}%"></i></span>
-        <a class="pv-rcount" href="#pvReviews">{{ $pvRcountLabel }}</a>
+        <span class="pv-ratebar"><i style="inline-size:{{ $pvFill }}%"></i></span>
+        {{-- PLAIN TEXT, NOT A LINK. These five pages stop where his list stops — at the
+             payment marks — so there is no reviews section beneath them for an anchor
+             to reach. A link to an id that is not on the page is a link that does
+             nothing, and a drawing that contains one is a drawing that is lying about
+             one of its own controls. On the shipped page this is a link to #sr and
+             stays one. --}}
+        <span class="pv-rcount">{{ $pvRcountLabel }}</span>
     </div>
 @endif

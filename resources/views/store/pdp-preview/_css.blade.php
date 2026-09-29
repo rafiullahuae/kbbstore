@@ -67,8 +67,8 @@
 .pv-stars{font-size:11px;letter-spacing:1px;opacity:.45}
 .pv-stars .f{opacity:1}
 .pv-avg{font-weight:700;color:var(--pv-ink);font-size:12.5px}
-.pv-bar{flex:1;min-inline-size:40px;max-inline-size:120px;block-size:3px;border-radius:2px;background:var(--pv-faint);overflow:hidden}
-.pv-bar i{display:block;block-size:100%;background:var(--pv-accent);border-start-end-radius:2px;border-end-end-radius:2px}
+.pv-ratebar{flex:0 1 96px;min-inline-size:44px;block-size:3px;border-radius:2px;background:var(--pv-faint);overflow:hidden}
+.pv-ratebar i{display:block;block-size:100%;background:var(--pv-accent);border-start-end-radius:2px;border-end-end-radius:2px}
 .pv-rcount{color:var(--pv-mut);text-decoration:underline;text-underline-offset:2px}
 
 /* blurb with a fade, and one tap to the rest ------------------------------ */
@@ -138,7 +138,7 @@
 @for ($k = 0; $k < $pvTabMax; $k++)
 .pv-tabin-{{ $k }}:checked ~ .pv-tabrow .pv-tab:nth-of-type({{ $k + 1 }}){opacity:1}
 .pv-tabin-{{ $k }}:checked ~ .pv-panels .pv-panel:nth-of-type({{ $k + 1 }}){display:block}
-.pv-tabin-{{ $k }}:checked ~ .pv-deck .pv-card:nth-of-type({{ $k + 1 }}){flex:1 1 auto;min-inline-size:0;opacity:1}
+.pv-tabin-{{ $k }}:checked ~ .pv-deck .pv-card:nth-of-type({{ $k + 1 }}){flex:0 0 76%;opacity:1}
 .pv-tabin-{{ $k }}:checked ~ .pv-deck .pv-card:nth-of-type({{ $k + 1 }}) .pv-spine{display:none}
 .pv-tabin-{{ $k }}:checked ~ .pv-deck .pv-card:nth-of-type({{ $k + 1 }}) .pv-face{display:block}
 .pv-tabin-{{ $k }}:checked ~ .pv-tabrow .pv-segfill{inset-inline-start:calc({{ $k }} * var(--pv-segw))}
@@ -187,16 +187,28 @@
 .pv-tabs-seg .pv-panels{background:var(--pv-cream);border-radius:14px;padding:18px;margin-block-start:10px}
 
 /* D · the deck: the open tab IS the panel, its neighbours are spines ------- */
-.pv-tabs-deck .pv-deck{display:flex;gap:8px;align-items:stretch;overflow-x:auto;scrollbar-width:none;
-    scroll-snap-type:x proximity}
+.pv-tabs-deck .pv-deck{display:flex;gap:8px;align-items:flex-start;overflow-x:auto;scrollbar-width:none;
+    scroll-snap-type:x proximity;padding-block-end:4px}
 .pv-tabs-deck .pv-deck::-webkit-scrollbar{display:none}
-.pv-card{flex:0 0 46px;min-inline-size:46px;scroll-snap-align:start;cursor:pointer;opacity:.5;
+/* A SPINE IS 44px AND AN OPEN CARD IS 86% OF THE STRIP, deliberately adding up
+   to more than the screen: the deck scrolls, which is requirement 3, and a
+   spine is therefore always standing at the edge, which is the affordance. An
+   open card sized `flex:1 1 auto` instead came out 130px wide with the body set
+   one word per line — measured, first run. */
+.pv-card{flex:0 0 44px;scroll-snap-align:start;cursor:pointer;opacity:.5;
     border:1px solid var(--pv-line);border-radius:var(--pv-r);background:#fff;overflow:hidden;
     transition:flex-basis .24s var(--ease),opacity .18s}
-.pv-card:hover{opacity:.8}
-.pv-spine{display:flex;align-items:center;justify-content:center;block-size:100%;min-block-size:150px;
+.pv-card:hover{opacity:.85}
+/* ▲ PHYSICAL width/height HERE, ON PURPOSE, AND IT IS THE ONE PLACE IN THIS
+     SHEET WHERE LOGICAL PROPERTIES WOULD BE THE BUG. `writing-mode:vertical-rl`
+     SWAPS what block and inline mean ON THE ELEMENT THAT CARRIES IT, so
+     `min-block-size:150px` on a vertical spine asks for 150px of WIDTH — inside
+     a 44px card with overflow:hidden, which clipped every spine's title to
+     nothing. Five empty white boxes, first run. */
+.pv-spine{display:flex;align-items:center;justify-content:center;
+    width:100%;height:210px;
     writing-mode:vertical-rl;font-size:12px;font-weight:700;letter-spacing:.03em;
-    color:var(--pv-ink);padding-block:14px}
+    color:var(--pv-ink);padding:14px 0;white-space:nowrap;overflow:hidden}
 .pv-face{display:none;padding:18px}
 .pv-facetitle{display:block;font-size:14px;font-weight:700;margin-block-end:10px}
 .pv-body{display:block}
@@ -282,7 +294,7 @@
 /* the stripes. Each group runs to both edges of the phone and is told from its
    neighbours by its ground, which is the whole of this candidate's skeleton. */
 .pv-e .pv-strip{margin-inline:calc(var(--pv-gut) * -1);padding:18px var(--pv-gut) 22px}
-.pv-e .pv-strip-tint{background:var(--pv-cream)}
+.pv-e .pv-strip-tint{background:var(--pv-soft)}
 .pv-e .pv-strip-plain{background:#fff}
 .pv-e .pv-strip-last{margin-block-start:0;padding-block-end:34px}
 .pv-e .pv-assure{margin-block-start:0}
@@ -332,8 +344,8 @@
 
   /* D — the dock stops docking: on a desktop the button is never far away. */
   .pv-d .pv-dock{position:static;box-shadow:none;border:0;padding:0;background:none}
-  .pv-d .pv-card{flex-basis:56px;min-inline-size:56px}
-  .pv-d .pv-spine{min-block-size:230px;font-size:13px}
+  .pv-d .pv-card{flex-basis:54px}
+  .pv-d .pv-spine{height:300px;font-size:13px}
 
   /* E — the stripes stop bleeding (there is a gutter to bleed into on a wide
      screen and it looks like an accident), the thumbnails stand up beside the
@@ -356,13 +368,20 @@
 
 /* ── the preview's own chrome. Never part of a design; it is how the owner
       moves between the five without going back to a menu. ─────────────────── */
-.pv-bar{position:sticky;top:0;z-index:70;background:var(--ink);color:#fff;
+/* ▲ NOT `.pv-bar`, AND NOT STICKY, AND BOTH WERE BUGS I SHIPPED INTO THE FIRST
+     CONTACT SHEET. The rating hairline above was also called `.pv-bar`, so every
+     rating on every candidate was painted as a solid ink rectangle by this
+     rule — an 96px black bar where a 3px pink one belonged, in all ten shots.
+     And sticky at top:0 put this chrome UNDER the shop's own sticky header
+     (z-index 60, top 0), so the switcher was a dark sliver behind the logo. It
+     is chrome for a throwaway page; it scrolls away like anything else. */
+.pv-switch{background:var(--ink);color:#fff;
     display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--site-gutter,22px);font-size:12px}
-.pv-bar b{font-size:13px}
-.pv-bar a{color:#fff;opacity:.55;text-decoration:none;border:1px solid rgba(255,255,255,.25);
+.pv-switch b{font-size:13px}
+.pv-switch a{color:#fff;opacity:.55;text-decoration:none;border:1px solid rgba(255,255,255,.25);
     border-radius:99px;padding:4px 11px;font-weight:600}
-.pv-bar a.on{opacity:1;background:#fff;color:var(--ink);border-color:#fff}
-.pv-bar .pv-idea{flex:1 1 100%;opacity:.6;line-height:1.5;font-size:11.5px}
+.pv-switch a.on{opacity:1;background:#fff;color:var(--ink);border-color:#fff}
+.pv-switch .pv-idea{flex:1 1 100%;opacity:.6;line-height:1.5;font-size:11.5px}
 .pv-index{padding-block:26px 60px}
 .pv-index h1{font-size:22px;margin-block-end:6px}
 .pv-index h2{font-size:15px;margin-block:26px 8px}
