@@ -1,0 +1,50 @@
+[
+  {
+    "shot": "accent-before-shop-390",
+    "pink": "#2E7D6B",
+    "pinkDeep": "#286e5e",
+    "accentBlock": true
+  },
+  {
+    "shot": "accent-before-quiz-390",
+    "pink": "#E0567B",
+    "pinkDeep": "#C13E63",
+    "accentBlock": false
+  },
+  {
+    "shot": "accent-before-reviews-390",
+    "pink": "#E0567B",
+    "pinkDeep": "#C13E63",
+    "accentBlock": false
+  },
+  {
+    "shot": "accent-before-journal-390",
+    "pink": "#E0567B",
+    "pinkDeep": "#C13E63",
+    "accentBlock": false
+  },
+  {
+    "shot": "accent-before-shop-1280",
+    "pink": "#2E7D6B",
+    "pinkDeep": "#286e5e",
+    "accentBlock": true
+  },
+  {
+    "shot": "accent-before-quiz-1280",
+    "pink": "#E0567B",
+    "pinkDeep": "#C13E63",
+    "accentBlock": false
+  },
+  {
+    "shot": "accent-before-reviews-1280",
+    "pink": "#E0567B",
+    "pinkDeep": "#C13E63",
+    "accentBlock": false
+  },
+  {
+    "shot": "accent-before-journal-1280",
+    "pink": "#E0567B",
+    "pinkDeep": "#C13E63",
+    "accentBlock": false
+  }
+]
