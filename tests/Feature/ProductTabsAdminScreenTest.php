@@ -334,3 +334,182 @@ it('ships with nothing switched on, so applying the package moves nothing', func
     expect(ProductTab::query()->count())->toBe(0,
         'the product_tabs table ships empty and stays empty until the owner writes one');
 });
+
+/* ═════════════════════════════ WHERE IT SHOWS — the control (round 2) ════ */
+
+it('draws the five rule options from the SERVER, not from a list of its own', function () {
+    /*
+     * ON THE SHOP: a screen holding its own copy of the vocabulary is a screen
+     * that offers an option the validator refuses. The owner picks it, presses
+     * Save, and gets "That tab could not be saved" with no way to tell which
+     * field was wrong -- which is the shape of every drifting-constant bug in
+     * this repository.
+     *
+     * MUTATION, RUN: replace `boot.audiences ||` with a literal array and this
+     * is red.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, 'var options = boot.audiences'))->toBeTrue(
+        'the option VALUES must come from the server'
+    );
+
+    // And the sentences beside them are the screen's, keyed by the server's
+    // word, so a value with no sentence still renders as itself rather than
+    // as an empty option.
+    foreach (['global', 'products', 'categories', 'brands', 'sets'] as $value) {
+        expect(str_contains($code, $value.':'))->toBeTrue($value.' has no words beside it');
+    }
+});
+
+it('checks the chosen rule against the server\'s list before it reaches state', function () {
+    /*
+     * CLAUDE.md rule 5: a select stores one of its own options or the default.
+     * A <select> is a DOM element and anything on the page can put a fourth
+     * <option> in it, so the change handler validates the value rather than
+     * trusting the control it came from -- and the server then checks the same
+     * value twice more.
+     *
+     * MUTATION, RUN: assign `t.value` straight to `state.rule.audience` and
+     * this is red.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, 'allowed.indexOf(t.value) === -1'))->toBeTrue()
+        ->and(str_contains($code, 'state.boot.audience_default'))->toBeTrue(
+            'and it falls back to the default the server named'
+        );
+});
+
+it('clears the picked targets when the rule changes', function () {
+    /*
+     * ON THE SHOP: eleven product ids left behind on a rule that now says
+     * "brands" is a row whose meaning depends on which field the next reader
+     * looks at -- and the next reader is a matcher written a year from now. The
+     * server clears them too; this is the same decision on both sides of the
+     * wire, which is what stops the screen and the row disagreeing about what
+     * was saved.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, 'state.rule = { audience: chosen, ids: [] };'))->toBeTrue();
+});
+
+it('picks products with the console\'s one type-ahead, not a second one', function () {
+    /*
+     * window.kbbProductPicker is the shared module, and its own header records
+     * what two copies of a type-ahead cost the last time: New Order's and the
+     * order detail screen's drifted apart, and fixing one left the other
+     * exactly as it was.
+     *
+     * attach() AFTER EVERY RENDER is the half that matters here. This screen
+     * redraws itself on every tick and every chip removal, so a picker bound
+     * once at open would be holding elements that are no longer in the
+     * document -- which is precisely the "appears and disappears instantly"
+     * the owner reported about New Order.
+     *
+     * MUTATION, RUN: move attachRulePicker() out of render() and into the
+     * open handler, and this is red.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, 'window.kbbProductPicker({'))->toBeTrue()
+        ->and(str_contains($code, 'rulePicker.attach();'))->toBeTrue()
+        ->and(str_contains($code, 'try { attachRulePicker(); } catch (e) {}'))->toBeTrue(
+            'the picker must be re-attached from render(), not from the open handler'
+        );
+});
+
+it('uses a tick list for categories and brands and a search for products', function () {
+    /*
+     * A MEASUREMENT, NOT A PREFERENCE. This shop has seven hundred products, a
+     * few dozen categories nested four deep and ninety-three brands. A
+     * type-ahead over ninety-three brands is a round trip to answer a question
+     * a list already answers; a tick list over seven hundred products is a
+     * screen nobody can use. The bootstrap carries the two short lists in full
+     * and deliberately does not carry products.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, "ticks(rule.audience)"))->toBeTrue()
+        ->and(str_contains($code, "rule.audience === 'products'"))->toBeTrue();
+
+    // A category shows its path, so two "Masks" in different branches can be
+    // told apart.
+    expect(str_contains($code, "kind === 'categories' && row.path"))->toBeTrue();
+});
+
+it('offers the rule on a global tab and on nothing else', function () {
+    /*
+     * ON THE SHOP: a per-product tab already names its product and an override
+     * already names the tab it covers. The server leaves `audience` out of
+     * THEIR rules, so a control drawn on those forms would be one the owner can
+     * set and that then silently does nothing -- the worst kind, because the
+     * screen says it saved.
+     *
+     * MUTATION, RUN: make isGlobalRow() return true and this is red.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, "isGlobalRow(kind) ? audienceField() : ''"))->toBeTrue()
+        ->and(str_contains($code, "return kind === 'new-global' || String(kind).indexOf('global:') === 0;"))
+        ->toBeTrue();
+});
+
+it('says on every row where that tab shows', function () {
+    /*
+     * The list is the screen's answer to "what have I set up", and a row that
+     * reads the same whether it is on seven hundred products or on two is not
+     * an answer. Every global row carries a sentence, and a rule with nothing
+     * picked SAYS SO -- that is the state the owner would otherwise have to
+     * discover by opening a product page.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, 'esc(audienceSummary(tab))'))->toBeTrue()
+        ->and(str_contains($code, 'nothing picked yet, so it shows nowhere'))->toBeTrue();
+});
+
+it('names every target from a list it already has, never one lookup per chip', function () {
+    /*
+     * Resolving a chip's name with a request each would be an N+1 on a screen
+     * the owner opens every time. Categories and brands come from the two lists
+     * the bootstrap carries in full; products come from `product_names`, which
+     * the server builds in ONE query over the union of every tab's ids.
+     *
+     * MUTATION, RUN: have chipName() fetch, and this is red.
+     */
+    $code = ptScreenCode();
+
+    expect(str_contains($code, 'boot.product_names && boot.product_names[id]'))->toBeTrue()
+        ->and(preg_match('/function chipName\(.*?\n\s*\}/s', $code, $m))->toBe(1);
+
+    expect(str_contains($m[0], 'await'))->toBeFalse('chipName must not fetch anything')
+        ->and(str_contains($m[0], 'api('))->toBeFalse();
+});
+
+it('still prefixes every class and data attribute it owns', function () {
+    // The round-2 control adds a dozen of each. Re-asserted here rather than
+    // trusted, because app.blade.php binds delegated listeners to `document`
+    // itself and an unprefixed attribute is another screen's listener firing
+    // on these buttons.
+    $src = (string) file_get_contents(ptScreenPath());
+
+    preg_match_all('/^\.([a-z][a-z0-9-]*)/mi', $src, $classes);
+
+    $leaked = array_values(array_unique(array_filter(
+        $classes[1] ?? [],
+        fn (string $c) => ! str_starts_with($c, 'kpt-') && ! str_starts_with($c, 'is-')
+    )));
+
+    expect($leaked)->toBe([]);
+
+    preg_match_all('/data-([a-z][a-z0-9-]*)/', $src, $attrs);
+
+    $foreign = array_values(array_unique(array_filter(
+        $attrs[1] ?? [],
+        fn (string $a) => ! str_starts_with($a, 'kpt-') && ! in_array($a, ['sec', 'go', 'ph'], true)
+    )));
+
+    expect($foreign)->toBe([]);
+});
