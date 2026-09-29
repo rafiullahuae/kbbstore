@@ -41,8 +41,7 @@
     paint and the header below it never moves. The custom property on the
     element only changes what that height IS. Nothing here measures anything in
     JavaScript, and there is no JavaScript here at all.
---}}
-@php
+--}}@php
     $kfb = app(\App\Services\HeaderSettings::class);
     $kfbC = $kfb->all();
     /* Blank means "the line this app ships", which is translated. An owner who

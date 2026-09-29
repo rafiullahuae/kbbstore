@@ -9,6 +9,7 @@ use App\Services\SettingsService;
 use App\Support\FlagArt;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\ArabicShop;
+use Tests\Support\EnglishRenderWalk;
 
 /**
  * THE FLAG BAR — the thin strip above the header. (Lane FB)
@@ -167,6 +168,56 @@ it('draws nothing at all when both switches are off', function () {
 
     expect($after)->not->toContain('kfb');
     expect($after)->not->toContain('Flag of South Korea');
+});
+
+it('is a pure insertion: take the strip out again and the page is byte-identical', function () {
+    /*
+     * RULE 1, MADE CHECKABLE FROM INSIDE THIS BRANCH.
+     *
+     * StorefrontEnglishUnchangedTest compares the tree against a COMMIT, so
+     * once its pin moves forward to carry this strip it can no longer say
+     * anything about this strip. This case says the thing that matters and
+     * says it without a commit hash: the whole of what the flag bar does to a
+     * storefront page is add its own element at one point. Cut that element
+     * out of the served page and what is left is byte-for-byte the page the
+     * same shop serves with both switches off — no reflow, no moved
+     * whitespace, no second copy of anything, on every page that draws it.
+     *
+     * Masked with EnglishRenderWalk's own mask, because a CSRF token differs
+     * between two renders of the same file whatever this lane does.
+     *
+     * MEASURED ALONGSIDE, and recorded in the commit rather than pinned here:
+     * against the tree this branch was cut from, 39 storefront pages render,
+     * 31 carry the strip, and on all 39 the rest of the document is identical.
+     * The eight without it are the quick-view fragment, the checkout and the
+     * order-received page (both `bare`), Laravel's own 404 document, and the
+     * four standalone documents — the Journal, an article, the quiz and the
+     * review wall — which carry no site header either.
+     *
+     * MUTATION: make the partial emit a newline before the element (put the
+     * closing `--}}` of its header comment on a line of its own) and this is
+     * red at the byte before `<div class="kfb`. Ran it; that is exactly the
+     * defect it caught while this was being written.
+     */
+    $paths = ['/', '/shop/', '/cart/', '/my-wishlist/'];
+
+    $with = [];
+
+    foreach ($paths as $path) {
+        $with[$path] = EnglishRenderWalk::mask(test()->get($path)->assertOk()->getContent());
+    }
+
+    fbSet(['fb_mobile' => false, 'fb_desktop' => false]);
+
+    foreach ($paths as $path) {
+        $without = EnglishRenderWalk::mask(test()->get($path)->assertOk()->getContent());
+
+        $cut = 0;
+        $stripped = (string) preg_replace('#<div class="kfb .*?</div>\s*</div>\n#s', '', $with[$path], -1, $cut);
+
+        expect($cut)->toBe(1, $path.' did not carry exactly one strip to cut out');
+        expect($stripped)->toBe($without, $path.' changed by something other than the strip');
+    }
 });
 
 /* ══════════════════ 2. the words ══════════════════ */

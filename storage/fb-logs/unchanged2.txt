@@ -1,0 +1,2143 @@
+PHPUnit 12.5.33 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.19
+Configuration: /home/user/lane-fb/phpunit.xml
+
+Cleared 0 compiled files.
+Relocated 0 asset files; cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Web root could not be identified with certainty — nothing removed. Delete the four scripts by hand.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the checkout now renders the card fields
+and /checkout/card/paid and /checkout/card/abandon resolve.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the shop can now fetch its own photographs
+from the old site, and the live progress page can be opened.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Added addresses: source_key
+Added order_items: wc_item_id
+Added users: wp_user_id
+Indexed addresses (source_key) as addresses_source_key_unique
+Indexed order_items (wc_item_id) as order_items_wc_item_unique
+Indexed users (wp_user_id) as users_wp_user_unique
+Indexed attribute_values (source_term_id) as attribute_values_source_term_unique
+Indexed reviews (source, source_id) as reviews_source_unique
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+reviews.status: already canonical, nothing moved.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Catalogued 0 existing uploads into the media library.
+Cleared 0 compiled files.
+Cleared 0 compiled files, removed 0 dead search settings rows.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Order numbers continue from 10001.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+media_usages: 0 recorded, 0 stale removed, 0 already correct.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Indexed products (total_sales) as products_total_sales_index.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Indexed products (created_at) as products_created_at_index.
+Indexed reviews (product_id, status) as reviews_product_id_status_index.
+Cleared 0 compiled files.
+Recomputed ratings for 24 products; 0 now carry a real review count.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Indexed reviews (status, created_at) as reviews_status_created_at_index.
+Indexed reviews (status, rating) as reviews_status_rating_index.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Analytics ids merged: 0 moved to the Marketing Pixels module.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+No demo-derived product ratings to retire.
+Cleared 0 compiled files.
+Menu category URLs: repointed 18 item(s) to /collections/…
+  /skincare/ -> /collections/skincare/  (1 item(s))
+  /cleansing-oils/ -> /collections/cleansing-oils/  (1 item(s))
+  /face-washes/ -> /collections/face-washes/  (1 item(s))
+  /exfoliators/ -> /collections/exfoliators/  (1 item(s))
+  /toners/ -> /collections/toners/  (2 item(s))
+  /face-serums/ -> /collections/face-serums/  (1 item(s))
+  /eye-care/ -> /collections/eye-care/  (1 item(s))
+  /face-masks/ -> /collections/face-masks/  (1 item(s))
+  /moisturizers/ -> /collections/moisturizers/  (2 item(s))
+  /lip-care/ -> /collections/lip-care/  (2 item(s))
+  /sunscreens/ -> /collections/sunscreens/  (2 item(s))
+  /hair-care/ -> /collections/hair-care/  (1 item(s))
+  /skincare-sets/ -> /collections/skincare-sets/  (1 item(s))
+  /beauty-devices/ -> /collections/beauty-devices/  (1 item(s))
+
+  These menu items now point at a category this shop does not have yet:
+    /collections/skincare/
+    /collections/cleansing-oils/
+    /collections/face-washes/
+    /collections/exfoliators/
+    /collections/face-serums/
+    /collections/eye-care/
+    /collections/face-masks/
+    /collections/moisturizers/
+    /collections/lip-care/
+    /collections/hair-care/
+    /collections/skincare-sets/
+    /collections/beauty-devices/
+  Each will answer 404 until the category exists, and will start
+  working on its own once the WordPress import brings it in. If a
+  category is never coming, repoint or remove that item in
+  Store -> Mega Menu.
+Cleared 0 compiled files.
+Cleared 0 compiled files; flushed the menu and routine caches.
+Cleared 0 compiled files.
+Cleared 0 compiled files; flushed the ordered storefront lists.
+Cleared 0 compiled files; the newsletter and mail-log routes are now reachable.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the Mega Menu switch now reaches the storefront.
+Cleared 0 compiled files; the Translation admin routes are now reachable.
+Arabic and right-to-left both ship OFF — Translation → Settings turns them on.
+Cleared 0 compiled files; the stock-alert and basket-reminder routes are now reachable.
+Cleared 0 compiled files; hreflang is emitted by App\Support\Seo now,
+so a stale compiled layout would print every alternate twice.
+Cleared 0 compiled files; the admin console includes a new partial
+(admin/partials/translation-screens.blade.php) and a stale compiled app.blade.php
+would render the Translation menu without the screens behind it.
+Cleared 0 compiled files; the checkout includes a new partial
+(partials/checkout/inline-validation.blade.php) and a stale compiled
+checkout would leave the new switch saving and doing nothing.
+Cleared 0 compiled files; /admin-api/payments/stripe/connect/platform
+is now reachable and the console repaints with the Connect application panel.
+Cleared 0 compiled files; the admin console now sends a CSRF token
+with every Stripe write, and Store -> Payments offers Set up Stripe.
+Cleared 0 compiled files; /routines and the five
+/admin-api/routine* paths are now in the route table. The two
+storefront pages stay 404 until Store -> Modules -> Build my
+routine is switched on, which is how this ships.
+Cleared 0 compiled files; /admin-api/homepage/content is now
+reachable, and the homepage stops printing the hero headline unescaped.
+Cleared 0 compiled files; category, brand and the four
+curated listings now publish a CollectionPage/ItemList, and the
+five standalone documents take their <html lang> and dir from
+the locale they are served in.
+App\Http\Middleware\CacheHeaders ships INERT -- it needs one
+line in bootstrap/app.php, which no package may write. See
+docs/FQ-CACHE-HEADERS.md.
+Cleared 0 compiled files; the skin quiz now emails the
+plan its contact step has always promised, and offers a way into
+Build my routine when that module is on. With the module off the
+quiz page is byte-for-byte what it was.
+Cleared 0 compiled files; the admin address bar now follows the screen
+and #payments/stripe reloads to Payments instead of the dashboard.
+Checkout now lists Card, Tabby, Tamara, Cash on delivery, in that order.
+Cleared 0 compiled files; the checkout now draws the card number,
+expiry and security code in their own labelled boxes.
+Cleared 0 compiled files; /blog and /post/{slug} now send
+a reader to the canonical address -- trailing slash kept, and an
+Arabic reader stays in Arabic instead of landing on the English page.
+Cleared 0 compiled files; Store → Import can now build the URL
+map and take the product photographs off the old site.
+Cleared 0 compiled files; the cart's trust row now draws real payment
+marks, the delivery row and the quantity stepper take their new sizes, and both
+admin previews agree with the shop again.
+Cleared 0 compiled files; /ar now resolves without the
+hand-edit to bootstrap/app.php that no package could ever make.
+Cleared 0 compiled files; Orders → tick → Print now has a route.
+Cleared 0 compiled files; the cart page adds, changes quantity and
+removes in real time again instead of only on a reload.
+Cleared 0 compiled files; the import now recognises an export it has
+already read, and there is a page saying what has been imported and when.
+Added attributes.source_attribute_id
+Indexed attributes (source_attribute_id) as attributes_source_attribute_unique
+Cleared 0 compiled files; the cart page draws two columns from 1024px up,
+and Appearance -> Cart page has a Desktop tab to tune them.
+Cleared 0 compiled files; Appearance -> Cart page -> Desktop now shows its
+preview full width, under the controls.
+Cleared 0 compiled files; the import can now keep going with the tab closed,
+and the shop can reach its own /import-chain/continue to do it.
+Cleared 0 compiled files; the address form has a way back to the list,
+the desktop popup carries its own close button, and the desktop cart page has
+spacing controls and carousel arrows on the rail.
+Cleared 0 compiled files; the shop can now be told which address is
+its real one, and a private install can be kept out of every search index.
+Cleared 0 compiled files; the rail's arrows are no longer clipped, the
+popup's close button sits above its top-right corner, and the checkout box and
+quantity stepper have desktop controls of their own.
+Cleared 0 compiled files; the Cache screen can now read the shop's
+real caching state, and the browser-cache switch can reach the middleware.
+Cleared 0 compiled files; the checkout takes its delivery address from
+the same list the cart page keeps, and the name sits with the email and phone.
+Cleared 0 compiled files; the cart page's address calls and the
+Appearance -> Cart page screen can now be reached.
+Cleared 0 compiled files; the checkout has its two columns back and
+the summary sits at the top again on a phone.
+Cleared 0 compiled files; the cart page now ships with no
+footer, and Appearance -> Cart page -> Layout can put it back.
+Cleared 0 compiled files; a shopper who is not signed in now keeps
+three delivery addresses instead of one, and they move into the account
+when that shopper signs in.
+Cleared 0 compiled files; the mobile checkout no longer scrolls
+sideways, and Appearance -> Checkout page can set the spacing on the
+desktop and mobile layouts separately.
+Cleared 0 compiled files; the checkout's order-summary rows now
+have their own controls under Appearance -> Checkout page, separately for
+desktop and for mobile.
+Cleared 0 compiled files; the address row now points at its own
+button, the contact fields read name, phone, email, the authenticity tick
+draws itself, and the header and every text size have controls.
+Cleared 0 compiled files; the address popup opens straight into the
+real list, the checkout header lost 15px of empty bar on phones, and the
+summary rows take padding on all four sides.
+Cleared 0 compiled files; the checkout has a slim footer under
+Appearance -> Footer, the summary's first line is no longer clipped, and its
+remove button and tab strip have sizes of their own.
+Cleared 0 compiled files; the footer has four shapes, four alignments,
+five tones and a row of payment marks, and the checkout screen's Mobile tabs
+show their preview beside the controls.
+Cleared 0 compiled files; the 52px band above the checkout
+header is gone, "Go back to cart" has size controls, and the phone's
+Place order bar appears only once the in-page button scrolls away.
+Cleared 0 compiled files; the checkout screen can draw a select
+and a text box, the phone header lines up with the page, the reviews line
+has its own wording, and the footer has its own shape on a phone.
+Cleared 0 compiled files; the checkout footer now wears the site
+header's own wordmark and colours, read live from Appearance -> Header.
+Cleared 0 compiled files; the floating Place order bar waits for a
+placeable order, the phone header takes the page's own side padding, and the
+footer lines up with the page with its links under the wordmark.
+Cleared 0 compiled files; Store -> Import can now list the articles
+whose addresses this storefront already owns.
+Cleared 0 compiled files; the phone checkout logo sits on the page's
+own left edge, the back-to-top arrow is centred and waits until you have
+scrolled, and Squeeze now moves only the tab you are looking at.
+Cleared 0 compiled files; the redirects table is now read before the
+router instead of only from the 404 handler, so a row for an address the shop
+already answers can finally fire.
+Cleared 0 compiled files; Store -> SEO & Meta -> SEO Audit is live at
+/admin-api/seo-audit, and the sitemap can carry product images once the
+Sitemap band's image box is ticked (it ships off).
+Cleared 0 compiled files; the shop now keeps an administrative
+audit trail and reports on it under Store -> Security. Nothing is blocked.
+Cleared 0 compiled files; /sitemap.xml, /robots.txt and /llms.txt can
+now be served without a session, and answer `public, max-age=3600` once they
+are. Until the routes/web.php line is applied they are unchanged.
+Cleared 0 compiled files; Store -> Import -> Addresses & pictures can now
+record an answer to the redirect map's questions, one row or a whole question at a
+time. Nothing on the storefront moves until an answer is given.
+Cleared 0 compiled files; Store -> Security now checks the files
+packages installed against the hashes those packages declared, and reports
+what differs. It blocks nothing and it restores nothing.
+Cleared 0 compiled files; Store -> Security grows a content-security
+policy card. The policy is REPORT-ONLY and ships switched off, so no response
+header changes until you turn it on. It refuses nothing either way.
+Cleared 0 compiled files; Store -> Business Details -> Business
+now has the shop's address, and /concern/acne/ goes live once you have
+tagged three products for "Acne & blemishes" under Catalog -> Build my
+routine. Nothing on the shop moves until you do.
+Cleared 0 compiled files; Appearance -> Set can now size the
+fanned member circles, the What's inside popup and the saving, with a
+separate value per measurement on the Desktop and Mobile tabs.
+Nothing on the shop has moved: every control ships at the value the
+page already draws, and the storefront emits no stylesheet at all
+until one of them is changed.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the health check the updater relies on now
+renders the home page and a product page instead of running SELECT 1. An update
+that breaks either one is rolled back automatically. KBB_HEALTH_DEEP=false in
+.env turns that back off if a shop is already broken for another reason.
+Cleared 0 compiled files; packages can now carry an Ed25519 signature
+and this shop can check one. NOTHING IS ENFORCED -- unsigned packages are still
+accepted exactly as before. docs/PACKAGE-SIGNING.md has the six-step sequence for
+turning it on. Also: /admin/updates?fallback=1 renders instead of 500ing, which
+it had done since the updater was built.
+Cleared 0 compiled files; Catalog -> Build my routine
+now carries the on/off switch and a Demo data card, and its
+product search runs as you type. The module is still OFF and
+no demo row exists until you press Import.
+Cleared 0 compiled files. Platform -> Site address now warns when this
+shop is served from an address that is not APP_URL, and offers one button to
+write the new one. It draws nothing while the two agree, which is the case here.
+Cleared 0 compiled files. Content -> Blog Posts can now write an
+article, not just list one: New article, Edit, the Arabic boxes beside every
+field, and an address that is checked against the storefront's own routes as
+you type. No article is created by applying this.
+Cleared 0 compiled files; Catalog -> Build my routine
+can now tag several products at once: tick the rows, then press
+one step or one concern for all of them, with Undo beside it.
+Nothing is tagged by this update and no concern page changes.
+Cleared 0 compiled files; Store -> Import now has a PAGE listing
+every article whose address this storefront already owns, with the live
+URL each one is indexed at. It writes nothing.
+Cleared 0 compiled files; the checkout includes a new partial
+(partials/checkout/address-autocomplete.blade.php) and a stale compiled
+checkout would leave the new switch saving and doing nothing.
+Cleared 0 compiled files; Appearance -> Homepage now has a Preview
+card that draws the real storefront homepage from the arrangement on screen,
+at 1280 and at 390, without saving anything. Nothing on the shop moves until
+you press Save as before.
+Cleared 0 compiled files; the shop now has a shoppable-video
+library under Content -> Shoppable video. Nothing on the storefront changed.
+Added locale_slugs and redirects.locale. Both are EMPTY and INERT: the
+Arabic slug policy ships at 'shared', which is the one-slug-per-row
+behaviour this shop already has, so no address on the storefront moves.
+Cleared 0 compiled files. Arabic addresses can now be a second slug
+per row instead of the shared one, and a shop that does not accept returns can
+say so in its markup. Both ship OFF: the Arabic policy reads 'shared', which is
+what this shop does today, and the returns box is untouched until somebody
+chooses an answer.
+Cleared 0 compiled files; the shop now has video SECTIONS
+(Content -> Video sections) and a look for them (Appearance -> Video rail).
+video). Nothing appears on the storefront until you switch Shoppable video
+on in Store -> Modules AND paste a [kbb_videos] shortcode somewhere.
+Cleared 0 compiled files; every SEO title and description box
+now shows what Google will print, before you save -- on Catalog -> Categories,
+Catalog -> Brands, Content -> Blog Posts and Store -> SEO & Meta. A new
+Overview tab on Store -> SEO & Meta lists what is waiting on you. No setting
+changed and nothing on the storefront moved.
+Cleared 0 compiled files; the site width is now one number
+(1680px) under Appearance -> Site layout. The cart, the checkout and the
+slim footer keep their own widths.
+Cleared 0 compiled files; the DESKTOP header is now as wide as
+the page (Appearance -> Site layout -> Page width -> "Header follows the
+site width", which now ships ON), it keeps every item on one row by
+shrinking its own padding, and the WhatsApp block no longer vanishes on a
+narrow desktop. The phone and small-tablet header are unchanged.
+Cleared 0 compiled files. All eight skin-concern pages are now
+enabled with their English copy written -- each stays a 404 until three
+products are tagged for it at Catalog -> Build my routine. The business type
+now says Online store, and the Shipping cost box on Store -> SEO & Meta ships
+BLANK instead of 0, so turning the merchant listing on no longer publishes
+free delivery. Nothing on the storefront moved.
+Cleared 0 compiled views. Shoppable video is one sidebar row with three tabs now.
+Cleared 0 compiled views. Saving a video section works now, and the clip editor is the tabbed one.
+Cleared 0 compiled files. Pages -> User pages can now EDIT a
+content page: its title, its body, its Arabic, its status, and the five search-engine
+fields (page title, meta description, canonical, social image, noindex) with a live
+Google preview above them. No page is created or changed by applying this.
+Cleared 0 compiled views. Adding a clip is five guided steps now, with drag-and-drop, a preview of the video and of the 2-3 second loop, and no more "Poster only" on clips that loop perfectly well.
+Cleared 0 compiled views. The clip editor no longer flashes when you change tab.
+Cleared 0 compiled files. Tabby can now be registered for webhooks (Store -> Payments -> Tabby) and an uncaptured Tabby authorisation can be released from the order screen. No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files. Content -> Instagram is reachable now, and the
+homepage has two new rows on Appearance -> Homepage: Video rail and Instagram
+Profile. BOTH DRAW NOTHING YET -- the video rail until a section is picked on
+Content -> Shoppable video -> Appearance -> Homepage, and Instagram until the
+account is connected on Content -> Instagram and the module is switched on at
+Store -> Modules -> Instagram Profile. Nothing on the storefront moved.
+Cleared 0 compiled files. Tamara and Tabby can both now release an
+uncaptured authorisation from the order screen, through one endpoint rather
+than two. Eleven admin screens have a working URL for the first time -- a link
+to Shoppable video, Instagram, Security, Cache, Build my routine, Site layout,
+Footer, Cart page or Checkout page used to open the Dashboard. No setting
+changed and nothing on the storefront moved.
+Cleared 0 compiled files. Content -> Shoppable video -> All clips now
+lays every step of the add-a-clip flow out in TWO COLUMNS on a desktop and one
+on a phone, with a titled section over each group instead of a small uppercase
+label. The upload bar shows the megabytes sent as well as the percentage, says
+when the file has all arrived and the server is working on it, and STAYS on
+screen afterwards -- with a tick, or with the reason it was refused. And the
+'Cut the cover and teaser from the video' button has moved out of the bottom of
+the cover box into its own section directly under the two file boxes, so
+finishing an upload offers the cut instead of leaving it to be found. On a
+server with no ffmpeg that same section says what to do instead. No setting
+changed, no default moved, and nothing on the storefront was touched.
+Cleared 0 compiled files. Store -> Ecommerce -> Payments is two columns
+now: keys on the left, settings on the right. The clip editor is too, and it
+offers to cut the cover and the teaser where an upload finishes. An error
+message no longer wears a green tick. Appearance -> Header -> Bar -> Content
+width now says it is not in use while the header is following the site width.
+No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files. Content -> Shoppable video -> All clips ->
+step 2 now advertises the size THIS server will really accept instead of the
+64 MB the shop allows, and says plainly when PHP is the thing capping it.
+An upload PHP refused for its size, or discarded for being over post_max_size,
+no longer reads as a bad file: the refusal names the directive, its value, and
+the fact that the file itself is fine. The bar can be cancelled, a failure that
+a second attempt could fix offers Try again, and a long wait says how long.
+
+On THIS server, right now:
+  upload_max_filesize = 2M
+  post_max_size       = 8M
+  largest clip that can really be uploaded: 2 MB
+  (Shoppable video itself allows 64 MB, so the SERVER is the limit — see docs/UPLOAD-LIMITS.md)
+
+No setting changed, no default moved, and nothing on the storefront was touched.
+Cleared 0 compiled files. Uploading a video now says what THIS server
+will really take, instead of promising 64 MB it cannot honour.
+This server: upload_max_filesize = 2M, post_max_size = 8M.
+Raise those on the server if you want bigger clips.
+Duplicating an order no longer copies the original's capture, a released
+authorisation can no longer be captured, and a failed capture or refund no
+longer reports itself with a green tick.
+No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files.
+Uploads in the console now show a real progress bar with the current speed and
+an estimate of the time left, so a slow upload can be told from a stuck one.
+Files can be dragged onto the Video, Poster and Short loop rows under
+Content -> Shoppable video -> Sections -> (a section) -> (a clip) -> Files.
+That screen also stops advertising 64 MB and prints what THIS server takes.
+This server: upload_max_filesize = 2M, post_max_size = 8M.
+If post_max_size is the smaller of those two, IT is what caps your uploads —
+raising it alone is what unlocks bigger clips. See docs/UPLOAD-LIMITS.md.
+No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files.
+
+Every upload in the console now has a live progress bar fed by real bytes,
+a drop target that covers the whole card rather than a small dashed box,
+a Stop button while it is in flight, and a refusal that names the size and
+the reason BEFORE the file is sent.
+
+  Choose an image (the shared Media Library popup) — drop images anywhere
+      on the dialog; it had no drop target at all before.
+  Catalog -> Products -> Edit -> Main image / Gallery / Search appearance
+      — all three take a dropped photograph, and the share image reports
+      progress at all for the first time.
+  Reviews -> Review Import / Export -> Import — drop the CSV on the card.
+
+On THIS server, right now:
+  upload_max_filesize = 2M
+  post_max_size       = 8M
+  largest image these screens can really upload: 2 MB
+  largest review CSV they can really import:      2 MB
+Raise those two directives on the server if you want bigger files.
+
+No setting changed, no default moved, and nothing on the storefront was
+touched. The two size numbers that changed on screen were never limits this
+shop could honour.
+Cleared 0 compiled files. Every upload in the console now has a live
+bar with a real speed and a time remaining, and a drop zone: Shoppable video,
+the image picker, the product editor and the review importer. A file dropped
+beside a box no longer opens in the browser and throws away the form you were
+filling in. No setting changed and nothing on the storefront moved.
+Catalogued 0 file(s) into the media library, including every shoppable-video
+clip and teaser, which nothing had ever recorded. From this version each new upload
+records itself, and Content → Media Library shows videos as well as pictures.
+Cleared 0 compiled files. Every upload in the back office now joins the
+Media Library, videos included, and a section page can take a new video directly:
+Content -> Shoppable video -> Sections -> open one -> top right of "Add from the
+library". No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files. Moving between the five steps of a clip is
+now instant and makes no request, and the video is no longer re-fetched and
+restarted on the way past. Unsaved typing survives a reload and is offered
+back rather than applied behind your back. The product search on step 4 now
+says when nothing matched, says when what matched is a draft, and shows the
+newest products before you type. No setting changed and nothing on the
+storefront moved.
+Cleared 0 compiled files. The section editor now has its
+"Upload a new video" control (Content -> Shoppable video -> Sections -> open one
+-> top right of "Add from the library"), and a failure on the clips screens now
+names its own cause instead of one sentence that could mean anything.
+`php artisan ugc:cut-covers` is now
+available over SSH: it cuts the cover and the 2.5s teaser for every clip
+that has a video and no cover, oldest first, and it works on this host
+even though the browser cannot, because the CLI is not the PHP that has
+proc_open switched off. Run it with --dry-run first to see the list.
+Also fixed: re-cutting a cover no longer leaves the old poster stuck in
+the Media Library. No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files; Appearance -> Homepage content now has a
+Live preview tab. Click any section in the picture and its own controls open
+beside it; the picture redraws as you change them and nothing reaches the shop
+until you press Save. No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files; Appearance -> Banners -> Cards banner is now
+reachable. Nothing on the shop moved: the section ships off, no set is chosen,
+and both tables are empty. Build a set, add cards, publish it, pick it on that
+screen and switch the section on to see it.
+Cleared 0 compiled files. Appearance -> Banners now has a Save
+button: edits to a set and its cards are held until you press it, and the
+preview redraws from what you have typed. A set can also take a background
+(none, a colour or a picture), its own button colours, and its title either
+below the picture or on it. Nothing on the storefront moved: every new
+control ships at the value the page already had.
+Cleared 0 compiled files. Catalog -> Sets is now reachable:
+create a set by choosing products, give it its own price, category,
+description and images, and publish it like any other product.
+Nothing on the storefront moves until you create one.
+Cleared 0 compiled files. Sets are now built on the PRODUCT
+editor: Catalog -> Product editor has a type control, and choosing Set
+reveals "What is in the box" beside every section a product already
+has. A set's own product page names what is in the box, Catalog ->
+Products has a Sets chip, Catalog -> Sets is now the list of them, and
+Catalog -> Sets -> Stock carries the switch for whether selling a set
+takes its members off the shelf. That switch ships OFF -- the set
+carries its own stock, exactly as before -- so nothing moves until you
+move it.
+Cleared 0 compiled files. Category archives are now at
+/collections/, brands at /brands/ and articles at /blog/; every old
+address 301s onto its final home in a single hop.
+Address scheme: removed 10 rows that would have looped, repointed 0 onto their final address, and removed 0 left pointing at themselves.
+Address scheme: repointed 2 menu item(s) onto /collections/, /brands/ and /blog/.
+Cleared 0 compiled files. Tapping a clip now opens a popup that is
+the SHAPE OF THE VIDEO: no black bands above or below it, and the product
+boxes and the creator's credit sit ON the video at the bottom instead of
+outside it. Escape closes it, the keyboard stays inside it, and it works the
+same in Arabic. Nothing about the rail itself moved.
+Content -> Shoppable video -> All clips also stops guessing about this
+server: where the 2.5-second teaser cannot be cut during an upload it now
+says WHICH of the two reasons it is, notes that every tile loops anyway, and
+gives the one cron line that makes the covers and teasers cut themselves
+within a minute of an upload. No setting changed, and nothing on a page
+without a video rail moved.
+Cleared 0 compiled files. The video tiles now loop on their own
+for the clips YOU uploaded. They were losing every playback slot to the
+(Demo) clips, because the rail filled its slots in the order the clips
+appear and the demo ones were imported first: your own two sat at the end
+showing a play button. Your clips are now preferred over demo footage, a
+tile whose file is missing gives its slot back instead of keeping it for
+ever, and the play button only disappears once a tile is really playing.
+Content -> Shoppable video -> Appearance -> Motion now SAYS what the shop
+will do: how many tiles will move, which will not and why, and what to
+change.
+The opened player also gets previous/next arrows (keyboard arrows too,
+mirrored in Arabic, greyed out at the first and last clip), and its
+product thumbnail is square again instead of a stretched rectangle: it
+was 129x46 on a phone and 138x46 on a desktop, and it is 46x46 on both,
+which gives the product name 82px more room on a phone and 91px on a
+desktop -- a name like 'Fresh That Lasts Deodorant' now fits on one line
+instead of two.
+No setting changed. A page with no video rail on it is unchanged.
+Cleared 0 compiled files. On a SET's product page the bulk-quantity
+strip is gone, and what is in the box now sits in the space it left --
+in the buy column, between the price and Add to cart, as a LIST rather
+than a grid of tiles, with its own sizes on a phone. A box of more than
+six products shows five and folds the rest behind "Show N more products",
+so the Add to cart button stays on the screen.
+
+Ordinary product pages are untouched -- they keep their bundle strip --
+and no basket is repriced.
+Cleared 0 compiled files. A SET priced by a rule -- a percentage
+off what is in the box, an amount off it, or a typed price anchored to it
+-- now shows the same figure on every grid in the shop that it has always
+shown on its own page, and the basket takes that figure rather than the
+one the editor last saved.
+
+A shop with no rule-priced set is byte-identical, and no basket or order
+that already exists is repriced.
+Cleared 0 compiled files. Appearance -> Product styles now actually
+changes the shop. Card roundness, Image shape, the six colours and the seven
+"what the card shows" toggles were drawn in the admin preview and emitted to
+the storefront by nothing, on every release so far; they reach all five
+product grids now.
+
+NOTHING ON YOUR SHOP MOVES. Those 0 stored value(s) were reset to the
+values the pages were already rendering, because a control that has never
+done anything has never shown you what its setting looks like. If you had
+moved one of those sliders in the past it reads at its shipped value again --
+move it now and you will see it take effect.
+
+Columns (desktop, tablet, phone), Gap between cards and Button wording are
+gone from that screen. The column count comes from Appearance -> Site layout,
+the gap is set per grid on purpose (/shop and the related rail are narrower
+than the home rails), and the button's words are in Content -> Translations.
+Cleared 0 compiled files. The video tiles now loop ONE SECOND
+instead of two and a half, which is what you asked for -- and a one-second
+cut is a much smaller file: 98.6 KB became 30.1 KB on the same clip.
+
+A tile now shows one of three things and never two at once: while the clip
+is still loading it shows a turning loader and NO play button; once it is
+ready it shows the play button; while it is playing it shows neither. A
+tile whose file cannot be played falls back to the play button rather than
+spinning for ever.
+
+WHAT IS ACTUALLY SLOW, measured: a clip with no cut teaser fetches the
+WHOLE video to loop the first second of it -- 3.2 MB against 54 KB for the
+same second, per tile, with four tiles going at once. Your clips have
+covers but no teasers, so this is what your rail is doing now. Over SSH:
+    php artisan ugc:cut-covers
+and, once only, if any teaser on this shop was cut before today:
+    php artisan ugc:cut-covers --recut-teasers
+
+Appearance -> Shoppable video -> Motion now ships at 1 second and its
+slider starts at 1 second. If you had already moved that slider, your own
+value is kept. Nothing else changed, and a page with no video rail on it
+is unchanged.
+Cleared 0 compiled files. Catalog -> Product tabs is now reachable:
+write a tab once and it appears on every product, or open one product and
+give it a tab of its own. A product can also hide or re-word a tab it
+inherits. Every title and body has an Arabic box beside it.
+Nothing on the storefront moves until you write one.
+Cleared 0 compiled files. Wrote 1026 Arabic interface strings as DRAFTS.
+
+NOTHING ON YOUR SHOP HAS CHANGED. A draft is never shown to a shopper,
+so /ar still reads exactly as it did before you applied this, and your
+English shop is untouched.
+
+Read them at Translation -> Strings, where each one sits beside its
+English, and correct anything you would say differently. When you are
+happy, Translation -> Progress has one button -- 'Approve all 1026
+drafts' -- and pressing it is the moment the Arabic shop starts
+speaking Arabic.
+
+Anything you had already typed yourself was left exactly as it was.
+Eight long paragraphs -- the intros on the eight concern pages -- were
+deliberately NOT translated and still show their English; they are
+landing-page copy and want a person who writes Arabic, not a machine.
+Cleared 0 compiled files. A global tab can now be pointed at
+specific products, whole categories (and everything under them), brands,
+or every set -- Catalog -> Product tabs -> Global tabs -> Where it shows.
+Every tab you have already written stays on every product until you
+narrow it.
+Cleared 0 compiled files. Store -> Gateway webhooks can now
+register the Tamara webhook that carries declines and expiries -- there
+was no way to do that from anywhere before, because Tamara's own
+merchant portal has no screen for it either. Without it a refused order
+sat at 'pending' for ever, holding its stock and its coupon.
+
+Nothing on the shop has moved and no gateway setting has changed. Open
+Store -> Payments -> Tamara, press 'Webhook & limits...', then
+'Register the webhook'. docs/TM-GATEWAY-WEBHOOKS.md is the walkthrough.
+Cleared 0 compiled files.
+Relocated 0 asset files; cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Web root could not be identified with certainty — nothing removed. Delete the four scripts by hand.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the checkout now renders the card fields
+and /checkout/card/paid and /checkout/card/abandon resolve.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the shop can now fetch its own photographs
+from the old site, and the live progress page can be opened.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Added addresses: source_key
+Added order_items: wc_item_id
+Added users: wp_user_id
+Indexed addresses (source_key) as addresses_source_key_unique
+Indexed order_items (wc_item_id) as order_items_wc_item_unique
+Indexed users (wp_user_id) as users_wp_user_unique
+Indexed attribute_values (source_term_id) as attribute_values_source_term_unique
+Indexed reviews (source, source_id) as reviews_source_unique
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+reviews.status: already canonical, nothing moved.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Catalogued 0 existing uploads into the media library.
+Cleared 0 compiled files.
+Cleared 0 compiled files, removed 0 dead search settings rows.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Order numbers continue from 10001.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+media_usages: 0 recorded, 0 stale removed, 0 already correct.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Indexed products (total_sales) as products_total_sales_index.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Indexed products (created_at) as products_created_at_index.
+Indexed reviews (product_id, status) as reviews_product_id_status_index.
+Cleared 0 compiled files.
+Recomputed ratings for 24 products; 0 now carry a real review count.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Indexed reviews (status, created_at) as reviews_status_created_at_index.
+Indexed reviews (status, rating) as reviews_status_rating_index.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Analytics ids merged: 0 moved to the Marketing Pixels module.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+No demo-derived product ratings to retire.
+Cleared 0 compiled files.
+Menu category URLs: repointed 18 item(s) to /collections/…
+  /skincare/ -> /collections/skincare/  (1 item(s))
+  /cleansing-oils/ -> /collections/cleansing-oils/  (1 item(s))
+  /face-washes/ -> /collections/face-washes/  (1 item(s))
+  /exfoliators/ -> /collections/exfoliators/  (1 item(s))
+  /toners/ -> /collections/toners/  (2 item(s))
+  /face-serums/ -> /collections/face-serums/  (1 item(s))
+  /eye-care/ -> /collections/eye-care/  (1 item(s))
+  /face-masks/ -> /collections/face-masks/  (1 item(s))
+  /moisturizers/ -> /collections/moisturizers/  (2 item(s))
+  /lip-care/ -> /collections/lip-care/  (2 item(s))
+  /sunscreens/ -> /collections/sunscreens/  (2 item(s))
+  /hair-care/ -> /collections/hair-care/  (1 item(s))
+  /skincare-sets/ -> /collections/skincare-sets/  (1 item(s))
+  /beauty-devices/ -> /collections/beauty-devices/  (1 item(s))
+
+  These menu items now point at a category this shop does not have yet:
+    /collections/skincare/
+    /collections/cleansing-oils/
+    /collections/face-washes/
+    /collections/exfoliators/
+    /collections/face-serums/
+    /collections/eye-care/
+    /collections/face-masks/
+    /collections/moisturizers/
+    /collections/lip-care/
+    /collections/hair-care/
+    /collections/skincare-sets/
+    /collections/beauty-devices/
+  Each will answer 404 until the category exists, and will start
+  working on its own once the WordPress import brings it in. If a
+  category is never coming, repoint or remove that item in
+  Store -> Mega Menu.
+Cleared 0 compiled files.
+Cleared 0 compiled files; flushed the menu and routine caches.
+Cleared 0 compiled files.
+Cleared 0 compiled files; flushed the ordered storefront lists.
+Cleared 0 compiled files; the newsletter and mail-log routes are now reachable.
+Cleared 0 compiled files.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the Mega Menu switch now reaches the storefront.
+Cleared 0 compiled files; the Translation admin routes are now reachable.
+Arabic and right-to-left both ship OFF — Translation → Settings turns them on.
+Cleared 0 compiled files; the stock-alert and basket-reminder routes are now reachable.
+Cleared 0 compiled files; hreflang is emitted by App\Support\Seo now,
+so a stale compiled layout would print every alternate twice.
+Cleared 0 compiled files; the admin console includes a new partial
+(admin/partials/translation-screens.blade.php) and a stale compiled app.blade.php
+would render the Translation menu without the screens behind it.
+Cleared 0 compiled files; the checkout includes a new partial
+(partials/checkout/inline-validation.blade.php) and a stale compiled
+checkout would leave the new switch saving and doing nothing.
+Cleared 0 compiled files; /admin-api/payments/stripe/connect/platform
+is now reachable and the console repaints with the Connect application panel.
+Cleared 0 compiled files; the admin console now sends a CSRF token
+with every Stripe write, and Store -> Payments offers Set up Stripe.
+Cleared 0 compiled files; /routines and the five
+/admin-api/routine* paths are now in the route table. The two
+storefront pages stay 404 until Store -> Modules -> Build my
+routine is switched on, which is how this ships.
+Cleared 0 compiled files; /admin-api/homepage/content is now
+reachable, and the homepage stops printing the hero headline unescaped.
+Cleared 0 compiled files; category, brand and the four
+curated listings now publish a CollectionPage/ItemList, and the
+five standalone documents take their <html lang> and dir from
+the locale they are served in.
+App\Http\Middleware\CacheHeaders ships INERT -- it needs one
+line in bootstrap/app.php, which no package may write. See
+docs/FQ-CACHE-HEADERS.md.
+Cleared 0 compiled files; the skin quiz now emails the
+plan its contact step has always promised, and offers a way into
+Build my routine when that module is on. With the module off the
+quiz page is byte-for-byte what it was.
+Cleared 0 compiled files; the admin address bar now follows the screen
+and #payments/stripe reloads to Payments instead of the dashboard.
+Checkout now lists Card, Tabby, Tamara, Cash on delivery, in that order.
+Cleared 0 compiled files; the checkout now draws the card number,
+expiry and security code in their own labelled boxes.
+Cleared 0 compiled files; /blog and /post/{slug} now send
+a reader to the canonical address -- trailing slash kept, and an
+Arabic reader stays in Arabic instead of landing on the English page.
+Cleared 0 compiled files; Store → Import can now build the URL
+map and take the product photographs off the old site.
+Cleared 0 compiled files; the cart's trust row now draws real payment
+marks, the delivery row and the quantity stepper take their new sizes, and both
+admin previews agree with the shop again.
+Cleared 0 compiled files; /ar now resolves without the
+hand-edit to bootstrap/app.php that no package could ever make.
+Cleared 0 compiled files; Orders → tick → Print now has a route.
+Cleared 0 compiled files; the cart page adds, changes quantity and
+removes in real time again instead of only on a reload.
+Cleared 0 compiled files; the import now recognises an export it has
+already read, and there is a page saying what has been imported and when.
+Added attributes.source_attribute_id
+Indexed attributes (source_attribute_id) as attributes_source_attribute_unique
+Cleared 0 compiled files; the cart page draws two columns from 1024px up,
+and Appearance -> Cart page has a Desktop tab to tune them.
+Cleared 0 compiled files; Appearance -> Cart page -> Desktop now shows its
+preview full width, under the controls.
+Cleared 0 compiled files; the import can now keep going with the tab closed,
+and the shop can reach its own /import-chain/continue to do it.
+Cleared 0 compiled files; the address form has a way back to the list,
+the desktop popup carries its own close button, and the desktop cart page has
+spacing controls and carousel arrows on the rail.
+Cleared 0 compiled files; the shop can now be told which address is
+its real one, and a private install can be kept out of every search index.
+Cleared 0 compiled files; the rail's arrows are no longer clipped, the
+popup's close button sits above its top-right corner, and the checkout box and
+quantity stepper have desktop controls of their own.
+Cleared 0 compiled files; the Cache screen can now read the shop's
+real caching state, and the browser-cache switch can reach the middleware.
+Cleared 0 compiled files; the checkout takes its delivery address from
+the same list the cart page keeps, and the name sits with the email and phone.
+Cleared 0 compiled files; the cart page's address calls and the
+Appearance -> Cart page screen can now be reached.
+Cleared 0 compiled files; the checkout has its two columns back and
+the summary sits at the top again on a phone.
+Cleared 0 compiled files; the cart page now ships with no
+footer, and Appearance -> Cart page -> Layout can put it back.
+Cleared 0 compiled files; a shopper who is not signed in now keeps
+three delivery addresses instead of one, and they move into the account
+when that shopper signs in.
+Cleared 0 compiled files; the mobile checkout no longer scrolls
+sideways, and Appearance -> Checkout page can set the spacing on the
+desktop and mobile layouts separately.
+Cleared 0 compiled files; the checkout's order-summary rows now
+have their own controls under Appearance -> Checkout page, separately for
+desktop and for mobile.
+Cleared 0 compiled files; the address row now points at its own
+button, the contact fields read name, phone, email, the authenticity tick
+draws itself, and the header and every text size have controls.
+Cleared 0 compiled files; the address popup opens straight into the
+real list, the checkout header lost 15px of empty bar on phones, and the
+summary rows take padding on all four sides.
+Cleared 0 compiled files; the checkout has a slim footer under
+Appearance -> Footer, the summary's first line is no longer clipped, and its
+remove button and tab strip have sizes of their own.
+Cleared 0 compiled files; the footer has four shapes, four alignments,
+five tones and a row of payment marks, and the checkout screen's Mobile tabs
+show their preview beside the controls.
+Cleared 0 compiled files; the 52px band above the checkout
+header is gone, "Go back to cart" has size controls, and the phone's
+Place order bar appears only once the in-page button scrolls away.
+Cleared 0 compiled files; the checkout screen can draw a select
+and a text box, the phone header lines up with the page, the reviews line
+has its own wording, and the footer has its own shape on a phone.
+Cleared 0 compiled files; the checkout footer now wears the site
+header's own wordmark and colours, read live from Appearance -> Header.
+Cleared 0 compiled files; the floating Place order bar waits for a
+placeable order, the phone header takes the page's own side padding, and the
+footer lines up with the page with its links under the wordmark.
+Cleared 0 compiled files; Store -> Import can now list the articles
+whose addresses this storefront already owns.
+Cleared 0 compiled files; the phone checkout logo sits on the page's
+own left edge, the back-to-top arrow is centred and waits until you have
+scrolled, and Squeeze now moves only the tab you are looking at.
+Cleared 0 compiled files; the redirects table is now read before the
+router instead of only from the 404 handler, so a row for an address the shop
+already answers can finally fire.
+Cleared 0 compiled files; Store -> SEO & Meta -> SEO Audit is live at
+/admin-api/seo-audit, and the sitemap can carry product images once the
+Sitemap band's image box is ticked (it ships off).
+Cleared 0 compiled files; the shop now keeps an administrative
+audit trail and reports on it under Store -> Security. Nothing is blocked.
+Cleared 0 compiled files; /sitemap.xml, /robots.txt and /llms.txt can
+now be served without a session, and answer `public, max-age=3600` once they
+are. Until the routes/web.php line is applied they are unchanged.
+Cleared 0 compiled files; Store -> Import -> Addresses & pictures can now
+record an answer to the redirect map's questions, one row or a whole question at a
+time. Nothing on the storefront moves until an answer is given.
+Cleared 0 compiled files; Store -> Security now checks the files
+packages installed against the hashes those packages declared, and reports
+what differs. It blocks nothing and it restores nothing.
+Cleared 0 compiled files; Store -> Security grows a content-security
+policy card. The policy is REPORT-ONLY and ships switched off, so no response
+header changes until you turn it on. It refuses nothing either way.
+Cleared 0 compiled files; Store -> Business Details -> Business
+now has the shop's address, and /concern/acne/ goes live once you have
+tagged three products for "Acne & blemishes" under Catalog -> Build my
+routine. Nothing on the shop moves until you do.
+Cleared 0 compiled files; Appearance -> Set can now size the
+fanned member circles, the What's inside popup and the saving, with a
+separate value per measurement on the Desktop and Mobile tabs.
+Nothing on the shop has moved: every control ships at the value the
+page already draws, and the storefront emits no stylesheet at all
+until one of them is changed.
+Cleared 0 compiled files.
+Cleared 0 compiled files; the health check the updater relies on now
+renders the home page and a product page instead of running SELECT 1. An update
+that breaks either one is rolled back automatically. KBB_HEALTH_DEEP=false in
+.env turns that back off if a shop is already broken for another reason.
+Cleared 0 compiled files; packages can now carry an Ed25519 signature
+and this shop can check one. NOTHING IS ENFORCED -- unsigned packages are still
+accepted exactly as before. docs/PACKAGE-SIGNING.md has the six-step sequence for
+turning it on. Also: /admin/updates?fallback=1 renders instead of 500ing, which
+it had done since the updater was built.
+Cleared 0 compiled files; Catalog -> Build my routine
+now carries the on/off switch and a Demo data card, and its
+product search runs as you type. The module is still OFF and
+no demo row exists until you press Import.
+Cleared 0 compiled files. Platform -> Site address now warns when this
+shop is served from an address that is not APP_URL, and offers one button to
+write the new one. It draws nothing while the two agree, which is the case here.
+Cleared 0 compiled files. Content -> Blog Posts can now write an
+article, not just list one: New article, Edit, the Arabic boxes beside every
+field, and an address that is checked against the storefront's own routes as
+you type. No article is created by applying this.
+Cleared 0 compiled files; Catalog -> Build my routine
+can now tag several products at once: tick the rows, then press
+one step or one concern for all of them, with Undo beside it.
+Nothing is tagged by this update and no concern page changes.
+Cleared 0 compiled files; Store -> Import now has a PAGE listing
+every article whose address this storefront already owns, with the live
+URL each one is indexed at. It writes nothing.
+Cleared 0 compiled files; the checkout includes a new partial
+(partials/checkout/address-autocomplete.blade.php) and a stale compiled
+checkout would leave the new switch saving and doing nothing.
+Cleared 0 compiled files; Appearance -> Homepage now has a Preview
+card that draws the real storefront homepage from the arrangement on screen,
+at 1280 and at 390, without saving anything. Nothing on the shop moves until
+you press Save as before.
+Cleared 0 compiled files; the shop now has a shoppable-video
+library under Content -> Shoppable video. Nothing on the storefront changed.
+Added locale_slugs and redirects.locale. Both are EMPTY and INERT: the
+Arabic slug policy ships at 'shared', which is the one-slug-per-row
+behaviour this shop already has, so no address on the storefront moves.
+Cleared 0 compiled files. Arabic addresses can now be a second slug
+per row instead of the shared one, and a shop that does not accept returns can
+say so in its markup. Both ship OFF: the Arabic policy reads 'shared', which is
+what this shop does today, and the returns box is untouched until somebody
+chooses an answer.
+Cleared 0 compiled files; the shop now has video SECTIONS
+(Content -> Video sections) and a look for them (Appearance -> Video rail).
+video). Nothing appears on the storefront until you switch Shoppable video
+on in Store -> Modules AND paste a [kbb_videos] shortcode somewhere.
+Cleared 0 compiled files; every SEO title and description box
+now shows what Google will print, before you save -- on Catalog -> Categories,
+Catalog -> Brands, Content -> Blog Posts and Store -> SEO & Meta. A new
+Overview tab on Store -> SEO & Meta lists what is waiting on you. No setting
+changed and nothing on the storefront moved.
+Cleared 0 compiled files; the site width is now one number
+(1680px) under Appearance -> Site layout. The cart, the checkout and the
+slim footer keep their own widths.
+Cleared 0 compiled files; the DESKTOP header is now as wide as
+the page (Appearance -> Site layout -> Page width -> "Header follows the
+site width", which now ships ON), it keeps every item on one row by
+shrinking its own padding, and the WhatsApp block no longer vanishes on a
+narrow desktop. The phone and small-tablet header are unchanged.
+Cleared 0 compiled files. All eight skin-concern pages are now
+enabled with their English copy written -- each stays a 404 until three
+products are tagged for it at Catalog -> Build my routine. The business type
+now says Online store, and the Shipping cost box on Store -> SEO & Meta ships
+BLANK instead of 0, so turning the merchant listing on no longer publishes
+free delivery. Nothing on the storefront moved.
+Cleared 0 compiled views. Shoppable video is one sidebar row with three tabs now.
+Cleared 0 compiled views. Saving a video section works now, and the clip editor is the tabbed one.
+Cleared 0 compiled files. Pages -> User pages can now EDIT a
+content page: its title, its body, its Arabic, its status, and the five search-engine
+fields (page title, meta description, canonical, social image, noindex) with a live
+Google preview above them. No page is created or changed by applying this.
+Cleared 0 compiled views. Adding a clip is five guided steps now, with drag-and-drop, a preview of the video and of the 2-3 second loop, and no more "Poster only" on clips that loop perfectly well.
+Cleared 0 compiled views. The clip editor no longer flashes when you change tab.
+Cleared 0 compiled files. Tabby can now be registered for webhooks (Store -> Payments -> Tabby) and an uncaptured Tabby authorisation can be released from the order screen. No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files. Content -> Instagram is reachable now, and the
+homepage has two new rows on Appearance -> Homepage: Video rail and Instagram
+Profile. BOTH DRAW NOTHING YET -- the video rail until a section is picked on
+Content -> Shoppable video -> Appearance -> Homepage, and Instagram until the
+account is connected on Content -> Instagram and the module is switched on at
+Store -> Modules -> Instagram Profile. Nothing on the storefront moved.
+Cleared 0 compiled files. Tamara and Tabby can both now release an
+uncaptured authorisation from the order screen, through one endpoint rather
+than two. Eleven admin screens have a working URL for the first time -- a link
+to Shoppable video, Instagram, Security, Cache, Build my routine, Site layout,
+Footer, Cart page or Checkout page used to open the Dashboard. No setting
+changed and nothing on the storefront moved.
+Cleared 0 compiled files. Content -> Shoppable video -> All clips now
+lays every step of the add-a-clip flow out in TWO COLUMNS on a desktop and one
+on a phone, with a titled section over each group instead of a small uppercase
+label. The upload bar shows the megabytes sent as well as the percentage, says
+when the file has all arrived and the server is working on it, and STAYS on
+screen afterwards -- with a tick, or with the reason it was refused. And the
+'Cut the cover and teaser from the video' button has moved out of the bottom of
+the cover box into its own section directly under the two file boxes, so
+finishing an upload offers the cut instead of leaving it to be found. On a
+server with no ffmpeg that same section says what to do instead. No setting
+changed, no default moved, and nothing on the storefront was touched.
+Cleared 0 compiled files. Store -> Ecommerce -> Payments is two columns
+now: keys on the left, settings on the right. The clip editor is too, and it
+offers to cut the cover and the teaser where an upload finishes. An error
+message no longer wears a green tick. Appearance -> Header -> Bar -> Content
+width now says it is not in use while the header is following the site width.
+No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files. Content -> Shoppable video -> All clips ->
+step 2 now advertises the size THIS server will really accept instead of the
+64 MB the shop allows, and says plainly when PHP is the thing capping it.
+An upload PHP refused for its size, or discarded for being over post_max_size,
+no longer reads as a bad file: the refusal names the directive, its value, and
+the fact that the file itself is fine. The bar can be cancelled, a failure that
+a second attempt could fix offers Try again, and a long wait says how long.
+
+On THIS server, right now:
+  upload_max_filesize = 2M
+  post_max_size       = 8M
+  largest clip that can really be uploaded: 2 MB
+  (Shoppable video itself allows 64 MB, so the SERVER is the limit — see docs/UPLOAD-LIMITS.md)
+
+No setting changed, no default moved, and nothing on the storefront was touched.
+Cleared 0 compiled files. Uploading a video now says what THIS server
+will really take, instead of promising 64 MB it cannot honour.
+This server: upload_max_filesize = 2M, post_max_size = 8M.
+Raise those on the server if you want bigger clips.
+Duplicating an order no longer copies the original's capture, a released
+authorisation can no longer be captured, and a failed capture or refund no
+longer reports itself with a green tick.
+No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files.
+Uploads in the console now show a real progress bar with the current speed and
+an estimate of the time left, so a slow upload can be told from a stuck one.
+Files can be dragged onto the Video, Poster and Short loop rows under
+Content -> Shoppable video -> Sections -> (a section) -> (a clip) -> Files.
+That screen also stops advertising 64 MB and prints what THIS server takes.
+This server: upload_max_filesize = 2M, post_max_size = 8M.
+If post_max_size is the smaller of those two, IT is what caps your uploads —
+raising it alone is what unlocks bigger clips. See docs/UPLOAD-LIMITS.md.
+No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files.
+
+Every upload in the console now has a live progress bar fed by real bytes,
+a drop target that covers the whole card rather than a small dashed box,
+a Stop button while it is in flight, and a refusal that names the size and
+the reason BEFORE the file is sent.
+
+  Choose an image (the shared Media Library popup) — drop images anywhere
+      on the dialog; it had no drop target at all before.
+  Catalog -> Products -> Edit -> Main image / Gallery / Search appearance
+      — all three take a dropped photograph, and the share image reports
+      progress at all for the first time.
+  Reviews -> Review Import / Export -> Import — drop the CSV on the card.
+
+On THIS server, right now:
+  upload_max_filesize = 2M
+  post_max_size       = 8M
+  largest image these screens can really upload: 2 MB
+  largest review CSV they can really import:      2 MB
+Raise those two directives on the server if you want bigger files.
+
+No setting changed, no default moved, and nothing on the storefront was
+touched. The two size numbers that changed on screen were never limits this
+shop could honour.
+Cleared 0 compiled files. Every upload in the console now has a live
+bar with a real speed and a time remaining, and a drop zone: Shoppable video,
+the image picker, the product editor and the review importer. A file dropped
+beside a box no longer opens in the browser and throws away the form you were
+filling in. No setting changed and nothing on the storefront moved.
+Catalogued 0 file(s) into the media library, including every shoppable-video
+clip and teaser, which nothing had ever recorded. From this version each new upload
+records itself, and Content → Media Library shows videos as well as pictures.
+Cleared 0 compiled files. Every upload in the back office now joins the
+Media Library, videos included, and a section page can take a new video directly:
+Content -> Shoppable video -> Sections -> open one -> top right of "Add from the
+library". No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files. Moving between the five steps of a clip is
+now instant and makes no request, and the video is no longer re-fetched and
+restarted on the way past. Unsaved typing survives a reload and is offered
+back rather than applied behind your back. The product search on step 4 now
+says when nothing matched, says when what matched is a draft, and shows the
+newest products before you type. No setting changed and nothing on the
+storefront moved.
+Cleared 0 compiled files. The section editor now has its
+"Upload a new video" control (Content -> Shoppable video -> Sections -> open one
+-> top right of "Add from the library"), and a failure on the clips screens now
+names its own cause instead of one sentence that could mean anything.
+`php artisan ugc:cut-covers` is now
+available over SSH: it cuts the cover and the 2.5s teaser for every clip
+that has a video and no cover, oldest first, and it works on this host
+even though the browser cannot, because the CLI is not the PHP that has
+proc_open switched off. Run it with --dry-run first to see the list.
+Also fixed: re-cutting a cover no longer leaves the old poster stuck in
+the Media Library. No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files; Appearance -> Homepage content now has a
+Live preview tab. Click any section in the picture and its own controls open
+beside it; the picture redraws as you change them and nothing reaches the shop
+until you press Save. No setting changed and nothing on the storefront moved.
+Cleared 0 compiled files; Appearance -> Banners -> Cards banner is now
+reachable. Nothing on the shop moved: the section ships off, no set is chosen,
+and both tables are empty. Build a set, add cards, publish it, pick it on that
+screen and switch the section on to see it.
+Cleared 0 compiled files. Appearance -> Banners now has a Save
+button: edits to a set and its cards are held until you press it, and the
+preview redraws from what you have typed. A set can also take a background
+(none, a colour or a picture), its own button colours, and its title either
+below the picture or on it. Nothing on the storefront moved: every new
+control ships at the value the page already had.
+Cleared 0 compiled files. Catalog -> Sets is now reachable:
+create a set by choosing products, give it its own price, category,
+description and images, and publish it like any other product.
+Nothing on the storefront moves until you create one.
+Cleared 0 compiled files. Sets are now built on the PRODUCT
+editor: Catalog -> Product editor has a type control, and choosing Set
+reveals "What is in the box" beside every section a product already
+has. A set's own product page names what is in the box, Catalog ->
+Products has a Sets chip, Catalog -> Sets is now the list of them, and
+Catalog -> Sets -> Stock carries the switch for whether selling a set
+takes its members off the shelf. That switch ships OFF -- the set
+carries its own stock, exactly as before -- so nothing moves until you
+move it.
+Cleared 0 compiled files. Category archives are now at
+/collections/, brands at /brands/ and articles at /blog/; every old
+address 301s onto its final home in a single hop.
+Address scheme: removed 10 rows that would have looped, repointed 0 onto their final address, and removed 0 left pointing at themselves.
+Address scheme: repointed 2 menu item(s) onto /collections/, /brands/ and /blog/.
+Cleared 0 compiled files. Tapping a clip now opens a popup that is
+the SHAPE OF THE VIDEO: no black bands above or below it, and the product
+boxes and the creator's credit sit ON the video at the bottom instead of
+outside it. Escape closes it, the keyboard stays inside it, and it works the
+same in Arabic. Nothing about the rail itself moved.
+Content -> Shoppable video -> All clips also stops guessing about this
+server: where the 2.5-second teaser cannot be cut during an upload it now
+says WHICH of the two reasons it is, notes that every tile loops anyway, and
+gives the one cron line that makes the covers and teasers cut themselves
+within a minute of an upload. No setting changed, and nothing on a page
+without a video rail moved.
+Cleared 0 compiled files. The video tiles now loop on their own
+for the clips YOU uploaded. They were losing every playback slot to the
+(Demo) clips, because the rail filled its slots in the order the clips
+appear and the demo ones were imported first: your own two sat at the end
+showing a play button. Your clips are now preferred over demo footage, a
+tile whose file is missing gives its slot back instead of keeping it for
+ever, and the play button only disappears once a tile is really playing.
+Content -> Shoppable video -> Appearance -> Motion now SAYS what the shop
+will do: how many tiles will move, which will not and why, and what to
+change.
+The opened player also gets previous/next arrows (keyboard arrows too,
+mirrored in Arabic, greyed out at the first and last clip), and its
+product thumbnail is square again instead of a stretched rectangle: it
+was 129x46 on a phone and 138x46 on a desktop, and it is 46x46 on both,
+which gives the product name 82px more room on a phone and 91px on a
+desktop -- a name like 'Fresh That Lasts Deodorant' now fits on one line
+instead of two.
+No setting changed. A page with no video rail on it is unchanged.
+Cleared 0 compiled files. On a SET's product page the bulk-quantity
+strip is gone, and what is in the box now sits in the space it left --
+in the buy column, between the price and Add to cart, as a LIST rather
+than a grid of tiles, with its own sizes on a phone. A box of more than
+six products shows five and folds the rest behind "Show N more products",
+so the Add to cart button stays on the screen.
+
+Ordinary product pages are untouched -- they keep their bundle strip --
+and no basket is repriced.
+Cleared 0 compiled files. A SET priced by a rule -- a percentage
+off what is in the box, an amount off it, or a typed price anchored to it
+-- now shows the same figure on every grid in the shop that it has always
+shown on its own page, and the basket takes that figure rather than the
+one the editor last saved.
+
+A shop with no rule-priced set is byte-identical, and no basket or order
+that already exists is repriced.
+Cleared 0 compiled files. Appearance -> Product styles now actually
+changes the shop. Card roundness, Image shape, the six colours and the seven
+"what the card shows" toggles were drawn in the admin preview and emitted to
+the storefront by nothing, on every release so far; they reach all five
+product grids now.
+
+NOTHING ON YOUR SHOP MOVES. Those 0 stored value(s) were reset to the
+values the pages were already rendering, because a control that has never
+done anything has never shown you what its setting looks like. If you had
+moved one of those sliders in the past it reads at its shipped value again --
+move it now and you will see it take effect.
+
+Columns (desktop, tablet, phone), Gap between cards and Button wording are
+gone from that screen. The column count comes from Appearance -> Site layout,
+the gap is set per grid on purpose (/shop and the related rail are narrower
+than the home rails), and the button's words are in Content -> Translations.
+Cleared 0 compiled files. The video tiles now loop ONE SECOND
+instead of two and a half, which is what you asked for -- and a one-second
+cut is a much smaller file: 98.6 KB became 30.1 KB on the same clip.
+
+A tile now shows one of three things and never two at once: while the clip
+is still loading it shows a turning loader and NO play button; once it is
+ready it shows the play button; while it is playing it shows neither. A
+tile whose file cannot be played falls back to the play button rather than
+spinning for ever.
+
+WHAT IS ACTUALLY SLOW, measured: a clip with no cut teaser fetches the
+WHOLE video to loop the first second of it -- 3.2 MB against 54 KB for the
+same second, per tile, with four tiles going at once. Your clips have
+covers but no teasers, so this is what your rail is doing now. Over SSH:
+    php artisan ugc:cut-covers
+and, once only, if any teaser on this shop was cut before today:
+    php artisan ugc:cut-covers --recut-teasers
+
+Appearance -> Shoppable video -> Motion now ships at 1 second and its
+slider starts at 1 second. If you had already moved that slider, your own
+value is kept. Nothing else changed, and a page with no video rail on it
+is unchanged.
+Cleared 0 compiled files. Catalog -> Product tabs is now reachable:
+write a tab once and it appears on every product, or open one product and
+give it a tab of its own. A product can also hide or re-word a tab it
+inherits. Every title and body has an Arabic box beside it.
+Nothing on the storefront moves until you write one.
+Cleared 0 compiled files. Wrote 1026 Arabic interface strings as DRAFTS.
+
+NOTHING ON YOUR SHOP HAS CHANGED. A draft is never shown to a shopper,
+so /ar still reads exactly as it did before you applied this, and your
+English shop is untouched.
+
+Read them at Translation -> Strings, where each one sits beside its
+English, and correct anything you would say differently. When you are
+happy, Translation -> Progress has one button -- 'Approve all 1026
+drafts' -- and pressing it is the moment the Arabic shop starts
+speaking Arabic.
+
+Anything you had already typed yourself was left exactly as it was.
+Eight long paragraphs -- the intros on the eight concern pages -- were
+deliberately NOT translated and still show their English; they are
+landing-page copy and want a person who writes Arabic, not a machine.
+Cleared 0 compiled files. A global tab can now be pointed at
+specific products, whole categories (and everything under them), brands,
+or every set -- Catalog -> Product tabs -> Global tabs -> Where it shows.
+Every tab you have already written stays on every product until you
+narrow it.
+Cleared 0 compiled files. Store -> Gateway webhooks can now
+register the Tamara webhook that carries declines and expiries -- there
+was no way to do that from anywhere before, because Tamara's own
+merchant portal has no screen for it either. Without it a refused order
+sat at 'pending' for ever, holding its stock and its coupon.
+
+Nothing on the shop has moved and no gateway setting has changed. Open
+Store -> Payments -> Tamara, press 'Webhook & limits...', then
+'Register the webhook'. docs/TM-GATEWAY-WEBHOOKS.md is the walkthrough.
+.[41;37mF[0m.                                                                 3 / 3 (100%)
+  [90;1m.[39;22m[31;1m⨯[39;22m[90;1m.[39;22m
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\StorefrontEnglishUnchangedTest[22m [90m>[39m it renders byte-id…   
+[39;1m  The English output of these pages changed:
+  /
+      at byte 2810
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  shop
+      at byte 12779
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  collections/{path}
+      at byte 5040
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  product/{slug}
+      at byte 20544
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  new-in
+      at byte 12854
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  best-sellers
+      at byte 12896
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  super-sale
+      at byte 5886
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  everything-under-54-aed
+      at byte 4353
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  brands
+      at byte 4039
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  brands/{slug}
+      at byte 4593
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  privacy-policy
+      at byte 2582
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  terms-and-conditions
+      at byte 2642
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  delivery
+      at byte 2621
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  refund_returns
+      at byte 2627
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  faqs
+      at byte 2598
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  about
+      at byte 2546
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  contact-us
+      at byte 2562
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  cart
+      at byte 2716
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-wishlist
+      at byte 2754
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account
+      at byte 2554
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  track-my-order
+      at byte 4089
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/forgot
+      at byte 2589
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/orders
+      at byte 4598
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/orders/{id}
+      at byte 6101
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/edit-address
+      at byte 2706
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/edit-address/{id}
+      at byte 2710
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  newsletter/confirm/{id}
+      at byte 2634
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  newsletter/unsubscribe/{id}
+      at byte 2600
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  mail-preferences/{kind}/{id}
+      at byte 2618
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/reset/{id}/{token}
+      at byte 2733
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎[39;22m[39;1m<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  (with a basket) /cart
+      at byte 2716
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎        [39;22m[39;1m<header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">[39;22m[39;1m⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+Failed asserting that two arrays are identical.
+  [39;22m[31m-Array &0 [][39m[39;1m
+  [39;22m[32m+Array &0 [[39m[39;1m
+  [39;22m[32m+    0 => '/\n[39m[39;1m
+  [39;22m[32m+      at byte 2810\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    1 => 'shop\n[39m[39;1m
+  [39;22m[32m+      at byte 12779\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    2 => 'collections/{path}\n[39m[39;1m
+  [39;22m[32m+      at byte 5040\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    3 => 'product/{slug}\n[39m[39;1m
+  [39;22m[32m+      at byte 20544\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    4 => 'new-in\n[39m[39;1m
+  [39;22m[32m+      at byte 12854\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    5 => 'best-sellers\n[39m[39;1m
+  [39;22m[32m+      at byte 12896\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    6 => 'super-sale\n[39m[39;1m
+  [39;22m[32m+      at byte 5886\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    7 => 'everything-under-54-aed\n[39m[39;1m
+  [39;22m[32m+      at byte 4353\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    8 => 'brands\n[39m[39;1m
+  [39;22m[32m+      at byte 4039\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    9 => 'brands/{slug}\n[39m[39;1m
+  [39;22m[32m+      at byte 4593\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    10 => 'privacy-policy\n[39m[39;1m
+  [39;22m[32m+      at byte 2582\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    11 => 'terms-and-conditions\n[39m[39;1m
+  [39;22m[32m+      at byte 2642\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    12 => 'delivery\n[39m[39;1m
+  [39;22m[32m+      at byte 2621\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    13 => 'refund_returns\n[39m[39;1m
+  [39;22m[32m+      at byte 2627\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    14 => 'faqs\n[39m[39;1m
+  [39;22m[32m+      at byte 2598\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    15 => 'about\n[39m[39;1m
+  [39;22m[32m+      at byte 2546\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    16 => 'contact-us\n[39m[39;1m
+  [39;22m[32m+      at byte 2562\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    17 => 'cart\n[39m[39;1m
+  [39;22m[32m+      at byte 2716\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    18 => 'my-wishlist\n[39m[39;1m
+  [39;22m[32m+      at byte 2754\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    19 => 'my-account\n[39m[39;1m
+  [39;22m[32m+      at byte 2554\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    20 => 'track-my-order\n[39m[39;1m
+  [39;22m[32m+      at byte 4089\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    21 => 'my-account/forgot\n[39m[39;1m
+  [39;22m[32m+      at byte 2589\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    22 => 'my-account/orders\n[39m[39;1m
+  [39;22m[32m+      at byte 4598\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    23 => 'my-account/orders/{id}\n[39m[39;1m
+  [39;22m[32m+      at byte 6101\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    24 => 'my-account/edit-address\n[39m[39;1m
+  [39;22m[32m+      at byte 2706\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    25 => 'my-account/edit-address/{id}\n[39m[39;1m
+  [39;22m[32m+      at byte 2710\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    26 => 'newsletter/confirm/{id}\n[39m[39;1m
+  [39;22m[32m+      at byte 2634\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    27 => 'newsletter/unsubscribe/{id}\n[39m[39;1m
+  [39;22m[32m+      at byte 2600\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    28 => 'mail-preferences/{kind}/{id}\n[39m[39;1m
+  [39;22m[32m+      at byte 2618\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    29 => 'my-account/reset/{id}/{token}\n[39m[39;1m
+  [39;22m[32m+      at byte 2733\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+    30 => '(with a basket) /cart\n[39m[39;1m
+  [39;22m[32m+      at byte 2716\n[39m[39;1m
+  [39;22m[32m+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n[39m[39;1m
+  [39;22m[32m+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',[39m[39;1m
+  [39;22m[32m+][39m[39;1m
+  [39;22m
+
+  at [32mtests/Feature/StorefrontEnglishUnchangedTest.php[39m:[32m213[39m
+    209▕             $changed[] = $uri . "\n      " . EnglishRenderWalk::firstDifference($html, $after[$uri] ?? '');
+    210▕         }
+    211▕     }
+    212▕ 
+  ➜ 213▕     expect($changed)->toBe([], "The English output of these pages changed:\n  " . implode("\n  ", $changed));
+    214▕ });
+    215▕ 
+    216▕ /**
+    217▕  * Forget the session, every resolved guard and the resolved cart, so the next
+
+  [33m1   [39m[39;1mtests/Feature/StorefrontEnglishUnchangedTest.php[39;22m:[39;1m213[39;22m
+
+
+  [90mTests:[39m    [31;1m1 failed[39;22m[90m,[39m[39m [39m[32;1m2 passed[39;22m[90m (19 assertions)[39m
+  [90mDuration:[39m [39m10.26s[39m
+
+
+
+Time: 00:09.782, Memory: 82.50 MB
+
+There was 1 failure:
+
+1) P\Tests\Feature\StorefrontEnglishUnchangedTest::__pest_evaluable_it_renders_byte_identical_English_on_every_storefront_page_after_the________conversion
+The English output of these pages changed:
+  /
+      at byte 2810
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  shop
+      at byte 12779
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  collections/{path}
+      at byte 5040
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  product/{slug}
+      at byte 20544
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  new-in
+      at byte 12854
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  best-sellers
+      at byte 12896
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  super-sale
+      at byte 5886
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  everything-under-54-aed
+      at byte 4353
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  brands
+      at byte 4039
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  brands/{slug}
+      at byte 4593
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  privacy-policy
+      at byte 2582
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  terms-and-conditions
+      at byte 2642
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  delivery
+      at byte 2621
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  refund_returns
+      at byte 2627
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  faqs
+      at byte 2598
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  about
+      at byte 2546
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  contact-us
+      at byte 2562
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  cart
+      at byte 2716
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-wishlist
+      at byte 2754
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account
+      at byte 2554
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  track-my-order
+      at byte 4089
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/forgot
+      at byte 2589
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/orders
+      at byte 4598
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/orders/{id}
+      at byte 6101
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/edit-address
+      at byte 2706
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/edit-address/{id}
+      at byte 2710
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  newsletter/confirm/{id}
+      at byte 2634
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  newsletter/unsubscribe/{id}
+      at byte 2600
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  mail-preferences/{kind}/{id}
+      at byte 2618
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  my-account/reset/{id}/{token}
+      at byte 2733
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+  (with a basket) /cart
+      at byte 2716
+        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…
+        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…
+Failed asserting that two arrays are identical.
+--- Expected
++++ Actual
+@@ @@
+-Array &0 []
++Array &0 [
++    0 => '/\n
++      at byte 2810\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    1 => 'shop\n
++      at byte 12779\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    2 => 'collections/{path}\n
++      at byte 5040\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    3 => 'product/{slug}\n
++      at byte 20544\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    4 => 'new-in\n
++      at byte 12854\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    5 => 'best-sellers\n
++      at byte 12896\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    6 => 'super-sale\n
++      at byte 5886\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    7 => 'everything-under-54-aed\n
++      at byte 4353\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    8 => 'brands\n
++      at byte 4039\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    9 => 'brands/{slug}\n
++      at byte 4593\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    10 => 'privacy-policy\n
++      at byte 2582\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    11 => 'terms-and-conditions\n
++      at byte 2642\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    12 => 'delivery\n
++      at byte 2621\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    13 => 'refund_returns\n
++      at byte 2627\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    14 => 'faqs\n
++      at byte 2598\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    15 => 'about\n
++      at byte 2546\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    16 => 'contact-us\n
++      at byte 2562\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    17 => 'cart\n
++      at byte 2716\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    18 => 'my-wishlist\n
++      at byte 2754\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    19 => 'my-account\n
++      at byte 2554\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    20 => 'track-my-order\n
++      at byte 4089\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    21 => 'my-account/forgot\n
++      at byte 2589\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    22 => 'my-account/orders\n
++      at byte 4598\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    23 => 'my-account/orders/{id}\n
++      at byte 6101\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    24 => 'my-account/edit-address\n
++      at byte 2706\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    25 => 'my-account/edit-address/{id}\n
++      at byte 2710\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    26 => 'newsletter/confirm/{id}\n
++      at byte 2634\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    27 => 'newsletter/unsubscribe/{id}\n
++      at byte 2600\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    28 => 'mail-preferences/{kind}/{id}\n
++      at byte 2618\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    29 => 'my-account/reset/{id}/{token}\n
++      at byte 2733\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++    30 => '(with a basket) /cart\n
++      at byte 2716\n
++        before: …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎        <header class="hd-sticky hd-border hd-shadow hd-trendhide sg-rule sg-rowrule sg-compact mhd-…\n
++        after:  …;--dv-col:#C13E63;--dv-len:26px;--dv-w:2px;--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" style="--kfb-h:30px;--kfb-s:12px;--kfb-fh:14px;--kfb-bg:#FDEFF4;--kf…',
++]
+
+/home/user/lane-fb/tests/Feature/StorefrontEnglishUnchangedTest.php:213
+
+[37;41mFAILURES![0m
+[37;41mTests: 3[0m[37;41m, Assertions: 19[0m[37;41m, Failures: 1[0m[37;41m.[0m
