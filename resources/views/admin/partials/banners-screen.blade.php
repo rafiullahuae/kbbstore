@@ -621,8 +621,13 @@
       + '<div class="bns-title">Your banner sets</div>'
       + '<div class="bns-sub">Two types live in this one list. A <b>cards banner</b> is a row of picture cards that scrolls itself; a <b>picture slider</b> is one picture at a time with arrows and thin bars along the bottom. Each set carries its own speed, background and shape. Build as many as you like and pick which one the homepage shows, above.</div>'
       + '<div class="bns-row" style="margin-bottom:11px">'
-      + '<button class="bns-btn is-primary" id="bns-new" data-bns-kind="cards">New cards banner</button>'
-      + '<button class="bns-btn is-primary" id="bns-newslider" data-bns-kind="slider">New picture slider</button>'
+      /* NO `id` ON EITHER, and that is a rule rather than a tidy-up:
+         AdminConsoleControlsAreLiveTest walks this console for an `id` that no
+         handler binds, and both of these are bound by `[data-bns-kind]` — one
+         loop, so neither can end up wired and the other not. An id here would
+         be a control the guard has to take on trust. */
+      + '<button class="bns-btn is-primary" data-bns-kind="cards">New cards banner</button>'
+      + '<button class="bns-btn is-primary" data-bns-kind="slider">New picture slider</button>'
       + '</div>';
 
     if (!(data.sets || []).length) {
@@ -765,6 +770,35 @@
       + '<span class="bns-help" data-bns-out="speed_ms">' + speedText(value, cards, slider) + '</span></div>';
   }
 
+  /*
+   * ── THE SECTION BACKGROUND, WRITTEN ONCE FOR BOTH BANNER TYPES ──────────
+   *
+   * `bg_mode`, `bg_color` and `bg_image` are three columns BOTH kinds read, and
+   * the block that draws them carries three element ids. Copied into each
+   * branch those ids appeared TWICE IN THE SOURCE — only one is ever rendered,
+   * but AdminNavAndIdsTest reads the source and is right to: a duplicated id is
+   * how a screen comes to have two controls writing one value, and the copy is
+   * how the two come to drift. It caught this the day it was written.
+   *
+   * Only the two sentences differ between the types, so only those are
+   * arguments.
+   */
+  function backgroundSection(s, heading, colourHelp){
+    return '<div class="bns-sec">' + esc(heading) + '</div><div class="bns-grid">'
+      + pick('bg_mode', 'Background', 'What sits behind the whole thing, edge to edge. \u201CNone\u201D is how every set has looked so far.', s.bg_mode, data.enums.bg_modes)
+      + '<div data-bns-when="color"' + (s.bg_mode === 'color' ? '' : ' hidden') + '>'
+      + colour('bg_color', 'Background colour', colourHelp, s.bg_color)
+      + '</div>'
+      + '<div data-bns-when="image"' + (s.bg_mode === 'image' ? '' : ' hidden') + '>'
+      + fld('Background picture', 'Cropped to fill, centred. It goes into your Media Library like any other upload.',
+          '<div class="bns-crow"><div class="bns-bgth" id="bns-bgth">'
+          + (s.bg_image ? '<img src="' + esc(draft.bgUrl || openSet.set.bg_image_url) + '" alt="">' : 'none')
+          + '</div><button class="bns-btn" id="bns-bgpic">' + (s.bg_image ? 'Change' : 'Choose') + '</button>'
+          + '<button class="bns-btn is-danger" id="bns-bgclr">Remove</button></div>')
+      + '</div>'
+      + '</div>';
+  }
+
   function editorView(){
     if (openId === null) return '';
 
@@ -824,19 +858,7 @@
         + '</div>';
 
       /* ── the section's background, the same control the cards row has ── */
-      html += '<div class="bns-sec">Behind the banner</div><div class="bns-grid">'
-        + pick('bg_mode', 'Background', 'What sits behind the whole banner, edge to edge. “None” is how every set has looked so far.', s.bg_mode, e.bg_modes)
-        + '<div data-bns-when="color"' + (s.bg_mode === 'color' ? '' : ' hidden') + '>'
-        + colour('bg_color', 'Background colour', 'Shown behind the picture, right across the page.', s.bg_color)
-        + '</div>'
-        + '<div data-bns-when="image"' + (s.bg_mode === 'image' ? '' : ' hidden') + '>'
-        + fld('Background picture', 'Cropped to fill, centred. It goes into your Media Library like any other upload.',
-            '<div class="bns-crow"><div class="bns-bgth" id="bns-bgth">'
-            + (s.bg_image ? '<img src="' + esc(draft.bgUrl || openSet.set.bg_image_url) + '" alt="">' : 'none')
-            + '</div><button class="bns-btn" id="bns-bgpic">' + (s.bg_image ? 'Change' : 'Choose') + '</button>'
-            + '<button class="bns-btn is-danger" id="bns-bgclr">Remove</button></div>')
-        + '</div>'
-        + '</div>';
+      html += backgroundSection(s, 'Behind the banner', 'Shown behind the picture, right across the page.');
 
       /* ── steering ── */
       html += '<div class="bns-sec">How a shopper moves it</div>'
@@ -872,19 +894,7 @@
           + '</div>';
 
         /* ── the section's background ── */
-        html += '<div class="bns-sec">Behind the row</div><div class="bns-grid">'
-          + pick('bg_mode', 'Background', 'What sits behind the whole row, edge to edge. “None” is how every set has looked so far.', s.bg_mode, e.bg_modes)
-          + '<div data-bns-when="color"' + (s.bg_mode === 'color' ? '' : ' hidden') + '>'
-          + colour('bg_color', 'Background colour', 'Shown behind the cards, right across the page.', s.bg_color)
-          + '</div>'
-          + '<div data-bns-when="image"' + (s.bg_mode === 'image' ? '' : ' hidden') + '>'
-          + fld('Background picture', 'Cropped to fill, centred. It goes into your Media Library like any other upload.',
-              '<div class="bns-crow"><div class="bns-bgth" id="bns-bgth">'
-              + (s.bg_image ? '<img src="' + esc(draft.bgUrl || openSet.set.bg_image_url) + '" alt="">' : 'none')
-              + '</div><button class="bns-btn" id="bns-bgpic">' + (s.bg_image ? 'Change' : 'Choose') + '</button>'
-              + '<button class="bns-btn is-danger" id="bns-bgclr">Remove</button></div>')
-          + '</div>'
-          + '</div>';
+      html += backgroundSection(s, 'Behind the row', 'Shown behind the cards, right across the page.');
 
         /* ── the button ── */
         html += '<div class="bns-sec">The button</div>'
