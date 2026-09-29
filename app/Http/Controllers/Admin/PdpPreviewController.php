@@ -115,7 +115,15 @@ class PdpPreviewController extends Controller
         $products = \App\Models\Product::query()
             ->visible()
             ->select('id', 'slug', 'name', 'type', 'image')
+            /* ▲ `id` AFTER `name`, AND IT IS NOT DECORATION. StableOrderingTest
+               reads this file and reported it: a SLICED query (`limit(60)`)
+               whose last ORDER BY key can tie does not have a defined answer —
+               two products named the same fall either side of the cut
+               depending on what the engine feels like, so the chooser would
+               list a different sixty on different requests and a link the owner
+               had open would stop being in the list. `id` cannot tie. */
             ->orderBy('name')
+            ->orderBy('id')
             ->limit(60)
             ->get();
 

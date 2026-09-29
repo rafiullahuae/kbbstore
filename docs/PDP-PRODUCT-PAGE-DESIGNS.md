@@ -48,9 +48,25 @@ drawing carries a bar at the top with the other four on it, so you can flick
 between all five on the same product without going back to the list.
 
 > ▲ **The integrator has to add one line before these URLs work.**
-> `routes/web.php` is his file; `routes/pdp-preview-admin.php` carries the line
-> and where it goes. The package that ships it also needs a `clear_caches_*`
-> migration, because `routes/web.php` is compiled on the server.
+> `routes/web.php` is his file. Inside the existing `admin-api` group, beside
+> the other catalog route files (today that is line 692):
+>
+>     require __DIR__.'/catalog-admin.php';
+>     require __DIR__.'/pdp-preview-admin.php';      // <- this
+>
+> The package that ships it also needs a `clear_caches_*` migration, because
+> `routes/web.php` is compiled on the server and these routes do not exist until
+> `bootstrap/cache/routes-*.php` is gone.
+>
+> **Two tests are red until that line lands, and nothing else is.** `PdpPreview-
+> Test > it requires routes/pdp-preview-admin.php exactly once` and the
+> repo-wide `EverythingIsMountedOnceTest`. Both pin the FINISHED state, which is
+> what CLAUDE.md asks for — `0` is the "built, never wired up" shape this repo
+> keeps finding, `2` mounts every path twice and Laravel keeps the last. Checked
+> rather than assumed: with that one line added, `EverythingIsMountedOnceTest`,
+> `AdminCapabilityMapTest` and all fourteen cases in `PdpPreviewTest` pass — 32
+> passed, 0 failed — and the line was then taken back out, because `routes/web.php`
+> is not this lane's file.
 
 ---
 
@@ -290,6 +306,19 @@ checked against `Locale::isSupported()` before it reaches `setLocale()`.
 | M5 | add `<script>…getBoundingClientRect()</script>` to `parts/tabs.blade.php` | **red** in both the source scan and the rendered count |
 | M6 | move the buy row above the bundle bars in D | **red** — names the pair that is out of order |
 | M7 | replace `@if ($rcount)` with `@if (true)` in `parts/rating.blade.php` | **red** — an unreviewed product draws a 0.0 bar |
+
+## What the rest of the suite said
+
+`KBB_WP_DB=kbb_wp_pdp vendor/bin/pest --compact` — **7781 passed, 22 skipped**,
+and five reds, every one of them acted on:
+
+| Red | What it was | What was done |
+|---|---|---|
+| `StorefrontStringsAreKeyedTest` | the **chooser's** five lines of English, in `views/store/` | moved to `views/admin/`, where the back office's templates live. The five designs stay under `views/store/` and stay scanned — they pass. |
+| `StableOrderingTest` | `PdpPreviewController:110` — `orderBy('name')` under a `limit(60)` **can tie**, so the chooser would list a different sixty on different requests | `->orderBy('id')` after it |
+| `SetListPanelControlsTest` | the panel is `@include`d in a **third** file | the pin is **advanced, not loosened**: the list stays exact and now has three entries, with the reasoning and a note that it goes back to two when the previews are deleted. *This is a file outside this lane's own directories — flagged for the integrator.* |
+| `EverythingIsMountedOnceTest` | `pdp-preview-admin.php is required 0 times` | the integrator's one line, above |
+| `PdpPreviewTest > requires … exactly once` | the same thing, pinned by this lane | the same line |
 
 > **M4 was GREEN on its first run and the test was wrong, not the code.** It
 > asserted `toContain($member->name)` — and a set's member names are in the
