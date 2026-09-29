@@ -1,0 +1,98 @@
+[
+  {
+    "layout": "shipped",
+    "page": "plain",
+    "scrollWidth": 390,
+    "scrollY": 342,
+    "galleryFrame": [
+      346,
+      346
+    ],
+    "addToCartVisible": true,
+    "addToCartViewportY": 813
+  },
+  {
+    "layout": "shipped",
+    "page": "set3",
+    "scrollWidth": 390,
+    "scrollY": 333,
+    "galleryFrame": [
+      346,
+      346
+    ],
+    "addToCartVisible": true,
+    "addToCartViewportY": 716
+  },
+  {
+    "layout": "focus",
+    "page": "plain",
+    "scrollWidth": 390,
+    "scrollY": 296,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "addToCartVisible": true,
+    "addToCartViewportY": 797
+  },
+  {
+    "layout": "focus",
+    "page": "set3",
+    "scrollWidth": 390,
+    "scrollY": 340,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "addToCartVisible": true,
+    "addToCartViewportY": 770
+  },
+  {
+    "layout": "editorial",
+    "page": "plain",
+    "scrollWidth": 390,
+    "scrollY": 348,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "addToCartVisible": false,
+    "addToCartViewportY": 960
+  },
+  {
+    "layout": "editorial",
+    "page": "set3",
+    "scrollWidth": 390,
+    "scrollY": 343,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "addToCartVisible": false,
+    "addToCartViewportY": 875
+  },
+  {
+    "layout": "compact",
+    "page": "plain",
+    "scrollWidth": 390,
+    "scrollY": 342,
+    "galleryFrame": [
+      297,
+      371
+    ],
+    "addToCartVisible": true,
+    "addToCartViewportY": 746
+  },
+  {
+    "layout": "compact",
+    "page": "set3",
+    "scrollWidth": 390,
+    "scrollY": 334,
+    "galleryFrame": [
+      297,
+      371
+    ],
+    "addToCartVisible": true,
+    "addToCartViewportY": 732
+  }
+]

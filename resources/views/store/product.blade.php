@@ -140,6 +140,85 @@
     $capStyle = (string) $settings->get('review_capsule_style', 'capsule');
     $showCap  = in_array($capStyle, ['capsule', 'both'], true);
     $showRate = in_array($capStyle, ['inline', 'both'], true);
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       WHERE THE SHORT DESCRIPTION SITS. (Lane PP)
+
+         "and then a short description should come after the list."
+
+       On a SET the blurb now prints BELOW "What is in this set", not above it.
+       The reason it is the right way round is the reason he noticed: the list
+       is the set's specification -- three named products, with quantities --
+       and the blurb is the sentence that sums them up. A summary before the
+       thing it summarises is a caption with nothing above it.
+
+       ▲ AND ONLY ON A SET. An ordinary product has no list, so "after the
+         list" names no position on its page; the only candidates would be
+         after the bundle strip or after Add to cart, and BOTH move the blurb
+         below the buying decision on the 99% of this catalogue that is not a
+         set. He asked for one page to change and the screenshot he marked up
+         was a set's. So the ordinary product's blurb is where it was, to the
+         byte, and $kbbShortBelow is false for every product in the shop but
+         the sets. CLAUDE.md rule 1.
+
+       ▲ AND ONLY WHEN THE LIST IS ACTUALLY DRAWN. A `type='set'` row whose
+         membership is empty renders no panel at all, and moving the blurb
+         "after" a block that does not exist would move it past the option
+         slot for no reason a shopper could see. So the question asked here is
+         the same one the panel asks itself -- does SetContents have members --
+         and it is asked through SetContents::fromProduct(), which is the one
+         description of a set's contents this application has.
+
+       ▲ AND IT COSTS NO QUERY. Store\ProductController::show() has already run
+         SetEagerLoad::on([$product]), so `setItems` and their members and
+         brands are in memory; this is a second loop over an array, not a
+         second trip to the database. StorefrontQueryBudgetTest measures it:
+         a set's page is the same count at 3 members and at 12, before and
+         after this change. */
+    $kbbShortBelow = (bool) $product->short_description
+        && \App\Support\SetContents::fromProduct($product)['members'] !== [];
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       THE THREE PROPOSED LAYOUTS — PREVIEWS, NOT A SETTING. (Lane PP)
+
+         "can u also propose the product / set page more improved from the
+          existing layout to derive more beautiful version, give me some
+          options previews to choose from for now."
+
+       "for now" is the whole design of this. He is CHOOSING, not configuring,
+       so there is no Appearance screen, no column on `products` and no row in
+       `settings`: a layout nobody has picked yet is not a setting, and a picker
+       shipped before the decision is a screen to keep working and a migration
+       to unpick when he names one. Three URLs, three photographs, one answer
+       next round.
+
+           /product/<slug>/?layout=focus
+           /product/<slug>/?layout=editorial
+           /product/<slug>/?layout=compact
+
+       ── AND THE SHIPPED PAGE IS UNTOUCHED, TO THE BYTE ────────────────────
+
+       With no `layout` in the query string $kbbLayoutClass is the empty string
+       and this element renders `<div class="pdp">`, character for character
+       what it rendered before. Every rule behind the three proposals is
+       scoped under .pp-lay-* in resources/css/kbb/kbb-product.css, so a page
+       nobody asked a layout of carries the bytes and matches none of them.
+       CLAUDE.md rule 1: a proposal must not move the shop.
+
+       ── THE VALUE IS NEVER PRINTED, ONLY LOOKED UP ────────────────────────
+
+       CLAUDE.md rule 5, on a page reached by anybody with a URL bar. The query
+       string does not become a class name; it becomes a KEY into a map written
+       here, and what is printed is one of this file's own three constants or
+       nothing at all. `?layout="><script>` finds no key and prints the empty
+       string. There is no branch on the raw value, no default that echoes it,
+       and no way to reach the element with a character the shop did not
+       choose. */
+    $kbbLayoutClass = [
+        'focus' => ' pp-lay pp-lay-focus',
+        'editorial' => ' pp-lay pp-lay-editorial',
+        'compact' => ' pp-lay pp-lay-compact',
+    ][(string) request()->query('layout')] ?? '';
 @endphp
 
 {{-- Brand once, not twice. This concatenated brand and name unconditionally,
@@ -215,7 +294,7 @@
 @section('content')
 <div class="wrap">
   <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
-  <div class="pdp">
+  <div class="pdp{{ $kbbLayoutClass }}">
     <!-- gallery -->
     @include('partials.product-gallery')
 
@@ -280,7 +359,7 @@
         @endif
       </div>
       @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif
-      @if ($product->short_description)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
+      @if ($product->short_description && ! $kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
@@ -398,8 +477,34 @@
              ▲ AND IT IS INCLUDED EXACTLY ONCE ON THIS PAGE. The section-level
                @include near the foot of the file was REMOVED in the same edit
                that added this one; two includes would print the box's contents
-               twice and its saving twice. --}}
-        @include('partials.set-contents-panel')
+               twice and its saving twice.
+
+             ── AND THE SHORT DESCRIPTION FOLLOWS IT, ON A SET. (Lane PP) ────
+
+             "and then a short description should come after the list."
+
+             The second @if on the line below, and nowhere else on this page:
+             the @if above the buy form carries `! $kbbShortBelow`, so exactly
+             ONE of the two prints for any product. Same element, same classes,
+             same module class from $modules->classFor('short') -- a shopper who
+             has turned the short description off in Appearance has it off in
+             both places, and the CSS that styles it does not need to know which
+             of the two positions it is in.
+
+             ▲ ON THE SAME SOURCE LINE AS THE @include, AND THAT IS NOT
+               TIDINESS. StorefrontEnglishUnchangedTest compares BYTES. A
+               directive on a line of its own contributes its indentation and
+               its newline to every page that renders it, INCLUDING the 99% of
+               this catalogue for which the @if is false and prints nothing --
+               so written on its own line this block changed the English output
+               of every ordinary product page in the shop by two whitespace
+               runs, for a feature none of them have. Written here it changes
+               nothing at all: the walk is green rather than pinned forward,
+               and the integrator has one less diff to read.
+
+               Same trap the .bb-price block above records for computing the
+               range beside the markup instead of up in the php block at the top. --}}
+        @include('partials.set-contents-panel')@if ($kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the

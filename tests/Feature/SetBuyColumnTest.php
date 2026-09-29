@@ -252,8 +252,13 @@ it('is a list and not a grid', function () {
 
     // A row is three tracks at every width. The rule is in the panel's own
     // @once block, which is what the page actually ships.
-    expect(str_contains($html, 'grid-template-columns:56px minmax(0,1fr) auto'))->toBeTrue(
-        'The row must be photograph / words / money, in that order along the inline axis.'
+    /* ▲ 40px, NOT 56. (Lane PP) The owner asked for "super squeeze, without
+         pricing mentioned for each product inside the set", so the third track
+         is the quantity alone and the photograph came down 56 -> 40. The three
+         tracks and their inline order are what this case is about and they are
+         unchanged; the number moved because he asked for it to. */
+    expect(str_contains($html, 'grid-template-columns:40px minmax(0,1fr) auto'))->toBeTrue(
+        'The row must be photograph / words / quantity, in that order along the inline axis.'
     );
 });
 
@@ -275,16 +280,21 @@ it('gives a phone its own sizes rather than reflowing the desktop list', functio
     expect(str_contains($html, '@media (max-width:480px)'))->toBeTrue(
         'The list must have sizes of its own on a phone.'
     );
-    expect(str_contains($html, 'grid-template-columns:48px minmax(0,1fr) auto'))->toBeTrue(
+    expect(str_contains($html, 'grid-template-columns:36px minmax(0,1fr) auto'))->toBeTrue(
         "A phone's row must be narrower than a desktop's."
     );
-    expect(str_contains($html, '.ksl-ph{width:48px;height:48px'))->toBeTrue(
+    expect(str_contains($html, '.ksl-ph{width:36px;height:36px'))->toBeTrue(
         "A phone's thumbnail must be smaller than a desktop's."
     );
-    // The one that actually buys the height back: a two-line right-hand column
-    // costs 16px twelve times over in a 346px buy column.
-    expect(str_contains($html, '.ksl-end{flex-direction:row'))->toBeTrue(
-        'On a phone the quantity and the price sit on one line.'
+    /* ▲ THE RULE THIS REPLACED IS GONE BECAUSE THE THING IT STACKED IS GONE.
+         (Lane PP) This used to assert `.ksl-end{flex-direction:row`, which made
+         the quantity and the PRICE sit on one line on a phone instead of
+         stacking. There is no price in the row any more, so `.ksl-end` itself
+         was deleted -- a flex column around a single child. What the phone case
+         is really about is that the phone has numbers of its own, and the row
+         padding is the one that buys height back twelve times over. */
+    expect(str_contains($html, 'padding:5px 0'))->toBeTrue(
+        "A phone's row must be padded more tightly than a desktop's."
     );
 });
 
@@ -316,11 +326,20 @@ it('draws nothing at all on a product that is not a set', function () {
 
 /* ════════════════════════════════════ 3. what the list has to get right ═══ */
 
-it('names every member, with its brand, its quantity and its own price', function () {
+it('names every member, with its brand and its quantity', function () {
     /*
-     * MUTATION NOTE. Delete the name, brand, quantity or price interpolation
-     * from partials/set-contents-row.blade.php and one of these is red. RUN
-     * (checked by removing the .ksl-pr span).
+     * ▲ AND NO LONGER "its own price". (Lane PP) ▲
+     *
+     *   "the set products list, i want super squeeze, without pricing
+     *    mentioned for each product inside the set."
+     *
+     * The price assertion that stood here is now an assertion that the price is
+     * ABSENT, and it lives in ProductPageSqueezeAndSeamTest scoped to the rows
+     * -- scoped, because the footing below them keeps three prices on purpose
+     * and an unscoped search would find those and pass whatever the rows did.
+     *
+     * MUTATION NOTE. Delete the name, brand or quantity interpolation from
+     * partials/set-contents-row.blade.php and one of these is red. RUN.
      */
     $brand = sfBrand('Anua');
     $toner = sfProduct('Heartleaf Soothing Toner', 9000, ['brand_id' => $brand->id]);

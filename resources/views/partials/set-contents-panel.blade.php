@@ -35,29 +35,62 @@
     width at which a grid of tiles is the right answer here and none at which
     this list has to become something else. One shape, three sizes of it:
 
-        [ photo ] [ brand / name / option ] [ xN / price ]
+        [ photo ] [ brand / name / option ] [ xN ]
 
     Three grid tracks, laid along the INLINE axis, so in an Arabic document the
-    photograph is on the right and the price on the left from the same
-    declaration — no [dir] selector in this file. `minmax(0,1fr)` on the middle
+    photograph is on the right and the quantity on the left from the same
+    declaration — no [dir] selector in this file. Photographed on /ar at 390 and
+    1280: dir="rtl", the photograph on the right of every row, and scrollWidth
+    equal to the viewport. `minmax(0,1fr)` on the middle
     track and min-width:0 everywhere, because a grid item's default min-width is
     the width of its longest unbreakable word, and "Revive Eye Serum Ginseng
     Retinal 30ml" in a 346px column is how a page comes to scroll sideways.
 
     ── MOBILE IS DESIGNED, NOT INHERITED ─────────────────────────────────────
 
-    He asked for it by name. Below 480px the photograph goes from 56 to 48, the
-    row padding from 11 to 9, the name from 14 to 13.5, and the quantity and
-    price stop stacking and sit on ONE line at the end of the row — a two-line
-    right-hand column costs 16px of row height twelve times over in the
-    narrowest column this shop has, and "2x AED 90" is shorter than the space
-    that costs. Nothing is measured to decide it; it is one media query.
+    He asked for it by name. Below 480px the photograph goes from 40 to 36, the
+    row padding from 6 to 5, and the name from 13.5 to 13. Nothing is measured
+    to decide it; it is one media query.
+
+    ── THE SQUEEZE, AND WHAT IT COST. (Lane PP) ──────────────────────────────
+
+      "the set products list, i want super squeeze, without pricing mentioned
+       for each product inside the set."
+
+    Two changes, and the second is what makes the first affordable. The price
+    left the row (see partials/set-contents-row.blade.php), which freed the
+    whole third track, so the quantity no longer has to stack under anything
+    and the row's height is now set by the PHOTOGRAPH alone. That let the
+    photograph come down 56 -> 40 and 48 -> 36 without the words ever being the
+    thing that decides how tall a row is:
+
+                          before          after
+      photo, desktop       56px            40px
+      photo, phone         48px            36px
+      row padding          11px            6px   (desktop)
+                            9px            5px   (phone)
+      name                 14px            13.5px
+      brand                11px            10px
+      row height, desktop  78px            52px
+      row height, phone    74px            46px
+
+    LEGIBLE AND TAPPABLE IS THE FLOOR, not an afterthought. 13.5px is the size
+    the option rows beside it already use, the brand at 10px is uppercase and
+    tracked so it reads at that size, and a member's name is a LINK — so
+    `a.ksl-nm` carries padding-block with an equal negative margin-block, which
+    grows the hit area by 6px WITHOUT growing the row by a pixel. An inline
+    box's padding does not contribute to its line box, so this is free height
+    for a thumb and no height at all for the page.
+
+    Nothing here is measured by script. Every number above is a constant in the
+    sheet below, and the "after" column was read off Chromium.
 
     ── AND THE LIST CANNOT PUSH ADD TO CART OFF THE SCREEN ───────────────────
 
     This is the cost of the new position and the one thing the old one did not
-    have. Twelve rows is about seven hundred pixels sitting between the price
-    and the button. So a box of more than six members shows the first five and
+    have. Twelve rows is about six hundred pixels sitting between the price and
+    the button — it was seven hundred before the squeeze, which shortens the
+    problem without solving it. So a box of more than six members shows the first five and
     folds the rest into a <details>:
 
       - HTML's own disclosure, so it is keyboard-operable, reachable by the
@@ -151,19 +184,19 @@
    WHAT IS IN THIS SET — the buy column's list. calc(), min() and one media
    query; nothing measured, no script.
    ═══════════════════════════════════════════════════════════════════════════ */
-.ksl{display:block;min-width:0;margin:0 0 16px}
+.ksl{display:block;min-width:0;margin:0 0 14px}
 .ksl-rows{display:block;min-width:0}
 
 /* The row. Photograph, words, money — three tracks along the inline axis, so
    Arabic mirrors without a second rule. */
-.ksl-r{display:grid;gap:0 12px;min-width:0;align-items:center;padding:11px 0;
-       grid-template-columns:56px minmax(0,1fr) auto}
+.ksl-r{display:grid;gap:0 10px;min-width:0;align-items:center;padding:6px 0;
+       grid-template-columns:40px minmax(0,1fr) auto}
 .ksl-r + .ksl-r{border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
 
 /* A fixed square, so every name in the column starts at the same place --
    which is the whole reason to draw a list rather than a grid. */
-.ksl-ph{position:relative;display:block;width:56px;height:56px;
-        border-radius:10px;overflow:hidden;background:var(--line-2,rgba(42,34,40,.06))}
+.ksl-ph{position:relative;display:block;width:40px;height:40px;
+        border-radius:8px;overflow:hidden;background:var(--line-2,rgba(42,34,40,.06))}
 .ksl-ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ksl-ph.is-blank{background-size:cover;background-position:center}
 
@@ -174,24 +207,33 @@
    in Chromium at 1280 and at 390; `flex-start` is the logical value, so it is
    the right-hand edge in Arabic from the same declaration. */
 .ksl-w{min-width:0;display:flex;flex-direction:column;align-items:flex-start;
-       gap:2px;text-align:start}
-.ksl-br{font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
-        color:var(--ink-2,#5E545A);opacity:.72;overflow-wrap:anywhere}
-.ksl-nm{font-size:14px;line-height:1.35;font-weight:640;color:var(--ink,#2A2228);
+       gap:1px;text-align:start}
+.ksl-br{font-size:10px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+        color:var(--ink-2,#5E545A);opacity:.72;overflow-wrap:anywhere;line-height:1.3}
+.ksl-nm{font-size:13.5px;line-height:1.3;font-weight:640;color:var(--ink,#2A2228);
         overflow-wrap:anywhere}
 /* A REAL LINK, so it is a link for a keyboard and for a crawler as well as for
    a mouse. A member that is not published is the same words without an <a> --
    see SetContents::memberIsLive(): a href to a draft is a 404 on the one page
    a shopper reached from Google. */
-a.ksl-nm{color:inherit;text-decoration:none;border-bottom:1px solid var(--line,rgba(42,34,40,.10))}
+/* padding-block with an equal NEGATIVE margin-block: an inline box's vertical
+   padding does not enter its line box, so this is 6px more hit area for a thumb
+   and zero extra row height. Measured in Chromium at 390 and 1280 -- the row is
+   the same height with it and without it. */
+a.ksl-nm{color:inherit;text-decoration:none;border-bottom:1px solid var(--line,rgba(42,34,40,.10));
+         padding-block:3px;margin-block:-3px}
 a.ksl-nm:hover{border-bottom-color:currentColor}
 a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
-.ksl-var{font-size:12px;color:var(--ink-2,#5E545A);overflow-wrap:anywhere}
+.ksl-var{font-size:11.5px;line-height:1.3;color:var(--ink-2,#5E545A);overflow-wrap:anywhere}
 
-.ksl-end{display:flex;flex-direction:column;align-items:flex-end;gap:2px;
-         min-width:0;text-align:end}
-.ksl-q{font-size:12px;font-weight:700;color:var(--ink,#2A2228);white-space:nowrap}
-.ksl-pr{font-size:13px;color:var(--ink-2,#5E545A);white-space:nowrap}
+/* The third track is the quantity ALONE now. The price span and the flex column
+   that wrapped it went with the price -- a column around a single child, and a
+   rule for an element that is no longer emitted.
+   (Their class names are deliberately not written here: this block is emitted
+   INTO the page, so a class name in this comment is a string in the HTML, and
+   the case that asserts no member carries a price searches the HTML for it.) */
+.ksl-q{font-size:12px;font-weight:700;color:var(--ink,#2A2228);white-space:nowrap;
+       text-align:end}
 
 /* ── THE DISCLOSURE ──────────────────────────────────────────────────────
    HTML's own, so there is no script. Both labels are in the markup and this
@@ -199,7 +241,7 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    different triangle and the row already reads as a control. */
 .ksl-more{display:block;min-width:0}
 .ksl-more > summary{list-style:none;cursor:pointer;display:block;min-width:0;
-  padding:11px 0 0;font-size:12.5px;font-weight:700;color:var(--ink,#2A2228);
+  padding:8px 0 6px;font-size:12.5px;font-weight:700;color:var(--ink,#2A2228);
   text-align:start;border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
 .ksl-more > summary::-webkit-details-marker{display:none}
 .ksl-more > summary:focus-visible{outline:2px solid currentColor;outline-offset:2px}
@@ -214,8 +256,8 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 /* The footing. Bought separately, the set's own price, and the saving -- the
    same three integers SetContents already computed, printed rather than
    recomputed, and counting every member whether or not it is folded away. */
-.ksl-foot{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;min-width:0;
-          margin-top:12px;padding-top:12px;border-top:1px solid var(--line,rgba(42,34,40,.10))}
+.ksl-foot{display:flex;flex-wrap:wrap;gap:5px 16px;align-items:baseline;min-width:0;
+          margin-top:9px;padding-top:9px;border-top:1px solid var(--line,rgba(42,34,40,.10))}
 .ksl-f{display:flex;gap:6px;align-items:baseline;min-width:0;font-size:13px;
        color:var(--ink-2,#5E545A)}
 .ksl-f b{font-weight:700;color:var(--ink,#2A2228);white-space:nowrap}
@@ -228,11 +270,10 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    The photograph comes down 8px, the row padding 2, the name half a step --
    and the quantity and the price stop stacking. */
 @media (max-width:480px){
-  .ksl-r{grid-template-columns:48px minmax(0,1fr) auto;gap:0 10px;padding:9px 0}
-  .ksl-ph{width:48px;height:48px;border-radius:9px}
-  .ksl-nm{font-size:13.5px}
-  .ksl-end{flex-direction:row;align-items:baseline;gap:7px}
-  .ksl-foot{gap:5px 14px}
+  .ksl-r{grid-template-columns:36px minmax(0,1fr) auto;gap:0 9px;padding:5px 0}
+  .ksl-ph{width:36px;height:36px;border-radius:7px}
+  .ksl-nm{font-size:13px}
+  .ksl-foot{gap:4px 12px}
 }
 </style>
 @endonce
