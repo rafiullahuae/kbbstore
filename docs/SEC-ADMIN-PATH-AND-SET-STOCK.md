@@ -378,3 +378,25 @@ frame is unchanged), but it is the same "two faults, one message" shape, and
 ```js
 if (e && (e.status === 401 || e.status === 419)) return 'Your session has ended. Sign in again.';
 ```
+
+---
+
+## The suite
+
+**7,966 passed, 22 skipped, 1 failed**, on a clean run with nothing in flight.
+
+The one failure is `PackageSigningTest > it holds no private key in this
+repository`, and it is not this lane's: it fails on `12ef037` — round one's own
+merge, with none of round two's work in the tree, checked out detached and run —
+tripping on Lane PERF's four `docs/perf-reports/*.html`. It passes in the
+integrator's newer checkout, so it is already fixed above this branch.
+
+Round one's two base-level failures (`ModuleSchemaEquivalenceTest`,
+`ModuleScreenPayloadTest`) are gone, fixed by the rebase exactly as predicted.
+
+**Seventeen pins were advanced in this round**, every one with its old value and
+the reason written at the site: four in the first commit (`SecurityModuleTest`,
+`MailRoutesTest`, `AdminRoleEnforcementTest`, `StorefrontRouteWalkTest`) and
+thirteen more found by the full run. All thirteen asserted the same thing — that
+an `admin-api` address answers a signed-out browser with a 302 to the admin
+login — and that redirect is the door this round closed.
