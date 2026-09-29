@@ -477,20 +477,34 @@
              ▲ AND IT IS INCLUDED EXACTLY ONCE ON THIS PAGE. The section-level
                @include near the foot of the file was REMOVED in the same edit
                that added this one; two includes would print the box's contents
-               twice and its saving twice. --}}
-        @include('partials.set-contents-panel')
+               twice and its saving twice.
 
-        {{-- ═══════════════════════════════════════════════════════════════
+             ── AND THE SHORT DESCRIPTION FOLLOWS IT, ON A SET. (Lane PP) ────
+
              "and then a short description should come after the list."
 
-             Here, and nowhere else on this page: the @if above the buy form
-             carries `! $kbbShortBelow`, so exactly ONE of the two prints for
-             any product. Same element, same classes, same module class from
-             $modules->classFor('short') -- a shopper who has turned the short
-             description off in Appearance has it off in both places, and the
-             CSS that styles it does not need to know which position it is in.
-             --}}
-        @if ($kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
+             The second @if on the line below, and nowhere else on this page:
+             the @if above the buy form carries `! $kbbShortBelow`, so exactly
+             ONE of the two prints for any product. Same element, same classes,
+             same module class from $modules->classFor('short') -- a shopper who
+             has turned the short description off in Appearance has it off in
+             both places, and the CSS that styles it does not need to know which
+             of the two positions it is in.
+
+             ▲ ON THE SAME SOURCE LINE AS THE @include, AND THAT IS NOT
+               TIDINESS. StorefrontEnglishUnchangedTest compares BYTES. A
+               directive on a line of its own contributes its indentation and
+               its newline to every page that renders it, INCLUDING the 99% of
+               this catalogue for which the @if is false and prints nothing --
+               so written on its own line this block changed the English output
+               of every ordinary product page in the shop by two whitespace
+               runs, for a feature none of them have. Written here it changes
+               nothing at all: the walk is green rather than pinned forward,
+               and the integrator has one less diff to read.
+
+               Same trap the .bb-price block above records for computing the
+               range beside the markup instead of up in the php block at the top. --}}
+        @include('partials.set-contents-panel')@if ($kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the
