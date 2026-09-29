@@ -83,6 +83,13 @@ foreach ($copy as $i => [$heading, $body, $label]) {
     $path = 'uploads/posters/'.basename($file);
     \App\Support\MediaRegistrar::record($path);
 
+    /* The phone-sized copies, exactly as Content -> Media Library -> "Make
+       phone-sized copies" writes them. They ARE on the live box -- the owner's
+       report shows the product tile beside this carousel serving
+       `img-cache/400/uploads/posters/20260928-081819-AHt4kiCq.jpg` -- so a
+       fixture without them would be measuring a different shop. */
+    \App\Support\ImageVariants::generate('/'.$path);
+
     BannerCard::create([
         'banner_set_id' => $set->id,
         'image' => $path,
@@ -129,6 +136,7 @@ foreach (range(1, 4) as $i) {
         imagejpeg($img, public_path($poster), 82);
         imagedestroy($img);
         \App\Support\MediaRegistrar::record($poster);
+        \App\Support\ImageVariants::generate('/'.$poster);
     }
 
     $video = UgcVideo::updateOrCreate(['slug' => 'perf-clip-'.$i], [

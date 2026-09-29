@@ -10,3 +10,9 @@
 {"label":"FONTS-1","profile":"mobile","performance":73,"performanceAtLiveTbt":88,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.41,"lcp":3.84,"tbt":574,"cls":0,"si":2.86}
 {"label":"FONTS-2","profile":"mobile","performance":90,"performanceAtLiveTbt":92,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.4,"lcp":3.31,"tbt":170,"cls":0,"si":2.29}
 {"label":"FONTS-3","profile":"mobile","performance":87,"performanceAtLiveTbt":88,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.42,"lcp":3.9,"tbt":123,"cls":0,"si":2.02}
+{"label":"FONTS-1","profile":"desktop","performance":79,"performanceAtLiveTbt":99,"accessibility":95,"bestPractices":100,"seo":100,"fcp":0.42,"lcp":0.82,"tbt":471,"cls":0,"si":1.05}
+{"label":"FONTS-2","profile":"desktop","performance":94,"performanceAtLiveTbt":98,"accessibility":95,"bestPractices":100,"seo":100,"fcp":0.45,"lcp":1.09,"tbt":157,"cls":0,"si":0.91}
+{"label":"FONTS-3","profile":"desktop","performance":85,"performanceAtLiveTbt":98,"accessibility":95,"bestPractices":100,"seo":100,"fcp":0.38,"lcp":1.07,"tbt":308,"cls":0,"si":1.1}
+{"label":"IMG-1","profile":"mobile","performance":91,"performanceAtLiveTbt":98,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.43,"lcp":2.04,"tbt":304,"cls":0,"si":3.3}
+{"label":"IMG-2","profile":"mobile","performance":95,"performanceAtLiveTbt":96,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.53,"lcp":2.14,"tbt":75,"cls":0,"si":4.38}
+{"label":"IMG-3","profile":"mobile","performance":78,"performanceAtLiveTbt":96,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.48,"lcp":2.12,"tbt":763,"cls":0,"si":4.21}

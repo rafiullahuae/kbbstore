@@ -82,6 +82,8 @@
      * with no parent at all, which is the other reason it cannot inherit them.
      */
     use App\Services\Banners;
+    use App\Models\BannerSet;
+    use App\Support\ImageVariants;
     use App\Support\Url;
 
     /** @var \App\Models\BannerSet $set */
@@ -108,11 +110,104 @@
      * RELATIVE darkening, and leaving it on under a flat custom colour would
      * darken the operator's choice on top of itself.
      */
+    /*
+     * ── THE PICTURES ARE DELIVERED AT THE SIZE THE CARD DRAWS ── Lane PERF ──
+     *
+     * PageSpeed Insights on extrabeauty.ae, desktop, 29 September 2026:
+     *
+     *   Improve image delivery                        Est savings of 276 KiB
+     *     div.kbbn-tr > div.kbbn-c > a.kbbn-im > img   810x1440    134.3 KiB
+     *       "This image file is larger than it needs to be (810x1079) for its
+     *        displayed dimensions (298x529)."                      110.1 KiB
+     *     ... and the same twice more
+     *
+     * Three of this section's own files, 341 KiB of a 520 KiB page, every one
+     * of them the operator's original painted into a box a third of its width.
+     * The shop has had phone-sized copies since Lane IM — the product tile
+     * beside this carousel was already serving `img-cache/400/...` in the same
+     * report — and this element was simply never given a srcset.
+     *
+     * NOTHING IS GENERATED HERE AND NOTHING IS MEASURED HERE. srcsetFor's own
+     * header states the policy: a variant exists because an upload or the
+     * owner's Content -> Media Library -> "Make phone-sized copies" batch made
+     * it, never because a page asked for it. A picture with no copies on disk
+     * gets '' and this template emits exactly the markup it emitted before,
+     * byte for byte.
+     *
+     * detailSrcsetFor AND NOT srcsetFor: this box reaches 669 CSS pixels at
+     * per_view 2, and srcsetFor deliberately stops at 800w on the ground that
+     * "the widest frame on the site is 399 CSS pixels" -- true of tiles, false
+     * here. ImageVariants::bannerCardSizesAttribute() carries that argument.
+     *
+     * rootRelative() IS NOT DECORATION. `banner_cards.image` is stored bare —
+     * MediaRegistrar::normalise() ends with ltrim($path, '/') — and
+     * ImageVariants::split() refuses a bare relative path by design, so
+     * detailSrcsetFor() on the raw column answers '' every time. That method's
+     * own header records the measurement.
+     *
+     * MEMOISED PER FILE because the track holds the list TWICE when the
+     * carousel animates, and a set may name one picture on more than one card.
+     * Without this, a six-card animating set pays detailSrcsetFor twelve times
+     * for six answers.
+     */
+    $bnPer = min(max((int) $set->per_view, BannerSet::LIMITS['per_view'][0]), BannerSet::LIMITS['per_view'][1]);
+    $bnPeek = min(max((int) $set->peek, BannerSet::LIMITS['peek'][0]), BannerSet::LIMITS['peek'][1]);
+    $bnGap = min(max((int) $set->gap, BannerSet::LIMITS['gap'][0]), BannerSet::LIMITS['gap'][1]);
+    $bnSizes = ImageVariants::bannerCardSizesAttribute($bnPer, $bnPeek, $bnGap);
+    $bnSrcsets = [];
+    $bnSrcsetFor = static function (string $image) use (&$bnSrcsets): string {
+        return $bnSrcsets[$image] ??= ImageVariants::detailSrcsetFor(ImageVariants::rootRelative($image));
+    };
+
     $bnBgMode = $set->bgMode();
     $bnBgVars = Banners::sectionVariables($set);
     $bnOver = $set->titlePosition() === 'over';
     $bnBtnHover = Banners::hex($set->btn_hover) !== '';
 @endphp
+{{--
+    ══ THE FIRST CARD'S PICTURE IS PRELOADED FROM <head> ══ Lane PERF ═════════
+
+    The owner's mobile report, "LCP breakdown":
+
+        Time to first byte         90 ms
+        Resource load delay     2,260 ms      <-- this
+        Resource load duration  1,900 ms
+        Element render delay      150 ms
+
+    Two and a quarter seconds in which the browser has the connection, has the
+    bandwidth, and does not yet know the picture exists. It is NOT the mistake
+    Lighthouse usually finds here — "LCP request discovery" PASSES on this shop:
+    the image is in the initial document, it is not lazy, and it already carries
+    fetchpriority="high". The delay is simpler than that. The document is 51 KiB
+    over a 1,638 kb/s link and this element is two thirds of the way down it, so
+    the preload scanner does not reach the tag until the body has arrived. The
+    fix is to say it in the first kilobyte instead.
+
+    imagesrcset AND imagesizes ARE NOT OPTIONAL HERE. A preload that names only
+    `href` while the element carries a srcset is a preload for a DIFFERENT
+    resource: the browser fetches the original, then fetches the candidate the
+    srcset chose, and the page is one whole photograph heavier than before.
+    They are the same two strings the <img> gets, from the same two calls.
+
+    ONLY WHEN THE SECTION IS ON FOR BOTH DEVICES. `d-off` and `m-off` are
+    `display:none !important`, so on the device that switches this section off
+    the <img> is never fetched — but a preload would be, and a preload for a
+    picture nothing draws is bandwidth taken from whatever the LCP actually is
+    there. `deviceClassFor()` returns '' only when neither switch is off.
+
+    $sections COMES FROM THE PARENT VIEW, which @include shares by default, and
+    it is GUARDED because the admin preview renders this partial with no parent
+    at all — the same reason the `use` statements above are declared here.
+--}}
+@if (isset($sections) && $sections->deviceClassFor('cards_banner') === '' && isset($cards[0]))
+  @php
+    $bnLcp = (string) $cards[0]->image;
+    $bnLcpSrcset = $bnSrcsetFor($bnLcp);
+  @endphp
+  @push('head')
+<link rel="preload" as="image" fetchpriority="high" href="{{ Banners::imageUrl($bnLcp) }}"@if ($bnLcpSrcset !== '') imagesrcset="{{ $bnLcpSrcset }}" imagesizes="{{ $bnSizes }}"@endif>
+  @endpush
+@endif
 <style>
 /* Prefix kbbn-, used nowhere else in this application. */
 .kbbn{--kbbn-gut:var(--site-gutter,18px)}
@@ -466,8 +561,10 @@
                    prints NEITHER attribute: a guessed width reserves the wrong
                    box and shifts the page anyway, which is worse than leaving
                    the card's own aspect-ratio to hold the space. --}}
+              @php $bnSrcset = $bnSrcsetFor((string) $bnCard->image); @endphp
               <img src="{{ Banners::imageUrl($bnCard->image) }}"
                    alt="{{ $bnDup ? '' : $bnAlt }}"
+                   @if ($bnSrcset !== '') srcset="{{ $bnSrcset }}" sizes="{{ $bnSizes }}" @endif
                    @if ($bnCard->image_w && $bnCard->image_h) width="{{ (int) $bnCard->image_w }}" height="{{ (int) $bnCard->image_h }}" @endif
                    @if ($bnI === 0 && ! $bnDup) fetchpriority="high" @else loading="lazy" @endif
                    decoding="async">

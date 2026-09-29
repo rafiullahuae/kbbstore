@@ -17,14 +17,41 @@
             </a>
         </div>
 
-        <div class="fcol"><h5>{{ __('store.footer.shop_heading') }}</h5>
+        {{-- <h2> AND NOT <h5>, ON ALL THREE — Lane PERF.
+
+             PageSpeed Insights, extrabeauty.ae, 29 September 2026. Accessibility
+             scored 95 and one of the two audits that cost it was:
+
+               Heading elements are not in a sequentially-descending order
+                 Failing Elements:  SHOP   <h5>
+
+             The homepage runs h1, then nine h2, then these. h2 -> h5 skips two
+             levels, and a screen-reader user navigating by heading is told the
+             footer is nested three deep inside the last section of the page
+             rather than beside it.
+
+             h2 AND NOT h3, which would also satisfy axe HERE and not everywhere:
+             this partial is in the layout, so it renders under every page in the
+             shop, and a page whose last heading is the h1 alone would skip h1 ->
+             h3. A DECREASE is always allowed, so h2 is correct after an h1, after
+             an h2 and after an h3 alike. There is one h1 per page (the homepage's
+             is asserted; every other page's comes from its own template), so h2 is
+             never the first heading either.
+
+             NOTHING MOVES ON THE PAGE. kbb.css line 180 is `*{box-sizing:border-box;
+             margin:0;padding:0}`, so the only User-Agent declaration either tag
+             still carries is font-size, and `.fcol h2` sets 12px exactly as
+             `.fcol h5` did. The rule was renamed in the same commit; every other
+             declaration in it is unchanged, and the computed style of these three
+             elements is identical before and after. --}}
+        <div class="fcol"><h2>{{ __('store.footer.shop_heading') }}</h2>
             <a href="{{ Url::to('/shop/') }}">{{ __('store.footer.link_all_products') }}</a>
             <a href="{{ Url::to('/shop/') }}?orderby=date">{{ __('store.footer.link_new_in') }}</a>
             <a href="{{ Url::to('/shop/') }}?orderby=popularity">{{ __('store.footer.link_best_sellers') }}</a>
             <a href="{{ Url::to('/shop/') }}?on_sale=1">{{ __('store.footer.link_super_sale') }}</a>
         </div>
 
-        <div class="fcol"><h5>{{ __('store.footer.care_heading') }}</h5>
+        <div class="fcol"><h2>{{ __('store.footer.care_heading') }}</h2>
             @forelse ($kbbFooterNav as $link)
                 <a href="{{ Url::to($link['url'] ?? '/') }}">{{ $link['label'] }}</a>
             @empty
@@ -37,7 +64,7 @@
             @endforelse
         </div>
 
-        <div class="fcol"><h5>{{ __('store.footer.account_heading') }}</h5>
+        <div class="fcol"><h2>{{ __('store.footer.account_heading') }}</h2>
             <a href="{{ Url::to('/my-account/') }}">{{ __('store.footer.link_my_account') }}</a>
             <a href="{{ Url::to('/my-account/orders/') }}">{{ __('store.footer.link_orders') }}</a>
             <a href="{{ Url::to('/my-account/edit-address/') }}">{{ __('store.footer.link_address') }}</a>
