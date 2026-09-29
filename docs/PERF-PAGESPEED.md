@@ -143,6 +143,32 @@ Your paths:
     application root   /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app
     web root           /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/public_html
 
+### 5.0 One thing to check BEFORE the package is built — for whoever builds it
+
+Your live shop is serving `build/assets/kbb-Dn1CuXv-.css`. This repository's
+own build of the same stylesheet is a **different** file
+(`kbb-Covswabr.css` after this lane's one-selector change). Two different
+hashes means the bundle on your server was not built from this repository's
+current source.
+
+That matters because this package **must** carry `public/build/` — the font
+files live there and `manifest.json` points at them. When it lands, your server
+starts serving this repository's bundle. Anything that was in
+`kbb-Dn1CuXv-.css` and is **not** in `resources/css/kbb/kbb.css` here would be
+lost.
+
+So, before the package is built: run `npx vite build` on the merged tree, and
+diff the package's file list against the repository. `CLAUDE.md`'s first
+landmine is exactly this — *"Packages 2.60.102–.106 were withdrawn for being
+built against a stale tree, then applied anyway. They reverted three files and
+500'd every product page. Before shipping a package, diff its contents against
+the repo — never trust a file list."*
+
+**This package needs no migration.** It adds no route and no setting, so there
+is no compiled route cache to clear and no `clear_caches_*` to ship. A trial
+build came out at 42 files and 754 KB with `"migrations": false`, which is
+correct here and unusual for this repository — do not add one out of habit.
+
 ### 5.1 Apply the package (this is the whole of the code half)
 
 1. Open **Store → Core Updates** in the admin.
@@ -268,11 +294,12 @@ stops tracking them. Not recommended.
 
 Said plainly, because you asked for "perfectly green".
 
-### Accessibility 95 → this lane takes it to about 97, not 100
+### Accessibility 95 → this lane takes it to 96, not 100
 
 There are exactly **two** scored audits failing. One is `heading-order` and it
-is fixed. The other is `color-contrast`, and it is **108 failing elements**
-across the whole shop, from a handful of colours in your palette:
+is fixed — measured, that is 95 → **96**. The other is `color-contrast`, and it
+is **108 failing elements** across the whole shop, from a handful of colours in
+your palette:
 
 | Foreground | Background | Ratio | Needs | Where it is |
 |---|---|---|---|---|
