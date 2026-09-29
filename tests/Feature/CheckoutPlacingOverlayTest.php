@@ -453,6 +453,35 @@ it('shows no tick, and one bounded refresh, while the payment is still unconfirm
         ->and(substr_count($second, 'window.location.replace'))->toBe(0, 'the receipt schedules a second reload');
 });
 
+it('never takes a press away from the receipt it is sitting on', function () {
+    /*
+     * THE CHECKOUT'S OVERLAY IS MODAL AND THIS ONE IS NOT, and the difference
+     * is the whole reason both exist in one stylesheet.
+     *
+     * An order in flight must not be touched, so the checkout's card freezes
+     * everything behind it. This one is over a RECEIPT, and while a Tamara
+     * payment is still being confirmed it is on screen for four or five
+     * seconds — a long time to be unable to press "Track your order" on your
+     * own order. It carries no controls, so every press goes through from the
+     * first frame.
+     *
+     * MUTATION, run: delete `pointer-events:none` from `.is-selfclosing` →
+     * this goes red, and a shopper cannot use their own order page until the
+     * card has finished fading.
+     */
+    $css = plcSource('placing-style');
+
+    $rule = substr($css, strpos($css, '.kbb-placing.is-selfclosing{'));
+    $rule = substr($rule, 0, strpos($rule, '}') + 1);
+
+    expect($rule)->toContain('pointer-events:none')
+        ->and($rule)->toContain('forwards');
+
+    /* And the modal one is NOT given the same treatment: it must keep taking
+       the presses it is there to absorb. */
+    expect(plcSource('placing-card'))->toContain('aria-modal="true"');
+});
+
 it('draws nothing at all for an order the shopper never left the shop to pay for', function () {
     /*
      * TWO TICKS FOR ONE ORDER is the defect. Cash on delivery and the card

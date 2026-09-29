@@ -110,7 +110,15 @@
    visibility:hidden AND pointer-events:none so the page underneath is both
    readable and clickable. The delay is set per state by an inline custom
    property on the element — see partials/checkout/placed-tick. */
-.kbb-placing.is-selfclosing{animation:kbbp-out .4s var(--kbbp-hold,1.25s) forwards}
+.kbb-placing.is-selfclosing{animation:kbbp-out .4s var(--kbbp-hold,1.25s) forwards;
+  /* AND IT NEVER TAKES A CLICK. The checkout's overlay is modal because an
+     order is in flight and the page behind it must not be touched. This one is
+     over a RECEIPT the shopper came back to read, and while the payment is
+     still being confirmed it can be on screen for four or five seconds — which
+     is a long time to be unable to press "Track your order" on your own order.
+     The card carries no controls, so nothing is lost by letting every press
+     through to the page underneath from the first frame. */
+  pointer-events:none}
 @keyframes kbbp-out{to{opacity:0;visibility:hidden;pointer-events:none}}
 /* ── prefers-reduced-motion ────────────────────────────────────────────────
    NON-NEGOTIABLE, and this is the shape of the compromise. Everything that
