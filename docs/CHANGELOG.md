@@ -3,6 +3,106 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.321
+**Apple Pay and Google Pay actually take money now** — and a lot else. This is a
+big one: 48 commits and seven lanes' work in a single package.
+
+### ▲ APPLE PAY AND GOOGLE PAY WERE DECORATION UNTIL THIS PACKAGE
+
+The badges were in your footer, your cart and your product pages, and the shop
+**could not take either payment**. There was no Apple Pay and no Google Pay
+anywhere in the payment code; the one line that mattered told Stripe *cards
+only*. So a shopper saw the logos and had no way to use them.
+
+They are now real payments on your existing Stripe setup — the same intent, the
+same capture, the same refund, the same ledger. The button draws the Apple Pay
+sheet on Safari, the Google Pay sheet on Chrome, and **nothing at all** on a
+browser that can do neither, so nobody is ever shown a button that cannot work.
+
+**WHAT YOU HAVE TO DO — Apple Pay needs two steps from you.** Google Pay needs
+neither, only HTTPS and your live keys.
+
+1. In the **Stripe dashboard**, register `extrabeauty.ae` for Apple Pay
+   (Settings → Payment methods → Apple Pay → Add a new domain).
+2. Apple then checks a file on your site. The route that serves it ships in this
+   package and answers **404 until Stripe holds the document** — that is correct
+   and expected, not a fault.
+
+Until you do both, the Apple Pay sheet will not appear. Google Pay is unaffected.
+
+### APPEARANCE → SET → DESKTOP / MOBILE
+
+*"I need the full controls of everything like spacing, fonts, elements turn on
+off etc etc. every single details. for mobile and desktop both separate tabs."*
+
+**157 controls**, in two tabs, with a Save bar that says how many changes are
+waiting and a Discard that puts them back. Every dimension has its own value per
+breakpoint — the phone's never falls back to the laptop's, because the shipped
+sheet already differs between the two. Everything that is not a measurement —
+the switches, the weights, the colours — is shared and appears once.
+
+**Nothing moves until you move a slider.** Every control ships at the value your
+shop already renders.
+
+### THE "WHAT IS IN THIS SET" BOX IS REDRAWN
+
+*"want nice light background box type and inside a squeezed products list"* —
+and, of the three drawings, *"ok the hanging photos style is fine."*
+
+A blush panel with **no row rules at all** and the photographs pulled OUT of it:
+each square hangs past the panel's edge, white-ringed and shadowed, so the list
+reads as a column of objects on a field rather than rows in a box.
+
+Squeezed, measured on the shop: the photograph 40 → 34, row padding 6 → 3, row
+height **52.8 → 42.0** and an eight-member block **364 → 328** on desktop. On a
+phone the row's height is set by the *words*, not the photograph — half your
+product names wrap at that width — so the phone squeeze comes from line spacing
+instead, and the panel's side padding is deliberately narrow because a wider one
+flipped two rows onto a second line and made the block **taller** than the list
+it was squeezing.
+
+On Arabic the photographs hang off the right-hand edge, from the same rule.
+
+### CATALOG → PRODUCT TABS → GLOBAL TABS → WHERE IT SHOWS
+
+A global tab no longer has to be on every product. Point it at **specific
+products, whole categories, brands, every set, or everything** — and a product
+matching several rules shows each tab once.
+
+**Every tab you have already written stays on every product** until you narrow
+it yourself.
+
+### A SET NOW SORTS AT THE PRICE IT CHARGES
+
+Sorting, price filtering and the price bands treated a set as its raw price
+rather than the price on its tile, so a set could sort into the wrong band or
+drop out of a filter it belonged in. Fixed on both engines.
+
+### THE PRODUCT PAGE
+
+The main image is **square in any case**, and the gallery thumbnail strip is
+there on a set exactly as on any other product — it always was; the earlier
+previews were shot on a test set carrying a single image, which is why the strip
+appeared to be missing.
+
+Three proposed page layouts were built, looked at and **deleted** rather than
+shipped: read side by side they were not three choices.
+
+### ALSO
+
+Seven backlog items, two newsletter boxes that answered nobody, a dropped CSS
+class the census mis-reported, a column offered on a screen that could not use
+it, and the homepage watch list unblocked.
+
+### FILES
+
+`App\Services\SetAppearance` and the Appearance → Set screen, its route file and
+capability; the Apple Pay / Google Pay gateway work on `StripeGateway`, two route
+files and `AppleDomainController`; product-tab audience targeting with its
+migration; the set price rule in SQL beside the PHP; the set contents panel's
+drawing; and two cache-clearing migrations, which is what makes the new routes
+answer at all.
+
 ## 2.60.320
 **Your WordPress navigation menu now imports.** It was the last thing on the
 import list still done by hand.
