@@ -2577,6 +2577,41 @@ const I={
    keep in sync. */
 const ADMIN_BASE = window.location.pathname.replace(/\/+$/, '');
 
+/* ---------- LANE NAV · the dashboard asks for its numbers now, not at 39% ---
+   THE OTHER HALF OF THE OWNER S REPORT: "some pages don't show immidiately and
+   it takes long to long", with "Loading the latest orders..." still spinning in
+   his screenshot.
+
+   That line is renderDash()'s placeholder and hydrateDash() replaces it from
+   GET /admin-api/stats. The endpoint is not slow -- measured cold, 62.7ms. It
+   was not being CALLED. hydrateDash() is defined in the second script block and
+   its only boot call sits at the foot of that block, which on the applied
+   console is byte 1,324,219 of 3,425,404: the browser must download and parse
+   1.3 MB before the dashboard so much as asks for its own numbers, and at
+   2 Mbit/s that is more than five seconds of a screen that is drawn but empty.
+
+   The request is started HERE instead, at byte ~197,000, which is as early as
+   the address of the endpoint is knowable. It is one GET with no side effects
+   and the dashboard is the screen this console opens on, so it is never
+   wasted; hydrateDash() below awaits this promise rather than issuing its own.
+
+   IT CANNOT BREAK hydrateDash(). The promise is stored resolved-or-rejected and
+   read exactly once -- a second hydrate (the order-status save re-hydrates)
+   falls through to a fresh api() call, which is what every call after the first
+   did before this existed. A rejection here is caught into `null` so an
+   unhandled rejection can never reach the console, and hydrateDash() treats a
+   null exactly as it treats a throw: it returns and leaves the screen alone.
+
+   NOT A CACHE, and deliberately not one. It answers the FIRST paint only. */
+window.__kbbStatsFirst = (function(){
+  try{
+    var url = ADMIN_BASE.replace(/\/[^\/]*$/, '') + '/admin-api/stats';
+    return fetch(url, {credentials:'same-origin', headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; });
+  }catch(e){ return null; }
+})();
+
 /* ---------- nav ---------- */
 const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
@@ -12156,7 +12191,15 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 
   /* ---------- Dashboard: real KPIs + recent orders ---------- */
   async function hydrateDash(){
-    var s; try{ s = await api('/admin-api/stats'); }catch(e){ return; }
+    var s = null;
+    /* The first paint reads the request the head of this document already
+       started; every later hydrate issues its own, exactly as before. */
+    if(window.__kbbStatsFirst){
+      var first = window.__kbbStatsFirst; window.__kbbStatsFirst = null;
+      try{ s = await first; }catch(e){ s = null; }
+    }
+    if(!s){ try{ s = await api('/admin-api/stats'); }catch(e){ return; } }
+    if(!s) return;
     function setKpi(label, val, sub, opts){
       opts = opts || {};
       document.querySelectorAll('#content .kpi').forEach(function(k){
