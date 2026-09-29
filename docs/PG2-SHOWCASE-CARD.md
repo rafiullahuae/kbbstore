@@ -173,9 +173,10 @@ Three other paths answer the questions this card raises:
   at all**. The contact sheets are shot with it **on**, because the heart is
   part of the design he sent and he is choosing between designs.
   `panel-showcase-no-wishlist-1280.png` and `…-390.png` are the same card as it
-  will arrive — measured, the button goes from 143px wide to 199px, which is the
-  whole text column, and **the card height does not move**: 454px at 1280 and
-  392px at 390 either way. Neither picture is a compromise; `:has(.heart)` is
+  will arrive — measured, the button goes from 143px wide to 199px **at 1280**,
+  which is the whole text column, and is 139px either way at 390 because the
+  heart is on the photograph there regardless. **The card height does not move**:
+  454px at 1280 and 392px at 390 with the module on or off. Neither picture is a compromise; `:has(.heart)` is
   what gives the heart its room, so the button takes the whole column when there
   is nothing to make room for. Turning the module on is one switch, and it is
   the owner's to throw — it is a whole module (its own pages, its own cookie,
