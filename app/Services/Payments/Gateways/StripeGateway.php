@@ -275,6 +275,16 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     /* ------------------------------------------------------------- checkout */
 
+    /**
+     * `confirm`. The card fields, Apple Pay and Google Pay all finish the
+     * payment on THIS page against a client secret — nobody leaves the shop,
+     * and the order is not confirmed until Stripe says the intent succeeded.
+     */
+    public function journey(): string
+    {
+        return 'confirm';
+    }
+
     public function start(Order $order): PaymentStart
     {
         return $this->openIntent($order, saveCard: false);

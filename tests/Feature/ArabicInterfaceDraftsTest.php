@@ -434,13 +434,49 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * The sibling case that enumerates the untranslated set BY NAME is
      * untouched and green, which is what says these two are the whole of the
      * difference. `translated` is still 0 and both are DRAFTS.
+     *
+     * ── AND A FOURTH, IN THE SAME ROUND: 1,037 -> 1,056, LANE PLC ─────────
+     *
+     * Lane PLC branched at 1,035 too and wrote 1,054 for its nineteen; Lane SEC
+     * had added two by the time either was merged. 1,023 + 3 + 9 + 2 + 19 =
+     * 1,056, confirmed by running this rather than by adding up.
+     *
+     * FOUR lanes have now advanced this one number from four different bases in
+     * two rounds, and not one of them could see the others. Stop reading the
+     * figure as a fact about the shop: it is a consequence, and the sibling
+     * case that enumerates the untranslated set BY NAME is the thing that says
+     * what actually changed.
+     *
+     * ── LANE PLC'S OWN NINETEEN ────────────────────────────────────────────
+     *
+     * Nineteen more, and they are the Place-order overlay's: twelve under
+     * store.checkout.placing_* (the freeze, the tick, and the five distinct
+     * failures it can report), two under store.checkout.return_* (what a
+     * shopper is told when they come back from Tabby or Tamara without having
+     * paid) and five under store.order_received.* (the tick, and the honest
+     * bounded "confirming your payment" state that replaces it while the shop
+     * is still waiting on a webhook).
+     *
+     * They reach an EXISTING install through a migration of their own --
+     * 2027_05_11_000100_seed_placing_overlay_arabic_drafts -- for the reason
+     * the flag bar's needed one: 2027_04_28_000000 and 2027_05_10_000100 have
+     * both already run on this shop, and a migration that has run does not run
+     * again, so keys added to ArabicInterfaceDrafts alone would sit in the
+     * class and in no database anywhere.
+     *
+     * The sibling case that enumerates the untranslated set BY NAME is
+     * untouched and green, which is what says these nineteen are the whole of
+     * the difference. `translated` is still 0, all nineteen are DRAFTS, and
+     * every one of them renders its English on /ar until somebody approves it —
+     * so the overlay a shopper actually sees on /ar today says "Placing your
+     * order…" in English, exactly as every other string on that page does.
      */
     ArabicShop::on();
 
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1037, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1056, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

@@ -495,6 +495,18 @@
 --}}@push('scripts')
 @include('partials.checkout.address-autocomplete', ['autocomplete' => \App\Support\AddressAutocomplete::config(app(\App\Services\SettingsService::class))])@include('partials.checkout.inline-validation', ['validation' => \App\Support\InlineValidation::config(app(\App\Services\SettingsService::class))]){!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
 @include('partials.checkout.stripe-elements')
+{{-- THE PLACE-ORDER OVERLAY, AND IT GOES AFTER stripe-elements ON PURPOSE.
+
+     Both register a capture-phase click listener on `document` for
+     [data-place], and capture listeners on the same node run in the order they
+     were added. stripe-elements claims the press and stops it ONLY when the
+     card is the chosen method; everything else falls through to the overlay's
+     own listener, which posts this form and reads place()'s JSON answer.
+
+     Swap the two lines and the card would be placed twice: the overlay would
+     post the form, get `action: confirm` back for a confirmation it cannot
+     perform, and refuse — while stripe-elements never saw the click at all. --}}
+@include('partials.checkout.placing-overlay')
 @endpush
 
 @push('scripts')

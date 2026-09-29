@@ -751,6 +751,23 @@ final class ArabicInterfaceDrafts
             'store.checkout.arrives_in' => 'يصل خلال :eta',
             'store.checkout.discount' => 'الخصم',
             'store.checkout.payment_fee' => 'رسوم :method',
+
+            // The place-order overlay (Lane PLC). جارٍ, not يتم: the shopper is
+            // watching it happen, not being told that it is arranged.
+            'store.checkout.placing_label' => 'جارٍ تنفيذ طلبك',
+            'store.checkout.placing_title' => 'جارٍ تنفيذ طلبك…',
+            'store.checkout.placing_note' => 'من فضلك أبقِ هذه الصفحة مفتوحة.',
+            'store.checkout.placing_leaving' => 'جارٍ نقلك إلى :provider…',
+            'store.checkout.placing_leaving_note' => 'وافق على الدفع هناك وستعود إلى هنا مباشرة.',
+            'store.checkout.placing_done' => 'تم تنفيذ الطلب',
+            'store.checkout.placing_failed' => 'تعذّر تنفيذ طلبك. من فضلك حاول مرة أخرى.',
+            'store.checkout.placing_offline' => 'تعذّر الوصول إلى المتجر. تحقّق من اتصالك وحاول مرة أخرى.',
+            'store.checkout.placing_expired' => 'هذه الصفحة مفتوحة منذ وقت طويل. من فضلك حدّثها وحاول مرة أخرى — لم يُخصم أي مبلغ.',
+            'store.checkout.placing_no_answer' => 'لم نتلقَّ ردًا من المتجر. قد يكون طلبك قد نُفّذ بالفعل — من فضلك تحقّق من بريدك الإلكتروني قبل المحاولة مرة أخرى.',
+            'store.checkout.placing_redirect_stuck' => 'تعذّر فتح :provider تلقائيًا.',
+            'store.checkout.placing_redirect_link' => 'المتابعة إلى :provider',
+            'store.checkout.return_not_completed' => 'لم يكتمل الدفع، لذلك لم يتم تنفيذ طلبك. ولم يُخصم أي مبلغ.',
+            'store.checkout.return_not_completed_at' => 'لم يكتمل الدفع لدى :provider، لذلك لم يتم تنفيذ طلبك. ولم يُخصم أي مبلغ.',
         ];
     }
 
@@ -794,6 +811,13 @@ final class ArabicInterfaceDrafts
             'store.order_received.not_found_track' => 'تتبع طلبًا ببريدك الإلكتروني ←',
             'store.order_received.show_more' => 'عرض المزيد|عرض منتج واحد إضافي|عرض منتجين إضافيين|عرض :count منتجات إضافية|عرض :count منتجًا إضافيًا|عرض :count منتج إضافي',
             'store.order_received.show_fewer' => 'عرض عدد أقل',
+
+            // The return leg (Lane PLC).
+            'store.order_received.placed_label' => 'تم تنفيذ الطلب',
+            'store.order_received.placed_title' => 'تم تنفيذ الطلب',
+            'store.order_received.confirming_title' => 'جارٍ تأكيد الدفع…',
+            'store.order_received.confirming_note' => 'يستغرق ذلك عادةً بضع ثوانٍ.',
+            'store.order_received.confirming_slow' => 'ما زال تأكيد الدفع جاريًا. تفاصيل طلبك بالأسفل، وسنراسلك بالبريد الإلكتروني فور اكتماله.',
         ];
     }
 

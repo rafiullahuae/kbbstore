@@ -80,6 +80,16 @@ class CashOnDelivery implements PaymentGateway, SettlesPayments
     }
 
     /**
+     * `placed`. No money moves online, so the order is finished the moment it
+     * exists — which is why the order-received page may show a confirmed order
+     * for a cash sale that will never carry `paid_at`.
+     */
+    public function journey(): string
+    {
+        return 'placed';
+    }
+
+    /**
      * Nothing to redirect to. The order is real the moment it is placed, and
      * moves to `processing` so it reaches the warehouse like any other.
      */

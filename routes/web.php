@@ -182,7 +182,7 @@ Route::get('/checkout',         [\App\Http\Controllers\Store\CheckoutController:
 Route::post('/api/checkout/rates', [\App\Http\Controllers\Store\CheckoutController::class, 'rates'])->name('checkout.rates');
 Route::post('/checkout/place',  [\App\Http\Controllers\Store\CheckoutController::class, 'place'])->name('checkout.place');
 Route::get('/checkout/success', [\App\Http\Controllers\Store\CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/pending', fn () => redirect(\App\Support\Url::redirect('/checkout/')))->name('checkout.pending');
+require __DIR__.'/checkout-return.php';
 Route::get('/skin-quiz',   [PageController::class, 'skinQuiz'])->name('skin-quiz');
 Route::get('/reviews',     [PageController::class, 'reviewWall'])->name('review-wall');
 

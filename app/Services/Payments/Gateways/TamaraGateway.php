@@ -478,6 +478,18 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     /* ------------------------------------------------------------- checkout */
 
+    /**
+     * `redirect`. Tamara takes the shopper to its own hosted page to approve the
+     * instalment plan and sends them back to the address RemoteGateway::
+     * returnUrl() builds. Nothing on this shop knows the outcome until they
+     * return and the webhook lands, so the order-received page must not call
+     * such an order confirmed on the strength of the return alone.
+     */
+    public function journey(): string
+    {
+        return 'redirect';
+    }
+
     public function start(Order $order): PaymentStart
     {
         if (! $this->configured()) {

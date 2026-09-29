@@ -1301,6 +1301,48 @@ final class InterfaceStrings
             // CODE. A code itself is an identifier and is never translated.
             'checkout.discount' => 'Discount',
             'checkout.payment_fee' => ':method fee',
+
+            /*
+             * THE PLACE-ORDER OVERLAY (Lane PLC).
+             *
+             * Every one of these is said to a shopper who has just pressed the
+             * button that spends their money, so none of them may be cheerful
+             * about a thing that has not happened. `placing_done` is the only
+             * one that claims an order exists and it is shown only after the
+             * server has said so.
+             */
+            'checkout.placing_label' => 'Placing your order',
+            'checkout.placing_title' => 'Placing your order…',
+            'checkout.placing_note' => 'Please keep this page open.',
+            // :provider is the payment method's own title, read off the option
+            // the shopper chose. A provider's name is not translated.
+            'checkout.placing_leaving' => 'Taking you to :provider…',
+            'checkout.placing_leaving_note' => 'Approve your payment there and you will come straight back.',
+            'checkout.placing_done' => 'Order placed',
+            'checkout.placing_failed' => 'We could not place your order. Please try again.',
+            'checkout.placing_offline' => 'We could not reach the shop. Check your connection and try again.',
+            'checkout.placing_expired' => 'This page has been open a long time. Please refresh it and try again — nothing has been charged.',
+            // Said when the request was sent and no answer ever came back. It
+            // must NOT invite a retry: the order may well have been placed, and
+            // a second press is the one mistake that cannot be undone.
+            'checkout.placing_no_answer' => 'We did not hear back from the shop. Your order may already have been placed — please check your email before trying again.',
+            // The way out when a redirect gateway did not take the browser
+            // anywhere. The provider's own address, offered as a link.
+            'checkout.placing_redirect_stuck' => 'We could not open :provider automatically.',
+            'checkout.placing_redirect_link' => 'Continue to :provider',
+
+            /*
+             * THE RETURN FROM AN INSTALMENT PROVIDER WITHOUT A PAYMENT.
+             *
+             * Neither sentence guesses. Tabby and Tamara send a declined
+             * shopper and a shopper who pressed Back to the same two addresses
+             * and neither carries a reason, so "your payment was declined" to
+             * somebody who simply changed their mind is an accusation. What is
+             * certainly true is said instead, including that nothing has been
+             * charged, which is the question they will actually have.
+             */
+            'checkout.return_not_completed' => 'Your payment was not completed, so your order has not been placed. Nothing has been charged.',
+            'checkout.return_not_completed_at' => 'Your payment was not completed at :provider, so your order has not been placed. Nothing has been charged.',
         ];
     }
 
@@ -1355,6 +1397,23 @@ final class InterfaceStrings
             'order_received.not_found_track' => 'Track an order with your email →',
             'order_received.show_more' => 'Show :count more item|Show :count more items',
             'order_received.show_fewer' => 'Show fewer items',
+
+            /*
+             * THE RETURN LEG OF THE PLACE-ORDER OVERLAY (Lane PLC).
+             *
+             * Shown over this page for a moment when a shopper arrives from a
+             * payment. Which one they get is App\Services\Checkout\
+             * PlacementState's answer for their own order, never the address
+             * they arrived at.
+             */
+            'order_received.placed_label' => 'Order placed',
+            'order_received.placed_title' => 'Order placed',
+            'order_received.confirming_title' => 'Confirming your payment…',
+            'order_received.confirming_note' => 'This usually takes a few seconds.',
+            // After the one refresh, and the last word this overlay says on the
+            // subject: the order details underneath are real and the shopper
+            // should read them rather than watch a spinner.
+            'order_received.confirming_slow' => 'Your payment is still being confirmed. Your order details are below, and we will email you as soon as it is through.',
         ];
     }
 

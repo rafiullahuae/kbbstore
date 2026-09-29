@@ -280,6 +280,22 @@
     return Array.prototype.slice.call(document.querySelectorAll('[data-place]'));
   }
 
+  /*
+   * THE PLACE-ORDER OVERLAY, IF THIS SHOP HAS ONE. (Lane PLC)
+   *
+   * partials/checkout/placing-overlay publishes window.KBB.placing and owns the
+   * freeze, the "Placing your order…" card and the tick. The card leg keeps
+   * driving its own payment; it just says out loud where it has got to.
+   *
+   * ASKED FOR EVERY TIME RATHER THAN CACHED, and every call is guarded, so a
+   * shop whose overlay is missing — an older package, a view cache that did not
+   * clear, a partial somebody removed — still takes a card payment exactly as
+   * it did before. A payment path may not depend on a decoration.
+   */
+  function overlay() {
+    return (window.KBB && window.KBB.placing) || null;
+  }
+
   function lock(on) {
     busy = on;
     buttons().forEach(function (b) {
@@ -336,6 +352,15 @@
     clearError();
     lock(true);
 
+    /* The freeze goes up in the same tick as the press, before anything leaves
+       the browser — which is what actually stops a second tap, rather than the
+       disabled button above, which is a courtesy. lock(true) runs first on
+       purpose: the overlay remembers each button's `disabled` as it found it
+       and puts that value back, so dismissing the overlay for the 3-D Secure
+       step below does not hand back a live Place order button. */
+    var ov = overlay();
+    if (ov) { ov.begin(); }
+
     try {
       var handle = openOrder;
 
@@ -348,6 +373,10 @@
         var placed = await post(PLACE_URL, formPayload());
 
         if (!placed.ok || !placed.body || placed.body.ok !== true) {
+          /* Overlay DOWN first: the card's error box lives on the checkout,
+             which is behind the blur. An overlay left up over the reason is
+             the failure this whole feature was written against. */
+          if (ov) { ov.dismiss(); }
           showError((placed.body && placed.body.error) || TEXT.generic);
           lock(false);
           return;
@@ -356,9 +385,25 @@
         /* place() answers for every gateway, so honour what it actually said
            rather than assuming. A shop that switches Stripe off mid-session
            still has a working checkout. */
-        if (placed.body.action === 'redirect' && placed.body.url) { window.location.assign(placed.body.url); return; }
-        if (placed.body.action === 'placed' && placed.body.success_url) { window.location.assign(placed.body.success_url); return; }
-        if (placed.body.action !== 'confirm' || !placed.body.client_secret) { showError(TEXT.generic); lock(false); return; }
+        if (placed.body.action === 'redirect' && placed.body.url) {
+          /* The overlay says where they are going and takes them there — and
+             brings itself down with a real link if the navigation does not
+             happen. Without it, straight out as before. */
+          if (ov) { ov.leaving(placed.body.url); return; }
+          window.location.assign(placed.body.url);
+          return;
+        }
+        if (placed.body.action === 'placed' && placed.body.success_url) {
+          if (ov) { ov.confirmed(placed.body.success_url); return; }
+          window.location.assign(placed.body.success_url);
+          return;
+        }
+        if (placed.body.action !== 'confirm' || !placed.body.client_secret) {
+          if (ov) { ov.dismiss(); }
+          showError(TEXT.generic);
+          lock(false);
+          return;
+        }
 
         handle = openOrder = placed.body;
       }
@@ -373,6 +418,23 @@
        * instead; those come back to the order-received page, and the webhook is
        * what marks that order paid.
        */
+      /*
+       * THE OVERLAY COMES DOWN FOR THE BANK'S STEP, DELIBERATELY.
+       *
+       * confirmCardPayment is where 3-D SECURE happens, and Stripe answers it
+       * by injecting its own full-screen challenge into this document. Our
+       * overlay marks every other child of <body> `inert` while it is up, which
+       * is exactly the property that would make a challenge injected into one
+       * of them unanswerable — and a shopper who cannot answer their bank is a
+       * shopper whose payment cannot complete. It is not a risk worth carrying
+       * for a blur behind a modal that is already covering the page.
+       *
+       * The buttons stay disabled: the overlay restores each one to the value
+       * it found, and lock(true) had already disabled them. `busy` above is
+       * still true, so a second press cannot start a second payment either.
+       */
+      if (ov) { ov.dismiss(); }
+
       var result = await stripe.confirmCardPayment(handle.client_secret, {
         payment_method: {
           card: parts.number,
@@ -406,6 +468,12 @@
         return;
       }
 
+      /* Stripe has said `succeeded`, so the payment is real and the overlay
+         may go back up — over a page that is about to be left rather than one
+         the shopper is still working on. It is raised BEFORE the report below
+         so the gap between the bank's modal closing and the tick is covered. */
+      if (ov) { ov.begin(); }
+
       /*
        * Tell the shop, then go. The server verifies this against Stripe before
        * it believes a word of it, and if this request never arrives the webhook
@@ -415,8 +483,14 @@
        */
       try { await post(PAID_URL, { order: handle.order }); } catch (e) { /* the webhook has it */ }
 
+      /* The tick, and then the received page. confirmed() schedules the
+         navigation the instant the tick starts, so the animation cannot hold up
+         an order that is finished. */
+      if (ov) { ov.confirmed(handle.success_url); return; }
+
       window.location.assign(handle.success_url);
     } catch (e) {
+      if (ov) { ov.dismiss(); }
       showError(TEXT.generic);
       offerBail();
       lock(false);

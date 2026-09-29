@@ -516,10 +516,46 @@
           return;
         }
 
+        /*
+         * ══════════════════════════════════════════════════════════════════
+         * THE PLACE-ORDER OVERLAY, AND WHY IT IS RAISED **HERE** AND NOWHERE
+         * EARLIER ON THIS PATH. (Lane PLC)
+         * ══════════════════════════════════════════════════════════════════
+         *
+         * Apple Pay and Google Pay are not our user interface. From the press
+         * until this line the shopper has been looking at the BROWSER'S OWN
+         * payment sheet — a native surface we cannot layer with, cannot blur
+         * and must not compete with. Freezing the page behind it would put a
+         * "Placing your order…" card under a sheet that already says what is
+         * happening, and leaving that card up while the shopper is choosing a
+         * card in the sheet, or has just dismissed it, is the "overlay that
+         * outlives its reason" this feature exists to prevent.
+         *
+         * Every failure above therefore says its piece through say() on the
+         * checkout, with no overlay to take down — which is also why none of
+         * them has to remember to.
+         *
+         * By this line the sheet is finished and Stripe has said `succeeded`.
+         * The shopper is about to be navigated away, there is a real wait while
+         * the shop is told, and the tick is now TRUE. So the overlay goes up
+         * for the one moment it belongs: the confirmation, and the wait behind
+         * it. Guarded, because a payment path may not depend on a decoration.
+         */
+        var ov = (window.KBB && window.KBB.placing) || null;
+        if (ov) { ov.begin(); }
+
         try { await post(PAID_URL, { order: order }); } catch (e) { /* the webhook has it */ }
+
+        if (ov) { ov.confirmed(placed.body.success_url); return; }
 
         window.location.assign(placed.body.success_url);
       } catch (e) {
+        /* If the overlay went up a line or two ago and then something threw,
+           it comes down with everything else — a frozen shop is not an
+           acceptable resting state for a failure. */
+        var down = (window.KBB && window.KBB.placing) || null;
+        if (down) { down.dismiss(); }
+
         /*
          * CONTAINED. Whatever went wrong, the shopper must end up with their
          * basket and a sentence, never with a half-placed order and a spinner.
