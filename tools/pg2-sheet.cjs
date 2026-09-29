@@ -31,7 +31,7 @@ const SUFFIX = process.env.KBB_SUFFIX || '';
 const COLUMNS = [
   ['classic', 'TODAY · Classic card', 'what the shop draws now'],
   ['showcase', 'A · Showcase', 'faithful to the screenshot — a full-width uppercase button with the heart beside it'],
-  ['showcase-compact', 'B · Showcase Compact', 'the same card a step tighter: less padding, smaller type, a shorter button'],
+  ['showcase-compact', 'B · Showcase Compact', 'tighter and with no card outline at all: less padding, smaller type, a shorter button'],
   ['showcase-row', 'C · Showcase Row', 'the price and the button share the last line; the heart goes on the photograph'],
   ['showcase-airy', 'D · Showcase Airy', 'more air, no border, a soft shadow and an outlined button that fills on hover'],
 ];
