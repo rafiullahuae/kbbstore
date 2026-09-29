@@ -179,46 +179,25 @@
         && \App\Support\SetContents::fromProduct($product)['members'] !== [];
 
     /* ═══════════════════════════════════════════════════════════════════════
-       THE THREE PROPOSED LAYOUTS — PREVIEWS, NOT A SETTING. (Lane PP)
+       THE THREE PROPOSED LAYOUTS ARE GONE. (Lane PP2)
 
-         "can u also propose the product / set page more improved from the
-          existing layout to derive more beautiful version, give me some
-          options previews to choose from for now."
+       Lane PP put a three-entry map here -- focus / editorial / compact --
+       keyed off `?layout=` in the query string, so the owner could look at
+       three drawings of this page on the real catalogue and pick one. He
+       looked, and answered that they were not three choices: read side by
+       side they differed by a card border against two hairline rules, one type
+       step, and the capitalisation of one button.
 
-       "for now" is the whole design of this. He is CHOOSING, not configuring,
-       so there is no Appearance screen, no column on `products` and no row in
-       `settings`: a layout nobody has picked yet is not a setting, and a picker
-       shipped before the decision is a screen to keep working and a migration
-       to unpick when he names one. Three URLs, three photographs, one answer
-       next round.
+       So there is no layout parameter on this shop any more. `.pdp` carries no
+       layout class, `?layout=` is an unread query string like any other, and
+       the ~240 lines of `.pp-lay*` rules behind it are deleted from
+       resources/css/kbb/kbb-product.css rather than left as dead selectors
+       every later lane has to reason about. The measurements that produced
+       them are kept in docs/PP-PRODUCT-PAGE-PROPOSALS.md, which is where a
+       proposal that was not taken belongs.
 
-           /product/<slug>/?layout=focus
-           /product/<slug>/?layout=editorial
-           /product/<slug>/?layout=compact
-
-       ── AND THE SHIPPED PAGE IS UNTOUCHED, TO THE BYTE ────────────────────
-
-       With no `layout` in the query string $kbbLayoutClass is the empty string
-       and this element renders `<div class="pdp">`, character for character
-       what it rendered before. Every rule behind the three proposals is
-       scoped under .pp-lay-* in resources/css/kbb/kbb-product.css, so a page
-       nobody asked a layout of carries the bytes and matches none of them.
-       CLAUDE.md rule 1: a proposal must not move the shop.
-
-       ── THE VALUE IS NEVER PRINTED, ONLY LOOKED UP ────────────────────────
-
-       CLAUDE.md rule 5, on a page reached by anybody with a URL bar. The query
-       string does not become a class name; it becomes a KEY into a map written
-       here, and what is printed is one of this file's own three constants or
-       nothing at all. `?layout="><script>` finds no key and prints the empty
-       string. There is no branch on the raw value, no default that echoes it,
-       and no way to reach the element with a character the shop did not
-       choose. */
-    $kbbLayoutClass = [
-        'focus' => ' pp-lay pp-lay-focus',
-        'editorial' => ' pp-lay pp-lay-editorial',
-        'compact' => ' pp-lay pp-lay-compact',
-    ][(string) request()->query('layout')] ?? '';
+       THE MAIN IMAGE IS SQUARE, IN ANY CASE -- his words. `.gmain` is back to
+       the `aspect-ratio:1` it has always carried, with no override anywhere. */
 @endphp
 
 {{-- Brand once, not twice. This concatenated brand and name unconditionally,
@@ -294,7 +273,7 @@
 @section('content')
 <div class="wrap">
   <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
-  <div class="pdp{{ $kbbLayoutClass }}">
+  <div class="pdp">
     <!-- gallery -->
     @include('partials.product-gallery')
 
