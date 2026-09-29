@@ -29,6 +29,39 @@ export default defineConfig({
                 'resources/css/kbb/sorina-reviews.css',
                 // 28 product-grid card templates, selectable from the admin.
                 'resources/css/kbb/kbb-grid-skins.css',
+                /*
+                 * POPPINS, SELF-HOSTED — Lane PERF.
+                 *
+                 * They are INPUTS and not files dropped into public/build,
+                 * because `npx vite build` empties that directory: a woff2
+                 * copied there by hand survives exactly until the next asset
+                 * build, and the shop is then serving a 404 for its own brand
+                 * face. As inputs they are hashed, listed in the manifest and
+                 * resolved by App\Support\WebFonts through Vite::asset().
+                 *
+                 * All twelve Poppins faces css2 returns, devanagari included,
+                 * and Cairo's three (its four weights are one variable file
+                 * per subset). A
+                 * browser fetches a face only when a codepoint in its
+                 * unicode-range is on the page, so the four this shop has no
+                 * text for cost a shopper nothing and are what makes
+                 * "the same font, byte for byte" true without an exception.
+                 */
+                'resources/fonts/poppins/poppins-devanagari-400.woff2',
+                'resources/fonts/poppins/poppins-latin-400.woff2',
+                'resources/fonts/poppins/poppins-latin-ext-400.woff2',
+                'resources/fonts/poppins/poppins-devanagari-600.woff2',
+                'resources/fonts/poppins/poppins-latin-600.woff2',
+                'resources/fonts/poppins/poppins-latin-ext-600.woff2',
+                'resources/fonts/poppins/poppins-devanagari-700.woff2',
+                'resources/fonts/poppins/poppins-latin-700.woff2',
+                'resources/fonts/poppins/poppins-latin-ext-700.woff2',
+                'resources/fonts/poppins/poppins-devanagari-800.woff2',
+                'resources/fonts/poppins/poppins-latin-800.woff2',
+                'resources/fonts/poppins/poppins-latin-ext-800.woff2',
+                'resources/fonts/cairo/cairo-arabic.woff2',
+                'resources/fonts/cairo/cairo-latin.woff2',
+                'resources/fonts/cairo/cairo-latin-ext.woff2',
                 'resources/js/kbb/app.js',
             ],
             refresh: true,

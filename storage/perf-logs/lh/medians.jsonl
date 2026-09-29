@@ -1,0 +1,3 @@
+{"label":"BEFORE","profile":"mobile","runs":3,"performance":79,"performanceAtLiveTbt":79,"accessibility":95,"bestPractices":100,"seo":100,"fcp":2.82,"lcp":4.05,"tbt":223,"cls":0.005,"si":4.78,"bytes":762}
+{"label":"BEFORE","profile":"desktop","runs":3,"performance":82,"performanceAtLiveTbt":95,"accessibility":95,"bestPractices":100,"seo":100,"fcp":0.96,"lcp":1.12,"tbt":133,"cls":0.008,"si":1.59,"bytes":897}
+{"label":"FONTS","profile":"mobile","runs":3,"performance":87,"performanceAtLiveTbt":88,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.41,"lcp":3.84,"tbt":170,"cls":0,"si":2.29,"bytes":758}

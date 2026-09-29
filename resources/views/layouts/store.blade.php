@@ -136,13 +136,29 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 {!! \App\Support\Seo::render($kbbSeoCtx) !!}
 @stack('head')
 
-{{-- Poppins 400-800, matching the theme exactly (T-BOOT-10). --}}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="dns-prefetch" href="https://fonts.gstatic.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-{{-- Only the weights the stylesheets actually use. Each extra weight is a
-     separate font file on the critical path. --}}
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+{{-- Poppins 400-800, matching the theme exactly (T-BOOT-10), AND SERVED BY
+     THIS SHOP — Lane PERF. App\Support\WebFonts carries the measurement in
+     full; the short version is the owner's own mobile report:
+
+         Initial Navigation  https://extrabeauty.ae         2,366 ms
+           /css2?family=Poppins…  (fonts.googleapis.com)     2,364 ms
+             …pxiEyp8kv….woff2    (fonts.gstatic.com)        4,366 ms
+             …pxiByp8kv….woff2    (fonts.gstatic.com)        4,369 ms
+         Maximum critical path latency: 4,369 ms
+
+     Two hops to two third-party origins before a single glyph exists, off a
+     <link> that blocks rendering while it happens. With font-display:swap
+     every word on the page is painted twice — once in the system fallback at
+     FCP, once in Poppins two seconds later — and that repaint is most of why
+     the Speed Index was 7.7 s against an LCP of 2.9 s.
+
+     THE PRECONNECTS GO WITH IT. A preconnect to an origin the page no longer
+     asks for is a TCP and TLS handshake spent on nothing, and Lighthouse's
+     "Preconnected origins" insight lists exactly these two.
+
+     THE FILES ARE GOOGLE'S OWN, unchanged, all twelve faces css2 returns. The
+     same codepoint resolves to the same face; only the host changed. --}}
+{!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::POPPINS) !!}<style id="kbb-poppins">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::POPPINS) !!}</style>
 {{--
     POPPINS CARRIES NO ARABIC GLYPHS. Not "renders Arabic badly" — it has none
     of the letters, so every Arabic word falls back to whatever the device
@@ -231,7 +247,14 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
     html[lang="ar"] .kbb-checkout (0,2,1) beats .kbb-checkout (0,1,0).
 --}}
 @if ($kbbLocale !== \App\Support\Locale::DEFAULT)
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+{{-- AND CAIRO IS SERVED BY THIS SHOP TOO — Lane PERF. Same argument as
+     Poppins above, and it has to go with it rather than after it: the two
+     preconnect hints that made this request cheap belonged to the Poppins
+     block, so leaving Cairo on fonts.googleapis.com while removing them would
+     have made the Arabic pages SLOWER than they were. Its four weights are one
+     variable file per subset — App\Support\WebFonts has the byte count that
+     proves it — so this is three files, of which an Arabic page fetches one. --}}
+{!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::CAIRO) !!}<style id="kbb-cairo">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::CAIRO) !!}</style>
 <style id="kbb-arabic-face">
 html[lang="ar"],html[lang="ar"] .kbb-checkout{--sans:"Poppins","Cairo",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 html[lang="ar"] body{font-family:"Poppins","Cairo",system-ui,sans-serif}
