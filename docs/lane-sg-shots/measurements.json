@@ -1,0 +1,362 @@
+[
+  {
+    "shot": "shop-grid-three-sets-390",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "tiles": {
+      "relief-sun-rice-probiotics-spf50": {
+        "was": "AED 75",
+        "now": "AED 52",
+        "badge": "-31%"
+      },
+      "age-r-booster-pro-device": {
+        "was": null,
+        "now": "AED 173",
+        "badge": null
+      },
+      "hyaluronic-acid-watery-sun-gel": {
+        "was": "AED 134",
+        "now": "AED 93",
+        "badge": "-31%"
+      },
+      "zinc-sunscreen-spf50": {
+        "was": null,
+        "now": "AED 140",
+        "badge": null
+      },
+      "sg-azelaic-serum": {
+        "was": null,
+        "now": "AED 80",
+        "badge": null
+      },
+      "sg-barrier-rescue-set": {
+        "was": "AED 175",
+        "now": "AED 160",
+        "badge": "-9%"
+      },
+      "sg-ceramide": {
+        "was": null,
+        "now": "AED 129",
+        "badge": null
+      },
+      "sg-glow-starter-set": {
+        "was": "AED 165",
+        "now": "AED 145",
+        "badge": "-12%"
+      },
+      "sg-heartleaf-toner": {
+        "was": null,
+        "now": "AED 105",
+        "badge": null
+      },
+      "sg-night-repair-set": {
+        "was": "AED 180",
+        "now": "AED 167",
+        "badge": "-7%"
+      },
+      "sg-milky-toner": {
+        "was": null,
+        "now": "AED 69",
+        "badge": null
+      },
+      "glow-deep-serum-rice-alpha-arbutin": {
+        "was": null,
+        "now": "AED 217",
+        "badge": null
+      },
+      "advanced-snail-96-mucin-power-essence": {
+        "was": null,
+        "now": "AED 215",
+        "badge": null
+      },
+      "low-ph-good-morning-gel-cleanser": {
+        "was": null,
+        "now": "AED 75",
+        "badge": null
+      },
+      "heartleaf-77-soothing-toner": {
+        "was": "AED 142",
+        "now": "AED 99",
+        "badge": "-30%"
+      },
+      "peach-niacinamide-30-serum": {
+        "was": null,
+        "now": "AED 164",
+        "badge": null
+      },
+      "collagen-night-wrapping-mask": {
+        "was": null,
+        "now": "AED 189",
+        "badge": null
+      },
+      "birch-juice-moisturizing-sunscreen": {
+        "was": "AED 177",
+        "now": "AED 123",
+        "badge": "-31%"
+      },
+      "1025-dokdo-toner": {
+        "was": null,
+        "now": "AED 204",
+        "badge": null
+      },
+      "dive-in-low-molecular-hyaluronic-acid-serum": {
+        "was": null,
+        "now": "AED 61",
+        "badge": null
+      },
+      "cellmazing-fit-serum": {
+        "was": null,
+        "now": "AED 103",
+        "badge": null
+      },
+      "green-tea-fresh-toner": {
+        "was": null,
+        "now": "AED 143",
+        "badge": null
+      },
+      "madagascar-centella-ampoule": {
+        "was": null,
+        "now": "AED 126",
+        "badge": null
+      },
+      "poremizing-clear-toner": {
+        "was": null,
+        "now": "AED 195",
+        "badge": null
+      }
+    }
+  },
+  {
+    "shot": "shop-grid-three-sets-1280",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "tiles": {
+      "relief-sun-rice-probiotics-spf50": {
+        "was": "AED 75",
+        "now": "AED 52",
+        "badge": "-31%"
+      },
+      "age-r-booster-pro-device": {
+        "was": null,
+        "now": "AED 173",
+        "badge": null
+      },
+      "hyaluronic-acid-watery-sun-gel": {
+        "was": "AED 134",
+        "now": "AED 93",
+        "badge": "-31%"
+      },
+      "zinc-sunscreen-spf50": {
+        "was": null,
+        "now": "AED 140",
+        "badge": null
+      },
+      "sg-azelaic-serum": {
+        "was": null,
+        "now": "AED 80",
+        "badge": null
+      },
+      "sg-barrier-rescue-set": {
+        "was": "AED 175",
+        "now": "AED 160",
+        "badge": "-9%"
+      },
+      "sg-ceramide": {
+        "was": null,
+        "now": "AED 129",
+        "badge": null
+      },
+      "sg-glow-starter-set": {
+        "was": "AED 165",
+        "now": "AED 145",
+        "badge": "-12%"
+      },
+      "sg-heartleaf-toner": {
+        "was": null,
+        "now": "AED 105",
+        "badge": null
+      },
+      "sg-night-repair-set": {
+        "was": "AED 180",
+        "now": "AED 167",
+        "badge": "-7%"
+      },
+      "sg-milky-toner": {
+        "was": null,
+        "now": "AED 69",
+        "badge": null
+      },
+      "glow-deep-serum-rice-alpha-arbutin": {
+        "was": null,
+        "now": "AED 217",
+        "badge": null
+      },
+      "advanced-snail-96-mucin-power-essence": {
+        "was": null,
+        "now": "AED 215",
+        "badge": null
+      },
+      "low-ph-good-morning-gel-cleanser": {
+        "was": null,
+        "now": "AED 75",
+        "badge": null
+      },
+      "heartleaf-77-soothing-toner": {
+        "was": "AED 142",
+        "now": "AED 99",
+        "badge": "-30%"
+      },
+      "peach-niacinamide-30-serum": {
+        "was": null,
+        "now": "AED 164",
+        "badge": null
+      },
+      "collagen-night-wrapping-mask": {
+        "was": null,
+        "now": "AED 189",
+        "badge": null
+      },
+      "birch-juice-moisturizing-sunscreen": {
+        "was": "AED 177",
+        "now": "AED 123",
+        "badge": "-31%"
+      },
+      "1025-dokdo-toner": {
+        "was": null,
+        "now": "AED 204",
+        "badge": null
+      },
+      "dive-in-low-molecular-hyaluronic-acid-serum": {
+        "was": null,
+        "now": "AED 61",
+        "badge": null
+      },
+      "cellmazing-fit-serum": {
+        "was": null,
+        "now": "AED 103",
+        "badge": null
+      },
+      "green-tea-fresh-toner": {
+        "was": null,
+        "now": "AED 143",
+        "badge": null
+      },
+      "madagascar-centella-ampoule": {
+        "was": null,
+        "now": "AED 126",
+        "badge": null
+      },
+      "poremizing-clear-toner": {
+        "was": null,
+        "now": "AED 195",
+        "badge": null
+      }
+    }
+  },
+  {
+    "shot": "product-page-sg-night-repair-set-390",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "now": "AED 167",
+    "was": "AED 180",
+    "off": "-7%",
+    "heading": "Night Repair Set"
+  },
+  {
+    "shot": "product-page-sg-night-repair-set-1280",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "now": "AED 167",
+    "was": "AED 180",
+    "off": "-7%",
+    "heading": "Night Repair Set"
+  },
+  {
+    "shot": "product-page-sg-barrier-rescue-set-390",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "now": "AED 160",
+    "was": "AED 175",
+    "off": "-9%",
+    "heading": "Barrier Rescue Set"
+  },
+  {
+    "shot": "product-page-sg-barrier-rescue-set-1280",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "now": "AED 160",
+    "was": "AED 175",
+    "off": "-9%",
+    "heading": "Barrier Rescue Set"
+  },
+  {
+    "shot": "product-page-sg-glow-starter-set-390",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "now": "AED 145",
+    "was": "AED 165",
+    "off": "-12%",
+    "heading": "Glow Starter Set"
+  },
+  {
+    "shot": "product-page-sg-glow-starter-set-1280",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "now": "AED 145",
+    "was": "AED 165",
+    "off": "-12%",
+    "heading": "Glow Starter Set"
+  },
+  {
+    "addedToBasket": [
+      [
+        29,
+        200,
+        "{\"ok\":true,\"error\":null,\"toast\":\"Added to bag\",\"count\":1,\"drawer\":\"<div class=\\\"kc-fragment\\\">\\n    <div class=\\\"kc-tabs\\\">\\n        <button class=\\\"kc-tab on\\\" type=\\\"button\\\" data-kctab=\\\"cart\\\">Car"
+      ],
+      [
+        31,
+        200,
+        "{\"ok\":true,\"error\":null,\"toast\":\"Added to bag\",\"count\":2,\"drawer\":\"<div class=\\\"kc-fragment\\\">\\n    <div class=\\\"kc-tabs\\\">\\n        <button class=\\\"kc-tab on\\\" type=\\\"button\\\" data-kctab=\\\"cart\\\">Car"
+      ]
+    ]
+  },
+  {
+    "shot": "cart-two-sets-390",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "lines": [
+      {
+        "name": "Night Repair Set",
+        "was": "AED 180",
+        "price": "AED 167"
+      },
+      {
+        "name": "Glow Starter Set",
+        "was": "AED 165",
+        "price": "AED 145"
+      }
+    ],
+    "subtotal": "AED 311.50",
+    "total": "AED 311.50"
+  },
+  {
+    "shot": "cart-two-sets-1280",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "lines": [
+      {
+        "name": "Night Repair Set",
+        "was": "AED 180",
+        "price": "AED 167"
+      },
+      {
+        "name": "Glow Starter Set",
+        "was": "AED 165",
+        "price": "AED 145"
+      }
+    ],
+    "subtotal": "AED 311.50",
+    "total": "AED 311.50"
+  }
+]
