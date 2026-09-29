@@ -56,8 +56,11 @@ namespace App\Support;
  * UAE: a red hoist band a quarter of the length, then equal green, white and
  * black bands. Colours are the government specification (#00732F, #FF0000).
  *
- * Korea: the taegeuk is two arcs of radius r/2 closed by one of radius r —
- * the standard construction — rotated 33.69° so the red sits upper-hoist. That
+ * Korea: the taegeuk is a circle a third of the flag's length across — 20
+ * units of 60, the specified diameter — made of two arcs of radius r/2 closed
+ * by one of radius r,
+ * which is the standard construction, rotated 33.69° so the red sits
+ * upper-hoist. That
  * angle is not a rounding of anything: it is the angle of the flag's own
  * diagonal, atan(20/30) for a 3:2 field. The four trigrams sit on
  * that diagonal at the four corners with their bars square to it: geon (three
@@ -78,8 +81,8 @@ final class FlagArt
     public const KOREA = '<svg viewBox="0 0 60 40" aria-hidden="true" focusable="false">'
         .'<rect width="60" height="40" fill="#FFFFFF"/>'
         .'<g transform="rotate(-33.69 30 20)">'
-        .'<circle cx="30" cy="20" r="8" fill="#0047A0"/>'
-        .'<path d="M22 20a4 4 0 0 1 8 0 4 4 0 0 0 8 0 8 8 0 0 0-16 0Z" fill="#CD2E3A"/>'
+        .'<circle cx="30" cy="20" r="10" fill="#0047A0"/>'
+        .'<path d="M20 20a5 5 0 0 1 10 0 5 5 0 0 0 10 0 10 10 0 0 0-20 0Z" fill="#CD2E3A"/>'
         .'</g>'
         .'<g fill="#000000">'
         // geon — upper hoist, three solid.
