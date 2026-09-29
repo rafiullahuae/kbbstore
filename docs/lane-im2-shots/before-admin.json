@@ -1,0 +1,94 @@
+{
+  "media-390": {
+    "requests": 14,
+    "bytes": 5912477,
+    "grid": {
+      "tiles": 24,
+      "boxes": [
+        {
+          "src": "http://127.0.0.1:8979/uploads/reviews/cold-rev.jpg",
+          "loaded": true,
+          "natural": [
+            1080,
+            1920
+          ],
+          "box": [
+            156,
+            277
+          ]
+        },
+        {
+          "src": "http://127.0.0.1:8979/uploads/reviews/rev-2.jpg",
+          "loaded": true,
+          "natural": [
+            1080,
+            1920
+          ],
+          "box": [
+            156,
+            277
+          ]
+        },
+        {
+          "src": "http://127.0.0.1:8979/uploads/reviews/rev-3.jpg",
+          "loaded": true,
+          "natural": [
+            1920,
+            1080
+          ],
+          "box": [
+            156,
+            117
+          ]
+        }
+      ],
+      "scrollWidth": 390
+    }
+  },
+  "media-1280": {
+    "requests": 24,
+    "bytes": 7985562,
+    "grid": {
+      "tiles": 24,
+      "boxes": [
+        {
+          "src": "http://127.0.0.1:8979/uploads/reviews/cold-rev.jpg",
+          "loaded": true,
+          "natural": [
+            1080,
+            1920
+          ],
+          "box": [
+            148,
+            264
+          ]
+        },
+        {
+          "src": "http://127.0.0.1:8979/uploads/reviews/rev-2.jpg",
+          "loaded": true,
+          "natural": [
+            1080,
+            1920
+          ],
+          "box": [
+            148,
+            264
+          ]
+        },
+        {
+          "src": "http://127.0.0.1:8979/uploads/reviews/rev-3.jpg",
+          "loaded": true,
+          "natural": [
+            1920,
+            1080
+          ],
+          "box": [
+            148,
+            111
+          ]
+        }
+      ],
+      "scrollWidth": 1280
+    }
+  }
+}

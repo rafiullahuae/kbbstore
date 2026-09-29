@@ -175,9 +175,9 @@ class ImageSizesApiController extends Controller
     /* ------------------------------------------------------------------ */
 
     /**
-     * Every distinct photograph a product PAGE can render, in a stable order —
-     * the featured image, every shot in the gallery beside it, and every
-     * variant's own picture.
+     * Every distinct photograph this SHOP can render, in a stable order — the
+     * featured image, every shot in the gallery beside it, every variant's own
+     * picture, and every photograph a shopper attached to a review.
      *
      * ── THE GALLERY WAS NEVER IN THIS LIST, AND THAT WAS THE WHOLE BUG ──────
      *
@@ -256,6 +256,50 @@ class ImageSizesApiController extends Controller
             ->where('image', '<>', '')
             ->pluck('image');
 
+        /*
+         * ── AND THE REVIEW PHOTOGRAPHS, WHICH HAD NO COPIES AT ALL ──────────
+         *
+         * (Lane IM2.) This list walked products and product variants, so a
+         * photograph a shopper attached to a review could never have a variant
+         * for anything to find: not because the batch skipped it, but because
+         * it was never work. The batch would report `remaining: 0` over a shop
+         * whose review wall was still serving phone camera originals.
+         *
+         * WHAT THAT COSTS, measured on this preview: a review photograph off a
+         * handset is 1080x1920 and ~530KB. partials/reviews.blade.php draws it
+         * into a card 266px wide and 160px tall (.sr-pp.one) or a 76px-tall
+         * half-card square (.sr-pp.multi), both object-fit:cover. Four
+         * photographs on one product page is ~2.1MB to paint about a
+         * postcard's worth of pixels, and unlike a product photograph it is
+         * NOT shared across the catalogue — every review brings its own files.
+         *
+         * IT IS ABOUT TO MATTER MUCH MORE. The WordPress importer brings review
+         * photographs across from plugin 1.6.0 onwards (reviews.csv gained an
+         * `images` column), so a shop that has one or two of these today will
+         * have thousands after the next import.
+         *
+         * WHY THE COLUMN IS READ THE SAME WAY `products.images` IS, and not
+         * with a join or a JSON function: identical reasoning to the block
+         * above. `reviews.images` is a JSON array, a JSON array cannot be
+         * ordered or range-filtered portably across MySQL and SQLite, and a
+         * photograph on a row whose id sorts before the cursor can itself sort
+         * after it. So the rows are read, decoded and merged into the same flat
+         * sorted set, and the cursor goes on meaning one thing across the whole
+         * work list.
+         *
+         * THE TWO CHEAP SQL PREDICATES ARE NOT A FILTER ON THE CURSOR — they
+         * cannot be, for the reason just given. They only skip rows that carry
+         * no photograph at all, which on this table is the overwhelming
+         * majority: a shop with 4,000 reviews and 120 photographed ones reads
+         * 120 short JSON strings instead of 4,000 nulls. `'[]'` is matched by
+         * value because that is what an empty cast writes back.
+         */
+        $reviewImages = \Illuminate\Support\Facades\DB::table('reviews')
+            ->whereNotNull('images')
+            ->where('images', '<>', '')
+            ->where('images', '<>', '[]')
+            ->pluck('images');
+
         $keep = function ($image) use (&$seen, $after): void {
             if (! is_string($image)) {
                 return;
@@ -292,6 +336,19 @@ class ImageSizesApiController extends Controller
 
         foreach ($variants as $image) {
             $keep($image);
+        }
+
+        foreach ($reviewImages as $json) {
+            // toBase() again, so the cast has not run and this is raw JSON —
+            // the same shape products.images arrives in above, decoded the same
+            // way rather than assumed to be an array.
+            $photos = is_string($json) && $json !== '' ? json_decode($json, true) : $json;
+
+            if (is_array($photos)) {
+                foreach ($photos as $photo) {
+                    $keep($photo);
+                }
+            }
         }
 
         // strval because PHP casts an array key that looks like an integer, and

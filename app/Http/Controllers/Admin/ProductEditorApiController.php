@@ -12,6 +12,7 @@ use App\Models\ProductSetItem;
 use App\Models\ProductVariant;
 use App\Models\Tag;
 use App\Support\Gtin;
+use App\Support\ImageVariants;
 use App\Support\MajorUnits;
 use App\Support\Money;
 use App\Support\ProductSeo;
@@ -157,6 +158,50 @@ class ProductEditorApiController extends Controller
         return str_replace(',', '', Money::amount($fils, Money::minorExponent()));
     }
 
+    /**
+     * The phone-sized copy of each of this product's photographs, keyed by the
+     * original's URL, for the boxes this screen draws them in.
+     *
+     * A URL is present ONLY when a real file backs it, so the screen's
+     * `thumbs[u] || u` falls through to the original for every photograph the
+     * batch has not reached — which, on a catalogue that has never been through
+     * Content -> Media Library -> Make phone-sized copies, is all of them, and
+     * the screen then behaves exactly as it does today.
+     *
+     * The widths are the boxes': ~300px for the main-image card, 56px for a
+     * gallery tile. See the payload's own note.
+     *
+     * @return array<string, string>
+     */
+    private function editorThumbs(Product $product): array
+    {
+        $thumbs = [];
+
+        $add = static function ($image, int $width) use (&$thumbs): void {
+            if (! is_string($image) || trim($image) === '') {
+                return;
+            }
+
+            $image = trim($image);
+            $thumb = ImageVariants::variantUrl($image, $width);
+
+            // Only a real copy earns a row. variantUrl() hands back its
+            // argument when there is nothing on disk, and a map of a URL to
+            // itself is bytes that tell the screen nothing it did not have.
+            if ($thumb !== $image) {
+                $thumbs[$image] = $thumb;
+            }
+        };
+
+        $add($product->image, 400);
+
+        foreach ((array) ($product->images ?? []) as $shot) {
+            $add($shot, 200);
+        }
+
+        return $thumbs;
+    }
+
     /* ------------------------------------------------------------ bootstrap */
 
     /**
@@ -258,6 +303,12 @@ class ProductEditorApiController extends Controller
                 'sku' => $p->sku,
                 'brand' => $p->brand?->name,
                 'image' => $p->image,
+                // (Lane IM2) `.peo-item img` is a 38px square, so 200w covers
+                // it at device-pixel-ratio 3 with room to spare and the row
+                // stops pulling the catalogue original. 40 rows a page, so this
+                // is ~11.6MB down to ~190KB. The original stays on `image` for
+                // anything that wants the file itself.
+                'thumb' => ImageVariants::variantUrl((string) ($p->image ?? ''), 200),
                 'status' => $p->editorStatus(),
                 'price_aed' => $this->editorAmount($p->price === null ? null : (int) $p->price),
             ])->values(),
@@ -441,6 +492,35 @@ class ProductEditorApiController extends Controller
             'image' => $product->image,
             'images' => array_values(array_filter((array) ($product->images ?? []))),
             'image_alts' => is_array($product->image_alts) ? $product->image_alts : (object) [],
+            /*
+             * (Lane IM2) THE COPY EACH OF THOSE SHOULD BE *DRAWN* FROM.
+             *
+             * The gallery strip on this screen paints every shot into a 56px
+             * square (.peo-tile img) and the main-image card into a box about
+             * 300px across. Both were pointed straight at the catalogue
+             * original, so opening one product with an eight-shot gallery cost
+             * about 2.3MB of photographs to fill eight thumbnails and one card.
+             *
+             * A MAP KEYED BY THE ORIGINAL URL, and not a parallel array, for
+             * one reason that is specific to this screen: the gallery is
+             * EDITABLE. Tiles are dragged to reorder and removed individually,
+             * and `image_alts` is already keyed by URL for exactly the same
+             * reason — a parallel array would have to be kept in step by every
+             * reorder and every delete, and the first one that was not would
+             * slide one photograph's thumbnail onto another. A map cannot go
+             * out of order, so the screen reads `thumbs[u] || u` and the drag
+             * handler stays as it is.
+             *
+             * ONLY THE ENTRIES THAT HAVE A COPY. variantUrl() returns its
+             * argument when nothing is on disk, so writing those would be a map
+             * of a URL to itself — bytes on the wire that say nothing. The
+             * screen's fallback is the original either way.
+             *
+             * 400 for the main image because its card is ~300px wide; 200 for
+             * the strip because 56px cannot use more. Both are what the boxes
+             * measure, not a round number.
+             */
+            'thumbs' => $this->editorThumbs($product),
 
             'seo' => is_array($product->seo) ? $product->seo : null,
 

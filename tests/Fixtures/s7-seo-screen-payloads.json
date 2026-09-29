@@ -273,7 +273,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             },
             {
                 "id": 2,
@@ -300,7 +301,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             },
             {
                 "id": 3,
@@ -327,7 +329,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             },
             {
                 "id": 4,
@@ -354,7 +357,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             },
             {
                 "id": 5,
@@ -381,7 +385,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             },
             {
                 "id": 6,
@@ -408,7 +413,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             },
             {
                 "id": 7,
@@ -435,7 +441,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             },
             {
                 "id": 8,
@@ -462,7 +469,8 @@
                             "stale": false
                         }
                     }
-                }
+                },
+                "logo_thumb": ""
             }
         ],
         "translatable": {

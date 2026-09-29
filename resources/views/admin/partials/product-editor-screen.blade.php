@@ -722,6 +722,29 @@
     return esc(s);
   }
 
+  /* (Lane IM2) THE COPY TO DRAW A PHOTOGRAPH FROM, given the photograph.
+
+     This screen painted every box -- the 56px gallery tiles and the main-image
+     card -- straight from the catalogue original, so opening one product with
+     an eight-shot gallery cost about 2.3MB of photographs. `model.thumbs` is a
+     map from the original's URL to its phone-sized copy, and it holds a row
+     ONLY where a real file is on disk, so this falls through to the original
+     for every shot the batch has not reached.
+
+     KEYED BY URL, which is what makes it safe here: the gallery is dragged to
+     reorder and tiles are removed one at a time, and a parallel array would
+     have to be re-indexed by every one of those handlers. `image_alts` is
+     keyed the same way for the same reason. Nothing that WRITES uses this --
+     the save payload still sends `model.image` and `model.images`, the
+     originals -- so a stale map can only ever cost a slightly larger picture,
+     never a wrong one. */
+  function shownAt(u){
+    var s = String(u == null ? '' : u).trim();
+    var map = (model && model.thumbs) || null;
+
+    return (map && typeof map === 'object' && typeof map[s] === 'string' && map[s]) ? map[s] : s;
+  }
+
   function say(msg){ try { window.toast(msg); } catch (e) {} }
 
   /* -------------------------------------------------------- sidebar entry */
@@ -2022,7 +2045,11 @@
     } else {
       rows = '<div class="peo-list">' + listing.map(function(p){
         var img = p.image
-          ? '<img src="' + url(p.image) + '" alt="">'
+          /* (Lane IM2) `thumb` is the 200w copy of this row's photograph when
+             one is on disk, and is the original when it is not. .peo-item img
+             is 38px; the row was pulling ~290KB to fill it, forty rows a
+             page. `p.image` still decides whether there IS a photograph. */
+          ? '<img src="' + url(p.thumb || p.image) + '" alt="">'
           : '<span class="peo-noimg"></span>';
 
         return '<button class="peo-item" data-peo-open="' + esc(p.id) + '">'
@@ -2091,7 +2118,7 @@
     var tiles = model.images.map(function(u, i){
       return '<div class="peo-tile" draggable="true" data-i="' + i + '">'
         + '<span class="peo-grip" title="Drag to reorder">⠿</span>'
-        + '<img src="' + url(u) + '" alt="">'
+        + '<img src="' + url(shownAt(u)) + '" alt="">'
         + '<span class="peo-body">'
         +   '<span class="peo-ord">Position ' + (i + 2) + '</span>'
         +   '<input class="peo-alt" data-alt="' + esc(u) + '" value="' + esc(altOf(u)) + '" '
@@ -2157,7 +2184,7 @@
 
   function mainImageView(){
     var box = model.image
-      ? '<img src="' + url(model.image) + '" alt="">'
+      ? '<img src="' + url(shownAt(model.image)) + '" alt="">'
       : '<div class="peo-ph">No main image yet</div>';
 
     return '<section class="peo-card peo-media-main" id="peo-mainzone">'

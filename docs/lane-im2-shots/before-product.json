@@ -1,0 +1,1160 @@
+[
+  {
+    "slug": "im2-gallery",
+    "width": 390,
+    "dprAsked": 1,
+    "dpr": 1,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "main": [
+      {
+        "currentSrc": "/img-cache/400/uploads/im2/shot-1.jpg",
+        "src": "/uploads/im2/shot-1.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-1.jpg 200w, /img-cache/400/uploads/im2/shot-1.jpg 400w, /img-cache/800/uploads/im2/shot-1.jpg 800w, /uploads/im2/shot-1.jpg 1000w",
+        "sizes": "(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px",
+        "fit": "contain",
+        "natural": [
+          349,
+          349
+        ],
+        "box": [
+          344,
+          344
+        ],
+        "painted": [
+          344,
+          344
+        ],
+        "bytes": 20711
+      }
+    ],
+    "thumbs": [
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-1.jpg",
+        "src": "/uploads/im2/shot-1.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-1.jpg 200w, /img-cache/400/uploads/im2/shot-1.jpg 400w, /img-cache/800/uploads/im2/shot-1.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          66
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          52
+        ],
+        "bytes": 5100
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-2.jpg",
+        "src": "/uploads/im2/shot-2.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-2.jpg 200w, /img-cache/400/uploads/im2/shot-2.jpg 400w, /img-cache/800/uploads/im2/shot-2.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          117
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          29,
+          52
+        ],
+        "bytes": 8106
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-3.jpg",
+        "src": "/uploads/im2/shot-3.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-3.jpg 200w, /img-cache/400/uploads/im2/shot-3.jpg 400w, /img-cache/800/uploads/im2/shot-3.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          36
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          28
+        ],
+        "bytes": 3350
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-4.jpg",
+        "src": "/uploads/im2/shot-4.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-4.jpg 200w, /img-cache/400/uploads/im2/shot-4.jpg 400w, /img-cache/800/uploads/im2/shot-4.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          88
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          39,
+          52
+        ],
+        "bytes": 6199
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-5.jpg",
+        "src": "/uploads/im2/shot-5.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-5.jpg 200w, /img-cache/400/uploads/im2/shot-5.jpg 400w, /img-cache/800/uploads/im2/shot-5.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          66
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          52
+        ],
+        "bytes": 4832
+      }
+    ],
+    "reviews": [
+      {
+        "currentSrc": "/uploads/reviews/rev-6.jpg",
+        "src": "/uploads/reviews/rev-6.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          134,
+          160
+        ],
+        "painted": [
+          134,
+          160
+        ],
+        "bytes": 616562
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-4.jpg",
+        "src": "/uploads/reviews/rev-4.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1200,
+          1200
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 418651
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-5.jpg",
+        "src": "/uploads/reviews/rev-5.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1440
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 481863
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-2.jpg",
+        "src": "/uploads/reviews/rev-2.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 621298
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-3.jpg",
+        "src": "/uploads/reviews/rev-3.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1920,
+          1080
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 610667
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-1.jpg",
+        "src": "/uploads/reviews/rev-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          134,
+          160
+        ],
+        "painted": [
+          134,
+          160
+        ],
+        "bytes": 638234
+      }
+    ],
+    "mainBox": [
+      346,
+      346
+    ],
+    "stripRequests": 5,
+    "stripBytes": 27587,
+    "reviewRequests": 6,
+    "reviewBytes": 3387275,
+    "mainBytes": 20711
+  },
+  {
+    "slug": "im2-gallery",
+    "width": 390,
+    "dprAsked": 2,
+    "dpr": 2,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "main": [
+      {
+        "currentSrc": "/img-cache/800/uploads/im2/shot-1.jpg",
+        "src": "/uploads/im2/shot-1.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-1.jpg 200w, /img-cache/400/uploads/im2/shot-1.jpg 400w, /img-cache/800/uploads/im2/shot-1.jpg 800w, /uploads/im2/shot-1.jpg 1000w",
+        "sizes": "(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px",
+        "fit": "contain",
+        "natural": [
+          349,
+          349
+        ],
+        "box": [
+          344,
+          344
+        ],
+        "painted": [
+          344,
+          344
+        ],
+        "bytes": 117257
+      }
+    ],
+    "thumbs": [
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-1.jpg",
+        "src": "/uploads/im2/shot-1.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-1.jpg 200w, /img-cache/400/uploads/im2/shot-1.jpg 400w, /img-cache/800/uploads/im2/shot-1.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          66
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          52
+        ],
+        "bytes": 5100
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-2.jpg",
+        "src": "/uploads/im2/shot-2.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-2.jpg 200w, /img-cache/400/uploads/im2/shot-2.jpg 400w, /img-cache/800/uploads/im2/shot-2.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          117
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          29,
+          52
+        ],
+        "bytes": 8106
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-3.jpg",
+        "src": "/uploads/im2/shot-3.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-3.jpg 200w, /img-cache/400/uploads/im2/shot-3.jpg 400w, /img-cache/800/uploads/im2/shot-3.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          36
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          28
+        ],
+        "bytes": 3350
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-4.jpg",
+        "src": "/uploads/im2/shot-4.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-4.jpg 200w, /img-cache/400/uploads/im2/shot-4.jpg 400w, /img-cache/800/uploads/im2/shot-4.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          88
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          39,
+          52
+        ],
+        "bytes": 6199
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-5.jpg",
+        "src": "/uploads/im2/shot-5.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-5.jpg 200w, /img-cache/400/uploads/im2/shot-5.jpg 400w, /img-cache/800/uploads/im2/shot-5.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          66
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          52
+        ],
+        "bytes": 4832
+      }
+    ],
+    "reviews": [
+      {
+        "currentSrc": "/uploads/reviews/rev-6.jpg",
+        "src": "/uploads/reviews/rev-6.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          134,
+          160
+        ],
+        "painted": [
+          134,
+          160
+        ],
+        "bytes": 616562
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-4.jpg",
+        "src": "/uploads/reviews/rev-4.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1200,
+          1200
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 418651
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-5.jpg",
+        "src": "/uploads/reviews/rev-5.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1440
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 481863
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-2.jpg",
+        "src": "/uploads/reviews/rev-2.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 621298
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-3.jpg",
+        "src": "/uploads/reviews/rev-3.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1920,
+          1080
+        ],
+        "box": [
+          65,
+          76
+        ],
+        "painted": [
+          65,
+          76
+        ],
+        "bytes": 610667
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-1.jpg",
+        "src": "/uploads/reviews/rev-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          134,
+          160
+        ],
+        "painted": [
+          134,
+          160
+        ],
+        "bytes": 638234
+      }
+    ],
+    "mainBox": [
+      346,
+      346
+    ],
+    "stripRequests": 5,
+    "stripBytes": 27587,
+    "reviewRequests": 6,
+    "reviewBytes": 3387275,
+    "mainBytes": 117257
+  },
+  {
+    "slug": "im2-gallery",
+    "width": 1280,
+    "dprAsked": 1,
+    "dpr": 1,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "main": [
+      {
+        "currentSrc": "/img-cache/800/uploads/im2/shot-1.jpg",
+        "src": "/uploads/im2/shot-1.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-1.jpg 200w, /img-cache/400/uploads/im2/shot-1.jpg 400w, /img-cache/800/uploads/im2/shot-1.jpg 800w, /uploads/im2/shot-1.jpg 1000w",
+        "sizes": "(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px",
+        "fit": "contain",
+        "natural": [
+          563,
+          563
+        ],
+        "box": [
+          609.5,
+          609.5
+        ],
+        "painted": [
+          610,
+          610
+        ],
+        "bytes": 117257
+      }
+    ],
+    "thumbs": [
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-1.jpg",
+        "src": "/uploads/im2/shot-1.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-1.jpg 200w, /img-cache/400/uploads/im2/shot-1.jpg 400w, /img-cache/800/uploads/im2/shot-1.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          66
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          62,
+          62
+        ],
+        "bytes": 5100
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-2.jpg",
+        "src": "/uploads/im2/shot-2.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-2.jpg 200w, /img-cache/400/uploads/im2/shot-2.jpg 400w, /img-cache/800/uploads/im2/shot-2.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          117
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          35,
+          62
+        ],
+        "bytes": 8106
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-3.jpg",
+        "src": "/uploads/im2/shot-3.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-3.jpg 200w, /img-cache/400/uploads/im2/shot-3.jpg 400w, /img-cache/800/uploads/im2/shot-3.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          36
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          62,
+          34
+        ],
+        "bytes": 3350
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-4.jpg",
+        "src": "/uploads/im2/shot-4.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-4.jpg 200w, /img-cache/400/uploads/im2/shot-4.jpg 400w, /img-cache/800/uploads/im2/shot-4.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          88
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          47,
+          62
+        ],
+        "bytes": 6199
+      },
+      {
+        "currentSrc": "/img-cache/200/uploads/im2/shot-5.jpg",
+        "src": "/uploads/im2/shot-5.jpg",
+        "srcset": "/img-cache/200/uploads/im2/shot-5.jpg 200w, /img-cache/400/uploads/im2/shot-5.jpg 400w, /img-cache/800/uploads/im2/shot-5.jpg 800w",
+        "sizes": "66px",
+        "fit": "contain",
+        "natural": [
+          66,
+          66
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          62,
+          62
+        ],
+        "bytes": 4832
+      }
+    ],
+    "reviews": [
+      {
+        "currentSrc": "/uploads/reviews/rev-6.jpg",
+        "src": "/uploads/reviews/rev-6.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          172.5,
+          160
+        ],
+        "painted": [
+          173,
+          160
+        ],
+        "bytes": 616562
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-4.jpg",
+        "src": "/uploads/reviews/rev-4.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1200,
+          1200
+        ],
+        "box": [
+          84.3,
+          76
+        ],
+        "painted": [
+          84,
+          76
+        ],
+        "bytes": 418651
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-5.jpg",
+        "src": "/uploads/reviews/rev-5.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1440
+        ],
+        "box": [
+          84.3,
+          76
+        ],
+        "painted": [
+          84,
+          76
+        ],
+        "bytes": 481863
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-2.jpg",
+        "src": "/uploads/reviews/rev-2.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          84.3,
+          76
+        ],
+        "painted": [
+          84,
+          76
+        ],
+        "bytes": 621298
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-3.jpg",
+        "src": "/uploads/reviews/rev-3.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1920,
+          1080
+        ],
+        "box": [
+          84.3,
+          76
+        ],
+        "painted": [
+          84,
+          76
+        ],
+        "bytes": 610667
+      },
+      {
+        "currentSrc": "/uploads/reviews/rev-1.jpg",
+        "src": "/uploads/reviews/rev-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          172.5,
+          160
+        ],
+        "painted": [
+          173,
+          160
+        ],
+        "bytes": 638234
+      }
+    ],
+    "mainBox": [
+      612,
+      612
+    ],
+    "stripRequests": 5,
+    "stripBytes": 27587,
+    "reviewRequests": 6,
+    "reviewBytes": 3387275,
+    "mainBytes": 117257
+  },
+  {
+    "slug": "im2-no-variants",
+    "width": 390,
+    "dprAsked": 1,
+    "dpr": 1,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "main": [
+      {
+        "currentSrc": "/uploads/im2/cold-1.jpg",
+        "src": "/uploads/im2/cold-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1000
+        ],
+        "box": [
+          344,
+          344
+        ],
+        "painted": [
+          344,
+          344
+        ],
+        "bytes": 310131
+      }
+    ],
+    "thumbs": [
+      {
+        "currentSrc": "/uploads/im2/cold-1.jpg",
+        "src": "/uploads/im2/cold-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1000
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          52
+        ],
+        "bytes": 310131
+      },
+      {
+        "currentSrc": "/uploads/im2/cold-2.jpg",
+        "src": "/uploads/im2/cold-2.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1778
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          29,
+          52
+        ],
+        "bytes": 536321
+      },
+      {
+        "currentSrc": "/uploads/im2/cold-3.jpg",
+        "src": "/uploads/im2/cold-3.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1778,
+          1000
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          29
+        ],
+        "bytes": 527246
+      }
+    ],
+    "reviews": [
+      {
+        "currentSrc": "/uploads/reviews/cold-rev.jpg",
+        "src": "/uploads/reviews/cold-rev.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          134,
+          160
+        ],
+        "painted": [
+          134,
+          160
+        ],
+        "bytes": 630448
+      }
+    ],
+    "mainBox": [
+      346,
+      346
+    ],
+    "stripRequests": 3,
+    "stripBytes": 1373698,
+    "reviewRequests": 1,
+    "reviewBytes": 630448,
+    "mainBytes": 310131
+  },
+  {
+    "slug": "im2-no-variants",
+    "width": 390,
+    "dprAsked": 2,
+    "dpr": 2,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "main": [
+      {
+        "currentSrc": "/uploads/im2/cold-1.jpg",
+        "src": "/uploads/im2/cold-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1000
+        ],
+        "box": [
+          344,
+          344
+        ],
+        "painted": [
+          344,
+          344
+        ],
+        "bytes": 310131
+      }
+    ],
+    "thumbs": [
+      {
+        "currentSrc": "/uploads/im2/cold-1.jpg",
+        "src": "/uploads/im2/cold-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1000
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          52
+        ],
+        "bytes": 310131
+      },
+      {
+        "currentSrc": "/uploads/im2/cold-2.jpg",
+        "src": "/uploads/im2/cold-2.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1778
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          29,
+          52
+        ],
+        "bytes": 536321
+      },
+      {
+        "currentSrc": "/uploads/im2/cold-3.jpg",
+        "src": "/uploads/im2/cold-3.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1778,
+          1000
+        ],
+        "box": [
+          52,
+          52
+        ],
+        "painted": [
+          52,
+          29
+        ],
+        "bytes": 527246
+      }
+    ],
+    "reviews": [
+      {
+        "currentSrc": "/uploads/reviews/cold-rev.jpg",
+        "src": "/uploads/reviews/cold-rev.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          134,
+          160
+        ],
+        "painted": [
+          134,
+          160
+        ],
+        "bytes": 630448
+      }
+    ],
+    "mainBox": [
+      346,
+      346
+    ],
+    "stripRequests": 3,
+    "stripBytes": 1373698,
+    "reviewRequests": 1,
+    "reviewBytes": 630448,
+    "mainBytes": 310131
+  },
+  {
+    "slug": "im2-no-variants",
+    "width": 1280,
+    "dprAsked": 1,
+    "dpr": 1,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "main": [
+      {
+        "currentSrc": "/uploads/im2/cold-1.jpg",
+        "src": "/uploads/im2/cold-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1000
+        ],
+        "box": [
+          609.5,
+          609.5
+        ],
+        "painted": [
+          610,
+          610
+        ],
+        "bytes": 310131
+      }
+    ],
+    "thumbs": [
+      {
+        "currentSrc": "/uploads/im2/cold-1.jpg",
+        "src": "/uploads/im2/cold-1.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1000
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          62,
+          62
+        ],
+        "bytes": 310131
+      },
+      {
+        "currentSrc": "/uploads/im2/cold-2.jpg",
+        "src": "/uploads/im2/cold-2.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1000,
+          1778
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          35,
+          62
+        ],
+        "bytes": 536321
+      },
+      {
+        "currentSrc": "/uploads/im2/cold-3.jpg",
+        "src": "/uploads/im2/cold-3.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "contain",
+        "natural": [
+          1778,
+          1000
+        ],
+        "box": [
+          62,
+          62
+        ],
+        "painted": [
+          62,
+          35
+        ],
+        "bytes": 527246
+      }
+    ],
+    "reviews": [
+      {
+        "currentSrc": "/uploads/reviews/cold-rev.jpg",
+        "src": "/uploads/reviews/cold-rev.jpg",
+        "srcset": "",
+        "sizes": "",
+        "fit": "cover",
+        "natural": [
+          1080,
+          1920
+        ],
+        "box": [
+          172.5,
+          160
+        ],
+        "painted": [
+          173,
+          160
+        ],
+        "bytes": 630448
+      }
+    ],
+    "mainBox": [
+      612,
+      612
+    ],
+    "stripRequests": 3,
+    "stripBytes": 1373698,
+    "reviewRequests": 1,
+    "reviewBytes": 630448,
+    "mainBytes": 310131
+  }
+]

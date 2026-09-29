@@ -154,9 +154,18 @@
     function rowsHTML(){
       return rows.map(function(p, i){
         var image = p.image ? String(p.image) : '';
+        /* (Lane IM2) DRAWN FROM `thumb`, CHOSEN BY `image`. .kpp-th is a 36px
+           square and this list was painting it with the catalogue original --
+           ~290KB each, for a box that can show 36. `thumb` is the 200w copy
+           when one exists on disk and is the original itself when it does not,
+           so a catalogue that has never been through Make phone-sized copies
+           looks and behaves exactly as it does today. Only the `src` moves:
+           `image` is still what decides whether a row HAS a photograph, and
+           the onerror fallback below still keys off the same element. */
+        var shown = p.thumb ? String(p.thumb) : image;
         var thumb = image
           ? '<span class="kpp-th" style="background:' + esc(tint(p.brand || p.name)) + '">' +
-              '<img src="' + esc(image) + '" alt="" loading="lazy" data-kpp-img="' + i + '">' +
+              '<img src="' + esc(shown) + '" alt="" loading="lazy" data-kpp-img="' + i + '">' +
             '</span>'
           : '<span class="kpp-th" style="background:' + esc(tint(p.brand || p.name)) + '">' +
               esc(initials(p.brand || p.name)) + '</span>';

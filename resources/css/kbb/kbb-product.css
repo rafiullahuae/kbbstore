@@ -127,7 +127,26 @@ a{color:inherit;text-decoration:none}
    position:relative is what the absolute fill needs -- .gthumb only set it for
    the .vid variant before, because only the play badge required it. */
 .gthumb{position:relative}
-.gthumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+/* (Lane IM2) COVER, NOT CONTAIN -- the owner, arrowing at this strip: "i want
+   the product gallery images thumbnail to be cropped or load square size mini
+   100x100 only to reduce the page load."
+
+   The BOX was already square (66px above, 56px under 640px) and always has
+   been. What was not square was the picture inside it: object-fit:contain
+   scales a photograph until it FITS, so a 9:16 phone shot drew a narrow
+   portrait stripe with white either side while a square bottle shot filled the
+   tile, and a row of them read as tiles of different shapes. cover scales until
+   it FILLS and the box's own overflow:hidden does the crop, so every tile is
+   now the same square regardless of what shape the file is. It is the same
+   treatment the product-grid card has.
+
+   IT CHANGES WHICH FILE IS THE RIGHT ONE, which is not obvious and is handled
+   in ImageVariants::thumbSizesAttribute(): under contain the binding dimension
+   is whichever runs out first, so a `w` descriptor never overstates; under
+   cover it is the image's SHORT side, which for a landscape photograph is its
+   height and is not what a srcset descriptor states. The markup declares a
+   wider `sizes` for exactly those files and nothing else. */
+.gthumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 
 /* buy box */
 .bb-brand{font-size:12px;font-weight:700;color:var(--pink-deep);text-transform:uppercase;letter-spacing:.05em}

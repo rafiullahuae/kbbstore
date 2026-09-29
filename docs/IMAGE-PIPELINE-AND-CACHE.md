@@ -51,6 +51,51 @@ for all of them.
 A variant exists because something made it. A page that finds none emits no
 srcset and loads the original exactly as it does today.
 
+### 2.1 And what the WordPress import does — which is nothing, on purpose (Lane IM2)
+
+`Services\Import\MediaSideloader` fetches the old site's photographs. It does
+not resize them, and neither does `MediaRegistrar` nor `MediaBackfill`. **After
+an import the owner clicks Content → Media Library → Make phone-sized copies,
+and that is the whole answer.** Lane IM2 was asked whether that is still right
+now that one import can land thousands of files. It is, and here is the case,
+because "the import should just do it" is the obvious suggestion and it is
+wrong in three separate ways.
+
+**It would make the import slower on the budget it already spends.** The
+sideloader runs at 10 files / 8 MB / 15 seconds a batch, and those ceilings
+exist because the host kills a request that outlives `max_execution_time`.
+Resizing costs ~137 ms for a 1000×1000 photograph and ~544 ms for a 4000×4000
+one (measured, §3). Ten files a batch is **+1.4 s to +5.4 s on a 15 s budget** —
+a third of it, spent making a batch that already hits its ceiling hit it
+sooner.
+
+**It would make it more fragile, on the operation that can least afford it.**
+The sideloader's safety property is that every fetch is validated in a
+temporary file and moved into place with one `rename()`, so a killed batch
+leaves a complete file or no file — never a truncated one. A resize *after*
+that rename is a second, unrelated failure mode inside the same request; a
+resize *before* it holds the downloaded bytes and a decoded bitmap at the same
+time, and a 4000×4000 decode is ~65 MB of resident memory on a shared host.
+
+**And it would not even be complete, which is the part that decides it.** The
+sideloader only fetches files that are *not already local*. A row that arrives
+pointing at a file already on disk — a re-import, a restored backup, a
+catalogue moved between shops — never passes through it at all. So "the import
+queues the work itself" would still leave a backlog, and the owner would still
+have to run the batch. A half-answer that looks like a whole one is worse than
+no answer, because nobody goes looking.
+
+Against all that, what the batch actually costs after an import: it is
+idempotent, resumable and bounded, and a photograph that is already done costs
+**two `stat()` calls** to skip. The owner leaves a tab open. The screen tells
+him the real number — which, from Lane IM2 onward, includes the review
+photographs the import now brings across.
+
+**So: leave it, and say so where it will be read.** The one-line addition
+belongs in `docs/IMPORT-RUNBOOK.md`, whose step list currently does not mention
+the variant batch at all; Lane IM2 does not own that file and reported the line
+rather than editing it.
+
 ## 3. What it costs
 
 Measured, this checkout:
@@ -98,9 +143,48 @@ visibly soft.
 | `.kbb-pgrid` skin grid | `skinGridSizesAttribute()` | `(max-width: 900px) 50vw, (max-width: 1180px) 34vw, 290px` |
 | homepage `.ugc` strip | `homeTileSizesAttribute()` | `(max-width: 900px) 50vw, (max-width: 1100px) 34vw, (max-width: 1200px) 25vw, 190px` |
 | product page main frame | `detailSizesAttribute()` | `(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px` |
-| gallery thumbnail | `thumbSizesAttribute()` | `66px` |
+| gallery thumbnail | `thumbSizesAttribute($aspect)` | `66px`, or `66 × aspect` for a photograph wider than tall |
+| review wall photograph | `reviewPhotoSizesAttribute($cols, $multi)` | derived from `--sr-cols`, which is a setting |
 | quick-view modal | `quickViewSizesAttribute()` | `(max-width: 640px) calc(100vw - 80px), 350px` |
 | frequently-bought-together | `fbtSizesAttribute()` | `90px` |
+
+Two of those do not read as constants, and both have a reason.
+
+**The gallery thumbnail takes an aspect** because the strip is `object-fit:
+cover` from Lane IM2 — a square *crop*, which is what the owner asked for. A
+`w` descriptor states a candidate's width and `sizes` states the box's width,
+and that pair is honest under `contain`: the picture is scaled until it fits,
+so width never overstates what arrived. Under `cover` the binding dimension is
+the image's **short side**, which for a landscape photograph is its height and
+is not in the srcset at all. Measured: a 1778×1000 shot's 200w copy is 200×112,
+and covering a 66px square at ratio 3 wants 198 — a 1.77× upscale. A square or
+portrait original returns plain `66px` and the markup does not move, which is
+almost this whole catalogue.
+
+**The review wall takes a column count** because `.sr-grid` is
+`column-count: var(--sr-cols, 4)` and `--sr-cols` is set from Review Settings.
+It is the only box on this shop whose width is the owner's rather than this
+code's, so it is the only declaration that cannot be a constant: a hardcoded
+`300px` would be right at four columns and half the truth at two.
+
+### 4.1 And the boxes that cannot carry a srcset at all
+
+A CSS `background-image` takes exactly one URL, and so does an `<img>` a screen
+builds in JavaScript. Those pick a width on the server with `variantUrl()`:
+
+| surface | width | why that width |
+|---|---|---|
+| basket / checkout line thumbnail | 400 | `--cp-thumb` is a setting and can outgrow 200w |
+| review photo square in the orphan `product-reviews` partial | 200 | 46px, fixed in the stylesheet |
+| Media Library grid tile, media picker | 400 | `--mlib-cols` / `--mp-cols` are settings |
+| product editor main-image card | 400 | ~300px wide |
+| product picker row, product editor list row and gallery tile | 200 | 36px, 38px and 56px, all fixed |
+
+The admin ones arrived with Lane IM2 as a **separate field** on each payload
+(`thumb`, or a `thumbs` map keyed by the original's URL for the product
+editor's draggable gallery) rather than by narrowing `url`/`image`, which four
+other things already read as meaning the file itself. Every one of them returns
+the original unchanged when no copy is on disk.
 
 The product page's main frame is the one surface that uses
 `detailSrcsetFor()` rather than `srcsetFor()`: it names the **original** as a

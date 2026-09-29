@@ -18,6 +18,7 @@ use App\Services\Payments\PaymentCapturer;
 use App\Services\Payments\PaymentRefunder;
 use App\Support\AggregatesQueries;
 use App\Support\Fils;
+use App\Support\ImageVariants;
 use App\Support\Money;
 use App\Support\OrderTax;
 use App\Support\StoreTime;
@@ -190,6 +191,13 @@ class AdminOrderController extends Controller
                 'unit_price_aed' => Money::toAed($i->unit_price),
                 'total_aed' => Money::toAed($i->total),
                 'image' => $i->product?->image,
+                // (Lane IM2) `.odthumb img` is a 36px square (app.blade.php:486)
+                // and an order with ten lines was pulling ten catalogue
+                // originals to fill it. 200w covers 36px at device-pixel-ratio
+                // 3 five times over, and variantUrl() returns the original
+                // untouched when no copy is on disk. `image` is unchanged for
+                // everything that means the file.
+                'thumb' => ImageVariants::variantUrl((string) ($i->product?->image ?? ''), 200),
                 'product_slug' => $i->product?->slug,
             ]),
 
@@ -1298,6 +1306,13 @@ class AdminOrderController extends Controller
                 'sku' => $p->sku,
                 'brand' => $p->brand?->name,
                 'image' => $p->image,
+                // (Lane IM2) This endpoint feeds the shared product picker,
+                // whose tile is a 36px square (.kpp-th). The picker already
+                // reads `thumb` and falls back to `image`; without this field
+                // it would go on drawing the original from THIS endpoint while
+                // drawing a copy from the catalogue one, which is the kind of
+                // half-fix that looks like a caching bug.
+                'thumb' => ImageVariants::variantUrl((string) ($p->image ?? ''), 200),
                 // effectivePrice() honours the sale window. The quantity-bundle
                 // tier is applied later, by CartService, once a quantity exists.
                 'price_fils' => $p->effectivePrice(),

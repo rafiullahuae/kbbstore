@@ -635,7 +635,14 @@
     var dim = (it.width && it.height) ? (it.width + ' × ' + it.height) : '';
 
     return '<button type="button" class="mp-tile" data-mp-url="' + esc(it.url) + '">'
-      + '<span class="mp-thumb"><img src="' + esc(it.url) + '" alt="" loading="lazy">'
+      /* (Lane IM2) `thumb` and not `url`: .mp-thumb is a square tile at least
+         112px across, and this grid was pulling the full-resolution original
+         for every one of the 24 on a page. `thumb` is the 400w copy when the
+         file has been through Make phone-sized copies and is the original
+         itself when it has not, so nothing changes on a library that has not.
+         data-mp-url below still carries the ORIGINAL, which is what the picker
+         hands back to whatever opened it. */
+      + '<span class="mp-thumb"><img src="' + esc(it.thumb || it.url) + '" alt="" loading="lazy">'
       +   '<span class="mp-tick">✓</span></span>'
       + '<span class="mp-cap"><span class="mp-name">' + esc(name) + '</span>'
       +   '<span class="mp-dim">' + esc([dim, bytes(it.size)].filter(Boolean).join(' · ')) + '</span>'

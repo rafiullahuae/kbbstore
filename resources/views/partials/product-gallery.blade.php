@@ -127,6 +127,31 @@
                        this shop. See Admin\ImageSizesApiController::images(). */
                     $thumbSrcset = $shotImage ? ImageVariants::srcsetFor($shotImage) : '';
 
+                    /* (Lane IM2) AND WHAT WIDTH THAT 66px SQUARE NOW NEEDS,
+                       which the square crop changed.
+
+                       The tile is object-fit:cover from this lane, so the
+                       picture is scaled until it FILLS the square rather than
+                       until it fits inside it, and the binding dimension is the
+                       photograph's SHORT side. For a square or a portrait that
+                       is its width and nothing moves -- thumbSizesAttribute()
+                       returns the same '66px' it returned yesterday and this
+                       markup is byte-identical. For a photograph WIDER than it
+                       is tall the short side is the height, which no `w`
+                       descriptor in a srcset mentions: a 1778x1000 shot's 200w
+                       copy is 200x112, and covering this square at
+                       device-pixel-ratio 3 stretches those 112 rows to 198.
+
+                       So the aspect is read off the original's header and the
+                       declaration widened by it. That header read is ONLY paid
+                       where it can buy something: a shot with no copies has no
+                       srcset to choose from, so it is not asked at all and a
+                       catalogue that has never been through the batch costs
+                       exactly what it costs today. On a shot that does have
+                       copies it is a second header read on a page that already
+                       opens the same file for $shotMainSrcset below. */
+                    $thumbAspect = $thumbSrcset === '' ? null : ImageVariants::aspectOf($shotImage);
+
                     /* AND WHAT THE MAIN FRAME WILL NEED WHEN THIS THUMBNAIL IS
                        TAPPED, which is a different list for a different box.
 
@@ -156,7 +181,7 @@
                         <img class="gthumb-img" src="{{ $shotImage }}" alt="{{ $shotAlt }}"
                              @if ($thumbSrcset !== '')
                              srcset="{{ $thumbSrcset }}"
-                             sizes="{{ ImageVariants::thumbSizesAttribute() }}"
+                             sizes="{{ ImageVariants::thumbSizesAttribute($thumbAspect) }}"
                              @endif
                              width="66" height="66" loading="lazy" decoding="async">
                     @else

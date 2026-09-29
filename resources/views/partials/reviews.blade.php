@@ -125,7 +125,32 @@
                     <div class="sr-reply"><b>{{ __('store.reviews.reply_from') }}</b> {{ $r->reply }}</div>
                 @endif
                 @if ($nph)
-                    <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; @endphp<span class="sr-ph"@if ($more) data-more="{{ \App\Support\Bidi::number('+' . $more) }}"@endif><img src="{{ $u }}" alt="" loading="lazy"></span>@endforeach</div>
+                    {{-- (Lane IM2) THE PHONE-SIZED COPY, when one exists.
+
+                         A review photograph comes off a handset at 1080x1920
+                         and about 530KB, and this card paints it into 266x160
+                         (one photograph) or a 131x76 half-cell (two or more),
+                         cropped. Until this lane the batch behind
+                         App\Support\ImageVariants walked products and product
+                         variants only, so a review photograph could never have
+                         a copy for anything to find and every card served the
+                         original — measured at 2.1MB for four of them on one
+                         product page. See Admin\ImageSizesApiController::images().
+
+                         '' WHEN THERE ARE NO COPIES, which is the case that
+                         governs: with `w` descriptors a browser picks a
+                         candidate and never looks at `src`, so a srcset naming
+                         a file that is not on disk is a blank card with nothing
+                         to fall back to. srcsetFor() lists only what the
+                         filesystem actually holds, and the attributes are
+                         emitted only when it listed something — a review whose
+                         photograph predates the batch renders exactly the
+                         markup it rendered before.
+
+                         ON $u AND NOT ON $r->images: these have been through
+                         SafeUrl::src() above, so a scheme this shop does not
+                         serve is already '' and never reaches here. --}}
+                    <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; $phSrcset = \App\Support\ImageVariants::srcsetFor($u); @endphp<span class="sr-ph"@if ($more) data-more="{{ \App\Support\Bidi::number('+' . $more) }}"@endif><img src="{{ $u }}" alt="" loading="lazy"@if ($phSrcset !== '') srcset="{{ $phSrcset }}" sizes="{{ \App\Support\ImageVariants::reviewPhotoSizesAttribute((int) $cols, $nph > 1) }}"@endif></span>@endforeach</div>
                 @endif
                 <div class="sr-cf"><span class="sr-dt">{{ $date }}</span>@if ($r->demo ?? false)<span class="sr-help sr-help-demo">👍 <span>{{ (int) $r->helpful }}</span></span>@else<button class="sr-help" data-id="{{ $r->id }}" type="button">👍 <span>{{ (int) $r->helpful }}</span></button>@endif</div>
 

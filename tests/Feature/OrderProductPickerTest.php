@@ -88,10 +88,20 @@ it('publishes only the fields the picker draws, never the product row', function
         ->assertOk()
         ->json('products.0');
 
-    // The whole allowlist, spelled out. A column added to `products` later is
-    // private until someone comes here and says otherwise.
+    /*
+     * The whole allowlist, spelled out. A column added to `products` later is
+     * private until someone comes here and says otherwise.
+     *
+     * (Lane IM2) `thumb` ADDED DELIBERATELY, and it is not a column: it is
+     * ImageVariants::variantUrl($p->image, 200) — the same address `image`
+     * already publishes, with `/img-cache/200/` in front of it when a copy of
+     * that file is on disk, and byte-identical to `image` when none is. It
+     * carries no fact about the product that `image` did not already carry, so
+     * publishing it discloses nothing new; the picker's tile is a 36px square
+     * and was pulling the full-resolution photograph to fill it.
+     */
     expect(array_keys($row))->toBe([
-        'id', 'name', 'sku', 'brand', 'image', 'price_fils', 'stock', 'stock_status', 'variants',
+        'id', 'name', 'sku', 'brand', 'image', 'thumb', 'price_fils', 'stock', 'stock_status', 'variants',
     ]);
 
     foreach (['wc_id', 'total_sales', 'description', 'cost_price', 'seo'] as $private) {
