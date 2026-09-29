@@ -250,10 +250,13 @@ pictures.
 ## 10. The instrument
 
 `tests/Feature/MnNavigationImportTest.php` — **22 tests, 21 mutation notes,
-every one of them RUN.** Twenty were applied by a driver that patches the source,
-runs the single test the note names, and reverts; the results are what the notes
-say, including four that did not go as written and were corrected rather than
-left as claims.
+every one of them RUN.** Twenty were applied by a driver that patches the
+source, runs the single test the note names, and reverts. The twenty-first is on
+the EXPORT side and was run through the plugin itself: the stage's label
+fallback removed, `run-export.php` re-run over MySQL, and the resulting
+`menu_items.csv` imported — three empty labels, three rejections, exactly as the
+note says. Four did not go as written and were corrected rather than left as
+claims.
 
 **The four that survived their first mutation, and what each one taught:**
 

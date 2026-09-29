@@ -162,9 +162,11 @@ it('carries the navigation in two files the contract names, and the plugin says 
      * for one release it covered two of the three, so every export written by
      * the 1.5.0 plugin said 1.0.0.
      *
-     * MUTATION NOTE — RAN. Setting PLUGIN_VERSION back to '1.6.0' while leaving
-     * the header at 1.7.0 fails this test on the manifest line; setting the
-     * header back fails it on the header line.
+     * MUTATION NOTE — BOTH HALVES RUN. Setting PLUGIN_VERSION back to '1.6.0'
+     * while leaving the header at 1.7.0 fails on the PLUGIN_VERSION line;
+     * setting the header back to 1.6.0 while leaving the other two fails on the
+     * header line. Two literals, two failures, which is the point of there
+     * being three copies.
      */
     $header = (string) file_get_contents(base_path('wordpress-plugin/kbb-exporter/kbb-exporter.php'));
     $runner = (string) file_get_contents(base_path('wordpress-plugin/kbb-exporter/includes/class-kbb-export-runner.php'));
@@ -207,10 +209,13 @@ it('resolves the label off the object when the owner never typed one', function 
      * REFUSES — which is the failure that would have been found on the owner's
      * server rather than here.
      *
-     * MUTATION NOTE — RAN. Changing the export stage's `$label` to
-     * `$row['post_title']` regenerates a fixture with three empty labels, and
-     * `it imports the plugin's navigation with nothing refused` then reports
-     * three rejections.
+     * MUTATION NOTE — RAN, THROUGH THE PLUGIN ITSELF. Changing
+     * KBB_Export_Stage_Menu_Items::batch()'s `$label` to the item's own
+     * `post_title` and re-running wordpress-plugin/harness/run-export.php
+     * produces a menu_items.csv with THREE EMPTY LABELS — 7504, 7505 and 7507,
+     * the three the owner never renamed. Importing that export reports exactly
+     * three rejections from `menu-items`, because `menu_items.label` is NOT
+     * NULL. Measured against a real export, not asserted.
      */
     $rows = array_map('str_getcsv', file(mnExportDir().'/menu_items.csv', FILE_IGNORE_NEW_LINES));
     $head = array_shift($rows);
