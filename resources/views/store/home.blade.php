@@ -1025,7 +1025,14 @@
      sentence that changed — the identical trap this file records at its @vite
      line and in four other places.
 
-     --}}@php $gsRows = app(\App\Services\GridSections::class)->forHome(); @endphp
+     AND THE DEVICE SWITCHES ARE APPLIED HERE, ON THE LIST, rather than inside
+     the partial. An instance switched off for BOTH devices is not rendered at
+     all — the rule every one of the seventeen shipped sections follows — and
+     doing it on the list is what keeps the @push below honest: gated inside
+     the partial, a shop whose only instance was switched off would still put
+     this feature's whole stylesheet in the head of its front page.
+
+     --}}@php $gsRows = array_values(array_filter(app(\App\Services\GridSections::class)->forHome(), fn ($r) => ! $sections->hidden($r['section']->sectionKey()))); @endphp
 @if ($gsRows !== [])
 @push('styles'){!! \App\Services\GridSections::css() !!}@endpush
 @foreach ($gsRows as $gsRow)

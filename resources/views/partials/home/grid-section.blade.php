@@ -60,6 +60,20 @@
     section's stylesheet. The gutters are `padding-inline` / `margin-inline`
     for the same reason.
 
+    ── WHO GATES IT, AND WHY NOT THIS FILE ───────────────────────────────────
+
+    The instance's Desktop/Mobile switches are applied by the LOOP in
+    store/home.blade.php, which drops an instance hidden on both before this
+    partial is reached. It is not done here for one measured reason: the shared
+    stylesheet is pushed from the loop, above it, so that six instances push it
+    once — and a gate inside the partial would leave that push firing for a
+    section that renders nothing. `GridSectionShipsOffTest`'s "leaves no wrapper
+    behind" case is what caught it.
+
+    The single-sided switches are still this file's: `classFor()` puts `d-off`
+    or `m-off` on the `<section>`, exactly as it does for the seventeen shipped
+    sections.
+
     The words are the OWNER'S — his heading, his sub-heading, his eyebrow, his
     button text — so they are printed as typed and escaped, never keyed: a
     second English source for a value the owner types is one of the two silently
@@ -69,16 +83,6 @@
 --}}
 @php
     $gsKey = $section->sectionKey();
-@endphp
-{{-- THE SECTION'S OWN Desktop/Mobile SWITCHES, WHICH IT INHERITS RATHER THAN
-     OWNS. Off on both is not rendered at all — the rule every one of the
-     seventeen shipped sections follows in store/home.blade.php, applied here
-     instead because there is one loop and not one block per instance. Left out,
-     an instance switched off on both devices would still emit its <section>,
-     its class attribute and its divider mark, which is the "empty wrapper"
-     shape CardsBannerShipsOffTest's header catalogues. --}}
-@unless ($sections->hidden($gsKey))
-@php
     $gsSkin = \App\Services\GridSections::skinFor($section);
     $gsHref = \App\Services\GridSections::viewAllHref($section);
     $gsHeading = trim((string) $section->heading);
@@ -125,4 +129,3 @@
   <div class="gs-foot"><a class="gs-all" href="{{ $gsHref }}">{{ $gsLabel !== '' ? $gsLabel : __('store.home.grid_view_all') }}</a></div>
   @endif
 </div></section>
-@endunless
