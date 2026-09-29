@@ -164,7 +164,23 @@ for (const [path, tag] of [['/', 'en'], ['/ar/', 'ar']]) {
       await page.waitForTimeout(250);
     }
 
-    await page.screenshot({ path: `${OUT}/${tag}-${width}-page.png`, fullPage: false });
+    /*
+       BOTH SECTIONS IN ONE PICTURE, clipped out of a full-page shot rather than
+       shot at the viewport. A viewport shot has to be positioned by scrolling,
+       and the first version of this parked on an empty band of the page and
+       produced 8 KB of flat pink — a picture of nothing, which is worse than no
+       picture because it looks like evidence.
+    */
+    const clip = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('.kbb-gsec'));
+      if (!els.length) return null;
+      const tops = els.map((e) => e.getBoundingClientRect().top + window.scrollY);
+      const bots = els.map((e) => e.getBoundingClientRect().bottom + window.scrollY);
+      return { x: 0, y: Math.max(0, Math.min(...tops) - 12), width: document.documentElement.clientWidth,
+               height: Math.max(...bots) - Math.min(...tops) + 24 };
+    });
+
+    await page.screenshot({ path: `${OUT}/${tag}-${width}-page.png`, fullPage: true, ...(clip ? { clip } : {}) });
 
     const secs = await page.$$('.kbb-gsec');
     for (let i = 0; i < secs.length; i++) {

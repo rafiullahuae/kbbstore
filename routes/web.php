@@ -724,6 +724,17 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/banners-admin.php';
 
+        /*
+         * Appearance → Grid sections (Lane GS). The owner's ONE reusable
+         * product-grid section, used as many times as he likes. Writes what the
+         * front page shows, reads the catalogue for the manual picker, and
+         * renders a storefront partial from an unsaved draft — so it belongs
+         * inside this guarded group like every other Appearance writer. Its own
+         * capabilities are `gridsections.view` and `gridsections.manage`; its
+         * package ships 2027_05_11_000100_clear_caches_grid_sections.
+         */
+        require __DIR__.'/grid-sections-admin.php';
+
         // Catalog → Categories & Brands: merge, the redirect ledger, and the
         // brand tree with its reorder. Same guarded group — the redirect
         // ledger is a map of the store's old URLs and the merge endpoint
