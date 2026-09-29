@@ -3,7 +3,7 @@
 <footer><div class="wrap">
     <div class="fcols">
         <div class="fcol">
-            <div class="logo" style="font-size:24px;margin-bottom:12px">K-Beauty<span>Bliss</span></div>
+            <div class="logo" style="font-size:24px;margin-bottom:12px"><bdi>K-Beauty<span>Bliss</span></bdi></div>
             <p>{{ __('store.footer.tagline') }}</p>
             {{-- Both numbers now come from App\Support\SupportContact, which is
                  the one place the shipped values live. The printed line and the

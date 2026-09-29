@@ -85,7 +85,7 @@
 @section('content')
 <section class="kbb-checkout">
     <header class="co-head"><div class="in">
-        <a class="logo" href="{{ Url::to('/') }}">K-Beauty<span>Bliss</span></a>
+        <a class="logo" href="{{ Url::to('/') }}"><bdi>K-Beauty<span>Bliss</span></bdi></a>
         <span class="secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> {{ __('store.order_received.header_badge') }}</span>
     </div></header>
 

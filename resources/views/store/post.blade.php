@@ -199,7 +199,7 @@
 <body>
 <header class="head"><div class="wrap head-in">
   <button class="burger" onclick="document.getElementById('mnav').classList.add('on');document.getElementById('navov').classList.add('on')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-  <a class="logo" href="{{ \App\Support\Url::to('/') }}">K-Beauty<span>Bliss</span></a>
+  <a class="logo" href="{{ \App\Support\Url::to('/') }}"><bdi>K-Beauty<span>Bliss</span></bdi></a>
   <nav class="nav-links">
     <a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a>
     <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a>

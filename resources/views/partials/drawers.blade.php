@@ -17,7 +17,7 @@
 
 <nav class="mnav" id="mnav">
     <div class="mnav-h">
-        <div class="logo">K-Beauty<span>Bliss</span></div>
+        <div class="logo"><bdi>K-Beauty<span>Bliss</span></bdi></div>
         <button class="x" style="margin-left:auto;width:32px;height:32px;border-radius:50%;background:var(--cream)" type="button" data-kbb-close>✕</button>
     </div>
     <div class="mnav-search"><input type="search" placeholder="{{ __('store.mobile_menu.search_placeholder') }}" data-kbb-msearch></div>

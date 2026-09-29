@@ -31,7 +31,7 @@
     <div class="hin">
       @include('partials.menu-icon')
 
-      <a class="logo" href="{{ Url::to('/') }}">{{ $h['logo_text'] }}<span>{{ $h['logo_accent'] }}</span></a>
+      <a class="logo" href="{{ Url::to('/') }}"><bdi>{{ $h['logo_text'] }}<span>{{ $h['logo_accent'] }}</span></bdi></a>
 
       @if ($h['search_show'])
         {{-- The script binds to `.search-in input[type=search]` and renders into
