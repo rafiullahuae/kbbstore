@@ -7,8 +7,9 @@
 # differ by the fixture as well, and nobody could tell which.
 set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-DIR=$APP/storage/framework/testing/lane-pg2-preview
 PORT=${KBB_PORT:-8931}
+# One directory per port -- see tools/pg2-preview.sh for what a shared one cost.
+DIR=$APP/storage/framework/testing/lane-pg2-preview-$PORT
 OUT=${KBB_SHOTS:-$APP/docs/pg2-card-shots}
 PAGE=${KBB_PAGE:-/collections/skincare-sets/}
 SUFFIX=${KBB_SUFFIX:-}
