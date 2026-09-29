@@ -423,10 +423,33 @@ it('gives the owner the report and refuses every other role', function () {
 it('refuses the report to a request with no admin session at all', function () {
     secRegisterRoutes();
 
-    // auth:admin owns this case and sends it to the login form, which is the
-    // behaviour EnforceAdminCapability's docblock requires: a logged-out owner
-    // must never meet a dead end on a host with no other way in.
-    $this->get('/admin-api/security')->assertRedirect(route('admin.login'));
+    /*
+     * ▲ PIN ADVANCED, DELIBERATELY (Lane SEC, round 2). This line used to read
+     *
+     *     $this->get('/admin-api/security')->assertRedirect(route('admin.login'));
+     *
+     * and the comment above it was:
+     *
+     *     "auth:admin owns this case and sends it to the login form, which is
+     *      the behaviour EnforceAdminCapability's docblock requires: a
+     *      logged-out owner must never meet a dead end on a host with no other
+     *      way in."
+     *
+     * That redirect was a leak. `admin-api` is a FIXED prefix anybody can
+     * guess, so the Location header handed the secret `admin_path` to any
+     * stranger who typed one of these 397 addresses. It answers 404 now.
+     *
+     * THE CONCERN THE OLD COMMENT NAMES IS STILL ANSWERED, and by the two
+     * things that did not change. `/'.AdminPathService::current()` — the
+     * console itself, the address the owner actually types — still redirects
+     * to the login form, so there is no host with no way in. And the console's
+     * own calls still answer `401 Unauthenticated`, which three screens
+     * already turn into "your admin session has expired — sign in again";
+     * nobody navigates to an admin-api address except the nine downloads.
+     * tests/Feature/AdminPathNeverLeaksTest.php holds all of it.
+     */
+    $this->get('/admin-api/security')->assertNotFound();
+    $this->get('/' . \App\Services\AdminPathService::current())->assertRedirect(route('admin.login'));
 });
 
 it('says plainly that there is nothing to act on, and says so differently when there is', function () {

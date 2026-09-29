@@ -232,7 +232,22 @@ it('still sends a logged-out administrator to the admin login, unchanged', funct
     $adminPath = trim(AdminPathService::current(), '/');
 
     $this->get('/' . $adminPath)->assertRedirect(sekAdminLoginUrl());
-    $this->get('/admin-api/security')->assertRedirect(sekAdminLoginUrl());
+
+    /*
+     * ▲ PIN ADVANCED, DELIBERATELY. This line used to read
+     *
+     *     $this->get('/admin-api/security')->assertRedirect(sekAdminLoginUrl());
+     *
+     * and that redirect was the second door the admin address walked out of:
+     * `admin-api` is a FIXED prefix anybody can guess, so a stranger who typed
+     * it was told the secret. It answers 404 now, and the case below is where
+     * that is asserted over the whole set rather than one endpoint.
+     *
+     * What is pinned HERE is the half that did not move: a route UNDER the
+     * admin path still answers the admin login, because a requester who
+     * reached it has already typed the secret.
+     */
+    $this->get('/' . $adminPath . '/kbb-health-log')->assertRedirect(sekAdminLoginUrl());
 });
 
 it('decides from the guard and not from the path, so a moved admin still works', function () {
@@ -253,15 +268,27 @@ it('decides from the guard and not from the path, so a moved admin still works',
      * would get the shopper's login, while a customer page that happened to
      * start with the admin path would get the admin's. RUN.
      */
+    $adminPath = trim(AdminPathService::current(), '/');
+
     sekUncompileRoutes();
 
-    Route::middleware(['web', 'auth:admin'])->get('/sek-lane/back-office', fn () => 'never reached');
+    Route::middleware(['web', 'auth:admin'])->get('/' . $adminPath . '/sek-back-office', fn () => 'never reached');
     Route::middleware(['web', 'auth:customer'])->get('/sek-lane/shop-floor', fn () => 'never reached');
 
     Route::getRoutes()->refreshNameLookups();
     Route::getRoutes()->refreshActionLookups();
 
-    $this->get('/sek-lane/back-office')->assertRedirect(sekAdminLoginUrl());
+    /*
+     * ▲ PIN ADVANCED, DELIBERATELY. The back-office route here used to sit at
+     * `/sek-lane/back-office` and this asserted it redirected to the admin
+     * login. It does not any more, and that is the whole of round two: an
+     * admin-guarded address that does NOT carry the secret is hidden rather
+     * than pointed at a login — asserted over the real 397 in its own case
+     * below. So the route moved under the admin path, which is where "this
+     * requester already knows it" is still true and where the redirect is
+     * still the right answer.
+     */
+    $this->get('/' . $adminPath . '/sek-back-office')->assertRedirect(sekAdminLoginUrl());
     $this->get('/sek-lane/shop-floor')->assertRedirect(sekCustomerLoginUrl());
 });
 
@@ -425,59 +452,224 @@ it('leaves usePublicPath in bootstrap/app.php exactly where it was', function ()
         ->and(substr_count($bootstrap, 'GuestRedirect::for($request)'))->toBe(1);
 });
 
-it('names every address outside the admin path that still answers a guest with the admin login', function () {
+it('hides every admin address that does not already prove you know the secret', function () {
     /*
      * ═══════════════════════════════════════════════════════════════════════
-     * FOUND AND NOT FIXED — DELIBERATELY, AND PINNED SO IT CANNOT GROW.
+     * THE SECOND DOOR, AND THE SWEEP THAT KEEPS IT SHUT.
      * ═══════════════════════════════════════════════════════════════════════
      *
-     * The sweep above skips routes that ask for the `admin` guard, because
-     * those are the back office and answering them with the back-office login
-     * is correct. But 398 of them do NOT live under the secret admin path: they
-     * live at `admin-api/...`, which is a FIXED prefix, and at
-     * `api/cart/debug`. A stranger who has never seen the admin address can ask
-     * for one of those and read `admin_path` straight off the Location header:
+     * 398 admin-guarded endpoints do NOT live under the secret admin path: 397
+     * `admin-api/...`, which is a fixed prefix anybody can guess, and
+     * `api/cart/debug`. Every one of them answered a logged-out browser with
      *
-     *     curl -sI https://extrabeauty.ae/admin-api/security
-     *     Location: https://extrabeauty.ae/mr-cool/login
+     *     302 Location: https://extrabeauty.ae/mr-cool/login
      *
-     * That is the same disclosure the storefront leak was, through a different
-     * door, and it is not this lane's to close on its own initiative: the fix
-     * — refuse to name the admin login unless the request is already under the
-     * admin path — changes where a logged-out administrator lands on 397
-     * endpoints, and the admin console's own session-expiry handling follows
-     * that redirect. It is reported to the owner rather than decided here.
+     * so `admin_path` was readable by anyone who could type `admin-api`. This
+     * requests EVERY one of them as a logged-out stranger with a browser's own
+     * Accept header and fails if the answer is anything but a 404, if it
+     * carries a Location header at all, or if either admin URL appears in the
+     * body or in any header.
      *
-     * WHAT THIS CASE IS FOR IS THE SET NOT GROWING. It is red the day somebody
-     * mounts a new admin-guarded endpoint at a public address — which is how
-     * this surface got to 398 in the first place.
+     * MUTATION NOTE. Make GuestRedirect::hidesTheAddressInstead() return false
+     * unconditionally and this is red on the first endpoint it reaches, with
+     * the Location naming the admin login. RUN.
      */
     $adminPath = trim(AdminPathService::current(), '/');
-    $outside = [];
+    $needles = [sekAdminLoginUrl(), route('admin')];
+    $swept = 0;
 
     foreach (Route::getRoutes() as $route) {
-        if (! sekIsAdminGuarded($route)) {
+        if (! in_array('GET', $route->methods(), true) || ! sekIsAdminGuarded($route)) {
             continue;
         }
 
         $uri = ltrim($route->uri(), '/');
 
-        if ($uri === $adminPath || str_starts_with($uri, $adminPath . '/')) {
+        // A route under the admin path keeps the redirect: whoever reached it
+        // typed the secret and cannot be told anything they did not bring.
+        if (in_array($adminPath, explode('/', $uri), true)) {
             continue;
         }
 
-        $outside[] = str_starts_with($uri, 'admin-api/') || $uri === 'admin-api'
-            ? 'admin-api/*'
-            : $uri;
+        if (str_contains($uri, '{')) {
+            continue;
+        }
+
+        $response = $this->withHeaders(['Accept' => 'text/html,application/xhtml+xml,*/*;q=0.8'])
+            ->get('/' . $uri);
+
+        $swept++;
+
+        expect($response->status())->toBe(404, "GET /{$uri} must be hidden from a stranger, not pointed at a login.");
+        expect($response->headers->get('Location'))->toBeNull("GET /{$uri} still carries a Location header.");
+
+        $haystack = (string) $response->getContent();
+
+        foreach ($response->headers->all() as $name => $values) {
+            foreach ($values as $value) {
+                $haystack .= "\n" . $name . ': ' . $value;
+            }
+        }
+
+        foreach ($needles as $needle) {
+            expect(str_contains($haystack, $needle))->toBeFalse(
+                "GET /{$uri} put the admin address ({$needle}) in front of a stranger."
+            );
+        }
     }
 
-    $outside = array_values(array_unique($outside));
-    sort($outside);
+    expect($swept)->toBeGreaterThan(100, 'the admin-api set is 397 endpoints; this swept almost none of them');
+});
 
-    expect($outside)->toBe(['admin-api/*', 'api/cart/debug']);
+it('leaves the console\'s own calls answering exactly what they answered', function () {
+    /*
+     * ▲ THE HALF THAT IS NOT ALLOWED TO MOVE, AND THE REASON THE SWEEP ABOVE
+     *   IS SCOPED THE WAY IT IS.
+     *
+     * Handler::unauthenticated() answers a request that expects JSON with a
+     * bare 401 and NO Location — measured before anything was changed — and
+     * every one of the console's 43 fetch() calls to admin-api sets
+     * `Accept: application/json`. So the console never saw the redirect, and
+     * this asserts it still does not see the 404 either.
+     *
+     * IT MATTERS BECAUSE OF WHAT THE CONSOLE DOES WITH A 404. Thirty-three
+     * screens read one from their own endpoints as "the endpoints are not in
+     * this server's compiled route table yet — clear the route cache", 53
+     * occurrences, because a package applied without its clear_caches
+     * migration is a real fault on this shop. Three screens already read 401
+     * as "your admin session has expired". Turning the console's 401 into a
+     * 404 would send the owner to clear his caches over an expired login.
+     *
+     * MUTATION NOTE. Drop the `$request->expectsJson()` guard from
+     * GuestRedirect::hidesTheAddressInstead() and this is red: the console's
+     * own call answers 404. RUN.
+     */
+    foreach ([
+        ['Accept' => 'application/json'],
+        ['X-Requested-With' => 'XMLHttpRequest'],
+    ] as $headers) {
+        $response = $this->withHeaders($headers)->get('/admin-api/security');
 
-    // And the one that is not under a back-office prefix at all really does
-    // hand the address over today, which is the measurement behind the note.
-    expect($this->get('/api/cart/debug')->headers->get('Location'))
-        ->toBe(sekAdminLoginUrl());
+        expect($response->status())->toBe(401)
+            ->and($response->headers->get('Location'))->toBeNull()
+            ->and($response->json('message'))->toBe('Unauthenticated.');
+    }
+});
+
+it('still hides it when the shop has moved its admin somewhere else', function () {
+    /*
+     * The decision is read off the GUARD and off whether the address already
+     * carries the secret — never a hard-coded prefix. Two routes registered
+     * here, at addresses that have nothing to do with where the admin is: one
+     * public, which must be hidden, and one under the configured admin path,
+     * which must keep the login it has always answered.
+     *
+     * MUTATION NOTE. Replace the segment test in
+     * GuestRedirect::hidesTheAddressInstead() with
+     * `str_starts_with($uri, 'admin')` and this is red on the second half:
+     * `admin-api`-shaped addresses would be read as "under the admin path" and
+     * go on naming it. RUN.
+     */
+    $adminPath = trim(AdminPathService::current(), '/');
+
+    sekUncompileRoutes();
+
+    Route::middleware(['web', 'auth:admin'])->get('/sek-open/probe', fn () => 'never reached');
+    Route::middleware(['web', 'auth:admin'])->get('/' . $adminPath . '/sek-probe', fn () => 'never reached');
+
+    Route::getRoutes()->refreshNameLookups();
+    Route::getRoutes()->refreshActionLookups();
+
+    $browser = ['Accept' => 'text/html,*/*;q=0.8'];
+
+    $this->withHeaders($browser)->get('/sek-open/probe')->assertNotFound();
+    $this->withHeaders($browser)->get('/' . $adminPath . '/sek-probe')->assertRedirect(sekAdminLoginUrl());
+});
+
+it('names every console path that navigates the browser to an admin-api address', function () {
+    /*
+     * ▲ FOUND, MEASURED, AND NOT THIS LANE'S FILE TO FIX.
+     *
+     * Of the console's ways to reach an admin-api address, 43 are fetch()
+     * calls and 4 are XMLHttpRequest uploads, and every one of the 47 sets
+     * `Accept: application/json` — the wrapper in admin/app.blade.php, the
+     * ~20 screen partials that carry their own, and the four upload paths,
+     * which are exactly where a wrapper usually gets bypassed and here do not.
+     * None of them is touched by any of this: they still answer 401.
+     *
+     * What is left are the BROWSER NAVIGATIONS, and every one is a download —
+     * a navigation is how the browser is made to save a file, so they cannot
+     * carry an Accept header the console chooses. Six call sites, nine
+     * endpoints:
+     *
+     *   admin/app.blade.php:13031  window.open   /admin-api/orders-bulk-documents
+     *   admin/app.blade.php:13215  location.href /admin-api/orders-export
+     *   admin/app.blade.php:14646  location.href /admin-api/customers/export
+     *   admin/app.blade.php:15745  location.href /admin-api/reviews/export
+     *   admin/app.blade.php:19750  location.href /admin-api/catalog-products-export
+     *   admin/app.blade.php:14082  window.open(url) where url is the SERVER'S
+     *                              own /admin-api/orders/{id}/invoice,
+     *                              /packing-slip, /delivery-note and
+     *                              /shipping-label — built by
+     *                              Admin\InvoiceController::invoiceUrl() and
+     *                              friends and sent down on the order payload.
+     *
+     * ▲ THAT LAST ONE IS THE ONE A SCAN FOR `admin-api` IN THE CONSOLE DOES
+     * NOT FIND, because the address never appears in the console's source at
+     * all. It was found by following `o.invoice_url` back to the controller,
+     * and it is four of the nine.
+     *
+     * With an expired session those nine used to land on the admin login and
+     * now land on a 404. That is the price of closing the door; it is paid by
+     * the administrator, never by a shopper, and the fix is to fetch them
+     * through the console's own api() and hand the blob to the browser — an
+     * edit to admin/app.blade.php, which is the integrator's file.
+     *
+     * THIS CASE IS THE COUNT, so the set cannot grow quietly: a seventh
+     * navigation is a red suite and a decision somebody makes on purpose.
+     *
+     * MUTATION NOTE. Add `location.href = '/admin-api/anything'` anywhere in
+     * admin/app.blade.php and this is red at 6 against 5. RUN.
+     */
+    $console = file_get_contents(base_path('resources/views/admin/app.blade.php'));
+
+    /*
+     * `[^;)]` and not `[\s\S]`: olPrintDocs() breaks its window.open over four
+     * lines so the pattern has to cross newlines, but it must NOT cross a `)`
+     * or a `;` — allowed to, it runs from an unrelated `window.open(url, ...)`
+     * on to the next admin-api string further down the file and reports a
+     * navigation that is not there.
+     */
+    preg_match_all(
+        '/(?:location(?:\.href)?\s*=|window\.open\s*\()[^;)]{0,200}?admin-api\/([a-z0-9\/-]+)/i',
+        $console,
+        $matches
+    );
+
+    $literal = array_values(array_unique($matches[1] ?? []));
+    sort($literal);
+
+    expect($literal)->toBe([
+        'catalog-products-export',
+        'customers/export',
+        'orders-bulk-documents',
+        'orders-export',
+        'reviews/export',
+    ], 'the set of admin-api addresses the console navigates to has changed');
+
+    /*
+     * And the four the console never spells out, because the server hands them
+     * over on the order payload. Asserted at the source of the string rather
+     * than at the console, which is the only place they exist.
+     */
+    foreach (['invoiceUrl', 'packingSlipUrl', 'deliveryNoteUrl', 'shippingLabelUrl'] as $builder) {
+        $url = \App\Http\Controllers\Admin\InvoiceController::$builder(1);
+
+        expect(str_contains($url, '/admin-api/'))->toBeTrue(
+            "InvoiceController::{$builder}() no longer builds an admin-api URL; this note needs rewriting."
+        );
+    }
+
+    // The console really does navigate to them rather than fetch them.
+    expect(substr_count($console, "window.open(url, '_blank', 'noopener')"))->toBe(1);
 });

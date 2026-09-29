@@ -153,13 +153,29 @@ it('rejects an unauthenticated caller of the test-send endpoint', function () {
 
     expect(app('router')->dispatch($json)->getStatusCode())->toBe(401);
 
-    // And a plain form post is bounced to the admin login, not served.
+    /*
+     * ▲ PIN ADVANCED, DELIBERATELY (Lane SEC, round 2). These four lines used
+     * to read
+     *
+     *     // And a plain form post is bounced to the admin login, not served.
+     *     expect($plain->getStatusCode())->toBe(302)
+     *         ->and($plain->headers->get('Location'))->toContain('login');
+     *
+     * That Location carried the secret `admin_path` to anyone who posted to
+     * `admin-api/mail/test`, which is a fixed prefix anybody can guess. A
+     * request that does not expect JSON is now refused with a 404 and no
+     * Location at all — the same answer the router gives for a path that was
+     * never registered, so it does not even confirm the endpoint exists.
+     *
+     * The half above is untouched and is the one the console takes: an XHR
+     * still answers 401. See tests/Feature/AdminPathNeverLeaksTest.php.
+     */
     $plain = app('router')->dispatch(
         Request::create('/admin-api/mail/test', 'POST', ['to' => 'spam-target@example.com'])
     );
 
-    expect($plain->getStatusCode())->toBe(302)
-        ->and($plain->headers->get('Location'))->toContain('login');
+    expect($plain->getStatusCode())->toBe(404)
+        ->and($plain->headers->get('Location'))->toBeNull();
 
     // Nothing was sent to the address the anonymous caller named.
     expect(app(App\Services\Mail\MailSettings::class)->lastTest())->toBeNull();

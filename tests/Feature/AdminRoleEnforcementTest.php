@@ -196,10 +196,23 @@ it('leaves the admin login and logout outside the permission layer', function ()
 })->group('role-enforcement');
 
 it('sends a signed-out visitor to the login form rather than a dead 403', function () {
-    // EnforceAdminCapability runs BEFORE auth:admin. If it answered an
-    // unauthenticated request itself, a logged-out owner would meet a 403 with
-    // no link to anywhere — on a host with no shell, that is unrecoverable.
-    test()->get('/admin-api/users')->assertStatus(302);
+    /*
+     * EnforceAdminCapability runs BEFORE auth:admin. If it answered an
+     * unauthenticated request itself, a logged-out owner would meet a 403 with
+     * no link to anywhere — on a host with no shell, that is unrecoverable.
+     * That is what the second line below still asserts, on the address the
+     * owner actually types.
+     *
+     * ▲ PIN ADVANCED, DELIBERATELY (Lane SEC, round 2). The first line used to
+     * read `test()->get('/admin-api/users')->assertStatus(302);`. The redirect
+     * it asserted named the secret `admin_path` in a Location header, on a
+     * fixed prefix anybody can guess, so an address that does NOT already
+     * carry the secret is now hidden rather than pointed at a login. The 403
+     * worry is untouched: 404 is not EnforceAdminCapability answering, it is
+     * the request being refused without admitting the endpoint is there, and
+     * the console's own XHRs still get 401.
+     */
+    test()->get('/admin-api/users')->assertStatus(404);
     test()->get('/'.AdminPathService::current())->assertStatus(302);
 })->group('role-enforcement');
 

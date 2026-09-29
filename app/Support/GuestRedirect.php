@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Services\AdminPathService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 
@@ -124,6 +125,107 @@ final class GuestRedirect
              * store/account/track.blade.php's own link to /my-account/orders/.
              */
             : Url::to('/my-account/');
+    }
+
+    /**
+     * Should this request be REFUSED OUTRIGHT rather than pointed at a login?
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * THE SECOND DOOR THE ADMIN ADDRESS WALKED OUT OF, AND THE ONLY ONE LEFT.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * 398 of this shop's admin-guarded endpoints do NOT live under the secret
+     * admin path. 397 are `admin-api/...` — a FIXED prefix anybody can guess —
+     * and the last is `api/cart/debug`. Ask for one of them logged out and the
+     * answer named the secret:
+     *
+     *     curl -sI https://extrabeauty.ae/admin-api/security
+     *     Location: https://extrabeauty.ae/mr-cool/login
+     *
+     * So `admin_path` was readable by anyone who could type `admin-api`, which
+     * is the whole of the protection it offers, gone through a different door
+     * from the one the storefront redirect closed.
+     *
+     * ── WHO ACTUALLY TOOK THAT BRANCH, MEASURED RATHER THAN ASSUMED ────────
+     *
+     * Illuminate\Foundation\Exceptions\Handler::unauthenticated() answers a
+     * request that expects JSON with `401 {"message":"Unauthenticated."}` and
+     * NO Location header at all, and only falls through to
+     * `redirect()->guest()` for everything else. Measured on this shop:
+     *
+     *     Accept: application/json        -> 401, Location NULL
+     *     X-Requested-With: XMLHttpRequest-> 401, Location NULL
+     *     a browser's own Accept          -> 302, Location .../mr-cool/login
+     *
+     * And every one of the console's 43 `fetch()` calls to `admin-api` sets
+     * `Accept: application/json` — the wrapper in admin/app.blade.php and the
+     * ~20 screen partials that each carry their own. So THE CONSOLE HAS NEVER
+     * SEEN THAT REDIRECT. The only things that ever followed it were a stranger
+     * with curl and five download navigations (see below).
+     *
+     * ── WHICH IS WHY THIS DOES NOT TOUCH THE JSON ANSWER ───────────────────
+     *
+     * ▲ Turning the console's 401 into a 404 would be a worse defect than the
+     * one being fixed, and the console says so itself. THIRTY-THREE screens
+     * read a 404 from their own endpoints as
+     *
+     *     "The … endpoints are not in this server's compiled route table yet.
+     *      Clear the route cache (Platform → Cache) and reload."
+     *
+     * — 53 occurrences — because a package applied by hand without its
+     * `clear_caches_*` migration is a real and frequent fault on this shop.
+     * THREE screens already read 401/419 as *"Your admin session has expired —
+     * nothing is wrong with this screen."* Collapsing the two would send the
+     * owner to clear caches over an expired login, which is precisely the
+     * "three faults with three different remedies, one sentence" trap those
+     * comments were written against.
+     *
+     * The 401 leaks nothing: it carries no Location and names nothing. So the
+     * JSON answer is left exactly as it is, and only the branch that actually
+     * printed the address changes.
+     *
+     * ── AND IT IS 404, NOT A REFUSAL THAT ADMITS THE ADDRESS EXISTS ────────
+     *
+     * A stranger who browses to `admin-api/security` now gets the same 404 the
+     * router gives for a path that was never registered. That is the shape
+     * CLAUDE.md already records for `QuizController::expertRequest`, where a
+     * forged token and an id that was never issued do the same work and return
+     * the same 404.
+     *
+     * ── THE TEST IS THE GUARD, NEVER THE PATH ──────────────────────────────
+     *
+     * A route KEEPS the redirect when the admin path is one of its own
+     * segments, because a requester who reached it has already typed the
+     * secret and cannot be told anything they did not bring. Compared segment
+     * by segment rather than by prefix, so `admin-api/...` is not mistaken for
+     * a path under `admin`, and so a KBB_BASE_PATH prefix cannot shift the
+     * comparison. Everything else that asks for the `admin` guard is hidden.
+     */
+    public static function hidesTheAddressInstead(?Request $request): bool
+    {
+        if ($request === null || ! self::wantsBackOffice($request)) {
+            return false;
+        }
+
+        /*
+         * The console's own calls, left exactly as they were. expectsJson() is
+         * what Handler::unauthenticated() itself branches on, so this asks the
+         * same question the framework asks rather than a second one that could
+         * drift from it.
+         */
+        if ($request->expectsJson()) {
+            return false;
+        }
+
+        $adminPath = trim(AdminPathService::current(), '/');
+
+        if ($adminPath === '') {
+            return true;
+        }
+
+        $uri = trim((string) $request->route()?->uri(), '/');
+
+        return ! in_array($adminPath, explode('/', $uri), true);
     }
 
     /**
