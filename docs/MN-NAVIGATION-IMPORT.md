@@ -182,6 +182,11 @@ id, and it never mounts and never deletes.**
   create, because replacing the header of every page as a side effect of a
   rehearsal is not a safe thing to do. Never again, because once he HAS switched
   it on, a delta pass the week after the cutover must not take it down.
+- **The parent link is kept as a WordPress id on the row**
+  (`menu_items.source_parent_post_id`, new column) so it can be repaired across
+  requests — §10. That also means a re-import re-applies WordPress's nesting,
+  which is the same semantics `label` and `url` already have for rows WordPress
+  owns.
 - **It does not write over his decoration.** `badge`, `icon`,
   `highlight_color`, `columns` and `visibility` are absent from the attribute
   list — WordPress has no such concepts, and writing NULL would wipe what he set
@@ -244,10 +249,29 @@ pictures.
 
 ## 10. The instrument
 
-`tests/Feature/MnNavigationImportTest.php` — **21 tests, 15 mutation notes, all
-15 run.**
+`tests/Feature/MnNavigationImportTest.php` — **22 tests, 16 mutation notes, all
+16 run.**
 
-One of them is a defect this file found rather than prevented:
+**Two defects were found by an assertion rather than by design, and both are the
+kind only a measurement produces.**
+
+**A slice is a request, and the parent link did not survive one.**
+`_menu_item_menu_item_parent` is a nav_menu_item POST id and a child can arrive
+before its parent, so the link has to be deferred. `CategoryImporter` defers in
+an instance array that `finalise()` drains — and that is exactly what cannot
+work here: **Store → Import steps an entity a slice at a time, and
+`ImportRunner::runEntity()` calls `finalise()` on EVERY call, exhausted or
+not.** A slice holding the child and not the parent resolved nothing, cleared
+its array, and lost the link; the later slice that imported the parent had no
+idea anything was waiting on it. It was green in every unsliced test in this
+file and red in `AdminImportScreenTest > it reaches the same database whether it
+is stepped in twos or done in one go`, with one menu item updated — and on the
+owner's server **every** import is sliced, so the sliced answer is the one he
+would have got. `menu_items.source_parent_post_id` keeps the WordPress id on the
+row, and `finalise()` now repairs with two queries over the whole table:
+idempotent, and indifferent to which request wrote which row.
+
+The other:
 **`'new_tab' => false` made every menu item dirty on every pass.**
 `menu_items.new_tab` has no cast on the model, so the value read back from either
 engine is the integer `0`; Laravel's dirty check compares with `!==` for anything
@@ -257,6 +281,16 @@ unchanged** on a second pass over a byte-identical export. Nothing was corrupted
 that says an import is idempotent said "updated" for seven rows that had not
 changed, and a report that never says "unchanged" is evidence of nothing. It is
 written as an int now, with the measurement in the comment.
+
+## 10a. The schema change
+
+One column, and it is the only one: **`menu_items.source_parent_post_id`**,
+`unsignedBigInteger`, nullable, indexed —
+`2027_04_20_000000_add_menu_item_source_parent.php`, guarded with
+`Schema::hasColumn` like every other migration in this repository. No route is
+added, so no `clear_caches_*` migration is needed. Nothing else in the schema
+moved: `menus.source_term_id` and `menu_items.source_post_id` have been there
+since the first schema migration, waiting.
 
 ## 11. What is not fixed
 
