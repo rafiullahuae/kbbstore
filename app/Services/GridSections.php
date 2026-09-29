@@ -339,13 +339,55 @@ class GridSections
             return self::$registryMemo;
         }
 
-        $rows = Cache::remember(self::CACHE_REGISTRY, self::TTL, fn () => DB::table('grid_sections')
-            ->select('id', 'name', 'status')
-            ->orderBy('position')
-            ->orderBy('id')
-            ->get()
-            ->map(fn ($r) => ['id' => (int) $r->id, 'name' => (string) $r->name, 'status' => (string) $r->status])
-            ->all());
+        $rows = Cache::remember(self::CACHE_REGISTRY, self::TTL, static function () {
+            /*
+             * ── THE ONE GUARD IN THIS FILE, AND EXACTLY WHAT IT SWALLOWS ────
+             *
+             * `Banners::forHome()` reaches its table only AFTER a settings read
+             * says the module is on, so an un-migrated shop with that feature
+             * off never touches `banner_cards`. This read has no such gate: it
+             * runs on every homepage, because the section registry has to be
+             * complete before anything can ask what is in it.
+             *
+             * That matters here specifically. CLAUDE.md records five packages
+             * whose migrations were copied to the live server and never ran —
+             * and the shape of that failure with an ungated read is EVERY PAGE
+             * OF THE SHOP 500ing on "no such table: grid_sections", from a
+             * feature nobody has configured. `UpdatePackage::verify()` now
+             * refuses a package that carries migrations without declaring them,
+             * and that file's own note says not to rely on the door.
+             *
+             * So a MISSING TABLE — and nothing else — answers "no instances",
+             * which is the true answer for a shop where this feature has not
+             * been installed yet. SQLSTATE 42S02 is "base table or view not
+             * found" on both engines; SQLite also reaches here with HY000 and
+             * "no such table" in the message, which is why both are matched.
+             * Every other database error is RE-THROWN, so a connection failure
+             * or a permissions problem still surfaces as itself rather than as
+             * a homepage quietly missing two sections.
+             *
+             * It leaves no state behind and cannot dirty a model — the
+             * distinction CLAUDE.md's updater landmine turns on. The next
+             * request after the migration runs reads the table normally; this
+             * result is cached for at most ten minutes and the migration
+             * beside it flushes the key anyway.
+             */
+            try {
+                return DB::table('grid_sections')
+                    ->select('id', 'name', 'status')
+                    ->orderBy('position')
+                    ->orderBy('id')
+                    ->get()
+                    ->map(fn ($r) => ['id' => (int) $r->id, 'name' => (string) $r->name, 'status' => (string) $r->status])
+                    ->all();
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ((string) $e->getCode() === '42S02' || str_contains($e->getMessage(), 'no such table')) {
+                    return [];
+                }
+
+                throw $e;
+            }
+        });
 
         $out = [];
 
