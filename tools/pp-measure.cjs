@@ -84,7 +84,30 @@ async function shoot(page, url, name, w, h) {
 
 const PAGES = (process.env.PP_PAGES || 'set3:lanepp-glow-starter-set,set12:lanepp-full-routine-set,plain:lanepp-plain-moisturiser')
   .split(',').map((s) => s.split(':'));
-const PREFIX = process.env.PP_PREFIX || 'before';
+/*
+ * ▲ NO DEFAULT, AND THAT IS THE POINT. ▲
+ *
+ * This defaulted to 'before', and the "before" shots are the only thing in this
+ * directory that CANNOT BE RETAKEN -- the tree they photograph is three commits
+ * back. A bare `node tools/pp-measure.cjs` run to refresh the afters silently
+ * overwrote all six of them with after-state pictures, and the only reason it
+ * cost nothing is that they were already committed. So the prefix is required,
+ * and a run that would overwrite an existing shot has to say so out loud.
+ */
+const PREFIX = process.env.PP_PREFIX;
+
+if (!PREFIX) {
+  console.error('PP_PREFIX is required (e.g. PP_PREFIX=after). There is no default: the\n'
+    + '"before" shots photograph a tree that no longer exists and must not be\n'
+    + 'overwritten by accident.');
+  process.exit(2);
+}
+
+if (PREFIX === 'before' && !process.env.PP_OVERWRITE_BEFORE) {
+  console.error('Refusing to write before-*.png. Those photograph the pre-change tree and\n'
+    + 'cannot be retaken from here. Set PP_OVERWRITE_BEFORE=1 if you really mean it.');
+  process.exit(2);
+}
 const QS = process.env.PP_QS || '';
 
 (async () => {
