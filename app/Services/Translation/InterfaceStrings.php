@@ -716,6 +716,24 @@ final class InterfaceStrings
              */
             'set.whats_inside' => 'What\'s inside',
             /*
+             * The cross that closes the tiny popup on a touch device.  (Lane SA)
+             *
+             * The owner: *"on mobile on-click with corner red cross icon inside
+             * the circle to close the tiny popup."*
+             *
+             * It is the button's ACCESSIBLE NAME and nothing else — the button
+             * draws an SVG cross and carries no visible text — so this string is
+             * read aloud and never seen. That is exactly why it is keyed here
+             * rather than typed into the partial: a name only a screen reader
+             * hears is the one an English literal would survive in unnoticed,
+             * and it has to be translated like every other sentence on this row.
+             *
+             * It is NOT shown on a pointer device at all: the stylesheet removes
+             * the button inside `(hover:hover) and (pointer:fine)`, where the
+             * way out is to move the pointer away.
+             */
+            'set.close' => 'Close',
+            /*
              * ── THE SET'S OWN PRODUCT PAGE (Lane SP) ────────────────────────
              *
              * Three keys, read by exactly one file --
