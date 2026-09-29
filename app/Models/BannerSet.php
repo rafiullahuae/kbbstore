@@ -340,6 +340,21 @@ class BannerSet extends Model
         return isset(self::SLIDER_STYLES[(string) $this->slider_style]) ? (string) $this->slider_style : 'inset';
     }
 
+    /**
+     * Does this treatment's current bar FILL as the picture rests?
+     *
+     * One token does, and the answer lives here rather than as
+     * `$set->sliderStyle() === 'veil'` in the template — for the reason this
+     * class's own header gives about the enums: a treatment renamed, or a
+     * second filling one added, would otherwise need finding in a Blade file.
+     * SLIDER_STYLES is the list; this is the one property of it the markup
+     * needs to ask about.
+     */
+    public function sliderFills(): bool
+    {
+        return $this->sliderStyle() === 'veil';
+    }
+
     /** The desktop `aspect-ratio` value for a slider, or the default's. */
     public function sliderRatioCss(): string
     {

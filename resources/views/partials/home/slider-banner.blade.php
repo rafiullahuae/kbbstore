@@ -459,7 +459,7 @@
   .kbbs.is-veil .kbbs-nav,.kbbs.is-veil .kbbs-pp{opacity:1}
 }
 </style>
-<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $bsStyle === 'veil' ? ' is-fill' : '' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}"
+<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}"
      id="{{ $bsUid }}"
      style="{{ $bsVars }}{{ $bsBgVars === '' ? '' : ';'.$bsBgVars }}"
      role="region"
