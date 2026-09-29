@@ -998,9 +998,22 @@ it('ends the progress page with a reconciliation the owner can read', function (
         ->toContain('WooCommerce said')
         ->and($reconciliation['sentence'])->toContain('arrived')
         ->and($reconciliation['sentence'])->toContain('refused')
-        ->and($reconciliation['sentence'])->toContain('21 fields skipped');
+        /*
+         * 21 -> 22, ADVANCED FOR A CHANGE MADE ON PURPOSE. MenuItemImporter now
+         * declares `classes` through EntityReport::droppedField(), because
+         * `menu_items` has no column for a CSS class and the owner was being
+         * told nothing about it -- while GqMigrationCensusTest asserted he was.
+         * This number is the count of DISTINCT declared fields across the run,
+         * so one more declaration is one more here, and that it moved is the
+         * proof the declaration reaches the sentence the owner actually reads.
+         */
+        ->and($reconciliation['sentence'])->toContain('22 fields skipped');
 
     expect($reconciliation['fields'])->toContain('weight');
+
+    // And the new one by name, so the count above cannot be satisfied by some
+    // other field appearing while this one quietly stopped.
+    expect($reconciliation['fields'])->toContain('classes');
 
     // It must not say "everything arrived" when something did not.
     expect($reconciliation['sentence'])->toContain('Every row is accounted for.');
