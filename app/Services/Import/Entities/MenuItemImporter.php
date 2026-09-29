@@ -316,6 +316,40 @@ final class MenuItemImporter extends EntityImporter
         $object = mb_strtolower($row->text('object', 'menu_item_object') ?? '');
         $objectId = $row->id('object_id', 'object_id', 'menu_item_object_id');
 
+        /*
+         * ── THE SHOP ARCHIVE, AND WHY THIS ONE BRANCHES ON A NAME ──────────
+         *
+         * WordPress's `post_type_archive` item is the "Shop" entry on nearly
+         * every WooCommerce header, and it is the one pointer in this export
+         * that HAS NO ID TO RESOLVE ON. `_menu_item_object_id` is 0 for an
+         * archive -- there is no post and no term behind it, only a post TYPE
+         * -- so it fell through to custom(), which found no `_menu_item_url`
+         * either, and parked the row. The shop's own front door arrived on the
+         * Mega Menu screen with no address on it.
+         *
+         * THE CLASS HEADER SAYS "RESOLVED ON THE ID, NEVER ON THE NAME OF THE
+         * TYPE", and this is the exception that rule could not have covered.
+         * That rule exists because a TAXONOMY name is a fact about one shop's
+         * plugins -- this shop keeps brands in the `pa_brands` ATTRIBUTE, and
+         * an importer branching on that string would place nothing on a shop
+         * running `product_brand`. `product` is not that kind of name: it is
+         * WooCommerce's own post type, registered by the plugin itself and the
+         * same four letters on every WooCommerce installation there has ever
+         * been. There is no id to prefer, and no shop for the name to be wrong
+         * on.
+         *
+         * NARROW ON PURPOSE. Only `product` resolves. An archive of some other
+         * post type -- a `portfolio`, an `event` -- is a listing this shop has
+         * no screen for, so it keeps parking, which is the honest answer.
+         */
+        if ($type === 'post_type_archive' && $object === 'product') {
+            return [
+                'url' => UrlScheme::shop(),
+                'target_type' => 'shop',
+                'target_id' => null,
+            ];
+        }
+
         if ($type === 'custom' || $objectId === null) {
             return $this->custom($row, $label, $report);
         }

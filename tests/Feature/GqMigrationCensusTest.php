@@ -1280,10 +1280,14 @@ function gqMetaKeyCensus(): array
          * unclassified, because unclassified is the state this census exists
          * to make impossible and "nothing carries it" is a real answer.
          */
-        '_menu_item_type' => 'menu_items.csv `type` -- `taxonomy`, `post_type` or `custom`. Read for the '
-            .'report and for the custom branch; the RESOLUTION is on the id, never on the type name',
-        '_menu_item_object' => 'menu_items.csv `object` -- which taxonomy or post type. Reported, never '
-            .'branched on: a WordPress id is unique across both spaces and a shop\'s brand taxonomy is a '
+        '_menu_item_type' => 'menu_items.csv `type` -- `taxonomy`, `post_type`, `post_type_archive` or '
+            .'`custom`. Read for the report, for the custom branch and for the archive branch; where there '
+            .'IS an id the RESOLUTION is on the id and never on the type name',
+        '_menu_item_object' => 'menu_items.csv `object` -- which taxonomy or post type. Reported, and '
+            .'branched on in exactly ONE place: `post_type_archive` + `product` -> UrlScheme::shop(), '
+            .'because an archive has no id to resolve on (`object_id` is 0) and `product` is WooCommerce\'s '
+            .'own post type rather than a per-shop setting. Everywhere else it is reported and never '
+            .'branched on: a WordPress id is unique across both spaces and a shop\'s brand taxonomy IS a '
             .'setting. docs/MN-NAVIGATION-IMPORT.md §3',
         '_menu_item_object_id' => 'menu_items.csv `object_id` -> menu_items.target_id + url, resolved '
             .'against categories.source_term_id, brands.source_term_id, products.wc_id, posts.source_post_id',

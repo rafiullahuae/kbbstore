@@ -461,6 +461,110 @@ it('parks an item whose target this shop refuses, instead of dropping it or link
     expect(str_contains($named[0], 'about-us'))->toBeTrue('the report does not carry the old slug: '.$named[0]);
 });
 
+it('lands WordPress\'s Shop archive item on this shop\'s catalogue, instead of parking it', function () {
+    /*
+     * THE ITEM THE PREVIOUS ROUND COULD NOT PLACE, AND IT IS THE SHOP'S OWN
+     * FRONT DOOR.
+     *
+     * WooCommerce's "Shop" menu entry is a `post_type_archive` item pointing at
+     * the `product` post type. It is the ONE pointer in this export with no id
+     * to resolve on -- `_menu_item_object_id` is 0, because there is no post
+     * and no term behind an archive, only a post TYPE -- so it fell past the
+     * taxonomy and post_type branches into custom(), found no
+     * `_menu_item_url` either, and was PARKED. The owner imported his
+     * navigation and the header came up without Shop on it, with the row
+     * sitting on the Mega Menu screen waiting for him to type an address the
+     * shop already knows.
+     *
+     * THE ADDRESS COMES FROM UrlScheme AND NOT A LITERAL, asserted here against
+     * the constant, because a literal `/shop/` in an importer is a sixth writer
+     * of an address the scheme class exists to own.
+     *
+     * The fixture has no archive row -- the plugin harness's menu is seven
+     * items and none of them is Shop -- so the Shop row is written over the
+     * "About us" line IN A COPY, the same way the brand-taxonomy case above
+     * rewrites `pa_brands`. Everything else about the export is untouched.
+     *
+     * MUTATION NOTE -- RAN. Delete the `post_type_archive` branch from
+     * MenuItemImporter::resolve() and this is red on the first expectation:
+     * target_type is `unresolved` and url is NULL, which is the defect exactly.
+     */
+    $dir = sys_get_temp_dir().'/kbb-mn-archive-'.bin2hex(random_bytes(4));
+    mkdir($dir, 0755, true);
+
+    foreach (glob(mnExportDir().'/*') as $file) {
+        copy($file, $dir.'/'.basename($file));
+    }
+
+    $csv = (string) file_get_contents($dir.'/menu_items.csv');
+
+    // The row WordPress writes for a Shop entry: type post_type_archive, object
+    // the post type, and object_id 0 because an archive has no row behind it.
+    $shop = '"7502","950","0","2","Shop","item","post_type_archive","product","0","","","","","","publish"';
+    $rewritten = str_replace(
+        '"7502","950","0","2","About us","item","post_type","page","7002","about-us","","","","","publish"',
+        $shop,
+        $csv,
+    );
+
+    expect($rewritten)->not->toBe($csv, 'the fixture no longer spells the About us row the way this test rewrites it');
+    file_put_contents($dir.'/menu_items.csv', $rewritten);
+
+    mnImport(['directory' => $dir]);
+
+    $item = mnItems()[7502] ?? null;
+
+    expect($item)->not->toBeNull('the Shop archive row was not imported at all');
+    expect($item->target_type)->toBe('shop');
+    expect($item->url)->toBe(UrlScheme::shop());
+    expect($item->url)->toBe('/shop/', 'UrlScheme::shop() no longer spells the address this shop serves');
+    expect($item->target_id)->toBeNull('an archive has no row to point at');
+
+    // AND IT REACHES THE HEADER, which is the whole difference from parked.
+    mnMount(Menu::query()->where('source_term_id', 950)->firstOrFail());
+
+    expect(in_array('Shop', mnLabels(app(NavigationService::class)->menu('primary')), true))
+        ->toBeTrue('the Shop item resolved but still does not render');
+
+    array_map('unlink', glob($dir.'/*') ?: []);
+    rmdir($dir);
+});
+
+it('keeps parking an archive of a post type this shop has no screen for', function () {
+    /*
+     * THE NARROWNESS IS THE POINT. `product` is WooCommerce's own post type --
+     * registered by the plugin, the same four letters on every installation --
+     * which is what makes matching on the NAME safe where the class header
+     * forbids it for a taxonomy. An archive of anything else is a listing this
+     * shop has no screen for, and guessing an address for it would put a 404 in
+     * the header, which is the answer the parking mechanism exists to avoid.
+     *
+     * MUTATION NOTE -- RAN. Widening the branch to `$type === 'post_type_archive'`
+     * with no check on $object makes this red: the portfolio archive resolves to
+     * /shop/ and renders in the header.
+     */
+    $dir = sys_get_temp_dir().'/kbb-mn-archive2-'.bin2hex(random_bytes(4));
+    mkdir($dir, 0755, true);
+
+    foreach (glob(mnExportDir().'/*') as $file) {
+        copy($file, $dir.'/'.basename($file));
+    }
+
+    file_put_contents($dir.'/menu_items.csv', str_replace(
+        '"7502","950","0","2","About us","item","post_type","page","7002","about-us","","","","","publish"',
+        '"7502","950","0","2","Portfolio","item","post_type_archive","portfolio","0","","","","","","publish"',
+        (string) file_get_contents($dir.'/menu_items.csv'),
+    ));
+
+    mnImport(['directory' => $dir]);
+
+    expect(mnItems()[7502]->target_type)->toBe(MenuItemImporter::UNRESOLVED);
+    expect(mnItems()[7502]->url)->toBeNull();
+
+    array_map('unlink', glob($dir.'/*') ?: []);
+    rmdir($dir);
+});
+
 it('un-parks an item the moment the owner gives it an address, with no second import', function () {
     /*
      * THE SELF-HEALING HALF, and the reason the gate is TWO conditions rather
