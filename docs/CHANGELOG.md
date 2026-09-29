@@ -3,6 +3,77 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.323
+**Two screens that never worked, an email that was laid out backwards, and
+thirteen sliders that did nothing.** Apply after .322.
+
+### ▲ "WHAT HAS BEEN IMPORTED" HAS NEVER ONCE OPENED
+
+There is a link in your admin, on the Import screen, to the record of what each
+import run did. **Clicking it gives a 404, and always has.** The screen was
+built, the code behind it was written, and the single line that mounts its
+three addresses was never added — no version of this shop has ever had it.
+
+Fixed. `Store → Store Import / Export` now opens it, and the CSV download works.
+
+### ▲ ARABIC ORDER EMAILS WERE LAID OUT LEFT-TO-RIGHT
+
+Every order confirmation sent to an Arabic customer was **written in Arabic and
+laid out in English direction**, in every mail client. The email template has no
+`<html>` element by design, so the place the rest of the shop declares its text
+direction simply did not exist there.
+
+Fixed with a direction *attribute* rather than a stylesheet rule, because
+Outlook renders mail through Word and ignores much of the CSS. English mail is
+byte-identical.
+
+### THIRTEEN SET CONTROLS THAT SAVED AND DID NOTHING
+
+`Appearance → Set` shipped last package with 157 controls. **Thirteen of them
+moved nothing.** The box's new drawing was written as fixed numbers on top of
+the rules that read your sliders, and the later rule wins — so photo size,
+corner radius, row padding, the gap, the hairline switch and the phone line
+spacing all saved correctly and were then ignored by the page.
+
+Every rule now reads its control. **157 → 198 controls, 13 cards**, with two new
+ones: `Appearance → Set → Desktop → Set list — the panel and the hang` and its
+Mobile twin. The overhang cannot be flattened by any combination of sliders.
+
+### ▲ AND THE SET BOX WAS BROKEN ON EVERY ARABIC SET PAGE
+
+The panel's padding was written in a form whose last value means *left* in every
+language, while the hanging photographs and the footing use direction-aware
+ones. In English they agreed; in Arabic they did not — **the footing's rule and
+all three money figures sat outside the pink panel**, and the photographs hung
+16px instead of 10.
+
+### THE TWO PRICES ON A DISCOUNTED ROW
+
+*"the cut price should be grey and small, and actual price don't need to be
+underline etc. and give little bit spacing between both prices"*
+
+Done — on the checkout's **Browsed** tab where you saw it, and in **Quick view**,
+which had the same three faults hidden behind a rule that matched nothing.
+
+### ALSO
+
+The Arabic **routine pages** had a reset link on the wrong end of its row. Five
+missing translations, four of them the wallet failure messages — what a shopper
+reads when a payment fails, *"nothing has been charged, your basket is safe"* —
+which an Arabic shopper was being shown in English at exactly that moment.
+
+And the import reconciliation sentence no longer names files that are not in the
+export you just ran. On cutover night, when you run a small delta after a full
+import, it would have told you a field was skipped from a file that was not even
+in it.
+
+### FILES
+
+`routes/web.php` (the import-history line), the email layout and its direction,
+`App\Services\SetAppearance` and the set panel's rules, the browsed and
+quick-view price styling with the rebuilt stylesheets, `ImportChain`, the Arabic
+strings, and one cache-clearing migration.
+
 ## 2.60.322
 **A declined payment no longer empties the shopper's bag.** Apply this one.
 
