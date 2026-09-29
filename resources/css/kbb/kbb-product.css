@@ -548,3 +548,239 @@ a{color:inherit;text-decoration:none}
 .mega a:hover{background:var(--pink-soft);color:var(--pink-deep)}
 .mega-brands{border-radius:0 0 16px 16px}
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   THREE PROPOSED PRODUCT-PAGE LAYOUTS — PREVIEW ONLY. (Lane PP)
+
+     "i don't like that much the product page. can u also propose the product /
+      set page more improved from the existing layout to derive more beautiful
+      version, give me some options previews to choose from for now."
+
+   Reached at /product/<slug>/?layout=focus | editorial | compact. The class
+   comes from a three-entry map in store/product.blade.php, so a page with no
+   `layout` in its query string matches NONE of the selectors below and renders
+   the bytes it rendered yesterday.
+
+   ── WHAT IS ACTUALLY WRONG WITH THE PAGE, MEASURED RATHER THAN ASSERTED ────
+
+   Read off Chromium at 1280 and 390 on the shipped page, not argued:
+
+   1. THE GALLERY FRAME IS 21% EMPTY, AND IT SETS THE PAGE'S HEIGHT.
+      `.gmain` is aspect-ratio:1 — 612x612 at 1280, 346x346 at 390. This
+      catalogue's photographs are 4:5 portrait, so object-fit:contain paints
+      488x610 inside the 612 square: 79% of the biggest element on the page is
+      the product and 21% is white. The frame is also what makes `.pdp` 753px
+      tall at 1280, against a 681px buy column.
+
+   2. ELEVEN BLOCKS, ONE RHYTHM, NO HIERARCHY.
+      At 1280 the buy column is eleven blocks, every one flush to the same
+      start edge, with gaps above of 7, 11, 6, 16, 18, 9, 22, 6, 17, 14 and 13
+      pixels. The BIGGEST gap on the page (22px) is between the option rows and
+      the stock line, and one of the smallest (6px) is under the price. Nothing
+      in that sequence says which of the eleven is the decision and which is a
+      footnote, so the VAT note reads at the same weight as the thing that
+      takes the money.
+
+   3. THREE PROMISES ABOUT DELIVERY, IN THREE STYLES, IN TWO PLACES.
+      `.deliver` ("Order within ... for delivery by ...") sits ABOVE the
+      button; `.trust` repeats "1-3 days fast delivery all over UAE" BELOW it
+      in a cream card; and `.paychips` repeats Tabby and Tamara, which the same
+      `.trust` card has already named. At 390 that is 175px of the bottom of
+      the buy column, and 58px of it is a second printing.
+
+   4. ON A PHONE YOU SCROLL 1155px BEFORE YOU CAN BUY.
+      Measured on the ordinary product at 390: Add to cart at y=1155, under a
+      346px gallery and eight blocks, on a viewport ~844px tall.
+
+   5. THE PAGE BELOW THE FOLD IS MOSTLY EMPTY BOXES.
+      At 1280 the details section is 256px for two lines of prose set to the
+      full 1240px measure — about 200 characters a line, roughly three times
+      what is readable — and the reviews section is 454px for a product with
+      no reviews. 710px, 28% of the page, for one sentence.
+
+   Everything below answers 1-4. 5 lives in partials/product-tabs.blade.php and
+   partials/reviews.blade.php, which are Lane PT's and not this lane's; it is
+   reported rather than touched.
+
+   ── SHARED BY ALL THREE ────────────────────────────────────────────────────
+
+   The frame matches the photograph. 4:5 is this catalogue's shape, so contain
+   paints edge to edge and finding 1 goes to zero in every proposal. It is
+   written here once because it is not one of the three ideas — it is the bug
+   all three inherit.
+
+   ▲ AND IT IS A PROPOSAL, NOT A PATCH. partials/product-gallery.blade.php and
+     App\Support\ImageVariants are Lane IM2's this round. Whichever layout is
+     chosen, the production form of this is a frame ratio that lane owns, not a
+     rule in this file. The literal lines are in the lane report.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pp-lay .gmain{aspect-ratio:4/5}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   A — FOCUS.  "There is one decision on this page, so draw one object."
+
+   The thesis: findings 2 and 4 are the same finding. The price, the options,
+   the quantity and the button are four of eleven equal blocks; make them ONE
+   bordered card and the other seven become what they are — supporting text.
+   Then raise the button above the stock and delivery lines inside that card,
+   because a shopper who has chosen does not read a cut-off clock first, and
+   demote the trust card and the payment chips to two quiet lines.
+
+   THE CARD IS THREE SIBLINGS DRAWN AS ONE. `.bb-price`, `.bb-vat` and the
+   <form> are siblings in the buy column and no CSS can nest them, so the first
+   takes the top corners and no bottom border, the second takes the inline
+   borders only, and the form takes the bottom corners and no top border. One
+   object, three elements, no markup moved.
+   ─────────────────────────────────────────────────────────────────────────── */
+.pp-lay-focus .buybox{display:flex;flex-direction:column}
+.pp-lay-focus .bb-brand{order:1}
+.pp-lay-focus .bb-title{order:2;font-size:clamp(21px,1.9vw,24px);margin-block:6px 6px}
+.pp-lay-focus .cap-area{order:3;margin-block:0 14px}
+.pp-lay-focus .bb-rate{order:3}
+
+/* the card: head, waist, body */
+.pp-lay-focus .bb-price{order:4;margin:0;padding:16px 18px 0;background:#fff;
+  border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0}
+.pp-lay-focus .bb-vat{order:5;margin:0;padding:3px 18px 14px;background:#fff;
+  border-inline:1px solid var(--line)}
+.pp-lay-focus .cart{order:6;display:flex;flex-direction:column;padding:0 18px 18px;
+  background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 18px 18px}
+
+/* inside the card: choose, then buy, then the small print about buying */
+.pp-lay-focus .cart > .opt-label{order:1}
+.pp-lay-focus .cart > .variants{order:2;margin-block-end:14px}
+.pp-lay-focus .cart > .ksl{order:2;margin-block-end:12px}
+.pp-lay-focus .cart > .bb-desc{order:3}
+.pp-lay-focus .cart > .buyrow{order:4;margin-block:0 10px}
+.pp-lay-focus .cart > .stockline{order:5;margin-block-end:4px}
+.pp-lay-focus .cart > .deliver{order:6;margin-block-end:0}
+.pp-lay-focus .cart > .notify{order:7}
+
+/* everything that is not the decision, after it and quieter */
+.pp-lay-focus .buybox > .bb-desc{order:7;margin-block:16px 0;font-size:13.5px}
+.pp-lay-focus .trust{order:8;display:flex;flex-wrap:wrap;gap:6px 18px;
+  padding:14px 0 0;margin-block-start:14px;background:none;border-radius:0;
+  border-top:1px solid var(--line)}
+.pp-lay-focus .trust .ti{font-size:11.5px}
+.pp-lay-focus .trust .ti svg{width:14px;height:14px}
+.pp-lay-focus .paychips{order:9;margin-block-start:10px;gap:5px}
+.pp-lay-focus .paychips span{font-size:9.5px;padding:3px 7px;border-color:var(--line-2)}
+
+/* The columns are rebalanced so a 4:5 frame is not a 765px-tall wall: the
+   gallery track narrows and the buy column takes what it gives up, which is
+   also what the card wanted. */
+@media (min-width:881px){
+  .pp-lay-focus{grid-template-columns:minmax(0,.78fr) minmax(0,1fr);gap:38px}
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   B — EDITORIAL.  "This is a beauty shop, not a spreadsheet."
+
+   The thesis: the page is legible and charmless. Finding 2 says every block
+   has the same weight; this answers it with TYPE rather than with a box —
+   amplify the top of the column until the product's name and its price are
+   the page, promote the blurb to a LEDE directly under the title (before the
+   price, which is the order a magazine would set it in), and separate the
+   groups with hairlines instead of guessing at gaps.
+
+   The gallery gets MORE room here, not less: the photograph is the argument.
+   ─────────────────────────────────────────────────────────────────────────── */
+.pp-lay-editorial .buybox{display:flex;flex-direction:column}
+.pp-lay-editorial .bb-brand{order:1;font-size:11px;letter-spacing:.14em;color:var(--ink-2)}
+.pp-lay-editorial .bb-title{order:2;font-size:clamp(27px,3.1vw,38px);font-weight:600;
+  line-height:1.12;letter-spacing:-.02em;margin-block:10px 0}
+.pp-lay-editorial .buybox > .bb-desc{order:3;font-size:16px;line-height:1.6;
+  max-inline-size:46ch;margin-block:14px 0;color:var(--ink-2)}
+.pp-lay-editorial .cap-area{order:4;margin-block:16px 0}
+.pp-lay-editorial .bb-rate{order:4}
+.pp-lay-editorial .bb-price{order:5;margin-block:18px 0;padding-block-start:18px;
+  border-top:1px solid var(--line);align-items:baseline}
+.pp-lay-editorial .bb-price .now{font-size:clamp(28px,3vw,34px)}
+.pp-lay-editorial .bb-vat{order:6;margin-block:5px 0;font-size:11px;letter-spacing:.02em}
+.pp-lay-editorial .cart{order:7;display:flex;flex-direction:column;
+  margin-block-start:20px;padding-block-start:20px;border-top:1px solid var(--line)}
+.pp-lay-editorial .cart > .opt-label{order:1;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;margin-block-end:12px}
+.pp-lay-editorial .cart > .opt-label span{letter-spacing:0;text-transform:none}
+.pp-lay-editorial .cart > .variants{order:2;margin-block-end:18px}
+.pp-lay-editorial .cart > .ksl{order:2}
+.pp-lay-editorial .cart > .bb-desc{order:3;font-size:15px;line-height:1.6;max-inline-size:46ch}
+.pp-lay-editorial .cart > .stockline{order:4}
+.pp-lay-editorial .cart > .deliver{order:5}
+.pp-lay-editorial .cart > .buyrow{order:6}
+.pp-lay-editorial .cart > .notify{order:7}
+.pp-lay-editorial .addcart{height:58px;border-radius:0;font-size:14px;
+  letter-spacing:.1em;text-transform:uppercase}
+.pp-lay-editorial .qty{border-radius:0}
+.pp-lay-editorial .variant{border-radius:0}
+.pp-lay-editorial .trust{order:8;display:flex;flex-wrap:wrap;gap:8px 22px;background:none;
+  border-radius:0;padding:14px 0 0;margin-block-start:18px;border-top:1px solid var(--line)}
+.pp-lay-editorial .trust .ti{font-size:11.5px;letter-spacing:.01em}
+.pp-lay-editorial .trust .ti svg{width:15px;height:15px}
+.pp-lay-editorial .paychips{order:9;margin-block-start:12px}
+.pp-lay-editorial .paychips span{border:0;padding:0;font-size:10px;letter-spacing:.06em;
+  color:var(--muted);margin-inline-end:10px}
+@media (min-width:881px){
+  .pp-lay-editorial{grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:52px}
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   C — COMPACT.  "The shopper on a phone already knows what she wants."
+
+   The thesis: finding 4 is the one that costs money. So the frame is CAPPED in
+   viewport units rather than sized from the column — a photograph is allowed
+   to be big, but not to be the reason a button is off screen — the option rows
+   lose a third of their height, the trust card and the chips become two small
+   lines, and on a phone `.buyrow` is stuck to the BOTTOM of the viewport for
+   as long as the form is on screen, so Add to cart is reachable at every
+   scroll position without being moved in the document at all.
+
+   `position:sticky;bottom:0` and not a fixed bar: a fixed bar is a second
+   element with a second copy of the price, and this is the same button in the
+   same place in the reading order.
+   ─────────────────────────────────────────────────────────────────────────── */
+.pp-lay-compact .gmain{max-block-size:52vh}
+.pp-lay-compact .buybox{display:flex;flex-direction:column}
+.pp-lay-compact .bb-brand{order:1;font-size:11px}
+.pp-lay-compact .bb-title{order:2;font-size:clamp(19px,1.7vw,21px);line-height:1.25;
+  margin-block:4px 4px}
+.pp-lay-compact .cap-area{order:3;margin-block:0 8px}
+.pp-lay-compact .bb-rate{order:3;margin-block:4px 8px}
+.pp-lay-compact .bb-price{order:4;margin-block-end:2px}
+.pp-lay-compact .bb-vat{order:5;margin-block-end:10px}
+.pp-lay-compact .buybox > .bb-desc{order:6;font-size:13px;line-height:1.55;margin-block:0 12px}
+.pp-lay-compact .cart{order:7;display:flex;flex-direction:column}
+.pp-lay-compact .cart > .opt-label{order:1;margin-block-end:6px}
+.pp-lay-compact .cart > .variants{order:2;gap:6px;margin-block-end:12px}
+.pp-lay-compact .cart > .ksl{order:2;margin-block-end:10px}
+.pp-lay-compact .cart > .bb-desc{order:3;font-size:13px;line-height:1.55}
+.pp-lay-compact .cart > .stockline{order:4;margin-block-end:3px}
+.pp-lay-compact .cart > .deliver{order:5;margin-block-end:12px}
+.pp-lay-compact .cart > .buyrow{order:6}
+.pp-lay-compact .cart > .notify{order:7}
+.pp-lay-compact .variant{padding:8px 12px;gap:10px;border-radius:10px;border-width:1.25px}
+.pp-lay-compact .variant .vn{font-size:12.5px}
+.pp-lay-compact .variant .vr{width:15px;height:15px}
+.pp-lay-compact .variant.on .vr::after{width:7px;height:7px}
+.pp-lay-compact .qty button{width:40px;height:46px}
+.pp-lay-compact .addcart{height:46px;font-size:14.5px}
+.pp-lay-compact .trust{order:8;display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 12px;
+  border-radius:10px;margin-block-start:12px}
+.pp-lay-compact .trust .ti{font-size:11px;gap:6px}
+.pp-lay-compact .trust .ti svg{width:13px;height:13px}
+.pp-lay-compact .paychips{order:9;margin-block-start:8px;gap:4px}
+.pp-lay-compact .paychips span{font-size:9.5px;padding:2px 6px}
+
+/* THE BUTTON THAT STAYS. Only on the phone, and only while the form is on
+   screen: `sticky` leaves the row exactly where it is in the flow and pins it
+   to the viewport's bottom edge on the way past, so nothing is duplicated and
+   nothing is measured. The backdrop is what keeps the option rows from
+   showing through it. */
+@media (max-width:880px){
+  .pp-lay-compact .cart > .buyrow{position:sticky;bottom:0;z-index:5;
+    padding-block:10px;margin-block-end:0;
+    background:linear-gradient(to bottom,rgba(255,255,255,0) 0,#fff 14px,#fff 100%)}
+  .pp-lay-compact .gmain{max-block-size:44vh}
+}
+@media (min-width:881px){
+  .pp-lay-compact{grid-template-columns:minmax(0,.9fr) minmax(0,1fr);gap:36px}
+}

@@ -177,6 +177,48 @@
          after this change. */
     $kbbShortBelow = (bool) $product->short_description
         && \App\Support\SetContents::fromProduct($product)['members'] !== [];
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       THE THREE PROPOSED LAYOUTS — PREVIEWS, NOT A SETTING. (Lane PP)
+
+         "can u also propose the product / set page more improved from the
+          existing layout to derive more beautiful version, give me some
+          options previews to choose from for now."
+
+       "for now" is the whole design of this. He is CHOOSING, not configuring,
+       so there is no Appearance screen, no column on `products` and no row in
+       `settings`: a layout nobody has picked yet is not a setting, and a picker
+       shipped before the decision is a screen to keep working and a migration
+       to unpick when he names one. Three URLs, three photographs, one answer
+       next round.
+
+           /product/<slug>/?layout=focus
+           /product/<slug>/?layout=editorial
+           /product/<slug>/?layout=compact
+
+       ── AND THE SHIPPED PAGE IS UNTOUCHED, TO THE BYTE ────────────────────
+
+       With no `layout` in the query string $kbbLayoutClass is the empty string
+       and this element renders `<div class="pdp">`, character for character
+       what it rendered before. Every rule behind the three proposals is
+       scoped under .pp-lay-* in resources/css/kbb/kbb-product.css, so a page
+       nobody asked a layout of carries the bytes and matches none of them.
+       CLAUDE.md rule 1: a proposal must not move the shop.
+
+       ── THE VALUE IS NEVER PRINTED, ONLY LOOKED UP ────────────────────────
+
+       CLAUDE.md rule 5, on a page reached by anybody with a URL bar. The query
+       string does not become a class name; it becomes a KEY into a map written
+       here, and what is printed is one of this file's own three constants or
+       nothing at all. `?layout="><script>` finds no key and prints the empty
+       string. There is no branch on the raw value, no default that echoes it,
+       and no way to reach the element with a character the shop did not
+       choose. */
+    $kbbLayoutClass = [
+        'focus' => ' pp-lay pp-lay-focus',
+        'editorial' => ' pp-lay pp-lay-editorial',
+        'compact' => ' pp-lay pp-lay-compact',
+    ][(string) request()->query('layout')] ?? '';
 @endphp
 
 {{-- Brand once, not twice. This concatenated brand and name unconditionally,
@@ -252,7 +294,7 @@
 @section('content')
 <div class="wrap">
   <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
-  <div class="pdp">
+  <div class="pdp{{ $kbbLayoutClass }}">
     <!-- gallery -->
     @include('partials.product-gallery')
 
