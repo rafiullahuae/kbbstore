@@ -117,6 +117,38 @@ return new class extends Migration
             DB::table('translations')->insert($chunk);
         }
 
+        /*
+         * THE COMPILED FILES, because this release changes CLASSES and not only
+         * rows. TranslationEstimate gains three models, a NEVER_MACHINE list and
+         * three labels; MachineTranslationRunner learns to read the second one;
+         * ArabicInterfaceDrafts is new. Under OPcache the server goes on running
+         * the old definitions until something resets it, and the symptom is the
+         * worst kind: the rows are in the table, the console looks right, and
+         * Content -> Translations still cannot open a product tab.
+         *
+         * Named globs and opcache_reset only -- never Cache::flush(), which on
+         * some drivers holds the sessions and would sign every customer out.
+         */
+        $cleared = 0;
+
+        foreach ([
+            storage_path('framework/views/*.php'),
+            base_path('bootstrap/cache/config.php'),
+            base_path('bootstrap/cache/routes-*.php'),
+            base_path('bootstrap/cache/services.php'),
+            base_path('bootstrap/cache/packages.php'),
+        ] as $pattern) {
+            foreach (glob($pattern) ?: [] as $file) {
+                if (is_file($file) && @unlink($file)) {
+                    $cleared++;
+                }
+            }
+        }
+
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
         try {
             TranslationStore::flush();
         } catch (\Throwable) {
@@ -128,7 +160,7 @@ return new class extends Migration
 
         if (app()->runningInConsole()) {
             $n = count($insert);
-            echo "Wrote {$n} Arabic interface strings as DRAFTS.\n"
+            echo "Cleared {$cleared} compiled files. Wrote {$n} Arabic interface strings as DRAFTS.\n"
                 ."\n"
                 ."NOTHING ON YOUR SHOP HAS CHANGED. A draft is never shown to a shopper,\n"
                 ."so /ar still reads exactly as it did before you applied this, and your\n"
