@@ -584,6 +584,49 @@ final class ImageVariants
     }
 
     /**
+     * The SLIDER banner's frame (`.kbbs-vp`), which shows one picture at a time
+     * at the full width of the content column.
+     *
+     * The slider is included from `store/home.blade.php:438` inside `.wrap`, so
+     * the box is `min(100vw, --site-max) - 2 * --site-gutter` at every width —
+     * there is no column count and no peek to divide by, which is why this is
+     * one flat expression and bannerCardSizesAttribute() is five.
+     *
+     * ── WHY IT IS WRITTEN AT THE WIDEST THE SETTINGS CAN MAKE IT ────────────
+     *
+     * Both terms are OWNER SETTINGS, not constants: SiteLayout's `max` is a
+     * range 1040..2400 (default 1680) and `gutter` is 8..48 (default 22). The
+     * `sizes` attribute is parsed by the HTML parser and NOT by the cascade, so
+     * `var(--site-max)` in it is not a length — the entry is dropped, and the
+     * default for a dropped entry is 100vw. A stale hard-coded 1680/22 pair
+     * would be worse than that: the day the owner widens the site the
+     * expression UNDERSTATES, and understating is the failure that shows on the
+     * screen — the browser picks a file too small for the frame and the
+     * owner's banner comes out soft.
+     *
+     * So the two bounds are taken at the ends that can only overstate: the
+     * widest site the slider can be asked for, and no gutter at all. It is the
+     * same direction detailSizesAttribute() and homeTileSizesAttribute() round
+     * in, and here it costs nothing measurable: at the shipped settings the
+     * declaration says 390 where the box is 346 on a phone and 1280 where it
+     * is 1236 on a laptop, and with `WIDTHS` offering 200/400/800 neither gap
+     * changes the candidate the browser picks (692 and 780 device pixels both
+     * take the 800w copy; a 1236px desktop frame takes it too, being the
+     * widest on offer).
+     *
+     * ── AND IT PAIRS WITH detailSrcsetFor() ─────────────────────────────────
+     *
+     * srcsetFor() stops at 800w for tiles. This frame is 1236 CSS pixels at the
+     * shipped width and more on a wide screen, so the cards banner's reasoning
+     * applies here unchanged — and more sharply, because the slider's first
+     * picture is the homepage's LCP element when the section is above the fold.
+     */
+    public static function bannerSliderSizesAttribute(): string
+    {
+        return 'min(100vw, 2400px)';
+    }
+
+    /**
      * The "frequently bought together" row: `.kbb-fbt-item img` is a fixed 90px
      * square at every viewport, declared inline on the element itself, so there
      * is no viewport term to write. The 200w copy covers it to

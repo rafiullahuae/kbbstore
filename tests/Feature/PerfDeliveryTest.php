@@ -88,6 +88,38 @@ function perfRemoveImage(string $relative): void
     }
 }
 
+/** The same set drawn as a SLIDER, which is the other banner kind. */
+function perfSliderMarkup(int $n = 3, array $setAttributes = []): string
+{
+    BannerCard::query()->delete();
+    BannerSet::query()->delete();
+
+    $set = BannerSet::create($setAttributes + [
+        'name' => 'Perf slider', 'slug' => 'perf-s-'.uniqid(),
+        'status' => 'publish', 'position' => 0, 'kind' => 'slider',
+    ]);
+
+    foreach (range(1, $n) as $i) {
+        BannerCard::create([
+            'banner_set_id' => $set->id,
+            'image' => 'uploads/posters/perf-'.$i.'.jpg',
+            'alt' => 'Alt '.$i,
+            'image_w' => 810,
+            'image_h' => 1440,
+            'position' => $i,
+            'status' => 'publish',
+        ]);
+    }
+
+    $loaded = app(Banners::class)->forPreview($set->id);
+    expect($loaded)->not->toBeNull();
+    expect($loaded[0]->homePartial())->toBe('partials.home.slider-banner');
+
+    $html = view($loaded[0]->homePartial(), ['set' => $loaded[0], 'cards' => $loaded[1]])->render();
+
+    return (string) preg_replace('#<style>.*?</style>#s', '', $html);
+}
+
 /* ── 1. the fonts ────────────────────────────────────────────────────────── */
 
 /*
@@ -379,6 +411,91 @@ it('describes the same column count the stylesheet is given', function () {
     }
 
     perfRemoveImage('uploads/posters/perf-1.jpg');
+});
+
+/*
+ * THE SAME DEFECT, IN THE OTHER BANNER KIND. The slider shipped with `src`
+ * alone while the cards banner was being fixed, and its frame is the WIDER of
+ * the two: one picture at the full width of the content column, 1236 CSS
+ * pixels at the shipped site width against the cards banner's 669. An 810x1440
+ * original was downloaded whole into a 346px box on a phone.
+ *
+ * The preload is asserted as well as the <img>, and that half matters more
+ * than it looks: a `<link rel=preload as=image>` with no `imagesrcset` asks
+ * for the ORIGINAL, so a fixed <img> beside an unfixed preload downloads two
+ * files instead of one and the section ends up slower than before the fix.
+ *
+ * MUTATION: delete the srcset/sizes attributes from the <img> in
+ * partials/home/slider-banner.blade.php — red on the third expectation; delete
+ * imagesrcset/imagesizes from the <link> — red on the first.
+ */
+it('offers the phone-sized copies of a slider picture, on the preload and on the slide', function () {
+    perfMakeImage('uploads/posters/perf-1.jpg');
+    ImageVariants::generate('/uploads/posters/perf-1.jpg');
+
+    $markup = perfSliderMarkup(1);
+
+    expect($markup)->toContain('imagesrcset="/img-cache/200/uploads/posters/perf-1.jpg 200w')
+        ->and($markup)->toContain('/img-cache/400/uploads/posters/perf-1.jpg 400w')
+        ->and($markup)->toContain('/img-cache/800/uploads/posters/perf-1.jpg 800w')
+        ->and($markup)->toContain('imagesizes="min(100vw, 2400px)"')
+        ->and($markup)->toContain(' srcset="/img-cache/200/uploads/posters/perf-1.jpg 200w')
+        ->and($markup)->toContain(' sizes="min(100vw, 2400px)"')
+        // The original is a candidate at its real width, the copies stopping at
+        // 800w — this frame is wider than any of them on a laptop.
+        ->and($markup)->toContain('/uploads/posters/perf-1.jpg 810w');
+
+    perfRemoveImage('uploads/posters/perf-1.jpg');
+});
+
+/*
+ * RULE 1 for the slider, the same way it is asserted for the cards banner: a
+ * shop that has never made phone-sized copies emits the markup it emitted
+ * yesterday, to the byte.
+ *
+ * MUTATION: drop the `$bsSrcset !== ''` guard from the @if in the template and
+ * this is red with `srcset=""` in the markup; drop the `$bsLcpSrcset !== ''`
+ * guard and it is red with `imagesrcset=""`.
+ */
+it('emits no srcset at all for a slider picture with no copies on disk', function () {
+    $markup = perfSliderMarkup(1);
+
+    expect($markup)->not->toContain('srcset')     // covers imagesrcset too
+        ->and($markup)->not->toContain('sizes=');
+});
+
+/*
+ * THE SLIDER'S `sizes`, AND WHY IT IS ONE FLAT EXPRESSION.
+ *
+ * The frame is `min(100vw, --site-max) - 2 * --site-gutter`, and BOTH of those
+ * are owner settings — SiteLayout's `max` is a range 1040..2400 and `gutter` is
+ * 8..48. `var()` is not a length to the HTML parser, so neither can be named in
+ * a `sizes` attribute; a dropped entry defaults to 100vw. The expression is
+ * therefore written at the ends that can only OVERSTATE: the widest site the
+ * screen can be set to, and no gutter at all.
+ *
+ * Overstating is the safe direction and understating is the one that shows —
+ * the browser picks a file too small for the frame and the owner's banner comes
+ * out soft. This case pins the direction rather than the string, which is the
+ * property that has to hold when somebody edits the number.
+ *
+ * MUTATION: return 'min(100vw, 1680px)' from bannerSliderSizesAttribute() —
+ * red, because 1680 is under the 2400 the screen allows.
+ */
+it('never states a slider frame narrower than the settings can make it', function () {
+    $sizes = ImageVariants::bannerSliderSizesAttribute();
+
+    // No media query and no calc(): one box at every width.
+    expect($sizes)->not->toContain('max-width:')
+        ->and($sizes)->not->toContain('calc(')
+        ->and($sizes)->not->toContain('var(');
+
+    $widestSite = (int) (\App\Services\SiteLayout::SCHEMA['max'][4]['max'] ?? 0);
+    $narrowestGutter = (int) (\App\Services\SiteLayout::SCHEMA['gutter'][4]['min'] ?? -1);
+
+    expect($widestSite)->toBe(2400)
+        ->and($narrowestGutter)->toBe(8)
+        ->and($sizes)->toBe('min(100vw, '.$widestSite.'px)');
 });
 
 /* ── 3. the LCP preload ──────────────────────────────────────────────────── */

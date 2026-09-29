@@ -120,6 +120,7 @@
      * renders this partial with no parent at all.
      */
     use App\Services\Banners;
+    use App\Support\ImageVariants;
     use App\Support\Locale;
     use App\Support\Url;
 
@@ -156,7 +157,49 @@
     // labelled region with no label.
     $bsLabel = trim((string) $set->name) !== '' ? $set->name : __('store.home.banner_slider_label');
 
+    /*
+     * ── THE PICTURES ARE DELIVERED AT THE SIZE THE FRAME ASKS FOR ───────────
+     *
+     * This section shipped with `src` alone, which is the defect PERF found
+     * and fixed in cards-banner.blade.php on the same afternoon: a 1600px
+     * original painted into a 346px frame on a phone, downloaded whole.
+     *
+     * rootRelative() IS NOT DECORATION, for the reason the cards banner
+     * records: `banner_cards.image` is stored BARE (`uploads/x.jpg`, no leading
+     * slash) and detailSrcsetFor() splits a ROOT-RELATIVE path, so handing it
+     * the raw column answers '' every time and the whole fix is a no-op that
+     * looks applied.
+     *
+     * Memoised per image rather than per card. detailSrcsetFor() stats up to
+     * three files per call, and the FIRST picture is asked for twice on every
+     * render — once by the <link rel="preload"> above the markup and once by
+     * its own slide — before counting a set where the owner has picked the
+     * same photograph on two slides.
+     */
+    $bsSizes = ImageVariants::bannerSliderSizesAttribute();
+    $bsSrcsets = [];
+    $bsSrcsetFor = static function (string $image) use (&$bsSrcsets): string {
+        return $bsSrcsets[$image] ??= ImageVariants::detailSrcsetFor(ImageVariants::rootRelative($image));
+    };
+
     $bsFirst = $cards[0] ?? null;
+    /*
+     * Computed HERE, in this block, and not in a second inline PHP block
+     * inside the preload's condition below. Two reasons, and the second one
+     * cost a red suite before it was written down:
+     *
+     * 1. An inline PHP block on a line of its own leaves that line's own
+     *    indentation behind in the output — a whitespace change on every
+     *    homepage carrying this section, which is what
+     *    StorefrontEnglishUnchangedTest is for.
+     * 2. BLADE LOOKS FOR THE CLOSING DIRECTIVE AS TEXT, so writing one inside
+     *    a PHP comment in here ends this block early and the rest of it is
+     *    printed as markup — "syntax error, unexpected token" on a line that
+     *    is a comment. It is the same trap the cart page hit with a Blade
+     *    comment closer, one directive along. Name the directives in prose,
+     *    never spell them.
+     */
+    $bsLcpSrcset = $bsFirst !== null ? $bsSrcsetFor((string) $bsFirst->image) : '';
 @endphp
 @if ($bsFirst !== null)
   {{-- THE FIRST PICTURE IS THE ONE THE PAGE PRELOADS. With this section on it
@@ -166,7 +209,7 @@
        markup, which is the half that matters on a slow connection. Only the
        first — a preload of all five would spend the whole connection on
        pictures four of which nobody has asked to see. --}}
-  <link rel="preload" as="image" fetchpriority="high" href="{{ Banners::imageUrl($bsFirst->image) }}">
+  <link rel="preload" as="image" fetchpriority="high" href="{{ Banners::imageUrl($bsFirst->image) }}"@if ($bsLcpSrcset !== '') imagesrcset="{{ $bsLcpSrcset }}" imagesizes="{{ $bsSizes }}"@endif>
 @endif
 <style>
 /* Prefix kbbs-, used nowhere else in this application. (The cards banner is
@@ -491,6 +534,7 @@
              */
             $bsHref = Banners::safeUrl($bsCard->button_url);
             $bsAlt = trim((string) $bsCard->alt) !== '' ? $bsCard->alt : '';
+            $bsSrcset = $bsSrcsetFor((string) $bsCard->image);
           @endphp
           <div class="kbbs-s" role="group" aria-roledescription="slide"
                aria-label="{{ __('store.home.banner_slider_slide', ['n' => $bsI + 1, 'total' => $bsCount]) }}">
@@ -517,6 +561,7 @@
               <img src="{{ Banners::imageUrl($bsCard->image) }}"
                    alt="{{ $bsAlt }}"
                    draggable="false"
+                   @if ($bsSrcset !== '') srcset="{{ $bsSrcset }}" sizes="{{ $bsSizes }}" @endif
                    @if ($bsCard->image_w && $bsCard->image_h) width="{{ (int) $bsCard->image_w }}" height="{{ (int) $bsCard->image_h }}" @endif
                    @if ($bsI === 0) fetchpriority="high" @else loading="lazy" @endif
                    decoding="async">
