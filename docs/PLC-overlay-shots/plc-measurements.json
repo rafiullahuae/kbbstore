@@ -106,7 +106,7 @@
     ],
     "notice": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 70
+    "pressToTickMs": 23
   },
   {
     "shot": "overlay-leaving",
@@ -179,7 +179,7 @@
     "buttonsDisabled": [],
     "notice": null,
     "focus": " dvs-ticks",
-    "order": "10066"
+    "order": "10004"
   },
   {
     "shot": "return-tick",
@@ -256,7 +256,7 @@
     ],
     "notice": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 356,
+    "pressToTickMs": 160,
     "intercepted": false
   },
   {
@@ -307,7 +307,7 @@
     ],
     "notice": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 46
+    "pressToTickMs": 31
   },
   {
     "shot": "arabic-working",
@@ -444,7 +444,7 @@
     ],
     "notice": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 38
+    "pressToTickMs": 22
   },
   {
     "shot": "overlay-leaving",
@@ -517,7 +517,7 @@
     "buttonsDisabled": [],
     "notice": null,
     "focus": " dvs-ticks",
-    "order": "10070"
+    "order": "10008"
   },
   {
     "shot": "return-tick",
@@ -594,7 +594,7 @@
     ],
     "notice": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 178,
+    "pressToTickMs": 100,
     "intercepted": false
   },
   {
@@ -645,7 +645,7 @@
     ],
     "notice": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 128
+    "pressToTickMs": 29
   },
   {
     "shot": "arabic-working",
