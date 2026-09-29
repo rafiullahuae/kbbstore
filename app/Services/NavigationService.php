@@ -96,6 +96,26 @@ class NavigationService
      * into another's. It also means the scheme probe runs once per five
      * minutes per menu rather than once per item per request.
      *
+     * ── AND A THIRD THING IS DECIDED HERE: AN ITEM WITH NOWHERE TO GO ──────
+     *
+     * `MenuItemImporter` writes `target_type` = 'unresolved' with no url for a
+     * menu item whose target this shop did not import -- a WordPress page it
+     * refuses by name, a post type it has no screen for. Its own header argues
+     * the case: dropping the row loses something the owner authored, and
+     * keeping it as a link puts a 404 in the header of EVERY page, so the row
+     * is kept and is not rendered.
+     *
+     * Gated on BOTH halves. `target_type` is a column no screen in this
+     * application has ever written, so an item an admin created by hand with no
+     * URL -- a mega-panel column heading is exactly that -- cannot be caught by
+     * it. And the empty `url` is what makes it heal itself: the moment the
+     * owner types an address on Store -> Modules -> Mega Menu the item appears,
+     * because `MegaMenuApiController::update()` writes `url` and never touches
+     * `target_type`. There is nothing for him to know about this.
+     *
+     * The subtree goes with it, because `tree()` recurses on the item's id and
+     * a child of an item nobody can see is a link nobody can reach.
+     *
      * `visibility` rides along unfiltered here on purpose — this whole tree
      * is cached for five minutes across every visitor. Filtering by auth
      * state inside the cached closure would bake whichever visitor's login
@@ -107,6 +127,7 @@ class NavigationService
     {
         return $items
             ->where('parent_id', $parentId)
+            ->reject(fn ($item) => self::isParked($item))
             ->sortBy('position')
             ->map(fn ($item) => [
                 'id' => $item->id,
@@ -265,6 +286,19 @@ class NavigationService
         }
 
         return $out;
+    }
+
+    /**
+     * An imported menu item that has no destination yet.
+     *
+     * Static and public so the Mega Menu screen and a test can ask the same
+     * question this renderer asks, rather than a second spelling of it drifting
+     * away from the first.
+     */
+    public static function isParked($item): bool
+    {
+        return ($item->target_type ?? null) === \App\Services\Import\Entities\MenuItemImporter::UNRESOLVED
+            && trim((string) ($item->url ?? '')) === '';
     }
 
     public function flush(): void

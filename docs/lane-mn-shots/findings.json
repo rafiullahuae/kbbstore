@@ -1,0 +1,130 @@
+{
+  "errors": [],
+  "store_390": {
+    "scrollWidth": 390,
+    "headerHeight": 127,
+    "headerWidth": 390,
+    "bodyFont": "14px",
+    "hasSkincare": true,
+    "hasFaceCleansers": true,
+    "hasBrand": true,
+    "hasProduct": true,
+    "hasArticle": true,
+    "hasSale": true,
+    "hasParked": false,
+    "importedHrefs": [
+      "Skincare -> /collections/skincare/",
+      "Face Cleansers -> /collections/skincare/face-cleansers/",
+      "Beauty of Joseon -> /brands/beauty-of-joseon/",
+      "Our hero serum -> /product/serum-4021/",
+      "How to layer a K-beauty routine -> /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale -> https://kbeautybliss.com/super-sale/",
+      "Face Cleansers -> /collections/skincare/face-cleansers/",
+      "Beauty of Joseon -> /brands/beauty-of-joseon/",
+      "Our hero serum -> /product/serum-4021/",
+      "How to layer a K-beauty routine -> /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale -> https://kbeautybliss.com/super-sale/",
+      "How to layer a K-beauty routine -> /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale -> https://kbeautybliss.com/super-sale/"
+    ]
+  },
+  "drawer_390": {
+    "found": true,
+    "sheetHeight": 675,
+    "sheetWidth": 390,
+    "scrollWidth": 390,
+    "rows": [
+      "×",
+      "Skincare 3",
+      "Face Cleansers",
+      "Beauty of Joseon",
+      "Our hero serum",
+      "How to layer a K-beauty routine",
+      "Sale",
+      "Sign in",
+      "Create an account",
+      "Wishlist"
+    ],
+    "hasParked": false
+  },
+  "admin_390": {
+    "scrollWidth": 390,
+    "mentionsImported": true,
+    "mentionsParked": true,
+    "menuTabs": [
+      "K-Beauty Bliss Menu",
+      "Main menu DesktopMobile",
+      "+ New menu",
+      "✨ Load kbeautybliss.com menu"
+    ],
+    "topLevel": 4,
+    "rows": [
+      "Skincare 3 /collections/skincare/",
+      "Face Cleansers /collections/skincare/face-cleansers/",
+      "Beauty of Joseon /brands/beauty-of-joseon/",
+      "Our hero serum /product/serum-4021/",
+      "About us",
+      "How to layer a K-beauty routine /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale ↗ https://kbeautybliss.com/super-sale/"
+    ]
+  },
+  "store_1280": {
+    "scrollWidth": 1280,
+    "headerHeight": 94,
+    "headerWidth": 1280,
+    "bodyFont": "14px",
+    "hasSkincare": true,
+    "hasFaceCleansers": true,
+    "hasBrand": true,
+    "hasProduct": true,
+    "hasArticle": true,
+    "hasSale": true,
+    "hasParked": false,
+    "importedHrefs": [
+      "Skincare -> /collections/skincare/",
+      "Face Cleansers -> /collections/skincare/face-cleansers/",
+      "Beauty of Joseon -> /brands/beauty-of-joseon/",
+      "Our hero serum -> /product/serum-4021/",
+      "How to layer a K-beauty routine -> /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale -> https://kbeautybliss.com/super-sale/",
+      "Face Cleansers -> /collections/skincare/face-cleansers/",
+      "Beauty of Joseon -> /brands/beauty-of-joseon/",
+      "Our hero serum -> /product/serum-4021/",
+      "How to layer a K-beauty routine -> /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale -> https://kbeautybliss.com/super-sale/",
+      "How to layer a K-beauty routine -> /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale -> https://kbeautybliss.com/super-sale/"
+    ]
+  },
+  "panel_1280": {
+    "open": true,
+    "height": 134,
+    "width": 216,
+    "links": [
+      "Face Cleansers -> /collections/skincare/face-cleansers/",
+      "Beauty of Joseon -> /brands/beauty-of-joseon/",
+      "Our hero serum -> /product/serum-4021/"
+    ]
+  },
+  "admin_1280": {
+    "scrollWidth": 1280,
+    "mentionsImported": true,
+    "mentionsParked": true,
+    "menuTabs": [
+      "K-Beauty Bliss Menu",
+      "Main menu DesktopMobile",
+      "+ New menu",
+      "✨ Load kbeautybliss.com menu"
+    ],
+    "topLevel": 4,
+    "rows": [
+      "Skincare 3 /collections/skincare/",
+      "Face Cleansers /collections/skincare/face-cleansers/",
+      "Beauty of Joseon /brands/beauty-of-joseon/",
+      "Our hero serum /product/serum-4021/",
+      "About us",
+      "How to layer a K-beauty routine /blog/how-to-layer-a-k-beauty-routine/",
+      "Sale ↗ https://kbeautybliss.com/super-sale/"
+    ]
+  }
+}

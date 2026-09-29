@@ -1418,7 +1418,7 @@ it('exports one group at a time, and the pieces land what the whole export lands
      * exporter alone: a group that writes the right CSV and lands nothing is
      * the failure this is for.
      */
-    $order = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses'];
+    $order = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'navigation', 'addresses'];
 
     $confirmations = [
         'seo' => 'seo:catalogue',
@@ -1775,7 +1775,7 @@ it('draws the groups, the warning and the bars in a real browser, and sends what
 
     // ── The groups are on the page, in the export's order, all ticked ────────
     expect($found['at_rest']['groups'])
-        ->toBe(['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses']);
+        ->toBe(['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'navigation', 'addresses']);
     expect($found['at_rest']['all_ticked'])->toBeTrue('the screen no longer offers the whole export by default');
     expect($found['at_rest']['warnings'])->toBe([]);
     expect($found['at_rest']['start_disabled'])->toBeFalse();
@@ -1882,7 +1882,7 @@ it('reads a request with no selection in it as the whole export, and an empty on
 
     $probe = json_decode(implode("\n", $lines), true);
 
-    $everything = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses'];
+    $everything = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'navigation', 'addresses'];
 
     expect($probe['no_groups_field']['groups'])->toBe($everything);
     expect($probe['no_groups_field']['runner_groups'])->toBe($everything);
@@ -2047,9 +2047,9 @@ it('packs one zip per group, and each one imports on its own into what the whole
      * So: the real ImportRunner, the same class `kbb:import` runs, pointed at
      * the unpacked archive and nothing else.
      */
-    $dir = gkExport(implode(',', ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses']));
+    $dir = gkExport(implode(',', ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'navigation', 'addresses']));
 
-    $order = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses'];
+    $order = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'navigation', 'addresses'];
 
     $unpacked = [];
 

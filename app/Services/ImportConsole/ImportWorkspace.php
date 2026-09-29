@@ -206,6 +206,24 @@ final class ImportWorkspace
             'unique' => false,
             'help' => 'Your blog. The export writes every WordPress post type into this one file; only articles are imported, and a page or anything else in it is named in the report rather than written. An article is served from the site root, so one whose address this shop already owns -- /about/, /wishlist/, /feed/ -- is refused by name rather than written somewhere nothing can reach.',
         ],
+        /*
+         * MUST MIRROR ImportRunner::entities(), in the same order -- PostImport
+         * Test pins the two lists against each other element by element.
+         */
+        'menus' => [
+            'file' => 'menus.csv',
+            'label' => 'Navigation menus',
+            'id' => ['term_id', 'id', 'menu_id'],
+            'unique' => true,
+            'help' => 'The menus from Appearance → Menus in WordPress. An imported menu arrives SWITCHED OFF and never replaces one already here — you turn it on from Store → Modules → Mega Menu once you have looked at it.',
+        ],
+        'menu-items' => [
+            'file' => 'menu_items.csv',
+            'label' => 'Navigation items',
+            'id' => ['id', 'post_id', 'item_id'],
+            'unique' => true,
+            'help' => 'What is in each menu, in order and at the right depth. Every item points at a category, brand, product or article by its WordPress id, so run this after the catalogue and the articles; anything that cannot be placed is imported with its label and its position, held out of the header until you give it an address, and named in the report.',
+        ],
     ];
 
     /**

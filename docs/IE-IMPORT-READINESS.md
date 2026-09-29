@@ -214,7 +214,9 @@ WordPress saying, in its own voice, that no address of that kind was ever served
 
 ## 5. What only the owner can decide
 
-**5.1 The navigation menu is retyped.** 3 items across 1 menu in the fixture;
+**5.1 The navigation menu is retyped.** ▲ **CLOSED by Lane MN, plugin 1.7.0** — the navigation is exported as `menus.csv` and `menu_items.csv` and imported into these very columns; `docs/MN-NAVIGATION-IMPORT.md` is the account, including what happens to an item pointing at a page §5.2 refuses. The paragraph below is left as it was written, because it is this document's record of what was true when it was measured.
+
+ 3 items across 1 menu in the fixture;
 the real figure is in the manifest note on his own export. Nothing imports it.
 The `menus` and `menu_items` tables have `source_term_id` and `source_post_id`
 columns waiting, so this is a gap a later lane can close — but it is not closed,
