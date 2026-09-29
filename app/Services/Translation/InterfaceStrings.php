@@ -144,6 +144,25 @@ final class InterfaceStrings
             'header.wishlist_label' => 'Wishlist',
             'header.cart_label' => 'Cart',
             'header.trending_heading' => 'TRENDING',
+            /*
+             * ── THE FLAG BAR'S THREE STRINGS — Lane FB ──────────────────────
+             *
+             * `flagbar.text` is the line the strip SHIPS with. It is here, and
+             * not a default string in HeaderSettings::SCHEMA, because the
+             * shipped wording is this app's and has to be translatable — an
+             * Arabic shopper reading an English reassurance about authenticity
+             * is the one reader this strip exists for. Appearance → Header →
+             * Flag bar → Wording overrides it, and an override is the owner's
+             * own words in whatever language he types them; the schema note
+             * says so where he reads it.
+             *
+             * The two flag names are not decoration. A flag beside the words
+             * "UAE's Authentic K-Beauty Store" is carrying part of the claim,
+             * so it is an image with a name rather than aria-hidden furniture.
+             */
+            'flagbar.text' => "UAE's Authentic K-Beauty Store",
+            'flagbar.uae' => 'Flag of the United Arab Emirates',
+            'flagbar.korea' => 'Flag of South Korea',
             'footer.tagline' => 'Authentic Korean beauty, curated for the UAE.',
             'footer.whatsapp_cta' => 'Chat on WhatsApp',
             'footer.shop_heading' => 'Shop',

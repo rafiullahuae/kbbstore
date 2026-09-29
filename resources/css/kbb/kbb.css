@@ -3788,3 +3788,42 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kbb-tile .heart svg{width:17px;height:17px}
 .kbb-tile .heart.on{color:var(--pink)}
 .kbb-tile .heart.on svg{fill:var(--pink)}
+
+/* ── THE FLAG BAR ──────────────────────────────────────────────── Lane FB ──
+   The thin strip above the header: UAE flag, one short line, Korean flag.
+   Appearance → Header → Flag bar. Eleven settings; everything below is a
+   var() with the shipped value as its own fallback, so the rules read the
+   same whether or not the element carries a style attribute.
+
+   ▲ ITS HEIGHT IS RESERVED HERE, WHICH IS THE WHOLE REASON THIS IS NOT AN
+   INLINE <style>. The strip sits above the header, so anything that sizes it
+   late pushes the entire page down after first paint. This sheet is loaded
+   render-blocking from <head>, so `min-height` is known before a single
+   pixel is drawn and the measured layout shift with the strip on is the same
+   number as with it off.
+
+   ▲ AND IT IS `display:none` UNTIL A CLASS SAYS OTHERWISE. `kfb-m` turns it
+   on below 900px and `kfb-d` above it; nothing else turns it on. 900px is
+   the phone/desktop line this stylesheet already uses in twenty other rules,
+   not a new breakpoint. Shipped: kfb-m only, which is the owner's "only for
+   mobile, keep this turned off for desktop by default".
+
+   ▲ NOT ONE PHYSICAL DIRECTION. `padding-inline`, `margin-inline` and the
+   source order of the three children are the whole of the layout, so /ar
+   mirrors with no `[dir]` selector and no second rule to keep in step. */
+.kfb{display:none;background:var(--kfb-bg,#FDEFF4);min-height:var(--kfb-h,30px);box-sizing:border-box}
+.kfb-in{box-sizing:border-box;max-width:min(100%,var(--site-max,1680px));margin-inline:auto;
+    min-height:var(--kfb-h,30px);padding-inline:var(--site-gutter,22px);
+    display:flex;align-items:center;gap:10px}
+/* margin-inline:auto rather than justify-content, so the words are centred in
+   what is left whether there are two flags beside them, or none. */
+.kfb-tx{margin-inline:auto;font-size:var(--kfb-s,12px);line-height:1.25;font-weight:600;
+    letter-spacing:.005em;color:var(--kfb-ink,#E0567B);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kfb-pill .kfb-tx{border:1px solid var(--kfb-bd,#F0B6C9);border-radius:99px;padding:2px 12px}
+.kfb-fl{display:flex;flex:0 0 auto}
+/* height alone: both drawings are 3:2, their own official ratio, so the width
+   follows and neither flag can be squeezed into the other's proportions. */
+.kfb-fl svg{display:block;height:var(--kfb-fh,14px);width:auto;border-radius:1px}
+@media (max-width:900px){.kfb-m{display:block}}
+@media (min-width:901px){.kfb-d{display:block}}
