@@ -24,7 +24,7 @@ Measured in this lane's worktree, both ways, on the same tree.
 | | assertions red | the eight guards |
 |---|---|---|
 | **Before** (as this branch ships) | **2** — see below | not run; both are static file checks |
-| **After** (the block applied) | **0** | **93 passed, 0 failed**, 33s |
+| **After** (the block applied) | **0** | **94 passed, 0 failed**, 33s |
 
 Both red-before are the *finished-state* pin CLAUDE.md prescribes — `=== 1`,
 never `->not->toContain` — so each goes green the moment the include lands and
@@ -39,10 +39,14 @@ ReleaseTheHoldTest > it includes the release panel on the admin console exactly 
     Failed asserting that 0 is identical to 1.
 ```
 
-The 93 counted above are `ReleaseTheHoldTest`, `EverythingIsMountedOnceTest`,
+The 94 counted above are `ReleaseTheHoldTest`, `EverythingIsMountedOnceTest`,
 `AdminNavAndIdsTest`, `AdminConsoleControlsAreLiveTest`, `TranslationConsoleTest`,
 `AdminConsoleJavaScriptParsesTest`, `AdminConsoleScriptParsesTest` and
 `VoidEndpointIsSharedTest`, run together with the block applied.
+
+The whole suite was run the same way, with the block applied and nothing else
+changed: **7,751 passed, 43 skipped, 0 failed**, 937s
+(`KBB_WP_DB=kbb_wp_od vendor/bin/pest --compact`).
 
 ---
 

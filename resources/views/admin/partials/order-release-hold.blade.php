@@ -531,6 +531,14 @@
     if (orderId !== id || !itemsPad() || document.getElementById(PANEL_ID)) return;
     if (headingOrderNumber() !== heading) return;
 
+    /*
+     * A FRESH READ MEANS THE SCREEN WAS REDRAWN, so the last release's message
+     * is stale by definition: it ends with "the rest of this screen was drawn
+     * before the release", and after a repaint that sentence is false. Cleared
+     * here and nowhere else — the release itself does not re-inject, so the
+     * message survives exactly as long as the screen it is describing.
+     */
+    said = null;
     state = res.body;
     insert(itemsPad());
   }
