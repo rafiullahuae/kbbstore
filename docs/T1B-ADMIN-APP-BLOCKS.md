@@ -115,14 +115,16 @@ shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language
 > it keeps the handover document and the applied console in step` is what says
 > so, and it is the test that caught this.
 >
-> **And it caught it again, 29 September**, when `setap` — Appearance → Set →
-> Desktop / Mobile — joined the set with the screen Lane SA delivered. The lane
-> could not edit the console, so the integrator added the id to `TITLES` and to
-> `LATE_RENDERED` and did not update this document; the full suite went red on
-> this case alone, which is precisely the job it was written for. `setap` is
-> safe to arm on the same condition as the rest: the partial's `render()` runs
-> synchronously before it awaits anything, so the replay marker inside
-> `#content` is already gone by the time its task runs.
+> **Moved again, 29 September (Lane FIN2): `'setap'`.** Appearance → Set joined
+> the armed set when Lane SA merged and this replacement was not moved with it,
+> so the integration branch was RED on that same case — `block 3 is not applied
+> to app.blade.php exactly once`, 0 against 1 — before any lane of this round
+> had touched the console. The repair is here and not in `app.blade.php`: the
+> console is right and the record of it had fallen behind. Note that `'setap'`
+> is the first id to join this set without a comment paragraph of its own; the
+> four before it each earned one, and the condition they each state — the
+> partial wraps `window.go` and calls `render()` before it awaits anything — is
+> the condition Appearance → Set meets too.
 
 **Anchor** (occurs once):
 
