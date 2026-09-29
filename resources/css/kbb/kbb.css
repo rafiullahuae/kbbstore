@@ -610,7 +610,9 @@
   /* footer (dark) */
   footer{background:#241C20;color:#CDBFC6;padding:52px 0 26px}
   .fcols{display:grid;grid-template-columns:1.6fr 1fr 1fr 1.2fr;gap:26px;margin-bottom:32px}
-  .fcol h5{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#fff;margin-bottom:14px;font-weight:700}
+  /* h2, not h5 — partials/footer.blade.php carries the reason (Lane PERF).
+     Every declaration below is unchanged; only the tag it selects moved. */
+  .fcol h2{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#fff;margin-bottom:14px;font-weight:700}
   .fcol a{display:block;font-size:13px;color:#CDBFC6;margin-bottom:9px;transition:.15s}
   .fcol a:hover{color:var(--pink)}
   .fcol p{font-size:13px;color:#B5A6AD;max-width:280px;line-height:1.6}

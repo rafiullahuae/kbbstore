@@ -1,0 +1,446 @@
+{
+ "before-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "bodyHeight": 9259,
+  "headings": [
+   "H1",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H3",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H5",
+   "H5",
+   "H5"
+  ],
+  "footerHeading": {
+   "w": 153.95,
+   "h": 19.19,
+   "font": "12px",
+   "weight": "700",
+   "color": "rgb(255, 255, 255)",
+   "family": "Poppins"
+  },
+  "cardName": {
+   "w": 153,
+   "h": 48.66,
+   "font": "13px",
+   "weight": "600",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "price": {
+   "w": 51.88,
+   "h": 19,
+   "font": "13.5px",
+   "weight": "700",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerBand": {
+   "w": 233.33,
+   "h": 52,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerHeading": {
+   "w": 122.75,
+   "h": 15,
+   "font": "13px",
+   "weight": "650",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerCard": {
+   "w": 233.33,
+   "h": 311.09,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "banner": [
+   {
+    "css": [
+     233.3,
+     259.1
+    ],
+    "natural": [
+     810,
+     1440
+    ],
+    "current": "/uploads/posters/perf-poster-1.jpg"
+   },
+   {
+    "css": [
+     233.3,
+     259.1
+    ],
+    "natural": [
+     810,
+     1440
+    ],
+    "current": "/uploads/posters/perf-poster-2.jpg"
+   },
+   {
+    "css": [
+     233.3,
+     259.1
+    ],
+    "natural": [
+     720,
+     1280
+    ],
+    "current": "/uploads/posters/perf-poster-3.jpg"
+   }
+  ],
+  "fontsLoaded": [
+   "Poppins 400",
+   "Poppins 600",
+   "Poppins 700",
+   "Poppins 800"
+  ]
+ },
+ "before-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "bodyHeight": 8271,
+  "headings": [
+   "H1",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H3",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H5",
+   "H5",
+   "H5"
+  ],
+  "footerHeading": {
+   "w": 241.25,
+   "h": 19.19,
+   "font": "12px",
+   "weight": "700",
+   "color": "rgb(255, 255, 255)",
+   "family": "Poppins"
+  },
+  "cardName": {
+   "w": 205.75,
+   "h": 53.2,
+   "font": "13px",
+   "weight": "600",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "price": {
+   "w": 49.95,
+   "h": 19,
+   "font": "13px",
+   "weight": "700",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerBand": {
+   "w": 260,
+   "h": 58,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerHeading": {
+   "w": 149.42,
+   "h": 16,
+   "font": "13px",
+   "weight": "650",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerCard": {
+   "w": 260,
+   "h": 346.66,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "banner": [
+   {
+    "css": [
+     260,
+     288.7
+    ],
+    "natural": [
+     810,
+     1440
+    ],
+    "current": "/uploads/posters/perf-poster-1.jpg"
+   },
+   {
+    "css": [
+     260,
+     288.7
+    ],
+    "natural": [
+     810,
+     1440
+    ],
+    "current": "/uploads/posters/perf-poster-2.jpg"
+   },
+   {
+    "css": [
+     260,
+     288.7
+    ],
+    "natural": [
+     720,
+     1280
+    ],
+    "current": "/uploads/posters/perf-poster-3.jpg"
+   }
+  ],
+  "fontsLoaded": [
+   "Poppins 400",
+   "Poppins 600",
+   "Poppins 700",
+   "Poppins 800"
+  ]
+ },
+ "after-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "bodyHeight": 9272,
+  "headings": [
+   "H1",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H3",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2"
+  ],
+  "footerHeading": {
+   "w": 153.95,
+   "h": 19.19,
+   "font": "12px",
+   "weight": "700",
+   "color": "rgb(255, 255, 255)",
+   "family": "Poppins"
+  },
+  "cardName": {
+   "w": 153,
+   "h": 48.66,
+   "font": "13px",
+   "weight": "600",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "price": {
+   "w": 51.5,
+   "h": 19,
+   "font": "13.5px",
+   "weight": "700",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerBand": {
+   "w": 233.33,
+   "h": 52,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerHeading": {
+   "w": 122.75,
+   "h": 15,
+   "font": "13px",
+   "weight": "650",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerCard": {
+   "w": 233.33,
+   "h": 311.09,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "banner": [
+   {
+    "css": [
+     233.3,
+     259.1
+    ],
+    "natural": [
+     233,
+     414
+    ],
+    "current": "/img-cache/400/uploads/posters/perf-poster-1.jpg"
+   },
+   {
+    "css": [
+     233.3,
+     259.1
+    ],
+    "natural": [
+     233,
+     414
+    ],
+    "current": "/img-cache/400/uploads/posters/perf-poster-2.jpg"
+   },
+   {
+    "css": [
+     233.3,
+     259.1
+    ],
+    "natural": [
+     233,
+     414
+    ],
+    "current": "/img-cache/400/uploads/posters/perf-poster-3.jpg"
+   }
+  ],
+  "fontsLoaded": [
+   "Poppins 400",
+   "Poppins 600",
+   "Poppins 700",
+   "Poppins 800"
+  ]
+ },
+ "after-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "bodyHeight": 8271,
+  "headings": [
+   "H1",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H3",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2",
+   "H2"
+  ],
+  "footerHeading": {
+   "w": 241.25,
+   "h": 19.19,
+   "font": "12px",
+   "weight": "700",
+   "color": "rgb(255, 255, 255)",
+   "family": "Poppins"
+  },
+  "cardName": {
+   "w": 205.75,
+   "h": 53.2,
+   "font": "13px",
+   "weight": "600",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "price": {
+   "w": 49.61,
+   "h": 19,
+   "font": "13px",
+   "weight": "700",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerBand": {
+   "w": 260,
+   "h": 58,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerHeading": {
+   "w": 149.42,
+   "h": 16,
+   "font": "13px",
+   "weight": "650",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "bannerCard": {
+   "w": 260,
+   "h": 346.66,
+   "font": "14px",
+   "weight": "400",
+   "color": "rgb(42, 34, 40)",
+   "family": "Poppins"
+  },
+  "banner": [
+   {
+    "css": [
+     260,
+     288.7
+    ],
+    "natural": [
+     263,
+     468
+    ],
+    "current": "/img-cache/400/uploads/posters/perf-poster-1.jpg"
+   },
+   {
+    "css": [
+     260,
+     288.7
+    ],
+    "natural": [
+     263,
+     468
+    ],
+    "current": "/img-cache/400/uploads/posters/perf-poster-2.jpg"
+   },
+   {
+    "css": [
+     260,
+     288.7
+    ],
+    "natural": [
+     263,
+     468
+    ],
+    "current": "/img-cache/400/uploads/posters/perf-poster-3.jpg"
+   }
+  ],
+  "fontsLoaded": [
+   "Poppins 400",
+   "Poppins 600",
+   "Poppins 700",
+   "Poppins 800"
+  ]
+ }
+}

@@ -65,6 +65,65 @@ final class Tile
     ];
 
     /**
+     * The poster, or null when the file it names is not on disk.      Lane PERF
+     *
+     * ── THE DEFECT, MEASURED ON THE OWNER'S OWN SHOP ────────────────────────
+     *
+     * PageSpeed Insights, extrabeauty.ae, 29 September 2026. Best Practices
+     * scored 96 instead of 100 and the ONE audit that cost it was:
+     *
+     *   Browser errors were logged to the console
+     *     …ugc/poster-20….jpg:1:0   Failed to load resource: the server
+     *     (extrabeauty.ae)          responded with a status of 404 (Not Found)
+     *
+     * The row is real and published, `poster_path` holds a perfectly
+     * well-formed `/uploads/ugc/poster-20260928-081820-fCoQkEvJ5G.jpg`, and
+     * the file was never written — the cover is CUT from the clip by
+     * UgcTranscoder, and a cut that fails leaves the column set and the disk
+     * empty. `UgcPath::stored()` checks the SHAPE of the string, which is its
+     * job and is not this question; nothing between there and the browser ever
+     * asks whether the file exists.
+     *
+     * ── WHY null AND NOT A PLACEHOLDER ──────────────────────────────────────
+     *
+     * Because the template already draws this case, correctly, and says so:
+     * "A clip may now be published without a cover … the reserved box is the
+     * tile's own aspect-ratio and does not depend on this element existing, so
+     * leaving it out shifts nothing." A cover that is missing from disk and a
+     * cover that was never set are the same thing to a shopper; they were only
+     * different to the browser, which fetched one of them and got a 404.
+     *
+     * So the tile still draws, the clip still plays, CLS does not move, and
+     * the console is clean.
+     *
+     * ── THE COST IS ONE is_file() PER TILE, AND IT IS THE PRICE ALREADY PAID ─
+     *
+     * App\Support\ImageVariants makes this exact trade and states it: "Two
+     * is_file() calls per tile, fifty on a full grid, are answered from the
+     * kernel's dentry cache and out of PHP's own stat cache; they cost far less
+     * than one 190KB download they save." A rail draws at most a handful of
+     * tiles. The same header explains why the disk is the authority and a
+     * column is not: "A column can disagree with the disk … The disk cannot
+     * disagree with itself."
+     *
+     * NOT MEMOISED, for the reason that file gives as well: a process-level
+     * memo is wrong in exactly the request that has just written the file.
+     *
+     * The path is already `/uploads/ugc/<one segment>` — UgcPath::stored()
+     * guarantees it, with no traversal, no second directory and no scheme —
+     * so there is nothing left for this to sanitise and it deliberately does
+     * not try to. A null in means a null out.
+     */
+    private static function posterOnDisk(?string $poster): ?string
+    {
+        if ($poster === null) {
+            return null;
+        }
+
+        return is_file(public_path(ltrim($poster, '/'))) ? $poster : null;
+    }
+
+    /**
      * @return array<string, mixed>|null  null when this clip cannot honestly be drawn
      */
     public static function fromVideo(UgcVideo $video, string $locale): ?array
@@ -91,7 +150,7 @@ final class Tile
          * and a tile with neither a poster nor a playable source is an empty box
          * that plays nothing, so that one is still refused.
          */
-        $poster = UgcPath::stored($video->poster_path);
+        $poster = self::posterOnDisk(UgcPath::stored($video->poster_path));
         $src = UgcPath::stored($video->file_path);
 
         if ($poster === null && $src === null) {

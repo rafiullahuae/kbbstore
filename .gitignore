@@ -23,6 +23,13 @@
 !/storage/framework/views/.gitignore
 !/storage/framework/testing/.gitignore
 /storage/logs/*.log
+
+# Lane PERF's working directory: Lighthouse JSON/HTML, suite output and page
+# dumps, tens of megabytes of it. CLAUDE.md's scratchpad landmine is why it is
+# here and not in the session scratchpad -- that directory is SHARED between
+# lanes and a generic filename in it is how one lane comes to report another's
+# numbers. The reports that are a deliverable are committed under docs/.
+/storage/perf-logs/
 /storage/.kbb-installed
 
 /bootstrap/cache/*.php
