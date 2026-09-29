@@ -114,6 +114,15 @@ shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language
 > applied, so when that line moves, this moves with it; `TranslationConsoleTest >
 > it keeps the handover document and the applied console in step` is what says
 > so, and it is the test that caught this.
+>
+> **And it caught it again, 29 September**, when `setap` — Appearance → Set →
+> Desktop / Mobile — joined the set with the screen Lane SA delivered. The lane
+> could not edit the console, so the integrator added the id to `TITLES` and to
+> `LATE_RENDERED` and did not update this document; the full suite went red on
+> this case alone, which is precisely the job it was written for. `setap` is
+> safe to arm on the same condition as the rest: the partial's `render()` runs
+> synchronously before it awaits anything, so the replay marker inside
+> `#content` is already gone by the time its task runs.
 
 **Anchor** (occurs once):
 
@@ -167,7 +176,7 @@ const LATE_RENDERED=new Set(['media','tax']);
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 ```
 
 ---
