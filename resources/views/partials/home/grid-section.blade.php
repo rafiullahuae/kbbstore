@@ -79,7 +79,11 @@
     second English source for a value the owner types is one of the two silently
     wrong, which is the rule InterfaceStrings states for the cards banner's own
     headings. The one string this section supplies ITSELF is the fallback on the
-    button, and that is `store.home.grid_view_all`.
+    button, and that is `store.product_grid.view_all` — the key the shop
+    ALREADY has for the "View all" under a product grid, reused rather than
+    duplicated. ArabicInterfaceDraftsTest refuses a second key carrying the same
+    Arabic, and it is right to: two keys for one sentence is two things for a
+    translator to keep in step.
 --}}
 @php
     $gsKey = $section->sectionKey();
@@ -126,6 +130,6 @@
        will follow. A refused address draws NO BUTTON rather than a button
        pointing at `#`: rule 5, and the same distinction SafeUrl's own header
        draws between a link and a picture. --}}
-  <div class="gs-foot"><a class="gs-all" href="{{ $gsHref }}">{{ $gsLabel !== '' ? $gsLabel : __('store.home.grid_view_all') }}</a></div>
+  <div class="gs-foot"><a class="gs-all" href="{{ $gsHref }}">{{ $gsLabel !== '' ? $gsLabel : __('store.product_grid.view_all') }}</a></div>
   @endif
 </div></section>

@@ -199,8 +199,12 @@ are printed as typed and escaped, never keyed — a second English source for a
 value he types is one of the two silently wrong, which is the rule
 `InterfaceStrings` states for the cards banner's own headings. The one string
 this section supplies itself is the fallback on the button, and that is
-`store.home.grid_view_all` — "View all" / "عرض الكل", in `InterfaceStrings` and
-`ArabicInterfaceDrafts`.
+`store.product_grid.view_all` — the key the shop ALREADY has for the "View all"
+under a product grid (`components/product-grid.blade.php`,
+`store/brands.blade.php`), reused rather than duplicated. A new key was written
+first and `ArabicInterfaceDraftsTest` refused it twice in one run: on the draft
+count, and on "it never labels two controls on one screen with the same Arabic",
+because both would have carried عرض الكل.
 
 ---
 

@@ -639,6 +639,27 @@ final class InterfaceStrings
              * so this is rendered with {!! !!}.
              */
             'product_card.price_range' => ':low – :high',
+            /*
+             * ── AND THE REUSABLE GRID SECTION'S BUTTON READS THIS ONE — Lane GS
+             *
+             * It is the fallback under a product grid when the owner has
+             * switched the "View all" button on and left its text box empty,
+             * which is the same sentence in the same place as the two callers
+             * above it — so it is the SAME KEY, not a second one.
+             *
+             * A second key was written first, and ArabicInterfaceDraftsTest
+             * refused it twice in one run: once on the draft count and once on
+             * "it never labels two controls on one screen with the same
+             * Arabic", because both would have carried عرض الكل. Two keys for
+             * one sentence is two things for a translator to keep in step and
+             * two ways for the shop to disagree with itself.
+             *
+             * Everything ELSE that section prints — the heading, the
+             * sub-heading, the eyebrow and the button's own text — is typed
+             * into Appearance → Grid sections and is the OWNER'S, which is why
+             * none of it is here: a second English source for a value the owner
+             * types is one of the two silently wrong.
+             */
             'product_grid.view_all' => 'View all',
             'quick_view.dialog_label' => 'Quick view',
             'quick_view.close_label' => 'Close',
@@ -853,19 +874,6 @@ final class InterfaceStrings
             'home.slider_previous' => 'Previous',
             'home.slider_next' => 'Next',
             'home.category_product_count' => ':count product|:count products',
-            /*
-             * ── THE ONE STRING THE REUSABLE PRODUCT GRID SUPPLIES — Lane GS ──
-             *
-             * The fallback on the "View all" button, used when the owner has
-             * switched the button on and left its text box empty. Everything
-             * else that section prints — the heading, the sub-heading, the
-             * eyebrow and the button's own text — is typed into Appearance →
-             * Grid sections and is the OWNER'S, which is why it is not here:
-             * a second English source for a value the owner types is one of the
-             * two silently wrong. Same rule, same reason, as the cards banner's
-             * two strings above.
-             */
-            'home.grid_view_all' => 'View all',
             'home.bundles_heading' => 'Big savings bundles',
             'home.bundles_count' => ':count set|:count sets',
             'home.bundles_subtitle' => 'Complete routines, priced below the sum of their parts.',

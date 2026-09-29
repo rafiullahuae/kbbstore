@@ -379,7 +379,21 @@ class GridSectionApiController extends Controller
             $query->where('name', 'like', '%'.$q.'%');
         }
 
-        $rows = $query->orderBy('name')->limit(40)->get();
+        /*
+         * `orderBy('id')` AFTER THE NAME, AND IT IS NOT DECORATION — caught by
+         * StableOrderingTest's walk of app/ for "a sliced query whose last
+         * ORDER BY key can tie".
+         *
+         * This is a LIMIT taken over `name`, and a catalogue has duplicate
+         * names: two sizes of one product, a re-import that landed a second
+         * row, a variant parent beside its own name. Where two rows tie at the
+         * fortieth place the engine is free to return either, and it is free to
+         * choose differently between two runs of the identical query — so the
+         * owner types one letter, the list redraws, and a product he could see
+         * a moment ago is gone with nothing to explain it. `id` is the primary
+         * key, so it cannot tie and it costs nothing to add.
+         */
+        $rows = $query->orderBy('name')->orderBy('id')->limit(40)->get();
 
         return response()->json([
             'ok' => true,

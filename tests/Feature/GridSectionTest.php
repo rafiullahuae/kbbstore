@@ -509,9 +509,18 @@ it('prints its own translated words when the owner leaves the button text empty'
 
     expect(gsBody())->toContain('>View all</a>');
 
-    // The key exists on both sides, so /ar answers Arabic rather than falling
-    // through to the English literal.
-    expect(__('store.home.grid_view_all'))->toBe('View all');
+    /*
+     * THE SHOP'S EXISTING KEY, not a second one. `store.product_grid.view_all`
+     * is what components/product-grid.blade.php and store/brands.blade.php
+     * already print under a product grid, and this section prints the same
+     * sentence in the same place.
+     *
+     * A new key was written first and ArabicInterfaceDraftsTest refused it
+     * twice in one run — on the draft count, and on "it never labels two
+     * controls on one screen with the same Arabic". Reusing it is not a
+     * shortcut; it is one sentence with one translation.
+     */
+    expect(__('store.product_grid.view_all'))->toBe('View all');
 });
 
 it('draws no button at all when the owner switched it off, whatever the link says', function () {
