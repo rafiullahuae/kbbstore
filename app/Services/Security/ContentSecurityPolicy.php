@@ -74,6 +74,13 @@ use App\Support\Url;
  *     and talks to api.stripe.com. Card entry is the one feature on this shop
  *     that a wrong policy takes down for money, so its three hosts are named
  *     on three different directives rather than left to default-src.
+ *   - `resources/views/partials/checkout/express-wallets.blade.php` mounts the
+ *     Express Checkout Element on the same js.stripe.com script. It adds ONE
+ *     host, pay.google.com, on script-src and frame-src: Stripe.js loads
+ *     Google's pay.js from there and Google frames the Google Pay sheet from
+ *     there. Apple Pay adds nothing — Safari's ApplePaySession draws a native
+ *     sheet, which is not a document and fetches nothing this policy governs.
+ *     The domain-association file Apple verifies is a same-origin GET.
  *   - The payment marks in the footer are INLINE <svg> elements out of
  *     `App\Support\PaymentMarkArt`, not image loads. An <svg> written into the
  *     document is not a fetch and no directive applies to it — which is worth
@@ -183,6 +190,25 @@ final class ContentSecurityPolicy
             'https://connect.facebook.net',
             // App\Services\Analytics — TikTok's events.js, same shape.
             'https://analytics.tiktok.com',
+            /*
+             * GOOGLE PAY, and only Google Pay.
+             *
+             * resources/views/partials/checkout/express-wallets.blade.php
+             * mounts Stripe's Express Checkout Element. On Chrome and Android
+             * that element draws a Google Pay button, and Stripe.js loads
+             * Google's own pay.js from this host into THIS document to do it.
+             * Named exactly, with no wildcard: pay.google.com and nothing
+             * under it.
+             *
+             * THERE IS NO APPLE HOST HERE AND THAT IS NOT AN OMISSION. Apple
+             * Pay on the web through Stripe uses Safari's built-in
+             * ApplePaySession API — the sheet is native browser UI, not a
+             * document, so it fetches nothing this policy governs. What Apple
+             * Pay needs instead is the domain association file, which is a
+             * same-origin GET (App\Http\Controllers\Store\AppleDomainController)
+             * and is already covered by 'self' on default-src.
+             */
+            'https://pay.google.com',
         ],
 
         'style-src' => [
@@ -233,10 +259,22 @@ final class ContentSecurityPolicy
             'https://api.stripe.com',
         ],
 
-        // Stripe's card fields are iframes, and 3-D Secure opens a second one
-        // on hooks.stripe.com. 'none' here is a checkout that cannot take a
-        // card, which is why this directive is named rather than defaulted.
-        'frame-src' => ['https://js.stripe.com', 'https://hooks.stripe.com'],
+        /*
+         * Stripe's card fields are iframes, and 3-D Secure opens a second one
+         * on hooks.stripe.com. 'none' here is a checkout that cannot take a
+         * card, which is why this directive is named rather than defaulted.
+         *
+         * pay.google.com is the third and it is the Google Pay payment sheet,
+         * which Google's pay.js frames over the page when the Express Checkout
+         * Element's Google Pay button is pressed. Again exactly one host and no
+         * wildcard, and again no Apple host: the Apple Pay sheet is Safari's
+         * own chrome and is not a frame at all.
+         */
+        'frame-src' => [
+            'https://js.stripe.com',
+            'https://hooks.stripe.com',
+            'https://pay.google.com',
+        ],
 
         // No <video> or <audio> from anywhere but this shop.
         'media-src' => ["'self'"],

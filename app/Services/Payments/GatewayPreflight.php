@@ -100,6 +100,26 @@ final class GatewayPreflight
                 continue;
             }
 
+            /*
+             * AND NEITHER IS A FIELD THE SCHEMA CALLS OPTIONAL.
+             *
+             * The fifth element of a schema tuple, and the first field to use
+             * it is Stripe's Apple Pay domain association file. Exactly the
+             * argument above, one step further: an empty `bool` means "off",
+             * and an empty optional field means "this shop does not want the
+             * feature it belongs to". Reporting either as a credential still to
+             * be pasted in puts a permanent amber line on a correctly
+             * configured shop, which the owner can only clear by configuring
+             * something he does not want.
+             *
+             * It marks the FIELD and not the gateway: every other Stripe key is
+             * still required, so a shop with no secret key is still reported as
+             * incomplete in the same sentence it always was.
+             */
+            if (($def[4] ?? '') === 'optional') {
+                continue;
+            }
+
             if ($this->credentials->get($gatewayId, $key) === '') {
                 // The LABEL, not the key. This is read by the person who has
                 // to go and find the value.

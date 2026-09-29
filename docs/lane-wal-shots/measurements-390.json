@@ -1,0 +1,129 @@
+{
+  "viewport": 390,
+  "base": "http://127.0.0.1:8994",
+  "shots": {
+    "checkout-wallets-off": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "expressRowInDom": false,
+      "expressRowVisible": false,
+      "dividerInDom": false,
+      "expressRow": null,
+      "paymentList": {
+        "w": 316,
+        "h": 348
+      },
+      "paymentOptions": 2,
+      "deadButtons": 0,
+      "footerChips": []
+    },
+    "checkout-wallets-on-no-stripe": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "expressRowInDom": false,
+      "expressRowVisible": false,
+      "dividerInDom": false,
+      "expressRow": null,
+      "paymentList": {
+        "w": 316,
+        "h": 348
+      },
+      "paymentOptions": 2,
+      "deadButtons": 0,
+      "footerChips": []
+    },
+    "checkout-stub-no-wallet": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "expressRowInDom": false,
+      "expressRowVisible": false,
+      "dividerInDom": false,
+      "expressRow": null,
+      "paymentList": {
+        "w": 316,
+        "h": 348
+      },
+      "paymentOptions": 2,
+      "deadButtons": 0,
+      "footerChips": []
+    },
+    "checkout-stub-wallets": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "expressRowInDom": true,
+      "expressRowVisible": true,
+      "dividerInDom": true,
+      "expressRow": {
+        "w": 316,
+        "h": 48
+      },
+      "paymentList": {
+        "w": 316,
+        "h": 348
+      },
+      "paymentOptions": 2,
+      "deadButtons": 0,
+      "footerChips": []
+    },
+    "admin-payments": {
+      "scrollWidth": 390,
+      "walletLabels": [
+        "Apple Pay",
+        "Google Pay",
+        "Apple Pay domain file"
+      ],
+      "walletSelects": [
+        {
+          "field": "publishable_key",
+          "value": "pk_test_lane_wal_preview"
+        },
+        {
+          "field": "secret_key",
+          "value": ""
+        },
+        {
+          "field": "webhook_signing_secret",
+          "value": ""
+        },
+        {
+          "field": "link_enabled",
+          "value": ""
+        },
+        {
+          "field": "wallet_apple_pay",
+          "value": "1"
+        },
+        {
+          "field": "wallet_google_pay",
+          "value": "1"
+        },
+        {
+          "field": "apple_domain_association",
+          "value": ""
+        }
+      ]
+    },
+    "footer-wallets-on": {
+      "scrollWidth": 390,
+      "chips": [
+        "Tabby",
+        "Tamara",
+        "Visa",
+        "Mastercard",
+        "Apple Pay",
+        "Google Pay",
+        "COD"
+      ]
+    },
+    "footer-wallets-off": {
+      "scrollWidth": 390,
+      "chips": [
+        "Tabby",
+        "Tamara",
+        "Visa",
+        "Mastercard",
+        "COD"
+      ]
+    }
+  }
+}

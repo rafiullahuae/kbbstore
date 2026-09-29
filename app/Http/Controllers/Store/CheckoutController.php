@@ -891,6 +891,28 @@ class CheckoutController extends Controller
                 'client_secret' => $start->clientSecret,
                 'order' => $order->order_number,
                 /*
+                 * WHAT THIS ORDER ACTUALLY COSTS, IN INTEGER FILS, SO THE
+                 * WALLET CAN REFUSE TO CHARGE A DIFFERENT FIGURE.
+                 *
+                 * `orders.total` — the number the PaymentIntent was opened for,
+                 * computed in this request from this shopper's basket. Apple
+                 * Pay and Google Pay show a total in a sheet BEFORE this
+                 * request is made, and a basket that moved in between (a
+                 * quantity tap in another tab, a coupon that expired, the gift
+                 * box ticked) would leave the sheet's figure and this one
+                 * disagreeing. partials/checkout/express-wallets compares them
+                 * and abandons the payment rather than charging the difference
+                 * — the shopper keeps their basket and is told the total moved.
+                 *
+                 * It is not a secret and not new information: the shopper is
+                 * looking at the same number in the summary beside the button,
+                 * and the client secret this response already carries can be
+                 * used to read the intent's amount from Stripe directly. It is
+                 * here so the browser does not have to parse a formatted string
+                 * to learn it, which would be a float on a money path.
+                 */
+                'amount' => (int) $order->total,
+                /*
                  * Where the ISSUER sends the shopper back to, on the minority
                  * of cards whose 3-D Secure step is a full-page redirect
                  * rather than the modal Stripe runs over this page. Stripe
@@ -1683,6 +1705,101 @@ class CheckoutController extends Controller
             // ONLY visible total stale the moment a COD shopper ticked the
             // gift box on a shop with no COD surcharge.
             'totalWithFee' => \App\Support\Money::format((int) $totals['total'] + $cod + $gift, $dp),
+        ]);
+    }
+
+    /**
+     * What the wallet sheet must say, in integer fils, from the server.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * THE SHEET SHOWS A NUMBER AND THE BROWSER NEVER CHOOSES IT
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * Apple Pay and Google Pay open a sheet with a total on it, and that total
+     * has to be decided somewhere before the shopper authorises anything. If
+     * the page worked it out — from the formatted "AED 220.00" in the summary,
+     * say — then a shopper would be authorising a figure the browser chose, in
+     * the one place on this shop where authorisation and amount are the same
+     * gesture. So the figure comes from here, and it is computed by exactly the
+     * arithmetic place() uses to write `orders.total`:
+     *
+     *     the basket's own total for this country and emirate
+     *   + the gift-wrap fee, which is read from settings and never from the
+     *     request — the form posts WHETHER they want wrapping, never what it
+     *     costs
+     *   + the gateway's own surcharge, asked of the gateway
+     *
+     * Integer fils throughout, no float anywhere on the path, and the same
+     * rateContext() the rendered summary was printed from.
+     *
+     * IT IS STILL NOT WHAT IS CHARGED. What is charged is the PaymentIntent
+     * place() opens, whose amount is `orders.total`, computed server-side in
+     * the same request that creates the order. This endpoint exists so the
+     * sheet AGREES with that, not so it decides it — and
+     * partials/checkout/express-wallets refuses to confirm a payment when the
+     * two disagree rather than charging the difference silently.
+     *
+     * WHY IT IS A GET-SHAPED POST. It reads nothing but the caller's own
+     * basket, identified by CartService's cookie, exactly as /api/checkout/rates
+     * does; it is a POST because it takes the country and emirate the form
+     * currently holds, and because everything on this page that takes form
+     * state posts. It reveals no more than the summary block already rendered
+     * on the same page to the same visitor.
+     *
+     * An empty basket answers 422 rather than 0. Zero is a number a sheet could
+     * be opened with; "there is nothing here" is not.
+     */
+    public function walletAmount(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json(['ok' => false, 'error' => 'Your bag is empty.'], 422);
+        }
+
+        // Only a country this shop's own selector offers, the same narrowing
+        // fragments() makes. Anything else falls back to the store's country
+        // rather than being taken on trust.
+        $country = strtoupper((string) ($data['country'] ?? ''));
+
+        if (! isset($this->countries()[$country])) {
+            $country = (string) $this->settings->get('store_country', 'AE');
+        }
+
+        [, , $totals] = $this->rateContext($cart, $country, $data['state'] ?? null);
+
+        $total = (int) ($totals['total'] ?? 0);
+
+        /*
+         * The gateway's surcharge, asked of the gateway rather than assumed to
+         * be zero. It is zero for Stripe today and this line costs nothing —
+         * but a card surcharge switched on later would otherwise make every
+         * wallet sheet disagree with every wallet charge by exactly that fee,
+         * which is the quietest possible way for this to break.
+         */
+        $gateway = app(\App\Services\Payments\GatewayRegistry::class)
+            ->find(\App\Services\Payments\Wallets::GATEWAY);
+
+        $amount = $total + $this->giftFee($request) + ($gateway?->feeFils($total) ?? 0);
+
+        return response()->json([
+            'ok' => true,
+            // Integer minor units, which is how this schema stores money and
+            // how Stripe takes it. Nothing formats it and nothing rounds it.
+            'amount' => $amount,
+            /*
+             * A CONSTANT, not a setting. place() writes 'AED' onto every order
+             * and StripeGateway lower-cases `orders.currency` for the intent,
+             * so this is the same string by the same route. A currency read
+             * from settings here could disagree with the order the sheet is
+             * about to pay for.
+             */
+            'currency' => 'aed',
         ]);
     }
 

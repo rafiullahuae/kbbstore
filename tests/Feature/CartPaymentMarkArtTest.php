@@ -64,9 +64,45 @@ function payMarkSave(array $values): void
     StaticMemos::forgetAll();
 }
 
+/**
+ * The shop able to take Apple Pay and Google Pay, with both switched on.
+ *
+ * TWO OF THE SIX MARKS NOW CARRY A SECOND CONDITION, and this is what
+ * satisfies it. `pay_apple` and `pay_google` used to be switches over nothing:
+ * the shop drew both marks and could take neither payment. They are now gated
+ * on App\Services\Payments\Wallets, which asks four questions — the card
+ * gateway's row is enabled, its secret key is present, its publishable key is
+ * present, and the merchant has switched that wallet on. All four, because each
+ * one alone is a way to draw a mark for a payment that cannot be taken.
+ *
+ * The four SCHEME marks are unaffected and deliberately so: Visa, Mastercard,
+ * tabby and tamara are separate claims with separate answers, and this round
+ * was sent for the two that were lying.
+ */
+function payMarkWalletsOn(bool $apple = true, bool $google = true): void
+{
+    $row = \App\Models\PaymentProvider::firstOrNew(['id' => 'stripe']);
+
+    $row->fill(['title' => 'Card', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+    $row->config = [
+        'publishable_key' => 'pk_test_marks',
+        'secret_key' => 'sk_test_marks',
+        'wallet_apple_pay' => $apple ? '1' : '',
+        'wallet_google_pay' => $google ? '1' : '',
+    ];
+    $row->save();
+
+    // The model's own `saved` hook already evicts the cached answer; these two
+    // are belt and braces for the per-instance memos that sit in front of it,
+    // which nothing in a test process would otherwise clear.
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+    app(\App\Services\Payments\Wallets::class)->forget();
+}
+
 /** Every scheme on, which is the shop's own default for this row. */
 function payMarkAllOn(): void
 {
+    payMarkWalletsOn();
     payMarkSave(array_fill_keys(array_keys(payMarkBrands()), true));
 }
 
@@ -141,6 +177,87 @@ it('prints no mark at all for a scheme that is switched off', function () {
 // MUTATION, run: in CartPage::paymentMarks() drop the `if ($c[$key])` and
 // push every mark. RED on the count, for all six schemes -- and on the block
 // below, which is the same defect seen from the other end. Two tests failed.
+
+/*
+ * THE DEFECT THIS LANE WAS SENT FOR, pinned from both ends.
+ *
+ * What the shop did before: it printed the Apple Pay and Google Pay marks on
+ * the basket, the footer and the product page unconditionally, on a build that
+ * had no Apple Pay and no Google Pay anywhere — GatewayRegistry knew four
+ * gateways, `cod`, `tabby`, `tamara` and `stripe`, and there was no code for
+ * either wallet at all. The marks were a claim nobody could act on, and the
+ * two buttons on the checkout that went with them had no listener behind them.
+ */
+
+it('draws no wallet mark while the shop cannot take that wallet', function () {
+    // Every appearance switch on, as a shop that has never touched this screen
+    // has them — so the only thing that can remove a mark here is capability.
+    payMarkAllOn();
+    payMarkWalletsOn(apple: false, google: true);
+
+    $all = implode('', app(CartPage::class)->paymentMarks());
+
+    expect($all)->not->toContain('aria-label="Apple Pay"')
+        ->and($all)->toContain('aria-label="Google Pay"')
+        // And nothing else moved: the four scheme marks have no wallet behind
+        // them and are not this gate's business.
+        ->and($all)->toContain('aria-label="Visa"')
+        ->and($all)->toContain('aria-label="Mastercard"')
+        ->and($all)->toContain('aria-label="tabby"')
+        ->and($all)->toContain('aria-label="tamara"');
+
+    expect(app(CartPage::class)->paymentMarks())->toHaveCount(5);
+});
+// MUTATION, run: in CartPage::paymentMarks() put `if ($c[$key])` back in place
+// of `$wallets->markAllowed($key, (bool) $c[$key])`. RED on the first
+// assertion -- the Apple Pay mark is drawn again for a shop that cannot take
+// an Apple Pay payment, which is exactly the shape of the original defect.
+
+it('draws no wallet mark at all when the card gateway itself is off', function () {
+    payMarkAllOn();
+
+    // Both wallets still switched ON in the gateway's own config. The row is
+    // what changed, and the wallets ride it: a shop that has switched the card
+    // off has switched the wallets off with it, because they are the same
+    // money path.
+    $row = \App\Models\PaymentProvider::find('stripe');
+    $row->enabled = false;
+    $row->save();
+
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+    app(\App\Services\Payments\Wallets::class)->forget();
+
+    $all = implode('', app(CartPage::class)->paymentMarks());
+
+    expect($all)->not->toContain('aria-label="Apple Pay"')
+        ->and($all)->not->toContain('aria-label="Google Pay"')
+        ->and($all)->toContain('aria-label="Visa"');
+});
+// MUTATION, run: in Wallets::compute() drop the `! $row->enabled` half of the
+// first guard. RED on both wallet assertions -- a shop with the card gateway
+// switched off went on advertising two payments it could not take.
+
+it('draws no wallet mark when Stripe has no publishable key', function () {
+    payMarkAllOn();
+
+    // The secret key alone opens an intent but never boots Stripe.js, so the
+    // sheet can never be drawn however willing Stripe is. StripeGateway makes
+    // the same distinction for the card option in availableFor().
+    $row = \App\Models\PaymentProvider::find('stripe');
+    $row->config = ['secret_key' => 'sk_test_marks', 'wallet_apple_pay' => '1', 'wallet_google_pay' => '1'];
+    $row->save();
+
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+    app(\App\Services\Payments\Wallets::class)->forget();
+
+    $all = implode('', app(CartPage::class)->paymentMarks());
+
+    expect($all)->not->toContain('aria-label="Apple Pay"')
+        ->and($all)->not->toContain('aria-label="Google Pay"');
+});
+// MUTATION, run: in Wallets::compute() drop `publishable_key` from the guard.
+// RED on both -- the marks come back for a shop whose checkout cannot mount a
+// wallet button.
 
 it('prints nothing whatsoever when every scheme is switched off', function () {
     payMarkSave(array_fill_keys(array_keys(payMarkBrands()), false));

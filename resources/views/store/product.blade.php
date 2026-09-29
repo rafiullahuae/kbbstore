@@ -639,7 +639,11 @@
         @if ($trustReturns !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 5v4h4"/></svg> {{ $trustReturns }}</div>@endif
         <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg> {{ __('store.product.trust_pay_later') }}</div>
       </div>
-      <div class="{{ $modules->classFor('paychips') }} paychips"><span>Tabby</span><span>Tamara</span><span>Visa</span><span>Mastercard</span><span>Apple Pay</span><span>{{ __('store.footer.pay_cod') }}</span></div>
+      {{-- Asked, not typed. App\Support\PaymentChips gates Apple Pay and Google
+           Pay on App\Services\Payments\Wallets, which is the one place that knows
+           whether this shop can take either. The section switch above
+           (Catalog → Product page → Sections) still decides whether the row is
+           drawn at all; this decides what it may say when it is. --}}<div class="{{ $modules->classFor('paychips') }} paychips">@foreach (\App\Support\PaymentChips::row('product') as $kbbChip)<span>{{ $kbbChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
     </div>
   </div>
 

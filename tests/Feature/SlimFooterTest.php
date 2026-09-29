@@ -22,6 +22,32 @@ function sf(): SlimFooter
     return app(SlimFooter::class);
 }
 
+/**
+ * Make the shop genuinely able to take both wallets, or neither.
+ *
+ * App\Services\Payments\Wallets asks four questions and all four have to
+ * pass: the card gateway's row is enabled, its secret key is present, its
+ * publishable key is present, and the merchant has switched that wallet on.
+ * Anything less and the mark is not drawn, which is the whole point of the
+ * gate.
+ */
+function sfWalletsOn(bool $apple = true, bool $google = true): void
+{
+    $row = \App\Models\PaymentProvider::firstOrNew(['id' => 'stripe']);
+
+    $row->fill(['title' => 'Card', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+    $row->config = [
+        'publishable_key' => 'pk_test_slimfoot',
+        'secret_key' => 'sk_test_slimfoot',
+        'wallet_apple_pay' => $apple ? '1' : '',
+        'wallet_google_pay' => $google ? '1' : '',
+    ];
+    $row->save();
+
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+    app(\App\Services\Payments\Wallets::class)->forget();
+}
+
 function sfOwner(): AdminUser
 {
     return AdminUser::create([
@@ -334,6 +360,18 @@ it('prints the payment marks from the constant and never from a setting', functi
 
     sf()->save(['pay_on' => true]);
 
+    /*
+     * A SHOP THAT CAN ACTUALLY TAKE BOTH WALLETS, which is now part of what
+     * "switched on" means for two of the six marks.
+     *
+     * `pay_apple` and `pay_google` used to be switches over nothing — this bar
+     * drew both marks on a build with no Apple Pay and no Google Pay anywhere.
+     * They are gated on App\Services\Payments\Wallets now, so a bar that is
+     * to print four marks needs the card gateway enabled, keyed and with both
+     * wallets switched on in Store → Payments.
+     */
+    sfWalletsOn();
+
     $marks = sf()->paymentMarks();
 
     // Visa, Mastercard, Apple Pay and Google Pay ship on; Tabby and Tamara off.
@@ -348,6 +386,37 @@ it('prints the payment marks from the constant and never from a setting', functi
 });
 // MUTATION: build a mark from a setting. RED — and on the shop, unescaped
 // markup from a settings row on the checkout.
+
+it('does not print a wallet mark this shop cannot honour', function () {
+    /*
+     * The defect this round closed, seen in the slim footer.
+     *
+     * The bar's `pay_apple` and `pay_google` switches ship ON — they are only
+     * drawn once `pay_on` is switched on, which itself ships off — so a
+     * merchant who turned the marks row on got an Apple Pay mark on a shop
+     * with no Apple Pay. The appearance switch is still first and still
+     * absolute; capability only ever narrows it.
+     */
+    sf()->save(['pay_on' => true]);
+    sfWalletsOn(apple: false, google: false);
+
+    $marks = sf()->paymentMarks();
+
+    // Visa and Mastercard only. The wallets are switched on in this bar's own
+    // settings and are still not drawn, because the shop cannot take them.
+    expect($marks)->toHaveCount(2);
+
+    $all = implode('', $marks);
+
+    expect($all)->not->toContain('aria-label="Apple Pay"')
+        ->and($all)->not->toContain('aria-label="Google Pay"')
+        ->and($all)->toContain('aria-label="Visa"')
+        ->and($all)->toContain('aria-label="Mastercard"');
+});
+// MUTATION, run: in SlimFooter::paymentMarks() put `! empty($c[$key])` back in
+// place of `$wallets->markAllowed($key, ! empty($c[$key]))`. RED on the count
+// and on both wallet assertions — the bar advertises two payments again that
+// this shop has no way to take.
 
 it('ships every new option at the value the bar already had', function () {
     /*

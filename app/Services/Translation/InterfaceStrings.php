@@ -1180,6 +1180,22 @@ final class InterfaceStrings
             'checkout.card_not_ready' => 'The card form is still loading. Please wait a moment and try again.',
             'checkout.card_generic_error' => 'We could not take that card. Please check the details or try another card.',
             'checkout.card_working' => 'Confirming your payment…',
+            /*
+             * The express wallet row — Apple Pay and Google Pay. Read by
+             * resources/views/partials/checkout/express-wallets.blade.php, the
+             * same way the card keys above are read by stripe-elements: through
+             * @json(__()) into the inline script, because the storefront's
+             * built JavaScript cannot be rebuilt on this host.
+             *
+             * "Apple Pay" and "Google Pay" themselves are NOT here. They are
+             * company names — a translated one is a different company — and the
+             * buttons are drawn by Stripe, which writes and localises its own
+             * wording for both sheets.
+             */
+            'checkout.wallet_details_first' => 'Please fill in your contact and delivery details above first, then tap again.',
+            'checkout.wallet_total_moved' => 'Your order total changed while the payment sheet was open, so nothing has been charged. Your basket is safe — please check the total and try again.',
+            'checkout.wallet_failed' => 'That payment did not go through and nothing has been charged. Your basket is safe — please try again or pay by card below.',
+            'checkout.wallet_working' => 'Confirming your payment…',
             'checkout.tab_summary' => 'Order summary',
             'checkout.tab_browsed' => 'Browsed',
             'checkout.browsed_heading' => 'Recently browsed — add in one tap',
