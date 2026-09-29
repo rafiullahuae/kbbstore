@@ -210,7 +210,12 @@ it('still refuses an emptied number box and an unparseable colour', function () 
 
     // The fix folds null to '' in the TEXT arm only. A number box that has been
     // emptied holds no number, and "is not a valid value" is the right answer.
-    foreach (['products_per_page', 'grid_columns', 'dispatch_cutoff_hour', 'cod_fee'] as $key) {
+    // `low_stock_at` stands where `grid_columns` used to: same panel, same int
+    // type. grid_columns left the Ecommerce panel when it was found to reach no
+    // storefront pixel, and an unknown key is IGNORED here rather than refused,
+    // so leaving it in the list would have asserted 422 against a box that is
+    // no longer on the screen.
+    foreach (['products_per_page', 'low_stock_at', 'dispatch_cutoff_hour', 'cod_fee'] as $key) {
         expect(test()->postJson('/admin-api/ecommerce', ['settings' => [$key => '']])->status())
             ->toBe(422, "{$key} accepted an empty number box");
     }

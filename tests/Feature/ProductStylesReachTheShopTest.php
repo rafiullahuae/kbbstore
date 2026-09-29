@@ -212,6 +212,43 @@ it('no longer offers a second answer to a question another screen owns', functio
         );
     }
 
+    /*
+     * ▲ AND THE SECOND SCREEN THAT OFFERED IT IS GONE TOO.
+     *
+     * The migration beside this test recorded the reason `grid_columns` was
+     * removed from Appearance → Product styles but NOT deleted from `settings`:
+     * "grid_columns is still written by the Ecommerce panel's Catalogue layout
+     * and by LayoutApiController, and deleting a row those still save would be a
+     * change to screens this lane does not own."
+     *
+     * It is off the Ecommerce panel now, so one of those two is closed and the
+     * argument for keeping the row is one writer weaker. The third — Appearance
+     * → Product grid's Columns select, which posts to LayoutApiController and
+     * then tells the owner "Saved — live on the storefront now" — needs a change
+     * to the console itself and is named in the lane report.
+     *
+     * Asserted on the field list AND the section list, because a key removed
+     * from one and left in the other is a section naming a field that cannot be
+     * drawn.
+     */
+    $owner = \App\Models\AdminUser::create([
+        'name' => 'Panel Owner',
+        'email' => 'ps-panel-owner@example.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('secret-secret'),
+        'role' => 'owner',
+    ]);
+
+    test()->actingAs($owner, 'admin');
+
+    // Asked of the ENDPOINT rather than the class, because what the screen
+    // draws is the payload and a private schema() is not reachable from here.
+    $payload = test()->getJson('/admin-api/ecommerce');
+
+    $payload->assertStatus(200);
+
+    expect(str_contains(json_encode($payload->json()), 'grid_columns'))->toBeFalse(
+        'grid_columns is back on the Ecommerce panel, where it reaches no storefront pixel');
+
     // And no tab still lists one, which is the half a schema-only check misses:
     // ModuleSchema::tabs() walks TABS, so a stale name there is a field that
     // cannot be drawn.
