@@ -67,8 +67,15 @@ treatment. Every card in a row measured the same height — on treatment A, all
 **twelve** tiles are 454px at 1280 and 392px at 390, including the one named
 `Toner` and the one named *Ultra Hydrating Ceramide Barrier Repair Night Cream
 With Panthenol and Squalane 100ml*, whose name boxes both measure 37px because
-the clamp reserves two lines whether or not the text fills them. That pair is
-visible side by side in the last row of `page-category-1280.png`.
+the clamp reserves two lines whether or not the text fills them.
+
+`names-short-vs-long-1280.png` and `names-short-vs-long-390.png` are that pair
+on its own — the last row of the fixture — which is the whole of "if the product
+titles goes long, still the product grid height must remain equal and adjusted"
+in one frame: **card 454 vs 454 at 1280 and 392 vs 392 at 390, name box 37 vs 37
+at both**. One of the two has no reviews and the other has 96, so the same
+picture also shows the rating row appearing and disappearing without moving the
+button.
 
 The raw numbers are in `docs/pg2-shots/measure-*.json`, one file per treatment.
 
