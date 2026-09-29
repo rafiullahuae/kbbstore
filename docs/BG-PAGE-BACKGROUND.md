@@ -24,7 +24,9 @@ Measured before anything was designed, because two of the three things everyone
 assumes about it are wrong.
 
 **It is not white.** There are FOUR `body` rules in `resources/css/kbb/kbb.css`
-— lines 181, 874, 1198 and 1599 — and the last one wins:
+— around lines 181, 874, 1198 and 1599 when this was written, 183/876/1200/1601
+on `claude/kind-mayer-rpqesv` at 12ef037 — and **the last one wins**. Line
+numbers in this file drift; the rules are identified by their declarations:
 
 ```css
 body{background-color:#FDEFF3;
@@ -35,8 +37,8 @@ body{background-color:#FDEFF3;
 
 so line 874's `background:#fff` has never reached a shopper.
 
-**And it is not one background, it is two.** `kbb-shop.css:17` and
-`kbb-product.css:16` each declare `body{…background:var(--bg)…}`, they are
+**And it is not one background, it is two.** `kbb-shop.css` and
+`kbb-product.css` each declare `body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5}`, they are
 pushed onto `@stack('styles')` *after* `kbb.css`, and `var(--bg)` is `#fff`. So:
 
 | page | background today |

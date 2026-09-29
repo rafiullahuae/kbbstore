@@ -23,7 +23,7 @@ use App\Services\PageWash;
  *
  * ── THE BAR, AND WHY IT IS THIS ONE ────────────────────────────────────────
  *
- * The shop's background today is NOT white. kbb.css:1599 paints
+ * The shop's background today is NOT white. kbb.css's LAST `body` rule paints
  * `background-color:#FDEFF3` under a four-stop gradient whose darkest stop is
  * `#FCE7EE` — and on /shop and a product page kbb-shop.css and kbb-product.css
  * then override it back to white, which is a second finding and is reported

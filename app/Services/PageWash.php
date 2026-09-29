@@ -26,8 +26,10 @@ use Illuminate\Http\Request;
  * ── WHAT THE SHOP ALREADY HAS, MEASURED BEFORE ANYTHING WAS DESIGNED ────────
  *
  * It already has a page wash, and the first correction is that it is not white.
- * There are FOUR `body` rules in resources/css/kbb/kbb.css — lines 181, 874,
- * 1198 and 1599 — and the LAST one wins:
+ * There are FOUR `body` rules in resources/css/kbb/kbb.css and the LAST one
+ * wins — around lines 181, 874, 1198 and 1599 when this was written, and
+ * 183/876/1200/1601 two merges later. Line numbers drift; the declarations do
+ * not, so they are what this note identifies them by:
  *
  *     body{background-color:#FDEFF3;
  *          background-image:var(--bg-botanical),
@@ -117,7 +119,7 @@ class PageWash
     /**
      * ── THE ONE INVARIANT EVERY PALETTE ABOVE HAS TO HOLD ───────────────────
      *
-     * The shop's background today is not white. kbb.css:1599 paints
+     * The shop's background today is not white. kbb.css's LAST `body` rule paints
      * `background-color:#FDEFF3` under a four-stop gradient whose DARKEST stop
      * is `#FCE7EE`, and that is the darkest flat background any storefront page
      * renders. Its contrast against the three text tokens is:
