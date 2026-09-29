@@ -20,25 +20,30 @@ $palette = [
 ];
 
 $W = 1600; $H = 900;
+$font = '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf';
 foreach ($palette as $i => [$label, $a, $b]) {
     $im = imagecreatetruecolor($W, $H);
-    for ($x = 0; $x < $W; $x++) {
-        $t = $x / ($W - 1);
-        $c = imagecolorallocate($im,
-            (int) round($a[0] + ($b[0] - $a[0]) * $t),
-            (int) round($a[1] + ($b[1] - $a[1]) * $t),
-            (int) round($a[2] + ($b[2] - $a[2]) * $t));
-        imageline($im, $x, 0, $x, $H, $c);
+    // A diagonal two-tone wash with a dark corner, so white chrome over the
+    // picture is judged against something like a photograph rather than
+    // against a pale flat.
+    for ($y = 0; $y < $H; $y++) {
+        for ($x = 0; $x < $W; $x += 8) {
+            $t = min(1.0, max(0.0, ($x / $W) * 0.72 + ($y / $H) * 0.28));
+            $v = 1.0 - 0.42 * (1.0 - $t) * (1.0 - $t);
+            $c = imagecolorallocate($im,
+                (int) round(($a[0] + ($b[0] - $a[0]) * $t) * $v),
+                (int) round(($a[1] + ($b[1] - $a[1]) * $t) * $v),
+                (int) round(($a[2] + ($b[2] - $a[2]) * $t) * $v));
+            imagefilledrectangle($im, $x, $y, $x + 7, $y, $c);
+        }
     }
-    $ink = imagecolorallocate($im, 32, 24, 30);
-    $white = imagecolorallocate($im, 255, 255, 255);
-    // A big numeral so a slide change is unmistakable in a screenshot.
-    for ($s = 0; $s < 26; $s++) {
-        imagestring($im, 5, 70, 300 + $s * 2, (string) ($i + 1), $ink);
-        imagestring($im, 5, 72, 300 + $s * 2, (string) ($i + 1), $ink);
+    $white = imagecolorallocatealpha($im, 255, 255, 255, 30);
+    $ink = imagecolorallocatealpha($im, 24, 16, 22, 40);
+    if (is_file($font)) {
+        imagettftext($im, 300, 0, 96, 470, $white, $font, (string) ($i + 1));
+        imagettftext($im, 46, 0, 100, 600, $white, $font, strtoupper($label));
+        imagettftext($im, 26, 0, 102, 660, $ink, $font, 'PICTURE '.($i + 1).' OF 5');
     }
-    imagestring($im, 5, 70, 640, strtoupper($label), $white);
-    imagestring($im, 5, 70, 664, 'PICTURE '.($i + 1).' OF 5', $ink);
     imagejpeg($im, $dir.'/bn2-'.($i + 1).'.jpg', 88);
     imagedestroy($im);
 }

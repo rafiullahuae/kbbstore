@@ -465,7 +465,21 @@ it('marks unsaved work and asks before every door out of the editor', function (
      * that WIRES it, and the question has to be inside that handler.
      */
     foreach ([
-        "var add = document.querySelector('#bns-new');",
+        /*
+         * ── THE FIRST ANCHOR MOVED IN ROUND 8 — Lane BN2 ────────────────────
+         *
+         * It was `var add = document.querySelector('#bns-new');`. There are two
+         * "new set" buttons now, one per banner type, so they are wired by one
+         * `[data-bns-kind]` loop instead of by an id. THE PROPERTY IS THE SAME
+         * AND SO IS THE RISK: creating a set reloads the editor and would take
+         * the buffer with it, so the handler has to ask first — and now it has
+         * to ask for BOTH buttons, which one loop guarantees and two separate
+         * handlers would not.
+         *
+         * MUTATION, run: delete the `mayLeave(` line from that loop and this is
+         * red naming it.
+         */
+        "document.querySelectorAll('[data-bns-kind]').forEach",
         "document.querySelectorAll('[data-bns-open]').forEach",
         "document.querySelectorAll('[data-bns-dup]').forEach",
         "var newCard = document.querySelector('#bns-newcard');",
