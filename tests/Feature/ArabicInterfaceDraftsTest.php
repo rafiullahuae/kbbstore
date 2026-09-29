@@ -104,8 +104,10 @@ it('gives every counted string six forms, or Arabic renders the zero form', func
      * TWO forms does not fall back to the plural -- it renders "no products"
      * for five products, on the shop, with nothing logged and nothing thrown.
      *
-     * 34 interface strings carry a `|`. Every Arabic one of them must carry
+     * 35 interface strings carry a `|`. Every Arabic one of them must carry
      * exactly six segments, in the order zero, one, two, few, many, other.
+     * The count is re-derived by this test rather than trusted, which is how
+     * the 34 an earlier draft of this comment claimed got corrected.
      *
      * MUTATION: cut any six-form value below down to two segments and this is
      * red naming the key. Ran it on store.cart.item_count.

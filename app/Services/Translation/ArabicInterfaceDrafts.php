@@ -20,8 +20,13 @@ namespace App\Services\Translation;
  * That is not an oversight. docs/BILINGUAL-PLAN.md decision 2 puts every typed
  * string in the `translations` table, and step 3 of its plan — "translate the
  * interface: ~30,000 characters of buttons and headings" — is costed as the
- * OWNER'S TIME. The measured total is 33,691 characters, so the plan's estimate
- * was right and the work simply had not been done.
+ * OWNER'S TIME. The measured total is 33,408 characters -- mb_strlen in UTF-8,
+ * which is what TranslationEstimate counts and what Google bills -- so the
+ * plan's estimate was right and the work simply had not been done.
+ *
+ * (33,691 is the same set measured in BYTES, and it is the wrong number: the
+ * English carries …, —, · and a few emoji, and a byte count of source text is
+ * neither what the estimate reports nor what anybody is charged for.)
  *
  * ── WHY DRAFTS, AND WHY THAT IS NOT TIMIDITY ────────────────────────────────
  *
