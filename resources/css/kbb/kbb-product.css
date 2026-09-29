@@ -719,7 +719,7 @@ a{color:inherit;text-decoration:none}
   letter-spacing:.1em;text-transform:uppercase}
 .pp-lay-editorial .qty{border-radius:0}
 .pp-lay-editorial .variant{border-radius:0}
-.pp-lay-editorial .buybox > .notifyme{order:7}
+.pp-lay-editorial .buybox > .notifyme{order:8}
 .pp-lay-editorial .trust{order:9;display:flex;flex-wrap:wrap;gap:8px 22px;background:none;
   border-radius:0;padding:14px 0 0;margin-block-start:18px;border-top:1px solid var(--line)}
 .pp-lay-editorial .trust .ti{font-size:11.5px;letter-spacing:.01em}
@@ -770,7 +770,7 @@ a{color:inherit;text-decoration:none}
 .pp-lay-compact .variant.on .vr::after{width:7px;height:7px}
 .pp-lay-compact .qty button{width:40px;height:46px}
 .pp-lay-compact .addcart{height:46px;font-size:14.5px}
-.pp-lay-compact .buybox > .notifyme{order:7}
+.pp-lay-compact .buybox > .notifyme{order:8}
 .pp-lay-compact .trust{order:9;display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 12px;
   border-radius:10px;margin-block-start:12px}
 .pp-lay-compact .trust .ti{font-size:11px;gap:6px}

@@ -38,8 +38,10 @@
         [ photo ] [ brand / name / option ] [ xN ]
 
     Three grid tracks, laid along the INLINE axis, so in an Arabic document the
-    photograph is on the right and the price on the left from the same
-    declaration — no [dir] selector in this file. `minmax(0,1fr)` on the middle
+    photograph is on the right and the quantity on the left from the same
+    declaration — no [dir] selector in this file. Photographed on /ar at 390 and
+    1280: dir="rtl", the photograph on the right of every row, and scrollWidth
+    equal to the viewport. `minmax(0,1fr)` on the middle
     track and min-width:0 everywhere, because a grid item's default min-width is
     the width of its longest unbreakable word, and "Revive Eye Serum Ginseng
     Retinal 30ml" in a 346px column is how a page comes to scroll sideways.
@@ -86,8 +88,9 @@
     ── AND THE LIST CANNOT PUSH ADD TO CART OFF THE SCREEN ───────────────────
 
     This is the cost of the new position and the one thing the old one did not
-    have. Twelve rows is about seven hundred pixels sitting between the price
-    and the button. So a box of more than six members shows the first five and
+    have. Twelve rows is about six hundred pixels sitting between the price and
+    the button — it was seven hundred before the squeeze, which shortens the
+    problem without solving it. So a box of more than six members shows the first five and
     folds the rest into a <details>:
 
       - HTML's own disclosure, so it is keyboard-operable, reachable by the
@@ -223,9 +226,12 @@ a.ksl-nm:hover{border-bottom-color:currentColor}
 a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .ksl-var{font-size:11.5px;line-height:1.3;color:var(--ink-2,#5E545A);overflow-wrap:anywhere}
 
-/* The third track is the quantity ALONE now. `.ksl-end` and `.ksl-pr` are gone
-   with the price -- a flex column around one child, and a rule for an element
-   that is no longer emitted. */
+/* The third track is the quantity ALONE now. The price span and the flex column
+   that wrapped it went with the price -- a column around a single child, and a
+   rule for an element that is no longer emitted.
+   (Their class names are deliberately not written here: this block is emitted
+   INTO the page, so a class name in this comment is a string in the HTML, and
+   the case that asserts no member carries a price searches the HTML for it.) */
 .ksl-q{font-size:12px;font-weight:700;color:var(--ink,#2A2228);white-space:nowrap;
        text-align:end}
 
