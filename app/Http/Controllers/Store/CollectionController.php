@@ -27,6 +27,18 @@ class CollectionController extends Controller
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
         'rating', 'review_count', 'featured', 'position', 'type', 'total_sales',
+        /*
+         * ▲ AND THE THREE A SET'S PRICE CANNOT BE READ WITHOUT. (Lane SG)
+         *
+         * App\Support\SetPricing::COLUMNS carries the argument in full. In
+         * short: SetPricing::mode() and ::basis() read these off getAttributes()
+         * and fall back to "no rule, no anchor" for an absent column, so a
+         * narrow select does not fail -- it prices the set at the number in
+         * `products.price`, which is a stale snapshot for a rule-priced set and
+         * the pre-reduction figure for an anchored one. This grid showed one
+         * price and the set's own page showed another.
+         */
+        ...\App\Support\SetPricing::COLUMNS,
     ];
 
     /**
@@ -163,6 +175,20 @@ class CollectionController extends Controller
 
         $products = $query->paginate(self::PER_PAGE, ['*'], 'page', $page)->withQueryString();
 
+        /*
+         * ONE STATEMENT FOR EVERY SET ON THIS PAGE, OR NONE AT ALL. (Lane SG)
+         *
+         * The three columns above let a set be priced by its RULE; this is what
+         * makes reading that rule affordable. App\Support\SetPricing::prime()
+         * looks first and returns without touching the database when none of
+         * these rows is a set -- which is every page of this shop today, so
+         * StorefrontQueryBudgetTest's ceilings do not move. With sets present it
+         * is ONE grouped aggregate for all of them, flat in their number, in
+         * place of the one-per-set tally() would otherwise run lazily from the
+         * card. See prime()'s docblock for the two alternatives and why not.
+         */
+        \App\Support\SetPricing::prime($products);
+
         // Same rule as ShopController: a page number past the end is not a
         // page. Here it answers 200 with an empty grid rather than a copy of
         // page one, which is a thin page instead of a duplicate one, but the
@@ -240,6 +266,20 @@ class CollectionController extends Controller
         $page = max(1, (int) $request->query('page', 1));
 
         $products = $query->paginate(self::PER_PAGE, ['*'], 'page', $page)->withQueryString();
+
+        /*
+         * ONE STATEMENT FOR EVERY SET ON THIS PAGE, OR NONE AT ALL. (Lane SG)
+         *
+         * The three columns above let a set be priced by its RULE; this is what
+         * makes reading that rule affordable. App\Support\SetPricing::prime()
+         * looks first and returns without touching the database when none of
+         * these rows is a set -- which is every page of this shop today, so
+         * StorefrontQueryBudgetTest's ceilings do not move. With sets present it
+         * is ONE grouped aggregate for all of them, flat in their number, in
+         * place of the one-per-set tally() would otherwise run lazily from the
+         * card. See prime()'s docblock for the two alternatives and why not.
+         */
+        \App\Support\SetPricing::prime($products);
 
         if ($page > 1 && $page > $products->lastPage()) {
             abort(404);

@@ -81,6 +81,12 @@ use Illuminate\Support\Facades\DB;
  * admin screen. With nothing loaded it runs ONE aggregate statement for the
  * whole set — a join summing quantity × price in SQL — never one per member.
  *
+ * AND ONE STATEMENT FOR A WHOLE GRID OF THEM. (Lane SG) A product card does not
+ * want the member ROWS — it prints a price, not the box — so a grid does not go
+ * through SetEagerLoad's six relation loads. prime() takes the page's products,
+ * keeps the sets it has not answered for, and fills the memo for all of them in
+ * ONE grouped statement; handed a page with no set in it, it runs none at all.
+ *
  * The per-request memo is what stops a single page render asking that question
  * three times for the same set (the price, the schema offer and the saving all
  * read it). It is a process-level static and therefore carries exactly the trap
@@ -97,6 +103,41 @@ final class SetPricing
 
     /** The only three values `products.set_price_mode` may ever read as. */
     public const MODES = [self::MODE_FIXED, self::MODE_PERCENT, self::MODE_AMOUNT];
+
+    /**
+     * THE THREE `products` COLUMNS A SET'S PRICE CANNOT BE READ WITHOUT.
+     * (Lane SG)
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * A NARROW SELECT THAT OMITS THESE DOES NOT FAIL. IT PRICES THE SET WRONG.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * mode() reads `set_price_mode` off getAttributes() and falls back to
+     * `fixed` for anything it does not recognise — including an absent column —
+     * and basis() reads `set_price_basis` and falls back to "no anchor". Both
+     * fallbacks are right for a hand-edited row and right for a legacy set, and
+     * both are SILENTLY WRONG for a query that simply did not ask: the set is
+     * then priced at the number in `products.price`, which for a rule-priced
+     * set is a stale snapshot and for an anchored one is the figure before the
+     * reduction.
+     *
+     * That is what nine card-column lists did — Store\ShopController,
+     * CollectionController, BrandController, HomeController, SearchController,
+     * ProductController, WishlistController, Services\CartPage and
+     * Support\Shortcodes — so a set showed one price on every grid in the shop
+     * and a different one on its own page, in the cart, in the checkout, in the
+     * API and in the admin. This constant is why there is now one list to add
+     * to rather than nine to remember.
+     *
+     * ▲ NOT FOR /api/*. These three columns are asserted ABSENT from the public
+     *   feed by tests/Feature/SetApiSecurityTest.php and must stay absent:
+     *   Product::toApi() publishes an allowlist and a pricing RULE is not a
+     *   thing the shop tells the internet. Selecting a column is not publishing
+     *   it, and this constant is about the SELECT.
+     *
+     * @var list<string>
+     */
+    public const COLUMNS = ['set_price_mode', 'set_discount', 'set_price_basis'];
 
     /** 100% in basis points, and the ceiling a discount is clamped to. */
     public const FULL_BP = 10000;
@@ -286,8 +327,128 @@ final class SetPricing
 
         $id = (int) $set->getKey();
 
-        if (array_key_exists($id, self::$memo)) {
-            return self::$memo[$id];
+        /*
+         * ONE SET IS THE ONE-ROW CASE OF prime(), NOT A SECOND SPELLING OF IT.
+         * (Lane SG)
+         *
+         * This method used to carry the aggregate itself. A grid needs the same
+         * figure for EVERY set on the page in ONE statement, and a second
+         * spelling of a money aggregate is exactly how the tile and the product
+         * page came to disagree about a set's price in the first place. So the
+         * SQL lives in prime() now and there is one of it; this is the call
+         * that fills the memo for a single set.
+         *
+         * `?? $none` rather than a second lookup: prime() skips a model with no
+         * key at all, so that row costs no query and still answers the empty
+         * tally it always answered.
+         */
+        if (! array_key_exists($id, self::$memo)) {
+            self::prime([$set]);
+        }
+
+        return self::$memo[$id] ?? $none;
+    }
+
+    /**
+     * FILL THE TALLY FOR EVERY SET ON A PAGE IN ONE STATEMENT — OR IN NONE.
+     * (Lane SG)
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * THIS IS WHAT LETS A GRID PRINT A SET'S REAL PRICE WITHOUT AN N+1.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ── THE DEFECT THIS EXISTS FOR ─────────────────────────────────────────
+     *
+     * The shop's nine card-column lists select `price` and did not select
+     * `set_price_mode`, `set_discount` or `set_price_basis`. mode() reads the
+     * ATTRIBUTE and falls back to `fixed`, and basis() reads the attribute and
+     * falls back to null, so on every grid a set was priced as though it had no
+     * rule and no anchor: the figure a human typed, while its own product page,
+     * the cart, the checkout, the API and the admin all showed the derived one.
+     * Three columns fix the reading. This fixes the COST of reading it.
+     *
+     * ── WHY A BATCH AND NOT A CORRELATED SUBQUERY IN THE CARD SELECT ───────
+     *
+     * The parts total is a join over `product_set_items`, `products` and
+     * `product_variants` with a sale window on it. It CAN be written as a
+     * correlated scalar subquery beside App\Support\EffectivePrice's selects,
+     * guarded by `CASE WHEN products.type = 'set'` so an ordinary row
+     * short-circuits past it — and that would be zero extra statements. It was
+     * rejected for two reasons, in this order:
+     *
+     *   IT PUTS THE MONEY RULE IN SQL, TWICE. derived()'s percentage is
+     *   `intdiv($parts * (10000 - $bp) + 5000, 10000)`: integer multiply, one
+     *   integer divide, half up. MySQL spells integer division `DIV` and SQLite
+     *   spells it `/`; MySQL's `/` yields DECIMAL. So the same arithmetic needs
+     *   two spellings, which is what App\Support\SqlDialectGuard exists to stop,
+     *   and a money rule with two implementations is the shape this class's
+     *   header was written against.
+     *
+     *   IT TAXES THE HOTTEST QUERY ON THE SHOP. That subquery would be attached
+     *   to /shop, every category archive, every search and every rail — pages
+     *   that hold no set at all, which today is nearly all of them.
+     *
+     * ── AND WHY NOT REFRESH A CACHED `products.price` ON A MEMBER'S SAVE ───
+     *
+     * Because that is the design the migration 2027_04_02_000000_set_pricing_-
+     * columns rejected in writing, and the count in its note is real: a
+     * product's price is written by the product editor, by Catalog → Products'
+     * inline price cell, by the bulk price action, by the importer and by the
+     * variation importer. Five writers, each of which would have to find every
+     * set containing the row it just touched, and the one that is missed fails
+     * silently and commercially.
+     *
+     * ── WHAT IT COSTS ─────────────────────────────────────────────────────
+     *
+     *   NO SET AMONG THE ROWS — not one query, and not one statement's worth of
+     *   planning. It looks first, exactly as App\Support\SetEagerLoad does, and
+     *   for the same reason: StorefrontQueryBudgetTest's ceilings may not move
+     *   for a feature a page is not using.
+     *
+     *   ONE OR MORE SETS — ONE statement for all of them, grouped by set, and
+     *   flat: a grid of one set and a grid of twenty-five cost the same one.
+     *
+     *   ALREADY MEMOISED, OR MEMBERS ALREADY LOADED — skipped. A page that has
+     *   been through SetEagerLoad answers from the relation with no query at
+     *   all, and tally() prefers that path.
+     *
+     * ▲ EVERY ID ASKED FOR IS MEMOISED, INCLUDING THE ONES THE STATEMENT DID
+     *   NOT ANSWER FOR. A set with no membership rows produces no GROUP BY row;
+     *   without seeding the misses first it would miss the memo on every read
+     *   and re-run this statement once per set per request, which is the very
+     *   N+1 this method is here to remove.
+     *
+     * @param  iterable<mixed>  $products  Product models; anything else, any
+     *                                     non-set and any null is ignored, so a
+     *                                     caller can hand over a whole page.
+     */
+    public static function prime(iterable $products): void
+    {
+        $ids = [];
+
+        foreach ($products as $product) {
+            if (! $product instanceof Product || ! $product->isSet()) {
+                continue;
+            }
+
+            // The relation is the free path and tally() takes it first; a set
+            // that has it loaded must not be counted into a statement whose
+            // answer would never be read.
+            if ($product->relationLoaded('setItems')) {
+                continue;
+            }
+
+            $id = (int) $product->getKey();
+
+            if ($id < 1 || array_key_exists($id, self::$memo)) {
+                continue;
+            }
+
+            $ids[$id] = $id;
+        }
+
+        if ($ids === []) {
+            return;
         }
 
         $now = now()->toDateTimeString();
@@ -324,24 +485,47 @@ final class SetPricing
          */
         $gone = "(p.id IS NULL OR p.deleted_at IS NOT NULL OR p.type = 'set')";
 
-        $row = DB::table('product_set_items as psi')
+        /*
+         * ▲ GROUPED BY THE SET, AND THE GROUPING COLUMN IS SELECTED BY NAME.
+         *   MySQL runs ONLY_FULL_GROUP_BY, so every bare column in the list has
+         *   to be the one grouped on; `psi.set_product_id` is, and the three
+         *   aggregates beside it are aggregates. SQLite would have accepted very
+         *   nearly anything here, which is the parity gap docs/MYSQL-PARITY.md
+         *   and SqlNeedleDialectGuardTest exist for.
+         *
+         *   The four `?` belong to the SELECT and the id list to the WHERE.
+         *   Laravel emits bindings by group -- select, from, join, where -- and
+         *   the compiled statement is SELECT ... FROM ... WHERE ... GROUP BY,
+         *   so the order matches without either side being written out by hand.
+         */
+        $rows = DB::table('product_set_items as psi')
             ->leftJoin('products as p', 'p.id', '=', 'psi.member_product_id')
             ->leftJoin('product_variants as pv', 'pv.id', '=', 'psi.member_variant_id')
-            ->where('psi.set_product_id', '=', $id)
+            ->whereIn('psi.set_product_id', array_values($ids))
+            ->groupBy('psi.set_product_id')
             ->selectRaw(
-                'COALESCE(SUM(CASE WHEN '.$gone.' THEN 0 ELSE ('.$sql.')'
+                'psi.set_product_id as set_id,'
+                .' COALESCE(SUM(CASE WHEN '.$gone.' THEN 0 ELSE ('.$sql.')'
                 .' * (CASE WHEN psi.quantity < 1 THEN 1 ELSE psi.quantity END) END), 0) as parts,'
                 .' COUNT(*) as rows_count,'
                 .' COALESCE(SUM(CASE WHEN '.$gone.' THEN 1 ELSE 0 END), 0) as missing',
                 [$now, $now, $now, $now]
             )
-            ->first();
+            ->get();
 
-        return self::$memo[$id] = [
-            'parts' => (int) ($row->parts ?? 0),
-            'rows' => (int) ($row->rows_count ?? 0),
-            'missing' => (int) ($row->missing ?? 0),
-        ];
+        // Seed every id asked for, THEN overwrite the ones the statement
+        // answered. See the note above: an empty box has no row to return.
+        foreach ($ids as $id) {
+            self::$memo[$id] = ['parts' => 0, 'rows' => 0, 'missing' => 0];
+        }
+
+        foreach ($rows as $row) {
+            self::$memo[(int) $row->set_id] = [
+                'parts' => (int) ($row->parts ?? 0),
+                'rows' => (int) ($row->rows_count ?? 0),
+                'missing' => (int) ($row->missing ?? 0),
+            ];
+        }
     }
 
     /**

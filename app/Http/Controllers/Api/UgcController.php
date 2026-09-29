@@ -99,6 +99,13 @@ class UgcController extends Controller
             ->limit($row->tileCap())
             ->get();
 
+        /*
+         * ONE STATEMENT FOR EVERY SET PINNED TO THESE CLIPS, OR NONE. (Lane SG)
+         * See App\Services\UgcRail, which this endpoint mirrors query for
+         * query. UgcVideo::toApi() prices its products the way the rail does.
+         */
+        \App\Support\SetPricing::prime($videos->pluck('products')->flatten());
+
         return response()->json([
             'section' => [
                 // The operator's private label (`title`) is NOT here. `heading`

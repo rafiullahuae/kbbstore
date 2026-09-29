@@ -41,6 +41,18 @@ class SearchController extends Controller
     private const CARD_COLUMNS = [
         'id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'image', 'stock_status', 'type',
+        /*
+         * ▲ AND THE THREE A SET'S PRICE CANNOT BE READ WITHOUT. (Lane SG)
+         *
+         * App\Support\SetPricing::COLUMNS carries the argument in full. In
+         * short: SetPricing::mode() and ::basis() read these off getAttributes()
+         * and fall back to "no rule, no anchor" for an absent column, so a
+         * narrow select does not fail -- it prices the set at the number in
+         * `products.price`, which is a stale snapshot for a rule-priced set and
+         * the pre-reduction figure for an anchored one. This grid showed one
+         * price and the set's own page showed another.
+         */
+        ...\App\Support\SetPricing::COLUMNS,
     ];
 
     public function __construct(
@@ -240,6 +252,16 @@ class SearchController extends Controller
             }
 
             if ($products->isNotEmpty()) {
+            /*
+             * ONE STATEMENT FOR EVERY SET IN THIS DROPDOWN, OR NONE. (Lane SG)
+             *
+             * The panel prints effectivePrice() just as a tile does, so it needs
+             * the set columns selected above AND the parts total behind them.
+             * SetPricing::prime() looks first: no set among these rows and it
+             * runs nothing at all, which is every search on this shop today.
+             */
+            \App\Support\SetPricing::prime($products);
+
                 $groups[] = [
                     'key' => 'products',
                     'label' => 'Products',
@@ -407,6 +429,16 @@ class SearchController extends Controller
             }
 
             if ($products->isNotEmpty()) {
+            /*
+             * ONE STATEMENT FOR EVERY SET IN THIS DROPDOWN, OR NONE. (Lane SG)
+             *
+             * The panel prints effectivePrice() just as a tile does, so it needs
+             * the set columns selected above AND the parts total behind them.
+             * SetPricing::prime() looks first: no set among these rows and it
+             * runs nothing at all, which is every search on this shop today.
+             */
+            \App\Support\SetPricing::prime($products);
+
                 $groups[] = [
                     'key' => 'products',
                     'label' => 'Products',
@@ -508,13 +540,28 @@ class SearchController extends Controller
 
         $popular = Cache::remember('kbb.search.starter.products', 900,
             fn () => Product::query()
-                ->select('id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image')
+                /*
+                 * `type` AND THE THREE SET COLUMNS. (Lane SG) This list had
+                 * neither, so Product::isSet() failed closed here and the
+                 * dropdown quoted `products.price` for a set -- the one figure
+                 * that is not what the shop charges for one. isSet() is the
+                 * only thing `type` changes on this path: a variable parent
+                 * reaches VariantPricing through a NULL `price`, not through
+                 * its type.
+                 */
+                ->select('id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image', 'type',
+                    ...\App\Support\SetPricing::COLUMNS)
                 ->visible()
                 ->with('brand:id,name')
                 ->orderByDesc('total_sales')
                 ->orderByDesc('id')
                 ->limit((int) $header->get('search_results_max'))
                 ->get()
+                /*
+                 * ONE STATEMENT FOR EVERY SET IN THE STARTER PANEL, OR NONE.
+                 * (Lane SG) See the two dropdown handlers above.
+                 */
+                ->tap(fn ($rows) => \App\Support\SetPricing::prime($rows))
                 ->map(fn ($p) => [
                     'name' => $p->t('name'),
                     'brand' => $p->brand?->t('name'),

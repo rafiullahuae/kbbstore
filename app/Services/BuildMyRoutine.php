@@ -296,6 +296,14 @@ class BuildMyRoutine
             ->orderBy('id')
             ->get();
 
+        /*
+         * ONE STATEMENT FOR EVERY SET AMONG THE CANDIDATES, OR NONE. (Lane SG)
+         * This query selects whole rows, so the set columns were always here —
+         * what was missing is the parts total behind them, which the card would
+         * otherwise fetch one set at a time as it drew each step.
+         */
+        \App\Support\SetPricing::prime($rows);
+
         $out = array_fill_keys($roles, []);
 
         foreach ($rows as $row) {

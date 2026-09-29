@@ -73,6 +73,20 @@ class ProductController extends Controller
         'id', 'slug', 'name', 'price', 'sale_price', 'image', 'images',
         'rating', 'review_count', 'stock_status', 'short_description',
         'sale_starts_at', 'sale_ends_at', 'type',
+        /*
+         * ▲ AND THE THREE A SET'S PRICE CANNOT BE READ WITHOUT. (Lane SG)
+         *
+         * show() hydrates whole rows and has always priced a set correctly;
+         * index() hydrates this list and did not, so the LIST endpoint and the
+         * SINGLE endpoint published two different prices for the same set. The
+         * argument against a narrow list is the one directly above about
+         * `type`: SELECTING a column and RETURNING one are different acts.
+         * toApi() is an allowlist and does not carry any of these three, and
+         * tests/Feature/SetApiSecurityTest.php asserts all three ABSENT from
+         * the response BY NAME -- which is what makes selecting them safe and
+         * would go red if anybody ever published them.
+         */
+        ...\App\Support\SetPricing::COLUMNS,
     ];
 
     /**
