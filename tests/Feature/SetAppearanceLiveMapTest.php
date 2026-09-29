@@ -207,18 +207,37 @@ it('declines exactly the controls a custom property cannot express', function ()
             'p_fold_at',
             // The three media queries' own widths.
             'bp', 'p_bp', 'ci_bp',
-            // And the set row on the cart page, whose padding and gaps are real
-            // properties re-declared over a compiled Vite stylesheet rather
-            // than variables — three of them share one `padding` shorthand.
-            'ci_pad_t', 'ci_pad_b', 'ci_pad_x', 'ci_gap', 'ci_name_gap',
-            'ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_x_m', 'ci_gap_m', 'ci_name_gap_m',
+            // And the set row on the cart page, whose padding, gaps, minimum
+            // height, picture and type sizes are real properties re-declared
+            // over a compiled Vite stylesheet rather than variables — three of
+            // them share one `padding` shorthand.
+            //
+            // ▲ ADVANCED DELIBERATELY, 29 September (Lane CR): thirteen keys
+            //   added, from five to eighteen. The owner asked for a set's row
+            //   to have the same depth an ordinary row now has — a minimum
+            //   height, the picture's size and radius, the brand and name
+            //   sizes, the space around the stepper, and where the circles sit
+            //   — and every one of them is the same KIND of control as the five
+            //   already here: a property over the compiled sheet, not a custom
+            //   property. So they decline for the reason this list exists and
+            //   the preview re-renders for them, which is what it already did
+            //   for the five beside them.
+            'ci_min_h', 'ci_pad_t', 'ci_pad_b', 'ci_pad_x', 'ci_gap', 'ci_name_gap',
+            'ci_thumb', 'ci_thumb_r', 'ci_brand_f', 'ci_name_f', 'ci_qty_top', 'ci_qty_bot',
+            // A flex keyword on `.kset`, from a select rather than a slider.
+            'ci_box_align',
+            'ci_min_h_m', 'ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_x_m', 'ci_gap_m', 'ci_name_gap_m',
+            'ci_thumb_m', 'ci_thumb_r_m', 'ci_brand_f_m', 'ci_name_f_m',
+            'ci_qty_top_m', 'ci_qty_bot_m',
         ]
     );
 
     sort($expected);
 
     expect($declined)->toBe($expected);
-    expect(count($declined))->toBe(38);
+    // 38 until 29 September; the thirteen above and their twins are why.
+    expect(count($declined))->toBe(53);
+    // Unmoved, and that is the point: not one control LEFT the fast path.
     expect(count(SetAppearanceLiveMap::build()['fields']))->toBe(160);
 });
 

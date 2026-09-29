@@ -203,6 +203,46 @@ it('renders byte-identical English on every storefront page after the __() conve
             . json_encode($reflowed));
 
     /*
+     * THE APPROVED INSERTIONS, applied to the AFTER side and counted.
+     *
+     * A whole element deliberately added to the layout has no "before" to
+     * reflow, so it is cut out of the new page instead and everything around it
+     * is still compared byte for byte. See EnglishRenderWalk::approvedInsertions()
+     * for why that is preferred to moving BASE_COMMIT — which would blind this
+     * walk, and PrintedEnglishUnchangedTest with it, to every other lane's work.
+     *
+     * A page may carry an approved element at most ONCE. Two is a second
+     * @include picked up in a merge, which is a real failure and one that
+     * nothing else here would see: the totals could still add up while one page
+     * carried two strips and another none.
+     */
+    $inserted = [];
+    $twice = [];
+
+    foreach (EnglishRenderWalk::approvedInsertions() as $name => $rule) {
+        $hits = 0;
+
+        foreach ($after as $uri => $html) {
+            $perPage = 0;
+            $after[$uri] = EnglishRenderWalk::cutApproved($html, $rule['pattern'], $perPage);
+
+            if ($perPage > 1) {
+                $twice[] = $name . ' appears ' . $perPage . ' times on ' . $uri;
+            }
+
+            $hits += $perPage;
+        }
+
+        $inserted[$name] = ['expected' => $rule['hits'], 'actual' => $hits];
+    }
+
+    expect($twice)->toBe([], implode("\n  ", $twice));
+    expect(array_keys(array_filter($inserted, fn (array $r): bool => $r['expected'] !== $r['actual'])))
+        ->toBe([], "An approved insertion no longer appears on the pages it was approved for.\n"
+            . "Fewer means the element stopped rendering; more means a page gained it.\n"
+            . 'Read the diff, then move the count. Got: ' . json_encode($inserted));
+
+    /*
      * 1b. The approved SUBSTITUTIONS, applied to the same BEFORE side.
      *
      * One entry: the shipped card style, which the owner asked to change in as

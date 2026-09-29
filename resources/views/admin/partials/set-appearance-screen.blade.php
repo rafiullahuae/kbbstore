@@ -217,6 +217,9 @@
 .sap-col input[type=text]{flex:1 1 auto;min-width:0;font:inherit;font-size:12.5px;padding:6px 9px;
                           border:1px solid var(--border,#e6e6e6);border-radius:8px;
                           background:var(--surface,#fff);color:inherit}
+.sap-sel{width:100%;min-width:0;font:inherit;font-size:12.5px;padding:7px 9px;
+         border:1px solid var(--border,#e6e6e6);border-radius:8px;
+         background:var(--surface,#fff);color:inherit}
 .sap-btn{font:inherit;font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:9px;
          border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit;cursor:pointer}
 .sap-btn:hover{border-color:var(--accent,#E8919F)}
@@ -308,6 +311,13 @@
   var pvSeq = 0;
   var open = 'desk';      // 'desk' | 'mob'
   var group = 'parts';
+  /* Essentials or everything. FALSE is the default, which is the whole of the
+     change: the screen opens showing the handful of controls a section is
+     really about. It is a view state and not a setting — nothing is written,
+     and it is deliberately not remembered between visits, because a screen
+     that opens differently for reasons the owner cannot see is the thing this
+     is trying to stop. (Lane CR) */
+  var detail = false;
   var frameW = 390;
   var pvLocale = 'en';
   var pvTimer = null;
@@ -345,6 +355,7 @@
   var GROUPS = [
     {
       id: 'parts',
+      few: 'on fan_on btn_on save_on p_on p_panel_on',
       label: 'What is drawn',
       blurb: 'Every on/off switch on this screen, in one place — the fanned stack in the basket and the '
         + 'list on the product page. These are SHARED between Desktop and Mobile: an element switched off '
@@ -356,13 +367,63 @@
     {
       id: 'cart',
       label: 'The set row on the cart page',
-      blurb: 'The basket row a SET sits in on /cart, and no other row. The preview draws a set line and '
-        + 'an ordinary line together, so you can watch these five land on one and leave the other alone.',
-      desk: [{ from: 'd_cart' }],
-      mob: [{ from: 'm_cart' }]
+      blurb: 'The basket row a SET sits in on /cart, and no other row — an ordinary product’s row is '
+        + 'Appearance → Cart page → Product rows. The preview shows a set line and an ordinary line '
+        + 'together, so you can watch these land on one and leave the other alone.',
+      /* FOUR CARDS AND NOT ONE. This section was five controls and is now
+         twenty-five, and twenty-five sliders under one heading is the shape the
+         owner called hard to use. Split by the part of the row they move, in
+         the order you meet them going across it: the room around it, the
+         picture, the words, the controls. (Lane CR) */
+      few: 'ci_min_h ci_pad_t ci_pad_b ci_name_gap ci_min_h_m ci_pad_t_m ci_pad_b_m ci_name_gap_m',
+      desk: [
+        {
+          title: 'Room around the row',
+          desc: 'How tall the row is allowed to get and how much space is inside it. The height is a '
+            + 'MINIMUM — it can only ever make a short row taller, never cut a tall one, which is the '
+            + 'defect this row had.',
+          keys: ['ci_min_h', 'ci_pad_t', 'ci_pad_b', 'ci_pad_x', 'ci_gap']
+        },
+        {
+          title: 'The picture',
+          desc: 'The square at the start of the row. NOT the fanned circles — those are under “The '
+            + 'fanned stack and its popup”.',
+          keys: ['ci_thumb', 'ci_thumb_r']
+        },
+        {
+          title: 'The words',
+          desc: 'The brand line and the set’s name, and what separates the name from what is under it.',
+          keys: ['ci_brand_f', 'ci_name_f', 'ci_name_gap']
+        },
+        {
+          title: 'The stepper, and where the circles sit',
+          desc: 'The quantity control at the foot of the row, and how the circles, the button and the '
+            + 'saving line up against the name above them.',
+          keys: ['ci_qty_top', 'ci_qty_bot', 'ci_box_align']
+        }
+      ],
+      mob: [
+        {
+          title: 'Room around the row',
+          desc: 'The phone’s own. Still a minimum height.',
+          keys: ['ci_min_h_m', 'ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_x_m', 'ci_gap_m']
+        },
+        { title: 'The picture', desc: 'The phone’s own.', keys: ['ci_thumb_m', 'ci_thumb_r_m'] },
+        {
+          title: 'The words',
+          desc: 'The phone’s own.',
+          keys: ['ci_brand_f_m', 'ci_name_f_m', 'ci_name_gap_m']
+        },
+        {
+          title: 'The stepper',
+          desc: 'The phone’s own. Where the circles sit is shared and is on the Desktop tab.',
+          keys: ['ci_qty_top_m', 'ci_qty_bot_m']
+        }
+      ]
     },
     {
       id: 'box',
+      few: 'top bot gap circle overlap btn_f save_f top_m bot_m gap_m circle_m overlap_m btn_f_m save_f_m',
       label: 'The fanned stack and its popup',
       blurb: 'The circles and the popup under a set’s name, everywhere a basket is drawn. Sizes are per '
         + 'breakpoint; the weights and colours are shared and live on Desktop.',
@@ -371,6 +432,7 @@
     },
     {
       id: 'panel',
+      few: 'p_panel_r p_panel_pt p_panel_pb p_over p_panel_r_m p_panel_pt_m p_panel_pb_m p_over_m',
       label: 'The panel and the hang',
       blurb: 'The blush box behind “What is in this set”, and the photographs hanging off its leading '
         + 'edge — on a set’s own product page.',
@@ -387,6 +449,7 @@
     },
     {
       id: 'rows',
+      few: 'p_rowpad p_photo p_gap p_rowpad_m p_photo_m p_gap_m',
       label: 'Rows and photographs',
       blurb: 'One member’s line in the list: its photograph, the space around it and the rule under it. '
         + 'The row’s height follows the photograph, so the photograph size and the row padding are the '
@@ -413,6 +476,7 @@
     },
     {
       id: 'words',
+      few: 'p_head_f p_brand p_name p_qty p_head_f_m p_brand_m p_name_m p_qty_m',
       label: 'Words',
       blurb: 'The heading, and the three lines of every member — brand, name, option — plus the '
         + 'quantity beside them. There is no font FAMILY here on purpose: this shop has one typographic '
@@ -442,6 +506,7 @@
     },
     {
       id: 'foot',
+      few: 'p_more p_foot p_footsp p_more_m p_foot_m p_footsp_m',
       label: 'The fold and the footing',
       blurb: 'What a long list does past its fold — “Show all” is a disclosure in the MARKUP, so it '
         + 'works with no script and a crawler still reads every member — and the three money lines under '
@@ -755,6 +820,35 @@
         + '</div>' + help + '</div>';
     }
 
+    /* ── A SELECT, AND IT HAD NO BRANCH ─────────────────────────── (Lane CR)
+     *
+     * Everything on this screen was a switch, a colour or a slider until "where
+     * the circles sit" arrived, and a field with no branch FELL THROUGH TO THE
+     * RANGE ONE: `<input type="range" min="undefined" max="undefined"
+     * value="start">`, which draws a dead slider and posts NaN. That is not
+     * hypothetical — the handler below carries a note about three selects on
+     * the Checkout page screen that shipped exactly that way and saved as NaN.
+     * Found by reading this function after adding the control, not by the
+     * suite, which is why SetScreenIsSimplerTest now has a case for it.
+     *
+     * The handler needs nothing: a <select> element's `.type` is 'select-one',
+     * which is neither 'checkbox' nor 'range', so it takes the string branch —
+     * which is the right one, because the value is one of the schema's own
+     * option keys and never a number. */
+    if (f.type === 'select' || f.type === 'enum') {
+      var opts = f.options || {};
+      var current = String(draft[f.key] == null ? '' : draft[f.key]);
+
+      return '<div class="sap-f"><div class="sap-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
+        + reset + '</div>'
+        + '<select id="' + id + '" data-sap-key="' + esc(f.key) + '" class="sap-sel">'
+        + Object.keys(opts).map(function (v) {
+          return '<option value="' + esc(v) + '"' + (v === current ? ' selected' : '') + '>'
+            + esc(opts[v]) + '</option>';
+        }).join('')
+        + '</select>' + help + '</div>';
+    }
+
     var o = f.options || {};
     return '<div class="sap-f"><div class="sap-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
       + '<span class="sap-val" data-sap-val="' + esc(f.key) + '">' + esc(shown(f)) + '</span>'
@@ -833,10 +927,48 @@
     return keysOfBreakpoint().filter(function (k) { return !placed[k]; });
   }
 
+  /* ── FEWER CONTROLS ON THE SCREEN AT ONCE ─────────────────────── (Lane CR)
+   *
+   * The owner, having been given 198 controls in eight sections with a live
+   * preview: *"also make it super easier the set control page."* The sections
+   * were the right move and they are not enough — the two biggest still open
+   * with twenty-five sliders, and this round adds fifteen more.
+   *
+   * So every section names the handful somebody actually reaches for, and that
+   * is what opens. The rest are one press away and the press says how many
+   * there are, so nothing is hidden, only folded. `few` is a SPACE-SEPARATED
+   * STRING rather than an array of quoted keys on purpose: the layout table is
+   * read out of this file by SetAppearanceScreenGroupsTest, which counts
+   * `keys: [...]` entries to prove the placement is total and has no
+   * duplicates, and a second array holding the same names would read as the
+   * same control placed twice.
+   *
+   * A group with no `few` opens whole, which is what "Where the phone sizes
+   * start" — three controls — wants.
+   */
+  function fewOf(g) {
+    if (!g.few) return null;
+    var set = {};
+    g.few.split(' ').forEach(function (k) { if (k) set[k] = true; });
+    return set;
+  }
+
   function groupHTML(entry) {
     var g = entry.g;
+    var few = fewOf(g);
+    var all = keysOfGroup(g);
+    var short = few ? all.filter(function (k) { return few[k]; }) : all;
+    var folding = few && short.length && short.length < all.length;
+    var showAll = detail || !folding;
+
     var out = '<div class="sap-card"><div class="sap-head">'
       + '<h2 class="sap-h1">' + esc(g.label) + '</h2>'
+      + (folding
+        ? '<button type="button" class="sap-btn' + (showAll ? '' : ' is-primary') + '" data-sap-detail="'
+          + (showAll ? 'few' : 'all') + '">'
+          + (showAll ? 'Just the ' + short.length + ' main ones' : 'Show all ' + all.length + ' controls')
+          + '</button>'
+        : '')
       + (entry.moved
         ? '<button type="button" class="sap-btn" data-sap-groupreset="' + esc(g.id) + '">Put this group back to shipped ('
           + entry.moved + ')</button>'
@@ -857,9 +989,26 @@
       var t = s.from ? tabOf(s.from) : null;
       var title = s.title || (t ? t.label : '');
       var desc = s.desc || (t ? t.description : '');
-      var fields = keysOfSection(s).map(fieldOf).filter(Boolean);
+      var keys = keysOfSection(s).filter(function (k) { return showAll || few[k]; });
+      var fields = keys.map(fieldOf).filter(Boolean);
+      /* cardHTML() draws nothing for an empty list, so a card whose controls
+         are all in the folded half simply is not there — the owner sees four
+         fields rather than four fields and three empty headings. */
       out += cardHTML(title, desc, fields);
     });
+
+    /* SAID ONCE, AT THE FOOT, and only while something is folded. A person who
+       has just read four sliders and is looking for a fifth is at the bottom of
+       the column, not back at the heading. */
+    if (!showAll) {
+      out += '<div class="sap-card"><p class="sap-path">'
+        + (all.length - short.length) + ' more control'
+        + (all.length - short.length === 1 ? '' : 's')
+        + ' in this section are folded away — padding on every edge, corner radii, weights and '
+        + 'colours. <b>Nothing is hidden from the shop</b>: a folded control still has whatever value it '
+        + 'has.</p><div class="sap-steps"><button type="button" class="sap-btn" data-sap-detail="all">'
+        + 'Show all ' + all.length + ' controls</button></div></div>';
+    }
 
     return out;
   }
@@ -1079,8 +1228,39 @@
     return (f.n ? '-' : '') + (f.d === 1 ? String(n) : String(n / f.d)) + f.s;
   }
 
+  /* ── THE PREVIEW SHOWS THE THING THE OPEN SECTION IS ABOUT ────── (Lane CR)
+   *
+   * The frame draws three surfaces stacked — the cart row, the box as the
+   * drawer and checkout draw it, and the product page's list. Seven of the
+   * eight sections are about ONE of them, so the other two are 300 pixels of
+   * scrolling between the owner and the thing he just moved.
+   *
+   * SENT AS CSS DOWN THE CHANNEL THAT ALREADY EXISTS, rather than as a new
+   * message or a new request. The frame's receiver filters what arrives to the
+   * characters a declaration block can be spelled with and assigns it to
+   * .textContent, so a class selector and `display:none` survive it exactly as
+   * a custom property does and nothing else has to be trusted. No branch in
+   * the controller, no second render, and a section change costs one
+   * postMessage.
+   *
+   * 'all' means show everything, which is what "What is drawn" and the
+   * breakpoint section really are about.
+   */
+  var FOCUS = {
+    cart: 'cart', box: 'box', panel: 'list', rows: 'list', words: 'list',
+    foot: 'list', parts: 'all', where: 'all'
+  };
+
+  function focusCss() {
+    var want = FOCUS[group] || 'all';
+    if (want === 'all') return '';
+
+    return ['cart', 'box', 'list'].filter(function (s) { return s !== want; })
+      .map(function (s) { return '.sap-s-' + s + '{display:none}'; }).join('');
+  }
+
   function overlayCss() {
-    if (!live || !draft) return '';
+    if (!live || !draft) return focusCss();
 
     var buckets = live.blocks.map(function () { return []; });
 
@@ -1108,7 +1288,7 @@
       css += block;
     });
 
-    return css;
+    return css + focusCss();
   }
 
   function pushOverlay() {
@@ -1182,8 +1362,26 @@
     var tab = t.closest('[data-sap-tab]');
     if (tab) { open = tab.dataset.sapTab; renderControls(); return; }
 
+    /* The fold, BEFORE the section buttons: the "Show all" control at the foot
+       of a section is not inside one, but the prev/next buttons beside it carry
+       data-sap-group and a mis-ordered check would move the owner to another
+       section instead of unfolding the one he is in. (Lane CR) */
+    var d = t.closest('[data-sap-detail]');
+    if (d) { detail = d.dataset.sapDetail === 'all'; renderControls(); return; }
+
     var g = t.closest('[data-sap-group]');
-    if (g) { group = g.dataset.sapGroup; renderControls(); return; }
+    if (g) {
+      group = g.dataset.sapGroup;
+      /* A new section opens folded, whatever the last one was left at: the
+         point of the fold is what a section OPENS with. */
+      detail = false;
+      renderControls();
+      /* The preview shows the surface this section is about, and that is a
+         postMessage rather than a re-render — see focusCss(). Without this the
+         frame keeps showing the last section's surface until the next drag. */
+      pushOverlay();
+      return;
+    }
 
     /* The width is the ONE thing on this card that really needs a new frame:
        it is the viewport the media queries are answering. */

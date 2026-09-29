@@ -21993,6 +21993,17 @@ buildNav();
      caller of any kind — built, tested, capability-mapped and unreachable. The
      webhook is how Tamara tells this shop about a decline. --}}
 @include('admin.partials.tamara-connection-screen')
+{{-- Orders → an order → Items → Release the hold (Lane OD). A PANEL, not a
+     screen: no sidebar row, no go() id, no window.go wrapper, so it needs no
+     TITLES row and no LATE_RENDERED entry. It attaches itself to the order
+     detail from outside via a MutationObserver, because renderOrderDetail is
+     module-scoped in this file and rewrites #content after every save.
+
+     It exists because routes/payments-void.php was mounted with no caller of
+     any kind while its sibling capture endpoint was wired — so a cancelled
+     order never released the buyer's held money, and a Tamara plan stayed live
+     for up to 180 days against an order this shop had abandoned. --}}
+@include('admin.partials.order-release-hold')
 
 {{-- Platform → Site address: the banner that appears when this shop is being
      served from an address that is not APP_URL. (Lane: domain-portability.)

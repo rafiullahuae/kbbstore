@@ -361,13 +361,31 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * `translated` is still 0 and the eight concern intros are still English.
      * Nothing a shopper sees moved: every one of the five is a DRAFT like the
      * 1,018 before them.
+     *
+     * ── 1,023 -> 1,026, SAME PROCEDURE, LANE FB ───────────────────────────
+     *
+     * Three more, and they are the flag bar's: store.flagbar.text (the line in
+     * the strip above the header) and the accessible names of the two flags,
+     * store.flagbar.uae and store.flagbar.korea. The sibling case that
+     * enumerates the untranslated set BY NAME is untouched and green, which is
+     * what says these three are the whole of the difference.
+     *
+     * They reach an EXISTING install through a migration of their own --
+     * 2027_05_10_000100_seed_flag_bar_arabic_drafts -- because
+     * 2027_04_28_000000 has already run on this shop and a migration that has
+     * run does not run again. Adding keys to ArabicInterfaceDrafts alone would
+     * have left them in the class and in no database anywhere, with the
+     * console's Drafts figure not moving and nothing for the owner to click.
+     *
+     * `translated` is still 0, all three are DRAFTS, and the strip renders its
+     * English on /ar until somebody approves them.
      */
     ArabicShop::on();
 
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1023, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1026, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

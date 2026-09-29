@@ -170,6 +170,21 @@ final class ArabicInterfaceDrafts
             'store.header.wishlist_label' => 'المفضلة',
             'store.header.cart_label' => 'السلة',
             'store.header.trending_heading' => 'الأكثر رواجًا',
+            /*
+             * The flag bar (Lane FB). A DRAFT like every other line in this
+             * file: nothing here reaches /ar until the owner approves it, and
+             * until then the strip renders the English.
+             *
+             * "متجر الإمارات للجمال الكوري الأصلي" is the claim written the way
+             * Arabic makes it — الأصلي (authentic/original) qualifies الجمال
+             * الكوري, not the shop — and it is the wording a native reader
+             * should be asked to check first, because it is the only one of the
+             * three that a shopper reads rather than hears from a screen
+             * reader.
+             */
+            'store.flagbar.text' => 'متجر الإمارات للجمال الكوري الأصلي',
+            'store.flagbar.uae' => 'علم الإمارات العربية المتحدة',
+            'store.flagbar.korea' => 'علم كوريا الجنوبية',
             'store.footer.tagline' => 'جمال كوري أصلي، مختار لدولة الإمارات.',
             'store.footer.whatsapp_cta' => 'تواصل عبر WhatsApp',
             'store.footer.shop_heading' => 'التسوق',

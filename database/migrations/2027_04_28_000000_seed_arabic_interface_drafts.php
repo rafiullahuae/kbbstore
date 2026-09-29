@@ -10,7 +10,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 1,023 Arabic interface strings, offered as DRAFTS. (Lane AR, +5 by Lane AR2)
+ * 1,026 Arabic interface strings, offered as DRAFTS.
+ * (Lane AR, +5 by Lane AR2, +3 by Lane FB)
+ *
+ * The count is what ArabicInterfaceDrafts::all() holds, which is what this
+ * migration writes -- so on a FRESH install it writes all 1,026 and Lane FB's
+ * own 2027_05_10_000100 finds nothing left to do. On an install where this
+ * has already run, this file never runs again and that one writes the three.
  *
  * ── WHAT THIS CHANGES ON THE SHOP: NOTHING ─────────────────────────────────
  *

@@ -425,6 +425,35 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
     it filled the page. Fixed once in 2.0.4, then reintroduced by a later
     package that shipped an older copy of this file. --}}
 @unless (View::hasSection('bare'))
+@php
+/*
+ * THE FLAG BAR, above the header and inside the same @unless. (Lane FB)
+ *
+ * A PHP comment inside an @php block and NOT a Blade comment, for the reason
+ * the footer's note below gives: Blade strips a Blade comment and leaves the
+ * newline after it, so a note written that way would add one byte to every
+ * page in the shop. Written this way it compiles to a bare PHP tag, whose
+ * close swallows the newline that follows, and the only bytes this change adds
+ * to a page are the strip itself.
+ *
+ * It also has to be written without the two Blade delimiters in it. Blade
+ * strips a Blade comment by a regex over the WHOLE template, inside an @php
+ * block as readily as outside one, so a note that quoted its own example lost
+ * the middle of the sentence in the compiled view — harmless, being a comment,
+ * and exactly the kind of harmless that reads as a mistake to the next person.
+ *
+ * INSIDE the @unless, because `bare` is the checkout: a page asking for a card
+ * number does not carry a marketing strip, and the section that already says
+ * "no site header here" is the one that should say it.
+ *
+ * Guarded on flagBarOn() rather than drawn and hidden. With both switches off
+ * the strip is not in the document at all and the line below compiles to
+ * `if(): endif;`, whose closing `?>` swallows its own newline — so a shop that
+ * turns it off on both widths gets back the byte-identical page it had before
+ * the package. Appearance → Header → Flag bar.
+ */
+@endphp
+@if (app(\App\Services\HeaderSettings::class)->flagBarOn())@include('partials.flag-bar')@endif
         @include('partials.header')
 @endunless
 

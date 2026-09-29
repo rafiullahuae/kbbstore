@@ -1578,6 +1578,96 @@ final class EnglishRenderWalk
         ];
     }
 
+    /**
+     * WHOLE ELEMENTS ADDED TO EVERY PAGE, ON PURPOSE, AND APPROVED ONE BY ONE.
+     *
+     * A reflow rewrites text that is already there. This is the other shape a
+     * deliberate change takes on this shop: a piece of chrome that did not
+     * exist, added to the layout, appearing at one point on every page that
+     * draws it. `approvedReflows()` cannot express it — collapseInner() edits
+     * an element's inner text and this has no "before" to edit.
+     *
+     * ── WHY A RULE AND NOT A MOVE OF BASE_COMMIT ────────────────────────────
+     *
+     * The same argument the printed sheet's group makes at greater length, and
+     * it is stronger here rather than weaker. Moving the constant blinds this
+     * walk to every OTHER lane's change as well, and it does more than that:
+     * BASE_COMMIT is read by PrintedEnglishUnchangedTest too, so a move past
+     * one lane's work fails ten of approvedDocumentDifferences() as rules that
+     * have stopped excusing anything and the correct response is to delete
+     * them — which takes the printed walk's coverage of Lane CX's stylesheet
+     * conversion with it. One new element on the storefront is not worth that.
+     *
+     * A rule here stays narrow: the element is cut out of the AFTER side, the
+     * cuts are counted, and everything else on all thirty-nine pages is still
+     * compared byte for byte. If the element stops appearing the count falls
+     * and this is red; if a second copy appears on one page the count rises and
+     * this is red; and when a later lane adds a storefront page that draws it,
+     * the count rises by one and the number below moves with it, deliberately.
+     *
+     * Applied to the AFTER side, which is the opposite of every other rule in
+     * this class, because the element is in the new tree and not in the old.
+     *
+     * @return array<string, array{pattern: string, hits: int}>
+     */
+    public static function approvedInsertions(): array
+    {
+        return [
+            /*
+             * THE FLAG BAR — Lane FB, Appearance → Header → Flag bar.
+             *
+             * The owner: "i need thin bar as same as attached, having uae flat,
+             * then text and then korea flag. (This bar is only for mobile, keep
+             * this turnef off for desktop by default)." CLAUDE.md rule 1 allows
+             * exactly one exception to "a new setting ships at the value the
+             * page already has" — a default the owner asked for in as many
+             * words — and that sentence is it, so the strip ships on for phones.
+             *
+             * WHAT IT DOES TO A PAGE, measured across the whole walk: 39 pages
+             * render, 31 gain the strip, and on all 39 the rest of the document
+             * is identical. The diff on each of the 31 is one insertion at one
+             * point:
+             *
+             *     before   …--dv-in:12px">⏎⏎⏎        <header class="hd-sticky …
+             *     after    …--dv-in:12px">⏎⏎⏎<div class="kfb kfb-m kfb-pill" …
+             *
+             * — the eight spaces of indentation move inside the strip's own
+             * markup and <header> follows it unchanged. Nothing on the desktop
+             * shop moves at all: `kfb-d` is absent from the class list and
+             * `.kfb` is display:none until a class inside a media query says
+             * otherwise.
+             *
+             * The eight pages WITHOUT it are the quick-view fragment, the
+             * checkout and the order-received page (both declare `bare`),
+             * Laravel's own 404 document, and the four standalone documents —
+             * the Journal, an article, the quiz and the review wall — which
+             * include neither partials.header nor partials.mobile-chrome and so
+             * have no site header for a strip to sit above.
+             *
+             * THE PATTERN IS THE OPENING TAG AND ITS OWN CLOSE, not `.*?` from
+             * one class to the next `</div>`: the strip is `<div class="kfb …">
+             * <div class="kfb-in">…</div></div>`, two levels, so a lazy match to
+             * the FIRST `</div>` would leave the outer close behind and a rule
+             * that cuts more than its element is a rule that hides the next
+             * lane's regression.
+             */
+            'the flag bar above the header (Lane FB)' => [
+                'pattern' => '#<div class="kfb [^>]*>\s*<div class="kfb-in">.*?</div>\s*</div>\n#s',
+                'hits' => 31,
+            ],
+        ];
+    }
+
+    /** Cut every match of one pattern out of a page, counting the cuts. */
+    public static function cutApproved(string $html, string $pattern, int &$hits): string
+    {
+        $n = 0;
+        $out = (string) preg_replace($pattern, '', $html, -1, $n);
+        $hits += $n;
+
+        return $out;
+    }
+
     /** One element's inner text, with its template indentation collapsed away. */
     public static function collapseInner(string $html, string $pattern, int &$hits): string
     {

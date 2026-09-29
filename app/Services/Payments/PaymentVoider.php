@@ -284,6 +284,86 @@ class PaymentVoider
         ];
     }
 
+    /**
+     * The facts an operator confirms BEFORE the release, read off the server.
+     *
+     * ── WHY THIS IS HERE AND NOT IN THE SCREEN ─────────────────────────────
+     *
+     * Releasing a hold is destructive and irreversible, so the operator has to
+     * be told exactly what it does to the buyer — and every word of that
+     * sentence has to come from the server, because the browser is the one
+     * party in this exchange that can be wrong about which order is on screen.
+     * The screen holds an id it read out of a click; this method answers with
+     * the order number that id really names, so the screen can refuse to draw a
+     * release button for an order the operator is not looking at.
+     *
+     * THE AMOUNT IS THE ORDER'S OWN COLUMN, in integer fils, exactly as void()
+     * reads it a few lines above. Nothing about the amount crosses the request
+     * in either direction: void() ignores the body entirely, and this is the
+     * only place a figure is produced for a human to read. No float is
+     * involved — Money::amount() formats the integer.
+     *
+     * GATEWAY-AGNOSTIC, like everything else in this class. The holder's name
+     * is the gateway class's own id, which is a constant in the class file
+     * ('tamara', 'tabby'), never a setting and never the order's
+     * `payment_method` column. So a third gateway that implements
+     * VoidsAuthorisation gets a correct sentence with no edit here, and nothing
+     * an operator can type ever reaches the sentence.
+     *
+     * NEVER CALLS THE NETWORK, for the reason status() gives.
+     *
+     * @return array<string, mixed>
+     */
+    public function confirmation(Order $order): array
+    {
+        $providerId = (string) ($order->payment_method ?? '');
+        $gateway = $this->registry->find($providerId !== '' ? $providerId : null);
+
+        $holder = $gateway instanceof VoidsAuthorisation
+            ? $this->holderName((string) $gateway->id())
+            : null;
+
+        $amountFils = (int) $order->total;
+
+        return [
+            'order_id' => (int) $order->getKey(),
+            'order_number' => (string) $order->order_number,
+            'amount_fils' => $amountFils,
+            'amount' => Money::amount($amountFils, 2),
+            'currency' => strtoupper((string) ($order->currency ?: 'AED')),
+            'holder' => $holder,
+            /*
+             * What it costs the BUYER, which is the thing an operator is
+             * actually deciding about. Written once, here, so the console and
+             * the artisan command cannot come to say different things about the
+             * same act — the drift this whole family of endpoints keeps
+             * producing when one answer has two implementations.
+             */
+            'consequence' => $holder === null ? null : sprintf(
+                'This ends the buyer\'s %s payment plan for this order and gives back the credit '
+                . 'it is holding against. Nothing recreates it: if the sale comes back, the buyer '
+                . 'has to order and pay again.',
+                $holder,
+            ),
+        ];
+    }
+
+    /**
+     * 'tamara' -> 'Tamara'. A class constant, so it is safe to print.
+     *
+     * Falls back to a neutral phrase rather than to an empty string: a sentence
+     * that reads "This ends the buyer's  payment plan" is worse than one that
+     * does not name the provider at all.
+     */
+    private function holderName(string $id): string
+    {
+        $id = trim($id);
+
+        return preg_match('/^[a-z][a-z0-9_-]*$/i', $id) === 1
+            ? ucfirst(strtolower($id))
+            : 'the payment provider';
+    }
+
     private function whyNot(Order $order, bool $supported, bool $voided, bool $captured): ?string
     {
         if (! $supported) {

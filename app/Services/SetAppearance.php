@@ -677,6 +677,69 @@ class SetAppearance
         'ci_name_gap' => ['range', 'Set row: space under the set’s name', 6,
             'What separates the name from whatever is under it — the option line, the set’s circles, or the quantity stepper.',
             ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+
+        /* ── THE SAME DEPTH AN ORDINARY ROW HAS, PLUS WHAT ONLY A SET HAS ──
+                                                                    (Lane CR)
+           The owner: *"for product rows and set rows. i need totally different
+           controls like height spacing, padding etc."* Appearance → Cart page →
+           Product rows now carries the same seven measurements for
+           `:not(.ci-set)`; these are their twins for `.ci-set`, so the two rows
+           can be shaped independently and neither screen can reach the other's.
+
+           ▲ THE HEIGHT IS A MINIMUM AND THERE IS NO OVERFLOW CONTROL, and that
+             is this lane's whole lesson. The defect the owner photographed was
+             a set row losing its name and its stepper to a FIXED height with
+             `overflow:hidden` — so the control that governs how tall a set row
+             is can only ever make it taller, and nothing on this screen can
+             make a row clip its own contents. The bad state is unreachable
+             rather than merely discouraged, which is the same move the set
+             box's overhang control made when it was expressed as the overhang
+             instead of the raw pull.
+
+           Every default is what the row draws today: the cart sheet's own
+           numbers for the picture, the brand and the name, and ZERO for the
+           minimum height and for the space around the stepper, which is what
+           `.qty{margin:0}` means. */
+        'ci_min_h' => ['range', 'Set row: minimum height', 0,
+            'A FLOOR AND NEVER A CEILING. Zero — what the page draws — lets the row be exactly as tall as what is in it, which for a set is the name, the circles, the button and the stepper. Raise it to give a short set room; a tall one is never cut.',
+            ['min' => 0, 'max' => 200, 'step' => 2, 'unit' => 'px']],
+        'ci_thumb' => ['range', 'Set row: picture size', 56,
+            'The square at the start of the row. It is NOT the fanned circles — those are sized under “Set box”, as a percentage of Appearance → Cart panel’s own thumbnail.',
+            ['min' => 28, 'max' => 96, 'step' => 1, 'unit' => 'px']],
+        'ci_thumb_r' => ['range', 'Set row: picture corner radius', 10, '',
+            ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'ci_brand_f' => ['range', 'Set row: brand size', 10, '',
+            ['min' => 7, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'ci_name_f' => ['range', 'Set row: name size', 130,
+            'IN TENTHS OF A PIXEL: 130 is 13px. The floor is 100 — 10px — which is a size and not a way of hiding the name.',
+            ['min' => 100, 'max' => 240, 'step' => 5, 'unit' => '/10 px']],
+        'ci_qty_top' => ['range', 'Set row: space above the quantity stepper', 0,
+            'Between the set’s circles and the stepper under them. It is ON TOP of “Space below the set box”, which belongs to the box rather than to the row.',
+            ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'ci_qty_bot' => ['range', 'Set row: space below the quantity stepper', 0, '',
+            ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'ci_box_align' => ['select', 'Set row: where the circles sit', 'start',
+            'How the fanned circles, the “What’s inside” button and the saving line up against the name above them and the stepper below them. “Start” is what the row draws today.', [
+                'start' => 'Start — under the first letter of the name',
+                'center' => 'Centre — in the middle of the words',
+                'end' => 'End — against the far side',
+                'between' => 'Spread — circles at one end, the saving at the other',
+            ]],
+        'ci_min_h_m' => ['range', 'Set row: minimum height', 0, '',
+            ['min' => 0, 'max' => 200, 'step' => 2, 'unit' => 'px']],
+        'ci_thumb_m' => ['range', 'Set row: picture size', 52, '',
+            ['min' => 28, 'max' => 96, 'step' => 1, 'unit' => 'px']],
+        'ci_thumb_r_m' => ['range', 'Set row: picture corner radius', 10, '',
+            ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'ci_brand_f_m' => ['range', 'Set row: brand size', 10, '',
+            ['min' => 7, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'ci_name_f_m' => ['range', 'Set row: name size', 125,
+            'In tenths of a pixel: 125 is 12.5px, which is what the sheet’s phone block draws.',
+            ['min' => 100, 'max' => 240, 'step' => 5, 'unit' => '/10 px']],
+        'ci_qty_top_m' => ['range', 'Set row: space above the quantity stepper', 0, '',
+            ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'ci_qty_bot_m' => ['range', 'Set row: space below the quantity stepper', 0, '',
+            ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
         'ci_bp' => ['range', 'The cart rows switch to their phone sizes below', 600,
             '▲ 600, AND NOT THE 760 THE SET BOX USES. The cart page’s own phone block in the stylesheet is at 600px and the set box’s is at 760px, and they are right to differ — one is about a two-column page collapsing and the other about the checkout summary starting to clip its contents. One number for both would change the shop at every width in between, which is exactly what may not happen.',
             ['min' => 320, 'max' => 1200, 'step' => 10, 'unit' => 'px']],
@@ -711,7 +774,9 @@ class SetAppearance
     public const TABS = [
         'd_cart' => ['Desktop · Set row on the cart page',
             'The row a SET sits in on the cart page, and no other row. It was scoped to every row in the basket until the owner caught it: “these controls must be apply only and only on Set rows, not on other rows”. An ordinary product’s row keeps the stylesheet’s own numbers, which is why moving these changes nothing outside a basket holding a set. Laptop values; the phone has its own on the Mobile tab.',
-            ['ci_pad_t', 'ci_pad_b', 'ci_pad_x', 'ci_gap', 'ci_name_gap']],
+            ['ci_min_h', 'ci_pad_t', 'ci_pad_b', 'ci_pad_x', 'ci_gap',
+                'ci_thumb', 'ci_thumb_r', 'ci_brand_f', 'ci_name_f', 'ci_name_gap',
+                'ci_qty_top', 'ci_qty_bot', 'ci_box_align']],
         'd_box_parts' => ['Desktop · Set box — what is drawn',
             'The fanned circles and the “What’s inside” popup under a set’s name in the cart drawer, on the cart page, in the checkout summary, in the browsed rail and on an order. Every switch here applies to BOTH screens — one control with two halves that could disagree is worse than one honest control.',
             ['on', 'fan_on', 'fan_max', 'btn_on', 'head_on', 'qty_on', 'save_on']],
@@ -753,7 +818,9 @@ class SetAppearance
             ['ci_bp', 'bp', 'p_bp']],
         'm_cart' => ['Mobile · Set row on the cart page',
             'The phone’s own padding and gaps for a SET’s row on the cart page. Like the Desktop tab, these reach a set’s row and no other row in the basket.',
-            ['ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_x_m', 'ci_gap_m', 'ci_name_gap_m']],
+            ['ci_min_h_m', 'ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_x_m', 'ci_gap_m',
+                'ci_thumb_m', 'ci_thumb_r_m', 'ci_brand_f_m', 'ci_name_f_m', 'ci_name_gap_m',
+                'ci_qty_top_m', 'ci_qty_bot_m']],
         'm_box' => ['Mobile · Set box',
             'The phone’s own sizes. What is DRAWN, every weight and every colour are shared with Desktop and are set on that tab — an element switched off there is off here too.',
             ['top_m', 'bot_m', 'gap_m', 'circle_m', 'overlap_m', 'ring_m', 'btn_f_m', 'btn_px_m', 'btn_py_m',
@@ -947,6 +1014,28 @@ class SetAppearance
         $hex = self::hex($value);
 
         return $hex === '' ? '' : $name.':'.$hex;
+    }
+
+    /**
+     * One of four flex keywords, chosen by a stored value that can only ever be
+     * one of the four.
+     *
+     * ModuleSchema's `select` cast already refuses anything that is not a key
+     * of the schema's own option list, so this map is the SECOND lock and not
+     * the first — the same belt-and-braces `hex()` applies to a colour, and for
+     * the same reason: `settings` is a table, the owner has a shell on the live
+     * box, and a row written by hand would otherwise land in a stylesheet. The
+     * default is returned for anything unrecognised, so this function cannot
+     * emit a value it was not written with.
+     */
+    private static function align(string $value): string
+    {
+        return [
+            'start' => 'flex-start',
+            'center' => 'center',
+            'end' => 'flex-end',
+            'between' => 'space-between',
+        ][$value] ?? 'flex-start';
     }
 
     /** A hundredths integer as a unitless CSS number, locale-proof. */
@@ -1206,9 +1295,40 @@ class SetAppearance
             // The cart page's own rows — properties, not variables, because the
             // sheet that sets them is compiled and this package does not
             // rebuild it.
+            /*
+             * ▲ THE PADDING STAYS FIRST IN THIS BLOCK, and `min-height` is
+             *   appended rather than the whole declaration being rewritten.
+             *   SetAppearanceTest pins the prefix `…ci.ci-set{padding:20px`,
+             *   and a rule reordered for tidiness is a pin moved for nothing.
+             *
+             * ▲ min-height AND NOT height. The defect this lane was given was a
+             *   set row losing its name and its stepper to a fixed height with
+             *   overflow:hidden on the squeezed layout; a ceiling here would be
+             *   the same defect with a slider in front of it.
+             */
             '.kbb-cartpage .items .ci.ci-set{padding:'.(int) $c['ci_pad_t'].'px '.(int) $c['ci_pad_x'].'px '
-                .(int) $c['ci_pad_b'].'px;gap:'.(int) $c['ci_gap'].'px}',
-            '.kbb-cartpage .items .ci.ci-set .cn{margin-bottom:'.(int) $c['ci_name_gap'].'px}',
+                .(int) $c['ci_pad_b'].'px;gap:'.(int) $c['ci_gap'].'px'
+                .';min-height:'.(int) $c['ci_min_h'].'px}',
+            '.kbb-cartpage .items .ci.ci-set .cn{margin-bottom:'.(int) $c['ci_name_gap'].'px'
+                .';font-size:'.self::ratio((int) $c['ci_name_f'], 10).'px}',
+            '.kbb-cartpage .items .ci.ci-set .cth{width:'.(int) $c['ci_thumb'].'px'
+                .';height:'.(int) $c['ci_thumb'].'px;border-radius:'.(int) $c['ci_thumb_r'].'px}',
+            '.kbb-cartpage .items .ci.ci-set .cbrand{font-size:'.(int) $c['ci_brand_f'].'px}',
+            // `margin-block`, logical, and a LONGHAND pair: the sheet writes
+            // `.qty{margin:0}`, so restating the shorthand would be the same
+            // number said twice while this says only what the owner set.
+            '.kbb-cartpage .items .ci.ci-set .qty{margin-block:'.(int) $c['ci_qty_top'].'px '
+                .(int) $c['ci_qty_bot'].'px}',
+            /*
+             * WHERE THE CIRCLES SIT. `.kset` is a flex row of three things —
+             * the fan, the button and the saving — so this is its
+             * justify-content, and the value can only ever be one of the four
+             * the schema names: ModuleSchema's `select` cast stores an option
+             * of its own or the default, so there is no path from a settings
+             * row to an arbitrary CSS keyword. Rule 5.
+             */
+            '.kbb-cartpage .items .ci.ci-set .kset{justify-content:'
+                .self::align((string) $c['ci_box_align']).'}',
         ];
 
         /*
@@ -1267,8 +1387,15 @@ class SetAppearance
          */
         $rules[] = '@media (max-width:'.(int) $c['ci_bp'].'px){'
             .'.kbb-cartpage .items .ci.ci-set{padding:'.(int) $c['ci_pad_t_m'].'px '.(int) $c['ci_pad_x_m'].'px '
-            .(int) $c['ci_pad_b_m'].'px;gap:'.(int) $c['ci_gap_m'].'px}'
-            .'.kbb-cartpage .items .ci.ci-set .cn{margin-bottom:'.(int) $c['ci_name_gap_m'].'px}}';
+            .(int) $c['ci_pad_b_m'].'px;gap:'.(int) $c['ci_gap_m'].'px'
+            .';min-height:'.(int) $c['ci_min_h_m'].'px}'
+            .'.kbb-cartpage .items .ci.ci-set .cn{margin-bottom:'.(int) $c['ci_name_gap_m'].'px'
+            .';font-size:'.self::ratio((int) $c['ci_name_f_m'], 10).'px}'
+            .'.kbb-cartpage .items .ci.ci-set .cth{width:'.(int) $c['ci_thumb_m'].'px'
+            .';height:'.(int) $c['ci_thumb_m'].'px;border-radius:'.(int) $c['ci_thumb_r_m'].'px}'
+            .'.kbb-cartpage .items .ci.ci-set .cbrand{font-size:'.(int) $c['ci_brand_f_m'].'px}'
+            .'.kbb-cartpage .items .ci.ci-set .qty{margin-block:'.(int) $c['ci_qty_top_m'].'px '
+            .(int) $c['ci_qty_bot_m'].'px}}';
 
         $rules[] = '@media (max-width:'.(int) $c['bp'].'px){.kset.kset{'
             .implode(';', self::boxVars($c, true)).'}}';

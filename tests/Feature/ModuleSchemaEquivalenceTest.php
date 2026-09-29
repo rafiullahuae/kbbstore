@@ -63,6 +63,32 @@
  *      already had its '#'.
  */
 
+/*
+ * ── ADDING A SETTING TO ONE OF THESE MODULES (read this before regenerating) ──
+ *
+ * The corpus is driven from each module's SCHEMA, so a new key adds rows and
+ * `it answers every recorded cast exactly as it did before the shared schema`
+ * goes red at the COUNT, not at a value: "the corpus changed shape; the fixture
+ * no longer describes it". That is the right failure — it means nobody can add
+ * a control without the corpus seeing it.
+ *
+ * ▲ DO NOT REGENERATE THE WHOLE FILE. Thirty-two of its lines are the recorded
+ *   PRE-FIX answers for the sixteen colour fields in mAllowedRepairs() — the
+ *   `E23A4E` that is not a CSS colour. Overwriting them with what the code says
+ *   today makes those lines agree trivially, which turns the exemption list
+ *   into a dead letter and erases the only record of the defect the second test
+ *   exists to forbid. The fixture is a record of what the code did BEFORE the
+ *   shared cast, not a snapshot of what it does now.
+ *
+ *   Take the new rows and nothing else: rebuild the corpus, then for every line
+ *   whose identity (module|key|type|input) is already in the fixture, keep the
+ *   FIXTURE's line. What is left to write is exactly the new keys' rows.
+ *
+ *   Lane FB added eleven keys to HeaderSettings for the flag bar and did it
+ *   that way: 101 lines inserted, 0 modified, 0 removed — which is also how it
+ *   could say the eleven changed nothing about the other 4,828 calls.
+ */
+
 use App\Services\ModuleSchema;
 
 /** Rebuild the recorded corpus against the code as it stands now. */
