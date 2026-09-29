@@ -286,6 +286,31 @@ final class AdminCapabilities
         'banners.view' => ['owner', 'manager', 'editor'],
         'banners.manage' => ['owner', 'manager', 'editor'],
 
+        /*
+         * ── Appearance → Grid sections (Lane GS, routes/grid-sections-admin.php)
+         *
+         * The owner's reusable product-grid section, as many instances as he
+         * builds. TWO, and the same three roles as `banners.*` above, for the
+         * same reason and with the same argument: an instance decides what the
+         * FRONT PAGE shows, which is narrower and louder than the media library
+         * `content.manage` also covers, and laying out the homepage is the work
+         * the `editor` role exists for.
+         *
+         * `support` is on neither half. A support account answers customers.
+         *
+         * ▲ `gridsections.view` IS NOT A HARMLESS GRANT, and it is worth saying
+         * why it is still only a view. The screen's list endpoint returns the
+         * shop's brands and categories as option sets and its picker searches
+         * the catalogue by name — published catalogue data, all of it, and
+         * nothing that is not already on /shop. What it does NOT return is a
+         * product row: the picker's allowlist is five columns wide and is
+         * asserted by GridSectionApiSurfaceTest, because a bare ->get() here
+         * would hand an editor `wc_id`, `sku` and `total_sales` the way the
+         * defects CLAUDE.md lists did.
+         */
+        'gridsections.view' => ['owner', 'manager', 'editor'],
+        'gridsections.manage' => ['owner', 'manager', 'editor'],
+
         // Writing an article into the Journal (Lane J). The same three roles
         // content.manage carries, and its own capability for the reason the
         // three below give: an article is published at the SITE ROOT of this
@@ -1141,6 +1166,30 @@ final class AdminCapabilities
         ['DELETE', 'admin-api/banners/**', 'banners.manage'],
         ['GET', 'admin-api/banners', 'banners.view'],
         ['GET', 'admin-api/banners/**', 'banners.view'],
+
+        /*
+         * ── Appearance → Grid sections (Lane GS) ────────────────────────────
+         *
+         * THE WRITES ABOVE THE READS, which is this file's rule and not a
+         * preference — RULES is first-match-wins, and listed the other way
+         * round `GET admin-api/grid-sections/**` would resolve every path in
+         * that file and a read capability would be enough to DELETE an
+         * instance. That is the same sentence routes/banners-admin.php's header
+         * writes about its own block, and it is repeated because the failure it
+         * describes is silent.
+         *
+         * `POST admin-api/grid-sections/**` covers the draft preview as well as
+         * the writes. A preview is a POST here deliberately: its payload is a
+         * draft of what the instance is about to become, and a reader who may
+         * not write the instance has no business composing one.
+         */
+        ['POST', 'admin-api/grid-sections', 'gridsections.manage'],
+        ['POST', 'admin-api/grid-sections/**', 'gridsections.manage'],
+        ['PUT', 'admin-api/grid-sections/**', 'gridsections.manage'],
+        ['PATCH', 'admin-api/grid-sections/**', 'gridsections.manage'],
+        ['DELETE', 'admin-api/grid-sections/**', 'gridsections.manage'],
+        ['GET', 'admin-api/grid-sections', 'gridsections.view'],
+        ['GET', 'admin-api/grid-sections/**', 'gridsections.view'],
 
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],

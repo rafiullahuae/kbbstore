@@ -84,7 +84,22 @@ class HomepageApiController extends Controller
         $order = 0;
 
         foreach ($rows as $row) {
-            if (! isset(HomepageSections::REGISTRY[$row['key']])) {
+            /*
+             * `registry()` AND NOT THE CONST — Lane GS, and it is the one line
+             * on this side of that change.
+             *
+             * The owner's reusable product grid puts one row per built instance
+             * into HomepageSections::registry(). Appearance → Homepage paints
+             * those rows, so the console posts them back — and read against the
+             * CONST every one of them is an "Unknown section", which 422s the
+             * whole save. The screen would show an instance, let the owner
+             * reorder it or switch it off, and refuse to store any of it.
+             *
+             * Pinned by GridSectionHomepageOrderTest's "it saves a reordered
+             * payload that contains a built grid instance": put REGISTRY back
+             * and that test goes red with the 422 in its message.
+             */
+            if (! isset(HomepageSections::registry()[$row['key']])) {
                 return [null, response()->json(['ok' => false, 'error' => "Unknown section: {$row['key']}."], 422)];
             }
 

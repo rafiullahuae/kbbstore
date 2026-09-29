@@ -129,25 +129,42 @@ class HomepageLayouts
         $order = 0;
 
         foreach ($layout['sections'] as $section) {
-            if (! isset(HomepageSections::REGISTRY[$section])) {
+            if (! isset(HomepageSections::registry()[$section])) {
                 continue;
             }
 
             $on = ! in_array($section, $layout['off'], true);
-            $hasGrid = HomepageSections::REGISTRY[$section][2];
+            $hasGrid = HomepageSections::registry()[$section][2];
 
             $out[$section] = [
                 'desktop' => $on,
                 'mobile' => $on,
                 'order' => $order++,
                 'skin' => $hasGrid
-                    ? ($layout['skins'][$section] ?? HomepageSections::REGISTRY[$section][3])
+                    ? ($layout['skins'][$section] ?? HomepageSections::registry()[$section][3])
                     : null,
             ];
         }
 
-        // Anything the preset did not mention keeps its default, placed last.
-        foreach (HomepageSections::REGISTRY as $section => $meta) {
+        /*
+         * Anything the preset did not mention keeps its default, placed last.
+         *
+         * `registry()` AND NOT THE CONST — Lane GS, and it is one token with a
+         * real consequence behind it. The owner's reusable product grid puts one
+         * row per built instance into HomepageSections::registry(); read against
+         * the const, an instance is in NEITHER loop, so applying a layout preset
+         * writes a payload that does not mention it and save() drops its stored
+         * row. all() then re-merges it from the registry with its switches back
+         * ON and its saved order gone — a section that moved and switched itself
+         * on because the owner pressed an unrelated button, with nothing said.
+         *
+         * Named here it is treated exactly as a shipped section the preset does
+         * not mention — kept, defaulted, placed last — which is the behaviour
+         * this loop already promises for `cards_banner` and the rest.
+         *
+         * Pinned by GridSectionHomepagePresetTest.
+         */
+        foreach (HomepageSections::registry() as $section => $meta) {
             if (! isset($out[$section])) {
                 $out[$section] = ['desktop' => true, 'mobile' => true, 'order' => $order++, 'skin' => $meta[3]];
             }

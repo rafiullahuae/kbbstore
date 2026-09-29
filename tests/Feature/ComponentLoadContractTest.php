@@ -153,6 +153,21 @@ const CLC_COVERED = [
     'resources/views/store/collection.blade.php' => '/concern/{concern}/',
     'resources/views/store/wishlist.blade.php' => '/my-wishlist',
     'resources/views/store/home.blade.php' => 'the homepage, rendered cold',
+    /*
+     * Lane GS. The reusable grid section's own partial renders
+     * <x-product-card> once per tile, so it is a caller of a contracted
+     * template and this file caught it on the day it was written — which is
+     * exactly what the walk below is for.
+     *
+     * Covered by the HOMEPAGE, which is the only page that draws it: the loop
+     * in store/home.blade.php includes it once per built instance. That entry
+     * is already above, so the coverage this row records is the SAME cold
+     * render — and the render case is what holds GridSections::fetchPool() to
+     * its `with('brand:id,name,slug')`, because preventLazyLoading() turns a
+     * dropped eager load into a failure here rather than into a per-tile query
+     * on the shop's most-hit URL.
+     */
+    'resources/views/partials/home/grid-section.blade.php' => 'the homepage, rendered cold, with an instance built',
 ];
 
 /* ══════════════════════════ reading the source ═══════════════════════════ */
