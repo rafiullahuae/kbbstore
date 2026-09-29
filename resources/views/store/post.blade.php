@@ -75,20 +75,6 @@
     --ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--line:rgba(42,34,40,.10);--line-2:rgba(42,34,40,.06);
     --r-m:14px;--r-l:20px;--sh-m:0 6px 20px rgba(42,34,40,.08);--sans:'Poppins',system-ui,sans-serif;--ease:cubic-bezier(.22,.61,.36,1)}
   *{box-sizing:border-box;margin:0;padding:0}
-  /* ── THIS PAGE IS WHITE, AND IT IS THE ONE THING THIS LANE COULD NOT MAKE
-     CONSISTENT ─────────────────────────────────────────────── (Lane BG)
-     `background:var(--bg)` stays, and staying is the decision. kbb.css's
-     designed page background -- `#FDEFF3` under a botanical SVG and a four-stop
-     gradient -- is what the home page, the cart, the checkout, the wishlist and
-     now /shop/ and a product page all render. THIS DOCUMENT CANNOT HAVE IT: it
-     carries its own <head> and its own stylesheet and does not load kbb.css at
-     all, so the rule is not available to it. Deleting the declaration here was
-     tried and MEASURED: body computes to rgba(0,0,0,0) and the page still
-     renders white off the canvas, so it buys nothing and states less.
-
-     Giving it the real background costs either loading kbb.css on this document
-     or copying a ~40 KB data-URI gradient into it. Both are bigger than this
-     lane, and docs/BG-STANDALONE-DOCUMENTS.md carries the arithmetic. */
   body{font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
   a{color:inherit}
   /* THE PAGE CONTAINER, on the site width.                        Lane W1
