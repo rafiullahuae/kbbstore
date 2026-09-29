@@ -55,6 +55,20 @@ class PageWashApiController extends Controller
             'treatments' => PageWash::TREATMENTS,
             'palettes' => PageWash::PALETTES,
             /*
+             * The five real storefront addresses the screen frames, with a
+             * real product slug read out of the catalogue rather than invented.
+             *
+             * THE SLUG IS LOOKED UP HERE AND NOT IN THE SCREEN, because the
+             * screen has no catalogue and a preview that framed /product/demo/
+             * would be showing the owner a 404 and calling it his shop. One
+             * `visible()` read on an admin endpoint; nothing on the storefront
+             * runs it, so StorefrontQueryBudgetTest is untouched.
+             *
+             * If the shop has no visible product at all the product row is
+             * simply absent — four frames rather than a broken fifth.
+             */
+            'preview_pages' => $this->previewPages(),
+            /*
              * The stylesheet this shop is currently sending, verbatim, so the
              * screen can show what it is doing and a reader can see that a shop
              * which has not switched the wash on sends NOTHING. An empty string
@@ -89,6 +103,28 @@ class PageWashApiController extends Controller
                 'intensity' => 100,
             ]),
         ]);
+    }
+
+    /**
+     * @return list<array{label:string, path:string}>
+     */
+    private function previewPages(): array
+    {
+        $pages = [
+            ['label' => 'Home', 'path' => '/'],
+            ['label' => 'Shop', 'path' => '/shop/'],
+        ];
+
+        $slug = \App\Models\Product::query()->visible()->orderBy('id')->value('slug');
+
+        if (is_string($slug) && $slug !== '') {
+            $pages[] = ['label' => 'A product', 'path' => '/product/'.$slug.'/'];
+        }
+
+        $pages[] = ['label' => 'Cart', 'path' => '/cart/'];
+        $pages[] = ['label' => 'Journal', 'path' => '/skincare-guide/'];
+
+        return $pages;
     }
 
     public function save(Request $request): JsonResponse

@@ -115,6 +115,20 @@ shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language
 > it keeps the handover document and the applied console in step` is what says
 > so, and it is the test that caught this.
 >
+> **Moved again, and this time BEFORE the merge rather than after it:
+> `'pagewash'` (Lane BG).** Appearance → Page background joins the armed set on
+> the same condition the paragraph below states — its partial wraps `window.go`
+> and calls `render()` before it awaits anything. The replacement above carries
+> it ALREADY, so this document is one id ahead of `app.blade.php` until the
+> integrator applies `docs/BG-ADMIN-APP-BLOCKS.md` block 2, and
+> `TranslationConsoleTest > it keeps the handover document and the applied
+> console in step` is RED on block 3 until then. That is deliberate and is the
+> shape CLAUDE.md prescribes: the pin is on the FINISHED state, it goes green
+> the moment the integrator does the one thing the lane asked for, and it is a
+> real guard afterwards. The alternative — leaving this document behind and
+> asking the integrator to remember a fourth edit — is the failure three of four
+> lanes have already shipped.
+>
 > **Moved again, 29 September (Lane FIN2): `'setap'`.** Appearance → Set joined
 > the armed set when Lane SA merged and this replacement was not moved with it,
 > so the integration branch was RED on that same case — `block 3 is not applied
@@ -178,7 +192,7 @@ const LATE_RENDERED=new Set(['media','tax']);
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash']);
 ```
 
 ---
