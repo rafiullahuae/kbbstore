@@ -188,8 +188,20 @@
    Both are logical properties, so Arabic mirrors from the same declaration. */
 .kset-fan{display:flex;align-items:center;flex:0 1 auto;min-inline-size:0;
           flex-wrap:wrap;row-gap:var(--kset-ring,2px);
-          padding-inline-start:calc(var(--kset-d-pad, calc(var(--cp-thumb,42px) * var(--kset-cf,.62))) * 0.38)}
-.kset-c{--kset-d:calc(var(--cp-thumb,42px) * var(--kset-cf,.62));
+          /* THE PADDING IS DERIVED FROM THE OVERLAP, not from a copy of its
+             shipped value. `--kset-lap` is negative, so `* -1` turns the pull
+             into the space that absorbs it — and the two track each other when
+             the owner moves the overlap slider. Written as `* 0.38` it did not:
+             at an overlap of 0 the fan would have kept a 0.38d dead gutter at
+             its start and the circles would have sat that far right of the
+             words above them. */
+          padding-inline-start:calc(var(--kset-dia) * -1 * var(--kset-lap,-.38))}
+/* The diameter, named ONCE on the wrapper so the fan's padding and the circles
+   themselves are the same number by construction. Declared here rather than
+   emitted, because it is an expression over two other properties and not a
+   value anybody sets. */
+.kset{--kset-dia:calc(var(--cp-thumb,42px) * var(--kset-cf,.62))}
+.kset-c{--kset-d:var(--kset-dia);
         width:var(--kset-d);height:auto;aspect-ratio:1;border-radius:50%;
         flex:0 1 auto;min-inline-size:0;
         background-size:cover;background-position:center;background-repeat:no-repeat;

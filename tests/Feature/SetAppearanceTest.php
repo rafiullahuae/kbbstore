@@ -241,8 +241,12 @@ it('carries a moved value onto a rendered storefront page', function () {
      * storefrontCss() return '' unconditionally, and this fails on the
      * `id="kbb-set"` expectation.
      */
-    expect((string) $this->get('/')->getContent())
-        ->not->toContain('id="kbb-set"', 'a shop that has moved nothing must gain no style block');
+    /* str_contains() and not ->not->toContain(): Pest's toContain() is
+       VARIADIC, so the second argument is a second NEEDLE rather than a
+       message, and the expectation cannot fail. CLAUDE.md names this and
+       ExpectationsThatCannotFailTest catches it — it caught this very line. */
+    expect(str_contains((string) $this->get('/')->getContent(), 'id="kbb-set"'))
+        ->toBeFalse('a shop that has moved nothing must gain no style block');
 
     saSet('circle', 80);
     saSet('ci_pad_t', 20);
@@ -585,8 +589,16 @@ it('lets the fan wrap instead of pushing the whole page sideways', function () {
         ->toBeTrue('a shrunken circle would be an ellipse');
     expect(str_contains($box, '.kset-c{margin-inline-start:calc(var(--kset-d) * var(--kset-lap,-.38))}'))
         ->toBeTrue('the overlap is still on the adjacent-sibling selector, which breaks on a wrapped line');
-    expect(str_contains($box, 'padding-inline-start:calc(var(--kset-d-pad'))
-        ->toBeTrue('nothing absorbs the first circle\'s negative margin, so the fan starts 0.38d too far back');
+    /* DERIVED FROM THE OVERLAP, not a copy of its shipped value: `--kset-lap`
+       is negative and `* -1` turns the pull into the space that absorbs it, so
+       the two track each other when the slider moves. Written `* 0.38` it did
+       not — at an overlap of 0 the fan kept a 0.38d dead gutter at its start
+       and sat that far right of the words above it, which is a new control
+       visibly breaking the alignment it was given to adjust. */
+    expect(str_contains($box, 'padding-inline-start:calc(var(--kset-dia) * -1 * var(--kset-lap,-.38))'))
+        ->toBeTrue('nothing absorbs the first circle\'s negative margin, or it does not follow the overlap');
+    expect(str_contains($box, '.kset{--kset-dia:calc(var(--cp-thumb,42px) * var(--kset-cf,.62))}'))
+        ->toBeTrue('the diameter is not named once, so the padding and the circles can disagree');
     expect(preg_match('/\.kset-c \+ \.kset-c\{/', $box))
         ->toBe(0, 'the adjacent-sibling overlap rule is back');
 
