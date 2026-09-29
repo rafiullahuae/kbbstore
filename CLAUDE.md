@@ -228,6 +228,34 @@ of it is blocked, finish everything else and say exactly what is left and why.
   with `git remote set-url origin https://github.com/rafiullahuae/kbbstore`
   (and `git config --unset remote.origin.pushurl`).
 
+- **The session scratchpad is SHARED between lanes, and a generic filename in
+  it is how one lane comes to report another's numbers.** Not a worktree, not
+  per-lane: one directory that every lane writes. Measured, 29 September: Lane
+  PP2 had been redirecting suite runs to `final.txt`, `full.txt`,
+  `baseline.txt`, `guards.txt`, `mysql.txt` there all session. Lane FIN's
+  armed script did `cp "$S/final.txt" "$S/fin-default.txt"` when its own run's
+  PID exited — and PP2 had truncated `final.txt` with a fresh full suite
+  thirteen minutes before FIN's copy fired. `fin-default.txt` was 165,805
+  bytes at 08:24 and `final.txt` 165,812 at 08:37: two lanes, one file, and
+  neither able to say whose output was in it. PP2 read an
+  `ImportProductParityTest` failure out of it, reported it as its own, and had
+  to retract the attribution; the file's odd shape — two summaries, 892.30s
+  then 911.59s, and `EXIT=0` under a "1 failed" line — was two lanes
+  interleaving, not anything clever.
+
+  A collision here does not error and does not look like one. Both files are
+  plausible test output, so it surfaces as a failure in a lane that cannot
+  reproduce it, which is indistinguishable from flake and costs a day.
+
+  **So: write logs and scratch files inside your own worktree
+  (`/home/user/lane-<x>/storage/<x>-logs/`), and if you must use the
+  scratchpad, namespace every filename `<lane>-*`.** Never read a file from
+  there you did not write under a name only your lane uses. The directory held
+  88 files from six lanes over several days when this was found — `a.bak`,
+  `PE.bak`, `clean.txt` — so assume anything generic in it is somebody else's.
+  This is the same class of failure as `KBB_WP_DB` and the `pkill` pattern:
+  three lanes sharing one unnamespaced resource.
+
 - **One swallowed exception bricked the updater for three hours.**
   `UpdateRunner::recordManifest()` wrote a column with `$release->update()`
   inside a try/catch, and its docblock claimed that made it incapable of failing
