@@ -57,7 +57,16 @@
 @section('title', __('store.cart.page_title'))
 
 @push('styles')
-    @vite('resources/css/kbb/kbb-cart.css')
+    {{-- THE COMMENT'S CLOSING BRACE TOUCHES @vite, AND @include TOUCHES ITS
+         CLOSING PARENTHESIS. Both are load-bearing rather than untidy. A Blade
+         comment is removed at compile time but the NEWLINE AND INDENTATION
+         around it are not, and an @include on a line of its own leaves that
+         line's newline in the <head> of every cart page whether or not the
+         partial emits anything. StorefrontEnglishUnchangedTest caught exactly
+         that here, at byte 2215, when this comment sat on its own lines.
+         Written this way the three compile to bare `<?php … ?>` with no
+         literal text between them, so a shop that has moved no slider gains
+         exactly nothing. (Lane CR) --}}@vite('resources/css/kbb/kbb-cart.css')@include('partials.cart-row-css')
 @endpush
 
 @section('content')

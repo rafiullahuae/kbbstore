@@ -183,6 +183,39 @@
 .cpv-pr{flex:0 0 auto;font-size:calc((11px + var(--h) * .040) * var(--f));font-weight:var(--w);
   white-space:nowrap}
 
+/* ── THE ORDINARY ROW ON THE PAGE THE SHOP ACTUALLY SERVES ────── (Lane CR)
+   Every number below is one of the new controls, printed by pvRowVars() from
+   the value in the buffer — so this draws what `.kbb-cartpage .items
+   .ci:not(.ci-set)` will draw and not an impression of it. The fourth row is
+   a SET's row, greyed and labelled: it is the one row these controls cannot
+   reach, and the owner asked twice about exactly that boundary. */
+.cpv-cl{background:#fff;border:1px solid #efe6ea;border-radius:12px}
+.cpv-cl .r{display:flex;align-items:center;min-height:var(--cim);
+  padding-block:var(--cipt) var(--cipb);padding-inline:var(--cips) var(--cipe);
+  gap:var(--cig);border-bottom:1px solid #f3ecef}
+.cpv-cl .r:last-child{border-bottom:0}
+.cpv-cl .r.set{background:#faf7f8}
+.cpv-cl .th{flex:0 0 auto;width:var(--cith);height:var(--cith);border-radius:var(--cithr);
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:calc(var(--cith) * .22)}
+.cpv-cl .mid{flex:1 1 auto;min-width:0}
+.cpv-cl .br{font-size:var(--cibf);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#c13a5e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cpv-cl .nm{font-size:var(--cinf);font-weight:500;line-height:1.3;margin:1px 0 var(--cing);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cpv-cl .q{display:inline-flex;align-items:center;border:1px solid #ebe3e6;border-radius:8px;
+  margin-block:var(--ciqt) var(--ciqb);font-size:13px;line-height:1}
+.cpv-cl .q i{font-style:normal;width:26px;height:26px;display:grid;place-items:center;color:#6b7280}
+.cpv-cl .q b{min-width:24px;text-align:center;font-weight:700;font-size:12px}
+.cpv-cl .pr{flex:0 0 auto;font-size:13px;font-weight:700;white-space:nowrap}
+.cpv-cl .fan{display:flex;align-items:center;gap:6px;margin:10px 0 6px}
+.cpv-cl .fan s{width:20px;height:20px;border-radius:50%;background:#e4d7ea;
+  box-shadow:0 0 0 2px #fff;margin-inline-start:-7px;text-decoration:none}
+.cpv-cl .fan s:first-child{margin-inline-start:0}
+.cpv-cl .fan em{font-style:normal;font-size:10px;font-weight:650;color:#a98;
+  border:1px solid #eadfe4;border-radius:99px;padding:2px 7px}
+.cpv-lock{font-size:10.5px;font-weight:650;color:#8a7c83;background:#fff;border:1px dashed #e0d4da;
+  border-radius:7px;padding:3px 7px;display:inline-block;margin-top:5px}
+
 /* rail */
 .cpv-rec{margin:0 -10px;padding:9px 0;position:relative;overflow:hidden}
 .cpv-rec::before{content:"";position:absolute;inset:0;
@@ -719,12 +752,27 @@
 
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
 
-    var warn = String(values.layout) === 'classic'
+    /* ▲ AND NOT ON THE TWO ROW-SIZE TABS. (Lane CR)
+       This note was true of every tab on this screen and is now false of two of
+       them: "Product rows . spacing and size" and "Product rows . phone" are
+       ordinary declarations at `.kbb-cartpage .items .ci:not(.ci-set)`, which
+       BOTH layouts match, so they are live on this shop today. Leaving the note
+       up over them would tell the owner that the sliders he is dragging do
+       nothing -- which is the complaint that brought this lane here, said by
+       the console itself. */
+    var liveOnClassic = open === 'rowsize' || open === 'rowphone';
+
+    var warn = String(values.layout) === 'classic' && !liveOnClassic
       ? '<div class="cps-note">This shop is on the <b>classic</b> cart page, which is the page it '
         + 'has always rendered. Nothing else on this screen changes anything a shopper sees until '
         + 'the layout above is set to <b>Squeezed</b>. That is deliberate: applying the update that '
         + 'brought this screen changed the shop by nothing.</div>'
-      : '';
+      : (liveOnClassic
+        ? '<div class="cps-note">These controls are <b>live on the page this shop serves right now</b>, '
+          + 'whichever layout is chosen above \u2014 they are the row\u2019s real padding, picture and type '
+          + 'sizes rather than the squeezed layout\u2019s. They reach an ordinary product\u2019s row and '
+          + 'never a set\u2019s: a set has its own under <b>Appearance \u2192 Set</b>.</div>'
+        : '');
 
     host.innerHTML = '<div class="cps-wrap' + (open === 'desktop' ? ' cps-stack' : '') + '"><div class="cps-col">'
       + (banner ? '<div class="cps-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
@@ -1052,10 +1100,65 @@
       + '<div class="cpv-sheet" style="--cap:' + cap + '%">' + inner + '</div></div>';
   }
 
+  /* ── THE ORDINARY-ROW CONTROLS, AS THE PROPERTIES THE MOCK READS ──────
+     `m` picks the phone's twin of every key, and it is the ONLY place the
+     `_m` suffix is added — the same discipline CartPage::rowBlock() keeps on
+     the server, so the two cannot drift into drawing different rows. The
+     fallbacks are the shipped values, so a control the owner has not touched
+     draws what the shop draws. (Lane CR) */
+  function pvRowVars(m) {
+    function n(k, d) { return pvNum(m ? k + '_m' : k, d); }
+    return 'style="'
+      + '--cim:' + n('ci_min_h', 0) + 'px;'
+      + '--cipt:' + n('ci_pad_t', m ? 10 : 11) + 'px;'
+      + '--cipb:' + n('ci_pad_b', m ? 10 : 11) + 'px;'
+      + '--cips:' + n('ci_pad_s', m ? 12 : 14) + 'px;'
+      + '--cipe:' + n('ci_pad_e', m ? 12 : 14) + 'px;'
+      + '--cig:' + n('ci_gap', m ? 11 : 12) + 'px;'
+      + '--cith:' + n('ci_thumb', m ? 52 : 56) + 'px;'
+      + '--cithr:' + n('ci_thumb_r', 10) + 'px;'
+      + '--cibf:' + n('ci_brand_f', 10) + 'px;'
+      /* TENTHS OF A PIXEL, divided here exactly as CartPage::px10() does it —
+         13.5px cannot be a slider value, and a mock that printed 130px would
+         be a mock nobody could read. */
+      + '--cinf:' + (n('ci_name_f', m ? 125 : 130) / 10) + 'px;'
+      + '--cing:' + n('ci_name_gap', m ? 5 : 6) + 'px;'
+      + '--ciqt:' + n('ci_qty_top', 0) + 'px;'
+      + '--ciqb:' + n('ci_qty_bot', 0) + 'px"';
+  }
+
+  /* Three ordinary rows and one SET row. The set row is drawn from the SAME
+     mock but greyed and labelled, because the boundary is the thing the owner
+     kept running into: these controls stop at `:not(.ci-set)`, and a picture
+     of where they stop is worth more than a sentence saying so. */
+  function pvClassic(m) {
+    var rows = PV_ROWS.slice(0, 3).map(function (r) {
+      return '<div class="r">'
+        + '<div class="th" style="background:linear-gradient(140deg,' + r.c + ')">' + esc(r.b.charAt(0)) + '</div>'
+        + '<div class="mid"><div class="br">' + esc(r.b) + '</div>'
+        + '<div class="nm">' + esc(r.n) + '</div>'
+        + '<div class="q"><i>\u2212</i><b>' + r.q + '</b><i>+</i></div></div>'
+        + '<div class="pr">' + esc(r.p) + '</div></div>';
+    }).join('');
+
+    rows += '<div class="r set">'
+      + '<div class="th" style="background:linear-gradient(140deg,#e7d7ff,#b79cf0)">S</div>'
+      + '<div class="mid"><div class="br">KBB</div>'
+      + '<div class="nm">Glass Skin Discovery Set</div>'
+      + '<div class="fan"><s></s><s></s><s></s><em>What\u2019s inside</em></div>'
+      + '<div class="q"><i>\u2212</i><b>1</b><i>+</i></div>'
+      + '<div class="cpv-lock">A set\u2019s row \u2014 Appearance \u2192 Set</div></div>'
+      + '<div class="pr">AED 120</div></div>';
+
+    return '<div class="cpv-cl" ' + pvRowVars(m) + '>' + rows + '</div>';
+  }
+
   /** What the open tab is responsible for, and nothing else. */
   function previewHTML() {
     var region, label;
-    if (open === 'rows')        { region = pvRows(); label = 'Product rows'; }
+    if (open === 'rows')        { region = pvRows(); label = 'Product rows · the squeezed layout'; }
+    else if (open === 'rowsize')  { region = pvClassic(false); label = 'Product rows · laptop values'; }
+    else if (open === 'rowphone') { region = pvClassic(true); label = 'Product rows · phone values'; }
     else if (open === 'rec')    { region = pvRail(); label = 'Recommended'; }
     else if (open === 'summary'){ region = pvSummary(); label = 'Summary & trust'; }
     else if (open === 'bars')   { region = pvBars(); label = 'Docked rows'; }
@@ -1063,7 +1166,13 @@
     else if (open === 'desktop'){ region = pvDesktop(); label = 'Desktop · ' + pvNum('d_min', 1024) + 'px and up'; }
     else                        { region = pvRows() + pvRail() + pvSummary() + pvBars(); label = 'The whole page'; }
 
-    var classic = String(values.layout) === 'classic';
+    /* The note below says "this is what Squeezed would draw". It is TRUE of
+       every other tab and FALSE of these two: their rules are declarations at
+       `.kbb-cartpage .items .ci:not(.ci-set)`, which both layouts match, so
+       they are live on this shop today. Printing it there would tell the owner
+       his sliders do nothing. (Lane CR) */
+    var classic = String(values.layout) === 'classic'
+      && open !== 'rowsize' && open !== 'rowphone';
 
     return '<div class="cpv" id="cps-preview">'
       + '<div class="cpv-h"><b>' + (open === 'desktop' ? 'Preview' : 'Live preview') + '</b><span>' + esc(label) + '</span></div>'

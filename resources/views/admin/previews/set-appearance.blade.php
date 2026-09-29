@@ -133,6 +133,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* The cart line around the box, drawn plainly: the preview is about the set
    box, and a faithful copy of the whole basket row would be a second copy of
    another lane's markup for no gain. */
+/* ── EACH SURFACE IS NAMED, SO THE SCREEN CAN SHOW ONE ────────── (Lane CR)
+   `sap-s-cart`, `sap-s-box` and `sap-s-list`. The screen appends
+   `.sap-s-x{display:none}` to the live overlay it already posts, so opening a
+   section that is about one surface hides the other two — no branch here, no
+   second render, and the overlay's own filter (see the receiver at the foot of
+   this file) passes a class selector and `display:none` exactly as it passes a
+   custom property. Nothing new is trusted. */
 .sap-line{padding:14px 16px;border-bottom:1px solid var(--line)}
 .sap-line:last-child{border-bottom:0}
 .sap-nm{font-size:13px;font-weight:600;line-height:1.35;color:var(--ink)}
@@ -196,7 +203,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     Turn it on to size the panel against the mirrored rendering.</div>
 @endif
 <div style="{{ $cartVars }}">
-    <div class="sap-line">
+    <div class="sap-line sap-s-cart">
         <div class="sap-tag">Cart page &middot; a set line and an ordinary line</div>
         {{-- The real `.kbb-cartpage .items` shape, so the five Set-row sliders
              can be seen landing on the first row and not on the second. --}}
@@ -221,12 +228,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
             </div>
         </div>
     </div>
-    <div class="sap-line">
+    <div class="sap-line sap-s-box">
         <div class="sap-tag">Cart drawer &middot; checkout summary &middot; order &mdash; the popup opens upward</div>
         <div class="sap-nm">Glass Skin Starter Set</div>
         @include('partials.set-row', ['contents' => $setContents, 'surface' => 'checkout', 'key' => 'preview-checkout'])
     </div>
-    <div class="sap-line">
+    <div class="sap-line sap-s-list">
         <div class="sap-tag">Product page &middot; the buy column's list</div>
         <div class="sap-buy">
             @include('partials.set-contents-panel', ['kbbSetPreviewContents' => $setContents])

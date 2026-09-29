@@ -129,6 +129,123 @@ class CartPage
                          'The minus, the plus and the number between them. A multiplier and not a fixed size: the stepper is worked out from the row height like everything else in the line, so it still shrinks when you shorten the row — this nudges that result up or down. The digit scales with the box, so it stays centred at every setting.',
                          ['min' => 60, 'max' => 180, 'step' => 5, 'unit' => '%']],
 
+        /* ═══════════════════════════════════════════════════════════════════
+           AN ORDINARY PRODUCT ROW, ON THE PAGE THE SHOP ACTUALLY SERVES.
+                                                                    (Lane CR)
+
+           The owner:
+
+             "for product rows and set rows. i need totally different controls
+              like height spacing, padding etc. the products rows controls will
+              be on the Cart Page under appearance as we have already, but make
+              more controls of spacing etc."
+
+           ── WHY THESE ARE NOT MORE OF THE FOUR ABOVE ─────────────────────
+
+           The four controls above reach the SQUEEZED layout and nothing else.
+           `row_h`, `row_font`, `row_bold` and `qty_size` are emitted as
+           `--cpg-…` custom properties by cssVariables(), which answers the
+           EMPTY STRING while `layout` is `classic` — and `classic` is what this
+           schema ships. Every rule that reads those properties lives inside
+           store/cart-squeeze.blade.php, which that layout does not include. So
+           on a classic cart page those four sliders save, report success and
+           move nothing.
+
+           These thirteen are real declarations, at
+           `.kbb-cartpage .items .ci:not(.ci-set)` and its descendants, emitted
+           by rowCss() into the cart page's own <head>. They reach BOTH layouts,
+           because the selector is about the row and not about the layout.
+
+           ── AND THEY CANNOT REACH A SET'S ROW ────────────────────────────
+
+           `:not(.ci-set)` — the marker store/cart-inner.blade.php already puts
+           on a set line for Appearance → Set. The owner asked for the two to be
+           separate in as many words, and the last time a set control reached
+           every row he said so with four exclamation marks. The two selectors
+           are (0,4,0) apiece and can never match the same element, so neither
+           screen can win an argument with the other: there is no argument.
+
+           ── NOT ONE OF THEM CAN HIDE THE ROW'S OWN CONTENTS ──────────────
+
+           Deliberately, and it is the lesson of the defect this lane was
+           given: a set row was losing its name and its stepper to a fixed
+           `height` plus `overflow:hidden`. There is no height here — the height
+           control is a MINIMUM, which can only ever make a row taller — and
+           there is no overflow, no display and no visibility. The smallest
+           value any type size can take is legible rather than zero. A control
+           on this screen cannot produce the state the owner photographed.
+
+           ── EVERY DEFAULT IS WHAT resources/css/kbb/kbb-cart.css DRAWS ───
+
+           Copied declaration by declaration off that sheet, laptop and phone,
+           and rowCss() answers the empty string while every one of them is
+           still at it — so applying this package adds no rule and no byte to
+           any cart page until a slider moves.
+           ═══════════════════════════════════════════════════════════════════ */
+        'ci_min_h'    => ['range', 'Minimum row height', 0,
+                          'A FLOOR AND NEVER A CEILING. Zero — what the page draws today — lets every row be exactly as tall as what is in it. Raise it and a short row grows; a tall one is never cut, which is the one thing this control must not be able to do.',
+                          ['min' => 0, 'max' => 160, 'step' => 2, 'unit' => 'px']],
+        'ci_pad_t'    => ['range', 'Row padding, top', 11, '',
+                          ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_pad_b'    => ['range', 'Row padding, bottom', 11, '',
+                          ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_pad_s'    => ['range', 'Row padding, leading edge', 14,
+                          'The left-hand side in English and the RIGHT-hand side on /ar — it is a logical property, so it mirrors with the page instead of staying on one side of it.',
+                          ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_pad_e'    => ['range', 'Row padding, trailing edge', 14, '',
+                          ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_gap'      => ['range', 'Space between the picture and the words', 12, '',
+                          ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_thumb'    => ['range', 'Picture size', 56,
+                          'The square at the start of the row. The floor is 28px: below that it stops being a picture anybody can read at arm’s length.',
+                          ['min' => 28, 'max' => 96, 'step' => 1, 'unit' => 'px']],
+        'ci_thumb_r'  => ['range', 'Picture corner radius', 10, '',
+                          ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'ci_brand_f'  => ['range', 'Brand size', 10,
+                          'The small uppercase line above the product name. A row whose product has no brand has never drawn one.',
+                          ['min' => 7, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'ci_name_f'   => ['range', 'Name size', 130,
+                          'IN TENTHS OF A PIXEL, because the phone’s shipped size is 12.5px and a slider stores whole numbers: 130 is 13px. The floor is 100 — 10px — which is a size, not a way of hiding the name.',
+                          ['min' => 100, 'max' => 240, 'step' => 5, 'unit' => '/10 px']],
+        'ci_name_gap' => ['range', 'Space under the name', 6,
+                          'What separates the name from whatever is under it — the option line or the quantity stepper.',
+                          ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'ci_qty_top'  => ['range', 'Space above the quantity stepper', 0, '',
+                          ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'ci_qty_bot'  => ['range', 'Space below the quantity stepper', 0, '',
+                          ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+
+        'ci_bp'       => ['range', 'The product rows switch to their phone sizes below', 600,
+                          '▲ 600, which is the width resources/css/kbb/kbb-cart.css already turns this page over at. Moving it away from 600 leaves a band of widths where the sheet’s own numbers and these disagree, because a media query is resolved before custom properties exist and the compiled sheet cannot be told a new number.',
+                          ['min' => 320, 'max' => 1200, 'step' => 10, 'unit' => 'px']],
+        'ci_min_h_m'    => ['range', 'Minimum row height', 0, '',
+                            ['min' => 0, 'max' => 160, 'step' => 2, 'unit' => 'px']],
+        'ci_pad_t_m'    => ['range', 'Row padding, top', 10, '',
+                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_pad_b_m'    => ['range', 'Row padding, bottom', 10, '',
+                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_pad_s_m'    => ['range', 'Row padding, leading edge', 12, '',
+                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_pad_e_m'    => ['range', 'Row padding, trailing edge', 12, '',
+                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_gap_m'      => ['range', 'Space between the picture and the words', 11, '',
+                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'ci_thumb_m'    => ['range', 'Picture size', 52, '',
+                            ['min' => 28, 'max' => 96, 'step' => 1, 'unit' => 'px']],
+        'ci_thumb_r_m'  => ['range', 'Picture corner radius', 10, '',
+                            ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'ci_brand_f_m'  => ['range', 'Brand size', 10, '',
+                            ['min' => 7, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'ci_name_f_m'   => ['range', 'Name size', 125,
+                            'In tenths of a pixel: 125 is 12.5px, which is half a pixel smaller than the laptop’s and is what the sheet’s own phone block draws.',
+                            ['min' => 100, 'max' => 240, 'step' => 5, 'unit' => '/10 px']],
+        'ci_name_gap_m' => ['range', 'Space under the name', 5, '',
+                            ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'ci_qty_top_m'  => ['range', 'Space above the quantity stepper', 0, '',
+                            ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'ci_qty_bot_m'  => ['range', 'Space below the quantity stepper', 0, '',
+                            ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+
         // ── Recommended rail ──
         'rec_on'      => ['bool', 'Show the recommended rail', true,
                           'Renders nothing at all until products are chosen below, so this can stay on in a shop that has not picked any.'],
@@ -626,8 +743,24 @@ class CartPage
 
     public const TABS = [
         'layout'  => ['Layout', 'Which cart page this shop serves, and whether it carries the site footer.', ['layout', 'footer_on']],
-        'rows'    => ['Product rows', 'One height drives the whole line. Everything in it is worked out from that number.',
+        /*
+         * THREE CARDS AND NOT ONE, because they answer to three different
+         * things and the first of them only works on one layout. Splitting
+         * them is the whole of "do not duplicate a control that exists": the
+         * four squeezed-layout sliders keep their card and their wording, and
+         * the row's real measurements are beside them rather than tangled into
+         * them.                                                     (Lane CR)
+         */
+        'rows'    => ['Product rows · the squeezed layout', 'ONLY on the Squeezed layout — these four are custom properties that the classic cart page does not read. One height drives the whole line; everything in it is worked out from that number.',
                       ['row_h', 'row_font', 'row_bold', 'qty_size']],
+        'rowsize' => ['Product rows · spacing and size', 'An ORDINARY product’s row on the cart page, on whichever layout this shop serves, and never a set’s row — a set has its own controls under Appearance → Set. Laptop values; the phone has its own card below. Nothing here can hide what is in the row: the height control is a minimum, so it can only make a row taller.',
+                      ['ci_min_h', 'ci_pad_t', 'ci_pad_b', 'ci_pad_s', 'ci_pad_e', 'ci_gap',
+                       'ci_thumb', 'ci_thumb_r', 'ci_brand_f', 'ci_name_f', 'ci_name_gap',
+                       'ci_qty_top', 'ci_qty_bot']],
+        'rowphone' => ['Product rows · phone', 'The phone’s own values for the same row, and the width it starts at. They never inherit the laptop’s — the shipped stylesheet already differs at both widths, so an inheriting field would have to ship already touched to reproduce today’s page.',
+                      ['ci_bp', 'ci_min_h_m', 'ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_s_m', 'ci_pad_e_m',
+                       'ci_gap_m', 'ci_thumb_m', 'ci_thumb_r_m', 'ci_brand_f_m', 'ci_name_f_m',
+                       'ci_name_gap_m', 'ci_qty_top_m', 'ci_qty_bot_m']],
         'rec'     => ['Recommended', 'Full width, no rounded corners, no padding box around it.',
                       ['rec_on', 'rec_heading', 'rec_per', 'rec_bold', 'rec_price_bold',
                        'rec_lh', 'rec_gap', 'rec_img_gap',
@@ -1076,6 +1209,129 @@ class CartPage
             $c['sheet_two_up'] ? ' cpg-twoup' : '',
             ' style="' . e($vars) . '"',
         ];
+    }
+
+    /** Every ordinary-row key, laptop first and its phone twin beside it. */
+    public const ROW_KEYS = [
+        'ci_min_h', 'ci_pad_t', 'ci_pad_b', 'ci_pad_s', 'ci_pad_e', 'ci_gap',
+        'ci_thumb', 'ci_thumb_r', 'ci_brand_f', 'ci_name_f', 'ci_name_gap',
+        'ci_qty_top', 'ci_qty_bot',
+    ];
+
+    /**
+     * A size stored in TENTHS of a pixel, printed with the decimal put back and
+     * trimmed — 130 is `13px`, 125 is `12.5px`. number_format() rather than
+     * (string) division, because (string) 12.5 is "12,5" under a comma locale
+     * and that is not a CSS length.
+     */
+    private static function px10(int $value): string
+    {
+        $out = rtrim(rtrim(number_format($value / 10, 1, '.', ''), '0'), '.');
+
+        return ($out === '' || $out === '-') ? '0' : $out;
+    }
+
+    /**
+     * The rules an ORDINARY product row reads — or the EMPTY STRING while every
+     * one of those settings is still at the value the compiled stylesheet
+     * draws.                                                        (Lane CR)
+     *
+     * ── WHY THIS IS RULES AND NOT CUSTOM PROPERTIES ────────────────────────
+     *
+     * cssVariables() above emits `--cpg-…` onto the cart page's wrapper, and
+     * every rule that READS one of those lives in store/cart-squeeze.blade.php,
+     * which the classic layout does not include. Declaring a property nothing
+     * reads is the ProductStyles failure this project has already paid for:
+     * twenty controls that saved, reported success and reached no page.
+     * `.kbb-cartpage .ci`'s padding, its gap, the thumbnail and the two type
+     * sizes are ordinary declarations in a COMPILED stylesheet, so what
+     * overrides them is an ordinary declaration at a higher specificity.
+     *
+     * ── SPECIFICITY, WHICH IS THE WHOLE OF THE SCOPING ─────────────────────
+     *
+     * `.kbb-cartpage .items .ci:not(.ci-set)` is (0,4,0) — `:not()` takes the
+     * specificity of its argument — against resources/css/kbb/kbb-cart.css's
+     * own `.kbb-cartpage .ci` at (0,2,0) and the squeezed sheet's
+     * `.kbb-cartpage.cpg-squeeze .ci` at (0,3,0). It therefore wins on both
+     * layouts and at every width, inside those sheets' media queries included.
+     *
+     * And it can never match a SET's row, which Appearance → Set owns at
+     * `.kbb-cartpage .items .ci.ci-set` — also (0,4,0). Two selectors of equal
+     * specificity that cannot both match one element is not a cascade question
+     * at all, which is the point: the owner asked for the two to be separate.
+     *
+     * ── THE PHONE IS A SECOND BLOCK WITH ITS OWN WIDTH ─────────────────────
+     *
+     * Interpolated into the query, because a media query is resolved before
+     * custom properties exist: `@media (max-width: var(--x))` is not a thing.
+     *
+     * ── NOTHING INTERPOLATED HERE IS ANYTHING BUT AN INTEGER ───────────────
+     *
+     * Every value below is an int out of a clamped `range`, or a string this
+     * method built from one. There is no path from a settings row to a
+     * selector, a property name or a unit. Rule 5.
+     */
+    public function rowCss(): string
+    {
+        $c = $this->all();
+        $shipped = true;
+
+        foreach (self::ROW_KEYS as $key) {
+            if ((int) $c[$key] !== (int) self::SCHEMA[$key][2]
+                || (int) $c[$key.'_m'] !== (int) self::SCHEMA[$key.'_m'][2]) {
+                $shipped = false;
+                break;
+            }
+        }
+
+        if ($shipped && (int) $c['ci_bp'] === (int) self::SCHEMA['ci_bp'][2]) {
+            return '';
+        }
+
+        return self::rowBlock($c, false)
+            .'@media (max-width:'.(int) $c['ci_bp'].'px){'.self::rowBlock($c, true).'}';
+    }
+
+    /**
+     * One breakpoint's worth of ordinary-row rules.
+     *
+     * `$m` selects the phone's twin of every key, and it is the ONLY place the
+     * `_m` suffix is added — which is what makes the two blocks provably the
+     * same list of declarations rather than two lists that have to be kept in
+     * step by hand.
+     *
+     * @param  array<string, mixed>  $c
+     */
+    private static function rowBlock(array $c, bool $m): string
+    {
+        $n = static fn (string $k): int => (int) $c[$m ? $k.'_m' : $k];
+        $row = '.kbb-cartpage .items .ci:not(.ci-set)';
+
+        return $row.'{min-height:'.$n('ci_min_h').'px'
+            /*
+             * LOGICAL LONGHANDS AND NEVER THE `padding` SHORTHAND. `padding: a
+             * b c d` is physical, so its fourth value is the LEFT edge in every
+             * language — which is how the set list came to hang its photographs
+             * off the wrong edge on /ar. These two mirror from one declaration.
+             */
+            .';padding-block:'.$n('ci_pad_t').'px '.$n('ci_pad_b').'px'
+            .';padding-inline:'.$n('ci_pad_s').'px '.$n('ci_pad_e').'px'
+            .';gap:'.$n('ci_gap').'px}'
+            // The square is sized on both axes, because `.cth` is a fixed
+            // square in the sheet and a width alone would leave it an oblong.
+            .$row.' .cth{width:'.$n('ci_thumb').'px;height:'.$n('ci_thumb').'px'
+            .';border-radius:'.$n('ci_thumb_r').'px}'
+            .$row.' .cbrand{font-size:'.$n('ci_brand_f').'px}'
+            /*
+             * `margin-bottom` and not `margin`: the sheet writes `.cn{margin:1px
+             * 0 6px}`, and restating the shorthand here would throw away its 1px
+             * top — a byte of drawing nobody asked to move. A longhand at a
+             * higher specificity beats the shorthand's own bottom value and
+             * leaves the other three where they are.
+             */
+            .$row.' .cn{font-size:'.self::px10($n('ci_name_f')).'px'
+            .';margin-bottom:'.$n('ci_name_gap').'px}'
+            .$row.' .qty{margin-block:'.$n('ci_qty_top').'px '.$n('ci_qty_bot').'px}';
     }
 
     /**

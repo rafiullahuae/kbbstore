@@ -28,7 +28,65 @@
 .kbb-cartpage .bar{height:7px;border-radius:6px;background:var(--pink-soft);overflow:hidden}
 .kbb-cartpage .fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--pink-deep));border-radius:6px;transition:.4s var(--ease)}
 
-.kbb-cartpage .items{background:#fff;border:1px solid var(--line-2);border-radius:13px;overflow:hidden;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE BASKET PANEL DOES NOT CLIP ITS OWN ROWS — Lane CR.
+
+   The owner, with two screenshots of his live cart:
+
+     "also the tiny popup also hiding inside the set row, it should show on top
+      of and not hide anywhere."
+
+   `overflow:hidden` on this element was the defect, and it was measured rather
+   than guessed. `.kset-pop` is `position:absolute` off `.kset`, which is inside
+   this panel, and an overflow ancestor clips an absolutely-positioned
+   descendant whenever it is in that descendant's containing-block chain — which
+   this is, because `.kset` is `position:relative` and `.items` is a static
+   ancestor of it.
+
+   MEASURED IN CHROMIUM, popup open on the LAST row of a four-row basket, before
+   this change (getBoundingClientRect reports the box a clip does not shrink, so
+   the evidence is document.elementFromPoint 8px inside the popup's own bottom
+   edge — what the engine would really hit-test there):
+
+                    popup bottom   .items bottom   overflow   probe hits
+       390px            846             777          69px     `sum`
+       1280px           658             593          65px     `wrap`
+
+   -- the bottom third of the popup was painted as the page BEHIND it. On the
+   FIRST row the same probe hit `kset-pop is-open`, which is why this reads as
+   "sometimes it works": a popup that fits inside the panel was never clipped.
+
+   ── WHY THE CLIP GOES RATHER THAN THE POPUP BEING PINNED ──────────────────
+
+   The checkout solved the same wall with `position:fixed` (see the note in
+   partials/set-row.blade.php about `.kbb-checkout .panels{max-height:148px;
+   overflow:hidden}`), and that was right THERE: the summary panel's clip is
+   load-bearing — it is what collapses the panel to 148px on a phone — so the
+   popup had to leave the panel. Here the clip is load-bearing for nothing. It
+   was rounding the corners of a panel whose rows have no background of their
+   own to spill past them, and the corners survive it: the radius stays on the
+   panel, and the first and last row now carry the same shape explicitly, so
+   anything that ever DOES paint to the panel's edge is still cut to it.
+
+   Pinning the popup to the viewport instead would have moved a box that is
+   correct today on every width, on the one surface where it is not clipped at
+   all when it opens on any row but the last. Removing a clip that guards
+   nothing is the smaller change and the one that can be looked at: with the
+   popup CLOSED the page renders pixel for pixel what it rendered before —
+   asserted, not asserted-to.
+
+   THE PAGE DOES NOT GET WIDER. The popup is `inset-inline-start:0` off a row
+   that starts inside the panel and `max-width:min(--kset-popw, calc(100vw -
+   32px))` with `box-sizing:border-box`. Measured with it OPEN on the FIRST and
+   the LAST row: document.documentElement.scrollWidth is 390 at 390 and 1280 at
+   1280, before and after.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.kbb-cartpage .items{background:#fff;border:1px solid var(--line-2);border-radius:13px;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
+/* The corners the clip used to produce, stated instead of implied. 12px is the
+   panel's 13px radius less its own 1px border, which is the curve `overflow:
+   hidden` cut. Logical, so /ar mirrors from the same declaration. */
+.kbb-cartpage .items > .ci:first-child{border-start-start-radius:12px;border-start-end-radius:12px}
+.kbb-cartpage .items > .ci:last-child{border-end-start-radius:12px;border-end-end-radius:12px}
 .kbb-cartpage .ci{display:flex;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line-2)}
 .kbb-cartpage .ci:last-child{border-bottom:none}
 .kbb-cartpage .cth{width:56px;height:56px;border-radius:10px;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.2);background-size:cover;background-position:center}
@@ -152,3 +210,60 @@
    asked about and they are not repeated thirteen times down a list.
    ========================================================================== */
 
+
+/* ==========================================================================
+   A SET'S ROW IS TALLER THAN AN ORDINARY ONE, AND THE SQUEEZED LAYOUT WAS
+   CUTTING THE DIFFERENCE OFF — Lane CR.
+
+   The owner, with a screenshot of his live cart:
+
+     "i have change the padding etc for desktop for set rows, but still the set
+      name and the quanity button is hiding"
+
+   ── THE MECHANISM, REPRODUCED AND MEASURED, NOT INFERRED ─────────────────
+
+   store/cart-squeeze.blade.php draws every basket line at a FIXED height:
+
+       .kbb-cartpage.cpg-squeeze .ci{height:var(--cpg-row-h);…;overflow:hidden}
+
+   which is the whole point of that layout — one height, so thirteen lines fit
+   on a phone — and `.cn` carries `-webkit-line-clamp:2` so a long name cannot
+   break it. A SET line carries something that height was never sized for: the
+   fanned stack and its "What's inside" button, between the name and the
+   stepper. `.cmid` is `display:flex;flex-direction:column;justify-content:
+   center`, so the content that does not fit overflows EQUALLY AT BOTH ENDS and
+   `overflow:hidden` takes exactly the two things at the two ends — the name at
+   the top and the quantity stepper at the bottom — leaving the circles, the
+   button and the saving in the middle. That is the owner's screenshot, element
+   for element.
+
+   MEASURED in Chromium on a four-line basket, `Appearance → Set → Desktop ·
+   Set row on the cart page` carrying his kind of change (row padding 30px):
+
+       390px    row 446..542   name 405..444  -> 41px of it above the row's top
+                               stepper 554..583 -> 41px below its bottom
+                               fan 460..486    -> inside, and drawn
+       1280px   row 419..515   name 416..435  -> 3px clipped
+                               stepper 489..518 -> 3px clipped
+
+   At 390 the name and the stepper are ENTIRELY outside the row's painted box.
+   It is also why changing the padding did not help him: SetAppearance emits
+   `.kbb-cartpage .items .ci.ci-set{padding:…}` at (0,4,0), which wins over the
+   squeezed sheet's padding at (0,3,0) — but it never touches `height`, so more
+   padding is less room inside the same 96px and pushes MORE of the row out.
+
+   ── THE FIX IS THAT THE HEIGHT BECOMES A FLOOR FOR THIS ROW ──────────────
+
+   `min-height` instead of `height`, for `.ci-set` and for nothing else, so the
+   dense layout keeps its density everywhere it was designed for and the one row
+   that carries an extra block is allowed to be as tall as what is in it. With
+   `overflow:visible` beside it, because a row that no longer needs to clip its
+   own contents must not clip the popup that hangs off them either — the second
+   half of the same complaint.
+
+   (0,5,0) — one class more than the squeezed sheet's `.kbb-cartpage.cpg-squeeze
+   .ci`, so it wins wherever that rule applies, inside its own media queries
+   included. It names `.cpg-squeeze`, so the CLASSIC cart page — which has no
+   row height and no clip — is not selected at all and cannot move.
+   ========================================================================== */
+.kbb-cartpage.cpg-squeeze .items .ci.ci-set{height:auto;min-height:var(--cpg-row-h);overflow:visible}
