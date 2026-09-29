@@ -3,6 +3,265 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.325
+**The biggest one yet: thirteen lanes, and three of them are fixes to things
+that were quietly broken on the live shop.** Apply after .324.
+
+> **Three things are waiting on a decision from you**, and none of them changes
+> anything until you make it: the product page, the slider's look and the site
+> background. All three are previews you can open. See **What is waiting on you**
+> at the end.
+
+---
+
+### ▲ THE SHOP WAS HANDING YOUR SECRET ADMIN ADDRESS TO STRANGERS
+
+You found this on the order-tracking page: the login link went to the
+administration login, which is only for you. It was not that link. **Every
+logged-out shopper who clicked anything behind an account — Your orders, the
+address book, an order page — was redirected to `/<your admin path>/login`**, and
+that address then sat in their address bar, their browser history and the
+referrer of their next click.
+
+One line in the application's start-up file set the guest redirect for the
+**whole shop** while its comment claimed it was for the back office. It now
+decides by which door was knocked on: an admin page sends you to the admin login,
+everything else sends you to **/my-account/**. Where you were trying to go still
+survives the sign-in.
+
+Checked against a preview: `/my-account/orders` logged out was `302 → /mr-cool/login`
+and is now `302 → /my-account`. The back office is unchanged, before and after.
+A sweep of **all 52 storefront pages** requested logged out now fails the build if
+the admin address appears in any page or any header.
+
+> **Not closed yet, and you should know:** 398 admin endpoints still sit at fixed
+> public addresses (`/admin-api/…`) and still name the admin login to anyone who
+> asks for one with curl. That is the same leak through a second door and it is
+> being worked now.
+
+### ▲ A SET PLUS THE SAME PRODUCT LOOSE MADE THE ORDER UNPLACEABLE
+
+Exactly what you reported. If a set in the basket contains a product and the same
+product is also in the basket on its own, and only one is on the shelf, the shop
+asked for two and refused itself: *"Only 1 of … is left"*, and no order.
+
+Now, **while you are looking at the basket** — never at payment time — the loose
+line is taken out and the set stays, which is the rule you asked for. The totals,
+the item count and the free-delivery bar all follow, because they are read off the
+basket afterwards. Measured: **(2 items) / AED 289 / 2 rows → (1 item) / AED 199 /
+1 row**, and the order places.
+
+A sentence says why, on the cart page, at the checkout, and in the toast when you
+press Add to bag. A basket with no set in it costs **zero extra queries**.
+
+### ▲ THE CART'S SET ROW WAS CLIPPING ITS OWN NAME AND STEPPER
+
+Not the controls — the layout. The squeezed cart gives every row a fixed height
+with `overflow:hidden`, and a set row is taller than an ordinary one, so it was
+cut off equally at both ends. And the tiny "what's inside" popup was being clipped
+by the items list, which is why it looked like it was not opening.
+
+Both fixed. **And the set-row controls now apply to set rows only** — they were
+moving every row on the cart page, which is what you reported. Two independent
+sets of controls now, and neither can reach the other's rows:
+
+- **Appearance → Cart page → Product rows** — ordinary rows
+- **Appearance → Cart page → Set rows** — set rows only
+
+Thirteen sliders on the Set screen that were drawn but wired to nothing now work.
+
+---
+
+### THE PRODUCT CARD YOU SENT, ON THE WHOLE SHOP
+
+**This is a shipped default change and it is the one thing in this package that
+moves the shop on its own** — you asked for it in as many words. The card matches
+your screenshot: bordered white card, square photograph, brand line, two-line name,
+rating row, struck price with the sale price in pink, and a full-width uppercase
+ADD TO CART with the heart beside it.
+
+It is on **every grid on the site except the cart and the checkout** — home, shop,
+category, brand, search, product page. Every card in a row is the same height
+whatever the name length: measured, all twelve tiles 454px at 1280 and 392px at
+390, including a product called *Toner* and one called *Ultra Hydrating Ceramide
+Barrier Repair Night Cream With Panthenol and Squalane 100ml*.
+
+Three other treatments are one setting away — **Appearance → Product grids → Card
+style**: Compact (tighter, no outline), Row (price beside the button) and Airy
+(more air, outlined button).
+
+### A PICTURE SLIDER, AS A SECOND BANNER TYPE
+
+Pictures only, one at a time, with arrows and bars — the banner type you asked
+for. **Appearance → Banners → (the set) → Kind: Slider.**
+
+It stops for real: autoplay pauses while the pointer is over it, while anything in
+it has keyboard focus, under reduced-motion, while the tab is hidden, and when the
+pause button is pressed. It works with no JavaScript at all (it is a swipeable
+rail), and it does not fight a downward swipe.
+
+Four looks to choose from; you have not picked one yet, so it ships on **On the
+picture**, which changes nothing until you add a slider.
+
+### A REUSABLE PRODUCT GRID SECTION
+
+What you asked for: *"prepare a proper grid section with all controls and it can
+be used anywhere, and can edit that specific grid section"*. **Appearance → Grid
+sections.** Build one, name it, choose its products, its heading, its card style
+and its column counts, publish it, and order it against the other homepage
+sections. Use it as many times as you like with different products.
+
+Two presets to start from: **Big savings bundles** and **BEST SELLERS**. Nothing
+appears on the homepage until you build one and publish it.
+
+### THE FLAG STRIP
+
+A thin bar above the header: **UAE flag · "UAE's Authentic K-Beauty Store" ·
+Korea flag**. On for phones, **off for desktop**, exactly as you asked. It ships
+**off** — turn it on at **Appearance → Header → Flag strip**. Every colour,
+the height, the wording and both flags are controls.
+
+### THE PLACE ORDER BUTTON NOW SHOWS YOU WHAT IS HAPPENING
+
+Exactly what you asked for. Press it and the page freezes behind a blur with a
+filling ring and *"Placing your order…"*; when the shop answers you get a tick,
+and then your order-received page. **Press to tick, measured on a real order:
+160ms on a phone, 100ms on a laptop.**
+
+**Tabby and Tamara**, as you asked me to work out: they get *"Taking you to
+Tamara…"* on the way out, and the tick is waiting on the way back — **but only
+once the shop has actually confirmed the payment.** A payment that has not been
+confirmed never gets a tick. If the provider has not answered yet, you get an
+honest *"confirming your payment"* card that gives up by itself rather than
+spinning for ever.
+
+**COD, card, Apple Pay and Google Pay** all behave the way you asked. The one
+deliberate exception: while the Apple Pay or Google Pay **sheet** is up there is
+no overlay, because that sheet is the browser's own and we cannot layer on it —
+the overlay goes up the moment the sheet is finished and there is a real wait.
+
+Every way it can go wrong takes the overlay back down and says what happened, in
+your shop's language: a refusal shows the gateway's own sentence; a page that has
+been open too long says **nothing has been charged**; a dropped connection says
+so. And after 45 seconds with no answer at all it says your order **may already
+have been placed** and to check your email — it does not invite you to press
+again, because the request had already gone.
+
+Pressing twice cannot place two orders: the button is disabled in the same tick
+as the press, before anything leaves the browser.
+
+**There is no setting for this**, and that is deliberate — you asked for the
+behaviour, not for a switch.
+
+> **One thing I did not fix, and you should know about it:** a shopper who
+> abandons at Tabby or Tamara comes back to an **empty basket**. That is not new
+> — the basket is marked converted when the order is written — but nothing puts
+> it back. Undoing it means releasing the stock and the coupon, which is the same
+> code another lane is in this round, so it has been named precisely and handed
+> on rather than half-done. They land on the basket with the real reason and the
+> provider's name on it.
+
+### A COLOUR WASH FOR THE WHOLE SITE — TO LOOK AT FIRST
+
+You asked to see it before deciding, so **the preview is the shop itself**:
+**Appearance → Page background** opens on a Preview tab that frames your real
+home page, shop, a real product, the cart and the journal with the wash on them,
+at phone and desktop width. Four treatments to look at: **Cream drift**,
+**Blossom**, **Mint morning** and **Cool header**.
+
+It ships **off**, and the screen writes nothing until you press something.
+
+Reading stays at least as easy as it is today — every one of the **15,876**
+colours the four treatments can reach was checked against your text colours, and
+every contrast figure comes out **at or above** its present value. One candidate
+palette was thrown away for failing that, not shipped.
+
+It costs no layout work and no JavaScript at all, and under a phone's
+"reduce motion" setting it does not move at all.
+
+> **Two things found on the way, about the background you have now:**
+> your shop is **not white** — the home page and cart are pink (`#FDEFF3` under a
+> botanical pattern) while **/shop/ and product pages are plain white**, because
+> two stylesheets overrule the first. Switching the wash on removes that
+> inconsistency. And five pages — the journal, an article, the review wall, the
+> skin quiz and the app page — are built as standalone documents, so **your brand
+> colour and site width have never reached them either.** Reported, not fixed.
+
+---
+
+### THE ADMIN SIDEBAR STOPS MAKING YOU WAIT
+
+Opening the console, the sidebar rows were arriving at **98.9%** of a 3.4 MB
+document — so on a real connection there were seconds where the menu was there and
+half of it did nothing. The twenty-one rows that arrived last are now written into
+the page by the server, and the dashboard asks for its numbers at byte 189,561
+instead of byte 1,337,459.
+
+**Measured on a throttled load: a usable sidebar at 16.0s → 3.5s**, with no
+half-built state in between. A row clicked during the load no longer strands the
+console.
+
+### PAGE SPEED: THE FONTS WERE THE PROBLEM
+
+Your PageSpeed reports named a **4,369 ms critical path**, and all of it was the
+two Google font origins. Poppins and Cairo are served by your own shop now.
+
+|  | before | after |
+|---|---:|---:|
+| Mobile | 76 | **86** |
+| Desktop | 88 | **99** |
+
+Banner pictures are also delivered at the size the frame actually asks for, on
+**both** banner types. Measured on a 1600×900 banner picture: a phone downloads
+**43 KB where it used to download 113 KB**, a 61% saving. That saving is a phone
+saving and is stated that way — above 800 pixels wide there is no smaller copy to
+choose, so a laptop correctly takes the original.
+
+Accessibility is stuck at 96 on 108 contrast failures. Fixing those means
+darkening the brand pink across the shop, which is your call and not mine.
+
+> **Still yours to do on the server** (nothing in a package can do these):
+> cache headers and HSTS, and registering the domain with Apple Pay in Stripe.
+> `docs/PERF-PAGESPEED.md §5` is the walkthrough.
+
+### A CANCELLED ORDER CAN FINALLY RELEASE THE BUYER'S HELD MONEY
+
+**Orders → (the order) → Items → Release the hold.** Until now nothing in this
+shop could: the endpoint was live and had no button, so a cancelled Tabby or
+Tamara order left the buyer's payment plan alive at the provider for up to 180
+days.
+
+### GATEWAY WEBHOOKS HAVE A SCREEN
+
+**Store → Payments → Tamara → Webhook & limits → Register the webhook.** The
+Tamara and Tabby admin endpoints existed and had no caller, so an order that
+Tamara approved after the shopper closed the tab sat at *pending* for ever,
+holding its stock and its coupon.
+
+---
+
+### WHAT IS WAITING ON YOU
+
+Three things are built, photographed and **switched off**, waiting for a letter:
+
+1. **The product page** — five whole designs, five mobile and five desktop.
+   **Catalog → Product page → Design previews.**
+2. **The slider's look** — four, all the same markup.
+   **Appearance → Banners → (the set) → Look.**
+3. **The site background** — four treatments, previewed on your own pages.
+   **Appearance → Page background.**
+
+Pick one of each and they ship in the next package.
+
+### WHAT MOVED, AND WHAT DID NOT
+
+The product card is the **only** shipped default that changes. Everything else in
+this package is either a fix to something that was broken, a new screen with
+nothing on it yet, or a setting at the value the page already had — so applying it
+moves nothing until you move a slider.
+
+---
+
 ## 2.60.324
 **The Set screen is rebuilt, Stripe finally speaks your shop's language, and two
 admin buttons that did nothing now work.** Apply after .323.
