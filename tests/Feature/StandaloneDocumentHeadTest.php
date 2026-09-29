@@ -84,8 +84,19 @@ it('leaves no second copy of either block behind', function () {
         $src = (string) file_get_contents(resource_path('views/'.$view));
         $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '', $src);
 
-        expect($src)->not->toContain('id="kbb-layout"', $view.' still writes the layout block itself');
-        expect($src)->not->toContain('id="kbb-brand-accent"', $view.' still writes the accent itself');
+        /*
+         * THE WRITER, NOT THE ID. Asserting on `id="kbb-layout"` was the first
+         * shape and it failed on store/blog for the wrong reason: that document
+         * has a CSS comment -- inside its own <style>, so no Blade strip
+         * touches it -- explaining that Appearance → Site layout emits
+         * `<style id="kbb-layout">` into its head. The prose is still true and
+         * is not a second copy of anything. What would be a second copy is the
+         * code that calls the service, so that is what is counted.
+         */
+        expect(str_contains($src, 'SiteLayout::class)->css()'))
+            ->toBeFalse($view.' still calls SiteLayout::css() itself');
+        expect(str_contains($src, "\$kbbAccent['base']"))
+            ->toBeFalse($view.' still prints the accent itself');
     }
 });
 
