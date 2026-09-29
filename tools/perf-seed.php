@@ -139,6 +139,18 @@ foreach (range(1, 4) as $i) {
         \App\Support\ImageVariants::generate('/'.$poster);
     }
 
+    /* A REAL mp4, cut by ffmpeg when it is here.
+       Without one every tile's <video> is a 404 of its own, and a 404 hunt
+       that turns up the video file rather than the cover is a 404 hunt that
+       proves nothing about the cover. */
+    $clip = 'uploads/ugc/perf-clip-'.$i.'.mp4';
+    $ff = '/opt/pw-browsers/ffmpeg-1011/ffmpeg-linux';
+
+    if (is_file($ff) && ! is_file(public_path($clip))) {
+        @shell_exec(escapeshellarg($ff).' -y -f lavfi -i color=c=0x2A2228:s=360x640:d=2 -c:v libx264 '
+            .'-pix_fmt yuv420p -movflags +faststart '.escapeshellarg(public_path($clip)).' 2>/dev/null');
+    }
+
     $video = UgcVideo::updateOrCreate(['slug' => 'perf-clip-'.$i], [
         'title' => 'Routine '.$i,
         'status' => 'publish',

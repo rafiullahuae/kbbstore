@@ -63,9 +63,13 @@ const M = () => {
 
   for (const [label, base] of [['before', BEFORE], ['after', AFTER]]) {
     for (const width of [390, 1280]) {
+      /* deviceScaleFactor 1, not 2. The full-page shot of this homepage is
+         ~18,000px tall; at ratio 2 that is a 5 MB PNG per shot and 20 MB of
+         binaries in the repository to show that nothing moved. One CSS pixel
+         per image pixel is the same picture and a twentieth of the weight. */
       const ctx = await browser.newContext({
         viewport: { width, height: width === 390 ? 844 : 900 },
-        deviceScaleFactor: 2,
+        deviceScaleFactor: 1,
       });
       const page = await ctx.newPage();
       await page.goto(base + '/', { waitUntil: 'networkidle' });
@@ -79,8 +83,8 @@ const M = () => {
       await page.waitForTimeout(500);
 
       out[`${label}-${width}`] = await page.evaluate(M);
-      await page.screenshot({ path: `${OUT}/${label}-${width}.png`, fullPage: false, animations: 'disabled', timeout: 60000 });
-      await page.screenshot({ path: `${OUT}/${label}-${width}-full.png`, fullPage: true, animations: 'disabled', timeout: 120000 });
+      await page.screenshot({ path: `${OUT}/${label}-${width}.jpg`, quality: 82, fullPage: false, animations: 'disabled', timeout: 60000 });
+      await page.screenshot({ path: `${OUT}/${label}-${width}-full.jpg`, quality: 76, fullPage: true, animations: 'disabled', timeout: 120000 });
       await ctx.close();
     }
   }

@@ -235,8 +235,69 @@ it('never lets a forged Host header into a canonical tag', function () {
         }
     }
 
-    expect(substr_count($html, 'attacker.test'))
-        ->toBeLessThanOrEqual(4, 'only the four Vite asset tags may carry the request host');
+    /*
+     * ── THIS WAS A COUNT AND IS NOW A SHAPE — Lane PERF ─────────────────────
+     *
+     * It read `<= 4, 'only the four Vite asset tags may carry the request
+     * host'`. The line above it already draws the real distinction — "those are
+     * in-band, the browser is already on that host, and Vite building them from
+     * the request root is correct" — and the count was a proxy for it that any
+     * new in-band asset breaks without meaning anything.
+     *
+     * Which is what happened: Poppins and Cairo are served by this shop now, so
+     * the page carries four `<link rel=preload as=font>` and fifteen
+     * `@font-face` src URLs, all of them Vite::asset() and all of them in-band
+     * by exactly the same argument. Twenty occurrences, and bumping 4 to 20
+     * would leave the next lane to bump it again.
+     *
+     * So the assertion is the sentence instead of the number: EVERY occurrence
+     * of the forged host is inside something that fetches this page's own
+     * assets, and none is in anything a crawler, a mailer or a customer reads.
+     * That is strictly stronger than the count — it would have caught a
+     * canonical tag hidden among four asset tags, which `<= 4` would not.
+     */
+    $offenders = [];
+    $at = 0;
+    $found = 0;
+
+    while (($at = strpos($html, 'attacker.test', $at)) !== false) {
+        $found++;
+
+        // The 200 characters in front of THIS occurrence — walked with strpos
+        // rather than reconstructed from explode(), which gets the offset wrong
+        // the moment there is more than one and hands every check the same
+        // stretch of a stylesheet.
+        $before = substr($html, max(0, $at - 200), min(200, $at));
+        $at += strlen('attacker.test');
+
+        /*
+         * The marker has to be CLOSE, not merely somewhere in the window: a
+         * 200-character stretch of a stylesheet can easily contain the words
+         * `rel="preload"` from the tag above it, and a canonical hiding behind
+         * one would pass. `src="`, `href="` and `src:url(` are the last thing
+         * before a URL in every one of these, so sixty characters is generous.
+         */
+        $near = substr($before, -60);
+
+        $inBand = (str_contains($before, '<script') && str_contains($near, 'src="'))
+            || (str_contains($before, 'rel="modulepreload"') && str_contains($near, 'href="'))
+            || (str_contains($before, 'rel="preload"') && str_contains($near, 'href="'))
+            || (str_contains($before, 'rel="stylesheet"') && str_contains($near, 'href="'))
+            // The @font-face src URLs, which sit inside a <style> block rather
+            // than in a tag of their own.
+            || str_contains($near, 'src:url(');
+
+        if (! $inBand) {
+            $offenders[] = '…'.substr($before, -120).'attacker.test';
+        }
+    }
+
+    expect($offenders)->toBe([],
+        "The forged host reached something that is not an in-band asset reference:\n".implode("\n", $offenders));
+
+    // And the loop ran: a document with no occurrence at all would pass the
+    // above while asserting nothing.
+    expect($found)->toBeGreaterThan(0);
 });
 
 /* ═══════════════════════════════════════════════ 2. the banner, and inertness */

@@ -43,8 +43,16 @@
              still carries is font-size, and `.fcol h2` sets 12px exactly as
              `.fcol h5` did. The rule was renamed in the same commit; every other
              declaration in it is unchanged, and the computed style of these three
-             elements is identical before and after. --}}
-        <div class="fcol"><h2>{{ __('store.footer.shop_heading') }}</h2>
+             elements is identical before and after.
+
+             ▲ AND THIS COMMENT ENDS GLUED TO THE <div> BELOW, which looks like
+             a typo and is the one thing in this comment that changes a byte on
+             the shop. A Blade comment is replaced by the EMPTY STRING and its
+             trailing newline SURVIVES, so written on a line of its own this
+             block put one extra newline and eight spaces into the footer of
+             every page — StorefrontEnglishUnchangedTest reported it, at byte
+             66479, a diff with no words in it. store/home.blade.php's header
+             records the same mechanism twice. --}}<div class="fcol"><h2>{{ __('store.footer.shop_heading') }}</h2>
             <a href="{{ Url::to('/shop/') }}">{{ __('store.footer.link_all_products') }}</a>
             <a href="{{ Url::to('/shop/') }}?orderby=date">{{ __('store.footer.link_new_in') }}</a>
             <a href="{{ Url::to('/shop/') }}?orderby=popularity">{{ __('store.footer.link_best_sellers') }}</a>

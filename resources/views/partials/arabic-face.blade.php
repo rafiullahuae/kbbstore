@@ -66,7 +66,27 @@
     }
 @endphp
 
-<link href="{{ \App\Support\ArabicFace::href($weights) }}" rel="stylesheet">
+{{-- CAIRO IS SERVED BY THIS SHOP, NOT BY GOOGLE — Lane PERF.
+
+     Same change as layouts/store.blade.php, and it belongs here for a reason
+     beyond consistency: these five documents are the ones a shopper reads, and
+     the round trip this removes is the same two-hop one that cost the homepage
+     most of its Speed Index (App\Support\WebFonts carries the measurement).
+     Cairo's four weights are ONE variable file per subset, and an Arabic page
+     fetches exactly the `arabic` one.
+
+     $weights IS NO LONGER READ, and the parameter stays in every caller on
+     purpose: it is the DOCUMENT's own Latin weight list, the callers pass it to
+     say which weights their stacks use, and App\Support\ArabicFace's measurement
+     that a weight costs no font bytes is what makes shipping all twelve faces
+     free. Taking it out of five call sites to delete one argument is five files
+     of churn for nothing.
+
+     THEIR LATIN FACES ARE STILL GOOGLE'S. Poppins at 300 and 500, Fraunces and
+     Hanken Grotesk are linked by these documents' own <head> at weights this
+     package does not carry, so their preconnect hints are still doing work and
+     are deliberately left alone. --}}
+{!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::CAIRO) !!}<style id="kbb-cairo">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::CAIRO) !!}</style>
 <style id="kbb-arabic-face">
 {!! implode("\n", $kbbFaceRules) !!}
 </style>@endif

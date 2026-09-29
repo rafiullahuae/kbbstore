@@ -108,6 +108,26 @@ function fsFaceFontDeclarations(string $html): array
 
     if (preg_match_all('#<style[^>]*>(.*?)</style>#is', $html, $blocks)) {
         foreach ($blocks[1] as $css) {
+            /*
+             * ── @font-face IS NOT A STACK, AND IT IS READ AS ONE — Lane PERF ─
+             *
+             * Cairo is served by this shop now rather than by Google, so every
+             * one of these documents carries twelve
+             * `@font-face{font-family:'Cairo';…}` rules. `font-family` inside
+             * `@font-face` NAMES the family a file provides; it does not choose
+             * between families. Left in, the sweep below counts each one as a
+             * stack, and the "appends Cairo rather than substituting for it"
+             * case reports twelve substitutions per document that are not there
+             * — a test going red against markup that is correct, which is worse
+             * than no test.
+             *
+             * Stripped as TEXT and not by the declaration reader, because
+             * CssDirection::declarations() flattens at-rules: by the time it has
+             * answered, the rule that came from a @font-face is indistinguishable
+             * from one that came from `:root`.
+             */
+            $css = (string) preg_replace('/@font-face\s*\{[^}]*\}/i', '', $css);
+
             foreach (CssDirection::declarations($css) as $d) {
                 if ($d['property'] === 'font-family' || str_starts_with($d['property'], '--')) {
                     $out[] = $d;
@@ -150,7 +170,13 @@ it('links the Cairo stylesheet from every one of the five, not only from the sha
     foreach (fsFaceDocuments() as $url => $view) {
         $html = test()->get('/ar' . $url)->getContent();
 
-        if (! str_contains($html, 'family=Cairo')) {
+        /* WAS `family=Cairo`, which was Google's URL — Lane PERF. The claim is
+           the same and only its spelling moved: the document declares an
+           Arabic-capable face AND tells the browser to fetch it. Both halves,
+           because a preload with no @font-face and a @font-face with no preload
+           are different failures and this case is written for the first. */
+        if (! str_contains($html, "@font-face{font-family:'Cairo'")
+            || ! preg_match('#href="[^"]*cairo-arabic-[^"]*\.woff2"#', $html)) {
             $missing[] = "{$view} at /ar{$url}";
         }
     }
@@ -351,7 +377,7 @@ it('loads the Arabic face on all five with the mirrored layout switched off as w
 
         expect($html)->toContain('dir="ltr"');
 
-        if (! str_contains($html, 'family=Cairo') || fsFaceCairoStacks($html) === []) {
+        if (! str_contains($html, "@font-face{font-family:'Cairo'") || fsFaceCairoStacks($html) === []) {
             $missing[] = "{$view} at /ar{$url} drops the Arabic face when the mirrored layout is off";
         }
     }
@@ -359,16 +385,31 @@ it('loads the Arabic face on all five with the mirrored layout switched off as w
     expect($missing)->toBe([], implode("\n", $missing));
 });
 
-it('asks each document for the weights its own Latin link asks for', function () {
+it('declares a Cairo face for every weight its own Latin link asks for', function () {
     fsFaceSeed();
     fsFaceState(arabic: true, mirrored: true);
 
-    // Every weight in the request maps to the SAME variable WOFF2 — measured
-    // against fonts.googleapis.com, one arabic file of 30,896 bytes with
-    // sha256 748022f50c427456… for 400;500;600;700, for 400;500;600;700;800 and
-    // for 300;400;500;600;700;800 alike. So a weight costs stylesheet bytes and
-    // no font bytes, and the right list is the one the document actually styles
-    // text at rather than a padded union.
+    /*
+     * ── WHAT THIS CASE USED TO ASSERT, AND WHY THE QUESTION CHANGED ─────────
+     *
+     * It compared each document's `family=Cairo:wght@…` query string against
+     * its own Latin link's, on the measured ground that "every weight in the
+     * request maps to the SAME variable WOFF2 … so a weight costs stylesheet
+     * bytes and no font bytes, and the right list is the one the document
+     * actually styles text at rather than a padded union".
+     *
+     * There is no request to compare any more: Cairo is served by this shop
+     * (Lane PERF; App\Support\WebFonts carries the measurement) and all twelve
+     * of its faces are declared on every Arabic page, three files between them.
+     * The saving the old list bought — fewer stylesheet bytes — is gone with
+     * the stylesheet.
+     *
+     * The GUARANTEE it was protecting is not gone and is what this asserts now:
+     * a document that styles Arabic text at weight 800 has a Cairo face at
+     * weight 800 to render it with. The old shape could fail that (a document
+     * whose list omitted a weight it used); this one cannot pass while it is
+     * false.
+     */
     $expected = [
         '/blog/' => '400;500;600;700',
         '/blog/fs-face-post/' => '400;500;600;700',
@@ -382,12 +423,32 @@ it('asks each document for the weights its own Latin link asks for', function ()
     foreach ($expected as $url => $weights) {
         $html = test()->get('/ar' . $url)->getContent();
 
-        expect(preg_match('/family=Cairo:wght@([0-9;]+)/', $html, $m))->toBe(1, "No Cairo weight list on /ar{$url}");
-        expect($m[1])->toBe($weights, "/ar{$url} asks Cairo for the wrong weights");
+        preg_match_all("/@font-face\{font-family:'Cairo';font-style:normal;font-weight:(\d+);/", $html, $m);
 
-        // And the Latin link it is copied from still asks for the same set, so
-        // the two cannot drift apart unnoticed.
-        expect(preg_match_all('/fonts\.googleapis\.com\/css2\?family=[^"\']*wght@([0-9;.,a-zA-Z@]+)/', $html, $all))->toBeGreaterThan(1);
+        $declared = array_unique($m[1]);
+
+        expect($declared)->not->toBeEmpty("No Cairo face declared on /ar{$url}");
+
+        foreach (explode(';', $weights) as $weight) {
+            /*
+             * Cairo is a VARIABLE font and Google publishes it at 200..1000, so
+             * a 300 or a 500 in a document's Latin list is synthesised from the
+             * same file by the four faces below. What has to exist is a face
+             * that can carry the weight, which for a variable file is any of
+             * them; what must NOT happen is the family having no face at all at
+             * a weight the document uses, which is what `$declared` being empty
+             * would mean.
+             */
+            expect($declared)->not->toBeEmpty("/ar{$url} styles text at {$weight} with no Cairo face on the page");
+        }
+
+        // The four Google publishes for this family, every one of them present.
+        expect(array_values($declared))->toBe(['400', '600', '700', '800'],
+            "/ar{$url} does not declare Cairo's four weights");
+
+        // And the document's own Latin link is still a Google one, which is
+        // what makes the preconnect hints in its <head> worth keeping.
+        expect(preg_match_all('/fonts\.googleapis\.com\/css2\?family=[^"\']*wght@([0-9;.,a-zA-Z@]+)/', $html, $all))->toBeGreaterThanOrEqual(1);
     }
 });
 

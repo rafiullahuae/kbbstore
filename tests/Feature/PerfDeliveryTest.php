@@ -502,6 +502,27 @@ it('gives the footer columns headings that do not skip a level', function () {
 });
 
 /*
+ * THE THREE LABELS, BOUGHT BACK.
+ *
+ * EnglishRenderWalk's approved rules for this change cut
+ * `<div class="fcol"><hN>[^<]*</hN>` out of both sides, and `[^<]*` swallows
+ * the words with the tag — so that walk no longer sees somebody rewriting
+ * "Shop", "Customer Care" or "My Account". A rule that cuts more than its
+ * element has to say what it stopped watching, and this is the sharper form of
+ * what it stopped watching: the shipped English, by tag, in order.
+ *
+ * MUTATION: change `store.footer.shop_heading` in InterfaceStrings and this is
+ * red.
+ */
+it('keeps the footer column headings saying what they said', function () {
+    $html = $this->get('/')->assertOk()->getContent();
+
+    preg_match_all('#<div class="fcol"><h2>([^<]*)</h2>#', $html, $m);
+
+    expect($m[1])->toBe(['Shop', 'Customer Care', 'My Account']);
+});
+
+/*
  * The stylesheet moved with the tag, or the footer headings are 1.5em serif-
  * weight black-on-black. This reads the SOURCE and the BUILT bundle, because
  * `npx vite build` is manual in this repository.
