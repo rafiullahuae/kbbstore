@@ -57,6 +57,21 @@ page, Quantity bundles, Product grid — and not Homepage content, Banners, Cart
 panel, Cart page, Checkout page, Footer, **Set** or Site layout. That is the
 screenshot, item for item.
 
+### The pictures
+
+All four are single frames from a cold, cache-disabled load at 2 Mbit/s with the
+CPU at one quarter, captured over CDP so the screenshot does not queue behind
+the page's own main thread. Appearance is forced open with a stylesheet injected
+before any page script, so the group is visible from the moment it is built.
+
+| | |
+|---|---|
+| `docs/nv-shots/1-before-desktop-1280-9000ms.png` | **before**, 1280px, 9.0s in. Appearance: Homepage, Product styles, Mobile Header, Section dividers, Login / Register panel, Header, Mobile menu, Product page, Quantity bundles, Product grid. Ten rows. This is the owner's screenshot. |
+| `docs/nv-shots/2-after-desktop-1280-4500ms.png` | **after**, 1280px, 4.5s in. Appearance: all eighteen, Homepage content and Banners under Homepage, Cart panel / Cart page / Checkout page / Footer under Section dividers, Set after Product page, Site layout last. |
+| `docs/nv-shots/3-before-mobile-390-9000ms.png` | **before**, 390px, drawer open, 9.0s in. Ten rows. |
+| `docs/nv-shots/4-after-mobile-390-4500ms.png` | **after**, 390px, drawer open, 4.5s in. Eighteen. |
+| `docs/nv-shots/5-before-desktop-1280-loading-the-latest-orders.png` | **before**, 1280px, 5.0s in — "Loading the latest orders…" under Recent activity, and the four tiles reading AED — and three dashes. The second half of the report. |
+
 ### The fix
 
 `LATE_NAV` — one declaration beside `NAV`, rendered by the server, registered
