@@ -2942,8 +2942,18 @@ function kbbNavClick(id){
   if(typeof window.go!=='function') return;
   window.go(id);
   if(document.readyState!=='loading') return;      /* every partial has run */
-  if(id==='dash'||!LATE_NAV_IDS.has(id)) return;   /* NAV's own rows are drawn by the go() that exists */
-  if(!$('#kbbDashWrap')) return;                   /* a real screen drew it: nothing to replay */
+  if(id==='dash') return;
+  /* The arming set is the deep link's, plus the rows declared above. Both
+     answer the same question -- can the go() that exists right now draw this
+     id at all -- and LIVE_RENDERED is the half this lane MEASURED rather than
+     reasoned about: clicking Store -> Orders 4.6s into a throttled load left
+     the console on "Orders could not be loaded ... Reload the page." for good,
+     and reloading reproduces it, because the address is not the cause. That is
+     Lane DA's defect reached by a click instead of by a link, and it is older
+     than this lane. AdminNavAndIdsTest already keeps every id that draws itself
+     after an await OUT of both sets, which is the rule this must not break. */
+  if(!(LATE_NAV_IDS.has(id) || LIVE_RENDERED.has(id) || LATE_RENDERED.has(id))) return;
+  if(!$('#kbbDashWrap') && !$('#kbbFrameStartup')) return;   /* a real screen drew it: nothing to replay */
   kbbNavReplay=id;
   if(kbbNavReplayArmed) return;
   kbbNavReplayArmed=true;
@@ -2957,7 +2967,7 @@ function kbbNavClick(id){
       kbbNavReplay=null;
       if(!want) return;
       if(cur!==want) return;                       /* the owner has moved on */
-      if(!$('#kbbDashWrap')) return;               /* something drew it after all */
+      if(!$('#kbbDashWrap') && !$('#kbbFrameStartup')) return;   /* something drew it after all */
       try{ window.go(want); }catch(e){}
     },0);
   });
@@ -7438,7 +7448,11 @@ function frameNotBuiltHTML(title,id){
 }
 /* Lane AM's wording for 'rev-all', reused verbatim so the two agree. */
 function frameStartupHTML(title){
-  return `<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">${escHtml(title)} could not be loaded — the admin script did not finish starting up. Reload the page.</p></div>`;
+  /* The id is kbbNavClick's signal, exactly as #kbbDashWrap is. This card is
+     painted only when mountFrame() had nothing else to draw with, which is the
+     same "nothing claimed this screen" condition and wants the same replay.
+     A constant, never a setting. */
+  return `<div class="wrap" id="kbbFrameStartup"><p style="padding:24px;color:var(--ink-soft)">${escHtml(title)} could not be loaded — the admin script did not finish starting up. Reload the page.</p></div>`;
 }
 
 function mountFrame(id,src,title,query){

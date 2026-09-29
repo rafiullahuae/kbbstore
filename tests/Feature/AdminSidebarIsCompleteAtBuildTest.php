@@ -433,6 +433,11 @@ it('can tell the dashboard fallback from a screen that drew itself', function ()
      */
     $src = navSidebarSrc();
 
+    expect(preg_match('/id="kbbFrameStartup"/', $src))
+        ->toBe(1, 'frameStartupHTML() no longer marks its card, so a sidebar row clicked before the document is '
+            .'parsed leaves the owner on "could not be loaded ... Reload the page." permanently -- reloading '
+            .'reproduces it, because the address is not the cause');
+
     expect(preg_match('/\$\(.#content.\)\.innerHTML=`<div class="wrap" id="kbbDashWrap">/', $src))
         ->toBe(1, "renderDash() no longer marks its own wrapper with id=\"kbbDashWrap\", so kbbNavClick cannot tell "
             .'"the dashboard fell through" from "the right screen drew", and would replay over a screen that had '
@@ -445,9 +450,15 @@ it('can tell the dashboard fallback from a screen that drew itself', function ()
         .'themselves or never replays at all');
     expect(str_contains($fn, "document.readyState!=='loading'"))->toBeTrue(
         'kbbNavClick no longer stops once the document is parsed, so it arms a replay on every click for ever');
-    expect(str_contains($fn, 'LATE_NAV_IDS.has(id)'))->toBeTrue(
-        "kbbNavClick no longer limits itself to the declared rows, so NAV's own rows -- which the go() that "
-        .'exists can always draw -- would be replayed too');
+    expect(str_contains($fn, "\$('#kbbFrameStartup')"))->toBeTrue(
+        'kbbNavClick no longer tests for the frame startup card, so clicking Store -> Orders while the document '
+        .'is still arriving strands the console on "Orders could not be loaded" for good');
+    foreach (['LATE_NAV_IDS.has(id)', 'LIVE_RENDERED.has(id)', 'LATE_RENDERED.has(id)'] as $set) {
+        expect(str_contains($fn, $set))->toBeTrue(
+            "kbbNavClick no longer arms from {$set}, so one of the three ways a click during load lands on the "
+            .'wrong screen is unanswered. The three sets are the same question asked of three groups of ids: '
+            .'can the go() that exists right now draw this one at all.');
+    }
 
     // Every sidebar row goes through it: buildNav's own rows and the injected
     // ones. A row wired straight to go() skips the guard.
