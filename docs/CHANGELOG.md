@@ -3,6 +3,57 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.322
+**A declined payment no longer empties the shopper's bag.** Apply this one.
+
+### WHAT WAS WRONG, AND FOR HOW LONG
+
+Two addresses your checkout has been reporting to since 17 September did not
+exist. The file that declares them shipped with its wiring instructions written
+in its own header, and the one line that mounts it was never added — so
+`POST /checkout/card/paid` and `POST /checkout/card/abandon` have answered
+**405, no such route** for twelve days, on the **typed card form** as much as on
+the new wallets.
+
+**No money was ever at risk.** Your Stripe webhook banks every payment and has
+been doing that job alone, unnoticed, the whole time. Every successful payment
+completed correctly, which is exactly why nobody saw this.
+
+**What broke is what happens when a payment FAILS.** The browser reports an
+abandoned payment to `/checkout/card/abandon`, inside a `try/catch` that
+silently swallowed the 405. So:
+
+- the basket was never put back to **active** — the shopper was told the payment
+  failed and handed an **empty bag**, with nothing to retry;
+- the stock was never returned to the shelf — the units stayed held against an
+  order that had been given up on;
+- the payment intent was never cancelled — a **confirmable** intent stayed live
+  at Stripe.
+
+### HOW IT WAS FOUND
+
+By writing tests for the failing payment rather than the successful one: they
+called those two endpoints expecting 200 and got 405. Nothing a working checkout
+does ever touches that path, which is how it hid for twelve days.
+
+### ALSO IN THIS PACKAGE
+
+**The wallet money path now has tests, where it had none.** Fifteen of them: the
+payment intent is re-read **at Stripe** before an order is marked paid and the
+figure banked is Stripe's, never the browser's; a mismatched amount is refused
+*and recorded*; a double tap makes **one** order and **one** intent; a declined
+wallet cancels the intent **before** the stock goes back; and a refund on a
+wallet-funded order goes against the payment intent, which is the only
+identifier a wallet payment and a card payment share.
+
+**Your Apple Pay setup steps**, with the exact SSH commands for your server's
+layout, are in `docs/WALLETS-APPLE-GOOGLE-PAY.md`.
+
+### FILES
+
+`routes/web.php` (one require line), `tests/Feature/WalletMoneyPathTest.php`
+(new), the wallet documentation, and the Arabic checkout screenshots.
+
 ## 2.60.321
 **Apple Pay and Google Pay actually take money now** — and a lot else. This is a
 big one: 48 commits and seven lanes' work in a single package.
