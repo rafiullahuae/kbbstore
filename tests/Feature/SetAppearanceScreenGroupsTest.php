@@ -126,7 +126,16 @@ it('places every one of the 198 controls in exactly one section', function () {
 
     expect($missing)->toBe([], 'The screen never draws: '.implode(', ', $missing));
     expect($unknown)->toBe([], 'The screen groups keys the schema does not have: '.implode(', ', $unknown));
-    expect(count($grouped))->toBe(198);
+    /*
+     * ▲ ADVANCED DELIBERATELY, 29 September (Lane CR): 198 -> 213. Fifteen
+     *   controls added to the set's row on the cart page — a minimum height,
+     *   the picture's size and radius, the brand and the name sizes, the space
+     *   above and below the stepper, where the circles sit, and the phone's
+     *   own twin of each measurement. They are placed by the `cart` section,
+     *   which takes the API's two cards whole, so the placement is total
+     *   without a line being added to the table above.
+     */
+    expect(count($grouped))->toBe(213);
 });
 
 it('names eight sections, and keeps Desktop and Mobile above them', function () {
