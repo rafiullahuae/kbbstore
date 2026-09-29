@@ -25,6 +25,22 @@ const OUT = process.env.KBB_SHOTS || require('path').join(__dirname, '..', 'docs
     const page = await browser.newPage({ viewport: { width: w, height: 1000 } });
     await page.goto(BASE + '/collections/skincare-sets/', { waitUntil: 'networkidle' });
 
+    /* ── SCROLL THE PAIR INTO VIEW FIRST, AND WAIT ─────────────────────────
+       Every tile but the first is `loading="lazy"`, and at 390px this pair is
+       the SIXTH row. A full-page screenshot does not make a browser fetch an
+       image it has decided it does not need yet: the 390 crop came back with
+       two empty frames and the pale background showing through, which reads as
+       "the photograph is broken" and is only the harness. Scrolling to them and
+       waiting for the network to settle is what the shopper's browser does. */
+    await page.evaluate(() => {
+      const t = [...document.querySelectorAll('.kbb-tile')].find(
+        (e) => (e.querySelector('.kbb-card-nm')?.textContent || '').length > 80
+      );
+      t?.scrollIntoView({ block: 'center' });
+    });
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
     const box = await page.evaluate(() => {
       const tiles = [...document.querySelectorAll('.kbb-tile')];
       const short = tiles.find((t) => (t.querySelector('.kbb-card-nm')?.textContent || '') === 'Toner');
