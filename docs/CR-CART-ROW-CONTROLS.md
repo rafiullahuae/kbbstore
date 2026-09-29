@@ -87,6 +87,24 @@ At 390 both were entirely outside the painted box. It is also why more padding
 did not help: the set screen's padding wins on specificity but never touches
 `height`, so it is less room inside the same 96px.
 
+**And the same basket, the same settings, the built stylesheet swapped under
+it** — `docs/CR-cart-shots/ab-before-*` and `ab-after-*`, which is the honest
+comparison because the table above and the one before it were measured on two
+different baskets:
+
+| | set row | the set's name | the set's stepper | an ordinary row |
+|---|---|---|---|---|
+| 390 before | 96px | 21px above the row's top | 19px below its bottom | 96px |
+| 390 after | 157px | nothing clipped | nothing clipped | 96px |
+| 1280 before | 96px | 1px clipped | — | 96px |
+| 1280 after | 158px | nothing clipped | nothing clipped | 96px |
+
+How much is cut depends on how many lines the name takes, which is why the
+earlier table reads 41px and this one 21px — one basket wraps the name onto a
+second line and the other does not. What does not depend on anything is that the
+row was 96px with more than 96px in it, and that the ordinary rows either side
+never move.
+
 `min-height` replaces `height` for `.ci-set` and for nothing else, with
 `overflow:visible` beside it. The dense layout keeps its density — every
 ordinary row is still exactly 96px — and the one row with an extra block is as
@@ -140,6 +158,7 @@ and the stepper.
 | `pop-before-last-*` / `pop-after-last-*` | the popup open on the LAST row, cut off and then not |
 | `pop-after-first-*` | the same popup on the FIRST row, which was always fine |
 | `setrow-before-clip-*` / `setrow-after-clip-*` | the squeezed set row losing and keeping its name and stepper |
+| `ab-before-*` / `ab-after-*` | the same, on ONE basket with only the built stylesheet swapped |
 | `rowcontrols-*` | both control sets moved at once: ordinary rows 120px with a 16px name, the set row 150px with a 17px name |
 | `en-*` / `ar-*` | the cart in both languages with the popup OPEN on the last row |
 | `cartpage-folded-*` | Appearance → Cart page → Product rows · spacing and size |
