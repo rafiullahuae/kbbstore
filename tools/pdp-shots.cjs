@@ -192,7 +192,12 @@ const signIn = async (page) => {
    down over the panel — measured in counter-tabs-1280.png, and it looked
    exactly like a rendering fault in the design rather than in the camera. */
 const FLATTEN = '.pv .pv-gal,.pv .pv-card-buy,.pv .pv-band,.pv .pv-buygroup,.pv .pv-dock,'
-  + '.pv-tabs-pill .pv-tabrow,.pv-e .pv-tabs-band .pv-tabrow,.head{position:static !important}';
+  + '.pv-tabs-pill .pv-tabrow,.pv-e .pv-tabs-band .pv-tabrow,'
+  // `header`, NOT `.head`. The storefront layout's sticky header is a bare
+  // <header> (kbb.css line 1792), and `.head` is the OTHER one -- so flattening
+  // only `.head` left the real header painted a third of the way down every
+  // full-page shot, over the thumbnails and the product name.
+  + 'header,.head,.catbar{position:static !important}';
 
 const settle = async (page) => {
   await page.waitForLoadState('networkidle');
