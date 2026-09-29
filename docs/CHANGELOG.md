@@ -3,6 +3,51 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.318
+**Your two decisions, both applied.** Both change how the shop behaves, so read
+the two ▲ lines before you apply this.
+
+### 1. SELLING A SET NOW TAKES ITS PRODUCTS OFF THE SHELF
+
+You said: *"if the product sold inside set or individual, the stock should be
+minus in any case."*
+
+**Catalog → Sets → Stock** now ships set to **"Also take each product in the box
+off its own stock"**. Sell a box containing one Heartleaf Toner and the toner's
+own stock drops by one, exactly as if somebody had bought it on its own.
+
+A basket holding *both* the box and a loose toner takes that shelf down **once,
+for the total** — not twice.
+
+**▲ The surprise to expect.** Nothing is counted backwards; past orders are not
+re-applied. But the **next** order for a set whose products are already low will
+be **refused** where it would have gone through before. That is correct — the box
+cannot be packed — and it is also the thing that will look like a fault the first
+time it happens, so: it is not a fault.
+
+If you ever want the old behaviour back, that screen still offers it, and once
+you choose it nothing will ever put this back over the top of your choice.
+
+### 2. A SET NO LONGER GETS THE BULK DISCOUNT
+
+You said: *"no there's no bulk discount for sets products."*
+
+The *2-pack / 3-pack* offers already stopped appearing on a set's page. The
+**basket** was still quietly applying them. It does not now — a set is charged
+its own price however many are bought.
+
+**▲ What this does to a basket somebody already has.** If a customer is sitting
+with three of a set in their basket right now, the price goes **up** to the set's
+own price the next time that line is touched. That is the price your set's page
+has been showing since the offers were removed, so the basket now agrees with
+what the customer was told — but it is a price rising, which is worth knowing
+before it happens.
+
+### FILES
+
+`app/Services/StockSetRule.php`, `app/Services/CartService.php`, one migration,
+and three test files.
+
 ## 2.60.317
 **Your two clips were not playing because the four demo clips were using up all
 four slots.** Found, proved in a browser, fixed.
