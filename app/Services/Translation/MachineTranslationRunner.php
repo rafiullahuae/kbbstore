@@ -241,9 +241,22 @@ final class MachineTranslationRunner
                 continue;
             }
 
+            /*
+             * A column on TranslationEstimate::NEVER_MACHINE is translatable
+             * work that a machine may not be sent — today that is a UGC
+             * caption, which the create_ugc_videos migration rules out in as
+             * many words because it is a creator's own voice. It is filtered
+             * out HERE, at the point the batch is built, rather than by leaving
+             * the model off CONTENT: off CONTENT it would also stop being
+             * counted, which is the defect that hid three whole models from the
+             * progress screen.
+             */
+            $neverMachine = TranslationEstimate::NEVER_MACHINE[$class] ?? [];
+
             $present = array_values(array_filter(
                 $columns,
                 static fn (string $c): bool => Schema::hasColumn($table, $c)
+                    && ! in_array($c, $neverMachine, true)
             ));
 
             if ($present === []) {

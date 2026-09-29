@@ -73,6 +73,45 @@ final class TranslationEstimate
         // column name that does not exist would silently count as zero work.
         \App\Models\Post::class => ['title', 'excerpt', 'body'],
         \App\Models\MenuItem::class => ['label'],
+        // `title` and `body` — the authored product tabs. `body` is one of
+        // TranslationStore::LONG_FIELDS, which is why the column is called
+        // `body` and not `content`; see the create_product_tabs migration.
+        \App\Models\ProductTab::class => ['title', 'body'],
+        // The shoppable-video section's own heading pair. Shop copy, not a
+        // creator's words.
+        \App\Models\UgcSection::class => ['heading', 'subheading'],
+        // A clip's title and caption. Counted as work because the owner types
+        // them; `caption` is in NEVER_MACHINE below and no machine sees it.
+        \App\Models\UgcVideo::class => ['title', 'caption'],
+    ];
+
+    /**
+     * Columns that are translatable WORK but that a machine may never be sent.
+     *
+     * ── WHY THIS IS A SECOND LIST AND NOT AN ABSENCE FROM THE FIRST ─────────
+     *
+     * Until this lane, CONTENT was doing two jobs at once: it was the list of
+     * what counts as translation work AND the list of what the "Translate
+     * everything" run walks. Those are not the same list, and the moment they
+     * disagree one of them has to be wrong.
+     *
+     * `ugc_videos.caption` is the case that proves it. The create_ugc_videos
+     * migration states the rule in as many words — *"A caption is a creator's
+     * own voice, so the machine path is deliberately NOT used on it"* — and the
+     * only way to honour that with ONE list was to leave the whole model off
+     * it. Which is what had happened, and it cost more than it saved: a caption
+     * the owner had translated by hand counted towards nothing, so the progress
+     * bar could not move and the character count under-quoted the job.
+     *
+     * So: CONTENT says what the work IS, this says what a machine may not do to
+     * it, and MachineTranslationRunner consults both. A column named here is
+     * still counted, still shows on the progress screen, and is still typed by
+     * hand in the ordinary Arabic box.
+     *
+     * @var array<class-string, list<string>>
+     */
+    public const NEVER_MACHINE = [
+        \App\Models\UgcVideo::class => ['caption'],
     ];
 
     /**

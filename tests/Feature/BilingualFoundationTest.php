@@ -1046,6 +1046,96 @@ it('keeps every model allowlist and the estimate in step', function () {
     }
 });
 
+it('lists every translatable model on the estimate, not just the ones already listed', function () {
+    /*
+     * THE TEST ABOVE ONLY EVER READ ONE DIRECTION, AND THAT IS HOW THREE
+     * MODELS WENT MISSING.
+     *
+     * It walks TranslationEstimate::CONTENT and checks each class it finds
+     * agrees with its own $translatable. Nothing walked the models. So a model
+     * that declared $translatable and was never added to CONTENT satisfied it
+     * completely — by not being in the loop at all.
+     *
+     * Three had: ProductTab (title, body), UgcSection (heading, subheading)
+     * and UgcVideo (title, caption). What that cost on the shop, all three of
+     * which the owner would have met before anybody found the cause:
+     *
+     *   1. Content -> Translations' progress bar could not move for them. The
+     *      denominator never counted the fields and the numerator is grouped by
+     *      table, so an owner who translated every product tab in the shop by
+     *      hand watched the figure stay exactly where it was.
+     *   2. The character count under the "Translate everything" button
+     *      under-quoted the job by however many tabs, sections and clips the
+     *      shop carries.
+     *   3. MachineTranslationRunner walks the same constant, so the machine
+     *      never offered to translate any of them at all.
+     *
+     * MUTATION: drop the ProductTab, UgcSection or UgcVideo row from
+     * TranslationEstimate::CONTENT and this is red, naming the class. Ran it
+     * for all three.
+     *
+     * The models are found by reading the directory rather than from a list
+     * here, because a list here is the third copy of the same allowlist and
+     * would go out of step exactly the way the first two did.
+     */
+    $missing = [];
+
+    foreach (glob(app_path('Models/*.php')) as $file) {
+        $class = 'App\\Models\\'.basename($file, '.php');
+
+        if (! class_exists($class)) {
+            continue;
+        }
+
+        $model = new $class;
+
+        if (! method_exists($model, 'translatable') || $model->translatable() === []) {
+            continue;
+        }
+
+        if (! array_key_exists($class, TranslationEstimate::CONTENT)) {
+            $missing[] = $class;
+        }
+    }
+
+    expect($missing)->toBe([], 'translatable but invisible to the translation console: '.implode(', ', $missing));
+});
+
+it('never sends a creator\'s own caption to a machine', function () {
+    /*
+     * The other half of the fix above. UgcVideo is now ON CONTENT so its two
+     * fields are COUNTED as work — but create_ugc_videos states the rule that
+     * kept it off in the first place: "A caption is a creator's own voice, so
+     * the machine path is deliberately NOT used on it."
+     *
+     * Counting it and machine-translating it are different decisions, so they
+     * are now different lists. This pins the second one.
+     *
+     * MUTATION: delete the UgcVideo row from TranslationEstimate::NEVER_MACHINE
+     * and this is red -- the caption comes back in the batch. Ran it.
+     */
+    $video = \App\Models\UgcVideo::create([
+        'slug' => 'ar-machine-'.uniqid(),
+        'title' => 'Morning routine',
+        'caption' => 'This is the creator speaking in her own voice',
+        'status' => 'publish',
+        'rights_status' => 'granted',
+    ]);
+
+    $batch = app(\App\Services\Translation\MachineTranslationRunner::class)
+        ->pending('ar', 500, 'ugc_videos');
+
+    $fields = array_column(array_filter(
+        $batch,
+        static fn (array $r): bool => (int) $r['item_id'] === (int) $video->id
+    ), 'field');
+
+    expect(in_array('title', $fields, true))
+        ->toBeTrue('a clip title is shop copy and should be offered to the machine')
+        ->and(in_array('caption', $fields, true))
+        ->toBeFalse('a caption is the creator\'s own voice and must never be machine-translated');
+});
+
 it('never lets an identifier onto a translatable list', function () {
     // SKUs, coupon codes, order numbers, currency codes and slugs. A translated
     // SKU is a SKU nobody can look up; a translated slug doubles the URL surface
