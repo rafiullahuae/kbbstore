@@ -72,7 +72,7 @@ Speed Index of 7.7.
 | 1 | Render-blocking requests · Speed Index · FCP | **Poppins and Cairo are now served by your own shop.** Google's own font files, unchanged, committed and built into `public/build/`. The `@font-face` rules are inline in the page and the four weights the page uses are `<link rel=preload>`ed, so the download starts while the browser is still reading the first kilobyte of `<head>`. | `app/Support/WebFonts.php`, `resources/views/layouts/store.blade.php`, `resources/fonts/**`, `vite.config.js` |
 | 2 | LCP breakdown · "Resource load delay 2,260 ms" | **The first banner picture is named in `<head>`.** Not the usual mistake — LCP request discovery *passes* on your shop. The document is 51 KiB over a slow connection and that `<img>` is two thirds of the way down it, so the browser did not know the picture existed until the page body had arrived. | `resources/views/partials/home/cards-banner.blade.php` |
 | 3 | Improve image delivery · 276 KiB | **The banner serves the phone-sized copies you already generated.** Three 810×1440 originals were being painted into 298×529 boxes. The product tile beside them in the same report was already doing this properly; the banner was simply never given a `srcset`. | same file, `app/Support/ImageVariants.php` |
-| 4 | Best Practices 96 → 100 | **One console 404 is gone.** A shoppable-video clip's cover file was never written to disk (the cut failed), and nothing between the database and the browser checked. The tile still draws and the clip still plays; the browser just stops asking for a file that is not there. | `app/Services/Ugc/Tile.php` |
+| 4 | Best Practices 96 → 100 | **One console 404 is gone.** Measured with `tools/perf-console-404.cjs`, which scrolls the page to the bottom the way a shopper does: before `["404 /uploads/ugc/perf-poster-clip-3.jpg"]`, after `no failed requests`. A shoppable-video clip's cover file was never written to disk (the cut failed), and nothing between the database and the browser checked. The tile still draws and the clip still plays; the browser just stops asking for a file that is not there. | `app/Services/Ugc/Tile.php` |
 | 5 | Accessibility · heading order | **The footer's three headings were `<h5>` under nine `<h2>`.** Now `<h2>`. Not one pixel moves — `kbb.css` zeroes every margin, and the `.fcol` rule sets the size — but a screen-reader user is no longer told the footer is nested three levels inside the last section of the page. | `resources/views/partials/footer.blade.php`, `resources/css/kbb/kbb.css` |
 
 ### Where these sit in the admin
@@ -321,9 +321,13 @@ video → (the clip) → Cover**, or re-upload the clip.
 ## 7. Everything this lane did NOT touch, and could not
 
 - **`store/review-wall`, `store/app`, `store/skin-quiz`, `store/blog`,
-  `store/post`** are five standalone layouts that link Google Fonts of their
-  own, at weights (300, 500) this package does not carry. They are not the
-  homepage and were not in your report. Self-hosting them is a small follow-up.
+  `store/post`** are five standalone layouts with `<head>`s of their own. Their
+  **Arabic** face is self-hosted with everything else — the same change reaches
+  them through `partials/arabic-face.blade.php` — but their **Latin** faces are
+  still Google's: Poppins at weights 300 and 500, plus Fraunces and Hanken
+  Grotesk, which this package does not carry. Their preconnect hints are
+  therefore still doing real work and were deliberately left alone. Those five
+  pages were not in your report; finishing them is a small follow-up.
 - **The inline `<style>` and `<script>` in the shoppable-video rail** (7.2 KiB
   and 10.6 KiB unminified) are what "Minify CSS / Minify JavaScript" names.
   Both audits are *Unscored*; minifying them saves roughly 2 KiB after gzip and

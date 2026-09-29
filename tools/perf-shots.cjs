@@ -91,5 +91,54 @@ const M = () => {
 
   await browser.close();
   fs.writeFileSync(`${OUT}/MEASUREMENTS.json`, JSON.stringify(out, null, 1));
+
+  /* A contact sheet, because eight files in a folder is not a picture anybody
+     looks at. Side by side at each width, with the numbers under them. */
+  const row = (w) => {
+    const b = out[`before-${w}`];
+    const a = out[`after-${w}`];
+    const cell = (label, m, file) => `
+      <figure>
+        <figcaption><b>${label}</b> · ${w}px<br>
+          scrollWidth <b>${m.scrollWidth}</b> · body ${m.bodyHeight}px<br>
+          headings ${m.headings.join(' ')}<br>
+          footer heading ${m.footerHeading ? m.footerHeading.font + ' / ' + m.footerHeading.weight : '—'}<br>
+          faces loaded ${m.fontsLoaded.join(', ') || 'none'}<br>
+          first banner picture <code>${(m.banner[0] || {}).current || '—'}</code>
+        </figcaption>
+        <img src="${file}" alt="${label} at ${w}px">
+      </figure>`;
+    return `<section><h2>${w}px</h2><div class="pair">
+      ${cell('before', b, `before-${w}.jpg`)}
+      ${cell('after', a, `after-${w}.jpg`)}
+    </div></section>`;
+  };
+
+  fs.writeFileSync(`${OUT}/index.html`, `<!doctype html>
+<meta charset="utf-8"><title>Lane PERF — the homepage, before and after</title>
+<style>
+ body{font:14px/1.5 system-ui,sans-serif;margin:24px;background:#faf7f8;color:#2A2228}
+ h1{font-size:20px} h2{font-size:15px;margin:28px 0 8px}
+ .pair{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+ figure{margin:0} figcaption{font-size:12px;margin-bottom:6px;color:#5E545A}
+ img{width:100%;border:1px solid rgba(42,34,40,.15);border-radius:8px;background:#fff}
+ code{font-size:11px;word-break:break-all}
+</style>
+<h1>Lane PERF — the homepage, before and after</h1>
+<p>Left: the commit this lane branched from. Right: its tip. Same browser, same
+fixture, animations disabled so the carousel is at the same offset in both.</p>
+${row(390)}
+${row(1280)}
+<h2>Full pages</h2>
+<div class="pair">
+ <figure><figcaption><b>before</b> · 390px, full page</figcaption><img src="before-390-full.jpg"></figure>
+ <figure><figcaption><b>after</b> · 390px, full page</figcaption><img src="after-390-full.jpg"></figure>
+</div>
+<div class="pair">
+ <figure><figcaption><b>before</b> · 1280px, full page</figcaption><img src="before-1280-full.jpg"></figure>
+ <figure><figcaption><b>after</b> · 1280px, full page</figcaption><img src="after-1280-full.jpg"></figure>
+</div>
+`);
+
   console.log(JSON.stringify(out, null, 1));
 })();
