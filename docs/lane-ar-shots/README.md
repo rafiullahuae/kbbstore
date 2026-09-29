@@ -29,7 +29,7 @@ work that made the mirrored layout real.
 | prefix | what the shop is doing |
 |---|---|
 | *(none)* | the 1,018 Arabic strings are shipped and **still drafts**. This is what applying the package gives you. |
-| `approved-` | after one press of **Content → Translations → Approve all**. |
+| `approved-` | after one press of **Translation → Strings → Approve all**. |
 
 The pair is the deliverable. The first half proves applying this changes
 nothing; the second proves the words are real.

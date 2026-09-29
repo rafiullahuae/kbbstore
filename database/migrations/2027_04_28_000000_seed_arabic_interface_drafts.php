@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Schema;
  * chain never reaches a draft — uiMap() filters on `published` before the map
  * is built. So /ar renders exactly the English it rendered before this package,
  * /  is untouched in every particular, and the only thing that moves is a
- * number on Content -> Translations: `drafts` goes from 0 to 1,018 while
- * `translated` stays where it is.
+ * number on Translation -> Progress: `Drafts awaiting approval` goes from 0 to
+ * 1,018 while `Published in Arabic` stays where it is.
  *
  * That is the point. The owner reads them, corrects what he wants, and presses
  * the console's existing "Publish all". Nothing a shopper can see changes until
@@ -124,7 +124,7 @@ return new class extends Migration
          * ArabicInterfaceDrafts is new. Under OPcache the server goes on running
          * the old definitions until something resets it, and the symptom is the
          * worst kind: the rows are in the table, the console looks right, and
-         * Content -> Translations still cannot open a product tab.
+         * Translation -> Strings still cannot open a product tab.
          *
          * Named globs and opcache_reset only -- never Cache::flush(), which on
          * some drivers holds the sessions and would sign every customer out.
@@ -166,9 +166,11 @@ return new class extends Migration
                 ."so /ar still reads exactly as it did before you applied this, and your\n"
                 ."English shop is untouched.\n"
                 ."\n"
-                ."They are waiting for you at Content -> Translations. Read them, correct\n"
-                ."anything you would say differently, and press 'Publish all' when you are\n"
-                ."happy -- that is the moment the Arabic shop starts speaking Arabic.\n"
+                ."Read them at Translation -> Strings, where each one sits beside its\n"
+                ."English, and correct anything you would say differently. When you are\n"
+                ."happy, Translation -> Progress has one button -- 'Approve all 1018\n"
+                ."drafts' -- and pressing it is the moment the Arabic shop starts\n"
+                ."speaking Arabic.\n"
                 ."\n"
                 ."Anything you had already typed yourself was left exactly as it was.\n"
                 ."Eight long paragraphs -- the intros on the eight concern pages -- were\n"

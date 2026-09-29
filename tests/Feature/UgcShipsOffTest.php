@@ -234,7 +234,7 @@ it('reads the ugc tables from no storefront code at all', function () {
                 // never offered them, which is the defect BilingualFoundation-
                 // Test's "lists every translatable model" now catches.
                 //
-                // It is Content -> Translations and the character-count
+                // It is Translation -> Strings and the character-count
                 // estimate, both admin-only, and it is exempt for the same
                 // reason AdminCapabilities is: a table of what exists is not a
                 // page that draws it. NOTHING on the storefront gained a read

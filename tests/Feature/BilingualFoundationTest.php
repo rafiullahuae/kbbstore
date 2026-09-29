@@ -1112,7 +1112,7 @@ it('lists every translatable model on the estimate, not just the ones already li
      * and UgcVideo (title, caption). What that cost on the shop, all three of
      * which the owner would have met before anybody found the cause:
      *
-     *   1. Content -> Translations' progress bar could not move for them. The
+     *   1. Translation -> Progress' progress bar could not move for them. The
      *      denominator never counted the fields and the numerator is grouped by
      *      table, so an owner who translated every product tab in the shop by
      *      hand watched the figure stay exactly where it was.

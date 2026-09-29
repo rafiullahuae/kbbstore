@@ -413,7 +413,7 @@ it('records the English it was translated from, so a later edit marks it stale',
 
 /* ══════════════════ 5. the three groups the console could not open ══════════════════ */
 
-it('opens product tabs, video sections and clips on Content -> Translations', function () {
+it('opens product tabs, video sections and clips on Translation -> Strings', function () {
     /*
      * THE OTHER HALF OF THE CONTENT FIX, AND THE ONE THE OWNER ACTUALLY TOUCHES.
      *

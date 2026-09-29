@@ -51,10 +51,12 @@ namespace App\Services\Translation;
  *   - TranslationEstimate::progress() counts `translated` and `drafts`
  *     SEPARATELY, so the honest figure stays 0% translated with 1,018 awaiting
  *     review, which is the truth.
- *   - Content -> Translations already lists a draft marked as a draft beside
- *     its English, and already has one "Publish all" button wired to
- *     TranslationsApiController::publish() with no `field`, which approves the
- *     whole locale in one call.
+ *   - Translation -> Strings already lists a draft marked as a draft beside
+ *     its English, so reading them is a screen the owner already has; and
+ *     Translation -> Progress already carries one "Approve all N drafts"
+ *     button, wired to TranslationsApiController::publish() with no `field`,
+ *     which approves the whole locale in one call and PRINTS THE COUNT IT IS
+ *     ABOUT TO APPROVE on its own face.
  *
  * The owner reads them, corrects what he wants, and presses one button. That is
  * the workflow the plan designed; this file fills it.
