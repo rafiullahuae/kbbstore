@@ -1,3 +1,19 @@
+/*
+ * Lane PERF — what the cards-banner card actually measures, at seventeen
+ * viewport widths.
+ *
+ * This is the instrument that corrected ImageVariants::bannerCardSizesAttribute().
+ * Read off the stylesheet, that method understated the card by 10% at 390px,
+ * because `@media(max-width:680px)` at kbb.css:3096 takes the homepage
+ * section's card frame off entirely and a reading of the CSS missed it. Its
+ * docblock carries the table this prints.
+ *
+ * NOTHING HERE SHIPS and the PAGE measures nothing: every rectangle below is
+ * read by this harness in a browser, never by a script the shop serves.
+ *
+ *   sh tools/perf-preview.sh 8991 "" after
+ *   node tools/perf-measure-card.cjs
+ */
 const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--ignore-certificate-errors'] });

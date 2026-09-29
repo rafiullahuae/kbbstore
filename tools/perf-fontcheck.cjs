@@ -1,3 +1,15 @@
+/*
+ * Lane PERF — does the page actually get its fonts?
+ *
+ * Written after an hour lost to an instrument bug: php -S's own static handler
+ * answered some of a dozen concurrent small files with
+ * net::ERR_INVALID_HTTP_RESPONSE, so Chromium reported four @font-face as
+ * `status: "error"` and fell back to the system face -- on a shop whose font
+ * files curl fetched happily one at a time. `document.fonts` says which faces
+ * a page HAS and which it LOADED, and the two are not the same question.
+ *
+ *   node tools/perf-fontcheck.cjs http://127.0.0.1:8991/
+ */
 const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--ignore-certificate-errors'] });

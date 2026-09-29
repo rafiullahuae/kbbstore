@@ -1,3 +1,14 @@
+#
+# Lane PERF -- turn a saved PageSpeed Insights page into text and a URL list.
+#
+# The reports the owner sends are 2.3 MB of saved DOM each and contain BOTH the
+# mobile and the desktop section. Eyeballing them in a browser loses the thing
+# that matters most -- WHICH of his files each audit names -- so this strips
+# <script>/<style>/tags and writes the audit text beside a frequency-ordered
+# list of every URL in the document.
+#
+#   python3 tools/perf-parse-psi.py <saved.html> <out.txt>
+#
 import re,sys,html,json
 path=sys.argv[1]
 s=open(path,encoding='utf-8',errors='replace').read()
