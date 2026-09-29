@@ -139,6 +139,7 @@ final class VolumeFixture
         $this->orderNotes();
         $this->seo();
         $this->posts();
+        $this->navigation();
         $this->unreadFiles();
 
         ksort($this->counts);
@@ -1110,6 +1111,10 @@ final class VolumeFixture
      *   a SCHEDULED post, which must not reach the index -- imported as a
      *   draft, never published on the owner's behalf.
      */
+    private array $articleIds = [];
+
+    private ?int $refusedPageId = null;
+
     private function posts(): void
     {
         /*
@@ -1146,6 +1151,9 @@ final class VolumeFixture
                     // A WordPress page, which is not an article.
                     $type = 'page';
                     $slug = 'page-'.$id;
+                    // Remembered so navigation() can point a menu item at a
+                    // real refused row rather than at an id it hopes is one.
+                    $this->refusedPageId ??= $id;
                     $this->count('posts.not_an_article_refused');
                     break;
                 case 3:
@@ -1163,6 +1171,13 @@ final class VolumeFixture
                     $this->count('posts.slug_normalised');
                     $this->count('posts.scheduled_held_as_draft');
                     break;
+            }
+
+            // The navigation points at articles by post id; only a PUBLISHED
+            // article at an address this shop can serve is one a menu item can
+            // land on, and the other three shapes are the ones it must not.
+            if ('post' === $type && 'publish' === $status) {
+                $this->articleIds[] = $id;
             }
 
             $rows[] = [
@@ -1184,6 +1199,119 @@ final class VolumeFixture
             'author_id', 'author_name', 'author_email',
             'date_created', 'date_created_gmt', 'date_modified',
             'parent_id', 'position', 'image', 'categories', 'tags', 'comment_status',
+        ], $rows);
+    }
+
+    /**
+     * `menus.csv` and `menu_items.csv` — the header and the footer, at the
+     * shape a five-year shop's navigation really has.
+     *
+     * SCALED OFF THE CATALOGUE, like posts() and for the same reason: a fixture
+     * too small to carry one of the kinds below is a test that has silently
+     * stopped asserting it.
+     *
+     * THE KINDS ARE THE POINT, and each is a different table on the new shop or
+     * a different decision:
+     *
+     *   a CATEGORY item, whose address is the cached `path` and not the slug,
+     *   so a nested one lands at /collections/a/b/ and not at /collections/b/;
+     *   a BRAND item, resolved on the term id and never on the taxonomy name;
+     *   a PRODUCT item and an ARTICLE item, which are two id spaces;
+     *   a CUSTOM link, the only kind carrying its own address;
+     *   an item pointing at a PAGE, which PostImporter refuses by name — the
+     *   case MenuItemImporter parks rather than dropping or linking;
+     *   an item WordPress had not PUBLISHED, parked for its own reason;
+     *   a SECOND menu, because `NavigationService` picks one menu per slot and
+     *   a fixture with one cannot tell "the first" from "the right one".
+     */
+    private function navigation(): void
+    {
+        $menus = [
+            [9500, 'Main menu', 'main-menu', 'primary,handheld'],
+            [9501, 'Footer menu', 'footer-menu', 'footer'],
+        ];
+
+        $this->csv('menus.csv', ['term_id', 'name', 'slug', 'description', 'locations', 'count'], array_map(
+            fn (array $m): array => [$m[0], $m[1], $m[2], '', $m[3], 0],
+            $menus,
+        ));
+
+        $this->count('menus', count($menus));
+
+        $rows = [];
+        $id = 75000;
+        $position = 0;
+
+        $item = function (
+            int $menu, int $parent, string $label, string $type, string $object, int $objectId,
+            string $url = '', string $status = 'publish', string $source = 'item',
+        ) use (&$rows, &$id, &$position): int {
+            $id++;
+
+            /*
+             * NEVER EMPTY. The real export resolves an untyped label off the
+             * object it points at (`label_source` = object), because WordPress
+             * writes post_title only when the owner types one over the default
+             * -- and `menu_items.label` on the new shop is NOT NULL. A
+             * generator emitting '' here would be writing a file the plugin
+             * cannot produce and the importer must refuse.
+             */
+            if ('' === $label) {
+                $label = ucfirst(str_replace('_', ' ', $object)).' '.$objectId;
+            }
+
+            $rows[] = [
+                $id, $menu, $parent, $position++, $label, $source, $type, $object, $objectId,
+                '' === $url ? 'slug-'.$objectId : '', $url, 0 === $parent && 'custom' === $type ? '_blank' : '',
+                '', '', $status,
+            ];
+
+            return $id;
+        };
+
+        // "Shop by category" over the real categories, two levels deep, which
+        // is what makes parent_id a translation rather than a copy.
+        $shop = $item(9500, 0, 'Shop by category', 'custom', 'custom', 0, '/shop/');
+
+        foreach (array_slice($this->categoryIds, 0, max(3, intdiv($this->products, 4))) as $termId) {
+            $item(9500, $shop, '', 'taxonomy', 'product_cat', $termId, '', 'publish', 'object');
+        }
+
+        $brands = $item(9500, 0, 'Brands', 'custom', 'custom', 0, '/brands/');
+
+        foreach (array_slice($this->brandIds, 0, max(2, intdiv($this->products, 6))) as $termId) {
+            $item(9500, $brands, '', 'taxonomy', 'pa_brands', $termId, '', 'publish', 'object');
+        }
+
+        if ($this->productIds !== []) {
+            $item(9500, 0, 'This week\'s hero', 'post_type', 'product', $this->productIds[0]);
+        }
+
+        if ($this->articleIds !== []) {
+            $item(9500, 0, '', 'post_type', 'post', $this->articleIds[0], '', 'publish', 'object');
+        }
+
+        $item(9500, 0, 'Super sale', 'custom', 'custom', 0, 'https://kbeautybliss.com/super-sale/');
+
+        /*
+         * THE TWO THAT ARE PARKED, and they are parked for two different
+         * reasons. 7002 is the WordPress page posts() writes at `page-7002`,
+         * which PostImporter refuses by name; the draft is a menu item the
+         * owner had not finished. Both are IN the database and out of the
+         * header — see docs/MN-NAVIGATION-IMPORT.md §4.
+         */
+        $item(9500, 0, 'About us', 'post_type', 'page', $this->refusedPageId ?? 7003);
+        $item(9500, 0, 'Coming soon', 'custom', 'custom', 0, '/coming-soon/', 'draft');
+
+        // The footer, which is a different menu in a different slot.
+        $item(9501, 0, 'Delivery', 'custom', 'custom', 0, '/delivery/');
+        $item(9501, 0, 'Contact', 'custom', 'custom', 0, '/contact-us/');
+
+        $this->count('menu_items', count($rows));
+        $this->csv('menu_items.csv', [
+            'id', 'menu_term_id', 'parent_id', 'position', 'label', 'label_source',
+            'type', 'object', 'object_id', 'object_slug', 'url', 'target', 'classes',
+            'description', 'status',
         ], $rows);
     }
 

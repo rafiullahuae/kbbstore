@@ -153,8 +153,6 @@ final class MenuItemImporter extends EntityImporter
      */
     public const UNRESOLVED = 'unresolved';
 
-    /** Items whose parent was not yet in the id map when the row was read. */
-    private array $pendingParents = [];
 
     public function name(): string
     {
@@ -272,30 +270,40 @@ final class MenuItemImporter extends EntityImporter
         $parentSourceId = $row->id('parent_id', 'parent_id', 'parent', 'menu_item_parent');
 
         /*
-         * The parent is resolved here when it can be — WordPress writes menus in
-         * id order and a parent is usually created before its children — and in
-         * finalise() when it cannot. Left out of the attribute list entirely
-         * when it is not known yet, so a re-run does not null an existing link
-         * on the way to setting it again.
+         * ── THE PARENT IS KEPT ON THE ROW, NOT IN A PROPERTY ────────────────
+         *
+         * `_menu_item_menu_item_parent` is a nav_menu_item POST id, so it has
+         * to be translated, and a child often arrives before its parent.
+         * CategoryImporter holds the unresolved ones in an instance array and
+         * fixes them in finalise(); that cannot work here, because **a batch is
+         * a separate HTTP request**. Store → Import steps this entity a slice at
+         * a time and ImportRunner calls finalise() on EVERY call — so a slice
+         * holding the child and not the parent would resolve nothing, clear its
+         * array, and lose the link for good.
+         *
+         * Measured rather than reasoned: the sliced run left a child at the top
+         * level where the single-pass run nested it, and on the owner's server
+         * every import is sliced. `menu_items.source_parent_post_id` is what
+         * lets finalise() repair from the DATABASE instead of from memory.
          */
-        if ($parentSourceId === null) {
-            $attributes['parent_id'] = null;
-        } else {
-            $parentId = $this->localItemId($context, $parentSourceId);
+        $attributes['source_parent_post_id'] = $parentSourceId;
+        $attributes['parent_id'] = $parentSourceId === null
+            ? null
+            : $this->localItemId($context, $parentSourceId);
 
-            if ($parentId !== null) {
-                $attributes['parent_id'] = $parentId;
-            }
+        /*
+         * A parent that is not here YET must not null a link an earlier run
+         * already made — that would be this defect with an extra step. Left out
+         * of the write entirely, and repaired by finalise().
+         */
+        if ($parentSourceId !== null && $attributes['parent_id'] === null) {
+            unset($attributes['parent_id']);
         }
 
         $outcome = $context->apply($item, $attributes);
 
         $context->record($this->name(), $outcome);
         $context->remember($this->name(), $id, (int) $item->id);
-
-        if ($parentSourceId !== null && ! array_key_exists('parent_id', $attributes)) {
-            $this->pendingParents[$id] = $parentSourceId;
-        }
     }
 
     /**
@@ -531,40 +539,60 @@ final class MenuItemImporter extends EntityImporter
     /**
      * Link the parents that arrived after their children, then flush the nav.
      *
-     * Both halves are idempotent, which is what lets an interrupted run that
-     * resumes still end with a correct tree.
+     * A SET OPERATION OVER THE WHOLE TABLE, in two queries, and deliberately
+     * not over "the rows this call touched". A slice that imported only the
+     * parent has to be able to repair a child imported by the slice before it,
+     * and it knows nothing about that child — the `source_parent_post_id`
+     * column is the whole point. Idempotent and cheap: a menu is tens of rows,
+     * and CategoryImporter recomputes its whole tree on the same reasoning.
      */
     public function finalise(ImportContext $context): void
     {
-        foreach ($this->pendingParents as $sourceId => $parentSourceId) {
-            $childId = $context->localId($this->name(), $sourceId);
-            $parentId = $this->localItemId($context, $parentSourceId);
+        $rows = MenuItem::query()
+            ->whereNotNull('source_parent_post_id')
+            ->get(['id', 'menu_id', 'source_post_id', 'source_parent_post_id', 'parent_id']);
 
-            if ($childId === null) {
-                continue;
+        if ($rows->isNotEmpty()) {
+            $localBySource = MenuItem::query()
+                ->whereIn('source_post_id', $rows->pluck('source_parent_post_id')->unique()->all())
+                ->pluck('id', 'source_post_id');
+
+            $orphans = [];
+
+            foreach ($rows as $child) {
+                $parentId = $localBySource[(int) $child->source_parent_post_id] ?? null;
+
+                if ($parentId === null) {
+                    $orphans[] = (int) $child->source_parent_post_id;
+
+                    continue;
+                }
+
+                if ((int) $parentId === (int) $child->id) {
+                    $context->report->for($this->name())->note(
+                        'menu item '.$child->source_post_id.' lists itself as its own parent; imported at '
+                        .'the top level'
+                    );
+
+                    continue;
+                }
+
+                if ((int) $parentId !== (int) $child->parent_id) {
+                    MenuItem::query()->whereKey($child->id)->update(['parent_id' => $parentId]);
+                }
             }
 
-            if ($parentId === null) {
+            $orphans = array_values(array_unique($orphans));
+
+            if ($orphans !== []) {
                 $context->report->for($this->name())->note(
-                    'menu item '.$parentSourceId.' is the parent of item '.$sourceId.' and is not in this '
-                    .'export; the child was imported at the top level of its menu'
+                    count($orphans).' menu item'.(count($orphans) === 1 ? ' is' : 's are').' named as a '
+                    .'parent and '.(count($orphans) === 1 ? 'is' : 'are').' not in this export (WordPress '
+                    .'id'.(count($orphans) === 1 ? ' ' : 's ').implode(', ', array_slice($orphans, 0, 10))
+                    .'); their children were imported at the top level of their menu'
                 );
-
-                continue;
             }
-
-            if ($childId === $parentId) {
-                $context->report->for($this->name())->note(
-                    'menu item '.$sourceId.' lists itself as its own parent; imported at the top level'
-                );
-
-                continue;
-            }
-
-            MenuItem::query()->whereKey($childId)->update(['parent_id' => $parentId]);
         }
-
-        $this->pendingParents = [];
 
         // See MenuImporter::finalise(). The five-minute `kbb.nav.*` cache is
         // what a second import onto a mounted menu would otherwise sit behind.

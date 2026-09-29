@@ -697,6 +697,14 @@ it('walks the entities in the importer\'s own dependency order, never its own co
              * next reader would otherwise look for the dependency.
              */
             'posts',
+            /*
+             * The navigation IS a dependency, and the strictest one on this
+             * list: a menu item points at a category, a brand, a product or an
+             * article by WordPress id, so every entity above it has to have run
+             * for the item to have an address at all. `menus` before
+             * `menu-items` because `menu_items.menu_id` is NOT NULL.
+             */
+            'menus', 'menu-items',
         ])
         ->and(ImportWorkspace::entities())->toBe(ImportWorkspace::runnerOrder());
 

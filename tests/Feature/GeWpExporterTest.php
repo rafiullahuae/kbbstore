@@ -1426,6 +1426,10 @@ it('exports one group at a time, and the pieces land what the whole export lands
         'sales' => 'sales:customers,sales:catalogue',
         'reviews' => 'reviews:catalogue,reviews:customers',
         'addresses' => 'addresses:catalogue,addresses:content',
+        // The navigation depends on both for the same reason the addresses do:
+        // a menu item names a category, a brand, a product or an article by
+        // WordPress id and cannot be placed without them.
+        'navigation' => 'navigation:catalogue,navigation:content',
     ];
 
     $directories = [];
@@ -1536,7 +1540,7 @@ it('records which groups it exported, and a group left out is absent rather than
     // And the same fact in the owner's vocabulary, which is what he ticked.
     expect($manifest['groups']['selected'])->toBe(['catalogue']);
     expect($manifest['groups']['skipped'])
-        ->toBe(['seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses']);
+        ->toBe(['seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'navigation', 'addresses']);
     expect($manifest['groups']['assumed_already_imported'])->toBe([]);
 
     // A skipped group is stated in words too, because `files` is structure and
@@ -1835,7 +1839,7 @@ it('draws the groups, the warning and the bars in a real browser, and sends what
         expect(isset($post['groups']))->toBeTrue("request {$index} carried no selection at all");
         expect(isset($post['confirmed']))->toBeTrue("request {$index} carried no confirmations");
         expect($post['groups'])
-            ->toBe('catalogue,seo,coupons,customers,sales,reviews,content,addresses',
+            ->toBe('catalogue,seo,coupons,customers,sales,reviews,content,navigation,addresses',
                 "request {$index} sent a selection that is not what was ticked");
     }
 
@@ -2313,9 +2317,9 @@ it('does not undo the folder guard by putting an archive in it', function () {
         'the zip phase did not do exactly one bounded unit per request'
     );
 
-    expect($report['zip']['units'])->toBeGreaterThan(8, 'a plan of one unit per group is not one unit per file');
+    expect($report['zip']['units'])->toBeGreaterThan(9, 'a plan of one unit per group is not one unit per file');
 
-    expect($report['guards']['archives_inside'])->toBe(8, 'one archive per group, inside the guarded folder');
+    expect($report['guards']['archives_inside'])->toBe(9, 'one archive per group, inside the guarded folder');
     expect($report['guards']['archives_outside'])
         ->toBe(0, 'an archive was written OUTSIDE the guarded folder, which undoes the guard');
 
@@ -2738,7 +2742,7 @@ it('draws a download button per group, and says so rather than 404ing when a gro
     // from a broken page.
     expect(array_keys($rows))->toBe([
         'Catalogue', 'SEO (Yoast)', 'Coupons', 'Customers', 'Orders',
-        'Reviews', 'Journal articles', 'Addresses and pictures',
+        'Reviews', 'Journal articles', 'Navigation', 'Addresses and pictures',
     ]);
 
     foreach (['Catalogue', 'Customers', 'Orders'] as $label) {

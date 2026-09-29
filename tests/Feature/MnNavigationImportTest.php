@@ -855,6 +855,102 @@ it('imports the same rows at --batch=1 and at --batch=500', function () {
     expect($small[7504]['parent'])->toBe(7501);
 });
 
+it('nests a child imported in an earlier request than its parent', function () {
+    /*
+     * ══════════════════════════════════════════════════════════════════════
+     * A BATCH IS A SEPARATE HTTP REQUEST, AND THIS IS THE ONE THAT BITES.
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * `_menu_item_menu_item_parent` is a nav_menu_item POST id, so it has to be
+     * translated, and a child can arrive before its parent. CategoryImporter
+     * has the same problem and holds the unresolved ones in an instance array
+     * that `finalise()` drains — and that is exactly what does NOT work here:
+     * Store → Import steps an entity a slice at a time, and
+     * `ImportRunner::runEntity()` calls finalise() on EVERY call, exhausted or
+     * not. A slice holding the child and not the parent resolves nothing,
+     * clears its array, and the link is gone: the later slice that imports the
+     * parent has no idea anything was waiting on it.
+     *
+     * MEASURED, NOT ANTICIPATED. It was found by `AdminImportScreenTest > it
+     * reaches the same database whether it is stepped in twos or done in one
+     * go`, which reported one menu item updated — the sliced run left the child
+     * at the top level and the single-pass run put it back. On the owner's
+     * server every import is sliced, so the sliced answer is the one he gets.
+     *
+     * `menu_items.source_parent_post_id` is the fix: finalise() repairs from
+     * the database rather than from memory.
+     *
+     * MUTATION NOTE — RAN. Dropping `source_parent_post_id` from
+     * MenuItemImporter's attribute list (so finalise() has nothing to repair
+     * from) fails this test with `Face Cleansers` at the top level, while the
+     * unsliced import in every other test here stays green.
+     */
+    $manifest = mnManifest();
+
+    $dir = sys_get_temp_dir().'/kbb-mn-sliced-'.bin2hex(random_bytes(4));
+    mkdir($dir, 0755, true);
+
+    foreach (glob(mnExportDir().'/*') as $file) {
+        copy($file, $dir.'/'.basename($file));
+    }
+
+    /*
+     * The child BEFORE the parent, which is the order this fixture does not
+     * have and a real export certainly can: WordPress renumbers nothing when
+     * an item is dragged into a submenu.
+     */
+    $lines = file($dir.'/menu_items.csv', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $head = array_shift($lines);
+
+    usort($lines, static function (string $a, string $b): int {
+        $rank = static fn (string $line): int => str_starts_with($line, '"7504"') ? 0 : 1;
+
+        return $rank($a) <=> $rank($b);
+    });
+
+    expect(str_starts_with($lines[0], '"7504"'))->toBeTrue('the child is not first, so this test proves nothing');
+
+    file_put_contents($dir.'/menu_items.csv', implode("\n", [$head, ...$lines])."\n");
+
+    // Everything but the navigation, so the targets are there to resolve.
+    mnImport(['directory' => $dir, 'only' => array_values(array_diff(ImportRunner::entityNames(), ['menus', 'menu-items']))]);
+
+    // Now the navigation, ONE ROW PER REQUEST. `limit` is what the import
+    // screen uses, and every call is a fresh ImportRunner with a fresh
+    // importer — exactly as a fresh PHP process would be.
+    $key = 'mn-sliced-'.bin2hex(random_bytes(4));
+
+    for ($request = 0; $request < 30; $request++) {
+        (new ImportRunner)->run(new ImportOptions(
+            directory: $dir,
+            sourceTimezone: $manifest['source']['timezone'],
+            only: ['menus', 'menu-items'],
+            runKey: $key,
+            limit: 1,
+        ));
+
+        if (MenuItem::query()->whereNotNull('source_post_id')->count() === 7) {
+            break;
+        }
+    }
+
+    $items = mnItems();
+
+    expect(count($items))->toBe(7, 'the sliced run did not finish');
+    expect($items[7504]->parent_id)->toBe($items[7501]->id, 'a child imported before its parent was left at the top level');
+    expect($items[7505]->parent_id)->toBe($items[7501]->id);
+    expect($items[7506]->parent_id)->toBe($items[7501]->id);
+
+    // And the parent link is not re-written on a later pass, which is what
+    // makes the repair idempotent rather than a rewrite every run.
+    $second = mnImport(['directory' => $dir]);
+
+    expect($second->for('menu-items')->updated)->toBe(0, 'the repaired link is rewritten on every pass');
+
+    array_map('unlink', glob($dir.'/*') ?: []);
+    rmdir($dir);
+});
+
 it('cuts a URL and a label to what the column and the admin screen will take', function () {
     /*
      * MYSQL ENFORCES COLUMN WIDTHS AND SQLITE DISCARDS THEM. `menu_items.url`
