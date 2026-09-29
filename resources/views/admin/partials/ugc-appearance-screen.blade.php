@@ -362,7 +362,7 @@
 
     if (!playback.teaser_on) {
       return '<div class="ugy-note is-bad">' + head
-        + '<b>No tile will move.</b> “Loop the first 2–3 seconds” below is switched off, so every '
+        + '<b>No tile will move.</b> “Loop the first second” below is switched off, so every '
         + 'one of the ' + esc(playback.total) + ' tiles shows its cover picture and its play button '
         + 'and waits to be tapped. '
         + (playback.teaser_chosen

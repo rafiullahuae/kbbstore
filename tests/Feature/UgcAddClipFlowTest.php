@@ -149,7 +149,7 @@ it('previews the loop with the same mechanism the shop plays it with', function 
         'v.loop = !full',              // native loop off when it is the full clip
         "v.currentTime * 1000 >= ms",  // ...and the rewind that replaces it
         'v.currentTime = 0',
-        'ms = 2500',                   // the rail's own default
+        'ms = 1000',                   // the rail's own default, after the move to one second
         'teaser || clip',              // the same `teaser || full` choice
     ] as $needle) {
         expect(str_contains($code, $needle))
@@ -596,8 +596,16 @@ it('previews the loop for the length the owner set, not a number typed into the 
      */
     $field = App\Services\UgcSettings::SCHEMA['teaser_ms'];
 
-    expect($field['default'])->toBe(2500)
-        ->and($field['options']['min'])->toBe(1500)
+    /*
+     * PINS ADVANCED, deliberately and for a change the owner asked for by name:
+     * *"I also want 1 seconds video to be cropped as clip."* The default moved
+     * 2500 -> 1000 and the FLOOR had to move with it — under a minimum of 1500 a
+     * default of 1000 is not a default, it is a value ModuleSchema::cast()
+     * clamps back up on the first save. UgcSettings' own comment carries the
+     * argument; this is the number.
+     */
+    expect($field['default'])->toBe(1000)
+        ->and($field['options']['min'])->toBe(1000)
         ->and($field['options']['max'])->toBe(4000);
 
     $code = addClipCode();
@@ -615,7 +623,7 @@ it('previews the loop for the length the owner set, not a number typed into the 
      * bounds, so a saved row outside them -- or a string -- becomes the shipped
      * default rather than an attribute nothing validated.
      */
-    expect(str_contains($code, 'if (!(ms >= 1500 && ms <= 4000)) ms = 2500;'))
+    expect(str_contains($code, 'if (!(ms >= 1000 && ms <= 4000)) ms = 1000;'))
         ->toBeTrue('a teaser_ms from the database reaches the markup unclamped');
 
     // And the read never blocks the library it sits on.

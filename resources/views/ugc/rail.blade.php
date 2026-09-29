@@ -109,7 +109,10 @@
          style="{{ $vars }}"
          data-ugcr-teaser="{{ ($conf['teaser'] ?? true) ? '1' : '0' }}"
          data-ugcr-max="{{ (int) ($conf['max_playing'] ?? 4) }}"
-         data-ugcr-teaser-ms="{{ (int) ($conf['teaser_ms'] ?? 2500) }}"
+         {{-- The FALLBACK number here is the schema's shipped default, so a rail
+              rendered with a $conf that is missing the key rewinds where the
+              shop says it does. It moved with the default: 2500 -> 1000. --}}
+         data-ugcr-teaser-ms="{{ (int) ($conf['teaser_ms'] ?? 1000) }}"
          data-ugcr-autoplay="{{ ($conf['autoplay_open'] ?? true) ? '1' : '0' }}"
          data-ugcr-controls="{{ ($conf['controls'] ?? true) ? '1' : '0' }}"
          data-ugcr-sound="{{ ($conf['sound_on_open'] ?? false) ? '1' : '0' }}"
@@ -284,6 +287,31 @@
           @endif
 
           <button class="ugcr-play" type="button" aria-label="{{ __('store.ugc.play') }}" data-ugcr-play><span></span></button>
+          {{-- THE LOADER, and it is in the MARKUP rather than built by the
+               script on the way past.
+
+               Two reasons, and the second is the one that matters. It is
+               CSS-only state: the script adds one class to the tile and the
+               stylesheet decides what is drawn, so there is no element being
+               created and destroyed on every mount, eviction and re-entry as a
+               rail is scrolled — which on a six-tile rail is a lot of DOM churn
+               for a spinner. And it means the three states are readable from
+               the stylesheet alone, by a person and by a test, instead of being
+               spread between a template and a listener.
+
+               It costs nothing until it is used: `opacity:0;visibility:hidden`,
+               `position:absolute;inset:0` inside a tile whose box is its own
+               `aspect-ratio`, and no background-image, no request and no glyph
+               — the whole thing is two pseudo-elements. A tile that never plays
+               draws it never.
+
+               aria-hidden, and there is no live region anywhere near it. The
+               tile is already a `role="button"` with a label that names the
+               clip; six tiles announcing "loading" as a shopper scrolls a rail
+               is noise a screen reader user cannot turn off, and nothing is
+               being waited FOR — the poster is already on screen and the page
+               is fully usable. --}}
+          <span class="ugcr-load" aria-hidden="true"></span>
         </div>
         {{-- What the OPENED PLAYER needs, and nothing else: every product on this
              clip, already formatted. Inline JSON rather than a second request,

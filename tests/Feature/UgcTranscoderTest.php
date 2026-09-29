@@ -118,7 +118,7 @@ it('says there is nothing to cut from when no clip has been uploaded', function 
     expect($notes)->toContain('No video file has been uploaded yet.');
 });
 
-it('cuts a 2.5 second silent 360x640 loop and nothing longer', function () {
+it('cuts a 1 second silent 360x640 loop and nothing longer', function () {
     /*
      * The three numbers that ARE the saving. Round three measured, over real
      * HTTP on a rail of eight tiles:
@@ -132,6 +132,11 @@ it('cuts a 2.5 second silent 360x640 loop and nothing longer', function () {
      * of these three arguments drifts, the teaser stops being 12.1x cheaper and
      * the whole reason for the second column goes with it.
      *
+     * PIN ADVANCED to ONE SECOND, which the owner asked for by name — and the
+     * byte table above is why it is worth doing rather than a preference. Cut
+     * from the same 1080x1920 source with the same argv and only `-t` changed:
+     * 100,975 B at 2.5s against 30,847 B at 1s, 3.27x smaller.
+     *
      * MUTATION NOTE. Drop '-an' and the silence assertion is red; change
      * TEASER_SECONDS to '10' and the length assertion is red. RUN: both.
      */
@@ -139,7 +144,7 @@ it('cuts a 2.5 second silent 360x640 loop and nothing longer', function () {
 
     expect($command[0])->toBe('/usr/bin/ffmpeg')
         ->and($command)->toContain('-t')
-        ->and($command[array_search('-t', $command, true) + 1])->toBe('2.5')
+        ->and($command[array_search('-t', $command, true) + 1])->toBe('1')
         // No audio. A teaser plays muted by policy — every browser refuses an
         // unmuted autoplay — so its audio track is bytes nobody can ever hear.
         ->and($command)->toContain('-an')

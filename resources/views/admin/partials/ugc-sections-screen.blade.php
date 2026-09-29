@@ -2226,7 +2226,7 @@
         + 'autocomplete="off" placeholder="https://"></div>'
         + '</div>'
         + '<p class="ugx-help">Attribution and a link back, never an embed. The shop serves the file you upload, '
-        + 'which is what lets a tile loop a 2–3 second teaser — inside somebody else’s player it could not.</p>'
+        + 'which is what lets a tile loop a one-second teaser — inside somebody else’s player it could not.</p>'
         + '<div class="ugx-two">'
         + '<div class="ugx-f"><label>Creator handle</label>'
         + '<input type="text" data-ugx-vfield="creator_handle" value="' + esc(v.creator_handle || '') + '" '
@@ -2277,7 +2277,8 @@
         + ugxFileRow('teaser', 'loop', 'Short loop file', v.teaser_bytes,
             (capNote('teaser') ? capNote('teaser') + ' ' : '')
             + 'Optional, and nothing is missing without it — the tile already loops the first '
-            + '2–3 seconds of the video above. Adding a cut-down file only saves the shopper bytes.')
+            + 'second of the video above. Adding a cut-down file only saves the shopper bytes — about '
+            + '30KB against the whole clip.')
         /* THE PANEL, UNDER THE THREE ROWS. In flight it carries the percentage,
            the bytes, the speed, the time remaining and Cancel; afterwards it
            carries the ending, and the ending STAYS. */

@@ -180,8 +180,72 @@ class UgcTranscoder
 
     public const REASON_NO_SPAWN = 'no_spawn';
 
-    /** §0b.1: 2.5 seconds, the length the byte table was measured at. */
-    public const TEASER_SECONDS = '2.5';
+    /**
+     * ONE SECOND, and it is the owner's own instruction rather than a tuning.
+     *
+     * *"I also want 1 seconds video to be cropped as clip. 2-3 seconds taking
+     * more time to load on front-end."* §0b.1 measured the byte table at 2.5
+     * seconds and that number was never the point — the point was "the smallest
+     * file that still reads as motion". Cut from the same 1080x1920 source, same
+     * argv, only `-t` changed:
+     *
+     *     -t 2.5   100,975 B   (98.6 KB)
+     *     -t 1      30,847 B   (30.1 KB)   3.27x smaller
+     *
+     * Better than the 2.5x a linear reading predicts, because a teaser is one
+     * keyframe followed by cheap inter frames and the keyframe is paid once
+     * either way — so the second and a half that comes off is the cheap part of
+     * the file, and what remains is the part that has to be there.
+     *
+     * A ONE-SECOND LOOP IS A DESIGN DECISION AND NOT ONLY A SIZE ONE. It repeats
+     * sixty times a minute where 2.5s repeats twenty-four, so the wrap has to be
+     * invisible: a teaser FILE gets `v.loop = true` and the browser's own
+     * seamless loop, which is exactly why cutting the file matters more at one
+     * second than it did at two and a half. The full-clip fallback still seeks,
+     * and seeks 2.5x more often — resources/views/ugc/assets.blade.php carries
+     * the one-seek-in-flight guard that makes that survivable and the note
+     * saying it is a fallback and not the design.
+     *
+     * A STRING, because it is an ffmpeg argument. '1' and not '1.0' so the
+     * derived file-name marker below reads `1s`.
+     */
+    public const TEASER_SECONDS = '1';
+
+    /**
+     * The marker every teaser file this shop cuts carries in its NAME.
+     *
+     * ── WHY A FILE NAME AND NOT A COLUMN ────────────────────────────────────
+     *
+     * Because the question "was this teaser cut at the length this shop cuts
+     * at now" has to be answerable from the ROW ALONE, for free, or the answer
+     * is an ffprobe per clip per run on a schedule that fires every minute.
+     * A column would answer it too and would cost a migration for one boolean
+     * that the name already encodes; the name travels with the file, survives
+     * a database restore that the file outlives, and is readable by anybody
+     * doing an `ls` on the uploads directory — which is how the last two rounds
+     * of this feature were actually diagnosed (CLAUDE.md, and the UG2 finding
+     * about a poster with no teaser beside it).
+     *
+     * `2.5` would render `2-5s`; a dot in a file name is a second extension and
+     * MediaRegistrar's own type sniffing is not the place to find that out.
+     */
+    public static function teaserMark(): string
+    {
+        return str_replace('.', '-', self::TEASER_SECONDS).'s';
+    }
+
+    /**
+     * Was this stored teaser cut at the length this shop cuts at NOW?
+     *
+     * FALSE for a file with no marker at all, which is every teaser cut before
+     * this change and every teaser an owner uploaded by hand. That is the
+     * conservative answer and it is only ever read by `ugc:cut-covers
+     * --recut-teasers`, which a person types; nothing on the schedule asks.
+     */
+    public static function teaserIsCurrentLength(?string $path): bool
+    {
+        return $path !== null && str_contains(basename($path), '-'.self::teaserMark().'-');
+    }
 
     /** A rail tile is 158 CSS px, 316 device px at 2x. 360x640 is the encode for it. */
     public const TEASER_WIDTH = 360;
@@ -502,7 +566,10 @@ class UgcTranscoder
         }
 
         if ($budget !== null && ($remakeTeaser || (string) $video->teaser_path === '')) {
-            $name = 'teaser-'.date('Ymd-His').'-'.Str::random(10).'.mp4';
+            /* THE LENGTH IS IN THE NAME — see teaserMark(). This is what makes
+               `--recut-teasers` a string comparison on a column the query has
+               already loaded instead of an ffprobe per clip. */
+            $name = 'teaser-'.self::teaserMark().'-'.date('Ymd-His').'-'.Str::random(10).'.mp4';
 
             if ($this->run($this->teaserCommand($ffmpeg, $source, $dir.'/'.$name), $budget)) {
                 $out['teaser'] = '/'.UgcMedia::DIR.'/'.$name;
@@ -555,8 +622,9 @@ class UgcTranscoder
     }
 
     /**
-     * The teaser command — §0b.1, verbatim: `-ss 0 -t 2.5 -vf scale=360:640
-     * -b:v 400k`, no audio.
+     * The teaser command — §0b.1's argv with ONE number changed: `-ss 0 -t 1
+     * -vf scale=360:640 -b:v 400k`, no audio. TEASER_SECONDS carries why it is
+     * one second and what that measured.
      *
      * `-an` is not a nicety. A teaser plays muted by policy (every browser
      * refuses an unmuted autoplay), so its audio track is bytes that can never

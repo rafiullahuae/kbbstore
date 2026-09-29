@@ -359,9 +359,22 @@ it('ships every setting at the value R3 already draws', function () {
         'desk_tile' => 206,
         'gap' => 12,
         'radius' => 16,
-        // The loop the owner asked for, on, at the measured 2.5s.
+        /*
+         * The loop the owner asked for, on — and at ONE SECOND, which is the
+         * one default on this whole list that has MOVED since it shipped.
+         *
+         * *"I also want 1 seconds video to be cropped as clip. 2-3 seconds
+         * taking more time to load on front-end."* Rule 1 allows exactly this:
+         * a default the owner asked for in as many words, called out rather
+         * than buried. A shop that had already moved the slider keeps its own
+         * value — UgcOneSecondLoopTest measures that — and this is the number a
+         * shop that has saved nothing gets.
+         *
+         * It has to agree with UgcTranscoder::TEASER_SECONDS or the same rail
+         * loops at two speeds; UgcOneSecondLoopTest is the case that ties them.
+         */
         'teaser' => true,
-        'teaser_ms' => 2500,
+        'teaser_ms' => 1000,
         'max_playing' => 4,
         'autoplay_open' => true,
         'controls' => true,

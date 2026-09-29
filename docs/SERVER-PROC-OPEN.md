@@ -124,7 +124,7 @@ What then happens, with no further action:
 1. You upload a clip. It saves, and the cover cannot be cut in the request —
    exactly as now.
 2. Within a minute the scheduled run finds the clip, cuts the poster and the
-   2.5-second teaser, and records the duration and dimensions.
+   one-second teaser, and records the duration and dimensions.
 3. Reload the clip and the cover is there.
 
 **Do not add a second cron line for `ugc:cut-covers` itself.** The schedule is
@@ -133,6 +133,31 @@ decided inside PHP; a second entry would run the work twice.
 **If you never add the cron line**, nothing breaks — you just cut the covers
 yourself with `php artisan ugc:cut-covers` when it suits you, or upload a
 poster image by hand.
+
+### Teasers cut before the one-second change
+
+The teaser used to be **2.5 seconds** and is now **one second**, which the owner
+asked for by name. A teaser already on the server is still 2.5 seconds long, and
+a rail carrying both lengths loops at two speeds in the same row.
+
+```bash
+php artisan ugc:cut-covers --recut-teasers
+```
+
+Run it **once**, by hand. It re-cuts only the loops — the covers are already
+right and re-cutting them would spend an ffmpeg run each writing the same frame
+back — and it selects only clips whose teaser was cut at an older length, which
+it reads off the file name (`teaser-1s-…`). A second run finds nothing.
+
+**It is deliberately not on the schedule.** The every-minute run exists to retry
+a teaser that is *missing*, which is a real gap: such a clip loops the whole
+video instead of 30 KB. A clip whose teaser is merely 1.5 seconds too long is
+not broken, so retrying it sixty times an hour for ever would buy nothing. If a
+re-cut fails, that clip keeps its working 2.5-second loop and the run says so.
+
+On this shop the list is probably **empty**: the cut runs so far have produced
+posters and no teasers, which is the whole reason the rail is loading full
+clips.
 
 **One honest limit:** this is a *shared* machine and the transcode is real work.
 The scheduled run takes at most 20 clips a minute and holds a lock so two runs

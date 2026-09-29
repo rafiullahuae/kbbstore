@@ -475,7 +475,14 @@ it('rewinds the teaser once per loop instead of stacking seeks', function () {
     expect(preg_match('/if \(rewinding \|\| v\.seeking\) return;/', $js))
         ->toBe(1, 'the rewind no longer refuses to start while one is already in flight');
 
-    expect(preg_match("/addEventListener\('seeked', function \(\) \{ rewinding = false; \}\)/", $js))
+    /*
+     * PIN ADVANCED, one shape only. The `seeked` listener now also RE-ARMS the
+     * wrap for the next lap (UgcRailLoaderStatesTest measures why), so it is no
+     * longer a one-line body. What this case is about is unchanged and is still
+     * what is asserted: something clears the in-flight flag when a seek lands,
+     * or the teaser rewinds once and never again.
+     */
+    expect(preg_match("/addEventListener\('seeked', function \(\) \{\s*rewinding = false;/", $js))
         ->toBe(1, 'nothing clears the in-flight flag, so the teaser rewinds once and never again');
 
     expect(preg_match('/typeof v\.fastSeek === \'function\'/', $js))
