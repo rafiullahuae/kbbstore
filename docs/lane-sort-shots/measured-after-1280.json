@@ -1,0 +1,615 @@
+{
+  "label": "after",
+  "width": 1280,
+  "base": "http://127.0.0.1:8993",
+  "pages": {
+    "plow": {
+      "viewport": 1280,
+      "scrollWidth": 1280,
+      "horizontalScroll": false,
+      "tiles": 12,
+      "rows": [
+        {
+          "name": "Mugwort Calming Pad",
+          "price": "AED 60",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Rice Water Cleanser",
+          "price": "AED 80",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Propolis Ampoule",
+          "price": "AED 80",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Snail Mucin Essence",
+          "price": "AED 100",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Azelaic Acid Serum",
+          "price": "AED 100",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Barrier Rescue Box",
+          "price": "AED 140",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Glow Starter Set",
+          "price": "AED 144",
+          "was": "AED 162",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Heartleaf Soothing Toner",
+          "price": "AED 145",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Morning Glow Duo",
+          "price": "AED 160",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Night Repair Set",
+          "price": "AED 162",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-10%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Ceramide Night Cream",
+          "price": "AED 200",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Retinal Renewal Serum",
+          "price": "AED 260",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        }
+      ],
+      "printed": [
+        "Mugwort Calming Pad  AED 60  [New]",
+        "Rice Water Cleanser  AED 80  [New]",
+        "Propolis Ampoule  AED 80  [New]",
+        "Snail Mucin Essence  AED 100  [New]",
+        "Azelaic Acid Serum  AED 100  [New]",
+        "Barrier Rescue Box  AED 140  [New]",
+        "Glow Starter Set  AED 162 -> AED 144  [New -11%]",
+        "Heartleaf Soothing Toner  AED 145  [New]",
+        "Morning Glow Duo  AED 180 -> AED 160  [New -11%]",
+        "Night Repair Set  AED 180 -> AED 162  [New -10%]",
+        "Ceramide Night Cream  AED 200  [New]",
+        "Retinal Renewal Serum  AED 260  [New]"
+      ]
+    },
+    "phigh": {
+      "viewport": 1280,
+      "scrollWidth": 1280,
+      "horizontalScroll": false,
+      "tiles": 12,
+      "rows": [
+        {
+          "name": "Retinal Renewal Serum",
+          "price": "AED 260",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Ceramide Night Cream",
+          "price": "AED 200",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Night Repair Set",
+          "price": "AED 162",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-10%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Morning Glow Duo",
+          "price": "AED 160",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Heartleaf Soothing Toner",
+          "price": "AED 145",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Glow Starter Set",
+          "price": "AED 144",
+          "was": "AED 162",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Barrier Rescue Box",
+          "price": "AED 140",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Snail Mucin Essence",
+          "price": "AED 100",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Azelaic Acid Serum",
+          "price": "AED 100",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Rice Water Cleanser",
+          "price": "AED 80",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Propolis Ampoule",
+          "price": "AED 80",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Mugwort Calming Pad",
+          "price": "AED 60",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        }
+      ],
+      "printed": [
+        "Retinal Renewal Serum  AED 260  [New]",
+        "Ceramide Night Cream  AED 200  [New]",
+        "Night Repair Set  AED 180 -> AED 162  [New -10%]",
+        "Morning Glow Duo  AED 180 -> AED 160  [New -11%]",
+        "Heartleaf Soothing Toner  AED 145  [New]",
+        "Glow Starter Set  AED 162 -> AED 144  [New -11%]",
+        "Barrier Rescue Box  AED 140  [New]",
+        "Snail Mucin Essence  AED 100  [New]",
+        "Azelaic Acid Serum  AED 100  [New]",
+        "Rice Water Cleanser  AED 80  [New]",
+        "Propolis Ampoule  AED 80  [New]",
+        "Mugwort Calming Pad  AED 60  [New]"
+      ]
+    },
+    "band-54-150": {
+      "viewport": 1280,
+      "scrollWidth": 1280,
+      "horizontalScroll": false,
+      "tiles": 8,
+      "rows": [
+        {
+          "name": "Azelaic Acid Serum",
+          "price": "AED 100",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Barrier Rescue Box",
+          "price": "AED 140",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Glow Starter Set",
+          "price": "AED 144",
+          "was": "AED 162",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Heartleaf Soothing Toner",
+          "price": "AED 145",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Mugwort Calming Pad",
+          "price": "AED 60",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Propolis Ampoule",
+          "price": "AED 80",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Rice Water Cleanser",
+          "price": "AED 80",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Snail Mucin Essence",
+          "price": "AED 100",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        }
+      ],
+      "printed": [
+        "Azelaic Acid Serum  AED 100  [New]",
+        "Barrier Rescue Box  AED 140  [New]",
+        "Glow Starter Set  AED 162 -> AED 144  [New -11%]",
+        "Heartleaf Soothing Toner  AED 145  [New]",
+        "Mugwort Calming Pad  AED 60  [New]",
+        "Propolis Ampoule  AED 80  [New]",
+        "Rice Water Cleanser  AED 80  [New]",
+        "Snail Mucin Essence  AED 100  [New]"
+      ]
+    },
+    "band-150-300": {
+      "viewport": 1280,
+      "scrollWidth": 1280,
+      "horizontalScroll": false,
+      "tiles": 4,
+      "rows": [
+        {
+          "name": "Ceramide Night Cream",
+          "price": "AED 200",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Morning Glow Duo",
+          "price": "AED 160",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Night Repair Set",
+          "price": "AED 162",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-10%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Retinal Renewal Serum",
+          "price": "AED 260",
+          "was": null,
+          "badges": [
+            "New"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        }
+      ],
+      "printed": [
+        "Ceramide Night Cream  AED 200  [New]",
+        "Morning Glow Duo  AED 180 -> AED 160  [New -11%]",
+        "Night Repair Set  AED 180 -> AED 162  [New -10%]",
+        "Retinal Renewal Serum  AED 260  [New]"
+      ]
+    },
+    "onsale": {
+      "viewport": 1280,
+      "scrollWidth": 1280,
+      "horizontalScroll": false,
+      "tiles": 3,
+      "rows": [
+        {
+          "name": "Glow Starter Set",
+          "price": "AED 144",
+          "was": "AED 162",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Morning Glow Duo",
+          "price": "AED 160",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-11%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        },
+        {
+          "name": "Night Repair Set",
+          "price": "AED 162",
+          "was": "AED 180",
+          "badges": [
+            "New",
+            "-10%"
+          ],
+          "tile": {
+            "w": 232.8,
+            "h": 348.6
+          },
+          "priceFontPx": "13px"
+        }
+      ],
+      "printed": [
+        "Glow Starter Set  AED 162 -> AED 144  [New -11%]",
+        "Morning Glow Duo  AED 180 -> AED 160  [New -11%]",
+        "Night Repair Set  AED 180 -> AED 162  [New -10%]"
+      ]
+    }
+  }
+}
