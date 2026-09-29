@@ -347,7 +347,15 @@ class ProductTabsApiController extends Controller
         ];
 
         $rules = $base + $this->rules(true);
-        $data = $request->validate($rules);
+
+        /*
+         * THE ARABIC BAG IS VALIDATED HERE TOO, and it was not in the first
+         * shape of this method. TranslationInput::rules() DERIVES the Arabic
+         * bounds from the English ones above -- a rule restated is a rule that
+         * drifts -- so without this line the English title was capped at 120
+         * and the Arabic one was not capped at all.
+         */
+        $data = $request->validate($rules + TranslationInput::rules(new ProductTab, $rules));
 
         $key = (string) $data['source_key'];
 

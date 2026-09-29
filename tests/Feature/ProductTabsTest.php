@@ -548,6 +548,34 @@ it('refuses a source_key outside its own closed vocabulary', function () {
     }
 });
 
+it('bounds the ARABIC title exactly as it bounds the English one', function () {
+    /*
+     * TranslationInput::rules() DERIVES the Arabic bounds from the English ones
+     * the controller has already written, which is the whole point of that
+     * helper: a rule restated is a rule that drifts. This case is here because
+     * the override endpoint was the one path that did not pass its English
+     * rules through it -- the English title was capped at 120 characters and
+     * the Arabic one was capped at nothing at all, so a paste into the Arabic
+     * box would have gone into the heading of a live product page unbounded.
+     *
+     * MUTATION, RUN: drop the `+ TranslationInput::rules(...)` from override()
+     * and this fails with 200 instead of 422.
+     */
+    ProductTabsAdminRoutes::wire(app());
+
+    $product = ptProduct();
+    $global = ptGlobal('Shipping', '<p>Three days.</p>');
+
+    $this->actingAs(ptAdmin(), 'admin')
+        ->postJson('/admin-api/product-tabs/product/'.$product->id.'/override', [
+            'source_key' => 'global:'.$global->id,
+            'mode' => 'override',
+            'title' => 'Shipping',
+            'translations' => ['ar' => ['title' => str_repeat('ش', 400)]],
+        ])
+        ->assertStatus(422);
+});
+
 it('refuses an override aimed at a global tab that does not exist', function () {
     ProductTabsAdminRoutes::wire(app());
 
