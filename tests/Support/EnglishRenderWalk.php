@@ -806,6 +806,40 @@ final class EnglishRenderWalk
      * The reason the attribute exists at all: twenty controls on Appearance ->
      * Product styles moved no byte of the shop, because the only caller of
      * cssVariables() and bodyClass() was the admin preview.
+     *
+     * ── MOVED AGAIN FOR LANE AR (the wordmark, and RTL bidi) ───────────────
+     *
+     * ONE ELEMENT, ON EVERY PAGE THAT DRAWS THE HEADER, AND THE DIFF WAS READ
+     * BEFORE THIS LINE MOVED. Every reported page's entire diff is:
+     *
+     *   before:  <a class="logo" href="/">K-Beauty<span>Bliss</span></a>
+     *   after:   <a class="logo" href="/"><bdi>K-Beauty<span>Bliss</span></bdi></a>
+     *
+     * and nothing else — same byte offset shape on each, no second hunk on any
+     * page, no change to any other element, attribute or whitespace run. The
+     * same wrapper went onto the seven other templates that draw the wordmark
+     * (the slim header, the drawer, the footer, the checkout, the order-received
+     * page and the two standalone blog layouts).
+     *
+     * WHY IT HAD TO MOVE. At 390px with the mirrored layout on, the header read
+     * `BlissK-Beauty`. `.logo` is given `display:inline-flex` by the 44px
+     * touch-target rule, which turns `K-Beauty` into an anonymous flex item and
+     * the accent `<span>` into a second one; flex lays items along the inline
+     * axis IN THE DOCUMENT'S DIRECTION and is not bidi, so `dir="rtl"` reversed
+     * the pair. `<bdi>` leaves the container one item, with nothing to reorder.
+     *
+     * AND NO PIXEL MOVED ON THE ENGLISH SHOP, which is why this is a repin and
+     * not a revert. `<bdi>` carries `unicode-bidi: isolate` and no box of its
+     * own; in a left-to-right document it isolates a run that was already in
+     * document order, so it is inert by construction. The photographs either
+     * side of it agree: eleven of the fourteen English pages in
+     * docs/lane-ar-shots/ are byte-identical across two passes, and the three
+     * that are not differ by the live dispatch countdown and one hairline of
+     * anti-aliasing at a mean of 0.0011 of full scale.
+     *
+     * Tests\Feature\WordmarkSurvivesRtlTest is the assertion this constant
+     * cannot make for its own move: it pins the shape on all eight templates
+     * and is red on any one of them losing the wrapper.
      */
     /*
      * ADVANCED BY LANE WAL, and the diff it was advanced for is one <span>.
@@ -855,8 +889,23 @@ final class EnglishRenderWalk
      * Nothing else on any page moved. tests/Feature/WalletPaymentsTest.php
      * pins both halves from the other end: no `.xbtn` anywhere, and the
      * express row present, hidden, only once a wallet is switched on.
+     *
+     * ── RE-PINNED BY LANE AR2, AND THE REBASE IS THE WHOLE REASON ─────────
+     *
+     * Lane AR advanced this to c1fb494 on lane/ar for the <bdi> wordmark
+     * wrapper, and said in that commit's own message that the constant is a
+     * SHA and a rebase invalidates it. lane/ar was rebased onto the
+     * integration branch, so c1fb494 no longer exists: a guard that cannot
+     * resolve its commit fails with "no such commit" rather than with a diff,
+     * which is indistinguishable from one that passes.
+     *
+     * 86f41a4 is that same <bdi> commit, rewritten onto this branch, so it
+     * carries BOTH halves: Lane WAL's wallet chips above and the wordmark
+     * wrapper. Neither baseline alone is correct here -- 386a5de predates the
+     * <bdi> wrapper and c1fb494 predates the wallet work, and pinning either
+     * one reports the other lane's finished change as a regression.
      */
-    public const BASE_COMMIT = '386a5de3d9cffb177fb5688be4d32c100211e68b';
+    public const BASE_COMMIT = '86f41a4bef17cde67ffc24de35e5cd2cfd4ce5ea';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
