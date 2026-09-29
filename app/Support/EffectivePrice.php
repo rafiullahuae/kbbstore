@@ -98,7 +98,10 @@ final class EffectivePrice
      */
     public static function sql(string $table = 'products'): string
     {
-        return 'COALESCE(' . self::ownSql($table) . ', ' . self::variantSql($table) . ')';
+        return SetPricing::chargedSql(
+            'COALESCE(' . self::ownSql($table) . ', ' . self::variantSql($table) . ')',
+            $table
+        );
     }
 
     /**
@@ -167,11 +170,35 @@ final class EffectivePrice
      *
      * @return array{0: string, 1: string, 2: string, 3: string}
      */
-    public static function bindings(): array
+    public static function bindings(string $table = 'products'): array
     {
-        $now = now()->format('Y-m-d H:i:s');
+        return self::fill(self::sql($table));
+    }
 
-        return [$now, $now, $now, $now];
+    /**
+     * ONE INSTANT, AS MANY TIMES AS $sql ASKS FOR IT. (Lane SORT)
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * THE COUNT IS READ OFF THE STATEMENT, NEVER WRITTEN DOWN BESIDE IT.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * Every `?` in this family is the same timestamp -- see bindings() above --
+     * so the only thing a caller can get wrong is HOW MANY, and getting it
+     * wrong is not a wrong answer but a PDO error on a page. That used to be a
+     * four written in three places; sql() now carries ten placeholders (four of
+     * its own and six for App\Support\SetPricing's derived table), regularSql()
+     * six, and whereOnSale() the sum of the two. Counting them out by hand is
+     * how Tests\Support\SqlShape's binding-count rule starts firing.
+     *
+     * So the count is derived from the text that will be sent. A branch added
+     * to the set expression tomorrow cannot desynchronise it, because nothing
+     * anywhere states the number.
+     *
+     * @return list<string>
+     */
+    private static function fill(string $sql): array
+    {
+        return array_fill(0, substr_count($sql, '?'), now()->format('Y-m-d H:i:s'));
     }
 
     /**
@@ -192,7 +219,9 @@ final class EffectivePrice
     {
         $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
 
-        return $query->orderByRaw(self::sql($table) . ' ' . $direction, self::bindings());
+        $sql = self::sql($table);
+
+        return $query->orderByRaw($sql . ' ' . $direction, self::fill($sql));
     }
 
     /**
@@ -227,8 +256,11 @@ final class EffectivePrice
         $parent = $table === '' ? 'products' : $table;
         $own = $table === '' ? 'price' : $table . '.price';
 
-        return 'COALESCE(' . $own . ', (SELECT MIN(kbbr.price) FROM product_variants kbbr'
-            . ' WHERE kbbr.product_id = ' . $parent . '.id))';
+        return SetPricing::compareSql(
+            'COALESCE(' . $own . ', (SELECT MIN(kbbr.price) FROM product_variants kbbr'
+                . ' WHERE kbbr.product_id = ' . $parent . '.id))',
+            $table
+        );
     }
 
     /**
@@ -262,7 +294,13 @@ final class EffectivePrice
      */
     public static function whereOnSale(mixed $query, string $table = 'products'): mixed
     {
-        return $query->whereRaw(self::sql($table) . ' < ' . self::regularSql($table), self::bindings());
+        // BOTH halves carry placeholders now: a hand-priced set's compare-at
+        // comes down with its members, so regularSql() reaches SetPricing's
+        // derived table too. fill() counts the whole comparison rather than
+        // either side of it.
+        $sql = self::sql($table) . ' < ' . self::regularSql($table);
+
+        return $query->whereRaw($sql, self::fill($sql));
     }
 
     /**
@@ -271,12 +309,14 @@ final class EffectivePrice
      */
     public static function whereRange(mixed $query, ?int $minFils, ?int $maxFils, string $table = 'products'): mixed
     {
+        $sql = self::sql($table);
+
         if ($minFils !== null) {
-            $query->whereRaw(self::sql($table) . ' >= ?', [...self::bindings(), $minFils]);
+            $query->whereRaw($sql . ' >= ?', [...self::fill($sql), $minFils]);
         }
 
         if ($maxFils !== null) {
-            $query->whereRaw(self::sql($table) . ' <= ?', [...self::bindings(), $maxFils]);
+            $query->whereRaw($sql . ' <= ?', [...self::fill($sql), $maxFils]);
         }
 
         return $query;
