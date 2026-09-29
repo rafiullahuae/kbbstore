@@ -57,6 +57,47 @@ page, Quantity bundles, Product grid — and not Homepage content, Banners, Cart
 panel, Cart page, Checkout page, Footer, **Set** or Site layout. That is the
 screenshot, item for item.
 
+### The timeline: when each row appears
+
+Sampled every 100ms from inside the page, same cold throttled load, recording
+the first sample in which each row exists. DOMContentLoaded was 16,190ms before
+and 16,303ms after — the document is the same size either way, which is the
+point: nothing here is about the document arriving sooner.
+
+**Before**
+
+```
+  3,323 ms  +56 rows
+            Appearance   Homepage, Product styles, Mobile Header, Section dividers,
+                         Login / Register panel, Header, Mobile menu, Product page,
+                         Quantity bundles, Product grid
+            Catalog      Catalog
+            Platform     K-Beauty Bliss Theme, Users & Roles, Settings, Site address
+            Store        16 rows, no New Order / Coupons / Gateway webhooks / Security
+            Content      Blog Posts, HTML Blocks, Media Library
+            + Safety, Pages, Growth & Marketing, Reviews, Translation, and the
+              three top-level rows
+
+ 14,595 ms  +1   Content: Shoppable video
+ 15,111 ms  +1   Content: Instagram
+ 16,298 ms  +19  Appearance: Homepage content, Banners, Cart panel, Cart page,
+                             Checkout page, Footer, Set, Site layout
+                 Catalog:    Sets, Product tabs, Product editor, Build my routine,
+                             Categories, Brands
+                 Platform:   Cache
+                 Store:      New Order, Coupons, Gateway webhooks, Security
+```
+
+Thirteen seconds between the first 56 rows and the last 19. `Appearance → Set`
+is in that last batch, with Banners, Cart panel, Cart page, Checkout page,
+Footer and Site layout — precisely the rows the owner's screenshot is missing.
+
+**After**
+
+```
+  4,011 ms  +77 rows   every group, complete, in one sample
+```
+
 ### The pictures
 
 All four are single frames from a cold, cache-disabled load at 2 Mbit/s with the

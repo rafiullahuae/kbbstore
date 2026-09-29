@@ -2578,7 +2578,7 @@ const I={
 const ADMIN_BASE = window.location.pathname.replace(/\/+$/, '');
 
 /* ---------- LANE NAV · the dashboard asks for its numbers now, not at 39% ---
-   THE OTHER HALF OF THE OWNER S REPORT: "some pages don't show immidiately and
+   THE OTHER HALF OF THE OWNER'S REPORT: "some pages don't show immidiately and
    it takes long to long", with "Loading the latest orders..." still spinning in
    his screenshot.
 
