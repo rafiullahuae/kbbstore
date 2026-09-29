@@ -653,16 +653,24 @@ a{color:inherit;text-decoration:none}
 .pp-lay-focus .cart > .buyrow{order:4;margin-block:0 10px}
 .pp-lay-focus .cart > .stockline{order:5;margin-block-end:4px}
 .pp-lay-focus .cart > .deliver{order:6;margin-block-end:0}
-.pp-lay-focus .cart > .notify{order:7}
 
 /* everything that is not the decision, after it and quieter */
-.pp-lay-focus .buybox > .bb-desc{order:7;margin-block:16px 0;font-size:13.5px}
-.pp-lay-focus .trust{order:8;display:flex;flex-wrap:wrap;gap:6px 18px;
+/* ▲ notify-me IS A CHILD OF .buybox, AFTER </form>, NOT OF .cart. A flex child
+   with no `order` takes 0, so without this line the "email me when it is back"
+   form jumped above the BRAND on every out-of-stock product. Caught on a
+   seeded out-of-stock fixture, not by reading.
+
+   ORDER AND NOTHING ELSE: the partial carries style="margin-top:14px" inline,
+   which beats any margin declared here, so a spacing rule in this file would
+   be a rule that never applies. */
+.pp-lay-focus .buybox > .notifyme{order:7}
+.pp-lay-focus .buybox > .bb-desc{order:8;margin-block:16px 0;font-size:13.5px}
+.pp-lay-focus .trust{order:9;display:flex;flex-wrap:wrap;gap:6px 18px;
   padding:14px 0 0;margin-block-start:14px;background:none;border-radius:0;
   border-top:1px solid var(--line)}
 .pp-lay-focus .trust .ti{font-size:11.5px}
 .pp-lay-focus .trust .ti svg{width:14px;height:14px}
-.pp-lay-focus .paychips{order:9;margin-block-start:10px;gap:5px}
+.pp-lay-focus .paychips{order:10;margin-block-start:10px;gap:5px}
 .pp-lay-focus .paychips span{font-size:9.5px;padding:3px 7px;border-color:var(--line-2)}
 
 /* The columns are rebalanced so a 4:5 frame is not a 765px-tall wall: the
@@ -707,16 +715,16 @@ a{color:inherit;text-decoration:none}
 .pp-lay-editorial .cart > .stockline{order:4}
 .pp-lay-editorial .cart > .deliver{order:5}
 .pp-lay-editorial .cart > .buyrow{order:6}
-.pp-lay-editorial .cart > .notify{order:7}
 .pp-lay-editorial .addcart{height:58px;border-radius:0;font-size:14px;
   letter-spacing:.1em;text-transform:uppercase}
 .pp-lay-editorial .qty{border-radius:0}
 .pp-lay-editorial .variant{border-radius:0}
-.pp-lay-editorial .trust{order:8;display:flex;flex-wrap:wrap;gap:8px 22px;background:none;
+.pp-lay-editorial .buybox > .notifyme{order:7}
+.pp-lay-editorial .trust{order:9;display:flex;flex-wrap:wrap;gap:8px 22px;background:none;
   border-radius:0;padding:14px 0 0;margin-block-start:18px;border-top:1px solid var(--line)}
 .pp-lay-editorial .trust .ti{font-size:11.5px;letter-spacing:.01em}
 .pp-lay-editorial .trust .ti svg{width:15px;height:15px}
-.pp-lay-editorial .paychips{order:9;margin-block-start:12px}
+.pp-lay-editorial .paychips{order:10;margin-block-start:12px}
 .pp-lay-editorial .paychips span{border:0;padding:0;font-size:10px;letter-spacing:.06em;
   color:var(--muted);margin-inline-end:10px}
 @media (min-width:881px){
@@ -756,18 +764,18 @@ a{color:inherit;text-decoration:none}
 .pp-lay-compact .cart > .stockline{order:4;margin-block-end:3px}
 .pp-lay-compact .cart > .deliver{order:5;margin-block-end:12px}
 .pp-lay-compact .cart > .buyrow{order:6}
-.pp-lay-compact .cart > .notify{order:7}
 .pp-lay-compact .variant{padding:8px 12px;gap:10px;border-radius:10px;border-width:1.25px}
 .pp-lay-compact .variant .vn{font-size:12.5px}
 .pp-lay-compact .variant .vr{width:15px;height:15px}
 .pp-lay-compact .variant.on .vr::after{width:7px;height:7px}
 .pp-lay-compact .qty button{width:40px;height:46px}
 .pp-lay-compact .addcart{height:46px;font-size:14.5px}
-.pp-lay-compact .trust{order:8;display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 12px;
+.pp-lay-compact .buybox > .notifyme{order:7}
+.pp-lay-compact .trust{order:9;display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 12px;
   border-radius:10px;margin-block-start:12px}
 .pp-lay-compact .trust .ti{font-size:11px;gap:6px}
 .pp-lay-compact .trust .ti svg{width:13px;height:13px}
-.pp-lay-compact .paychips{order:9;margin-block-start:8px;gap:4px}
+.pp-lay-compact .paychips{order:10;margin-block-start:8px;gap:4px}
 .pp-lay-compact .paychips span{font-size:9.5px;padding:2px 6px}
 
 /* THE BUTTON THAT STAYS. Only on the phone, and only while the form is on

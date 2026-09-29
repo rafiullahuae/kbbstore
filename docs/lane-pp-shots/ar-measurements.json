@@ -1,0 +1,102 @@
+[
+  {
+    "shot": "ar-set3-390",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "viewport": 390,
+    "photoOnRight": true,
+    "descGap": 18,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-set3-1280",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "photoOnRight": true,
+    "descGap": 18,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-plain-390",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "viewport": 390,
+    "photoOnRight": null,
+    "descGap": 18,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-plain-1280",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "photoOnRight": null,
+    "descGap": 18,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-focus-set3-390",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "viewport": 390,
+    "photoOnRight": true,
+    "descGap": 90,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-focus-set3-1280",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "photoOnRight": true,
+    "descGap": 90,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-editorial-set3-390",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "viewport": 390,
+    "photoOnRight": true,
+    "descGap": 18,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-editorial-set3-1280",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "photoOnRight": true,
+    "descGap": 18,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-compact-set3-390",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "viewport": 390,
+    "photoOnRight": true,
+    "descGap": 18,
+    "memberPrices": 0
+  },
+  {
+    "shot": "ar-compact-set3-1280",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "photoOnRight": true,
+    "descGap": 18,
+    "memberPrices": 0
+  }
+]

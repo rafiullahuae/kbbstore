@@ -1,0 +1,266 @@
+[
+  {
+    "layout": "focus",
+    "page": "plain",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3904,
+    "pdpHeight": 1344,
+    "buyboxHeight": 813,
+    "addToCartY": 1093,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "galleryPainted": [
+      344,
+      430
+    ],
+    "galleryFillPct": 99,
+    "descTop": 1263,
+    "titleFontSize": "21px"
+  },
+  {
+    "layout": "focus",
+    "page": "plain",
+    "width": 1280,
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2518,
+    "pdpHeight": 728,
+    "buyboxHeight": 656,
+    "addToCartY": 521,
+    "galleryFrame": [
+      525,
+      656
+    ],
+    "galleryPainted": [
+      523,
+      654
+    ],
+    "galleryFillPct": 99,
+    "descTop": 671,
+    "titleFontSize": "24px"
+  },
+  {
+    "layout": "focus",
+    "page": "set3",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3816,
+    "pdpHeight": 1278,
+    "buyboxHeight": 747,
+    "addToCartY": 1110,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "galleryPainted": [
+      344,
+      430
+    ],
+    "galleryFillPct": 99,
+    "descTop": 1069,
+    "titleFontSize": "21px"
+  },
+  {
+    "layout": "focus",
+    "page": "set3",
+    "width": 1280,
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2518,
+    "pdpHeight": 728,
+    "buyboxHeight": 656,
+    "addToCartY": 585,
+    "galleryFrame": [
+      525,
+      656
+    ],
+    "galleryPainted": [
+      523,
+      654
+    ],
+    "galleryFillPct": 99,
+    "descTop": 544,
+    "titleFontSize": "24px"
+  },
+  {
+    "layout": "editorial",
+    "page": "plain",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3956,
+    "pdpHeight": 1395,
+    "buyboxHeight": 865,
+    "addToCartY": 1308,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "galleryPainted": [
+      344,
+      430
+    ],
+    "galleryFillPct": 99,
+    "descTop": 770,
+    "titleFontSize": "27px"
+  },
+  {
+    "layout": "editorial",
+    "page": "plain",
+    "width": 1280,
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2644,
+    "pdpHeight": 854,
+    "buyboxHeight": 782,
+    "addToCartY": 758,
+    "galleryFrame": [
+      626,
+      782
+    ],
+    "galleryPainted": [
+      624,
+      779
+    ],
+    "galleryFillPct": 99,
+    "descTop": 278,
+    "titleFontSize": "38px"
+  },
+  {
+    "layout": "editorial",
+    "page": "set3",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3843,
+    "pdpHeight": 1305,
+    "buyboxHeight": 774,
+    "addToCartY": 1218,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "galleryPainted": [
+      344,
+      430
+    ],
+    "galleryFillPct": 99,
+    "descTop": 1113,
+    "titleFontSize": "27px"
+  },
+  {
+    "layout": "editorial",
+    "page": "set3",
+    "width": 1280,
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2644,
+    "pdpHeight": 854,
+    "buyboxHeight": 782,
+    "addToCartY": 715,
+    "galleryFrame": [
+      626,
+      782
+    ],
+    "galleryPainted": [
+      624,
+      779
+    ],
+    "galleryFillPct": 99,
+    "descTop": 610,
+    "titleFontSize": "38px"
+  },
+  {
+    "layout": "compact",
+    "page": "plain",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3754,
+    "pdpHeight": 1193,
+    "buyboxHeight": 663,
+    "addToCartY": 1149,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "galleryPainted": [
+      344,
+      430
+    ],
+    "galleryFillPct": 99,
+    "descTop": 814,
+    "titleFontSize": "19px"
+  },
+  {
+    "layout": "compact",
+    "page": "plain",
+    "width": 1280,
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2572,
+    "pdpHeight": 783,
+    "buyboxHeight": 711,
+    "addToCartY": 554,
+    "galleryFrame": [
+      568,
+      711
+    ],
+    "galleryPainted": [
+      566,
+      708
+    ],
+    "galleryFillPct": 99,
+    "descTop": 282,
+    "titleFontSize": "21px"
+  },
+  {
+    "layout": "compact",
+    "page": "set3",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3710,
+    "pdpHeight": 1172,
+    "buyboxHeight": 641,
+    "addToCartY": 1127,
+    "galleryFrame": [
+      346,
+      433
+    ],
+    "galleryPainted": [
+      344,
+      430
+    ],
+    "galleryFillPct": 99,
+    "descTop": 1025,
+    "titleFontSize": "19px"
+  },
+  {
+    "layout": "compact",
+    "page": "set3",
+    "width": 1280,
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2572,
+    "pdpHeight": 783,
+    "buyboxHeight": 711,
+    "addToCartY": 604,
+    "galleryFrame": [
+      568,
+      711
+    ],
+    "galleryPainted": [
+      566,
+      708
+    ],
+    "galleryFillPct": 99,
+    "descTop": 512,
+    "titleFontSize": "21px"
+  }
+]

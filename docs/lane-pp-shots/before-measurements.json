@@ -1,0 +1,190 @@
+[
+  {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3785,
+    "addToCartY": 1123,
+    "addToCartText": "Add to cart",
+    "listRect": {
+      "top": 724,
+      "bottom": 1044,
+      "h": 320,
+      "w": 346
+    },
+    "listRows": 3,
+    "rowHeight": 74,
+    "photoBox": 48,
+    "memberPrices": 3,
+    "memberQtys": 3,
+    "footText": "Bought separately AED 325 Set price AED 269 You save AED 56",
+    "descRect": {
+      "top": 701,
+      "bottom": 724,
+      "h": 23,
+      "w": 346
+    },
+    "descNext": "div.ksl",
+    "descGap": 0,
+    "galleryRect": {
+      "top": 211,
+      "bottom": 557,
+      "h": 346,
+      "w": 346
+    }
+  },
+  {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2593,
+    "addToCartY": 687,
+    "addToCartText": "Add to cart",
+    "listRect": {
+      "top": 300,
+      "bottom": 608,
+      "h": 308,
+      "w": 582
+    },
+    "listRows": 3,
+    "rowHeight": 78,
+    "photoBox": 56,
+    "memberPrices": 3,
+    "memberQtys": 3,
+    "footText": "Bought separately AED 325 Set price AED 269 You save AED 56",
+    "descRect": {
+      "top": 277,
+      "bottom": 300,
+      "h": 23,
+      "w": 582
+    },
+    "descNext": "div.ksl",
+    "descGap": 0,
+    "galleryRect": {
+      "top": 152,
+      "bottom": 764,
+      "h": 612,
+      "w": 612
+    }
+  },
+  {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3967,
+    "addToCartY": 1304,
+    "addToCartText": "Add to cart",
+    "listRect": {
+      "top": 724,
+      "bottom": 1225,
+      "h": 501,
+      "w": 346
+    },
+    "listRows": 12,
+    "rowHeight": 74,
+    "photoBox": 48,
+    "memberPrices": 12,
+    "memberQtys": 12,
+    "footText": "Bought separately AED 991 Set price AED 599 You save AED 392",
+    "descRect": {
+      "top": 701,
+      "bottom": 724,
+      "h": 23,
+      "w": 346
+    },
+    "descNext": "div.ksl",
+    "descGap": 0,
+    "galleryRect": {
+      "top": 211,
+      "bottom": 557,
+      "h": 346,
+      "w": 346
+    }
+  },
+  {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2782,
+    "addToCartY": 876,
+    "addToCartText": "Add to cart",
+    "listRect": {
+      "top": 300,
+      "bottom": 797,
+      "h": 497,
+      "w": 582
+    },
+    "listRows": 12,
+    "rowHeight": 78,
+    "photoBox": 56,
+    "memberPrices": 12,
+    "memberQtys": 12,
+    "footText": "Bought separately AED 991 Set price AED 599 You save AED 392",
+    "descRect": {
+      "top": 277,
+      "bottom": 300,
+      "h": 23,
+      "w": 582
+    },
+    "descNext": "div.ksl",
+    "descGap": 0,
+    "galleryRect": {
+      "top": 152,
+      "bottom": 764,
+      "h": 612,
+      "w": 612
+    }
+  },
+  {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 3822,
+    "addToCartY": 1137,
+    "addToCartText": "Add to cart",
+    "listRect": null,
+    "listRows": 0,
+    "rowHeight": null,
+    "photoBox": null,
+    "memberPrices": 0,
+    "memberQtys": 0,
+    "footText": null,
+    "descRect": {
+      "top": 751,
+      "bottom": 820,
+      "h": 69,
+      "w": 346
+    },
+    "descNext": "div.opt-label",
+    "descGap": 0,
+    "galleryRect": {
+      "top": 211,
+      "bottom": 557,
+      "h": 346,
+      "w": 346
+    }
+  },
+  {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "pageHeight": 2524,
+    "addToCartY": 619,
+    "addToCartText": "Add to cart",
+    "listRect": null,
+    "listRows": 0,
+    "rowHeight": null,
+    "photoBox": null,
+    "memberPrices": 0,
+    "memberQtys": 0,
+    "footText": null,
+    "descRect": {
+      "top": 295,
+      "bottom": 341,
+      "h": 46,
+      "w": 582
+    },
+    "descNext": "div.opt-label",
+    "descGap": 0,
+    "galleryRect": {
+      "top": 152,
+      "bottom": 764,
+      "h": 612,
+      "w": 612
+    }
+  }
+]

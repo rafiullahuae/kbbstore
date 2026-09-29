@@ -186,3 +186,18 @@ app(\App\Services\SettingsService::class)->set(\App\Support\Locale::SETTING_ENAB
 app(\App\Services\SettingsService::class)->set(\App\Support\Locale::SETTING_RTL, true);
 
 echo "arabic and the mirror switched on for the preview\n";
+
+/* ── AN OUT-OF-STOCK PRODUCT ───────────────────────────────────────────────
+ *
+ * partials/notify-me.blade.php is a child of .buybox AFTER </form>, and it only
+ * renders when the product cannot be bought. All three proposals make .buybox a
+ * flex column, and a flex child with no `order` takes 0 -- so a block that is
+ * invisible on every in-stock page lands ABOVE THE BRAND on this one. There is
+ * no way to see that without a product in this state. */
+$oos = $make('Sold Out Sleeping Mask 100ml', 'lanepp-sold-out-mask', 8900, $palette[7], 'publish', $brand->id);
+$oos->forceFill([
+    'stock_status' => 'outofstock',
+    'short_description' => 'A demo product that cannot be bought, so the notify-me form renders.',
+])->save();
+
+echo 'seeded out-of-stock product #', $oos->id, "\n";
