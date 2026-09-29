@@ -3,6 +3,93 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.324
+**The Set screen is rebuilt, Stripe finally speaks your shop's language, and two
+admin buttons that did nothing now work.** Apply after .323.
+
+### APPEARANCE → SET IS NO LONGER ONE LONG PAGE
+
+Controls on the left in eight named sections, **the preview pinned on the right**,
+and it moves **as you drag** — not on save. Measured on the real screen:
+
+| | before | after |
+|---|---:|---:|
+| laptop, 1280 | 6,747px tall | **2,405px** |
+| wide, 1680 | 5,764px | **2,131px** |
+| phone, 390 | 13,534px | **4,144px** |
+
+Controls on screen at once: **132 → 25**. On a narrow screen it stacks to one
+column and the preview goes first.
+
+Most controls update the preview with no request at all, because the shop is
+driven by the same values the preview is. Two sliders dragged through their full
+range: **zero requests**.
+
+**The cart preview draws a set row next to an ordinary row**, so you can watch
+the set row move while the ordinary one stays put.
+
+### ▲ TWO THINGS ABOUT THAT SCREEN THAT WERE QUIETLY WRONG
+
+**The width buttons were lying.** "Desktop · 1280" inside a narrow preview column
+was resolving at about 430px and drawing the **phone** layout — so sizing desktop
+was sizing against mobile rules.
+
+**The preview had no text direction**, so the Arabic rendering could never be
+previewed. There is an English / العربية pair on it now.
+
+### ▲ STRIPE WAS NEVER TOLD WHAT LANGUAGE YOUR SHOP IS IN
+
+Both the card fields and the Apple Pay / Google Pay buttons followed the
+**shopper's browser** language, not your shop's. An Arabic customer read four
+translated Arabic sentences from you wrapped around a Stripe decline message in
+English — at the moment their payment had just failed.
+
+Now set from the shop's own language, on every Stripe object, mapped onto a
+language Stripe publishes rather than passed raw.
+
+### ▲ YOUR PRINTED INVOICE WOULD HAVE PRINTED THE BARCODE BACKWARDS
+
+The invoice takes its direction from the language but sat on a left-to-right
+stylesheet, so the day you switch Arabic on it would have rendered half mirrored.
+The barcode was the dangerous part: it is laid out as a row, and a row follows the
+document's direction — **an Arabic invoice would have printed the bars in reverse
+order and no scanner would have read it.** Fixed and verified by actually
+printing the sheets, not by reading the code.
+
+The free-delivery bar's glow was also on the wrong end in Arabic — measured 149px
+away from the bar at half progress, 332px at full.
+
+### TWO ADMIN BUTTONS THAT DID NOTHING
+
+**Orders → Move to trash…** and **Store → Import → Stop**. Both were drawn, both
+took a click, neither was connected to anything. Their neighbours in the same bar
+were all connected; these two were missed. The code behind both already existed.
+
+### THE SET ROW CONTROLS REACH SET ROWS ONLY
+
+You caught this one: `Appearance → Set` was moving the padding of **every** row in
+the basket. Now a set's row and no other row, and the controls are relabelled to
+say so.
+
+### THE TWO PRICES ON A DISCOUNTED ROW
+
+Cut price grey and small, charged price no longer underlined, space between them —
+on the checkout's Browsed tab and in Quick view.
+
+### ALSO
+
+New checks that enumerate rather than name: every route file mounted exactly once,
+every admin partial included once, every admin address resolving to a real route,
+every button connected to something. That is what found the two dead buttons, and
+it is what stops the next one shipping.
+
+### FILES
+
+The Set appearance screen and its preview, `App\Services\SetAppearanceLiveMap`
+(new), the Stripe locale support and both checkout partials, the invoice and cart
+stylesheets, `admin/app.blade.php`, the import checkpoint, and one cache-clearing
+migration.
+
 ## 2.60.323
 **Two screens that never worked, an email that was laid out backwards, and
 thirteen sliders that did nothing.** Apply after .322.
