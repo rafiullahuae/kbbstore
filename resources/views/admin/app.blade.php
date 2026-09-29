@@ -2830,7 +2830,7 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
    opened the dashboard. Same fix, same condition, and the strings are copied
    from what each partial's own go() writes so the heading cannot depend on how
    the screen was reached. */
-'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer']};
+'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -7219,7 +7219,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -21983,6 +21983,16 @@ buildNav();
      no storefront page and moves no existing setting — it begins writing rows
      to a new table that only this screen reads. --}}
 @include('admin.partials.security-screen')
+{{-- Store → Gateway webhooks (Lane TM). Late-rendered like the screens around
+     it: it runs after this file's own script has defined window.go,
+     window.kbbAddNavEntry and toast(), so it appends its sidebar row and wraps
+     window.go rather than reaching NAV and TITLES, which are module-scoped
+     consts here.
+
+     It exists because Tamara's five admin endpoints and Tabby's two had no
+     caller of any kind — built, tested, capability-mapped and unreachable. The
+     webhook is how Tamara tells this shop about a decline. --}}
+@include('admin.partials.tamara-connection-screen')
 
 {{-- Platform → Site address: the banner that appears when this shop is being
      served from an address that is not APP_URL. (Lane: domain-portability.)
