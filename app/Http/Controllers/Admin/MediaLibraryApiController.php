@@ -9,6 +9,7 @@ use App\Models\Media;
 use App\Models\MediaUsageRecord;
 use App\Models\UgcVideo;
 use App\Support\AggregatesQueries;
+use App\Support\ImageVariants;
 use App\Support\MediaBackfill;
 use App\Support\MediaRegistrar;
 use App\Support\MediaUsage;
@@ -607,6 +608,45 @@ class MediaLibraryApiController extends Controller
     }
 
     /**
+     * The URL a grid tile should draw, given the URL of the file itself.
+     *
+     * ── WHY THE ORIGIN IS STRIPPED BEFORE THE LOOKUP ───────────────────────
+     *
+     * Media::urlFor() returns an ABSOLUTE url for anything under `uploads/`,
+     * built from the `site_url` setting. ImageVariants::split() will only
+     * resize an absolute URL whose host matches the host of the request in
+     * hand — correctly, because it cannot check another origin's bytes against
+     * this web root. So a shop whose `site_url` is spelled even slightly
+     * differently from the hostname the owner reached the admin on (www, a
+     * staging alias, http against https) would silently get no thumbnail at
+     * all, on every tile, with nothing to say why.
+     *
+     * A site-relative `/img-cache/400/…` is the same file either way and is a
+     * perfectly good `src` on a page served from this origin, so the lookup is
+     * done on the path and the question of hosts never arises.
+     *
+     * AND THE FOREIGN CASE STILL WORKS. A row imported from the old WooCommerce
+     * domain has a URL on another host; stripping its origin yields a path this
+     * web root does not hold, variantUrl() finds nothing and hands the string
+     * back unchanged, and this returns the ORIGINAL absolute URL — never a path
+     * on this site that would 404.
+     */
+    private function tileThumb(string $url): string
+    {
+        $relative = (string) preg_replace('#^[a-z][a-z0-9+.\-]*://[^/]*#i', '', $url);
+
+        if ($relative === '' || $relative === $url && ! str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        $thumb = ImageVariants::variantUrl($relative, 400);
+
+        // Unchanged means there is no copy on disk. The original is what the
+        // tile has always drawn and is what it goes on drawing.
+        return $thumb === $relative ? $url : $thumb;
+    }
+
+    /**
      * One tile's worth of an image.
      *
      * @param  array<int, list<array{type: string, id: int, name: string, field: string}>>  $usage
@@ -626,6 +666,41 @@ class MediaLibraryApiController extends Controller
             'original_name' => (string) ($media->original_name ?: $media->filename),
             'path' => (string) $media->path,
             'url' => $media->url(),
+            /*
+             * (Lane IM2) WHAT A GRID TILE SHOULD DRAW, as opposed to what the
+             * detail panel and the "open the original" link need.
+             *
+             * This screen is a grid of dozens of photographs and every tile
+             * built `<img src=item.url>` — the full-resolution original, at
+             * ~290KB apiece on this catalogue's sizes. Fifty tiles is fifteen
+             * megabytes to paint fifty 150px squares, which is why the media
+             * library is the slowest screen in the console and the one the
+             * owner is in most.
+             *
+             * It is behind a login and there is one user, so this is not a
+             * shopper's bytes — it is the owner's, every time he opens the
+             * screen.
+             *
+             * A SEPARATE FIELD RATHER THAN CHANGING `url`, because `url` is the
+             * original and four other things already depend on it meaning
+             * that: the detail panel's preview, the copy-address control, the
+             * usage lookups and the video element. Narrowing it here would
+             * quietly hand the owner a 400px copy when he asked for the file.
+             *
+             * 400 AND NOT 200, for the reason variantUrl() gives for the
+             * basket: the tile's size is a SETTING. `--mlib-cols` is set from
+             * this screen's own column control, so a two-column grid draws a
+             * tile well over 300px wide and a single URL has no second
+             * candidate to fall back to. 400w covers that at ratio 1 and costs
+             * about 8% of the original — 25KB against 290KB, measured.
+             *
+             * IT IS THE ORIGINAL WHEN THERE IS NO COPY. variantUrl() returns
+             * its argument untouched unless a real file is on disk, so a
+             * library that has never been through Make phone-sized copies draws
+             * exactly what it draws today, and a video (whose mime says so) has
+             * no resizable extension and is returned unchanged as well.
+             */
+            'thumb' => $this->tileThumb((string) $media->url()),
             'mime' => $media->mime,
             'size' => $media->size === null ? null : (int) $media->size,
             'width' => $media->width === null ? null : (int) $media->width,

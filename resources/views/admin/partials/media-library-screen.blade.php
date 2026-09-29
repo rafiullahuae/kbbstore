@@ -785,10 +785,18 @@
     var img = item.is_video
       ? '<div class="mlib-film">' + filmIcon() + '<b>' + esc(videoLabel(item)) + '</b></div>'
       : (item.url
-        // loading="lazy" and decoding="async" because a full page of 24 originals
-        // is the whole point of the screen and none of them are resized server-side
-        // -- the `sizes` column exists but nothing has ever generated a variant.
-        ? '<img src="' + esc(item.url) + '" alt="" loading="lazy" decoding="async">'
+        /* loading="lazy" and decoding="async" because a full page of 24 images
+           is the whole point of the screen.
+
+           (Lane IM2) AND `thumb` RATHER THAN `url`. This tile drew the
+           catalogue ORIGINAL -- ~290KB apiece on this shop's sizes -- into a
+           box whose width is `--mlib-cols`, so a page of 24 was about 7MB to
+           paint 24 tiles. `thumb` is the 400w copy when one is on disk and IS
+           `url` when there is not, so a library that has never been through
+           Make phone-sized copies below draws exactly what it drew before.
+           The detail panel, the copy-address control and the delete path all
+           go on using `url`, which is still the file itself. */
+        ? '<img src="' + esc(item.thumb || item.url) + '" alt="" loading="lazy" decoding="async">'
         : '<div class="mlib-noimg">no file</div>');
 
     /* The operator's own name is the title. UNDERNEATH IT goes what the image

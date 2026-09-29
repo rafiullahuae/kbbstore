@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\ImageVariants;
 use App\Support\MajorUnits;
 use App\Support\Money;
 use App\Support\RichText;
@@ -1803,6 +1804,33 @@ class CatalogProductsApiController extends Controller
             'brand' => $this->blankToNull($p->brand_name ?? null),
             'brand_id' => $p->brand_id === null ? null : (int) $p->brand_id,
             'image' => $image,
+            /*
+             * (Lane IM2) THE COPY A LIST ROW SHOULD DRAW.
+             *
+             * Every screen that consumes this payload paints the photograph
+             * into a small fixed square: `.kpp-th` is 36px (the product
+             * picker), `.peo-item img` is 38px (the product editor's list).
+             * They were all pulling the catalogue original — ~290KB on this
+             * shop's sizes — and this endpoint hands back up to 500 rows a
+             * page. Half a thousand originals is roughly 145MB to paint five
+             * hundred 36px squares.
+             *
+             * 200 AND NOT THE 400 THE MEDIA LIBRARY USES. That grid's tile
+             * width is a setting and can be over 300px, so it has to be able to
+             * outgrow 200w. These boxes cannot: 36 and 38 pixels are written
+             * into the stylesheets beside them, and 200w covers 38px at
+             * device-pixel-ratio 3 (114) five times over. On a 500-row page the
+             * choice is 2.4MB against 12.5MB, so it is worth making per box
+             * rather than once.
+             *
+             * `image` IS LEFT ALONE, and every consumer reading it is
+             * unaffected — the screens that need the real file (the editor's
+             * main-image card, the copy-address control) go on getting it.
+             * null stays null, and variantUrl() returns the original untouched
+             * whenever no copy is on disk, so a catalogue that has never been
+             * through Make phone-sized copies behaves exactly as it does today.
+             */
+            'thumb' => $image === null ? null : ImageVariants::variantUrl($image, 200),
             'has_image' => $image !== null,
             'status' => (string) $p->status,
             'is_visible' => (bool) $p->is_visible,
