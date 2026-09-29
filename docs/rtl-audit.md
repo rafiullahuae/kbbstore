@@ -97,6 +97,7 @@ because anything went physical.
 | `resources/views/store/checkout-success.blade.php` | 1 | 154 |
 | `resources/views/store/account/order-detail.blade.php` | 5 | 154 |
 | `resources/views/store/account/track.blade.php` | 1 | 63 |
+| `resources/views/store/routines.blade.php` | 1 | 174 |
 <!-- rtl-audit:floors:end -->
 
 `kbb-banner.css` had none to begin with; it is in scope so that a physical
