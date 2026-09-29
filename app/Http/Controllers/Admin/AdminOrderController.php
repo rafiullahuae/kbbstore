@@ -1258,6 +1258,17 @@ class AdminOrderController extends Controller
                 'id', 'name', 'sku', 'image', 'brand_id',
                 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at',
                 'stock', 'stock_status',
+                /*
+                 * ▲ `type` AND THE THREE SET COLUMNS. (Lane SG) Without them
+                 *   Product::isSet() fails closed here and `price_fils` below
+                 *   quotes `products.price` for a set -- the stale snapshot,
+                 *   not what the shop charges. The ORDER was always right
+                 *   (ManualOrderBuilder loads whole rows); it is the figure the
+                 *   operator reads while picking that was wrong. `type` changes
+                 *   nothing else on this payload: it is read by isSet() and by
+                 *   requiresVariant(), and this handler calls neither.
+                 */
+                'type', ...\App\Support\SetPricing::COLUMNS,
             ])
             ->with(['brand:id,name', 'variants'])
             // `id` after `name`, because forPage() below is LIMIT/OFFSET and
@@ -1268,6 +1279,14 @@ class AdminOrderController extends Controller
             ->orderBy('id')
             ->forPage($page, self::PAGE)
             ->get();
+
+        /*
+         * ONE STATEMENT FOR EVERY SET IN THIS PAGE OF THE PICKER, OR NONE.
+         * (Lane SG) `price_fils` below asks every row what it costs; for a set
+         * that is a parts total, and without this it would be fetched one set
+         * at a time as the payload is built.
+         */
+        \App\Support\SetPricing::prime($rows);
 
         return response()->json([
             'total' => $total,

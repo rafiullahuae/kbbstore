@@ -32,6 +32,24 @@ class CartDrawerComposer
     private const LINE_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'type',
+        /*
+         * ▲ AND THE THREE A SET'S PRICE CANNOT BE READ WITHOUT. (Lane SG)
+         *
+         * ═══════════════════════════════════════════════════════════════════
+         * THIS ONE WAS MONEY, NOT DISPLAY.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * App\Support\SetPricing::mode() and ::basis() read these columns off
+         * getAttributes() and fall back to "no rule, no anchor" when they were
+         * not selected -- so effectivePrice() on a row hydrated from THIS list
+         * answered `products.price`, which for a rule-priced set is the figure
+         * the editor last wrote and for an anchored one is the price before the
+         * reduction. Measured on a three-set fixture whose members had since
+         * been marked down: the page offered AED 166.50, AED 160.00 and
+         * AED 145.00 and this list priced the same three rows at AED 180.00,
+         * AED 175.00 and AED 160.00. See App\Support\SetPricing::COLUMNS.
+         */
+        ...\App\Support\SetPricing::COLUMNS,
     ];
 
     public function __construct(
