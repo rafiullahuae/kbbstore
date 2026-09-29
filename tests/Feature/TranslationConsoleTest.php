@@ -48,6 +48,22 @@ function fcTranslateInterface(int $count): array
     $keys = array_keys(InterfaceStrings::flat());
     $take = array_slice($keys, 0, $count);
 
+    /*
+     * DELETE FIRST, because the table is no longer empty when a test starts.
+     * 2027_04_28_000000_seed_arabic_interface_drafts writes a DRAFT for every
+     * interface key, so a bare insert here collides with the unique index on
+     * (locale, group, item_id, field) -- which is what four tests in this file
+     * started doing the day that migration landed. Deleting the rows this
+     * helper is about to write keeps its contract exactly as it was: after it,
+     * the first $count interface keys are PUBLISHED and nothing else is.
+     */
+    DB::table('translations')
+        ->where('locale', 'ar')
+        ->where('group', Translation::GROUP_UI)
+        ->where('item_id', 0)
+        ->whereIn('field', $take)
+        ->delete();
+
     $now = now();
     $rows = array_map(static fn (string $k): array => [
         'locale' => 'ar',
@@ -225,6 +241,16 @@ it('quotes the run a figure the run itself will accept', function () {
         }
     });
 
+    /*
+     * THE DELTA, not the total. The table no longer starts empty:
+     * 2027_04_28_000000_seed_arabic_interface_drafts writes a draft for every
+     * interface string it could translate, so a bare count here reads 1,023
+     * and says nothing about what this run did. What the assertion was always
+     * about is "the run stored exactly the five it quoted", and that is a
+     * difference.
+     */
+    $before = Translation::query()->where('status', Translation::STATUS_DRAFT)->count();
+
     test()->actingAs(fcAdmin(), 'admin')
         ->postJson('/admin-api/translations/machine/run', [
             'locale' => 'ar',
@@ -234,7 +260,7 @@ it('quotes the run a figure the run itself will accept', function () {
         ])
         ->assertOk();
 
-    expect(Translation::query()->where('status', Translation::STATUS_DRAFT)->count())->toBe(5);
+    expect(Translation::query()->where('status', Translation::STATUS_DRAFT)->count() - $before)->toBe(5);
 });
 
 it('states the currency of the cost, and does not put it through Money', function () {

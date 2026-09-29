@@ -535,6 +535,15 @@ final class TranslationEstimate
             'pages' => 'Pages',
             'posts' => 'Journal posts',
             'menu_items' => 'Menu labels',
+            // The three Lane AR added to CONTENT. Named the way the admin's own
+            // menu names them, not after their tables: the fallback below would
+            // have called two of them "Ugc sections" and "Ugc videos", and
+            // "UGC" is a piece of our jargon that appears nowhere the owner
+            // looks -- the screens are Catalog -> Product tabs and Appearance
+            // -> Shoppable video.
+            'product_tabs' => 'Product tabs',
+            'ugc_sections' => 'Shoppable video sections',
+            'ugc_videos' => 'Shoppable video clips',
         ][$table] ?? ucfirst(str_replace('_', ' ', $table));
     }
 

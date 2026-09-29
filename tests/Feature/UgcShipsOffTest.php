@@ -221,7 +221,26 @@ it('reads the ugc tables from no storefront code at all', function () {
             // This lane's own files are the module; an admin controller is the
             // console. Neither is the storefront.
             if (str_contains($path, 'Ugc')
-                || str_starts_with($path, 'app/Http/Controllers/Admin/')) {
+                || str_starts_with($path, 'app/Http/Controllers/Admin/')
+                // The capability map names UgcVideo::toApi() in a comment
+                // explaining why rights evidence is never public. It is the
+                // permissions table, not a page.
+                || $path === 'app/Support/AdminCapabilities.php'
+                // ── LANE AR ─────────────────────────────────────────────────
+                // The translation console's work list. UgcVideo is on
+                // TranslationEstimate::CONTENT because a clip's title and
+                // caption are translatable and the owner types them -- without
+                // it the progress bar could not move for them and the machine
+                // never offered them, which is the defect BilingualFoundation-
+                // Test's "lists every translatable model" now catches.
+                //
+                // It is Content -> Translations and the character-count
+                // estimate, both admin-only, and it is exempt for the same
+                // reason AdminCapabilities is: a table of what exists is not a
+                // page that draws it. NOTHING on the storefront gained a read
+                // -- the five-page behavioural assertion above is unchanged and
+                // still green with the module off.
+                || $path === 'app/Services/Translation/TranslationEstimate.php') {
                 continue;
             }
 

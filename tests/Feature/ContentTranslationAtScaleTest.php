@@ -342,9 +342,16 @@ it('batches a run of hundreds of fields at the provider\'s own limit', function 
 
     // Every row a draft, every row marked machine. Nothing is published by a
     // run, whatever its size.
-    expect(Translation::query()->where('status', Translation::STATUS_DRAFT)->count())->toBe(240)
-        ->and(Translation::query()->where('status', Translation::STATUS_PUBLISHED)->count())->toBe(0)
-        ->and(Translation::query()->where('source', Translation::SOURCE_MACHINE)->count())->toBe(240);
+    /*
+     * SCOPED TO `products`, which is the group this run was given.
+     * 2027_04_28_000000_seed_arabic_interface_drafts writes a draft for every
+     * interface string, so the table no longer starts empty and a count across
+     * the whole of it says nothing about what this run did. `products` is what
+     * the run touched, so it is what the assertion should always have read.
+     */
+    expect(Translation::query()->where('group', 'products')->where('status', Translation::STATUS_DRAFT)->count())->toBe(240)
+        ->and(Translation::query()->where('group', 'products')->where('status', Translation::STATUS_PUBLISHED)->count())->toBe(0)
+        ->and(Translation::query()->where('group', 'products')->where('source', Translation::SOURCE_MACHINE)->count())->toBe(240);
 });
 
 it('keeps 240 machine drafts away from every shopper', function () {
@@ -410,7 +417,9 @@ it('resumes where an interrupted run stopped, and re-sends nothing it already bo
 
     expect($result['requested'])->toBe(100)
         ->and($result['translated'])->toBe(100)
-        ->and(Translation::query()->count())->toBe(240);
+        // Scoped to the group this run was given -- see the note above; the
+        // interface drafts shipped by 2027_04_28_000000 are in the table too.
+        ->and(Translation::query()->where('group', 'products')->count())->toBe(240);
 
     $resent = array_merge(...$second->batches);
 
@@ -461,7 +470,9 @@ it('refuses a batch the provider answered with the wrong number of rows', functi
     expect($result['translated'])->toBe(0)
         ->and($result['errors'])->toHaveCount(1)
         ->and($result['errors'][0])->toContain('99')
-        ->and(Translation::query()->count())->toBe(0);
+        // Scoped: nothing was stored FOR PRODUCTS. The interface drafts
+        // shipped by 2027_04_28_000000 are in the table and are not this run's.
+        ->and(Translation::query()->where('group', 'products')->count())->toBe(0);
 });
 
 it('accepts a batch whose gaps the provider left in place', function () {
@@ -487,7 +498,11 @@ it('accepts a batch whose gaps the provider left in place', function () {
         ->and($result['translated'])->toBe(39)
         ->and($result['errors'])->toBe([]);
 
-    foreach (Translation::query()->get() as $row) {
+    // Scoped to `products`: every row here is looked up AS A PRODUCT, and the
+    // table also holds the interface drafts shipped by 2027_04_28_000000,
+    // whose item_id is 0 and whose field is a dotted key. Unscoped, the first
+    // one of those turns this into a ModelNotFoundException.
+    foreach (Translation::query()->where('group', 'products')->get() as $row) {
         $english = Product::query()->findOrFail($row->item_id)->getAttribute($row->field);
 
         expect($row->value)->toBe('AR::'.$english, 'row '.$row->item_id.'.'.$row->field.' carries another row\'s copy')
