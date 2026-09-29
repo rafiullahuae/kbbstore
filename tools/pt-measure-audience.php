@@ -95,5 +95,23 @@ foreach ($rows as $row) {
 
 \App\Support\ProductTabs::flush();
 
-echo json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+$json = json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+/*
+ * WRITTEN INSIDE THIS LANE'S OWN WORKTREE, UNDER A pt- NAME. (Lane PT)
+ *
+ * Not /tmp and not the session scratchpad: both are shared between every lane
+ * on this machine, and a generic filename there has already cost one lane a
+ * truncated suite log that a second lane then copied into its own result. The
+ * two lanes could not tell whose numbers were in it. A measurement nobody can
+ * attribute is not a measurement.
+ *
+ * storage/framework/testing/* is git-ignored, so this travels nowhere.
+ */
+$path = storage_path('framework/testing/pt-logs/pt-query-counts.json');
+@mkdir(dirname($path), 0775, true);
+@file_put_contents($path, $json."\n");
+
+echo $json, "\n";
 echo 'tabs restored: ', \App\Models\ProductTab::query()->count(), "\n";
+echo 'written to: ', $path, "\n";
