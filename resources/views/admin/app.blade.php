@@ -1517,6 +1517,17 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 /* header preview */
 .hdpv{background:var(--hd-bg,#fff);border-radius:12px;overflow:hidden;width:100%;color:#2A2228}
 .hdpv-bar{display:flex;align-items:center;gap:10px;padding:0 12px;min-height:var(--hd-h,64px)}
+/* The flag strip, in the header preview. Lane FB shipped the strip and could
+   not add it here — this mock is hand-written in app.blade.php, which a lane
+   may not edit — so Appearance → Header → Flag bar had eleven correct controls
+   and a preview that never showed what they did. Drawn from the same custom
+   properties the storefront reads, so moving a slider moves the picture. */
+.hdpv-fb{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:0 12px;min-height:var(--fb-h,30px);background:var(--fb-bg,#FDEFF4)}
+.hdpv-fb span.t{font-size:var(--fb-size,12px);font-weight:600;color:var(--fb-ink,#E0567B);
+  line-height:1.2;text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdpv-fb span.t.pill{border:1px solid var(--fb-border,#F0B6C9);border-radius:99px;padding:2px 10px;flex:0 1 auto}
+.hdpv-fb svg{height:var(--fb-flag-h,14px);width:calc(var(--fb-flag-h,14px) * 1.5);flex:none;display:block}
 .hdpv-bar.bd{border-bottom:1px solid #F0E8EB}
 .hdpv-logo{font-size:var(--hd-logo,22px);font-weight:700;color:var(--hd-logo-c,#2A2228);flex:1;letter-spacing:-.02em}
 .hdpv-logo em{font-style:normal;color:var(--hd-logo-a,#E0567B)}
@@ -6414,7 +6425,9 @@ function hdPreview(){
     --hd-icon:${g('icon_size')}px;--hd-badge:${g('badge_bg')};--hd-nav:${g('nav_size')}px;--hd-gap:${g('nav_gap')}px;
     --hd-hot:${g('nav_hot_colour')};--hd-sup-bg:${g('support_icon_bg')};--hd-sup-fg:${g('support_icon_fg')};
     --mi-size:${g('menu_icon_size')}px;--mi-speed:${g('menu_icon_speed')}s;
-    --mi-c1:${g('menu_icon_c1')};--mi-c2:${g('menu_icon_c2')};--mi-c3:${g('menu_icon_c3')}`;
+    --mi-c1:${g('menu_icon_c1')};--mi-c2:${g('menu_icon_c2')};--mi-c3:${g('menu_icon_c3')};
+    --fb-h:${g('fb_height')}px;--fb-size:${g('fb_size')}px;--fb-flag-h:${g('fb_flag_h')}px;
+    --fb-bg:${g('fb_bg')};--fb-ink:${g('fb_ink')};--fb-border:${g('fb_border')}`;
   const icon=g('menu_icon');
   const fam = icon==='tiles'?'tiles' : icon==='dots9'?'dots9' : icon==='dots3'?'dots3' : 'bars';
   const inner = fam==='tiles' ? '<span class="s"></span>'.repeat(4)
@@ -6422,7 +6435,19 @@ function hdPreview(){
               : fam==='dots3' ? '<span class="d"></span>'.repeat(3)
               : '<span class="b"></span>'.repeat(3);
   const nav=['Brands','Skincare','Sunscreens','SUPER SALE','BLOG'];
+  /* The two flags are CONSTANTS here, as they are in app/Support/FlagArt.php:
+     emoji regional indicators render as boxed AE/KR on Windows, which is the
+     one place this strip's claim must not break. Kept deliberately simple —
+     this is a 21px mock, not the shipped artwork. */
+  const fbFlags = {
+    ae: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><rect width="30" height="6.67" fill="#00732f"/><rect y="13.33" width="30" height="6.67" fill="#000"/><rect width="7.5" height="20" fill="#ce1126"/></svg>',
+    kr: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="5" fill="#cd2e3a"/><path d="M10 10a5 5 0 0 1 10 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 0-5 0z" fill="#0047a0"/></svg>',
+  };
+  const fbOn = g('fb_mobile') || g('fb_desktop');
+  const fbText = String(g('fb_text') || '').trim() || "UAE's Authentic K-Beauty Store";
+
   $('#hdPhone').innerHTML=`<div class="hdpv" style="${vars}">
+    ${fbOn?`<div class="hdpv-fb">${g('fb_flags')?fbFlags.ae:''}<span class="t${g('fb_pill')?' pill':''}">${escHtml(fbText)}</span>${g('fb_flags')?fbFlags.kr:''}</div>`:''}
     <div class="hdpv-bar${g('bar_border')?' bd':''}">
       <span class="kbbmi kbbmi-${icon}">${inner}</span>
       <span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>
