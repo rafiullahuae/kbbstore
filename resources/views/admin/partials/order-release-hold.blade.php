@@ -301,7 +301,14 @@
         + (c.holder ? esc(c.holder) + ' is no longer holding this buyer&#39;s credit for this order. ' : '')
         + (v.voided_at ? 'Released on ' + esc(when(v.voided_at)) + '. ' : '')
         + (v.void_ref ? 'Cancellation reference ' + esc(v.void_ref) + '. ' : '')
-        + 'The order notes below carry the same record.</p>'
+        /* Only when this panel is NOT reporting a release it has just made.
+           The note PaymentVoider writes lands on the order at the same moment,
+           and the Order notes card a few inches below was drawn before it --
+           so saying "the notes carry the same record" beside a card reading
+           "No notes yet" would be this panel contradicting the screen it is
+           sitting on. The line below says what is actually true instead. */
+        + (said ? '' : 'The order notes below carry the same record.')
+        + '</p>'
         + saidHtml();
     }
 
@@ -342,8 +349,9 @@
 
     return '<p class="' + (said.tone === 'bad' ? 'orh-warn' : 'orh-soft') + '">' + esc(said.text) + '</p>'
       + (said.tone === 'good'
-          ? '<p class="orh-soft">The capture box above this one was drawn before the release and still '
-            + 'reads as it did; reopen the order to redraw it.</p>'
+          ? '<p class="orh-soft">The rest of this screen &mdash; the capture box above, the refundable '
+            + 'figure and the order notes below &mdash; was drawn before the release and still reads as '
+            + 'it did. Reopen the order to redraw it; the release itself is recorded either way.</p>'
           : '');
   }
 
