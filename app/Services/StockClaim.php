@@ -123,11 +123,19 @@ final class StockClaim
         /*
          * THE SET RULE, APPLIED BEFORE THE LINES ARE SUMMED PER SHELF. (Lane SP)
          *
-         * StockSetRule::expand() returns the caller's own array untouched --
-         * and runs no query at all -- unless the owner has switched Catalog →
-         * Sets → Stock · When a set is sold to "members", which is NOT the
-         * shipped default. Today's shop therefore claims exactly what it
-         * claimed before this line existed.
+         * ▲ THIS PARAGRAPH USED TO READ: "returns the caller's own array
+         * untouched -- and runs no query at all -- unless the owner has
+         * switched Catalog → Sets → Stock · When a set is sold to 'members',
+         * which is NOT the shipped default. Today's shop therefore claims
+         * exactly what it claimed before this line existed."
+         *
+         * THE DEFAULT MOVED on 29 September, at the owner's word -- "if the
+         * product sold inside set or individual, the stock should be minus in
+         * any case" -- and StockSetRule::MODE_MEMBERS is what ships now. So
+         * expand() DOES look, on every basket, and a basket with no set in it
+         * costs the one statement StockSetRule::setIdsAmong() runs and returns.
+         * Left uncorrected this reads as a promise that a set moves no member
+         * stock, which is the opposite of what the shop does.
          *
          * BEFORE perShelf() AND NOT AFTER, which is the whole reason it is
          * here rather than in the loop: a basket holding both a Glow Set and
