@@ -457,8 +457,17 @@ it('picks an existing card skin and never invents one', function () {
 
     // An unknown name falls back the way every other skin reader in the shop
     // falls back, rather than rendering an unstyled grid.
+    //
+    // ▲ ASSERTED AGAINST THE CONSTANT, not the literal 'classic'. Lane GS wrote
+    //   this line while `classic` was the shop's default card; Lane PG2 landed
+    //   the owner's showcase card in the same round and moved the default, and
+    //   this was one of two tests the merge caught. A literal here would have to
+    //   be edited every time he changes his mind about the card, which is a
+    //   setting he is meant to change — and PG2's own DefaultCardStyleTest
+    //   exists precisely because that default had five homes and a literal in
+    //   three of them.
     GridSection::query()->update(['skin' => 'not-a-skin']);
-    expect(gsBody())->toContain('data-skin="classic"');
+    expect(gsBody())->toContain('data-skin="'.\App\Support\GridSkins::DEFAULT.'"');
 });
 
 /* ═══════════════════════════ the View all button ══════════════════════════ */

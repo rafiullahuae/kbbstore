@@ -956,6 +956,24 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          */
         'admin-api/ugc-videos/{id}' => '/admin-api/ugc-videos/' . $ugcVideo->id,
         /*
+         * Appearance -> the product-page design previews (Lane PDP). Listed
+         * here because this walk caught it: the route landed with no entry on
+         * either list and this file went red -- which is what the walk is for,
+         * and it caught my own wiring rather than a lane's.
+         *
+         * DRIVEN RATHER THAN EXCUSED, and specifically not as "it renders a
+         * product page, which is already covered". It is not the storefront
+         * route: it calls Store\ProductController::show() and then renders one
+         * of five candidate templates, so it runs that page's whole read --
+         * the gallery, BundleService, ProductTabs with its audience matching,
+         * TrustClaims, PaymentChips and SetContents -- against an admin
+         * connection, under an admin guard, with a candidate name in the path.
+         * Nothing else on this list drives that combination, and the point of
+         * this walk is the QUERY a route really makes rather than the family it
+         * belongs to.
+         */
+        'admin-api/catalog/pdp-preview/{candidate}/{slug}' => '/admin-api/catalog/pdp-preview/ledger/' . $product->slug,
+        /*
          * Content -> Video sections -> Open (Lane V3). Listed here because this
          * walk caught it too: the route landed with no entry on either list and
          * this file went red, which is exactly what the walk is for.
