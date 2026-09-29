@@ -1,4 +1,0 @@
-0 instances: cold 1, warm 0
-1 instances: cold 4, warm 0
-3 instances: cold 8, warm 0
-6 instances: cold 14, warm 0
