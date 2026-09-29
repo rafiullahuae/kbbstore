@@ -373,6 +373,14 @@ final class AdminCapabilities
         // capability for the same reason as the three above. (Lane W1)
         'sitelayout.manage' => ['owner', 'manager', 'editor'],
 
+        // The page background: the palette, its strength, how far and how fast
+        // it travels, and which pages carry it. Storefront appearance again,
+        // and its own capability for the same reason as the four above -- this
+        // one writes colours that are printed into a gradient on every page of
+        // the shop, and it also decides whether the wash is ON AT ALL, which is
+        // a switch the owner has not yet said yes to. (Lane BG)
+        'pagewash.manage' => ['owner', 'manager', 'editor'],
+
         // Reviews. The export is separated from the rest of the screen because
         // the review rows carry author_email and the reviewer's IP.
         'reviews.view' => ['owner', 'manager', 'support', 'editor'],
@@ -1292,6 +1300,8 @@ final class AdminCapabilities
         ['*', 'admin-api/slim-footer', 'slimfooter.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/site-layout', 'sitelayout.manage'],
+        // One line and no '/**' sibling: this screen has no sub-endpoint either.
+        ['*', 'admin-api/page-wash', 'pagewash.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.
