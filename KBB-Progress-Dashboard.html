@@ -70,18 +70,18 @@
 
   <header>
     <h1>K-Beauty Bliss — build progress</h1>
-    <p class="sub">Version 2.60.223 &middot; generated 20 September 2026, 07:52</p>
+    <p class="sub">Version 2.60.325 &middot; generated 29 September 2026, 23:59</p>
   </header>
 
   <section class="total">
     <div class="totrow">
       <span class="totnum">91%</span>
-      <span class="totlab">across 22 phases<br>counted from the plan, not typed in</span>
+      <span class="totlab">across 24 phases<br>counted from the plan, not typed in</span>
     </div>
     <div class="track"><div class="fill most" style="width:91%"></div></div>
   </section>
 
-<section class="panel flight"><h2>In flight right now</h2><ul><li><b>Lane GO — the import runs in the background.</b> The owner&#039;s own requirement: *&quot;i want this job must be running in background, even i close the tab.&quot;* Batch-by-batch, real progress and stop already exist; what does not is a run that survives the browser. No shell, no queue worker and no cron that can be assumed, so it is a self-chaining run — and the hazards are the whole job: two chains racing import every row twice, a lock a crash leaves held is a shop that can never import again, and a runaway is worse than a stall</li><li><b>Lane GP — the addresses group lands, and every old URL with it.</b> *&quot;will have all new urls as per our app.&quot;* Today that group downloads, unpacks and is refused twice, because <code>permalinks.csv</code> and <code>media.csv</code> are read by a different screen. ▲ And Lane GB measured the trap to re-check: <code>CheckRedirects</code> is written as middleware and is not registered as one, so the table is consulted only from the 404 handler — a row for an address the shop already answers can never fire</li><li><b>Lane GQ — is everything there? ANSWERED.</b> A census three columns wide, in <code>tests/Feature/GqMigrationCensusTest.php</code>: <strong>282 columns across 17 files — 208 land in a named table and column, 44 are named in the discard list, 9 are in a file nothing opens, and not one is unaccounted for.</strong> Asserted against the plugin&#039;s own export and the real <code>ImportRunner</code>, so a column that stops crossing fails by name rather than arriving empty. Three things that were being lost in silence were found by building it and all three are fixed: the <strong>barcodes</strong> (<code>products.gtin</code>, published to Google), <strong>which size of a variable product each order line sold</strong>, and the <strong>OpenGraph image and noindex flag</strong> — two Yoast keys with a hyphen in them that the CSV reader turns into an underscore, so neither had ever matched on any import ever run. One thing is still in no channel and is now named: <code>_order_key</code>, the token in every order-view link WooCommerce emailed. <code>docs/FV-IMPORT-AT-VOLUME.md</code> §11 is <strong>stale</strong> — six of its seven lines are closed by Lanes GH, GI and GJ. See <code>docs/GQ-MIGRATION-COMPLETENESS.md</code></li></ul></section><section class="panel waiting"><h2>Waiting on you, not on us</h2><ul><li><b>Reconnect Stripe</b> — Store → Payments → Set up Stripe. Until then the webhook is subscribed to the hosted-checkout events a card payment no longer produces: the shop takes the money and never hears about it</li><li><b>One real test-mode payment</b> , which is the only thing a sandbox cannot stand in for</li><li><b>Did the old site have brand archive pages, and at what base?</b> 93 redirect rows hang on it, and inventing a base writes 93 redirects from an address that may never have existed</li><li><b>Three bulk-printing questions</b> — the cap of 100, whether a bulk invoice run should skip cancelled orders, and whether the &quot;Sheet 3 of 12&quot; line should print</li></ul></section>
+<section class="panel flight"><h2>In flight right now</h2><ul><li><b>Lane PLC — putting the basket back.</b> A shopper who abandons at Tabby or Tamara comes back to an empty basket; <code>place()</code> marks the cart <code>converted</code> inside the transaction that writes the order and nothing on the return leg undoes it. A POST, gated on <code>kbb_last_order</code> + <code>hash_equals</code>, refusing any order that is confirmed or carries <code>paid_at</code>. ▲ The restored basket has to come back <strong>through</strong> <code>SetStockReconciler</code>, not around it, or it re-creates the set-plus-loose order blocker the owner reported</li><li><b>Lane BG — the webfont, and closing the standalone documents.</b> Converting the five documents that carry their own <code>&lt;head&gt;</code> to the self-hosted fonts is not a free swap and the arithmetic is written down: three of them want weight 500 and the skin quiz also wants 300, none of which <code>WebFonts</code> carries, and <code>/app</code> asks for Fraunces and Hanken Grotesk, neither of which this shop has at all</li></ul></section><section class="panel waiting"><h2>Waiting on you, not on us</h2><ul><li><b>▲ FOUR DESIGN DECISIONS, all built, photographed and switched off.</b> Nothing ships on any of them until he picks a letter, and three lanes&#039; next round is shaped by the answers. One page carries all four with the shots at 390 and 1280 and the measured numbers under each: - <strong>The product page</strong> — five whole designs (Ledger, Dossier, Counter, Deck, - <strong>The product card</strong> — A is live on the shop; B, C and D are one setting away - <strong>The picture slider&#039;s look</strong> — four, all the same markup. Appearance → - <strong>The site background</strong> — four treatments, previewed on his own pages.</li><li><b>Apply 2.60.325</b> , then the two server-side jobs no package can do: cache headers and HSTS, and registering the domain with Apple Pay in Stripe. <code>docs/PERF-PAGESPEED.md</code> §5 is the walkthrough</li><li><b>Darkening the brand pink, or not.</b> Accessibility is stuck at 96 on 108 contrast failures, and <code>--muted</code> (3.14) and <code>--pink</code> (3.08) are already below AA on the shop as it stands. That is the brand colour against a pale page; it is his call and the Page background screen shows it beside the sliders</li><li><b>Reconnect Stripe</b> — Store → Payments → Set up Stripe. Until then the webhook is subscribed to the hosted-checkout events a card payment no longer produces: the shop takes the money and never hears about it</li><li><b>One real test-mode payment</b> , which is the only thing a sandbox cannot stand in for</li><li><b>Did the old site have brand archive pages, and at what base?</b> 93 redirect rows hang on it, and inventing a base writes 93 redirects from an address that may never have existed</li><li><b>Three bulk-printing questions</b> — the cap of 100, whether a bulk invoice run should skip cancelled orders, and whether the &quot;Sheet 3 of 12&quot; line should print</li></ul></section>
   <div class="rows">
     <article class="row">
       <div class="rowhead">
@@ -101,19 +101,19 @@
       </div>
       <div class="track"><div class="fill done" style="width:100%"></div></div>
       <div class="chips">
-        <span class="chip done">7 done</span>
-        <span class="chip of">of 7</span>
+        <span class="chip done">11 done</span>
+        <span class="chip of">of 11</span>
       </div>
     </article>
     <article class="row">
       <div class="rowhead">
         <h3>Phase 3 — Module framework</h3>
-        <span class="pct">88%</span>
+        <span class="pct">94%</span>
       </div>
-      <div class="track"><div class="fill most" style="width:88%"></div></div>
+      <div class="track"><div class="fill most" style="width:94%"></div></div>
       <div class="chips">
-        <span class="chip done">15 done</span><span class="chip open">2 open</span>
-        <span class="chip of">of 17</span>
+        <span class="chip done">17 done</span><span class="chip open">1 open</span>
+        <span class="chip of">of 18</span>
       </div>
     </article>
     <article class="row">
@@ -134,19 +134,19 @@
       </div>
       <div class="track"><div class="fill done" style="width:100%"></div></div>
       <div class="chips">
-        <span class="chip done">4 done</span>
-        <span class="chip of">of 4</span>
+        <span class="chip done">6 done</span>
+        <span class="chip of">of 6</span>
       </div>
     </article>
     <article class="row">
       <div class="rowhead">
         <h3>Phase 6 — Product page</h3>
-        <span class="pct">100%</span>
+        <span class="pct">80%</span>
       </div>
-      <div class="track"><div class="fill done" style="width:100%"></div></div>
+      <div class="track"><div class="fill most" style="width:80%"></div></div>
       <div class="chips">
-        <span class="chip done">4 done</span>
-        <span class="chip of">of 4</span>
+        <span class="chip done">4 done</span><span class="chip open">1 open</span>
+        <span class="chip of">of 5</span>
       </div>
     </article>
     <article class="row">
@@ -174,12 +174,12 @@
     <article class="row">
       <div class="rowhead">
         <h3>Phase 8 — Cart and checkout</h3>
-        <span class="pct">89%</span>
+        <span class="pct">86%</span>
       </div>
-      <div class="track"><div class="fill most" style="width:89%"></div></div>
+      <div class="track"><div class="fill most" style="width:86%"></div></div>
       <div class="chips">
-        <span class="chip done">8 done</span><span class="chip open">1 open</span>
-        <span class="chip of">of 9</span>
+        <span class="chip done">12 done</span><span class="chip open">2 open</span>
+        <span class="chip of">of 14</span>
       </div>
     </article>
     <article class="row">
@@ -218,17 +218,6 @@
     <article class="row">
       <div class="rowhead">
         <h3>Phase 9 — Content pages</h3>
-        <span class="pct">88%</span>
-      </div>
-      <div class="track"><div class="fill most" style="width:88%"></div></div>
-      <div class="chips">
-        <span class="chip done">7 done</span><span class="chip open">1 open</span>
-        <span class="chip of">of 8</span>
-      </div>
-    </article>
-    <article class="row">
-      <div class="rowhead">
-        <h3>Phase 10 — Build my routine</h3>
         <span class="pct">80%</span>
       </div>
       <div class="track"><div class="fill most" style="width:80%"></div></div>
@@ -239,46 +228,57 @@
     </article>
     <article class="row">
       <div class="rowhead">
-        <h3>Phase 11 — Payments</h3>
-        <span class="pct">90%</span>
+        <h3>Phase 10 — Build my routine</h3>
+        <span class="pct">88%</span>
       </div>
-      <div class="track"><div class="fill most" style="width:90%"></div></div>
+      <div class="track"><div class="fill most" style="width:88%"></div></div>
       <div class="chips">
-        <span class="chip done">13 done</span><span class="chip part">1 part done</span><span class="chip open">1 open</span>
-        <span class="chip of">of 15</span>
+        <span class="chip done">18 done</span><span class="chip part">1 part done</span><span class="chip open">2 open</span>
+        <span class="chip of">of 21</span>
+      </div>
+    </article>
+    <article class="row">
+      <div class="rowhead">
+        <h3>Phase 11 — Payments</h3>
+        <span class="pct">91%</span>
+      </div>
+      <div class="track"><div class="fill most" style="width:91%"></div></div>
+      <div class="chips">
+        <span class="chip done">15 done</span><span class="chip part">1 part done</span><span class="chip open">1 open</span>
+        <span class="chip of">of 17</span>
       </div>
     </article>
     <article class="row">
       <div class="rowhead">
         <h3>Phase 12 — Performance and SEO</h3>
-        <span class="pct">84%</span>
+        <span class="pct">86%</span>
       </div>
-      <div class="track"><div class="fill most" style="width:84%"></div></div>
+      <div class="track"><div class="fill most" style="width:86%"></div></div>
       <div class="chips">
-        <span class="chip done">13 done</span><span class="chip part">6 part done</span>
-        <span class="chip of">of 19</span>
+        <span class="chip done">16 done</span><span class="chip part">6 part done</span>
+        <span class="chip of">of 22</span>
       </div>
     </article>
     <article class="row">
       <div class="rowhead">
         <h3>Phase 13 — Data migration</h3>
-        <span class="pct">79%</span>
+        <span class="pct">96%</span>
       </div>
-      <div class="track"><div class="fill most" style="width:79%"></div></div>
+      <div class="track"><div class="fill most" style="width:96%"></div></div>
       <div class="chips">
-        <span class="chip done">19 done</span><span class="chip open">5 open</span>
-        <span class="chip of">of 24</span>
+        <span class="chip done">25 done</span><span class="chip open">1 open</span>
+        <span class="chip of">of 26</span>
       </div>
     </article>
     <article class="row">
       <div class="rowhead">
         <h3>Phase 14 — Licensing console</h3>
-        <span class="pct">20%</span>
+        <span class="pct">36%</span>
       </div>
-      <div class="track"><div class="fill some" style="width:20%"></div></div>
+      <div class="track"><div class="fill some" style="width:36%"></div></div>
       <div class="chips">
-        <span class="chip done">1 done</span><span class="chip open">4 open</span>
-        <span class="chip of">of 5</span>
+        <span class="chip done">2 done</span><span class="chip part">1 part done</span><span class="chip open">4 open</span>
+        <span class="chip of">of 7</span>
       </div>
     </article>
     <article class="row">
@@ -316,6 +316,17 @@
     </article>
     <article class="row">
       <div class="rowhead">
+        <h3>Phase 18 — Security module</h3>
+        <span class="pct">100%</span>
+      </div>
+      <div class="track"><div class="fill done" style="width:100%"></div></div>
+      <div class="chips">
+        <span class="chip done">2 done</span>
+        <span class="chip of">of 2</span>
+      </div>
+    </article>
+    <article class="row">
+      <div class="rowhead">
         <h3>Translation Module — Arabic</h3>
         <span class="pct">79%</span>
       </div>
@@ -323,6 +334,17 @@
       <div class="chips">
         <span class="chip done">8 done</span><span class="chip part">3 part done</span><span class="chip open">1 open</span>
         <span class="chip of">of 12</span>
+      </div>
+    </article>
+    <article class="row">
+      <div class="rowhead">
+        <h3>Phase 20 — UGC video, shoppable</h3>
+        <span class="pct">0%</span>
+      </div>
+      <div class="track"><div class="fill none" style="width:0%"></div></div>
+      <div class="chips">
+        <span class="chip done">0 done</span><span class="chip open">5 open</span>
+        <span class="chip of">of 5</span>
       </div>
     </article>
   </div>

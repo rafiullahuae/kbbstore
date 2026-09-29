@@ -26,8 +26,8 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 | | |
 |---|---|
 | Ledger completion at last count | **36%** (110 Fn ☑ / 94 Dsp ☑ of 305) |
-| **Counted now** | **92%** across 22 phases, 254 items — and that number is *counted*, not estimated: `tools/progress-dashboard/build.php` reads the checkboxes out of this file. A part-done item counts as half; an item struck as not-wanted is left out of the total entirely. Open `KBB-Progress-Dashboard.html` |
-| Releases shipped this stretch | 2.38.0 → **2.60.220**. ▲ Five packages are built and waiting to be applied: 2.60.216 → .220, in that order |
+| **Counted now** | **91%** across 24 phases, 312 items — and that number is *counted*, not estimated: `tools/progress-dashboard/build.php` reads the checkboxes out of this file. A part-done item counts as half; an item struck as not-wanted is left out of the total entirely. Open `KBB-Progress-Dashboard.html` |
+| Releases shipped this stretch | 2.38.0 → **2.60.325**. ▲ **2.60.325 is built and waiting to be applied** — thirteen lanes, 155 files, 14 migrations, every file checked byte-for-byte against the tested tree. Apply after .324 |
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |
@@ -105,38 +105,51 @@ is a bug in this section rather than a second opinion about the phase.
 
 
 
-- **Lane GO — the import runs in the background.** The owner's own requirement:
-  *"i want this job must be running in background, even i close the tab."*
-  Batch-by-batch, real progress and stop already exist; what does not is a run
-  that survives the browser. No shell, no queue worker and no cron that can be
-  assumed, so it is a self-chaining run — and the hazards are the whole job: two
-  chains racing import every row twice, a lock a crash leaves held is a shop that
-  can never import again, and a runaway is worse than a stall
-- **Lane GP — the addresses group lands, and every old URL with it.** *"will have
-  all new urls as per our app."* Today that group downloads, unpacks and is
-  refused twice, because `permalinks.csv` and `media.csv` are read by a different
-  screen. ▲ And Lane GB measured the trap to re-check: `CheckRedirects` is
-  written as middleware and is not registered as one, so the table is consulted
-  only from the 404 handler — a row for an address the shop already answers can
-  never fire
-- **Lane GQ — is everything there? ANSWERED.** A census three columns wide, in
-  `tests/Feature/GqMigrationCensusTest.php`: **282 columns across 17 files — 208
-  land in a named table and column, 44 are named in the discard list, 9 are in a
-  file nothing opens, and not one is unaccounted for.** Asserted against the
-  plugin's own export and the real `ImportRunner`, so a column that stops
-  crossing fails by name rather than arriving empty. Three things that were being
-  lost in silence were found by building it and all three are fixed: the
-  **barcodes** (`products.gtin`, published to Google), **which size of a variable
-  product each order line sold**, and the **OpenGraph image and noindex flag** —
-  two Yoast keys with a hyphen in them that the CSV reader turns into an
-  underscore, so neither had ever matched on any import ever run. One thing is
-  still in no channel and is now named: `_order_key`, the token in every
-  order-view link WooCommerce emailed. `docs/FV-IMPORT-AT-VOLUME.md` §11 is
-  **stale** — six of its seven lines are closed by Lanes GH, GI and GJ. See
-  `docs/GQ-MIGRATION-COMPLETENESS.md`
+- **Lane SEC — the download navigations, and the branch is package-blocked on
+  them.** Closing the second door on the admin-path leak made `/admin-api/*`
+  answer a browser with a bare 404, and nine endpoints are reached by NAVIGATING
+  rather than by fetch — five exports and the four order documents. With an
+  expired session those now land on a blank 404, and for the four
+  `window.location.href` ones that means the owner loses the console screen he was
+  on, which is worse than the login page it replaced. ▲ 2.60.325 does **not**
+  carry this — it was built before — and no package ships from this branch until
+  it is fixed. Four of the nine are invisible to any scan of the console, because
+  the address never appears there: the server builds them in
+  `Admin\InvoiceController::invoiceUrl()`
+- **Lane PLC — putting the basket back.** A shopper who abandons at Tabby or
+  Tamara comes back to an empty basket; `place()` marks the cart `converted`
+  inside the transaction that writes the order and nothing on the return leg
+  undoes it. A POST, gated on `kbb_last_order` + `hash_equals`, refusing any order
+  that is confirmed or carries `paid_at`. ▲ The restored basket has to come back
+  **through** `SetStockReconciler`, not around it, or it re-creates the
+  set-plus-loose order blocker the owner reported
+- **Lane BG — the webfont, and closing the standalone documents.** Converting the
+  five documents that carry their own `<head>` to the self-hosted fonts is not a
+  free swap and the arithmetic is written down: three of them want weight 500 and
+  the skin quiz also wants 300, none of which `WebFonts` carries, and `/app` asks
+  for Fraunces and Hanken Grotesk, neither of which this shop has at all
 
 ### Waiting on the owner, not on us
 
+- **▲ FOUR DESIGN DECISIONS, all built, photographed and switched off.** Nothing
+  ships on any of them until he picks a letter, and three lanes' next round is
+  shaped by the answers. One page carries all four with the shots at 390 and 1280
+  and the measured numbers under each:
+  - **The product page** — five whole designs (Ledger, Dossier, Counter, Deck,
+    Marquee). Catalog → Product page → Design previews
+  - **The product card** — A is live on the shop; B, C and D are one setting away
+    at Appearance → Product grids
+  - **The picture slider's look** — four, all the same markup. Appearance →
+    Banners → (the set) → Look
+  - **The site background** — four treatments, previewed on his own pages.
+    Appearance → Page background
+- **Apply 2.60.325**, then the two server-side jobs no package can do: cache
+  headers and HSTS, and registering the domain with Apple Pay in Stripe.
+  `docs/PERF-PAGESPEED.md` §5 is the walkthrough
+- **Darkening the brand pink, or not.** Accessibility is stuck at 96 on 108
+  contrast failures, and `--muted` (3.14) and `--pink` (3.08) are already below AA
+  on the shop as it stands. That is the brand colour against a pale page; it is
+  his call and the Page background screen shows it beside the sliders
 - **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
   webhook is subscribed to the hosted-checkout events a card payment no longer
   produces: the shop takes the money and never hears about it
@@ -335,6 +348,37 @@ something half-right.
   rather than CSS auto-balance, plus a full styling round with Rafi — column and row dividers,
   hover state, spacing, font weight matched to the approved single-column style — *2.60.29 →
   2.60.32*
+- [x] **A thin flag strip above the header** — UAE flag · "UAE's Authentic K-Beauty
+  Store" · Korea flag. On for phones and **off for desktop by default**, exactly as
+  the owner asked. Every colour, the height, the wording and both flags are controls
+  at Appearance → Header → Flag strip. Ships **off**, so applying the package moves
+  nothing. The taeguk is drawn to the spec rather than shipped as an image — *2.60.325*
+- [x] **A second banner type: the picture slider** — pictures only, one at a time,
+  with arrows and bars. Appearance → Banners → (the set) → Kind: Slider. Autoplay
+  stops for real: pointer over it, keyboard focus inside it, `prefers-reduced-motion`,
+  a hidden tab, or the pause button — the first four are floors, not switches. Works
+  with **no JavaScript at all** as a scroll-snap rail, and does not fight a downward
+  swipe. Four looks, all the same markup; the owner has not yet picked one, so it
+  ships on `inset` — *2.60.325*
+- [x] **Appearance → Page background** — the soft multi-colour wash the owner asked
+  for, with the live preview he asked to see **first**: `?kbbwash=` on a real
+  storefront URL draws the real shop, honoured only for a request carrying an admin
+  session. Ships **off**. Contrast was **enumerated, not sampled** — all 15,876
+  reachable colours asserted no darker than the darkest flat background the shop
+  already renders, and one candidate palette was changed rather than shipped for
+  failing it. No layout, no script, 0.1 ms/s under reduced motion — *2.60.325*
+- [x] ▲ **The shop's background was five backgrounds, and nobody had chosen four of
+  them.** Read off `getComputedStyle(document.body)` on ten URLs, not off the
+  stylesheets: home/cart/checkout/wishlist pink, **/shop/ and product pages plain
+  white**, journal and article white, review wall cream, skin quiz transparent. The
+  white came from `kbb-shop.css` and `kbb-product.css` each carrying a **base** rule
+  duplicated out of `kbb.css` — `background:var(--bg)` came along with the copy, and
+  both load later, so a copied base rule outranked the designed background on every
+  shop, category, brand and product page. Removed; two of `kbb.css`'s four `body`
+  rules were dead and are gone. The review wall and the skin quiz are deliberate
+  compositions and are **left alone** — `OnePageBackgroundTest` now fails a later lane
+  that flattens them — *2.60.326*
+
 
 ## Phase 3 — Module framework ← **in progress**
 
@@ -464,6 +508,22 @@ something half-right.
 - [x] Full product titles — *2.40.3*
 - [x] Card skin preview inside the shortcode builder — was already built and never ticked. `#scPrev` renders `skinCard(SC.skin ?? grid_skin)` under a "Card style used" note — *verified 2.60.91*
 - [x] Quick view — modal from any grid card with image, brand, price including sale rules, stock, short description and add-to-cart. Server-rendered fragment so money formatting cannot drift from the card; hidden on touch devices — *2.60.72, module switch 2.60.73*
+- [x] **The showcase card, matched to the owner's screenshot, and made the shipped
+  default.** Bordered white card, square photograph, brand line, two-line name, rating
+  row, struck price with the sale price in pink, full-width uppercase ADD TO CART with
+  the heart beside it. On **every grid on the site except the cart and the checkout**,
+  proved page by page rather than assumed. Every card in a row is the same height
+  whatever the name length — measured, all twelve tiles 454px at 1280 and 392px at 390,
+  including one product called *Toner* and one called *Ultra Hydrating Ceramide Barrier
+  Repair Night Cream With Panthenol and Squalane 100ml*, both name boxes 37px. Three
+  other treatments are one setting away at Appearance → Product grids — *2.60.325*
+- [x] **One reusable grid section, usable as many times as wanted.** The owner's own
+  words: *"prepare a proper grid section with all controls and it can be use anywhere,
+  and can be edit that specific grid section."* Appearance → Grid sections: build one,
+  name it, choose its products, heading, card style and column counts, publish it, and
+  order it against the other homepage sections. Two presets to start from. Nothing
+  appears until one is built and published — *2.60.325*
+
 
 ## Phase 6 — Product page
 
@@ -478,6 +538,16 @@ something half-right.
   real "awaiting approval" message. Must have been built in a session this plan was
   never updated to reflect
 - [x] Related and recently viewed — was already registered and never ticked. Present in `ModuleRegistry`, settings at Appearance → Cart panel — *verified 2.60.91*
+- [ ] **Five whole product pages to choose from, built and photographed, switched
+  off.** *"give me 5 different ideas surrounding related to the attachment to choose
+  from. for desktop and mobile, both 5 each designs."* Ledger, Dossier, Counter, Deck
+  and Marquee — whole pages at their own addresses behind the admin login, drawn on
+  the real catalogue, each answering the scrolling-tab idea with a different mechanism
+  (a dissolving underline row, a pinning pill row, a sliding segmented control, a shelf
+  of books whose tab row **is** the panel, a full-bleed ink band). Catalog → Product
+  page → Design previews. **Waiting on the owner to pick a letter**; nothing ships
+  until he does — *previews at 2.60.325*
+
 
 ## Phase 7 — Account area
 
@@ -892,6 +962,48 @@ something half-right.
       row goes. Summary, payment options, mobile bag strip with its free-delivery bar, and the
       browsed count all update from one request, because `PayShipRules` measures its COD window
       against the total and a single add can withdraw the selected method — *2.60.116*
+- [x] ▲ **A set plus the same product loose made the order unplaceable.** The owner's
+  report. Nothing was applied twice: the set's member claim and the shopper's own loose
+  line summed to a demand of two against a one-unit shelf, and the shop refused itself —
+  *"Only 1 of … is left"*, and no order. Reproduced end to end before anything was
+  designed. `SetStockReconciler` now takes the loose line out **while the shopper is
+  looking at the basket**, never inside `place()`, which is `CartService::claimStock()`'s
+  own rule — and that is also what makes the totals, the item count and the free-delivery
+  bar follow, because they are read off the basket afterwards. Measured: (2 items) /
+  AED 289 / 2 rows → (1 item) / AED 199 / 1 row, and the order places. A basket with no
+  set in it costs **zero** extra queries — *2.60.325*
+- [x] ▲ **The cart's set row was clipping its own name and stepper, and the popup was
+  clipped by the items list.** Not the controls — the layout: the squeezed cart gives
+  every row a fixed height with `overflow:hidden` and `justify-content:center`, so a set
+  row taller than an ordinary one was cut equally at both ends. Proved with
+  `document.elementFromPoint`, because `getBoundingClientRect()` cannot see a clip. And
+  the set-row controls were moving **every** row on the cart page; there are two
+  independent sets now — Appearance → Cart page → Product rows and → Set rows — and
+  neither can reach the other's rows. Thirteen sliders on the Set screen that were drawn
+  and wired to nothing now work — *2.60.325*
+- [x] **The Place order button freezes the page and shows what is happening.** Press →
+  a blur with a filling ring and *"Placing your order…"* → the server answers → an
+  animated tick → the order-received page. Press to tick, measured on a real order:
+  **160ms at 390, 100ms at 1280.** It branches on the server's own `placed` / `confirm` /
+  `redirect` answer and **never on a gateway id**; `place()` itself is untouched. Every
+  failure path takes it down and says what happened, and at 45 seconds with no answer it
+  says the order **may already have been placed** and does not invite a retry, because
+  the request was sent. Pressing twice cannot place two orders. No setting — the owner
+  asked for the behaviour, not a switch — *2.60.325*
+- [x] **The instalment providers' return leg.** `GET /checkout/pending` was a one-line
+  closure that threw the order number away and bounced to an unchanged checkout. It is a
+  controller now that **writes nothing** (a GET that changes an order is a GET a
+  prefetcher can fire), resolves the order by `kbb_last_order` + `hash_equals` so a real
+  order number and an invented one get the same sentence and the same destination, and
+  **forwards a paid order to its receipt** rather than telling it that it failed. The
+  tick is never drawn for a payment the shop has not confirmed; COD is confirmed by
+  `journey()`, which is what stops every cash sale spinning for ever — *2.60.325*
+- [ ] ▲ **A shopper who abandons at Tabby or Tamara comes back to an empty basket.**
+  Pre-existing: `place()` marks the cart `converted` inside the transaction that writes
+  the order and nothing on the return leg puts it back. Named precisely rather than
+  half-done, because undoing it releases the stock and the coupon. **In flight** —
+  *2.60.326*
+
 
 ## Phase 8b — Admin screens, engine parity and the import foundation *(2.60.117 → .125)*
 
@@ -1820,6 +1932,16 @@ pin that looks applied and is not is worse than none.**
   and the server decides independently of it: `place()` attaches an order to an
   existing customer row whenever a guest types the email address of one, so "this
   order has a customer" is not "this shopper has an account"
+- [x] **A cancelled order can finally release the buyer's held money.** Orders → (the
+  order) → Items → Release the hold. Until now nothing in this shop could: the endpoint
+  was live and had no button, so a cancelled Tabby or Tamara order left the buyer's
+  payment plan alive at the provider for up to 180 days. `php artisan
+  payments:release-hold` is the escape hatch — *2.60.325*
+- [x] **Gateway webhooks have a screen.** Store → Payments → Tamara → Webhook & limits →
+  Register the webhook. The Tamara and Tabby admin endpoints existed and had **no
+  caller**, so an order Tamara approved after the shopper closed the tab sat at
+  *pending* for ever, holding its stock and its coupon — *2.60.325*
+
 
 ## Phase 12 — Performance and SEO
 
@@ -2029,6 +2151,33 @@ a fake success toast and saves nothing).
   product cards, the quick-view and the frequently-bought-together strip now emit real
   `srcset`/`sizes` against generated variants — *2.60.205*. Written up with the numbers in
   `docs/IMAGE-PIPELINE-AND-CACHE.md`. The cache-header half is still open
+- [x] ▲ **The fonts were the problem, and the first brief about it was wrong.** The
+  owner's own PageSpeed reports named a **4,369 ms critical path** and all of it was the
+  two Google font origins — the lane parsed both 2.3 MB reports and corrected an
+  integrator brief that had started from an audit sitting under *Passed*. Poppins and
+  Cairo are served by this shop now. **Mobile 76 → 86, desktop 88 → 99**, measured.
+  Banner pictures are delivered at the size the frame asks for on **both** banner types:
+  a phone takes 43 KB where it took 113 KB. Accessibility is stuck at 96 on 108 contrast
+  failures — fixing those means darkening the brand pink, which is the owner's call.
+  Cache headers and HSTS remain his to do on the server — *2.60.325*
+- [x] **Opening the admin console stopped waiting for the last byte of a 3.4 MB
+  document.** The owner's screenshot was the console part-way through loading, with
+  sub-menus missing — not a rendering fault, the clock. Twenty-one sidebar rows were
+  registered by screen partials whose scripts run at **98.9%** of the document. They are
+  declared at build time now and the dashboard asks for its numbers at byte 189,561
+  instead of byte 1,337,459. **Measured on a throttled load: a usable sidebar at 16.0s →
+  3.5s**, with no half-built state in between — *2.60.325*
+- [x] ▲ **The owner's brand colour had never reached five of his pages.** The journal, an
+  article, the review wall, the skin quiz and `/app` each carry their own `<head>` and do
+  not extend the store layout, and the composer that supplies the accent is bound to the
+  layout — so `$kbbAccent` was not empty there, it was **never defined**. All five
+  hard-code the original pink; the skin quiz uses it twelve times plus fourteen of
+  `--pink-deep`. Site width was missing on three of them. One writer now, read by the
+  composer and by one partial six documents include, at **zero bytes** on shops that have
+  not moved the colour. The self-hosted webfont still does not reach them, and the
+  arithmetic for why that is not a free swap is in `docs/BG-STANDALONE-DOCUMENTS.md` —
+  *2.60.326*
+
 
 ## Phase 13 — Data migration  *(one-time, idempotent Artisan command)*
 
@@ -2960,6 +3109,27 @@ a time.
 
 **Not started. No code, no schema, no routes.** This entry exists so the shape
 is agreed before anyone writes the first middleware.
+- [x] ▲ **The shop was handing the owner's secret admin address to every logged-out
+  shopper.** He found it on the order-tracking page. The link was never wrong: one line
+  in the application's start-up file set the guest redirect for the **whole shop** while
+  its comment claimed it was for the back office, so every unauthenticated request behind
+  any guard answered with `/<admin_path>/login` — and that address then sat in a
+  stranger's address bar, history and referrer. It decides by the matched route's
+  **guard** now, never by a path match, because `admin_path` is configurable, and it
+  fails towards the storefront. Registered twice on purpose: `bootstrap/` is on
+  `BuildPackage::NEVER_SHIP`, so the provider carries it too or the fix could never
+  travel in a package. A sweep of all 52 storefront pages requested logged out now fails
+  the build on the admin address appearing in any body or header — *2.60.325*
+- [x] ▲ **And the same leak through a second door: 398 admin endpoints at fixed public
+  addresses.** `curl -sI …/admin-api/security` returned `Location: …/<admin_path>/login`
+  to anybody. Measured before designing, which changed the answer: all 47 console calls
+  expect JSON, but **33 console screens read a 404 from their own endpoints as "the route
+  cache is stale"** (53 occurrences), so a blanket 404 would have sent the owner to clear
+  caches over an expired login. Only the branch that actually printed the address
+  changed — a browser's own Accept gets a bare 404, JSON calls still get 401, and the
+  expired-session screen was shot twice, with the change live and neutralised, to prove
+  it byte-identical — *2.60.326*
+
 
 ## Translation Module — Arabic  *(owner-approved 2.60.199; foundation in flight)*
 
