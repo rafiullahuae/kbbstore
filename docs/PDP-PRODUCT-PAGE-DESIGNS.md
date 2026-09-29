@@ -26,7 +26,7 @@ admin login.
 | **Mobile, all five side by side** | `docs/lane-pdp-shots/sheet-390.png` |
 | **Desktop, all five side by side** | `docs/lane-pdp-shots/sheet-1280.png` |
 
-And three more that answer the questions the whole-page sheets cannot:
+And four more that answer the questions the whole-page sheets cannot:
 
 | | |
 |---|---|
