@@ -96,13 +96,13 @@
   "dossier-390-sticky": {
     "topInViewport": 352,
     "onScreen": true,
-    "scrolledTo": 925
+    "scrolledTo": 939
   },
   "dossier-390": {
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 2598,
+    "pageHeight": 2612,
     "galleryFrame": {
       "w": 346,
       "h": 346,
@@ -116,55 +116,55 @@
       "h": 68,
       "y": 662
     },
-    "brandY": 717,
+    "brandY": 731,
     "title": {
       "w": 210,
       "h": 78,
-      "y": 742
+      "y": 756
     },
     "titleFont": "20px",
     "money": {
       "w": 82,
       "h": 58,
-      "y": 742
+      "y": 756
     },
     "moneyFont": "21px",
     "priceBesideTitle": true,
     "ratingBar": {
       "w": 308,
       "h": 19,
-      "y": 851
+      "y": 865
     },
     "ratingFillPct": "96%",
     "blurb": {
       "w": 308,
       "h": 66,
-      "y": 884
+      "y": 898
     },
     "blurbLineHeight": "21.87px",
     "blurbMasked": true,
     "readMore": {
       "w": 104,
       "h": 18,
-      "y": 955
+      "y": 969
     },
     "bundleBars": 3,
     "setRows": 0,
     "addToCart": {
       "w": 182,
       "h": 52,
-      "y": 1277
+      "y": 1291
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 1277
+      "y": 1291
     },
     "tabs": 5,
     "tabRow": {
       "w": 346,
       "h": 57,
-      "y": 1382
+      "y": 1396
     },
     "tabRowScrolls": true,
     "tabRowOverflowPx": 333,
@@ -633,7 +633,7 @@
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 2365,
+    "pageHeight": 2379,
     "galleryFrame": {
       "w": 346,
       "h": 346,
@@ -647,17 +647,17 @@
       "h": 68,
       "y": 662
     },
-    "brandY": 717,
+    "brandY": 731,
     "title": {
       "w": 196,
       "h": 26,
-      "y": 742
+      "y": 756
     },
     "titleFont": "20px",
     "money": {
       "w": 96,
       "h": 24,
-      "y": 742
+      "y": 756
     },
     "moneyFont": "21px",
     "priceBesideTitle": true,
@@ -666,32 +666,32 @@
     "blurb": {
       "w": 308,
       "h": 66,
-      "y": 803
+      "y": 817
     },
     "blurbLineHeight": "21.87px",
     "blurbMasked": true,
     "readMore": {
       "w": 104,
       "h": 18,
-      "y": 874
+      "y": 888
     },
     "bundleBars": 0,
     "setRows": 3,
     "addToCart": {
       "w": 182,
       "h": 52,
-      "y": 1193
+      "y": 1207
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 1193
+      "y": 1207
     },
     "tabs": 5,
     "tabRow": {
       "w": 346,
       "h": 57,
-      "y": 1298
+      "y": 1312
     },
     "tabRowScrolls": true,
     "tabRowOverflowPx": 333,
@@ -713,7 +713,7 @@
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 2393,
+    "pageHeight": 2407,
     "galleryFrame": {
       "w": 346,
       "h": 346,
@@ -727,17 +727,17 @@
       "h": 68,
       "y": 662
     },
-    "brandY": 717,
+    "brandY": 731,
     "title": {
       "w": 210,
       "h": 52,
-      "y": 742
+      "y": 756
     },
     "titleFont": "20px",
     "money": {
       "w": 82,
       "h": 24,
-      "y": 742
+      "y": 756
     },
     "moneyFont": "21px",
     "priceBesideTitle": true,
@@ -746,32 +746,32 @@
     "blurb": {
       "w": 308,
       "h": 66,
-      "y": 829
+      "y": 843
     },
     "blurbLineHeight": "21.87px",
     "blurbMasked": true,
     "readMore": {
       "w": 104,
       "h": 18,
-      "y": 900
+      "y": 914
     },
     "bundleBars": 3,
     "setRows": 0,
     "addToCart": {
       "w": 182,
       "h": 52,
-      "y": 1222
+      "y": 1236
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 1222
+      "y": 1236
     },
     "tabs": 5,
     "tabRow": {
       "w": 346,
       "h": 57,
-      "y": 1327
+      "y": 1341
     },
     "tabRowScrolls": true,
     "tabRowOverflowPx": 333,

@@ -246,8 +246,14 @@
 .pv-b .pv-gal{padding-block-start:14px}
 .pv-b .gmain{border-radius:20px}
 .pv-b .gthumbs{margin-block-start:10px;gap:8px;justify-content:center}
+/* ▲ THE TOP PADDING IS THE SAME 34px THE CARD OVERLAPS BY, and that is the fix
+     rather than tidiness. At 20px the brand line sat INSIDE the overlap and the
+     thumbnail strip painted over it — measured on the set, where the brand is
+     long enough to reach the middle of the strip: "B———— of Joseon". A
+     z-index alone is the wrong answer to a layout that puts two things in the
+     same place; the right one is not to put anything there. */
 .pv-b .pv-card-buy{background:#fff;border-radius:22px;box-shadow:var(--sh-m);border:1px solid var(--pv-faint);
-    padding:20px 18px 22px;margin-block-start:-34px;position:relative;z-index:3}
+    padding:34px 18px 22px;margin-block-start:-34px;position:relative;z-index:3}
 .pv-b .pv-assure{margin-block-start:22px;padding-inline:2px}
 
 /* ═══════════════════════════════════════════════════════════════════════════
