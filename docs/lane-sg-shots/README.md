@@ -95,3 +95,56 @@ control — only which price the rest of the shop reads off it.
 `measurements.json` and `measurements-before.json` are what the two runs
 printed: every price as TEXT, every badge, the cart lines and total, and
 `scrollWidth` at both widths.
+
+## And on the public feed
+
+Not photographed — it is JSON — but measured on the same preview, before and
+after, on both endpoints:
+
+| | `price` | `sale_price` | what the checkout takes |
+|---|---|---|---|
+| Night Repair Set, before | 18000 | `null` | 16650 |
+| Night Repair Set, after | 18000 | **16650** | 16650 |
+| Barrier Rescue Set, after | 17500 | **16000** | 16000 |
+| Glow Starter Set, after | 16500 | **14500** | 14500 |
+
+The feed states its own rule in `Product::toApi()`: `charged = sale_price ??
+price`. For a rule-priced set that evaluated to `products.price`, because
+`advertisedSalePrice()` returned early on the raw `sale_price` column being
+NULL — which is exactly what the editor writes for a set priced by a rule.
+
+`set_price_mode`, `set_discount` and `set_price_basis` are **absent from both
+responses**, asserted by name in `SetPriceOnGridsTest` as well as in
+`SetApiSecurityTest`.
+
+## What this lane did NOT close
+
+**Price sorting and the price-range facet still run on `products.price`.**
+`EffectivePrice::sql()` is SQL over that column and its sale window, evaluated
+across the whole catalogue before a page is in hand, so it cannot see a rule:
+
+* `discount_percent` / `discount_amount` — sorts and filters at the derived
+  price **as at the last time anybody saved the set**. On the fixture above the
+  sort key is 18000 and 17500 while the tiles read 16650 and 16000.
+* `fixed` with an anchor — sorts and filters at the typed figure, **before** the
+  reduction: key 16000 against a tile of 14500.
+
+So a shopper sorting "Price, low to high" can see a set placed later than its
+own printed price deserves, and a set can be missing from the band its printed
+price falls in. **It is bounded**: the key is never below the printed price, so
+a set is never sorted cheaper than it is; and it is zero for every set an
+operator has not anchored, which is every set built before Lane SP2.
+
+Closing it needs the parts total in SQL — see `SetPricing::prime()`'s docblock
+for the two shapes that were written out and rejected, and why the percentage's
+`intdiv(..., 10000)` is the part that does not travel between MySQL and SQLite
+without two spellings.
+
+**A rule-priced set can show a `-N%` badge and be absent from the "On sale"
+facet.** `compareAtPrice()` for a derived set is `products.price`, so as soon as
+a member is marked down the tile draws a strikethrough and a percentage against
+the last-saved figure — which is what the set's own product page has always
+done, and this lane makes the grids agree with it. `EffectivePrice::whereOnSale()`
+asks `sale_price < price` in SQL, and the editor keeps `sale_price` NULL under a
+rule, so the facet never lists it. Whether a derived set *should* read as "on
+sale" is a pricing-policy question for the owner, not a column list.
