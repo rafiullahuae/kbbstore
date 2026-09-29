@@ -52,6 +52,16 @@ class CartController extends Controller
         ...\App\Support\SetPricing::COLUMNS,
     ];
 
+    /**
+     * What SetStockReconciler took out of the basket on this request, so
+     * payload() can hand the page the sentence that says so. Empty on every
+     * request that changed nothing, which is every request on a shop with no
+     * set in anybody's basket. (Lane SEC)
+     *
+     * @var list<array{product: string, set: string, removed: int, left: int}>
+     */
+    private array $setStockNotices = [];
+
     public function __construct(
         private CartService $carts,
         private CouponService $coupons,
@@ -281,10 +291,61 @@ class CartController extends Controller
      * eight lines equals the cost of one — rather than a number, because a
      * total is a ceiling that a generous budget hides an N+1 inside.
      */
+    /**
+     * ONE JAR, CLAIMED TWICE — reconciled before the page is drawn. (Lane SEC)
+     *
+     * A basket holding a set AND a product that is inside it asked for the same
+     * unit twice and could not be paid for at all: Place order answered "1025
+     * Dokdo Toner (in Medicube booster set) is sold out" for ever, because
+     * nothing the shopper could press changed the basket. The owner's decision
+     * is that the LOOSE LINE GOES AND THE SET STAYS, and it happens here —
+     * while they are looking at the basket — rather than inside place(), so the
+     * subtotal, the item count and the free-delivery bar all describe what is
+     * actually left. See App\Services\SetStockReconciler.
+     *
+     * AFTER the load and not before it: the reconciler reads the set membership
+     * rows SetEagerLoad has just fetched, so it costs no query of its own for
+     * those. A basket with no set in it costs NOTHING AT ALL — one cached
+     * settings read and an in-memory scan — which is why the ceilings in
+     * StorefrontQueryBudgetTest do not move.
+     *
+     * AND THE SECOND HYDRATION ONLY HAPPENS WHEN A LINE ACTUALLY WENT. The
+     * relation in memory still describes the basket as it was, and every figure
+     * the page prints is read off it.
+     */
     private function loadCart(Request $request, bool $create = true)
     {
         $cart = $this->carts->current($request, create: $create);
 
+        $this->hydrate($cart);
+
+        $took = app(\App\Services\SetStockReconciler::class)->reconcile($cart);
+
+        if ($took !== []) {
+            $this->hydrate($cart);
+        }
+
+        /*
+         * ACCUMULATED ACROSS THE REQUEST, NOT ASSIGNED. Several methods on this
+         * controller call loadCart() TWICE — remove() and coupon() each load
+         * once to do the work and again to render the reply. The second call
+         * finds a basket this one has already reconciled and correctly reports
+         * that it took nothing, so an assignment here would throw away the
+         * sentence the first call earned and the reply would say "Removed" with
+         * no explanation of why a second line went with it.
+         */
+        $this->setStockNotices = array_merge($this->setStockNotices, $took);
+
+        return $cart;
+    }
+
+    /**
+     * What a cart page, a drawer and every write fragment need loaded, in one
+     * batch. Split out of loadCart() so the reconciler above can ask for it
+     * again after it has taken a line out, without the two copies drifting.
+     */
+    private function hydrate($cart): void
+    {
         $cart?->load([
             'items' => fn ($q) => $q->orderBy('id'),
             'items.product' => fn ($q) => $q->select(self::LINE_COLUMNS),
@@ -322,8 +383,6 @@ class CartController extends Controller
         if ($cart !== null) {
             $this->carts->markDisplayLoaded();
         }
-
-        return $cart;
     }
 
     /**
@@ -396,6 +455,14 @@ class CartController extends Controller
              * was ever missing.
              */
             'kbbCartPage' => app(\App\Services\CartPage::class),
+            /*
+             * The sentences SetStockReconciler wrote, if it took anything out
+             * of the basket. An empty array on every ordinary request, and the
+             * views render nothing at all for an empty array — so the cart page
+             * and the drawer are byte-identical to what they were unless a set
+             * has actually claimed the last of something. (Lane SEC)
+             */
+            'setStockNotices' => $this->setStockNotices,
             'cart' => $cart,
             'items' => $cart?->items ?? collect(),
             'totals' => $cart ? $this->carts->totals($cart, $country) : $empty,
@@ -477,6 +544,35 @@ class CartController extends Controller
     private function fragments($cart, Request $request, ?string $toast = null, ?string $error = null): JsonResponse
     {
         $payload = $this->payload($cart, $request);
+
+        /*
+         * ONE JAR, CLAIMED TWICE — said at the moment it happens. (Lane SEC)
+         *
+         * Adding a product that is already inside a set in the basket, when the
+         * shelf cannot cover both, makes SetStockReconciler take the new line
+         * straight back out. Without this the shopper presses Add to bag,
+         * nothing appears, and the toast says "Added to bag" — which is the
+         * shape of a bug even though the basket is right.
+         *
+         * The sentence replaces the toast rather than joining it, because it
+         * IS the answer to what the press did. The cart page and the checkout
+         * print the same sentence from the same partial when they are rendered;
+         * this is the third surface, and the only one with no room for a band.
+         */
+        if ($this->setStockNotices !== []) {
+            $first = $this->setStockNotices[0];
+
+            $toast = $first['left'] === 0
+                ? __('store.cart.set_took_the_last_one', [
+                    'product' => $first['product'],
+                    'set' => $first['set'],
+                ])
+                : __('store.cart.set_took_some', [
+                    'product' => $first['product'],
+                    'left' => $first['left'],
+                    'set' => $first['set'],
+                ]);
+        }
 
         // The cart-page body is only rendered when the client is actually
         // showing it. Off the cart page that was a full Blade view compiled and

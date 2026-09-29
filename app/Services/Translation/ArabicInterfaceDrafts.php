@@ -396,6 +396,11 @@ final class ArabicInterfaceDrafts
             'store.cart.delivery_at_checkout' => 'يُحتسب التوصيل عند إتمام الطلب',
             'store.cart.checkout_cta' => 'إتمام الطلب ←',
             'store.cart.continue_shopping_link' => 'أو تابع التسوق',
+            // Lane SEC. Drafts, like everything else in this file: read them at
+            // Translation -> Strings and correct anything you would say
+            // differently. No markup in either, matching their English.
+            'store.cart.set_took_the_last_one' => 'تمت إزالة :product من سلتك: آخر قطعة منه موجودة داخل :set الذي تشتريه، لذا لا يمكن شراؤه بشكل منفصل أيضًا.',
+            'store.cart.set_took_some' => 'تم تخفيض :product إلى :left في سلتك: الباقي منه موجود داخل :set الذي تشتريه، ولا تكفي الكمية المتوفرة للاثنين.',
 
             'store.cart_drawer.browsed_sold_out' => 'نفدت الكمية',
             'store.cart_drawer.browsed_in_bag' => 'في حقيبتك — أضف واحدًا آخر',

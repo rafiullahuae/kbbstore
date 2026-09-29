@@ -406,13 +406,41 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * check that matters here: it is untouched and green, which is what says
      * twelve keys is the WHOLE of the difference and no thirteenth crept in
      * with the merge.
+     *
+     * ── AND A THIRD LANE MET THEM HERE: 1,035 -> 1,037, LANE SEC ──────────
+     *
+     * Same story one round later. Lane SEC branched when the figure was 1,026,
+     * added two and wrote 1,028; by the time it was merged FB's three and
+     * BN2's nine had already met each other at 1,035. The merged truth is
+     * 1,023 + 3 + 9 + 2 = 1,037. THREE lanes have now advanced this one number
+     * from three different bases, which is the argument for the rule the
+     * sibling case enforces: the figure is a consequence, and the enumeration
+     * BY NAME is the thing that actually says what changed.
+     *
+     * ── LANE SEC'S OWN TWO ─────────────────────────────────────────────────
+     *
+     * Two more, and they are the set-stock notice's:
+     * store.cart.set_took_the_last_one and store.cart.set_took_some — what a
+     * shopper reads when a set in their basket has taken the last of something
+     * they also added loose and the loose line has gone. Before this lane the
+     * whole basket simply could not be paid for, so there was nothing to say
+     * and no string to say it with.
+     *
+     * They reach an EXISTING install through a migration of their own --
+     * 2027_05_20_000100_seed_set_stock_notice_arabic_drafts -- for the reason
+     * the paragraph above gives: both earlier seeding migrations have already
+     * run on this shop and a migration that has run does not run again.
+     *
+     * The sibling case that enumerates the untranslated set BY NAME is
+     * untouched and green, which is what says these two are the whole of the
+     * difference. `translated` is still 0 and both are DRAFTS.
      */
     ArabicShop::on();
 
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1035, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1037, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

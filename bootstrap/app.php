@@ -101,8 +101,43 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->append(\App\Http\Middleware\CheckRedirects::class);
 
-        // Unauthenticated back-office requests go to the admin login, not /login.
-        $middleware->redirectGuestsTo(fn () => route('admin.login'));
+        /*
+         * THE GUEST REDIRECT, DECIDED BY AUDIENCE. (Lane SEC)
+         *
+         * ▲ THIS LINE USED TO READ:
+         *
+         *     // Unauthenticated back-office requests go to the admin login, not /login.
+         *     $middleware->redirectGuestsTo(fn () => route('admin.login'));
+         *
+         * The comment described a scope the call does not have.
+         * redirectGuestsTo() sets three APPLICATION-WIDE statics, so every
+         * unauthenticated request to anything behind any guard answered with
+         * the admin login -- including /my-account/orders and every other page
+         * behind `auth:customer`. A logged-out shopper who clicked "Your
+         * orders" was handed the owner's secret admin address in their address
+         * bar and their browser history. `admin_path` is a secret everywhere
+         * else in this codebase (CLAUDE.md, SettingController::PUBLIC_KEYS,
+         * Mail\NewOrderAlert); this was the one door it walked out of.
+         *
+         * App\Support\GuestRedirect decides from the matched route's GUARD --
+         * `auth:admin` is the back office, everything else is a shopper -- and
+         * never from a string match on the path, because `admin_path` is
+         * configurable and a shop that changed it would fall through to the
+         * wrong branch.
+         *
+         * AND LIKE THE TWO REGISTRATIONS ABOVE, THIS ONE CANNOT SHIP.
+         * bootstrap/ is on BuildPackage::NEVER_SHIP and UpdateGuard's forbidden
+         * list. AppServiceProvider::boot() sets the same three statics to the
+         * same closure, from a file that DOES ship, and its call lands after
+         * this one (this callback runs when the HTTP kernel is resolved, which
+         * is before providers boot), so the provider's registration is the one
+         * that reaches the live shop and the one that wins. Both together are
+         * safe: same closure, same statics.
+         * tests/Feature/AdminPathNeverLeaksTest.php pins both halves.
+         */
+        $middleware->redirectGuestsTo(
+            fn (\Illuminate\Http\Request $request) => \App\Support\GuestRedirect::for($request)
+        );
 
         /*
          * THE ONE COOKIE THE BROWSER WRITES, AND THEREFORE THE ONE THAT MUST

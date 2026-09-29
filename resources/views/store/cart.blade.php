@@ -86,6 +86,29 @@
              The id stays `cartLead` so cart.js (Lane R) keeps updating the same
              element; only the class is renamed. --}}
         <h1>{{ __('store.cart.heading') }} <span class="cart-count" id="cartLead">({{ trans_choice('store.cart.item_count', $totals['item_count']) }})</span></h1>
+{{-- ONE JAR, CLAIMED TWICE (Lane SEC). Rendered only when a set in this basket
+     has taken the last of something the shopper also added loose;
+     App\Services\SetStockReconciler removed the loose line and this says so.
+
+     ZERO BYTES WHEN THERE IS NOTHING TO SAY, which is what this file's own
+     opening comment sets out and what StorefrontEnglishUnchangedTest requires.
+     Two things buy it, and this cost a round of the guard to learn:
+
+       * The block starts at COLUMN 0 and the comment's closer TOUCHES the
+         conditional, so no indentation of its own survives. Written indented,
+         on its own line, it added one blank line to every cart page in the shop.
+       * PHP swallows the single newline after the conditional's compiled
+         closing tag, so the line contributes nothing either.
+
+     AND NO BLADE METASYNTAX IN THE PROSE. A comment is compiled AFTER the
+     directives inside it, so a literal comment-closer written in a sentence
+     ends the comment where it stands and hands the rest of the paragraph to the
+     compiler as template. That is a 500 on the cart page, and it is what
+     happened here.
+
+     ABOVE #kbbCartNotices and not inside it: cart.js owns that div and replaces
+     its contents on every quantity change, which would wipe the one sentence
+     explaining why the basket looks different. --}}@if ((($setStockNotices ?? [])) !== [])@include('partials.set-stock-notice')@endif
         <div id="kbbCartNotices"></div>
         <div id="cartInner">
             @include('store.cart-inner')
