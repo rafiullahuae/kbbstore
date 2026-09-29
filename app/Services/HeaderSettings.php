@@ -143,6 +143,58 @@ class HeaderSettings
         'support_label'   => ['text',   'Wording', '24/7 support', ''],
         'support_icon_bg' => ['colour', 'Icon background', '#E8F7EE', ''],
         'support_icon_fg' => ['colour', 'Icon colour', '#1F9D55', ''],
+
+        /*
+         * ── THE FLAG BAR ──────────────────────────────────────────── Lane FB ──
+         *
+         * The owner: "i need thin bar as same as attached, having uae flat,
+         * then text and then korea flag. (This bar is only for mobile, keep
+         * this turnef off for desktop by default)."
+         *
+         * ▲ THESE ARE THE ONE PLACE IN THIS FILE WHERE A NEW DEFAULT IS NOT
+         *   "whatever the page does today". CLAUDE.md rule 1 says a new setting
+         *   ships at the value the page already has, with one exception — "a
+         *   default the owner asked for in as many words" — and the sentence
+         *   above is that exception, quoted. `fb_mobile` therefore ships ON and
+         *   `fb_desktop` ships OFF, which is the whole of what moves when this
+         *   package is applied: a 30px strip appears at the top of the phone
+         *   shop and the desktop shop does not change by one pixel.
+         *
+         * They live in header_settings and not in a module of their own because
+         * that is ONE ROW, already read, already memoised, and already loaded by
+         * partials/header.blade.php on every page. A settings module of its own
+         * would be a second `settings` read on the critical path of every page
+         * of the shop to draw thirty pixels — StorefrontQueryBudgetTest is a
+         * budget, and this spends none of it.
+         *
+         * WORDING IS BLANK BY DEFAULT, AND BLANK IS NOT EMPTY. An empty
+         * `fb_text` means "use the line this app ships", which is
+         * `store.flagbar.text` — a translated key, so /ar renders Arabic the
+         * day somebody approves the draft. Typing something here replaces it in
+         * BOTH languages, which is the same trade every other operator-typed
+         * string on this shop makes (App\Services\SlimFooter's header sets it
+         * out) and is the reason the shipped line is a key rather than a
+         * default string sitting in this array.
+         */
+        'fb_mobile'       => ['bool',   'Show it on phones', true,
+                              'The thin strip above the header, with the two flags. On, because this is what the bar was asked for.'],
+        'fb_desktop'      => ['bool',   'Show it on desktop', false,
+                              'Off, so nothing above 900px wide changes. Turn it on to run the same strip across the desktop header.'],
+        'fb_text'         => ['text',   'Wording', '',
+                              'Leave it empty to use the line the shop ships — which is translated, so an Arabic page shows Arabic. Typing here replaces it in every language.'],
+        'fb_flags'        => ['bool',   'Show the two flags', true,
+                              'The UAE flag at the reading start and the Korean flag at the end. On an Arabic page the pair swaps sides with the text.'],
+        'fb_height'       => ['range',  'Bar height', 30,
+                              'Reserved in the stylesheet, so the strip takes up its own height before anything has loaded and the header below it never jumps.',
+                              ['min' => 22, 'max' => 56, 'step' => 1, 'unit' => 'px']],
+        'fb_size'         => ['range',  'Text size', 12, '', ['min' => 9, 'max' => 18, 'step' => 1, 'unit' => 'px']],
+        'fb_flag_h'       => ['range',  'Flag height', 14, 'The width follows: both flags are drawn 3:2, which is their official ratio.',
+                              ['min' => 8, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'fb_bg'           => ['colour', 'Background', '#FDEFF4', ''],
+        'fb_ink'          => ['colour', 'Text colour', '#E0567B', ''],
+        'fb_pill'         => ['bool',   'Outline around the words', true,
+                              'The rounded border the words sit inside. Off leaves the line bare on the strip.'],
+        'fb_border'       => ['colour', 'Outline colour', '#F0B6C9', ''],
     ];
 
     /** tab key => [label, description, field keys] */
@@ -164,6 +216,9 @@ class HeaderSettings
                       ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
+        'flagbar' => ['Flag bar', 'The thin strip above the header: the UAE flag, one short line, the Korean flag. It ships on for phones and off for desktop.',
+                      ['fb_mobile', 'fb_desktop', 'fb_text', 'fb_flags', 'fb_height', 'fb_size', 'fb_flag_h',
+                       'fb_bg', 'fb_ink', 'fb_pill', 'fb_border']],
     ];
 
     public function __construct(
@@ -342,6 +397,76 @@ class HeaderSettings
             $c['nav_uppercase'] ? 'hd-upper' : '',
             $c['trending_hide'] ? 'hd-trendhide' : '',
         ])));
+    }
+
+    /**
+     * ── THE FLAG BAR, in three methods ──────────────────────────────────────
+     *
+     * Deliberately the same shape as bodyClass() and cssVariables() above: a
+     * boolean the template branches on, a class list for the structural
+     * choices CSS cannot express, and the appearance as custom properties on
+     * the element. The stylesheet is then static and cacheable, and one shop's
+     * colours never reach another shop's cache.
+     */
+
+    /** Whether the strip is drawn at all. */
+    public function flagBarOn(): bool
+    {
+        $c = $this->all();
+
+        /*
+         * BOTH OFF DRAWS NOTHING — not a hidden element, no element. A shop
+         * that has switched the strip off on both widths should not be paying
+         * for its markup, and a `display:none` strip is still a node in every
+         * page of the shop and still in the accessibility tree of any browser
+         * that gets the CSS late.
+         */
+        return (bool) $c['fb_mobile'] || (bool) $c['fb_desktop'];
+    }
+
+    /**
+     * Which widths draw it, as classes.
+     *
+     * The two switches are INDEPENDENT rather than one three-way select,
+     * because "phones only", "desktop only", "both" and "neither" are four
+     * real answers and the owner asked for the first of them. `kfb-m` and
+     * `kfb-d` each turn the strip on inside one media query and nothing else
+     * turns it on at all, so a strip with neither class is invisible at every
+     * width — which is why flagBarOn() above refuses to render one.
+     */
+    public function flagBarClass(): string
+    {
+        $c = $this->all();
+
+        return trim(implode(' ', array_filter([
+            $c['fb_mobile'] ? 'kfb-m' : '',
+            $c['fb_desktop'] ? 'kfb-d' : '',
+            $c['fb_pill'] ? 'kfb-pill' : '',
+        ])));
+    }
+
+    /**
+     * The strip's appearance, as custom properties.
+     *
+     * It sits OUTSIDE <header>, so it cannot inherit the properties
+     * cssVariables() puts on that element and carries its own five. Every
+     * colour here has been through ModuleSchema::cast() with this class's
+     * POLICY, whose `hex` axis is `strict` — Color::isValidHex() or the
+     * schema default, never the stored string — so nothing that is not a hex
+     * colour can reach a style attribute from here.
+     */
+    public function flagBarStyle(): string
+    {
+        $c = $this->all();
+
+        return implode(';', [
+            '--kfb-h:' . (int) $c['fb_height'] . 'px',
+            '--kfb-s:' . (int) $c['fb_size'] . 'px',
+            '--kfb-fh:' . (int) $c['fb_flag_h'] . 'px',
+            '--kfb-bg:' . $c['fb_bg'],
+            '--kfb-ink:' . $c['fb_ink'],
+            '--kfb-bd:' . $c['fb_border'],
+        ]);
     }
 
     /**
