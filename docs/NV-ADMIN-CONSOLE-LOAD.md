@@ -129,6 +129,13 @@ shape is a `settings` lookup issued twice inside
 eager-loading `brand` and `category`, with the comment recording the 1,300-query
 version it replaced.
 
+`AdminColdLoadQueryBudgetTest` now pins both halves the way
+`StorefrontQueryBudgetTest` does for the shop — a ceiling per endpoint, and
+flatness: ten products against fifty, asserting the counts are identical. The
+admin had no budget at all before this, which is how the 1,300-query version of
+`products()` shipped in the first place. Mutation: drop the eager load and
+flatness reports 25 queries on 10 products against 105 on 50.
+
 **Nothing is fetched twice.** Six requests on a cold load, all distinct. Walking
 nine screens afterwards (`orders → catalog → settings → dash → orders → dash →
 catalog → media → seo`) produced one request per screen visit and no duplicates
