@@ -430,11 +430,17 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
  * THE FLAG BAR, above the header and inside the same @unless. (Lane FB)
  *
  * A PHP comment inside an @php block and NOT a Blade comment, for the reason
- * the footer's note below gives: Blade strips `{{-- --}}` and leaves the
+ * the footer's note below gives: Blade strips a Blade comment and leaves the
  * newline after it, so a note written that way would add one byte to every
- * page in the shop. Written this way it compiles to a bare <?php ?>, PHP
- * swallows the newline that follows, and the only bytes this change adds to a
- * page are the strip itself.
+ * page in the shop. Written this way it compiles to a bare PHP tag, whose
+ * close swallows the newline that follows, and the only bytes this change adds
+ * to a page are the strip itself.
+ *
+ * It also has to be written without the two Blade delimiters in it. Blade
+ * strips a Blade comment by a regex over the WHOLE template, inside an @php
+ * block as readily as outside one, so a note that quoted its own example lost
+ * the middle of the sentence in the compiled view — harmless, being a comment,
+ * and exactly the kind of harmless that reads as a mistake to the next person.
  *
  * INSIDE the @unless, because `bare` is the checkout: a page asking for a card
  * number does not carry a marketing strip, and the section that already says
