@@ -73,7 +73,7 @@
 {{-- Wrapper matches the theme's cart page shell (kbb-cart.css .kbb-cartpage). --}}
 <div class="kbb-cartpage{{ $kbbCartPage->bodyClass() }}" id="cartPage"{!! $kbbCartPage->styleAttr() !!}>
     <div class="wrap">
-        <a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.cart.continue_shopping') }}</a>
+        {{-- Why a shopper is looking at an empty basket after leaving for Tabby or Tamara; draws NOTHING on an ordinary visit (Lane PLC). ON THIS LINE, glued to the <a>: an @include on a line of its own would leave its own leading indentation and the newline of the comment above it in the rendered page, and this page is compared byte for byte against itself at the base commit. --}}@include('partials.checkout.return-notice')<a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.cart.continue_shopping') }}</a>
         {{-- The count sits in the heading rather than on a line of its own.
 
              The class is `cart-count`, NOT `lead`. `.lead` in kbb.css is the

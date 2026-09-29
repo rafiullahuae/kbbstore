@@ -90,7 +90,7 @@
     </div></header>
 
     <div class="co-received">
-        @if ($order)
+        {{-- The tick a shopper comes back to from Tabby or Tamara. Draws NOTHING for any other kind of order (cash on delivery and the card showed their tick on the checkout a moment ago) and nothing at all without an order, which is the state this page is walked in. Here rather than at the foot of the page because it reads `kbb_last_order`, which the Purchase pixel below consumes. ON THIS LINE, glued to the @if, because an include on a line of its own would leave its indentation and the comment's newline in a page this suite compares byte for byte. (Lane PLC) --}}@include('partials.checkout.placed-tick')@if ($order)
             @php
                 $signedIn = auth('customer')->check();
                 $shipping = is_array($order->shipping_address) ? $order->shipping_address : [];

@@ -62,6 +62,36 @@ interface PaymentGateway
     public function start(Order $order): PaymentStart;
 
     /**
+     * WHICH OF THE THREE JOURNEYS A SHOPPER IS SENT ON, ASKED OF THE GATEWAY.
+     *
+     * The same three words PaymentStart::$result already uses, and deliberately
+     * the same three: `placed` (nothing more to do — cash on delivery),
+     * `confirm` (the browser finishes the payment against a provider handle on
+     * this page — the card fields, Apple Pay and Google Pay), `redirect` (the
+     * shopper leaves this shop for the provider's own site — Tabby, Tamara).
+     *
+     * WHY IT IS ASKED AT ALL, when start() already answers it: start() answers
+     * it by opening a payment, which is a network call that mints an intent and
+     * cannot be made by a page that is merely DRAWING the checkout, or by the
+     * order-received page working out whether an order is finished. Both need
+     * the shape of the journey without taking a step along it.
+     *
+     * AND WHY IT IS A METHOD RATHER THAN A LIST OF GATEWAY IDS SOMEWHERE. This
+     * shop has already found six features that were wired in one place and not
+     * another; a `['tabby', 'tamara']` in a template or a service is a list that
+     * is wrong the first time a gateway is added and silent about it. A gateway
+     * says what it does, in the same file its start() lives in, so the two
+     * cannot drift — PaymentJourneyTest asserts that for the one gateway whose
+     * start() can be run without a network.
+     *
+     * Must never throw and must never call out to the network: it is asked
+     * while a page is rendering.
+     *
+     * @return 'placed'|'confirm'|'redirect'
+     */
+    public function journey(): string;
+
+    /**
      * The config fields the admin screen renders.
      *
      * ── THE FOURTH ELEMENT IS WHICH COLUMN THE FIELD BELONGS IN ─────────────

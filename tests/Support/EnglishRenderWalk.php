@@ -1609,6 +1609,61 @@ final class EnglishRenderWalk
                 'pattern' => '#<div class="kfb [^>]*>\s*<div class="kfb-in">.*?</div>\s*</div>\n#s',
                 'hits' => 31,
             ],
+
+            /*
+             * THE PLACE-ORDER OVERLAY — Lane PLC.
+             *
+             * The owner asked for it in as many words: "when press the PLACE
+             * ORDER button, it should freeze the page and come nice real time
+             * loading bar or filled circle with text, Placing your order…".
+             * CLAUDE.md rule 1 allows exactly one exception to "a new setting
+             * ships at the value the page already has" — a default the owner
+             * asked for in as many words — and this is a feature rather than a
+             * setting: there is no switch, it is simply what the button does
+             * now. So it ships on.
+             *
+             * WHAT IT DOES TO THE WALK, measured across all thirty-nine pages:
+             * ONE page moves, and at one point. (with a basket) /checkout, at
+             * byte 101353, where partials/checkout/placing-overlay's <style>,
+             * its <template> and its <script> are pushed into the scripts stack
+             * after partials/checkout/stripe-elements. The diff is one
+             * insertion:
+             *
+             *     before   …})();⏎    </script>⏎    ⏎<style>⏎/* Scoped to …
+             *     after    …})();⏎    </script>⏎    ⏎⏎<!--kbb-placing--><style>…
+             *
+             * — and the page picks up again at that same <style>, unchanged.
+             *
+             * EVERY OTHER PAGE IS BYTE FOR BYTE WHAT IT WAS, and two of them are
+             * worth naming because they draw this lane's other two partials:
+             *
+             *   /checkout/success  partials/checkout/placed-tick draws NOTHING
+             *                      without an order, and the walk requests this
+             *                      page with no `order` in the query string.
+             *   /cart              partials/checkout/return-notice draws NOTHING
+             *                      without a flashed error, and no page in the
+             *                      walk has one.
+             *
+             * Both includes are also GLUED to the markup that follows them —
+             * see the comments at each call site — because an @include on a line
+             * of its own leaves its own indentation and the newline of the
+             * comment above it in the rendered page even when the partial
+             * itself renders nothing. That is a real byte change for a partial
+             * that drew nothing, and it is how a "this cannot possibly move the
+             * page" edit moves the page.
+             *
+             * THE PATTERN IS THE FENCE AND ITS OWN CLOSE, not `.*?` to the next
+             * `</script>`: the block contains a <style>, a <template> and a
+             * <script>, so anything that stopped at the first closing tag would
+             * leave the rest behind — and a rule that cuts less than its element
+             * fails loudly, while one that cuts more hides the next lane's
+             * regression. The leading \n is the newline the comment line above
+             * the include contributes and is part of the insertion.
+             */
+            'the Place-order overlay on the checkout (Lane PLC)' => [
+                'pattern' => '#\n<!--kbb-placing-->.*?<!--/kbb-placing-->\n#s',
+                'hits' => 1,
+            ],
         ];
     }
 
