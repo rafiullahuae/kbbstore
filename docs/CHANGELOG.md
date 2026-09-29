@@ -3,6 +3,71 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.320
+**Your WordPress navigation menu now imports.** It was the last thing on the
+import list still done by hand.
+
+### WHAT YOU DO
+
+1. **Upload the exporter plugin 1.7.0 to WordPress** (Plugins → Add New → Upload
+   Plugin). It is attached beside this package.
+2. On the export screen, **tick Navigation**.
+3. On this shop, **Store → Store Import / Export → Import** now has two more
+   steps: **Navigation menus** and **Navigation items**.
+
+### ▲ THE IMPORTED MENU ARRIVES SWITCHED OFF
+
+On purpose. It lands in the picker on **Store → Modules → Mega Menu**, and it
+appears on the site only when you tick Desktop / Mobile / Footer under
+**⚙ Menu settings**.
+
+That is so a rehearsal import cannot replace your live header as a side effect —
+and so that once you *have* switched it on, running the file again to pick up a
+change cannot take it back down.
+
+**The menu you typed by hand is never touched.** Imported rows are matched on
+their WordPress id, and the rows your own screens create have none — so no part
+of this can select, edit or delete them. Nor does a second import duplicate
+anything: it matches and updates, it does not add again.
+
+### WHAT HAPPENS TO AN ITEM POINTING AT SOMETHING THAT DID NOT IMPORT
+
+Your menu may point at a WordPress **page**, and this shop imports articles but
+not pages. Rather than dropping that row — losing something you wrote, with no
+way back after cutover — or keeping it as a link that 404s in the header of
+every page, it is **kept and parked**: the row is there with its label, its
+position and its place in the tree, and **no address**.
+
+- It is **on the Mega Menu screen**, so nothing is lost.
+- It is **not on the shop**, so nothing is broken.
+- **It fixes itself the moment you give it an address** — type one on that
+  screen and it appears. No re-import, nothing to remember.
+
+Anything parked is listed by name after the import, with what it was pointing at.
+
+### WHAT IMPORTS CLEANLY
+
+Category items land on their full nested address (`/collections/skincare/face-
+cleansers/`, not one level short), brand items on `/brands/…`, product items on
+`/product/…`, article items on `/blog/…`, and custom links on themselves —
+including "open in a new tab".
+
+Items where you never typed a label over WordPress's default come across with the
+right words: WordPress stores nothing in that case and lets the theme print the
+target's name, so the **exporter** fills it in. Most of a real menu is that shape.
+
+### ALSO FIXED
+
+A test that failed about **one run in five** for reasons nobody had pinned down —
+the export screen was being started twice, so it packed twice. Measured 3, 4, 3,
+3, 3 before; six runs out of six correct after.
+
+### FILES
+
+`app/Services/Import/Entities/MenuImporter.php` and `MenuItemImporter.php` (new),
+`ImportRunner`, `NavigationService`, one migration, and the exporter plugin at
+1.7.0.
+
 ## 2.60.319
 **A big one.** Five rounds of work land together: the video loop, review photos,
 your own product tabs, a set's real price everywhere, and twenty admin controls
