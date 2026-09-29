@@ -29,22 +29,36 @@ second is the shape the owner reports as "the feature is broken" rather than as
 
 Measured in this lane's worktree, both ways, on the same tree.
 
-The assertions red before are the *finished-state* pins CLAUDE.md prescribes —
+| | cases red | full suite |
+|---|---|---|
+| **Before** (as this branch ships) | **5** — listed below | not run; all five are static file checks |
+| **After** (all five applied) | **0** | **7,805 passed, 26 skipped, 0 failed** — 7,831 tests, 69,577 assertions |
+
+The five red before are all the *finished-state* pins CLAUDE.md prescribes —
 `=== 1`, never `->not->toContain` — so each goes green the moment its edit lands
-and stays a real guard afterwards. Two of them would go red again if the edit
-were applied TWICE, which is the other half of what they are for: a sidebar
-entry registered twice wraps `window.go` around its own wrapper.
+and stays a real guard afterwards. They go red again if an edit is applied
+TWICE, which is the other half of what they are for: a sidebar entry registered
+twice wraps `window.go` around its own wrapper and draws the screen into
+`#content` twice.
 
-```
-EverythingIsMountedOnceTest > it requires every route file exactly once
-    grid-sections-admin                is required 0 times
+    EverythingIsMountedOnceTest > it requires every route file exactly once
+        grid-sections-admin    is required 0 times by routes/web.php + routes/api.php
 
-EverythingIsMountedOnceTest > it includes every admin console partial exactly once
-    grid-sections-screen               is included 0 times
+    EverythingIsMountedOnceTest > it includes every admin console partial exactly once
+        grid-sections-screen   is included 0 times
 
-GridSectionConsoleReachTest > it wires the Grid sections screen exactly once
-    (all four counts)
-```
+    GridSectionConsoleReachTest > it wires the Grid sections screen exactly once
+        block 1: the routes file is required the wrong number of times
+
+    GridSectionConsoleReachTest > it keeps the handover document and the applied console in step
+        block 1 is not applied to web.php exactly once
+
+    GridSectionConsoleReachTest > it reaches the screen through the router once it is wired
+        the ten grid-section endpoints are not in the router
+
+`StorefrontEnglishUnchangedTest` and `StorefrontQueryBudgetTest` are green
+**both ways**, which is the other half of the promise: applying these five moves
+no byte on the shop and no query on the homepage.
 
 ---
 
