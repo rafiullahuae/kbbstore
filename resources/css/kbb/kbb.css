@@ -3827,3 +3827,18 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kfb-fl svg{display:block;height:var(--kfb-fh,14px);width:auto;border-radius:1px}
 @media (max-width:900px){.kfb-m{display:block}}
 @media (min-width:901px){.kfb-d{display:block}}
+/* ── THE NARROWEST PHONES, AND ONLY THEM ──────────────────────────────────
+   Measured in Chromium: the shipped line is 215px at 12px Poppins, the two
+   flags are 21px each and the page gutter is 22px a side, which comes to
+   more than a 320px screen has — so `.kfb-tx` hit its own ellipsis and the
+   strip read "UAE's Authentic K-Beauty…", which is the one rendering that
+   undoes the point of it. At 360 and 390 everything fits with 13px and 43px
+   to spare respectively, so those widths must not move: the gutter and the
+   gaps close up BELOW 360 and nowhere else, and the sizes the owner controls
+   are untouched at every width.
+
+   320 after this: 242px of room for a 235px pill. Whole line, no ellipsis. */
+@media (max-width:359px){
+    .kfb-in{padding-inline:12px;gap:6px}
+    .kfb-pill .kfb-tx{padding-inline:9px}
+}

@@ -447,6 +447,47 @@ it('reserves its height in the stylesheet, so the header below it cannot jump', 
         ->toBeTrue('the built stylesheet has no flag-bar rules: the source was edited without npx vite build');
 });
 
+it('keeps the whole line on the narrowest phones', function () {
+    /*
+     * MEASURED, AND THE FIRST MEASUREMENT WAS THE DEFECT. At 320px the shipped
+     * line (215px at 12px Poppins), two 21px flags, two 10px gaps and a 22px
+     * gutter a side come to more than the screen, so `.kfb-tx` hit its own
+     * ellipsis and the strip read "UAE's Authentic K-Beauty…" — a truncated
+     * claim about authenticity, which is the one rendering that undoes the
+     * point of the strip. Photographed before and after in
+     * docs/lane-fb-shots/.
+     *
+     * The fix closes the gutter and the gaps BELOW 360 and nowhere else, so the
+     * two widths that already fit do not move: measured after, 360 and 390 are
+     * byte-for-byte the same geometry as before (text 241.2px, flags at x=22),
+     * and 320 has 242px of room for a 235px pill.
+     *
+     * It is a media query and not a script, and it changes no size the owner
+     * controls — the Text size and Flag height sliders mean the same thing at
+     * every width, which a vw-scaled font would have quietly stopped being true.
+     *
+     * MUTATION: delete the @media block and 320 ellipsises again — and this is
+     * red from the source side at once.
+     */
+    $source = (string) file_get_contents(base_path('resources/css/kbb/kbb.css'));
+
+    expect($source)->toContain('@media (max-width:359px){');
+
+    $narrow = substr($source, (int) strpos($source, '@media (max-width:359px){'));
+
+    expect($narrow)->toContain('.kfb-in{padding-inline:12px;gap:6px}')
+        ->and($narrow)->toContain('.kfb-pill .kfb-tx{padding-inline:9px}');
+
+    $built = '';
+
+    foreach (glob(base_path('public/build/assets/kbb-*.css')) ?: [] as $file) {
+        $built .= (string) file_get_contents($file);
+    }
+
+    expect(str_contains($built, '@media (max-width:359px)') && str_contains($built, '.kfb-pill .kfb-tx{padding-inline:9px}'))
+        ->toBeTrue('the narrow-phone rule is in the source and not in the bundle: run npx vite build');
+});
+
 it('mirrors from logical properties alone, with no direction selector', function () {
     /*
      * RTL. On /ar the UAE flag belongs at the reading start and Korea at the

@@ -21,6 +21,8 @@ kill $(cat storage/framework/testing/lane-fb-preview/server.pid)
 | File | What it shows |
 | --- | --- |
 | `phone-on-390.png` | the shop at 390px as the package leaves it — the strip, then the header |
+| `narrow-320-strip.png` | the strip at 320px, the narrowest phone still in use |
+| `phone360-360-strip.png` | the strip at 360px, the commonest Android width |
 | `phone-on-390-strip.png` | the strip at its own pixels, English |
 | `phone-off-390.png` | the same page with both switches off: the header at y=0, unchanged |
 | `desktop-default-1280.png` | the desktop shop, as the package leaves it — **no strip** |
@@ -49,6 +51,30 @@ kill $(cat storage/framework/testing/lane-fb-preview/server.pid)
 
 `scrollWidth === clientWidth` at every width in both languages: the strip gives
 the page no horizontal scroll.
+
+### The narrow phones, where the first measurement was a defect
+
+| | 320 | 360 | 390 |
+| --- | --- | --- | --- |
+| strip box | 320 × 30 | 360 × 30 | 390 × 30 |
+| pill width | **235.2** | 241.2 | 241.2 |
+| UAE flag x | **12** | 22 | 22 |
+| Korea flag x | 287 | 317 | 347 |
+| `scrollWidth` | 320 | 360 | 390 |
+| CLS | 0 | 0 | 0 |
+| the line | whole | whole | whole |
+
+At 320 the shipped line (215px at 12px Poppins), two 21px flags, two 10px gaps
+and a 22px gutter a side came to more than the screen, and the pill ellipsised:
+the strip read **"UAE's Authentic K-Beauty…"**, a truncated claim about
+authenticity. `@media (max-width:359px)` closes the gutter to 12px, the gaps to
+6px and the pill's padding to 9px — **below 360 and nowhere else**, which is why
+360 and 390 above are the same geometry as they were before the rule existed
+(pill 241.2, flags at x=22). 320 now has 242px of room for a 235px pill.
+
+No size the owner controls changes with the viewport. A `vw`-scaled font would
+have fitted it in one line and made the Text size slider mean something
+different on every phone.
 
 **RTL is the mirror and nothing else.** The UAE flag is at x=22 in English and
 x=347 in Arabic — 390 − 22 − 21 = 347, the same distance from the reading edge.

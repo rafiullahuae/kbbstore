@@ -1,0 +1,31 @@
+{
+  "label": "desktop-off",
+  "width": 1280,
+  "path": "/",
+  "file": "/home/user/lane-fb/tools/../docs/lane-fb-shots/desktop-off-1280.png",
+  "dir": "ltr",
+  "lang": "en",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "stripInDom": false,
+  "stripDisplay": null,
+  "strip": null,
+  "stripBg": null,
+  "text": null,
+  "textContent": null,
+  "textSize": null,
+  "textColour": null,
+  "flagCount": 0,
+  "flagNames": [],
+  "flagBoxes": [],
+  "header": {
+    "x": 0,
+    "y": 0,
+    "w": 1280,
+    "h": 93.5
+  },
+  "cls": 0.85251,
+  "shifts": [
+    0.85251
+  ]
+}

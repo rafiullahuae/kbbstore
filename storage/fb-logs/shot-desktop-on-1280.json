@@ -1,0 +1,66 @@
+{
+  "label": "desktop-switched-on",
+  "width": 1280,
+  "path": "/",
+  "file": "/home/user/lane-fb/tools/../docs/lane-fb-shots/desktop-switched-on-1280.png",
+  "dir": "ltr",
+  "lang": "en",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "stripInDom": true,
+  "stripDisplay": "block",
+  "strip": {
+    "x": 0,
+    "y": 0,
+    "w": 1280,
+    "h": 30
+  },
+  "stripBg": "rgb(253, 239, 244)",
+  "text": {
+    "x": 519.4,
+    "y": 4.5,
+    "w": 241.2,
+    "h": 21
+  },
+  "textContent": "UAE's Authentic K-Beauty Store",
+  "textSize": "12px",
+  "textColour": "rgb(224, 86, 123)",
+  "flagCount": 2,
+  "flagNames": [
+    "Flag of the United Arab Emirates",
+    "Flag of South Korea"
+  ],
+  "flagBoxes": [
+    {
+      "x": 22,
+      "y": 8,
+      "w": 21,
+      "h": 14
+    },
+    {
+      "x": 1237,
+      "y": 8,
+      "w": 21,
+      "h": 14
+    }
+  ],
+  "header": {
+    "x": 0,
+    "y": 30,
+    "w": 1280,
+    "h": 93.5
+  },
+  "cls": 0.82072,
+  "shifts": [
+    {
+      "value": 0.82072,
+      "sources": [
+        "A.navlink",
+        "MAIN",
+        "SECTION..ec",
+        "A.navlink",
+        "A.navlink"
+      ]
+    }
+  ]
+}
