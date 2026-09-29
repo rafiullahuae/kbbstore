@@ -516,3 +516,50 @@ it('gives every control on the screen a writer behind it', function () {
 
     expect($section->fresh()->source_brand_id)->toBeGreaterThan(0);
 });
+
+it('gives a blank grid a name, so it is not an unnamed row on two screens', function () {
+    /*
+     * ── THE ORDER OF TWO LINES, AND WHAT IT COST ────────────────────────────
+     *
+     * store() wrote `$section->name` and THEN laid every schema default over
+     * the row — and `name`'s shipped default is `''`. So "Add a blank grid"
+     * created a row with no name at all: blank on this screen's list, and blank
+     * on Appearance → Homepage, which is the one place the owner orders it
+     * against the shop's other sections. Two screens with an unnamed row he
+     * cannot tell from the next one.
+     *
+     * It was invisible from the preset side, because both presets carry a
+     * `name` that is applied after the defaults — which is why this case
+     * creates a BLANK one and the preset case above did not catch it.
+     *
+     * MUTATION: move the `$section->name = $name;` block back above the two
+     * apply() calls in store() and this goes red with an empty name. Run, red,
+     * put back.
+     */
+    $body = test()->actingAs(gsaAdmin(), 'admin')
+        ->postJson('/admin-api/grid-sections', [])
+        ->assertCreated()
+        ->json();
+
+    expect($body['section']['name'])->not->toBe('')
+        ->and($body['section']['slug'])->not->toBe('')
+        ->and($body['section']['status'])->toBe('draft');
+
+    $row = GridSection::query()->findOrFail($body['section']['id']);
+
+    expect($row->name)->toBe('Product grid')
+        // And the rest of the row is the shipped defaults rather than nulls,
+        // which is the other half of what the defaults pass is for.
+        ->and($row->source)->toBe('bestsellers')
+        ->and($row->desktop_cols)->toBe(4)
+        ->and($row->mobile_layout)->toBe('carousel');
+
+    // And a name the owner typed is kept.
+    $named = test()->actingAs(gsaAdmin(), 'admin')
+        ->postJson('/admin-api/grid-sections', ['name' => 'Autumn picks'])
+        ->assertCreated()
+        ->json();
+
+    expect($named['section']['name'])->toBe('Autumn picks')
+        ->and($named['section']['slug'])->toBe('autumn-picks');
+});

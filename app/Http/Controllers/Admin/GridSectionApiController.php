@@ -153,21 +153,37 @@ class GridSectionApiController extends Controller
             : (string) ($values['name'] ?? 'Product grid');
 
         $section = new GridSection;
+
+        // Every schema default first, then the preset over it. In this order a
+        // preset that names four keys still produces a complete row, and a
+        // field added to the schema later does not leave older presets writing
+        // nulls into a NOT NULL column.
+        self::apply($section, self::defaults());
+        self::apply($section, $values);
+
+        /*
+         * ▲ AND THE NAME AND THE STATUS AFTER BOTH, WHICH IS NOT TIDYING.
+         *
+         * These three lines used to sit ABOVE the two apply() calls, and
+         * `name`'s shipped default is `''` — so the defaults pass blanked the
+         * name that had just been written and "Add a blank grid" created a row
+         * with no name at all: blank in this screen's list AND blank on
+         * Appearance → Homepage, which is where the owner orders it against the
+         * shop's other sections. Two screens with an unnamed row he cannot tell
+         * from the next one.
+         *
+         * Invisible from the preset side, because both presets carry a `name`
+         * of their own that lands in the second apply(). Caught by
+         * GridSectionApiSurfaceTest's "it gives a blank grid a name".
+         *
+         * `status` is last for a different reason and is not through apply()
+         * at all: it IS in the schema, and a preset that named it could
+         * otherwise publish straight onto the live front page.
+         */
         $section->name = $name;
         $section->slug = self::uniqueSlug($name);
         $section->status = 'draft';
         $section->position = (int) (GridSection::query()->max('position') ?? 0) + 1;
-
-        // Every schema default first, then the preset over it. Doing it in this
-        // order means a preset that names four keys still produces a complete
-        // row, and a field added to the schema later does not leave older
-        // presets writing nulls into a NOT NULL column.
-        self::apply($section, self::defaults());
-        self::apply($section, $values);
-
-        // Not through apply(): `status` IS in the schema, and a preset that
-        // named it could otherwise publish straight onto the shop.
-        $section->status = 'draft';
 
         $section->save();
         GridSections::flush();
