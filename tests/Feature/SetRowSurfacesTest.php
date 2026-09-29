@@ -77,10 +77,28 @@ it('keeps the popup markup and the design switch in one file', function () {
         ->and($partial)->toContain('kset-pop')
         ->and($partial)->toContain('kset-fan');
 
+    /*
+     * ▲ BLADE COMMENTS ARE STRIPPED FIRST. (Lane SA)
+     *
+     * This case is about the MARKUP living in one file, and a docblock that
+     * names `kset-pop` in prose is not a second description of a set — it is
+     * usually the opposite: the note in layouts/store.blade.php says WHY the
+     * Appearance -> Set block has to be emitted in the head, and the reason is
+     * that the checkout's `.kbb-checkout .kset-pop.is-open` escape hatch must
+     * keep winning the tie. Refusing to let a comment explain that would make
+     * the next reader move the include and slice the popup back to one line on
+     * a phone.
+     *
+     * The sibling case below strips comments the same way and for the same
+     * reason. Stripping does not weaken this one: a real second copy of the
+     * popup would be markup, not a comment, and would still be found.
+     */
+    $strip = static fn (string $s): string => (string) preg_replace('/\{\{--.*?--\}\}/s', '', $s);
+
     $others = collect(\Illuminate\Support\Facades\File::allFiles(resource_path('views')))
         ->filter(fn ($f) => str_ends_with($f->getFilename(), '.blade.php'))
         ->filter(fn ($f) => $f->getFilename() !== 'set-row.blade.php')
-        ->filter(fn ($f) => str_contains((string) file_get_contents($f->getPathname()), 'kset-pop'))
+        ->filter(fn ($f) => str_contains($strip((string) file_get_contents($f->getPathname())), 'kset-pop'))
         ->map(fn ($f) => $f->getRelativePathname())
         ->values()
         ->all();
