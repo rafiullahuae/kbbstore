@@ -299,10 +299,20 @@ which falls back rather than rendering the bare markup.
 ## 7 · The harness
 
 ```sh
-sh tools/pg2-preview.sh 8931     # boots a preview and seeds twelve products
-sh tools/pg2-shoot.sh            # every treatment, both widths, one fixture
-node tools/pg2-sheet.cjs         # assembles the four sheets
+sh tools/pg2-evidence.sh            # everything below, in the right order
+sh tools/pg2-preview.sh 8931        # boots a preview and seeds twelve products
+sh tools/pg2-shoot.sh               # every treatment, both widths, one fixture
+node tools/pg2-sheet.cjs            # assembles the four sheets
+node tools/pg2-card-geometry.cjs    # one tile, part by part, hovered
+node tools/pg2-names-shot.cjs       # the short-name / long-name pair
 ```
+
+`tools/pg2-card-geometry.cjs` is the one that answers "is the card built the way
+it looks", which is a different question from "which of these do I want" and the
+one that caught the quick-view pill. It also checks the arithmetic the card
+depends on: **button 143 + gap 12 + heart 44 = 199**, which is the text
+column's content box (231 − 2×16) at 1280. If those stop adding up, one of them
+is sitting on top of something.
 
 `tools/pg2-shoot.sh` writes `grid_skin` between passes and re-renders the same
 page, so the panels differ by the setting under test and by nothing else. A
