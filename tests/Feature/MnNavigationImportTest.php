@@ -565,6 +565,97 @@ it('keeps parking an archive of a post type this shop has no screen for', functi
     rmdir($dir);
 });
 
+it('tells the Mega Menu screen which items the header will not draw', function () {
+    /*
+     * ▲ THE SCREEN CALLS ITS TOP STRIP "LIVE PREVIEW", AND IT WAS NOT LIVE.
+     *
+     * mgmPreview() in the console draws from the raw tree this endpoint
+     * returns. NavigationService::tree() rejects a PARKED item -- `target_type`
+     * = 'unresolved' with no url, the state the import writes for a menu entry
+     * pointing at something this shop did not import -- so the preview drew an
+     * item the shop does not draw. A preview that disagrees with the page is
+     * worse than no preview: it is the one place the owner goes to check.
+     *
+     * The payload could not tell the screen, either. `target_type` was not even
+     * SELECTed, so the console had nothing to filter on however it was written.
+     *
+     * WHAT THIS PINS is the thing the preview has to be built out of: the set of
+     * items this endpoint reports as NOT parked is exactly the set the header
+     * renders. That holds in this worktree today and goes on holding after the
+     * console reads it, which is the property worth having rather than an
+     * assertion about a line of JavaScript.
+     *
+     * The parked row itself stays IN the tree, asserted below. It has to: the
+     * repair is typing an address on this screen, and the owner cannot repair
+     * what the screen does not show him.
+     *
+     * MUTATION NOTE -- RAN. Return `'parked' => false` unconditionally from
+     * MegaMenuApiController::tree() and this is red -- the screen is told the
+     * header will draw "About us", and the header does not.
+     */
+    mnImport();
+
+    $menu = Menu::query()->where('source_term_id', 950)->firstOrFail();
+    mnMount($menu);
+
+    $owner = \App\Models\AdminUser::create([
+        'name' => 'Menu Owner',
+        'email' => 'mn-preview-owner@example.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('secret-secret'),
+        'role' => 'owner',
+    ]);
+
+    test()->actingAs($owner, 'admin');
+
+    $payload = test()->getJson('/admin-api/mega-menu?menu_id='.$menu->id);
+
+    $payload->assertStatus(200);
+
+    /** @var callable(array): array<int, array{0: string, 1: bool}> $walk */
+    $walk = function (array $nodes) use (&$walk): array {
+        $out = [];
+
+        foreach ($nodes as $node) {
+            $out[] = [$node['label'], $node['parked']];
+
+            foreach ($walk($node['children'] ?? []) as $child) {
+                $out[] = $child;
+            }
+        }
+
+        return $out;
+    };
+
+    $reported = $walk($payload->json('tree') ?? []);
+
+    expect($reported)->not->toBe([], 'the endpoint returned no tree at all');
+
+    // HALF ONE: the parked row is on the screen, flagged.
+    $about = array_values(array_filter($reported, fn (array $r): bool => $r[0] === 'About us'));
+
+    expect($about)->not->toBe([], 'the parked item is missing from the screen, which is where it is repaired');
+    expect($about[0][1])->toBeTrue('the screen is not told that the header will skip this item');
+
+    // And the marker itself is not published. `target_type` is an import
+    // mechanism, no screen has ever written it, and a console that could see it
+    // is a console somebody would eventually make editable.
+    expect(array_key_exists('target_type', ($payload->json('tree') ?? [])[0] ?? []))->toBeFalse();
+
+    // HALF TWO: and what it reports as drawable is EXACTLY what the header draws.
+    $drawable = array_values(array_map(
+        fn (array $r): string => $r[0],
+        array_filter($reported, fn (array $r): bool => $r[1] === false),
+    ));
+
+    $rendered = mnLabels(app(NavigationService::class)->menu('primary'));
+
+    sort($drawable);
+    sort($rendered);
+
+    expect($drawable)->toBe($rendered,
+        'the Mega Menu screen and the header disagree about which items are drawn');
+});
+
 it('un-parks an item the moment the owner gives it an address, with no second import', function () {
     /*
      * THE SELF-HEALING HALF, and the reason the gate is TWO conditions rather

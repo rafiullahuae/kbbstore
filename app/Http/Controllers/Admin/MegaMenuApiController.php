@@ -307,7 +307,14 @@ class MegaMenuApiController extends Controller
 
             $items = MenuItem::where('menu_id', $menu->id)
                 ->orderBy('position')
-                ->get(['id', 'parent_id', 'label', 'url', 'icon', 'badge', 'position', 'highlight_color', 'visibility', 'new_tab']);
+                /*
+                 * `target_type` is SELECTED but never returned. It is the half
+                 * of NavigationService::isParked()'s gate that the payload
+                 * cannot compute without it -- see `parked` in tree() below --
+                 * and it is not published, because it is an import-mechanism
+                 * marker and no screen has any business writing it.
+                 */
+                ->get(['id', 'parent_id', 'label', 'url', 'icon', 'badge', 'position', 'highlight_color', 'visibility', 'new_tab', 'target_type']);
 
             return response()->json([
                 'module_on' => app(\App\Services\SettingsService::class)->moduleEnabled('mega_menu', false),
@@ -407,6 +414,25 @@ class MegaMenuApiController extends Controller
             'highlight_color' => $i->highlight_color,
             'visibility' => $i->visibility,
             'new_tab' => (bool) $i->new_tab,
+            /*
+             * ── WHAT THE HEADER WILL NOT DRAW, SAID ON THE SCREEN ──────────
+             *
+             * The strip at the top of this screen is labelled LIVE PREVIEW, and
+             * it was built from this raw tree. NavigationService::tree() rejects
+             * an item the import PARKED -- `target_type` = 'unresolved' with no
+             * url, which is how a menu entry pointing at something this shop did
+             * not import is kept without putting a 404 in the header -- so the
+             * preview drew an item the shop does not, and the one thing a
+             * preview may never do is disagree with the page.
+             *
+             * ASKED OF NavigationService, not re-spelled here. A second copy of
+             * that two-part gate is a second copy that can drift, and the note
+             * beside isParked() says exactly that. The ROW stays in the tree
+             * whatever this answers: the item is on this screen, in its right
+             * place, because giving it an address is the repair and the owner
+             * cannot repair what he cannot see.
+             */
+            'parked' => NavigationService::isParked($i),
             // `label` only. `url` is deliberately not translatable — one address
             // per item, with the language carried by the /ar prefix.
             'translations' => $translations[(int) $i->id] ?? null,
