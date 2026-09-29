@@ -76,22 +76,32 @@ use Illuminate\Support\Facades\DB;
  *                   and it is why the owner's two presets are cheaper than they
  *                   look. Cached whole, so a warm homepage pays NOTHING.
  *
- * Measured on this project's own fixture, cold (cache cleared) and warm:
+ * Measured on this project's own fixture, with THIS feature's two cache entries
+ * cleared and the rest of the page warm, against a fully warm page:
  *
  *                     cold    warm
  *     0 instances       1       0
- *     1 instance        3       0
- *     3 instances       5       0
- *     6 instances       8       0
+ *     1 instance        4       0
+ *     3 instances       8       0
+ *     6 instances      14       0
  *
  * The warm column is what the budget test sees and what a shopper gets — the
  * rails beside this section have been cached the same way since the page was
- * written. The cold column is 1 (registry) + 1 (rows) + one per distinct spec,
- * which is flat in the CATALOGUE — 24 products or 84 makes no difference —
- * and linear in the number of DISTINCT product selections the owner has asked
- * for, which is the irreducible number: six different product lists cannot be
+ * written, and `StorefrontQueryBudgetTest` measures the homepage at the same
+ * number with six instances built as with none.
+ *
+ * The cold column is `1 (registry) + 1 (rows) + 2 per distinct selection`, and
+ * the 2 is worth naming rather than rounding away: the products, and then the
+ * `with('brand:id,name,slug')` eager load the card needs. That second query is
+ * what makes the page FLAT — without it the card would read a brand per tile —
+ * so it is a cost this feature buys deliberately. An EMPTY selection costs 1,
+ * because Eloquent skips an eager load with nothing to hydrate.
+ *
+ * It is flat in the CATALOGUE — 12 products or 60 makes no difference — and
+ * linear in the number of DISTINCT product selections the owner has asked for,
+ * which is the irreducible number: six different product lists cannot be
  * fetched in fewer than six reads without fetching things nobody asked for.
- * `GridSectionQueryCostTest` measures all four rows and asserts the flatness.
+ * `GridSectionQueryCostTest` measures all four rows and asserts both flatnesses.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * AND IT COSTS AN EMPTY SHOP NOTHING AT ALL
