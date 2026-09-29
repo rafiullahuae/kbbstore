@@ -505,8 +505,23 @@ class SetAppearance
             ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
         'p_morepb' => ['range', 'Space below “Show all”', 4, '',
             ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
-        'p_foot' => ['range', 'Footing size', 13, '',
+        'p_foot' => ['range', 'Footing size', 13,
+            'The wording — “Bought separately”, “Set price” — and the base the three figures start from. Each of them has its own size below; this is what they all ship at.',
             ['min' => 9, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        /*
+         * THREE SIZES FOR THE THREE FIGURES, and they all ship at 13 because
+         * the sheet gives all three one declaration today. The owner asked for
+         * them separately — "each of the three figures … with their sizes" —
+         * and the reason to have them is that the saving is the one a shopper
+         * is meant to read across the aisle while the struck-through total is
+         * the one he is meant to read past.
+         */
+        'p_was_f' => ['range', 'Footing: “Bought separately” size', 13, '',
+            ['min' => 9, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'p_price_f' => ['range', 'Footing: “Set price” size', 13, '',
+            ['min' => 9, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'p_save_f' => ['range', 'Footing: “You save” size', 13, '',
+            ['min' => 9, 'max' => 28, 'step' => 1, 'unit' => 'px']],
         'p_footsp' => ['range', 'Space around the footing’s rule', 9,
             'Used twice — above the rule and below it — so the line stays centred in the space however it is set.',
             ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
@@ -621,6 +636,12 @@ class SetAppearance
             ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
         'p_foot_m' => ['range', 'Footing size', 13, '',
             ['min' => 9, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'p_was_f_m' => ['range', 'Footing: “Bought separately” size', 13, '',
+            ['min' => 9, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'p_price_f_m' => ['range', 'Footing: “Set price” size', 13, '',
+            ['min' => 9, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'p_save_f_m' => ['range', 'Footing: “You save” size', 13, '',
+            ['min' => 9, 'max' => 28, 'step' => 1, 'unit' => 'px']],
         'p_footsp_m' => ['range', 'Space around the footing’s rule', 7, '',
             ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
         'p_footgy_m' => ['range', 'Footing: space between its lines', 4, '',
@@ -717,7 +738,8 @@ class SetAppearance
             'Laptop values. The row’s height follows the photograph, so the photograph size and the row padding are the two numbers that decide how tall the list is.',
             ['p_block', 'p_head_f', 'p_head_gap', 'p_rowpad', 'p_gap', 'p_wgap', 'p_photo', 'p_radius',
                 'p_brand', 'p_brand_lh', 'p_name', 'p_name_lh', 'p_var',
-                'p_qty', 'p_more', 'p_morept', 'p_morepb', 'p_foot', 'p_footsp', 'p_footgy', 'p_footgx']],
+                'p_qty', 'p_more', 'p_morept', 'p_morepb', 'p_foot', 'p_was_f', 'p_price_f', 'p_save_f',
+                'p_footsp', 'p_footgy', 'p_footgx']],
         'd_list_type' => ['Desktop · Set list — weight and colour',
             'Both screens.',
             ['p_head_w', 'p_lh', 'p_brand_w', 'p_brand_ls', 'p_brand_op', 'p_name_w', 'p_qty_w', 'p_more_w',
@@ -747,7 +769,8 @@ class SetAppearance
             ['p_block_m', 'p_head_f_m', 'p_head_gap_m', 'p_rowpad_m', 'p_gap_m', 'p_wgap_m', 'p_photo_m',
                 'p_radius_m', 'p_brand_m', 'p_brand_lh_m',
                 'p_name_m', 'p_name_lh_m', 'p_var_m', 'p_qty_m', 'p_more_m', 'p_morept_m', 'p_morepb_m',
-                'p_foot_m', 'p_footsp_m', 'p_footgy_m', 'p_footgx_m']],
+                'p_foot_m', 'p_was_f_m', 'p_price_f_m', 'p_save_f_m',
+                'p_footsp_m', 'p_footgy_m', 'p_footgx_m']],
     ];
 
     /**
@@ -1083,6 +1106,9 @@ class SetAppearance
             '--ksl-morept:'.$n('p_morept').'px',
             '--ksl-morepb:'.$n('p_morepb').'px',
             '--ksl-foot:'.$n('p_foot').'px',
+            '--ksl-wasf:'.$n('p_was_f').'px',
+            '--ksl-pricef:'.$n('p_price_f').'px',
+            '--ksl-savef:'.$n('p_save_f').'px',
             '--ksl-footsp:'.$n('p_footsp').'px',
             '--ksl-footgy:'.$n('p_footgy').'px',
             '--ksl-footgx:'.$n('p_footgx').'px',

@@ -367,9 +367,18 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .ksl-f{display:flex;gap:6px;align-items:baseline;min-width:0;font-size:var(--ksl-foot,13px);
        color:var(--ksl-footc,var(--ink-2,#5E545A))}
 .ksl-f b{font-weight:var(--ksl-footw,700);color:var(--ksl-footbc,var(--ink,#2A2228));white-space:nowrap}
+/* ONE SIZE PER FIGURE. All three ship at 13px, which is what `.ksl-f` alone
+   used to give all three -- the owner asked for them separately, and the reason
+   to have them is that the saving is the figure a shopper is meant to read
+   across the aisle while the struck-through total is the one he reads past.
+   These come AFTER `.ksl-f` and are the same (0,1,0), so source order is what
+   decides -- which is fine for two rules eight lines apart and stated here so
+   nobody moves one of them. */
+.ksl-was{font-size:var(--ksl-wasf,13px)}
+.ksl-price{font-size:var(--ksl-pricef,13px)}
 .ksl-was b{font-weight:var(--ksl-wasw,600);text-decoration:line-through;
            color:var(--ksl-footc,var(--ink-2,#5E545A))}
-.ksl-save{font-size:var(--ksl-foot,13px);font-weight:var(--ksl-savew,700);
+.ksl-save{font-size:var(--ksl-savef,13px);font-weight:var(--ksl-savew,700);
           color:var(--ksl-savec,#1c7a4a);white-space:nowrap}
 
 /* ── THE PHONE ───────────────────────────────────────────────────────────
