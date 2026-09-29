@@ -86,6 +86,17 @@
              The id stays `cartLead` so cart.js (Lane R) keeps updating the same
              element; only the class is renamed. --}}
         <h1>{{ __('store.cart.heading') }} <span class="cart-count" id="cartLead">({{ trans_choice('store.cart.item_count', $totals['item_count']) }})</span></h1>
+        {{-- ONE JAR, CLAIMED TWICE (Lane SEC). Rendered only when a set in this
+             basket has taken the last of something the shopper also added
+             loose; App\Services\SetStockReconciler removed the loose line and
+             this says so. On one line, at column 0 inside the @if, so an empty
+             list contributes ZERO BYTES and the page is byte-identical to what
+             StorefrontEnglishUnchangedTest pinned.
+
+             ABOVE #kbbCartNotices and not inside it: cart.js owns that div and
+             replaces its contents on every quantity change, which would wipe
+             the one sentence explaining why the basket looks different. --}}
+@if ((($setStockNotices ?? [])) !== [])@include('partials.set-stock-notice')@endif
         <div id="kbbCartNotices"></div>
         <div id="cartInner">
             @include('store.cart-inner')

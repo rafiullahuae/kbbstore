@@ -725,6 +725,23 @@ final class InterfaceStrings
              * only when it is positive -- a set priced above its parts is a
              * pricing mistake to correct, not a negative saving to advertise.
              */
+            /*
+             * ONE JAR, CLAIMED TWICE. (Lane SEC)
+             *
+             * When a basket holds a set AND a product that is inside it, and
+             * the shelf cannot cover both, the loose line goes and the set
+             * stays -- the owner's decision, in as many words. These are what
+             * the shopper reads when that happens, on the cart page and on the
+             * checkout, and they are the whole of the explanation: what left,
+             * which set is keeping it, and why.
+             *
+             * `:product` and `:set` are product names out of the database, so
+             * both are printed ESCAPED. Neither key carries markup, which is
+             * what the parity case in ArabicInterfaceDraftsTest requires of the
+             * Arabic beside it.
+             */
+            'cart.set_took_the_last_one' => ':product has been taken out of your bag: the last of it is inside the :set you are buying, so it cannot be bought separately as well.',
+            'cart.set_took_some' => ':product has been reduced to :left in your bag: the rest of it is inside the :set you are buying, and there is not enough stock for both.',
             'set.contents' => 'In this set · :count item|In this set · :count items',
             'set.saving' => 'You save :amount',
             /*

@@ -104,6 +104,39 @@ class CheckoutController extends Controller
     {
         $cart = $this->loadCart($request);
 
+        /*
+         * ONE JAR, CLAIMED TWICE — reconciled before the page is drawn.
+         * (Lane SEC)
+         *
+         * A basket holding a set AND a product that is inside it asked for the
+         * same unit twice, and Place order answered "1025 Dokdo Toner (in
+         * Medicube booster set) is sold out" for ever: the button could not
+         * succeed and nothing on the screen said what to do. The owner's
+         * decision is that the LOOSE LINE GOES AND THE SET STAYS.
+         *
+         * HERE AND NOT IN place(). CartService::claimStock()'s own comment
+         * refuses to drop a line at payment time -- "the shopper then pays for
+         * a basket they never agreed to, at a total they never saw" -- and that
+         * rule is followed rather than replaced. Reconciling at render means
+         * $totals, the item count and the free-delivery bar below are computed
+         * off what is actually left, and the shopper is told in words before
+         * they press anything.
+         *
+         * IN page() AND NOT IN loadCart(), which eleven other methods on this
+         * controller also call, several of them mid-payment. A basket may only
+         * change while the shopper is looking at it.
+         *
+         * NOTHING on a basket with no set in it: one cached settings read, an
+         * in-memory scan of lines already loaded, and no statement at all.
+         */
+        $setStockNotices = app(\App\Services\SetStockReconciler::class)->reconcile($cart);
+
+        if ($setStockNotices !== []) {
+            // A line went, so the relation in memory is stale and every figure
+            // below is read off it.
+            $cart = $this->loadCart($request);
+        }
+
         if (! $cart || $cart->items->isEmpty()) {
             /*
              * THE REQUEST IS HANDED OVER, AND THIS IS THE LINE LANE N MEASURED.
@@ -203,6 +236,12 @@ class CheckoutController extends Controller
 
         return view('store.checkout', [
             'settings' => $this->settings,
+            /*
+             * The sentences SetStockReconciler wrote, if it took anything out
+             * of the basket. Empty on every ordinary checkout, and the view
+             * renders nothing at all for an empty array. (Lane SEC)
+             */
+            'setStockNotices' => $setStockNotices,
             'cart' => $cart,
             'items' => $cart->items,
             'totals' => $totals,
