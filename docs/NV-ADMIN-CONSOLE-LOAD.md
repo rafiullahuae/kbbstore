@@ -30,6 +30,12 @@ from it was **3,425,404 bytes**. Inside it:
 | Banners | 3,326,631 | 97.1% |
 | **`Appearance → Set`** — the last of them | **3,388,358** | **98.9%** |
 
+(Those figures are the tree this lane was cut from. After Lane OD's and Lane
+FB's work merged in, the document is 3,439,696 bytes and the same four points
+sit at 5.5%, 21.7%, 21.7% and 38.9% — the percentages are what matter and they
+do not move. The guard test derives its thresholds from the document rather than
+hard-coding a number, for exactly this reason.)
+
 Twenty-one of the console's seventy-seven sidebar rows are not in `NAV`. Each
 belongs to a screen that ships as its own partial, and a partial cannot call
 `window.kbbAddNavEntry` before the block that defines it — so every one of those
@@ -327,6 +333,20 @@ Ranked by what it costs the owner.
    remove.
 
 ---
+
+## 4b. A note for the next lane that adds an admin screen
+
+A screen that ships as its own partial still registers its own row exactly as
+before — `kbbAddNavEntry({screen, label, icon, group, after})`, unchanged, and
+still the one supported way. **Add the same row to `LATE_NAV` as well**, at the
+position in the array where you want it to land. If you do not,
+`AdminSidebarIsCompleteAtBuildTest` fails by name and tells you so: your row
+would otherwise not exist until your partial has been parsed, which on this
+document can be the last one per cent of it.
+
+`docs/T1B-ADMIN-APP-BLOCKS.md` is untouched and still correct: the four
+Translation rows are in `NAV`, not in `LATE_NAV`, and `LATE_RENDERED` — which is
+about the *renderer*, not the row — is exactly as it was.
 
 ## 5. Where it sits in the admin
 
