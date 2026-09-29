@@ -21,8 +21,8 @@ kill $(cat storage/framework/testing/lane-fb-preview/server.pid)
 | File | What it shows |
 | --- | --- |
 | `phone-on-390.png` | the shop at 390px as the package leaves it — the strip, then the header |
-| `narrow-320-strip.png` | the strip at 320px, the narrowest phone still in use |
-| `phone360-360-strip.png` | the strip at 360px, the commonest Android width |
+| `narrow-320.png` / `narrow-320-strip.png` | 320px, the narrowest phone still in use — the width where the line used to truncate |
+| `phone360-360.png` / `phone360-360-strip.png` | 360px, the commonest Android width |
 | `phone-on-390-strip.png` | the strip at its own pixels, English |
 | `phone-off-390.png` | the same page with both switches off: the header at y=0, unchanged |
 | `desktop-default-1280.png` | the desktop shop, as the package leaves it — **no strip** |
