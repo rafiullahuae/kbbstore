@@ -301,3 +301,41 @@ it('keeps the product editor thumbnails keyed by the photograph they belong to',
         ->and(substr_count($screen, 'url(shownAt(model.image))'))
         ->toBe(1, 'the editor main-image card is still pointing at the original');
 });
+
+it('gives the manual-order product search the same copy the picker already reads', function () {
+    /*
+     * THE HALF-FIX THIS CATCHES. resources/views/admin/partials/product-picker
+     * .blade.php is ONE component used by two endpoints — /admin-api/catalog
+     * /products and /admin-api/manual-orders/products. Teaching the tile to
+     * read `thumb` and giving only one of the two endpoints the field would
+     * leave the same picker drawing a 4.8KB copy on one screen and a 290KB
+     * original on another, which reads like a caching bug and is not one.
+     *
+     * MUTATION: delete the 'thumb' line from AdminOrderController::products()
+     * and this is red with "the manual-order picker is still pointing at the
+     * original".
+     */
+    ad2Photo('uploads/ad2/mo.jpg', 1000, 1000);
+
+    $brand = Brand::firstOrCreate(['slug' => 'ad2-anua'], ['name' => 'Anua']);
+    Product::create([
+        'slug' => 'ad2-manual', 'name' => 'Sleeping Mask', 'brand_id' => $brand->id,
+        'status' => 'publish', 'is_visible' => true, 'price' => 6600, 'stock_status' => 'instock',
+        'image' => '/uploads/ad2/mo.jpg', 'images' => [],
+    ]);
+
+    $this->actingAs(AdminUser::create([
+        'name' => 'Owner', 'email' => 'ad2c@preview.test',
+        'password' => 'ad2-secret-11', 'role' => 'owner',
+    ]), 'admin');
+
+    ad2RunBatch();
+
+    $rows = $this->getJson('/admin-api/manual-orders/products?q=Sleeping')->json();
+    $row = collect($rows['products'] ?? [])->firstWhere('image', '/uploads/ad2/mo.jpg');
+
+    expect($row)->not->toBeNull('the product is not in the manual-order search at all');
+    expect(str_contains((string) ($row['thumb'] ?? ''), '/'.ImageVariants::DIR.'/200/uploads/ad2/mo.jpg'))
+        ->toBeTrue('the manual-order picker is still pointing at the original: '.($row['thumb'] ?? '(absent)'))
+        ->and($row['image'])->toBe('/uploads/ad2/mo.jpg', 'the image field moved');
+});

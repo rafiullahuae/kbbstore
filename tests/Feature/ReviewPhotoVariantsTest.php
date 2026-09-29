@@ -394,3 +394,51 @@ it('declares the review card real width, which the owner can change', function (
         ->toBe(ImageVariants::reviewPhotoSizesAttribute(1, false),
             'a nonsense column count does not clamp to a real one');
 });
+
+it('says nothing rather than something malformed when a filename holds a comma', function () {
+    /*
+     * A LATENT BUG THIS LANE MADE REACHABLE.
+     *
+     * A srcset is a COMMA-separated list, so a comma anywhere in a candidate's
+     * URL splits it into two malformed ones and the browser is entitled to
+     * discard the whole attribute. detailSrcsetFor() has refused a comma since
+     * it was written; srcsetFor() did not — the wrong way round, since that
+     * method has one caller and this one has nine.
+     *
+     * It could not be hit before: every path in this catalogue is written by
+     * MediaUploadController as `Ymd-His-<random>.ext`. Review photographs
+     * change that. Their addresses come from the WordPress import, out of a
+     * database this shop did not author, and a filename an operator typed into
+     * WordPress in 2019 can hold anything the filesystem allows.
+     *
+     * MUTATION: drop the `str_contains($rel, ',')` guard from srcsetFor() and
+     * this is red with "a malformed srcset was emitted".
+     */
+    im2Photo('uploads/im2/product.jpg', 1000, 1000);
+    im2Photo('uploads/im2/hello,world.jpg', 900, 900);
+
+    // Attached to a REVIEW, which is how such a name reaches this shop at all.
+    $product = im2Product(['/uploads/im2/product.jpg']);
+    im2Review($product, ['/uploads/im2/hello,world.jpg']);
+
+    im2RunBatch();
+
+    // The copies are made — the comma is only a problem in a srcset, and
+    // refusing to resize the file would be a different and worse answer.
+    expect(is_file(public_path(ImageVariants::DIR.'/200/uploads/im2/hello,world.jpg')))
+        ->toBeTrue('a comma in the filename stopped the copy being made at all');
+
+    $srcset = ImageVariants::srcsetFor('/uploads/im2/hello,world.jpg');
+
+    expect($srcset)->toBe('', 'a malformed srcset was emitted: '.$srcset);
+
+    // And the big-image method has always agreed, which is the point.
+    expect(ImageVariants::detailSrcsetFor('/uploads/im2/hello,world.jpg'))->toBe('');
+
+    // variantUrl() is a SINGLE url, not a list, so a comma is harmless there
+    // and refusing it would cost the basket and the admin grids their copy for
+    // no reason.
+    expect(ImageVariants::variantUrl('/uploads/im2/hello,world.jpg', 200))
+        ->toBe('/'.ImageVariants::DIR.'/200/uploads/im2/hello,world.jpg',
+            'variantUrl refused a comma it has no reason to refuse');
+});

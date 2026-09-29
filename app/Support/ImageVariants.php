@@ -220,6 +220,32 @@ final class ImageVariants
         }
 
         [$prefix, $rel, $fsRel] = $parts;
+
+        /*
+         * (Lane IM2) A COMMA IN THE PATH, refused here as detailSrcsetFor()
+         * already refuses it and for the reason written there: a srcset is a
+         * COMMA-separated list, so a comma anywhere in a URL splits one
+         * candidate into two malformed ones and the browser is entitled to
+         * discard the lot -- leaving the box with whatever `src` resolves to,
+         * or nothing at all if the malformed list is preferred over it.
+         *
+         * It was guarded on the product page's main frame and not here, which
+         * is the wrong way round: that method has one caller and this one has
+         * nine. It went unnoticed because every path in this catalogue is
+         * written by MediaUploadController as `Ymd-His-<random>.ext`, which
+         * cannot contain one.
+         *
+         * WHAT MADE IT REACHABLE. Review photographs now enter this method, and
+         * their addresses come from the WordPress import -- a database this
+         * shop did not author, whose filenames are whatever an operator typed
+         * into WordPress years ago. `src` alone is always correct, so saying
+         * nothing is strictly safer than saying something a browser may throw
+         * away.
+         */
+        if (str_contains($rel, ',')) {
+            return '';
+        }
+
         $candidates = [];
 
         foreach (self::WIDTHS as $width) {
