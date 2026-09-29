@@ -145,18 +145,37 @@ class GridSections
     private const TTL = 600;
 
     /**
-     * The process-level memo, and the reason it has an explicit forgetter.
+     * The per-request memo's key IN THE CONTAINER — deliberately not a static.
+     *
+     * ── WHY NOT A STATIC, WHICH IS WHAT THIS WAS ────────────────────────────
      *
      * `Setting::map()` memoises in a process-level static as well as the cache,
-     * and CLAUDE.md names the consequence: within one long-lived process it
-     * will not see writes made after the first call — fine under PHP-FPM, a
-     * trap in tests and queue workers. This memo has exactly the same shape and
-     * therefore exactly the same trap, so `flush()` clears BOTH layers and
-     * every writer in `GridSectionApiController` calls it.
+     * and CLAUDE.md names the consequence: "within one long-lived process it
+     * will not see writes made after the first call. Fine under PHP-FPM, a trap
+     * in tests and queue workers."
      *
-     * @var array<string, array{0: string, 1: string, 2: bool, 3: string|null}>|null
+     * This was written as exactly that static, and the trap arrived within the
+     * hour — not in this lane's own tests, which flush explicitly, but in FIVE
+     * OTHER LANES' FILES. Pest runs the suite in one process and rolls the
+     * database back between tests; a static survives the rollback, so once this
+     * lane's cases had built `grid_1`…`grid_5`, `HomepageSections::registry()`
+     * went on returning five instances that no longer existed for every later
+     * test in the process. `HomepageSectionOrderTest` counted 24 order rules
+     * where it expected 18, `HomepagePreviewTest`'s section list grew five
+     * rows, and two files died on `Undefined array key "grid_1"`. A stale memo
+     * does not error where it is wrong; it errors somewhere else, in somebody
+     * else's file, and reads exactly like flake.
+     *
+     * The container is the right scope and not a workaround: production throws
+     * the whole container away between requests, so a container instance IS
+     * per request — the same lifetime the static was pretending to have — and
+     * Pest builds a fresh Application per test, so the memo cannot outlive the
+     * rows it describes. A queue worker gets the same correctness for free.
+     *
+     * `flush()` still clears both layers, because the cache entry outlives the
+     * container.
      */
-    private static ?array $registryMemo = null;
+    private const MEMO = 'kbb.gridsections.registry.memo';
 
     /**
      * The two instances the owner named, as one-click presets.
@@ -346,8 +365,13 @@ class GridSections
      */
     public static function registryRows(): array
     {
-        if (self::$registryMemo !== null) {
-            return self::$registryMemo;
+        $container = \Illuminate\Container\Container::getInstance();
+
+        if ($container->bound(self::MEMO)) {
+            /** @var array<string, array{0: string, 1: string, 2: bool, 3: string|null}> $memo */
+            $memo = $container->make(self::MEMO);
+
+            return $memo;
         }
 
         $rows = Cache::remember(self::CACHE_REGISTRY, self::TTL, static function () {
@@ -426,7 +450,9 @@ class GridSections
             ];
         }
 
-        return self::$registryMemo = $out;
+        $container->instance(self::MEMO, $out);
+
+        return $out;
     }
 
     /**
@@ -434,13 +460,15 @@ class GridSections
      *
      * Called by every writer in `GridSectionApiController` and by the tests.
      * Clearing only the cache would leave the memo answering the old list for
-     * the rest of the process, which is the `Setting::map()` shape CLAUDE.md
-     * warns about; clearing only the memo would leave the next request reading
-     * a stale cache entry.
+     * the rest of THIS request; clearing only the memo would leave the next
+     * request reading a stale cache entry. The memo is container-scoped rather
+     * than static — see MEMO for what the static version cost — so it dies with
+     * the request anyway, and this makes a write visible within it.
      */
     public static function flush(): void
     {
-        self::$registryMemo = null;
+        \Illuminate\Container\Container::getInstance()->forgetInstance(self::MEMO);
+
         Cache::forget(self::CACHE_REGISTRY);
         Cache::forget(self::CACHE_HOME);
     }
