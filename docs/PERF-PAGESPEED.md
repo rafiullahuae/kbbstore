@@ -22,11 +22,14 @@ miss because the headline list of opportunities looks like a to-do list.
 | "Legacy JavaScript" | ✅ **Passes.** Nothing is being transpiled that need not be. |
 | "Reduce unused JavaScript" | ✅ **Passes.** |
 
-And two more that look like failures and **cannot change the score at all**,
-because Lighthouse 13 marks them *Unscored*: **Minify CSS**, **Minify
-JavaScript**, **Reduce unused CSS**, and every "Trust and Safety" row (CSP,
-HSTS, COOP, Trusted Types). The Performance score is computed from five
-measurements and nothing else:
+And several more that look like failures and **cannot change the score at
+all**, because Lighthouse 13 marks them *Unscored*: **Minify CSS**, **Minify
+JavaScript**, **Reduce unused CSS**, **Improve image delivery**,
+**Render-blocking requests**, and every "Trust and Safety" row (CSP, HSTS,
+COOP, Trusted Types). They are still worth fixing — a render-blocking request
+and 276 KiB of unnecessary image show up in the metrics below even though the
+audit itself scores nothing — but fixing one does not, by itself, add a point.
+The Performance score is computed from five measurements and nothing else:
 
     First Contentful Paint  10%      Largest Contentful Paint  25%
     Speed Index             10%      Total Blocking Time       30%
@@ -101,7 +104,37 @@ one from its tip — and the Lighthouse runs **alternate** between them, so the
 load on the machine lands on both halves rather than on one. Five pairs per
 profile, median. `tools/perf-ab.sh` is the script.
 
-<!-- PERF-AB-TABLE -->
+**Mobile** — 5 interleaved pairs, median
+
+| | before | after |
+|---|---|---|
+| **Performance** (measured) | 76 | 86 ✅ |
+| **Performance** (with TBT at your shop's 0 ms) | 79 | 91 ✅ |
+| Accessibility | 95 | 96 ✅ |
+| Best Practices | 100 | 100 |
+| SEO | 100 | 100 |
+| First Contentful Paint | 2.83 s | 1.55 s ✅ |
+| Largest Contentful Paint | 4.06 s | 3.09 s ✅ |
+| Speed Index | 4.71 s | 3.97 s ✅ |
+| Cumulative Layout Shift | 0 | 0 |
+| Total Blocking Time (this machine, see below) | 225 ms | 217 ms ✅ |
+| Page weight | 898 KiB | 684 KiB ✅ |
+
+**Desktop** — 5 interleaved pairs, median
+
+| | before | after |
+|---|---|---|
+| **Performance** (measured) | 88 | 99 ✅ |
+| **Performance** (with TBT at your shop's 0 ms) | 96 | 100 ✅ |
+| Accessibility | 95 | 96 ✅ |
+| Best Practices | 100 | 100 |
+| SEO | 100 | 100 |
+| First Contentful Paint | 0.9 s | 0.39 s ✅ |
+| Largest Contentful Paint | 1.14 s | 0.58 s ✅ |
+| Speed Index | 1.49 s | 0.93 s ✅ |
+| Cumulative Layout Shift | 0.007 | 0 ✅ |
+| Total Blocking Time (this machine, see below) | 221 ms | 84 ms ✅ |
+| Page weight | 898 KiB | 252 KiB ✅ |
 
 ### And the one fix this instrument cannot show
 
@@ -119,7 +152,65 @@ the picture is two thirds of the way down it.
 So it is measured directly instead, over a *real* throttled connection at the
 same 1,638 kb/s and 150 ms round-trip, by `tools/perf-lcp-discovery.cjs`:
 
-<!-- PERF-LCP-DISCOVERY -->
+    before   first request for the banner picture, 286 / 284 / 217 ms after
+             the document — median 284
+    after    first request for the banner picture, 226 / 217 / 180 ms after
+             the document — median 217
+
+It moves, and **67 ms is all it can be worth here**, which is worth saying
+plainly rather than dressing up. The reason is a byte count: on this fixture
+the preload sits at byte **1,650** of the document and the `<img>` at byte
+**48,725**, and once compressed that gap is about **11 KB on the wire** — 54 ms
+at 1,638 kb/s. Saying it 11 KB earlier saves 11 KB of waiting.
+
+**Your 2,260 ms is a different number and it is worth reading twice.** It is
+exactly the figure in your own "Render-blocking requests" table (1st party
+2,260 ms), which is not a coincidence: the image request is queued behind the
+document AND its render-blocking stylesheets, and a `<link rel=preload>` is
+acted on by the *preload scanner* before any of that is parsed. That is the
+standard fix and it is the right one. But the honest ranking of what will move
+your LCP is:
+
+1. **The font chain leaving the critical path** — 2,364 ms of it — which is
+   what stops blocking the picture behind two third-party round trips.
+2. **The picture being smaller**: your desktop LCP file goes from 134 KiB to the
+   400w copy, and your mobile one from 131 KiB to 107 KiB. That is directly the
+   "Resource load duration 1,900 ms" line.
+3. **The preload**, which is worth the tens of milliseconds the byte count says
+   it is, and which costs nothing.
+
+
+### The pictures, and the reports
+
+* `docs/perf-shots/index.html` — the homepage side by side at 390px and 1280px,
+  before and after, with the geometry under each. `MEASUREMENTS.json` beside it
+  is the raw read.
+* `docs/perf-reports/` — the four Lighthouse reports the medians above come
+  from, openable in a browser.
+
+**Nothing moved.** At 1280px the page is the same height to the pixel
+(8,271px) and at 390px it differs by 13px out of 9,259, which is the
+"Recommended for you" grid drawing a different product — the two fixtures seed
+the same catalogue and order it by a timestamp. `document.documentElement.
+scrollWidth` is 390 and 1280 exactly, on both sides, so nothing gained
+horizontal scroll. Every box measured is identical:
+
+    footer heading   12px / 700 / rgb(255,255,255)     same
+    product name     13px / 600                        same
+    banner band      260 x 58                          same
+    banner heading   13px / 650                        same
+    banner card      260 x 346.66                      same
+    faces loaded     Poppins 400 600 700 800           same
+
+The one thing that differs, which is the point:
+
+    first banner picture   before  /uploads/posters/perf-poster-1.jpg
+                           after   /img-cache/400/uploads/posters/perf-poster-1.jpg
+
+`StorefrontEnglishUnchangedTest` is the instrument that settles it properly —
+39 pages rendered from the old templates and the new ones in the same process,
+compared byte for byte, with the two deliberate changes cut out of both sides
+and counted. It is green.
 
 **About Total Blocking Time.** PageSpeed measured 0 ms on your shop, on both
 profiles. This container runs six other agents and has no GPU, so the same page

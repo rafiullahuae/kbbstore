@@ -2,7 +2,7 @@
  "before-390": {
   "scrollWidth": 390,
   "innerWidth": 390,
-  "bodyHeight": 9263,
+  "bodyHeight": 9259,
   "headings": [
    "H1",
    "H2",
@@ -37,7 +37,7 @@
    "family": "Poppins"
   },
   "price": {
-   "w": 51.5,
+   "w": 51.88,
    "h": 19,
    "font": "13.5px",
    "weight": "700",
@@ -148,7 +148,7 @@
    "family": "Poppins"
   },
   "price": {
-   "w": 49.61,
+   "w": 49.95,
    "h": 19,
    "font": "13px",
    "weight": "700",
@@ -224,7 +224,7 @@
  "after-390": {
   "scrollWidth": 390,
   "innerWidth": 390,
-  "bodyHeight": 9255,
+  "bodyHeight": 9272,
   "headings": [
    "H1",
    "H2",
@@ -259,7 +259,7 @@
    "family": "Poppins"
   },
   "price": {
-   "w": 53.69,
+   "w": 51.5,
    "h": 19,
    "font": "13.5px",
    "weight": "700",
@@ -297,10 +297,10 @@
      259.1
     ],
     "natural": [
-     209,
-     372
+     233,
+     414
     ],
-    "current": "/img-cache/800/uploads/posters/perf-poster-1.jpg"
+    "current": "/img-cache/400/uploads/posters/perf-poster-1.jpg"
    },
    {
     "css": [
@@ -308,10 +308,10 @@
      259.1
     ],
     "natural": [
-     209,
-     372
+     233,
+     414
     ],
-    "current": "/img-cache/800/uploads/posters/perf-poster-2.jpg"
+    "current": "/img-cache/400/uploads/posters/perf-poster-2.jpg"
    },
    {
     "css": [
@@ -319,10 +319,10 @@
      259.1
     ],
     "natural": [
-     209,
-     372
+     233,
+     414
     ],
-    "current": "/uploads/posters/perf-poster-3.jpg"
+    "current": "/img-cache/400/uploads/posters/perf-poster-3.jpg"
    }
   ],
   "fontsLoaded": [
@@ -370,7 +370,7 @@
    "family": "Poppins"
   },
   "price": {
-   "w": 51.7,
+   "w": 49.61,
    "h": 19,
    "font": "13px",
    "weight": "700",
@@ -408,10 +408,10 @@
      288.7
     ],
     "natural": [
-     260,
-     462
+     263,
+     468
     ],
-    "current": "/img-cache/800/uploads/posters/perf-poster-1.jpg"
+    "current": "/img-cache/400/uploads/posters/perf-poster-1.jpg"
    },
    {
     "css": [
@@ -419,10 +419,10 @@
      288.7
     ],
     "natural": [
-     260,
-     462
+     263,
+     468
     ],
-    "current": "/img-cache/800/uploads/posters/perf-poster-2.jpg"
+    "current": "/img-cache/400/uploads/posters/perf-poster-2.jpg"
    },
    {
     "css": [
@@ -430,10 +430,10 @@
      288.7
     ],
     "natural": [
-     260,
-     463
+     263,
+     468
     ],
-    "current": "/uploads/posters/perf-poster-3.jpg"
+    "current": "/img-cache/400/uploads/posters/perf-poster-3.jpg"
    }
   ],
   "fontsLoaded": [

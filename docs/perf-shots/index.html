@@ -1,0 +1,70 @@
+<!doctype html>
+<meta charset="utf-8"><title>Lane PERF — the homepage, before and after</title>
+<style>
+ body{font:14px/1.5 system-ui,sans-serif;margin:24px;background:#faf7f8;color:#2A2228}
+ h1{font-size:20px} h2{font-size:15px;margin:28px 0 8px}
+ .pair{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+ figure{margin:0} figcaption{font-size:12px;margin-bottom:6px;color:#5E545A}
+ img{width:100%;border:1px solid rgba(42,34,40,.15);border-radius:8px;background:#fff}
+ code{font-size:11px;word-break:break-all}
+</style>
+<h1>Lane PERF — the homepage, before and after</h1>
+<p>Left: the commit this lane branched from. Right: its tip. Same browser, same
+fixture, animations disabled so the carousel is at the same offset in both.</p>
+<section><h2>390px</h2><div class="pair">
+      
+      <figure>
+        <figcaption><b>before</b> · 390px<br>
+          scrollWidth <b>390</b> · body 9259px<br>
+          headings H1 H2 H2 H2 H2 H3 H2 H2 H2 H2 H2 H2 H5 H5 H5<br>
+          footer heading 12px / 700<br>
+          faces loaded Poppins 400, Poppins 600, Poppins 700, Poppins 800<br>
+          first banner picture <code>/uploads/posters/perf-poster-1.jpg</code>
+        </figcaption>
+        <img src="before-390.jpg" alt="before at 390px">
+      </figure>
+      
+      <figure>
+        <figcaption><b>after</b> · 390px<br>
+          scrollWidth <b>390</b> · body 9272px<br>
+          headings H1 H2 H2 H2 H2 H3 H2 H2 H2 H2 H2 H2 H2 H2 H2<br>
+          footer heading 12px / 700<br>
+          faces loaded Poppins 400, Poppins 600, Poppins 700, Poppins 800<br>
+          first banner picture <code>/img-cache/400/uploads/posters/perf-poster-1.jpg</code>
+        </figcaption>
+        <img src="after-390.jpg" alt="after at 390px">
+      </figure>
+    </div></section>
+<section><h2>1280px</h2><div class="pair">
+      
+      <figure>
+        <figcaption><b>before</b> · 1280px<br>
+          scrollWidth <b>1280</b> · body 8271px<br>
+          headings H1 H2 H2 H2 H2 H3 H2 H2 H2 H2 H2 H2 H5 H5 H5<br>
+          footer heading 12px / 700<br>
+          faces loaded Poppins 400, Poppins 600, Poppins 700, Poppins 800<br>
+          first banner picture <code>/uploads/posters/perf-poster-1.jpg</code>
+        </figcaption>
+        <img src="before-1280.jpg" alt="before at 1280px">
+      </figure>
+      
+      <figure>
+        <figcaption><b>after</b> · 1280px<br>
+          scrollWidth <b>1280</b> · body 8271px<br>
+          headings H1 H2 H2 H2 H2 H3 H2 H2 H2 H2 H2 H2 H2 H2 H2<br>
+          footer heading 12px / 700<br>
+          faces loaded Poppins 400, Poppins 600, Poppins 700, Poppins 800<br>
+          first banner picture <code>/img-cache/400/uploads/posters/perf-poster-1.jpg</code>
+        </figcaption>
+        <img src="after-1280.jpg" alt="after at 1280px">
+      </figure>
+    </div></section>
+<h2>Full pages</h2>
+<div class="pair">
+ <figure><figcaption><b>before</b> · 390px, full page</figcaption><img src="before-390-full.jpg"></figure>
+ <figure><figcaption><b>after</b> · 390px, full page</figcaption><img src="after-390-full.jpg"></figure>
+</div>
+<div class="pair">
+ <figure><figcaption><b>before</b> · 1280px, full page</figcaption><img src="before-1280-full.jpg"></figure>
+ <figure><figcaption><b>after</b> · 1280px, full page</figcaption><img src="after-1280-full.jpg"></figure>
+</div>
