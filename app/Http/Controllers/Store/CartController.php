@@ -534,6 +534,35 @@ class CartController extends Controller
     {
         $payload = $this->payload($cart, $request);
 
+        /*
+         * ONE JAR, CLAIMED TWICE — said at the moment it happens. (Lane SEC)
+         *
+         * Adding a product that is already inside a set in the basket, when the
+         * shelf cannot cover both, makes SetStockReconciler take the new line
+         * straight back out. Without this the shopper presses Add to bag,
+         * nothing appears, and the toast says "Added to bag" — which is the
+         * shape of a bug even though the basket is right.
+         *
+         * The sentence replaces the toast rather than joining it, because it
+         * IS the answer to what the press did. The cart page and the checkout
+         * print the same sentence from the same partial when they are rendered;
+         * this is the third surface, and the only one with no room for a band.
+         */
+        if ($this->setStockNotices !== []) {
+            $first = $this->setStockNotices[0];
+
+            $toast = $first['left'] === 0
+                ? __('store.cart.set_took_the_last_one', [
+                    'product' => $first['product'],
+                    'set' => $first['set'],
+                ])
+                : __('store.cart.set_took_some', [
+                    'product' => $first['product'],
+                    'left' => $first['left'],
+                    'set' => $first['set'],
+                ]);
+        }
+
         // The cart-page body is only rendered when the client is actually
         // showing it. Off the cart page that was a full Blade view compiled and
         // thrown away on every add — the single biggest cost of opening the

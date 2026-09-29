@@ -573,3 +573,34 @@ it('costs the same number of queries for a nine-member set as for a three-member
         . 'A difference is one query per member, inside a page render.'
     );
 });
+
+it('says so on the add itself, not only when the basket is next drawn', function () {
+    /*
+     * The third surface. A shopper with the set already in the bag who presses
+     * Add to bag on the toner gets the line taken straight back out — and
+     * without this the reply's toast still read "Added to bag" while nothing
+     * appeared in the drawer, which is the shape of a bug even though the
+     * basket is right.
+     *
+     * MUTATION NOTE. Remove the `if ($this->setStockNotices !== [])` block from
+     * CartController::fragments() and this is red: the toast is "Added to bag"
+     * and the count is still 1. RUN.
+     */
+    $toner = slsProduct('1025 Dokdo Toner', 1);
+    $set = slsSet('Medicube booster set', [[$toner, 1]]);
+    $cart = slsCart([[$set, 1]]);
+
+    $response = slsAs($cart)->postJson('/api/cart/add', [
+        'product_id' => $toner->id,
+        'quantity' => 1,
+    ])->assertOk();
+
+    expect($response->json('toast'))
+        ->toContain('1025 Dokdo Toner')
+        ->and($response->json('toast'))->toContain('Medicube booster set')
+        ->and($response->json('toast'))->toContain('has been taken out of your bag');
+
+    // And the basket really is back to the set alone.
+    expect($response->json('count'))->toBe(1)
+        ->and($cart->fresh(['items'])->items)->toHaveCount(1);
+});
