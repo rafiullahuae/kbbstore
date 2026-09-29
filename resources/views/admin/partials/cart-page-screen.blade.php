@@ -752,12 +752,27 @@
 
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
 
-    var warn = String(values.layout) === 'classic'
+    /* ▲ AND NOT ON THE TWO ROW-SIZE TABS. (Lane CR)
+       This note was true of every tab on this screen and is now false of two of
+       them: "Product rows . spacing and size" and "Product rows . phone" are
+       ordinary declarations at `.kbb-cartpage .items .ci:not(.ci-set)`, which
+       BOTH layouts match, so they are live on this shop today. Leaving the note
+       up over them would tell the owner that the sliders he is dragging do
+       nothing -- which is the complaint that brought this lane here, said by
+       the console itself. */
+    var liveOnClassic = open === 'rowsize' || open === 'rowphone';
+
+    var warn = String(values.layout) === 'classic' && !liveOnClassic
       ? '<div class="cps-note">This shop is on the <b>classic</b> cart page, which is the page it '
         + 'has always rendered. Nothing else on this screen changes anything a shopper sees until '
         + 'the layout above is set to <b>Squeezed</b>. That is deliberate: applying the update that '
         + 'brought this screen changed the shop by nothing.</div>'
-      : '';
+      : (liveOnClassic
+        ? '<div class="cps-note">These controls are <b>live on the page this shop serves right now</b>, '
+          + 'whichever layout is chosen above \u2014 they are the row\u2019s real padding, picture and type '
+          + 'sizes rather than the squeezed layout\u2019s. They reach an ordinary product\u2019s row and '
+          + 'never a set\u2019s: a set has its own under <b>Appearance \u2192 Set</b>.</div>'
+        : '');
 
     host.innerHTML = '<div class="cps-wrap' + (open === 'desktop' ? ' cps-stack' : '') + '"><div class="cps-col">'
       + (banner ? '<div class="cps-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
