@@ -65,8 +65,46 @@
     $replyInvitation = ($brand['replyTo'] ?? '') !== ''
         ? ' Reply to this message if anything looks wrong — it reaches us.'
         : '';
+
+    /*
+     * THE DIRECTION OF THE MESSAGE, and until now there was not one.
+     *
+     * This shell carries no <html> element on purpose (see the header), so the
+     * usual place a document says which way it reads -- <html dir> in
+     * layouts/store.blade.php -- does not exist here. The consequence was that
+     * an Arabic order email had NO direction declared anywhere in it: not an
+     * attribute, not a `direction:` property, nothing. OrderMailer renders the
+     * body through OrderLocale in the language the order was placed in, so the
+     * words arrived in Arabic and every mail client laid them out
+     * left-to-right, because left-to-right is what a client assumes when
+     * nothing says otherwise.
+     *
+     * AN ATTRIBUTE AND NOT A STYLE, for this file's own stated reasons. Outlook
+     * renders with Word and ignores half the CSS; `dir` is an attribute Word
+     * has honoured since it was Word. Everything else in here is already
+     * belt-and-braces the same way -- bgcolor beside background, width beside
+     * style -- and this is the same trade.
+     *
+     * ON THE OUTER TABLE, so it governs every row, cell and partial inside it
+     * without any of them being touched. A `dir` on an ancestor is inherited
+     * by the whole subtree, which is precisely what a document-level
+     * declaration is for.
+     *
+     * FROM Locale::direction() AND NOT FROM THE LANGUAGE. Two switches, the
+     * way the whole shop does it: "Arabic on, mirrored off" is a state the
+     * owner can choose and in it an Arabic email stays left-to-right, matching
+     * what /ar itself is doing that day. The day he turns the mirror on, this
+     * turns with it and no package is needed.
+     *
+     * AND IT APPENDS AN EMPTY STRING ON AN ENGLISH EMAIL, the same trick
+     * $replyInvitation above uses and for the same reason: an @if on its own
+     * line would leave that line's indentation in the output and churn every
+     * committed preview under docs/email-previews. Nothing is emitted, so an
+     * English order email is byte-identical to the one this replaces.
+     */
+    $kbbMailDir = \App\Support\Locale::direction() === 'rtl' ? ' dir="rtl"' : '';
 @endphp
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};margin:0;padding:0;">
+<table role="presentation"{!! $kbbMailDir !!} width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};margin:0;padding:0;">
     <tr>
         <td align="center" style="padding:24px 12px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
 

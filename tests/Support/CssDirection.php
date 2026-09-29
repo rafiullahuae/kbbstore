@@ -93,6 +93,11 @@ final class CssDirection
         'resources/views/store/checkout-success.blade.php',
         'resources/views/store/account/order-detail.blade.php',
         'resources/views/store/account/track.blade.php',
+        // Added by Lane AR2. /routines/{concern}/ ships an inline <style> like
+        // the rest of this list and was outside the audit entirely, which is
+        // how `.rtn-foot .rtn-reset{margin-left:auto}` sat there unseen: the
+        // auto margin that ends a flex row, naming a physical side.
+        'resources/views/store/routines.blade.php',
     ];
 
     /** Blank out comment bodies, keeping newlines so offsets and lines survive. */

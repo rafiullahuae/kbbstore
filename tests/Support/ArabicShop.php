@@ -35,9 +35,35 @@ use App\Support\Locale;
  * gets a request that still believes the shop is English, and the failure looks
  * like a missing translation rather than a stale memo.
  */
+/*
+ * ── WHAT on() DOES NOT DO, AND WHY THAT KEEPS BEING READ AS A BUG ──────────
+ *
+ * It sets `language_ar_enabled` and NOT `language_rtl_enabled`. So a request
+ * made after it renders <html lang="ar" dir="ltr">: Arabic words, a
+ * left-to-right document. That is correct and it is the shop's real default --
+ * App\Support\Locale::direction() keeps the two switches apart deliberately
+ * and its docblock says why -- but the name `ArabicShop::on()` reads like it
+ * turns Arabic all the way on, and it does not.
+ *
+ * Lane PT reported the resulting dir="ltr" as a defect in Locale::direction().
+ * It is not one; it is this helper's default, and the shop's. A lane that wants
+ * to assert something about the MIRRORED layout has to write the second row
+ * itself, the way ArabicFaceTest, SignedNumbersInRtlTest and
+ * DirectionalGlyphsTest already do, and the way tools/pp-seed.php and the three
+ * tools/ug*-seed.php files do for their screenshots.
+ *
+ * Deliberately NOT changed to set both: "Arabic on, RTL off" is a state the
+ * owner can choose and the one the shop is in the moment he flips the single
+ * switch he has been told about, so it is the right default for a test helper
+ * to give you. Lane AR's docs/lane-ar-shots/ photographs all three states.
+ */
 final class ArabicShop
 {
-    /** Turn Arabic on, and make every memo notice. */
+    /**
+     * Turn Arabic on, and make every memo notice.
+     *
+     * NOT the mirrored layout -- see the note above this class.
+     */
     public static function on(): void
     {
         Setting::query()->updateOrCreate(

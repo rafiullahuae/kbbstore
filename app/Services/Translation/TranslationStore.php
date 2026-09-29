@@ -173,6 +173,53 @@ final class TranslationStore
     public const RICH_GROUP = 'products';
 
     /**
+     * Every group that prints a field raw, and which of its fields.
+     *
+     * ── WHY THIS STOPPED BEING ONE GROUP, AND WHAT OPENED THE DOOR ──────────
+     *
+     * `product_tabs.body` is printed with `{!! !!}` TWICE by
+     * partials/product-tabs.blade.php — the desktop panel and the mobile
+     * accordion — exactly like a product description. It was not on any list
+     * here, and for a while that was harmless for the reason CLAUDE.md names as
+     * its own trap: *a broken filter can hide a second bug.*
+     * TranslationsApiController::index() resolves a group by walking
+     * TranslationEstimate::CONTENT, ProductTab was not on it, and so
+     * `?group=product_tabs` resolved to null and the standalone screen could
+     * not write that field at all.
+     *
+     * Lane AR put ProductTab on CONTENT so the owner could translate a tab's
+     * body — and that turned the dead filter into a live one. Measured before
+     * this constant existed: POST /admin-api/translations with
+     * group=product_tabs, field=body and a `<script>` in the value answered
+     * **200** and stored the script tag **verbatim**, to be printed raw on the
+     * Arabic product page. Fixing one thing exposed the next, which is the
+     * shape that history records.
+     *
+     * ── AND WHY `pages.content` AND `posts.body` ARE STILL NOT HERE ─────────
+     *
+     * Unchanged, deliberately, and it is not an oversight this lane inherited
+     * quietly: ContentPageEditorTest already pins the gap by name. Their
+     * ENGLISH is stored as trusted operator HTML by a decision older than any
+     * of this, so cleaning only the Arabic would render one document
+     * differently in its two languages. ProductTab has no such asymmetry —
+     * ProductTabsApiController runs RichText::clean() over its English body and
+     * hands TranslationInput its own RICH_FIELDS for the Arabic — so adding it
+     * here closes a hole without opening a discrepancy.
+     *
+     * RICH_GROUP and RICH_FIELDS above are kept as the `products` entry rather
+     * than replaced: StorefrontReadsTranslationsTest holds RICH_FIELDS
+     * identical to ProductEditorApiController's by reflection, and
+     * ContentPageEditorTest reads RICH_GROUP to assert the pages gap is still
+     * the shape it described.
+     *
+     * @var array<string, list<string>>
+     */
+    public const RICH_BY_GROUP = [
+        self::RICH_GROUP => self::RICH_FIELDS,
+        'product_tabs' => ['body'],
+    ];
+
+    /**
      * locale => group => item id => [ field => value ], published long prose.
      *
      * Filled by longFor() and cleared by flush(), exactly like $memo. There is
@@ -578,7 +625,8 @@ final class TranslationStore
      */
     public static function isRichField(string $group, string $field): bool
     {
-        return self::normaliseKey($group) === self::RICH_GROUP
-            && in_array(self::normaliseKey($field), self::RICH_FIELDS, true);
+        $fields = self::RICH_BY_GROUP[self::normaliseKey($group)] ?? [];
+
+        return in_array(self::normaliseKey($field), $fields, true);
     }
 }

@@ -578,7 +578,14 @@ it('lowercases every key so a case-insensitive collation cannot split a row', fu
     // are one opinion, on MySQL and on SQLite alike.
     TranslationStore::put('ar', 'UI', 0, 'Store.Wishlist.Title', 'عنوان', Translation::STATUS_PUBLISHED);
 
-    $row = Translation::query()->first();
+    /*
+     * SCOPED, because the translations table no longer starts empty:
+     * 2027_04_28_000000_seed_arabic_interface_drafts ships a DRAFT for every
+     * interface string. A bare first()/count() over the whole table used to
+     * mean "the row this test wrote" and now means "one of 1,018 others".
+     * The subject of each assertion is named instead.
+     */
+    $row = Translation::query()->where('field', 'store.wishlist.title')->firstOrFail();
 
     expect($row->group)->toBe('ui')->and($row->field)->toBe('store.wishlist.title')
         ->and(TranslationStore::get('ar', 'ui', 0, 'store.wishlist.title'))->toBe('عنوان');
@@ -654,8 +661,15 @@ it('gives interface strings a real uniqueness, because item_id is 0 and not null
     TranslationStore::put('ar', Translation::GROUP_UI, 0, 'store.wishlist.title', 'أ', Translation::STATUS_PUBLISHED);
     TranslationStore::put('ar', Translation::GROUP_UI, 0, 'store.wishlist.title', 'ب', Translation::STATUS_PUBLISHED);
 
-    expect(Translation::query()->count())->toBe(1)
-        ->and(Translation::query()->first()->value)->toBe('ب');
+    /*
+     * SCOPED, because the translations table no longer starts empty:
+     * 2027_04_28_000000_seed_arabic_interface_drafts ships a DRAFT for every
+     * interface string. A bare first()/count() over the whole table used to
+     * mean "the row this test wrote" and now means "one of 1,018 others".
+     * The subject of each assertion is named instead.
+     */
+    expect(Translation::query()->where('field', 'store.wishlist.title')->count())->toBe(1)
+        ->and(Translation::query()->where('field', 'store.wishlist.title')->firstOrFail()->value)->toBe('ب');
 });
 
 /* ══════════════════ 7. the order's language ══════════════════ */
@@ -968,7 +982,14 @@ it('writes one string from the standalone screen, and clears it with a blank', f
         'field' => 'store.wishlist.title', 'value' => '',
     ])->assertOk();
 
-    expect(Translation::query()->count())->toBe(0);
+    /*
+     * SCOPED, because the translations table no longer starts empty:
+     * 2027_04_28_000000_seed_arabic_interface_drafts ships a DRAFT for every
+     * interface string. A bare first()/count() over the whole table used to
+     * mean "the row this test wrote" and now means "one of 1,018 others".
+     * The subject of each assertion is named instead.
+     */
+    expect(Translation::query()->where('field', 'store.wishlist.title')->count())->toBe(0);
 });
 
 it('refuses to store a translation of an English string that does not exist', function () {
@@ -981,7 +1002,14 @@ it('refuses to store a translation of an English string that does not exist', fu
         'field' => 'made.up.key', 'value' => 'أي شيء',
     ])->assertStatus(422);
 
-    expect(Translation::query()->count())->toBe(0);
+    /*
+     * SCOPED, because the translations table no longer starts empty:
+     * 2027_04_28_000000_seed_arabic_interface_drafts ships a DRAFT for every
+     * interface string. A bare first()/count() over the whole table used to
+     * mean "the row this test wrote" and now means "one of 1,018 others".
+     * The subject of each assertion is named instead.
+     */
+    expect(Translation::query()->where('field', 'made.up.key')->count())->toBe(0);
 });
 
 it('approves a draft, and only then does a shopper see it', function () {
@@ -992,12 +1020,27 @@ it('approves a draft, and only then does a shopper see it', function () {
 
     expect(test()->get('/ar/my-wishlist/')->getContent())->not->toContain('مسودة آلية');
 
+    /*
+     * `published` is no longer 1. The table ships with a draft for every
+     * interface string (2027_04_28_000000_seed_arabic_interface_drafts), and
+     * "Approve all" is deliberately the whole locale -- the console's button
+     * prints the count it is about to approve, so the owner presses it knowing.
+     *
+     * What this test is actually about is the DRAFT BOUNDARY: invisible before,
+     * visible after. So it counts the drafts that were waiting and asserts the
+     * call approved exactly those, which is the same claim without pinning a
+     * number that belongs to a fixture.
+     */
+    $waiting = Translation::query()
+        ->where('locale', 'ar')->where('status', Translation::STATUS_DRAFT)->count();
+
     test()->actingAs(epAdmin(), 'admin')
         ->postJson('/admin-api/translations/publish', ['locale' => 'ar'])
         ->assertOk()
-        ->assertJsonPath('published', 1);
+        ->assertJsonPath('published', $waiting);
 
-    expect(test()->get('/ar/my-wishlist/')->getContent())->toContain('مسودة آلية');
+    expect($waiting)->toBeGreaterThanOrEqual(1, 'the draft under test was not waiting to be approved')
+        ->and(test()->get('/ar/my-wishlist/')->getContent())->toContain('مسودة آلية');
 });
 
 it('refuses to spend money on a stale estimate', function () {
@@ -1006,6 +1049,8 @@ it('refuses to spend money on a stale estimate', function () {
     TranslationCredentials::saveApiKey('a-key');
     app()->forgetScopedInstances();
 
+    $before = Translation::query()->count();
+
     // A tab that opened the estimate an hour ago must not be able to authorise
     // today's much larger run. "I saw the number before I pressed it" has to be
     // true rather than claimed.
@@ -1013,7 +1058,14 @@ it('refuses to spend money on a stale estimate', function () {
         'locale' => 'ar', 'limit' => 50, 'group' => 'ui', 'confirm_characters' => 999_999,
     ])->assertStatus(409);
 
-    expect(Translation::query()->count())->toBe(0);
+    /*
+     * "Nothing was written" as a DIFFERENCE, not as a total. The table ships
+     * with 1,018 interface drafts, so a bare count of 0 stopped meaning "the
+     * refused run stored nothing" the day that migration landed -- and would
+     * have gone on failing for a reason that has nothing to do with the guard
+     * under test.
+     */
+    expect(Translation::query()->count())->toBe($before);
 });
 
 it('tells the owner how to proceed for free when no provider is connected', function () {
@@ -1044,6 +1096,96 @@ it('keeps every model allowlist and the estimate in step', function () {
                 ->toBeTrue($class.' has no column '.$column);
         }
     }
+});
+
+it('lists every translatable model on the estimate, not just the ones already listed', function () {
+    /*
+     * THE TEST ABOVE ONLY EVER READ ONE DIRECTION, AND THAT IS HOW THREE
+     * MODELS WENT MISSING.
+     *
+     * It walks TranslationEstimate::CONTENT and checks each class it finds
+     * agrees with its own $translatable. Nothing walked the models. So a model
+     * that declared $translatable and was never added to CONTENT satisfied it
+     * completely — by not being in the loop at all.
+     *
+     * Three had: ProductTab (title, body), UgcSection (heading, subheading)
+     * and UgcVideo (title, caption). What that cost on the shop, all three of
+     * which the owner would have met before anybody found the cause:
+     *
+     *   1. Translation -> Progress' progress bar could not move for them. The
+     *      denominator never counted the fields and the numerator is grouped by
+     *      table, so an owner who translated every product tab in the shop by
+     *      hand watched the figure stay exactly where it was.
+     *   2. The character count under the "Translate everything" button
+     *      under-quoted the job by however many tabs, sections and clips the
+     *      shop carries.
+     *   3. MachineTranslationRunner walks the same constant, so the machine
+     *      never offered to translate any of them at all.
+     *
+     * MUTATION: drop the ProductTab, UgcSection or UgcVideo row from
+     * TranslationEstimate::CONTENT and this is red, naming the class. Ran it
+     * for all three.
+     *
+     * The models are found by reading the directory rather than from a list
+     * here, because a list here is the third copy of the same allowlist and
+     * would go out of step exactly the way the first two did.
+     */
+    $missing = [];
+
+    foreach (glob(app_path('Models/*.php')) as $file) {
+        $class = 'App\\Models\\'.basename($file, '.php');
+
+        if (! class_exists($class)) {
+            continue;
+        }
+
+        $model = new $class;
+
+        if (! method_exists($model, 'translatable') || $model->translatable() === []) {
+            continue;
+        }
+
+        if (! array_key_exists($class, TranslationEstimate::CONTENT)) {
+            $missing[] = $class;
+        }
+    }
+
+    expect($missing)->toBe([], 'translatable but invisible to the translation console: '.implode(', ', $missing));
+});
+
+it('never sends a creator\'s own caption to a machine', function () {
+    /*
+     * The other half of the fix above. UgcVideo is now ON CONTENT so its two
+     * fields are COUNTED as work — but create_ugc_videos states the rule that
+     * kept it off in the first place: "A caption is a creator's own voice, so
+     * the machine path is deliberately NOT used on it."
+     *
+     * Counting it and machine-translating it are different decisions, so they
+     * are now different lists. This pins the second one.
+     *
+     * MUTATION: delete the UgcVideo row from TranslationEstimate::NEVER_MACHINE
+     * and this is red -- the caption comes back in the batch. Ran it.
+     */
+    $video = \App\Models\UgcVideo::create([
+        'slug' => 'ar-machine-'.uniqid(),
+        'title' => 'Morning routine',
+        'caption' => 'This is the creator speaking in her own voice',
+        'status' => 'publish',
+        'rights_status' => 'granted',
+    ]);
+
+    $batch = app(\App\Services\Translation\MachineTranslationRunner::class)
+        ->pending('ar', 500, 'ugc_videos');
+
+    $fields = array_column(array_filter(
+        $batch,
+        static fn (array $r): bool => (int) $r['item_id'] === (int) $video->id
+    ), 'field');
+
+    expect(in_array('title', $fields, true))
+        ->toBeTrue('a clip title is shop copy and should be offered to the machine')
+        ->and(in_array('caption', $fields, true))
+        ->toBeFalse('a caption is the creator\'s own voice and must never be machine-translated');
 });
 
 it('never lets an identifier onto a translatable list', function () {

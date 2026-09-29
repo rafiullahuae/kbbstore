@@ -33,7 +33,7 @@
 
     <!-- slim secure-checkout header (design .head) -->
     <header class="co-head"><div class="in">
-        <a class="logo" href="{{ Url::to('/') }}">K-Beauty<span>Bliss</span></a>
+        <a class="logo" href="{{ Url::to('/') }}"><bdi>K-Beauty<span>Bliss</span></bdi></a>
         <span class="secure">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
             {{ __('store.checkout.secure_badge') }}        </span>

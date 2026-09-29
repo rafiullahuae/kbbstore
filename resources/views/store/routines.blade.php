@@ -97,7 +97,15 @@
   .rtn-foot{margin-top:22px;padding:16px;border:1px solid var(--line,rgba(42,34,40,.12));border-radius:16px;background:#fff;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
   .rtn-foot b{font-size:15px}
   .rtn-foot small{font-size:12px;color:var(--ink-2,#5E545A)}
-  .rtn-foot .rtn-reset{margin-left:auto;font-size:12.5px;color:var(--pink-deep,#C13E63)}
+  /* `margin-inline-start`, NOT `margin-left`. .rtn-foot is a flex row and this
+     is the auto margin that pushes "Start this routine again" to the far end
+     of it, past the total and the note. Under dir="rtl" the row's main-start
+     is the RIGHT edge, so `margin-left:auto` eats the free space on the left
+     and shoves the link back to the START -- it lands tucked against the
+     total instead of at the end of the row, which is the one place in this
+     box a reader is not looking. The logical form names the end in both
+     directions. */
+  .rtn-foot .rtn-reset{margin-inline-start:auto;font-size:12.5px;color:var(--pink-deep,#C13E63)}
   .rtn-empty{margin-top:26px;border:1px dashed var(--line,rgba(42,34,40,.12));border-radius:16px;padding:28px;text-align:center;background:#fff}
   .rtn-empty h2{margin:0 0 8px;font-size:18px}
   .rtn-empty p{margin:0 auto 14px;max-width:460px;font-size:13.5px;color:var(--ink-2,#5E545A);line-height:1.55}
