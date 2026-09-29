@@ -331,6 +331,22 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 @endphp
 @if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
 @endif
+{{-- Appearance -> Page background: the soft multi-colour wash.        (Lane BG)
+
+     ONE LINE, and the partial's own header carries the argument. The short
+     version is: it emits ZERO BYTES -- not even a newline -- until the owner
+     switches the wash on, so applying this package leaves every storefront page
+     byte-identical; and it is a partial rather than a block here because FIVE
+     storefront pages do not extend this layout at all and the owner asked for
+     "the whole background".
+
+     AFTER the accent, the page stylesheets and the site layout, so it outranks
+     kbb-shop.css's and kbb-product.css's own `body{background:var(--bg)}` --
+     which is not a detail: those two are why /shop and a product page are
+     WHITE today while the home page and the cart are pink. Nothing else here
+     competes with it; the only selectors it declares are `html::before`,
+     `body::before` and `body::after`, which no stylesheet and no Blade in this
+     repository declares. --}}@include('partials.page-wash-css')
 {{-- Appearance -> Set. ONE LINE, and its POSITION is load-bearing rather than
      tidy -- the partial's own header carries the whole argument, and the short
      version is: after @stack('styles') so a page sheet cannot outrank the

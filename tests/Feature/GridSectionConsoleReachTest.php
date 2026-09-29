@@ -72,7 +72,34 @@ it('wires the Grid sections screen exactly once', function () {
     expect(substr_count($app, "'gridsections':['Appearance','Grid sections']"))
         ->toBe(1, 'block 3: the TITLES row is present the wrong number of times');
 
-    expect(substr_count($app, "'paygw','sitelayout','slimfooter','gridsections']);"))
+    /*
+     * ▲ ASKED OF THE ID LIST, NOT OF THE END OF THE LINE.        (edited by Lane BG)
+     *
+     * This read `substr_count($app, "'paygw','sitelayout','slimfooter','gridsections']);")`,
+     * which asserts that `gridsections` is the LAST id in LATE_RENDERED — so the
+     * next lane to arm a screen turns this red however correctly it does it, and
+     * the only way to green it again is to un-arm its own screen. That is the
+     * shape CLAUDE.md forbids by name, one level up: a pin on "nothing has
+     * happened since" rather than on the finished state.
+     *
+     * The fact this case exists for is unchanged and is asserted below: a deep
+     * link to Grid sections opens the dashboard unless `gridsections` is armed
+     * EXACTLY ONCE. It is now read out of the captured id list, which is the
+     * shape TranslationConsoleTest already uses for the same line and for the
+     * same reason.
+     *
+     * MUTATION: delete 'gridsections' from LATE_RENDERED and this fails with 0
+     * against 1, exactly as before. Add a second copy and it fails with 2.
+     *
+     * Lane BG changed this to arm 'pagewash' beside it and is flagging the edit
+     * rather than hiding it: it is one assertion in a file this lane does not
+     * own, the intent is preserved, and it is easy to revert if Lane GS would
+     * rather word it differently.
+     */
+    expect(preg_match('/const LATE_RENDERED\s*=\s*new Set\(\[([^\]]*)\]\);/', $app, $lateRendered))
+        ->toBe(1, 'block 4: LATE_RENDERED could not be found in the console at all');
+
+    expect(substr_count($lateRendered[1], "'gridsections'"))
         ->toBe(1, 'block 4: the LATE_RENDERED id is present the wrong number of times');
 });
 

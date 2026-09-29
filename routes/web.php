@@ -536,6 +536,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * settings rows and needs its own capability, `sitelayout.manage`.
          */
         require __DIR__.'/site-layout-admin.php';
+        require __DIR__.'/page-wash-admin.php';
 
         /*
          * Store → Security. Lane C. Inside this group for the reason the

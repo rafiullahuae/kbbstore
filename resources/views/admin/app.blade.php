@@ -2782,6 +2782,7 @@ const LATE_NAV=[
   {screen:'product-tabs',label:'Product tabs',group:'Catalog',after:['catalog','sets'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M8 7V4"/><path d="M14 7V4"/>'},
   {screen:'banners',label:'Banners',group:'Appearance',after:['hpcontent','homepage'],icon:'<rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/>'},
   {screen:'gridsections',label:'Grid sections',group:'Appearance',after:['banners','hpcontent','homepage'],icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
+  {screen:'pagewash',label:'Page background',group:'Appearance',after:['dividers','prodstyles','homepage','layout'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14c4-3 7 1 10-1s5-2 8 0"/>'},
 ];
 
 /* The ids above, for the click guard below. */
@@ -3049,7 +3050,7 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
    opened the dashboard. Same fix, same condition, and the strings are copied
    from what each partial's own go() writes so the heading cannot depend on how
    the screen was reached. */
-'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections']};
+'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -7452,7 +7453,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -22366,6 +22367,24 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      so the homepage renders the bytes it rendered before. The two rows he named
      are one-click presets on this screen, not defaults this ships. --}}
 @include('admin.partials.grid-sections-screen')
+
+{{-- Appearance -> Page background (Lane BG). The soft multi-colour wash the
+     owner asked for, and the live preview he asked to see first.
+
+     IT REGISTERS ITS OWN SIDEBAR ROW through kbbAddNavEntry(), and the LATE_NAV
+     entry above is the copy of that call the console needs so the row exists
+     when the sidebar is first drawn rather than at the end of this document.
+
+     IT CHANGES NOTHING ON THE SHOP BY BEING APPLIED. App\Services\PageWash
+     ships `on` FALSE and css() returns the empty string while it is, so every
+     storefront page is byte-identical until somebody switches the wash on --
+     and the screen opens on its PREVIEW tab, which writes nothing at all.
+
+     The preview frames five real storefront addresses with ?kbbwash= on them.
+     That parameter is honoured only for a request carrying an admin session, so
+     a shopper who is handed one of those URLs gets the shop exactly as it is
+     today. --}}
+@include('admin.partials.page-wash-screen')
 
 @verbatim
 <script>

@@ -223,7 +223,33 @@ input,textarea{font-family:inherit}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .preview-flag{position:fixed;top:10px;inset-inline-start:10px;font-size:9.5px;font-weight:700;letter-spacing:.04em;color:var(--pink-ink);background:#fff;border:1px solid var(--blush);padding:4px 10px;border-radius:99px;z-index:40;box-shadow:var(--sh-s)}
 </style>
-</head>
+@endverbatim{{-- Appearance -> Page background (Lane BG). ZERO BYTES until the owner
+     switches the wash on. THIS DOCUMENT DOES NOT EXTEND
+     layouts/store.blade.php -- it carries its own <html>, <head> and inline
+     stylesheet -- so the include is repeated here rather than inherited, and it
+     goes LAST in the head so it outranks this file's own
+     `body{background:var(--bg)}`.
+
+     IT BREAKS OUT OF THE VERBATIM FENCE AND BACK IN, and EVERY PIECE OF
+     WHITESPACE AROUND THAT IS LOAD-BEARING. Three mechanics, each of which cost
+     a render to find:
+
+       - this whole <head> is inside a fence, so an include dropped in raw is
+         PRINTED rather than run. The page grew 565 bytes of Blade comment into
+         its <head>, served to every visitor.
+       - a Blade COMMENT inside a fence is not a comment either, for the same
+         reason, so the note you are reading sits outside it.
+       - the compiler puts the whitespace that follows the opening marker back
+         OUTSIDE the raw block, immediately after this include's compiled
+         `?>` -- and PHP eats one newline after `?>`. So a newline there
+         disappears and the closing head tag joins the style tag. The newline
+         that has to survive is therefore the one BEFORE the closing marker,
+         inside the fence, and the reopening marker is followed by no whitespace
+         at all.
+
+     (The markers are deliberately not spelled out with their @ in this comment:
+     the fence is extracted before comments are stripped, so naming one here
+     would arm the trap it describes.) --}}@include('partials.page-wash-css')@verbatim</head>
 <body>
 <div class="deco"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>@endverbatim
 <div class="preview-flag">{{ __('store.quiz.preview_flag') }}</div>

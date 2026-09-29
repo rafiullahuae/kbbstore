@@ -149,7 +149,7 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections']};
+'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background']};
 ```
 
 ## Block 4 · arm the deep-link replay
@@ -170,8 +170,23 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash']);
 ```
+
+> **Block 3's replacement above also carries `,'pagewash':['Appearance','Page
+> background']` for the same reason as blocks 4 and 5**: that run reaches the
+> closing brace of `TITLES`, so a row appended to the map lengthens this record
+> too. Lane BG appends rather than inserting after `'sitelayout'` precisely so
+> that this record is LENGTHENED rather than SPLIT IN HALF.
+
+> **Both replacements below carry `,'pagewash'` as well, and that is Lane BG's
+> insertion rather than this lane's.** `LATE_RENDERED` is the one line in this
+> console that every handover document quotes verbatim, so the lane that
+> lengthens it has to lengthen every record of it in the same commit — which is
+> the instruction `docs/T1B-ADMIN-APP-BLOCKS.md` gives and the reason block 5
+> below exists at all. Applying this document's blocks 4 and 5 therefore lands
+> the console and both records on the same line, whichever order the two lanes
+> merge in.
 
 ## Block 5 · keep the other handover document in step
 
@@ -190,7 +205,7 @@ Anchor (occurs once, in `docs/T1B-ADMIN-APP-BLOCKS.md`):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash']);
 ```
 
 ---

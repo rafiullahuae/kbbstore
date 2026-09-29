@@ -1,0 +1,70 @@
+{
+    "a": {
+        "name": "Cream drift",
+        "cycle": 420,
+        "floor": "#FCF2F1",
+        "contrast": {
+            "--ink": 13.52,
+            "--ink-2": 6.35,
+            "--muted": 3.24,
+            "--pink": 3.17,
+            "--pink-deep": 4.44
+        },
+        "frames": {
+            "0": "radial-gradient(120% 92% at 14% 6%,rgb(252,242,241) 0%,rgba(252,242,241,0) 62%),radial-gradient(112% 86% at 88% 20%,rgb(251,238,242) 0%,rgba(251,238,242,0) 58%),radial-gradient(136% 104% at 46% 104%,rgb(246,237,246) 0%,rgba(246,237,246,0) 66%),linear-gradient(168deg,rgb(252,242,241) 0%,rgb(251,238,242) 52%,rgb(246,237,246) 100%)",
+            "33": "radial-gradient(128% 96% at 84% 4%,rgb(251,238,242) 0%,rgba(251,238,242,0) 62%),radial-gradient(118% 90% at 10% 26%,rgb(246,237,246) 0%,rgba(246,237,246,0) 58%),radial-gradient(130% 100% at 58% 100%,rgb(252,242,241) 0%,rgba(252,242,241,0) 66%),linear-gradient(198deg,rgb(251,238,242) 0%,rgb(246,237,246) 52%,rgb(252,242,241) 100%)",
+            "66": "radial-gradient(116% 88% at 50% 0%,rgb(246,237,246) 0%,rgba(246,237,246,0) 62%),radial-gradient(124% 94% at 6% 62%,rgb(252,242,241) 0%,rgba(252,242,241,0) 58%),radial-gradient(128% 98% at 96% 88%,rgb(251,238,242) 0%,rgba(251,238,242,0) 66%),linear-gradient(146deg,rgb(246,237,246) 0%,rgb(252,242,241) 52%,rgb(251,238,242) 100%)"
+        }
+    },
+    "b": {
+        "name": "Blossom",
+        "cycle": 120,
+        "floor": "#F8F5F9",
+        "contrast": {
+            "--ink": 13.3,
+            "--ink-2": 6.24,
+            "--muted": 3.18,
+            "--pink": 3.12,
+            "--pink-deep": 4.36
+        },
+        "frames": {
+            "0": "radial-gradient(120% 92% at 14% 6%,rgb(255,241,231) 0%,rgba(255,241,231,0) 62%),radial-gradient(112% 86% at 88% 20%,rgb(253,233,237) 0%,rgba(253,233,237,0) 58%),radial-gradient(136% 104% at 46% 104%,rgb(248,245,249) 0%,rgba(248,245,249,0) 66%),linear-gradient(168deg,rgb(255,241,231) 0%,rgb(253,233,237) 52%,rgb(248,245,249) 100%)",
+            "33": "radial-gradient(128% 96% at 84% 4%,rgb(253,233,237) 0%,rgba(253,233,237,0) 62%),radial-gradient(118% 90% at 10% 26%,rgb(248,245,249) 0%,rgba(248,245,249,0) 58%),radial-gradient(130% 100% at 58% 100%,rgb(255,241,231) 0%,rgba(255,241,231,0) 66%),linear-gradient(198deg,rgb(253,233,237) 0%,rgb(248,245,249) 52%,rgb(255,241,231) 100%)",
+            "66": "radial-gradient(116% 88% at 50% 0%,rgb(248,245,249) 0%,rgba(248,245,249,0) 62%),radial-gradient(124% 94% at 6% 62%,rgb(255,241,231) 0%,rgba(255,241,231,0) 58%),radial-gradient(128% 98% at 96% 88%,rgb(253,233,237) 0%,rgba(253,233,237,0) 66%),linear-gradient(146deg,rgb(248,245,249) 0%,rgb(255,241,231) 52%,rgb(253,233,237) 100%)"
+        }
+    },
+    "c": {
+        "name": "Mint morning",
+        "cycle": 240,
+        "floor": "#FDF6EC",
+        "contrast": {
+            "--ink": 13.51,
+            "--ink-2": 6.34,
+            "--muted": 3.23,
+            "--pink": 3.17,
+            "--pink-deep": 4.44
+        },
+        "frames": {
+            "0": "radial-gradient(120% 92% at 14% 6%,rgb(235,244,236) 0%,rgba(235,244,236,0) 62%),radial-gradient(112% 86% at 88% 20%,rgb(253,246,236) 0%,rgba(253,246,236,0) 58%),radial-gradient(136% 104% at 46% 104%,rgb(251,236,239) 0%,rgba(251,236,239,0) 66%),linear-gradient(168deg,rgb(235,244,236) 0%,rgb(253,246,236) 52%,rgb(251,236,239) 100%)",
+            "33": "radial-gradient(128% 96% at 84% 4%,rgb(253,246,236) 0%,rgba(253,246,236,0) 62%),radial-gradient(118% 90% at 10% 26%,rgb(251,236,239) 0%,rgba(251,236,239,0) 58%),radial-gradient(130% 100% at 58% 100%,rgb(235,244,236) 0%,rgba(235,244,236,0) 66%),linear-gradient(198deg,rgb(253,246,236) 0%,rgb(251,236,239) 52%,rgb(235,244,236) 100%)",
+            "66": "radial-gradient(116% 88% at 50% 0%,rgb(251,236,239) 0%,rgba(251,236,239,0) 62%),radial-gradient(124% 94% at 6% 62%,rgb(235,244,236) 0%,rgba(235,244,236,0) 58%),radial-gradient(128% 98% at 96% 88%,rgb(253,246,236) 0%,rgba(253,246,236,0) 66%),linear-gradient(146deg,rgb(251,236,239) 0%,rgb(235,244,236) 52%,rgb(253,246,236) 100%)"
+        }
+    },
+    "d": {
+        "name": "Cool header",
+        "cycle": 180,
+        "floor": "#F4F3FC",
+        "contrast": {
+            "--ink": 13.47,
+            "--ink-2": 6.33,
+            "--muted": 3.22,
+            "--pink": 3.16,
+            "--pink-deep": 4.42
+        },
+        "frames": {
+            "0": "radial-gradient(120% 92% at 14% 6%,rgb(239,238,251) 0%,rgba(239,238,251,0) 62%),radial-gradient(112% 86% at 88% 20%,rgb(236,242,252) 0%,rgba(236,242,252,0) 58%),radial-gradient(136% 104% at 46% 104%,rgb(244,243,252) 0%,rgba(244,243,252,0) 66%),linear-gradient(168deg,rgb(239,238,251) 0%,rgb(236,242,252) 52%,rgb(244,243,252) 100%)",
+            "33": "radial-gradient(128% 96% at 84% 4%,rgb(236,242,252) 0%,rgba(236,242,252,0) 62%),radial-gradient(118% 90% at 10% 26%,rgb(244,243,252) 0%,rgba(244,243,252,0) 58%),radial-gradient(130% 100% at 58% 100%,rgb(239,238,251) 0%,rgba(239,238,251,0) 66%),linear-gradient(198deg,rgb(236,242,252) 0%,rgb(244,243,252) 52%,rgb(239,238,251) 100%)",
+            "66": "radial-gradient(116% 88% at 50% 0%,rgb(244,243,252) 0%,rgba(244,243,252,0) 62%),radial-gradient(124% 94% at 6% 62%,rgb(239,238,251) 0%,rgba(239,238,251,0) 58%),radial-gradient(128% 98% at 96% 88%,rgb(236,242,252) 0%,rgba(236,242,252,0) 66%),linear-gradient(146deg,rgb(244,243,252) 0%,rgb(239,238,251) 52%,rgb(236,242,252) 100%)"
+        }
+    }
+}

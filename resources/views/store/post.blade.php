@@ -195,6 +195,13 @@
 @endphp
 @if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
 @endif
+{{-- Appearance -> Page background (Lane BG). ONE LINE, zero bytes until the
+     owner switches the wash on. THIS DOCUMENT DOES NOT EXTEND
+     layouts/store.blade.php -- it carries its own <html>, <head> and inline
+     stylesheet -- so the include has to be repeated here rather than inherited.
+     Measured: without it this page rendered BYTE-IDENTICALLY under all four
+     treatments, and tools/bg-sheet.cjs refused to arrange the row. LAST IN THE
+     HEAD so it outranks this file's own `body{background:var(--bg)}`. --}}@include('partials.page-wash-css')
 </head>
 <body>
 <header class="head"><div class="wrap head-in">
