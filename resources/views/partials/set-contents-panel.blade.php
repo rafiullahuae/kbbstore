@@ -156,24 +156,50 @@
     use App\Support\Money;
     use App\Support\SetContents;
 
-    $kbbSetPage = $product->isSet() ? SetContents::fromProduct($product) : SetContents::NONE;
+    /*
+     * ONE READ OF THE APPEARANCE SETTINGS PER PAGE, not one per row and not one
+     * per call site. all() walks the whole schema, and the panel, its class
+     * list, the fold and every row's link switch all want the same answer —
+     * three calls to get() would be three walks. It is handed down to
+     * partials/set-contents-row.blade.php as $kbbSetAp for the same reason.
+     *
+     * It costs no query: every key is a row of `settings`, read through the one
+     * Setting::map() snapshot the header and the cart panel have already warmed
+     * on this request.                                              (Lane SA)
+     */
+    $kbbSetAp = app(\App\Services\SetAppearance::class)->all();
+
+    $kbbSetPage = ($product->isSet() && $kbbSetAp['p_on']) ? SetContents::fromProduct($product) : SetContents::NONE;
+    /* ▲ `p_on` IS TESTED HERE AND NOT AS A WRAPPER `@if` FURTHER DOWN, which is
+         not tidiness: SetContents::fromProduct() is the work, and a panel the
+         owner has switched off should not do it and then throw the answer away.
+         It also means the switch returns the SAME shape the "this is not a set"
+         branch already returns, so there is exactly one empty case below rather
+         than two. */
 
     /*
      * HOW MANY ROWS STAND BEFORE THE FOLD.
      *
-     * Five, and the number lives here rather than in the CSS because the fold
-     * is a SERVER decision: the rows past it are inside a <details> in the
-     * markup, which is what lets the disclosure work with no script at all.
+     * Five, and the number lives on the SERVER rather than in the CSS because
+     * the fold is a server decision: the rows past it are inside a <details> in
+     * the markup, which is what lets the disclosure work with no script at all.
      * Five rows is about 370px of list, which leaves the Add to cart button on
      * a 667px phone screen with the price still above it.
+     *
+     * IT IS A SETTING NOW — Appearance -> Set -> Desktop -> "Show this many
+     * before folding" — and it SHIPS AT FIVE, so a shop that applies the
+     * package folds exactly where it folded yesterday. Zero from
+     * SetAppearance::foldAt() means the owner turned the fold off, and then the
+     * whole list stands however long it is; that is why the `> $kbbSetFold + 1`
+     * test is guarded rather than left to arithmetic on a zero.
      *
      * A box of exactly six would fold ONE row, which is a disclosure that
      * saves nothing and costs a click -- so the fold applies from seven
      * upward and a six-member box is drawn whole.
      */
-    $kbbSetFold = 5;
+    $kbbSetFold = \App\Services\SetAppearance::foldAt($kbbSetAp);
     $kbbSetRows = $kbbSetPage['members'];
-    $kbbSetFolds = count($kbbSetRows) > $kbbSetFold + 1;
+    $kbbSetFolds = $kbbSetFold > 0 && count($kbbSetRows) > $kbbSetFold + 1;
     $kbbSetShown = $kbbSetFolds ? array_slice($kbbSetRows, 0, $kbbSetFold) : $kbbSetRows;
     $kbbSetHidden = $kbbSetFolds ? array_slice($kbbSetRows, $kbbSetFold) : [];
 @endphp
@@ -184,19 +210,43 @@
    WHAT IS IN THIS SET — the buy column's list. calc(), min() and one media
    query; nothing measured, no script.
    ═══════════════════════════════════════════════════════════════════════════ */
-.ksl{display:block;min-width:0;margin:0 0 14px}
+/* ── EVERY NUMBER BELOW IS `var(--ksl-x, <the literal it has always been>)`.
+   ────────────────────────────────────────────────────────────────────────
+   NOTHING DECLARES THOSE PROPERTIES HERE, which is what makes Appearance ->
+   Set possible without a specificity fight: the owner's values are declared
+   once, on `.ksl`, by resources/views/partials/set-appearance-css.blade.php in
+   the <head>, and every rule below simply reads them. A shop that has moved
+   nothing emits no such block at all, so these fallbacks ARE the shop, byte
+   for byte, and every one of them is the number that was here before.
+                                                                  (Lane SA) */
+.ksl{display:block;min-width:0;margin:0 0 var(--ksl-block,14px)}
 .ksl-rows{display:block;min-width:0}
 
 /* The row. Photograph, words, money — three tracks along the inline axis, so
    Arabic mirrors without a second rule. */
-.ksl-r{display:grid;gap:0 10px;min-width:0;align-items:center;padding:6px 0;
-       grid-template-columns:40px minmax(0,1fr) auto}
-.ksl-r + .ksl-r{border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
+.ksl-r{display:grid;gap:0 var(--ksl-gap,10px);min-width:0;align-items:center;
+       padding:var(--ksl-rowpad,6px) 0;
+       grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr) auto}
+.ksl-r + .ksl-r{border-block-start:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)))}
+/* The three track layouts the on/off switches produce. A custom property can
+   change a number inside a rule; it cannot take a track out of a grid, so
+   these are classes — put on `.ksl` by App\Services\SetAppearance::panelClass()
+   and therefore present from the first byte, so nothing reflows after paint. */
+.ksl-noph .ksl-r{grid-template-columns:minmax(0,1fr) auto}
+.ksl-noq .ksl-r{grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr)}
+.ksl-noph.ksl-noq .ksl-r{grid-template-columns:minmax(0,1fr)}
+.ksl-noph .ksl-ph,.ksl-nobr .ksl-br,.ksl-novar .ksl-var,.ksl-noq .ksl-q{display:none}
+.ksl-norule .ksl-r + .ksl-r,.ksl-norule .ksl-more .ksl-r:first-of-type,
+.ksl-norule .ksl-more > summary{border-block-start:0}
+.ksl-noul a.ksl-nm{border-bottom:0}
+.ksl-nofoot .ksl-foot,.ksl-nowas .ksl-was,.ksl-noprice .ksl-price,
+.ksl-nosave .ksl-save{display:none}
 
 /* A fixed square, so every name in the column starts at the same place --
    which is the whole reason to draw a list rather than a grid. */
-.ksl-ph{position:relative;display:block;width:40px;height:40px;
-        border-radius:8px;overflow:hidden;background:var(--line-2,rgba(42,34,40,.06))}
+.ksl-ph{position:relative;display:block;width:var(--ksl-ph,40px);height:var(--ksl-ph,40px);
+        border-radius:var(--ksl-phr,8px);overflow:hidden;
+        background:var(--ksl-phbg,var(--line-2,rgba(42,34,40,.06)))}
 .ksl-ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ksl-ph.is-blank{background-size:cover;background-position:center}
 
@@ -207,10 +257,13 @@
    in Chromium at 1280 and at 390; `flex-start` is the logical value, so it is
    the right-hand edge in Arabic from the same declaration. */
 .ksl-w{min-width:0;display:flex;flex-direction:column;align-items:flex-start;
-       gap:1px;text-align:start}
-.ksl-br{font-size:10px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
-        color:var(--ink-2,#5E545A);opacity:.72;overflow-wrap:anywhere;line-height:1.3}
-.ksl-nm{font-size:13.5px;line-height:1.3;font-weight:640;color:var(--ink,#2A2228);
+       gap:var(--ksl-wgap,1px);text-align:start}
+.ksl-br{font-size:var(--ksl-br,10px);letter-spacing:var(--ksl-brls,.04em);
+        text-transform:uppercase;font-weight:var(--ksl-brw,700);
+        color:var(--ksl-brc,var(--ink-2,#5E545A));opacity:var(--ksl-brop,.72);
+        overflow-wrap:anywhere;line-height:var(--ksl-lh,1.3)}
+.ksl-nm{font-size:var(--ksl-nm,13.5px);line-height:var(--ksl-lh,1.3);
+        font-weight:var(--ksl-nmw,640);color:var(--ksl-nmc,var(--ink,#2A2228));
         overflow-wrap:anywhere}
 /* A REAL LINK, so it is a link for a keyboard and for a crawler as well as for
    a mouse. A member that is not published is the same words without an <a> --
@@ -220,11 +273,13 @@
    padding does not enter its line box, so this is 6px more hit area for a thumb
    and zero extra row height. Measured in Chromium at 390 and 1280 -- the row is
    the same height with it and without it. */
-a.ksl-nm{color:inherit;text-decoration:none;border-bottom:1px solid var(--line,rgba(42,34,40,.10));
+a.ksl-nm{color:inherit;text-decoration:none;
+         border-bottom:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)));
          padding-block:3px;margin-block:-3px}
 a.ksl-nm:hover{border-bottom-color:currentColor}
 a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
-.ksl-var{font-size:11.5px;line-height:1.3;color:var(--ink-2,#5E545A);overflow-wrap:anywhere}
+.ksl-var{font-size:var(--ksl-var,11.5px);line-height:var(--ksl-lh,1.3);
+         color:var(--ksl-varc,var(--ink-2,#5E545A));overflow-wrap:anywhere}
 
 /* The third track is the quantity ALONE now. The price span and the flex column
    that wrapped it went with the price -- a column around a single child, and a
@@ -232,8 +287,8 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    (Their class names are deliberately not written here: this block is emitted
    INTO the page, so a class name in this comment is a string in the HTML, and
    the case that asserts no member carries a price searches the HTML for it.) */
-.ksl-q{font-size:12px;font-weight:700;color:var(--ink,#2A2228);white-space:nowrap;
-       text-align:end}
+.ksl-q{font-size:var(--ksl-q,12px);font-weight:var(--ksl-qw,700);
+       color:var(--ksl-qc,var(--ink,#2A2228));white-space:nowrap;text-align:end}
 
 /* ── THE DISCLOSURE ──────────────────────────────────────────────────────
    HTML's own, so there is no script. Both labels are in the markup and this
@@ -241,47 +296,65 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    different triangle and the row already reads as a control. */
 .ksl-more{display:block;min-width:0}
 .ksl-more > summary{list-style:none;cursor:pointer;display:block;min-width:0;
-  padding:8px 0 6px;font-size:12.5px;font-weight:700;color:var(--ink,#2A2228);
-  text-align:start;border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
+  padding:var(--ksl-morept,8px) 0 var(--ksl-morepb,6px);
+  font-size:var(--ksl-more,12.5px);font-weight:var(--ksl-morew,700);
+  color:var(--ksl-morec,var(--ink,#2A2228));
+  text-align:start;border-block-start:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)))}
 .ksl-more > summary::-webkit-details-marker{display:none}
 .ksl-more > summary:focus-visible{outline:2px solid currentColor;outline-offset:2px}
-.ksl-more > summary span{border-bottom:1px solid var(--line,rgba(42,34,40,.10))}
+.ksl-more > summary span{border-bottom:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)))}
 .ksl-more > summary .ksl-less{display:none}
 .ksl-more[open] > summary .ksl-less{display:inline}
 .ksl-more[open] > summary .ksl-all{display:none}
 /* The first folded row carries its own hairline, so it is separated from the
    summary the way every other row is separated from the one above it. */
-.ksl-more .ksl-r:first-of-type{border-block-start:1px solid var(--line,rgba(42,34,40,.10))}
+.ksl-more .ksl-r:first-of-type{border-block-start:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)))}
 
 /* The footing. Bought separately, the set's own price, and the saving -- the
    same three integers SetContents already computed, printed rather than
    recomputed, and counting every member whether or not it is folded away. */
-.ksl-foot{display:flex;flex-wrap:wrap;gap:5px 16px;align-items:baseline;min-width:0;
-          margin-top:9px;padding-top:9px;border-top:1px solid var(--line,rgba(42,34,40,.10))}
-.ksl-f{display:flex;gap:6px;align-items:baseline;min-width:0;font-size:13px;
-       color:var(--ink-2,#5E545A)}
-.ksl-f b{font-weight:700;color:var(--ink,#2A2228);white-space:nowrap}
-.ksl-was b{font-weight:600;text-decoration:line-through;color:var(--ink-2,#5E545A)}
-.ksl-save{font-size:13px;font-weight:700;color:#1c7a4a;white-space:nowrap}
+.ksl-foot{display:flex;flex-wrap:wrap;gap:var(--ksl-footgy,5px) var(--ksl-footgx,16px);
+          align-items:baseline;min-width:0;
+          margin-top:var(--ksl-footsp,9px);padding-top:var(--ksl-footsp,9px);
+          border-top:1px solid var(--ksl-linec,var(--line,rgba(42,34,40,.10)))}
+.ksl-f{display:flex;gap:6px;align-items:baseline;min-width:0;font-size:var(--ksl-foot,13px);
+       color:var(--ksl-footc,var(--ink-2,#5E545A))}
+.ksl-f b{font-weight:var(--ksl-footw,700);color:var(--ksl-footbc,var(--ink,#2A2228));white-space:nowrap}
+.ksl-was b{font-weight:var(--ksl-wasw,600);text-decoration:line-through;
+           color:var(--ksl-footc,var(--ink-2,#5E545A))}
+.ksl-save{font-size:var(--ksl-foot,13px);font-weight:var(--ksl-savew,700);
+          color:var(--ksl-savec,#1c7a4a);white-space:nowrap}
 
 /* ── THE PHONE ───────────────────────────────────────────────────────────
    "also the mobile screen will adjust that list nicely and display."
 
    The photograph comes down 8px, the row padding 2, the name half a step --
    and the quantity and the price stop stacking. */
+/*
+ * ONE DECLARATION BLOCK INSTEAD OF FOUR RULES, and it says exactly what the
+ * four said: below 480px the photograph comes down to 36, its radius to 7, the
+ * row padding to 5, the column gap to 9, the name to 13 and the footing's gaps
+ * to 4 and 12. Written as custom properties rather than as properties so that
+ * the `.ksl-noph` / `.ksl-noq` track rules above keep working at both widths
+ * from a single declaration instead of needing a phone copy of each.
+ *
+ * ▲ A SHOP THAT HAS MOVED A SLIDER GETS THESE FROM
+ *   partials/set-appearance-css.blade.php INSTEAD, whose media query uses the
+ *   owner's own breakpoint and whose selector is one class more specific than
+ *   this one — so his numbers win wherever his query matches, and these are
+ *   what a shop that has touched nothing renders.                  (Lane SA)
+ */
 @media (max-width:480px){
-  .ksl-r{grid-template-columns:36px minmax(0,1fr) auto;gap:0 9px;padding:5px 0}
-  .ksl-ph{width:36px;height:36px;border-radius:7px}
-  .ksl-nm{font-size:13px}
-  .ksl-foot{gap:4px 12px}
+  .ksl{--ksl-ph:36px;--ksl-phr:7px;--ksl-rowpad:5px;--ksl-gap:9px;--ksl-nm:13px;
+       --ksl-footgy:4px;--ksl-footgx:12px}
 }
 </style>
 @endonce
-<div class="ksl">
+<div class="ksl{{ \App\Services\SetAppearance::panelClass($kbbSetAp) }}">
     {{-- The same `.opt-label` line the quantity-bundle strip used, in the same
          slot: the words, then the count in the note span. Not an <h2> -- the
          note at the top of this file argues it. --}}
-    <div class="opt-label">{{ __('store.set.page_heading') }} <span>{{ trans_choice('store.set.count_note', $kbbSetPage['count'], ['count' => $kbbSetPage['count']]) }}</span></div>
+    @if ($kbbSetAp['p_heading_on'])<div class="opt-label">{{ __('store.set.page_heading') }} <span>{{ trans_choice('store.set.count_note', $kbbSetPage['count'], ['count' => $kbbSetPage['count']]) }}</span></div>@endif
     {{-- ONE COPY OF THE ROW, drawn twice. The folded rows and the standing rows
          are the same markup, and a second copy of it inside the <details> is
          the copy that drifts. --}}
@@ -300,7 +373,7 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
     @endif
     <div class="ksl-foot">
         <span class="ksl-f ksl-was">{{ __('store.set.page_separately') }} <b>{!! Money::format((int) $kbbSetPage['partsTotal']) !!}</b></span>
-        <span class="ksl-f">{{ __('store.set.page_set_price') }} <b>{!! Money::format((int) $kbbSetPage['setPrice']) !!}</b></span>
+        <span class="ksl-f ksl-price">{{ __('store.set.page_set_price') }} <b>{!! Money::format((int) $kbbSetPage['setPrice']) !!}</b></span>
         {{-- ▲ AN UNPRICED SET IS NOT SAVING ANYBODY ANYTHING. The owner's first
              set, half filled in, read "Bought separately: AED 806.00 / Set
              price: AED 0.00 / You save AED 806.00" -- the arithmetic right and

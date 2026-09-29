@@ -308,6 +308,14 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 @endphp
 @if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
 @endif
+{{-- Appearance -> Set. ONE LINE, and its POSITION is load-bearing rather than
+     tidy -- the partial's own header carries the whole argument, and the short
+     version is: after @stack('styles') so a page sheet cannot outrank the
+     owner's numbers, and BEFORE THE BODY so the set partial's own
+     `.kbb-checkout .kset-pop.is-open{max-width:none}` -- the rule that gets the
+     popup out of the checkout summary's overflow:hidden on a phone -- still
+     wins where the two tie on specificity. It emits ZERO BYTES until a slider
+     moves.                                                          (Lane SA) --}}@include('partials.set-appearance-css')
     {{--
         The account panel's welcome typeface, and ONLY for someone who can see
         it.
