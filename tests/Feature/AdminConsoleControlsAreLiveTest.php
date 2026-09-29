@@ -184,7 +184,23 @@ it('binds every button an admin screen partial draws', function () {
     $unbound = [];
     $seen = 0;
 
-    foreach (glob(resource_path('views/admin/partials/*.blade.php')) ?: [] as $file) {
+    /*
+     * ▲ WIDENED TO app.blade.php, 29 September. This case shipped scoped to
+     *   partials/ because the console itself carried two buttons that were
+     *   drawn and bound to nothing, and a guard that is red on arrival is a
+     *   guard somebody switches off. Lane QA named both with their line
+     *   numbers: `olBulkDelete` ("Move to trash…" in the Orders bulk bar, whose
+     *   three siblings were all bound) and `impStop` ("Stop" in the Import
+     *   banner, on the SAME markup line as a Continue that was bound). Both are
+     *   wired now, so the glob covers the whole console -- which is the ground
+     *   those two defects were sitting on.
+     */
+    $files = array_merge(
+        glob(resource_path('views/admin/partials/*.blade.php')) ?: [],
+        [resource_path('views/admin/app.blade.php')]
+    );
+
+    foreach ($files as $file) {
         $body = (string) file_get_contents($file);
 
         foreach (explode("\n", $body) as $i => $line) {

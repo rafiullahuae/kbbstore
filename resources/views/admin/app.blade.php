@@ -8790,6 +8790,26 @@ function impWire(){
 
   const cont=$('#impContinue'); if(cont) cont.onclick=()=>{ impMsg=''; impDrive(); };
   const pause=$('#impPause'); if(pause) pause.onclick=()=>{ impRunning=false; impPaint(); };
+  /* ▲ "Stop" WAS DRAWN AND BOUND TO NOTHING. It sits on the SAME LINE of markup
+     as Continue, which is bound immediately above, and beside Pause, which is
+     bound on the line above this one -- so the one button in that banner that
+     reaches the server was the one nobody wired. POST /admin-api/import/stop
+     has been live and capability-mapped the whole time and was called only by
+     the test suite. The background run has its own working Stop through
+     /import/background-control; this is the FOREGROUND banner's, and a shopper
+     import that had gone wrong could be paused in the browser but never put
+     down on the server.
+
+     It stops the browser loop FIRST and repaints from the status the server
+     returns, rather than calling impDrive() -- driving again is what Continue
+     means, and a Stop that resumes the run is worse than one that does nothing,
+     because the owner believes the run is over. Found by Lane QA. */
+  const stop=$('#impStop'); if(stop) stop.onclick=async()=>{
+    impRunning=false;
+    try{ await impApi('/import/stop',{method:'POST'}); }catch(e){}
+    await impRefresh();
+    impPaint();
+  };
 
   /* Lane GO. Hands the run to the server and opens the live page, which is
      where Pause, Stop and the real bars then live. The browser loop is stopped
@@ -12907,6 +12927,17 @@ buildNav();
       e.target.value = '';
       if(type) olConfirmDocs(olSelectedIds(), type);
     };
+
+    /* ▲ "Move to trash…" WAS DRAWN AND BOUND TO NOTHING. Its three siblings in
+       the same bulk bar are bound just above and just below this line; this one
+       never was, so the button rendered, took a click and did nothing at all.
+       olConfirmDelete() and olRunDelete() both already existed and were
+       reachable only from the second "some were skipped" dialog, which a
+       shopper's orders can only reach by going through the first one -- so the
+       whole delete path was live and had no way in. Found by Lane QA sweeping
+       every id-bearing button for something that references its id. */
+    var bulkDelete = byId('olBulkDelete');
+    if(bulkDelete) bulkDelete.onclick = function(){ olConfirmDelete(olSelectedIds()); };
 
     var bulkRestore = byId('olBulkRestore');
     if(bulkRestore) bulkRestore.onclick = async function(){
