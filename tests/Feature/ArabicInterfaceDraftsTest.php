@@ -240,10 +240,28 @@ it('translates everything except the eight paragraphs it says it left', function
 
 it('writes no markup into a string whose English carries none', function () {
     /*
-     * Three interface strings are printed with {!! !!} and the rest are
-     * escaped. A tag that appears in the Arabic and not the English is either
-     * printed as visible angle brackets or, on one of those three, injected --
-     * so the counts have to match rather than merely "be safe".
+     * SIXTY-SIX INTERFACE KEYS ARE PRINTED RAW, which is the whole reason this
+     * case is not decoration.
+     *
+     * Grepping resources/views for `{!! __(`, `{!! trans_choice(` and
+     * `{!! \App\Support\Phrase::inline(__(` finds 66 distinct keys --
+     * store.cart.free_delivery_away, store.order_received.lead,
+     * store.home.quiz_heading, store.checkout.gift_characters_left and the
+     * rest. They are raw because each wraps a bold amount, a link or a <br>
+     * that Arabic has to be able to REORDER, which InterfaceStrings' header
+     * explains at length.
+     *
+     * The consequence for a file of 1,018 translations is that a tag in any of
+     * those 66 Arabic values is injected HTML, and a tag in any of the other
+     * 952 is visible angle brackets on a page. Both are defects, so the rule is
+     * not "no tags" but PARITY: each Arabic value carries exactly the tags its
+     * English carries, in the same order. Only one string has any --
+     * store.home.quiz_heading's single <br>, which is layout and which the
+     * Arabic keeps because the heading still has to break over two lines.
+     *
+     * Asserted over all 1,018 rather than over the 66, because a key moves
+     * between the two sets whenever a template changes {{ }} to {!! !!}, and
+     * this test must not have to be told.
      */
     $english = InterfaceStrings::flat();
     $wrong = [];
