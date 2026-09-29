@@ -157,6 +157,31 @@ const signIn = async (page) => {
   await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }), page.click('button[type=submit]')]);
 };
 
+/*
+ * ── STICKY AND fullPage DO NOT MIX, AND THE FIRST SHEET SHOWED IT ───────────
+ *
+ * Chromium's full-page capture resizes the viewport to the whole document, so
+ * every `position:sticky` element resolves against a viewport as tall as the
+ * page and is painted somewhere it never appears to a reader. Candidate D's buy
+ * dock came out ON TOP OF THE PRODUCT TITLE in the first contact sheet, and
+ * candidate B's card and C's price rail were displaced the same way at 1280.
+ *
+ * So each design is photographed TWICE and the two shots answer two different
+ * questions:
+ *
+ *   · the FLOW shot (fullPage, sticky neutralised) — "what is on this page, in
+ *     what order, at what size". This is the one that goes on the contact
+ *     sheet, and it is the only way five designs can be compared at all.
+ *   · the STICKY shot (one viewport, nothing neutralised, scrolled to the buy
+ *     block) — "and what follows you down it". D's dock, B's pinned pill row
+ *     and card, C's price rail and E's desktop tab rail are only real here.
+ *
+ * The override is injected by the HARNESS and is not in the page: nothing in
+ * resources/views/store/pdp-preview/ knows this script exists.
+ */
+const FLATTEN = '.pv .pv-gal,.pv .pv-card-buy,.pv .pv-band,.pv .pv-buygroup,.pv .pv-dock,'
+  + '.pv .pv-tabrow,.pv .pv-tabs-band .pv-tabrow{position:static !important}';
+
 const settle = async (page) => {
   await page.waitForLoadState('networkidle');
   await page.evaluate(() => document.fonts && document.fonts.ready);
@@ -176,6 +201,37 @@ const settle = async (page) => {
     for (const [key] of (AR ? [] : CANDS)) {
       await page.goto(`${BASE}${PREVIEW}/${key}/${PRODUCT}`, { waitUntil: 'networkidle' });
       await settle(page);
+
+      /* THE STICKY SHOT FIRST, while nothing has been neutralised: one viewport,
+         scrolled to the buy block, which is where each design's "what follows
+         you" either happens or does not. */
+      /* scrollTo with behavior:'instant', NOT scrollIntoView. kbb.css sets
+         `scroll-behavior:smooth` on the root, so scrollIntoView animates and a
+         screenshot taken a quarter of a second later catches the page still at
+         the top — which is exactly what the first run of this produced: five
+         "scrolled to the buy block" shots of the top of the page. */
+      const scrolledTo = await page.evaluate(() => {
+        const el = document.querySelector('.pv-optlabel') || document.querySelector('.pv-variants');
+        if (!el) return null;
+        const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - 70);
+        window.scrollTo({ top: y, behavior: 'instant' });
+        return Math.round(window.scrollY);
+      });
+      await page.waitForTimeout(280);
+      await page.screenshot({ path: path.join(OUT, `${key}-sticky-${width}.png`) });
+      measured[`${key}-${width}-sticky`] = await page.evaluate(() => {
+        const b = document.querySelector('.pv-add');
+        if (!b) return null;
+        const r = b.getBoundingClientRect();
+        // In the viewport at this scroll position, or not? That is the whole
+        // claim D's dock makes and the only one worth a number.
+        return { topInViewport: Math.round(r.top), onScreen: r.top >= 0 && r.bottom <= window.innerHeight };
+      });
+      if (measured[`${key}-${width}-sticky`]) measured[`${key}-${width}-sticky`].scrolledTo = scrolledTo;
+
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.addStyleTag({ content: FLATTEN });
+      await page.waitForTimeout(160);
       measured[`${key}-${width}`] = await page.evaluate(M);
       await page.screenshot({ path: path.join(OUT, `${key}-${width}.png`), fullPage: true });
 
@@ -234,6 +290,7 @@ const settle = async (page) => {
         for (const [slug, tag] of [[SET, 'set'], [SOLDOUT, 'soldout']]) {
           await page.goto(`${BASE}${PREVIEW}/${key}/${slug}`, { waitUntil: 'networkidle' });
           await settle(page);
+          await page.addStyleTag({ content: FLATTEN });
           measured[`${key}-${tag}-390`] = await page.evaluate(M);
           await page.screenshot({ path: path.join(OUT, `${key}-${tag}-390.png`), fullPage: true });
         }
@@ -255,6 +312,7 @@ const settle = async (page) => {
         for (const key of ['ledger', 'counter', 'marquee']) {
           await page.goto(`${BASE}${PREVIEW}/${key}/${PRODUCT}?lang=ar`, { waitUntil: 'networkidle' });
           await settle(page);
+          await page.addStyleTag({ content: FLATTEN });
           measured[`ar-${key}-390`] = await page.evaluate(M);
           await page.screenshot({ path: path.join(OUT, `ar-${key}-390.png`), fullPage: true });
 
@@ -319,6 +377,10 @@ const settle = async (page) => {
   await sheet('sheet-1280.png', 'Desktop — 1280px', CANDS.map(([k, n]) => [n, path.join(OUT, `${k}-1280.png`)]), 420);
   await sheet('sheet-tabs.png', 'The tabs — five ideas, at 390px', CANDS.map(([k, n]) => [n, path.join(OUT, `${k}-tabs-390.png`)]), 330);
   await sheet('sheet-tabs-1280.png', 'The tabs — five ideas, at 1280px', CANDS.map(([k, n]) => [n, path.join(OUT, `${k}-tabs-1280.png`)]), 460);
+  await sheet('sheet-sticky-390.png', 'What follows you — 390px, scrolled to the buy block',
+    CANDS.map(([k, n]) => [n, path.join(OUT, `${k}-sticky-390.png`)]), 300);
+  await sheet('sheet-sticky-1280.png', 'What follows you — 1280px, scrolled to the buy block',
+    CANDS.map(([k, n]) => [n, path.join(OUT, `${k}-sticky-1280.png`)]), 420);
   await sheet('sheet-set-390.png', 'On a SET — 390px (no bundle bars; the contents panel instead)', CANDS.map(([k, n]) => [n, path.join(OUT, `${k}-set-390.png`)]), 300);
   } else {
     await sheet('sheet-ar-390.png', 'Arabic — 390px (the same three, mirrored)',
@@ -340,7 +402,8 @@ const settle = async (page) => {
       console.log(
         `${k.padEnd(9)} ${String(w).padEnd(5)} scrollW=${m.scrollWidth}/${m.viewport} ` +
           `addY=${m.addToCart && m.addToCart.y} tabs=${m.tabs} rowScrolls=${m.tabRowScrolls} ` +
-          `openPanels=${m.openPanels} bundles=${m.bundleBars} thumbs=${m.thumbs} h=${m.pageHeight}`
+          `openPanels=${m.openPanels} bundles=${m.bundleBars} thumbs=${m.thumbs} h=${m.pageHeight} ` +
+          `stickyOnScreen=${(measured[`${k}-${w}-sticky`] || {}).onScreen}`
       );
     }
   }

@@ -325,17 +325,29 @@
   .pv-b .gthumbs{justify-content:flex-start}
 
   /* C — THREE columns, made by PLACEMENT and not by moving any markup:
-     photograph, the reading, and a price rail that stays. The DOM order is
-     still the order he asked for, which is what a phone reads. */
+     photograph, the reading, and a buy rail. The DOM order is still the order
+     he asked for, which is what a phone reads.
+
+     ▲ THE BUY GROUP IS THE STICKY ONE, NOT THE PRICE BAND, AND THAT IS A FACT
+       ABOUT GRID RATHER THAN A PREFERENCE. A grid item's containing block is
+       its own grid AREA, so `position:sticky` on an item sitting in a short,
+       auto-sized row has nowhere to travel and does nothing at all — the band
+       was declared sticky in the first draft and measured at 1280 as
+       `addToCart top=-57, onScreen=false`, i.e. the rail scrolled away with
+       everything else. The buy group is in the TALL row (the one the bundle
+       bars make), so it has somewhere to stick, and it is also the half of the
+       rail worth keeping: a price you have already read does not need to follow
+       you, and a button does. */
   .pv-c .pv-3col{display:grid;grid-template-columns:1fr .94fr 290px;
-      grid-template-rows:auto auto 1fr;column-gap:34px;row-gap:0;align-items:start}
-  .pv-c .pv-gal{grid-column:1;grid-row:1 / span 3}
+      grid-template-rows:auto 1fr;column-gap:34px;row-gap:0;align-items:start}
+  .pv-c .pv-gal{grid-column:1;grid-row:1 / span 2}
   .pv-c .pv-facts{grid-column:2;grid-row:1}
-  .pv-c .pv-mid{grid-column:2;grid-row:2 / span 2}
+  .pv-c .pv-mid{grid-column:2;grid-row:2}
   .pv-c .pv-band{grid-column:3;grid-row:1;margin-inline:0;margin-block-start:0;
-      border-radius:16px;padding:22px}
+      border-radius:16px 16px 0 0;padding:22px}
   .pv-c .pv-buygroup{grid-column:3;grid-row:2;background:var(--pv-soft);
-      border-radius:16px;padding:0 22px 22px;margin-block-start:-1px}
+      border-radius:0 0 16px 16px;padding:4px 22px 22px;
+      position:sticky;top:88px;align-self:start}
   .pv-c .pv-band .pv-money s{display:block;margin-inline-end:0}
   .pv-c .pv-band .pv-money b{display:block;font-size:33px}
   .pv-c .pv-buygroup .pv-stock{margin-block:0 12px}

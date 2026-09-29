@@ -1,4 +1,9 @@
 {
+  "ledger-390-sticky": {
+    "topInViewport": 375,
+    "onScreen": true,
+    "scrolledTo": 1026
+  },
   "ledger-390": {
     "dir": "ltr",
     "viewport": 390,
@@ -87,6 +92,11 @@
     "checked": "pvtab3",
     "visiblePanels": 1,
     "visiblePanelIndex": 3
+  },
+  "dossier-390-sticky": {
+    "topInViewport": 352,
+    "onScreen": true,
+    "scrolledTo": 925
   },
   "dossier-390": {
     "dir": "ltr",
@@ -177,6 +187,11 @@
     "visiblePanels": 1,
     "visiblePanelIndex": 3
   },
+  "counter-390-sticky": {
+    "topInViewport": 334,
+    "onScreen": true,
+    "scrolledTo": 1001
+  },
   "counter-390": {
     "dir": "ltr",
     "viewport": 390,
@@ -266,11 +281,16 @@
     "visiblePanels": 1,
     "visiblePanelIndex": 3
   },
+  "deck-390-sticky": {
+    "topInViewport": 341,
+    "onScreen": true,
+    "scrolledTo": 940
+  },
   "deck-390": {
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 2659,
+    "pageHeight": 2705,
     "galleryFrame": {
       "w": 346,
       "h": 346,
@@ -321,21 +341,21 @@
     "addToCart": {
       "w": 198,
       "h": 52,
-      "y": 781
+      "y": 1281
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 781
+      "y": 1281
     },
     "tabs": 5,
     "tabRow": {
       "w": 346,
-      "h": 339,
+      "h": 386,
       "y": 1374
     },
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 160,
+    "tabRowOverflowPx": 125,
     "openTabOpacity": {
       "open": "1",
       "others": [
@@ -354,6 +374,11 @@
     "checked": "pvtab3",
     "visiblePanels": 0,
     "visiblePanelIndex": -1
+  },
+  "marquee-390-sticky": {
+    "topInViewport": 374,
+    "onScreen": true,
+    "scrolledTo": 954
   },
   "marquee-390": {
     "dir": "ltr",
@@ -975,12 +1000,12 @@
     "addToCart": {
       "w": 198,
       "h": 52,
-      "y": 781
+      "y": 1199
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 781
+      "y": 1199
     },
     "tabs": 5,
     "tabRow": {
@@ -989,7 +1014,7 @@
       "y": 1292
     },
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 160,
+    "tabRowOverflowPx": 125,
     "openTabOpacity": {
       "open": "1",
       "others": [
@@ -1055,12 +1080,12 @@
     "addToCart": {
       "w": 198,
       "h": 52,
-      "y": 781
+      "y": 1225
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 781
+      "y": 1225
     },
     "tabs": 5,
     "tabRow": {
@@ -1069,7 +1094,7 @@
       "y": 1318
     },
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 160,
+    "tabRowOverflowPx": 125,
     "openTabOpacity": {
       "open": "1",
       "others": [
@@ -1244,6 +1269,11 @@
     "payChips": 5,
     "inlineScriptsInPv": 0
   },
+  "ledger-1280-sticky": {
+    "topInViewport": 336,
+    "onScreen": true,
+    "scrolledTo": 481
+  },
   "ledger-1280": {
     "dir": "ltr",
     "viewport": 1280,
@@ -1332,6 +1362,11 @@
     "checked": "pvtab3",
     "visiblePanels": 1,
     "visiblePanelIndex": 3
+  },
+  "dossier-1280-sticky": {
+    "topInViewport": 402,
+    "onScreen": true,
+    "scrolledTo": 396
   },
   "dossier-1280": {
     "dir": "ltr",
@@ -1422,6 +1457,11 @@
     "visiblePanels": 1,
     "visiblePanelIndex": 3
   },
+  "counter-1280-sticky": {
+    "topInViewport": 122,
+    "onScreen": true,
+    "scrolledTo": 369
+  },
   "counter-1280": {
     "dir": "ltr",
     "viewport": 1280,
@@ -1477,12 +1517,12 @@
     "addToCart": {
       "w": 120,
       "h": 52,
-      "y": 312
+      "y": 317
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 312
+      "y": 317
     },
     "tabs": 5,
     "tabRow": {
@@ -1510,6 +1550,11 @@
     "checked": "pvtab3",
     "visiblePanels": 1,
     "visiblePanelIndex": 3
+  },
+  "deck-1280-sticky": {
+    "topInViewport": 291,
+    "onScreen": true,
+    "scrolledTo": 363
   },
   "deck-1280": {
     "dir": "ltr",
@@ -1579,8 +1624,8 @@
       "h": 306,
       "y": 907
     },
-    "tabRowScrolls": true,
-    "tabRowOverflowPx": 75,
+    "tabRowScrolls": false,
+    "tabRowOverflowPx": 0,
     "openTabOpacity": {
       "open": "1",
       "others": [
@@ -1599,6 +1644,11 @@
     "checked": "pvtab3",
     "visiblePanels": 0,
     "visiblePanelIndex": -1
+  },
+  "marquee-1280-sticky": {
+    "topInViewport": 335,
+    "onScreen": true,
+    "scrolledTo": 401
   },
   "marquee-1280": {
     "dir": "ltr",
