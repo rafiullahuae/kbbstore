@@ -319,11 +319,22 @@ class CartController extends Controller
 
         $this->hydrate($cart);
 
-        $this->setStockNotices = app(\App\Services\SetStockReconciler::class)->reconcile($cart);
+        $took = app(\App\Services\SetStockReconciler::class)->reconcile($cart);
 
-        if ($this->setStockNotices !== []) {
+        if ($took !== []) {
             $this->hydrate($cart);
         }
+
+        /*
+         * ACCUMULATED ACROSS THE REQUEST, NOT ASSIGNED. Several methods on this
+         * controller call loadCart() TWICE — remove() and coupon() each load
+         * once to do the work and again to render the reply. The second call
+         * finds a basket this one has already reconciled and correctly reports
+         * that it took nothing, so an assignment here would throw away the
+         * sentence the first call earned and the reply would say "Removed" with
+         * no explanation of why a second line went with it.
+         */
+        $this->setStockNotices = array_merge($this->setStockNotices, $took);
 
         return $cart;
     }

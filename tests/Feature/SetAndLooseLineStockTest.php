@@ -604,3 +604,37 @@ it('says so on the add itself, not only when the basket is next drawn', function
     expect($response->json('count'))->toBe(1)
         ->and($cart->fresh(['items'])->items)->toHaveCount(1);
 });
+
+it('keeps the sentence through a second load of the same basket', function () {
+    /*
+     * ▲ THE ONE THAT ONLY BITES ON SOME OF THE ENDPOINTS.
+     *
+     * remove() and coupon() each call CartController::loadCart() TWICE — once
+     * to do the work and once to render the reply. The second call finds a
+     * basket the first has already reconciled and correctly reports that it
+     * took nothing. Assigned rather than accumulated, that second answer threw
+     * away the sentence the first call earned, and the reply came back saying
+     * "Removed" with no explanation of why a SECOND line had gone with the one
+     * the shopper actually pressed.
+     *
+     * Two lines of the toner here, so removing one leaves a line for the
+     * reconciler to find on the same request.
+     *
+     * MUTATION NOTE. Change the `array_merge($this->setStockNotices, $took)` in
+     * CartController::loadCart() back to a plain assignment and this is red:
+     * the toast is "Removed". RUN.
+     */
+    $toner = slsProduct('1025 Dokdo Toner', 1);
+    $spare = slsProduct('Spare Cleanser', 9);
+    $set = slsSet('Medicube booster set', [[$toner, 1]]);
+
+    $cart = slsCart([[$set, 1], [$spare, 1], [$toner, 1]]);
+    $spareLine = $cart->items->firstWhere('product_id', $spare->id);
+
+    $response = slsAs($cart)->postJson('/api/cart/remove', ['item_id' => $spareLine->id])->assertOk();
+
+    expect($response->json('toast'))->toContain('has been taken out of your bag')
+        ->and($response->json('toast'))->toContain('1025 Dokdo Toner');
+
+    expect($cart->fresh(['items'])->items)->toHaveCount(1);
+});
