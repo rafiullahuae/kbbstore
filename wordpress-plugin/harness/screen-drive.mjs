@@ -107,6 +107,7 @@ await page.addInitScript(() => {
           parts: [{ part: 1, parts: 1, archive: 'kbb-export-sales-8f14e45f.zip', ready: packed > 2, bytes: 2264924, files: ['orders.csv', 'order_items.csv', 'refunds.csv', 'order_notes.csv'] }] },
         { key: 'reviews', label: 'Reviews', state: 'absent', why: 'Reviews was not in this export, so there is no file to download.', parts: [] },
         { key: 'content', label: 'Journal articles', state: 'absent', why: 'Journal articles was not in this export, so there is no file to download.', parts: [] },
+        { key: 'navigation', label: 'Navigation', state: 'absent', why: 'Navigation was not in this export, so there is no file to download.', parts: [] },
         { key: 'addresses', label: 'Addresses and pictures', state: 'absent', why: 'Addresses and pictures was not in this export, so there is no file to download.', parts: [] },
     ]);
 
