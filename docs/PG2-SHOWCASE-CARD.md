@@ -77,7 +77,17 @@ at both**. One of the two has no reviews and the other has 96, so the same
 picture also shows the rating row appearing and disappearing without moving the
 button.
 
-The raw numbers are in `docs/pg2-card-shots/measure-*.json`, one file per treatment.
+The raw numbers are in `docs/pg2-card-shots/measure-*.json`, one file per
+treatment.
+
+**Every picture here was taken twice**, and the second time after merging the
+integration tip — Lane CR's forty-two cart-row controls and Lane FB's flag
+strip — with `public/build` rebuilt against the merged sources. All thirty
+measured rows came back identical, which is what says neither of those lanes
+moves this card. The preview printed `fixture OK` before each pass: that is a
+request for a slug only this lane's fixture creates, and it is there because a
+`php -S` that has lost its bind can still produce a run that looks completely
+finished while photographing somebody else's shop.
 
 ---
 
