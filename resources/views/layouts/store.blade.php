@@ -308,41 +308,22 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 @endphp
 @if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
 @endif
-{{--
-    Appearance -> Page background: the soft multi-colour wash, and the four
-    treatments the owner previews it with.                          (Lane BG)
+{{-- Appearance -> Page background: the soft multi-colour wash.        (Lane BG)
 
-    ONE BLOCK, AND IT EMITS ZERO BYTES UNTIL HE SAYS YES. App\Services\PageWash
-    ships `on` FALSE, and css() returns the empty string while it is, so a shop
-    that applies this package renders every page byte-identical to the one it
-    rendered before -- the same guarantee, made the same way, as the accent and
-    the site-layout blocks immediately above.
+     ONE LINE, and the partial's own header carries the argument. The short
+     version is: it emits ZERO BYTES -- not even a newline -- until the owner
+     switches the wash on, so applying this package leaves every storefront page
+     byte-identical; and it is a partial rather than a block here because FIVE
+     storefront pages do not extend this layout at all and the owner asked for
+     "the whole background".
 
-    THE WHITESPACE IS ARRANGED THE WAY THE SITE-LAYOUT BLOCK ABOVE IS ARRANGED,
-    and for the reason its own comment gives at length: written with the
-    directives each on their own line this adds blank lines to the <head> of
-    every storefront page, and StorefrontEnglishUnchangedTest reports all of
-    them for a change that renders nothing. PHP eats the newline after `?>`, so
-    a raw-PHP block and a conditional that both CLOSE at the end of a line
-    contribute nothing, and the opening directive shares a line with this
-    comment so no newline is left outside the branch.
-
-    AFTER the accent, the page stylesheets and the site layout, and BEFORE the
-    set partial. Nothing here competes with any of them -- the only selectors it
-    declares are `html::before`, `body::before` and `body::after`, which no
-    stylesheet and no Blade in this repository declares -- so the position is a
-    convention rather than a dependency. It is placed with the other
-    emit-nothing-by-default blocks so a reader finds all four together.
-
-    {!! !!} rather than {{ }}: this is a stylesheet. Every selector, property,
-    unit and piece of punctuation in it is a literal in PageWash; the only
-    things a saved value can influence are integers clamped to their own
-    slider's range and colours that have been through Color::isValidHex().
---}}@php
-    $kbbWashCss = app(\App\Services\PageWash::class)->css();
-@endphp
-@if ($kbbWashCss !== '')<style id="kbb-page-wash">{!! $kbbWashCss !!}</style>
-@endif
+     AFTER the accent, the page stylesheets and the site layout, so it outranks
+     kbb-shop.css's and kbb-product.css's own `body{background:var(--bg)}` --
+     which is not a detail: those two are why /shop and a product page are
+     WHITE today while the home page and the cart are pink. Nothing else here
+     competes with it; the only selectors it declares are `html::before`,
+     `body::before` and `body::after`, which no stylesheet and no Blade in this
+     repository declares. --}}@include('partials.page-wash-css')
 {{-- Appearance -> Set. ONE LINE, and its POSITION is load-bearing rather than
      tidy -- the partial's own header carries the whole argument, and the short
      version is: after @stack('styles') so a page sheet cannot outrank the

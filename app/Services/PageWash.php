@@ -108,11 +108,41 @@ class PageWash
      * @var array<string, array{0:string, 1:string, 2:string}>
      */
     public const PALETTES = [
-        'cream_blush_lilac' => ['#FFF4E8', '#FBDFE8', '#E9DFF6'],
-        'mint_cream_blush' => ['#E2F1E8', '#FFF6E9', '#FBDCE6'],
-        'lilac_sky_pearl' => ['#E7E2F7', '#DEECF7', '#F4F0FA'],
-        'peach_rose_pearl' => ['#FFEDE0', '#FBDEE4', '#F5F1F6'],
+        'cream_blush_lilac' => ['#FFF7EE', '#FDECF1', '#F1EAFA'],
+        'mint_cream_blush' => ['#E7F4EC', '#FFF7EC', '#FDEAF0'],
+        'lilac_sky_pearl' => ['#EFECFB', '#EAF3FC', '#F7F4FC'],
+        'peach_rose_pearl' => ['#FFF1E7', '#FDE9ED', '#F8F5F9'],
     ];
+
+    /**
+     * ── THE ONE INVARIANT EVERY PALETTE ABOVE HAS TO HOLD ───────────────────
+     *
+     * The shop's background today is not white. kbb.css:1599 paints
+     * `background-color:#FDEFF3` under a four-stop gradient whose DARKEST stop
+     * is `#FCE7EE`, and that is the darkest flat background any storefront page
+     * renders. Its contrast against the three text tokens is:
+     *
+     *     --ink   #2A2228   13.11     --muted #8C828A   3.14
+     *     --ink-2 #5E545A    6.16     --pink  #E0567B   3.08
+     *
+     * Two of those are BELOW 4.5 on the shop as it stands today, which is a
+     * finding this lane reports and does not fix — muted body copy and the pink
+     * accent have never met AA against this background, and moving them is a
+     * decision about the brand, not about a wash.
+     *
+     * What this lane CAN guarantee, and does, is that the wash never makes any
+     * of them worse. Every colour in PALETTES is at or above `#FCE7EE`'s
+     * relative luminance, `drift` only ever interpolates between a palette
+     * colour and the palette's mean, and `intensity` only ever mixes towards
+     * white — so no combination of the two sliders can produce a stop darker
+     * than the palette's own darkest member, and therefore none can produce a
+     * page darker than the one the shop renders today.
+     *
+     * PageWashContrastTest walks the ENTIRE reachable set — every drift and
+     * every intensity a slider can be on, nine stops per moment — and asserts
+     * it against this number. It is not a sample.
+     */
+    public const CONTRAST_FLOOR = '#FCE7EE';
 
     /** The palette a shop that has never opened this screen would be on. */
     public const DEFAULT_PALETTE = 'cream_blush_lilac';
@@ -125,16 +155,20 @@ class PageWash
      * DIFFERENT axis from the one before it, so they separate at thumbnail
      * size:
      *
-     *   a  the palest one. Warm cream, 5 minutes a cycle, very little colour
-     *      travel. If he wants "nobody catches it happening", this is it.
-     *   b  the same hues as (a) at nearly full strength and nearly full travel,
-     *      at 2 minutes. Same family, unmistakably more colour.
-     *   c  a different family — green enters the palette, which is the one
-     *      change no amount of intensity can imitate.
-     *   d  a different SHAPE. Cool lilac/sky, and the wash only sits behind the
-     *      header and fades out by mid-screen, so the rest of the page is a
-     *      near-white pearl. Distinguishable from the other three even in
-     *      greyscale.
+     *   a  warm ivory into blush into lilac, seven minutes a cycle, and the
+     *      smallest colour travel of the four. If he wants "nobody catches it
+     *      happening", this is the one.
+     *   b  a different family AND the opposite motion: peach and rose, full
+     *      travel, two minutes. Each moment of it leads with a different
+     *      colour, so two frames of (b) taken a minute apart are obviously two
+     *      different pictures where two frames of (a) are nearly one.
+     *   c  green enters the palette, which is the one change no slider can
+     *      imitate — mint, cream, blush, four minutes, most of the travel.
+     *   d  a different SHAPE. Cool lilac and sky, and the wash only sits behind
+     *      the header and fades out by mid-screen, so the rest of the page is a
+     *      near-white pearl. It is the one that is distinguishable from the
+     *      other three even in greyscale, and the one to choose if the answer
+     *      to "how much colour" turns out to be "less than all of it".
      *
      * These are preview presets, not stored rows. Nothing here is written to
      * `settings` by looking at a treatment; the screen's four buttons move the
@@ -144,13 +178,13 @@ class PageWash
      */
     public const TREATMENTS = [
         'a' => ['name' => 'Cream drift', 'palette' => 'cream_blush_lilac',
-            'intensity' => 45, 'drift' => 35, 'cycle' => 300, 'spread' => 'page'],
-        'b' => ['name' => 'Blossom', 'palette' => 'cream_blush_lilac',
-            'intensity' => 90, 'drift' => 90, 'cycle' => 120, 'spread' => 'page'],
+            'intensity' => 100, 'drift' => 40, 'cycle' => 420, 'spread' => 'page'],
+        'b' => ['name' => 'Blossom', 'palette' => 'peach_rose_pearl',
+            'intensity' => 100, 'drift' => 100, 'cycle' => 120, 'spread' => 'page'],
         'c' => ['name' => 'Mint morning', 'palette' => 'mint_cream_blush',
-            'intensity' => 65, 'drift' => 70, 'cycle' => 210, 'spread' => 'page'],
+            'intensity' => 100, 'drift' => 75, 'cycle' => 240, 'spread' => 'page'],
         'd' => ['name' => 'Cool header', 'palette' => 'lilac_sky_pearl',
-            'intensity' => 80, 'drift' => 55, 'cycle' => 180, 'spread' => 'top'],
+            'intensity' => 100, 'drift' => 60, 'cycle' => 180, 'spread' => 'top'],
     ];
 
     /**
@@ -160,9 +194,9 @@ class PageWash
      * in this app is written in.
      *
      * `on` IS FALSE AND THAT IS THE WHOLE OF RULE 1 HERE. Every other default
-     * below is treatment (a) — the palest of the four — so that the first thing
-     * the owner sees when he does switch it on is the quietest of them, not the
-     * loudest. None of it renders a byte while `on` is false.
+     * below is treatment (a) — the gentlest of the four — so that the first
+     * thing the owner sees when he does switch it on is the quietest of them,
+     * not the loudest. None of it renders a byte while `on` is false.
      */
     public const SCHEMA = [
         'on' => ['bool', 'Colour wash on', false,
@@ -178,22 +212,22 @@ class PageWash
                 'custom' => 'Your own three colours',
             ]],
 
-        'c1' => ['colour', 'Your colour 1', '#FFF4E8',
+        'c1' => ['colour', 'Your colour 1', '#FFF7EE',
             'Used only when the palette above is "Your own three colours". Keep it pale — text sits on this.'],
-        'c2' => ['colour', 'Your colour 2', '#FBDFE8',
+        'c2' => ['colour', 'Your colour 2', '#FDECF1',
             'Used only when the palette above is "Your own three colours".'],
-        'c3' => ['colour', 'Your colour 3', '#E9DFF6',
+        'c3' => ['colour', 'Your colour 3', '#F1EAFA',
             'Used only when the palette above is "Your own three colours".'],
 
-        'intensity' => ['range', 'Strength', 45,
+        'intensity' => ['range', 'Strength', 100,
             'How much of the colour reaches the page. 0 is white. 100 is the palette exactly as it is listed, which is already light.',
             ['min' => 0, 'max' => 100, 'step' => 5, 'unit' => '%']],
 
-        'drift' => ['range', 'How far it travels', 35,
+        'drift' => ['range', 'How far it travels', 40,
             'How different the three moments of the cycle are from each other. At 0 they are identical and the page never appears to change; at 100 each moment leads with a different colour.',
             ['min' => 0, 'max' => 100, 'step' => 5, 'unit' => '%']],
 
-        'cycle' => ['range', 'One full cycle', 300,
+        'cycle' => ['range', 'One full cycle', 420,
             'Seconds for the background to travel through all three moments and back. Long is the point — "time to time" means a drift nobody catches happening. The shortest this allows is a minute.',
             ['min' => 60, 'max' => 900, 'step' => 30, 'unit' => 's']],
 
@@ -542,6 +576,111 @@ class PageWash
     private static function mixToWhite(int $channel, float $towards): int
     {
         return (int) round($channel + (255 - $channel) * $towards);
+    }
+
+    /**
+     * The darkest of the nine stops these values produce.
+     *
+     * The whole contrast story of this screen is one number, and this is where
+     * it comes from. Dark text on a light background gets WORSE as the
+     * background darkens, monotonically, so the worst moment of the cycle is
+     * whichever stop has the lowest relative luminance — there is no need to
+     * sample the animation, because the set of colours it passes through is
+     * exactly the set of colours between these nine and they are all lighter
+     * than this one.
+     *
+     * @param  array<string, mixed>  $values
+     * @return array{0:int, 1:int, 2:int}
+     */
+    public static function darkestStop(array $values): array
+    {
+        $worst = [255, 255, 255];
+        $worstLum = 2.0;
+
+        foreach (self::moments($values) as $moment) {
+            foreach ($moment as $c) {
+                $l = self::luminance($c);
+
+                if ($l < $worstLum) {
+                    $worstLum = $l;
+                    $worst = $c;
+                }
+            }
+        }
+
+        return $worst;
+    }
+
+    /**
+     * WCAG relative luminance of an `[r, g, b]` triple.
+     *
+     * @param  array{0:int, 1:int, 2:int}  $c
+     */
+    public static function luminance(array $c): float
+    {
+        $f = static function (int $v): float {
+            $s = $v / 255;
+
+            return $s <= 0.03928 ? $s / 12.92 : (($s + 0.055) / 1.055) ** 2.4;
+        };
+
+        return 0.2126 * $f($c[0]) + 0.7152 * $f($c[1]) + 0.0722 * $f($c[2]);
+    }
+
+    /**
+     * The WCAG contrast ratio between two `[r, g, b]` triples.
+     *
+     * @param  array{0:int, 1:int, 2:int}  $a
+     * @param  array{0:int, 1:int, 2:int}  $b
+     */
+    public static function contrast(array $a, array $b): float
+    {
+        $la = self::luminance($a);
+        $lb = self::luminance($b);
+
+        return (max($la, $lb) + 0.05) / (min($la, $lb) + 0.05);
+    }
+
+    /**
+     * The storefront text colours this wash sits behind, from kbb.css's :root.
+     *
+     * Named here rather than read out of the stylesheet because these five are
+     * what the contrast table in docs/BG-PAGE-BACKGROUND.md is computed
+     * against, and a table whose inputs can move without anybody noticing is
+     * not evidence. PageWashContrastTest reads kbb.css and fails if any of the
+     * five has changed there, so the copy and the original cannot drift.
+     *
+     * @var array<string, string>
+     */
+    public const TEXT_TOKENS = [
+        '--ink' => '#2A2228',
+        '--ink-2' => '#5E545A',
+        '--muted' => '#8C828A',
+        '--pink' => '#E0567B',
+        '--pink-deep' => '#C13E63',
+    ];
+
+    /**
+     * The worst-case contrast of each text token against these values.
+     *
+     * Shown on the screen beside the sliders, so that somebody choosing three
+     * colours of their own can see what they cost before they save them — which
+     * is the only place a custom palette can be checked at all, since the four
+     * built-in ones are checked by a test.
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, float>
+     */
+    public static function contrastReport(array $values): array
+    {
+        $bg = self::darkestStop($values);
+        $out = [];
+
+        foreach (self::TEXT_TOKENS as $token => $hex) {
+            $out[$token] = round(self::contrast(self::rgb($hex), $bg), 2);
+        }
+
+        return $out;
     }
 
     /**

@@ -70,6 +70,24 @@ class PageWashApiController extends Controller
             'css' => $this->wash->css(),
             'is_default' => $this->wash->isDefault(),
             'preview_param' => PageWash::PREVIEW_PARAM,
+            /*
+             * The worst moment of the cycle, measured rather than described:
+             * the contrast ratio of each of the five storefront text colours
+             * against the DARKEST of the nine gradient stops these settings
+             * produce. The four built-in palettes are held above the shop's own
+             * background by a test; a custom palette is the owner's to choose,
+             * and this is the only place he can see what it costs before he
+             * saves it.
+             */
+            'contrast' => PageWash::contrastReport($this->wash->all()),
+            'contrast_today' => PageWash::contrastReport([
+                'palette' => 'custom',
+                'c1' => PageWash::CONTRAST_FLOOR,
+                'c2' => PageWash::CONTRAST_FLOOR,
+                'c3' => PageWash::CONTRAST_FLOOR,
+                'drift' => 0,
+                'intensity' => 100,
+            ]),
         ]);
     }
 
