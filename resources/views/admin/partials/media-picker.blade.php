@@ -346,7 +346,19 @@
     var r = await fetch(apiBase() + path, o);
     var body = null;
     try { body = await r.json(); } catch (e) { body = null; }
-    if (!r.ok) { var err = new Error('media ' + r.status); err.body = body; throw err; }
+    if (!r.ok) {
+      /* err.status was never set here, so no caller could tell one failure
+         from another even where it wanted to. It is set now, and a 404 with no
+         JSON body -- the compiled route table not knowing these paths after a
+         package shipped without its clear_caches migration -- gets the sentence
+         that names it rather than the developer string 'media 404'. */
+      var err = new Error(r.status === 404 && !body
+        ? 'The Media Library endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
+        : ('media ' + r.status));
+      err.status = r.status;
+      err.body = body;
+      throw err;
+    }
     return body;
   }
 

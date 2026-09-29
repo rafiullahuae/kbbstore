@@ -376,7 +376,21 @@
     try { j = await r.json(); } catch (e) { j = null; }
 
     if (!r.ok) {
-      var err = new Error((j && j.message) || ('Request failed (' + r.status + ')'));
+      /* A 404 WITH NO JSON BODY IS THE ROUTE CACHE, and it is worth telling
+         apart from the other 404 this endpoint really does return.
+
+         Every package that adds a route ships a clear_caches migration
+         precisely because the compiled route table wins over routes/web.php
+         until it is cleared; when that migration does not run, these paths are
+         simply not known and Laravel answers its own 404 HTML PAGE. A media row
+         that has genuinely been deleted answers 404 with a JSON body carrying a
+         message. So the presence of a parsed body is the discriminator, and it
+         is exact -- no status ladder can tell those two apart, and "Request
+         failed (404)" is the same sentence for both while the remedies are
+         "clear the route cache" and "it is already gone". */
+      var err = new Error((j && j.message) || (r.status === 404
+        ? 'The Media Library endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
+        : ('Request failed (' + r.status + ')')));
       err.status = r.status;
       err.body = j;
       throw err;

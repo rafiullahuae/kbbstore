@@ -996,6 +996,16 @@
     }
     if (b && b.message) return b.message;
     if (e && e.status === 401) return 'Your session expired. Sign in again.';
+    /* A 404 from one of this screen's own endpoints almost always means the
+       package shipped without its clear_caches migration having run, so the
+       compiled route table does not know the path. Said plainly rather than
+       falling through to "Could not load the editor.", which is the same
+       sentence for a route that is missing, a product that is gone and a
+       server that is down -- three faults with three different remedies, and
+       the route-cache one is the one this shop keeps hitting because packages
+       are applied by hand. Banners, Coupons and Reviews.io already answer a
+       404 this way; this screen did not. */
+    if (e && e.status === 404) return 'The Product editor endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.';
     return fallback;
   }
 
