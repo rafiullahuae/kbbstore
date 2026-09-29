@@ -241,6 +241,69 @@ class AppServiceProvider extends ServiceProvider
         }
 
         /*
+         * ── THE GUEST REDIRECT, DECIDED BY AUDIENCE (Lane SEC) ──────────────
+         *
+         * bootstrap/app.php carried one line whose comment named a scope the
+         * call does not have:
+         *
+         *     // Unauthenticated back-office requests go to the admin login, not /login.
+         *     $middleware->redirectGuestsTo(fn () => route('admin.login'));
+         *
+         * redirectGuestsTo() sets three APPLICATION-WIDE statics, so every
+         * unauthenticated request to anything behind any guard answered with
+         * the admin login. /my-account/orders, the address book, the order
+         * detail page and the verification notice are all behind
+         * `auth:customer`, so a logged-out shopper who clicked "Your orders"
+         * from the order-tracking page was handed the owner's SECRET ADMIN
+         * ADDRESS -- in their address bar, their browser history and the
+         * Referer of whatever they clicked next. The owner reported it from his
+         * own shop. `admin_path` is a secret everywhere else in this codebase:
+         * CLAUDE.md names it among the columns that must never leave `settings`
+         * through /api/*, Api\SettingController::PUBLIC_KEYS holds it in, and
+         * Mail\NewOrderAlert refuses to print it into an email. This redirect
+         * was the one door it walked out of.
+         *
+         * App\Support\GuestRedirect answers from the matched route's GUARD --
+         * `auth:admin` is the back office and everything else is a shopper --
+         * and never from a string match on the path, because `admin_path` is
+         * configurable (KBB_ADMIN_PATH, or the settings row) and a shop that
+         * changed it would fall through to the wrong branch. It fails towards
+         * the storefront: no matched route, or a guard it has never heard of,
+         * answers with the customer login, which is the direction that cannot
+         * leak.
+         *
+         * HERE AND NOT ONLY IN bootstrap/app.php, for the reason the three
+         * registrations above exist: bootstrap/ is on BuildPackage::NEVER_SHIP
+         * and UpdateGuard's forbidden list, so a fix written only there can
+         * never reach the live shop -- and this one is a security fix on a shop
+         * that is taking orders today.
+         *
+         * THIS CALL IS THE ONE THAT WINS, AND THE TWO ARE SAFE TOGETHER.
+         * withMiddleware()'s callback runs when the HTTP kernel is resolved,
+         * which is before BootProviders, so bootstrap/app.php sets these
+         * statics first and this line sets them again to the same closure.
+         * They are plain statics, so last write wins and both writes are
+         * identical.
+         *
+         * THE THREE, because Middleware::redirectTo() sets all three and
+         * missing one leaves a path that still answers with the admin login:
+         * Authenticate is the `auth` middleware, AuthenticateSession is the
+         * one that logs a session out when the password changes elsewhere, and
+         * AuthenticationException is the fallback the exception itself reads
+         * when it was constructed without a destination.
+         *
+         * IT MOVES NOTHING FOR THE BACK OFFICE. Every route inside
+         * `auth:admin` answers route('admin.login') exactly as before, byte for
+         * byte. tests/Feature/AdminPathNeverLeaksTest.php pins both sides.
+         */
+        $guests = static fn (\Illuminate\Http\Request $request): string
+            => \App\Support\GuestRedirect::for($request);
+
+        \Illuminate\Auth\Middleware\Authenticate::redirectUsing($guests);
+        \Illuminate\Session\Middleware\AuthenticateSession::redirectUsing($guests);
+        \Illuminate\Auth\AuthenticationException::redirectUsing($guests);
+
+        /*
          * CacheHeaders -- APPENDED TO THE `web` GROUP, not prepended globally,
          * and for the opposite reason to the two above. Those two have to run
          * BEFORE the router: one rewrites the path so /ar matches an existing
