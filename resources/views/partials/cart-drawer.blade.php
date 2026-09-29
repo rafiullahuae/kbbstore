@@ -73,6 +73,37 @@
             </div>
             @endif
             <div class="dbody">
+{{-- ONE JAR, CLAIMED TWICE (Lane SEC). The same sentence the cart page and the
+     checkout print, in the third place a shopper meets their basket. Rendered
+     only when a set in this basket has taken the last of something they also
+     added loose and App\Services\SetStockReconciler removed the loose line.
+
+     INSIDE .dbody, AND NOT IN A BAND OF ITS OWN. The band above it is
+     `.kc-ship`, and `.cp-noship .kc-ship{display:none}` hides that whole
+     element on a shop that has switched the free-delivery bar off in
+     Appearance -> Cart panel — so a notice wearing that class would be
+     invisible on exactly the shops that turned one control off. `.dbody`
+     already carries the panel's own padding at both widths (10px/16px, and
+     9px/11px under 600), so this needs no new rule in a stylesheet another
+     lane owns and no media query of its own.
+
+     .dbody IS ALWAYS THERE WHEN THIS CAN FIRE. The reconciler only ever trims
+     LOOSE lines and only runs when a set line is in the basket, so the set
+     survives and the count is never zero. Asserted rather than assumed.
+
+     ZERO BYTES WHEN THERE IS NOTHING TO SAY: column 0, the comment's closer
+     touching the conditional, and PHP swallowing the newline after the
+     loop's compiled closing tag — the same guard the cart page and the checkout
+     answer to.
+
+     ONE LOOP AND NO SURROUNDING CONDITIONAL, which is a Blade fact rather than
+     a preference: a directive is only recognised after a NON-word character, so
+     a closing `endif` written immediately after a closing `endforeach` is left
+     uncompiled and the page dies with "unexpected end of file, expecting
+     endif". An empty list iterates nothing and emits nothing, so the
+     conditional bought nothing anyway. --}}@foreach (($setStockNotices ?? []) as $kbbDrawerNotice)<div class="kc-note" role="status" style="font-size:12px;line-height:1.45;color:var(--ink-2);background:#fff8fb;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;margin:0 0 10px">{{ $kbbDrawerNotice['left'] === 0
+                    ? __('store.cart.set_took_the_last_one', ['product' => $kbbDrawerNotice['product'], 'set' => $kbbDrawerNotice['set']])
+                    : __('store.cart.set_took_some', ['product' => $kbbDrawerNotice['product'], 'left' => $kbbDrawerNotice['left'], 'set' => $kbbDrawerNotice['set']]) }}</div>@endforeach
                 @foreach ($items as $item)
                     @php
                         $p = $item->product;
