@@ -1683,6 +1683,138 @@
             "options": null
           }
         ]
+      },
+      {
+        "key": "flagbar",
+        "label": "Flag bar",
+        "description": "The thin strip above the header: the UAE flag, one short line, the Korean flag. It ships on for phones and off for desktop.",
+        "fields": [
+          {
+            "key": "fb_mobile",
+            "name": "fb_mobile",
+            "type": "bool",
+            "label": "Show it on phones",
+            "help": "The thin strip above the header, with the two flags. On, because this is what the bar was asked for.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "fb_desktop",
+            "name": "fb_desktop",
+            "type": "bool",
+            "label": "Show it on desktop",
+            "help": "Off, so nothing above 900px wide changes. Turn it on to run the same strip across the desktop header.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "fb_text",
+            "name": "fb_text",
+            "type": "text",
+            "label": "Wording",
+            "help": "Leave it empty to use the line the shop ships — which is translated, so an Arabic page shows Arabic. Typing here replaces it in every language.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "fb_flags",
+            "name": "fb_flags",
+            "type": "bool",
+            "label": "Show the two flags",
+            "help": "The UAE flag at the reading start and the Korean flag at the end. On an Arabic page the pair swaps sides with the text.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "fb_height",
+            "name": "fb_height",
+            "type": "range",
+            "label": "Bar height",
+            "help": "Reserved in the stylesheet, so the strip takes up its own height before anything has loaded and the header below it never jumps.",
+            "options": {
+              "min": 22,
+              "max": 56,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 30,
+            "value": 30
+          },
+          {
+            "key": "fb_size",
+            "name": "fb_size",
+            "type": "range",
+            "label": "Text size",
+            "help": "",
+            "options": {
+              "min": 9,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "fb_flag_h",
+            "name": "fb_flag_h",
+            "type": "range",
+            "label": "Flag height",
+            "help": "The width follows: both flags are drawn 3:2, which is their official ratio.",
+            "options": {
+              "min": 8,
+              "max": 28,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 14,
+            "value": 14
+          },
+          {
+            "key": "fb_bg",
+            "name": "fb_bg",
+            "type": "colour",
+            "label": "Background",
+            "help": "",
+            "options": null,
+            "default": "#FDEFF4",
+            "value": "#FDEFF4"
+          },
+          {
+            "key": "fb_ink",
+            "name": "fb_ink",
+            "type": "colour",
+            "label": "Text colour",
+            "help": "",
+            "options": null,
+            "default": "#E0567B",
+            "value": "#E0567B"
+          },
+          {
+            "key": "fb_pill",
+            "name": "fb_pill",
+            "type": "bool",
+            "label": "Outline around the words",
+            "help": "The rounded border the words sit inside. Off leaves the line bare on the strip.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "fb_border",
+            "name": "fb_border",
+            "type": "colour",
+            "label": "Outline colour",
+            "help": "",
+            "options": null,
+            "default": "#F0B6C9",
+            "value": "#F0B6C9"
+          }
+        ]
       }
     ],
     "suggestions": [
@@ -4356,8 +4488,8 @@
       },
       {
         "key": "rows",
-        "label": "Product rows",
-        "description": "One height drives the whole line. Everything in it is worked out from that number.",
+        "label": "Product rows · the squeezed layout",
+        "description": "ONLY on the Squeezed layout — these four are custom properties that the classic cart page does not read. One height drives the whole line; everything in it is worked out from that number.",
         "fields": [
           {
             "key": "row_h",
@@ -4409,6 +4541,425 @@
               "step": 5,
               "unit": "%"
             }
+          }
+        ]
+      },
+      {
+        "key": "rowsize",
+        "label": "Product rows · spacing and size",
+        "description": "An ORDINARY product’s row on the cart page, on whichever layout this shop serves, and never a set’s row — a set has its own controls under Appearance → Set. Laptop values; the phone has its own card below. Nothing here can hide what is in the row: the height control is a minimum, so it can only make a row taller.",
+        "fields": [
+          {
+            "key": "ci_min_h",
+            "name": "ci_min_h",
+            "type": "range",
+            "label": "Minimum row height",
+            "help": "A FLOOR AND NEVER A CEILING. Zero — what the page draws today — lets every row be exactly as tall as what is in it. Raise it and a short row grows; a tall one is never cut, which is the one thing this control must not be able to do.",
+            "options": {
+              "min": 0,
+              "max": 160,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ci_pad_t",
+            "name": "ci_pad_t",
+            "type": "range",
+            "label": "Row padding, top",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 11,
+            "value": 11
+          },
+          {
+            "key": "ci_pad_b",
+            "name": "ci_pad_b",
+            "type": "range",
+            "label": "Row padding, bottom",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 11,
+            "value": 11
+          },
+          {
+            "key": "ci_pad_s",
+            "name": "ci_pad_s",
+            "type": "range",
+            "label": "Row padding, leading edge",
+            "help": "The left-hand side in English and the RIGHT-hand side on /ar — it is a logical property, so it mirrors with the page instead of staying on one side of it.",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 14,
+            "value": 14
+          },
+          {
+            "key": "ci_pad_e",
+            "name": "ci_pad_e",
+            "type": "range",
+            "label": "Row padding, trailing edge",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 14,
+            "value": 14
+          },
+          {
+            "key": "ci_gap",
+            "name": "ci_gap",
+            "type": "range",
+            "label": "Space between the picture and the words",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "ci_thumb",
+            "name": "ci_thumb",
+            "type": "range",
+            "label": "Picture size",
+            "help": "The square at the start of the row. The floor is 28px: below that it stops being a picture anybody can read at arm’s length.",
+            "options": {
+              "min": 28,
+              "max": 96,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 56,
+            "value": 56
+          },
+          {
+            "key": "ci_thumb_r",
+            "name": "ci_thumb_r",
+            "type": "range",
+            "label": "Picture corner radius",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 10,
+            "value": 10
+          },
+          {
+            "key": "ci_brand_f",
+            "name": "ci_brand_f",
+            "type": "range",
+            "label": "Brand size",
+            "help": "The small uppercase line above the product name. A row whose product has no brand has never drawn one.",
+            "options": {
+              "min": 7,
+              "max": 20,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 10,
+            "value": 10
+          },
+          {
+            "key": "ci_name_f",
+            "name": "ci_name_f",
+            "type": "range",
+            "label": "Name size",
+            "help": "IN TENTHS OF A PIXEL, because the phone’s shipped size is 12.5px and a slider stores whole numbers: 130 is 13px. The floor is 100 — 10px — which is a size, not a way of hiding the name.",
+            "options": {
+              "min": 100,
+              "max": 240,
+              "step": 5,
+              "unit": "/10 px"
+            },
+            "default": 130,
+            "value": 130
+          },
+          {
+            "key": "ci_name_gap",
+            "name": "ci_name_gap",
+            "type": "range",
+            "label": "Space under the name",
+            "help": "What separates the name from whatever is under it — the option line or the quantity stepper.",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 6,
+            "value": 6
+          },
+          {
+            "key": "ci_qty_top",
+            "name": "ci_qty_top",
+            "type": "range",
+            "label": "Space above the quantity stepper",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ci_qty_bot",
+            "name": "ci_qty_bot",
+            "type": "range",
+            "label": "Space below the quantity stepper",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          }
+        ]
+      },
+      {
+        "key": "rowphone",
+        "label": "Product rows · phone",
+        "description": "The phone’s own values for the same row, and the width it starts at. They never inherit the laptop’s — the shipped stylesheet already differs at both widths, so an inheriting field would have to ship already touched to reproduce today’s page.",
+        "fields": [
+          {
+            "key": "ci_bp",
+            "name": "ci_bp",
+            "type": "range",
+            "label": "The product rows switch to their phone sizes below",
+            "help": "▲ 600, which is the width resources/css/kbb/kbb-cart.css already turns this page over at. Moving it away from 600 leaves a band of widths where the sheet’s own numbers and these disagree, because a media query is resolved before custom properties exist and the compiled sheet cannot be told a new number.",
+            "options": {
+              "min": 320,
+              "max": 1200,
+              "step": 10,
+              "unit": "px"
+            },
+            "default": 600,
+            "value": 600
+          },
+          {
+            "key": "ci_min_h_m",
+            "name": "ci_min_h_m",
+            "type": "range",
+            "label": "Minimum row height",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 160,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ci_pad_t_m",
+            "name": "ci_pad_t_m",
+            "type": "range",
+            "label": "Row padding, top",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 10,
+            "value": 10
+          },
+          {
+            "key": "ci_pad_b_m",
+            "name": "ci_pad_b_m",
+            "type": "range",
+            "label": "Row padding, bottom",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 10,
+            "value": 10
+          },
+          {
+            "key": "ci_pad_s_m",
+            "name": "ci_pad_s_m",
+            "type": "range",
+            "label": "Row padding, leading edge",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "ci_pad_e_m",
+            "name": "ci_pad_e_m",
+            "type": "range",
+            "label": "Row padding, trailing edge",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "ci_gap_m",
+            "name": "ci_gap_m",
+            "type": "range",
+            "label": "Space between the picture and the words",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 11,
+            "value": 11
+          },
+          {
+            "key": "ci_thumb_m",
+            "name": "ci_thumb_m",
+            "type": "range",
+            "label": "Picture size",
+            "help": "",
+            "options": {
+              "min": 28,
+              "max": 96,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 52,
+            "value": 52
+          },
+          {
+            "key": "ci_thumb_r_m",
+            "name": "ci_thumb_r_m",
+            "type": "range",
+            "label": "Picture corner radius",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 10,
+            "value": 10
+          },
+          {
+            "key": "ci_brand_f_m",
+            "name": "ci_brand_f_m",
+            "type": "range",
+            "label": "Brand size",
+            "help": "",
+            "options": {
+              "min": 7,
+              "max": 20,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 10,
+            "value": 10
+          },
+          {
+            "key": "ci_name_f_m",
+            "name": "ci_name_f_m",
+            "type": "range",
+            "label": "Name size",
+            "help": "In tenths of a pixel: 125 is 12.5px, which is half a pixel smaller than the laptop’s and is what the sheet’s own phone block draws.",
+            "options": {
+              "min": 100,
+              "max": 240,
+              "step": 5,
+              "unit": "/10 px"
+            },
+            "default": 125,
+            "value": 125
+          },
+          {
+            "key": "ci_name_gap_m",
+            "name": "ci_name_gap_m",
+            "type": "range",
+            "label": "Space under the name",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 5,
+            "value": 5
+          },
+          {
+            "key": "ci_qty_top_m",
+            "name": "ci_qty_top_m",
+            "type": "range",
+            "label": "Space above the quantity stepper",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ci_qty_bot_m",
+            "name": "ci_qty_bot_m",
+            "type": "range",
+            "label": "Space below the quantity stepper",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
           }
         ]
       },
