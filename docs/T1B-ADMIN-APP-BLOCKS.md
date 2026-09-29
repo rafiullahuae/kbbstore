@@ -114,6 +114,17 @@ shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language
 > applied, so when that line moves, this moves with it; `TranslationConsoleTest >
 > it keeps the handover document and the applied console in step` is what says
 > so, and it is the test that caught this.
+>
+> **Moved again, 29 September (Lane FIN2): `'setap'`.** Appearance → Set joined
+> the armed set when Lane SA merged and this replacement was not moved with it,
+> so the integration branch was RED on that same case — `block 3 is not applied
+> to app.blade.php exactly once`, 0 against 1 — before any lane of this round
+> had touched the console. The repair is here and not in `app.blade.php`: the
+> console is right and the record of it had fallen behind. Note that `'setap'`
+> is the first id to join this set without a comment paragraph of its own; the
+> four before it each earned one, and the condition they each state — the
+> partial wraps `window.go` and calls `render()` before it awaits anything — is
+> the condition Appearance → Set meets too.
 
 **Anchor** (occurs once):
 
@@ -167,7 +178,7 @@ const LATE_RENDERED=new Set(['media','tax']);
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 ```
 
 ---

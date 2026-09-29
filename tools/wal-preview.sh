@@ -32,8 +32,12 @@ export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
 mkdir -p "$DIR/compiled"
 
 php "$APP/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -30 "$DIR/migrate.log"; exit 1; }
-php "$APP/artisan" tinker "$APP/tools/wal-seed.php" >>"$DIR/migrate.log" 2>&1 \
-  || php "$APP/artisan" tinker --execute="require '$APP/tools/wal-seed.php';" >>"$DIR/migrate.log" 2>&1 \
+# STDIN IS CLOSED ON BOTH ARMS. `artisan tinker <file>` runs the file and then
+# drops into its REPL, which BLOCKS on stdin for ever whenever a terminal is
+# attached: the log says the seed is done and the server never comes up.
+# PreviewSeedCannotHangTest fails by name if either redirect is dropped.
+php "$APP/artisan" tinker "$APP/tools/wal-seed.php" >>"$DIR/migrate.log" 2>&1 </dev/null \
+  || php "$APP/artisan" tinker --execute="require '$APP/tools/wal-seed.php';" >>"$DIR/migrate.log" 2>&1 </dev/null \
   || { tail -30 "$DIR/migrate.log"; exit 1; }
 
 cp "$APP/tools/m1-router.php" "$ROOT/router.php"

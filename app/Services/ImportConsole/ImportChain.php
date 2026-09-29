@@ -1051,7 +1051,42 @@ final class ImportChain
                 'finished' => $cp !== null && $cp->finished_at !== null,
             ];
 
-            $droppedAll = [...$droppedAll, ...$dropped];
+            /*
+             * ── ONLY WHEN THE FILE IS IN THIS EXPORT ────────────────────────
+             *
+             * `$droppedAll` feeds the ONE SENTENCE, and every other number in
+             * that sentence is already computed over `$present` — rows, files,
+             * arrived, refused. This list was not, and the two disagreed.
+             *
+             * `import_checkpoints` is not per-import: ImportDriver::RUN_KEY is
+             * a constant, mergeDroppedFields() unions and never subtracts, so
+             * the row is the shop's permanent record of every export it has
+             * ever been given. The runbook's real sequence is a full import,
+             * then a delta, then a cutover delta, and a delta is a SMALLER set
+             * of files — so on cutover night the sentence read "across 1 file
+             * … and 22 fields skipped (…, classes, …)", naming a field of a
+             * file that was not in that export at all, from an import that had
+             * finished weeks before.
+             *
+             * It never under-reported, so nothing was lost to it. It
+             * over-reported, in the one sentence whose whole job is to be
+             * exact — and "across 1 file" beside twenty-two names reads as
+             * though that one file had shed twenty-two fields.
+             *
+             * THE PER-FILE COLUMN ABOVE IS DELIBERATELY NOT FILTERED. It is
+             * drawn against the file's own row and says what that file did,
+             * which stays true whether or not the file is in the workspace
+             * today. Only the sentence is scoped, because only the sentence
+             * mixes the files together.
+             *
+             * ReconciliationNamesOnlyThisExportTest pins both directions:
+             * remove the guard and it is red on `classes`; invert it and it is
+             * red on `weight`, which is the dangerous way round — an empty list
+             * reads as "nothing was lost".
+             */
+            if ($present) {
+                $droppedAll = [...$droppedAll, ...$dropped];
+            }
         }
 
         return [
