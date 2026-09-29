@@ -101,6 +101,17 @@ and the heart are each given a `grid-area`, because an absolutely positioned
 child of a grid whose containing block *is* that grid resolves its insets
 against its grid area. No measurement, no script, no breakpoint.
 
+**One thing the grid broke and this rule fixes.** `layouts/store.blade.php`
+positions the quick-view pill with `left:50%; bottom:10px` and centres it with a
+`translateX(-50%)`. Inside a grid area that stops working: an absolutely
+positioned grid child resolves an `auto` offset to the edge of its grid area, so
+`top:auto` became the photograph's top edge, the box was stretched between that
+and `bottom:10px`, and the pill measured **231×231** — the whole photograph —
+with its label floating at the top of it. Found by hovering a tile and measuring,
+not by reading. The family sets all four insets to `auto` and places it with
+`align-self:end; justify-self:center` instead, which is 97×27 at the
+photograph's foot. `hover-quickview-1280.png` is the shot.
+
 ### Every control the owner already has still governs
 
 The family reads his custom properties rather than painting over them:
@@ -237,6 +248,16 @@ struck price and the sale price in reading order, the pills on the left.
 `panel-en-after-*.png` is the English pair taken from the same server
 afterwards, and it measures identically — same columns, same 454px/392px card
 heights, same button.
+
+Measured at 1280, the same card in both directions:
+
+| | Add to cart | heart |
+| --- | --- | --- |
+| English | x 39, 143 wide | x 194, 44 wide — **after** the button |
+| Arabic | x 1098, 143 wide | x 1042, 44 wide — **before** the button |
+
+Nothing was written twice to get that: it is one rule with `inset-inline-end`
+and `margin-inline-end` in it.
 
 ---
 

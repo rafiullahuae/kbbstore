@@ -1571,7 +1571,7 @@
           175
         ],
         "rated": 0,
-        "struck": 0,
+        "struck": 1,
         "photo": [
           [
             13,
@@ -1939,7 +1939,7 @@
           228
         ],
         "rated": 0,
-        "struck": 0,
+        "struck": 1,
         "photo": [
           [
             40,
@@ -2082,28 +2082,6 @@
         ]
       }
     ]
-  },
-  {
-    "name": "page-wishlist-390",
-    "path": "/my-wishlist/",
-    "viewport": 390,
-    "skin": "showcase",
-    "scrollWidth": 390,
-    "clientWidth": 390,
-    "dir": "ltr",
-    "lang": "en",
-    "grids": []
-  },
-  {
-    "name": "page-wishlist-1280",
-    "path": "/my-wishlist/",
-    "viewport": 1280,
-    "skin": "showcase",
-    "scrollWidth": 1280,
-    "clientWidth": 1280,
-    "dir": "ltr",
-    "lang": "en",
-    "grids": []
   },
   {
     "name": "page-cart-390",

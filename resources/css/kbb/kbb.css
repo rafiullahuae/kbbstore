@@ -3912,11 +3912,37 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 }
 
 /* The pills and the quick-view button keep the photograph; the heart takes the
-   button's line. Both are absolutely positioned children of the card grid, so
-   naming an area is what tells each one which box to measure its insets from. */
+   button's line. All three are absolutely positioned children of the card grid,
+   so naming an area is what tells each one which box to measure its insets
+   from. */
 .kbb-pgrid[data-skin^="showcase"] .kbb-badge,
 .kbb-pgrid[data-skin^="showcase"] .lbl,
 .kbb-pgrid[data-skin^="showcase"] .qv-btn{grid-area:scphoto}
+
+/* ── THE QUICK-VIEW PILL IS ALIGNED, NOT INSET, AND THAT IS A REAL FIX ──────
+   layouts/store.blade.php positions it with `left:50%; bottom:10px` and centres
+   it with `translateX(-50%)`. Inside a grid area that stops working, and not
+   subtly: an absolutely positioned grid child resolves an `auto` offset to the
+   edge of its grid area, so `top:auto` became the photograph's top edge, the
+   box was stretched between that and `bottom:10px`, and the pill measured
+   231x231 — the whole photograph — with its label floating at the top of it.
+   Measured on hover at 1280 before this rule existed.
+
+   All four insets auto instead, which puts it at its static position inside the
+   area and lets `align-self` and `justify-self` place it — the alignment
+   properties apply to an absolutely positioned box exactly when its insets are
+   auto. The 6px lift it rises from is a margin now rather than half of a
+   translate that also had to do the centring. */
+.kbb-pgrid[data-skin^="showcase"] .qv-btn{
+    inset:auto;
+    align-self:end;
+    justify-self:center;
+    margin-bottom:10px;
+    transform:translateY(6px);
+}
+
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile:hover .qv-btn,
+.kbb-pgrid[data-skin^="showcase"] .qv-btn:focus-visible{transform:none}
 
 .kbb-pgrid[data-skin^="showcase"] .heart{
     grid-area:scbody;
