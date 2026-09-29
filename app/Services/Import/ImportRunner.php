@@ -10,6 +10,8 @@ use App\Services\Import\Entities\CategoryImporter;
 use App\Services\Import\Entities\CouponImporter;
 use App\Services\Import\Entities\CustomerImporter;
 use App\Services\Import\Entities\EntityImporter;
+use App\Services\Import\Entities\MenuImporter;
+use App\Services\Import\Entities\MenuItemImporter;
 use App\Services\Import\Entities\OrderImporter;
 use App\Services\Import\Entities\OrderItemImporter;
 use App\Services\Import\Entities\OrderNoteImporter;
@@ -177,6 +179,28 @@ final class ImportRunner
              * PostImporter's own header carries the rest.
              */
             new PostImporter,
+            /*
+             * THE NAVIGATION, LAST, AND EVERY WORD OF THAT IS A DEPENDENCY.
+             *
+             * A menu item is a POINTER: `object_id` is a WordPress id, and
+             * MenuItemImporter resolves it against categories.source_term_id,
+             * brands.source_term_id, products.wc_id and posts.source_post_id --
+             * every one of which is written by an entity above. Registered
+             * earlier, every category, brand, product and article item in the
+             * menu would be parked for want of a target that is two steps away
+             * in the same run.
+             *
+             * `menus` before `menu-items` for the ordinary reason:
+             * `menu_items.menu_id` is NOT NULL and an item whose menu is not
+             * here yet has nowhere to land.
+             *
+             * AND NOTHING DEPENDS ON THESE TWO, which is why they can be last:
+             * no other entity reads a menu. See MenuImporter's header for why
+             * an imported menu changes nothing on the storefront until a human
+             * ticks a box.
+             */
+            new MenuImporter,
+            new MenuItemImporter,
         ];
     }
 

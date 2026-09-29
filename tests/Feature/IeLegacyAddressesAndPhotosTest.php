@@ -687,7 +687,7 @@ it('refuses an executable address in a reviews.csv that did not come from this p
 
 /* ══════════════════════════════════ 4. the navigation, named as what it is */
 
-it('names the navigation menu as a loss instead of as WordPress plumbing', function () {
+it('says what it did with the navigation menu, with a count, instead of calling it plumbing', function () {
     /*
      * `docs/GQ-MIGRATION-COMPLETENESS.md` §4.4 lists `menus` and `menu_items`
      * among the tables a clean import leaves at exactly the count they had, and
@@ -719,36 +719,76 @@ it('names the navigation menu as a loss instead of as WordPress plumbing', funct
      * and this goes red — the export goes back to describing the owner's
      * navigation as WordPress's own machinery and saying nothing else about it.
      */
+    /*
+     * ── AND AT PLUGIN 1.7.0 THE LOSS ITSELF WENT AWAY (Lane MN) ────────────
+     *
+     * Everything above is the history and is left as written: it is why the
+     * note exists. What it asserted -- that the export names the navigation as
+     * a LOSS, with a count of how much retyping -- is now false, because
+     * menus.csv and menu_items.csv carry it and `MenuImporter` /
+     * `MenuItemImporter` read it.
+     *
+     * The same rule decides what this test does next. A note is worth having
+     * only if every line in it is true, so the assertion moves with the fact
+     * rather than being deleted: the export must still say what it did with the
+     * navigation, with a count, and the tables that used to be asserted EMPTY
+     * are now asserted to FILL. Deleting the test would leave the one channel
+     * the owner approves free to go quiet about his header again.
+     *
+     * MUTATION NOTE, RUN: delete `$this->report_totals();` from
+     * `KBB_Export_Stage_Menu_Items::batch()`, regenerate the fixture, and this
+     * goes red -- the export carries the navigation and says nothing about it,
+     * which is the same defect as saying the wrong thing.
+     */
     $manifest = json_decode((string) file_get_contents(ieExportDir().'/manifest.json'), true);
 
     $navigation = '';
 
     foreach ($manifest['notes'] as $note) {
-        if (str_contains($note, 'NAVIGATION MENU')) {
+        if (str_contains($note, 'THE NAVIGATION')) {
             $navigation = $note;
         }
     }
 
     expect($navigation)->not->toBe(
         '',
-        'the export counts nav_menu_item among "another file\'s job or WordPress\'s own machinery" and says '
-        .'nothing else about it. The navigation is neither, and it is retyped by hand.',
+        'the export says nothing at all about the navigation. Either it is carried and the note says so, or '
+        .'it is not and the note says how much retyping that is -- silence is the one answer that leaves the '
+        .'owner reading a discard list that does not mention his header.',
     );
 
-    // The COUNT, which is the whole usefulness of the note: it is how much
-    // retyping, and the owner cannot plan a cutover evening without it.
-    expect(str_contains($navigation, '3 menu items across 1 menu'))->toBeTrue(
+    // The COUNT, which is the whole usefulness of the note either way.
+    expect(str_contains($navigation, '7 menu items across 1 menu'))->toBeTrue(
         'the navigation note carries no count: '.$navigation,
     );
 
-    // And it must say the tables are waiting, because that is what makes this
-    // a gap somebody can close rather than a decision already taken.
-    expect(str_contains($navigation, 'source_post_id'))->toBeTrue();
+    // And the orphan, which is the one nav_menu_item that is deliberately NOT
+    // exported: its term relationship is gone, so it belongs to no menu and
+    // WordPress renders it nowhere either.
+    expect(str_contains($navigation, 'belongs to no menu'))->toBeTrue(
+        'the note does not account for the menu items it left behind: '.$navigation,
+    );
+
+    // The posts stage must have STOPPED calling it machinery, which was the
+    // original finding and is the half that would otherwise still be false.
+    $discardList = '';
+
+    foreach ($manifest['notes'] as $note) {
+        if (str_contains($note, 'does not carry these WordPress post types')) {
+            $discardList = $note;
+        }
+    }
+
+    expect(str_contains($discardList, 'nav_menu_item'))->toBeFalse(
+        'posts.csv\'s discard list still counts nav_menu_item among "another file\'s job or WordPress\'s '
+        .'own machinery", on an export that carries it in menu_items.csv: '.$discardList,
+    );
 
     /*
-     * AND THE TABLES REALLY ARE UNTOUCHED, asserted rather than described. A
-     * note claiming the menu is not imported, on a shop where something quietly
-     * imported it, would be the same defect pointing the other way.
+     * AND THE TABLES REALLY DO FILL, asserted rather than described. This test
+     * asserted the opposite for as long as the opposite was true; a note
+     * claiming the menu is imported, on a shop where nothing imported it, is
+     * the same defect pointing the other way.
      */
     $before = [
         'menus' => \App\Models\Menu::query()->count(),
@@ -757,8 +797,8 @@ it('names the navigation menu as a loss instead of as WordPress plumbing', funct
 
     ieImportAndMapAddresses();
 
-    expect(\App\Models\Menu::query()->count())->toBe($before['menus']);
-    expect(\DB::table('menu_items')->count())->toBe($before['menu_items']);
+    expect(\App\Models\Menu::query()->count())->toBe($before['menus'] + 1);
+    expect(\DB::table('menu_items')->count())->toBe($before['menu_items'] + 7);
 });
 
 it('reports the same photograph keys however many requests the export takes', function () {

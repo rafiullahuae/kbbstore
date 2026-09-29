@@ -1,13 +1,13 @@
 {
     "format": "kbb-export/1",
-    "export_id": "ca0b06cf-3a04-46c8-96b9-f692a4d33aed",
-    "generated_at": "2026-09-28T21:01:12+04:00",
+    "export_id": "b903ebd4-2c79-40fa-af83-432611f33014",
+    "generated_at": "2026-09-29T07:36:08+04:00",
     "source": {
         "site_url": "https://kbeautybliss.com",
         "home_url": "https://kbeautybliss.com",
         "wp_version": "6.5.2",
         "woo_version": "8.7.0",
-        "plugin_version": "1.6.0",
+        "plugin_version": "1.7.0",
         "timezone": "Asia/Dubai",
         "order_storage": "posts",
         "permalink_structure": "/%postname%/",
@@ -32,7 +32,7 @@
                 "inherit": 6
             },
             "nav_menu_item": {
-                "publish": 3
+                "publish": 8
             },
             "page": {
                 "publish": 2
@@ -138,6 +138,16 @@
             "bytes": 1029,
             "sha256": "13ba9b128ca8722c2eb72b217e5f40bc28c91718890aca7d67d8066c5c7e370c"
         },
+        "menus.csv": {
+            "rows": 1,
+            "bytes": 148,
+            "sha256": "e25b61307d580f54b780722cbaa3f828e0cd62792271cad70affb9c88b292082"
+        },
+        "menu_items.csv": {
+            "rows": 7,
+            "bytes": 1003,
+            "sha256": "d0f7a06e4e1136647c2437b8cb06a55f4d97a2ff34effd274bd52a6dbf4409d0"
+        },
         "permalinks.csv": {
             "rows": 20,
             "bytes": 3282,
@@ -165,6 +175,8 @@
         "order_notes": 1,
         "reviews": 2,
         "posts": 3,
+        "menus": 1,
+        "menu_items": 7,
         "permalinks": 20,
         "media": 8
     },
@@ -177,6 +189,7 @@
             "sales",
             "reviews",
             "content",
+            "navigation",
             "addresses"
         ],
         "skipped": [],
@@ -196,6 +209,8 @@
             "order_notes.csv",
             "reviews.csv",
             "posts.csv",
+            "menus.csv",
+            "menu_items.csv",
             "permalinks.csv",
             "media.csv"
         ],
@@ -203,7 +218,7 @@
     },
     "notes": [
         "Orders were read from legacy (wp_posts): orders are shop_order posts and their fields are wp_postmeta keys.",
-        "Every group was exported: Catalogue, SEO (Yoast), Coupons, Customers, Orders, Reviews, Journal articles, Addresses and pictures.",
+        "Every group was exported: Catalogue, SEO (Yoast), Coupons, Customers, Orders, Reviews, Journal articles, Navigation, Addresses and pictures.",
         "brands.csv was read from the `pa_brands` taxonomy. BrandImporter promotes these terms to their own table with source_term_id carrying this term id.",
         "attributes.csv excludes `pa_brands`, which brands.csv carries instead -- exporting it in both would make every brand an attribute value as well as a brand.",
         "1 product is in the WordPress trash and NOT in products.csv. ProductImporter refuses a trashed product outright -- importing it would make it a live row -- so this export does what that refusal asks. Empty the trash or turn off \"skip trashed\" and re-export if you want them.",
@@ -213,8 +228,8 @@
         "1 comment on products carries no star rating and is NOT in reviews.csv -- these are customer questions, not reviews. ReviewImporter refuses a rating-less row rather than defaulting it to five stars, so exporting them would only produce refusals. The shop has nowhere to put a product question, so this is a real loss and it is named here rather than left silent.",
         "Review photographs were read from 2 comment meta key(s): `cr_photos`, `reviews-images`. They are in reviews.csv's `images` column, pipe-separated, and land in `reviews.images`. Recognised by the VALUE being an attachment id this site resolves or an address under its own uploads directory -- not by the key being one this plugin had heard of.",
         "These comment meta keys are on reviews and are NOT in reviews.csv: `imported_avatar`, `wc_review_helpful`. Most will be a plugin's bookkeeping and no loss at all. But if this shop shows customer PHOTOGRAPHS on its reviews and the `images` column came out empty, the plugin storing them is one of these keys in a shape this export did not recognise (a bare filename, or a path relative to the uploads root). That is the list to look at, and it is here so the answer is a key name rather than a discovery after the cutover.",
-        "posts.csv does not carry these WordPress post types, which are either another file's job or WordPress's own machinery: 6 attachment, 3 nav_menu_item. `attachment` in that list is the whole media library; media.csv carries the attachments the catalogue actually references, which is a smaller set and the one the new shop has to fetch.",
-        "THE NAVIGATION MENU IS NOT IN THIS EXPORT AND HAS TO BE RE-ENTERED BY HAND: 3 menu items across 1 menu. It is in the list above as `nav_menu_item`, and that list's sentence is wrong about this one entry: a menu item is neither another file's job nor WordPress's machinery. It is the header and the mobile drawer -- which categories, in which order, under which names. WordPress stores a menu as a `nav_menu` taxonomy term whose members are `nav_menu_item` posts, each with its target in postmeta, and no stage here reads them. The new shop has `menus` and `menu_items` tables with `source_term_id` and `source_post_id` columns waiting for exactly this, so it is a gap that can be closed later -- but until it is, the navigation is retyped, and this is the count of how much retyping.",
+        "posts.csv does not carry these WordPress post types, which are either another file's job or WordPress's own machinery: 6 attachment. `attachment` in that list is the whole media library; media.csv carries the attachments the catalogue actually references, which is a smaller set and the one the new shop has to fetch.",
+        "THE NAVIGATION IS IN THIS EXPORT: 7 menu items across 1 menu, in menus.csv and menu_items.csv. Each item names what it points at by its WordPress id, and the new shop resolves that id against what it imported -- so run the navigation AFTER the catalogue and the articles, or the items that point at them cannot be placed. An imported menu arrives switched OFF on the new shop and does not replace a menu already there; it is switched on from Store -> Modules -> Mega Menu. 1 further nav_menu_item row belongs to no menu at all and is not exported: WordPress does not render it either.",
         "4 previous addresses (`_wp_old_slug`) are in permalinks.csv with status `old-slug`. WordPress core answers these with a 301 on every front-end 404 (wp_old_slug_redirect), which is why they still work today and why nobody has noticed them. That is a WordPress feature and it stops when WordPress does: without these rows every one of these addresses 404s on the new shop, and the list cannot be recovered afterwards because it only ever existed in the old database.",
         "This site's permalink settings, which produced every address in permalinks.csv: WordPress structure \"/%postname%/\"; WooCommerce product base \"/product\", category base \"\", tag base \"product-tag\", attribute base \"\". The category base is EMPTY, which means product category archives were served flat at the site root -- /toners/, not /product-category/toners/. That is the shape App\\Support\\LegacyCategoryUrls describes and this export confirms it from the setting itself rather than from the navigation menu."
     ]

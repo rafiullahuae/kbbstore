@@ -30,6 +30,8 @@ names the existing importers already parse:
 | `tags.csv` | `TagImporter` | exists — Lane GH |
 | `attributes.csv` | `AttributeImporter` | exists — Lane GH |
 | `posts.csv` | `PostImporter` | exists — Lane GJ |
+| `menus.csv` | `MenuImporter` | exists — Lane MN, plugin 1.7.0 |
+| `menu_items.csv` | `MenuItemImporter` | exists — Lane MN, plugin 1.7.0 |
 | `media.csv` | — | **gap** — `kbb:import-media` re-derives its download list from the imported product URLs instead, so this file is opened by nothing and the unread-file channel names it every run. Its `exists` column is a `stat()` taken on the OLD server and cannot be re-taken after the cutover |
 
 That is deliberate and it is the whole risk-management strategy here. Ten of
@@ -156,6 +158,39 @@ export still imports — it simply carries neither of these facts.
   `kbb:import-redirects` therefore requires `--permalinks=` on every run; see
   `docs/IMPORT-RUNBOOK.md` §10. Store → SEO & Meta does not need the flag —
   `UrlsMediaApiController` passes the uploaded file itself.
+
+## The 1.7.0 delta: the navigation
+
+ADDITIVE, and it obeys the ignore-unknown rule like the two before it: a 1.6.0
+export still imports and simply carries no menu.
+
+- **`menus.csv` and `menu_items.csv` are new**, and they are a new GROUP,
+  `navigation`, so an export that leaves the box unticked carries neither file
+  at all — ABSENT from `files`, never `"rows": 0`, which is the distinction this
+  document's rules already turn on.
+
+- **A menu item is a POINTER and the export never resolves it.** `type`,
+  `object` and `object_id` are WordPress's own three columns, verbatim. The new
+  shop resolves `object_id` against what IT imported — `categories.source_term_id`,
+  `brands.source_term_id`, `products.wc_id`, `posts.source_post_id` — because a
+  WordPress id is unique across every post type and every taxonomy, so the NAME
+  of the type never has to be trusted. `object_slug` travels with it for the
+  report only.
+
+- **`label` MAY NOT BE the item's own `post_title`**, and this is the one place
+  the export resolves something rather than carrying it. WordPress writes
+  `post_title` only when the owner types a label over the default; otherwise the
+  theme prints the target's name. `label_source` is `item`, `object` or `none`
+  and says which happened. The export has to do it because the importer cannot:
+  the target of the interesting case is a WordPress page, which this shop
+  refuses by name.
+
+- **`classes` is a comma list**, not the serialised array WordPress stores.
+  Nothing downstream runs `unserialize()` over a file this shop did not write.
+
+- **`locations` on a menu is a FACT, not an instruction.** It is the theme's
+  `nav_menu_locations` map. An imported menu is never mounted by the import; see
+  `docs/MN-NAVIGATION-IMPORT.md`.
 
 - **The plugin never invents an id.** `wc_id`, `wc_order_id`, `wc_item_id` and
   the WordPress user id are what every importer upserts on; they come from

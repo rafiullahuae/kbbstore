@@ -168,7 +168,7 @@ and the census asserts it:
 | `tax_rates` | every tax rate |
 | `delivery_countries` | the countries he ships to and their charges |
 | `payment_providers` | gateway configuration — which is secrets, and should be re-entered |
-| `menus`, `menu_items` | the navigation menu. WordPress keeps it as a `nav_menu_item` post type, which is on the exporter's denylist and **counted in the manifest notes** with its row count |
+| `menus`, `menu_items` | ~~the navigation menu~~ — **NO LONGER TRUE from plugin 1.7.0.** The navigation is exported as `menus.csv` and `menu_items.csv` and imported by `MenuImporter` / `MenuItemImporter`; `docs/MN-NAVIGATION-IMPORT.md` is the account. This row is kept rather than deleted because the sentence under it — that a discard list with false entries is worse than a shorter one (§5.4) — is what made the line worth correcting |
 | `pages` | WordPress pages are **refused by name**: this shop ships its own `/about/`, `/delivery/`, `/faqs/`, `/privacy-policy/` and `/terms-and-conditions/`, and which of the two he wants is a content decision |
 | `media` | `kbb:import-media`, a separate command |
 | `redirects` | `kbb:import-redirects`, a separate command |

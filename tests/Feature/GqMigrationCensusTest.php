@@ -464,6 +464,53 @@ function gqCensus(): array
         ]],
 
         /*
+         * ── THE NAVIGATION, WHICH THIS CENSUS SPENT FOUR ENTRIES CALLING A
+         *    LOSS ─────────────────────────────────────────────────────────
+         *
+         * Plugin 1.7.0. `docs/MN-NAVIGATION-IMPORT.md` is the account,
+         * including why `object` is REPORTED and never branched on, and what
+         * happens to an item whose target this shop refused.
+         */
+        'menus.csv' => ['entity' => 'menus', 'columns' => [
+            'term_id' => GQ_LANDS.'menus.source_term_id',
+            'name' => GQ_LANDS.'menus.name',
+            // On CREATE only: `menus.slug` is unique and is shown nowhere, so a
+            // rename in WordPress must not try to move it.
+            'slug' => GQ_LANDS.'menus.slug',
+            'locations' => GQ_NAMED.": the theme's nav_menu_locations, reported as a note so the owner knows "
+                .'WHICH menu was his header -- and deliberately not acted on, because an imported menu is '
+                .'never mounted',
+            'description' => GQ_CONSOLIDATED.': `menus` has no description column',
+            'count' => GQ_CONSOLIDATED.": WordPress's own cached item count; this shop counts its own rows",
+        ]],
+
+        'menu_items.csv' => ['entity' => 'menu-items', 'columns' => [
+            'id' => GQ_LANDS.'menu_items.source_post_id',
+            // Through menus.source_term_id.
+            'menu_term_id' => GQ_LANDS.'menu_items.menu_id',
+            // Translated through this run's id map: it is a nav_menu_item POST id.
+            'parent_id' => GQ_LANDS.'menu_items.parent_id',
+            'position' => GQ_LANDS.'menu_items.position',
+            'label' => GQ_LANDS.'menu_items.label',
+            'type' => GQ_GUARD.': chooses which id space `object_id` is read in, and the custom branch',
+            // Resolved against categories.source_term_id, brands.source_term_id,
+            // products.wc_id and posts.source_post_id -- on the ID, never on
+            // the name of the type. docs/MN-NAVIGATION-IMPORT.md §3.
+            'object_id' => GQ_LANDS.'menu_items.target_id + menu_items.target_type',
+            // Custom rows only, and scheme-checked by SafeUrl::href() first.
+            'url' => GQ_LANDS.'menu_items.url',
+            'target' => GQ_LANDS.'menu_items.new_tab',
+            'status' => GQ_GUARD.': an item WordPress had not published is imported and held out of the '
+                .'header, because `menu_items` has no draft state',
+            'object' => GQ_NAMED.': which taxonomy or post type -- reported, never branched on, so a shop '
+                .'whose brands live in another taxonomy resolves identically',
+            'object_slug' => GQ_NAMED.': what a parked item pointed at, by name, in the import report',
+            'label_source' => GQ_NAMED.": whether the owner typed this label or WordPress supplied it",
+            'classes' => GQ_CONSOLIDATED.': `menu_items` has no column for a CSS class',
+            'description' => GQ_CONSOLIDATED.": WordPress's menu-item description; this shop's menu has none",
+        ]],
+
+        /*
          * The two files kbb:import does not open, and the difference between
          * them, which is the whole point of having this row in the census.
          */
@@ -526,9 +573,18 @@ function gqPostTypeCensus(): array
          * it reads as though his navigation were a cache. The posts stage now
          * names it as itself, with the count of how much retyping it is.
          */
-        'nav_menu_item' => 'NOTHING CARRIES IT. No stage reads a menu; `menus` and `menu_items` here keep the '
-            .'count they had before the import. NAMED, with its item and menu counts, in the posts stage\'s '
-            .'navigation note in manifest.json -- and re-entered by hand',
+        /*
+         * ── LANE MN: AND THEN SOMETHING DID CARRY IT ───────────────────────
+         *
+         * Plugin 1.7.0 exports menu_items.csv and MenuItemImporter reads it.
+         * The entry above is kept as history in the comment and the
+         * classification is replaced, because a census that says "nothing
+         * carries it" about rows that are now imported is exactly the false
+         * entry §5.4 is about.
+         */
+        'nav_menu_item' => 'menu_items.csv -> menu_items (plugin 1.7.0). An item whose target this shop did '
+            .'not import is written with its label and position and no address, and named in the import '
+            .'report -- docs/MN-NAVIGATION-IMPORT.md §4',
     ];
 }
 
@@ -543,7 +599,7 @@ function gqTaxonomyCensus(): array
         'product_type' => 'products.csv `type` -> products.type',
         'product_visibility' => 'products.csv `featured` and `is_visible`',
         'category' => 'posts.csv `categories` -> posts.tag',
-        'nav_menu' => 'NOTHING CARRIES IT -- one row per menu; see `nav_menu_item` above',
+        'nav_menu' => 'menus.csv -> menus (plugin 1.7.0) -- one row per menu; see `nav_menu_item` above',
     ];
 }
 
@@ -906,8 +962,6 @@ it('fills the tables the census says it fills, and leaves the rest visibly empty
         'tax_rates' => 'nothing in the export carries a WooCommerce tax rate',
         'delivery_countries' => 'nothing in the export carries a delivery country',
         'payment_providers' => 'gateway configuration is secrets and is re-entered by hand',
-        'menus' => "the WordPress navigation menu is a nav_menu_item post type on the exporter's denylist",
-        'menu_items' => 'the same',
         'media' => 'kbb:import-media, a separate command; media.csv itself is opened by nothing',
         'redirects' => 'kbb:import-redirects, a separate command',
         'pages' => 'a WordPress page is refused BY NAME -- this shop ships its own',
@@ -915,7 +969,14 @@ it('fills the tables the census says it fills, and leaves the rest visibly empty
 
     $filled = ['products', 'categories', 'tags', 'attributes', 'attribute_values', 'product_variants',
         'coupons', 'customers', 'addresses', 'orders', 'order_items', 'refunds', 'order_notes',
-        'reviews', 'posts'];
+        'reviews', 'posts',
+        /*
+         * LANE MN. Both of these were in $stillEmptyAfterAFullImport with the
+         * reason "the WordPress navigation menu is a nav_menu_item post type on
+         * the exporter's denylist". It is not on the denylist any more, and a
+         * census that goes on saying so is the false entry §5.4 is about.
+         */
+        'menus', 'menu_items'];
 
     $before = [];
 
@@ -1219,12 +1280,20 @@ function gqMetaKeyCensus(): array
          * unclassified, because unclassified is the state this census exists
          * to make impossible and "nothing carries it" is a real answer.
          */
-        '_menu_item_type' => 'NOT exported -- `taxonomy`, `post_type` or `custom`. NAMED whole by the navigation '
-            .'note in manifest.json; the menu is re-entered by hand',
-        '_menu_item_object' => 'NOT exported -- which taxonomy or post type the row points at. Same note',
-        '_menu_item_object_id' => 'NOT exported -- WHICH category or page the row points at. Same note',
-        '_menu_item_menu_item_parent' => 'NOT exported -- the drawer\'s nesting. Same note',
-        '_menu_item_url' => 'NOT exported -- a hand-typed address on a custom row. Same note',
+        '_menu_item_type' => 'menu_items.csv `type` -- `taxonomy`, `post_type` or `custom`. Read for the '
+            .'report and for the custom branch; the RESOLUTION is on the id, never on the type name',
+        '_menu_item_object' => 'menu_items.csv `object` -- which taxonomy or post type. Reported, never '
+            .'branched on: a WordPress id is unique across both spaces and a shop\'s brand taxonomy is a '
+            .'setting. docs/MN-NAVIGATION-IMPORT.md §3',
+        '_menu_item_object_id' => 'menu_items.csv `object_id` -> menu_items.target_id + url, resolved '
+            .'against categories.source_term_id, brands.source_term_id, products.wc_id, posts.source_post_id',
+        '_menu_item_menu_item_parent' => 'menu_items.csv `parent_id` -> menu_items.parent_id, translated '
+            .'through this run\'s id map',
+        '_menu_item_url' => 'menu_items.csv `url` -> menu_items.url, scheme-checked by SafeUrl::href()',
+        '_menu_item_target' => 'menu_items.csv `target` -> menu_items.new_tab (`_blank`)',
+        '_menu_item_classes' => 'menu_items.csv `classes`, as a comma list -- and NOT imported: `menu_items` '
+            .'has no column for a CSS class. It is named in the import report\'s discard list with its '
+            .'value, which is the one WordPress menu field this shop has nowhere to put'
     ];
 }
 
@@ -1344,6 +1413,8 @@ function gqImportedRowMarker(): array
         'order_notes' => 'source_comment_id',
         'reviews' => 'source_id',
         'posts' => 'source_post_id',
+        'menus' => 'source_term_id',
+        'menu_items' => 'source_post_id',
         'category_product' => null,
         'product_tag' => null,
         'product_attribute_value' => null,

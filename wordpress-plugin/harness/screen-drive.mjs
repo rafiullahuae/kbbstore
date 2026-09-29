@@ -107,6 +107,7 @@ await page.addInitScript(() => {
           parts: [{ part: 1, parts: 1, archive: 'kbb-export-sales-8f14e45f.zip', ready: packed > 2, bytes: 2264924, files: ['orders.csv', 'order_items.csv', 'refunds.csv', 'order_notes.csv'] }] },
         { key: 'reviews', label: 'Reviews', state: 'absent', why: 'Reviews was not in this export, so there is no file to download.', parts: [] },
         { key: 'content', label: 'Journal articles', state: 'absent', why: 'Journal articles was not in this export, so there is no file to download.', parts: [] },
+        { key: 'navigation', label: 'Navigation', state: 'absent', why: 'Navigation was not in this export, so there is no file to download.', parts: [] },
         { key: 'addresses', label: 'Addresses and pictures', state: 'absent', why: 'Addresses and pictures was not in this export, so there is no file to download.', parts: [] },
     ]);
 
@@ -150,7 +151,25 @@ await page.addInitScript(() => {
         if (sent.action === 'kbb_export_step' && !window.__hold) {
             window.__steps++;
 
-            if (window.__steps > 1) {
+            /*
+             * ── done:true IS ANSWERED ONCE, AND THAT IS A FIX ──────────────
+             *
+             * This driver clicks #kbb-start twice: once to get an export
+             * running under the hold, and again after the hold is released.
+             * Both chains are still polling, so BOTH used to be told the export
+             * had finished — and each one then started its own packing loop.
+             * Two loops against a stub that caps at three units post three or
+             * four times depending on which promise resolved first, so
+             * `it packs and draws the archives` failed about one run in five
+             * with "4 is identical to 3" — on an assertion whose whole point is
+             * that the page packs ONE BOUNDED UNIT PER REQUEST.
+             *
+             * Measured: five consecutive drives of this harness gave 3, 4, 3,
+             * 3, 3. A real screen has one chain, because a real Start button
+             * disables itself; the stub is what had two.
+             */
+            if (window.__steps > 1 && !window.__exportDone) {
+                window.__exportDone = true;
                 return new Promise((resolve) => setTimeout(() => resolve({
                     json: () => Promise.resolve({
                         ok: true, error: '', export_id: '8f14e45f-ceea-467a-9c31-1a2b3c4d5e6f',

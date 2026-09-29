@@ -1,0 +1,9 @@
+id,menu_term_id,parent_id,position,label,label_source,type,object,object_id,object_slug,url,target,classes,description,status
+7501,950,0,1,Skincare,item,taxonomy,product_cat,15,skincare,,,,,publish
+7504,950,7510,1,Makeup Removers,object,taxonomy,product_cat,31,makeup-removers,,,,,publish
+7510,950,7501,2,Face Cleansers,object,taxonomy,product_cat,22,face-cleansers,,,,,publish
+7502,950,0,2,About us,item,post_type,page,7099,about-us,,,,,publish
+7503,950,0,3,Sale,item,custom,custom,0,,https://kbeautybliss.com/super-sale/,_blank,menu-sale,,publish
+7505,950,0,4,Run this,item,custom,custom,0,,javascript:alert(1),,,,publish
+7506,950,0,5,,none,taxonomy,product_cat,15,skincare,,,,,publish
+7507,999,0,6,Orphan,item,custom,custom,0,,/nowhere/,,,,publish

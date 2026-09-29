@@ -18,6 +18,68 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.7.0
+
+**The navigation menu — the last thing a WordPress shop carries that no export
+had ever read.**
+
+1.6.0's own note said it out loud, with a count: *"THE NAVIGATION MENU IS NOT IN
+THIS EXPORT AND HAS TO BE RE-ENTERED BY HAND: 3 menu items across 1 menu."* The
+new shop's `menus` and `menu_items` tables have carried `source_term_id` and
+`source_post_id` since the first schema migration, waiting for it.
+`docs/IE-IMPORT-READINESS.md` §7 swept every `source_*` column in that schema
+against every writer in `app/` and found this to be the last one nothing filled.
+
+Two new files, because WordPress keeps a menu in two tables and so does this
+shop:
+
+- **`menus.csv`** — one row per `nav_menu` TERM: `term_id, name, slug,
+  description, locations, count`. `locations` is the theme's own slot
+  assignment, read out of every `theme_mods_*` option's `nav_menu_locations`.
+  It is exported so the owner can be told which of his menus WAS the header; it
+  is deliberately not an instruction, because an imported menu is not mounted.
+
+- **`menu_items.csv`** — one row per `nav_menu_item` POST that belongs to a
+  menu: `id, menu_term_id, parent_id, position, label, label_source, type,
+  object, object_id, object_slug, url, target, classes, description, status`.
+
+**The label is not always the item's own title, and this was measured rather
+than assumed.** WordPress writes `post_title` on a menu item only when the owner
+types a label OVER the default; leave the box alone and the column is the empty
+string and the theme prints the target's own name. Most items on a real menu are
+that shape. An export emitting `post_title` would carry an empty label for most
+of the menu, and `menu_items.label` on the new shop is NOT NULL. So the fallback
+is resolved HERE, against the object the item points at — which is the only side
+of the pipe that still has the object, since the new shop refuses a WordPress
+page by name. `label_source` says which of the two a row's label came from.
+
+**An orphan is not exported and is counted.** A `nav_menu_item` whose term
+relationship was deleted and whose post row was not belongs to no menu;
+WordPress renders it nowhere, so neither does this export carry it, and the note
+says how many there were.
+
+**`_menu_item_classes` is a serialised array** and comes out as a comma list, so
+nothing downstream has to run `unserialize()` over an untrusted file.
+
+**A new group, `navigation`,** between `content` and `addresses`. Its own group
+rather than part of `content` because the dependency is different — an article
+needs nothing, a menu item points at a category, a brand, a product or an
+article — and because it is the one group an owner may genuinely want to leave
+out, having already rebuilt his header by hand.
+
+**And two notes that were about the gap are now about what is carried.**
+`nav_menu_item` joins the list of post types posts.csv does not carry *because
+another file does*, and the "IS NOT IN THIS EXPORT" note fires only when the
+Navigation group was left unticked — which is the one case where it is still
+true. `docs/GQ-MIGRATION-COMPLETENESS.md` §5.4: a discard list with false
+entries is worse than a shorter one.
+
+The importer is `App\Services\Import\Entities\MenuImporter` and
+`::MenuItemImporter`; `docs/MN-NAVIGATION-IMPORT.md` is the account of what each
+pointer resolves to and what happens to one that cannot be resolved.
+
+---
+
 ## 1.6.0
 
 **Two things a WordPress shop carries that no export had ever read.**

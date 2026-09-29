@@ -7,6 +7,8 @@ namespace App\Services\Import;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Menu;
+use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -199,6 +201,14 @@ final class ImportContext
             'brands' => Brand::query()->where('source_term_id', $externalId)->value('id'),
             'customers' => Customer::query()->where('wp_user_id', $externalId)->value('id'),
             'orders' => Order::query()->where('wc_order_id', $externalId)->value('id'),
+            /*
+             * The navigation's two. `menu-items` is resolved from the database
+             * as well as from the map because a menu item's PARENT may have
+             * been written by an earlier, interrupted run of the same file --
+             * the map is per run and the parent link is not.
+             */
+            'menus' => Menu::query()->where('source_term_id', $externalId)->value('id'),
+            'menu-items' => MenuItem::query()->where('source_post_id', $externalId)->value('id'),
             default => null,
         };
 
