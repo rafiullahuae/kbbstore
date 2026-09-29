@@ -1,0 +1,119 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TREATMENT 2 — WHITE CARD WITH A HEADER STRIP.  (Lane SPL)
+
+   A white card lifted off the page by a hairline and a soft shadow, with the
+   "What is in this set · 8 items" line turned into a tinted strip across its
+   top. The list keeps its hairlines, but the card's inner padding means they
+   stop short of its edges instead of running into them — which is the
+   difference between a list inside an object and a list with lines drawn
+   through it.
+
+   WHY THIS IS A DIFFERENT OBJECT AND NOT A LIGHTER TINT. The buy column is
+   white, so a white card only exists because of its edge and its shadow: it
+   reads as a thing lying ON the page rather than a patch OF it, which is the
+   opposite claim from treatment 1. At thumbnail size the two are told apart by
+   the header strip — one dark-on-blush band at the top that neither of the
+   others has.
+
+   `overflow:hidden` on the card is what lets the strip reach the card's corners
+   without a second radius on the strip itself, and it is also what would clip a
+   shadow drawn INSIDE it — hence the strip's separator is a border and not a
+   shadow.
+
+   To ship: append this file to the end of the @once <style> in
+   resources/views/partials/set-contents-panel.blade.php. Nothing else changes —
+   the header strip is the `.opt-label` line that is already in the markup.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── THE OBJECT ─────────────────────────────────────────────────────────── */
+.ksl{
+  background:#fff;
+  border:1px solid var(--line-2,rgba(42,34,40,.06));
+  border-radius:16px;
+  box-shadow:var(--sh-s,0 1px 2px rgba(42,34,40,.05), 0 3px 10px rgba(42,34,40,.05));
+  /* No padding on the card: the strip has to reach its corners. Every child
+     below carries its own inline padding instead. */
+  padding:0;
+  overflow:hidden;
+}
+
+/* ── THE HEADER STRIP ───────────────────────────────────────────────────── */
+/* The same `.opt-label` element the block already emits — the words, then the
+   count in its note span. It becomes a band rather than a line. */
+.ksl .opt-label{
+  margin:0;
+  padding:9px 14px;
+  background:var(--pink-soft,#FFF0F4);
+  border-block-end:1px solid var(--line-2,rgba(42,34,40,.06));
+  font-size:12.5px;
+}
+.ksl .opt-label span{color:var(--pink-deep,#C13E63);font-weight:600}
+
+/* ── THE SQUEEZE ────────────────────────────────────────────────────────── */
+.ksl-rows{padding:2px 14px}
+.ksl-r{
+  grid-template-columns:34px minmax(0,1fr) auto;
+  gap:0 10px;
+  padding:4px 0;
+}
+.ksl-ph{width:34px;height:34px;border-radius:9px}
+
+/* The hairlines STAY — they are this treatment's rhythm — but they are lighter
+   than the bare list's, because the card is already doing the containing. */
+.ksl-r + .ksl-r{border-block-start:1px solid rgba(42,34,40,.07)}
+
+/* ── THE DISCLOSURE ─────────────────────────────────────────────────────── */
+.ksl-more{padding:0 14px}
+.ksl-more > summary{
+  padding:7px 0 6px;
+  border-block-start:1px solid rgba(42,34,40,.07);
+  color:var(--pink-deep,#C13E63);
+}
+.ksl-more > summary span{border-bottom-color:currentColor;opacity:.85}
+.ksl-more .ksl-r:first-of-type{border-block-start:1px solid rgba(42,34,40,.07)}
+
+/* ── THE FOOTING ────────────────────────────────────────────────────────── */
+/* A second band, matching the header, so the card is bracketed by its two
+   tinted ends and the list sits between them. */
+.ksl-foot{
+  margin-top:0;
+  padding:8px 14px;
+  background:var(--cream,#FFF8F5);
+  border-top:1px solid var(--line-2,rgba(42,34,40,.06));
+}
+
+/* ── THE PHONE ──────────────────────────────────────────────────────────── */
+
+/* ── AND WHAT THE PHONE COSTS, MEASURED RATHER THAN ASSUMED ──────────────
+   A box is padding, and at 390px `.buybox` is 346px wide — so every pixel of
+   inner padding is a pixel the NAMES lose, and this catalogue's names are long
+   enough that losing twenty of them flips a row from one line to two. The first
+   cut of this treatment was 12px of inline padding and it made the block TALLER
+   than the bare list it was squeezing: 408px against 396px, because two of the
+   five standing rows gained a line. A squeeze that grows the block has failed
+   whatever the row padding says.
+
+   So on the phone the panel's inline padding comes down to 9px and the gap
+   between the photograph and the words to 8, which together hand back 17px of
+   measure — more than the padding took. Measured, both widths, in the table in
+   docs/SET-BOX-SQUEEZE.md. */
+@media (max-width:480px){
+  .ksl{border-radius:14px}
+  .ksl .opt-label{padding:7px 10px}
+  .ksl-rows{padding:1px 10px}
+  .ksl-more{padding:0 10px}
+  .ksl-foot{padding:7px 10px}
+  .ksl-r{grid-template-columns:32px minmax(0,1fr) auto;gap:0 8px;padding:3px 0}
+  .ksl-ph{width:32px;height:32px;border-radius:8px}
+  /* THE ROWS' HEIGHT AT 390 IS SET BY THE WORDS, NOT BY THE PHOTOGRAPH, and
+     that is the finding this treatment had to be re-cut around. At 1280 the
+     names fit on one line and the photograph decides the row, so 40 -> 34 is
+     worth 10px a row. At 390 every second name in this catalogue wraps to two
+     lines and a 32px photograph is already shorter than they are — shrinking it
+     further buys nothing at all. What does buy height there is the leading:
+     1.3 -> 1.24 on a two-line name and 1.3 -> 1.15 on the brand is ~2px a row,
+     five rows of it, and neither goes near the legible floor. Measured both
+     ways in docs/SET-BOX-SQUEEZE.md. */
+  .ksl-nm{line-height:1.24}
+  .ksl-br{line-height:1.15}
+}
