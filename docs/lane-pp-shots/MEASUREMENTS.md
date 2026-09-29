@@ -119,6 +119,25 @@ choosing:
 | editorial, set3 | **no** | 922 |
 | compact, set3 | yes | **690** |
 
+### The twelve-member set, where the list costs most
+
+| layout | w | page h | .pdp h | Add to cart y | rows | member prices |
+|---|---|---|---|---|---|---|
+| *shipped, before* | 390 | 3967 | — | 1304 | 12 | 12 |
+| *shipped, after* | 390 | 3839 | — | **1177** | 12 | **0** |
+| focus | 390 | 3969 | 1431 | 1263 | 12 | 0 |
+| editorial | 390 | 3970 | 1433 | 1346 | 12 | 0 |
+| compact | 390 | **3837** | **1300** | **1255** | 12 | 0 |
+| *shipped, before* | 1280 | 2782 | — | 876 | 12 | 12 |
+| *shipped, after* | 1280 | 2665 | — | **759** | 12 | **0** |
+| focus | 1280 | 2648 | 858 | **725** | 12 | 0 |
+| editorial | 1280 | 2718 | 928 | 854 | 12 | 0 |
+| compact | 1280 | 2600 | **810** | 744 | 12 | 0 |
+
+On a twelve-member set the squeeze alone (shipped, after) beats every
+proposal at 390, because the proposals all trade some of it back for a 4:5
+gallery. `scrollWidth == viewport` in all six.
+
 ---
 
 ## 4 · Cost, and the mirror
@@ -143,7 +162,8 @@ inline axis, and the seam is `margin-block`.
 ```
 before-{plain,set3,set12}-{390,1280}.png     items 1-3, before
 after-{plain,set3,set12}-{390,1280}.png      items 1-3, after
-layout-{focus,editorial,compact}-{plain,set3}-{390,1280}.png
+layout-{focus,editorial,compact}-{plain,set3,set12}-{390,1280}.png
+oos-{shipped,focus,editorial,compact}-1280.png              flex order, out of stock
 phone844-{shipped,focus,editorial,compact}-{plain,set3}.png   real phone viewport
 ar-{set3,plain,focus-set3,editorial-set3,compact-set3}-{390,1280}.png
 *-measurements.json                          every number above, as captured
