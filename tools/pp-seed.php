@@ -165,3 +165,24 @@ echo 'seeded 3-member set #', $setThree->id, ' (', $setThree->price, " fils)\n";
 echo 'seeded 12-member set #', $setTwelve->id, ' (', $setTwelve->price, " fils)\n";
 echo 'seeded UNPRICED set #', $setUnpriced->id, "\n";
 echo 'seeded ordinary product #', $plain->id, "\n";
+
+/* ── ARABIC ON, SO THE MIRROR CAN BE PHOTOGRAPHED ──────────────────────────
+ *
+ * The storefront is bilingual and this lane's list, seam and three proposals
+ * are all written with logical properties and no [dir] rule -- which is a claim
+ * that has to be a screenshot. /ar does not exist until this switch is on
+ * (App\Support\Locale::enabled): the prefix is never stripped and the router
+ * 404s, which is what the preview did before this line.
+ *
+ * It is a PREVIEW fixture. Nothing in this lane's diff seeds this setting, and
+ * the shop's own default stays off. */
+app(\App\Services\SettingsService::class)->set(\App\Support\Locale::SETTING_ENABLED, true);
+
+/* AND THE MIRROR ITSELF, which is a SECOND switch. Locale::direction() reads
+ * `language_rtl_enabled` and answers 'ltr' without it, so /ar renders in
+ * Arabic and left to right -- <html lang="ar" dir="ltr">. Measured: with only
+ * the line above, every mirrored shot came back dir="ltr" and proved nothing
+ * about a logical property at all. */
+app(\App\Services\SettingsService::class)->set(\App\Support\Locale::SETTING_RTL, true);
+
+echo "arabic and the mirror switched on for the preview\n";

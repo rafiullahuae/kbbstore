@@ -115,6 +115,33 @@ function sqzListRows(string $html): string
     return substr($html, (int) $start, (int) $end - (int) $start);
 }
 
+/**
+ * The queries ONE request to $path costs, warmed first.
+ *
+ * ▲ THE WARM-UP IS THE WHOLE HELPER. ▲
+ *
+ * The first request of a process pays for the settings table, the module
+ * registry and the menu, which every later page then shares -- Setting::map()
+ * memoises in a process-level static as well as the cache, which CLAUDE.md
+ * records. Counted cold, the FIRST page measured reads 24 and the second reads
+ * 10, so a flatness comparison between two cold pages compares warm-up costs
+ * and nothing else. Measured: 24 vs 10 for the same two set pages before this
+ * helper existed. StorefrontQueryBudgetTest solves the same problem with
+ * budgetReset().
+ */
+function sqzQueries(string $path): int
+{
+    test()->get($path)->assertOk();
+
+    \DB::connection()->flushQueryLog();
+    \DB::connection()->enableQueryLog();
+    test()->get($path)->assertOk();
+    $n = count(\DB::connection()->getQueryLog());
+    \DB::connection()->disableQueryLog();
+
+    return $n;
+}
+
 /* ═════════════════════════════ 1. the squeeze, and the price that left ═════ */
 
 it('prints no price at all against any member of a set', function () {
@@ -392,5 +419,66 @@ it('ships all three proposals in the built stylesheet', function () {
         expect(phoneHas($css, '.pp-lay .gmain{aspect-ratio:4/5}'))->toBeTrue(
             "The frame that matches the photograph is missing from {$where}."
         );
+    }
+});
+
+/* ════════════════════════════════════ 5. and it costs nothing to run ══════ */
+
+it('keeps a set\'s page flat, at three members and at twelve', function () {
+    /*
+     * ▲ CLAUDE.md RULE 4, AND THE ONE THING THIS LANE COULD EASILY HAVE COST. ▲
+     *
+     * $kbbShortBelow asks SetContents::fromProduct() a SECOND time, beside the
+     * call the panel already makes. That is free only because
+     * Store\ProductController::show() has run SetEagerLoad::on([$product])
+     * first, so both calls loop over relations that are already in memory. Get
+     * that wrong -- ask the pivot again, or ask a member for its brand -- and a
+     * twelve-member set costs more than a three-member one, which is the N+1
+     * shape this repo budgets against.
+     *
+     * So the assertion is FLATNESS, measured, rather than a number: a twelve-
+     * member box must cost exactly what a three-member box costs.
+     *
+     * MUTATION NOTE. Replace $kbbShortBelow's SetContents call with
+     * `$product->setItems->contains(fn ($r) => $r->member?->brand !== null)`
+     * -- a lazy read of a relation that is not eager-loaded -- and the twelve-
+     * member count runs away from the three-member one. RUN.
+     */
+    $three = sqzSet(14000, array_map(
+        fn ($i) => [sqzProduct('Flat three '.$i, 1000 + $i), 1],
+        range(1, 3)
+    ), ['short_description' => 'Three steps, one box.']);
+
+    $twelve = sqzSet(59900, array_map(
+        fn ($i) => [sqzProduct('Flat twelve '.$i, 1000 + $i), 1],
+        range(1, 12)
+    ), ['short_description' => 'Twelve steps, one box.']);
+
+    $at3 = sqzQueries('/product/'.$three->slug.'/');
+    $at12 = sqzQueries('/product/'.$twelve->slug.'/');
+
+    expect($at12)->toBe($at3, "A set's page must cost the same at twelve members as at three; "
+        ."it was {$at3} at three and {$at12} at twelve.");
+});
+
+it('costs a preview layout nothing, because a preview layout is CSS', function () {
+    /*
+     * The three proposals add one class to one element and no query, no
+     * setting read and no model. If a preview ever costs more than the page it
+     * previews, the photographs are of a page the shop would not ship.
+     *
+     * MUTATION NOTE. Make the map lookup read a setting --
+     * `$settings->get('pp_layout')` as the fallback -- and the counts diverge.
+     * RUN.
+     */
+    $slug = sqzProduct('Preview cost product', 9900, [
+        'short_description' => 'A blurb, so the page has every block on it.',
+    ])->slug;
+
+    $plain = sqzQueries('/product/'.$slug.'/');
+
+    foreach (['focus', 'editorial', 'compact'] as $name) {
+        expect(sqzQueries('/product/'.$slug.'/?layout='.$name))
+            ->toBe($plain, "?layout={$name} must cost what the page costs.");
     }
 });
