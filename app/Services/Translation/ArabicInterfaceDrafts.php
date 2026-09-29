@@ -430,6 +430,7 @@ final class ArabicInterfaceDrafts
             'store.home.slider_previous' => 'السابق',
             'store.home.slider_next' => 'التالي',
             'store.home.category_product_count' => 'لا منتجات|منتج واحد|منتجان|:count منتجات|:count منتجًا|:count منتج',
+            'store.home.grid_view_all' => 'عرض الكل',
             'store.home.bundles_heading' => 'مجموعات بتوفير كبير',
             'store.home.bundles_count' => 'لا مجموعات|مجموعة واحدة|مجموعتان|:count مجموعات|:count مجموعة|:count مجموعة',
             'store.home.bundles_subtitle' => 'روتين متكامل بسعر أقل من مجموع قطعه.',

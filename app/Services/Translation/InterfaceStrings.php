@@ -853,6 +853,19 @@ final class InterfaceStrings
             'home.slider_previous' => 'Previous',
             'home.slider_next' => 'Next',
             'home.category_product_count' => ':count product|:count products',
+            /*
+             * ── THE ONE STRING THE REUSABLE PRODUCT GRID SUPPLIES — Lane GS ──
+             *
+             * The fallback on the "View all" button, used when the owner has
+             * switched the button on and left its text box empty. Everything
+             * else that section prints — the heading, the sub-heading, the
+             * eyebrow and the button's own text — is typed into Appearance →
+             * Product grids and is the OWNER'S, which is why it is not here:
+             * a second English source for a value the owner types is one of the
+             * two silently wrong. Same rule, same reason, as the cards banner's
+             * two strings above.
+             */
+            'home.grid_view_all' => 'View all',
             'home.bundles_heading' => 'Big savings bundles',
             'home.bundles_count' => ':count set|:count sets',
             'home.bundles_subtitle' => 'Complete routines, priced below the sum of their parts.',
