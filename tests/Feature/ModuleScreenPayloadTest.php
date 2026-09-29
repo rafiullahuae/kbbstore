@@ -121,6 +121,24 @@ function mScreenUrls(): array
     ];
 }
 
+/*
+ * ── ONE SCREEN'S RECORDED PAYLOAD MOVED ON PURPOSE ────────────────── Lane PG2 ──
+ *
+ * `product-styles` in tests/Fixtures/module-screen-payloads.json, and three
+ * values in it:
+ *
+ *     skins                     28 entries -> 32; the showcase family is four
+ *                               new selectable card templates
+ *     grid_skin.default         "classic" -> "showcase"
+ *     grid_skin.value           "classic" -> "showcase"
+ *
+ * The second and third are the owner's own words — "keep this design by default
+ * from backend" — which is CLAUDE.md rule 1's one exception, and the first is
+ * what a picker looks like when four options are added to it. NOTHING ELSE in
+ * the file moved: the field count is the same, every other screen is untouched,
+ * and `grid_skin`'s label, help and type are as they were. Read before it was
+ * advanced, and advanced for that change and nothing else.
+ */
 it('sends every module screen the payload it sent before the shared schema', function () {
     $owner = AdminUser::create([
         'name' => 'Payload Owner',

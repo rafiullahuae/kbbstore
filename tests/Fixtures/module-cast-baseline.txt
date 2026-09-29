@@ -3129,8 +3129,8 @@ slim_footer|pay_tamara|bool|1|true
 slim_footer|pay_tamara|bool|0|false
 slim_footer|pay_tamara|bool|null|false
 product_styles|grid_skin|skin|"classic"|'classic'
-product_styles|grid_skin|skin|"nope"|'classic'
-product_styles|grid_skin|skin|null|'classic'
+product_styles|grid_skin|skin|"nope"|'showcase'
+product_styles|grid_skin|skin|null|'showcase'
 product_styles|card_radius|range|5|5
 product_styles|card_radius|range|"5"|5
 product_styles|card_radius|range|0|0

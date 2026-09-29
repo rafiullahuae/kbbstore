@@ -1502,6 +1502,52 @@ final class EnglishRenderWalk
      *
      * @return array<string, string> a name => the pattern that selects the element's inner text
      */
+    /**
+     * The approved STOREFRONT differences — one, and it is the card style.
+     *
+     * ── WHAT CHANGED AND WHY IT IS ALLOWED ──────────────────────────────────
+     *
+     * The owner, verbatim: "apply this design on the whole website everywhere.
+     * exept cart and checkout pages. keep this design by default from backend."
+     * CLAUDE.md rule 1 has exactly one exception — "a default the owner asked
+     * for in as many words" — and this is it, so `GridSkins::DEFAULT` moved
+     * from `classic` to the showcase card and every grid that does not choose
+     * its own skin follows it.
+     *
+     * ── WHY A RULE AND NOT A BASE_COMMIT MOVE ───────────────────────────────
+     *
+     * The same argument the printed sheet's rules make above: moving the
+     * constant would blind this walk to every OTHER lane's change as well, for
+     * one attribute. A rule stays narrow, and applyApproved() counts the hits —
+     * so when the base does move past this work it fails as a rule that has
+     * stopped excusing anything, which is the signal to delete it.
+     *
+     * ── FOUR HITS, AND THEY ARE NAMED ───────────────────────────────────────
+     *
+     * The four curated collection listings — /new-in, /best-sellers,
+     * /super-sale and /everything-under-54-aed — are the only pages in this
+     * walk that BOTH render a product grid and have products in the fixture to
+     * put in it. One grid each, one attribute each. Measured, not predicted:
+     * before this rule existed the test named those four pages and no others.
+     *
+     * The REPLACEMENT names the constant rather than repeating a skin name, so
+     * the day the owner picks a different treatment of the same card this rule
+     * still excuses exactly the difference it was written for and the count
+     * does not move.
+     *
+     * @return array<string, array{pattern: string, with: string, hits: int}>
+     */
+    public static function approvedStorefrontChanges(): array
+    {
+        return [
+            'the shipped card style, which the owner asked to change' => [
+                'pattern' => '#<div class="kbb-pgrid" data-skin="classic">#',
+                'with' => '<div class="kbb-pgrid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">',
+                'hits' => 4,
+            ],
+        ];
+    }
+
     public static function approvedReflows(): array
     {
         return [

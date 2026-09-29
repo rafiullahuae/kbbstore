@@ -2940,8 +2940,8 @@
             "type": "skin",
             "label": "Default card style",
             "help": "Used wherever a grid does not choose its own.",
-            "default": "classic",
-            "value": "classic",
+            "default": "showcase",
+            "value": "showcase",
             "options": null
           },
           {
@@ -3364,6 +3364,22 @@
       {
         "key": "accentbar",
         "label": "Accent bar — left"
+      },
+      {
+        "key": "showcase",
+        "label": "Showcase — full-width button"
+      },
+      {
+        "key": "showcase-compact",
+        "label": "Showcase Compact — tighter"
+      },
+      {
+        "key": "showcase-row",
+        "label": "Showcase Row — price beside the button"
+      },
+      {
+        "key": "showcase-airy",
+        "label": "Showcase Airy — more air, lighter button"
       }
     ],
     "categories": [

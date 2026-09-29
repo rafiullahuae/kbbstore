@@ -773,9 +773,20 @@ it('offers every column count the grid can show, including the default', functio
             ->toBeTrue('the column switcher cannot offer '.$n.' columns');
     }
 
-    // The URL is honoured, and the pin reaches the grid.
-    expect(str_contains(optGet('/shop/?cols=5'), 'id="grid" data-skin="classic" data-cols="5"'))
-        ->toBeTrue('?cols=5 does not pin the grid at five');
+    /*
+     * The URL is honoured, and the pin reaches the grid.
+     *
+     * `GridSkins::DEFAULT` AND NOT THE LITERAL `classic`. This case is about
+     * `data-cols`; the skin is only in the needle because it sits between
+     * `id="grid"` and it in the rendered attribute order. Lane PG2 moved the
+     * shipped default to `showcase` — the owner asked for that in as many
+     * words — and a literal here would have reddened a column-count pin over a
+     * card-style change, which is the wrong test failing.
+     */
+    expect(str_contains(
+        optGet('/shop/?cols=5'),
+        'id="grid" data-skin="'.\App\Support\GridSkins::DEFAULT.'" data-cols="5"'
+    ))->toBeTrue('?cols=5 does not pin the grid at five');
 
     // A value that is not on the list is not a pin at all — the automatic
     // answer, not a silent fall back to some other number.

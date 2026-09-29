@@ -242,6 +242,23 @@ it('renders byte-identical English on every storefront page after the __() conve
             . "Fewer means the element stopped rendering; more means a page gained it.\n"
             . 'Read the diff, then move the count. Got: ' . json_encode($inserted));
 
+    /*
+     * 1b. The approved SUBSTITUTIONS, applied to the same BEFORE side.
+     *
+     * One entry: the shipped card style, which the owner asked to change in as
+     * many words. Same mechanism the printed documents' test already uses —
+     * applyApproved() counts what each rule fired, and a rule that stops
+     * excusing anything fails here rather than quietly excusing nothing. See
+     * EnglishRenderWalk::approvedStorefrontChanges() for the argument.
+     */
+    $substituted = EnglishRenderWalk::applyApproved(
+        EnglishRenderWalk::approvedStorefrontChanges(),
+        $before,
+    );
+    expect(array_keys(array_filter($substituted, fn (array $r): bool => $r['expected'] !== $r['actual'])))
+        ->toBe([], 'Each approved storefront change must match exactly the pages it was written for. Got: '
+            . json_encode($substituted));
+
     // 2. The bar itself.
     $changed = [];
     foreach ($before as $uri => $html) {

@@ -1,0 +1,14 @@
+[
+ {"name":"page-shop-390","skin":"showcase","path":"/shop/","w":390,"h":1500},
+ {"name":"page-shop-1280","skin":"showcase","path":"/shop/","w":1280,"h":1400},
+ {"name":"page-category-390","skin":"showcase","path":"/collections/skincare-sets/","w":390,"h":1500},
+ {"name":"page-category-1280","skin":"showcase","path":"/collections/skincare-sets/","w":1280,"h":1400},
+ {"name":"page-brand-390","skin":"showcase","path":"/brands/beauty-of-joseon/","w":390,"h":1500},
+ {"name":"page-brand-1280","skin":"showcase","path":"/brands/beauty-of-joseon/","w":1280,"h":1400},
+ {"name":"page-product-390","skin":"showcase","path":"/product/pg2-relief-sun/","w":390,"h":2400},
+ {"name":"page-product-1280","skin":"showcase","path":"/product/pg2-relief-sun/","w":1280,"h":2200},
+ {"name":"page-home-390","skin":"showcase","path":"/","w":390,"h":2400},
+ {"name":"page-home-1280","skin":"showcase","path":"/","w":1280,"h":2200},
+ {"name":"page-cart-390","skin":"showcase","path":"/cart/","w":390,"h":1200},
+ {"name":"page-cart-1280","skin":"showcase","path":"/cart/","w":1280,"h":1200}
+]
