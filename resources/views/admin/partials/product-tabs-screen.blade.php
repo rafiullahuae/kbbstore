@@ -139,7 +139,14 @@
 .kpt-edit{border-top:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);
   padding:14px 12px;display:grid;gap:12px;min-width:0}
 .kpt-f{display:grid;gap:5px;min-width:0}
-.kpt-f label{font-size:11.5px;font-weight:650;color:var(--ink-soft,#626c80);letter-spacing:.02em}
+/* The control sits INSIDE its label rather than being joined to one by id.
+   Two ids would be two elements sharing a name the moment both editors are on
+   screen -- AdminNavAndIdsTest pins that across the console, and the console
+   has already lost a feature to it once. Nesting needs no id at all and the
+   association cannot go stale. */
+.kpt-f label{display:grid;gap:5px;min-width:0;font-size:11.5px;font-weight:650;
+  color:var(--ink-soft,#626c80);letter-spacing:.02em}
+.kpt-f label > input,.kpt-f label > select{font-weight:400}
 .kpt-f input[type=text],.kpt-f input[type=number],.kpt-f select{width:100%;box-sizing:border-box;
   font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border,#e6e9f2);
   border-radius:var(--r-xs,9px);background:var(--surface,#fff);color:var(--ink,#101729);min-width:0}
@@ -306,9 +313,10 @@
 
     return '<div class="kpt-edit">'
       + '<div class="kpt-f">'
-      +   '<label for="kptTitle">Tab title</label>'
-      +   '<input type="text" id="kptTitle" data-kpt-title maxlength="120" '
+      +   '<label>Tab title'
+      +   '<input type="text" data-kpt-title maxlength="120" '
       +     'value="' + esc(row ? row.title : '') + '" placeholder="Shipping &amp; returns">'
+      +   '</label>'
       +   '<p class="kpt-hint">The word on the tab. It is a heading, not a paragraph.</p>'
       +   arabic('title', 'Tab title', 'text', prefill, row ? undefined : '')
       + '</div>'
@@ -318,11 +326,11 @@
       +   arabic('body', 'What the tab says', 'rich', prefill, row ? undefined : '')
       + '</div>'
       + '<div class="kpt-f" style="max-width:220px">'
-      +   '<label for="kptOn">Show this tab</label>'
-      +   '<select id="kptOn" data-kpt-on>'
+      +   '<label>Show this tab'
+      +   '<select data-kpt-on>'
       +     '<option value="1"' + (!row || row.is_enabled ? ' selected' : '') + '>Yes, show it</option>'
       +     '<option value="0"' + (row && !row.is_enabled ? ' selected' : '') + '>No, keep it but hide it</option>'
-      +   '</select>'
+      +   '</select></label>'
       + '</div>'
       + '<div class="kpt-ord" style="flex-wrap:wrap;gap:8px">'
       +   '<button class="kpt-btn is-primary" data-kpt-save="' + esc(kind) + '">Save this tab</button>'
@@ -495,9 +503,10 @@
       + '<div class="kpt-note">Leave a box <b>empty</b> and this product uses the shop&rsquo;s own '
       + 'wording for it. Fill one in and only this product changes.</div>'
       + '<div class="kpt-f">'
-      +   '<label for="kptTitle">Tab title on this product</label>'
-      +   '<input type="text" id="kptTitle" data-kpt-title maxlength="120" '
+      +   '<label>Tab title on this product'
+      +   '<input type="text" data-kpt-title maxlength="120" '
       +     'value="' + esc(row ? row.title : '') + '" placeholder="' + esc(tab.label) + '">'
+      +   '</label>'
       +   arabic('title', 'Tab title', 'text', prefill, row ? undefined : '')
       + '</div>'
       + '<div class="kpt-f">'
