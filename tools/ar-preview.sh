@@ -97,7 +97,7 @@ export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
 mkdir -p "$DIR/compiled"
 
 php "$APP/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -40 "$DIR/migrate.log"; exit 1; }
-php "$APP/artisan" tinker "$APP/tools/ar-seed.php" >>"$DIR/migrate.log" 2>&1 \
+php "$APP/artisan" tinker "$APP/tools/ar-seed.php" </dev/null >>"$DIR/migrate.log" 2>&1 \
   || php "$APP/artisan" tinker --execute="require '$APP/tools/ar-seed.php';" >>"$DIR/migrate.log" 2>&1 \
   || { tail -40 "$DIR/migrate.log"; exit 1; }
 

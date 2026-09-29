@@ -18,5 +18,5 @@ export KBB_PUBLIC_PATH="$DIR/webroot" APP_ENV=local APP_DEBUG=true \
   APP_SERVICES_CACHE="$DIR/compiled/services.php" \
   APP_PACKAGES_CACHE="$DIR/compiled/packages.php"
 
-php "$APP/artisan" tinker "$APP/tools/ar-publish-drafts.php" \
+php "$APP/artisan" tinker "$APP/tools/ar-publish-drafts.php" </dev/null \
   || php "$APP/artisan" tinker --execute="require '$APP/tools/ar-publish-drafts.php';"

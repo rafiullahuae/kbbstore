@@ -899,13 +899,13 @@ final class EnglishRenderWalk
      * resolve its commit fails with "no such commit" rather than with a diff,
      * which is indistinguishable from one that passes.
      *
-     * 86f41a4 is that same <bdi> commit, rewritten onto this branch, so it
+     * 98853a0 is that same <bdi> commit, rewritten onto this branch, so it
      * carries BOTH halves: Lane WAL's wallet chips above and the wordmark
      * wrapper. Neither baseline alone is correct here -- 386a5de predates the
      * <bdi> wrapper and c1fb494 predates the wallet work, and pinning either
      * one reports the other lane's finished change as a regression.
      */
-    public const BASE_COMMIT = '86f41a4bef17cde67ffc24de35e5cd2cfd4ce5ea';
+    public const BASE_COMMIT = '98853a0c6d4a88e8cf80fb553f68ed04f7559195';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
