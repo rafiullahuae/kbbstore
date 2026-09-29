@@ -304,6 +304,58 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Auth\AuthenticationException::redirectUsing($guests);
 
         /*
+         * ── AND THE SECOND DOOR: HIDE, RATHER THAN POINT AT A LOGIN ─────────
+         *
+         * 398 admin-guarded endpoints do not live under the secret admin path —
+         * 397 `admin-api/...`, which is a FIXED prefix anybody can guess, and
+         * `api/cart/debug`. Logged out, each of them answered
+         * `302 Location: .../<admin_path>/login`, so the secret was readable by
+         * anyone who could type `admin-api`.
+         *
+         * WHAT CHANGES IS ONLY THE BRANCH THAT PRINTED IT. Handler::
+         * unauthenticated() already answers a request that expects JSON with a
+         * bare 401 and no Location, and every one of the console's 43 fetch()
+         * calls to admin-api sets Accept: application/json — so the console has
+         * never seen the redirect and does not see this. Leaving the 401 alone
+         * is deliberate and is argued at length on
+         * GuestRedirect::hidesTheAddressInstead(): 33 console screens read a
+         * 404 from their own endpoints as "clear the route cache", and 3
+         * already read 401 as "your session expired".
+         *
+         * A RENDER CALLBACK, WHICH IS THE ONLY SHIPPABLE HOOK. The obvious home
+         * for this is `->withExceptions()` in bootstrap/app.php, and
+         * bootstrap/ is on BuildPackage::NEVER_SHIP — the same reason
+         * everything else in this method is here. Handler::render() runs its
+         * render callbacks BEFORE the AuthenticationException branch, so this
+         * intercepts cleanly, and returning null falls straight through to the
+         * behaviour above for every request it does not claim.
+         *
+         * IT RE-RENDERS A REAL NotFoundHttpException rather than composing a
+         * 404 of its own, so the answer is byte-identical to the one the router
+         * gives for a path that was never registered — in every environment,
+         * debug or not. A refusal that looked slightly different from a genuine
+         * 404 would tell a stranger the address exists, which is the one thing
+         * this is for.
+         */
+        $handler = $this->app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class);
+
+        if (method_exists($handler, 'renderable')) {
+            $handler->renderable(static function (
+                \Illuminate\Auth\AuthenticationException $e,
+                \Illuminate\Http\Request $request
+            ) use ($handler) {
+                if (! \App\Support\GuestRedirect::hidesTheAddressInstead($request)) {
+                    return null;
+                }
+
+                return $handler->render(
+                    $request,
+                    new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+                );
+            });
+        }
+
+        /*
          * CacheHeaders -- APPENDED TO THE `web` GROUP, not prepended globally,
          * and for the opposite reason to the two above. Those two have to run
          * BEFORE the router: one rewrites the path so /ar matches an existing

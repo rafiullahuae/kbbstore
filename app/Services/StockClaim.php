@@ -123,11 +123,19 @@ final class StockClaim
         /*
          * THE SET RULE, APPLIED BEFORE THE LINES ARE SUMMED PER SHELF. (Lane SP)
          *
-         * StockSetRule::expand() returns the caller's own array untouched --
-         * and runs no query at all -- unless the owner has switched Catalog →
-         * Sets → Stock · When a set is sold to "members", which is NOT the
-         * shipped default. Today's shop therefore claims exactly what it
-         * claimed before this line existed.
+         * ▲ THIS PARAGRAPH USED TO READ: "returns the caller's own array
+         * untouched -- and runs no query at all -- unless the owner has
+         * switched Catalog → Sets → Stock · When a set is sold to 'members',
+         * which is NOT the shipped default. Today's shop therefore claims
+         * exactly what it claimed before this line existed."
+         *
+         * THE DEFAULT MOVED on 29 September, at the owner's word -- "if the
+         * product sold inside set or individual, the stock should be minus in
+         * any case" -- and StockSetRule::MODE_MEMBERS is what ships now. So
+         * expand() DOES look, on every basket, and a basket with no set in it
+         * costs the one statement StockSetRule::setIdsAmong() runs and returns.
+         * Left uncorrected this reads as a promise that a set moves no member
+         * stock, which is the opposite of what the shop does.
          *
          * BEFORE perShelf() AND NOT AFTER, which is the whole reason it is
          * here rather than in the loop: a basket holding both a Glow Set and
@@ -141,27 +149,154 @@ final class StockClaim
          * session() both call claim(); a second implementation for the second
          * door is the drift this class was extracted to end.
          */
-        foreach ($this->perShelf(app(StockSetRule::class)->expand($lines)) as $line) {
-            $this->claimOne($line, $orderId);
+        $lines = app(StockSetRule::class)->expand($lines);
+
+        if ($lines === []) {
+            return;
+        }
+
+        /*
+         * EVERY ROW THIS CLAIM TOUCHES, LOCKED IN ONE STATEMENT PER TABLE.
+         *
+         * This used to be a `lockForUpdate()->first()` per line for the product
+         * and a second for the variant, inside the loop. It had to be: the loop
+         * was the first thing that knew which rows it wanted. Measured on this
+         * shop before the change, a six-line basket ran 19 statements and a
+         * two-line one 8.
+         *
+         * Hoisting it is not an optimisation for its own sake -- it is what
+         * makes the correction below POSSIBLE. Summing per shelf requires
+         * knowing each variant's `manage_stock` BEFORE anything is grouped, and
+         * learning that one line at a time would be an N+1 inside the
+         * transaction that places the order, which is the worst place in this
+         * application to put one.
+         *
+         * AND IT IS THE SAFER LOCK ORDER. `whereIn(...)->orderBy('id')` takes
+         * the rows in a defined sequence, so two transactions that want the
+         * same jars queue rather than crossing. N separate statements in basket
+         * order gave no such guarantee.
+         */
+        $rows = $this->lockRows($lines);
+
+        foreach ($this->perShelf($lines, $rows) as $shelf) {
+            $this->takeFromShelf(
+                $shelf['table'],
+                $shelf['id'],
+                $shelf['have'],
+                $shelf['quantity'],
+                $shelf['label'],
+                $orderId,
+                $shelf['line'],
+            );
         }
     }
 
     /**
-     * Demand summed PER SHELF before anything is checked.
+     * Lock every product and variant these lines name, in one statement each.
      *
-     * One product can legitimately appear on two lines — the same product added
-     * through the cart page and through the checkout's Browsed tab, or a
-     * variant line beside a plain one — and the API endpoint's request shape is
-     * a plain list of slugs, so the same slug twice is a single POST away.
-     * Checking each line against the shelf on its own lets a basket of 1 + 1 buy
-     * a single remaining unit twice over.
+     * Soft-deleted products are excluded by the model's own scope, so a product
+     * the owner has binned since it went in the basket simply does not come
+     * back, and perShelf() below refuses it rather than selling it.
      *
      * @param  list<array{product_id:int, variant_id:?int, quantity:int, label:string}>  $lines
-     * @return array<string, array{product_id:int, variant_id:?int, quantity:int, label:string}>
+     * @return array{products: \Illuminate\Support\Collection, variants: \Illuminate\Support\Collection}
      */
-    private function perShelf(array $lines): array
+    private function lockRows(array $lines): array
+    {
+        $productIds = [];
+        $variantIds = [];
+
+        foreach ($lines as $line) {
+            $productId = (int) ($line['product_id'] ?? 0);
+
+            if ($productId > 0) {
+                $productIds[$productId] = true;
+            }
+
+            if (isset($line['variant_id']) && $line['variant_id'] !== null) {
+                $variantIds[(int) $line['variant_id']] = true;
+            }
+        }
+
+        return [
+            'products' => $productIds === []
+                ? collect()
+                : Product::query()
+                    ->whereIn('id', array_keys($productIds))
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id'),
+            'variants' => $variantIds === []
+                ? collect()
+                : ProductVariant::query()
+                    ->whereIn('id', array_keys($variantIds))
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id'),
+        ];
+    }
+
+    /**
+     * Demand summed PER SHELF, and availability asked PER LINE.
+     *
+     * One product can legitimately appear on two lines -- the same product
+     * added through the cart page and through the checkout's Browsed tab, a
+     * variant line beside a plain one, or a set member beside the loose
+     * product -- and the API endpoint's request shape is a plain list of slugs,
+     * so the same slug twice is a single POST away. Checking each line against
+     * the shelf on its own lets a basket of 1 + 1 buy a single remaining unit
+     * twice over.
+     *
+     * -- THE KEY THIS USED TO USE, AND WHY IT WAS WRONG --------------------
+     *
+     * It was
+     *
+     *     $key = $variantId !== null ? 'variant:' . $variantId : 'product:' . $productId;
+     *
+     * -- the variant id whenever a line carried one -- while claimOne() decided
+     * the shelf AFTERWARDS by a different rule: the variant's own shelf only
+     * when the variant counts its own stock, and the PARENT's otherwise. A
+     * variant with `manage_stock` off shares its parent's single stock figure,
+     * which is what every variant this shop imported looks like (see
+     * VariationImporter), so a basket holding that variant AND the parent as a
+     * plain line asked for one jar twice, and the two asks were checked one at
+     * a time against a shelf they both came off.
+     *
+     * IT COULD NOT OVERSELL -- the decrement repeats its condition in its own
+     * WHERE -- so what it produced was a WRONG SENTENCE, which is the thing a
+     * shopper acts on:
+     *
+     *     honest      "Only 1 of Hydrating Serum is left. Please reduce the
+     *                  quantity in your basket to continue."
+     *     what it     "Hydrating Serum is sold out. Please remove it from your
+     *     said         basket to continue."
+     *
+     * The first claim emptied the shelf and marked it `outofstock`; the second
+     * met the status the first had just written. A shopper told to remove a
+     * line removes it, and the shop loses the sale of the unit it did have.
+     *
+     * -- THE TWO QUESTIONS ARE NOT THE SAME QUESTION -----------------------
+     *
+     * That is the whole correction. HOW MANY UNITS LEAVE is a fact about the
+     * SHELF, and is summed. WHETHER THIS THING MAY BE SOLD AT ALL is a fact
+     * about the LINE -- a variant can be marked sold out by hand while its
+     * parent is still selling, which is the flip the owner actually uses in
+     * Store -> Products -- so it is asked once per distinct product-and-variant
+     * pair. Asked once per shelf instead, a delisted variant merged onto its
+     * healthy parent's shelf would be sold.
+     *
+     * @param  list<array{product_id:int, variant_id:?int, quantity:int, label:string}>  $lines
+     * @param  array{products: \Illuminate\Support\Collection, variants: \Illuminate\Support\Collection}  $rows
+     * @return array<string, array{table:string, id:int, have:int, quantity:int, label:string, line:array}>
+     *
+     * @throws StockUnavailable
+     */
+    private function perShelf(array $lines, array $rows): array
     {
         $wanted = [];
+        $asked = [];
 
         foreach ($lines as $line) {
             $productId = (int) ($line['product_id'] ?? 0);
@@ -170,82 +305,90 @@ final class StockClaim
                 continue;
             }
 
+            $label = (string) ($line['label'] ?? 'Item');
+            $product = $rows['products']->get($productId);
+
+            if ($product === null) {
+                throw new StockUnavailable($label . ' is no longer available. Please remove it from your basket to continue.');
+            }
+
             $variantId = isset($line['variant_id']) && $line['variant_id'] !== null
                 ? (int) $line['variant_id']
                 : null;
 
-            $key = $variantId !== null ? 'variant:' . $variantId : 'product:' . $productId;
+            $variant = $variantId === null ? null : $rows['variants']->get($variantId);
 
-            $wanted[$key] ??= [
-                'product_id' => $productId,
-                'variant_id' => $variantId,
+            if ($variantId !== null && $variant === null) {
+                throw new StockUnavailable($label . ' is no longer available. Please remove it from your basket to continue.');
+            }
+
+            /*
+             * The same question the add-to-basket paths ask, asked again here
+             * and asked of THIS LINE:
+             * `($variant?->stock_status ?? $product->stock_status) !== 'instock'`.
+             * It applies whether or not stock is counted, because this is the
+             * shape a sell-out actually takes in this shop, and a product
+             * nobody may add to a basket is not one anybody may pay for either.
+             *
+             * Once per distinct pair rather than once per line, so a basket
+             * carrying the same variant twice is not interrogated twice.
+             */
+            $pair = $productId . ':' . ($variantId ?? '-');
+
+            if (! isset($asked[$pair])) {
+                $asked[$pair] = true;
+
+                if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
+                    throw new StockUnavailable($label . ' is sold out. Please remove it from your basket to continue.');
+                }
+            }
+
+            /*
+             * THE SHELF, decided here and not after the sum. A variant that
+             * counts its own stock is its own shelf; a variant that does not
+             * falls back to the parent product's. A product that counts no
+             * stock at all is not counted, not decremented and not marked --
+             * the only thing asked of it is the status question above.
+             */
+            if ($variant !== null && $variant->manage_stock) {
+                $key = 'product_variants:' . (int) $variant->id;
+                $shelf = ['table' => 'product_variants', 'id' => (int) $variant->id, 'have' => (int) ($variant->stock ?? 0)];
+            } elseif ($product->manage_stock) {
+                $key = 'products:' . (int) $product->id;
+                $shelf = ['table' => 'products', 'id' => (int) $product->id, 'have' => (int) ($product->stock ?? 0)];
+            } else {
+                continue;
+            }
+
+            $wanted[$key] ??= $shelf + [
                 'quantity' => 0,
-                // Used only in the refusal sentence, so it is taken from what
-                // the caller has already loaded and never fetched again.
-                'label' => (string) ($line['label'] ?? 'Item'),
+                /*
+                 * Used only in the refusal sentence, so it is taken from what
+                 * the caller has already loaded and never fetched again. The
+                 * FIRST line to reach a shelf names it, which is the line the
+                 * shopper is likeliest to recognise: their own, ahead of the
+                 * set-member lines StockSetRule appends behind them.
+                 */
+                'label' => $label,
+                /*
+                 * What the ledger records against this claim: the first line's
+                 * pair, exactly the shape it recorded before the shelves were
+                 * summed, so anything reading `order_stock_claims` sees what it
+                 * always saw. `shelf_table` and `shelf_id` are what release()
+                 * and reclaim() work off, and those are the shelf's own.
+                 */
+                'line' => [
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'quantity' => 0,
+                    'label' => $label,
+                ],
             ];
 
             $wanted[$key]['quantity'] += max(0, (int) ($line['quantity'] ?? 0));
         }
 
         return $wanted;
-    }
-
-    /**
-     * One shelf: checked under a lock, then decremented conditionally.
-     *
-     * @param  array{product_id:int, variant_id:?int, quantity:int, label:string}  $line
-     *
-     * @throws StockUnavailable
-     */
-    private function claimOne(array $line, ?int $orderId): void
-    {
-        $quantity = $line['quantity'];
-
-        if ($quantity < 1) {
-            return;
-        }
-
-        // Soft-deleted products are excluded by the model's own scope, so a
-        // product the owner has binned since it went in the basket arrives here
-        // as null and is refused rather than sold.
-        $product = Product::whereKey($line['product_id'])->lockForUpdate()->first();
-
-        if ($product === null) {
-            throw new StockUnavailable($line['label'] . ' is no longer available. Please remove it from your basket to continue.');
-        }
-
-        $variant = $line['variant_id'] !== null
-            ? ProductVariant::whereKey($line['variant_id'])->lockForUpdate()->first()
-            : null;
-
-        if ($line['variant_id'] !== null && $variant === null) {
-            throw new StockUnavailable($line['label'] . ' is no longer available. Please remove it from your basket to continue.');
-        }
-
-        /*
-         * The same question the add-to-basket paths ask, asked again here:
-         * `($variant?->stock_status ?? $product->stock_status) !== 'instock'`.
-         * It applies whether or not stock is counted, because this is the shape
-         * a sell-out actually takes in this shop — the owner flips the status by
-         * hand in Store → Products — and a product nobody may add to a basket
-         * is not one anybody may pay for either.
-         */
-        if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
-            throw new StockUnavailable($line['label'] . ' is sold out. Please remove it from your basket to continue.');
-        }
-
-        // The shelf: the variant's own when it counts stock, otherwise the
-        // parent's, otherwise nothing is counted and there is nothing to do.
-        if ($variant !== null && $variant->manage_stock) {
-            $this->takeFromShelf('product_variants', (int) $variant->id, $variant->stock, $quantity, $line['label'], $orderId, $line);
-
-            return;
-        }
-
-        if ($product->manage_stock) {
-            $this->takeFromShelf('products', (int) $product->id, $product->stock, $quantity, $line['label'], $orderId, $line);
-        }
     }
 
     /**

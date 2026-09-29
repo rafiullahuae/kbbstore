@@ -132,7 +132,10 @@ it('refuses an anonymous caller, and allocates nothing on the way to the refusal
     $response = test()->get(gcUrl('invoice', $orders));
 
     expect($response->getStatusCode())->not->toBe(200)
-        ->and($response->getStatusCode())->toBeIn([301, 302, 401, 403]);
+        // 404 (Lane SEC, round 2): these are admin-api addresses, which no
+            // longer name the secret admin path in a Location header to a browser.
+            // Still a refusal, and still not a 200.
+            ->and($response->getStatusCode())->toBeIn([301, 302, 401, 403, 404]);
 
     $body = (string) $response->getContent();
 

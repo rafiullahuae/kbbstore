@@ -711,7 +711,18 @@ it('gives the check to the owner alone, on a capability of its own', function ()
 
     // And with no admin session at all.
     auth()->guard('admin')->logout();
-    $this->post('/admin-api/security/integrity')->assertStatus(302);
+    /*
+     * ▲ PIN ADVANCED (Lane SEC, round 2): this asserted a 302 to the admin login.
+     *
+     * An admin-guarded address that does NOT carry the secret admin path --
+     * every `admin-api/...` one -- used to answer a browser with
+     * `302 Location: .../<admin_path>/login`, which handed the secret to anyone
+     * who typed a fixed, guessable prefix. It answers a plain 404 now. Still a
+     * refusal, and one that does not admit the endpoint is there. A request
+     * that expects JSON still answers 401, unchanged.
+     * tests/Feature/AdminPathNeverLeaksTest.php sweeps all 398.
+     */
+    $this->post('/admin-api/security/integrity')->assertStatus(404);
 
     /*
      * MUTATION NOTE. Move the ['POST', 'admin-api/security/integrity', …] rule

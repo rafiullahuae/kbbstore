@@ -151,7 +151,10 @@ it('refuses a guest on every one of its routes', function () {
 
             $response = test()->call($method, $uri);
 
-            expect(in_array($response->status(), [401, 403, 302], true))
+            // 404 (Lane SEC, round 2): an admin-guarded address that does not
+            // carry the secret admin path is hidden rather than redirected, so the
+            // Location header can no longer name it. Still a refusal.
+            expect(in_array($response->status(), [401, 403, 302, 404], true))
                 ->toBeTrue($method.' '.$uri.' answered '.$response->status().' to a guest');
         }
     }

@@ -179,8 +179,19 @@ it('refuses a signed-out visitor both the chooser and a drawing', function () {
      */
     pdpProduct();
 
-    $this->get('/admin-api/catalog/pdp-preview')->assertRedirect();
-    $this->get(pdpUrl('ledger', 'pdp-test-toner'))->assertRedirect();
+    /*
+     * ▲ PIN ADVANCED (Lane SEC, round 2): this asserted assertRedirect() on both.
+     *
+     * An admin-guarded address that does NOT carry the secret admin path --
+     * every `admin-api/...` one -- used to answer a browser with
+     * `302 Location: .../<admin_path>/login`, which handed the secret to anyone
+     * who typed a fixed, guessable prefix. It answers a plain 404 now. Still a
+     * refusal, and one that does not admit the endpoint is there. A request
+     * that expects JSON still answers 401, unchanged.
+     * tests/Feature/AdminPathNeverLeaksTest.php sweeps all 398.
+     */
+    $this->get('/admin-api/catalog/pdp-preview')->assertNotFound();
+    $this->get(pdpUrl('ledger', 'pdp-test-toner'))->assertNotFound();
 });
 
 it('is governed by catalog.view, which is the rule its prefix already carries', function () {

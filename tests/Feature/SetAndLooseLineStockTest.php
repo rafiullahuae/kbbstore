@@ -638,3 +638,49 @@ it('keeps the sentence through a second load of the same basket', function () {
 
     expect($cart->fresh(['items'])->items)->toHaveCount(1);
 });
+
+it('says it in the drawer as well, which is where the shopper is standing', function () {
+    /*
+     * The third surface a shopper meets their basket in, and the one they are
+     * looking at when they press Add to bag. The drawer used to show the line
+     * simply gone.
+     *
+     * ▲ AND IT IS NOT IN `.kc-ship`. That band is hidden outright by
+     * `.cp-noship .kc-ship{display:none}` on a shop that has switched the
+     * free-delivery bar off in Appearance → Cart panel, so a notice wearing
+     * that class would be invisible on exactly the shops that turned one
+     * control off. It sits inside `.dbody`, which carries the panel's own
+     * padding at both widths.
+     *
+     * MUTATION NOTE. Delete the notice block from
+     * resources/views/partials/cart-drawer.blade.php and this is red. RUN.
+     */
+    $toner = slsProduct('1025 Dokdo Toner', 1);
+    $set = slsSet('Medicube booster set', [[$toner, 1]]);
+    $cart = slsCart([[$set, 1]]);
+
+    $response = slsAs($cart)->postJson('/api/cart/add', [
+        'product_id' => $toner->id,
+        'quantity' => 1,
+    ])->assertOk();
+
+    $drawer = (string) $response->json('drawer');
+
+    expect($drawer)->toContain('1025 Dokdo Toner')
+        ->and($drawer)->toContain('Medicube booster set')
+        ->and($drawer)->toContain('has been taken out of your bag');
+
+    /*
+     * And it is inside the item list rather than in the band that can be
+     * switched off — asserted at the markup, because the whole point of the
+     * placement is that a setting cannot hide it.
+     */
+    expect($drawer)->toContain('class="kc-note"')
+        ->and(strpos($drawer, 'class="kc-note"'))->toBeGreaterThan(
+            (int) strpos($drawer, 'class="dbody"'),
+            'the notice must sit inside .dbody, not in the switchable .kc-ship band'
+        );
+
+    // The set survives, so the drawer always has a body to put this in.
+    expect($response->json('count'))->toBe(1);
+});

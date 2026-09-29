@@ -910,10 +910,21 @@ it('refuses every translation endpoint to a signed-out caller', function () {
     // internet.
     \Tests\Support\TranslationAdminRoutes::mount();
 
-    test()->get('/admin-api/translations/settings')->assertStatus(302);
+    /*
+     * ▲ PIN ADVANCED (Lane SEC, round 2): this asserted a 302 to the admin login.
+     *
+     * An admin-guarded address that does NOT carry the secret admin path --
+     * every `admin-api/...` one -- used to answer a browser with
+     * `302 Location: .../<admin_path>/login`, which handed the secret to anyone
+     * who typed a fixed, guessable prefix. It answers a plain 404 now. Still a
+     * refusal, and one that does not admit the endpoint is there. A request
+     * that expects JSON still answers 401, unchanged.
+     * tests/Feature/AdminPathNeverLeaksTest.php sweeps all 398.
+     */
+    test()->get('/admin-api/translations/settings')->assertStatus(404);
     test()->post('/admin-api/translations/machine/run', [
         'locale' => 'ar', 'confirm_characters' => 0,
-    ])->assertStatus(302);
+    ])->assertStatus(404);
 });
 
 it('reports both switches, and says plainly when the combination is awkward', function () {

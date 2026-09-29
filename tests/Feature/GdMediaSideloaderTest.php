@@ -1063,7 +1063,18 @@ it('refuses every one of its endpoints to a caller with no admin session', funct
     foreach (MediaSideloadAdminRoutes::registered() as $route) {
         $method = in_array('POST', $route->methods(), true) ? 'post' : 'get';
 
-        test()->{$method}('/'.$route->uri())->assertStatus(302);
+        /*
+     * ▲ PIN ADVANCED (Lane SEC, round 2): this asserted a 302 to the admin login on every one of these routes.
+     *
+     * An admin-guarded address that does NOT carry the secret admin path --
+     * every `admin-api/...` one -- used to answer a browser with
+     * `302 Location: .../<admin_path>/login`, which handed the secret to anyone
+     * who typed a fixed, guessable prefix. It answers a plain 404 now. Still a
+     * refusal, and one that does not admit the endpoint is there. A request
+     * that expects JSON still answers 401, unchanged.
+     * tests/Feature/AdminPathNeverLeaksTest.php sweeps all 398.
+     */
+        test()->{$method}('/'.$route->uri())->assertStatus(404);
     }
 
     expect(MediaSideloadAdminRoutes::registered())->toHaveCount(4);

@@ -109,7 +109,10 @@ it('refuses the whole screen to anybody who is not signed in as an admin', funct
         $response = test()->{$method}($path, [], ['Accept' => 'application/json']);
 
         expect($response->getStatusCode())->toBeIn(
-            [401, 403, 302],
+            // 404 (Lane SEC, round 2): an admin-guarded address that does not
+            // carry the secret admin path is hidden rather than redirected, so the
+            // Location header can no longer name it. Still a refusal.
+            [401, 403, 302, 404],
             "{$method} {$path} answered {$response->getStatusCode()} to an anonymous caller"
         );
     }

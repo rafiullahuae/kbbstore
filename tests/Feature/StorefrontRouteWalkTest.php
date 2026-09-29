@@ -273,8 +273,20 @@ function walkExpectations(array $seed): array
         // --- Cart and checkout ------------------------------------------
         'cart'                     => ['status' => 200],
         'api/cart/drawer'          => ['status' => 200],
-        // Admin-guarded: a guest is bounced to the admin login.
-        'api/cart/debug'           => ['status' => 302],
+        /*
+         * ▲ PIN ADVANCED, DELIBERATELY (Lane SEC, round 2). This used to read
+         *
+         *     // Admin-guarded: a guest is bounced to the admin login.
+         *     'api/cart/debug'           => ['status' => 302],
+         *
+         * and that bounce was a leak: the Location header named the secret
+         * `admin_path`, at an address under /api/ that anybody can guess and
+         * that this very walk requests as a logged-out visitor. It is the only
+         * admin-guarded endpoint outside `admin-api/`, and it is hidden now —
+         * the same 404 the router gives for a path that was never registered.
+         * tests/Feature/AdminPathNeverLeaksTest.php sweeps all 398 of them.
+         */
+        'api/cart/debug'           => ['status' => 404],
         // An empty cart is sent back to the cart rather than shown a checkout.
         'checkout'                 => ['status' => 302],
         'checkout/success'         => ['status' => 200],

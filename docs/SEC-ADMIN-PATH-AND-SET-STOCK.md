@@ -1,6 +1,7 @@
 # Lane SEC — the leaked admin address, and the basket that could not be paid for
 
-Two defects the owner reported from `extrabeauty.ae`. Both are fixed; the
+Two defects the owner reported from `extrabeauty.ae`, and three follow-ups the
+first round found. All five are fixed; the
 pictures below were taken in real Chromium at **390** and **1280** against a
 preview of this checkout whose admin path is **`mr-cool`** — the one he named —
 so a leak is visible in the address bar rather than argued about.
@@ -208,56 +209,194 @@ login a shopper is sent to.
 
 ---
 
-## Found and NOT fixed — the owner's call
+## Round two — the second door, the shelf key, and the drawer
 
-**398 admin-guarded endpoints live at fixed, public addresses, and each one
-still names the admin login to a stranger.** 397 of them are `admin-api/*` and
-the last is `api/cart/debug`. `admin-api` is not the secret path — it is a fixed
-prefix anyone can guess — so:
+### 4 · The 398 public admin addresses are closed
 
-```
-curl -sI https://extrabeauty.ae/admin-api/security
-Location: https://extrabeauty.ae/mr-cool/login
-```
+Round one reported these as the owner's call. They were not; they are closed.
 
-reveals `admin_path` to anybody who asks, which defeats the point of a secret
-admin address by a different door from the one just closed.
+**Measured before anything was designed**, because the measurement decided the
+shape. `Handler::unauthenticated()` answers a request that expects JSON with a
+bare 401 and NO Location, and only falls through to `redirect()->guest()`
+otherwise:
 
-It is **not fixed here** because the fix — refuse to name the admin login unless
-the request is already under the admin path — changes where a logged-out
-administrator lands on 397 endpoints, and the admin console's own session-expiry
-handling follows that redirect. That is a decision about the back office, not
-about the storefront, and the owner should make it.
+| request | before | after |
+|---|---|---|
+| `Accept: application/json` | `401`, no Location | `401`, no Location — **unchanged** |
+| `X-Requested-With: XMLHttpRequest` | `401`, no Location | `401`, no Location — **unchanged** |
+| a browser's own `Accept` | `302 → …/mr-cool/login` | **`404`, no Location** |
+| the console itself, `/mr-cool` | `302 → …/mr-cool/login` | unchanged |
+| the storefront, `/my-account/orders` | `302 → /my-account` | unchanged |
 
-The set is pinned by name in `AdminPathNeverLeaksTest`, so it cannot grow
-quietly: mounting a new admin-guarded endpoint at a public address is a red
-suite.
+**Every one of the console's 47 programmatic calls to `admin-api` expects
+JSON** — 43 `fetch()` (the wrapper at `admin/app.blade.php:12209` plus ~20
+screen partials with their own) and 4 `XMLHttpRequest` uploads, which are
+exactly where a wrapper usually gets bypassed and here do not. Confirmed from
+the browser as well as the source: signing in fired 6 admin-api calls, all
+expecting JSON, all 200.
 
-**And one latent defect in `StockClaim::perShelf()`.** It keys demand on
-`variant:<id>` whenever a line carries a variant, but `claimOne()` decides the
-actual shelf *afterwards* — a variant that does not manage its own stock comes
-off the parent product's shelf. So two lines that share one physical shelf can
-be checked separately, which produces a wrong refusal message (the second claim
-reports "sold out" against a shelf the first one just emptied). It cannot
-oversell — the decrement is a conditional `UPDATE` — and `SetStockReconciler`
-resolves shelves correctly for the basket, so the owner's case is fixed either
-way. Fixing `perShelf()` itself means loading products and variants before the
-sum, which is a query-budget decision worth its own lane.
+**So the 401 is left exactly as it is, deliberately.** Turning it into a 404
+would be a worse defect than the one being fixed, and the console says so
+itself: **33 screens** read a 404 from their own endpoints as *"the endpoints
+are not in this server's compiled route table yet — clear the route cache"*
+(53 occurrences), because a package applied by hand without its
+`clear_caches_*` migration is a real and frequent fault here; **3 screens**
+already read 401 as *"your admin session has expired — sign in again"*.
+Collapsing them would send the owner to clear his caches over an expired login.
+
+The decision is the **guard** plus whether the address already carries the
+secret, compared **segment by segment** so `admin-api` is not mistaken for
+something under `admin` and a `KBB_BASE_PATH` prefix cannot shift it. Registered
+as a render callback from `AppServiceProvider::boot()`, because the obvious home
+— `withExceptions()` in `bootstrap/app.php` — cannot ship. It re-renders a real
+`NotFoundHttpException` so the answer is byte-identical to a genuine 404.
+
+**The console's pictures**, which are the ones that matter here because the
+shopper-facing half is invisible:
+
+| | 390 | 1280 |
+|---|---|---|
+| signed in, reading from `admin-api` | `390-console-01-signed-in.png` | `1280-console-01-…` |
+| the session gone, something pressed | `390-console-02-session-gone.png` | `1280-console-02-…` |
+| **before** — a stranger at `admin-api/security` | `390-console-00-BEFORE-…` | `1280-console-00-…` |
+| **after** — the same stranger | `390-console-03-stranger-gets-404.png` | `1280-console-03-…` |
+
+The "before" shot is the shop's own **Store administration · authorised staff
+only** card, served at 200 to anyone who typed `admin-api/security`. The "after"
+is a bare **404 · NOT FOUND**, and the body does not contain `mr-cool`.
+
+**No session-expiry defect was created, and that is measured rather than
+argued.** The expired-session frame was shot twice — once with the change live
+and once with it neutralised — and the two PNGs are **byte-identical**
+(`md5 21ba9d80…`). The console received 401 before and receives 401 now.
+
+**Four pins advanced deliberately**, each with its old value and reason at the
+site: `SecurityModuleTest`, `MailRoutesTest`, `AdminRoleEnforcementTest` and
+`StorefrontRouteWalkTest`'s `api/cart/debug`.
+
+### 5 · `perShelf()` now sums by the shelf the units actually leave
+
+`perShelf()` keyed demand on the variant id whenever a line carried one, while
+`claimOne()` picked the shelf afterwards by a different rule. A variant with
+`manage_stock` off shares its parent's stock figure — which is every variant
+this shop imported — so that variant and the parent as a plain line asked for
+one jar twice and were checked one at a time against a shelf they both came off.
+
+It could not oversell, so it was a **wrong sentence**, and the sentence is what
+a shopper acts on. Measured on the fixture:
+
+> before  "Hydrating Serum **is sold out**. Please **remove it** from your basket to continue."
+> after   "**Only 1 of** Hydrating Serum is left. Please **reduce the quantity** in your basket to continue."
+
+A shopper told to remove a line removes it, and the shop loses the sale of the
+unit it did have.
+
+The correction is that the two questions are not one question. **How many units
+leave** is a fact about the shelf and is summed; **whether this may be sold at
+all** is a fact about the line, because a variant can be delisted by hand while
+its parent is still selling, so it is asked once per distinct
+product-and-variant pair.
+
+**Cheaper, not dearer, and measured.** Every row is locked in one statement per
+table, up front, in id order — which is also the safer lock order against
+deadlocks.
+
+| basket | before | after |
+|---|---|---|
+| two lines sharing a shelf | 8 statements | 4 |
+| six lines sharing a shelf | 19 statements | 4 |
+
+`StorefrontQueryBudgetTest` is unmoved and needed no raising.
+
+### 6 · The drawer says it too
+
+The cart page and the checkout carried the sentence; the drawer — the thing a
+shopper is looking at when they press Add to bag — showed the line simply gone.
+
+**Not in `.kc-ship`**, which was the obvious band and the wrong one:
+`.cp-noship .kc-ship{display:none}` hides that element outright on a shop that
+has switched the free-delivery bar off in `Appearance → Cart panel`, so a notice
+wearing that class would be invisible on exactly the shops that turned one
+control off. It sits inside `.dbody`, which already carries the panel's own
+padding at both widths — no new rule in a stylesheet another lane owns, and no
+media query of its own.
+
+| | 390 | 1280 |
+|---|---|---|
+| the drawer, after Add to bag | `390-drawer-notice.png` | `1280-drawer-notice.png` |
+
+Measured: the badge reads **1**, the subtotal **AED 199**, the notice is visible
+at both widths, and `scrollWidth` equals `clientWidth` (390/390, 1280/1280).
 
 ---
 
-## Two guards that are red at this lane's base, and are not this lane's
+## Found and NOT fixed — the integrator's file
 
-`ModuleSchemaEquivalenceTest > it answers every recorded cast exactly as it did
-before the shared schema` (5172 against a fixture of 4929) and
-`ModuleScreenPayloadTest > it sends every module screen the shape it sent
-before` (the header's tab count, 7 against 6) fail on **`fc5c322` with none of
-this lane's work in the tree** — checked out detached and run, identical numbers.
+**Nine admin-api endpoints are reached by a browser NAVIGATION rather than by
+`fetch()`, and every one is a download.** With an expired session they used to
+land on the admin login and now land on a 404. That is the price of closing the
+door; it is paid by the administrator and never by a shopper. Six call sites,
+all in `resources/views/admin/app.blade.php`, which is the integrator's file:
 
-They are already fixed on the integrator's branch by `0ab7f28`, *"Advance three
-fixtures for the flag bar and the cart-row controls, additively"*, which lands
-after this lane branched. Nothing here touches modules, their schemas or the
-header, and the fixtures are another lane's to advance. Merging this branch onto
-current `claude/kind-mayer-rpqesv` greens both.
+```
+:13031  window.open   /admin-api/orders-bulk-documents
+:13215  location.href /admin-api/orders-export
+:14646  location.href /admin-api/customers/export
+:15745  location.href /admin-api/reviews/export
+:19750  location.href /admin-api/catalog-products-export
+:14082  window.open(url)  where url is the SERVER's own
+        /admin-api/orders/{id}/invoice, /packing-slip, /delivery-note and
+        /shipping-label — Admin\InvoiceController::invoiceUrl() and friends
+```
 
-Everything else in the suite is green: **7,827 passed, 22 skipped**.
+▲ That last one is the one a scan for `admin-api` in the console does **not**
+find, because the address never appears in the console's source at all. It was
+found by following `o.invoice_url` back to the controller, and it is four of the
+nine.
+
+**The fix**, for whoever owns that file: fetch them through the console's own
+`api()` and hand the blob to the browser —
+
+```js
+const r = await api(url, { headers: { Accept: 'application/octet-stream' } });
+// …or fetch() the same URL with Accept: application/json on the error path,
+// then URL.createObjectURL(blob) and click a synthetic <a download>.
+```
+
+That puts them on the JSON path, so an expired session answers 401 and the
+console can say what it already says on three other screens. The count is pinned
+in `AdminPathNeverLeaksTest`, so a seventh navigation is a red suite.
+
+**And a second, smaller one in the same file.** The Catalog screen's failure
+message (`app.blade.php:19323`) reads *"If this is a fresh deployment, the
+Catalog → Products routes may not be wired into routes/web.php yet"* for **any**
+error, including the 401 an expired session produces — pictured above. It is
+**not a regression from this work** (the byte-identical comparison proves the
+frame is unchanged), but it is the same "two faults, one message" shape, and
+`product-editor-screen.blade.php:1021` already shows the one-line remedy:
+
+```js
+if (e && (e.status === 401 || e.status === 419)) return 'Your session has ended. Sign in again.';
+```
+
+---
+
+## The suite
+
+**7,966 passed, 22 skipped, 1 failed**, on a clean run with nothing in flight.
+
+The one failure is `PackageSigningTest > it holds no private key in this
+repository`, and it is not this lane's: it fails on `12ef037` — round one's own
+merge, with none of round two's work in the tree, checked out detached and run —
+tripping on Lane PERF's four `docs/perf-reports/*.html`. It passes in the
+integrator's newer checkout, so it is already fixed above this branch.
+
+Round one's two base-level failures (`ModuleSchemaEquivalenceTest`,
+`ModuleScreenPayloadTest`) are gone, fixed by the rebase exactly as predicted.
+
+**Seventeen pins were advanced in this round**, every one with its old value and
+the reason written at the site: four in the first commit (`SecurityModuleTest`,
+`MailRoutesTest`, `AdminRoleEnforcementTest`, `StorefrontRouteWalkTest`) and
+thirteen more found by the full run. All thirteen asserted the same thing — that
+an `admin-api` address answers a signed-out browser with a 302 to the admin
+login — and that redirect is the door this round closed.
