@@ -26,6 +26,30 @@ DIR=$APP/storage/framework/testing/lane-ar-preview-$STATE
 ROOT=$DIR/webroot
 DB=$DIR/preview.sqlite
 
+# ── REFUSE THE PORT IF ANYTHING IS ALREADY ON IT ───────────────────────────
+#
+# THE FAILURE THIS PREVENTS HAS ALREADY HAPPENED TWICE IN THIS CONTAINER. If
+# `php -S` cannot bind it says so in server.log and EXITS -- and the old
+# version of this script slept two seconds and then printed a confident
+# "preview on http://..." line regardless. The shoot that followed talked to
+# whatever WAS on the port, which was another lane's preview, and produced 84
+# photographs of a different catalogue that looked completely finished.
+#
+# So: check first, and refuse loudly. A port that is busy is not a thing to
+# work around, because the only way to "work around" it is to photograph
+# somebody else's shop.
+if command -v ss >/dev/null 2>&1; then
+  BUSY=$(ss -ltn "sport = :$PORT" 2>/dev/null | grep -c LISTEN || true)
+else
+  BUSY=$( (netstat -ltn 2>/dev/null || true) | grep -c "[:.]$PORT " || true)
+fi
+if [ "${BUSY:-0}" -gt 0 ]; then
+  echo "REFUSING TO START: something is already listening on 127.0.0.1:$PORT." >&2
+  echo "Five other lanes share this container. Pick another port -- do NOT" >&2
+  echo "shoot against this one, you would be photographing their catalogue." >&2
+  exit 2
+fi
+
 rm -rf "$DIR"
 mkdir -p "$ROOT"
 cp "$APP/public-web-root/index.php" "$ROOT/index.php"
@@ -86,4 +110,29 @@ cp "$APP/tools/m1-router.php" "$ROOT/router.php"
 php -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
 echo $! > "$DIR/server.pid"
 sleep 2
-echo "preview[$STATE] on http://127.0.0.1:$PORT  pid $(cat "$DIR/server.pid")  root $ROOT"
+
+# ── AND PROVE THE THING THAT ANSWERED IS THIS FIXTURE ──────────────────────
+#
+# The port check above closes the "somebody got there first" case. This closes
+# the other one: our own php -S died on boot (a fatal in the router, a web root
+# that is not there) and something else took the port in the two seconds since,
+# or never left it. Both end with a server answering 200 on the right port with
+# the wrong shop in it.
+#
+# `lanear-glow-starter-set` is created by tools/ar-seed.php and by nothing else
+# in this repository, so a 200 on it is proof of identity and not just proof of
+# life. The state prefix is included because /ar/ MUST 404 in the `en` state --
+# that is the shop as it ships -- so the English preview is asked for the
+# unprefixed address and the two Arabic ones for /ar/.
+PROBE_PREFIX=""
+[ "$STATE" = "en" ] || PROBE_PREFIX="/ar"
+PROBE="http://127.0.0.1:$PORT$PROBE_PREFIX/product/lanear-glow-starter-set/"
+CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$PROBE" || echo 000)
+if [ "$CODE" != "200" ]; then
+  echo "PREVIEW DID NOT COME UP: $PROBE answered $CODE, not 200." >&2
+  echo "--- server.log ---" >&2; tail -20 "$DIR/server.log" >&2 || true
+  kill "$(cat "$DIR/server.pid")" 2>/dev/null || true
+  exit 3
+fi
+
+echo "preview[$STATE] on http://127.0.0.1:$PORT  pid $(cat "$DIR/server.pid")  root $ROOT  probe $CODE"

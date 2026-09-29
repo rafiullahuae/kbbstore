@@ -1,7 +1,7 @@
 # Lane AR — what `/ar` actually renders, in all three of its states
 
 `tools/ar-preview.sh <port> <en|ar|rtl>` boots the tree three times, one per
-language state; `tools/ar-shots.cjs <dir> [prefix]` photographs seven surfaces
+language state; `tools/ar-shots.cjs <dir> [prefix]` photographs eight surfaces
 at two widths in each. Everything here is one tree — this branch — differing
 only in two settings rows and, for the `approved-` half, one press of the
 console's **Approve all** button.
@@ -41,8 +41,9 @@ nothing; the second proves the words are real.
 which side of centre it falls on, and the two words that say which language
 rendered.
 
-- **No horizontal overflow anywhere.** `scrollWidth === clientWidth` on all 84
-  shots: 390 at 390, 1280 at 1280.
+- **No horizontal overflow anywhere.** `scrollWidth === clientWidth` on all 96
+  shots: 390 at 390, 1280 at 1280. This is the number that catches a physical
+  direction property, and it is clean in both passes and all three states.
 - **`ar` is not mirrored, and the logo is the proof.** Logo x = 68 at 390 and
   22 at 1280 — the same numbers as English, on the same side. A `dir`
   attribute is a claim; where the logo is is a fact.
@@ -82,9 +83,9 @@ Nothing on the English shop moved.
 
 ## Why JPEG
 
-`docs/rtl-shots/` made this call first and the reason still holds: 84 full-size
-PNGs come to 14 MB, which is more than this repo should carry for one round of
-evidence. JPEG q70 is 3.6 MB and the encoding is deterministic, so identical
+`docs/rtl-shots/` made this call first and the reason still holds: 96 full-size
+PNGs come to 16 MB, which is more than this repo should carry for one round of
+evidence. JPEG q70 is 4.4 MB and the encoding is deterministic, so identical
 source pixels still give identical FILES — the eleven byte-identical English
 pages above were checked as PNGs and are still byte-identical as JPEGs.
 
@@ -99,19 +100,32 @@ stylesheet, `html{overflow-y:scroll}` so the scrollbar gutter cannot flip
 so a webfont resolving at its own pace cannot move the layout.
 
 ```sh
-sh tools/ar-preview.sh 8991 ar
-sh tools/ar-preview.sh 8992 rtl
-sh tools/ar-preview.sh 8993 en
+sh tools/ar-preview.sh 8971 ar
+sh tools/ar-preview.sh 8972 rtl
+sh tools/ar-preview.sh 8973 en
 node tools/ar-shots.cjs docs/lane-ar-shots
 
 sh tools/ar-approve.sh ar && sh tools/ar-approve.sh rtl
 node tools/ar-shots.cjs docs/lane-ar-shots approved-
 ```
 
-**Ports 8991–8993, and check them first.** Lane SPL runs a preview on 8981 in
-this same container, and an earlier run of this harness spent several minutes
-talking to it: `/ar/` came back `dir="rtl"` with none of this lane's products
-in it, which reads exactly like a broken seed and is a port collision.
+**Ports 8971–8973, and the script now checks them ITSELF.** Lane SPL runs a
+preview on 8981 and Lane AR used 8991–8993; an earlier run of this harness
+spent several minutes talking to somebody else's: `/ar/` came back `dir="rtl"`
+with none of this lane's products in it, which reads exactly like a broken seed
+and is a port collision.
+
+Checking by hand was not enough, because the failure is silent from both ends.
+`tools/ar-preview.sh` now does two things before it claims to be up:
+
+1. **It refuses a port that is already listening**, and exits 2. The old script
+   slept two seconds and printed a confident "preview on http://..." line even
+   when `php -S` had failed to bind and said so only in `server.log`.
+2. **It asks the server that answered for `/product/lanear-glow-starter-set/`**
+   — a slug `tools/ar-seed.php` creates and nothing else in this repository
+   does — and exits 3 on anything but 200. A 200 there is proof of IDENTITY and
+   not merely proof of life, which is the difference between this harness and
+   the one that photographed another lane's catalogue while looking finished.
 
 **`CACHE_STORE=array`, not `file`.** The file cache writes to the application's
 own `storage/framework/cache`, which is one directory for all three previews

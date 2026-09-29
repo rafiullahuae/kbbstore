@@ -30,7 +30,7 @@ const OUT = process.argv[2] || 'docs/lane-ar-shots';
    gives you) and once after the owner has pressed Approve all. The pair is the
    deliverable; either one alone proves only half of it. */
 const PRE = process.argv[3] || '';
-const PORTS = { en: 8993, ar: 8991, rtl: 8992 };
+const PORTS = { en: 8973, ar: 8971, rtl: 8972 };   /* Lane AR2: 899x had AR's and Lane SPL's previews on them */
 
 const FREEZE = `*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;
   transition-duration:0s!important;transition-delay:0s!important}
@@ -40,6 +40,7 @@ html{overflow-y:scroll}`;
    basket first or /cart and /checkout redirect and photograph nothing. */
 const PAGES = [
   { key: 'home',     path: '/',                             bag: false },
+  { key: 'shop',     path: '/shop/',                        bag: false },
   { key: 'product',  path: '/product/lanear-1/',             bag: false },
   { key: 'set',      path: '/product/lanear-glow-starter-set/', bag: false },
   { key: 'cart',     path: '/cart/',                        bag: true  },
@@ -165,5 +166,5 @@ async function measure(page) {
 
   await browser.close();
   fs.writeFileSync(path.join(OUT, PRE + 'measurements.json'), JSON.stringify(rows, null, 2));
-  console.log('\nwrote ' + rows.length + ' rows to ' + path.join(OUT, 'measurements.json'));
+  console.log('\nwrote ' + rows.length + ' rows to ' + path.join(OUT, PRE + 'measurements.json'));
 })();
