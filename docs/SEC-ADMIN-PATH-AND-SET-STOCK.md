@@ -260,4 +260,4 @@ after this lane branched. Nothing here touches modules, their schemas or the
 header, and the fixtures are another lane's to advance. Merging this branch onto
 current `claude/kind-mayer-rpqesv` greens both.
 
-Everything else in the suite is green: **7,826 passed, 22 skipped**.
+Everything else in the suite is green: **7,827 passed, 22 skipped**.
