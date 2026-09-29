@@ -1331,7 +1331,15 @@ final class ArabicInterfaceDrafts
             'email.quiz_plan.why' => 'تصلك هذه الرسالة لأن هذا العنوان كُتب في اختبار البشرة على موقعنا، وقد ذكر النموذج أننا سنرسل الخطة بالبريد. وهذه هي تلك الرسالة الوحيدة — ولم يُضف العنوان إلى أي قائمة.',
             'email.quiz_plan.why_text' => 'تصلك هذه الرسالة لأن هذا العنوان كُتب في اختبار البشرة على موقعنا، وقد ذكر النموذج أننا سنرسل الخطة بالبريد. وهذه هي تلك الرسالة الوحيدة - ولم يُضف العنوان إلى أي قائمة.',
 
-            'email.newsletter.our' => 'رسائل',
+            /*
+             * The FALLBACK for :store when the shop has no name set, and it has
+             * to read inside somebody_asked's sentence rather than translate the
+             * English word. English builds "asked for OUR emails"; the Arabic
+             * builds "أن تُرسل رسائل :store", so :store wants the name -- or, with
+             * none, "منّا": "رسائل منّا". Translating it as رسائل, which is what
+             * the English word points at, produced "رسائل رسائل".
+             */
+            'email.newsletter.our' => 'منّا',
             'email.newsletter.somebody_asked' => 'طلب أحدهم — ونأمل أن تكون أنت — أن تُرسل رسائل :store إلى هذا العنوان.',
             'email.newsletter.somebody_asked_text' => 'طلب أحدهم -- ونأمل أن تكون أنت -- أن تُرسل رسائل :store إلى هذا العنوان.',
             'email.newsletter.not_yet' => ':emphasis اضغط الزر أدناه وستكون كذلك.',

@@ -450,3 +450,49 @@ it('opens product tabs, video sections and clips on Content -> Translations', fu
 
     expect($section->fresh()->t('heading'))->toBe('تسوقي الإطلالة');
 });
+
+/* ══════════════════ 6. the fragments that get slotted into other strings ══════════════════ */
+
+it('composes the newsletter fallback into a sentence rather than a repeated word', function () {
+    /*
+     * A CLASS OF ERROR NO PLACEHOLDER CHECK CAN SEE, AND THIS LANE SHIPPED ONE.
+     *
+     * `email.newsletter.our` is not a word the reader ever sees on its own. It
+     * is what the templates pass as `:store` when the shop has no name set:
+     *
+     *     __('email.newsletter.somebody_asked',
+     *        ['store' => $brand['storeName'] ?? __('email.newsletter.our')])
+     *
+     * English composes "asked for OUR emails to be sent". The Arabic sentence is
+     * built the other way round -- "أن تُرسل رسائل :store" -- so :store wants a
+     * NAME there, and with none it wants "منّا". Translated as the English word
+     * points ("رسائل") it composed to "رسائل رسائل": the same word twice, in a
+     * transactional email, on the one path a shop that has not set its name
+     * takes.
+     *
+     * Every placeholder is present in both strings, so the placeholder test is
+     * green on the broken version. Only rendering it catches this.
+     *
+     * MUTATION: set 'email.newsletter.our' back to 'رسائل' and this is red on
+     * the doubled word. Ran it.
+     */
+    $strings = \App\Services\Translation\ArabicInterfaceDrafts::all();
+
+    $withFallback = str_replace(
+        ':store',
+        $strings['email.newsletter.our'],
+        $strings['email.newsletter.somebody_asked']
+    );
+
+    $withName = str_replace(':store', 'K-Beauty Bliss', $strings['email.newsletter.somebody_asked']);
+
+    // No word repeated back-to-back once the fallback is slotted in.
+    expect((bool) preg_match('/(\S+)\s+\1(\s|$)/u', $withFallback))
+        ->toBeFalse('the newsletter fallback composes to a repeated word: '.$withFallback);
+
+    // And the same sentence still reads with a real shop name in it.
+    expect(str_contains($withName, 'K-Beauty Bliss'))
+        ->toBeTrue('the shop name no longer appears in the sentence: '.$withName)
+        ->and((bool) preg_match('/(\S+)\s+\1(\s|$)/u', $withName))
+        ->toBeFalse($withName);
+});
