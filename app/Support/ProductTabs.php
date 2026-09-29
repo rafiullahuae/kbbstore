@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Models\Category;
 use App\Models\ProductTab;
 use App\Services\Translation\TranslationStore;
 use Illuminate\Support\Facades\Cache;
@@ -222,15 +223,68 @@ final class ProductTabs
      */
     public const SOURCE_KEY_PATTERN = '/^(builtin:(description|ingredients|how_to_use)|global:[1-9][0-9]{0,18})$/';
 
+    /**
+     * WHERE A GLOBAL TAB SHOWS. The owner's five options, and the only five
+     * this application will store. (Lane PT, round 2)
+     *
+     *   global      every product. THE DEFAULT, and what every row written
+     *               before this feature existed already holds.
+     *   products    the product ids in `audience_ids`.
+     *   categories  those categories AND EVERYTHING UNDER THEM. See
+     *               categoryFamily() for the argument.
+     *   brands      the brand ids in `audience_ids`.
+     *   sets        every product whose `type` is 'set'. A TYPE MATCH and not a
+     *               picker, so a set created next week is covered without
+     *               anybody going back to tick it.
+     *
+     * The order is the order the select offers them in, and `global` is first
+     * because it is the default and the common case.
+     */
+    public const AUDIENCES = ['global', 'products', 'categories', 'brands', 'sets'];
+
+    /** What an unrecognised or absent audience reads as. */
+    public const AUDIENCE_DEFAULT = 'global';
+
+    /** The two audiences that take no target list at all. */
+    public const AUDIENCES_WITHOUT_TARGETS = ['global', 'sets'];
+
+    /**
+     * How many ids one tab may target.
+     *
+     * A bound rather than a limit anybody will reach: CLAUDE.md rule 5 asks for
+     * an ordering value to be bounded and the same argument applies to a list
+     * that arrives in a request body. 200 is comfortably more products than a
+     * shop would tick by hand -- past that the honest answer is a category or a
+     * brand, which is what those two options are for.
+     */
+    public const MAX_AUDIENCE_IDS = 200;
+
+
     private const CACHE_GLOBALS = 'kbb.product_tabs.globals';
 
     private const CACHE_SCOPED = 'kbb.product_tabs.scoped';
+
+    /**
+     * The category tree, for `categories` targeting.
+     *
+     * Its own entry rather than a third field on the globals entry, because the
+     * two evict for different reasons: a tab is written from the Product tabs
+     * screen, and a category is re-parented from the Categories screen by
+     * somebody who has never heard of this file. App\Models\Category evicts
+     * this one from its own model hooks for exactly that reason -- the argument
+     * TranslationStore makes about putting flush() on a hook rather than in the
+     * callers.
+     */
+    private const CACHE_CATEGORY_TREE = 'kbb.product_tabs.category_tree';
 
     /** @var list<array<string, mixed>>|null */
     private static ?array $globalsMemo = null;
 
     /** @var list<int>|null */
     private static ?array $scopedMemo = null;
+
+    /** @var array<int, int|null>|null category id => parent id */
+    private static ?array $treeMemo = null;
 
     /**
      * Every global tab, enabled or not, in position order.
@@ -253,13 +307,25 @@ final class ProductTabs
                     ->whereNull('product_id')
                     ->orderBy('position')
                     ->orderBy('id')
-                    ->get(['id', 'title', 'body', 'position', 'is_enabled'])
+                    ->get(['id', 'title', 'body', 'position', 'is_enabled', 'audience', 'audience_ids'])
                     ->map(static fn (ProductTab $t): array => [
                         'id' => (int) $t->id,
                         'title' => (string) $t->title,
                         'body' => (string) ($t->body ?? ''),
                         'position' => (int) $t->position,
                         'is_enabled' => (bool) $t->is_enabled,
+                        /*
+                         * NORMALISED HERE, ONCE, AND NOT AT MATCH TIME. The
+                         * column is text and a hand-edited row -- or a row
+                         * written before these two columns existed -- can hold
+                         * anything at all, so the cached shape is always a
+                         * known audience and a list of positive ints. The
+                         * matcher then has no parsing to do and no branch for
+                         * bad data, which is what keeps it cheap enough to run
+                         * for every tab on every product page.
+                         */
+                        'audience' => self::audienceOf($t->audience ?? null),
+                        'audience_ids' => self::idsOf($t->audience_ids ?? null),
                     ])
                     ->all();
             });
@@ -310,15 +376,303 @@ final class ProductTabs
         return self::$scopedMemo = is_array($ids) ? $ids : [];
     }
 
+    /**
+     * The whole category tree: id => parent id. (Lane PT, round 2)
+     *
+     * ONE cached read of two integer columns. The shop nests product_cat four
+     * levels deep and has a few dozen categories, which is configuration-sized
+     * -- the same argument SettingsService makes for reading its whole table in
+     * one go, and the reason a `categories`-targeted tab costs the product page
+     * NO query at all once the entry is warm.
+     *
+     * Evicted by App\Models\Category's own model hooks, so re-parenting a
+     * category from the Categories screen corrects every tab that targets it
+     * without that screen knowing this file exists.
+     *
+     * @return array<int, int|null>
+     */
+    public static function categoryTree(): array
+    {
+        if (self::$treeMemo !== null) {
+            return self::$treeMemo;
+        }
+
+        try {
+            $rows = Cache::rememberForever(self::CACHE_CATEGORY_TREE, static function (): array {
+                $out = [];
+
+                foreach (Category::query()->get(['id', 'parent_id']) as $row) {
+                    $out[(int) $row->id] = $row->parent_id === null ? null : (int) $row->parent_id;
+                }
+
+                return $out;
+            });
+        } catch (\Throwable) {
+            // Reached from a storefront view, and reachable while the migration
+            // that adds these columns is still running. A tab that does not
+            // appear for one request is survivable; a 500 on every product page
+            // for the length of an update is not.
+            $rows = [];
+        }
+
+        return self::$treeMemo = is_array($rows) ? $rows : [];
+    }
+
+    /**
+     * The categories a `categories` rule actually covers: the ones named, plus
+     * EVERY CATEGORY UNDER THEM.
+     *
+     * ── A CHILD INHERITS ITS PARENT'S TAB. YES, AND THIS IS THE ARGUMENT ────
+     *
+     * It is the first question the owner will ask, so it is decided here rather
+     * than fallen into.
+     *
+     * When he ticks "Skincare" he means skincare -- the whole of it. The
+     * shop nests four deep (Skincare -> Face cleansers -> Makeup removers) and
+     * a product lives at the BOTTOM of that chain, so a rule that matched only
+     * the exact category ticked would put an ingredients policy on nothing at
+     * all on the day it was written, and the owner would conclude the feature
+     * does not work.
+     *
+     * The alternative -- tick every leaf -- fails in the direction that cannot
+     * be seen: he ticks the eleven categories that exist today, adds a twelfth
+     * next month, and the policy tab is silently missing from everything in it.
+     * Nothing says so. A missing legal tab is a worse outcome than a tab on one
+     * product too many, and the too-many case is visible on the page and fixed
+     * with one per-product "Hide on this product" that already exists.
+     *
+     * Exact-only is still reachable when he wants it: tick the leaf category
+     * rather than its parent. Descendants-only-if-you-ask is not reachable the
+     * other way round without a second control, and a second control on this
+     * row would be a switch the owner has to understand before he can write a
+     * shipping paragraph.
+     *
+     * CYCLES CANNOT HANG THIS. `categories.parent_id` is a self-referencing
+     * foreign key and nothing in the application refuses a loop, so the walk
+     * carries a visited set. A cycle is then simply a family that stops growing
+     * rather than a product page that never answers.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, true> a SET, so the match below is a hash lookup
+     */
+    public static function categoryFamily(array $ids): array
+    {
+        $tree = self::categoryTree();
+
+        // parent => children, built once from the id => parent map.
+        $children = [];
+
+        foreach ($tree as $id => $parent) {
+            if ($parent !== null) {
+                $children[$parent][] = $id;
+            }
+        }
+
+        $family = [];
+        $queue = array_values(array_unique(array_map('intval', $ids)));
+
+        while ($queue !== []) {
+            $id = (int) array_pop($queue);
+
+            if ($id <= 0 || isset($family[$id])) {
+                // The visited check and the cycle guard are the same line.
+                continue;
+            }
+
+            $family[$id] = true;
+
+            foreach ($children[$id] ?? [] as $child) {
+                $queue[] = $child;
+            }
+        }
+
+        return $family;
+    }
+
+    /**
+     * Does this global tab show on this product?
+     *
+     * ── NO QUERY, PER TAB OR PER RULE TYPE ─────────────────────────────────
+     *
+     * Everything this reads is already in hand: the tab's own row came out of
+     * one cached entry, `type` and `brand_id` are columns on the product the
+     * page has already loaded, the category tree is a second cached entry, and
+     * the product's own category ids are resolved ONCE per page by the closure
+     * the caller passes in -- and only when some enabled tab actually targets a
+     * category. That is what keeps the product page's budget where it is with
+     * thirty targeted tabs on the shop.
+     *
+     * ── AN AUDIENCE THIS BUILD DOES NOT KNOW SHOWS NOWHERE ────────────────
+     *
+     * Fails CLOSED, and audienceOf() has already turned such a value into
+     * 'global'... for every path but this one, which is why the final `return
+     * false` is reachable only if AUDIENCES grows and this match does not. A
+     * future audience is by definition NARROWER than global -- nobody adds an
+     * option meaning "everything", that is what global is -- so showing nowhere
+     * is closer to what its author asked for than printing a paragraph on the
+     * whole catalogue.
+     *
+     * @param  array<string, mixed>  $global   one row out of globals()
+     * @param  callable(): list<int>  $categoryIds  this product's categories,
+     *                                              resolved at most once
+     */
+    public static function showsOn(array $global, object $product, callable $categoryIds): bool
+    {
+        $audience = (string) ($global['audience'] ?? self::AUDIENCE_DEFAULT);
+
+        if ($audience === 'global') {
+            return true;
+        }
+
+        if ($audience === 'sets') {
+            return (string) ($product->type ?? '') === 'set';
+        }
+
+        /** @var list<int> $ids */
+        $ids = $global['audience_ids'] ?? [];
+
+        if ($ids === []) {
+            // A rule that names nothing matches nothing. NOT everything: an
+            // empty picker is an unfinished tab, and the failure the owner can
+            // see (it is not on any product) is the one he can fix.
+            return false;
+        }
+
+        if ($audience === 'products') {
+            return in_array((int) ($product->id ?? 0), $ids, true);
+        }
+
+        if ($audience === 'brands') {
+            $brand = $product->brand_id ?? null;
+
+            return $brand !== null && in_array((int) $brand, $ids, true);
+        }
+
+        if ($audience === 'categories') {
+            $family = self::categoryFamily($ids);
+
+            foreach ($categoryIds() as $id) {
+                if (isset($family[$id])) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * Every category this product is in, as ids.
+     *
+     * BOTH HALVES, and that is not belt and braces. ProductEditorApiController
+     * names it as the landmine in that file: `products.category_id` is the
+     * primary category used for breadcrumbs and the product's own page, while
+     * the archive filters through the `categories` many-to-many, and "the two
+     * must move together". A rule that read only one of them would put a tab on
+     * a product the owner can see in that category, or leave it off one he can,
+     * depending on which of the two a past importer wrote.
+     *
+     * The relation is EAGER-LOADED by Store\ProductController::show()
+     * (`categories:id,name,slug,path`), so on the page this is actually about
+     * it costs nothing. Somewhere else it is one query, once, for the whole
+     * page -- never one per tab.
+     *
+     * @return list<int>
+     */
+    public static function productCategoryIds(object $product): array
+    {
+        $ids = [];
+
+        $primary = $product->category_id ?? null;
+
+        if ($primary !== null && (int) $primary > 0) {
+            $ids[] = (int) $primary;
+        }
+
+        try {
+            foreach ($product->categories ?? [] as $category) {
+                $id = (int) ($category->id ?? 0);
+
+                if ($id > 0) {
+                    $ids[] = $id;
+                }
+            }
+        } catch (\Throwable) {
+            // A fixture or a projection that has no categories relation at all.
+            // A product with no categories simply matches no category rule.
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /** One of AUDIENCES, or the default. Never the string that arrived. */
+    public static function audienceOf(mixed $value): string
+    {
+        $value = is_string($value) ? strtolower(trim($value)) : '';
+
+        return in_array($value, self::AUDIENCES, true) ? $value : self::AUDIENCE_DEFAULT;
+    }
+
+    /**
+     * A stored or posted target list, as positive ints and nothing else.
+     *
+     * Accepts the JSON string the column holds and the array a request sends,
+     * because both reach this and a second normaliser is a second thing to get
+     * wrong. Anything that is not a positive integer is DROPPED rather than
+     * coerced: `"7abc"` is not product 7, and (int) would say it was.
+     *
+     * @return list<int>
+     */
+    public static function idsOf(mixed $value): array
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : [];
+        }
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ($value as $id) {
+            /*
+             * POSITIVE INTEGERS ONLY, and `is_int($id)` alone is not that --
+             * `-3` is an int and would have gone in. A row id is never zero or
+             * negative, and a negative one reaching the matcher would be an id
+             * that can match nothing while looking like a real target on the
+             * screen. A string is admitted only if it is entirely digits with
+             * no leading zero, so "7abc" is not product 7 -- which is what
+             * (int) would have said it was.
+             */
+            if (is_int($id) && $id > 0) {
+                $out[] = $id;
+
+                continue;
+            }
+
+            if (is_string($id) && preg_match('/^[1-9][0-9]{0,18}$/', $id) === 1) {
+                $out[] = (int) $id;
+            }
+        }
+
+        return array_values(array_slice(array_unique($out), 0, self::MAX_AUDIENCE_IDS));
+    }
+
     /** Both layers, one call, called from ProductTab's own model hooks. */
     public static function flush(): void
     {
         self::$globalsMemo = null;
         self::$scopedMemo = null;
+        self::$treeMemo = null;
 
         try {
             Cache::forget(self::CACHE_GLOBALS);
             Cache::forget(self::CACHE_SCOPED);
+            Cache::forget(self::CACHE_CATEGORY_TREE);
         } catch (\Throwable) {
             // A model hook can fire inside a migration or a console command
             // where the cache store is not resolvable. An eviction that could
@@ -331,6 +685,7 @@ final class ProductTabs
     {
         self::$globalsMemo = null;
         self::$scopedMemo = null;
+        self::$treeMemo = null;
     }
 
     /**
@@ -377,9 +732,38 @@ final class ProductTabs
             }
         }
 
+        /*
+         * THIS PRODUCT'S CATEGORY IDS, RESOLVED AT MOST ONCE AND ONLY IF ASKED.
+         * (Lane PT, round 2)
+         *
+         * A closure rather than a value, because the common shop has no
+         * `categories`-targeted tab at all and must not pay for the feature:
+         * showsOn() calls it only on the `categories` branch, and the memo
+         * means ten targeted tabs resolve the list once between them. On the
+         * product page it is free either way -- ProductController eager-loads
+         * the relation -- but "free because somebody else loaded it" is not a
+         * thing to rely on from a support class.
+         */
+        $memoisedCategoryIds = null;
+
+        $categoryIds = static function () use ($product, &$memoisedCategoryIds): array {
+            return $memoisedCategoryIds ??= self::productCategoryIds($product);
+        };
+
         // The globals, each already knowing its own key so an override finds it.
         foreach (self::globals() as $global) {
             if (! $global['is_enabled']) {
+                continue;
+            }
+
+            /*
+             * WHERE IT SHOWS. A tab whose rule does not match this product is
+             * not added at all -- not added and hidden, which would leave the
+             * strip with a gap and the accordion with a separator over nothing.
+             * The list this builds is the list the template draws, so a tab
+             * that matches nothing is simply absent everywhere.
+             */
+            if (! self::showsOn($global, $product, $categoryIds)) {
                 continue;
             }
 

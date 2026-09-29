@@ -59,12 +59,24 @@ class ProductTab extends Model
 
     protected $fillable = [
         'product_id', 'source_key', 'title', 'body', 'position', 'is_enabled',
+        'audience', 'audience_ids',
     ];
 
     protected $casts = [
         'product_id' => 'integer',
         'position' => 'integer',
         'is_enabled' => 'boolean',
+        /*
+         * A JSON list of ids, on a `text` column. (Lane PT, round 2)
+         *
+         * The cast is for the WRITE side -- the controller hands it a list and
+         * Eloquent encodes it -- and for the admin payload, which hands the
+         * screen back an array rather than a string it would have to parse a
+         * second time. The READ side does not trust it: ProductTabs::idsOf()
+         * normalises whatever comes out to positive ints, because the column is
+         * text and a row can be older than this cast or edited by hand.
+         */
+        'audience_ids' => 'array',
     ];
 
     protected static function booted(): void
@@ -73,7 +85,17 @@ class ProductTab extends Model
         static::deleted(static fn () => ProductTabs::flush());
     }
 
-    /** A tab that appears on every product. */
+    /**
+     * A tab that is not tied to one product.
+     *
+     * NOT "appears on every product" any more, which is what this scope's name
+     * used to mean and what its docblock used to say. Since round 2 a row with
+     * no `product_id` carries an `audience` deciding WHERE it shows -- every
+     * product, some products, some categories, some brands, or the sets -- and
+     * App\Support\ProductTabs::showsOn() is the one place that decides. The
+     * scope is about SCOPE: this row belongs to the shop rather than to one
+     * product.
+     */
     public function scopeGlobal($query)
     {
         return $query->whereNull('product_id');

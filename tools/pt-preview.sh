@@ -56,9 +56,16 @@ old = "(require_once $base.'/bootstrap/app.php')\n    ->handleRequest(Request::c
 new = """$kbbApp = require_once $base.'/bootstrap/app.php';
 
 $kbbApp->booted(function ($app) {
-    \\Illuminate\\Support\\Facades\\Route::middleware(['web', 'auth:admin', \\App\\Http\\Middleware\\NoStoreAdminApi::class])
-        ->prefix('admin-api')
-        ->group(base_path('routes/product-tabs-admin.php'));
+    $kbbWired = str_contains(
+        (string) @file_get_contents(base_path('routes/web.php')),
+        "require __DIR__.'/product-tabs-admin.php';"
+    );
+
+    if (! $kbbWired) {
+        \\Illuminate\\Support\\Facades\\Route::middleware(['web', 'auth:admin', \\App\\Http\\Middleware\\NoStoreAdminApi::class])
+            ->prefix('admin-api')
+            ->group(base_path('routes/product-tabs-admin.php'));
+    }
 
     \\Illuminate\\Support\\Facades\\View::getFinder()->prependLocation('%%VIEWS%%');
 });
@@ -74,7 +81,18 @@ PATCH
 # window.kbbAddNavEntry and toast() are defined -- which is exactly where the
 # integrator's line goes.
 cp "$APP/resources/views/admin/app.blade.php" "$VIEWS/admin/app.blade.php"
-printf "\n@include('admin.partials.product-tabs-screen')\n" >> "$VIEWS/admin/app.blade.php"
+
+# ── ONLY IF IT IS NOT ALREADY THERE ─────────────────────────────────────────
+#
+# The integrator has since landed both lines, so appending unconditionally
+# would include the partial TWICE -- which registers the sidebar row twice and
+# wraps window.go around its own wrapper. That is the exact shape CLAUDE.md
+# names when it says to pin `substr_count(...) === 1` rather than an absence:
+# zero is "built, never wired up" and two is this. The same guard is on the
+# route mount in the front controller above, for the same reason.
+if ! grep -q "admin.partials.product-tabs-screen" "$VIEWS/admin/app.blade.php"; then
+  printf "\n@include('admin.partials.product-tabs-screen')\n" >> "$VIEWS/admin/app.blade.php"
+fi
 
 cp -r "$APP/public/build" "$ROOT/build" 2>/dev/null || true
 mkdir -p "$ROOT/uploads"
