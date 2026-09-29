@@ -167,6 +167,25 @@ function mAllowedRepairs(): array
     return $out;
 }
 
+/*
+ * ── TWO ROWS OF THE FIXTURE MOVED ON PURPOSE ──────────────────────── Lane PG2 ──
+ *
+ * The baseline records what each cast ANSWERS, and two of its 4,653 rows carry
+ * the shipped value of `grid_skin` rather than anything the cast decides:
+ *
+ *     product_styles|grid_skin|skin|"nope"|'classic'   ->   'showcase'
+ *     product_styles|grid_skin|skin|null|'classic'     ->   'showcase'
+ *
+ * Both are the fall-back arm — an option that is not an option, and no value at
+ * all — so what they print is `GridSkins::DEFAULT`, which the owner asked to
+ * change in as many words ("keep this design by default from backend"). The
+ * CAST is untouched: `product_styles|grid_skin|skin|"classic"|'classic'`, the
+ * row above them, is unchanged, which is what says a valid skin is still stored
+ * as itself.
+ *
+ * Read before it was advanced, and advanced for that change and nothing else:
+ * those two rows are the whole diff of this fixture on this branch.
+ */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);
     $now = mEquivRows();

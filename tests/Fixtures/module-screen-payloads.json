@@ -2584,7 +2584,7 @@
             "key": "nl_error",
             "type": "text",
             "label": "Bad address",
-            "help": "Shown when what was typed is not an email address at all. This one is live \u2014 it is refused before the list is consulted, so it gives nothing away.",
+            "help": "Shown when what was typed is not an email address at all. This one is live — it is refused before the list is consulted, so it gives nothing away.",
             "default": "That does not look like an email address.",
             "value": "That does not look like an email address.",
             "options": null
@@ -2808,8 +2808,8 @@
             "type": "skin",
             "label": "Default card style",
             "help": "Used wherever a grid does not choose its own.",
-            "default": "classic",
-            "value": "classic",
+            "default": "showcase",
+            "value": "showcase",
             "options": null
           },
           {
@@ -3232,6 +3232,22 @@
       {
         "key": "accentbar",
         "label": "Accent bar — left"
+      },
+      {
+        "key": "showcase",
+        "label": "Showcase — full-width button"
+      },
+      {
+        "key": "showcase-compact",
+        "label": "Showcase Compact — tighter"
+      },
+      {
+        "key": "showcase-row",
+        "label": "Showcase Row — price beside the button"
+      },
+      {
+        "key": "showcase-airy",
+        "label": "Showcase Airy — more air, lighter button"
       }
     ],
     "categories": [
