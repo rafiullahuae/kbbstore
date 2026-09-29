@@ -447,6 +447,21 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * case that enumerates the untranslated set BY NAME is the thing that says
      * what actually changed.
      *
+     * ── AND THREE MORE FROM THE SAME LANE A ROUND LATER: 1,056 -> 1,059 ────
+     *
+     * The "Put my basket back" button: store.checkout.restore_basket,
+     * restore_done and restore_gone. A shopper who abandons a payment at Tabby
+     * or Tamara comes back to an empty basket, and these are the only words on
+     * that page that offer it back, say it came back, and say there was nothing
+     * to come back — all three read by somebody whose order has just gone
+     * wrong, which is not a moment to be reading a language they do not.
+     *
+     * Their migration is 2027_06_03_000100_seed_restore_basket_arabic_drafts,
+     * and it is a second one FROM THE SAME LANE for the reason the paragraphs
+     * above give about other lanes': this lane's own 2027_05_11_000100 has
+     * already run on this shop, and a migration that has run does not run
+     * again. A round gets a migration, not an edit.
+     *
      * ── LANE PLC'S OWN NINETEEN ────────────────────────────────────────────
      *
      * Nineteen more, and they are the Place-order overlay's: twelve under
@@ -476,7 +491,7 @@ it('counts them as drafts awaiting review and not as work already done', functio
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1056, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1059, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

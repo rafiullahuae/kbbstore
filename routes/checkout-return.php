@@ -7,6 +7,10 @@ declare(strict_types=1);
 | The instalment providers' return leg — GET /checkout/pending (Lane PLC)
 |------------------------------------------------------------------------------
 |
+| Two routes: GET /checkout/pending, which is where Tabby and Tamara send a
+| shopper whose payment was declined or abandoned, and POST
+| /checkout/restore-basket, which is the button on the page that lands them.
+|
 | MOUNTED at the storefront level of routes/web.php, in place of the one-line
 | closure that used to answer this URI by throwing the order number away and
 | bouncing to an unchanged checkout. The closure is gone rather than left
@@ -42,3 +46,21 @@ use App\Http\Controllers\Store\CheckoutReturnController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/checkout/pending', [CheckoutReturnController::class, 'pending'])->name('checkout.pending');
+
+/*
+ * "Put my basket back", pressed by the shopper on the basket page after a
+ * payment that did not complete. A POST because it is a write with consequences
+ * — the order moves to `failed` and OrderStatus hands the stock and the coupon
+ * back with it — and the reasoning for a button rather than a script that fires
+ * on arrival is written out in full on CheckoutReturnController::restore().
+ *
+ * THROTTLED, although the session gate already makes it effectively single-use:
+ * `kbb_restorable` is forgotten the moment it is used or refused, so a second
+ * press finds nothing. The limit is for the shape of the endpoint rather than
+ * for any path through it — an unauthenticated POST that moves an order's
+ * status should not be free to hammer, whatever today's guards happen to be.
+ * Well above any real shopper, who presses it once.
+ */
+Route::post('/checkout/restore-basket', [CheckoutReturnController::class, 'restore'])
+    ->middleware('throttle:20,1')
+    ->name('checkout.restore-basket');
