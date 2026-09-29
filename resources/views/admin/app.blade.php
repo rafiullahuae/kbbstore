@@ -2638,6 +2638,77 @@ const NAV=[
   {sec:'Storefront',items:[['shopfilters','Shop Filters','<path d="M4 5h16l-6 7v5l-4 2v-7z"/>']]},
   {sec:'Core Updates',items:[['updates','Core Updates','<path d=\"M21 12a9 9 0 1 1-3-6.7\"/><path d=\"M21 3v6h-6\"/><path d=\"M12 8v5l3 2\"/>']]}
 ];
+
+/* ---------- LANE NAV · the rows that ship inside a partial ----------------
+   THE COMPLAINT THIS EXISTS FOR, and the measurement behind it.
+
+   Reported with a screenshot of the console part-way through loading: the
+   sidebar showed Appearance holding ten rows and not the eleven others that
+   belong in it, and some parent menus were short of children entirely. It was
+   not a rendering fault. It was the clock.
+
+   Twenty-one of this console's sidebar rows do not come from NAV above. They
+   are contributed by screen partials, each of which registers its own row when
+   its script runs -- and every one of those scripts is at the END of this
+   document, because a partial cannot call window.kbbAddNavEntry before the
+   block that defines it. Measured on the applied console: buildNav() runs at
+   byte 731,657 of a 3,425,404-byte document, which is 21.4 per cent of the way
+   through it, and the last of the twenty-one registers at byte 3,388,358 --
+   98.9 per cent. Between those two points the sidebar is genuinely incomplete,
+   and on a throttled load (2 Mbit/s, CPU at one quarter) that gap measured
+   10.8 seconds: Appearance held ten rows from 4.3s to 15.1s, then eighteen.
+   Appearance -> Set registers last of all, which is exactly the row the
+   owner's screenshot is missing.
+
+   So the rows are declared HERE, where the server renders them, and registered
+   immediately after buildNav(). A partial's own kbbAddNavEntry() call is then
+   a no-op -- it is keyed on the screen id and returns the row that is already
+   there -- so nothing in any partial changes and nothing registers twice. What
+   a partial still contributes is the only thing it alone can: its renderer.
+
+   THE ORDER OF THIS ARRAY IS THE SIDEBAR'S ORDER AND IS NOT ALPHABETICAL.
+   kbbAddNavEntry() inserts each row directly after the first of its `after`
+   anchors that is already in the group, so the order rows arrive in decides
+   where they land. This array is in the order the console registers them in
+   today -- the three that register while the document is still parsing first,
+   then the eighteen that wait for DOMContentLoaded, each of those in the order
+   this file includes them. The one place that matters is 'setap': it names
+   'cartpanel' first, but it registers before cart-panel does, so it has always
+   landed after 'productpage' instead. Sorting this array would silently move
+   that row. The settled sidebar was captured from the browser before and after
+   this change and is byte-identical; AdminSidebarIsCompleteAtBuildTest pins
+   both the order and the anchors.
+
+   EACH ROW'S label, group AND after ARE COPIES OF THE PARTIAL'S OWN CALL, and
+   a copy can drift. That is what the guard test compares, in both directions:
+   a partial that registers a row missing from here, or a row here that no
+   partial registers, fails the suite rather than the sidebar. */
+const LATE_NAV=[
+  {screen:'ugcsections',label:'Shoppable video',group:'Content',after:['media','htmlblocks','posts'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="m9 14 4 2-4 2z"/>'},
+  {screen:'instagram',label:'Instagram',group:'Content',after:['ugcsections','media','htmlblocks','posts'],icon:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/>'},
+  {screen:'setap',label:'Set',group:'Appearance',after:['cartpanel','productpage'],icon:'<circle cx="8.5" cy="12" r="4.2"/><circle cx="14" cy="12" r="4.2"/><circle cx="19" cy="12" r="1.6"/>'},
+  {screen:'order-new',label:'New Order',group:'Store',after:['orders'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'},
+  {screen:'coupon-editor',label:'Coupons',group:'Store',after:['order-new','orders'],icon:'<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M12 9v6"/><path d="M9 12h6"/>'},
+  {screen:'category-tree',label:'Categories',group:'Catalog',after:['catalog'],icon:'<path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/>'},
+  {screen:'brands-manager',label:'Brands',group:'Catalog',after:['category-tree','catalog'],icon:'<path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 0-7.1 5 5 0 0 1 7.1 0L12 7.8l1.5-1.5a5 5 0 0 1 7.1 7.1Z"/>'},
+  {screen:'product-editor',label:'Product editor',group:'Catalog',after:['catalog'],icon:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'},
+  {screen:'hpcontent',label:'Homepage content',group:'Appearance',after:['homepage'],icon:'<path d="M3 5h18v6H3z"/><path d="M3 15h9"/><path d="M3 19h6"/>'},
+  {screen:'routines',label:'Build my routine',group:'Catalog',after:['product-editor','catalog'],icon:'<path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="15" cy="18" r="2"/>'},
+  {screen:'cache',label:'Cache',group:'Platform',after:['siteaddr','settings'],icon:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'},
+  {screen:'cartpanel',label:'Cart panel',group:'Appearance',after:['dividers','mobilehdr','prodstyles'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'},
+  {screen:'cartpage',label:'Cart page',group:'Appearance',after:['cartpanel','dividers'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M9.5 9.5h7"/>'},
+  {screen:'checkoutpage',label:'Checkout page',group:'Appearance',after:['cartpage','cartpanel','dividers'],icon:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>'},
+  {screen:'slimfooter',label:'Footer',group:'Appearance',after:['checkoutpage','cartpage','dividers'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18"/><path d="M7 18h5"/>'},
+  {screen:'sitelayout',label:'Site layout',group:'Appearance',after:['layout','prodstyles','header','dividers'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/>'},
+  {screen:'security',label:'Security',group:'Store',after:['payments','modules','analytics'],icon:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/>'},
+  {screen:'paygw',label:'Gateway webhooks',group:'Store',after:['payments','orders'],icon:'<path d="M12 3a4 4 0 0 1 3.4 6.1l2.8 4.6"/><path d="M8.2 20a4 4 0 0 1-1.4-7.1L9.6 8"/><path d="M18 20a4 4 0 0 0 1-7.9H13"/>'},
+  {screen:'sets',label:'Sets',group:'Catalog',after:['catalog'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M12 7V4"/><path d="M8 4h8"/>'},
+  {screen:'product-tabs',label:'Product tabs',group:'Catalog',after:['catalog','sets'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M8 7V4"/><path d="M14 7V4"/>'},
+  {screen:'banners',label:'Banners',group:'Appearance',after:['hpcontent','homepage'],icon:'<rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/>'},
+];
+
+/* The ids above, for the click guard below. */
+const LATE_NAV_IDS=new Set(LATE_NAV.map(r=>r.screen));
 /* LANE DH - the 'live' tag and its badge are gone.
    Debug & Monitor was the only NAV row that carried it, and the branch it
    selected rendered a literal <span class="cnt">3</span>. Not a count of
@@ -2671,7 +2742,7 @@ function buildNav(){
     const chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 6 6 6-6 6"/></svg>';
     return `<div class="nav-group" data-sec="${g.sec}"><button class="nav-gh"><span class="gh-name">${g.sec}</span>${badge}${chev}</button><div class="nav-sub">${g.items.map(navItemHTML).join('')}</div></div>`;
   }).join('');
-  $$('#nav .nav-item').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  $$('#nav .nav-item').forEach(b=>b.onclick=()=>kbbNavClick(b.dataset.go));
   $$('#nav .nav-gh').forEach(h=>h.onclick=()=>h.closest('.nav-group').classList.toggle('open'));
   syncNavOpen(cur);
 }
@@ -2756,7 +2827,7 @@ function kbbAddNavEntry(opts){
   b.className = 'nav-item';
   b.dataset.go = screen;
   b.innerHTML = ic(o.icon || '') + '<span>' + (o.label || screen) + '</span>';
-  b.onclick = () => window.go(screen);
+  b.onclick = () => kbbNavClick(screen);
 
   const sub = o.group ? nav.querySelector('.nav-group[data-sec="' + o.group + '"] .nav-sub') : null;
   const after = o.after == null ? [] : (Array.isArray(o.after) ? o.after : [o.after]);
@@ -2796,6 +2867,67 @@ function kbbAddNavEntry(opts){
   return b;
 }
 window.kbbAddNavEntry = kbbAddNavEntry;
+
+/* ---------- LANE NAV · clicking a row whose renderer has not arrived -------
+   LATE_NAV puts twenty-one rows in the sidebar at buildNav(), which is 21.4
+   per cent of the way through this document. Their renderers are still being
+   parsed. So for the first few seconds of a cold load a row can be clicked
+   before the partial that draws it exists -- a window this console never had
+   before, because the row did not exist either.
+
+   Clicked in that window, go() finds no entry in its dispatch object and ends
+   `||renderDash`: THE DASHBOARD UNDER THE CLICKED SCREEN NAME, with no error.
+   That is the exact defect LATE_RENDERED and the deep-link replay were built
+   for, reached by a click instead of by an address, so it is answered the same
+   way -- navigate now, and if nothing but the dashboard drew, navigate once
+   more when the document is parsed and the renderer exists.
+
+   THE TEST IS renderDash S OWN WRAPPER, not a marker and not a timer. A marker
+   cannot tell the two cases apart here: go() clears #content before it draws,
+   so a marker placed before the call is destroyed whichever screen wins, and
+   one placed after survives a screen that drew itself correctly and would
+   replay over it. Lane DA measured that double render on `rev-all`. #kbbDashWrap
+   is present only when renderDash() painted, which is precisely the case that
+   needs replaying, so a screen whose partial had already arrived is never
+   replayed and never drawn twice.
+
+   ONE QUEUED TARGET, CANCELLED BY THE NEXT CLICK. Every sidebar row routes
+   through here, so a second click overwrites the first. The replay then checks
+   `cur` as well: any other navigation -- an inline go() inside the dashboard,
+   a deep-link replay, the address bar -- has moved it, and the queued target is
+   dropped rather than yanking the owner off the screen he is now on.
+
+   AFTER DOMContentLoaded THIS DOES NOTHING AT ALL. Every partial has run by
+   then, so there is nothing left to wait for and no replay is ever armed; the
+   call is one Set lookup and a readyState test. */
+let kbbNavReplay=null;
+let kbbNavReplayArmed=false;
+function kbbNavClick(id){
+  kbbNavReplay=null;
+  if(typeof window.go!=='function') return;
+  window.go(id);
+  if(document.readyState!=='loading') return;      /* every partial has run */
+  if(id==='dash'||!LATE_NAV_IDS.has(id)) return;   /* NAV's own rows are drawn by the go() that exists */
+  if(!$('#kbbDashWrap')) return;                   /* a real screen drew it: nothing to replay */
+  kbbNavReplay=id;
+  if(kbbNavReplayArmed) return;
+  kbbNavReplayArmed=true;
+  document.addEventListener('DOMContentLoaded',function(){
+    /* setTimeout for the same reason the deep-link replay uses one: this
+       listener is registered before any partial is parsed, so it runs ahead of
+       the very boots whose result it reads. A task queued from inside it runs
+       after the lot. */
+    setTimeout(function(){
+      const want=kbbNavReplay;
+      kbbNavReplay=null;
+      if(!want) return;
+      if(cur!==want) return;                       /* the owner has moved on */
+      if(!$('#kbbDashWrap')) return;               /* something drew it after all */
+      try{ window.go(want); }catch(e){}
+    },0);
+  });
+}
+window.kbbNavClick = kbbNavClick;
 
 /* Breadcrumb and page title per screen: [group, title].
 
@@ -2863,7 +2995,7 @@ function go(id,sub){
    it is rendered to the page as visible text. That is not hypothetical — it
    shipped to a screenshot in this lane before being caught. */
 function renderDash(){
-  $('#content').innerHTML=`<div class="wrap">
+  $('#content').innerHTML=`<div class="wrap" id="kbbDashWrap">
     <div class="banner">${ic('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>')}<div>This is the <b>foundation</b>. Real numbers appear once your WooCommerce data is imported in <b>Phase 1</b> — the layout, modules, and safety tools below are live and clickable now.</div></div>
     <div class="kpis">
       ${kpi(I.revenue,'#15a85a','var(--accent-soft)','Revenue (30d)','AED —','Awaiting import')}
@@ -11511,6 +11643,11 @@ function bindMail(){
 
 $('.side-pin .nav-item').onclick=()=>go('console');
 buildNav();
+/* The twenty-one partial-contributed rows, registered HERE rather than
+   2.7 MB further down this document. kbbAddNavEntry() is keyed on the screen
+   id, so each partial's own call further down returns this row and adds
+   nothing -- one row, one position, whichever runs first. */
+LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 
 /* ===== LANE DA · deep links · BEGIN ========================================
    Deep link: /{admin}?go=updates or /{admin}#updates opens that panel directly.
