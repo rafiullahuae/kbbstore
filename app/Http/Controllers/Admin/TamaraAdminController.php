@@ -13,7 +13,21 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Store → Ecommerce → Payments → Tamara: the two things that cannot be typed in.
+ * Store → Gateway webhooks: the two things that cannot be typed in.
+ *
+ * ▲ WHERE THE BUTTONS ARE, corrected 29 September. This docblock named
+ *   Store → Ecommerce → Payments → Tamara, and for the whole of this
+ *   controller's life NOTHING on that screen — or any other — called a single
+ *   one of its five endpoints:
+ *
+ *       grep -rni "tamara" resources/views/admin/ resources/js/ \
+ *         | grep -E "fetch|api\(|admin-api"      ->  0 matches
+ *
+ *   They were exercised by Pest and by a Playwright harness that POSTs to them
+ *   directly (tools/pg1-tamara-shots/shots.mjs), which is why the absence never
+ *   showed in a screenshot either. The screen is
+ *   resources/views/admin/partials/tamara-connection-screen.blade.php, and
+ *   Store → Payments → Tamara carries one button through to it.
  *
  * ── WHAT THIS IS FOR ────────────────────────────────────────────────────────
  *
