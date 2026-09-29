@@ -129,29 +129,110 @@
    Mobile moves this with the row rather than leaving it behind. calc() and
    min() only — nothing here is measured in JavaScript.
    ═══════════════════════════════════════════════════════════════════════════ */
-.kset{position:relative;display:flex;align-items:center;gap:8px;margin-top:6px;
+/* ── EVERY NUMBER BELOW IS `var(--kset-x, <the literal it has always been>)`.
+   ────────────────────────────────────────────────────────────────────────
+   NOTHING DECLARES THOSE PROPERTIES HERE. That is deliberate and it is what
+   makes Appearance -> Set possible without a specificity fight: the owner's
+   values are declared once, on `.kset`, by
+   resources/views/partials/set-appearance-css.blade.php in the <head>, and
+   every rule in this block simply reads them. A shop that has moved nothing
+   emits no such block at all, so these fallbacks ARE the shop, byte for byte.
+
+   ▲ TWO OF THE FALLBACKS ARE NEW VALUES AND NOT TODAY'S. `margin-top` was 6px
+     and `margin-bottom` did not exist. See the note on .kset directly below --
+     it is the one deliberate default move in this change and the owner asked
+     for it in as many words. */
+.kset{position:relative;display:flex;align-items:center;gap:var(--kset-gap,8px);
+      margin-top:var(--kset-top,10px);margin-bottom:var(--kset-bot,6px);
       min-width:0;flex-wrap:wrap}
+/* ▲ THE ONE DELIBERATE DEFAULT MOVE IN THIS FILE. (Lane SA)
+   The owner, with a screenshot of the cart page and a red arrow at the set
+   line: *"the only this i need is the row spacing i need little bit up spacing
+   or give control for set rows too on backend for cart page."*
+
+     margin-top     6px -> 10px   what he asked for, in as many words
+     margin-bottom  0   ->  6px   MEASURED, not inferred from taste
+
+   The second one is the defect behind the complaint. Measured in Chromium on
+   the cart page before this change: the product name has 6px under it
+   (.cn{margin:1px 0 6px}) and then the set block, and then the quantity
+   stepper with NOTHING between them -- the fan sat flush against the control
+   under it while every other pair of stacked things in that row had at least
+   6px. `ksetBottomToRowBottom` read 41px at 390 and 42px at 1280, all of it
+   stepper. There is no overlap anywhere: the gap from the divider above to the
+   top of the name measured 27px at 390 and 28px at 1280 on a SET row and 27px
+   and 28px on the PLAIN rows either side of it, which is the same number -- so
+   what reads as a collision in the screenshot is a block with room above it
+   and none below it, and moving only the top margin would have made that
+   worse. Both numbers are also settings now, per breakpoint. */
 
 /* The fan. Each circle overlaps the one before it by a little under half its
-   width; the white ring is what separates them. `direction` is untouched, and
-   the negative margin is a LOGICAL property, so the fan reverses correctly in
+   width; the ring is what separates them. `direction` is untouched, and the
+   negative margin is a LOGICAL property, so the fan reverses correctly in
    Arabic instead of stacking the wrong way. */
-.kset-fan{display:flex;align-items:center;flex:none}
-.kset-c{--kset-d:calc(var(--cp-thumb,42px) * .62);
-        width:var(--kset-d);height:var(--kset-d);border-radius:50%;flex:none;
+/* ── THE FAN WRAPS, AND THAT IS THE WHOLE OVERFLOW FIX ─────────────────────
+   A nowrap fan's MIN-CONTENT is the sum of its circles, and a row's min-content
+   is what the cart page's grid track grows to — measured below. Wrapping makes
+   it ONE CIRCLE, so the row can always be as narrow as the screen and a fan too
+   wide for its column falls onto a second line instead of pushing the page
+   sideways. `row-gap` is the ring's own width, which is zero visual change while
+   nothing wraps.
+
+   THE PADDING AND THE MARGIN CANCEL, which is what makes this free. The overlap
+   used to be `-.38d` on every circle BUT THE FIRST (`.kset-c + .kset-c`); a
+   wrapped line's first circle is not the first child, so it would have been
+   pulled 0.38d outside the fan's start edge. So the pull is now on EVERY circle
+   and the fan carries `padding-inline-start:.38d` to absorb it. Arithmetic:
+   before, width = d + .62d(n-1); after, .38d + n(d - .38d) = d + .62d(n-1) —
+   the same number, and the first circle's start edge is in the same place.
+   Both are logical properties, so Arabic mirrors from the same declaration. */
+.kset-fan{display:flex;align-items:center;flex:0 1 auto;min-inline-size:0;
+          flex-wrap:wrap;row-gap:var(--kset-ring,2px);
+          padding-inline-start:calc(var(--kset-d-pad, calc(var(--cp-thumb,42px) * var(--kset-cf,.62))) * 0.38)}
+.kset-c{--kset-d:calc(var(--cp-thumb,42px) * var(--kset-cf,.62));
+        width:var(--kset-d);height:auto;aspect-ratio:1;border-radius:50%;
+        flex:0 1 auto;min-inline-size:0;
         background-size:cover;background-position:center;background-repeat:no-repeat;
-        box-shadow:0 0 0 2px #fff,0 1px 2px rgba(0,0,0,.14)}
-.kset-c + .kset-c{margin-inline-start:calc(var(--kset-d) * -.38)}
+        box-shadow:0 0 0 var(--kset-ring,2px) var(--kset-ringc,#fff),0 1px 2px rgba(0,0,0,.14)}
+/* ▲ THE FAN COULD PUSH THE WHOLE PAGE SIDEWAYS, AND DID. (Lane SA)
+   `flex:none` on both the fan and its circles with a fixed `--kset-d` makes N
+   circles occupy d*(1 + 0.62*(N-1)) with no way to give any of it back, so the
+   row's min-content width was the fan's width whatever the screen was.
+   MEASURED on the cart page with a twelve-member set, before this change:
+
+     viewport 320  document.documentElement.scrollWidth 381   fan 204px
+     viewport 360  scrollWidth 381                            fan 204px
+     viewport 390  scrollWidth 390                            fan 204px
+
+   -- a horizontal scrollbar on the whole shop at 320 and 360, and 390 saved
+   only by the coincidence that 12 circles at 26px come to 203.3px and the
+   column is 203.6px. One more member, or one turn of the new circle-size
+   slider, and 390 goes too.
+
+   The answer is pure CSS and measures nothing: let them shrink. `flex:0 1 auto`
+   with `min-inline-size:0` on the circles AND on the fan makes the fan
+   compressible, and `height:auto` with `aspect-ratio:1` keeps a shrunken
+   circle round instead of leaving it an ellipse -- which is what `height` fixed
+   at `--kset-d` would have done. The overlap stays a proportion of the
+   UNSHRUNKEN diameter, so a squeezed fan simply overlaps a little harder,
+   which is what a fanned stack is for. */
+/* EVERY circle, not `.kset-c + .kset-c` — see the note on .kset-fan above: the
+   first circle of a WRAPPED line is not the first child, and the fan's own
+   padding-inline-start is what the first one is pulled back into. */
+.kset-c{margin-inline-start:calc(var(--kset-d) * var(--kset-lap,-.38))}
 
 /* The opener. A real button, and small enough to sit on the same line as the
    fan at 390px without wrapping the row it lives in. */
-.kset-btn{border:1px solid var(--line-2,#eadfe4);background:#fff;cursor:pointer;
-          border-radius:99px;padding:3px 9px;font:inherit;line-height:1.35;
-          font-size:calc(var(--cp-name,12.5px) * .82);font-weight:650;
-          color:var(--cp-accent,#c9587f);white-space:nowrap;
-          min-height:24px;flex:none}
-.kset-btn:hover{background:#fff4f8}
-.kset-btn:focus-visible{outline:2px solid var(--cp-accent,#c9587f);outline-offset:2px}
+.kset-btn{border:1px solid var(--kset-btnline,var(--line-2,#eadfe4));
+          background:var(--kset-btnbg,#fff);cursor:pointer;
+          border-radius:var(--kset-btnr,99px);
+          padding:var(--kset-btnpy,3px) var(--kset-btnpx,9px);font:inherit;line-height:1.35;
+          font-size:calc(var(--kset-base,var(--cp-name,12.5px)) * var(--kset-btnf,.82));
+          font-weight:var(--kset-btnw,650);
+          color:var(--kset-btnc,var(--cp-accent,#c9587f));white-space:nowrap;
+          min-height:var(--kset-btnh,24px);flex:none}
+.kset-btn:hover{background:var(--kset-btnhbg,#fff4f8)}
+.kset-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 
 /* The tiny popup. Absolute off .kset, which is positioned — so opening it moves
    nothing on the page and costs no layout below the row.
@@ -160,30 +241,146 @@
    page gutter subtracted, and border-box so the padding is inside that figure.
    There is no measured position anywhere; `inset-inline-start:0` anchors it to
    the row's own start edge, which is inside the panel by construction. */
-.kset-pop{display:none;position:absolute;z-index:40;inset-block-start:calc(100% + 6px);
+.kset-pop{display:none;position:absolute;z-index:40;
+          inset-block-start:calc(100% + var(--kset-popoff,6px));
           inset-inline-start:0;box-sizing:border-box;
-          width:max-content;max-width:min(230px, calc(100vw - 32px));
-          background:#fff;border:1px solid var(--line-2,#eadfe4);border-radius:10px;
-          box-shadow:0 8px 24px -8px rgba(0,0,0,.28);padding:8px 10px;
+          width:max-content;max-width:min(var(--kset-popw,230px), calc(100vw - 32px));
+          background:var(--kset-popbg,#fff);
+          border:1px solid var(--kset-popline,var(--line-2,#eadfe4));
+          border-radius:var(--kset-popr,10px);
+          box-shadow:0 var(--kset-popshy,8px) var(--kset-popshb,24px)
+                     calc(var(--kset-popshb,24px) / -3) rgba(0,0,0,var(--kset-popsha,.28));
+          padding:var(--kset-poppy,8px) var(--kset-poppx,10px);
+          /* ROOM FOR THE CLOSE BUTTON, on the devices that get one. It is an
+             absolutely-positioned 28px target on the popup's own end corner,
+             and a member name running under it is the defect this clears. The
+             hover branch at the foot of this block takes it back off, because
+             a pointer closes the popup by leaving it and the cross is not
+             drawn there at all. Logical, so Arabic gets the room on the side
+             the button actually lands on. */
+          padding-inline-end:var(--kset-closepad,34px);
           text-align:start}
 .kset-pop.is-open{display:block}
 /* Opens UPWARD when the row asks for it, by a class the markup carries — never
    by a script that reads geometry. The order surfaces sit at the foot of a long
    page where downward is fine; the checkout summary's last line does not. */
-.kset-pop.is-up{inset-block-start:auto;inset-block-end:calc(100% + 6px)}
-.kset-pop h4{margin:0 0 4px;font-size:calc(var(--cp-name,12.5px) * .78);font-weight:700;
-             letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft,#8a7c83)}
+.kset-pop.is-up{inset-block-start:auto;inset-block-end:calc(100% + var(--kset-popoff,6px))}
+/*
+ * ── THE BRIDGE, AND IT IS THE REASON HOVER IS USABLE AT ALL ────────────────
+ *
+ * The popup hangs `--kset-popoff` below the row, and that strip belongs to
+ * neither element — so a pointer travelling from the button down into the
+ * popup leaves `.kset`, the hover rule stops matching, and the box vanishes
+ * under the cursor before it arrives. A transparent ::before spanning exactly
+ * that strip is part of the popup, so the pointer never leaves. It is
+ * `inset-inline` rather than left/right, so it mirrors on /ar, and it is
+ * pointer-events-none where it would otherwise sit over the row's own
+ * controls — it only has to be hoverable, never clickable.
+ */
+.kset-pop::before{content:"";position:absolute;inset-inline:0;
+                  inset-block-start:calc(var(--kset-popoff,6px) * -1);
+                  height:var(--kset-popoff,6px)}
+.kset-pop.is-up::before{inset-block-start:auto;
+                        inset-block-end:calc(var(--kset-popoff,6px) * -1)}
+.kset-pop h4{margin:0 0 var(--kset-headgap,4px);
+             font-size:calc(var(--cp-name,12.5px) * var(--kset-headf,.78));
+             font-weight:var(--kset-headw,700);
+             letter-spacing:var(--kset-headls,.03em);text-transform:uppercase;
+             color:var(--kset-headc,var(--ink-soft,#8a7c83))}
 .kset-pop ul{margin:0;padding:0;list-style:none}
-.kset-pop li{font-size:calc(var(--cp-name,12.5px) * .88);line-height:1.45;
-             color:var(--ink-2,#5e545a);overflow-wrap:anywhere}
-.kset-pop li + li{margin-top:2px}
-.kset-q{font-weight:700;color:var(--ink,#2b2226)}
-.kset-save{font-size:calc(var(--cp-name,12.5px) * .82);font-weight:700;color:#1c7a4a;
+.kset-pop li{font-size:calc(var(--kset-base,var(--cp-name,12.5px)) * var(--kset-lif,.88));
+             font-weight:var(--kset-liw,400);
+             line-height:var(--kset-lilh,1.45);
+             color:var(--kset-lic,var(--ink-2,#5e545a));overflow-wrap:anywhere}
+.kset-pop li + li{margin-top:var(--kset-ligap,2px)}
+.kset-q{font-size:calc(100% * var(--kset-qf,1));font-weight:var(--kset-qw,700);
+        color:var(--kset-qc,var(--ink,#2b2226))}
+.kset-save{font-size:calc(var(--kset-base,var(--cp-name,12.5px)) * var(--kset-savef,.82));
+           font-weight:var(--kset-savew,700);color:var(--kset-savec,#1c7a4a);
            white-space:nowrap;flex:none}
+
+/* ── THE CLOSE CONTROL — "corner red cross icon inside the circle" ──────────
+ *
+ * The owner: *"and the tiny popup should be mouse hover to display on desktop,
+ * and on mobile on-click with corner red cross icon inside the circle to close
+ * the tiny popup."*
+ *
+ * A REAL <button type="button"> with an accessible name, not a glyph in a div:
+ * it is operable from a keyboard, it is announced, and it is in the tab order
+ * of the popup it closes. The name goes through __() like every other string on
+ * this row, so Lane AR translates it rather than finding an English word baked
+ * into a partial.
+ *
+ * POSITIONED WITH LOGICAL INSETS off the popup, so it lands on the top-right
+ * corner in English and the top-LEFT in Arabic from the same declaration — no
+ * [dir] selector in this file, which is the rule the rest of it already keeps.
+ *
+ * THE CIRCLE IS DRAWN AND THE TARGET IS PADDED OUT AROUND IT. The ring is sized
+ * in calc() off the popup's own type token, so it tracks the box; the BUTTON is
+ * a flat 28px so a thumb has something to hit even when the ring is smaller
+ * than that. Growing the ring to 28px instead would have put a cross the size
+ * of a member's name in the corner of a 230px box.
+ *
+ * THE COLOUR IS A CONSTANT. Rule 5: anything printed unescaped is a constant,
+ * never a setting. There is no Appearance control for this red and there must
+ * not be one — the cross is a system affordance, not decoration.
+ */
+.kset-close{position:absolute;inset-block-start:0;inset-inline-end:0;
+            width:28px;height:28px;min-width:28px;min-height:28px;
+            display:grid;place-items:center;padding:0;border:0;background:none;
+            color:#D93025;cursor:pointer;z-index:1;line-height:0}
+.kset-close::before{content:"";position:absolute;
+                    width:calc(var(--cp-name,12.5px) * 1.34);
+                    height:calc(var(--cp-name,12.5px) * 1.34);
+                    border-radius:50%;border:1px solid currentColor}
+.kset-close svg{position:relative;display:block;
+                width:calc(var(--cp-name,12.5px) * .68);
+                height:calc(var(--cp-name,12.5px) * .68);
+                stroke:currentColor;stroke-width:2.6;fill:none;
+                stroke-linecap:round}
+.kset-close:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+
+/* ── HOVER OPENS IT, AND IT IS CSS AND NOT SCRIPT ──────────────────────────
+ *
+ * `hover:hover` AND `pointer:fine` together, never either alone: a touch device
+ * that reports a coarse hover capability would otherwise be given a popup it
+ * has no way to dismiss, because the finger that opened it has already left.
+ *
+ * HUNG OFF `.kset` AND NOT OFF THE BUTTON, so moving the pointer from the
+ * opener into the popup does not close it half-read — the popup is a DESCENDANT
+ * of `.kset`, so `.kset:hover` still matches while the pointer is inside it,
+ * and the ::before above spans the gap between the two.
+ *
+ * `:focus-within` is the keyboard's half of the same rule: tabbing to the
+ * opener shows the box without a keypress, exactly as the pointer does.
+ *
+ * A CLICK STILL TOGGLES. Hover is an ADDITION — `.is-open` is written by the
+ * script below and honoured everywhere, including here, so a shopper who taps
+ * a trackpad gets what they expect and `aria-expanded` stays the truth. The
+ * close button is removed on this branch because the way out is to move the
+ * pointer, and a cross that does nothing a shopper needs is furniture. */
+@media (hover:hover) and (pointer:fine){
+  .kset:hover > .kset-pop,.kset:focus-within > .kset-pop{display:block}
+  .kset-close{display:none}
+  .kset-pop{padding-inline-end:var(--kset-poppx,10px)}
+}
 @media (max-width:760px){
-  .kset-btn{font-size:calc(var(--cp-name-m,13px) * .82)}
-  .kset-pop li{font-size:calc(var(--cp-name-m,13px) * .88)}
-  .kset-save{font-size:calc(var(--cp-name-m,13px) * .85)}
+  /*
+   * ONE DECLARATION INSTEAD OF THREE FONT-SIZES, and it says exactly what the
+   * three said: the button, the popup's lines and the saving all measure
+   * against the cart row's PHONE name token here, and the saving is a shade
+   * larger than it is on a laptop (.85 against .82). The heading is
+   * deliberately NOT in this list -- it has always measured against the
+   * laptop token at every width, and restating it here would have changed
+   * every phone in the shop.
+   *
+   * ▲ A SHOP THAT HAS MOVED A SLIDER GETS THESE FROM
+   *   partials/set-appearance-css.blade.php INSTEAD, whose own media query
+   *   uses the owner's breakpoint and whose selector is one class more
+   *   specific than this one -- so his numbers win wherever his query matches
+   *   and these are what a shop that has touched nothing renders.
+   */
+  .kset{--kset-base:var(--cp-name-m,13px);--kset-savef:.85}
 
   /* ▲ THE CHECKOUT'S SUMMARY CLIPS ITS OWN CHILDREN ON A PHONE, and the first
      shot of this screen proved it: `.kbb-checkout .panels` is
@@ -205,6 +402,12 @@
     position:fixed;inset-block-start:auto;inset-block-end:14px;
     inset-inline-start:14px;inset-inline-end:14px;
     width:auto;max-width:none;z-index:95}
+  /* The hover bridge belongs to a box that hangs off a row. This one does not
+     hang off anything -- it is pinned to the viewport -- so the strip would be
+     a transparent band floating in the middle of the checkout. The close
+     button comes WITH the popup automatically: it is absolute inside it, so it
+     lands on the pinned box's own corner. (Lane SA) */
+  .kbb-checkout .kset-pop.is-open::before{display:none}
 }
 </style>
 <script>
@@ -238,6 +441,23 @@
   }
 
   document.addEventListener('click', function(e){
+    /* THE CROSS. Checked before the opener, because it lives INSIDE the popup
+       and the outside-click arm below would otherwise treat a press on it as
+       "somebody is selecting a product name" and leave the box open — which is
+       the whole defect the owner is asking to be given a way out of. */
+    var close = e.target.closest ? e.target.closest('[data-kset-close]') : null;
+
+    if (close) {
+      var box = close.closest('.kset-pop');
+      var opener = box ? document.querySelector('[aria-controls="' + box.id + '"]') : null;
+      closeAll(null);
+      /* Focus back to what opened it, exactly as Escape does. A press that
+         leaves focus on a button that has just been removed from the page's
+         reading order is a keyboard user dumped at the top of the document. */
+      if (opener) opener.focus();
+      return;
+    }
+
     var btn = e.target.closest ? e.target.closest('[data-kset-toggle]') : null;
 
     if (!btn) {
@@ -255,6 +475,47 @@
     pop.classList.toggle('is-open', open);
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
+
+  /*
+   * ── aria-expanded HAS TO STAY TRUE WHILE CSS IS DOING THE OPENING ────────
+   *
+   * On a pointer device the popup is shown by `.kset:hover > .kset-pop` and no
+   * script runs at all — so the button would keep saying aria-expanded="false"
+   * over a box a sighted shopper can see, which is the one thing an assistive
+   * technology reads to answer "is it open". These two listeners write that
+   * attribute and NOTHING ELSE: they toggle no class, they do not open or close
+   * anything, and they measure nothing. The CSS decides what is visible; this
+   * only reports it.
+   *
+   * GATED ON THE SAME QUERY THE CSS IS GATED ON, through matchMedia, so a touch
+   * device — where the hover rule never applies — is not told the popup is open
+   * because a finger brushed past. `pointer:fine` is checked with `hover:hover`
+   * for the reason the stylesheet gives: a coarse pointer that reports hover
+   * would get an aria-expanded that never comes back.
+   *
+   * `mouseenter`/`mouseleave` are CAPTURED on the document rather than bound
+   * per row: the cart panel replaces its own markup on every add and every
+   * quantity change, so a listener bound to an element is a listener lost. They
+   * do not bubble, which is exactly why the third argument is `true`.
+   */
+  var fine = window.matchMedia ? window.matchMedia('(hover:hover) and (pointer:fine)') : null;
+
+  function reportHover(e, open){
+    if (!fine || !fine.matches) return;
+    var row = e.target && e.target.closest ? e.target.closest('.kset') : null;
+    if (!row) return;
+    var owner = row.querySelector('[data-kset-toggle]');
+    if (!owner) return;
+    /* A row whose popup the shopper CLICKED open stays reported open when the
+       pointer wanders off it, because the click is what is still holding it
+       there. */
+    var box = document.getElementById(owner.getAttribute('aria-controls'));
+    if (!open && box && box.classList.contains('is-open')) return;
+    owner.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  document.addEventListener('mouseenter', function(e){ reportHover(e, true); }, true);
+  document.addEventListener('mouseleave', function(e){ reportHover(e, false); }, true);
 
   document.addEventListener('keydown', function(e){
     if (e.key !== 'Escape') return;
@@ -287,6 +548,13 @@
             </div>
             <button type="button" class="kset-btn" data-kset-toggle aria-expanded="false" aria-controls="{{ $kbbSetKey }}">{{ __('store.set.whats_inside') }}</button>
             <div class="kset-pop{{ in_array($kbbSetSurface, ['checkout', 'order'], true) ? ' is-up' : '' }}" id="{{ $kbbSetKey }}" role="group" aria-label="{{ __('store.set.whats_inside') }}">
+                {{-- THE CLOSE CONTROL, and it is FIRST in the popup on purpose: a
+                     keyboard user tabbing into the box meets the way out before
+                     the list, and a screen reader announces it in the same
+                     place. It is removed by CSS on a pointer device -- see the
+                     hover branch in the sheet above -- so on a laptop this is
+                     markup nobody ever reaches. --}}
+                <button type="button" class="kset-close" data-kset-close aria-label="{{ __('store.set.close') }}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6 18 18M18 6 6 18"/></svg></button>
                 <h4>{{ trans_choice('store.set.contents', $kbbSetCount, ['count' => $kbbSetCount]) }}</h4>
                 <ul>
                     @foreach ($kbbSetMembers as $kbbSetMember)
