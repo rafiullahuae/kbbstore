@@ -140,6 +140,43 @@
     $capStyle = (string) $settings->get('review_capsule_style', 'capsule');
     $showCap  = in_array($capStyle, ['capsule', 'both'], true);
     $showRate = in_array($capStyle, ['inline', 'both'], true);
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       WHERE THE SHORT DESCRIPTION SITS. (Lane PP)
+
+         "and then a short description should come after the list."
+
+       On a SET the blurb now prints BELOW "What is in this set", not above it.
+       The reason it is the right way round is the reason he noticed: the list
+       is the set's specification -- three named products, with quantities --
+       and the blurb is the sentence that sums them up. A summary before the
+       thing it summarises is a caption with nothing above it.
+
+       ▲ AND ONLY ON A SET. An ordinary product has no list, so "after the
+         list" names no position on its page; the only candidates would be
+         after the bundle strip or after Add to cart, and BOTH move the blurb
+         below the buying decision on the 99% of this catalogue that is not a
+         set. He asked for one page to change and the screenshot he marked up
+         was a set's. So the ordinary product's blurb is where it was, to the
+         byte, and $kbbShortBelow is false for every product in the shop but
+         the sets. CLAUDE.md rule 1.
+
+       ▲ AND ONLY WHEN THE LIST IS ACTUALLY DRAWN. A `type='set'` row whose
+         membership is empty renders no panel at all, and moving the blurb
+         "after" a block that does not exist would move it past the option
+         slot for no reason a shopper could see. So the question asked here is
+         the same one the panel asks itself -- does SetContents have members --
+         and it is asked through SetContents::fromProduct(), which is the one
+         description of a set's contents this application has.
+
+       ▲ AND IT COSTS NO QUERY. Store\ProductController::show() has already run
+         SetEagerLoad::on([$product]), so `setItems` and their members and
+         brands are in memory; this is a second loop over an array, not a
+         second trip to the database. StorefrontQueryBudgetTest measures it:
+         a set's page is the same count at 3 members and at 12, before and
+         after this change. */
+    $kbbShortBelow = (bool) $product->short_description
+        && \App\Support\SetContents::fromProduct($product)['members'] !== [];
 @endphp
 
 {{-- Brand once, not twice. This concatenated brand and name unconditionally,
@@ -280,7 +317,7 @@
         @endif
       </div>
       @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif
-      @if ($product->short_description)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
+      @if ($product->short_description && ! $kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
@@ -400,6 +437,18 @@
                that added this one; two includes would print the box's contents
                twice and its saving twice. --}}
         @include('partials.set-contents-panel')
+
+        {{-- ═══════════════════════════════════════════════════════════════
+             "and then a short description should come after the list."
+
+             Here, and nowhere else on this page: the @if above the buy form
+             carries `! $kbbShortBelow`, so exactly ONE of the two prints for
+             any product. Same element, same classes, same module class from
+             $modules->classFor('short') -- a shopper who has turned the short
+             description off in Appearance has it off in both places, and the
+             CSS that styles it does not need to know which position it is in.
+             --}}
+        @if ($kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the
