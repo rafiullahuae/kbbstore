@@ -40,7 +40,7 @@
     upload() returned early on `!editing.id`, so choosing a file there did
     nothing at all and said nothing about why.
 
-    ── THE 2–3 SECOND LOOP NEEDS NO SECOND UPLOAD, AND THE SCREEN SAYS SO ───
+    ── THE ONE-SECOND LOOP NEEDS NO SECOND UPLOAD, AND THE SCREEN SAYS SO ───
 
     The old copy on this screen said a tile without a teaser file "shows its
     poster instead of a short loop". That is wrong, and it sent the owner
@@ -54,7 +54,7 @@
     plan measured 12.19 MB for a rail of eight full clips against 1.01 MB of
     teasers.
 
-    HOW LONG IS A SETTING, so this screen reads it instead of printing 2.5:
+    HOW LONG IS A SETTING, so this screen reads it instead of printing a number:
     `teaser_ms` on Appearance → Shoppable video → Motion, default 1000 and
     ranged 1000–4000, and `teaser` beside it decides whether a tile loops at
     all. readMotion() fetches both once, clamps the number to that range, and
@@ -2986,7 +2986,7 @@
     return '<div class="ugs-card"><div class="ugs-note is-cool" data-ugs-cutremedy="1">'
       + '<b>Every tile still loops. Nothing is broken.</b> '
       + 'The rail plays the first ' + esc(length) + ' seconds of the video you uploaded and '
-      + 'rewinds, so a clip loops whether or not a separate 2.5-second file was ever cut. '
+      + 'rewinds, so a clip loops whether or not a separate ' + esc(length) + '-second file was ever cut. '
       + 'The cover is taken in your browser the moment an upload lands.'
       /*
        * AND THEN THE HONEST SIZE OF WHAT IS MISSING, because "a bandwidth
@@ -2996,6 +2996,13 @@
        * 3 Mbit one — MORE than the file, because the loop rewinds past what the
        * browser has already dropped and it fetches it again. The same clip with
        * a 2.5-second teaser fetched 97 KB, once, and buffered exactly 2.50s.
+       * That was measured when teasers were 2.5 seconds long. They are ONE
+       * second now, and the same argv against the same 1080x1920 source cuts
+       * 100,975 B at 2.5s against 30,847 B at 1s -- so the figure below is a
+       * CEILING on what a cut clip costs today, not an estimate of it. The
+       * sentence says which, because a number measured at a length the shop no
+       * longer cuts at is exactly the kind of stale figure this screen was
+       * rewritten to stop printing.
        *
        * HTTP Range does not bound this and cannot: the shop controls what it
        * serves, and the browser alone decides how far ahead of the playhead to
@@ -3004,13 +3011,15 @@
       + '<div style="margin-top:10px"><b>It is worth cutting them, though.</b> '
       + 'Measured on a 6.1 MB clip at phone width: a tile with no teaser file fetched '
       + '<b>10.7 MB</b> in twenty seconds on a 3 Mbit connection — it re-fetches what the loop has '
-      + 'rewound past — while the same clip with a 2.5-second teaser fetched <b>97 KB</b>, once. '
-      + 'That is about a hundred times the data, per tile, and up to four tiles play at once.</div>'
+      + 'rewound past — while the same clip with a teaser file fetched <b>97 KB</b>, once, back when '
+      + 'teasers were cut at two and a half seconds. They are cut at ' + esc(length) + ' now, and the same clip '
+      + 'measured 98.6 KB at 2.5 seconds against 30.1 KB at one — so 97 KB is the ceiling and not the '
+      + 'figure. That is well over a hundred times the data, per tile, and up to four tiles play at once.</div>'
       + '<div style="margin-top:10px">' + why + '</div>'
       + '<div style="margin-top:10px"><b>If you want the teasers cut anyway</b>, this shop can do it '
       + 'on a schedule instead — the command line on this same machine is allowed to start ffmpeg '
       + 'even when the web server is not. Add <b>one</b> cron entry and every clip, including the '
-      + 'ones already here, gets its cover and its 2.5-second teaser within a minute of being '
+      + 'ones already here, gets its cover and its ' + esc(length) + '-second teaser within a minute of being '
       + 'uploaded:'
       + '<div style="margin-top:8px"><code>* * * * * cd /path/to/your/application &amp;&amp; '
       + 'php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</code></div>'
@@ -3288,7 +3297,11 @@
   function cutHTML(v, clip) {
     if (!clip) return '';       // nothing to cut from, and step 2 says so above
 
-    var length = (transcoder && transcoder.teaser_seconds) || '2.5';
+    /* THE SERVER'S OWN CONSTANT, and the fallback moved with it. This screen
+       prints the cut length in four sentences and must never print a number the
+       shop has stopped cutting at -- which is what '2.5' here became the day
+       UgcTranscoder::TEASER_SECONDS changed. */
+    var length = (transcoder && transcoder.teaser_seconds) || '1';
     var fresh = freshClip !== null && String(freshClip) === String(v.id);
 
     if (!(transcoder && transcoder.available && v.id)) {

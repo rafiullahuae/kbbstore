@@ -238,3 +238,41 @@ it('keeps the value a shop had already saved, and prints it on the rail', functi
     expect(Shortcodes::render('[kbb_videos section="os-rail"]'))
         ->toContain('data-ugcr-teaser-ms="1000"');
 });
+
+it('never prints a cut length the shop has stopped cutting at', function () {
+    /*
+     * ── THE DEFECT THIS EXISTS FOR, AND IT IS THIS ROUND'S OWN ──────────────
+     *
+     * The clips screen tells the owner, in four separate sentences, how long the
+     * loop his shop cuts is. Three of them said "2.5-second" as a LITERAL, and
+     * the fourth read the server's constant with `|| '2.5'` behind it. The day
+     * UgcTranscoder::TEASER_SECONDS changed, a screen whose entire job is to
+     * say what this shop does was describing a length it no longer cuts —
+     * exactly the defect that screen was rewritten once already to stop having
+     * (it used to hard-code 2500 into the loop preview).
+     *
+     * The length now comes from ONE variable, fed by the endpoint's
+     * `transcoder.teaser_seconds`, which is UgcTranscoder::TEASER_SECONDS
+     * itself. UgcLibrarySurvivesAProbeTest pins that the endpoint carries it.
+     *
+     * MUTATION NOTE — RUN. Put any of the '2.5-second' literals back into a
+     * sentence the owner reads and the first expectation is red. Change the
+     * fallback back to `|| '2.5'` and the second is red.
+     */
+    $screen = (string) file_get_contents(
+        resource_path('views/admin/partials/ugc-library-screen.blade.php')
+    );
+
+    // Strip the comments: this file argues about 2.5 at length in its own
+    // prose, and a raw search finds every one of those. Only what is PRINTED
+    // counts. (The same trick UgcRailR3Test uses for rule 4, and for the same
+    // reason — the first cut of this went red on a comment.)
+    $printed = (string) preg_replace(['~/\*.*?\*/~s', '~^\s*//.*$~m', '~\{\{--.*?--\}\}~s'], '', $screen);
+
+    expect(str_contains($printed, '2.5-second'))
+        ->toBeFalse('the clips screen prints a hard-coded teaser length at the owner');
+
+    expect(str_contains($printed, "var length = (transcoder && transcoder.teaser_seconds) || '"
+        .UgcTranscoder::TEASER_SECONDS."';"))
+        ->toBeTrue('the screen falls back to a length that is not what this shop cuts');
+});
