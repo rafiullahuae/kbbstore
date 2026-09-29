@@ -279,6 +279,12 @@ class Banners
             // table and not added here reaches the admin screen and the preview
             // (which read the model) and silently does nothing on the shop.
             'bg_mode', 'bg_color', 'bg_image', 'btn_bg', 'btn_text', 'btn_hover', 'title_pos',
+            // Lane BN2, and the same warning applies word for word: this list
+            // is the whole of what forHome() hydrates. `kind` missing from it
+            // is a slider that draws as cards on the shop and as a slider in
+            // the admin preview — the exact "reaches the screen and silently
+            // does nothing" fault the note above was written for.
+            'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
         ];
 
         $select = ['banner_cards.'.'id as c_id'];
@@ -470,6 +476,88 @@ class Banners
         }
 
         return '';
+    }
+
+    /**
+     * The custom properties ONE SLIDER is sized, timed and pointed with.
+     *
+     * Lane BN2. The companion to `cssVariables()` above and it obeys the same
+     * two rules: every value is either an integer this method has clamped or a
+     * literal looked up in one of BannerSet's own enums, so nothing an operator
+     * can type reaches the `style` attribute; and the whole geometry is
+     * arithmetic the browser does once, so there is nothing for a script to
+     * measure.
+     *
+     * ── `--kbbs-dirn` IS HOW THE SLIDER RUNS BACKWARDS ON /ar ───────────────
+     *
+     * The track is moved with `translateX`, and `transform` is PHYSICAL: there
+     * is no logical transform, so `translateX(-100%)` walks left in Arabic as
+     * well and the slider would run the wrong way. The three answers are a
+     * `[dir="rtl"]` rule, a `:dir(rtl)` rule, or a number.
+     *
+     * This is the number, and it is the right answer here rather than the
+     * cheap one. A `[dir]` rule is a SECOND place the direction is decided —
+     * `<html dir>` is already written from `Locale::direction()`, and a
+     * stylesheet that re-reads the attribute can disagree with the server that
+     * wrote it (an admin preview iframe has no `<html dir>` of its own, which
+     * is exactly where this would have gone wrong). Everything else about the
+     * slider — where the arrows sit, which way the bars run, which end the
+     * progress fills from — is a logical property or a flex direction and
+     * mirrors by itself with no rule at all.
+     *
+     *   `--kbbs-flip`   1 / -1, and it only ever multiplies a scaleX: it turns
+     *                   the chevron round so "previous" points at the inline
+     *                   start in both directions.
+     *   `--kbbs-dirn`   -1 / 1, the sign of the track's travel.
+     *
+     * ── AND `--kbbs-dwell` IS A PER-SLIDE REST, NOT A LOOP TIME ─────────────
+     *
+     * `speed_ms` is the same column the cards banner reads and it means the
+     * same thing in both: the time attached to ONE item. For a slider that is
+     * how long a picture rests before the next one comes, so a set of three and
+     * a set of twelve feel the same under the same number.
+     *
+     * @param  list<BannerCard>  $cards
+     */
+    public static function sliderVariables(BannerSet $set, array $cards, bool $rtl): string
+    {
+        $radius = self::clamp($set->card_radius, ...BannerSet::LIMITS['card_radius']);
+        $dwell = self::clamp($set->speed_ms, ...BannerSet::LIMITS['speed_ms']);
+
+        $vars = [
+            '--kbbs-ar:'.$set->sliderRatioCss(),
+            '--kbbs-arm:'.$set->sliderRatioMobileCss(),
+            '--kbbs-r:'.$radius.'px',
+            '--kbbs-sh:'.$set->shadowCss(),
+            // Printed from an integer this method has already clamped, so the
+            // declaration cannot carry anything but digits and a dot.
+            '--kbbs-dwell:'.number_format($dwell / 1000, 2, '.', '').'s',
+            '--kbbs-dirn:'.($rtl ? '1' : '-1'),
+            '--kbbs-flip:'.($rtl ? '-1' : '1'),
+        ];
+
+        return implode(';', $vars);
+    }
+
+    /**
+     * The milliseconds a slider rests on one picture, or 0 when it does not
+     * move at all.
+     *
+     * ONE PLACE DECIDES IT, for the reason `animates()` gives on the model: the
+     * template writes this into a data attribute, the script reads it, and 0 is
+     * the single spelling of "there is no autoplay" — the set said no, or there
+     * is only one picture and there is nowhere to go. A script that had to ask
+     * two questions would eventually answer them differently from the stylesheet.
+     *
+     * @param  list<BannerCard>  $cards
+     */
+    public static function sliderDwell(BannerSet $set, array $cards): int
+    {
+        if (! $set->autoplay || count($cards) < 2) {
+            return 0;
+        }
+
+        return self::clamp($set->speed_ms, ...BannerSet::LIMITS['speed_ms']);
     }
 
     /**

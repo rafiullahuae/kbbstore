@@ -429,7 +429,13 @@
      --}}@unless ($sections->hidden('cards_banner'))
 @php $bnSection = app(\App\Services\Banners::class)->forHome(); @endphp
 @if ($bnSection !== null)
-<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include('partials.home.cards-banner', ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
+{{-- THE PARTIAL IS THE SET'S OWN, AND IT IS A LOOKUP IN A CONSTANT — Lane BN2.
+     `banner_sets.kind` chose between two banner types and BannerSet::homePartial()
+     maps its two tokens to two literal view names; a set whose kind is anything
+     else, including null, returns the cards partial this line named before the
+     column existed. The section, its class, its padding and its query are
+     unchanged, which is why a shop with no slider renders the same bytes. --}}
+<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
 @endif
 @endunless
 

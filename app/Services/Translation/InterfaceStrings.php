@@ -852,6 +852,27 @@ final class InterfaceStrings
             'home.cards_banner_go' => 'Go to card :n',
             'home.slider_previous' => 'Previous',
             'home.slider_next' => 'Next',
+            /*
+             * The picture slider — Lane BN2. Every one of these is an
+             * ACCESSIBLE NAME rather than something drawn on the page: the
+             * arrows and the bars are icon-only buttons and these are what a
+             * screen reader says for them, and `banner_slider_live` is what the
+             * live region announces when a shopper moves the slider himself.
+             *
+             * "Picture" and not "slide" on purpose. The owner's words were "only
+             * images slider", the control carries no text layer at all, and
+             * "slide 3 of 5" is presentation jargon for a thing a shopper thinks
+             * of as a picture.
+             */
+            'home.banner_slider_label' => 'Picture slider',
+            'home.banner_slider_prev' => 'Previous picture',
+            'home.banner_slider_next' => 'Next picture',
+            'home.banner_slider_bars' => 'Choose a picture',
+            'home.banner_slider_go' => 'Show picture :n',
+            'home.banner_slider_slide' => 'Picture :n of :total',
+            'home.banner_slider_live' => 'Picture :n of :total',
+            'home.banner_slider_pause' => 'Pause the slideshow',
+            'home.banner_slider_play' => 'Play the slideshow',
             'home.category_product_count' => ':count product|:count products',
             'home.bundles_heading' => 'Big savings bundles',
             'home.bundles_count' => ':count set|:count sets',
