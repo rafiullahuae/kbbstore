@@ -164,6 +164,18 @@ function walkExpectations(array $seed): array
         'robots.txt'               => ['status' => 200],
         'llms.txt'                 => ['status' => 200],
         /*
+         * Apple's domain-association document (Lane WAL), both spellings Apple
+         * publishes. 404 IS THE CORRECT ANSWER ON A SHOP THAT HAS NOT SET ONE
+         * UP, and that is the state this walk runs in: AppleDomainController
+         * serves the file from disk or from the gateway credentials, and aborts
+         * 404 when neither holds one. A 200 here would mean the walk had
+         * somehow acquired a verification document, which is the thing worth
+         * noticing. The owner registers the domain in Stripe, the document
+         * appears, and these answer 200 on the live shop only.
+         */
+        '.well-known/apple-developer-merchantid-domain-association'     => ['status' => 404],
+        '.well-known/apple-developer-merchantid-domain-association.txt' => ['status' => 404],
+        /*
          * Asked for by the key the application reports rather than by the one
          * the seeder wrote: IndexNow::key() memoises in a static, and so does
          * Setting::map() underneath it (see CLAUDE.md), so in a long-lived

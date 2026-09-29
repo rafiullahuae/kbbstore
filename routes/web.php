@@ -41,6 +41,14 @@ Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
     Route::get('/sitemap.xml', [SeoFilesController::class, 'sitemap']);
     Route::get('/robots.txt',  [SeoFilesController::class, 'robots']);
     Route::get('/llms.txt',    [SeoFilesController::class, 'llms']);
+
+    /*
+     * The fourth document of the same kind (Lane WAL): Apple's domain
+     * association file, machine-read, no session and no per-visitor content.
+     * Apple Pay draws no sheet on a domain Apple has not verified, and
+     * verification is one GET of this path.
+     */
+    require __DIR__.'/wallet-domain.php';
 });
 Route::get('/{key}.txt', [SeoFilesController::class, 'indexNowKeyFile'])
     ->where('key', '[a-zA-Z0-9\-]{8,128}');
@@ -996,6 +1004,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/site-url-admin.php';
 
+        /*
+         * Appearance -> Set -> Desktop / Mobile (Lane SA). Inside this group
+         * for the reason the two above it are: the POST rewrites what every
+         * shopper sees in the cart drawer, on the cart page and in the
+         * checkout summary, and /api/* on this shop is unauthenticated.
+         * Capability `setappearance.manage`; the map fails closed.
+         */
+        require __DIR__.'/set-appearance-admin.php';
+
         Route::get('/orders',                [AdminController::class, 'orders']);
         Route::get('/orders/{id}',           [AdminController::class, 'order']);
         Route::get('/orders/{id}/detail',    [\App\Http\Controllers\Admin\AdminOrderController::class, 'show']);
@@ -1246,6 +1263,15 @@ require __DIR__.'/checkout-browsed.php';
  * the session and CSRF, and it must come before the Phase 9 catch-all.
  */
 require __DIR__.'/checkout-line.php';
+
+/*
+ * What the wallet sheet is allowed to say (Lane WAL). web.php and not api.php,
+ * for the reason checkout-card.php records: the endpoint reads THIS visitor's
+ * basket, identified by CartService's cookie, and Laravel 11's api.php carries
+ * neither session nor cookie middleware. The total on an Apple Pay or Google
+ * Pay sheet may not be a figure the browser worked out.
+ */
+require __DIR__.'/wallet-checkout.php';
 
 /*
  * The two reports the card form on /checkout/ makes after a payment: that the

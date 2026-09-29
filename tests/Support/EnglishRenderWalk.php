@@ -1080,6 +1080,13 @@ final class EnglishRenderWalk
             'sitemap.xml' => $file,
             'robots.txt' => $file,
             'llms.txt' => $file,
+            // Apple's domain-association document (Lane WAL). Machine-facing in
+            // the strictest sense: Apple's own fetcher reads it to verify this
+            // domain, and Apple Pay draws no sheet until it has. Both spellings
+            // are served because Apple has published the path with and without
+            // the .txt suffix; neither renders Blade or carries a shopper string.
+            '.well-known/apple-developer-merchantid-domain-association' => $file,
+            '.well-known/apple-developer-merchantid-domain-association.txt' => $file,
             '{key}.txt' => ['params' => ['key' => fn () => \App\Services\Seo\IndexNow::key()]] + $file,
             '_kbb-health' => ['query' => ['token' => 'walk-health-token']] + $json,
             'storage/{path}' => ['params' => ['path' => 'kbb/app.css']] + $file,
