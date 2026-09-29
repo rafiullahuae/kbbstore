@@ -178,8 +178,8 @@ shots, on sale, 5 real reviews, 3 bundle bars, 5 tabs). Everything below is in
 
 | | A Ledger | B Dossier | C Counter | D Deck | E Marquee |
 |---|---|---|---|---|---|
-| **390** page height | 2761 | **2598** | 2675 | 2705 | 2698 |
-| **390** Add to cart, in flow | 1401 | **1277** | 1335 | 1281 | 1328 |
+| **390** page height | 2761 | **2612** | 2675 | 2705 | 2698 |
+| **390** Add to cart, in flow | 1401 | **1291** | 1335 | 1281 | 1328 |
 | **390** button on screen while choosing | ✓ | ✓ | ✓ | **✓ (docked)** | ✓ |
 | **390** title / price | 21 / 22px | 20 / 21px | 19 / **29px** | 21 / 21px | 20 / 21px |
 | **1280** page height | 1654 | **1580** | **1433** | 1729 | 1653 |
