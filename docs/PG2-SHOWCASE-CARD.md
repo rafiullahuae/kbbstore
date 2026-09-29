@@ -168,11 +168,18 @@ already there. Choosing one changes every product grid on the site at once.
 
 Three other paths answer the questions this card raises:
 
-* the heart — **Catalogue → Wishlist**. It ships **off**, so the shop as it
-  stands draws the button at the card's full width and no heart at all. The
-  contact sheets are shot with it **on**, because it is part of the design he
-  sent. Both are correct; the card reserves the space for the heart only on a
-  shop that has the module switched on.
+* the heart — **Catalogue → Wishlist**. It ships **off**, so what applying the
+  package actually draws is the button at the card's full width and **no heart
+  at all**. The contact sheets are shot with it **on**, because the heart is
+  part of the design he sent and he is choosing between designs.
+  `panel-showcase-no-wishlist-1280.png` and `…-390.png` are the same card as it
+  will arrive — measured, the button goes from 143px wide to 199px, which is the
+  whole text column, and **the card height does not move**: 454px at 1280 and
+  392px at 390 either way. Neither picture is a compromise; `:has(.heart)` is
+  what gives the heart its room, so the button takes the whole column when there
+  is nothing to make room for. Turning the module on is one switch, and it is
+  the owner's to throw — it is a whole module (its own pages, its own cookie,
+  its own endpoint), not a decoration, which is why this lane did not throw it.
 * the two pills — **Appearance → Product styles → Card content → Discount badge**
   and **→ New badge**. His card shows neither, because that product is neither
   new nor badged; the shop's are still drawn and still switchable.

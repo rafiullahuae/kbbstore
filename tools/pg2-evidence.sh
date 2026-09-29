@@ -33,6 +33,17 @@ KBB_SKIN=showcase php "$APP/artisan" tinker "$APP/tools/pg2-set-skin.php" </dev/
 KBB_BASE="http://127.0.0.1:$PORT" KBB_SHOTS="$OUT" KBB_PLAN="$APP/tools/pg2-plan-pages.json" \
   KBB_MEASURE=measure-pages node "$APP/tools/pg2-shots.cjs"
 
+# 3b · and the SHIPPED state of the same card: Catalogue -> Wishlist is OFF on
+#      this shop, so what applying the package actually draws is the button at
+#      the card's full width and no heart. The contact sheets are shot with the
+#      module ON because the heart is part of the design being chosen; this is
+#      the other half of the truth, and it is one shot rather than five because
+#      the difference is the same on all four treatments.
+php "$APP/artisan" tinker "$APP/tools/pg2-wishlist-off.php" </dev/null >/dev/null 2>&1 \
+  || php "$APP/artisan" tinker --execute="require '$APP/tools/pg2-wishlist-off.php';" </dev/null >/dev/null 2>&1
+KBB_BASE="http://127.0.0.1:$PORT" KBB_SHOTS="$OUT" KBB_PLAN="$APP/tools/pg2-plan-no-wishlist.json" \
+  KBB_MEASURE=measure-no-wishlist node "$APP/tools/pg2-shots.cjs"
+
 # 4 · Arabic LAST, for the reason at the top of this file.
 php "$APP/artisan" tinker "$APP/tools/pg2-arabic-on.php" </dev/null >/dev/null 2>&1 \
   || php "$APP/artisan" tinker --execute="require '$APP/tools/pg2-arabic-on.php';" </dev/null >/dev/null 2>&1
