@@ -2,9 +2,16 @@
 
 Chromium `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, 390 and 1280,
 `deviceScaleFactor: 2`. Every number below was read off a rendered page by
-`tools/pp-measure.cjs`, `tools/pp-diagnose.cjs`, `tools/pp-layout-shots.cjs`,
-`tools/pp-phone-shots.cjs` and `tools/pp-rtl-shots.cjs`. **Nothing in the page
-measures anything** — the shipped product page contains no layout-measuring
+`tools/pp-measure.cjs` and `tools/pp-diagnose.cjs`, plus three shot scripts
+that have since been DELETED -- `pp-layout-shots.cjs`, `pp-phone-shots.cjs` and
+`pp-rtl-shots.cjs` -- because every one of them drove `?layout=focus|editorial|
+compact`, and the owner cancelled the proposals and Lane PP2 deleted the
+parameter. A script that still asks for a layout the page no longer knows about
+does not fail: it silently shoots the SHIPPED page three times and writes three
+identical files under three different names, which is the most expensive kind
+of wrong. `tools/pp2-shots.cjs` (fixture `tools/pp2-seed.php`, server
+`tools/pp2-preview.sh`) photographs the live page and is the one to use.
+**Nothing in the page measures anything** — the shipped product page contains no layout-measuring
 script and this lane added none.
 
 Boot the fixture with `sh tools/pp-preview.sh 8977` (seed: `tools/pp-seed.php`

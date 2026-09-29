@@ -1,5 +1,32 @@
 # Three proposals for the product page (Lane PP)
 
+> ## ▲ SUPERSEDED — THESE URLS DO NOT WORK ANY MORE. ▲
+>
+> The owner looked at all three and answered: *"all three options are exactly
+> same, what's this? and the image will come square in any case and along with
+> gallery images as thumnails."* Read side by side he was right — Focus and
+> Editorial differed by a card border against two hairline rules, one type step
+> and the capitalisation of one button.
+>
+> So the proposals were **deleted rather than differentiated**: Lane PP2 removed
+> the ~240 lines of `.pp-lay*` CSS, the `?layout=` map in
+> `resources/views/store/product.blade.php`, the 4:5 gallery override, and the
+> three shot scripts that drove the parameter. `.gmain{aspect-ratio:1}` is the
+> only gallery frame the shop has, and `?layout=` is now an unread query string
+> like any other — every URL in the table below renders the shipped page.
+>
+> **The document is kept for its measurements, not its instructions.** The
+> findings that produced these designs (the 21% empty gallery frame, the eleven
+> equal blocks, the three delivery promises in two places, Add to cart at
+> y=1155 on a phone) were read off a real page and are still true. See the
+> outcome section at the foot for what was done with each.
+>
+> A later request — *"i want to redesign the products list box on the set
+> product page. want nice light background box type and inside a squeezed
+> products list"* — is being answered by Lane SPL against
+> `resources/views/partials/set-contents-panel.blade.php`, not by reviving
+> anything here.
+
 > *"i don't like that much the product page. can u also propose the product /
 > set page more improved from the existing layout to derive more beautiful
 > version, give me some options previews to choose from for now."*
