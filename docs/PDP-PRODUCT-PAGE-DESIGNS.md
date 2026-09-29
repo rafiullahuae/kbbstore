@@ -357,6 +357,7 @@ not a sixth copy of it, and this whole directory goes:
     app/Http/Controllers/Admin/PdpPreviewController.php
     routes/pdp-preview-admin.php
     resources/views/store/pdp-preview/
+    resources/views/admin/pdp-preview-index.blade.php
     tests/Feature/PdpPreviewTest.php
     tests/Support/PdpPreviewRoutes.php
     tools/pdp-preview.sh  tools/pdp-seed.php  tools/pdp-arabic-on.php

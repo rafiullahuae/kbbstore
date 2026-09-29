@@ -101,6 +101,14 @@ class PdpPreviewController extends Controller
      *
      * No query of its own beyond the product list, and the list is the narrow
      * select the shop's own grid uses, not `Product::all()`.
+     *
+     * ▲ ITS TEMPLATE IS UNDER views/admin/, WHILE THE FIVE DESIGNS ARE UNDER
+     *   views/store/. That is not an inconsistency — StorefrontStringsAreKeyed-
+     *   Test walks every Blade outside `admin/` and reports bare English, and
+     *   the two kinds of file want opposite answers from it. The five designs
+     *   are drafts of the shopper's product page and must stay scanned; this
+     *   one is a back-office index whose prose is deleted the day a design is
+     *   chosen. The file's own header carries the argument in full.
      */
     public function index(): View
     {
@@ -111,7 +119,7 @@ class PdpPreviewController extends Controller
             ->limit(60)
             ->get();
 
-        return view('store.pdp-preview.index', [
+        return view('admin.pdp-preview-index', [
             'candidates' => self::CANDIDATES,
             'products' => $products,
         ]);
