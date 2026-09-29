@@ -90,7 +90,7 @@ and the title is the row's own label.
 **Anchor** (occurs once):
 
 ```
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections']);
 ```
 
 **Replacement:**
@@ -106,15 +106,25 @@ const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progres
    before being armed. It matters more than usual here: this screen exists to be
    LOOKED AT and then linked to — its whole job is to show the owner four
    treatments on his own pages — so a shareable URL is not a nicety for it. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','pagewash']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash']);
 ```
 
-> **If this anchor has moved on**, it is because another lane legitimately joined
-> the same set. The guard in `PageWashScreenTest` asserts the FINAL id list
-> contains `pagewash` exactly once rather than matching the whole line, so a
-> console that has moved on does not make this document wrong — but update the
-> replacement here anyway, the way
-> `docs/T1B-ADMIN-APP-BLOCKS.md` records having had to twice.
+> **THIS ONE LINE MOVES, AND IT MOVED WHILE THIS LANE WAS OPEN.** The anchor
+> above ends `…,'slimfooter','gridsections']);` because Lane GS merged into
+> `claude/kind-mayer-rpqesv` after this branch was cut, and this lane was
+> rebased onto it; `docs/T1B-ADMIN-APP-BLOCKS.md` records the same line and its
+> copy was updated in the same rebase, which is where the merge conflict landed
+> and was resolved to carry **both** ids.
+>
+> **If it has moved again by the time you apply this**, do not hunt for the
+> anchor: append `,'pagewash'` to whatever the id list now is, and make
+> `docs/T1B-ADMIN-APP-BLOCKS.md`'s block-3 replacement carry the identical final
+> line **in the same commit**. `TranslationConsoleTest > it keeps the handover
+> document and the applied console in step` asserts that document's replacement
+> appears in `app.blade.php` exactly once, so a console that has legitimately
+> moved on makes the record false rather than making the console wrong — and
+> `PageWashScreenTest` asserts only that the final list contains `pagewash`
+> exactly once, so it does not care where in the line it ends up.
 
 ---
 

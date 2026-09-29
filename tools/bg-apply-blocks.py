@@ -26,7 +26,6 @@ half-applied file.
 ▲ IT EDITS TWO FILES THIS LANE MAY NOT SHIP. Revert them the moment you are
 done -- `git checkout --` on both -- and check `git status` before committing.
 """
-import sys, re
 
 app = 'resources/views/admin/app.blade.php'
 web = 'routes/web.php'
@@ -39,9 +38,15 @@ assert s.count(a1) == 1, ('block 1 anchor', s.count(a1))
 s = s.replace(a1, a1 + "'pagewash':['Appearance','Page background'],", 1)
 
 # Block 2 - LATE_RENDERED
-a2 = "'sitelayout','slimfooter']);"
-assert s.count(a2) == 1, ('block 2 anchor', s.count(a2))
-s = s.replace(a2, "'sitelayout','slimfooter','pagewash']);", 1)
+# Block 2 - LATE_RENDERED. The id list is APPENDED TO rather than matched: this
+# is the one line in the console that moves, and it moved once while this lane
+# was open ('gridsections', Lane GS). Matching it exactly would make this script
+# stop working the next time somebody arms a screen, for no benefit.
+import re
+m = re.search(r"const LATE_RENDERED=new Set\(\[([^\]]*)\]\);", s)
+assert m, 'LATE_RENDERED not found'
+assert "'pagewash'" not in m.group(1), 'pagewash is already armed'
+s = s[:m.end(1)] + ",'pagewash'" + s[m.end(1):]
 
 # Block 3 - the include
 a3 = "@include('admin.partials.set-appearance-screen')"
