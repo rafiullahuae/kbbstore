@@ -807,7 +807,56 @@ final class EnglishRenderWalk
      * Product styles moved no byte of the shop, because the only caller of
      * cssVariables() and bodyClass() was the admin preview.
      */
-    public const BASE_COMMIT = '2e15f2a5990a53ce191aa67285e7bcb3a58bdf97';
+    /*
+     * ADVANCED BY LANE WAL, and the diff it was advanced for is one <span>.
+     *
+     * The shop printed "Apple Pay" in the footer, in the basket and on the
+     * product page, unconditionally, on a build that had no Apple Pay anywhere
+     * — no gateway class, no button with a listener behind it, no way to take
+     * the payment. Those chips are now drawn only when the shop can actually
+     * take the payment (App\Services\Payments\Wallets), and both wallet
+     * switches ship OFF, so on a shop that has not switched one on the chip is
+     * gone. That is the change, and it is the one the owner asked for in as
+     * many words: "the mark art stops lying".
+     *
+     * THE DIFF WAS READ PAGE BY PAGE BEFORE THIS LINE MOVED. On every page
+     * carrying the footer, and on the product page and the basket, it is
+     * exactly this and nothing else:
+     *
+     *   before: …<span>Mastercard</span><span>Apple Pay</span><span>COD</span>…
+     *   after:  …<span>Mastercard</span><span>COD</span>…
+     *
+     * Not a space, not an indent, not an attribute. The comment that now
+     * stands above each of those three rows closes onto the markup — `--}}<div`
+     * — precisely so that moving the names into PHP moved no whitespace; the
+     * first attempt left a blank line on eleven pages and was corrected rather
+     * than approved.
+     *
+     * ── AND ONE PAGE WHERE MORE THAN A SPAN CHANGED ───────────────────────
+     *
+     * /checkout, where two buttons were deleted. What stood there was
+     *
+     *   <div class="express" aria-hidden="true">
+     *     <button type="button" class="xbtn xapple" tabindex="-1"> Apple&nbsp;Pay</button>
+     *     <button type="button" class="xbtn xgoogle" tabindex="-1">…&nbsp;Pay</button>
+     *   </div>
+     *   <div class="ordiv">or pay with</div>
+     *
+     * drawn on every checkout, on every browser, with no listener behind them
+     * and no gateway behind that — `aria-hidden` and `tabindex="-1"` kept a
+     * screen reader and a keyboard away from them, which is a fair description
+     * of what they were. In their place is
+     * partials/checkout/express-wallets, which renders NOTHING while the
+     * wallets are off — so the payment step of a shop that has not switched one
+     * on is the payment step it always had, minus the two buttons that did
+     * nothing. The "or pay with" divider moved inside the partial with them,
+     * because a divider is a claim that there is something above it.
+     *
+     * Nothing else on any page moved. tests/Feature/WalletPaymentsTest.php
+     * pins both halves from the other end: no `.xbtn` anywhere, and the
+     * express row present, hidden, only once a wallet is switched on.
+     */
+    public const BASE_COMMIT = '386a5de3d9cffb177fb5688be4d32c100211e68b';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
