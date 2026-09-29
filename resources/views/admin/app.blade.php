@@ -2830,7 +2830,7 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
    opened the dashboard. Same fix, same condition, and the strings are copied
    from what each partial's own go() writes so the heading cannot depend on how
    the screen was reached. */
-'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections']};
+'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -7219,7 +7219,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -22087,24 +22087,6 @@ buildNav();
      entry to the rendered nav rather than reaching NAV and TITLES, which are
      module-scoped consts here. --}}
 @include('admin.partials.set-appearance-screen')
-
-{{-- Appearance → Grid sections (Lane GS). The owner: "prepare a proper grid
-     section with all controls and it can be use anywhere, and can be edit that
-     specific grid section. so this case we can re-use this grid section
-     anywhere multiple times with different products etc selection."
-
-     ONE section type, added as many times as he likes. Each instance is a row
-     in HomepageSections::registry() as well, so its position on the page and
-     its Desktop/Mobile switches are the ones Appearance → Homepage has always
-     shown — there is no second ordering mechanism beside that one.
-
-     It registers its own sidebar entry inside the Appearance group and wraps
-     window.go, exactly as the screens above it do.
-
-     Applying it changes nothing on the live shop: the table is created empty,
-     so the homepage renders the bytes it rendered before. The two rows he named
-     are one-click presets on this screen, not defaults this ships. --}}
-@include('admin.partials.grid-sections-screen')
 
 @verbatim
 <script>
