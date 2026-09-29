@@ -241,7 +241,7 @@
    the FAMILY'S LOOK — the padding, the type scale, the price pair and the four
    button shapes — which is what a swatch is for. Physical properties, like the
    rest of this sheet, because the admin console is left-to-right only. */
-.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card{background:#fff;border:1px solid rgba(42,34,40,.10);border-radius:12px;overflow:hidden}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card{background:#fff;border:1px solid rgba(42,34,40,.10);overflow:hidden}
 .skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-thumb{background:#FBF5F3;border-radius:0}
 .skinprev .kbb-pgrid[data-skin^="showcase"] .cb{padding:12px;text-align:left}
 .skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-cat,.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-brand{color:#9A8D94}
