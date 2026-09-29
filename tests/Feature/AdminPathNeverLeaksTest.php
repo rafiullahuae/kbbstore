@@ -475,7 +475,17 @@ it('hides every admin address that does not already prove you know the secret', 
      * the Location naming the admin login. RUN.
      */
     $adminPath = trim(AdminPathService::current(), '/');
-    $needles = [sekAdminLoginUrl(), route('admin')];
+
+    /*
+     * The two absolute URLs, and the configured path itself as a PATH SEGMENT.
+     * `'/' . $adminPath . '/'` and not the bare word: the default admin path is
+     * "admin", which is a substring of every `admin-api/...` address this case
+     * requests, so a bare-word search would report the request's own URL as a
+     * leak the moment anything echoed it. With the slashes it cannot match
+     * `admin-api/`, and it still catches the thing that matters — the admin
+     * address printed anywhere in the answer.
+     */
+    $needles = [sekAdminLoginUrl(), route('admin'), '/' . $adminPath . '/'];
     $swept = 0;
 
     foreach (Route::getRoutes() as $route) {
