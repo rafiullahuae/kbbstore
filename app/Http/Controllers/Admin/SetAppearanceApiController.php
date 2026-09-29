@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\ModuleSchema;
 use App\Services\SetAppearance;
+use App\Services\SetAppearanceLiveMap;
+use App\Support\Locale;
 use App\Support\SetContents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -78,6 +80,32 @@ class SetAppearanceApiController extends Controller
             // can say "3 changed from shipped" without a second copy of the
             // defaults in JavaScript that could drift from the schema.
             'defaults' => SetAppearance::defaults(),
+            /*
+             * WHICH CONTROLS THE SCREEN MAY DRAW WITHOUT ASKING AGAIN, and the
+             * custom property each of them writes — see SetAppearanceLiveMap,
+             * which DERIVES all of it from css() rather than restating it, for
+             * the same reason the preview includes the real partial instead of
+             * carrying a copy of its markup. 160 of the 198 controls are one
+             * custom property each and move the preview with no request at
+             * all; the other 38 change the STRUCTURE of the sheet — a
+             * `display:none`, an `nth-child()`, a media query's own width, or
+             * a compiled stylesheet's padding — and are re-rendered here,
+             * debounced. A field this map cannot explain is simply absent from
+             * it and takes the slower path, which is the fail-closed
+             * direction: the screen never guesses.
+             */
+            'live' => SetAppearanceLiveMap::build(),
+            // The languages the preview can be drawn in, for the pair of
+            // buttons beside the widths. Names come from Locale so a third
+            // language is a row there and nothing here.
+            'locales' => collect(Locale::LOCALES)
+                ->map(static fn (array $l, string $code): array => [
+                    'code' => $code,
+                    'native' => $l['native'],
+                    'dir' => $l['dir'],
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -111,18 +139,57 @@ class SetAppearanceApiController extends Controller
      */
     public function preview(Request $request): Response
     {
-        $data = $request->validate(['settings' => ['nullable', 'array']]);
+        $data = $request->validate([
+            'settings' => ['nullable', 'array'],
+            'locale' => ['nullable', 'string'],
+        ]);
 
         $values = $this->set->preview($data['settings'] ?? []);
 
-        return response(
-            view('admin.previews.set-appearance', [
+        /*
+         * ONE OF THIS SHOP'S OWN LANGUAGE CODES OR THE DEFAULT, and never the
+         * string that arrived. Rule 5's "a select stores one of its own options
+         * or the default", pointed at a locale: what comes in here goes
+         * straight into `<html lang>` and into App::setLocale(), which decides
+         * which translation FILES are read, so an unchecked value is a path
+         * fragment with an opinion.
+         */
+        $locale = (string) ($data['locale'] ?? Locale::DEFAULT);
+        $locale = Locale::isSupported($locale) ? $locale : Locale::DEFAULT;
+
+        $previous = app()->getLocale();
+
+        /*
+         * The WHOLE render happens inside the locale, not just the two
+         * attributes — both partials put interface strings through __(), and
+         * the Arabic ones are a different length. A preview that mirrored the
+         * layout but kept the English wording would be showing the owner a box
+         * sized for text his shop does not draw. try/finally because a throw
+         * inside the view must not leave the console speaking Arabic: this
+         * process serves the next admin request too, and Locale::current()
+         * reads the framework's locale rather than keeping a copy of it.
+         */
+        app()->setLocale($locale);
+
+        try {
+            $html = view('admin.previews.set-appearance', [
                 'setValues' => $values,
                 'setCss' => SetAppearance::css($values),
                 'setContents' => $this->contents(),
                 'cartVars' => app(\App\Services\CartPanel::class)->cssVariables(),
-            ])->render()
-        )->header('Content-Type', 'text/html; charset=utf-8');
+                'lang' => $locale,
+                // What the shop really draws: Locale::direction() is gated on
+                // the `language_rtl_enabled` switch, so a shop still finishing
+                // its mirrored stylesheet previews Arabic words left to right,
+                // which is what it serves. The document says so when it does.
+                'dir' => Locale::direction($locale),
+                'naturalDir' => Locale::LOCALES[$locale]['dir'] ?? 'ltr',
+            ])->render();
+        } finally {
+            app()->setLocale($previous);
+        }
+
+        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\ServerMailTransport;
 use App\Services\ModuleSchema;
 use App\Services\Seo\IndexNow;
+use App\Services\SetAppearanceLiveMap;
 use App\Services\SettingsService;
 use App\Services\Translation\TranslationStore;
 use App\Services\Update\InstalledVersion;
@@ -154,6 +155,21 @@ final class StaticMemos
              * for.
              */
             SetPricing::class => static fn () => SetPricing::forget(),
+            /*
+             * Which of Appearance → Set's controls the screen may preview
+             * without asking the server, derived from SetAppearance::css()
+             * itself. (Lane SA3)
+             *
+             * It is a memo over a CACHE entry, the same two-layer shape as
+             * Setting::map() and ProductTabs above, and it is here for the
+             * reason those are: the cache store is `array` under test, so the
+             * first test to build the map decides what every later test in the
+             * process is handed — and SetAppearanceLiveMapTest builds it
+             * deliberately against a flushed cache to prove the caching works
+             * at all. Without this reset that test's own timing measurement
+             * would depend on whether some earlier file had opened the screen.
+             */
+            SetAppearanceLiveMap::class => static fn () => SetAppearanceLiveMap::forget(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

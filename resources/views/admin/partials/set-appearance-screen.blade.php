@@ -1,9 +1,20 @@
 {{--
-    Appearance → Set → Desktop / Mobile.                              (Lane SA)
+    Appearance → Set → Desktop / Mobile.                       (Lane SA, SA3)
 
-    The owner, verbatim: *"I need the full controls of everything like spacing,
-    fonts, elements turn on off etc etc. every single details. for mobile and
-    desktop both separate tabs. Under Appearance → Set → desktop / mobile."*
+    The owner, first time round: *"I need the full controls of everything like
+    spacing, fonts, elements turn on off etc etc. every single details. for
+    mobile and desktop both separate tabs. Under Appearance → Set → desktop /
+    mobile."*
+
+    And then, having got them: *"on this set backend controls page, i want the
+    preview on the right side, so i can avoid the long page. also make the tabs
+    or sections properly, not just throw the long page. make it super nice. and
+    preview must work in real time upon changing controls."*
+
+    Both are answered here. What he was looking at was 198 controls in 13 cards
+    stacked down one column, with the preview at the bottom of it — so the two
+    things a person actually does on this screen, move a slider and look at what
+    it did, were 4,000 pixels apart.
 
     Pulled into resources/views/admin/app.blade.php at the very end, after that
     file closes its raw block and before the closing body tag, so it runs once
@@ -17,27 +28,66 @@
     already exposes for exactly this, and the shape is deliberately the same as
     admin/partials/banners-screen.blade.php.
 
-    ── TWO TABS, AND THE SECOND ONE IS NOT A COPY OF THE FIRST ───────────────
+    ── TWO COLUMNS, AND THE RIGHT-HAND ONE STAYS PUT ─────────────────────────
 
-    Desktop and Mobile, as asked. Every DIMENSIONAL control has a value per
-    breakpoint and the phone's never falls back to the laptop's — the argument
-    is in App\Services\SetAppearance's own header, and the short version is that
-    the shipped sheet ALREADY differs between the two, so inheritance would have
-    had to ship pre-touched and would have been a lie on the day it landed.
+    Controls on the left, the preview on the right, pinned with `position:
+    sticky` and nothing else. No scroll listener, no ResizeObserver and no
+    getBoundingClientRect: rule 4 forbids measuring layout in JavaScript on this
+    project, and a sticky column is one declaration that the compositor honours
+    at 60fps whatever this script is doing.
 
-    Everything that is not a measurement — the on/off switches, the weights, the
-    colours — is SHARED and appears once, on Desktop. The Mobile tab says so at
-    the top of every card. A second copy of "show the quantities" per breakpoint
-    is one control with two halves that can disagree without anybody meaning
-    them to.
+    Below 1120px there is no right-hand side, so the preview goes FIRST instead
+    — `order:-1` on the grid item, one line, no second markup path. The owner
+    reviews on a phone and the thing he is judging should not be below the
+    thing he is dragging.
 
-    ── THE SAVE BUTTON, BECAUSE HE ASKED FOR ONE ON BANNERS ──────────────────
+    The frame's height is `clamp()` against the viewport rather than a fixed
+    620px, so a tall screen gets a tall preview and a phone does not get a
+    preview taller than the phone.
 
-    Nothing is written until Save. The bar says HOW MANY changes are waiting,
-    Discard puts them back, leaving the screen asks first, and closing the tab
-    asks too. Same machinery as the Banners editor and for the same reason: he
-    makes several edits before he saves, and a screen that writes on every input
-    turns a slider drag into forty writes.
+    ── EIGHT GROUPS, ONE AT A TIME ──────────────────────────────────────────
+
+    The thirteen cards the API returns are regrouped by WHAT THEY DRAW rather
+    than by where they happened to be declared, and exactly one group is on
+    screen at a time:
+
+        What is drawn · The set row on the cart page · The fanned stack and its
+        popup · The panel and the hang · Rows and photographs · Words · The
+        fold and the footing · Where the phone sizes start
+
+    The split is not cosmetic. `d_list_size` and `d_list_type` between them held
+    49 controls covering four different things — the photographs, the words, the
+    "Show all" fold and the footing — and a card that holds four subjects is a
+    card nobody can find anything in. The keys are laid out below in GROUPS, and
+    anything the API sends that GROUPS does not place is drawn anyway, in a card
+    that says so: a schema key must never be able to disappear from this screen
+    because a layout table forgot it. SetAppearanceScreenGroupsTest pins that
+    the placement is total and has no duplicates.
+
+    Desktop/Mobile stays exactly where it was, above all of this — it is the axis
+    the owner asked for by name, and the group strip sits under it.
+
+    ── THE PREVIEW MOVES AS HE DRAGS, AND ALMOST NEVER ASKS THE SERVER ───────
+
+    160 of the 198 controls are ONE CUSTOM PROPERTY each. The two storefront
+    partials read every tunable number as `var(--kset-x, <its old literal>)`, so
+    the preview can be moved by re-declaring those same properties into a second
+    <style> element inside the frame — instant, no request, and truthful because
+    it is the very mechanism the shop is driven by.
+
+    Which property each control writes is NOT written down here. It comes from
+    the API, out of App\Services\SetAppearanceLiveMap, which DERIVES it by
+    rendering SetAppearance::css() once per field and diffing. A table here
+    would be a second copy of boxVars() and listVars(), and this project has
+    paid twice already for a second copy that stopped agreeing with the first.
+
+    The other 38 change the sheet's STRUCTURE — a `display:none`, the fan's
+    `nth-child()` cap, a media query's own width, the fold's position in the
+    MARKUP, and the five cart-row numbers that are real properties in a compiled
+    stylesheet rather than variables. Those re-render through
+    POST /admin-api/set-appearance/preview, debounced, exactly as everything
+    used to. A control the map cannot explain is absent from the map and takes
+    that path, so a wrong guess can only make the screen slower, never wrong.
 
     ── THE PREVIEW IS AN IFRAME, AND THAT IS NOT DECORATION ──────────────────
 
@@ -49,6 +99,12 @@
     against the frame's own width, so the Phone and Desktop buttons show what
     those widths really produce.
 
+    WHICH IS WHY THE FRAME IS NO LONGER `max-width:100%`. It was, and inside a
+    flex stage that silently clamped every width button to the width of the
+    panel: pressing "Desktop · 1280" in a 700px column resolved the media query
+    at 700px and drew the phone branch under a label that said Desktop. The
+    stage scrolls now and the frame is `flex:none`, so 1280 means 1280.
+
     Its contents come from POST /admin-api/set-appearance/preview, which renders
     THE SAME PARTIAL the cart renders, from the values in the buffer. Nothing is
     written. A second copy of that markup here would disagree with the shop the
@@ -57,7 +113,47 @@
 
     THE POPUP IN THE PREVIEW REALLY OPENS, because the partial ships its own
     script and the frame is a fresh window. The owner presses "What's inside"
-    and sees the box he just sized. Nothing here simulates an open state.
+    and sees the box he just sized. Nothing here simulates an open state — and
+    that is the second reason the live path matters: a re-render replaces the
+    document, which closes the popup, so a preview that re-rendered on every
+    pixel could never be used to size a popup while it was open.
+
+    ── AND THE CONTROLS REDRAW WITHOUT THE PREVIEW ──────────────────────────
+
+    Which is only half of it, and the other half is drawing. Every redraw used
+    to be one innerHTML over #content, so the iframe was thrown away and rebuilt
+    from the last document the server sent — on a slider's RELEASE, on a tab
+    switch, on opening another section. That was invisible while everything
+    re-rendered anyway. It is not invisible now: measured, the popup shut on
+    every mouseup.
+
+    So there are three builders. topHTML() is the bar, the breakpoint strip and
+    the section strip; leftHTML() is the open section; sideHTML() is the preview
+    card. renderControls() replaces the first two and does not touch the third,
+    and it is what every handler calls except the two that really change the
+    frame — its width, which is the viewport the media queries answer, and its
+    language, which only the server can render.
+
+    ── ENGLISH AND العربية ──────────────────────────────────────────────────
+
+    The preview used to be `lang="en" dir="ltr"`, written into the document, and
+    the controller had no locale at all — so the rendering most likely to be
+    wrong, the mirrored one, was the one that could not be looked at. The panel
+    hangs its photographs off its LEADING edge, and a leading edge is a
+    different edge in Arabic. There is a language pair beside the width buttons
+    now and the whole preview re-renders in that locale, wording included.
+
+    ── THE SAVE BUTTON, BECAUSE HE ASKED FOR ONE ON BANNERS ──────────────────
+
+    Nothing is written until Save. The bar says HOW MANY changes are waiting,
+    Discard puts them back, leaving the screen asks first, and closing the tab
+    asks too. Same machinery as the Banners editor and for the same reason: he
+    makes several edits before he saves, and a screen that writes on every input
+    turns a slider drag into forty writes.
+
+    Per-control "shipped" stays, and there is now a "Put this group back" beside
+    each group's name — the same idea one level up, for an owner who has been
+    experimenting inside one section and wants only that section back.
 
     ── THE LAYOUT RULE ──────────────────────────────────────────────────────
 
@@ -80,8 +176,17 @@
 --}}
 @verbatim
 <style>
-.sap-wrap{display:grid;gap:16px;min-width:0}
+.sap-wrap{display:grid;gap:14px;min-width:0}
 .sap-wrap > *{min-width:0}
+/* `display:contents` AND NOT A BOX. The bar, the Desktop/Mobile strip and the
+   section strip are redrawn together and the preview is not, so they need one
+   element to replace the innerHTML of — but a real box here would become the
+   sticky bar's containing block, and a sticky element only sticks within its
+   parent's own bounds. The bar would unstick about 40px down. With
+   `display:contents` the three stay grid items of .sap-wrap exactly as they
+   were, and there is an element to write into. */
+.sap-top{display:contents}
+.sap-top > *{min-width:0}
 .sap-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
           border-radius:var(--r,12px);padding:16px;min-width:0}
 .sap-title{font-weight:650;font-size:14.5px;margin:0 0 3px}
@@ -89,16 +194,18 @@
 .sap-banner{background:#FEF3C7;border:1px solid #FCD34D;color:#7C2D12;border-radius:10px;
             padding:11px 13px;font-size:12.5px;line-height:1.55;margin-bottom:12px}
 .sap-note{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E3A8A;border-radius:10px;
-          padding:10px 12px;font-size:12px;line-height:1.55;margin-bottom:12px}
-.sap-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;min-width:0}
+          padding:10px 12px;font-size:12px;line-height:1.55}
+.sap-tabs{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
 .sap-tab{font:inherit;font-size:13px;font-weight:650;padding:8px 16px;border-radius:999px;
          border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit;cursor:pointer}
 .sap-tab[aria-selected="true"]{background:var(--accent,#E8919F);border-color:var(--accent,#E8919F);color:#fff}
-.sap-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));min-width:0}
-.sap-f{display:grid;gap:5px;min-width:0}
+.sap-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));min-width:0}
+.sap-f{display:grid;gap:5px;min-width:0;align-content:start}
 .sap-fh{display:flex;gap:8px;align-items:baseline;justify-content:space-between;min-width:0}
 .sap-fh label{font-size:12.5px;font-weight:600;min-width:0;overflow-wrap:anywhere}
-.sap-val{font-size:11.5px;font-weight:700;color:var(--ink-soft,#6b7280);white-space:nowrap;flex:none}
+.sap-val{font-size:11.5px;font-weight:700;color:inherit;white-space:nowrap;flex:none;
+         background:var(--code-bg,rgba(0,0,0,.05));border-radius:6px;padding:1px 6px;
+         font-variant-numeric:tabular-nums}
 .sap-help{font-size:11px;color:var(--ink-soft,#6b7280);line-height:1.5}
 .sap-f input[type=range]{width:100%;min-width:0}
 .sap-check{display:flex;gap:9px;align-items:flex-start;min-width:0}
@@ -119,17 +226,64 @@
           border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:var(--ink-soft,#6b7280);
           cursor:pointer;flex:none}
 .sap-tiny:hover{border-color:var(--accent,#E8919F);color:inherit}
-.sap-bar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+.sap-bar{position:sticky;top:0;z-index:6;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
          background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);
          padding:11px 14px;min-width:0}
 .sap-bar .sap-count{font-size:12.5px;font-weight:650;min-width:0;flex:1 1 auto}
 .sap-bar.is-dirty{border-color:var(--accent,#E8919F);background:rgba(232,145,159,.07)}
-.sap-stage{border:1px solid var(--border,#e6e6e6);border-radius:11px;overflow:hidden;background:#fff;
-           margin-top:10px;display:flex;justify-content:center;min-width:0}
-.sap-frame{border:0;display:block;background:#fff;width:100%;max-width:100%}
-.sap-widths{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+/* ── the two columns ─────────────────────────────────────────────────────
+   One grid, two children, and everything about the pinning is in the three
+   media queries below. The preview is FIRST in the flow until there is a
+   right-hand side to put it on — `order`, not a second copy of the markup. */
+.sap-body{display:grid;gap:16px;min-width:0;align-items:start}
+.sap-left{display:grid;gap:14px;min-width:0;align-content:start}
+.sap-side{min-width:0;order:-1}
+@media (min-width:1120px){
+  .sap-body{grid-template-columns:minmax(0,1fr) minmax(330px,430px)}
+  .sap-side{order:0;position:sticky;top:66px}
+}
+@media (min-width:1420px){.sap-body{grid-template-columns:minmax(0,1fr) minmax(430px,560px)}}
+@media (min-width:1640px){.sap-body{grid-template-columns:minmax(0,1fr) minmax(520px,648px)}}
+
+/* ── the group strip ─────────────────────────────────────────────────────
+   Chips, because there are eight of them and they have to wrap at 390px.
+   The count rides on the chip so the owner can see which sections he has
+   already been inside without opening them. */
+.sap-nav{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+.sap-g{font:inherit;font-size:12px;font-weight:650;padding:7px 12px;border-radius:9px;
+       border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit;
+       cursor:pointer;display:inline-flex;gap:6px;align-items:center;min-width:0}
+.sap-g:hover{border-color:var(--accent,#E8919F)}
+.sap-g[aria-current="true"]{background:rgba(232,145,159,.12);border-color:var(--accent,#E8919F);
+                            box-shadow:inset 0 0 0 1px var(--accent,#E8919F)}
+.sap-gn{font-size:9.5px;font-weight:800;border-radius:999px;padding:0 5px;line-height:15px;
+        background:var(--accent,#E8919F);color:#fff;flex:none}
+.sap-head{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;min-width:0;margin-bottom:4px}
+.sap-h1{font-size:17px;font-weight:700;line-height:1.3;margin:0;min-width:0;flex:1 1 220px}
+.sap-steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.sap-sec{font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+         color:var(--ink-soft,#6b7280);margin:0 0 3px}
+
+/* ── the preview ─────────────────────────────────────────────────────────
+   overflow:auto, and `flex:none` on the frame, because a frame that is
+   allowed to shrink is a frame whose media query answers the panel's width
+   instead of the width on the button. */
+.sap-stage{border:1px solid var(--border,#e6e6e6);border-radius:11px;overflow:auto;background:#fff;
+           margin-top:10px;display:flex;min-width:0;justify-content:center;
+           /* `safe` so a frame WIDER than the panel still starts at its own left
+              edge: plain centring in a scroll container pushes the overflow out of
+              reach on the leading side, which would hide the phone preview's first
+              44 pixels at 390. */
+           justify-content:safe center}
+.sap-frame{border:0;display:block;background:#fff;flex:none;
+           height:min(56vh,430px)}
+@media (min-width:1120px){.sap-frame{height:clamp(360px,calc(100vh - 250px),760px)}}
+.sap-widths{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.sap-sp{flex:1 1 8px;min-width:0}
 .sap-path{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.55}
 .sap-path b{color:inherit}
+.sap-live{font-size:11px;color:var(--ink-soft,#6b7280);line-height:1.5;margin-top:8px}
 </style>
 <script>
 (function () {
@@ -142,11 +296,20 @@
   var defaults = null;    // what "shipped" means, from the server
   var saved = null;       // key => value as the server last told us
   var draft = null;       // key => value as the owner has typed it
+  var live = null;        // SetAppearanceLiveMap's derivation, from the server
+  var locales = null;     // the languages the preview can be drawn in
   var banner = null;
   var busy = false;
   var seq = 0;
+  /* The PREVIEW's own counter, and it must not be `seq`. Sharing one would let
+     a preview render land between load()'s request and its reply and make
+     load() think it had been superseded — the screen would then sit on
+     "Loading…" for ever with a perfectly good payload in hand. */
+  var pvSeq = 0;
   var open = 'desk';      // 'desk' | 'mob'
+  var group = 'parts';
   var frameW = 390;
+  var pvLocale = 'en';
   var pvTimer = null;
   /* The last preview document, kept in a MODULE variable rather than on the
      iframe's dataset: render() replaces #content wholesale, so the element the
@@ -154,6 +317,170 @@
      the next debounce fired, which reads as a preview that has stopped
      working. */
   var pvHtml = null;
+  /* The frame's own window, remembered when IT tells us it is ready. The screen
+     cannot look inside a sandboxed frame — no allow-same-origin, so
+     contentDocument is null — and must not try; this is the only handle it
+     has, and postMessage is the only thing it does with it. */
+  var pvWin = null;
+
+  /*
+   * ── HOW THE 198 CONTROLS ARE LAID OUT ───────────────────────────────────
+   *
+   * Eight groups. Each names its sections per breakpoint, and a section is
+   * either `from` — a whole card exactly as the API sent it, label, prose and
+   * all — or an explicit list of keys with a title written here.
+   *
+   * The `from` ones are the five cards that already were one subject. The
+   * explicit ones exist because `d_list_size` and `d_list_type` between them
+   * held 49 controls spanning four subjects, and splitting them is the whole
+   * point of the exercise.
+   *
+   * NOTHING IS DROPPED IF THIS TABLE IS WRONG. render() collects every key the
+   * API sent for the open breakpoint, subtracts what this table placed, and
+   * draws the remainder in a card of its own that says it is ungrouped. A
+   * layout table that silently swallowed a new schema key would be the worst
+   * possible failure here — a control the owner cannot reach and nobody can
+   * see is missing.
+   */
+  var GROUPS = [
+    {
+      id: 'parts',
+      label: 'What is drawn',
+      blurb: 'Every on/off switch on this screen, in one place — the fanned stack in the basket and the '
+        + 'list on the product page. These are SHARED between Desktop and Mobile: an element switched off '
+        + 'here is off at both widths, because one control with two halves that can disagree is worse '
+        + 'than one honest control.',
+      desk: [{ from: 'd_box_parts' }, { from: 'd_list_parts' }],
+      mob: []
+    },
+    {
+      id: 'cart',
+      label: 'The set row on the cart page',
+      blurb: 'The basket row a SET sits in on /cart, and no other row. The preview draws a set line and '
+        + 'an ordinary line together, so you can watch these five land on one and leave the other alone.',
+      desk: [{ from: 'd_cart' }],
+      mob: [{ from: 'm_cart' }]
+    },
+    {
+      id: 'box',
+      label: 'The fanned stack and its popup',
+      blurb: 'The circles and the popup under a set’s name, everywhere a basket is drawn. Sizes are per '
+        + 'breakpoint; the weights and colours are shared and live on Desktop.',
+      desk: [{ from: 'd_box_size' }, { from: 'd_box_type' }],
+      mob: [{ from: 'm_box' }]
+    },
+    {
+      id: 'panel',
+      label: 'The panel and the hang',
+      blurb: 'The blush box behind “What is in this set”, and the photographs hanging off its leading '
+        + 'edge — on a set’s own product page.',
+      desk: [
+        { from: 'd_list_panel' },
+        {
+          title: 'The panel’s fill and the photograph’s ring',
+          desc: 'Both breakpoints. Leave a colour empty and that element keeps the theme’s own, so a '
+            + 'later theme change still moves it.',
+          keys: ['p_panel_bg', 'p_ring_c', 'p_ph_bg', 'p_sh_a']
+        }
+      ],
+      mob: [{ from: 'm_list_panel' }]
+    },
+    {
+      id: 'rows',
+      label: 'Rows and photographs',
+      blurb: 'One member’s line in the list: its photograph, the space around it and the rule under it. '
+        + 'The row’s height follows the photograph, so the photograph size and the row padding are the '
+        + 'two numbers that decide how tall the whole list is.',
+      desk: [
+        {
+          title: 'Sizes and spacing',
+          desc: 'Laptop values.',
+          keys: ['p_block', 'p_rowpad', 'p_gap', 'p_wgap', 'p_photo', 'p_radius']
+        },
+        {
+          title: 'The hairline between rows',
+          desc: 'Both breakpoints. The hairline itself is switched on under “What is drawn”.',
+          keys: ['p_line_c']
+        }
+      ],
+      mob: [
+        {
+          title: 'Sizes and spacing',
+          desc: 'The phone’s own. It never inherits the laptop’s — the shipped sheet already differs.',
+          keys: ['p_block_m', 'p_rowpad_m', 'p_gap_m', 'p_wgap_m', 'p_photo_m', 'p_radius_m']
+        }
+      ]
+    },
+    {
+      id: 'words',
+      label: 'Words',
+      blurb: 'The heading, and the three lines of every member — brand, name, option — plus the '
+        + 'quantity beside them. There is no font FAMILY here on purpose: this shop has one typographic '
+        + 'system, and a family belongs to a site-wide typography setting rather than to the set.',
+      desk: [
+        {
+          title: 'Sizes and line heights',
+          desc: 'Laptop values. Three of these are stored in TENTHS of a pixel, because 13.5px cannot be '
+            + 'a whole number; the figure beside the slider shows the real one.',
+          keys: ['p_head_f', 'p_head_gap', 'p_brand', 'p_brand_lh', 'p_name', 'p_name_lh', 'p_var', 'p_qty']
+        },
+        {
+          title: 'Weight and colour',
+          desc: 'Both breakpoints. Leave a colour empty and that element keeps the theme’s own ink.',
+          keys: ['p_head_w', 'p_head_c', 'p_lh', 'p_brand_w', 'p_brand_ls', 'p_brand_op', 'p_brand_c',
+            'p_name_w', 'p_name_c', 'p_var_c', 'p_qty_w', 'p_qty_c']
+        }
+      ],
+      mob: [
+        {
+          title: 'Sizes and line heights',
+          desc: 'The phone’s own. The weights and the colours are shared and are set on Desktop.',
+          keys: ['p_head_f_m', 'p_head_gap_m', 'p_brand_m', 'p_brand_lh_m', 'p_name_m', 'p_name_lh_m',
+            'p_var_m', 'p_qty_m']
+        }
+      ]
+    },
+    {
+      id: 'foot',
+      label: 'The fold and the footing',
+      blurb: 'What a long list does past its fold — “Show all” is a disclosure in the MARKUP, so it '
+        + 'works with no script and a crawler still reads every member — and the three money lines under '
+        + 'it. Whether each of them is drawn at all is under “What is drawn”.',
+      desk: [
+        {
+          title: '“Show all”',
+          desc: 'How many rows stand before the fold is under “What is drawn”; these are its size, its '
+            + 'spacing and its colour.',
+          keys: ['p_more', 'p_morept', 'p_morepb', 'p_more_w', 'p_more_c']
+        },
+        {
+          title: 'The footing',
+          desc: 'Bought separately, Set price, You save — and the rule above them.',
+          keys: ['p_foot', 'p_was_f', 'p_price_f', 'p_save_f', 'p_footsp', 'p_footgy', 'p_footgx',
+            'p_foot_w', 'p_was_w', 'p_save_w', 'p_foot_c', 'p_foot_b_c', 'p_save_c', 'p_footrule_c']
+        }
+      ],
+      mob: [
+        {
+          title: '“Show all”',
+          desc: 'The phone’s own sizes.',
+          keys: ['p_more_m', 'p_morept_m', 'p_morepb_m']
+        },
+        {
+          title: 'The footing',
+          desc: 'The phone’s own sizes. The weights and colours are shared and are set on Desktop.',
+          keys: ['p_foot_m', 'p_was_f_m', 'p_price_f_m', 'p_save_f_m', 'p_footsp_m', 'p_footgy_m', 'p_footgx_m']
+        }
+      ]
+    },
+    {
+      id: 'where',
+      label: 'Where the phone sizes start',
+      blurb: 'Three numbers, and they are meant to differ.',
+      desk: [],
+      mob: [{ from: 'm_where' }]
+    }
+  ];
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -287,8 +614,8 @@
       b.classList.toggle('on', b.dataset.go === SCREEN);
     });
 
-    var group = document.querySelector('#nav .nav-group[data-sec="Appearance"]');
-    if (group) group.classList.add('open');
+    var grp = document.querySelector('#nav .nav-group[data-sec="Appearance"]');
+    if (grp) grp.classList.add('open');
 
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
@@ -318,6 +645,10 @@
       if (mine !== seq) return;
       tabs = body.tabs;
       defaults = body.defaults;
+      /* Both are optional on purpose: a server that predates them still draws
+         a working screen, it just re-renders the preview for everything. */
+      live = body.live || null;
+      locales = body.locales || null;
       saved = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { saved[f.key] = f.value; });
@@ -346,15 +677,25 @@
       await api('/set-appearance', { method: 'POST', body: JSON.stringify({ settings: payload }) });
       keys.forEach(function (k) { saved[k] = draft[k]; });
       say('Saved ' + keys.length + ' change(s).');
-      render();
+      renderControls();
     } catch (e) {
       say(explain(e, 'Could not save.'));
     }
   }
 
   /* -------------------------------------------------------------- drawing */
-  function fieldsOf(prefix) {
-    return (tabs || []).filter(function (t) { return t.key.indexOf(prefix) === 0; });
+  function fieldOf(key) {
+    var found = null;
+    (tabs || []).forEach(function (t) {
+      t.fields.forEach(function (f) { if (f.key === key) found = f; });
+    });
+    return found;
+  }
+
+  function tabOf(key) {
+    var found = null;
+    (tabs || []).forEach(function (t) { if (t.key === key) found = t; });
+    return found;
   }
 
   /* What the number beside a slider reads. The three list sizes are stored in
@@ -374,9 +715,9 @@
     return String(v) + u;
   }
 
-  function isShipped(f) {
-    return String(draft[f.key] == null ? '' : draft[f.key])
-      === String(defaults[f.key] == null ? '' : defaults[f.key]);
+  function isShipped(key) {
+    return String(draft[key] == null ? '' : draft[key])
+      === String(defaults[key] == null ? '' : defaults[key]);
   }
 
   function fieldHTML(f) {
@@ -385,7 +726,7 @@
     /* Only drawn when the value is NOT the shipped one, so a fresh screen
        carries no furniture at all and the button's presence is itself the
        answer to "have I moved this". */
-    var reset = isShipped(f) ? ''
+    var reset = isShipped(f.key) ? ''
       : '<button type="button" class="sap-tiny" data-sap-reset="' + esc(f.key) + '">shipped</button>';
 
     if (f.type === 'bool') {
@@ -424,10 +765,251 @@
       + help + '</div>';
   }
 
-  function cardHTML(t) {
-    return '<div class="sap-card"><div class="sap-title">' + esc(t.label) + '</div>'
-      + '<p class="sap-sub">' + esc(t.description) + '</p>'
-      + '<div class="sap-grid">' + t.fields.map(fieldHTML).join('') + '</div></div>';
+  function cardHTML(title, description, fields) {
+    if (!fields.length) return '';
+
+    return '<div class="sap-card"><div class="sap-title">' + esc(title) + '</div>'
+      + (description ? '<p class="sap-sub">' + esc(description) + '</p>' : '')
+      + '<div class="sap-grid">' + fields.map(fieldHTML).join('') + '</div></div>';
+  }
+
+  /* ------------------------------------------------------------ the groups */
+  /* Every key the API sent for this breakpoint, in the API's own order. The
+     prefix is the one thing this screen still reads off a tab key, and it is
+     the same split App\Services\SetAppearance's TABS declares. */
+  function keysOfBreakpoint() {
+    var out = [];
+    var want = open === 'desk' ? 'd_' : 'm_';
+
+    (tabs || []).forEach(function (t) {
+      if (t.key.indexOf(want) !== 0) return;
+      t.fields.forEach(function (f) { out.push(f.key); });
+    });
+
+    return out;
+  }
+
+  function sectionsOf(g) {
+    return (open === 'desk' ? g.desk : g.mob) || [];
+  }
+
+  function keysOfSection(s) {
+    if (s.keys) return s.keys;
+    var t = tabOf(s.from);
+    return t ? t.fields.map(function (f) { return f.key; }) : [];
+  }
+
+  function keysOfGroup(g) {
+    var out = [];
+    sectionsOf(g).forEach(function (s) {
+      keysOfSection(s).forEach(function (k) { out.push(k); });
+    });
+    return out;
+  }
+
+  /** The groups that have anything to show at this breakpoint, plus the count. */
+  function visibleGroups() {
+    var moved = {};
+    movedFromShipped().forEach(function (k) { moved[k] = true; });
+
+    return GROUPS.filter(function (g) { return keysOfGroup(g).length > 0; })
+      .map(function (g) {
+        var n = 0;
+        keysOfGroup(g).forEach(function (k) { if (moved[k]) n++; });
+        return { g: g, moved: n };
+      });
+  }
+
+  /* Anything GROUPS did not place. Normally empty, and pinned empty by
+     SetAppearanceScreenGroupsTest — but drawn rather than dropped, because a
+     control the owner cannot reach and nobody can see is missing is the worst
+     way for this table to be wrong. */
+  function ungrouped() {
+    var placed = {};
+    GROUPS.forEach(function (g) {
+      keysOfGroup(g).forEach(function (k) { placed[k] = true; });
+    });
+
+    return keysOfBreakpoint().filter(function (k) { return !placed[k]; });
+  }
+
+  function groupHTML(entry) {
+    var g = entry.g;
+    var out = '<div class="sap-card"><div class="sap-head">'
+      + '<h2 class="sap-h1">' + esc(g.label) + '</h2>'
+      + (entry.moved
+        ? '<button type="button" class="sap-btn" data-sap-groupreset="' + esc(g.id) + '">Put this group back to shipped ('
+          + entry.moved + ')</button>'
+        : '')
+      + '</div><p class="sap-sub">' + esc(g.blurb) + '</p>';
+
+    if (open === 'mob' && g.id !== 'where') {
+      out += '<div class="sap-note">These are the phone’s own measurements. <b>What is drawn, every '
+        + 'weight and every colour are shared with Desktop</b> and are set on that tab. The phone never '
+        + 'inherits a size from the laptop: the shop already draws several of these differently at the '
+        + 'two widths, so a value that quietly followed the other one would be wrong the day it shipped.'
+        + '</div>';
+    }
+
+    out += '</div>';
+
+    sectionsOf(g).forEach(function (s) {
+      var t = s.from ? tabOf(s.from) : null;
+      var title = s.title || (t ? t.label : '');
+      var desc = s.desc || (t ? t.description : '');
+      var fields = keysOfSection(s).map(fieldOf).filter(Boolean);
+      out += cardHTML(title, desc, fields);
+    });
+
+    return out;
+  }
+
+  /* ── THREE BUILDERS, AND THE PREVIEW IS NOT IN THE FIRST TWO ────────────
+   *
+   * Everything used to be one innerHTML over #content, which threw the iframe
+   * away and rebuilt it from the last server document — so releasing a slider,
+   * switching tab or opening another section RELOADED the preview. That was
+   * invisible while every change re-rendered anyway. It is not invisible now:
+   * the whole point of the live path is that the frame keeps its state, and a
+   * popup the owner has opened in order to size it would have closed on the
+   * first mouseup.
+   *
+   * So the controls redraw on their own and the preview column is left alone
+   * unless something about the FRAME really changed — its width, its language,
+   * or a structural re-render from the server.
+   */
+  function topHTML() {
+    var n = changed().length;
+    var moved = movedFromShipped().length;
+
+    var bar = '<div class="sap-bar' + (n ? ' is-dirty' : '') + '">'
+      + '<span class="sap-count">' + (n ? n + ' unsaved change' + (n === 1 ? '' : 's') : 'No unsaved changes')
+      + ' · ' + (moved ? moved + ' setting' + (moved === 1 ? '' : 's') + ' moved from shipped'
+                            : 'everything is at the value the page shipped with') + '</span>'
+      + '<button type="button" class="sap-btn" data-sap-discard' + (n ? '' : ' disabled') + '>Discard</button>'
+      + '<button type="button" class="sap-btn is-primary" data-sap-save' + (n ? '' : ' disabled') + '>Save</button>'
+      + '</div>';
+
+    var strip = '<div class="sap-tabs">'
+      + '<button type="button" class="sap-tab" data-sap-tab="desk" aria-selected="'
+      + (open === 'desk' ? 'true' : 'false') + '">Desktop</button>'
+      + '<button type="button" class="sap-tab" data-sap-tab="mob" aria-selected="'
+      + (open === 'mob' ? 'true' : 'false') + '">Mobile</button>'
+      + '</div>';
+
+    /* NOT role="tablist". A tablist's children must be role="tab" with
+       aria-selected, and these are buttons that swap the column's contents
+       rather than tab panels with ids to point at — a half-applied tab pattern
+       reads worse to a screen reader than none. `aria-current` is the honest
+       one: this is the item in the set you are on. */
+    var nav = '<div class="sap-nav" aria-label="Sections">'
+      + visibleGroups().map(function (e) {
+        return '<button type="button" class="sap-g" data-sap-group="' + esc(e.g.id) + '"'
+          + ' aria-current="' + (e.g.id === group ? 'true' : 'false') + '">' + esc(e.g.label)
+          + (e.moved ? '<span class="sap-gn">' + e.moved + '</span>' : '') + '</button>';
+      }).join('') + '</div>';
+
+    return bar + strip + nav;
+  }
+
+  function leftHTML() {
+    /* The open group has to exist at this breakpoint: "What is drawn" is
+       Desktop-only and "Where the phone sizes start" is Mobile-only, so
+       switching the tab can strand the selection. Fall to the first rather
+       than drawing an empty column. */
+    var vis = visibleGroups();
+    var here = vis.filter(function (e) { return e.g.id === group; });
+    if (!here.length && vis.length) { group = vis[0].g.id; here = [vis[0]]; }
+
+    var body = here.length ? groupHTML(here[0]) : '';
+
+    var loose = ungrouped().map(fieldOf).filter(Boolean);
+    if (loose.length) {
+      body += cardHTML('Not yet grouped',
+        'These controls arrived from the server and this screen\u2019s layout table does not place them. '
+        + 'They are drawn here so nothing can go missing; tell a developer.', loose);
+    }
+
+    /* Prev/next at the foot of the column, so a long section does not have to
+       be scrolled back up out of to reach the next one. */
+    var at = -1;
+    vis.forEach(function (e, i) { if (e.g.id === group) at = i; });
+
+    var steps = '<div class="sap-card"><div class="sap-steps">'
+      + (at > 0 ? '<button type="button" class="sap-btn" data-sap-group="' + esc(vis[at - 1].g.id)
+        + '">\u2190 ' + esc(vis[at - 1].g.label) + '</button>' : '')
+      + (at >= 0 && at < vis.length - 1
+        ? '<button type="button" class="sap-btn" data-sap-group="' + esc(vis[at + 1].g.id)
+          + '">' + esc(vis[at + 1].g.label) + ' \u2192</button>' : '')
+      + '</div></div>';
+
+    var where = '<div class="sap-card"><div class="sap-title">Where these controls land on the shop</div>'
+      + '<p class="sap-path"><b>Set row on the cart page</b> \u2014 the row a SET sits in on /cart, and no '
+      + 'other row in the basket.<br>'
+      + '<b>Set box</b> \u2014 the circles and the \u201cWhat\u2019s inside\u201d popup under a set\u2019s name in the '
+      + 'cart drawer, on the cart page, in the checkout summary, in the browsed rail and on an order\u2019s '
+      + 'detail page.<br>'
+      + '<b>Set list</b> \u2014 \u201cWhat is in this set\u201d in the buy column of a set\u2019s own product page.</p></div>';
+
+    return body + steps + where;
+  }
+
+  function sideHTML() {
+    var localeDir = 'ltr';
+    (locales || []).forEach(function (l) { if (l.code === pvLocale) localeDir = l.dir; });
+
+    var langs = (locales || []).map(function (l) {
+      return '<button type="button" class="sap-btn' + (pvLocale === l.code ? ' is-primary' : '') + '"'
+        + ' data-sap-loc="' + esc(l.code) + '" lang="' + esc(l.code) + '">' + esc(l.native) + '</button>';
+    }).join('');
+
+    var fast = live ? Object.keys(live.fields).length : 0;
+
+    return '<div class="sap-card"><div class="sap-title">Live preview</div>'
+      + '<p class="sap-sub">What you have typed, never what is saved \u2014 nothing here writes anything. '
+      + 'The real partials, in a frame, so the phone and desktop sizes resolve against the frame\u2019s '
+      + 'width the way they do on a real screen.</p>'
+      + '<div class="sap-widths">'
+      + '<button type="button" class="sap-btn' + (frameW === 390 ? ' is-primary' : '') + '" data-sap-w="390">Phone \u00b7 390</button>'
+      + '<button type="button" class="sap-btn' + (frameW === 760 ? ' is-primary' : '') + '" data-sap-w="760">Tablet \u00b7 760</button>'
+      + '<button type="button" class="sap-btn' + (frameW === 1280 ? ' is-primary' : '') + '" data-sap-w="1280">Desktop \u00b7 1280</button>'
+      + (langs ? '<span class="sap-sp"></span>' + langs : '')
+      + '</div>'
+      /* THE STAGE TAKES THE PREVIEW'S DIRECTION, and it is not cosmetic. When
+         the frame is wider than the panel the stage scrolls, and where that
+         scroll STARTS is decided by the stage's own direction — so a mirrored
+         preview inside a left-to-right stage opens showing its empty left
+         margin with every word off the right-hand edge. Measured: the Arabic
+         panel at a 760px frame in a 648px column. One attribute, no script. */
+      + '<div class="sap-stage"' + (localeDir === 'rtl' ? ' dir="rtl"' : '')
+      + '><iframe class="sap-frame" id="sap-frame" title="Set preview" '
+      + 'style="width:' + frameW + 'px" sandbox="allow-scripts"></iframe></div>'
+      + '<p class="sap-live">The top block is a set line beside an ordinary one, so the Set-row controls '
+      + 'can be seen landing on one and not the other. Press \u201cWhat\u2019s inside\u201d: the popup really opens. '
+      + 'Scroll the frame sideways if the width you picked is wider than this panel.<br><br>'
+      /* `fast` is 0 only on a server that predates the live map — the screen
+         still works there, it just redraws everything through the endpoint, and
+         saying "0 of these controls" would read as a broken feature rather than
+         an older back end. */
+      + (fast
+        ? fast + ' of these controls redraw the frame as you drag them, with no request at all \u2014 they '
+          + 'are single custom properties and the shop is driven by those very properties. The rest change '
+          + 'the STRUCTURE of the stylesheet (something switched off, the fan\u2019s cap, a breakpoint, the '
+          + 'fold, the set row\u2019s own padding) and re-render here a moment after you let go.'
+        : 'This server does not send the live map yet, so every control re-renders the frame through the '
+          + 'endpoint a moment after you let go.') + '</p>'
+      + '</div>';
+  }
+
+  /** The controls only. The preview column, and the frame in it, are untouched. */
+  function renderControls() {
+    var top = document.querySelector('.sap-top');
+    var left = document.querySelector('.sap-left');
+
+    if (!top || !left) { render(); return; }
+
+    top.innerHTML = topHTML();
+    left.innerHTML = leftHTML();
   }
 
   function render() {
@@ -435,7 +1017,7 @@
     if (!host || (document.querySelector('#ptitle') || {}).textContent !== 'Set') return;
 
     if (busy && !tabs) {
-      host.innerHTML = '<div class="sap-wrap"><div class="sap-card">Loading…</div></div>';
+      host.innerHTML = '<div class="sap-wrap"><div class="sap-card">Loading\u2026</div></div>';
       return;
     }
 
@@ -448,70 +1030,100 @@
       return;
     }
 
-    var n = changed().length;
-    var moved = movedFromShipped().length;
-
-    var strip = '<div class="sap-tabs">'
-      + '<button type="button" class="sap-tab" data-sap-tab="desk" aria-selected="'
-      + (open === 'desk' ? 'true' : 'false') + '">Desktop</button>'
-      + '<button type="button" class="sap-tab" data-sap-tab="mob" aria-selected="'
-      + (open === 'mob' ? 'true' : 'false') + '">Mobile</button>'
-      + '</div>';
-
-    var bar = '<div class="sap-bar' + (n ? ' is-dirty' : '') + '">'
-      + '<span class="sap-count">' + (n ? n + ' unsaved change' + (n === 1 ? '' : 's') : 'No unsaved changes')
-      + ' · ' + (moved ? moved + ' setting' + (moved === 1 ? '' : 's') + ' moved from shipped'
-                            : 'everything is at the value the page shipped with') + '</span>'
-      + '<button type="button" class="sap-btn" data-sap-discard' + (n ? '' : ' disabled') + '>Discard</button>'
-      + '<button type="button" class="sap-btn is-primary" data-sap-save' + (n ? '' : ' disabled') + '>Save</button>'
-      + '</div>';
-
-    var cards = fieldsOf(open === 'desk' ? 'd_' : 'm_').map(cardHTML).join('');
-
-    var mobNote = open === 'mob'
-      ? '<div class="sap-note">These are the phone’s own measurements. <b>What is drawn, every '
-        + 'weight and every colour are shared with Desktop</b> and are set on that tab — an element '
-        + 'switched off there is off here too. The phone never inherits a size from the laptop: the shop '
-        + 'already draws several of these differently at the two widths, so a value that quietly followed '
-        + 'the other one would be wrong the day it shipped.</div>'
-      : '';
-
-    var preview = '<div class="sap-card"><div class="sap-title">Live preview</div>'
-      + '<p class="sap-sub">Drawn from what you have typed, not from what is saved — nothing here writes '
-      + 'anything. It is the real set row the cart and the checkout draw AND the real “What is in this '
-      + 'set” panel the product page draws, in a frame, so the phone and desktop sizes resolve against '
-      + 'the frame’s width the way they do on a real screen. The third block is the buy column, capped '
-      + 'at the measure it really gets — 346px on a phone, 582px on a laptop. '
-      + 'Press “What’s inside” in the frame: the popup really opens.</p>'
-      + '<div class="sap-widths">'
-      + '<button type="button" class="sap-btn' + (frameW === 390 ? ' is-primary' : '') + '" data-sap-w="390">Phone · 390</button>'
-      + '<button type="button" class="sap-btn' + (frameW === 760 ? ' is-primary' : '') + '" data-sap-w="760">Tablet · 760</button>'
-      + '<button type="button" class="sap-btn' + (frameW === 1280 ? ' is-primary' : '') + '" data-sap-w="1280">Desktop · 1280</button>'
-      + '</div>'
-      + '<div class="sap-stage"><iframe class="sap-frame" id="sap-frame" title="Set preview" '
-      + 'style="width:' + frameW + 'px;height:620px" sandbox="allow-scripts"></iframe></div></div>';
-
-    var where = '<div class="sap-card"><div class="sap-title">Where these controls land on the shop</div>'
-      + '<p class="sap-path"><b>Cart page rows</b> — every product row on /cart, set or not. '
-      + 'Their padding was hard-coded in the stylesheet until this release.<br>'
-      + '<b>Set box</b> — the circles and the “What’s inside” popup under a set’s name in the '
-      + 'cart drawer, on the cart page, in the checkout summary, in the browsed rail and on an order’s '
-      + 'detail page.<br>'
-      + '<b>Set list</b> — “What is in this set” in the buy column of a set’s own product page.</p>'
-      + '<p class="sap-path">There is no font FAMILY here on purpose: this shop has one typographic '
-      + 'system, and a family belongs to a site-wide typography setting rather than to the set. Sizes and '
-      + 'weights are safe and are all here.</p></div>';
-
-    host.innerHTML = '<div class="sap-wrap">' + bar + strip + mobNote + cards + preview + where + '</div>';
+    host.innerHTML = '<div class="sap-wrap">'
+      + '<div class="sap-top">' + topHTML() + '</div>'
+      + '<div class="sap-body">'
+      + '<div class="sap-left">' + leftHTML() + '</div>'
+      + '<div class="sap-side">' + sideHTML() + '</div>'
+      + '</div></div>';
 
     var frame = document.querySelector('#sap-frame');
-    if (frame && pvHtml) frame.srcdoc = pvHtml;
+    if (frame && pvHtml) {
+      /* A new element every full render, so the window we were posting into is
+         gone and the document will announce itself again. */
+      pvWin = null;
+      frame.srcdoc = pvHtml;
+    }
   }
 
-  /* The preview, redrawn from the BUFFER and debounced. Debounced because a
-     slider fires `input` on every pixel of the drag and a request per pixel is
-     a request per pixel; 260ms is below the point a redraw reads as a response
-     to something else. */
+  /* ═══════════════════════════════ the live overlay ════════════════════════
+   *
+   * The whole set of custom properties, rebuilt from the buffer and posted into
+   * the frame. Rebuilt WHOLE rather than patched, and emitted in the order
+   * SetAppearanceLiveMap gives, because the sheet it lands on top of declares
+   * several of these twice — once at the laptop and once inside a media query —
+   * and whichever the overlay writes LAST is the one that wins inside that
+   * query. Emitting the phone block before the laptop one would pin every phone
+   * value to its laptop one the moment a slider moved, which is precisely the
+   * distinction this screen exists to keep.
+   *
+   * It costs a couple of hundred string joins per input event and no request.
+   */
+  function declValue(f, v) {
+    if (f.c) {
+      var hex = String(v == null ? '' : v).trim();
+      if (/^#?[0-9a-fA-F]{6}$/.test(hex)) return hex.charAt(0) === '#' ? hex : '#' + hex;
+
+      /* EMPTY, OR HALF-TYPED. `initial` makes a custom property
+         guaranteed-invalid, which is the one thing that hands the partial's own
+         `var(--x, <fallback>)` back. Leaving the declaration out would not do
+         it: the sheet underneath may still declare the property, and a
+         declared-but-empty custom property is a VALID value that beats the
+         fallback — the exact trap SetAppearance::colourVar() documents. */
+      return 'initial';
+    }
+
+    var n = Math.round(Number(v));
+    if (!isFinite(n)) return '';
+
+    return (f.n ? '-' : '') + (f.d === 1 ? String(n) : String(n / f.d)) + f.s;
+  }
+
+  function overlayCss() {
+    if (!live || !draft) return '';
+
+    var buckets = live.blocks.map(function () { return []; });
+
+    Object.keys(live.fields).forEach(function (k) {
+      var f = live.fields[k];
+      if (!(k in draft)) return;
+      var v = declValue(f, draft[k]);
+      if (v === '') return;
+      buckets[f.b].push(f.p + ':' + v);
+    });
+
+    var css = '';
+
+    live.blocks.forEach(function (b, i) {
+      if (!buckets[i].length) return;
+
+      var block = b.sel + '{' + buckets[i].join(';') + '}';
+
+      if (b.mq) {
+        var w = Math.round(Number(draft[b.mq]));
+        if (!isFinite(w)) return;
+        block = '@media (max-width:' + w + 'px){' + block + '}';
+      }
+
+      css += block;
+    });
+
+    return css;
+  }
+
+  function pushOverlay() {
+    if (!pvWin) return;
+    try { pvWin.postMessage({ kbbSetLive: 'css', css: overlayCss() }, '*'); } catch (e) {}
+  }
+
+  /* Does this key need the server, or can the frame draw it itself? */
+  function isFast(key) {
+    return !!(live && live.fields && Object.prototype.hasOwnProperty.call(live.fields, key));
+  }
+
+  /* The preview, redrawn from the BUFFER and debounced. Only the 38 structural
+     controls come through here now; 260ms is below the point a redraw reads as
+     a response to something else. */
   function schedulePreview() {
     if (pvTimer) clearTimeout(pvTimer);
     pvTimer = setTimeout(refreshPreview, 260);
@@ -523,20 +1135,40 @@
     var frame = document.querySelector('#sap-frame');
     if (!frame) return;
 
+    var mine = ++pvSeq;
+
     try {
       var r = await fetch(BASE + '/set-appearance/preview', {
         method: 'POST',
         credentials: 'same-origin',
         headers: Object.assign(headers(), { Accept: 'text/html' }),
-        body: JSON.stringify({ settings: draft })
+        body: JSON.stringify({ settings: draft, locale: pvLocale })
       });
 
       if (!r.ok) return;
 
-      pvHtml = await r.text();
+      var html = await r.text();
+      if (mine !== pvSeq) return;
+
+      pvHtml = html;
+      pvWin = null;
       frame.srcdoc = pvHtml;
     } catch (e) { /* a preview that cannot be drawn is not an error worth a toast */ }
   }
+
+  /* The frame says when it is ready, and this is the only thing that ever
+     answers it. `e.source` identity and not `e.origin`: a sandboxed srcdoc
+     frame has an OPAQUE origin, which serialises to the string "null", and
+     "null" is also what a file:// page and any other sandboxed frame reports —
+     so the origin proves nothing and the window handle proves everything. */
+  window.addEventListener('message', function (e) {
+    var frame = document.querySelector('#sap-frame');
+    if (!frame || e.source !== frame.contentWindow) return;
+    if (!e.data || typeof e.data !== 'object' || e.data.kbbSetLive !== 'ready') return;
+
+    pvWin = frame.contentWindow;
+    pushOverlay();
+  });
 
   /* ------------------------------------------------------------- handlers */
   function onScreen(el) {
@@ -548,20 +1180,60 @@
     if (!onScreen(t)) return;
 
     var tab = t.closest('[data-sap-tab]');
-    if (tab) { open = tab.dataset.sapTab; render(); return; }
+    if (tab) { open = tab.dataset.sapTab; renderControls(); return; }
 
+    var g = t.closest('[data-sap-group]');
+    if (g) { group = g.dataset.sapGroup; renderControls(); return; }
+
+    /* The width is the ONE thing on this card that really needs a new frame:
+       it is the viewport the media queries are answering. */
     var w = t.closest('[data-sap-w]');
     if (w) { frameW = Number(w.dataset.sapW); render(); return; }
 
+    var loc = t.closest('[data-sap-loc]');
+    if (loc) {
+      /* The wording is a SERVER decision — every string in both partials goes
+         through __() — so this one really does re-render. */
+      pvLocale = loc.dataset.sapLoc;
+      render();
+      refreshPreview();
+      return;
+    }
+
     var reset = t.closest('[data-sap-reset]');
-    if (reset) { draft[reset.dataset.sapReset] = defaults[reset.dataset.sapReset]; render(); schedulePreview(); return; }
+    if (reset) {
+      draft[reset.dataset.sapReset] = defaults[reset.dataset.sapReset];
+      renderControls();
+      if (isFast(reset.dataset.sapReset)) { pushOverlay(); } else { schedulePreview(); }
+      return;
+    }
+
+    var groupReset = t.closest('[data-sap-groupreset]');
+    if (groupReset) {
+      var target = null;
+      GROUPS.forEach(function (x) { if (x.id === groupReset.dataset.sapGroupreset) target = x; });
+      if (!target) return;
+
+      var keys = keysOfGroup(target).filter(function (k) { return !isShipped(k); });
+      if (!keys.length) return;
+
+      if (!window.confirm('Put ' + keys.length + ' setting(s) in “' + target.label
+        + '” back to the value the page shipped with?\n\nNothing is saved until you press Save.')) return;
+
+      keys.forEach(function (k) { draft[k] = defaults[k]; });
+      renderControls();
+      pushOverlay();
+      if (keys.some(function (k) { return !isFast(k); })) schedulePreview();
+      return;
+    }
 
     if (t.closest('[data-sap-save]')) { save(); return; }
 
     if (t.closest('[data-sap-discard]')) {
       if (!window.confirm('Put back ' + changed().length + ' change(s)?')) return;
       startDraft();
-      render();
+      renderControls();
+      pushOverlay();
       schedulePreview();
       return;
     }
@@ -578,7 +1250,8 @@
       draft[swatch.dataset.sapSwatch] = swatch.value;
       var box = document.querySelector('[data-sap-key="' + swatch.dataset.sapSwatch + '"]');
       if (box) box.value = swatch.value;
-      schedulePreview();
+      refreshBar();
+      if (isFast(swatch.dataset.sapSwatch)) { pushOverlay(); } else { schedulePreview(); }
       return;
     }
 
@@ -601,8 +1274,7 @@
       draft[key] = Number(f.value);
       var out = document.querySelector('[data-sap-val="' + key + '"]');
       if (out) {
-        var field = null;
-        (tabs || []).forEach(function (t) { t.fields.forEach(function (x) { if (x.key === key) field = x; }); });
+        var field = fieldOf(key);
         if (field) out.textContent = shown(field);
       }
     } else {
@@ -628,7 +1300,14 @@
      * go brings the per-field "shipped" buttons up to date.
      */
     refreshBar();
-    schedulePreview();
+
+    /*
+     * AND THE PREVIEW IS MOVED HERE, ON EVERY PIXEL, FOR 160 OF THE 198.
+     * pushOverlay() is a string join and a postMessage — no request, no
+     * document swap, and the popup the owner may have open in the frame stays
+     * open. Only the structural controls fall through to the debounce.
+     */
+    if (isFast(key)) { pushOverlay(); } else { schedulePreview(); }
   });
 
   /* A slider fires `change` on release and a checkbox and a colour box fire it
@@ -636,7 +1315,15 @@
   document.addEventListener('change', function (e) {
     if (!onScreen(e.target)) return;
     if (!(e.target.closest && e.target.closest('[data-sap-key]'))) return;
-    render();
+
+    /* renderControls() AND NOT render(): `change` fires on a slider's RELEASE,
+       and a full render replaces the iframe with the last document the server
+       sent — which closes a popup the owner opened in order to size it, and
+       throws away the live overlay he has just been dragging. Measured: the
+       popup shut on every mouseup. The preview column is already correct; only
+       the per-field “shipped” buttons and the counts need redrawing. */
+    renderControls();
+    pushOverlay();
   });
 
   function refreshBar() {
@@ -649,7 +1336,7 @@
 
     bar.classList.toggle('is-dirty', n > 0);
     count.textContent = (n ? n + ' unsaved change' + (n === 1 ? '' : 's') : 'No unsaved changes')
-      + ' \u00b7 ' + (moved ? moved + ' setting' + (moved === 1 ? '' : 's') + ' moved from shipped'
+      + ' · ' + (moved ? moved + ' setting' + (moved === 1 ? '' : 's') + ' moved from shipped'
                             : 'everything is at the value the page shipped with');
 
     var save = document.querySelector('[data-sap-save]');
