@@ -496,3 +496,89 @@ it('composes the newsletter fallback into a sentence rather than a repeated word
         ->and((bool) preg_match('/(\S+)\s+\1(\s|$)/u', $withName))
         ->toBeFalse($withName);
 });
+
+/* ══════════════════ 7. the door the CONTENT fix opened, and closed ══════════════════ */
+
+it('cleans an Arabic product-tab body typed on the standalone screen', function () {
+    /*
+     * STORED XSS, OPENED BY THIS LANE'S OWN FIX AND CLOSED IN THE SAME ROUND.
+     *
+     * partials/product-tabs.blade.php prints a tab body with {!! !!} twice --
+     * the desktop panel and the mobile accordion. TranslationStore::put()'s
+     * sanitiser was scoped to ONE group, 'products', so `product_tabs.body` was
+     * never cleaned by it.
+     *
+     * That was inert only because of a second defect: TranslationsApiController
+     * resolves a group by walking TranslationEstimate::CONTENT, ProductTab was
+     * not on it, and `?group=product_tabs` resolved to null. A dead filter
+     * hiding a live hole -- the exact shape CLAUDE.md records under "a broken
+     * filter can hide a second bug", where fixing Api\ProductController's
+     * status filter turned it into a 500.
+     *
+     * Putting ProductTab on CONTENT so the owner could translate a tab is what
+     * made the filter live. MEASURED BEFORE THE FIX: this same request answered
+     * 200 and stored `<script>alert(1)</script>` verbatim.
+     *
+     * MUTATION: drop the 'product_tabs' row from
+     * TranslationStore::RICH_BY_GROUP and this is red with the script tag in
+     * the stored value. Ran it.
+     */
+    ArabicShop::on();
+
+    $admin = \App\Models\AdminUser::create([
+        'name' => 'Lane AR owner',
+        'email' => 'lane-ar-'.uniqid().'@example.com',
+        'password' => bcrypt('secret'),
+        'role' => 'owner',
+    ]);
+
+    $product = \App\Models\Product::create([
+        'name' => 'Tabbed', 'slug' => 'ar-tab-'.uniqid(), 'price' => 100,
+        'status' => 'publish', 'is_visible' => true,
+    ]);
+
+    $tab = \App\Models\ProductTab::create([
+        'product_id' => $product->id, 'source_key' => 'ar-'.uniqid(),
+        'title' => 'How we chose it', 'body' => '<p>ok</p>', 'position' => 1, 'is_enabled' => true,
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->postJson('/admin-api/translations', [
+            'locale' => 'ar', 'group' => 'product_tabs', 'item_id' => $tab->id, 'field' => 'body',
+            'value' => '<p>مرحبا</p><script>alert(1)</script><img src=x onerror=alert(2)>',
+        ])->assertOk();
+
+    $stored = (string) \App\Models\Translation::query()
+        ->where('group', 'product_tabs')->where('field', 'body')
+        ->where('item_id', $tab->id)->value('value');
+
+    expect(str_contains($stored, '<script'))
+        ->toBeFalse('a script tag reached a column the product page prints raw: '.$stored)
+        ->and(str_contains($stored, 'onerror'))
+        ->toBeFalse('an inline event handler survived: '.$stored)
+        // and the legitimate Arabic is still there, so the fix is a sanitiser
+        // and not a rejection.
+        ->and(str_contains($stored, 'مرحبا'))
+        ->toBeTrue('the sanitiser ate the translation as well: '.$stored);
+});
+
+it('still leaves the pages and posts gap exactly where it was found', function () {
+    /*
+     * NOT WIDENED, ON PURPOSE. `pages.content` and `posts.body` are printed raw
+     * too and are still not on RICH_BY_GROUP. Their ENGLISH is stored as
+     * trusted operator HTML by a decision older than this lane, so cleaning
+     * only the Arabic would render one document differently in its two
+     * languages -- ContentPageEditorTest names that gap and asserts its shape.
+     *
+     * ProductTab had no such asymmetry, which is why it could be closed here
+     * and these cannot: ProductTabsApiController already runs RichText::clean()
+     * over the English body.
+     *
+     * This exists so that widening the map to pages or posts is a deliberate
+     * act with a test to delete, rather than a quiet afternoon's tidy-up.
+     */
+    expect(array_keys(TranslationStore::RICH_BY_GROUP))
+        ->toBe(['products', 'product_tabs'],
+            'RICH_BY_GROUP has grown or shrunk -- if pages/posts are now sanitised, '
+            .'ContentPageEditorTest has a case to delete and their English needs the same treatment');
+});
