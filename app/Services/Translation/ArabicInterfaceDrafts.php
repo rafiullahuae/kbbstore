@@ -97,6 +97,25 @@ namespace App\Services\Translation;
  * English, and they are named in the lane report for the owner to commission.
  *
  * Everything else is here.
+ *
+ * ── ONE CONSEQUENCE OF THAT, WHICH THE OWNER SHOULD BE TOLD ────────────────
+ *
+ * TranslationEstimate::translatedSlots() counts a slot as done once ANY row
+ * exists for it, draft or published -- deliberately, because re-sending text
+ * that already has a translation is money spent overwriting work. So once this
+ * file's 1,018 rows are in, the interface all but disappears from the
+ * machine-translation quote: what is left for `group=ui` is exactly these eight
+ * paragraphs, 5,367 characters, about USD 0.11 at Google's published rate.
+ *
+ * That is a saving -- docs/BILINGUAL-PLAN.md costed the whole interface as
+ * machine work and it no longer is -- but it leaves a sharp edge: the only
+ * interface strings the machine will now offer to translate are precisely the
+ * eight this file judged a machine must not write. All eight are plain text, so
+ * MachineTranslationRunner::isMachineSafe() does not refuse them. Nothing is
+ * unsafe about it -- the output would arrive as a draft and want approving like
+ * any other -- but "Translate everything" pointed at this shop's interface now
+ * means "machine-translate the eight SEO paragraphs", and the owner should know
+ * that before he presses it.
  */
 final class ArabicInterfaceDrafts
 {
