@@ -53,6 +53,7 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\SiteSearchApiController;
 use App\Models\AdminUser;
+use App\Services\SetAppearance;
 use App\Services\AccountPanel;
 use App\Services\Banners;
 use App\Services\BuildMyRoutine;
@@ -607,6 +608,22 @@ function ehSchemaModules(): array
          * the storefront never calls it (Banners' own header says why).
          */
         'cards_banner' => ['schema' => Banners::SCHEMA, 'tabs' => Banners::TABS, 'policy' => Banners::POLICY, 'overrides' => Banners::overrides()],
+
+        /*
+         * ── LANE SA: Appearance → Set, enrolled in the same round it shipped ──
+         *
+         * Lane BN's report once said its module "passes as written" and left
+         * the line to the integrator. A module that passes as written is a
+         * module nobody has run the guard over, and the round before that found
+         * `review_capsule_style` drawn twice over one settings row by doing
+         * exactly this. So it goes in here, with the branch that adds it.
+         *
+         * 157 fields across ten tabs, `store` defaulted to `module` on every
+         * one of them — nothing on this screen goes through the generic
+         * settings endpoint, so missingRules() has nothing to find and finding
+         * nothing is the point rather than an exemption.
+         */
+        'set_appearance' => ['schema' => SetAppearance::SCHEMA, 'tabs' => SetAppearance::TABS, 'policy' => SetAppearance::POLICY],
     ];
 }
 

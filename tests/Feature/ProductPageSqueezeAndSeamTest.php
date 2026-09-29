@@ -222,17 +222,29 @@ it('ships the squeezed sizes, on the desktop and on the phone', function () {
      */
     $html = sqzGet(sqzSet(14000, [[sqzProduct('Size toner', 9000), 1]])->slug);
 
-    expect(str_contains($html, 'grid-template-columns:40px minmax(0,1fr) auto'))->toBeTrue(
+    /* ▲ ADVANCED BY LANE SA, AND THE RENDERED PAGE DID NOT MOVE.
+         The panel's numbers are now `var(--ksl-x, <the literal they have always
+         been>)` so that Appearance -> Set can change them, and NOTHING declares
+         those properties anywhere else — a shop that has moved no slider emits
+         no override block at all, so the fallbacks ARE what the page draws.
+         Measured in Chromium at both widths after the change: the photograph is
+         40px at 1280 and 36px at 390, the row padding 6px and 5px, the name
+         13.5px and 13px — the same six numbers as before.
+         The assertion is advanced rather than deleted: it is still the only
+         thing that says the row is photograph / words / quantity in that inline
+         order, and it still fails if somebody reorders the tracks or drops the
+         phone's own size. (Lane SA) */
+    expect(str_contains($html, 'grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr) auto'))->toBeTrue(
         'The desktop row is a 40px thumbnail, down from 56.'
     );
-    expect(str_contains($html, 'padding:6px 0'))->toBeTrue(
+    expect(str_contains($html, 'padding:var(--ksl-rowpad,6px) 0'))->toBeTrue(
         'The desktop row is padded 6px, down from 11.'
     );
-    expect(str_contains($html, 'grid-template-columns:36px minmax(0,1fr) auto'))->toBeTrue(
+    expect(str_contains($html, '--ksl-ph:36px'))->toBeTrue(
         'The phone row is a 36px thumbnail, down from 48.'
     );
-    expect(str_contains($html, '.ksl-ph{width:36px;height:36px'))->toBeTrue(
-        "A phone's thumbnail must be smaller than a desktop's."
+    expect(str_contains($html, '--ksl-rowpad:5px'))->toBeTrue(
+        "A phone's row must be padded less than a desktop's."
     );
 });
 

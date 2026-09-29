@@ -319,6 +319,16 @@ final class AdminCapabilities
         // The RULES entry below carries the full argument.
         'cartpage.manage' => ['owner', 'manager', 'editor'],
 
+        // The set box's own appearance — the fanned member circles, the
+        // "What's inside" popup and the saving, on the cart drawer, the cart
+        // page, the checkout summary, the browsed rail, an order's detail page
+        // and the buy column of a set's product page, with a separate value per
+        // breakpoint for every measurement. Storefront appearance again, so the
+        // same three roles; its own capability for the same reason as the line
+        // above, which is that narrowing one must not silently narrow the other
+        // from a different file.                                     (Lane SA)
+        'setappearance.manage' => ['owner', 'manager', 'editor'],
+
         // The checkout page's spacing — the two column widths, the page
         // padding and the padding inside each of the four numbered sections,
         // stored separately for desktop and for mobile. Storefront appearance
@@ -1221,6 +1231,15 @@ final class AdminCapabilities
         ['*', 'admin-api/cart-page/**', 'cartpage.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/checkout-page', 'checkoutpage.manage'],
+        /*
+         * Appearance → Set. The '/**' sibling IS needed here: the preview is
+         * 'admin-api/set-appearance/preview', which the exact line above it
+         * does not match — and an endpoint that renders a Blade from a POST
+         * body left outside the map would be reachable by any signed-in admin
+         * whatever their role.                                       (Lane SA)
+         */
+        ['*', 'admin-api/set-appearance', 'setappearance.manage'],
+        ['*', 'admin-api/set-appearance/**', 'setappearance.manage'],
         ['*', 'admin-api/slim-footer', 'slimfooter.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/site-layout', 'sitelayout.manage'],

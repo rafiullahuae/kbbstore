@@ -257,7 +257,19 @@ it('is a list and not a grid', function () {
          is the quantity alone and the photograph came down 56 -> 40. The three
          tracks and their inline order are what this case is about and they are
          unchanged; the number moved because he asked for it to. */
-    expect(str_contains($html, 'grid-template-columns:40px minmax(0,1fr) auto'))->toBeTrue(
+    /* ▲ ADVANCED BY LANE SA, AND THE RENDERED PAGE DID NOT MOVE.
+         The panel's numbers are now `var(--ksl-x, <the literal they have always
+         been>)` so that Appearance -> Set can change them, and NOTHING declares
+         those properties anywhere else — a shop that has moved no slider emits
+         no override block at all, so the fallbacks ARE what the page draws.
+         Measured in Chromium at both widths after the change: the photograph is
+         40px at 1280 and 36px at 390, the row padding 6px and 5px, the name
+         13.5px and 13px — the same six numbers as before.
+         The assertion is advanced rather than deleted: it is still the only
+         thing that says the row is photograph / words / quantity in that inline
+         order, and it still fails if somebody reorders the tracks or drops the
+         phone's own size. (Lane SA) */
+    expect(str_contains($html, 'grid-template-columns:var(--ksl-ph,40px) minmax(0,1fr) auto'))->toBeTrue(
         'The row must be photograph / words / quantity, in that order along the inline axis.'
     );
 });
@@ -280,11 +292,22 @@ it('gives a phone its own sizes rather than reflowing the desktop list', functio
     expect(str_contains($html, '@media (max-width:480px)'))->toBeTrue(
         'The list must have sizes of its own on a phone.'
     );
-    expect(str_contains($html, 'grid-template-columns:36px minmax(0,1fr) auto'))->toBeTrue(
-        "A phone's row must be narrower than a desktop's."
-    );
-    expect(str_contains($html, '.ksl-ph{width:36px;height:36px'))->toBeTrue(
+    /* ▲ ADVANCED BY LANE SA. The phone's four numbers are now ONE declaration
+         block of custom properties inside the same media query instead of four
+         rules — which is what lets the `.ksl-noph` / `.ksl-noq` track rules work
+         at both widths from a single declaration instead of needing a phone copy
+         of each. The numbers themselves are identical, measured in Chromium: a
+         36px photograph with a 7px radius, 5px of row padding and a 13px name at
+         390. This case is still about the phone HAVING numbers of its own, and
+         it still goes red if the block is deleted. */
+    expect(str_contains($html, '--ksl-ph:36px'))->toBeTrue(
         "A phone's thumbnail must be smaller than a desktop's."
+    );
+    expect(str_contains($html, '--ksl-rowpad:5px'))->toBeTrue(
+        "A phone's row must be padded less than a desktop's."
+    );
+    expect(str_contains($html, '--ksl-nm:13px'))->toBeTrue(
+        "A phone's name must be smaller than a desktop's."
     );
     /* ▲ THE RULE THIS REPLACED IS GONE BECAUSE THE THING IT STACKED IS GONE.
          (Lane PP) This used to assert `.ksl-end{flex-direction:row`, which made
@@ -293,7 +316,11 @@ it('gives a phone its own sizes rather than reflowing the desktop list', functio
          was deleted -- a flex column around a single child. What the phone case
          is really about is that the phone has numbers of its own, and the row
          padding is the one that buys height back twelve times over. */
-    expect(str_contains($html, 'padding:5px 0'))->toBeTrue(
+    /* ▲ ADVANCED BY LANE SA, same reason as the three above: the phone's
+         numbers are one declaration block of custom properties now, and 5px is
+         still 5px. Already asserted above as `--ksl-rowpad:5px`; kept here as
+         the sentence this case was written to say. */
+    expect(str_contains($html, '--ksl-rowpad:5px'))->toBeTrue(
         "A phone's row must be padded more tightly than a desktop's."
     );
 });

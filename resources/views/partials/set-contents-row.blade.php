@@ -62,7 +62,20 @@
     $kslBrand = (string) ($kbbSetPageMember['brand'] ?? '');
     $kslImage = $kbbSetPageMember['image'] ?? null;
     $kslSrcset = $kslImage ? ImageVariants::srcsetFor($kslImage) : '';
-    $kslLink = ($kbbSetPageMember['visible'] ?? false) && ($kbbSetPageMember['url'] ?? null);
+    /*
+     * `p_link_on` — Appearance -> Set -> Desktop -> "Link each member to its own
+     * page". It ships ON, which is what this list does today.
+     *
+     * IT NARROWS AND NEVER WIDENS. `visible` still has to be true and there
+     * still has to be a url, so switching the control on can never produce a
+     * link to a draft — the fail-closed property SetContents::memberIsLive()
+     * gives this row is preserved rather than replaced. $kbbSetAp is handed
+     * down by partials/set-contents-panel.blade.php, which reads the settings
+     * once per page; the `??` is there for a caller that has not, and its
+     * answer is the shipped behaviour.                              (Lane SA)
+     */
+    $kslLink = ($kbbSetAp['p_link_on'] ?? true)
+        && ($kbbSetPageMember['visible'] ?? false) && ($kbbSetPageMember['url'] ?? null);
 @endphp
 <div class="ksl-r">
     @if ($kslImage)
