@@ -90,3 +90,9 @@ public/wp-content/
 # Built update packages, dropped at the repo root so the owner can download one
 # from the app. The durable copy is storage/app/packages/.
 /kbb-update-*.zip
+
+# Lane worktree scratch — suite logs and one-off harnesses. CLAUDE.md puts
+# a lane's logs in storage/<lane>-logs/ rather than the shared scratchpad; they
+# are working notes, not source, and a `git add -A` that catches 100 KB of ANSI
+# test output puts it in the package.
+/storage/*-logs/
