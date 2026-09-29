@@ -1265,6 +1265,35 @@ require __DIR__.'/checkout-browsed.php';
 require __DIR__.'/checkout-line.php';
 
 /*
+ * ▲ THE CARD FORM'S TWO REPORTS, AND THIS LINE WAS MISSING FOR TWELVE DAYS.
+ *
+ * Lane FU shipped routes/checkout-card.php on 17 September with the require
+ * line written in its own header, the way this project asks, and the line was
+ * never added. So POST /checkout/card/paid and POST /checkout/card/abandon
+ * answered 405 on the live shop, for the TYPED CARD as well as for the wallets
+ * -- partials/checkout/stripe-elements.blade.php:72-73 and
+ * partials/checkout/express-wallets.blade.php:139-140 both post to them.
+ *
+ * WHAT IT COST, and it is not what it looks like. No money was ever at risk:
+ * the webhook banks the payment and has been carrying that load alone. What
+ * broke is the OTHER half. A declined payment posts to /card/abandon inside a
+ * try/catch, which swallowed the 405 -- so nothing put the basket back to
+ * `active`, nothing returned the stock to the shelf, and nothing cancelled the
+ * intent. The shopper was told the payment failed and handed an empty bag,
+ * with the units still held and a confirmable intent still live at Stripe
+ * against an order the shop had given up on.
+ *
+ * Found by Lane WAL2 writing tests for that exact failure path and getting 405
+ * where it expected 200 -- which is the whole argument for testing the sad
+ * path. It had been invisible for twelve days because every SUCCESSFUL payment
+ * still completes.
+ *
+ * Top level and inside the `web` group: both endpoints need the session and
+ * CSRF, and they read THIS visitor's basket by CartService's cookie.
+ */
+require __DIR__.'/checkout-card.php';
+
+/*
  * What the wallet sheet is allowed to say (Lane WAL). web.php and not api.php,
  * for the reason checkout-card.php records: the endpoint reads THIS visitor's
  * basket, identified by CartService's cookie, and Laravel 11's api.php carries
