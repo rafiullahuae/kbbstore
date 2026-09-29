@@ -341,7 +341,7 @@ window.KBBArabic = (function(){
              that" sends the owner to look at his API key for a fault that has
              nothing to do with it. */
           if (!r.ok) {
-            note(btn, d.message || (r.status === 404
+            note(btn, d.message || d.error || (r.status === 404 && !(d && (d.message || d.error))
               ? 'The translate endpoint is not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
               : 'Could not translate that.'));
             return;

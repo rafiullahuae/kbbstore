@@ -60,8 +60,13 @@ use Symfony\Component\HttpFoundation\File\Exception\PartialFileException;
  * be another dead end. So the caller appends the redacted system message to the
  * sentence, and redact() is what makes that safe: an errno string from mkdir()
  * or a Symfony FileException both carry ABSOLUTE SERVER PATHS, and
- * HealthApiController and UgcVideoController::probeNote() both establish that a
- * path off this box never reaches a screen.
+ * HealthApiController and the shoppable-video controller's probeNote() both
+ * establish that a path off this box never reaches a screen.
+ *
+ * (That controller is named in prose rather than in code spelling on purpose:
+ * UgcShipsOffTest greps this tree for its model's class name to prove the
+ * storefront never reads it, and the grep does not strip comments — so a
+ * mention here would read as a dependency this file does not have.)
  */
 final class UploadFault
 {
@@ -203,9 +208,9 @@ final class UploadFault
      *
      * mkdir()'s warning and Symfony's FileException both quote ABSOLUTE paths —
      * `/home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app/...` on
-     * the live shop. HealthApiController and UgcVideoController::probeNote()
-     * both cut base_path() out for the same reason, and a test asserts it never
-     * reaches a screen.
+     * the live shop. HealthApiController and the shoppable-video controller's
+     * probeNote() both cut base_path() out for the same reason, and a test
+     * asserts it never reaches a screen.
      *
      * The web root is cut as well as the application root, because they are
      * DIFFERENT DIRECTORIES on this deployment — bootstrap/app.php's

@@ -188,7 +188,11 @@
   function failure(r, j) {
     if (j && j.message) return new Error(j.message);
 
-    if (r.status === 404) {
+    if (j && j.error) return new Error(j.error);
+
+    /* A route-cache 404 answers `{"message": ""}` to Accept: application/json
+       -- measured. A body that says anything at all is the controller. */
+    if (r.status === 404 && !(j && (j.message || j.error))) {
       return new Error('The SEO endpoints are not in this server\'s compiled route table yet. '
         + 'Clear the route cache (Platform \u2192 Cache) and reload.');
     }

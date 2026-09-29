@@ -388,7 +388,8 @@
          is exact -- no status ladder can tell those two apart, and "Request
          failed (404)" is the same sentence for both while the remedies are
          "clear the route cache" and "it is already gone". */
-      var err = new Error((j && j.message) || (r.status === 404
+      var silent = !j || (!j.message && !j.error);
+      var err = new Error((j && j.message) || (r.status === 404 && silent
         ? 'The Media Library endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
         : ('Request failed (' + r.status + ')')));
       err.status = r.status;

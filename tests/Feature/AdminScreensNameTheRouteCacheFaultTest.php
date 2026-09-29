@@ -148,37 +148,87 @@ it('points the owner at the one click that fixes it, not at a reload', function 
     }
 });
 
-it('leaves a 404 that carries a message speaking in the server\'s own words', function () {
+it('claims the route cache only when the 404 body says nothing at all', function () {
     /*
-     * THE DISCRIMINATOR MATTERS AS MUCH AS THE BRANCH.
+     * THE DISCRIMINATOR, AND THE BUG IT ALREADY CAUGHT IN THIS LANE.
      *
-     * Two different faults answer 404 on these endpoints:
+     * The first version of these six branches tested `!body`, reasoning that a
+     * path missing from the compiled route table gets Laravel's own HTML 404
+     * page, which parses to null. That is true for a BROWSER. Every one of
+     * these requests sends `Accept: application/json`, and to those the handler
+     * answers
      *
-     *   the route cache   Laravel's own HTML page. No JSON, so no `message`.
-     *   the controller    'not_found' for a media row, a product or an order
-     *                     that is genuinely gone. JSON, with a message.
+     *     {"message": ""}
      *
-     * A blanket `status === 404` branch would tell an owner to clear his route
-     * cache because he clicked a product somebody else had just deleted. So the
-     * screens whose endpoints really do return 404 check the BODY as well, and
-     * the controller's own words win where it supplied them.
+     * a JSON body with nothing in it. So `!body` was never true and two of the
+     * six branches could never fire. It was caught by running the screens, not
+     * by reading them, which is why the shape is asserted here now.
      *
-     * This is asserted on the three that have such endpoints. It is deliberately
-     * NOT asserted on seo-back-office, whose helper reaches the same result
-     * through `j.message` being checked first — a different spelling of the same
-     * rule, and pinning the spelling would forbid the clearer one.
+     * The other half matters just as much: a controller's OWN 404 — a product
+     * or a media row somebody else deleted — answers `{"error": "not_found"}`
+     * (Admin\AdminController does it in five places). A branch that fired on any
+     * 404 would tell the owner to clear his route cache because he clicked a
+     * product that is gone, which is a new wrong answer in place of the old one.
+     *
+     * So: NO message and NO error is the route table. Either one present is the
+     * controller speaking for itself, and it is what gets shown.
+     *
+     * MUTATION (run): change `silent` in manual-order-screen back to `!e.body`.
+     * RED here.
      */
     $screens = rcScreens();
 
-    foreach (['media-library-screen', 'media-picker', 'manual-order-screen'] as $name) {
+    foreach (['media-library-screen', 'media-picker', 'manual-order-screen',
+        'product-editor-screen', 'seo-back-office', 'arabic-boxes'] as $name) {
         $code = $screens[$name];
 
-        $checksBody = str_contains($code, '!body') || str_contains($code, '!e.body')
-            || str_contains($code, 'j && j.message') || str_contains($code, 'body.message')
-            || str_contains($code, 'j.message');
+        /*
+         * THE DECISION IS READ WHERE IT IS MADE. Every one of these screens
+         * mentions `message` and `error` somewhere for unrelated reasons, so a
+         * whole-file search proves nothing. The window is the 700 characters
+         * before the sentence — the statement that chooses it and the guard
+         * above it — and BOTH keys have to be consulted inside it.
+         */
+        $at = strpos($code, 'compiled route table');
 
-        expect($checksBody)->toBeTrue(
-            "{$name} branches on a bare 404 and would blame the route cache for a row that is genuinely gone"
+        expect($at)->not->toBeFalse("{$name} no longer names the compiled route table");
+
+        $window = substr($code, max(0, $at - 700), 700);
+
+        expect(str_contains($window, 'message'))->toBeTrue(
+            "{$name} decides the route-cache branch without looking at the body's `message`, so "
+            .'Laravel\'s {"message": ""} would not be told apart from a controller\'s own words'
+        );
+        expect(str_contains($window, 'error'))->toBeTrue(
+            "{$name} decides the route-cache branch without looking at the body's `error`, so a "
+            .'controller\'s own 404 ({"error": "not_found"}) would be blamed on the compiled route table'
         );
     }
+});
+
+it('gets {"message": ""} and not an HTML page from an unrouted admin-api path', function () {
+    /*
+     * THE FACT THE BRANCHES ABOVE REST ON, asserted against the real
+     * application rather than taken on trust. If Laravel's handler ever starts
+     * answering these with HTML, or with a filled-in message, the discriminator
+     * in six screens is wrong and this is where it is said.
+     */
+    test()->actingAs(\App\Models\AdminUser::create([
+        'name' => 'RC Owner',
+        'email' => 'rc-owner-'.uniqid().'@example.test',
+        'password' => 'secret-secret',
+        'role' => 'owner',
+    ]), 'admin');
+
+    $response = test()->getJson('/admin-api/this-path-is-not-in-the-route-table');
+
+    $response->assertStatus(404);
+
+    $body = $response->json();
+
+    expect($body)->toBeArray('an unrouted admin-api path no longer answers JSON — six screens branch on that');
+    expect((string) ($body['message'] ?? ''))->toBe('',
+        'an unrouted admin-api path now carries a message, so "the body says nothing" no longer identifies it');
+    expect(array_key_exists('error', $body))->toBeFalse(
+        'an unrouted admin-api path now carries an error key, which is how a controller 404 is told apart');
 });

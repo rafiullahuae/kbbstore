@@ -1005,7 +1005,16 @@
        the route-cache one is the one this shop keeps hitting because packages
        are applied by hand. Banners, Coupons and Reviews.io already answer a
        404 this way; this screen did not. */
-    if (e && e.status === 404) return 'The Product editor endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.';
+    /* ONLY WHEN THE BODY SAYS NOTHING. A route-cache 404 answers
+       `{"message": ""}` to an Accept: application/json request -- measured; it
+       is Laravel's HTML page only for a browser. This screen's OWN 404 is
+       `{"error": "not_found"}` for a product somebody else deleted, and telling
+       him to clear his route cache for that would be a new wrong answer in
+       place of the old one. */
+    if (e && e.status === 404 && !(b && (b.message || b.error || b.errors))) {
+      return 'The Product editor endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.';
+    }
+    if (b && b.error) return b.error;
     return fallback;
   }
 
