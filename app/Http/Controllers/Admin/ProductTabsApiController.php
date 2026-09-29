@@ -362,6 +362,14 @@ class ProductTabsApiController extends Controller
         $tab = $existing ?? new ProductTab([
             'product_id' => $productId,
             'source_key' => $key,
+            // BOTH EMPTY, and the column is NOT NULL. An empty box on an
+            // override row means INHERIT -- see ProductTabs::applyOverrides --
+            // so a hide is a row with no text of its own at all, and that has
+            // to be storable. `null` is not: `title` is NOT NULL, which is
+            // right, because a row whose title is missing and a row whose title
+            // is deliberately blank must not be two different states.
+            'title' => '',
+            'body' => '',
             'position' => $this->basePosition($key),
         ]);
 
