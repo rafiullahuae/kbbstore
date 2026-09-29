@@ -39,18 +39,39 @@ if ($path !== '/' && ! str_contains($path, '..') && is_file($file)) {
         // lifetimes" already passes on.
         header('Cache-Control: public, max-age=31536000'.(str_starts_with($path, '/build/') ? ', immutable' : ''));
 
+        header('Content-Type: '.($types[$ext] ?? 'application/octet-stream'));
+        header('Vary: Accept-Encoding');
+
         if ($accepts && in_array($ext, $compressible, true)) {
             $body = gzencode((string) file_get_contents($file), 6);
-            header('Content-Type: '.($types[$ext] ?? 'application/octet-stream'));
             header('Content-Encoding: gzip');
-            header('Vary: Accept-Encoding');
             header('Content-Length: '.strlen($body));
             echo $body;
 
             return true;
         }
 
-        return false;
+        /*
+         * ── EVERY STATIC FILE IS SERVED HERE, AND `return false` IS NEVER USED
+         *
+         * Measured, 29 September: with PHP_CLI_SERVER_WORKERS=6 and a homepage
+         * asking for a dozen small files at once, php -S's OWN static handler
+         * answers some of them with net::ERR_INVALID_HTTP_RESPONSE. Chromium
+         * then reports four @font-face as `status: "error"` and falls back to
+         * the system face, and the img-cache/400 candidates fail so the browser
+         * takes a larger one -- which is to say the instrument reported the
+         * self-hosted fonts and the responsive images as NOT WORKING when both
+         * were on disk and curl fetched them happily one at a time.
+         *
+         * That is an instrument bug of exactly the shape tools/m1-router.php
+         * already warns about for Range requests: "an instrument that reports a
+         * healthy clip as an unsupported source is an instrument that will send
+         * somebody to re-encode a video that was fine".
+         */
+        header('Content-Length: '.(string) filesize($file));
+        readfile($file);
+
+        return true;
     }
 
     $size = (int) filesize($file);

@@ -283,19 +283,69 @@ it('reads a stored image column, which split() refuses without a leading slash',
 it('states the card width the stylesheet draws', function () {
     $sizes = ImageVariants::bannerCardSizesAttribute(4, 38, 16);
 
-    expect($sizes)->toContain('(max-width: 519px) calc((100vw - 76px) / 1.5)')
-        ->and($sizes)->toContain('(max-width: 767px) calc((100vw - 92px) / 2.45)')
-        ->and($sizes)->toContain('(max-width: 1023px) calc((100vw - 108px) / 3.4)')
-        ->and($sizes)->toContain('calc((min(96vw - 24px, 1624px) - 64px) / 4.38)');
+    expect($sizes)->toContain('(max-width: 519px) calc((100vw - 40px) / 1.5)')
+        ->and($sizes)->toContain('(max-width: 680px) calc((100vw - 56px) / 2.45)')
+        ->and($sizes)->toContain('(max-width: 767px) calc((100vw - 94px) / 2.45)')
+        ->and($sizes)->toContain('(max-width: 1023px) calc((min(100vw - 24px, 1680px) - 86px) / 3.4)')
+        ->and($sizes)->toContain('calc((min(100vw - 24px, 1680px) - 102px) / 4.38)');
 
-    // 412px phone: (412 - 76) / 1.5 = 224 CSS px, which at DPR 1.75 wants 392
-    // and takes the 400w copy.
-    expect((412 - 76) / 1.5)->toBe(224.0);
+    /*
+     * THE ARITHMETIC AGAINST THE BROWSER, not against the stylesheet.
+     *
+     * Read off the CSS the first time, this method understated the card by
+     * 10% at 390px — `@media(max-width:680px)` takes the homepage section's
+     * card frame off entirely and the reading missed it. These seventeen rows
+     * are `.kbbn-c`'s own rectangle, measured in Chromium by
+     * storage/perf-logs/measure-kbbn.cjs, and the rule is that the declared
+     * figure is never BELOW the drawn one: understating is what leaves a
+     * photograph soft, and the browser never looks at `src` again once it has
+     * chosen from a srcset.
+     *
+     * MUTATION: put 1 back where the 1.5 is in the first band and this is red
+     * at 360px.
+     */
+    $declared = static function (int $vw) use (&$declared): float {
+        $gap = 16;
+
+        if ($vw <= 519) {
+            return (float) ($vw - 24 - $gap) / 1.5;
+        }
+        if ($vw <= 680) {
+            return (float) ($vw - 24 - 2 * $gap) / 2.45;
+        }
+        if ($vw <= 767) {
+            return (float) ($vw - 62 - 2 * $gap) / 2.45;
+        }
+
+        $frame = min($vw - 24, 1680);
+
+        return $vw <= 1023
+            ? (float) ($frame - 38 - 3 * $gap) / 3.4
+            : (float) ($frame - 38 - 4 * $gap) / 4.38;
+    };
+
+    $drawn = [
+        360 => 213.33, 390 => 233.33, 412 => 248.00, 519 => 319.33,
+        520 => 189.38, 600 => 222.03, 767 => 274.69, 768 => 193.52,
+        900 => 232.34, 1023 => 267.08, 1024 => 203.89, 1280 => 260.00,
+        1350 => 275.33, 1440 => 295.42, 1680 => 350.22, 1920 => 355.70,
+        2560 => 355.70,
+    ];
+
+    foreach ($drawn as $vw => $measured) {
+        $value = $declared($vw);
+
+        expect($value)->toBeGreaterThanOrEqual($measured - 0.02,
+            "sizes understates the card at {$vw}px: says {$value}, draws {$measured}");
+        // And not wildly over, which would fetch a candidate nobody needs.
+        expect($value)->toBeLessThanOrEqual($measured * 1.02,
+            "sizes overstates the card at {$vw}px: says {$value}, draws {$measured}");
+    }
 
     // Two big cards is the case srcsetFor's 800w ceiling could not serve:
-    // (1624 - 32) / 2.45 = 650 CSS px, 1300 at DPR 2.
+    // (1622 - 32) / 2.45 = 649 CSS px, 1298 at device-pixel-ratio 2.
     expect(ImageVariants::bannerCardSizesAttribute(2, 45, 16))
-        ->toContain('calc((min(96vw - 24px, 1624px) - 32px) / 2.45)');
+        ->toContain('calc((min(100vw - 24px, 1680px) - 70px) / 2.45)');
 });
 
 /*

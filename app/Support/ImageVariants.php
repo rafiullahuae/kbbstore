@@ -501,47 +501,67 @@ final class ImageVariants
      * is a constant. This one does not: `--kbbn-per-lg` and `--kbbn-peek-lg`
      * are written into the element's own `style` attribute by
      * Banners::cssVariables() from the operator's choice, and per_view ranges
-     * 1..8 (BannerSet::LIMITS). A shop showing two big cards draws a 669 CSS
+     * 1..8 (BannerSet::LIMITS). A shop showing two big cards draws a 650 CSS
      * pixel box where the shipped four draws 356 — and `sizes` is the one
      * attribute where being wrong in the small direction is visible, because
-     * the browser never looks at `src` again once it has chosen. So the number
-     * is computed rather than declared.
+     * the browser never looks at `src` again once it has chosen.
      *
-     * ── THE ARITHMETIC, AND IT IS EXACT RATHER THAN ROUNDED UP ──────────────
+     * ── THE ARITHMETIC, AND IT WAS MEASURED IN A BROWSER RATHER THAN READ ───
      *
-     * `.kbbn-vp` is `container-type:inline-size` with `margin-inline:-gut` and
-     * `padding-inline:gut`, which cancel: 100cqi is its CONTENT box, which is
-     * the homepage section card's content width.
+     * It was read off the stylesheet first and it was WRONG, in the direction
+     * that matters: 209 CSS pixels declared where the card draws 233 at 390px,
+     * which on a device-pixel-ratio 1.75 phone is the difference between the
+     * 400w copy and the 800w one, and the 400w copy in a 434-device-pixel box
+     * is a visibly soft photograph. What the reading missed is
+     * `@media(max-width:680px)` at kbb.css:3096, where the homepage section's
+     * card frame comes off entirely — `width:100%; max-width:none; border:0;
+     * padding-inline:12px` — so below 680 the container is 24px narrower than
+     * the viewport and above it 38px narrower plus the gutter.
      *
-     *   .kbb-home .sec > .wrap   width: calc(100% - 24px); max-width: 1680px
-     *                            padding-inline: clamp(18px, 2vw, 28px)
+     * So the numbers below come from
+     * `storage/perf-logs/measure-kbbn.cjs`, which reads `.kbbn-vp`'s own
+     * content box and `.kbbn-c`'s rectangle at seventeen viewport widths:
      *
-     *   C(vw) = min(vw - 24, 1680) - 2 x clamp(18, 2vw, 28)
+     *   vw     100cqi    card (per/peek)      this method
+     *   360     336      213.33  (1/.5)       213.33   exact
+     *   390     366      233.33  (1/.5)       233.33   exact
+     *   412     388      248.00  (1/.5)       248.00   exact
+     *   520     496      189.38  (2/.45)      189.39   exact
+     *   600     576      222.03  (2/.45)      222.04   exact
+     *   767     705      274.69  (2/.45)      274.69   exact
+     *   768     706      193.52  (3/.4)       193.53   exact
+     *  1023     956      267.08  (3/.4)       268.53   +0.5%
+     *  1024     957      203.89  (4/.38)      205.02   +0.6%
+     *  1280    1203      260.00  (4/.38)      263.47   +1.3%
+     *  1920    1622      355.70  (4/.38)      360.27   +1.3%
      *
-     * Below 900px the clamp is pinned at its 18px floor, so C = vw - 60 there;
-     * from 1024 to ~1750 it is 0.96vw - 24, and above that it is 1624. The
-     * card is then the stylesheet's own calc(), restated:
-     *
-     *   card = (C - gap x per) / (per + peek)
-     *
-     * with (per, peek) = (1, .5) / (2, .45) / (3, .4) below 1024, and the
-     * operator's pair at and above it — cards-banner.blade.php's four media
-     * queries, in the same order.
-     *
-     * Checked against the stylesheet at three widths with the shipped set
-     * (gap 16, per 4, peek .38): 412 -> 224px, 1350 -> 276px, 1920 -> 356px,
-     * which is what the layout actually draws rather than a figure a shade
-     * above it.
+     * Every row is exact or a shade ABOVE, which is the direction
+     * tileSizesAttribute() already names as the one that cannot hurt:
+     * overstating makes a browser choose the larger candidate, understating
+     * leaves the photograph soft. The +1.3% is the gutter, declared at its
+     * 18px floor instead of `clamp(18px, 2vw, 28px)` so the expression carries
+     * no clamp() — a `sizes` entry a browser cannot parse is DROPPED, and the
+     * default for a dropped entry is 100vw, which overstates hugely.
      *
      * ── AND IT PAIRS WITH detailSrcsetFor(), NOT srcsetFor() ────────────────
      *
      * srcsetFor() stops at 800w on the stated ground that "the widest frame on
      * the site is 399 CSS pixels" — a sentence about tiles, and false here: at
-     * per_view 2 on a 1920 screen this box is 669 CSS pixels and a
-     * device-pixel-ratio 2 browser wants 1338 of them. Offered nothing wider
+     * per_view 2 on a 1920 screen this box is 650 CSS pixels and a
+     * device-pixel-ratio 2 browser wants 1300 of them. Offered nothing wider
      * than 800w it would take the 800 and the owner's banner would come out
      * SOFTER than it is today, which is the one outcome a delivery change must
      * never produce.
+     *
+     * ▲ AND ONE THING THIS CANNOT FIX, SAID HERE BECAUSE IT LOOKS LIKE A BUG.
+     * On a 412px phone at ratio 1.75 the card needs 434 device pixels, and
+     * `WIDTHS` offers 400 and then 800 with nothing between, so the browser
+     * takes the 800w copy — which for an 810px original is very nearly the
+     * original. The desktop saving is real (ratio 1, 260 CSS px, the 400w copy)
+     * and the phone saving is not. A 600w entry in `WIDTHS` would close it and
+     * would also make every variant set in the shop report `isComplete()`
+     * false until the owner re-ran the batch, which is a decision for him and
+     * not for a delivery change. docs/PERF-PAGESPEED.md §6 carries it.
      *
      * @param  int  $per     cards per row at >= 1024px (BannerSet::LIMITS['per_view'], 1..8)
      * @param  int  $peekPct how much of the next card shows, in percent (0..90)
@@ -552,10 +572,15 @@ final class ImageVariants
         $per = max(1, $per);
         $divisor = number_format($per + ($peekPct / 100), 2, '.', '');
 
-        return '(max-width: 519px) calc((100vw - '.(60 + $gap).'px) / 1.5)'
-            .', (max-width: 767px) calc((100vw - '.(60 + 2 * $gap).'px) / 2.45)'
-            .', (max-width: 1023px) calc((100vw - '.(60 + 3 * $gap).'px) / 3.4)'
-            .', calc((min(96vw - 24px, 1624px) - '.($gap * $per).'px) / '.$divisor.')';
+        /* Above 680px the section still draws its card frame: 24px of inset,
+           2px of border and 18px of padding a side. */
+        $frame = 'min(100vw - 24px, 1680px)';
+
+        return '(max-width: 519px) calc((100vw - '.(24 + $gap).'px) / 1.5)'
+            .', (max-width: 680px) calc((100vw - '.(24 + 2 * $gap).'px) / 2.45)'
+            .', (max-width: 767px) calc((100vw - '.(62 + 2 * $gap).'px) / 2.45)'
+            .', (max-width: 1023px) calc(('.$frame.' - '.(38 + 3 * $gap).'px) / 3.4)'
+            .', calc(('.$frame.' - '.(38 + $gap * $per).'px) / '.$divisor.')';
     }
 
     /**

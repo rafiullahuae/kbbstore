@@ -16,3 +16,7 @@
 {"label":"IMG-1","profile":"mobile","performance":91,"performanceAtLiveTbt":98,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.43,"lcp":2.04,"tbt":304,"cls":0,"si":3.3}
 {"label":"IMG-2","profile":"mobile","performance":95,"performanceAtLiveTbt":96,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.53,"lcp":2.14,"tbt":75,"cls":0,"si":4.38}
 {"label":"IMG-3","profile":"mobile","performance":78,"performanceAtLiveTbt":96,"accessibility":95,"bestPractices":100,"seo":100,"fcp":1.48,"lcp":2.12,"tbt":763,"cls":0,"si":4.21}
+{"label":"AB-before-1","profile":"mobile","performance":91,"performanceAtLiveTbt":91,"accessibility":95,"bestPractices":96,"seo":100,"fcp":2.77,"lcp":2.77,"tbt":1,"cls":0,"si":2.88}
+{"label":"AB-after-1","profile":"mobile","performance":78,"performanceAtLiveTbt":99,"accessibility":96,"bestPractices":96,"seo":100,"fcp":1.4,"lcp":1.75,"tbt":929,"cls":0,"si":2.88}
+{"label":"AB-before-2","profile":"mobile","performance":65,"performanceAtLiveTbt":90,"accessibility":95,"bestPractices":96,"seo":100,"fcp":2.74,"lcp":2.74,"tbt":1289,"cls":0.006,"si":3.89}
+{"label":"AB-after-2","profile":"mobile","performance":71,"performanceAtLiveTbt":98,"accessibility":96,"bestPractices":96,"seo":100,"fcp":1.53,"lcp":2,"tbt":1698,"cls":0,"si":3.26}
