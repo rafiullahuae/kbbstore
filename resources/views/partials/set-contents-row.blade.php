@@ -16,25 +16,47 @@
     ── THE PICTURE ───────────────────────────────────────────────────────────
 
     `sizes` IS A LITERAL HERE and not a method on App\Support\ImageVariants,
-    which is Lane IM's file this round. `.ksl-ph` is 56px at every width and
-    48px below 480px, so there is no viewport term to write and no `vw` to get
-    wrong; 56px declared covers both, and the browser picks a variant for
-    device-pixel-ratio against it — on a 3x phone a 168px source for a 48px
-    box, comfortably sharp.
+    which is Lane IM's file this round. `.ksl-ph` is 40px at every width and
+    36px below 480px — the squeeze took 16px and 12px off it — so there is no
+    viewport term to write and no `vw` to get wrong; 40px declared covers both,
+    and the browser picks a variant for device-pixel-ratio against it — on a 3x
+    phone a 120px source for a 36px box, comfortably sharp.
 
     A member with NO picture gets App\Support\Gradient::for(), which is a CSS
     background and not an <img>, so a broken image is not reachable — the same
     fallback a pictureless product has everywhere else in this shop.
 
+    ── NO PER-MEMBER PRICE. (Lane PP) ────────────────────────────────────────
+
+    The owner, looking at the list on his phone:
+
+      "the set products list, i want super squeeze, without pricing mentioned
+       for each product inside the set."
+
+    So the third track is the QUANTITY ALONE. The price is not hidden with CSS
+    and it is not printed and covered -- the span is gone, which is the only
+    version of "without pricing" that is also true of the page source, of a
+    screen reader, and of the text a shopper can select and paste.
+
+    ▲ AND THE FOOTING KEEPS ITS THREE FIGURES. "Bought separately / Set price /
+      You save" is the SET's own economics, not a per-member price, and it is
+      the only reason the box reads as a bargain at all. It lives in
+      partials/set-contents-panel.blade.php and this file never touched it.
+
+    Money is no longer used here, so the import went with the span. A member's
+    unit price is still carried by SetContents::fromProduct() for every other
+    caller -- the cart row, the invoice, the order email -- and this view simply
+    stopped printing it.
+
     ── EVERY INTERPOLATION IS ESCAPED ────────────────────────────────────────
 
-    The name, the brand and the option label are settings. The only {!! !!} is
-    Money::format(), which returns markup this application builds itself.
+    The name, the brand and the option label are settings. There is no {!! !!}
+    on this row at all now: the one that existed was Money::format(), and it
+    left with the price.
 --}}
 @php
     use App\Support\Gradient;
     use App\Support\ImageVariants;
-    use App\Support\Money;
 
     $kslName = (string) $kbbSetPageMember['name'];
     $kslBrand = (string) ($kbbSetPageMember['brand'] ?? '');
@@ -44,7 +66,7 @@
 @endphp
 <div class="ksl-r">
     @if ($kslImage)
-        <span class="ksl-ph"><img src="{{ $kslImage }}" alt="{{ $kslName }}" width="112" height="112" loading="lazy" decoding="async" @if ($kslSrcset !== '') srcset="{{ $kslSrcset }}" sizes="56px" @endif></span>
+        <span class="ksl-ph"><img src="{{ $kslImage }}" alt="{{ $kslName }}" width="112" height="112" loading="lazy" decoding="async" @if ($kslSrcset !== '') srcset="{{ $kslSrcset }}" sizes="40px" @endif></span>
     @else
         <span class="ksl-ph is-blank" style="background:{{ Gradient::for($kslBrand . $kslName) }}"></span>
     @endif
@@ -57,8 +79,9 @@
         @endif
         @if (($kbbSetPageMember['variant'] ?? '') !== '')<span class="ksl-var">{{ $kbbSetPageMember['variant'] }}</span>@endif
     </span>
-    <span class="ksl-end">
-        <span class="ksl-q">{{ (int) $kbbSetPageMember['quantity'] }}&times;</span>
-        <span class="ksl-pr">{!! Money::format((int) $kbbSetPageMember['unit']) !!}</span>
-    </span>
+    {{-- THE QUANTITY, AND NOTHING ELSE. The `.ksl-end` wrapper went with the
+         price: a flex column holding one child is a box that exists to stack
+         things that are no longer there, and removing it is 2px of gap and one
+         element per row that the browser no longer lays out. --}}
+    <span class="ksl-q">{{ (int) $kbbSetPageMember['quantity'] }}&times;</span>
 </div>
