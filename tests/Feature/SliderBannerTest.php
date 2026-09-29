@@ -761,6 +761,82 @@ it('adds no public endpoint and serialises no banner column', function () {
         ->and(substr_count($routes, 'Route::'))->toBe(14);
 });
 
+it('cannot hold a URL in the column its <img src> is built from', function () {
+    /*
+     * ── WHERE THE SCHEME CHECK ON A PICTURE ACTUALLY IS ────────────────────
+     *
+     * A card's LINK is scheme-checked at render, by Banners::safeUrl(), because
+     * it is a box an operator types a URL into. Its PICTURE is not, and that is
+     * a different guarantee rather than a missing one: `banner_cards.image` is
+     * written only through BannerApiController::storedPath(), which hands the
+     * value to `MediaRegistrar::normalise()` — an allowlist that refuses a
+     * scheme, a host, a protocol-relative path, a traversal, a backslash, a NUL
+     * and anything outside the two upload roots. The column therefore cannot
+     * hold a URL, and `<img src>` is built from a path this shop wrote.
+     *
+     * This is the SHARED posture of both banner types and predates this round;
+     * it is asserted here rather than assumed because the second type doubled
+     * the number of templates that print this column.
+     *
+     * MUTATION: drop the `MediaRegistrar::normalise()` call from storedPath()
+     * and the first four cases below round-trip the operator's string.
+     */
+    \App\Models\AdminUser::query()->where('email', 'sb-guard@example.test')->delete();
+
+    $owner = \App\Models\AdminUser::create([
+        'name' => 'SB Guard', 'email' => 'sb-guard@example.test',
+        'password' => 'sb-guard-password', 'role' => 'owner',
+    ]);
+
+    test()->actingAs($owner, 'admin');
+
+    $set = BannerSet::create(['name' => 'Guard', 'slug' => 'sb-guard', 'status' => 'publish', 'kind' => 'slider']);
+    $card = BannerCard::create(['banner_set_id' => $set->id, 'image' => '', 'status' => 'publish']);
+
+    foreach ([
+        'https://evil.test/x.jpg',
+        '//evil.test/x.jpg',
+        'javascript:alert(1)',
+        '../../.env',
+        'etc/wp-content/uploads/x.jpg',
+    ] as $bad) {
+        test()->putJson('/admin-api/banners/cards/'.$card->id, ['image' => $bad])->assertOk();
+
+        expect((string) $card->fresh()->image)->toBe('', $bad.' reached banner_cards.image');
+    }
+
+    // …and the shape it IS for still round-trips, so this is a gate and not a
+    // wall: the picker hands over a URL and the controller cuts it to a path.
+    test()->putJson('/admin-api/banners/cards/'.$card->id, [
+        'image' => 'http://shop.test/kbb-upgrade/uploads/banners/sb-1.webp',
+    ])->assertOk();
+
+    expect((string) $card->fresh()->image)->toBe('uploads/banners/sb-1.webp');
+});
+
+it('normalises a picture path the same way for both banner types', function () {
+    /*
+     * The half of the case above that does not need a mounted route: the
+     * allowlist itself, which is the thing that makes `<img src>` safe.
+     *
+     * MUTATION, run: change `MediaRegistrar::normalise()` to return its argument
+     * and every expectation here goes red.
+     */
+    foreach ([
+        'https://evil.test/uploads/x.jpg',
+        '//evil.test/uploads/x.jpg',
+        'javascript:alert(1)',
+        '../../.env',
+        'etc/wp-content/uploads/x.jpg',
+        "uploads/x\0.jpg",
+        'uploads/../../secret.env',
+    ] as $bad) {
+        expect(\App\Support\MediaRegistrar::normalise($bad))->toBeNull($bad.' is accepted as a picture path');
+    }
+
+    expect(\App\Support\MediaRegistrar::normalise('uploads/banners/sb-1.webp'))->toBe('uploads/banners/sb-1.webp');
+});
+
 /* ══════════════════════════ the admin preview frame ═══════════════════════ */
 
 it('runs the slider inside the preview frame without giving it the console', function () {
