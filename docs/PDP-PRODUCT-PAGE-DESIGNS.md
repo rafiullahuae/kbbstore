@@ -309,8 +309,14 @@ checked against `Locale::isSupported()` before it reaches `setLocale()`.
 
 ## What the rest of the suite said
 
-`KBB_WP_DB=kbb_wp_pdp vendor/bin/pest --compact` — **7781 passed, 22 skipped**,
-and five reds, every one of them acted on:
+`KBB_WP_DB=kbb_wp_pdp vendor/bin/pest --compact`.
+
+**The run that matters is the second one: 7784 passed, 22 skipped, 2 failed,
+1208s — and both failures are the wiring pins above**, which go green on the
+integrator's one line (checked: 32 passed / 0 failed with it in).
+
+The FIRST run found five reds. Every one was acted on rather than explained
+away, and three of them were real:
 
 | Red | What it was | What was done |
 |---|---|---|
