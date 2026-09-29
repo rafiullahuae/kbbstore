@@ -181,7 +181,17 @@ it('holds one integer and reaches for no element-measuring API', function () {
         'innerWidth', 'innerHeight', 'getComputedStyle', 'getClientRects',
         'ResizeObserver', 'IntersectionObserver', 'requestAnimationFrame',
     ] as $api) {
-        expect($script)->not->toContain($api, "the slider's script reaches for {$api}");
+        /*
+         * `str_contains(...)->toBeFalse($message)` AND NOT `->not->toContain($api, $message)`.
+         *
+         * Pest's toContain() is VARIADIC: a second argument is a second NEEDLE,
+         * not a failure message. Written the obvious way this loop asserted
+         * that the script contains neither the API nor the sentence describing
+         * it — which is always true — so the whole of rule 4's guard could not
+         * fail. ExpectationsThatCannotFailTest caught it in the full run and
+         * this is the shape it prescribes.
+         */
+        expect(str_contains($script, $api))->toBeFalse("the slider's script reaches for {$api}");
     }
 
     /*
