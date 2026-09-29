@@ -150,6 +150,23 @@ afterEach(function () {
  * RULE 1. This is the test that says the patch is inert.
  * ------------------------------------------------------------------ */
 
+/**
+ * A base64 Ed25519 SECRET key, as a WHOLE token: 86 payload characters and the
+ * two-character pad, with a non-base64 character or the edge of the file on
+ * either side. See 'it holds no private key in this repository' for why the
+ * boundaries are not optional.
+ *
+ * ▲ THE TWO BOUNDARIES ARE NOT SYMMETRIC, AND THE CASE BELOW IS WHY. The left
+ * one excludes base64 PAYLOAD characters only and NOT `=`, because the single
+ * likeliest way a key reaches a file is `KBB_UPDATE_SIGNING_KEY=<key>` — an
+ * equals sign immediately before it. That is safe: `=` is base64 PADDING, so a
+ * `=` to the left means the previous token has already ended and the 88
+ * characters after it are a token of their own. The right one does exclude `=`,
+ * because three pad characters is not a 64-byte key. Written the obvious
+ * symmetric way first; the 'in an env line' shape below caught it.
+ */
+const KBB_SECRET_KEY_PATTERN = '/(?<![A-Za-z0-9+\/])[A-Za-z0-9+\/]{86}==(?![A-Za-z0-9+\/=])/';
+
 it('applying this changes nothing about the packages that install today', function () {
     /* Every package this project has built carries "signature": "". The shipped
      * default must accept one, or the day this lands is the day the owner can no
@@ -588,8 +605,27 @@ it('cannot ship a key file to a shop even if one were committed by accident', fu
 });
 
 it('holds no private key in this repository', function () {
-    // The whole scheme rests on this. A base64 Ed25519 secret key is 88
-    // characters; nothing tracked here may look like one.
+    /*
+     * The whole scheme rests on this. A base64 Ed25519 secret key is 88
+     * characters; nothing tracked here may look like one.
+     *
+     * ▲ THE 88 CHARACTERS HAVE TO BE THE WHOLE TOKEN, AND THIS COST A RED
+     * SUITE. The pattern was `[A-Za-z0-9+/]{86}==` unanchored, which matches a
+     * SLICE of any longer base64 run — and `docs/perf-reports/*.html` are four
+     * Lighthouse reports carrying their screenshots as data URIs. Fifteen hits
+     * across four files, none of them a key, and the suite went red the day
+     * Lane PERF committed the owner's own evidence.
+     *
+     * Requiring a non-base64 character (or the file's edge) on both sides is
+     * not a weakening: 64 bytes base64-encode to exactly 88 characters, so a
+     * committed key is a WHOLE token — a .key file's contents, or a quoted
+     * string — and a run of base64 longer than 88 characters cannot be one. A
+     * real key in a real file still has a quote, a newline or an equals sign
+     * beside it, which is what the case below asserts rather than assumes.
+     *
+     * MUTATION: drop either boundary group and the four Lighthouse reports come
+     * back as hits.
+     */
     $hits = [];
 
     foreach (['app', 'config', 'database', 'resources', 'routes', 'tests', 'docs'] as $dir) {
@@ -600,13 +636,49 @@ it('holds no private key in this repository', function () {
                 continue;
             }
 
-            if (preg_match('/[A-Za-z0-9+\/]{86}==/', (string) file_get_contents($file->getPathname()))) {
+            if (preg_match(KBB_SECRET_KEY_PATTERN, (string) file_get_contents($file->getPathname()))) {
                 $hits[] = $file->getPathname();
             }
         }
     }
 
     expect($hits)->toBe([]);
+});
+
+/*
+ * THE SCANNER ABOVE STILL CATCHES A KEY. Written after the pattern was
+ * tightened, because a guard that has been narrowed and not re-proved is a
+ * guard nobody knows still works — and this one is the only thing standing
+ * between a careless commit and a signing key on GitHub.
+ *
+ * Every shape a key actually reaches a file in is tried: alone, newline
+ * terminated, quoted in PHP, in an .env line, and inside JSON. The negative
+ * half is the Lighthouse case that made the change necessary.
+ */
+it('still catches a real key in every shape one is committed in', function () {
+    [$secret] = signingPair();
+    $key = base64_encode($secret);
+
+    expect(strlen($key))->toBe(88, 'an Ed25519 secret is not 88 base64 characters any more');
+
+    foreach ([
+        'on its own' => $key,
+        'with a newline' => $key."\n",
+        'quoted in PHP' => "<?php \$k = '".$key."';",
+        'in an env line' => 'KBB_UPDATE_SIGNING_KEY='.$key,
+        'inside JSON' => '{"key":"'.$key.'"}',
+        'in prose' => 'the key is '.$key.' and it must never be here',
+    ] as $shape => $body) {
+        expect((bool) preg_match(KBB_SECRET_KEY_PATTERN, $body))->toBeTrue($shape.' is not caught');
+    }
+
+    // And the false positive that forced the change: a key-length run INSIDE a
+    // longer base64 blob, which is what a data: URI is made of.
+    $blob = str_repeat('QhAIQhAIQhAIQhAJEqCgRUSQKsk6hdXlR', 12);
+
+    expect(strlen($blob))->toBeGreaterThan(88)
+        ->and((bool) preg_match('/[A-Za-z0-9+\/]{86}==/', $blob.'=='))->toBeTrue('the old pattern did not match the blob, so this case proves nothing')
+        ->and((bool) preg_match(KBB_SECRET_KEY_PATTERN, $blob.'=='))->toBeFalse('a slice of a longer base64 run is being read as a key');
 });
 
 /* ------------------------------------------------------------------ *
