@@ -50,26 +50,29 @@ Block 3 is the **copy** of that call the console needs at build time; a row in
 
 Measured in this lane's worktree, both ways, on the same tree.
 
-| | assertions red | the console guards |
-|---|---|---|
-| **Before** (as this branch ships) | **6** | — |
-| **After** (all five edits) | **0** | **122 passed, 1 skipped** |
+| | assertions red | the console guards | the whole suite |
+|---|---|---|---|
+| **Before** (as this branch ships) | **10** | 104 passed, 1 skipped | — |
+| **After** (all five edits) | **0** | **122 passed, 1 skipped** | **7,947 passed, 22 skipped, 0 failed**, 856s |
 
 Every one is the *finished-state* pin CLAUDE.md prescribes — `=== 1`, never
 `->not->toContain` — so each goes green the moment the integrator does the one
 thing this lane asked for, and stays a real guard afterwards:
 
 ```
-EverythingIsMountedOnceTest  page-wash-admin.php is required 0 times
-EverythingIsMountedOnceTest  page-wash-screen    is included 0 times
-PageWashScreenTest           the route file is not required exactly once
-PageWashScreenTest           the screen is not mounted on the console exactly once
-PageWashScreenTest           pagewash has no TITLES entry / is not armed in LATE_RENDERED
-PageWashScreenTest           pagewash has no LATE_NAV row
-AdminSidebarIsCompleteAtBuildTest  the Appearance menu would not settle where it does today
-TranslationConsoleTest       block 3 is not applied to app.blade.php exactly once
-GridSectionConsoleReachTest  block 1/3/4/5 is not applied … exactly once
+AdminSidebarIsCompleteAtBuildTest > it declares the same row the partial does
+AdminSidebarIsCompleteAtBuildTest > it keeps LATE_NAV in the order the sidebar is built in
+EverythingIsMountedOnceTest       > it requires every route file exactly once
+EverythingIsMountedOnceTest       > it includes every admin console partial exactly once
+GridSectionConsoleReachTest       > it keeps the handover document and the applied console in step
+PageWashScreenTest                > it mounts the route file on the admin-api group exactly once
+PageWashScreenTest                > it includes the screen on the console exactly once
+PageWashScreenTest                > it gives the screen a breadcrumb and a title, and arms its deep link
+PageWashScreenTest                > it declares its sidebar row where the sidebar is built
+TranslationConsoleTest            > it keeps the handover document and the applied console in step
 ```
+
+Counted, both ways, on the same tree: **10 red before, 0 red after.**
 
 The 122 counted above are `PageWashTest`, `PageWashScreenTest`,
 `PageWashContrastTest`, `AdminNavAndIdsTest`, `AdminSidebarIsCompleteAtBuildTest`,

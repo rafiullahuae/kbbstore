@@ -363,6 +363,11 @@ BG_BASE=http://127.0.0.1:<port> node tools/bg-admin-shots.cjs
 git checkout -- resources/views/admin/app.blade.php routes/web.php
 ```
 
+The whole suite, with all five edits applied: **7,947 passed, 22 skipped, 0
+failed**, 856s (`KBB_WP_DB=kbb_wp_bg vendor/bin/pest --compact`). As this branch
+ships — unwired — ten assertions are red and every one of them is a
+finished-state pin that the wiring greens.
+
 `docs/BG-ADMIN-APP-BLOCKS.md` is the record: **five** edits, not three —
 `LATE_NAV` and the route require joined the set when this branch was rebased
 onto a console that had grown a new guard. It also names the two other lanes'
