@@ -224,6 +224,45 @@ class KBB_Export_Groups {
 				'needs' => array(),
 			),
 
+			/*
+			 * THE NAVIGATION, AND IT IS ITS OWN GROUP RATHER THAN PART OF
+			 * `content`.
+			 *
+			 * Two reasons, and both are the operator's rather than the
+			 * programmer's. The dependency is different: an article needs
+			 * nothing, while every menu item points at a category, a brand, a
+			 * product or an article and lands unplaced without them. And it is
+			 * the one group an owner may genuinely want to leave out -- he has
+			 * been retyping this menu by hand for weeks, and a header he has
+			 * already rebuilt is a header he does not want a second copy of.
+			 */
+			'navigation' => array(
+				'label' => 'Navigation',
+				'summary' => 'Your header menu and mobile drawer',
+				'help'  => 'The menus from Appearance -> Menus, with every item in its own order and under '
+					. 'the name you typed. An imported menu arrives SWITCHED OFF on the new shop and never '
+					. 'replaces one already there -- you turn it on from Store -> Modules -> Mega Menu once '
+					. 'you have looked at it.',
+				'files' => array( 'menus.csv', 'menu_items.csv' ),
+				'needs' => array(
+					'catalogue' => array(
+						'severity' => self::REPORTED,
+						'consequence' => 'A menu item names what it points at by its WordPress id, and the '
+							. 'new shop resolves that id against what it has imported. Without the '
+							. 'catalogue, every category, brand and product item is imported with its '
+							. 'label and its place in the menu but WITHOUT an address, named one by one in '
+							. 'the import report -- so nothing is lost and nothing is a dead link, but the '
+							. 'menu is not usable until you re-import it after the catalogue. Running '
+							. 'menu_items.csv again once the products are in resolves every one of them.',
+					),
+					'content' => array(
+						'severity' => self::REPORTED,
+						'consequence' => 'The same, for an item pointing at a blog article: it arrives with '
+							. 'its label and its position and no address until the articles are imported.',
+					),
+				),
+			),
+
 			'addresses' => array(
 				'label' => 'Addresses and pictures',
 				'summary' => 'The old URLs to redirect, and the image files to fetch',

@@ -744,26 +744,77 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	// ── The navigation menu ─────────────────────────────────────────────────
 	//
 	// WordPress keeps a menu as a `nav_menu` TAXONOMY term whose members are
-	// `nav_menu_item` POSTS, each carrying its target in postmeta. No stage
-	// exports it: `nav_menu_item` is on posts.csv's NOT_CONTENT list, so the
-	// whole navigation is meant to be "counted and named in the manifest
-	// notes" and re-entered by hand.
+	// `nav_menu_item` POSTS, each carrying its target in postmeta.
 	//
-	// THE FIXTURE HAD NO MENU, so that note had never fired and nobody had
-	// ever seen whether it says anything. A gap that is only named on a shop
-	// nothing tests is a gap that is not named.
+	// THE FIXTURE HAD NO MENU until Lane IE, so the note that said the
+	// navigation was lost had never fired and nobody had ever read it. It then
+	// had a FLAT menu of three, which proved the note and nothing else. This is
+	// the shape the exporter and the importer actually have to survive:
+	//
+	//   two LEVELS, because `menu_items.parent_id` is a self-referencing key
+	//     and a flat menu never exercises it;
+	//   a CATEGORY, a BRAND, a PRODUCT and an ARTICLE, because those are four
+	//     different tables on the new shop and four different address shapes;
+	//   a CUSTOM link, which is the only kind carrying its own URL;
+	//   an item pointing at a WordPress PAGE, which this shop REFUSES by name
+	//     (PostImporter: it ships its own /about/), so the importer has to
+	//     answer for a pointer whose target was deliberately never imported;
+	//   items with an EMPTY post_title, because WordPress only writes that
+	//     column when the owner types a label OVER the default -- leave the box
+	//     alone and the theme prints the target's own name. Most real items are
+	//     this shape, and an export that emitted post_title would carry an
+	//     empty label for nearly the whole menu.
 	$insert( 'terms', array( 'term_id' => 950, 'name' => 'Main menu', 'slug' => 'main-menu' ) );
 	$insert( 'term_taxonomy', array(
 		'term_taxonomy_id' => 950, 'term_id' => 950, 'taxonomy' => 'nav_menu',
-		'description' => '', 'parent' => 0, 'count' => 3,
+		'description' => 'The header, as the theme draws it.', 'parent' => 0, 'count' => 7,
+	) );
+
+	// The theme's own slot assignment. `nav_menu_locations` inside
+	// theme_mods_<stylesheet> is what makes one of several menus THE header,
+	// and it is the only place that fact is written down.
+	$insert( 'options', array(
+		'option_name'  => 'theme_mods_kbeautybliss',
+		'option_value' => serialize( array(
+			'nav_menu_locations' => array( 'primary' => 950, 'handheld' => 950 ),
+		) ),
 	) );
 
 	$menu_items = array(
-		// A category link, a page link and a hand-typed URL: the three kinds a
-		// real header carries, and three different things to re-enter.
-		array( 'id' => 7501, 'title' => 'Skincare', 'order' => 1, 'type' => 'taxonomy', 'object' => 'product_cat', 'object_id' => 15, 'url' => '' ),
-		array( 'id' => 7502, 'title' => 'About us', 'order' => 2, 'type' => 'post_type', 'object' => 'page', 'object_id' => 7002, 'url' => '' ),
-		array( 'id' => 7503, 'title' => 'Sale', 'order' => 3, 'type' => 'custom', 'object' => 'custom', 'object_id' => 0, 'url' => 'https://kbeautybliss.com/super-sale/' ),
+		array( 'id' => 7501, 'title' => 'Skincare', 'order' => 1, 'parent' => 0,
+			'type' => 'taxonomy', 'object' => 'product_cat', 'object_id' => 15, 'url' => '' ),
+
+		// Empty title: the label has to come off the term.
+		array( 'id' => 7504, 'title' => '', 'order' => 1, 'parent' => 7501,
+			'type' => 'taxonomy', 'object' => 'product_cat', 'object_id' => 22, 'url' => '' ),
+
+		// A BRAND, which on this shop is a term of the `pa_brands` ATTRIBUTE
+		// taxonomy rather than of a brands taxonomy -- BrandImporter's header
+		// records that production is shaped this way.
+		array( 'id' => 7505, 'title' => '', 'order' => 2, 'parent' => 7501,
+			'type' => 'taxonomy', 'object' => 'pa_brands', 'object_id' => 502, 'url' => '' ),
+
+		// A PRODUCT, under a label the owner typed over the product's own name.
+		array( 'id' => 7506, 'title' => 'Our hero serum', 'order' => 3, 'parent' => 7501,
+			'type' => 'post_type', 'object' => 'product', 'object_id' => 4021, 'url' => '' ),
+
+		// THE ONE THIS SHOP REFUSES. `page` 7002 is /about-us/, and
+		// PostImporter declines every WordPress page by name because this shop
+		// ships its own /about/. The pointer is valid, the target is
+		// deliberately absent, and the importer has to have an answer that is
+		// neither "drop it" nor "leave a 404 in the header".
+		array( 'id' => 7502, 'title' => 'About us', 'order' => 2, 'parent' => 0,
+			'type' => 'post_type', 'object' => 'page', 'object_id' => 7002, 'url' => '' ),
+
+		// An ARTICLE, label off the post title.
+		array( 'id' => 7507, 'title' => '', 'order' => 3, 'parent' => 0,
+			'type' => 'post_type', 'object' => 'post', 'object_id' => 7001, 'url' => '' ),
+
+		// A hand-typed URL, opening in a new tab, with a CSS class on it.
+		array( 'id' => 7503, 'title' => 'Sale', 'order' => 4, 'parent' => 0,
+			'type' => 'custom', 'object' => 'custom', 'object_id' => 0,
+			'url' => 'https://kbeautybliss.com/super-sale/', 'target' => '_blank',
+			'classes' => array( 'menu-sale', 'menu-highlight' ) ),
 	);
 
 	foreach ( $menu_items as $item ) {
@@ -779,14 +830,39 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 			'_menu_item_type'             => $item['type'],
 			'_menu_item_object'           => $item['object'],
 			'_menu_item_object_id'        => (string) $item['object_id'],
-			'_menu_item_menu_item_parent' => '0',
+			'_menu_item_menu_item_parent' => (string) $item['parent'],
 			'_menu_item_url'              => $item['url'],
+			'_menu_item_target'           => isset( $item['target'] ) ? $item['target'] : '',
+			// A serialised array of one empty string is what WordPress writes
+			// for an item with no classes, and it is the common case.
+			'_menu_item_classes'          => serialize( isset( $item['classes'] ) ? $item['classes'] : array( '' ) ),
 		) );
 
 		$insert( 'term_relationships', array(
 			'object_id' => $item['id'], 'term_taxonomy_id' => 950, 'term_order' => 0,
 		) );
 	}
+
+	// AN ORPHAN: a menu item whose term relationship was deleted and whose post
+	// row was not. Real, and common on a shop somebody has rebuilt a menu on.
+	// WordPress renders it nowhere, so neither does the export carry it -- and
+	// the count in the manifest note says how many were left behind, because a
+	// row silently absent is the thing this whole export is arranged against.
+	$insert( 'posts', array(
+		'ID' => 7599, 'post_author' => 1, 'post_type' => 'nav_menu_item', 'post_status' => 'publish',
+		'post_title' => 'Orphaned item', 'post_name' => '7599',
+		'post_content' => '', 'post_excerpt' => '',
+		'post_date' => '2019-02-01 09:00:00', 'post_date_gmt' => '2019-02-01 05:00:00',
+		'post_modified' => '2019-02-01 09:00:00', 'menu_order' => 9,
+	) );
+
+	$meta( 'postmeta', 'post_id', 7599, array(
+		'_menu_item_type'             => 'custom',
+		'_menu_item_object'           => 'custom',
+		'_menu_item_object_id'        => '0',
+		'_menu_item_menu_item_parent' => '0',
+		'_menu_item_url'              => 'https://kbeautybliss.com/gone/',
+	) );
 
 	// ── Previous addresses ──────────────────────────────────────────────────
 	//

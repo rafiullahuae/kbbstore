@@ -197,7 +197,14 @@ class KBB_Export_Stage_Posts extends KBB_Export_Stage {
 	 * are different claims and only the first is true.
 	 */
 	private function report_skipped_types() {
-		$carried = array( 'product', 'product_variation', 'shop_order', 'shop_order_refund', 'shop_coupon' );
+		/*
+		 * `nav_menu_item` JOINED THIS LIST AT PLUGIN 1.7.0, and that is the
+		 * whole of the change here: menu_items.csv carries it now, so naming
+		 * it among the types nothing carries would be the same false entry
+		 * report_navigation() below was written to correct, pointing the
+		 * other way.
+		 */
+		$carried = array( 'product', 'product_variation', 'shop_order', 'shop_order_refund', 'shop_coupon', 'nav_menu_item' );
 		$parts   = array();
 
 		foreach ( KBB_Export_Wp::post_types_in_database() as $type => $by_status ) {
@@ -218,6 +225,14 @@ class KBB_Export_Stage_Posts extends KBB_Export_Stage {
 			}
 		}
 
+		/*
+		 * BEFORE THE EARLY RETURN, and that is the fix rather than a tidy-up.
+		 * This note used to hang off the end of the discard list, so a shop
+		 * whose every post type is carried -- which is the shop this export is
+		 * aimed at -- got no navigation note at all.
+		 */
+		$this->report_navigation();
+
 		if ( empty( $parts ) ) {
 			return;
 		}
@@ -228,8 +243,6 @@ class KBB_Export_Stage_Posts extends KBB_Export_Stage {
 				. 'the whole media library; media.csv carries the attachments the catalogue actually '
 				. 'references, which is a smaller set and the one the new shop has to fetch.'
 		);
-
-		$this->report_navigation();
 	}
 
 	/**
@@ -237,26 +250,39 @@ class KBB_Export_Stage_Posts extends KBB_Export_Stage {
 	 *
 	 * ── A TRUE LIST WITH A FALSE SENTENCE OVER IT ───────────────────────────
 	 *
-	 * The note above is accurate about what it OMITS and wrong about `nav_menu_
-	 * item`, which it sweeps into "another file's job or WordPress's own
-	 * machinery". It is neither. No file carries it, and it is not plumbing: it
-	 * is the owner's header and mobile drawer -- the categories he chose, in the
-	 * order he chose them, with the names he typed.
-	 *
-	 * `docs/GQ-MIGRATION-COMPLETENESS.md` lists `menus` and `menu_items` among
-	 * the tables a clean import leaves untouched, and says the loss is "counted
-	 * in the manifest notes with its row count". That was true only of a shop
-	 * that HAS a menu, and until Lane IE the fixture had none -- so this note
-	 * had never fired with a `nav_menu_item` in it and nobody had ever read the
-	 * sentence it produces. It reads, to the owner, as though his navigation
-	 * were a cache.
+	 * The note above is accurate about what it OMITS and was wrong about
+	 * `nav_menu_item`, which it swept into "another file's job or WordPress's
+	 * own machinery". It was neither. `docs/GQ-MIGRATION-COMPLETENESS.md` lists
+	 * `menus` and `menu_items` among the tables a clean import leaves untouched
+	 * and says the loss is "counted in the manifest notes with its row count",
+	 * which was true only of a shop that HAS a menu -- and until Lane IE the
+	 * fixture had none, so the sentence had never been read by anybody.
 	 *
 	 * GQ §5.4 is the precedent and states the rule: a discard list with false
 	 * entries is worse than a shorter one, because the reader cannot tell which
 	 * of them matters and stops reading all of them.
+	 *
+	 * ── AND AT 1.7.0 THE SENTENCE ITSELF WENT STALE ─────────────────────────
+	 *
+	 * menus.csv and menu_items.csv now carry the navigation, so "IS NOT IN THIS
+	 * EXPORT AND HAS TO BE RE-ENTERED BY HAND" became exactly the kind of entry
+	 * the rule above is about -- a loud, specific, checkable claim that is
+	 * false. It fires only when the Navigation group was left UNTICKED, which
+	 * is the one case where it is still true; when the group is selected,
+	 * KBB_Export_Stage_Menu_Items::report_totals() says what was carried
+	 * instead. This stage does not print both and does not print neither.
 	 */
 	private function report_navigation() {
 		global $wpdb;
+
+		$groups = (array) $this->option( 'groups', array() );
+
+		if ( in_array( 'navigation', $groups, true ) ) {
+			// Carried. The menu-items stage counts what it wrote; one export
+			// saying two different things about the same rows is how an owner
+			// comes to trust neither.
+			return;
+		}
 
 		$items = (int) $wpdb->get_var(
 			'SELECT COUNT(*) FROM ' . $wpdb->prefix . "posts WHERE post_type = 'nav_menu_item'"
@@ -273,14 +299,11 @@ class KBB_Export_Stage_Posts extends KBB_Export_Stage {
 		$this->note(
 			'THE NAVIGATION MENU IS NOT IN THIS EXPORT AND HAS TO BE RE-ENTERED BY HAND: ' . $items
 				. ' menu item' . ( 1 === $items ? '' : 's' ) . ' across ' . $menus . ' menu'
-				. ( 1 === $menus ? '' : 's' ) . '. It is in the list above as `nav_menu_item`, and that list\'s '
-				. 'sentence is wrong about this one entry: a menu item is neither another file\'s job nor '
-				. 'WordPress\'s machinery. It is the header and the mobile drawer -- which categories, in which '
-				. 'order, under which names. WordPress stores a menu as a `nav_menu` taxonomy term whose members '
-				. 'are `nav_menu_item` posts, each with its target in postmeta, and no stage here reads them. The '
-				. 'new shop has `menus` and `menu_items` tables with `source_term_id` and `source_post_id` columns '
-				. 'waiting for exactly this, so it is a gap that can be closed later -- but until it is, the '
-				. 'navigation is retyped, and this is the count of how much retyping.'
+				. ( 1 === $menus ? '' : 's' ) . '. It is the header and the mobile drawer -- which '
+				. 'categories, in which order, under which names. This plugin CAN export it: tick '
+				. '**Navigation** on the export screen and it goes out as menus.csv and menu_items.csv, '
+				. 'which the new shop imports into its own `menus` and `menu_items` tables. It was left '
+				. 'unticked on this run, and this is the count of how much retyping that costs.'
 		);
 	}
 }

@@ -87,7 +87,7 @@ class KBB_Export_Runner {
 	 * plugin's main file; a test that they agree is the part a human cannot do
 	 * by looking at one file.
 	 */
-	const PLUGIN_VERSION = '1.6.0';
+	const PLUGIN_VERSION = '1.7.0';
 
 	/** @var array<string,mixed> */
 	private $state;
@@ -832,6 +832,15 @@ class KBB_Export_Runner {
 			new KBB_Export_Stage_Order_Notes( $s ),
 			new KBB_Export_Stage_Reviews( $s ),
 			new KBB_Export_Stage_Posts( $s ),
+			/*
+			 * AFTER THE CATALOGUE AND THE ARTICLES, and that is the importer's
+			 * dependency showing through into the export's own order. A menu
+			 * item points at a category, a brand, a product or an article by
+			 * WordPress id; an export that dies half way is more useful with
+			 * the things pointed AT in it than with the pointers.
+			 */
+			new KBB_Export_Stage_Menus( $s ),
+			new KBB_Export_Stage_Menu_Items( $s ),
 			new KBB_Export_Stage_Permalinks( $s ),
 			new KBB_Export_Stage_Media( $s ),
 		);
