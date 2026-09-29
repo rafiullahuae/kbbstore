@@ -63,3 +63,20 @@ $cod->fill(['title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 
 $cod->save();
 
 echo 'seeded ', \App\Models\Product::count(), " products, wallets on\n";
+
+/*
+ * ARABIC ON, so the Arabic pair can be photographed (Lane WAL2).
+ *
+ * The shop serves Arabic at /ar/... and English unprefixed —
+ * App\Http\Middleware\SetLocaleFromPath strips the segment rather than
+ * declaring a Route::prefix('ar'). Both settings are needed: one turns the
+ * locale on at all, the other turns the page right-to-left. Neither changes
+ * anything about English, which is the point of photographing both.
+ *
+ * This is a PREVIEW fixture and not a default. Nothing in the package this
+ * lane ships turns Arabic on for a shop that has not asked for it.
+ */
+app(\App\Services\SettingsService::class)->set(\App\Support\Locale::SETTING_ENABLED, '1');
+app(\App\Services\SettingsService::class)->set(\App\Support\Locale::SETTING_RTL, '1');
+
+echo "arabic enabled for the preview\n";

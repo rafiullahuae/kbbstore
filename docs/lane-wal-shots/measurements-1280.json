@@ -1,10 +1,12 @@
 {
   "viewport": 1280,
-  "base": "http://127.0.0.1:8994",
+  "base": "http://127.0.0.1:8971",
   "shots": {
     "checkout-wallets-off": {
       "scrollWidth": 1280,
       "clientWidth": 1280,
+      "lang": "en",
+      "dir": "ltr",
       "expressRowInDom": false,
       "expressRowVisible": false,
       "dividerInDom": false,
@@ -20,6 +22,8 @@
     "checkout-wallets-on-no-stripe": {
       "scrollWidth": 1280,
       "clientWidth": 1280,
+      "lang": "en",
+      "dir": "ltr",
       "expressRowInDom": false,
       "expressRowVisible": false,
       "dividerInDom": false,
@@ -35,6 +39,8 @@
     "checkout-stub-no-wallet": {
       "scrollWidth": 1280,
       "clientWidth": 1280,
+      "lang": "en",
+      "dir": "ltr",
       "expressRowInDom": false,
       "expressRowVisible": false,
       "dividerInDom": false,
@@ -50,6 +56,8 @@
     "checkout-stub-wallets": {
       "scrollWidth": 1280,
       "clientWidth": 1280,
+      "lang": "en",
+      "dir": "ltr",
       "expressRowInDom": true,
       "expressRowVisible": true,
       "dividerInDom": true,
@@ -57,6 +65,43 @@
         "w": 560,
         "h": 48
       },
+      "paymentList": {
+        "w": 560,
+        "h": 331
+      },
+      "paymentOptions": 2,
+      "deadButtons": 0,
+      "footerChips": []
+    },
+    "checkout-ar-stub-wallets": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "lang": "ar",
+      "dir": "rtl",
+      "expressRowInDom": true,
+      "expressRowVisible": true,
+      "dividerInDom": true,
+      "expressRow": {
+        "w": 560,
+        "h": 48
+      },
+      "paymentList": {
+        "w": 560,
+        "h": 331
+      },
+      "paymentOptions": 2,
+      "deadButtons": 0,
+      "footerChips": []
+    },
+    "checkout-ar-wallets-off": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "lang": "ar",
+      "dir": "rtl",
+      "expressRowInDom": false,
+      "expressRowVisible": false,
+      "dividerInDom": false,
+      "expressRow": null,
       "paymentList": {
         "w": 560,
         "h": 331
@@ -91,11 +136,11 @@
         },
         {
           "field": "wallet_apple_pay",
-          "value": "1"
+          "value": ""
         },
         {
           "field": "wallet_google_pay",
-          "value": "1"
+          "value": ""
         },
         {
           "field": "apple_domain_association",
