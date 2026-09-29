@@ -90,3 +90,7 @@ public/wp-content/
 # Built update packages, dropped at the repo root so the owner can download one
 # from the app. The durable copy is storage/app/packages/.
 /kbb-update-*.zip
+
+# Lane PDP keeps its suite logs here (CLAUDE.md: never in the shared scratchpad,
+# and never under a generic name). They are lane working notes, not repo state.
+/storage/pdp-logs/
