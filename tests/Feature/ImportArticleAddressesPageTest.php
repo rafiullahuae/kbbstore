@@ -380,10 +380,18 @@ it('refuses the page to anybody who is not signed in', function () {
 
     aapPostsCsv([aapRow(7500, 'about', 'About')]);
 
-    // A browser navigation is redirected to the login page; a request that
-    // asked for JSON is answered 401. Either is a refusal; both are asserted so
-    // neither shape can quietly become a 200.
-    $this->get('/admin-api/import/article-addresses-page')->assertRedirect();
+    /*
+     * A browser navigation is refused outright; a request that asked for JSON
+     * is answered 401. Either is a refusal; both are asserted so neither shape
+     * can quietly become a 200.
+     *
+     * ▲ PIN ADVANCED (Lane SEC, round 2): the first line asserted
+     * assertRedirect(). That redirect named the secret admin path in a Location
+     * header, on a fixed prefix anybody can guess, so it is a 404 now — which
+     * this case's own two-shape reasoning already anticipated. The JSON half is
+     * untouched, and is the one the console takes.
+     */
+    $this->get('/admin-api/import/article-addresses-page')->assertNotFound();
     $this->getJson('/admin-api/import/article-addresses-page')->assertStatus(401);
 });
 

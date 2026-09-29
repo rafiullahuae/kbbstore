@@ -176,8 +176,19 @@ it('refuses a signed-out browser on the two GETs that write, without starting an
      */
     InstagramAdminRoutes::wire($this->app);
 
-    $this->get('/admin-api/instagram/start')->assertRedirect();
-    $this->get('/admin-api/instagram/callback?code=x&state=y')->assertRedirect();
+    /*
+     * ▲ PIN ADVANCED (Lane SEC, round 2): this asserted assertRedirect() on both legs.
+     *
+     * An admin-guarded address that does NOT carry the secret admin path --
+     * every `admin-api/...` one -- used to answer a browser with
+     * `302 Location: .../<admin_path>/login`, which handed the secret to anyone
+     * who typed a fixed, guessable prefix. It answers a plain 404 now. Still a
+     * refusal, and one that does not admit the endpoint is there. A request
+     * that expects JSON still answers 401, unchanged.
+     * tests/Feature/AdminPathNeverLeaksTest.php sweeps all 398.
+     */
+    $this->get('/admin-api/instagram/start')->assertNotFound();
+    $this->get('/admin-api/instagram/callback?code=x&state=y')->assertNotFound();
 
     expect(session()->has(InstagramAuth::STATE_SESSION_KEY))->toBeFalse();
 });
