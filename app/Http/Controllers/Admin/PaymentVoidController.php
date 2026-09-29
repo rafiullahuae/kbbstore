@@ -68,7 +68,29 @@ class PaymentVoidController extends Controller
             return response()->json(['error' => 'not_found'], 404);
         }
 
-        return response()->json($this->voider->status($order));
+        return response()->json($this->voider->status($order) + [
+            /*
+             * THE FACTS THE OPERATOR CONFIRMS, ON THE READ THAT DECIDES WHETHER
+             * TO OFFER THE BUTTON AT ALL.
+             *
+             * A nested key, so every top-level field this endpoint has ever
+             * answered is byte-identical and PaymentVoider::status() — which is
+             * also embedded in the order-detail and settlement payloads — is
+             * untouched. Only this endpoint gained anything.
+             *
+             * It exists because the release control is appended to the order
+             * screen from OUTSIDE app.blade.php (see
+             * resources/views/admin/partials/order-release-hold.blade.php), so
+             * the only order id it has is one it read off a click. `order_number`
+             * lets the screen check that id against the order heading it can
+             * see before it draws a button that spends somebody's credit, and
+             * `amount`/`consequence` mean the confirmation sentence is the
+             * SERVER's, not a figure the browser assembled.
+             *
+             * Reads only, and still calls no provider.
+             */
+            'confirm' => $this->voider->confirmation($order),
+        ]);
     }
 
     /**
