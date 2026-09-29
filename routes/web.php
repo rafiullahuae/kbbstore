@@ -683,6 +683,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/sp-set-stock-admin.php';
 
         /*
+         * Catalog -> Product tabs. Writes global tabs and the per-product
+         * overrides that hide or replace them, and a tab's body is rich text
+         * printed on every product page — so it sits inside this guarded group
+         * with the rest of Catalog, behind its own producttabs.manage
+         * capability.
+         */
+        require __DIR__.'/product-tabs-admin.php';
+
+        /*
          * Appearance → Banners. Writes banner sets and cards, and accepts image
          * addresses, so it belongs inside this guarded group like every other
          * catalogue-adjacent writer. Its package ships

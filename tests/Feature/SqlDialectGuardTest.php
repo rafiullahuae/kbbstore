@@ -967,6 +967,17 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * engines plan differently.
          */
         'admin-api/sets/{id}' => '/admin-api/sets/' . $setProduct->id,
+
+        /*
+         * Catalog -> Product tabs -> pick a product (Lane PT). DRIVEN rather
+         * than excused, and not because the shape is novel: it reads
+         * product_tabs filtered on a nullable `product_id` with an OR for the
+         * global rows, which is exactly the shape that reads correctly on one
+         * engine and returns the wrong set on the other -- SQLite and MySQL do
+         * not agree about NULL in a compound WHERE unless the parentheses say
+         * so, and the parentheses are the thing a guard should be watching.
+         */
+        'admin-api/product-tabs/product/{product}' => '/admin-api/product-tabs/product/' . $setProduct->id,
         /*
          * Appearance -> Banners -> open a set, and its live preview (Lane BN).
          * Both caught by this walk on the day they were wired, and both driven
