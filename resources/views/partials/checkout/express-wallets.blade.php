@@ -111,6 +111,17 @@
     $kbbWalletAmount = $kbbBasketTotal
         + $kbbGiftFee
         + ($kbbStripeOnOffer ? $kbbStripe->feeFils($kbbBasketTotal) : 0);
+
+    /*
+     * The language the sheet and its button label are drawn in.
+     *
+     * THE SAME VALUE partials/checkout/stripe-elements COMPUTES, from the same
+     * class, because the two are one decision: a checkout whose card fields
+     * speak Arabic and whose Apple Pay button speaks the phone's language is
+     * the defect half-fixed. App\Support\StripeLocale says which way the
+     * fallback goes and why it is not `auto`.
+     */
+    $kbbStripeLocale = \App\Support\StripeLocale::current();
 @endphp
 @if (($kbbApplePay || $kbbGooglePay) && $kbbWalletAmount > 0)
 {{-- HIDDEN UNTIL STRIPE SAYS A WALLET IS THERE. Both nodes carry the hook the
@@ -132,6 +143,12 @@
   if (!FORM || !ROW) return;
 
   var PK          = @json($kbbStripe->publishableKey());
+  /* See stripe-elements for why this is set on the Stripe object as well as on
+     the group: the constructor governs the error strings Stripe.js METHODS
+     return — result.error.message from confirmPayment(), which say() prints
+     verbatim — and the group governs what is drawn inside the sheet, including
+     the "Buy with Apple Pay" / "Buy with Google Pay" label itself. */
+  var LOCALE      = @json($kbbStripeLocale);
   var APPLE       = @json($kbbApplePay);
   var GOOGLE      = @json($kbbGooglePay);
   var AMOUNT_URL  = @json(\App\Support\Url::to('/checkout/wallet/amount'));
@@ -308,7 +325,7 @@
   }
 
   function boot() {
-    stripe = window.Stripe(PK);
+    stripe = window.Stripe(PK, { locale: LOCALE });
 
     /*
      * A SECOND elements() GROUP, deliberately, and it does not disturb the
@@ -327,7 +344,8 @@
       mode: 'payment',
       amount: amount,
       currency: 'aed',
-      paymentMethodTypes: ['card']
+      paymentMethodTypes: ['card'],
+      locale: LOCALE
     });
 
     var ece = elements.create('expressCheckout', {

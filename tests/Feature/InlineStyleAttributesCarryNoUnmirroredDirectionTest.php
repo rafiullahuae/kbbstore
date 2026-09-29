@@ -74,9 +74,14 @@ const INLINE_STYLE_ALLOWED = [
  * Every inline style attribute in the storefront views, parsed per declaration.
  *
  * Emails and invoices are deliberately out of scope: an HTML email is a table
- * layout aimed at clients with no logical-property support, and
- * resources/views/invoices/document.blade.php states in its own header that its
- * sheet stays physical and why.
+ * layout aimed at clients with no logical-property support, and the printable
+ * documents' one remaining physical inline declaration is the Code 128
+ * `border-left-width` on each bar, which MUST stay physical -- a barcode is a
+ * machine-readable mark and not text, and `.bc { direction: ltr }` pins the
+ * whole symbol so it cannot mirror with the sheet around it. (That sentence
+ * used to read "document.blade.php states in its own header that its sheet
+ * stays physical and why"; Lane CX converted that sheet, and its header now
+ * says the opposite. The scope decision here is unchanged.)
  *
  * @return array{swept: int, physical: array<int, array{file: string, property: string, value: string, attribute: string}>}
  */

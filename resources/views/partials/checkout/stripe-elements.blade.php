@@ -58,6 +58,13 @@
     // else. Asked of the guard, not of the markup — see syncSave() below and
     // the note in partials/checkout/stripe-card.
     $cardCustomerSignedIn = auth('customer')->check();
+    /*
+     * The language Stripe speaks back in. App\Support\StripeLocale holds the map
+     * and the fallback; the short version is that Stripe's own default is
+     * `auto`, which is the BROWSER's language and not this shop's — so an Arabic
+     * checkout printed an English decline reason inside four Arabic sentences.
+     */
+    $stripeLocale = \App\Support\StripeLocale::current();
 @endphp
 @if ($stripeKey !== '')
 <script src="https://js.stripe.com/v3"></script>
@@ -80,8 +87,28 @@
     place:    @json(__('store.checkout.place_order'))
   };
 
-  var stripe = Stripe(@json($stripeKey));
-  var elements = stripe.elements();
+  /*
+   * THE SHOP'S LANGUAGE, ON BOTH OBJECTS, AND THEY ARE NOT THE SAME SWITCH.
+   *
+   * Stripe documents two places a locale can be set and they govern different
+   * text, which is why this passes it twice rather than picking one:
+   *
+   *   Stripe(key, {locale}) localises the ERROR STRINGS returned by Stripe.js
+   *     METHODS — which is where "Your card was declined" comes from. That
+   *     sentence is confirmCardPayment()'s, not an Element's, and showError()
+   *     below prints it verbatim ("Stripe's own sentence, not one of ours").
+   *
+   *   stripe.elements({locale}) localises what is drawn INSIDE the three
+   *     iframes: the placeholders, and the per-field validation each
+   *     element.on('change') hands to showError().
+   *
+   * Left unset both default to `auto`, which is the browser's language. The one
+   * value is computed once on the server so the two cannot disagree.
+   */
+  var LOCALE = @json($stripeLocale);
+
+  var stripe = Stripe(@json($stripeKey), { locale: LOCALE });
+  var elements = stripe.elements({ locale: LOCALE });
 
   /* The three fields, each an Element and each mounted into a box this page
      draws. `number` is the one confirmCardPayment() is handed; Stripe finds the

@@ -71,14 +71,19 @@ const MENU_ITEMS = 'menu-items';
  * MUTATION: put the `$droppedAll` append back outside the `if ($present)` in
  * ImportChain::progress() and the first case is red, naming `classes`.
  *
- * ── WHAT THIS DOES NOT FIX, AND WHO OWNS IT ───────────────────────────────
+ * ── THE OTHER HALF, AND WHO FIXED IT ──────────────────────────────────────
  *
- * The other half of the same staleness is in `Checkpoint::open()`, which zeroes
+ * The other half of the same staleness was in `Checkpoint::open()`, which zeroes
  * `processed` and the four counters when an entity is restarted or re-run after
- * finishing, and does NOT clear `dropped_fields` with them. So a field that the
- * PREVIOUS export of a file carried is still named after a new export of that
- * same file stops carrying it. That is `app/Services/Import/**`, which is Lane
- * A's, and it is reported rather than touched — see this lane's report.
+ * finishing, and did NOT clear `dropped_fields` with them. So a field that the
+ * PREVIOUS export of a file carried was still named after a new export of that
+ * same file stopped carrying it. This lane reported it rather than touching it,
+ * because `app/Services/Import/**` was another lane's.
+ *
+ * CLOSED BY LANE CX, in the same two branches that zero the counters and
+ * nowhere else -- an ordinary resume must keep the list, because a background
+ * import is many requests over one pass. See
+ * tests/Feature/CheckpointForgetsTheLastExportsDroppedFieldsTest.php.
  */
 
 /**

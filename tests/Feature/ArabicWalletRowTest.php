@@ -38,11 +38,18 @@ use Illuminate\Support\Facades\Cache;
  * ── AND ONE THING THAT IS NOT OURS, SAID OUT LOUD ──────────────────────────
  *
  * The BUTTON LABEL itself ("Buy with Apple Pay") and every decline reason
- * Stripe produces are drawn by Stripe, not by this shop, and neither
- * stripe.elements() call in this checkout passes a `locale`. They therefore
- * follow the BROWSER's language, not the shop's. That is a real gap and it is
- * reported rather than fixed here, because the same one-line option belongs on
- * the card form's element group too and that file is another lane's.
+ * Stripe produces are drawn by Stripe, not by this shop. This paragraph used to
+ * report that neither stripe.elements() call in this checkout passed a
+ * `locale`, so both followed the BROWSER's language rather than the shop's --
+ * a real gap, reported rather than fixed here because the same option belongs
+ * on the card form's element group too and that file was another lane's.
+ *
+ * CLOSED BY LANE CX. Both partials now pass the shop's language, on the
+ * elements() group AND on the Stripe() constructor (the two govern different
+ * text: the group draws the button label, the constructor writes the decline
+ * sentence). App\Support\StripeLocale maps the shop's locale onto a tag Stripe
+ * lists and falls back to the shop's default language rather than to `auto`.
+ * tests/Feature/StripeSpeaksTheShopsLanguageTest.php is the guard.
  */
 function awrArabicShopApproved(): void
 {

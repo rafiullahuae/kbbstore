@@ -812,12 +812,30 @@ it('animates the free-delivery bar and lets its bloom out of the track', functio
         ->and($css)->toContain('animation:cpgflow 2.6s linear infinite')
         ->and($css)->toContain('animation:cpgbloom 1.9s ease-in-out infinite')
         ->and($css)->toContain('animation:cpgpetal 4.2s linear infinite')
-        // Both ride the leading edge, and every keyframe keeps the translate —
-        // a transform that dropped it would snap the bloom back to the corner
-        // the moment its animation took over.
-        ->and($css)->toContain('position:absolute;top:50%;right:0;pointer-events:none')
+        /*
+         * Both ride the leading edge, and every keyframe keeps the translate —
+         * a transform that dropped it would snap the bloom back to the corner
+         * the moment its animation took over.
+         *
+         * PIN ADVANCED BY LANE CX, deliberately: `right:0` was the LEADING edge
+         * only while the page reads left to right, and under `dir="rtl"` it is
+         * the trailing one — the far end of the track the fill has not reached.
+         * The anchor is logical now. The pin is advanced rather than relaxed,
+         * and it gains the RTL half, because the two have to move together: the
+         * inset has a logical form and the translateX that centres the shape ON
+         * that inset does not, so converting one without the other puts the
+         * bloom half its own width outside the bar. See
+         * tests/Feature/FreeDeliveryBloomRidesTheLeadingEdgeTest.php, which is
+         * where that pairing is asserted in full; these three lines keep this
+         * file's own account of the rule honest.
+         */
+        ->and($css)->toContain('position:absolute;top:50%;inset-inline-end:0;pointer-events:none')
         ->and($css)->toContain('0%,100%{transform:translate(50%,-50%) scale(.85)}')
         ->and($css)->toContain('from{transform:translate(50%,-50%) rotate(0deg)}')
+        // The mirrored halves, each naming its own keyframes.
+        ->and($css)->toContain('[dir="rtl"] .kbb-cartpage.cpg-squeeze .sum .ship .fill::before{')
+        ->and($css)->toContain('0%,100%{transform:translate(-50%,-50%) scale(.85)}')
+        ->and($css)->toContain('from{transform:translate(-50%,-50%) rotate(0deg)}')
         // No image and no extra request: four petals out of one clip-path.
         ->and($css)->toContain('clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%)')
         /*

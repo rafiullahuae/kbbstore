@@ -98,6 +98,17 @@ final class CssDirection
         // how `.rtn-foot .rtn-reset{margin-left:auto}` sat there unseen: the
         // auto margin that ends a flex row, naming a physical side.
         'resources/views/store/routines.blade.php',
+        // Added by Lane CX. The squeeze cart page's own <style> block was
+        // outside the audit as well, which is how the free-delivery bloom came
+        // to be two `right:0` pseudo-elements anchored to the fill's leading
+        // edge -- the edge that changes sides under `dir="rtl"`.
+        'resources/views/store/cart-squeeze.blade.php',
+        // Added by Lane CX. The printable invoice/packing slip, which section 5
+        // of docs/rtl-audit.md listed as out of scope and handed to whoever
+        // owned it. It is converted now: the document already takes its `dir`
+        // from Locale::direction(), so the day Arabic is switched on it would
+        // otherwise render right-to-left over a fully physical stylesheet.
+        'resources/views/invoices/document.blade.php',
     ];
 
     /** Blank out comment bodies, keeping newlines so offsets and lines survive. */

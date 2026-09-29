@@ -1548,11 +1548,17 @@ final class EnglishRenderWalk
      * Same rule as the pages: applied to the BEFORE side, counted, and each one
      * has to keep matching or it is removed.
      *
-     * All of them are REFLOWS: paragraphs written across two to four lines of
-     * template with a link or an @if in the middle of the sentence. Each is now
-     * one __() with the markup passed in as a placeholder, so the line breaks
-     * between the words are gone. HTML collapses them to a single space either
-     * way, so nothing a reader sees has moved.
+     * The first group are REFLOWS: paragraphs written across two to four lines
+     * of template with a link or an @if in the middle of the sentence. Each is
+     * now one __() with the markup passed in as a placeholder, so the line
+     * breaks between the words are gone. HTML collapses them to a single space
+     * either way, so nothing a reader sees has moved.
+     *
+     * The second group -- everything named `printed sheet -- ...` -- is not a
+     * reflow. It is the printed documents' stylesheet going from physical sides
+     * to logical ones, which is also a change no English reader can see, but for
+     * a different reason: the two resolve to the same edge in a left-to-right
+     * document. The group carries its own explanation where it starts.
      *
      * There is no escaping entry here, and there was: the seven sentences on
      * this shop that contain an apostrophe would have gained an &#039; from
@@ -1628,6 +1634,129 @@ final class EnglishRenderWalk
              * every mail template to the invariant that a link it prints is
              * absolute.
              */
+
+            /*
+             * ═══════════════════════════════════════════════════════════════
+             *  THE PRINTED SHEET'S STYLESHEET WENT LOGICAL -- LANE CX
+             * ═══════════════════════════════════════════════════════════════
+             *
+             * These are NOT reflows, which is why they are grouped and why the
+             * paragraph above them has been amended. Thirteen declarations in
+             * resources/views/invoices/document.blade.php's one <style> block
+             * changed name, on all four printed documents at once, and nothing
+             * a reader sees moved.
+             *
+             * WHY IT HAD TO CHANGE. That document already takes its `dir` from
+             * Locale::direction(), and its stylesheet was entirely physical. The
+             * two are harmless apart and a mess together: the day the owner
+             * switches the mirrored layout on, an Arabic invoice would lay
+             * right-to-left text over left-to-right rules -- the money column
+             * aligned to the middle of the sheet, the totals' 26px gap closed up
+             * against its label, the facts strip's dividers on the outside of
+             * the row. Half mirrored, which is worse than either whole answer,
+             * on a document a customer keeps. docs/GC-BULK-PRINTING.md predicted
+             * exactly this and docs/rtl-audit.md Sec. 5 recorded it.
+             *
+             * WHY NOTHING AN ENGLISH READER SEES MOVED, measured rather than
+             * asserted. Every rule below resolves to the same physical edge in a
+             * left-to-right document, which is what makes the conversion a no-op
+             * today -- and the sheet was put through Chromium's own print path
+             * to check it rather than reasoned about. English: `.fact`
+             * border-right 1px / left 0, first cell padding-left 0, totals
+             * padding-left 26px, exactly as the physical rules produced.
+             * Arabic: all three mirror. docs/cx-shots/README.md has the table.
+             *
+             * WHY RULES AND NOT A BASE_COMMIT MOVE. Moving the constant would
+             * blind this walk to every OTHER lane's change as well, for one
+             * file's stylesheet. A rule per declaration stays narrow, and
+             * applyApproved() counts the hits -- so when the base does move past
+             * this work, every one of these fails as a rule that has stopped
+             * excusing anything, which is the signal to delete them.
+             */
+            'printed sheet -- masthead: the document block alignment' => [
+                'pattern' => '#\\.head\\ \\.what\\ \\{\\ flex:\\ 0\\ 0\\ auto;\\ text\\-align:\\ right;\\ \\}#',
+                'with' => '.head .what { flex: 0 0 auto; text-align: end; }',
+                'hits' => 4,
+            ],
+            'printed sheet -- facts strip: the divider between cells' => [
+                'pattern' => '#\\.fact\\ \\{\\ flex:\\ 1\\ 1\\ 130px;\\ padding:\\ 9px\\ 12px;\\ border\\-right:\\ 1px\\ solid\\ var\\(\\-\\-rule\\-soft\\);\\ \\}#',
+                'with' => '.fact { flex: 1 1 130px; padding: 9px 12px; border-inline-end: 1px solid var(--rule-soft); }',
+                'hits' => 4,
+            ],
+            'printed sheet -- facts strip: no divider after the last cell' => [
+                'pattern' => '#\\.fact:last\\-child\\ \\{\\ border\\-right:\\ 0;\\ \\}#',
+                'with' => '.fact:last-child { border-inline-end: 0; }',
+                'hits' => 4,
+            ],
+            'printed sheet -- line items: the column headings' => [
+                'pattern' => '#text\\-align:\\ left;\\ padding:\\ 0\\ 8px\\ 7px;\\ border\\-bottom:\\ 1\\.5px\\ solid\\ var\\(\\-\\-ink\\);#',
+                'with' => 'text-align: start; padding: 0 8px 7px; border-bottom: 1.5px solid var(--ink);',
+                'hits' => 4,
+            ],
+            'printed sheet -- line items: the money columns' => [
+                'pattern' => '#table\\.lines\\ th\\.num,\\ table\\.lines\\ td\\.num\\ \\{\\ text\\-align:\\ right;\\ white\\-space:\\ nowrap;\\ \\}#',
+                'with' => 'table.lines th.num, table.lines td.num { text-align: end; white-space: nowrap; }',
+                'hits' => 4,
+            ],
+            'printed sheet -- line items: flush to the leading edge' => [
+                'pattern' => '#table\\.lines\\ td:first\\-child,\\ table\\.lines\\ th:first\\-child\\ \\{\\ padding\\-left:\\ 0;\\ \\}#',
+                'with' => 'table.lines td:first-child, table.lines th:first-child { padding-inline-start: 0; }',
+                'hits' => 4,
+            ],
+            'printed sheet -- line items: flush to the trailing edge' => [
+                'pattern' => '#table\\.lines\\ td:last\\-child,\\ table\\.lines\\ th:last\\-child\\ \\{\\ padding\\-right:\\ 0;\\ \\}#',
+                'with' => 'table.lines td:last-child, table.lines th:last-child { padding-inline-end: 0; }',
+                'hits' => 4,
+            ],
+            'printed sheet -- totals: the figure, and the gap between it and its label' => [
+                'pattern' => '#table\\.totals\\ td\\.num\\ \\{\\ text\\-align:\\ right;\\ padding\\-left:\\ 26px;\\ white\\-space:\\ nowrap;\\ \\}#',
+                'with' => 'table.totals td.num { text-align: end; padding-inline-start: 26px; white-space: nowrap; }',
+                'hits' => 4,
+            ],
+            'printed sheet -- the VAT note under the totals' => [
+                'pattern' => '#margin\\-top:\\ 7px;\\ text\\-align:\\ right;#',
+                'with' => 'margin-top: 7px; text-align: end;',
+                'hits' => 4,
+            ],
+            'printed sheet -- phone layout: the masthead once it stacks' => [
+                'pattern' => '#\\.head\\ \\.what\\ \\{\\ text\\-align:\\ left;\\ \\}#',
+                'with' => '.head .what { text-align: start; }',
+                'hits' => 4,
+            ],
+            'printed sheet -- phone layout: the money column once it stacks' => [
+                'pattern' => '#table\\.lines\\ tbody\\ td\\.num\\ \\{\\ text\\-align:\\ left;\\ \\}#',
+                'with' => 'table.lines tbody td.num { text-align: start; }',
+                'hits' => 4,
+            ],
+            /*
+             * The one rule this lane ADDED rather than converted: Arabic letters
+             * join, and the tracking on .doctype/.label/.stamp prises the joins
+             * open. Scoped to [dir="rtl"], so it changes nothing an English
+             * sheet draws -- but it is three lines of CSS text in the document,
+             * so the baseline has to know about it.
+             */
+            'printed sheet -- Arabic furniture keeps its joins' => [
+                'pattern' => '#/\* \-\-\-\- the order number, drawn as Code 128 \-\-\-\-#',
+                'with' => "[dir=\"rtl\"] .doctype,\n"
+                    ."        [dir=\"rtl\"] .label,\n"
+                    ."        [dir=\"rtl\"] .stamp { letter-spacing: normal; }\n"
+                    ."\n"
+                    .'        /* ---- the order number, drawn as Code 128 ----',
+                'hits' => 4,
+            ],
+            /*
+             * And the one that must NOT mirror. `.bc` is a flex row and a flex
+             * row follows the document's direction, so a right-to-left sheet
+             * would lay the Code 128 bars out backwards and the symbol would
+             * stop being the order number. Pinned to one direction, which is
+             * also what keeps the two `border-left-*` declarations under it
+             * correct rather than merely tolerated.
+             */
+            'printed sheet -- the barcode cannot mirror' => [
+                'pattern' => '#(height: 14mm; padding: 0 3\\.4mm;   /\\* 10 modules of quiet zone \\*/)#',
+                'with' => "$1\n            direction: ltr;   /* RTL-PHYSICAL: a barcode is data, not text */",
+                'hits' => 4,
+            ],
         ];
     }
 
