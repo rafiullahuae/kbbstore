@@ -1,0 +1,85 @@
+{
+  "what": "The one-second teaser, weighed against the 2.5-second one and against looping the full clip. Cut with UgcTranscoder::teaserCommand's own argv; only -t changed.",
+  "h264_same_source_only_-t_changed": {
+    "note": "The shop's real codec. Source: 8s 1080x1920 H.264 at 4000k, 4,053,294 B. Cut with -vf scale=360:640 crop -b:v 400k -c:v libx264 -preset veryfast -profile:v baseline -movflags +faststart -an.",
+    "teaser_2_5s_bytes": 100975,
+    "teaser_1s_bytes": 30847,
+    "ratio_2_5s_over_1s": 3.27,
+    "why_better_than_linear": "A teaser is one keyframe plus cheap inter frames. The keyframe is paid once either way, so the 1.5s that comes off is the cheap part of the file."
+  },
+  "vp9_the_measured_rail": {
+    "note": "What tools/ug3-preview.sh actually serves. VP9/WebM because Playwright's Chromium has no H.264. Source: 8s 1080x1920 testsrc2 at 4000k.",
+    "full_clip_bytes": 3232005,
+    "teaser_2_5s_bytes": 124390,
+    "teaser_1s_bytes": 53817,
+    "ratio_full_over_teaser_1s": 60.1,
+    "ratio_2_5s_over_1s": 2.31
+  },
+  "bytes_fetched_per_tile_over_real_http": {
+    "note": "From measurements-after.json, tools/m1-router.php serving real HTTP 206. Tile 1 and tile 2 point at the SAME content and differ in one thing: tile 1 has a teaser file.",
+    "tile_1_ug3_cut_has_teaser": {
+      "video_bytes": 53817,
+      "file": "teaser-1s-...webm"
+    },
+    "tile_2_ug3_uncut_no_teaser": {
+      "video_bytes": 3232005,
+      "file": "long-a.webm"
+    },
+    "difference": "60.1x, for the same one second of picture",
+    "poster_bytes_each": 74250
+  },
+  "loop_length_measured_in_chromium": {
+    "note": "currentTime sampled every 100ms for 5s; a lap is the value a sample wrapped FROM. The 100ms sampling UNDERSTATES the true lap, so the before numbers are a floor.",
+    "before_timeupdate_only": {
+      "390_uncut_tile": [
+        0.958,
+        1.153
+      ],
+      "1280_uncut_tiles_max": 1.051,
+      "worst_lap_seen": 1.153
+    },
+    "after_armed_wrap": {
+      "390_uncut_tile": [
+        0.953,
+        0.996
+      ],
+      "1280_uncut_tiles_max": 0.97,
+      "worst_lap_seen": 1.001
+    },
+    "cut_clip_native_loop": {
+      "note": "tile 1 has a teaser file and uses v.loop=true, so it never seeks at all",
+      "worst_lap_seen": 0.99
+    }
+  },
+  "layout": {
+    "note": "The loader must not move the tile. Same tile, all three states, both widths.",
+    "tile_box_390": "158x281 in loading, ready, playing and failed",
+    "tile_box_1280": "206x366 in loading, ready, playing and failed",
+    "page_scrollWidth_390": 390,
+    "page_clientWidth_390": 390,
+    "page_scrollWidth_1280": 1280,
+    "page_clientWidth_1280": 1280
+  },
+  "three_states_measured": {
+    "note": "Computed opacity, which is what a shopper sees. From states.json.",
+    "loading": {
+      "loader": 1,
+      "disc": 0
+    },
+    "ready": {
+      "loader": 0,
+      "disc": 1
+    },
+    "playing": {
+      "loader": 0,
+      "disc": 0
+    },
+    "failed_ug3_gone": {
+      "loader": 0,
+      "disc": 1,
+      "fault": "media",
+      "why": "no-media",
+      "meaning": "a failed tile lands in READY -- a pressable disc, never an endless spinner"
+    }
+  }
+}

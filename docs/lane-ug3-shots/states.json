@@ -1,0 +1,1262 @@
+{
+  "390": {
+    "page": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "loading": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ],
+    "scrolled": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ],
+    "playing": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ]
+  },
+  "1280": {
+    "page": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "loading": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      }
+    ],
+    "scrolled": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      }
+    ],
+    "playing": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "no-media",
+        "fault": "media",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      }
+    ]
+  },
+  "rtl-390": {
+    "page": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "loading": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ],
+    "scrolled": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ],
+    "playing": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "offscreen",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ]
+  },
+  "rtl-1280": {
+    "page": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "loading": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      }
+    ],
+    "scrolled": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "loading",
+        "fault": "",
+        "loading": true,
+        "playing": false,
+        "disc": 0,
+        "load": 1,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      }
+    ],
+    "playing": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "cap",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "no-media",
+        "fault": "media",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "playing",
+        "fault": "",
+        "loading": false,
+        "playing": true,
+        "disc": 0,
+        "load": 0,
+        "box": "206x366"
+      }
+    ]
+  },
+  "reduced-390": {
+    "page": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "loading": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ],
+    "scrolled": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ],
+    "playing": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "158x281"
+      }
+    ]
+  },
+  "reduced-1280": {
+    "page": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "loading": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      }
+    ],
+    "scrolled": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      }
+    ],
+    "playing": [
+      {
+        "n": 1,
+        "slug": "ug3-cut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 2,
+        "slug": "ug3-uncut",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 3,
+        "slug": "ug3-bright",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 4,
+        "slug": "ug3-dark",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 5,
+        "slug": "ug3-gone",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      },
+      {
+        "n": 6,
+        "slug": "ug3-spare",
+        "why": "reduced-motion",
+        "fault": "",
+        "loading": false,
+        "playing": false,
+        "disc": 1,
+        "load": 0,
+        "box": "206x366"
+      }
+    ]
+  }
+}

@@ -217,15 +217,31 @@
 .ugcr-load::before{content:'';grid-area:1/1;width:42px;height:42px;border-radius:99px;
   background:rgba(255,255,255,.22);
   -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
-  border:1.4px solid rgba(255,255,255,.5)}
-/* The sweep. ONE element, no extra DOM: a conic gradient masked to a 2.5px rim,
+  border:1.4px solid rgba(255,255,255,.5);
+  /* ── THE ONE NUMBER THAT IS NOT THE PLAY DISC'S, AND IT IS FROM LOOKING ──
+     A soft drop shadow, which .ugcr-play span does not have. Photographed over
+     the cream poster (docs/lane-ug3-shots/state-loading-posters-390.png), a
+     white-on-white frosted disc sat almost flat against it — the blur has
+     nothing to blur when what is behind it is one pale colour. The shadow is
+     what separates it, and it costs nothing on a dark poster where it is
+     invisible. The play disc is left exactly as it was: it is not this lane's
+     to change, and it is a control a shopper is looking FOR rather than one
+     appearing under them. */
+  box-shadow:0 2px 10px rgba(20,14,18,.30)}
+/* The sweep. ONE element, no extra DOM: a conic gradient masked to a 3px rim,
    rotating. White at the head so it reads on a dark poster, the rail's gold
-   behind it so it is this shop's loader and not a browser's. */
+   behind it so it is this shop's loader and not a browser's.
+   ── AND A CONTINUOUS TRACK UNDER THE HEAD, which the first cut did not have.
+   With the rest of the circle fully transparent the rim VANISHED for two thirds
+   of every turn over a bright poster, so the thing flickered rather than
+   turned. A faint always-there ring with a bright head is the shape a shopper
+   reads as "working" — and it is the same idea as the shimmer's muted base with
+   a moving highlight, which is this shop's pending language. */
 .ugcr-load::after{content:'';grid-area:1/1;width:42px;height:42px;border-radius:99px;
-  background:conic-gradient(from 0deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,0) 168deg,
-    var(--ugc-gold) 256deg,#fff 330deg,rgba(255,255,255,0) 360deg);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2.5px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2.5px));
+  background:conic-gradient(from 0deg,rgba(255,255,255,.34) 0deg,rgba(255,255,255,.34) 150deg,
+    var(--ugc-gold) 256deg,#fff 330deg,rgba(255,255,255,.34) 360deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));
   animation:ugcrspin 1.05s linear infinite}
 @keyframes ugcrspin{to{transform:rotate(1turn)}}
 /* REDUCED MOTION GETS A STILL RIM AND NOT A FROZEN ARC. A stopped spinner
