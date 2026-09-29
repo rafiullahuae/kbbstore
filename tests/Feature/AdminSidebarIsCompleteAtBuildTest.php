@@ -392,9 +392,14 @@ it('keeps LATE_NAV in the order the sidebar is built in', function () {
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'analytics', 'search', 'seo',
             'mail', 'store-settings', 'customers', 'quiz-leads'],
         'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram'],
+        // 'pagewash' — Appearance → Page background (Lane BG), one insertion,
+        // which is what the note above says a new row should cost this pin. It
+        // lands after 'dividers' because that is the first anchor its
+        // kbbAddNavEntry() call names, and the LATE_NAV row the integrator adds
+        // names the same four in the same order.
         'Appearance' => ['homepage', 'hpcontent', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
-            'dividers', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel', 'header',
-            'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
+            'dividers', 'pagewash', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
+            'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
     ];
 
     // kbbAddNavEntry's placement, steps 1 and 2. Steps 3 and 4 are its loud

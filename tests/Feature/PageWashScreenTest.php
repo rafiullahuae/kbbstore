@@ -61,6 +61,27 @@ it('gives the screen a breadcrumb and a title, and arms its deep link', function
         ->toBe(1, "pagewash is not armed in LATE_RENDERED exactly once");
 });
 
+it('declares its sidebar row where the sidebar is built, not where the partial is', function () {
+    /*
+     * LATE_NAV, and it is the newest of the console's rules.
+     * AdminSidebarIsCompleteAtBuildTest measured it: twenty-one rows were
+     * contributed by screen partials near the END of a 3.4 MB document, so
+     * buildNav() ran at 21.4% of it and the last row arrived at 98.9% — the
+     * owner's own words were "under some parent menus some sub menues don't
+     * show". A row declared ONLY by its partial is that defect for that row.
+     *
+     * The copy has to agree with the partial's own call in label, group and
+     * anchors, or the row lands in one place on a cold load and another once
+     * the partial runs. That guard compares both directions and names the id;
+     * this one is the finished-state count.
+     */
+    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    expect(substr_count($app, "{screen:'pagewash',label:'Page background',group:'Appearance',"
+        ."after:['dividers','prodstyles','homepage','layout'],"))
+        ->toBe(1, 'pagewash has no LATE_NAV row, so its sidebar entry does not exist until the partial is parsed');
+});
+
 it('reaches every storefront document, each exactly once', function () {
     /*
      * SIX DOCUMENTS, not one layout. Five storefront pages carry their own

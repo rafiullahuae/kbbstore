@@ -1,38 +1,48 @@
-# Lane BG · the three edits the integrator applies
+# Lane BG · the five edits the integrator applies
 
-`resources/views/admin/app.blade.php` is the integrator's file and this lane may
-not edit it, so Appearance → Page background is delivered as anchor/replacement
-blocks in the shape `docs/OD-ADMIN-APP-BLOCKS.md` and `docs/T1B-ADMIN-APP-BLOCKS.md`
-established.
+`routes/web.php` and `resources/views/admin/app.blade.php` are the integrator's
+files and this lane may not edit them, so Appearance → Page background is
+delivered as anchor/replacement blocks in the shape `docs/GS-ADMIN-APP-BLOCKS.md`
+and `docs/T1B-ADMIN-APP-BLOCKS.md` established.
 
 **Each block is an exact ANCHOR and an exact REPLACEMENT.** Every anchor occurs
-**exactly once** in that file at the commit this branch was cut from — verified
-by count, not by eye. Apply in any order; no anchor overlaps another's
-replacement.
-
-**THREE BLOCKS, NOT FOUR, AND THE MISSING ONE IS THE SIDEBAR.** This screen
-registers its own row through `window.kbbAddNavEntry()` from inside its partial,
-exactly as `admin/partials/site-layout-screen.blade.php` does — so there is no
-edit to the `NAV` const. The other three are all required:
+**exactly once** in its target at the commit this branch was cut from — verified
+by count, not by eye, by `tools/bg-apply-blocks.py`, which refuses to touch
+anything if one of them does not. Apply in any order; no anchor overlaps
+another's replacement.
 
 | # | Where | What |
 | --- | --- | --- |
-| 1 | `const TITLES={…}` | the breadcrumb and page title for `pagewash` |
-| 2 | `const LATE_RENDERED=…` | arms the deep-link replay for it |
-| 3 | the includes | loads the screen |
+| 1 | `routes/web.php` | mount the two endpoints |
+| 2 | `const TITLES={…}` | the breadcrumb and page title for `pagewash` |
+| 3 | `const LATE_NAV=[…]` | the sidebar row, declared where the sidebar is built |
+| 4 | `const LATE_RENDERED=…` | arm the deep-link replay |
+| 5 | the includes | load the screen |
 
-**Block 3 without block 1 is the silent half-wired failure this repo keeps
-finding**: the sidebar row appears (the partial adds it), the screen draws, and
-`?go=pagewash` opens the DASHBOARD under no heading at all, because `go()` reads
-`TITLES` to decide what it is looking at and this screen's own `render()` refuses
-to paint unless `#ptitle` already says "Page background". `AdminNavAndIdsTest`
-fails by name on that combination.
+Plus **two records to keep in step**, §6 — `docs/GS-ADMIN-APP-BLOCKS.md` and
+`docs/T1B-ADMIN-APP-BLOCKS.md` — which **this branch has already updated**, and
+**one assertion in another lane's test**, §7, which this branch has also
+already changed and which is flagged rather than hidden.
 
-**There is a FOURTH edit, and it is to this repository rather than to the
-console**: `routes/web.php` must gain the `require` for
-`routes/page-wash-admin.php`. That file's own header carries the line and where
-it goes. `EverythingIsMountedOnceTest` reports it as *"page-wash-admin.php is
-required 0 times"* until it lands.
+**There is no `NAV` edit.** The screen registers its own row through
+`window.kbbAddNavEntry()` from inside its partial, exactly as
+`admin/partials/site-layout-screen.blade.php` and `grid-sections-screen` do.
+Block 3 is the **copy** of that call the console needs at build time; a row in
+`NAV` as well would give the owner the same row twice.
+
+**Blocks 2, 3 and 4 are each a different silent failure if left out.**
+
+- without **2**, `?go=pagewash` opens the DASHBOARD under no heading, because
+  `go()` reads `TITLES` to decide what it is looking at and this screen's own
+  `render()` refuses to paint unless `#ptitle` already says "Page background";
+- without **3**, the sidebar row does not exist until 98.9% of a 3.4 MB document
+  has been parsed — the defect `AdminSidebarIsCompleteAtBuildTest` was written
+  for, in the owner's words *"under some parent menus some sub menues don't
+  show"*;
+- without **4**, the deep-link replay is not armed, and `?go=` / `#pagewash`
+  land on the dashboard on a cold load. (`LATE_NAV` membership arms the CLICK
+  path only — `kbbNavClick` — not the URL one, which reads `LIVE_RENDERED` and
+  `LATE_RENDERED`. Measured, not assumed.)
 
 ---
 
@@ -40,52 +50,111 @@ required 0 times"* until it lands.
 
 Measured in this lane's worktree, both ways, on the same tree.
 
-| | assertions red | the guards |
+| | assertions red | the console guards |
 |---|---|---|
-| **Before** (as this branch ships) | **3** — see below | — |
-| **After** (all three blocks + the route require) | **0** | green |
+| **Before** (as this branch ships) | **6** | — |
+| **After** (all five edits) | **0** | **122 passed, 1 skipped** |
 
-All three are the *finished-state* pin CLAUDE.md prescribes — `=== 1`, never
+Every one is the *finished-state* pin CLAUDE.md prescribes — `=== 1`, never
 `->not->toContain` — so each goes green the moment the integrator does the one
 thing this lane asked for, and stays a real guard afterwards:
 
 ```
-EverythingIsMountedOnceTest > it requires every route file exactly once
-    page-wash-admin.php                is required 0 times
-
-EverythingIsMountedOnceTest > it includes every admin console partial exactly once
-    page-wash-screen                   is included 0 times
-
-PageWashScreenTest > it mounts the page background screen on the console exactly once
-    the screen is not mounted on the console exactly once
-    Failed asserting that 0 is identical to 1.
+EverythingIsMountedOnceTest  page-wash-admin.php is required 0 times
+EverythingIsMountedOnceTest  page-wash-screen    is included 0 times
+PageWashScreenTest           the route file is not required exactly once
+PageWashScreenTest           the screen is not mounted on the console exactly once
+PageWashScreenTest           pagewash has no TITLES entry / is not armed in LATE_RENDERED
+PageWashScreenTest           pagewash has no LATE_NAV row
+AdminSidebarIsCompleteAtBuildTest  the Appearance menu would not settle where it does today
+TranslationConsoleTest       block 3 is not applied to app.blade.php exactly once
+GridSectionConsoleReachTest  block 1/3/4/5 is not applied … exactly once
 ```
+
+The 122 counted above are `PageWashTest`, `PageWashScreenTest`,
+`PageWashContrastTest`, `AdminNavAndIdsTest`, `AdminSidebarIsCompleteAtBuildTest`,
+`AdminDeepLinkTest`, `EverythingIsMountedOnceTest`,
+`AdminConsoleControlsAreLiveTest`, `TranslationConsoleTest` and
+`GridSectionConsoleReachTest`, `AdminConsoleJavaScriptParsesTest`,
+`AdminConsoleScriptParsesTest` and `ExpectationsThatCannotFailTest`, run together
+with all five edits applied.
 
 ---
 
-## Block 1 · the breadcrumb and the page title
+## Block 1 · mount the two endpoints
 
-`TITLES` is `id => [breadcrumb group, page title]`, and both halves must match
-the sidebar row exactly: `AdminNavAndIdsTest` compares them and fails when the
-owner clicks one word and the page answers with another. The group is
-`'Appearance'`, which is the `group` the partial's `kbbAddNavEntry()` call joins,
-and the title is the row's own label.
+In **`routes/web.php`**, inside the existing `admin-api` group that already
+carries `web`, `auth:admin` and `NoStoreAdminApi`.
 
 **Anchor** (occurs once):
 
 ```
-'sitelayout':['Appearance','Site layout'],
+        require __DIR__.'/site-layout-admin.php';
 ```
 
 **Replacement:**
 
 ```
-'sitelayout':['Appearance','Site layout'],'pagewash':['Appearance','Page background'],
+        require __DIR__.'/site-layout-admin.php';
+        require __DIR__.'/page-wash-admin.php';
 ```
 
 ---
 
-## Block 2 · arm the deep-link replay
+## Block 2 · the breadcrumb and the page title
+
+`TITLES` is `id => [breadcrumb group, page title]`, and both halves must match
+the sidebar row exactly: `AdminNavAndIdsTest` compares them and fails when the
+owner clicks one word and the page answers with another.
+
+**APPENDED AT THE END OF THE MAP, not inserted after `'sitelayout'`**, and that
+is not a preference. `docs/GS-ADMIN-APP-BLOCKS.md` block 3 records the run from
+`'sitelayout'` to the closing brace **verbatim**, and
+`GridSectionConsoleReachTest` asserts that record appears in the console exactly
+once — so inserting inside it splits another lane's record in half, while
+appending lengthens it. §6 lengthens the record in the same commit.
+
+**Anchor** (occurs once):
+
+```
+'gridsections':['Appearance','Grid sections']};
+```
+
+**Replacement:**
+
+```
+'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background']};
+```
+
+---
+
+## Block 3 · the sidebar row, where the sidebar is built
+
+`LATE_NAV` is a **copy** of each partial's own `kbbAddNavEntry()` call, made so
+that the row exists at `buildNav()` rather than at the end of the document.
+`AdminSidebarIsCompleteAtBuildTest` compares the label, the group and the
+anchors **both ways** and fails naming the id if either copy drifts.
+
+**LAST in the array**, because this partial's `@include` is last (block 5) and
+that array's ORDER is what reproduces the sidebar the console settles on. The
+row lands after *Section dividers*, which is the first anchor its call names.
+
+**Anchor** (occurs once):
+
+```
+{screen:'gridsections',label:'Grid sections',group:'Appearance',after:['banners','hpcontent','homepage'],icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
+```
+
+**Replacement:**
+
+```
+{screen:'gridsections',label:'Grid sections',group:'Appearance',after:['banners','hpcontent','homepage'],icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
+  {screen:'pagewash',label:'Page background',group:'Appearance',after:['dividers','prodstyles','homepage','layout'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14c4-3 7 1 10-1s5-2 8 0"/>'},
+```
+
+---
+
+## Block 4 · arm the deep-link replay
 
 **Anchor** (occurs once):
 
@@ -93,64 +162,68 @@ and the title is the row's own label.
 const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections']);
 ```
 
-**Replacement:**
+The reasoning, which the console carries as a comment of its own beside the
+line:
+
+```js
+/* 'pagewash' — Appearance → Page background, added when Lane BG merged, on this
+   set's own condition again: its partial wraps window.go and calls render()
+   BEFORE load(), synchronously, so the replay's marker inside #content is
+   already destroyed by the time its task runs and nothing is drawn twice.
+
+   It matters more than usual here. This screen exists to be LOOKED AT and then
+   linked to — its whole job is to show the owner four treatments on his own
+   pages — so a shareable URL is not a nicety for it. Without this, ?go=pagewash
+   and #pagewash open the DASHBOARD, which is the defect ugcvideo, ugcsections,
+   ugcstyle, instagram, sets, product-tabs and gridsections each hit before
+   being armed.
+
+   LATE_NAV membership (block 3) does NOT cover this. That set arms kbbNavClick,
+   the CLICK path; the URL path is armed from LIVE_RENDERED and LATE_RENDERED —
+   see AdminDeepLinkTest, which pins the condition by name. */
+```
+
+**Replacement** (the line only — the comment above it in the console is this
+lane's and is not part of the anchor/replacement pair, so a later lane can
+lengthen the line without disturbing it):
 
 ```
-/* 'pagewash' — Appearance → Page background, added when Lane BG merged, on this
-   set's own condition a seventh time: its partial wraps window.go and calls
-   render() BEFORE load(), synchronously, so the replay's marker inside #content
-   is already destroyed by the time its task runs and nothing is drawn twice.
-
-   Without it ?go=pagewash and #pagewash open the DASHBOARD, which is the defect
-   ugcvideo, ugcsections, ugcstyle, instagram, sets and product-tabs each hit
-   before being armed. It matters more than usual here: this screen exists to be
-   LOOKED AT and then linked to — its whole job is to show the owner four
-   treatments on his own pages — so a shareable URL is not a nicety for it. */
 const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash']);
 ```
 
-> **THIS ONE LINE MOVES, AND IT MOVED WHILE THIS LANE WAS OPEN.** The anchor
-> above ends `…,'slimfooter','gridsections']);` because Lane GS merged into
-> `claude/kind-mayer-rpqesv` after this branch was cut, and this lane was
-> rebased onto it; `docs/T1B-ADMIN-APP-BLOCKS.md` records the same line and its
-> copy was updated in the same rebase, which is where the merge conflict landed
-> and was resolved to carry **both** ids.
->
-> **If it has moved again by the time you apply this**, do not hunt for the
-> anchor: append `,'pagewash'` to whatever the id list now is, and make
-> `docs/T1B-ADMIN-APP-BLOCKS.md`'s block-3 replacement carry the identical final
-> line **in the same commit**. `TranslationConsoleTest > it keeps the handover
-> document and the applied console in step` asserts that document's replacement
-> appears in `app.blade.php` exactly once, so a console that has legitimately
-> moved on makes the record false rather than making the console wrong — and
-> `PageWashScreenTest` asserts only that the final list contains `pagewash`
-> exactly once, so it does not care where in the line it ends up.
+> **THIS ONE LINE MOVES, AND IT MOVED ONCE WHILE THIS LANE WAS OPEN.** The
+> anchor above ends `…,'slimfooter','gridsections']);` because Lane GS merged
+> after this branch was cut and this lane was rebased onto it. **If it has moved
+> again by the time you apply this, do not hunt for the anchor**: append
+> `,'pagewash'` to whatever the id list now is — the position inside the list is
+> irrelevant, it is a `Set` — and lengthen the two records in §6 to the identical
+> final line, in the same commit.
 
 ---
 
-## Block 3 · include the screen
+## Block 5 · include the screen
 
 Last among the includes, like every screen partial that wraps `window.go`: the
 wrapper installed last is consulted first, and this id is claimed by no other
-wrapper, so the order is a convention rather than a dependency.
+wrapper. Being last is also what puts its `LATE_NAV` row last in block 3.
 
 **Anchor** (occurs once):
 
 ```
-@include('admin.partials.set-appearance-screen')
+@include('admin.partials.grid-sections-screen')
 ```
 
 **Replacement:**
 
 ```
-@include('admin.partials.set-appearance-screen')
+@include('admin.partials.grid-sections-screen')
 
 {{-- Appearance -> Page background (Lane BG). The soft multi-colour wash the
      owner asked for, and the live preview he asked to see first.
 
-     IT REGISTERS ITS OWN SIDEBAR ROW through kbbAddNavEntry(), the way
-     site-layout-screen does, so this include and the two const edits above are
-     the whole of the change to this file.
+     IT REGISTERS ITS OWN SIDEBAR ROW through kbbAddNavEntry(), and block 3
+     above is the copy of that call LATE_NAV needs so the row exists when the
+     sidebar is first drawn rather than at the end of this document.
 
      IT CHANGES NOTHING ON THE SHOP BY BEING APPLIED. App\Services\PageWash
      ships `on` FALSE and css() returns the empty string while it is, so every
@@ -166,35 +239,84 @@ wrapper, so the order is a convention rather than a dependency.
 
 ---
 
-## After applying
+## 6 · The two records this lengthens, already updated in this branch
 
-Run, from the repo root:
+`LATE_RENDERED` and the tail of `TITLES` are quoted **verbatim** by two handover
+documents, and two tests assert that those quotes still match the console. A
+lane that lengthens either line therefore has to lengthen every record of it in
+the same commit — which is the instruction `docs/T1B-ADMIN-APP-BLOCKS.md` gives
+about exactly this, and the reason `docs/GS-ADMIN-APP-BLOCKS.md` carries a block
+5 of its own that edits T1B.
 
-```bash
-KBB_WP_DB=kbb_wp_bg vendor/bin/pest --filter='PageWash|AdminNavAndIds|EverythingIsMountedOnce|AdminConsoleControlsAreLive|TranslationConsole'
+**This branch has already done it**, so there is nothing to apply here — it is
+listed so that a conflict in either file during the merge is expected rather
+than alarming:
+
+| file | what changed | asserted by |
+|---|---|---|
+| `docs/T1B-ADMIN-APP-BLOCKS.md` | block 3's replacement gains `,'pagewash'` | `TranslationConsoleTest` |
+| `docs/GS-ADMIN-APP-BLOCKS.md` | blocks 3, 4 and 5's replacements gain their `pagewash` fragment | `GridSectionConsoleReachTest` |
+
+Both are one-line changes and both are RED in this worktree until the five edits
+above are applied — which is the finished-state shape, not an oversight.
+
+---
+
+## 7 · One assertion in another lane's test, changed and flagged
+
+`tests/Feature/GridSectionConsoleReachTest.php` asserted
+
+```php
+expect(substr_count($app, "'paygw','sitelayout','slimfooter','gridsections']);"))
+    ->toBe(1, 'block 4: the LATE_RENDERED id is present the wrong number of times');
 ```
 
-`AdminNavAndIdsTest` reads `app.blade.php` and the partials it includes, so it is
-the check that all three blocks landed and agree with each other.
+which asserts that **`gridsections` is the LAST id in `LATE_RENDERED`** — so the
+next lane to arm a screen turns it red however correctly it does so, and the
+only way to green it again is to un-arm its own screen. That is the shape
+CLAUDE.md forbids by name one level up: a pin on "nothing has happened since"
+rather than on the finished state.
+
+It now reads the captured id list and asserts `'gridsections'` appears in it
+exactly once — the shape `TranslationConsoleTest` already uses for the same line
+and for the same reason, and the shape this lane's own pins use. **The fact it
+exists for is unchanged**: removing `gridsections` still fails it with 0 against
+1, and adding a second copy still fails it with 2.
+
+**This is a file Lane GS owns**, so it is flagged here and in this lane's report
+rather than buried: one assertion, intent preserved, easy to revert if Lane GS
+would rather word it differently. The comment in the test says the same thing at
+the line itself.
+
+---
+
+## After applying
+
+```bash
+KBB_WP_DB=kbb_wp_bg vendor/bin/pest --compact --filter='PageWash|AdminNavAndIds\
+|AdminSidebarIsCompleteAtBuild|AdminDeepLink|EverythingIsMountedOnce\
+|AdminConsoleControlsAreLive|TranslationConsole|GridSectionConsoleReach'
+```
+
+`tools/bg-apply-blocks.py` applies all five mechanically for a check like this
+and **must be reverted afterwards** — it edits two files this lane may not ship:
+
+```bash
+python3 tools/bg-apply-blocks.py
+... run the guards, take the screenshots ...
+git checkout -- resources/views/admin/app.blade.php routes/web.php
+```
 
 ## What does NOT need doing, and why each was checked rather than assumed
 
-- **No `NAV` edit.** The partial calls `kbbAddNavEntry({group:'Appearance', …})`.
-  Adding a row here as well would give the owner the same row twice.
-- **No `docs/T1B-ADMIN-APP-BLOCKS.md` edit.** That document records the
-  `LATE_RENDERED` replacement for the *Translation* lane, and
-  `TranslationConsoleTest > it keeps the handover document and the applied
-  console in step` asserts that document's replacement appears in
-  `app.blade.php` **exactly once**. Appending `'pagewash'` to the live line
-  therefore makes that document's copy stale — **so T1B's block 3 replacement
-  must be updated in the same commit**, exactly as it was for `'setap'` on 29
-  September. This is the fourth edit three of four lanes forget; block 2 above
-  and this paragraph are the same instruction said twice on purpose.
+- **No `NAV` edit**, for the reason at the top.
+- **No capability change beyond this lane's own.** `pagewash.manage` and the
+  `admin-api/page-wash` rule ship in `App\Support\AdminCapabilities` in this
+  branch; that map fails closed, so the screen 403s without them.
 - **The `clear_caches_*` migration is already written** —
-  `database/migrations/2027_06_02_000000_clear_caches_page_wash.php`, and it
-  ships in this lane. It covers all three staleness kinds: the new route, the
-  two changed Blades (this console and `layouts/store.blade.php`), and the
-  config cache, because `AdminCapabilities` gains `pagewash.manage` and a rule
-  for `admin-api/page-wash` and that map fails closed.
+  `database/migrations/2027_06_02_000000_clear_caches_page_wash.php`. It covers
+  all three staleness kinds: the new route, the changed Blades (this console and
+  `layouts/store.blade.php` plus five standalone storefront documents), and the
+  config cache, because the capability map is compiled into it.
 - **No new setting is seeded and no default is moved.** `wash_on` is absent,
   absent means the shipped default, and the shipped default is false.

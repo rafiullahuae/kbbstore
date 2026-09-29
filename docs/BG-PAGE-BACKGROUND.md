@@ -352,15 +352,22 @@ php tools/bg-css.php > docs/bg-shots/gradients.json
 BG_BASE=http://127.0.0.1:<port> node tools/bg-perf.cjs
 ```
 
-For the console screenshots and to prove the three red pins go green:
+For the console screenshots and to prove the red pins go green:
 
 ```bash
 python3 tools/bg-apply-blocks.py          # edits two files this lane may not ship
-KBB_WP_DB=kbb_wp_bg vendor/bin/pest --compact \
-  --filter='PageWash|AdminNavAndIds|EverythingIsMountedOnce|AdminConsoleControlsAreLive|TranslationConsole'
+KBB_WP_DB=kbb_wp_bg vendor/bin/pest --compact --filter='PageWash|AdminNavAndIds\
+|AdminSidebarIsCompleteAtBuild|AdminDeepLink|EverythingIsMountedOnce\
+|AdminConsoleControlsAreLive|TranslationConsole|GridSectionConsoleReach'
 BG_BASE=http://127.0.0.1:<port> node tools/bg-admin-shots.cjs
 git checkout -- resources/views/admin/app.blade.php routes/web.php
 ```
+
+`docs/BG-ADMIN-APP-BLOCKS.md` is the record: **five** edits, not three —
+`LATE_NAV` and the route require joined the set when this branch was rebased
+onto a console that had grown a new guard. It also names the two other lanes'
+handover documents this lengthens (already updated here) and the one assertion
+in another lane's test that had made `LATE_RENDERED` unextendable.
 
 > `tools/bg-preview.sh` asks the operating system for a port rather than
 > guessing one, and refuses to print a URL for a server that did not answer.
