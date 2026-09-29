@@ -72,16 +72,27 @@ use App\Models\ProductSetItem;
  */
 final class StockSetRule
 {
-    /** The settings row. Absent means MODE_SET, which is today's behaviour. */
+    /**
+     * The settings row. Absent means MODE_MEMBERS since the owner's decision of
+     * 29 September 2026; 2027_04_21_000000 writes the row for shops that already
+     * existed, so "never opened that screen" and "deliberately chose set-only"
+     * stay distinguishable.
+     */
     public const KEY = 'set_stock_mode';
 
     /**
-     * The set carries its own stock. THE DEFAULT, and what this application
-     * did before this class existed.
+     * The set carries its own stock, and nothing else moves. What this
+     * application did before this class existed, and what it defaulted to until
+     * the owner said otherwise.
      */
     public const MODE_SET = 'set';
 
-    /** Selling a set also takes each member off its own shelf. */
+    /**
+     * Selling a set also takes each member off its own shelf. THE DEFAULT.
+     *
+     * The owner, 29 September 2026, asked in as many words: "if the product sold
+     * inside set or individual, the stock should be minus in any case."
+     */
     public const MODE_MEMBERS = 'members';
 
     /** The only two values that may ever be stored. */
@@ -96,12 +107,19 @@ final class StockSetRule
      * written by hand, by an import, or by a future screen that has not been
      * written yet. A stock rule that did something unexpected because a string
      * in a table was unexpected is the worst shape this could take.
+     *
+     * ▲ THE DEFAULT MOVED, and it moved in the direction that REFUSES orders
+     * rather than accepting them: with members counted, a set whose member is
+     * out of stock becomes unsellable. That is the safe direction for a rule
+     * that decides whether a box can be packed, and it is why an unrecognised
+     * string now falls to MODE_MEMBERS too — a garbled row must not quietly
+     * restore the permissive answer.
      */
     public function mode(): string
     {
-        $stored = (string) $this->settings->get(self::KEY, self::MODE_SET);
+        $stored = (string) $this->settings->get(self::KEY, self::MODE_MEMBERS);
 
-        return in_array($stored, self::MODES, true) ? $stored : self::MODE_SET;
+        return in_array($stored, self::MODES, true) ? $stored : self::MODE_MEMBERS;
     }
 
     public function decrementsMembers(): bool

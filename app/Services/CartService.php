@@ -234,6 +234,52 @@ class CartService
             return $base;
         }
 
+        /*
+         * A SET TAKES NO QUANTITY DISCOUNT — the owner, 29 September 2026, asked
+         * in as many words: "no there's no bulk discount for sets products."
+         *
+         * The strip stopped being DRAWN on a set's page when
+         * BundleService::forProduct() learnt to answer [] for one. This is the
+         * other half, and the lane that did the first half deliberately left it
+         * and pinned that it had: changing what a basket is charged is not
+         * something to slip into a package, and it needed his decision. It has
+         * it.
+         *
+         * HERE AND NOT IN BundleService::unitFor(), which is where it looks
+         * like it belongs. That method is pure arithmetic over a price and a
+         * quantity and has no opinion about product types — its own docblock
+         * argues the case at length, and CouponService reasons about it the
+         * same way. This method already draws exactly this kind of line one
+         * branch above, for variants, and for the same reason: an offer the
+         * page does not make is an offer the basket must not apply.
+         *
+         * ▲ WHAT CHANGES ON A LIVE SHOP: a basket that already holds three of a
+         * set is repriced at the set's own price the next time its line is
+         * touched. That is a price going UP, which is the one direction that
+         * needs saying out loud — it is the price on the set's own page, the
+         * one the page has been showing since the strip was removed, so the
+         * basket now agrees with what the shopper was told.
+         */
+        /*
+         * isSet() READS getAttributes()['type'], so a model loaded with a
+         * narrow column list answers FALSE rather than throwing — which on a
+         * DISPLAY path is the right shape (draw the strip) and on a PRICING
+         * path is the wrong one (charge the discount). This method is the
+         * pricing path. So "the column is not loaded" is treated as "I do not
+         * know" and answered with one lookup rather than a guess.
+         *
+         * It costs nothing on every call this application makes today: every
+         * caller passes a full model or an `$item->product` relation, so `type`
+         * is present and the query never runs. It is here for the caller that
+         * has not been written yet.
+         */
+        $type = $product->getAttributes()['type']
+            ?? \App\Models\Product::whereKey($product->getKey())->value('type');
+
+        if ($type === 'set') {
+            return $base;
+        }
+
         return app(BundleService::class)->unitFor($base, $quantity);
     }
 

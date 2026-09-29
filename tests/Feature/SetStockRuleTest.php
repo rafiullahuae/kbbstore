@@ -91,33 +91,55 @@ function stkClaim(Product $set, int $quantity = 1): void
     });
 }
 
-/* ═══════════════════════════════════════ the default is today's behaviour ═══ */
+/* ════════════════════════════════════════════════ the default, and it MOVED ═══ */
 
-it('ships switched off, so applying the package moves not one unit', function () {
+it('ships taking members off the shelf, which the owner asked for by name', function () {
     /*
-     * ── CLAUDE.md: "Any NEW setting ships at the value the page already has,
-     *    so applying the package moves nothing until somebody moves a slider."
+     * ▲ THIS PIN WAS THE OPPOSITE UNTIL 29 SEPTEMBER 2026, AND THE OLD TEXT IS
+     *   KEPT HERE BECAUSE IT WAS RIGHT WHEN IT WAS WRITTEN.
      *
-     * Before this lane, StockClaim claimed the set's own row and nothing else.
-     * With no settings row written, that is exactly what still happens: the
-     * toner still has all six on the shelf after a set containing it is sold.
+     * It read: "ships switched off, so applying the package moves not one
+     * unit", and cited CLAUDE.md rule 1 — any NEW setting ships at the value
+     * the page already has. That was correct: the lane that built this rule had
+     * no instruction to change what the shop counted, so it shipped the switch
+     * off and said in its report that the choice was the owner's.
      *
-     * MUTATION NOTE. Change StockSetRule::mode()'s fall-through from MODE_SET
-     * to MODE_MEMBERS and this is red — applying the package would silently
-     * start emptying the shelves of every product in every box. RUN.
+     * He made it, in these words: *"Yes if the product sold inside set or
+     * individual, the stock should be minus in any case."* That is rule 1's
+     * stated exception — a default the owner asked for in as many words — and
+     * it is called out in the commit rather than buried, which is the other
+     * half of what rule 1 requires.
+     *
+     * So this case now pins the opposite fact, and the one it used to pin lives
+     * on two cases below, where an operator who chooses the old rule keeps it.
+     *
+     * MUTATION NOTE. Change StockSetRule::mode()'s fall-through back to
+     * MODE_SET and this is red: the toner keeps all six after a box containing
+     * it is sold, and the shop sells a second box it cannot pack. RUN.
      */
     $toner = stkProduct('Toner', 6);
     $set = stkSet([[$toner, 1]]);
 
-    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_SET)
-        ->and(app(StockSetRule::class)->decrementsMembers())->toBeFalse();
+    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_MEMBERS)
+        ->and(app(StockSetRule::class)->decrementsMembers())->toBeTrue();
 
     stkClaim($set);
 
-    expect((int) $toner->fresh()->stock)->toBe(6, "A member's shelf is untouched while the rule is off.");
+    expect((int) $toner->fresh()->stock)->toBe(
+        5,
+        "A member's shelf must come down when the box it is in is sold."
+    );
 });
 
-it('costs no query at all while it is off', function () {
+it('costs no query at all while it is switched off', function () {
+    /*
+     * OFF IS NO LONGER THE DEFAULT, so this case sets it. What it measures is
+     * unchanged and still worth measuring: with the rule off, expand() must not
+     * put a statement inside the transaction that places every order in this
+     * shop.
+     */
+    app(\App\Services\SettingsService::class)->set(StockSetRule::KEY, StockSetRule::MODE_SET);
+
     /*
      * The other half of "moves nothing": the expansion must not put a statement
      * inside the transaction that places every order in this shop. expand()
@@ -276,21 +298,33 @@ it('stores one of its own two options or the default, never what arrived', funct
 
     $this->postJson('/admin-api/set-stock', ['mode' => 'everything'])->assertStatus(422);
 
-    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_SET);
+    /*
+     * The refused post wrote nothing, so this reads the DEFAULT — which is
+     * MODE_MEMBERS since 29 September 2026. The value here is deliberately not
+     * spelled out as a literal: what the case is about is that a third value
+     * cannot be stored, not which of the two is currently the default.
+     */
+    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_MEMBERS);
 
-    $this->postJson('/admin-api/set-stock', ['mode' => StockSetRule::MODE_MEMBERS])
+    // The operator's own choice of the OTHER rule is stored and honoured.
+    $this->postJson('/admin-api/set-stock', ['mode' => StockSetRule::MODE_SET])
         ->assertOk()
-        ->assertJson(['saved' => true, 'mode' => StockSetRule::MODE_MEMBERS]);
+        ->assertJson(['saved' => true, 'mode' => StockSetRule::MODE_SET]);
 
     SettingsService::forgetMemo();
 
-    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_MEMBERS);
+    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_SET);
 
-    // And a row that got there another way reads back as the default.
+    /*
+     * And a row that got there another way reads back as the default — which is
+     * now the SAFER of the two. It used to fall to MODE_SET, the permissive
+     * answer, which would sell a box whose contents may not exist; a garbled
+     * row now makes the shop refuse an order it cannot pack instead.
+     */
     app(SettingsService::class)->set(StockSetRule::KEY, 'nonsense');
     SettingsService::forgetMemo();
 
-    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_SET);
+    expect(app(StockSetRule::class)->mode())->toBe(StockSetRule::MODE_MEMBERS);
 });
 
 it('gives both endpoints their own capability and fails closed', function () {
