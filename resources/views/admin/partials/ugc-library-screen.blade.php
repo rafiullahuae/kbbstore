@@ -55,12 +55,17 @@
     teasers.
 
     HOW LONG IS A SETTING, so this screen reads it instead of printing 2.5:
-    `teaser_ms` on Appearance → Shoppable video → Motion, default 2500 and
-    ranged 1500–4000, and `teaser` beside it decides whether a tile loops at
+    `teaser_ms` on Appearance → Shoppable video → Motion, default 1000 and
+    ranged 1000–4000, and `teaser` beside it decides whether a tile loops at
     all. readMotion() fetches both once, clamps the number to that range, and
-    falls back to the shipped 2500 — so the preview above and the prose beside
+    falls back to the shipped 1000 — so the preview above and the prose beside
     it are the owner's own settings rather than a number that was true the day
     this was written.
+
+    THE DEFAULT AND THE FLOOR BOTH MOVED, from 2500/1500 to 1000/1000, because
+    the owner asked for a one-second clip by name. A shop that had already saved
+    a value keeps it, so this screen can still be showing 4000 — which is the
+    whole reason it reads the setting instead of printing a number.
 
     The one case where a tile really does stand still is the shopper's, not the
     clip's: data-saver mode, reduced motion, or the rail's own Loop switch
@@ -1321,7 +1326,7 @@
    *
    * THE DEFECT THIS EXISTS FOR. `teaser_ms` is a SETTING — Appearance →
    * Shoppable video → Motion → "How long the loop runs before repeating",
-   * default 2500, range 1500–4000 — and so is `teaser`, the switch that decides
+   * default 1000, range 1000–4000 — and so is `teaser`, the switch that decides
    * whether a tile loops at all. This screen used to hard-code 2500 into the
    * preview and into its own prose. An owner who had moved that slider to 4000
    * was then shown a preview that rewound at 2.5s and a sentence that said
@@ -1331,7 +1336,7 @@
    *
    * Read ONCE per screen visit and never blocking: `load()` does not await it,
    * so a slow or forbidden read costs the library nothing and the preview falls
-   * back to the shipped 2500 — which is also the value the shop uses when the
+   * back to the shipped 1000 — which is also the value the shop uses when the
    * owner has saved nothing.
    */
   async function readMotion() {
@@ -1354,11 +1359,12 @@
 
       /* CLAMPED TO THE SCHEMA'S OWN RANGE, because this is a setting on its way
          into the markup. Rule 5: a value from a setting is checked before it is
-         used, and `range` means 1500–4000 here. A saved row outside it, or a
-         string, becomes the shipped default rather than an attribute nothing
-         validates. */
+         used, and `range` means 1000–4000 here — the floor came down with the
+         default when the owner asked for a one-second loop. A saved row outside
+         it, or a string, becomes the shipped default rather than an attribute
+         nothing validates. */
       var ms = parseInt(found, 10);
-      if (!(ms >= 1500 && ms <= 4000)) ms = 2500;
+      if (!(ms >= 1000 && ms <= 4000)) ms = 1000;
 
       motion = motion || {};
       motion.ms = ms;
@@ -1366,7 +1372,7 @@
     } catch (e) {
       /* Silent on purpose: this is a nicety on a screen about clips, and the
          owner does not need a toast about the Appearance endpoint to add one. */
-      motion = { ms: 2500, on: true };
+      motion = { ms: 1000, on: true };
     }
 
     render();
@@ -1374,10 +1380,10 @@
 
   /** The loop settings, with the shipped values until the read lands. */
   function loop() {
-    return { ms: (motion && motion.ms) || 2500, on: !motion || motion.on !== false };
+    return { ms: (motion && motion.ms) || 1000, on: !motion || motion.on !== false };
   }
 
-  /** 2500 -> "2.5", 3000 -> "3". The seconds an owner would say out loud. */
+  /** 1000 -> "1", 2500 -> "2.5". The seconds an owner would say out loud. */
   function secs(ms) {
     var s = Math.round(ms / 100) / 10;
     return String(s);
@@ -4117,6 +4123,9 @@
      keystroke would otherwise accumulate them. */
   function releaseLoop() {
     if (!loopEl) return;
+    /* The wrap timer first: it holds a reference to the element and would fire
+       a seek at something that has just had its src taken away. */
+    try { if (loopEl.ugsClearWrap) loopEl.ugsClearWrap(); } catch (e) {}
     try { loopEl.pause(); loopEl.removeAttribute('src'); loopEl.load(); } catch (e) {}
     loopEl = null;
   }
@@ -4136,7 +4145,7 @@
     if (!src) return;
 
     var ms = parseInt(box.getAttribute('data-ugs-loopms'), 10);
-    if (!(ms >= 500)) ms = 2500;
+    if (!(ms >= 500)) ms = 1000;
     var full = box.getAttribute('data-ugs-loopfull') === '1';
 
     var v = document.createElement('video');
@@ -4158,10 +4167,66 @@
     loopEl = v;
 
     if (full) {
+      /*
+       * ── THE SHOP'S MECHANISM, NOT A SKETCH OF IT ────────────────────────
+       *
+       * This preview is offered to the owner as EVIDENCE of what his rail does,
+       * so a preview that loops differently from the rail is worse than none.
+       * It had the older shape — a bare `timeupdate` assigning zero — which is
+       * the one resources/views/ugc/assets.blade.php stopped using, and for two
+       * reasons that both show on screen:
+       *
+       *   STACKED SEEKS. `timeupdate` keeps firing WHILE a seek is in flight,
+       *     so the handler assigned zero two and three times per wrap and the
+       *     seeks queued. That is the hang the owner reported on the shop, and
+       *     this screen was still demonstrating it.
+       *   A LATE WRAP. `timeupdate` fires about every 250ms, so the wrap lands
+       *     0-250ms past the mark. At the old 2500 that was 10%; at 1000 it is
+       *     25%, and the preview would have shown a limp the shop no longer
+       *     has.
+       *
+       * So: one seek in flight at a time, the wrap ARMED for the time actually
+       * left, and `timeupdate` kept as the backstop for a throttled timer.
+       * Transcribed from playTeaser(), which is the original.
+       */
+      var rewinding = false;
+      var timer = null;
+
+      var rewind = function () {
+        if (rewinding || v.seeking) return;
+
+        rewinding = true;
+
+        if (typeof v.fastSeek === 'function') {
+          try { v.fastSeek(0); return; } catch (e) { /* fall through */ }
+        }
+
+        v.currentTime = 0;
+      };
+
+      var armWrap = function () {
+        if (timer) clearTimeout(timer);
+
+        var left = ms - v.currentTime * 1000;
+        if (!(left > 16)) left = 16;
+
+        timer = setTimeout(rewind, left);
+      };
+
+      /* The screen repaints on every keystroke and releaseLoop() is what keeps
+         decoders from piling up; a timer armed for a released element would
+         seek something nothing can see, so it goes the same way. */
+      v.ugsClearWrap = function () { if (timer) { clearTimeout(timer); timer = null; } };
+
+      v.addEventListener('seeked', function () { rewinding = false; armWrap(); });
+      v.addEventListener('playing', armWrap);
+
       v.addEventListener('timeupdate', function () {
-        if (v.currentTime * 1000 >= ms) v.currentTime = 0;
+        if (v.currentTime * 1000 >= ms) rewind();
       });
+
       v.addEventListener('ended', function () {
+        rewinding = false;
         v.currentTime = 0;
         var again = v.play();
         if (again && again.catch) again.catch(function () {});

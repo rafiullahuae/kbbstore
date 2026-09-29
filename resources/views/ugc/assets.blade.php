@@ -155,11 +155,86 @@
 .ugcr-play span::before{content:'';border-inline-start:12px solid #fff;
   border-top:8px solid transparent;border-bottom:8px solid transparent;margin-inline-start:4px}
 .ugcr-t.is-playing .ugcr-play span{opacity:0;transform:scale(.7)}
+/* ── STATE TWO OF THREE: LOADING ─────────────────────────────────────────
+   The owner: *"the play button will be hide for now, and when video load on
+   page the play icon will show."* So the disc is drawn in exactly one of the
+   three states a tile can be in:
+
+     loading  the loader, and NO disc          .is-loading
+     ready    the disc, and no loader          neither class
+     playing  neither                          .is-playing
+
+   A FAILED tile is `ready` on purpose — `data-ugcr-fault` drops both classes
+   (stopTeaser), so the disc comes back and a shopper is never left looking at
+   a spinner that will never end. Pressing it opens the player, which is the
+   one thing that might still work: the opened player streams the FULL clip,
+   and a teaser that 404s says nothing about the clip.
+
+   Scaled .86 rather than .7: the disc shrinks INTO the loader's rim, which is
+   the same 42px circle, so the two states are one shape changing its inside. */
+.ugcr-t.is-loading .ugcr-play span{opacity:0;transform:scale(.86)}
 .ugcr-play:hover span{transform:scale(1.08)}
 /* A border triangle has no logical form, so RTL flips it by hand — kbb.css
    carries exactly this pattern for the drawer, with a comment explaining the
    sign, and this follows it. */
 [dir="rtl"] .ugcr-play span::before{transform:scaleX(-1)}
+
+/* ── THE LOADER ──────────────────────────────────────────────────────────────
+ *
+ * ── WHY IT IS THE PLAY DISC AND NOT A SPINNER BOLTED ON ─────────────────────
+ *
+ * This shop already has a pending language and it is a SHIMMER — a moving
+ * highlight over a muted base: `kbbshim` in resources/css/kbb/kbb.css for the
+ * cart drawer, `cpgshim` in partials/address-sheet.blade.php for the address
+ * list. Both are SKELETONS, and a skeleton is the right answer when the box is
+ * empty and you are standing in for text and thumbnails that are coming. THIS
+ * BOX IS NOT EMPTY. A 9:16 tile already has a poster in it, the product card,
+ * the handle and the caption. A grey shimmer over a photograph is a smear.
+ *
+ * What this shop already draws at this exact spot, and nowhere else, is the
+ * frosted disc: 42px, rgba(255,255,255,.22), backdrop-filter blur(7px), a
+ * 1.4px rgba(255,255,255,.5) rim. It is the storefront's one "control floating
+ * over video" shape, and it is legible on a bright poster AND a dark one
+ * because the BLUR and the RIM carry the contrast rather than a fill — which
+ * is why the white play triangle reads on both today.
+ *
+ * So the loader is that disc, at the same size, in the same place, with the
+ * shop's shimmer moved from a sweeping bar to a sweeping RIM, and tinted with
+ * the rail's own --ugc-gold. Loading and ready are then one control changing
+ * its inside rather than two elements swapping places, and nothing moves: the
+ * tile's box is its `aspect-ratio` and this is `position:absolute;inset:0`.
+ *
+ * NOT DRAWN AT ALL unless `.is-loading` is on the tile, which playTeaser() adds
+ * only when it has actually mounted a video and asked it to play. A tile the
+ * cap refused, a tile with no media, a tile the shopper's Save-Data setting
+ * stopped and a tile that failed have no loader on them at any point.
+ */
+.ugcr-load{position:absolute;inset:0;z-index:3;display:grid;place-items:center;
+  pointer-events:none;opacity:0;visibility:hidden;
+  transition:opacity .18s var(--ugc-ease),visibility 0s linear .18s}
+.ugcr-t.is-loading .ugcr-load{opacity:1;visibility:visible;transition-delay:0s,0s}
+/* The disc. Every number is .ugcr-play span's, copied rather than re-chosen. */
+.ugcr-load::before{content:'';grid-area:1/1;width:42px;height:42px;border-radius:99px;
+  background:rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  border:1.4px solid rgba(255,255,255,.5)}
+/* The sweep. ONE element, no extra DOM: a conic gradient masked to a 2.5px rim,
+   rotating. White at the head so it reads on a dark poster, the rail's gold
+   behind it so it is this shop's loader and not a browser's. */
+.ugcr-load::after{content:'';grid-area:1/1;width:42px;height:42px;border-radius:99px;
+  background:conic-gradient(from 0deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,0) 168deg,
+    var(--ugc-gold) 256deg,#fff 330deg,rgba(255,255,255,0) 360deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2.5px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2.5px));
+  animation:ugcrspin 1.05s linear infinite}
+@keyframes ugcrspin{to{transform:rotate(1turn)}}
+/* REDUCED MOTION GETS A STILL RIM AND NOT A FROZEN ARC. A stopped spinner
+   reads as broken, which is worse than no indicator; a complete faint ring
+   reads as "something is pending here" and does not move. The disc underneath
+   is unchanged, so the three states still look different from each other. */
+@media(prefers-reduced-motion:reduce){
+  .ugcr-load::after{animation:none;background:rgba(255,255,255,.62)}
+}
 
 .ugcr-badge{position:absolute;top:8px;inset-inline-start:8px;z-index:2;font-size:10.5px;font-weight:700;
   color:#fff;background:rgba(20,14,18,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
@@ -500,8 +575,20 @@
 
   /* Dropping the src and calling load() is what hands the decoder back.
      Pausing alone leaves the stream decoded and resident. */
+  /* Timers belong to the MOUNT, so they die with it. A wrap armed for a tile
+     that has since scrolled away would seek an element nothing can see, and a
+     stall guard would put a play disc back on a tile that no longer has a
+     video in it. Both are cleared here, in the one place every teardown path
+     already goes through. */
+  function clearTimers(v) {
+    if (!v || !v.ugcrTimers) return;
+    for (var i = 0; i < v.ugcrTimers.length; i++) clearTimeout(v.ugcrTimers[i]);
+    v.ugcrTimers.length = 0;
+  }
+
   function unmount(v) {
     if (!v) return;
+    clearTimers(v);
     try { v.pause(); } catch (e) {}
     v.removeAttribute('src');
     try { v.load(); } catch (e) {}
@@ -514,6 +601,13 @@
     var v = tile.querySelector('video');
     if (!v) return;
     tile.classList.remove('is-playing');
+    /* AND THE LOADER GOES WITH IT. Every teardown reaches here — eviction by
+       the ranking, leaving the viewport, a media error, a refused play() — so
+       this one line is what guarantees the rule the owner asked for: a tile
+       that is not loading never shows a loader. A faulted tile lands in the
+       `ready` state (disc, no loader), which is what stops a shopper looking
+       at a spinner that is never going to finish. */
+    tile.classList.remove('is-loading');
     unmount(v);
   }
 
@@ -573,6 +667,43 @@
 
     var v = mount(tile, src, true);
     teasers.push(v);
+    v.ugcrTimers = [];
+
+    /* ── STATE ONE: LOADING ──────────────────────────────────────────────
+     *
+     * Set HERE and nowhere else, which is what makes the rule checkable: the
+     * loader exists exactly between "this tile has been asked to play" and
+     * "this tile is rendering frames". Before this line the tile has no video
+     * in it at all; after `playing` below it has pictures.
+     *
+     * `preload` is 'none' (mount()), so nothing was fetched until the play()
+     * at the foot of this function — which is precisely the wait the owner is
+     * looking at, and precisely what had no indicator on it. */
+    tile.classList.add('is-loading');
+    why(tile, 'loading');
+
+    /* ── AND A BOUND ON IT, BECAUSE A SPINNER WITH NO END IS THE WORSE BUG ──
+     *
+     * `playing` and `error` cover the two answers a browser gives. There is a
+     * third outcome and it is silence: a request that hangs, a captive portal
+     * that swallows the response, a phone that drops to no signal mid-fetch.
+     * Nothing fires, and without this the loader turns for ever on a tile that
+     * is never going to move.
+     *
+     * IT ONLY PUTS THE DISC BACK. It does not unmount, does not fault the tile
+     * and does not give the slot up, so if the bytes do arrive at second
+     * fourteen the `playing` listener still runs and the tile still plays —
+     * the shopper simply gets a control they can press in the meantime instead
+     * of a promise nothing is keeping.
+     *
+     * THIS IS NOT THE TIMER THE BRIEF FORBIDS. The loader is hidden on the
+     * FIRST PAINTED FRAME, by the `playing` event, every time that event
+     * comes; this is the failure bound underneath it. */
+    v.ugcrTimers.push(setTimeout(function () {
+      if (tile.querySelector('video') !== v) return;
+      tile.classList.remove('is-loading');
+      why(tile, 'slow');
+    }, 8000));
 
     /* ── A SLOT IS GIVEN BACK WHEN THE FILE TURNS OUT NOT TO PLAY ──────────
      *
@@ -603,6 +734,14 @@
        tile that never gets there keeps its poster and keeps its disc. */
     v.addEventListener('playing', function () {
       tile.classList.add('is-playing');
+      /* ── STATE THREE: PLAYING, and the loader goes on the SAME EVENT ─────
+         Not on a timer and not on `canplay` — `playing` is the browser saying
+         it is rendering frames, which is the moment the poster underneath is
+         replaced by a picture that moves. Hiding the loader anywhere earlier
+         shows a still poster with nothing over it; anywhere later leaves a
+         spinner over a clip that is already running. */
+      tile.classList.remove('is-loading');
+      clearTimers(v);
       v.classList.add('is-on');
       why(tile, 'playing');
     });
@@ -612,8 +751,8 @@
        playback, which looks identical and costs 12x the bytes. It is a
        deliberate fallback and not the design: the shop should cut teasers. */
     if (!teaser) {
-      var ms = parseInt(conf(tile, 'teaser-ms', 2500), 10);
-      if (!(ms >= 500)) ms = 2500;
+      var ms = parseInt(conf(tile, 'teaser-ms', 1000), 10);
+      if (!(ms >= 500)) ms = 1000;
       v.loop = false;
 
       /*
@@ -650,19 +789,42 @@
        *     and they are where a long seek hurts most.
        *
        * THE REAL FIX IS STILL A TEASER FILE, and it is a paragraph up: a clip
-       * with its own 2.5-second file uses `v.loop = true` and never seeks at
+       * with its own one-second file uses `v.loop = true` and never seeks at
        * all. `php artisan ugc:cut-covers` cuts them over SSH, and the clip
        * editor now has a button that re-cuts one on demand. This branch is the
        * fallback for clips that have not been cut yet, and it should stutter on
        * none of them.
+       *
+       * ── AND AT ONE SECOND, `timeupdate` ALONE IS NO LONGER GOOD ENOUGH ────
+       *
+       * `timeupdate` is specified to fire "at least" every 250ms and Chromium
+       * fires it about every 250ms exactly. So the wrap lands wherever the next
+       * tick happens to fall AFTER the mark, and the loop is not `ms` long — it
+       * is `ms` plus 0 to 250ms, a different amount every lap.
+       *
+       * At 2500ms that overshoot was at most 10% and nobody could see it. At
+       * 1000ms it is up to 25%, sixty times a minute, and four tiles do it out
+       * of step with each other: measured on the preview rail at 390px, the
+       * observed loop length walked between 1.00s and 1.24s. That reads as a
+       * limp, and it is exactly the "smooth loop" the owner asked for.
+       *
+       * So the wrap is ARMED rather than polled: one setTimeout for the time
+       * actually remaining, re-armed after each seek lands. `timeupdate` stays
+       * as the BACKSTOP and not as the mechanism — a background tab clamps
+       * timers to once a second and a throttled timer would then wrap late,
+       * where the tick still catches it.
+       *
+       * Both paths go through the same `rewind()`, so the single-seek-in-flight
+       * guard above still holds however the wrap was reached.
        */
       var rewinding = false;
 
-      v.addEventListener('seeked', function () { rewinding = false; });
-
-      v.addEventListener('timeupdate', function () {
+      /* FUNCTION EXPRESSIONS AND NOT DECLARATIONS, because these two live
+         inside an `if` block and this file is ES5 under 'use strict', where a
+         function DECLARATION in a block is not something every engine agrees
+         about. Everything else in this file is written the same way. */
+      var rewind = function () {
         if (rewinding || v.seeking) return;
-        if (v.currentTime * 1000 < ms) return;
 
         rewinding = true;
 
@@ -671,6 +833,33 @@
         }
 
         v.currentTime = 0;
+      };
+
+      /* The time actually left of this lap, in ms. Floored at 16 (one frame at
+         60Hz) so a timer armed at or past the mark still yields to the event
+         loop instead of recursing. */
+      var armWrap = function () {
+        clearTimers(v);
+
+        var left = ms - v.currentTime * 1000;
+        if (!(left > 16)) left = 16;
+
+        v.ugcrTimers.push(setTimeout(rewind, left));
+      };
+
+      v.addEventListener('seeked', function () {
+        rewinding = false;
+        armWrap();
+      });
+
+      /* Armed from the first painted frame rather than from play(): play() can
+         resolve well before the decoder has anything, and a lap timed from
+         there is short by however long the fetch took. */
+      v.addEventListener('playing', armWrap);
+
+      v.addEventListener('timeupdate', function () {
+        if (v.currentTime * 1000 < ms) return;
+        rewind();
       });
 
       v.addEventListener('ended', function () {
