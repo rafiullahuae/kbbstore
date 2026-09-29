@@ -430,3 +430,89 @@ it('deletes an instance and takes it out of the homepage registry', function () 
     expect(GridSections::registryRows())->not->toHaveKey($key)
         ->and(\App\Services\HomepageSections::registry())->not->toHaveKey($key);
 });
+
+it('gives every control on the screen a writer behind it', function () {
+    /*
+     * ── THE SHAPE AdminConsoleWriteTokenTest WAS WRITTEN AFTER ──────────────
+     *
+     * `site_title` had a box on Appearance → Homepage and no writer behind it
+     * in either console block: the owner typed into it and nothing happened.
+     * This screen cannot grow that defect by forgetting a key — it renders from
+     * the payload's `tabs` rather than from a list of its own — but it CAN grow
+     * it the other way, by a field being added to GridSections::SCHEMA and
+     * declared in no TABS group, which drops it off the screen while leaving it
+     * in the cast.
+     *
+     * So both directions are asserted, over the real endpoints:
+     *
+     *   every SCHEMA key is in a TABS group, so it reaches the screen;
+     *   every SCHEMA key round-trips through PUT, so the box that draws it
+     *     writes something.
+     *
+     * MUTATION: delete `'card_label'` from the `layout` group in
+     * GridSections::TABS and the first half goes red; delete the
+     * `$section->{$key} = $cast;` line at the end of apply() and the second
+     * half goes red on eighteen keys at once. Run, red, put back.
+     */
+    $section = gsaSection();
+    $admin = gsaAdmin();
+
+    $tabKeys = [];
+
+    foreach (GridSections::TABS as [, , $keys]) {
+        foreach ($keys as $k) {
+            $tabKeys[] = $k;
+        }
+    }
+
+    expect(array_keys(GridSections::SCHEMA))->toEqualCanonicalizing($tabKeys);
+
+    // And the payload really carries them all.
+    $body = test()->actingAs($admin, 'admin')
+        ->getJson('/admin-api/grid-sections/'.$section->id)->assertOk()->json();
+
+    $drawn = [];
+
+    foreach ($body['tabs'] as $tab) {
+        foreach ($tab['fields'] as $field) {
+            $drawn[] = $field['key'];
+        }
+    }
+
+    expect($drawn)->toEqualCanonicalizing(array_keys(GridSections::SCHEMA));
+
+    /*
+     * Each key moved to a value that is NOT its default and NOT what the row
+     * already holds, so a writer that silently did nothing cannot pass by
+     * coincidence.
+     */
+    $moved = [
+        'name' => 'Renamed', 'status' => 'publish',
+        'show_heading' => false, 'heading' => 'A heading', 'subheading' => 'A sub',
+        'source' => 'newest', 'include_children' => true,
+        'count' => 12, 'mobile_count' => 3,
+        'desktop_layout' => 'carousel', 'desktop_cols' => '6',
+        'mobile_layout' => 'grid', 'mobile_cols' => '3',
+        'skin' => 'luxe', 'card_label' => 'An eyebrow', 'show_rank' => true,
+        'show_view_all' => true, 'view_all_label' => 'See them all', 'view_all_url' => '/shop/',
+    ];
+
+    test()->actingAs($admin, 'admin')
+        ->putJson('/admin-api/grid-sections/'.$section->id, ['values' => $moved])
+        ->assertOk();
+
+    $stored = GridSections::valuesOf($section->fresh());
+
+    foreach ($moved as $key => $want) {
+        expect((string) $stored[$key])->toBe((string) $want, "the control for '{$key}' has no writer behind it");
+    }
+
+    // The two id selects are the exception this loop cannot cover — they store
+    // null for '' — so they are asserted on their own.
+    test()->actingAs($admin, 'admin')
+        ->putJson('/admin-api/grid-sections/'.$section->id, ['values' => [
+            'source_brand_id' => (string) Brand::firstOrCreate(['slug' => 'gsa-w'], ['name' => 'GSA W'])->id,
+        ]])->assertOk();
+
+    expect($section->fresh()->source_brand_id)->toBeGreaterThan(0);
+});
