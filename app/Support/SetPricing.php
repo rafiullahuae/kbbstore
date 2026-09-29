@@ -388,6 +388,17 @@ final class SetPricing
      *   to /shop, every category archive, every search and every rail — pages
      *   that hold no set at all, which today is nearly all of them.
      *
+     * ▲ THE FIRST OF THOSE TWO WAS TAKEN UP AFTER ALL, AND IT IS BELOW.
+     *   (Lane SORT) chargedSql() is the correlated subquery this paragraph
+     *   rejected, with both objections answered rather than waived: the parts
+     *   total is NOT spelled twice (unitSql() and goneSql() are shared with
+     *   this method), the integer division needs no `DIV`, and the whole
+     *   expression sits behind `CASE WHEN products.type = 'set'` so a page with
+     *   no set never executes it. What it buys is the thing this method could
+     *   not: the price SORT and the price FACETS seeing the rule. Read
+     *   chargedSql()'s docblock before changing either of them — the two are
+     *   now the batched and the in-statement halves of one answer.
+     *
      * ── AND WHY NOT REFRESH A CACHED `products.price` ON A MEMBER'S SAVE ───
      *
      * Because that is the design the migration 2027_04_02_000000_set_pricing_-
@@ -458,32 +469,17 @@ final class SetPricing
          *   the variant's own in-window sale price, else the variant's price,
          *   else the member's in-window sale price, else the member's price,
          *   else zero.
-         * A variant's sale WINDOW is its parent product's — ProductVariant::
-         * saleWindowOpen() reads `$this->product->sale_starts_at` — which is
-         * why the window below is read off `products` for both branches.
+         *
+         * ▲ THE EXPRESSION ITSELF LIVES IN unitSql() AND goneSql() BECAUSE IT
+         *   IS NOW READ FROM TWO PLACES. (Lane SORT) This method groups it over
+         *   a named id list for a page; groupedSql() groups the SAME text over
+         *   the whole catalogue so the shop's price SORT and price FACET can
+         *   reach it inside one statement. A member's charged unit price with
+         *   two spellings is the disagreement this class's header was written
+         *   against, so there is one spelling and both callers take it.
          */
-        $sql = 'CASE'
-            .'  WHEN pv.id IS NOT NULL AND pv.sale_price IS NOT NULL'
-            .'   AND (p.sale_starts_at IS NULL OR p.sale_starts_at <= ?)'
-            .'   AND (p.sale_ends_at IS NULL OR p.sale_ends_at >= ?)'
-            .'   THEN pv.sale_price'
-            .'  WHEN pv.id IS NOT NULL THEN COALESCE(pv.price, 0)'
-            .'  WHEN p.sale_price IS NOT NULL'
-            .'   AND (p.sale_starts_at IS NULL OR p.sale_starts_at <= ?)'
-            .'   AND (p.sale_ends_at IS NULL OR p.sale_ends_at >= ?)'
-            .'   THEN p.sale_price'
-            .'  ELSE COALESCE(p.price, 0)'
-            .' END';
-
-        /*
-         * ▲ A LEFT JOIN WITH THE FILTER MOVED INTO A CASE, AND STILL ONE
-         *   STATEMENT. The inner join this replaces dropped a deleted member's
-         *   row from the result entirely, which is the right answer for the
-         *   TOTAL and makes the row uncountable -- and the count is the whole
-         *   point of this method. A missing member now contributes 0 to `parts`
-         *   exactly as it did before, and 1 to `missing`, in one pass.
-         */
-        $gone = "(p.id IS NULL OR p.deleted_at IS NOT NULL OR p.type = 'set')";
+        $sql = self::unitSql();
+        $gone = self::goneSql();
 
         /*
          * ▲ GROUPED BY THE SET, AND THE GROUPING COLUMN IS SELECTED BY NAME.
@@ -526,6 +522,336 @@ final class SetPricing
                 'missing' => (int) ($row->missing ?? 0),
             ];
         }
+    }
+
+    /**
+     * ONE MEMBER'S CHARGED UNIT PRICE, IN SQL. FOUR `?` FOR ONE INSTANT.
+     * (Lane SORT)
+     *
+     * prime() grouped this over a page's set ids and groupedSql() groups the
+     * same text over the whole catalogue. The aliases are arguments rather than
+     * literals so the two callers can name their tables differently without the
+     * arithmetic being written out twice -- a member's unit price with two
+     * spellings is exactly how the tile and the basket came to disagree.
+     *
+     * A variant's sale WINDOW is its parent product's -- ProductVariant::
+     * saleWindowOpen() reads `$this->product->sale_starts_at` -- which is why
+     * the window below is read off the MEMBER row for both branches.
+     */
+    private static function unitSql(string $member = 'p', string $variant = 'pv'): string
+    {
+        return 'CASE'
+            .'  WHEN '.$variant.'.id IS NOT NULL AND '.$variant.'.sale_price IS NOT NULL'
+            .'   AND ('.$member.'.sale_starts_at IS NULL OR '.$member.'.sale_starts_at <= ?)'
+            .'   AND ('.$member.'.sale_ends_at IS NULL OR '.$member.'.sale_ends_at >= ?)'
+            .'   THEN '.$variant.'.sale_price'
+            .'  WHEN '.$variant.'.id IS NOT NULL THEN COALESCE('.$variant.'.price, 0)'
+            .'  WHEN '.$member.'.sale_price IS NOT NULL'
+            .'   AND ('.$member.'.sale_starts_at IS NULL OR '.$member.'.sale_starts_at <= ?)'
+            .'   AND ('.$member.'.sale_ends_at IS NULL OR '.$member.'.sale_ends_at >= ?)'
+            .'   THEN '.$member.'.sale_price'
+            .'  ELSE COALESCE('.$member.'.price, 0)'
+            .' END';
+    }
+
+    /**
+     * IS THIS MEMBERSHIP ROW POINTING AT SOMETHING NOBODY CAN BUY? No `?`.
+     *
+     * A LEFT JOIN with the filter moved into a CASE, so a deleted member still
+     * produces a countable row: it contributes 0 to `parts` and 1 to `missing`
+     * in one pass. See tally() for why the count is taken at all -- a product
+     * deleted from the catalogue is not a price reduction.
+     */
+    private static function goneSql(string $member = 'p'): string
+    {
+        return '('.$member.'.id IS NULL OR '.$member.'.deleted_at IS NOT NULL'
+            ." OR ".$member.".type = 'set')";
+    }
+
+    /**
+     * EVERY SET IN THE CATALOGUE, TALLIED, AS AN UNCORRELATED DERIVED TABLE.
+     * SIX `?`, ALL ONE INSTANT. (Lane SORT)
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * THIS IS WHAT LETS THE PRICE SORT AND THE PRICE FACET SEE A SET'S RULE.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * Columns, one row per set, keyed `sid`:
+     *
+     *   own     the set's OWN charged price -- Product::ownPrice() in SQL, sale
+     *           window included. Only the hand-typed modes read it.
+     *   parts   what the members cost bought separately, today, in fils.
+     *   n       how many membership rows the set has (0 for an empty box).
+     *   miss    how many of them name a product nobody can buy.
+     *
+     * ── WHY A DERIVED TABLE AND NOT A CORRELATED AGGREGATE ────────────────
+     *
+     * Because the rule needs `parts` more than once -- the percentage divides
+     * a product of it, the anchor subtracts it, and the clamp compares against
+     * it -- and SQL has no way to name a subexpression. Spelled as a correlated
+     * aggregate, `parts` would be written out six times and would carry six
+     * copies of the sale window: twenty-four placeholders for one instant.
+     * As a derived table it is computed once and referred to by NAME, which is
+     * both smaller and the only version a person can read.
+     *
+     * It is UNCORRELATED on purpose: nothing inside it mentions the outer
+     * query, so MySQL materialises it once per statement (a correlated
+     * reference inside a FROM subquery needs LATERAL, which is 8.0.14+ and not
+     * a dependency this shop is taking). The outer reference is in the scalar
+     * subquery's WHERE, one level up, where both engines have always allowed
+     * it.
+     *
+     * ── GROUPED BY THE KEY, AND EVERY BARE COLUMN LISTED ──────────────────
+     *
+     * MySQL runs ONLY_FULL_GROUP_BY. It does recognise functional dependency on
+     * a primary key, but the four window columns beside `kbbss.id` are named in
+     * the GROUP BY anyway: this expression is read by people, and a grouping
+     * that is legal only because the server worked out a dependency is the kind
+     * of thing that stops being legal when somebody adds a join.
+     *
+     * ── THE EMPTY BOX HAS A ROW ───────────────────────────────────────────
+     *
+     * It is grouped from `products` outward through a LEFT JOIN, not from
+     * `product_set_items` inward, so a set with no members answers
+     * parts 0 / n 0 / miss 0 rather than answering nothing at all. A scalar
+     * subquery that found no row would have returned NULL, and NULL sorts first
+     * ascending on both engines -- an empty box would have opened "Price, low
+     * to high" ahead of every real product. That is the same NULL trap
+     * App\Support\EffectivePrice::sql() was widened for, arriving from a new
+     * direction.
+     */
+    public static function groupedSql(): string
+    {
+        $gone = self::goneSql('kbbsp');
+        $unit = self::unitSql('kbbsp', 'kbbsv');
+
+        // `kbbsi.id IS NULL` is the empty box: the LEFT JOIN produced one row
+        // with nothing on it, and that row is neither a part nor a missing
+        // member. It is tested FIRST because goneSql() would call it missing.
+        return 'SELECT kbbss.id as sid,'
+            .' CASE WHEN kbbss.sale_price IS NOT NULL'
+            .'  AND (kbbss.sale_starts_at IS NULL OR kbbss.sale_starts_at <= ?)'
+            .'  AND (kbbss.sale_ends_at IS NULL OR kbbss.sale_ends_at >= ?)'
+            .'  THEN kbbss.sale_price ELSE kbbss.price END as own,'
+            .' COALESCE(SUM(CASE WHEN kbbsi.id IS NULL THEN 0 WHEN '.$gone.' THEN 0'
+            .'  ELSE ('.$unit.') * (CASE WHEN kbbsi.quantity < 1 THEN 1 ELSE kbbsi.quantity END)'
+            .'  END), 0) as parts,'
+            .' COUNT(kbbsi.id) as n,'
+            .' COALESCE(SUM(CASE WHEN kbbsi.id IS NULL THEN 0 WHEN '.$gone.' THEN 1 ELSE 0 END), 0) as miss'
+            .' FROM products kbbss'
+            .' LEFT JOIN product_set_items kbbsi ON kbbsi.set_product_id = kbbss.id'
+            .' LEFT JOIN products kbbsp ON kbbsp.id = kbbsi.member_product_id'
+            .' LEFT JOIN product_variants kbbsv ON kbbsv.id = kbbsi.member_variant_id'
+            ." WHERE kbbss.type = 'set'"
+            .' GROUP BY kbbss.id, kbbss.price, kbbss.sale_price,'
+            .' kbbss.sale_starts_at, kbbss.sale_ends_at';
+    }
+
+    /**
+     * WRAP A CHARGED-PRICE EXPRESSION SO A RULE-PRICED SET ANSWERS ITS RULE.
+     * Product::effectivePrice() in SQL, for the one product type whose price is
+     * not in a column. (Lane SORT)
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * THE SORT KEY AND THE PRINTED PRICE ARE NOW THE SAME NUMBER.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ── THE DEFECT, ON THE SHOP ───────────────────────────────────────────
+     *
+     * App\Support\EffectivePrice is SQL over `products.price` and its sale
+     * window, and it is evaluated across the whole catalogue before a page is
+     * in hand, so it could not see a rule. `discount_percent` and
+     * `discount_amount` sorted and bucketed at the derived price AS AT THE LAST
+     * SAVE -- Admin\ProductEditorApiController writes that snapshot into
+     * `products.price` and nothing writes it again -- and `fixed` with an
+     * anchor sorted at the typed figure, BEFORE the reduction. So:
+     *
+     *   - "Price, low to high" put a set later in the list than the number on
+     *     its own tile deserved, and the shopper could see both at once.
+     *   - The price-range facet filed a set in the band its STALE figure fell
+     *     in, so a set printing AED 145.00 was missing from "AED 54 - 150".
+     *   - "On sale" never contained a rule-priced set at all, because
+     *     whereOnSale() asks `charged < regular` and both sides read the same
+     *     stale column. The tile drew a -N% badge from Product::isOnSale(),
+     *     which compares the DERIVED price with the same snapshot, so the badge
+     *     and the filter contradicted each other on the same screen.
+     *
+     * ── WHY THIS SHAPE, AND NOT THE TWO prime() REJECTED ──────────────────
+     *
+     * prime()'s docblock rejected a correlated subquery beside EffectivePrice
+     * on two grounds and rejected a cached `products.price` refreshed on a
+     * member's save on a third. This IS the first of those, taken up
+     * deliberately, and each ground is answered rather than ignored:
+     *
+     *   "IT PUTS THE MONEY RULE IN SQL, TWICE." It does, and that is the real
+     *   cost of this change. It is paid for in two ways. The parts total -- the
+     *   half with a sale window in it -- is NOT duplicated: unitSql() and
+     *   goneSql() are one text, read by prime() and by groupedSql() alike. What
+     *   is spelled twice is derived()'s arithmetic, and
+     *   tests/Feature/SetSortKeyMatchesPriceTest drives several hundred
+     *   (parts, mode, discount, basis, price, sale) combinations through BOTH
+     *   spellings and asserts them equal to the fil, on SQLite and again under
+     *   `-c phpunit-mysql.xml`. A duplicated rule nobody checks is a hazard; a
+     *   duplicated rule the suite compares on both engines is a property.
+     *
+     *   "MySQL SPELLS INTEGER DIVISION `DIV`." It need not be spelled at all.
+     *   `(n - n % 10000) / 10000` is exact on both engines for every sign of n:
+     *   `%` truncates toward zero on both, so the numerator is already an exact
+     *   multiple and the division has nothing to round. SQLite answers an
+     *   INTEGER; MySQL answers a DECIMAL, which is an EXACT type -- not a float
+     *   -- and compares and orders identically. There is no float on this path
+     *   in either engine, which is the rule this repository holds money to.
+     *
+     *   "IT TAXES THE HOTTEST QUERY ON THE SHOP." It does not, and that is what
+     *   the outer CASE is for. `type = 'set'` is one comparison against a column
+     *   already on the row; a CASE evaluates only the branch it takes, on both
+     *   engines, so for a product that is not a set the subquery is not merely
+     *   cheap, it is NEVER EXECUTED -- and the derived table inside it is never
+     *   built. The STATEMENT COUNT does not move by one on any page, with a set
+     *   or without: this is zero extra queries, which is the property prime()
+     *   bought and this must not spend.
+     *
+     *   "FIVE WRITERS WOULD HAVE TO FIND EVERY SET." That objection kills the
+     *   cached column, and a THIRD shape -- a `set_effective_price` refreshed by
+     *   one owner, an observer or a sweep -- dies with it for a reason neither
+     *   of the first two mention: A MEMBER'S SCHEDULED SALE OPENS WITH NO WRITE
+     *   AT ALL. Nothing is saved at midnight when a markdown's window opens, so
+     *   no observer fires and no hook can; only a sweep would notice, and until
+     *   it ran the shop would sort a set by a price it had stopped charging.
+     *   This shop schedules its markdowns -- EffectivePrice exists entirely
+     *   because it does -- so a stored sort key is stale by design on exactly
+     *   the days the owner most wants the sort to be right. The window here is
+     *   a bound instant in the same statement, so it cannot be stale by any
+     *   amount.
+     *
+     * ── WHAT IT ANSWERS, BRANCH BY BRANCH ─────────────────────────────────
+     *
+     *   NOT A SET, or a set with no rule and no anchor -- which is every
+     *   product in this shop and every set built before Lane SP -- the
+     *   expression handed in, unchanged and byte-identical. The guard is two
+     *   column tests and no subquery.
+     *   `discount_percent`  intdiv(parts * (10000 - bp) + 5000, 10000), clamped
+     *                       at 0, with bp clamped to 0..10000 first.
+     *   `discount_amount`   parts less the discount, clamped at 0.
+     *   `fixed` + anchor    the set's own charged figure less
+     *                       max(0, basis - parts), clamped at MIN_PRICE_FILS
+     *                       and never raised -- and only when the box has
+     *                       members and none of them is missing.
+     *
+     * ▲ `kbbst.own` IS THE HANDED-IN EXPRESSION FOR A SET, not a second answer.
+     *   sql()'s COALESCE falls through to the cheapest variation only when the
+     *   row's own price is NULL, and a set has no variations, so for a set the
+     *   two are the same number. Using the derived table's copy is what keeps
+     *   the placeholder count at ten instead of twenty-two.
+     *
+     * @param  string  $base  The charged-price expression for everything that
+     *                        is not a rule-priced set. Its own `?` are kept.
+     */
+    public static function chargedSql(string $base, string $table = 'products'): string
+    {
+        $c = static fn (string $column): string => $table === '' ? $column : $table.'.'.$column;
+
+        $discount = 'COALESCE('.$c('set_discount').', 0)';
+
+        // The basis-point clamp derived() applies before it multiplies, so a
+        // row holding 20000 prices the set at zero rather than at minus the
+        // parts total. CASE, not LEAST/GREATEST: MySQL's MAX() of two arguments
+        // is an aggregate and SQLite's is a scalar, which is the kind of
+        // difference that passes here and raises 1064 on the server.
+        $bp = 'CASE WHEN '.$discount.' < 0 THEN 0'
+            .' WHEN '.$discount.' > '.self::FULL_BP.' THEN '.self::FULL_BP
+            .' ELSE '.$discount.' END';
+
+        // intdiv($parts * (10000 - $bp) + 5000, 10000): integer multiply, one
+        // integer divide, half carried up, once.
+        $numerator = '(kbbst.parts * ('.self::FULL_BP.' - ('.$bp.')) + '.intdiv(self::FULL_BP, 2).')';
+        $divided = '(('.$numerator.' - '.$numerator.' % '.self::FULL_BP.') / '.self::FULL_BP.')';
+        $percent = 'CASE WHEN '.$divided.' < 0 THEN 0 ELSE '.$divided.' END';
+
+        $flat = 'CASE WHEN '.$discount.' < 0 THEN 0 ELSE '.$discount.' END';
+        $amount = 'CASE WHEN kbbst.parts - ('.$flat.') < 0 THEN 0'
+            .' ELSE kbbst.parts - ('.$flat.') END';
+
+        return 'CASE WHEN '.$c('type')." = 'set' AND ("
+            .$c('set_price_mode')." IN ('".self::MODE_PERCENT."', '".self::MODE_AMOUNT."')"
+            .' OR '.$c('set_price_basis').' IS NOT NULL) THEN ('
+            .'SELECT CASE'
+            .' WHEN '.$c('set_price_mode')." = '".self::MODE_PERCENT."' THEN ".$percent
+            .' WHEN '.$c('set_price_mode')." = '".self::MODE_AMOUNT."' THEN ".$amount
+            .' WHEN '.self::anchorSql($c('set_price_basis')).' THEN '
+            .self::reducedSql('kbbst.own', $c('set_price_basis'))
+            .' ELSE kbbst.own END'
+            .' FROM ('.self::groupedSql().') kbbst WHERE kbbst.sid = '.$c('id')
+            .') ELSE '.$base.' END';
+    }
+
+    /**
+     * WRAP A COMPARE-AT EXPRESSION THE SAME WAY — Product::compareAtPrice() in
+     * SQL. SIX `?` ON TOP OF WHATEVER $base CARRIES. (Lane SORT)
+     *
+     * compareAtPrice() is `afterAdjustment($this, (int) $this->price)`, and
+     * afterAdjustment() answers its input unchanged for everything that is not
+     * a hand-priced set with an anchor. So only that one case is wrapped here,
+     * and the two discount modes are deliberately NOT: their compare-at is the
+     * `products.price` column exactly as it stands, which is the figure the
+     * editor snapshotted and the figure Product::compareAtPrice() returns.
+     *
+     * ── WHICH IS THE "ON SALE" DECISION, MADE RATHER THAN INHERITED ────────
+     *
+     * whereOnSale() is `charged < compare-at`, and with both halves wrapped it
+     * is Product::isOnSale() term for term again. A rule-priced set therefore
+     * enters the "On sale" facet on exactly the days its tile draws a -N%
+     * badge, and leaves it on exactly the days the badge goes: both read the
+     * same two numbers. The alternative -- taking the badge OFF the tile -- was
+     * rejected because it changes a surface that works today, and because the
+     * shop would then be silent about a real reduction a shopper is being
+     * offered. See the lane report for the third reading that was considered
+     * and refused: a set is NOT put in "On sale" for being cheaper than its
+     * members bought separately. That is a different claim, it is the one
+     * App\Support\SetContents prints as `saving` on the set's own page, and it
+     * is true of nearly every set ever built -- a facet that contains almost
+     * everything filters nothing.
+     */
+    public static function compareSql(string $base, string $table = 'products'): string
+    {
+        $c = static fn (string $column): string => $table === '' ? $column : $table.'.'.$column;
+
+        return 'CASE WHEN '.$c('type')." = 'set' AND ".$c('set_price_basis').' IS NOT NULL'
+            .' AND ('.$c('set_price_mode').' IS NULL OR '.$c('set_price_mode')
+            ." NOT IN ('".self::MODE_PERCENT."', '".self::MODE_AMOUNT."')) THEN ("
+            .'SELECT CASE WHEN '.self::anchorSql($c('set_price_basis')).' THEN '
+            .self::reducedSql($c('price'), $c('set_price_basis'))
+            .' ELSE '.$c('price').' END'
+            .' FROM ('.self::groupedSql().') kbbst WHERE kbbst.sid = '.$c('id')
+            .') ELSE '.$base.' END';
+    }
+
+    /**
+     * Is there an adjustment to make at all? adjustment()'s three refusals, in
+     * SQL and in the same order: an empty box, a box with a member missing, and
+     * a basis today's total has already caught up with. No `?`.
+     */
+    private static function anchorSql(string $basis): string
+    {
+        return '(kbbst.n >= 1 AND kbbst.miss = 0 AND '.$basis.' - kbbst.parts > 0)';
+    }
+
+    /**
+     * afterAdjustment() in SQL: $amount less (basis - parts), never below
+     * MIN_PRICE_FILS and never ABOVE $amount. No `?` of its own.
+     *
+     * The first branch is the `min($amount, MIN_PRICE_FILS)` half, which is
+     * there so a product genuinely priced at 0 is not LIFTED to one fil by a
+     * clamp that was meant to protect it. A clamp that can move a figure up is
+     * not a clamp, it is a price change.
+     */
+    private static function reducedSql(string $amount, string $basis): string
+    {
+        $reduced = $amount.' - ('.$basis.' - kbbst.parts)';
+
+        return 'CASE WHEN '.$amount.' < '.self::MIN_PRICE_FILS.' THEN '.$amount
+            .' WHEN '.$reduced.' < '.self::MIN_PRICE_FILS.' THEN '.self::MIN_PRICE_FILS
+            .' ELSE '.$reduced.' END';
     }
 
     /**
