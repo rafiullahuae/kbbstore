@@ -217,6 +217,9 @@
 .sap-col input[type=text]{flex:1 1 auto;min-width:0;font:inherit;font-size:12.5px;padding:6px 9px;
                           border:1px solid var(--border,#e6e6e6);border-radius:8px;
                           background:var(--surface,#fff);color:inherit}
+.sap-sel{width:100%;min-width:0;font:inherit;font-size:12.5px;padding:7px 9px;
+         border:1px solid var(--border,#e6e6e6);border-radius:8px;
+         background:var(--surface,#fff);color:inherit}
 .sap-btn{font:inherit;font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:9px;
          border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit;cursor:pointer}
 .sap-btn:hover{border-color:var(--accent,#E8919F)}
@@ -815,6 +818,35 @@
         + '<input type="text" id="' + id + '" data-sap-key="' + esc(f.key) + '"'
         + ' value="' + esc(hex) + '" placeholder="theme’s own" spellcheck="false">'
         + '</div>' + help + '</div>';
+    }
+
+    /* ── A SELECT, AND IT HAD NO BRANCH ─────────────────────────── (Lane CR)
+     *
+     * Everything on this screen was a switch, a colour or a slider until "where
+     * the circles sit" arrived, and a field with no branch FELL THROUGH TO THE
+     * RANGE ONE: `<input type="range" min="undefined" max="undefined"
+     * value="start">`, which draws a dead slider and posts NaN. That is not
+     * hypothetical — the handler below carries a note about three selects on
+     * the Checkout page screen that shipped exactly that way and saved as NaN.
+     * Found by reading this function after adding the control, not by the
+     * suite, which is why SetScreenIsSimplerTest now has a case for it.
+     *
+     * The handler needs nothing: a <select> element's `.type` is 'select-one',
+     * which is neither 'checkbox' nor 'range', so it takes the string branch —
+     * which is the right one, because the value is one of the schema's own
+     * option keys and never a number. */
+    if (f.type === 'select' || f.type === 'enum') {
+      var opts = f.options || {};
+      var current = String(draft[f.key] == null ? '' : draft[f.key]);
+
+      return '<div class="sap-f"><div class="sap-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
+        + reset + '</div>'
+        + '<select id="' + id + '" data-sap-key="' + esc(f.key) + '" class="sap-sel">'
+        + Object.keys(opts).map(function (v) {
+          return '<option value="' + esc(v) + '"' + (v === current ? ' selected' : '') + '>'
+            + esc(opts[v]) + '</option>';
+        }).join('')
+        + '</select>' + help + '</div>';
     }
 
     var o = f.options || {};

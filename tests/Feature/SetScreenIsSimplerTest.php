@@ -198,6 +198,46 @@ it('draws the cart section as four cards in the order you meet the row', functio
     expect(substr_count($section, 'title:'))->toBe(8);
 });
 
+it('draws a select as a select and never as a dead slider', function () {
+    /*
+     * ── THE DEFECT THIS CASE EXISTS FOR ────────────────────────────────────
+     *
+     * Every control on this screen was a switch, a colour or a slider until
+     * "where the circles sit" arrived with this round. fieldHTML() had no
+     * branch for a select, and the function ENDS with the range branch — so the
+     * new control rendered as `<input type="range" min="undefined"
+     * max="undefined" value="start">`: a dead slider that posts NaN. The screen
+     * itself carries a note about three selects on the Checkout page screen
+     * that shipped exactly that way.
+     *
+     * MUTATION NOTE — RUN. Delete the `f.type === 'select'` branch from
+     * fieldHTML() and this is red.
+     */
+    $blade = crScreen();
+
+    expect($blade)->toContain("if (f.type === 'select' || f.type === 'enum') {");
+    expect($blade)->toContain('<select id=');
+    expect($blade)->toContain('.sap-sel{');
+
+    /*
+     * AND THE SCHEMA REALLY HAS ONE, so this is not a branch guarding nothing.
+     * Read off the schema rather than named here, so a second select later is
+     * covered without a line being added.
+     */
+    $selects = array_keys(array_filter(
+        SetAppearance::SCHEMA,
+        static fn (array $def): bool => ($def[0] ?? '') === 'select'
+    ));
+
+    expect($selects)->not->toBe([]);
+
+    foreach ($selects as $key) {
+        expect(is_array(SetAppearance::SCHEMA[$key][4] ?? null))->toBeTrue(
+            "`{$key}` is a select with no option list, so it would draw an empty box."
+        );
+    }
+});
+
 it('shows the preview surface the open section is about, and no other', function () {
     /*
      * Sent down the live-overlay channel that already exists rather than as a
