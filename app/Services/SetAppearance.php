@@ -666,29 +666,29 @@ class SetAppearance
          * already runs on tokens (`--cop-rowp-t` and its family); this is the
          * same idea, one page along.
          */
-        'ci_pad_t' => ['range', 'Cart row padding, top', 11, '',
+        'ci_pad_t' => ['range', 'Set row padding, top', 11, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_pad_b' => ['range', 'Cart row padding, bottom', 11, '',
+        'ci_pad_b' => ['range', 'Set row padding, bottom', 11, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_pad_x' => ['range', 'Cart row padding, left and right', 14, '',
+        'ci_pad_x' => ['range', 'Set row padding, left and right', 14, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_gap' => ['range', 'Cart row: space between the picture and the words', 12, '',
+        'ci_gap' => ['range', 'Set row: space between the picture and the words', 12, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_name_gap' => ['range', 'Cart row: space under the product name', 6,
+        'ci_name_gap' => ['range', 'Set row: space under the set’s name', 6,
             'What separates the name from whatever is under it — the option line, the set’s circles, or the quantity stepper.',
             ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
         'ci_bp' => ['range', 'The cart rows switch to their phone sizes below', 600,
             '▲ 600, AND NOT THE 760 THE SET BOX USES. The cart page’s own phone block in the stylesheet is at 600px and the set box’s is at 760px, and they are right to differ — one is about a two-column page collapsing and the other about the checkout summary starting to clip its contents. One number for both would change the shop at every width in between, which is exactly what may not happen.',
             ['min' => 320, 'max' => 1200, 'step' => 10, 'unit' => 'px']],
-        'ci_pad_t_m' => ['range', 'Cart row padding, top', 10, '',
+        'ci_pad_t_m' => ['range', 'Set row padding, top', 10, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_pad_b_m' => ['range', 'Cart row padding, bottom', 10, '',
+        'ci_pad_b_m' => ['range', 'Set row padding, bottom', 10, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_pad_x_m' => ['range', 'Cart row padding, left and right', 12, '',
+        'ci_pad_x_m' => ['range', 'Set row padding, left and right', 12, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_gap_m' => ['range', 'Cart row: space between the picture and the words', 11, '',
+        'ci_gap_m' => ['range', 'Set row: space between the picture and the words', 11, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
-        'ci_name_gap_m' => ['range', 'Cart row: space under the product name', 5, '',
+        'ci_name_gap_m' => ['range', 'Set row: space under the set’s name', 5, '',
             ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
     ];
 
@@ -709,8 +709,8 @@ class SetAppearance
      * order somebody arranges a thing in.
      */
     public const TABS = [
-        'd_cart' => ['Desktop · Cart page rows',
-            'The rows every product sits in on the cart page — set or not. These four numbers were hard-coded in the stylesheet until this release, which is why the owner asked for them by name. Laptop values; the phone has its own on the Mobile tab.',
+        'd_cart' => ['Desktop · Set row on the cart page',
+            'The row a SET sits in on the cart page, and no other row. It was scoped to every row in the basket until the owner caught it: “these controls must be apply only and only on Set rows, not on other rows”. An ordinary product’s row keeps the stylesheet’s own numbers, which is why moving these changes nothing outside a basket holding a set. Laptop values; the phone has its own on the Mobile tab.',
             ['ci_pad_t', 'ci_pad_b', 'ci_pad_x', 'ci_gap', 'ci_name_gap']],
         'd_box_parts' => ['Desktop · Set box — what is drawn',
             'The fanned circles and the “What’s inside” popup under a set’s name in the cart drawer, on the cart page, in the checkout summary, in the browsed rail and on an order. Every switch here applies to BOTH screens — one control with two halves that could disagree is worse than one honest control.',
@@ -751,8 +751,8 @@ class SetAppearance
         'm_where' => ['Mobile · Where “mobile” starts',
             'THREE NUMBERS AND NOT ONE, and they are meant to differ. Each of the three surfaces already turns over at its own width in the shop’s stylesheets — 600 for the cart page’s rows, 760 for the set box, 480 for the buy column’s list — because each is about a different thing collapsing. Forcing one number on all three would change what the shop renders at every width in between, which is the one thing a new setting may not do.',
             ['ci_bp', 'bp', 'p_bp']],
-        'm_cart' => ['Mobile · Cart page rows',
-            'The phone’s own padding and gaps for the cart page’s product rows.',
+        'm_cart' => ['Mobile · Set row on the cart page',
+            'The phone’s own padding and gaps for a SET’s row on the cart page. Like the Desktop tab, these reach a set’s row and no other row in the basket.',
             ['ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_x_m', 'ci_gap_m', 'ci_name_gap_m']],
         'm_box' => ['Mobile · Set box',
             'The phone’s own sizes. What is DRAWN, every weight and every colour are shared with Desktop and are set on that tab — an element switched off there is off here too.',
@@ -1206,9 +1206,9 @@ class SetAppearance
             // The cart page's own rows — properties, not variables, because the
             // sheet that sets them is compiled and this package does not
             // rebuild it.
-            '.kbb-cartpage .items .ci.ci{padding:'.(int) $c['ci_pad_t'].'px '.(int) $c['ci_pad_x'].'px '
+            '.kbb-cartpage .items .ci.ci-set{padding:'.(int) $c['ci_pad_t'].'px '.(int) $c['ci_pad_x'].'px '
                 .(int) $c['ci_pad_b'].'px;gap:'.(int) $c['ci_gap'].'px}',
-            '.kbb-cartpage .items .ci.ci .cn{margin-bottom:'.(int) $c['ci_name_gap'].'px}',
+            '.kbb-cartpage .items .ci.ci-set .cn{margin-bottom:'.(int) $c['ci_name_gap'].'px}',
         ];
 
         /*
@@ -1266,9 +1266,9 @@ class SetAppearance
          * `@media (max-width: var(--x))` is not a thing.
          */
         $rules[] = '@media (max-width:'.(int) $c['ci_bp'].'px){'
-            .'.kbb-cartpage .items .ci.ci{padding:'.(int) $c['ci_pad_t_m'].'px '.(int) $c['ci_pad_x_m'].'px '
+            .'.kbb-cartpage .items .ci.ci-set{padding:'.(int) $c['ci_pad_t_m'].'px '.(int) $c['ci_pad_x_m'].'px '
             .(int) $c['ci_pad_b_m'].'px;gap:'.(int) $c['ci_gap_m'].'px}'
-            .'.kbb-cartpage .items .ci.ci .cn{margin-bottom:'.(int) $c['ci_name_gap_m'].'px}}';
+            .'.kbb-cartpage .items .ci.ci-set .cn{margin-bottom:'.(int) $c['ci_name_gap_m'].'px}}';
 
         $rules[] = '@media (max-width:'.(int) $c['bp'].'px){.kset.kset{'
             .implode(';', self::boxVars($c, true)).'}}';

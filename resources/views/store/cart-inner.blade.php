@@ -199,7 +199,33 @@ $kbbLineWas = static function ($kbbWasLine): int {
                         // saving it actually got.
                         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
                     @endphp
-                    <div class="ci">
+                    {{-- ▲ `ci-set` MARKS A SET LINE AND NOTHING ELSE, and it is what
+                         Appearance → Set → Set row on the cart page is scoped to.
+
+                         Those five controls were emitted at
+                         `.kbb-cartpage .items .ci.ci`, which is EVERY row in the
+                         basket. The owner: "the set row padding etc is disturbing
+                         the whole cart all rows, these controls must be apply only
+                         and only on Set rows, not on other rows!!!!" A screen
+                         called Appearance → SET moving the padding of an ordinary
+                         product's row is a control doing something its name does
+                         not say, which is the one thing a settings screen may
+                         never do.
+
+                         $kbbSet is already computed above for the fanned stack and
+                         is SetContents::NONE for every line that is not a set, so
+                         this costs no query and no second definition of what a set
+                         is.
+
+                         ▲ AND THE COMMENT'S CLOSING BRACE TOUCHES THE ELEMENT,
+                         on purpose, with no newline between them. A Blade
+                         comment is removed at compile time but the NEWLINE AND
+                         INDENTATION around it are not, so a comment on its own
+                         lines above this element shifts every byte after it on
+                         every /cart in the shop. StorefrontEnglishUnchangedTest
+                         caught exactly that here, at byte 22394, which is the same
+                         lesson the note further down this file records about a
+                         directive eating the newline after it. --}}<div class="ci{{ $kbbSet['members'] ? ' ci-set' : '' }}">
                         <div class="cth" style="{{ $thumb }}">{{ $imgCss !== '' ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
                         <div class="cmid">
                             @if ($brand)<div class="cbrand">{{ $brand }}</div>@endif

@@ -286,8 +286,67 @@ it('carries a moved value onto a rendered storefront page', function () {
 
     expect(str_contains($html, '<style id="kbb-set">'))->toBeTrue('the block never reached the page');
     expect(str_contains($html, '--kset-cf:0.8'))->toBeTrue('the circle factor never reached the page');
-    expect(str_contains($html, '.kbb-cartpage .items .ci.ci{padding:20px'))->toBeTrue(
-        'the cart row padding never reached the page'
+    /*
+     * ▲ ADVANCED DELIBERATELY, 29 September: `.ci.ci` -> `.ci.ci-set`.
+     *
+     * These five controls were emitted at `.kbb-cartpage .items .ci.ci`, which
+     * is EVERY row in the basket. The owner caught it on his own shop:
+     *
+     *   "the set row padding etc is disturbing the whole cart all rows, these
+     *    controls must be apply only and only on Set rows, not on other
+     *    rows!!!!"
+     *
+     * He is right, and it is not a preference: a screen called Appearance ->
+     * SET moving the padding of an ordinary product's row is a control doing
+     * something its own name does not say, which is the one thing a settings
+     * screen may never do. The old string is kept above so the change is
+     * visible rather than silent.
+     *
+     * The specificity is unchanged -- (0,4,0) before and after -- so the rule
+     * still wins against the compiled sheet for the rows it now matches.
+     */
+    expect(str_contains($html, '.kbb-cartpage .items .ci.ci-set{padding:20px'))->toBeTrue(
+        'the set row padding never reached the page'
+    );
+
+    expect(str_contains($html, '.kbb-cartpage .items .ci.ci{padding:20px'))->toBeFalse(
+        'the set controls are still scoped to every row in the basket'
+    );
+});
+
+it('reaches a set line in the basket and no other line', function () {
+    /*
+     * The half the selector test cannot prove: that the MARKUP actually carries
+     * the class the rule is scoped to, on a set line and on nothing else.
+     * Rendering the real cart page and reading the bytes back is the only thing
+     * that can tell the difference -- the same argument the ProductStyles
+     * landmine above makes, where twenty controls reached no page for releases.
+     *
+     * MUTATION, RUN: drop the `ci-set` from the class attribute in
+     * store/cart-inner.blade.php and the first expectation goes red; put the
+     * class on every row and the second does.
+     */
+    $inner = (string) file_get_contents(
+        resource_path('views/store/cart-inner.blade.php')
+    );
+
+    expect(str_contains($inner, "class=\"ci{{ \$kbbSet['members'] ? ' ci-set' : '' }}\""))->toBeTrue(
+        'the cart row no longer marks a set line, so the scoped rule matches nothing at all'
+    );
+
+    /*
+     * And the non-set line renders `class="ci"` character for character what it
+     * always did -- appended INSIDE the attribute rather than as a second class
+     * attribute, which is what keeps every basket in this shop byte-identical
+     * for StorefrontEnglishUnchangedTest.
+     */
+    /* `<div class="ci` and not `class="ci`: the paragraph above the element in
+       that file QUOTES the rendered attribute to explain why the marker is
+       appended inside it, and a bare substring count reads the explanation as a
+       second row. Found by running this — it reported 2. */
+    expect(substr_count($inner, '<div class="ci'))->toBe(
+        1,
+        'there is more than one cart row element; the marker must be on the one that holds a line'
     );
 });
 
