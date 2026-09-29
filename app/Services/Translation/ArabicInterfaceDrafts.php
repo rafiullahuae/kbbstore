@@ -528,7 +528,11 @@ final class ArabicInterfaceDrafts
             'store.reviews.field_email_placeholder' => 'you@email.com',
             'store.reviews.field_title' => 'العنوان',
             'store.reviews.field_title_placeholder' => 'اختصرها في سطر ✨',
-            'store.reviews.field_review' => 'تقييمك',
+            // NOT تقييمك, which is what field_rating above says. These are two
+            // labels on ONE form -- the star picker and the textarea under it --
+            // and giving both the same word leaves the shopper with two
+            // identically-labelled controls.
+            'store.reviews.field_review' => 'رأيك',
             'store.reviews.field_review_placeholder' => 'أخبرنا بما أعجبك…',
             'store.reviews.field_photos' => 'أضف صورًا',
             'store.reviews.field_photos_hint' => '(اختياري)|(اختياري، صورة واحدة كحد أقصى)|(اختياري، صورتان كحد أقصى)|(اختياري، حتى :count صور)|(اختياري، حتى :count صورة)|(اختياري، حتى :count صورة)',
@@ -677,7 +681,10 @@ final class ArabicInterfaceDrafts
             'store.checkout.gift_wrapping' => 'تغليف الهدية',
             'store.checkout.cod_fee' => 'رسوم الدفع عند الاستلام',
             'store.checkout.total' => 'الإجمالي',
-            'store.checkout.place_order' => 'إتمام الطلب',
+            // NOT إتمام الطلب, which is the page's own heading four keys up.
+            // The heading names the page and the button names the act, and on
+            // this page they are inches apart.
+            'store.checkout.place_order' => 'تأكيد الطلب',
             'store.checkout.freeship_done' => 'تهانينا! حصلت على التوصيل المجاني',
             'store.checkout.thumbs_your_bag' => 'حقيبتك',
             'store.checkout.thumbs_your_order' => 'طلبك',

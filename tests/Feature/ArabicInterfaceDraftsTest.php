@@ -600,3 +600,93 @@ it('still leaves the pages and posts gap exactly where it was found', function (
             'RICH_BY_GROUP has grown or shrunk -- if pages/posts are now sanitised, '
             .'ContentPageEditorTest has a case to delete and their English needs the same treatment');
 });
+
+/* ══════════════════ 8. one Arabic word doing two different jobs ══════════════════ */
+
+it('never labels two controls on one screen with the same Arabic', function () {
+    /*
+     * A CLASS OF ERROR THE OTHER CASES CANNOT SEE, AND THIS LANE SHIPPED TWO.
+     *
+     * Arabic collapses distinctions English makes. Translating 1,018 strings a
+     * few dozen at a time, it is easy to reach for the obvious word twice --
+     * and if the two keys happen to sit on the SAME screen, the shopper gets
+     * two identically-labelled controls.
+     *
+     * The two this caught, both found by running it:
+     *
+     *   store.reviews.field_rating  "Your rating"  and
+     *   store.reviews.field_review  "Your review"  were both تقييمك --
+     *   the star picker and the textarea directly under it, on one form.
+     *
+     *   store.checkout.heading      "Checkout"     and
+     *   store.checkout.place_order  "Place order"  were both إتمام الطلب --
+     *   the page's own <h1> and its submit button, inches apart.
+     *
+     * The rest of the collapses are legitimate and are listed below rather than
+     * suppressed by a rule, because the difference between "Best sellers" and
+     * "Best selling" genuinely does not survive into Arabic and pretending
+     * otherwise would invent a distinction the language does not make. Each
+     * group is either one screen where the repetition reads naturally, or two
+     * screens a shopper never sees at once.
+     *
+     * MUTATION: set store.reviews.field_review back to تقييمك and this is red
+     * naming the pair. Ran it.
+     */
+    $english = InterfaceStrings::flat();
+
+    $byArabic = [];
+
+    foreach (ArabicInterfaceDrafts::all() as $key => $arabic) {
+        $byArabic[$arabic][] = $key;
+    }
+
+    $collapsed = [];
+
+    foreach ($byArabic as $keys) {
+        if (count($keys) < 2) {
+            continue;
+        }
+
+        // Keys whose ENGLISH is the same word are not a collapse at all -- one
+        // Arabic for one English is the point of keying by component.
+        $englishes = array_unique(array_map(
+            static fn (string $k): string => mb_strtolower($english[$k]),
+            $keys
+        ));
+
+        if (count($englishes) > 1) {
+            sort($keys);
+            $collapsed[] = $keys;
+        }
+    }
+
+    usort($collapsed, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
+
+    /*
+     * The collapses that are correct. Named in full, so adding a new one is a
+     * decision somebody writes down rather than a number that creeps.
+     */
+    $allowed = [
+        ['email.invoice.col_unit', 'invoice.invoice.col_unit_price'],
+        ['email.invoice.deliver_to', 'store.order_received.address_heading'],
+        ['email.items.col_qty', 'invoice.delivery_note.col_quantity'],
+        ['store.account.dashboard_title', 'store.account_panel.default_name', 'store.account_panel.link_account', 'store.footer.account_heading', 'store.footer.link_my_account', 'store.header.account_label', 'store.mobile_menu.link_account'],
+        ['store.account.orders_empty', 'store.collection.empty'],
+        ['store.account.register_title', 'store.account_panel.register_button', 'store.account_panel.tab_register', 'store.mobile_menu.link_register'],
+        ['store.account_panel.field_email', 'store.checkout.field_email', 'store.quiz.js_label_email', 'store.reviews.field_email'],
+        ['store.addresses.add_address', 'store.addresses.form_heading_add'],
+        ['store.brands.card_count', 'store.cart.item_count', 'store.home.category_product_count', 'store.set.count_note'],
+        ['store.checkout.field_address', 'store.reviews.field_title'],
+        ['store.checkout.secure_badge', 'store.home.trust_payments_title'],
+        ['store.collection.title_best_sellers', 'store.footer.link_best_sellers', 'store.home.bestsellers_grid_label', 'store.home.bestsellers_heading', 'store.product_card.label_bestseller', 'store.shop.sort_popularity'],
+        ['store.home.flash_link', 'store.product_grid.view_all'],
+        ['store.instagram.follow', 'store.quiz.js_continue'],
+        ['store.order_received.show_more', 'store.set.show_all'],
+        ['store.order_status.on-hold', 'store.order_status.onhold'],
+        ['store.orders.pager_newer', 'store.shop.sort_date'],
+    ];
+
+    expect($collapsed)->toBe($allowed,
+        "one Arabic value is covering two different English strings that is not on the allowed list -- "
+        ."if it is legitimate, add it there with a reason; if the two sit on one screen, give them different words");
+});
