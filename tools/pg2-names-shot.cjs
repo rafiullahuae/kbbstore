@@ -11,7 +11,12 @@
 const { chromium } = require('playwright');
 const BASE = process.env.KBB_BASE || 'http://127.0.0.1:8931';
 const EXE = process.env.KBB_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
-const OUT = process.env.KBB_SHOTS || '/home/user/lane-pg2/docs/pg2-shots';
+/* DERIVED FROM THIS FILE'S OWN LOCATION, NEVER HARDCODED. tools/pg2-preview.sh
+   carries the same note and the same reason: two harnesses in this repository
+   became unrunnable because they named their lane's worktree, and that worktree
+   is removed the day the branch merges. The screenshots are a deliverable, so
+   the thing that produces them has to travel with the branch. */
+const OUT = process.env.KBB_SHOTS || require('path').join(__dirname, '..', 'docs', 'pg2-card-shots');
 
 (async () => {
   const browser = await chromium.launch({ executablePath: EXE });

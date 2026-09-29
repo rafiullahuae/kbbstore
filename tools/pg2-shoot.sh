@@ -9,7 +9,7 @@ set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 DIR=$APP/storage/framework/testing/lane-pg2-preview
 PORT=${KBB_PORT:-8931}
-OUT=${KBB_SHOTS:-$APP/docs/pg2-shots}
+OUT=${KBB_SHOTS:-$APP/docs/pg2-card-shots}
 PAGE=${KBB_PAGE:-/collections/skincare-sets/}
 SUFFIX=${KBB_SUFFIX:-}
 
@@ -33,5 +33,5 @@ for SKIN in ${KBB_SKINS:-classic showcase showcase-compact showcase-row showcase
 ]
 PLAN
   KBB_BASE="http://127.0.0.1:$PORT" KBB_SHOTS="$OUT" KBB_PLAN="$DIR/plan.json" \
-    KBB_MEASURE="measure-$SKIN$SUFFIX" node "$APP/tools/pg2-shots.cjs"
+    KBB_MEASURE="measure-$SKIN$SUFFIX" node "$APP/tools/pg2-card-shots.cjs"
 done

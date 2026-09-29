@@ -1,5 +1,5 @@
 #!/bin/sh
-# Lane PG2 — every picture in docs/pg2-shots, from one command.
+# Lane PG2 — every picture in docs/pg2-card-shots, from one command.
 #
 # THE ORDER IS THE POINT and it is the same one tools/spl-arabic-on.php argues
 # for: the English pages are shot BEFORE Arabic is switched on, because a shop
@@ -10,7 +10,7 @@ set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 DIR=$APP/storage/framework/testing/lane-pg2-preview
 PORT=${KBB_PORT:-8931}
-OUT=${KBB_SHOTS:-$APP/docs/pg2-shots}
+OUT=${KBB_SHOTS:-$APP/docs/pg2-card-shots}
 
 # 1 · a fresh preview, and the BUILT stylesheet in its web root. `npx vite build`
 #     is manual in this project and a preview served against a stale
@@ -31,7 +31,7 @@ KBB_PORT="$PORT" KBB_SHOTS="$OUT" sh "$APP/tools/pg2-shoot.sh"
 KBB_SKIN=showcase php "$APP/artisan" tinker "$APP/tools/pg2-set-skin.php" </dev/null >/dev/null 2>&1 \
   || KBB_SKIN=showcase php "$APP/artisan" tinker --execute="require '$APP/tools/pg2-set-skin.php';" </dev/null >/dev/null 2>&1
 KBB_BASE="http://127.0.0.1:$PORT" KBB_SHOTS="$OUT" KBB_PLAN="$APP/tools/pg2-plan-pages.json" \
-  KBB_MEASURE=measure-pages node "$APP/tools/pg2-shots.cjs"
+  KBB_MEASURE=measure-pages node "$APP/tools/pg2-card-shots.cjs"
 
 # 3b · and the SHIPPED state of the same card: Catalogue -> Wishlist is OFF on
 #      this shop, so what applying the package actually draws is the button at
@@ -42,13 +42,13 @@ KBB_BASE="http://127.0.0.1:$PORT" KBB_SHOTS="$OUT" KBB_PLAN="$APP/tools/pg2-plan
 php "$APP/artisan" tinker "$APP/tools/pg2-wishlist-off.php" </dev/null >/dev/null 2>&1 \
   || php "$APP/artisan" tinker --execute="require '$APP/tools/pg2-wishlist-off.php';" </dev/null >/dev/null 2>&1
 KBB_BASE="http://127.0.0.1:$PORT" KBB_SHOTS="$OUT" KBB_PLAN="$APP/tools/pg2-plan-no-wishlist.json" \
-  KBB_MEASURE=measure-no-wishlist node "$APP/tools/pg2-shots.cjs"
+  KBB_MEASURE=measure-no-wishlist node "$APP/tools/pg2-card-shots.cjs"
 
 # 4 · Arabic LAST, for the reason at the top of this file.
 php "$APP/artisan" tinker "$APP/tools/pg2-arabic-on.php" </dev/null >/dev/null 2>&1 \
   || php "$APP/artisan" tinker --execute="require '$APP/tools/pg2-arabic-on.php';" </dev/null >/dev/null 2>&1
 KBB_BASE="http://127.0.0.1:$PORT" KBB_SHOTS="$OUT" KBB_PLAN="$APP/tools/pg2-plan-arabic.json" \
-  KBB_MEASURE=measure-arabic node "$APP/tools/pg2-shots.cjs"
+  KBB_MEASURE=measure-arabic node "$APP/tools/pg2-card-shots.cjs"
 
 # 5 · the sheets.
 KBB_SHOTS="$OUT" node "$APP/tools/pg2-sheet.cjs"

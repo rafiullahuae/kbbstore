@@ -20,7 +20,7 @@ with a **heart outline beside it**. Plenty of white space.
 
 ## 1 · The four treatments, and where to look at them
 
-**`docs/pg2-shots/contact-sheet-1280.png` and `docs/pg2-shots/contact-sheet-390.png`**
+**`docs/pg2-card-shots/contact-sheet-1280.png` and `docs/pg2-card-shots/contact-sheet-390.png`**
 are the two pictures to open first. Five columns each: *today's card* and then
 the four treatments, at the size the browser drew them, from the same twelve
 products on the same category page at the same width. The only difference
@@ -77,7 +77,7 @@ at both**. One of the two has no reviews and the other has 96, so the same
 picture also shows the rating row appearing and disappearing without moving the
 button.
 
-The raw numbers are in `docs/pg2-shots/measure-*.json`, one file per treatment.
+The raw numbers are in `docs/pg2-card-shots/measure-*.json`, one file per treatment.
 
 ---
 
