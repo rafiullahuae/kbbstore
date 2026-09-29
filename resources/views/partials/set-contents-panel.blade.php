@@ -348,6 +348,115 @@ a.ksl-nm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
   .ksl{--ksl-ph:36px;--ksl-phr:7px;--ksl-rowpad:5px;--ksl-gap:9px;--ksl-nm:13px;
        --ksl-footgy:4px;--ksl-footgx:12px}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE BOX — "Hanging photos", the treatment the owner chose, 29 September.
+
+     "i want to redesign the products list box on the set product page. want
+      nice light background box type and inside a squeezed products list."
+     "ok the hanging photos style is fine. please proceed with that"
+
+   Appended whole from Lane SPL's tools/spl-box/t3-hanging-photos.css, which is
+   deleted in the same commit: three treatments were drawn, one was chosen, and
+   a shipped design does not need the two it beat kept beside it. The rules
+   below OVERRIDE the bare-list rules above rather than replacing them, so the
+   list's structure, its fold, its escaping and its query cost are untouched and
+   this is a change of drawing only.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* ── THE OBJECT ─────────────────────────────────────────────────────────── */
+.ksl{
+  background:var(--pink-soft,#FFF0F4);
+  border-radius:18px;
+  /* Asymmetric on purpose. The inline-start padding is the words' inset; the
+     chip's negative margin is 10px BIGGER than it, and that difference is the
+     overhang. The two numbers are the design. */
+  padding:12px 14px 11px 20px;
+}
+.ksl .opt-label{margin-bottom:7px}
+
+/* ── THE SQUEEZE ────────────────────────────────────────────────────────── */
+.ksl-r{
+  grid-template-columns:36px minmax(0,1fr) auto;
+  gap:0 12px;
+  padding:3px 0;
+}
+
+/* ── THE HANG ───────────────────────────────────────────────────────────── */
+.ksl-ph{
+  width:36px;height:36px;border-radius:10px;
+  margin-inline-start:-30px;
+  background:#fff;
+  /* A white ring and a small drop, so the chip reads as sitting ON the blush
+     rather than cut out of it. The ring is a spread shadow and not a border:
+     a border would grow the square and push the words. */
+  box-shadow:0 0 0 3px #fff, 0 2px 6px -1px rgba(42,34,40,.22);
+}
+
+/* NO ROW RULES ANYWHERE. */
+.ksl-r + .ksl-r{border-block-start:0}
+.ksl-more .ksl-r:first-of-type{border-block-start:0}
+
+/* ── THE DISCLOSURE ─────────────────────────────────────────────────────── */
+/* The summary is NOT a row and must not hang: it carries no negative margin at
+   all, so it starts at the panel's own inline-start padding and lines up with
+   the names rather than with the chips. The chips are the only thing in this
+   treatment that crosses the panel's edge — one exception, stated once. */
+.ksl-more > summary{
+  border-block-start:0;
+  padding:8px 0 4px;
+  color:var(--pink-deep,#C13E63);
+}
+.ksl-more > summary span{border-bottom-color:currentColor;opacity:.85}
+
+/* ── THE FOOTING ────────────────────────────────────────────────────────── */
+/* Pulled back to the panel's real inline-start edge so the three figures — and
+   the rule above them — are not indented into the words column. They are about
+   the box, not about a row, so they use the PANEL's padding (20) and not the
+   chip's pull (30): the rule stops at the panel's edge and the chips are the
+   only thing that crosses it. Logical axis, so it is the other edge on /ar. */
+.ksl-foot{
+  margin-top:9px;
+  margin-inline-start:-20px;
+  padding-top:9px;
+  padding-inline-start:20px;
+  border-top:1px solid rgba(42,34,40,.09);
+}
+
+/* ── THE PHONE ──────────────────────────────────────────────────────────── */
+
+/* ── AND WHAT THE PHONE COSTS, MEASURED RATHER THAN ASSUMED ──────────────
+   A box is padding, and at 390px `.buybox` is 346px wide — so every pixel of
+   inner padding is a pixel the NAMES lose, and this catalogue's names are long
+   enough that losing twenty of them flips a row from one line to two. The first
+   cut of this treatment was 12px of inline padding and it made the block TALLER
+   than the bare list it was squeezing: 408px against 396px, because two of the
+   five standing rows gained a line. A squeeze that grows the block has failed
+   whatever the row padding says.
+
+   So on the phone the panel's inline padding comes down to 9px and the gap
+   between the photograph and the words to 8, which together hand back 17px of
+   measure — more than the padding took. Measured, both widths, in the table in
+   docs/SET-BOX-SQUEEZE.md. */
+@media (max-width:480px){
+  .ksl{padding:8px 9px 8px 16px;border-radius:16px}
+  .ksl .opt-label{margin-bottom:5px}
+  .ksl-r{grid-template-columns:32px minmax(0,1fr) auto;gap:0 9px;padding:3px 0}
+  .ksl-ph{width:32px;height:32px;border-radius:9px;margin-inline-start:-26px;
+          box-shadow:0 0 0 2.5px #fff, 0 2px 5px -1px rgba(42,34,40,.22)}
+  .ksl-foot{margin-top:7px;padding-top:7px;margin-inline-start:-16px;padding-inline-start:16px}
+  /* THE ROWS' HEIGHT AT 390 IS SET BY THE WORDS, NOT BY THE PHOTOGRAPH, and
+     that is the finding this treatment had to be re-cut around. At 1280 the
+     names fit on one line and the photograph decides the row, so 40 -> 34 is
+     worth 10px a row. At 390 every second name in this catalogue wraps to two
+     lines and a 32px photograph is already shorter than they are — shrinking it
+     further buys nothing at all. What does buy height there is the leading:
+     1.3 -> 1.24 on a two-line name and 1.3 -> 1.15 on the brand is ~2px a row,
+     five rows of it, and neither goes near the legible floor. Measured both
+     ways in docs/SET-BOX-SQUEEZE.md. */
+  .ksl-nm{line-height:1.24}
+  .ksl-br{line-height:1.15}
+}
+
 </style>
 @endonce
 <div class="ksl{{ \App\Services\SetAppearance::panelClass($kbbSetAp) }}">

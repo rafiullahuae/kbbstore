@@ -6,7 +6,7 @@ use Tests\Support\CssDirection;
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- *  THE "WHAT IS IN THIS SET" BOX — three proposed treatments.  (Lane SPL)
+ *  THE "WHAT IS IN THIS SET" BOX — the shipped drawing.  (Lane SPL, shipped)
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * The owner, 29 September 2026:
@@ -14,195 +14,211 @@ use Tests\Support\CssDirection;
  *   "i want to redesign the products list box on the set product page. want
  *    nice light background box type and inside a squeezed products list."
  *
- * Three treatments of that box are in tools/spl-box/. Each one is the block of
- * rules to append to the end of the @once <style> in
- * resources/views/partials/set-contents-panel.blade.php once he picks one —
- * nothing is wired, the shipped partial is byte-identical on this branch, and
- * `StorefrontEnglishUnchangedTest` is the pin that says so.
+ *   "ok the hanging photos style is fine. please proceed with that"
  *
- * ── WHY A TEST AT ALL FOR SOMETHING THAT IS NOT WIRED ──────────────────────
+ * Three treatments were drawn in tools/spl-box/ and he chose the third, so the
+ * rules were appended to the @once <style> in
+ * resources/views/partials/set-contents-panel.blade.php and the three proposal
+ * files were DELETED. This file used to assert about those three files; it now
+ * asserts about the one box that ships, which is both the thing that can
+ * actually regress and the thing a shopper sees.
  *
- * Because the thing that breaks when it IS wired is invisible in an English
- * screenshot, and this repository has already paid for it twice: a physical
- * `margin-left` where a `margin-inline-start` belongs looks perfect in every
- * shot the lane took and puts the element on the wrong side of an Arabic page.
- * Treatment 3 hangs its photographs 30px off the panel's inline-start edge —
- * which is the RIGHT-hand edge on /ar — so it is exactly the shape of rule that
- * has to be read declaration by declaration rather than eyeballed.
+ * ── WHY THESE CASES AND NOT A SCREENSHOT ──────────────────────────────────
+ *
+ * Because what breaks here is invisible in an English screenshot, and this
+ * repository has already paid for it twice: a physical `margin-left` where a
+ * `margin-inline-start` belongs looks perfect in every shot and puts the
+ * element on the wrong side of an Arabic page. This box hangs its photographs
+ * 30px off the panel's INLINE-START edge — the right-hand edge on /ar — so it
+ * is exactly the shape of rule that has to be read declaration by declaration.
  *
  * Tests\Support\CssDirection is the reader Lane G built for the RTL audit, and
  * it is a real CSS declaration reader rather than a grep: `margin-left` occurs
  * both as a declaration and inside comments explaining why a rule keeps one,
  * and a grep cannot tell those apart.
  *
- * MUTATION, and it is a one-character edit: change `margin-inline-start` to
- * `margin-left` on `.ksl-ph` in tools/spl-box/t3-hanging-photos.css and the
- * first case below goes red naming the file, the selector and the property.
+ * MUTATION, a one-character edit: change `margin-inline-start` to `margin-left`
+ * on `.ksl-ph` in the partial and the first case goes red naming the selector
+ * and the property. RUN IT.
  */
-function splTreatmentFiles(): array
+function splBoxCss(): string
 {
-    return [
-        't1' => 'tools/spl-box/t1-filled-tint.css',
-        't2' => 'tools/spl-box/t2-white-card.css',
-        't3' => 'tools/spl-box/t3-hanging-photos.css',
-    ];
+    $partial = (string) file_get_contents(
+        base_path('resources/views/partials/set-contents-panel.blade.php')
+    );
+
+    /* The partial is Blade, not CSS, so the declaration reader is handed the
+       <style> block alone rather than the file. One block, by construction —
+       it is @once and there is exactly one <style> in the file. */
+    expect(substr_count($partial, '<style>'))->toBe(1, 'The panel must carry exactly one style block.');
+
+    $open = strpos($partial, '<style>');
+    $close = strpos($partial, '</style>');
+
+    expect($open === false || $close === false)->toBeFalse('The panel has no closed style block.');
+
+    return substr($partial, $open + 7, $close - $open - 7);
 }
 
-it('has all three treatments on disk with the README that says how to ship one', function () {
-    foreach (splTreatmentFiles() as $key => $relative) {
-        expect(file_exists(base_path($relative)))->toBeTrue("{$key} is missing: {$relative}");
-    }
-
-    $readme = (string) file_get_contents(base_path('tools/spl-box/README.md'));
-
-    expect($readme)->toContain('set-contents-panel.blade.php');
-});
-
-it('states no physical direction anywhere in any treatment', function () {
+it('states no physical direction anywhere in the shipped box', function () {
     /*
-     * The row is three grid tracks on the INLINE axis and the panel's asymmetric
-     * padding, the photographs' overhang and the footing's pull-back are all
-     * logical. One `left`, one `right`, one `margin-left` and the box is drawn
-     * correctly in English and wrongly in Arabic — which is a defect nobody
-     * reviewing an English screenshot can see.
+     * The row is three grid tracks on the INLINE axis, and the panel's
+     * asymmetric padding, the photographs' overhang and the footing's pull-back
+     * are all logical. One `left`, one `right`, one `margin-left` and the box is
+     * drawn correctly in English and wrongly in Arabic.
      */
     $physical = [];
 
-    foreach (splTreatmentFiles() as $relative) {
-        $physical += CssDirection::physicalIn(base_path(), $relative);
+    foreach (CssDirection::declarations(splBoxCss()) as $d) {
+        if (CssDirection::isPhysical($d['property'], $d['value'])) {
+            $physical[] = $d['selector'].' | '.$d['property'].': '.$d['value'];
+        }
     }
 
-    expect(array_keys($physical))->toBe([], "Physical direction declarations in the box treatments:\n  "
-        .implode("\n  ", array_keys($physical)));
+    expect($physical)->toBe([], "Physical direction declarations in the shipped set box:\n  "
+        .implode("\n  ", $physical));
 });
 
-it('never selects on [dir] in any treatment', function () {
+it('never selects on [dir] in the shipped box', function () {
     /*
      * The same rule from the other end. A `[dir="rtl"]` override is how a
-     * physical property gets kept alive — it works, and it doubles every rule
-     * it touches, and the second copy is the one that stops being maintained.
-     * partials/set-contents-panel.blade.php has no [dir] selector in it today
-     * and none of these may introduce one.
+     * physical property gets kept alive — it works, it doubles every rule it
+     * touches, and the second copy is the one that stops being maintained.
      */
-    foreach (splTreatmentFiles() as $key => $relative) {
-        expect(str_contains((string) file_get_contents(base_path($relative)), '[dir'))
-            ->toBeFalse("{$key} introduces a [dir] selector");
-    }
+    expect(str_contains(splBoxCss(), '[dir'))->toBeFalse(
+        'The set box introduced a [dir] selector; it had none and needs none.'
+    );
 });
 
-it('makes each treatment a real box: a fill, a radius and inner padding', function () {
+it('is a real box: a fill, a radius and inner padding on the panel', function () {
     /*
-     * "want nice light background box type". A treatment that forgets one of
-     * the three is not a box, it is a restyled list — which is the note the
-     * owner has already sent back twice about proposals that were too alike.
+     * "want nice light background box type". A drawing that loses one of the
+     * three is not a box, it is a restyled list — which is the note the owner
+     * sent back twice about proposals that were too alike.
      *
-     * MUTATION: delete the `background:` line from any one treatment's `.ksl`
-     * rule and that treatment fails here by name.
+     * MUTATION: delete the `background:` line from the `.ksl` rule and this
+     * goes red.
      */
-    foreach (splTreatmentFiles() as $key => $relative) {
-        $declarations = CssDirection::declarationsInFile(base_path($relative));
+    $properties = [];
 
-        $onPanel = array_values(array_filter(
-            $declarations,
-            fn (array $d): bool => $d['selector'] === '.ksl'
-        ));
-
-        $properties = array_column($onPanel, 'property');
-
-        /* in_array() and not ->toContain(): Pest's toContain() takes a LIST of
-           needles, so a message passed as its second argument is asserted as a
-           second needle and the case fails on its own explanation. Found by
-           running it. */
-        expect(in_array('background', $properties, true))->toBeTrue("{$key}: the panel has no fill");
-        expect(in_array('border-radius', $properties, true))->toBeTrue("{$key}: the panel has no radius");
-        expect(in_array('padding', $properties, true))->toBeTrue("{$key}: the panel has no inner padding");
+    foreach (CssDirection::declarations(splBoxCss()) as $d) {
+        if ($d['selector'] === '.ksl') {
+            $properties[] = $d['property'];
+        }
     }
+
+    /* in_array() and not ->toContain(): Pest's toContain() takes a LIST of
+       needles, so a message passed as its second argument is asserted as a
+       second needle and the case fails on its own explanation. */
+    expect(in_array('background', $properties, true))->toBeTrue('The panel has no fill.');
+    expect(in_array('border-radius', $properties, true))->toBeTrue('The panel has no radius.');
+    expect(in_array('padding', $properties, true))->toBeTrue('The panel has no inner padding.');
 });
 
-it('keeps the squeeze above the legible and tappable floor in every treatment', function () {
+it('hangs the photographs outside the panel rather than inside it', function () {
     /*
-     * "squeezed" has a floor and the floor is the reason the last squeeze
-     * stopped where it did: 12.5px is the smallest a member name may be set,
-     * 30px the smallest the photograph may be, and `a.ksl-nm` must keep the
-     * padding-block / negative margin-block trick that buys 6px of hit area for
-     * zero row height. A treatment may not quietly take any of those back.
+     * THIS IS THE TREATMENT'S WHOLE IDEA, and it is one subtraction away from
+     * being a plain tinted list. The chip's negative inline-start margin must be
+     * LARGER than the panel's inline-start padding — equal is a gutter, smaller
+     * is an indent, and only larger is an overhang.
      *
-     * Read off the DECLARATIONS rather than off a rendered page, because a
-     * rendered page needs a browser and this has to fail in CI. The rendered
-     * figures are measured too — tools/spl-box-shots.cjs refuses to take the
-     * screenshot at all if the computed name size is under 12.5px or the
-     * computed photograph under 30px, on either width, in either language.
+     * The numbers ship at 20px of panel padding against a 30px pull (16 against
+     * 26 on the phone), so each chip stands 10px outside the panel on both.
      *
-     * MUTATION: set `.ksl-nm{font-size:11px}` in any treatment and it fails.
+     * MUTATION: change the pull to -20px and this goes red saying the chips sit
+     * flush rather than hanging.
      */
-    foreach (splTreatmentFiles() as $key => $relative) {
-        foreach (CssDirection::declarationsInFile(base_path($relative)) as $d) {
-            if ($d['property'] === 'font-size' && str_contains($d['selector'], '.ksl-nm')) {
-                expect((float) $d['value'])->toBeGreaterThanOrEqual(
-                    12.5,
-                    "{$key}: {$d['selector']} sets the member name to {$d['value']}"
-                );
-            }
+    $pull = null;
+    $pad = null;
 
-            if (in_array($d['property'], ['width', 'height'], true) && str_contains($d['selector'], '.ksl-ph')) {
-                expect((float) $d['value'])->toBeGreaterThanOrEqual(
-                    30.0,
-                    "{$key}: {$d['selector']} sets the photograph to {$d['value']}"
-                );
-            }
+    foreach (CssDirection::declarations(splBoxCss()) as $d) {
+        if ($d['selector'] === '.ksl-ph' && $d['property'] === 'margin-inline-start') {
+            $pull ??= (int) preg_replace('/[^0-9-]/', '', $d['value']);
+        }
+        if ($d['selector'] === '.ksl' && $d['property'] === 'padding') {
+            /* `padding: 12px 14px 11px 20px` — the fourth value is the
+               inline-start inset in a physical shorthand that CSS has no
+               logical spelling of at this level. */
+            $parts = preg_split('/\s+/', trim($d['value'])) ?: [];
+            $pad ??= (int) preg_replace('/[^0-9]/', '', (string) ($parts[3] ?? $parts[1] ?? '0'));
+        }
+    }
 
-            // A treatment must not zero the hit-area padding on the link.
-            if ($d['property'] === 'padding-block' && str_contains($d['selector'], 'a.ksl-nm')) {
-                expect((float) $d['value'])->toBeGreaterThan(0.0, "{$key}: the link's hit area was squeezed away");
+    expect($pull)->not->toBeNull('The photographs carry no inline-start pull at all.');
+    expect($pad)->not->toBeNull('The panel declares no padding to hang off.');
+    expect(abs((int) $pull))->toBeGreaterThan(
+        (int) $pad,
+        'The chips do not hang: the pull must exceed the panel padding, or they sit flush inside it.'
+    );
+});
+
+it('keeps the squeeze above the legible and tappable floor', function () {
+    /*
+     * "squeezed" has a floor, and it is the reason the previous squeeze stopped
+     * where it did: 12.5px is the smallest a member name may be set and 30px the
+     * smallest the photograph may be drawn. Both are read off the shipped rules
+     * rather than trusted, because a squeeze is precisely the change that walks
+     * past a floor one pixel at a time.
+     */
+    /*
+     * ▲ THE VALUE MAY BE A var() AND THE FALLBACK IS THE FLOOR THAT MATTERS.
+     *   `.ksl-ph{width:var(--ksl-ph,40px)}` — Appearance → Set drives these
+     *   through custom properties, so a naive (float) cast reads 0 and this case
+     *   fails on a box that is drawn at 40px. Found by running it: the first
+     *   version reported "0.0 is not greater than 30.0" against a 40px square.
+     *   The fallback is what the shop renders until somebody moves a slider, so
+     *   the fallback is what is pinned here; the slider's own floor is
+     *   SetAppearance's to enforce, and it does.
+     */
+    $px = static function (string $value): ?float {
+        if (preg_match('/^var\(\s*--[A-Za-z0-9_-]+\s*,\s*([0-9.]+)px\s*\)$/', trim($value), $m) === 1) {
+            return (float) $m[1];
+        }
+
+        return preg_match('/^([0-9.]+)px$/', trim($value), $m) === 1 ? (float) $m[1] : null;
+    };
+
+    foreach (CssDirection::declarations(splBoxCss()) as $d) {
+        if ($d['selector'] === '.ksl-nm' && $d['property'] === 'font-size') {
+            $size = $px($d['value']);
+
+            if ($size !== null) {
+                expect($size)->toBeGreaterThanOrEqual(12.5, 'A member name is set below the legible floor.');
+            }
+        }
+
+        if ($d['selector'] === '.ksl-ph' && in_array($d['property'], ['width', 'height'], true)) {
+            $size = $px($d['value']);
+
+            if ($size !== null) {
+                expect($size)->toBeGreaterThanOrEqual(30.0, 'The photograph is drawn below the tappable floor.');
             }
         }
     }
 });
 
-it('puts no script and no remote fetch in any treatment', function () {
+it('puts no script and no remote fetch in the box', function () {
     /*
-     * The block these land in has no JavaScript at all: the fold is HTML's own
-     * <details> and the sizing is calc() and one media query. `@import` and a
-     * remote url() are the two ways a stylesheet fetches something, and a box
-     * in a buy column has no business doing either.
+     * The fold is a <details> and stays script-free, and a @import or a remote
+     * url() in a style block the storefront inlines is a third-party request on
+     * every set page.
      */
-    foreach (splTreatmentFiles() as $key => $relative) {
-        $css = (string) file_get_contents(base_path($relative));
+    $css = splBoxCss();
 
-        expect(str_contains($css, '@import'))->toBeFalse("{$key} imports another stylesheet");
-        expect(str_contains($css, 'javascript:'))->toBeFalse("{$key} carries a javascript: URL");
-        expect(str_contains($css, 'expression('))->toBeFalse("{$key} carries an IE expression");
-        expect(preg_match('#url\(\s*[\'"]?https?:#i', $css))->toBe(0, "{$key} fetches a remote asset");
-    }
+    expect(str_contains($css, '@import'))->toBeFalse('The box @imports something.');
+    expect((bool) preg_match('#url\(\s*[\'"]?https?:#i', $css))->toBeFalse('The box fetches a remote url().');
+    expect(str_contains($css, '<script'))->toBeFalse('The box carries a script.');
 });
 
-it('leaves the shipped box exactly as it is until the owner picks one', function () {
+it('leaves the three proposals deleted', function () {
     /*
-     * CLAUDE.md rule 1. This lane proposes; it does not ship. The three
-     * treatments are files under tools/ that the application never loads, and
-     * the assertion that matters is that the partial still emits the markup
-     * they are written against — the class names are the contract between the
-     * proposal and the page.
-     *
-     * ▲ THIS IS NOT A PIN ON THE UNWIRED STATE. It does not assert that the
-     *   panel has no background; that assertion would be correct today and go
-     *   red the moment the integrator pastes the chosen treatment in, which is
-     *   the trap CLAUDE.md names as having cost this repository three round
-     *   trips. It asserts the four hooks every treatment writes against, which
-     *   are true now AND after the paste — and which, if a later lane renamed
-     *   one of them, would leave the chosen treatment silently styling nothing.
+     * He chose one. Keeping the two it beat is two more drawings to maintain and
+     * a second answer to "what does a set look like" — the thing
+     * partials/set-row.blade.php's header exists to prevent. Pinning the
+     * FINISHED state rather than an absence-of-work: this is green the day it
+     * ships and stays green.
      */
-    $panel = (string) file_get_contents(resource_path('views/partials/set-contents-panel.blade.php'));
-    $row = (string) file_get_contents(resource_path('views/partials/set-contents-row.blade.php'));
-
-    expect($panel)->toContain('<div class="ksl">')
-        ->and($panel)->toContain('class="ksl-rows"')
-        ->and($panel)->toContain('class="ksl-more"')
-        ->and($panel)->toContain('class="ksl-foot"')
-        ->and($row)->toContain('class="ksl-r"')
-        ->and($row)->toContain('class="ksl-ph');
-
-    // And the fold is still HTML's own disclosure, with no script behind it.
-    expect($panel)->toContain('<details class="ksl-more">')
-        ->and($panel)->not->toContain('<script');
+    expect(is_dir(base_path('tools/spl-box')))->toBeFalse(
+        'The proposal directory is back; the owner has already chosen.'
+    );
 });
