@@ -319,3 +319,53 @@ it('re-throws a database error that is not a missing table', function () {
         ->and((string) $thrown->getCode())->not->toBe('42S02')
         ->and(str_contains($thrown->getMessage(), 'no such table'))->toBeFalse();
 });
+
+/* ═══ the memo's lifetime, as a PAIR of cases — read the note in the first ═══ */
+
+it('primes the registry memo with instances (half one of a pair)', function () {
+    /*
+     * ── THIS CASE AND THE NEXT ARE ONE TEST ─────────────────────────────────
+     *
+     * The defect: `registryRows()` memoised in a process-level STATIC. Pest
+     * runs the suite in one process and rolls the database back between tests,
+     * so a static survives the rollback — and once this lane's cases had built
+     * instances, `HomepageSections::registry()` went on returning rows that no
+     * longer existed for every later test in the process. It broke five files
+     * belonging to four other lanes: `HomepageSectionOrderTest` counted 24
+     * order rules where it expected 18, and two files died on
+     * `Undefined array key "grid_1"`.
+     *
+     * A stale memo does not fail where it is wrong. It fails somewhere else, in
+     * somebody else's file, and reads exactly like flake — which is why the
+     * regression has to be pinned rather than remembered.
+     *
+     * This case primes it and DOES NOT FLUSH. The next one asserts the rows are
+     * gone. Pest runs a file's cases in declaration order and builds a fresh
+     * Application for each, which is the whole property being checked: the memo
+     * is a container instance now, so it dies with the application.
+     *
+     * MUTATION, and the exact result is worth writing down. Add a
+     * `private static ?array $badMemo` to GridSections alongside the container
+     * instance, read it first and write it last, then run THIS WHOLE FILE: two
+     * cases go red — "keeps the homepage section list in the order the template
+     * draws it" and the priming case below, both on rows an EARLIER case built
+     * and the rollback removed. Not the follow-up case, because by then the
+     * poisoned memo is already several tests old. That is the defect exactly:
+     * a static memo fails wherever it is next read, never where it was set.
+     * Filtering to one case hides it entirely — run the file. Run, red, put
+     * back.
+     */
+    gsoSection(['heading' => 'Primed']);
+
+    // Deliberately no GridSections::flush() anywhere in this case.
+    expect(GridSections::registryRows())->toHaveCount(1);
+});
+
+it('has forgotten them by the next test, because the memo is not a static', function () {
+    // RefreshDatabase rolled the row above back. A process-level memo would
+    // still be holding it; a container-scoped one died with the last test's
+    // application.
+    expect(GridSection::query()->count())->toBe(0)
+        ->and(GridSections::registryRows())->toBe([])
+        ->and(HomepageSections::registry())->toBe(HomepageSections::REGISTRY);
+});
