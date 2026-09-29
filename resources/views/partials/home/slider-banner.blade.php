@@ -343,6 +343,15 @@
 .kbbs-fill{display:none}
 .kbbs.is-fill .kbbs-bar.is-on .kbbs-fill{display:block;height:100%;inline-size:0;
   background:var(--kbbs-baron,#fff)}
+/* ▲ WHILE IT IS ACTUALLY RUNNING the current segment keeps the TRACK colour and
+   the growing fill is the bright part — otherwise the segment is solid before
+   the fill has grown a pixel and there is nothing to watch. The moment it stops
+   (paused, or autoplay off) the solid highlight comes back, because a frozen
+   fill at 0% would leave no mark on the current picture at all. Caught in the
+   first contact sheet: the rail's first segment was solid dark and the fill was
+   invisible underneath it. */
+.kbbs.is-fill.is-auto:not(.is-paused) .kbbs-bar.is-on .kbbs-line{
+  background:var(--kbbs-barbg,rgba(255,255,255,.45))}
 .kbbs.is-fill.is-js.is-auto:not(.is-paused) .kbbs-bar.is-on .kbbs-fill{
   animation:kbbs-fill var(--kbbs-dwell,5s) linear forwards}
 @keyframes kbbs-fill{from{inline-size:0}to{inline-size:100%}}
@@ -360,13 +369,13 @@
    photograph are invisible, and this is the same argument the cards banner
    makes for the scrim behind its title. */
 .kbbs.is-inset{--kbbs-below:0px;--kbbs-barb:0px;--kbbs-barg:0px;--kbbs-barh:4px;
-  --kbbs-barr:0px;--kbbs-barpb:24px 0;--kbbs-barpi:0;--kbbs-hit:22px;
+  --kbbs-barr:0px;--kbbs-barpb:44px 0;--kbbs-barpi:0;--kbbs-hit:20px;
   --kbbs-barbg:rgba(255,255,255,.40);--kbbs-baron:#fff}
 .kbbs.is-inset .kbbs-bar{flex:1 1 auto;width:auto}
 /* The strip is clipped to the frame's OWN corner radius. Without this the
    scrim is a square-cornered block sitting past two rounded corners, which is
    the kind of thing only a screenshot finds. */
-.kbbs.is-inset .kbbs-bars{background-image:linear-gradient(to top,rgba(18,12,16,.52) 0%,rgba(18,12,16,0) 100%);
+.kbbs.is-inset .kbbs-bars{background-image:linear-gradient(to top,rgba(18,12,16,.46) 0%,rgba(18,12,16,.16) 46%,rgba(18,12,16,0) 100%);
   border-end-start-radius:var(--kbbs-r,18px);border-end-end-radius:var(--kbbs-r,18px);overflow:hidden}
 
 /* ══ TREATMENT 2 — BESIDE THE PICTURE ══════════════════════════════════════
@@ -379,6 +388,15 @@
   --kbbs-barb:0px;--kbbs-barg:7px;--kbbs-barh:3px;--kbbs-barw:28px;--kbbs-barpb:0;--kbbs-barpi:0;
   --kbbs-hit:18px;--kbbs-navbg:#fff;--kbbs-barbg:var(--line,#EADCE2);--kbbs-baron:var(--pink,#E8919F)}
 .kbbs.is-outside .kbbs-stage{padding-inline:46px}
+/* AND THE PAUSE BUTTON COMES OFF THE PICTURE TOO, or this treatment's whole
+   promise — "nothing is ever over the photograph" — would be true of two
+   controls out of three. `--kbbs-below` negated puts it in the strip the bars
+   are in, at the inline start, where it reads as part of that row. */
+.kbbs.is-outside .kbbs-pp{top:auto;bottom:calc(var(--kbbs-below,0px) * -1);
+  inset-inline-start:0;inset-inline-end:auto;width:24px;height:24px;
+  background:var(--line2,#F4EEF1);box-shadow:none}
+.kbbs.is-outside .kbbs-pp:hover{background:var(--line,#EADCE2)}
+.kbbs.is-outside .kbbs-pp svg{width:11px;height:11px}
 @media (max-width:639px){
   .kbbs.is-outside .kbbs-stage{padding-inline:0}
   .kbbs.is-outside{--kbbs-navx:10px;--kbbs-navbg:rgba(255,255,255,.93)}
@@ -395,10 +413,16 @@
    gets. Below 1024px they are simply there. `:focus-within` is on the same rule
    as `:hover`, so a keyboard user reaches them without a mouse at any width. */
 .kbbs.is-veil{--kbbs-below:20px;--kbbs-navx:0px;--kbbs-navw:42px;--kbbs-navh:66px;
-  --kbbs-navr:0px;--kbbs-navsh:none;--kbbs-navbg:rgba(255,255,255,.88);
+  --kbbs-navr:0px;--kbbs-navsh:none;--kbbs-navbg:rgba(255,255,255,.90);
   --kbbs-barb:0px;--kbbs-barg:3px;--kbbs-barh:3px;--kbbs-barpb:0;--kbbs-barpi:0;--kbbs-hit:16px;
   --kbbs-barbg:var(--line,#EADCE2);--kbbs-baron:var(--ink,#2A2228)}
 .kbbs.is-veil .kbbs-bar{flex:1 1 auto;width:auto}
+/* The plate is square against the frame's edge and ROUNDED ON THE INNER ONE, so
+   it reads as a tab growing out of the picture rather than as a white rectangle
+   dropped on it. Logical corners, so the pair swaps ends in Arabic. Found in the
+   390 contact sheet, where a phone shows these permanently. */
+.kbbs.is-veil .kbbs-prev{border-start-end-radius:9px;border-end-end-radius:9px}
+.kbbs.is-veil .kbbs-next{border-start-start-radius:9px;border-end-start-radius:9px}
 @media (min-width:1024px){
   .kbbs.is-veil .kbbs-nav,.kbbs.is-veil .kbbs-pp{opacity:0}
   .kbbs.is-veil:hover .kbbs-nav,.kbbs.is-veil:focus-within .kbbs-nav,
