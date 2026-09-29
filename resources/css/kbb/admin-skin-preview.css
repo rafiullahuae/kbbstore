@@ -233,3 +233,29 @@
 .skinprev .kbb-badge-new{left:7px;background:var(--kbb-new,#1F9D55)}
 .skinprev .kbb-badge-sale{right:7px;background:var(--kbb-sale,#E23B57)}
 .skinprev .kbb-card-cart{display:block;margin-top:7px;text-align:center;font-size:9.5px;font-weight:700;border-radius:7px;padding:6px;background:var(--kbb-cart-bg,#E0567B);color:var(--kbb-cart-fg,#fff)}
+
+/* ── THE SHOWCASE FAMILY, as the admin swatch draws it ───────────── Lane PG2 ──
+   skinCard() in resources/views/admin/app.blade.php builds a card with no
+   `.kbb-card-shot` and no `.heart`, so the shop's `display:contents` trick has
+   nothing to do here: the thumb keeps its own frame and these rules only carry
+   the FAMILY'S LOOK — the padding, the type scale, the price pair and the four
+   button shapes — which is what a swatch is for. Physical properties, like the
+   rest of this sheet, because the admin console is left-to-right only. */
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card{background:#fff;border:1px solid rgba(42,34,40,.10);border-radius:12px;overflow:hidden}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-thumb{background:#FBF5F3;border-radius:0}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .cb{padding:12px;text-align:left}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-cat,.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-brand{color:#9A8D94}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .cn{font-size:12px;color:#221A20}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .cp{display:flex;align-items:baseline;gap:6px;margin-top:8px}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg{margin-right:0;color:#A2959B}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg+.kbb-card-price{color:#C13E63}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-cart{margin-top:9px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;padding:9px 6px}
+.skinprev .kbb-pgrid[data-skin="showcase-compact"] .cb{padding:8px}
+.skinprev .kbb-pgrid[data-skin="showcase-compact"] .kbb-card-cart{margin-top:6px;border-radius:2px;padding:6px 4px;font-size:8.5px}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .cb{display:grid;grid-template-columns:1fr auto;column-gap:8px;align-items:end}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cat,.skinprev .kbb-pgrid[data-skin="showcase-row"] .cn,.skinprev .kbb-pgrid[data-skin="showcase-row"] .kbb-card-rate{grid-column:1/-1}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .cp{grid-column:1;margin-top:8px}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{grid-column:2;margin-top:8px;padding:8px 12px;border-radius:3px}
+.skinprev .kbb-pgrid[data-skin="showcase-airy"] .kbb-card{border-color:transparent;box-shadow:0 6px 18px rgba(42,34,40,.09)}
+.skinprev .kbb-pgrid[data-skin="showcase-airy"] .cb{padding:16px}
+.skinprev .kbb-pgrid[data-skin="showcase-airy"] .kbb-card-cart{background:transparent;color:var(--kbb-cart-bg,#E0567B);box-shadow:inset 0 0 0 1.5px var(--kbb-cart-bg,#E0567B);border-radius:2px;margin-top:11px}
