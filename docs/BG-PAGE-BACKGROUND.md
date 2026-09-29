@@ -261,16 +261,38 @@ rather than trusting the stylesheet: it is empty.
 
 ## 8 · It does not eat the shop
 
-Read off computed style on every frame, in `docs/bg-shots/measurements.json`:
+Read off computed style on every one of the 94 frames, in
+`docs/bg-shots/measurements.json`. Nine surfaces, compared today-against-washed
+on fourteen page/width pairs:
+
+```
+page/width pairs compared: 14   surfaces changed: 0
+scrollWidth != clientWidth: 0 of 94
+reduced-motion animations:  []
+signed-out wash block:      false
+```
 
 | | today | with the wash |
 |---|---|---|
 | `header` background | `rgb(255,255,255)` | `rgb(255,255,255)` |
 | `header` opacity | `1` | `1` |
 | homepage section card | `rgba(255,255,255,0.94)` | `rgba(255,255,255,0.94)` |
+| product card | `rgba(0,0,0,0)` | `rgba(0,0,0,0)` |
+| cart drawer | `rgb(255,255,255)` | `rgb(255,255,255)` |
+| journal sticky header | `rgba(255,255,255,0.92)` | `rgba(255,255,255,0.92)` |
 | `document.documentElement.scrollWidth` @390 | **390** | **390** |
 | `document.documentElement.scrollWidth` @1280 | **1280** | **1280** |
 | body font-size | `14px` | `14px` |
+
+> **That table was wrong twice before it was right, and both times the
+> MEASUREMENT had moved rather than the page.** First, the card was found with
+> four alternative selectors in one `querySelector`, which returns whichever
+> matches first in DOM order — so it reported the home page's card turning
+> transparent. Then the reduced-motion and signed-out sets moved from the home
+> page to `/shop/` and their `page` label did not move with them, so two
+> different pages shared one key and the later row overwrote the earlier. Both
+> times the tell was the same: the **signed-out control**, which emits no wash
+> at all, "changed" too. A control that moves is a measurement that moved.
 
 - Every white card, panel and modal keeps its own background and its own edges.
   The wash declares nothing on any of them: three layers at **negative

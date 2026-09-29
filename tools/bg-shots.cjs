@@ -111,6 +111,16 @@ const MEASURE = () => {
   };
 };
 
+/* EVERY ROW CARRIES THE PAGE IT WAS REALLY TAKEN ON.
+ *
+ * The reduced-motion and signed-out sets moved from the home page to /shop/
+ * (the home page's sections are white cards laid edge to edge, so it shows
+ * almost nothing of a background) and their `page` label did not move with
+ * them. Two different pages then shared one key, the later row overwrote the
+ * earlier, and the comparison that reads this file reported the home page's
+ * section card "disappearing" under all four treatments AND under the
+ * signed-out control — which emits no wash at all, and is the tell that the
+ * measurement had moved rather than the page. */
 const rows = [];
 
 async function shoot(page, name, w, h, extra = {}) {
@@ -210,7 +220,7 @@ async function signIn(ctx) {
     for (const t of TREATMENTS) {
       await rmPage.goto(`${BASE}/shop/?kbbwash=${t}`, { waitUntil: 'networkidle' });
       await rmPage.waitForTimeout(600);
-      await shoot(rmPage, `reduced-${t}`, w, h, { variant: t, page: 'home', reducedMotion: true });
+      await shoot(rmPage, `reduced-${t}`, w, h, { variant: t, page: 'shop', reducedMotion: true });
     }
   }
   await rm.close();
@@ -221,7 +231,7 @@ async function signIn(ctx) {
 
   for (const [w, h] of WIDTHS) {
     await outPage.goto(`${BASE}/shop/?kbbwash=b`, { waitUntil: 'networkidle' });
-    await shoot(outPage, 'signedout-b-home', w, h, { variant: 'signed-out ?kbbwash=b', page: 'home' });
+    await shoot(outPage, 'signedout-b-home', w, h, { variant: 'signed-out ?kbbwash=b', page: 'shop' });
   }
   await out.close();
 
