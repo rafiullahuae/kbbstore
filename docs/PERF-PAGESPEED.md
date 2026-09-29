@@ -103,6 +103,24 @@ profile, median. `tools/perf-ab.sh` is the script.
 
 <!-- PERF-AB-TABLE -->
 
+### And the one fix this instrument cannot show
+
+Your **"Resource load delay 2,260 ms"** does not move in the table above, and
+that is a property of the instrument rather than of the fix. Lighthouse's
+default throttling is *simulated*: it builds a dependency graph from the trace
+and replays it at 150 ms round-trip, and in that graph **the document is one
+node** — a request the document makes starts when the whole document has
+finished, whether the browser read about it in the first kilobyte or the last.
+On a server running on the same machine the document really arrives in 280 ms,
+so a preload in `<head>` buys about 20 ms of observed time and the simulation
+models the rest away. On your shop it is 51 KiB arriving over 1,638 kb/s, and
+the picture is two thirds of the way down it.
+
+So it is measured directly instead, over a *real* throttled connection at the
+same 1,638 kb/s and 150 ms round-trip, by `tools/perf-lcp-discovery.cjs`:
+
+<!-- PERF-LCP-DISCOVERY -->
+
 **About Total Blocking Time.** PageSpeed measured 0 ms on your shop, on both
 profiles. This container runs six other agents and has no GPU, so the same page
 here spends 8.6 s in "Other" and 2.9 s in "Rendering" where your run spent
