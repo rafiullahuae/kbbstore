@@ -434,6 +434,14 @@ final class ColumnWidths
         ],
         'product_tabs' => [
             /*
+             * WHERE A GLOBAL TAB SHOWS: one of ProductTabs::AUDIENCES.
+             * (Lane PT, round 2) 16 is one more than the longest of the five
+             * words -- a column whose width says what it holds, the same choice
+             * `source_key` made at 64. `audience_ids` is a `text` column and
+             * therefore not width-checked here at all.
+             */
+            'audience' => 16,
+            /*
              * A HEADING, not prose: printed escaped into a <button> and an
              * accordion heading. 120 is about twice the longest title that fits
              * the tab strip at 1280 before it starts scrolling. (Lane PT)
