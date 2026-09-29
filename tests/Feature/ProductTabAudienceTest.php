@@ -775,3 +775,143 @@ it('holds the five options identical to the ones the screen offers', function ()
     expect($body['audiences'])->toBe(['global', 'products', 'categories', 'brands', 'sets'])
         ->and($body['audience_default'])->toBe('global');
 });
+
+/* ══════════════ 10. the seam between targeting and the round-1 overrides ══ */
+
+it('lets a product hide a tab it only gets because of a rule', function () {
+    /*
+     * THE SEAM. Round 1 gave a product "Hide on this product" and "Override
+     * here" against any global tab; round 2 made a global tab reach only some
+     * products. The two have to compose, and the order matters: WHERE IT SHOWS
+     * is asked first, and only then does the product's own answer apply.
+     *
+     * ON THE SHOP: the owner points "Ships in its own crate" at four bulky
+     * products, then finds one of the four has since been repacked. He hides it
+     * there. If the override were applied before the rule, or the rule skipped
+     * for a product carrying an override row, he would be hiding it on the
+     * three it is still right for -- or failing to hide it at all.
+     *
+     * MUTATION, RUN: delete the `if (! $override['is_enabled']) continue;`
+     * branch from applyOverrides() and this fails -- the crated product shows
+     * the tab it was told to hide, while the other one is unaffected, which is
+     * the shape that proves the two halves are independent.
+     *
+     * (The first mutation tried here was "apply the overrides before the
+     * showsOn() filter", and it is recorded as a MISS rather than quietly
+     * dropped: both orders give the same answer for a hide, because an entry
+     * added and then dropped is an entry that is not there. Ordering matters
+     * for an override that RE-WORDS a tab the rule no longer reaches, and that
+     * is the case below this one.)
+     */
+    $bulky = paProduct(['name' => 'Crated one']);
+    $alsoBulky = paProduct(['name' => 'Other crated one']);
+
+    $tab = paTab('Ships in its own crate', 'products', [$bulky->id, $alsoBulky->id]);
+
+    expect(paTitles($bulky))->toContain('Ships in its own crate')
+        ->and(paTitles($alsoBulky))->toContain('Ships in its own crate');
+
+    ProductTab::create([
+        'product_id' => $bulky->id,
+        'source_key' => 'global:'.$tab->id,
+        'title' => '',
+        'body' => '',
+        'position' => 100,
+        'is_enabled' => false,
+    ]);
+
+    /*
+     * in_array() and not toContain(): Pest's toContain() is VARIADIC, so a
+     * message passed as its second argument is read as a second value that must
+     * also be in the array -- and the case then fails claiming the array does
+     * not contain its own failure message. CLAUDE.md names this one by name.
+     */
+    expect(paTitles($bulky))->toBe(['Description'], 'hidden on the one it was hidden on');
+
+    expect(in_array('Ships in its own crate', paTitles($alsoBulky), true))->toBeTrue(
+        'and still on the other, which nobody touched'
+    );
+});
+
+it('leaves an override inert when the rule stops reaching that product', function () {
+    /*
+     * ON THE SHOP: the owner re-words a category tab on one product, then
+     * narrows the category rule so that product is no longer in it. The tab is
+     * gone from that product -- which is what the rule now says -- and the
+     * override row is simply not consulted. It is NOT resurrected as a tab of
+     * its own, which is the failure worth naming: a product would then carry a
+     * paragraph that no rule on the screen accounts for, and nothing in the
+     * admin would explain where it came from.
+     */
+    $skincare = paCategory('Skincare');
+    $hair = paCategory('Hair');
+
+    $product = paProduct(['name' => 'Toner', 'category_id' => $skincare->id]);
+    $tab = paTab('Ingredients policy', 'categories', [$skincare->id]);
+
+    ProductTab::create([
+        'product_id' => $product->id,
+        'source_key' => 'global:'.$tab->id,
+        'title' => 'Ingredients policy (this one)',
+        'body' => '<p>Different here.</p>',
+        'position' => 100,
+        'is_enabled' => true,
+    ]);
+
+    expect(paTitles($product))->toContain('Ingredients policy (this one)');
+
+    // The rule moves off this product. Its override must go quiet with it.
+    $tab->audience_ids = [$hair->id];
+    $tab->save();
+
+    expect(paTitles($product))->toBe(['Description']);
+});
+
+it('does not offer to override a global tab that does not reach this product', function () {
+    /*
+     * The admin half of the same seam. Catalog -> Product tabs -> This
+     * product's tabs lists what the product ACTUALLY gets; offering "Override
+     * here" on a tab it does not get would be a control that changes nothing,
+     * which is the same reason a switched-off global is already skipped.
+     *
+     * It asks ProductTabs::showsOn() -- the identical function the storefront
+     * asks, with the identical inputs -- rather than re-implementing the match
+     * on a second screen where it could drift.
+     *
+     * MUTATION, RUN: delete the showsOn() guard from forProduct() in
+     * ProductTabsApiController and this fails, the brand tab offered on a
+     * product of another brand.
+     */
+    ProductTabsAdminRoutes::wire(app());
+
+    $anua = Brand::create(['name' => 'Anua', 'slug' => 'anua-'.Str::lower(Str::random(5))]);
+    $cosrx = Brand::create(['name' => 'COSRX', 'slug' => 'cosrx-'.Str::lower(Str::random(5))]);
+
+    $theirs = paProduct(['name' => 'Toner', 'brand_id' => $anua->id]);
+    $others = paProduct(['name' => 'Essence', 'brand_id' => $cosrx->id]);
+
+    paTab('Shipping', 'global');
+    paTab('How we authenticate', 'brands', [$anua->id]);
+
+    $admin = paAdmin();
+
+    $on = collect($this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/product-tabs/product/'.$theirs->id)->assertOk()->json('inherited'))
+        ->pluck('label')->all();
+
+    $off = collect($this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/product-tabs/product/'.$others->id)->assertOk()->json('inherited'))
+        ->pluck('label')->all();
+
+    expect(in_array('How we authenticate', $on, true))->toBeTrue(
+        'the brand tab is offered on a product of that brand'
+    );
+
+    expect(in_array('How we authenticate', $off, true))->toBeFalse(
+        'and not on a product of another brand'
+    );
+
+    expect(in_array('Shipping', $off, true))->toBeTrue(
+        'the global one is still offered on both'
+    );
+});
