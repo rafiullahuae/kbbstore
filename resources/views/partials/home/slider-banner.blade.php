@@ -334,7 +334,13 @@
   transition:background .2s}
 .kbbs-bar.is-on .kbbs-line{background:var(--kbbs-baron,#fff)}
 .kbbs-bar:hover .kbbs-line{background:var(--kbbs-baron,#fff)}
-.kbbs-bar:focus-visible{outline:2px solid var(--kbbs-baron,#fff);outline-offset:1px;border-radius:2px}
+/* A TWO-TONE FOCUS RING, because the bar is the one control whose own colour
+   changes with the treatment: `--kbbs-baron` is the shop's ink under the two
+   that sit below the picture and plain white under the two that sit on it, and
+   a white ring over a pale photograph is no ring at all. The dark halo behind
+   it is what makes the keyboard user's only feedback visible over both. */
+.kbbs-bar:focus-visible{outline:2px solid var(--kbbs-baron,#fff);outline-offset:1px;
+  border-radius:2px;box-shadow:0 0 0 4px rgba(18,12,16,.35)}
 
 /* The filling rail is ONE treatment's, and the fill grows by `inline-size`
    rather than by a transform on purpose: an inline size grows from the inline
