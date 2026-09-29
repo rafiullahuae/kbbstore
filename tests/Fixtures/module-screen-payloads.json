@@ -2229,23 +2229,6 @@
         }
       },
       {
-        "key": "icon_style",
-        "type": "select",
-        "label": "Menu icon",
-        "help": "How the icon animates when the menu opens.",
-        "default": "default",
-        "value": "default",
-        "options": {
-          "default": "Cross",
-          "ico-spin": "Spin cross",
-          "ico-arrow": "Down arrow",
-          "ico-collapse": "Collapse",
-          "ico-pinch": "Slow pinch",
-          "ico-pink": "Cross in pink",
-          "ico-taper": "Tapered"
-        }
-      },
-      {
         "key": "show_grab",
         "type": "bool",
         "label": "Grab handle",
@@ -2463,7 +2446,6 @@
         "label": "Panel",
         "description": "Size and motion of the sheet.",
         "fields": [
-          "icon_style",
           "height",
           "radius",
           "slide_speed",

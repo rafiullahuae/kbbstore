@@ -237,6 +237,21 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // button's words are in Content → Translations. The reasoning is recorded in
     // full in ProductStyles::SCHEMA, and ProductStylesReachTheShopTest is the
     // measurement it rests on.
+    //
+    // STILL 520 after Appearance → Mobile menu lost "Menu icon", and the reason
+    // is the same one the Lane M3 note above gives: mobile-menu's payload
+    // carries `fields` and `groups` rather than `tabs`, so its controls are
+    // compared OUTRIGHT, key by key, in the loop above and contribute nothing
+    // to this walk. Its field object and its name in the panel group were both
+    // cut from the fixture, byte for byte, and the outright comparison is what
+    // holds them.
+    //
+    // (Why it went: the seven options are CSS class names — `ico-spin`,
+    // `ico-arrow` and the rest — whose rules are real and still in kbb.css, but
+    // MobileMenu::bodyClass() has never emitted one of them onto anything, so
+    // all seven did the same nothing. The menu icon is chosen on Appearance →
+    // Header → Icon now, which reaches the element and offers a family, a
+    // speed, a size and three colours besides.)
     expect($compared)->toBe(520, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {

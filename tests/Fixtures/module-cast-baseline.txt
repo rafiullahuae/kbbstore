@@ -1155,10 +1155,6 @@ mobile_menu|scrim|range|"abc"|0
 mobile_menu|scrim|range|""|0
 mobile_menu|scrim|range|null|0
 mobile_menu|scrim|range|"3.7"|3
-mobile_menu|icon_style|select|"default"|'default'
-mobile_menu|icon_style|select|"nope"|'default'
-mobile_menu|icon_style|select|""|'default'
-mobile_menu|icon_style|select|null|'default'
 mobile_menu|show_grab|bool|true|true
 mobile_menu|show_grab|bool|false|false
 mobile_menu|show_grab|bool|"1"|true
