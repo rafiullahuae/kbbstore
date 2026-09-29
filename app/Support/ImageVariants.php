@@ -625,15 +625,26 @@ final class ImageVariants
 
         $phone = $multi ? '21vw' : '43vw';
 
-        $wide = static function (string $content) use ($columns, $multi): string {
-            $card = "calc(($content - ".(($columns - 1) * 14)."px) / $columns - 32px)";
+        /*
+         * FLATTENED RATHER THAN NESTED. calc() nests legally, but `sizes` is
+         * parsed as a <source-size-value> and a browser that will not take the
+         * value drops the whole attribute and assumes 100vw — which on this
+         * card is a four-times overstatement and would pull the 800w copy for
+         * a 131px box. The two-up case is therefore written as one expression,
+         * ((content - gaps) / columns - 36px) / 2, which is the card interior
+         * less the 4px grid gap, halved.
+         */
+        $gaps = ($columns - 1) * 14;
 
-            return $multi ? "calc(($card - 4px) / 2)" : $card;
+        $wide = static function (string $content) use ($columns, $multi, $gaps): string {
+            return $multi
+                ? "calc((($content - {$gaps}px) / $columns - 36px) / 2)"
+                : "calc(($content - {$gaps}px) / $columns - 32px)";
         };
 
         // Three branches and not two: above 1724px the page stops growing (the
-        // 1680px site cap plus its gutters), so a vw term there would go on
-        // declaring a box that is no longer getting any wider.
+        // 1680px site cap plus its 22px gutters), so a vw term there would go
+        // on declaring a box that is no longer getting any wider.
         return '(max-width: 760px) '.$phone
             .', (max-width: 1724px) '.$wide('100vw - 44px')
             .', '.$wide('1636px');
