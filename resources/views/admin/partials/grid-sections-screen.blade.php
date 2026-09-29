@@ -1,5 +1,5 @@
 {{--
-    Appearance → Product grids. (Lane GS — Phase 23)
+    Appearance → Grid sections. (Lane GS — Phase 23)
 
     The owner:
 
@@ -241,7 +241,7 @@
      conclusion, and one an owner would answer by building them all again. */
   function explain(e, fallback){
     return e && e.status === 404
-      ? 'The Product grids endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform → Cache) and reload.'
+      ? 'The Grid sections endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform → Cache) and reload.'
       : ((e && e.body && e.body.error) ? e.body.error : fallback);
   }
 
@@ -249,8 +249,13 @@
   function addNavEntry(){
     window.kbbAddNavEntry({
       screen: SCREEN,
-      label:  'Product grids',
-      icon:   '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+      label:  'Grid sections',
+      /* NOT the four-square icon: `layout` — Appearance → Product grid, the
+         shop-wide column and tile settings — already uses exactly that glyph,
+         and two identical icons two rows apart in the same group is a sidebar
+         the owner has to read rather than scan. Two stacked bands, each split,
+         which is what a page of repeated grid sections looks like. */
+      icon:   '<rect x="3" y="4" width="18" height="7" rx="1.5"/><path d="M12 4v7"/><rect x="3" y="14" width="18" height="6" rx="1.5"/>',
       group:  'Appearance',
       after:  ['banners', 'hpcontent', 'homepage']
     });
@@ -339,7 +344,7 @@
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = 'Appearance';
-    if (title) title.textContent = 'Product grids';
+    if (title) title.textContent = 'Grid sections';
 
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
@@ -441,7 +446,18 @@
       + '<meta name="viewport" content="width=device-width,initial-scale=1">'
       + links
       + '<style>html,body{margin:0;padding:0;background:#fff}body{padding:14px 0}'
-      + '.sec{padding:0}</style>'
+      + '.sec{padding:0}'
+      /* THE HOVER-ONLY CHROME IS SUPPRESSED, AND SAYING WHY MATTERS.
+         `.qv-btn` and `.heart` are positioned and faded in by an inline <style>
+         in layouts/store.blade.php, which this document does not have and must
+         not copy — a second copy of another file's card CSS is exactly the
+         fault the cards-banner preview's own header records paying for with
+         `--pink`. Drawn without those rules the quick-view chip renders as a
+         line of plain text in the corner of every tile, which is a picture of
+         something the shop never shows. The preview's job is the LAYOUT — how
+         many across, how wide, where it wraps — and a frame with no pointer
+         cannot show hover state honestly either way. */
+      + '.qv-btn,.heart{display:none}</style>'
       + (body.css || '')
       + '</head><body>' + body.html + '</body></html>';
 

@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 /**
- * Appearance → Product grids. The console's endpoints. (Lane GS — Phase 23)
+ * Appearance → Grid sections. The console's endpoints. (Lane GS — Phase 23)
  *
  * One reusable grid section, created as many times as the owner likes, each
  * instance edited on its own. `App\Services\GridSections` is the module and

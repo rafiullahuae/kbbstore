@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Cache;
  * ── WHY THE OWNER'S TWO ROWS ARE NOT SEEDED ─────────────────────────────────
  *
  * He named a 4-up bundles row and a 5-up BEST SELLERS row. Both are PRESETS on
- * Appearance → Product grids — one button each — and neither is created by a
+ * Appearance → Grid sections — one button each — and neither is created by a
  * migration, because seeding them would put two new bands on a live front page
  * the moment the package applied, which is the one thing rule 1 forbids. The
  * last case below asserts the table is empty after the migration set has run.

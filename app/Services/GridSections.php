@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Appearance → Product grids. ONE section type, used as many times as wanted.
+ * Appearance → Grid sections. ONE section type, used as many times as wanted.
  *
  * Phase 23, Lane GS. The owner's last three sentences are the whole brief:
  *
@@ -359,8 +359,8 @@ class GridSections
             $out[$key] = [
                 $label,
                 ($row['status'] ?? '') === 'publish'
-                    ? 'A product grid you built. Edit it in Appearance → Product grids.'
-                    : 'A product grid you built. It is a DRAFT, so it draws nothing until you publish it in Appearance → Product grids.',
+                    ? 'A product grid you built. Edit it in Appearance → Grid sections.'
+                    : 'A product grid you built. It is a DRAFT, so it draws nothing until you publish it in Appearance → Grid sections.',
                 /*
                  * `false` — no grid skin picker on the Homepage screen, even
                  * though this section is nothing but a grid. The class header
@@ -803,8 +803,25 @@ class GridSections
                 .'.kbb-gsec .gs-grid{grid-template-columns:repeat(var(--gs-m,2),minmax(0,1fr))}'
                 .'.kbb-gsec .gs-d-only{display:none}'
                 /* The carousel, at this width only. */
+                /*
+                 * ▲ `scroll-padding-inline-start` MATCHES THE PADDING, AND IT
+                 * READ 0 UNTIL IT WAS MEASURED.
+                 *
+                 * The row bleeds to the screen edges — `padding-inline` of one
+                 * gutter, `margin-inline` of minus one — so the first card
+                 * starts one gutter in. With `scroll-snap-type:x mandatory` and
+                 * a scroll padding of 0, the browser snaps the first card's
+                 * START EDGE to the scrollport's, which means it scrolls one
+                 * gutter on load and EATS the left margin: measured at 390px,
+                 * `grid.scrollLeft` was 22 at rest on a row nobody had touched.
+                 * Matching the padding puts the snap position back at 0 and the
+                 * gutter back on the screen.
+                 *
+                 * `inline`, not `left`: on /ar the same declaration is the
+                 * RIGHT-hand gutter, with no second rule to keep in step.
+                 */
                 .'.kbb-gsec .gs-grid.gs-car-m{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;'
-                    .'scroll-padding-inline-start:0;scrollbar-width:none;'
+                    .'scroll-padding-inline-start:var(--site-gutter,18px);scrollbar-width:none;'
                     .'padding-inline:var(--site-gutter,18px);margin-inline:calc(var(--site-gutter,18px) * -1);'
                     .'padding-bottom:6px}'
                 .'.kbb-gsec .gs-grid.gs-car-m::-webkit-scrollbar{display:none}'

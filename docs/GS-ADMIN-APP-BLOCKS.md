@@ -1,0 +1,212 @@
+# Lane GS · the five edits the integrator applies
+
+`routes/web.php`, `resources/views/admin/app.blade.php` and
+`docs/T1B-ADMIN-APP-BLOCKS.md` are the integrator's files and this lane may not
+edit them, so **Appearance → Grid sections** is delivered as anchor/replacement
+blocks in the shape `docs/TM-ADMIN-APP-BLOCKS.md` and `docs/T1B-ADMIN-APP-BLOCKS.md`
+established. Every anchor below was verified to occur **exactly once** on
+`lane/gs` at `0af665b`, which is `claude/kind-mayer-rpqesv` at `4e1d9af` plus
+this lane's own commits.
+
+**All five are one commit.** Applying four of them leaves either a sidebar row
+that opens the dashboard under its own heading, or a finished-looking screen
+whose every endpoint 404s — both of them the silent half-wired failure
+`AdminNavAndIdsTest` and `EverythingIsMountedOnceTest` exist to catch, and the
+second is the shape the owner reports as "the feature is broken" rather than as
+"the feature is unapplied".
+
+| | what it does |
+|---|---|
+| 1 | requires the routes file, so the ten endpoints exist |
+| 2 | draws the screen |
+| 3 | gives the screen a breadcrumb and a heading, so `?go=` and `#` reach it |
+| 4 | arms the deep-link replay for it |
+| 5 | keeps `docs/T1B-ADMIN-APP-BLOCKS.md` in step with block 4 |
+
+---
+
+## What is red until they are applied, and what is green after
+
+Measured in this lane's worktree, both ways, on the same tree.
+
+The assertions red before are the *finished-state* pins CLAUDE.md prescribes —
+`=== 1`, never `->not->toContain` — so each goes green the moment its edit lands
+and stays a real guard afterwards. Two of them would go red again if the edit
+were applied TWICE, which is the other half of what they are for: a sidebar
+entry registered twice wraps `window.go` around its own wrapper.
+
+```
+EverythingIsMountedOnceTest > it requires every route file exactly once
+    grid-sections-admin                is required 0 times
+
+EverythingIsMountedOnceTest > it includes every admin console partial exactly once
+    grid-sections-screen               is included 0 times
+
+GridSectionConsoleReachTest > it wires the Grid sections screen exactly once
+    (all four counts)
+```
+
+---
+
+## Block 1 · require the routes file
+
+Without this every one of the ten `/admin-api/grid-sections…` endpoints 404s and
+the screen cannot load its own list.
+
+It goes inside the existing `admin-api` group — the one that already carries
+`web`, `auth:admin` and `NoStoreAdminApi` — beside the other Appearance route
+files. `/api/*` is unauthenticated (CLAUDE.md) and not one of these endpoints
+could live there: every one of them writes what the front page of the shop
+shows, the picker reads the catalogue, and the preview renders a storefront
+template from a draft the owner has not saved.
+
+Anchor (occurs once):
+
+```
+        require __DIR__.'/banners-admin.php';
+```
+
+Replacement:
+
+```
+        require __DIR__.'/banners-admin.php';
+
+        /*
+         * Appearance → Grid sections (Lane GS). The owner's ONE reusable
+         * product-grid section, used as many times as he likes. Writes what the
+         * front page shows, reads the catalogue for the manual picker, and
+         * renders a storefront partial from an unsaved draft — so it belongs
+         * inside this guarded group like every other Appearance writer. Its own
+         * capabilities are `gridsections.view` and `gridsections.manage`; its
+         * package ships 2027_05_11_000100_clear_caches_grid_sections.
+         */
+        require __DIR__.'/grid-sections-admin.php';
+```
+
+## Block 2 · draw the screen
+
+Anchor (occurs once):
+
+```
+@include('admin.partials.set-appearance-screen')
+```
+
+Replacement:
+
+```
+@include('admin.partials.set-appearance-screen')
+
+{{-- Appearance → Grid sections (Lane GS). The owner: "prepare a proper grid
+     section with all controls and it can be use anywhere, and can be edit that
+     specific grid section. so this case we can re-use this grid section
+     anywhere multiple times with different products etc selection."
+
+     ONE section type, added as many times as he likes. Each instance is a row
+     in HomepageSections::registry() as well, so its position on the page and
+     its Desktop/Mobile switches are the ones Appearance → Homepage has always
+     shown — there is no second ordering mechanism beside that one.
+
+     It registers its own sidebar entry inside the Appearance group and wraps
+     window.go, exactly as the screens above it do.
+
+     Applying it changes nothing on the live shop: the table is created empty,
+     so the homepage renders the bytes it rendered before. The two rows he named
+     are one-click presets on this screen, not defaults this ships. --}}
+@include('admin.partials.grid-sections-screen')
+```
+
+## Block 3 · give the screen a breadcrumb and a heading
+
+Without this, `?go=gridsections` and `#gridsections` open the **dashboard** and
+the screen has no shareable URL at all — an id that is not in `TITLES` does not
+route. `ugcvideo`, `ugcsections`, `ugcstyle`, `instagram`, `sets`,
+`product-tabs` and `banners` each hit this before being added.
+
+The strings are copied from what the partial's own `go()` writes into `#crumb`
+and `#ptitle`, because two answers for one screen is how a heading ends up
+disagreeing with the page under it.
+
+Anchor (occurs once):
+
+```
+'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer']};
+```
+
+Replacement:
+
+```
+'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections']};
+```
+
+## Block 4 · arm the deep-link replay
+
+`LATE_RENDERED` is the set of ids `go()` would otherwise answer with the
+dashboard, because the partial that owns them is appended after the console's
+own script has run. The condition the four originals each state — *the partial
+wraps `window.go` and calls `render()` before it awaits anything* — is met here:
+`grid-sections-screen.blade.php` calls `render()` synchronously and then
+`load()`.
+
+Anchor (occurs once):
+
+```
+'paygw','sitelayout','slimfooter']);
+```
+
+Replacement:
+
+```
+'paygw','sitelayout','slimfooter','gridsections']);
+```
+
+## Block 5 · keep the other handover document in step
+
+**In `docs/T1B-ADMIN-APP-BLOCKS.md`, not in the console.** That document's
+"Block 3 · arm the deep-link replay" quotes the `LATE_RENDERED` line verbatim
+and `TranslationConsoleTest > it keeps the handover document and the applied
+console in step` asserts the quote matches the console. The same anchor and the
+same replacement as block 4 above; it occurs once in that file.
+
+Anchor (occurs once, in `docs/T1B-ADMIN-APP-BLOCKS.md`):
+
+```
+'paygw','sitelayout','slimfooter']);
+```
+
+Replacement:
+
+```
+'paygw','sitelayout','slimfooter','gridsections']);
+```
+
+---
+
+## What no longer needs doing
+
+- **No capability change.** `App\Support\AdminCapabilities` already carries
+  `gridsections.view` and `gridsections.manage` and the five RULES rows for
+  them, written in this lane's own commit — that file is additive and is not
+  the integrator's. The writes are listed **above** the reads because RULES is
+  first-match-wins; listed the other way round a read capability would be enough
+  to delete an instance, which `GridSectionApiSurfaceTest` asserts by name.
+- **No migration to write.** `2027_05_11_000000_create_grid_sections_table` and
+  `2027_05_11_000100_clear_caches_grid_sections` ship with this branch. The
+  second is not optional: a route added to `routes/web.php` does not exist until
+  the compiled route table is rebuilt, and three Blade templates change.
+- **No asset build.** This lane touches no file under `resources/css/`. The
+  section's stylesheet is emitted inline by `GridSections::css()`, for the
+  reason `HomepageSections::orderStyle()` already argues: the storefront serves
+  BUILT css from a web root that is a different directory, `npx vite build` is a
+  manual step nobody runs during an update, and a rule added to `kbb.css`
+  therefore ships inert. `BuiltCssSelectorsAreCurrentTest` has nothing to
+  compare.
+
+## And one thing that IS a shared file, named
+
+`app/Services/HomepageSections.php` gains one method, `registry()`, and seven
+`self::REGISTRY` reads inside that class become `self::registry()`. The const is
+untouched and still public. `app/Http/Controllers/Admin/HomepageApiController.php`
+gains one token on line 87 for the same reason — without it, Appearance →
+Homepage paints a grid instance's row, lets the owner reorder it, and then 422s
+the whole save with "Unknown section". Both edits carry their argument in place
+and both are pinned by a test that names the mutation.

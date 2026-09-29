@@ -12,7 +12,7 @@ use App\Support\GridSkins;
 use Tests\Support\GridSectionAdminRoutes;
 
 /**
- * Appearance → Product grids: the endpoints, and what they will and will not
+ * Appearance → Grid sections: the endpoints, and what they will and will not
  * answer. (Lane GS)
  *
  * The routes ship in `routes/grid-sections-admin.php` because CLAUDE.md forbids

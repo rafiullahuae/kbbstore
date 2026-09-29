@@ -14,7 +14,7 @@ use Illuminate\Database\Migrations\Migration;
  * the router dispatches against `bootstrap/cache/routes-*.php` rather than
  * against the source. Without this clear, every one of the ten
  * `/admin-api/grid-sections…` endpoints 404s on the server and Appearance →
- * Product grids is a finished-looking screen that cannot load its own list —
+ * Grid sections is a finished-looking screen that cannot load its own list —
  * the worst shape of failure, because the owner concludes the feature is broken
  * rather than unapplied.
  *
@@ -90,7 +90,7 @@ return new class extends Migration
         }
 
         if (app()->runningInConsole()) {
-            echo "Cleared {$cleared} compiled files; Appearance -> Product grids is now\n"
+            echo "Cleared {$cleared} compiled files; Appearance -> Grid sections is now\n"
                 ."reachable. Nothing on the shop moved: no grid has been built yet, so the\n"
                 ."homepage renders exactly what it rendered before. Add one there -- the two\n"
                 ."presets are 'Big savings bundles' and 'BEST SELLERS' -- publish it, and order\n"

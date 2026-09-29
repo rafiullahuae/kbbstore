@@ -1,0 +1,178 @@
+[
+  {
+    "path": "/",
+    "tag": "en",
+    "width": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "worst": null,
+    "sections": [
+      {
+        "heading": "Big savings bundles",
+        "display": "flex",
+        "cols": "repeat(2, minmax(0px, 1fr))",
+        "cellWidth": 152,
+        "tilesInDom": 8,
+        "tilesVisible": 8,
+        "scrollLeft": 0,
+        "maxScrollLeft": 958,
+        "advances": "positive (left → right)",
+        "dir": "ltr",
+        "viewAll": {
+          "text": "View all",
+          "href": "/shop/"
+        },
+        "headingPx": "19px"
+      },
+      {
+        "heading": "BEST SELLERS",
+        "display": "flex",
+        "cols": "repeat(2, minmax(0px, 1fr))",
+        "cellWidth": 152,
+        "tilesInDom": 10,
+        "tilesVisible": 6,
+        "scrollLeft": 0,
+        "maxScrollLeft": 623,
+        "advances": "positive (left → right)",
+        "dir": "ltr",
+        "viewAll": {
+          "text": "View all",
+          "href": "/shop/?orderby=popularity"
+        },
+        "headingPx": "19px"
+      }
+    ]
+  },
+  {
+    "path": "/",
+    "tag": "en",
+    "width": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "worst": null,
+    "sections": [
+      {
+        "heading": "Big savings bundles",
+        "display": "grid",
+        "cols": "288.703px 288.703px 288.703px 288.703px",
+        "cellWidth": 289,
+        "tilesInDom": 8,
+        "tilesVisible": 8,
+        "scrollLeft": 0,
+        "maxScrollLeft": 0,
+        "advances": "not scrollable",
+        "dir": "ltr",
+        "viewAll": {
+          "text": "View all",
+          "href": "/shop/"
+        },
+        "headingPx": "26px"
+      },
+      {
+        "heading": "BEST SELLERS",
+        "display": "grid",
+        "cols": "227.75px 227.766px 227.766px 227.766px 227.75px",
+        "cellWidth": 228,
+        "tilesInDom": 10,
+        "tilesVisible": 10,
+        "scrollLeft": 0,
+        "maxScrollLeft": 0,
+        "advances": "not scrollable",
+        "dir": "ltr",
+        "viewAll": {
+          "text": "View all",
+          "href": "/shop/?orderby=popularity"
+        },
+        "headingPx": "26px"
+      }
+    ]
+  },
+  {
+    "path": "/ar/",
+    "tag": "ar",
+    "width": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "worst": null,
+    "sections": [
+      {
+        "heading": "Big savings bundles",
+        "display": "flex",
+        "cols": "repeat(2, minmax(0px, 1fr))",
+        "cellWidth": 152,
+        "tilesInDom": 8,
+        "tilesVisible": 8,
+        "scrollLeft": 0,
+        "maxScrollLeft": 958,
+        "advances": "negative (right → left)",
+        "dir": "rtl",
+        "viewAll": {
+          "text": "عرض الكل",
+          "href": "/shop/"
+        },
+        "headingPx": "19px"
+      },
+      {
+        "heading": "BEST SELLERS",
+        "display": "flex",
+        "cols": "repeat(2, minmax(0px, 1fr))",
+        "cellWidth": 152,
+        "tilesInDom": 10,
+        "tilesVisible": 6,
+        "scrollLeft": 0,
+        "maxScrollLeft": 623,
+        "advances": "negative (right → left)",
+        "dir": "rtl",
+        "viewAll": {
+          "text": "عرض الكل",
+          "href": "/shop/?orderby=popularity"
+        },
+        "headingPx": "19px"
+      }
+    ]
+  },
+  {
+    "path": "/ar/",
+    "tag": "ar",
+    "width": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "worst": null,
+    "sections": [
+      {
+        "heading": "Big savings bundles",
+        "display": "grid",
+        "cols": "288.703px 288.703px 288.703px 288.703px",
+        "cellWidth": 289,
+        "tilesInDom": 8,
+        "tilesVisible": 8,
+        "scrollLeft": 0,
+        "maxScrollLeft": 0,
+        "advances": "not scrollable",
+        "dir": "rtl",
+        "viewAll": {
+          "text": "عرض الكل",
+          "href": "/shop/"
+        },
+        "headingPx": "26px"
+      },
+      {
+        "heading": "BEST SELLERS",
+        "display": "grid",
+        "cols": "227.75px 227.766px 227.766px 227.766px 227.75px",
+        "cellWidth": 228,
+        "tilesInDom": 10,
+        "tilesVisible": 10,
+        "scrollLeft": 0,
+        "maxScrollLeft": 0,
+        "advances": "not scrollable",
+        "dir": "rtl",
+        "viewAll": {
+          "text": "عرض الكل",
+          "href": "/shop/?orderby=popularity"
+        },
+        "headingPx": "26px"
+      }
+    ]
+  }
+]

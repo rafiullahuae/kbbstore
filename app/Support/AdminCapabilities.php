@@ -287,7 +287,7 @@ final class AdminCapabilities
         'banners.manage' => ['owner', 'manager', 'editor'],
 
         /*
-         * ── Appearance → Product grids (Lane GS, routes/grid-sections-admin.php)
+         * ── Appearance → Grid sections (Lane GS, routes/grid-sections-admin.php)
          *
          * The owner's reusable product-grid section, as many instances as he
          * builds. TWO, and the same three roles as `banners.*` above, for the
@@ -1168,7 +1168,7 @@ final class AdminCapabilities
         ['GET', 'admin-api/banners/**', 'banners.view'],
 
         /*
-         * ── Appearance → Product grids (Lane GS) ────────────────────────────
+         * ── Appearance → Grid sections (Lane GS) ────────────────────────────
          *
          * THE WRITES ABOVE THE READS, which is this file's rule and not a
          * preference — RULES is first-match-wins, and listed the other way

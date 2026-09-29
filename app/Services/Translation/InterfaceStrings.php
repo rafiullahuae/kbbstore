@@ -860,7 +860,7 @@ final class InterfaceStrings
              * switched the button on and left its text box empty. Everything
              * else that section prints — the heading, the sub-heading, the
              * eyebrow and the button's own text — is typed into Appearance →
-             * Product grids and is the OWNER'S, which is why it is not here:
+             * Grid sections and is the OWNER'S, which is why it is not here:
              * a second English source for a value the owner types is one of the
              * two silently wrong. Same rule, same reason, as the cards banner's
              * two strings above.

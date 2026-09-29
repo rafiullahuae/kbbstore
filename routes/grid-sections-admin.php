@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /*
 |------------------------------------------------------------------------------
-| Appearance → Product grids  (Lane GS — Phase 23)
+| Appearance → Grid sections  (Lane GS — Phase 23)
 |------------------------------------------------------------------------------
 |
 | ONE reusable homepage product-grid section, used as many times as the owner
