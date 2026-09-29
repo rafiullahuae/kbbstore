@@ -8,7 +8,6 @@ use App\Services\CartService;
 use App\Services\NavigationService;
 use App\Services\SettingsService;
 use App\Services\ShippingService;
-use App\Support\Color;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
@@ -71,7 +70,7 @@ class StoreComposer
     public function compose(View $view): void
     {
         $cart = $this->carts->current($this->request, create: false);
-        $accent = (string) $this->settings->get('brand_accent', '#E0567B');
+
         $mobile = $this->nav->menu('mobile');
         // Filtered per-request, after the shared cached tree comes back — see
         // NavigationService::tree()'s own comment for why this can't happen
@@ -121,11 +120,23 @@ class StoreComposer
                 fn () => Product::query()->visible()->count()),
             'kbbTrending' => $this->trending(),
             'kbbFreeShipThreshold' => $this->shipping->thresholdHere($this->request),
-            // Emitted only when it differs from the design default, matching the
-            // theme, which ships no override in the common case.
-            'kbbAccent' => Color::isValidHex($accent) && strtolower($accent) !== '#e0567b'
-                ? ['base' => $accent, 'deep' => Color::darken($accent, 12)]
-                : null,
+            /*
+             * Emitted only when it differs from the design default, matching
+             * the theme, which ships no override in the common case.
+             *
+             * THE EXPRESSION MOVED TO App\Support\BrandAccent, and that is not
+             * tidying. This composer is registered for `layouts.store` AND
+             * NOTHING ELSE, so `$kbbAccent` has never been defined on the five
+             * storefront views that carry their own <head> — the journal, an
+             * article, the review wall, the skin quiz and /app — and all five
+             * hard-code `--pink:#E0567B` in their own stylesheet instead. They
+             * read BrandAccent directly now, through
+             * resources/views/partials/shop-appearance-css.blade.php, so the
+             * question "has the owner moved his brand colour" has one answer
+             * for every document rather than one answer and five copies of the
+             * old one.
+             */
+            'kbbAccent' => \App\Support\BrandAccent::pair($this->settings),
         ]);
     }
 }

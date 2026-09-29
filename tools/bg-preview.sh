@@ -32,7 +32,7 @@ DB=$DIR/preview.sqlite
 # tests/Support/PreviewPort.php is the same fix for the suite and carries the
 # same story. Here it is six lines of shell: walk up from the requested port and
 # take the first one that will actually bind.
-PORT=$(python3 - "${1:-8931}" <<'PORTPY'
+PORT=$(python3 - "${1:-8931}" <<'KBBPORTPY'
 import socket, sys
 start = int(sys.argv[1])
 for p in range(start, start + 400):
@@ -43,7 +43,7 @@ for p in range(start, start + 400):
         s.close()
 else:
     raise SystemExit('no free port in [%d, %d)' % (start, start + 400))
-PORTPY
+KBBPORTPY
 )
 
 rm -rf "$DIR"
@@ -140,5 +140,43 @@ sleep 2
 if ! curl -fsS -o /dev/null "http://127.0.0.1:$PORT/"; then
   echo "preview did NOT come up on $PORT:"; tail -20 "$DIR/server.log"; exit 1
 fi
-echo "preview on http://127.0.0.1:$PORT  pid $(cat "$DIR/server.pid")  root $ROOT"
+
+# ── AND IT PROVES THE SERVER ANSWERING IS THE ONE THIS SCRIPT STARTED ───────
+#
+# A 200 is not enough, which is the whole lesson of the twenty minutes above:
+# ANOTHER LANE's preview answers 200 to everything too. Two checks, and they
+# fail for different reasons on purpose.
+#
+# The NONCE is written into this script's own webroot and read back over HTTP.
+# Another lane's server is rooted in another lane's directory, so it cannot have
+# the file whatever its catalogue looks like. It is the general check, and every
+# preview script in this repository carries it now.
+kbbnonce=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
+printf '%s' "$kbbnonce" > "$ROOT/kbb-preview-id.txt"
+
+if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$kbbnonce" ]; then
+  echo "REFUSING TO HAND BACK A PREVIEW: the server answering on 127.0.0.1:$PORT" >&2
+  echo "is not the one this script started -- it is serving another webroot." >&2
+  tail -10 "$DIR/server.log" >&2
+  kill "$(cat "$DIR/server.pid")" 2>/dev/null || true
+  exit 4
+fi
+
+# The FIXTURE check is Lane PG2's, and it answers the other half of the
+# question: the server is mine, but has it got MY SEED in it? A webroot that
+# came up before `artisan tinker` finished, or against a database an earlier run
+# left half-migrated, passes the nonce and still photographs an empty shop. So
+# ask for a product only tools/bg-seed.php creates, and require its name in the
+# body rather than only a 200.
+kbbfixture=$(curl -s -o "$DIR/probe.html" -w '%{http_code}' \
+  "http://127.0.0.1:$PORT/product/lanebg-1/" || echo 000)
+
+if [ "$kbbfixture" != "200" ] || ! grep -q 'Heartleaf 77% Soothing Toner 250ml' "$DIR/probe.html"; then
+  echo "the server on $PORT did not answer this lane's own fixture (HTTP $kbbfixture)." >&2
+  echo "Refusing to hand back a preview that would photograph the wrong catalogue." >&2
+  tail -10 "$DIR/server.log" >&2
+  kill "$(cat "$DIR/server.pid")" 2>/dev/null || true
+  exit 5
+fi
+echo "preview on http://127.0.0.1:$PORT  pid $(cat "$DIR/server.pid")  root $ROOT  fixture OK"
 echo "stop it with: kill $(cat "$DIR/server.pid")   # NEVER pkill -f: three lanes share this machine"

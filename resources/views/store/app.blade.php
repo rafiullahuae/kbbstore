@@ -596,9 +596,16 @@ footer p{font-size:13px;line-height:1.6;max-width:34ch}
          inside the fence, and the reopening marker is followed by no whitespace
          at all.
 
+     TWO INCLUDES, not one: partials/shop-appearance-css carries the brand
+     colour and the site width, which this document has never had either --
+     App\View\Composers\StoreComposer is registered for `layouts.store` and
+     nothing else, so `$kbbAccent` was not defined here and this file's own
+     `:root{--pink:#E0567B}` was the only answer. They share the one hole in
+     the fence because a second hole would be a second newline to account for.
+
      (The markers are deliberately not spelled out with their @ in this comment:
      the fence is extracted before comments are stripped, so naming one here
-     would arm the trap it describes.) --}}@include('partials.page-wash-css')@verbatim</head>
+     would arm the trap it describes.) --}}@include('partials.shop-appearance-css')@include('partials.page-wash-css')@verbatim</head>
 <body>
 
 <!-- TOP MARQUEE -->

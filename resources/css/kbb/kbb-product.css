@@ -13,7 +13,23 @@
   --ease:cubic-bezier(.22,.61,.36,1);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5}
+/* ── ONE PAGE BACKGROUND, AND IT IS DECLARED ONCE ────────────────────────
+   Lane BG. `background` is gone from this rule and from kbb.css's own copy of
+   it, and the reason is the same in both places: this declaration is part of a
+   BASE rule -- font family, colour, line height -- that was duplicated into
+   this sheet, and this sheet is pushed onto @stack('styles') AFTER kbb.css. So
+   `background:var(--bg)` (which is #fff) outranked kbb.css's designed page
+   background and this page rendered PLAIN WHITE while the home page, the cart,
+   the checkout and the wishlist rendered the pink botanical wash. Measured on
+   the rendered page, not read off the sheet:
+
+       home / cart / checkout / wishlist   rgb(253,239,243) + the botanical SVG
+       /shop/ / a product page            rgb(255,255,255), background-image none
+
+   Nobody chose two backgrounds. Deleting the declaration leaves the rest of the
+   base rule doing its job and lets the one designed background reach this page.
+   tests/Feature/OnePageBackgroundTest.php is the pin. */
+body{font-family:var(--sans);color:var(--ink);line-height:1.5}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 a{color:inherit;text-decoration:none}
 ::selection{background:var(--blush)}

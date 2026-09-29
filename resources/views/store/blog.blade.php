@@ -161,27 +161,22 @@
   .mnav-x{align-self:flex-end;font-size:20px;background:none;border:none;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
   @media(max-width:900px){.grid{grid-template-columns:1fr}h1{font-size:29px}.nav-links{display:none}.burger{display:grid}}
 </style>@endverbatim
-{{--
-    Appearance → Site layout, in a document that loads no shared stylesheet.
-                                                                       Lane W1
-    This page carries its own <html> and its own :root, so the only way a moved
-    slider reaches it is for the same block the shared layout emits to be emitted
-    here too. AFTER the <style> above, so the owner's number wins over the
-    literal fallback in it; and empty while every setting is at its shipped
-    value, so this document gains no bytes until one moves — which is why it can
-    be added to a page StorefrontEnglishUnchangedTest pins.
+{{-- The brand colour and the site width.                           (Lane BG)
 
-    ▲ ARRANGED TO EMIT NOTHING. The directives share lines with the comment and
-    with the tag they guard, and both close at end of line so PHP eats the
-    newline after each `?>`. Written the obvious way this added blank lines to
-    the <head> of this document and of every page using the shared layout, and
-    the walk reported all of them — for a change it cannot otherwise see, because
-    the width itself is CSS. See the long note in layouts/store.blade.php.
---}}@php
-    $kbbLayoutCss = app(\App\Services\SiteLayout::class)->css();
-@endphp
-@if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
-@endif
+     THIS DOCUMENT DOES NOT EXTEND layouts/store.blade.php, so nothing that
+     layout emits reaches it. The site-width block that used to stand here was
+     this document's own copy of the layout's; the BRAND COLOUR was never here
+     at all, because App\View\Composers\StoreComposer is registered for
+     `layouts.store` and nothing else, so `$kbbAccent` was not even defined.
+     This file declares `--pink:#E0567B` on its own `:root` and uses it, so a
+     shop that had changed its brand colour kept the old pink on this page.
+
+     LAST IN THE HEAD, AFTER THIS DOCUMENT'S OWN <style>, and that is
+     load-bearing rather than tidy: the accent rule is `:root` and so is this
+     document's own `--pink` declaration, so the two tie on specificity and
+     source order decides. Emitted earlier, it would lose.
+
+     ZERO BYTES until the owner moves one of them. --}}@include('partials.shop-appearance-css')
 {{-- Appearance -> Page background (Lane BG). ONE LINE, zero bytes until the
      owner switches the wash on. THIS DOCUMENT DOES NOT EXTEND
      layouts/store.blade.php -- it carries its own <html>, <head> and inline

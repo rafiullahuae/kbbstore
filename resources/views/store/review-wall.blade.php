@@ -223,6 +223,22 @@
   }
 </style>
 @endverbatim
+{{-- The brand colour and the site width.                           (Lane BG)
+
+     THIS DOCUMENT DOES NOT EXTEND layouts/store.blade.php, so nothing that
+     layout emits reaches it -- and App\View\Composers\StoreComposer is
+     registered for `layouts.store` and nothing else, so `$kbbAccent` was not
+     even defined here. This file declares `--pink:#E0567B` on its own `:root`
+     and uses it, so a shop that had changed its brand colour kept the old pink
+     on this page. The site width is emitted here too, and on this document it
+     is currently INERT -- nothing in this stylesheet reads `--site-max` -- which
+     is stated rather than used as a reason to leave it out: it costs zero bytes
+     at the shipped settings and it is correct the day this page's container
+     reads the token.
+
+     LAST IN THE HEAD, AFTER THIS DOCUMENT'S OWN <style>: the accent rule is
+     `:root` and so is this document's own `--pink` declaration, so the two tie
+     on specificity and source order decides. --}}@include('partials.shop-appearance-css')
 {{-- Appearance -> Page background (Lane BG). ONE LINE, zero bytes until the
      owner switches the wash on. THIS DOCUMENT DOES NOT EXTEND
      layouts/store.blade.php -- it carries its own <html>, <head> and inline
