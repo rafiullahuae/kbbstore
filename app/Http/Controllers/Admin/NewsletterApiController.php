@@ -32,6 +32,23 @@ class NewsletterApiController extends Controller
         return response()->json([
             'tabs' => $tabs,
             'stats' => $this->stats(),
+            /*
+             * ── WHAT A SHOPPER IS ACTUALLY TOLD, FOR THE PANEL PREVIEW ─────
+             *
+             * The preview on this screen drew `nl_success` as its confirmation
+             * line. No shopper has seen that string since double opt-in landed:
+             * SubscribeController::CONFIRM_MESSAGE is the one answer a signup
+             * ever gets, precisely so that two different sentences cannot reveal
+             * who is already on the list. So the preview was showing the owner a
+             * panel his shoppers do not see, on the screen whose whole job is to
+             * show him what they DO see.
+             *
+             * A CONSTANT, NOT A SETTING, and that is why it is published here
+             * rather than added to SCHEMA: the controller's own header argues
+             * that an owner who could edit this string would reopen the
+             * membership oracle without knowing he had.
+             */
+            'confirm_message' => \App\Http\Controllers\Store\SubscribeController::CONFIRM_MESSAGE,
         ]);
     }
 

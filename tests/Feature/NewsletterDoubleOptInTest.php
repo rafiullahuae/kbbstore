@@ -381,6 +381,30 @@ it('says on the screen that the two message boxes no longer answer a shopper', f
             $key.'\'s help text does not say that what is typed there changes nothing');
     }
 
+    /*
+     * HALF THREE: and the screen is handed the sentence a shopper really gets,
+     * so its panel preview can stop drawing `nl_success`.
+     *
+     * Published as a CONSTANT and not added to SCHEMA, deliberately: an owner
+     * who could edit this string would reopen the membership oracle without
+     * knowing he had, which is the argument in SubscribeController's header.
+     * Pinned here rather than in the payload fixture because it is a promise
+     * about the CONTENT -- the screen must be told the same sentence the
+     * endpoint answers, and a copy of the words would let the two drift.
+     */
+    $owner = \App\Models\AdminUser::create([
+        'name' => 'NL Owner',
+        'email' => 'nl-preview-owner@example.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('secret-secret'),
+        'role' => 'owner',
+    ]);
+
+    test()->actingAs($owner, 'admin');
+
+    expect(test()->getJson('/admin-api/newsletter')->json('confirm_message'))
+        ->toBe(\App\Http\Controllers\Store\SubscribeController::CONFIRM_MESSAGE)
+        ->toBe($new->json('message'));
+
     // And `nl_error` is NOT swept up in that: it is still live, because a
     // malformed address is refused before the list is consulted.
     expect(str_contains($schema['nl_error'][1], 'not in use'))->toBeFalse();
