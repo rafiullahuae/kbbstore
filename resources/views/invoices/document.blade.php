@@ -63,12 +63,86 @@
       neither is wrapped, so for those two this resolves to exactly what it was
       hard-coded to.
 
-      WHAT IS STILL PHYSICAL. The sheet's own stylesheet below uses physical
-      sides (text-align:right on the money columns, margins that assume a
-      left-hand masthead). Turning the mirrored layout on gives this document
-      the right TEXT direction and not yet a mirrored layout; converting these
-      rules to logical properties is lane/rtl-logical-properties' work on the
-      storefront stylesheet and belongs with it, not bolted on here.
+      AND A STYLESHEET THAT FOLLOWS IT. This paragraph used to say the
+      opposite -- that the sheet below kept physical sides, that a direction
+      without a mirrored layout was the intended half-way state, and that
+      converting it belonged to whoever did the storefront. It was handed over
+      by name (docs/rtl-audit.md Sec. 5, docs/GC-BULK-PRINTING.md) and it is
+      done: every direction-carrying rule below is logical, so the day the
+      mirrored layout is switched on an Arabic invoice mirrors WITH its text
+      instead of laying Arabic right-to-left over left-to-right rules. A
+      half-mirrored sheet is worse than either whole one, and it was the state
+      this document was one settings flip away from.
+
+      Tests\Support\CssDirection::SCOPE now names this file, so the next
+      physical declaration added here fails RtlReadinessTest rather than waiting
+      to be noticed on a customer's copy.
+
+      TWO DECLARATIONS ARE STILL PHYSICAL AND BOTH ARE MARKED RTL-PHYSICAL: the
+      Code 128 bars -- `border-left-style` and `border-left-color` on `.bc i.b`.
+
+      A Code 128 symbol is read start-to-end by a scanner and its bar order is
+      the DATA. `.bc` is a flex row, and a flex row follows the document's
+      direction, so inside a right-to-left sheet the bars would be laid out in
+      reverse and the symbol would encode something else -- or, more often,
+      nothing a scanner will accept. It is a machine-readable mark and not text,
+      so `.bc` carries `direction: ltr` and the symbol cannot mirror at all,
+      whatever the sheet around it does.
+
+      That is also what makes the two physical borders correct rather than
+      merely tolerated: inside `.bc`, `left` and `inline-start` are the same
+      edge in every document this shop prints. And they have to stay physical,
+      because partials/barcode.blade.php writes `border-left-width` into each
+      bar's own `style=""` -- an inline declaration beats any author rule, so a
+      logical `border-inline-start-style` here would style an edge that has no
+      width while the edge that has one has no style: a blank strip where the
+      barcode should be. Physical on both sides, in one direction, is the only
+      pairing that holds.
+
+      TWO OF THE CONVERSIONS LOOK LIKE A SWAP AND ARE NOT, so they are written
+      down. `table.lines td:first-child` and `td:last-child` are DOM ORDER,
+      which does not flip -- but WHICH SIDE of each of those cells is the outer
+      one does. The first cell's outer edge is the inline-start edge in both
+      directions, so `padding-left: 0` becomes `padding-inline-start: 0` and not
+      the other one. Same for `table.totals td.num`: the 26px gap between the
+      label and the figure belongs to the figure's reading-side edge, which is
+      the side the label is on in either direction.
+
+      ARABIC FURNITURE IS CURSIVE, so one more rule was added. `letter-spacing`
+      is a Latin typographic device -- Arabic letters JOIN, and tracking between
+      them pulls the joins open. `.doctype`, `.label` and `.stamp` carry .04em
+      to .11em, so under [dir="rtl"] all three are set back to `normal`.
+      `text-transform: uppercase` is simply a no-op on Arabic and is left alone.
+      The rule is scoped to [dir="rtl"] and nothing else, so the English sheet --
+      which is every sheet this shop prints today -- is untouched by it.
+
+      COMMENTS FOR ALL OF THIS LIVE HERE AND NOT IN THE STYLESHEET BELOW,
+      unlike the rest of this file's. A Blade comment is removed before a byte
+      is sent; a CSS comment is printed into every invoice, packing slip,
+      delivery note and dispatch label this shop produces. Three paragraphs
+      beside the rules would have been about 2KB on every document a customer
+      keeps, and would have put three multi-line hunks into the four
+      printed-document baselines PrintedEnglishUnchangedTest compares. The short
+      markers at the rules point here.
+
+      AND NOTHING IN THIS COMMENT MAY SPELL A CURLY BRACE OR THE STYLE TAG.
+      Tests\Support\CssDirection reads this file by taking everything between
+      the first style tag and its closing twin and then walking braces; a brace
+      written up here lands inside that slice and unbalances the walk. Written
+      with braces, it read ZERO declarations in a 236-declaration file -- and
+      "no physical declarations found" is then trivially true, which is the
+      vacuous green RtlReadinessTest's first case exists to refuse.
+
+      THE PRINT PATH SUPPORTS THIS, CHECKED RATHER THAN ASSUMED. There is no PDF
+      library in this project (none in composer.json, none in composer.lock,
+      none in vendor/, and none could ever arrive -- vendor/ is in
+      BuildPackage::NEVER_SHIP and UpdateGuard::FORBIDDEN_PREFIXES). The
+      renderer IS the operator's browser, through its own print dialog, which is
+      the same engine that already renders this shop's storefront: the support
+      floors docs/rtl-audit.md Sec. 6 records (Chrome 87, Firefox 66, Safari
+      14.1) are the floors that apply here too. Verified by printing, not by
+      reading: the sheet was rendered to PDF through Chromium's print path in
+      both directions and the columns land where the rules say.
 
       Every element that prints CUSTOMER text carries dir="auto" regardless,
       which resolves from that value's own first strong character. Without it an
@@ -171,7 +245,7 @@
         /* ---- masthead ---- */
         .head { display: flex; gap: 20px; align-items: flex-start; }
         .head .who { flex: 1 1 auto; min-width: 0; }
-        .head .what { flex: 0 0 auto; text-align: right; }
+        .head .what { flex: 0 0 auto; text-align: end; }
         .biz { font-size: 17px; font-weight: 750; letter-spacing: .01em; }
         .biz-lines { margin-top: 5px; font-size: 12px; color: var(--ink-2); }
         .biz-lines div { line-height: 1.5; }
@@ -201,8 +275,8 @@
             margin-top: 18px; border: 1px solid var(--rule); border-radius: 6px;
             overflow: hidden;
         }
-        .fact { flex: 1 1 130px; padding: 9px 12px; border-right: 1px solid var(--rule-soft); }
-        .fact:last-child { border-right: 0; }
+        .fact { flex: 1 1 130px; padding: 9px 12px; border-inline-end: 1px solid var(--rule-soft); }
+        .fact:last-child { border-inline-end: 0; }
         .fact .label { margin-bottom: 2px; }
         .fact .v { font-size: 12.5px; font-weight: 600; overflow-wrap: anywhere; }
 
@@ -211,16 +285,16 @@
         table.lines thead th {
             font-size: 10px; font-weight: 750; letter-spacing: .1em;
             text-transform: uppercase; color: var(--ink-soft);
-            text-align: left; padding: 0 8px 7px; border-bottom: 1.5px solid var(--ink);
+            text-align: start; padding: 0 8px 7px; border-bottom: 1.5px solid var(--ink);
         }
-        table.lines th.num, table.lines td.num { text-align: right; white-space: nowrap; }
+        table.lines th.num, table.lines td.num { text-align: end; white-space: nowrap; }
         table.lines tbody td {
             padding: 10px 8px; border-bottom: 1px solid var(--rule-soft);
             vertical-align: top;
         }
         table.lines tbody tr:last-child td { border-bottom: 1px solid var(--rule); }
-        table.lines td:first-child, table.lines th:first-child { padding-left: 0; }
-        table.lines td:last-child, table.lines th:last-child { padding-right: 0; }
+        table.lines td:first-child, table.lines th:first-child { padding-inline-start: 0; }
+        table.lines td:last-child, table.lines th:last-child { padding-inline-end: 0; }
         .it-name { font-weight: 600; }
         .it-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
 
@@ -228,13 +302,13 @@
         .totals-wrap { display: flex; justify-content: flex-end; margin-top: 14px; }
         table.totals { border-collapse: collapse; min-width: 62mm; }
         table.totals td { padding: 4px 0; font-size: 13px; color: var(--ink-2); }
-        table.totals td.num { text-align: right; padding-left: 26px; white-space: nowrap; }
+        table.totals td.num { text-align: end; padding-inline-start: 26px; white-space: nowrap; }
         table.totals tr.grand td {
             padding-top: 9px; border-top: 2px solid var(--ink);
             font-size: 15px; font-weight: 750; color: var(--ink);
         }
         .vatnote {
-            margin-top: 7px; text-align: right;
+            margin-top: 7px; text-align: end;
             font-size: 11.5px; color: var(--ink-soft);
         }
 
@@ -260,6 +334,10 @@
             text-transform: uppercase;
         }
 
+        [dir="rtl"] .doctype,
+        [dir="rtl"] .label,
+        [dir="rtl"] .stamp { letter-spacing: normal; }
+
         /* ---- the order number, drawn as Code 128 ----
 
            Bars are ELEMENTS WITH A BORDER, not a background colour, and the
@@ -279,6 +357,7 @@
         .bc {
             display: flex; align-items: stretch; background: #fff;
             height: 14mm; padding: 0 3.4mm;   /* 10 modules of quiet zone */
+            direction: ltr;   /* RTL-PHYSICAL: a barcode is data, not text */
         }
         .bc i { display: block; flex: 0 0 auto; }
         /* A bar has no width of its own; its LEFT BORDER is the black. The
@@ -317,10 +396,10 @@
         @media screen and (max-width: 820px) {
             .sheet { width: auto; min-height: 0; margin: 12px; padding: 18px 16px; }
             .head, .parties, .notes { flex-direction: column; gap: 14px; }
-            .head .what { text-align: left; }
+            .head .what { text-align: start; }
             table.lines thead { display: none; }
             table.lines tbody td { display: block; padding: 2px 0; border: 0; }
-            table.lines tbody td.num { text-align: left; }
+            table.lines tbody td.num { text-align: start; }
             table.lines tbody tr { display: block; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
         }
     </style>

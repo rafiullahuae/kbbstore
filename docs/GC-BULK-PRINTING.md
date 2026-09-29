@@ -297,6 +297,16 @@ Note that an Arabic sheet today is `lang="ar" dir="ltr"`. That is correct:
 layout is still being built. The test says so rather than pinning `rtl`, so it
 starts reading `rtl` by itself the day another lane turns mirroring on.
 
+**And the sheet under it is ready for that day now (Lane CX).** This paragraph
+used to be a prediction with nothing behind it: `invoices/document.blade.php`
+carried a fully physical stylesheet, so the moment `dir` started reading `rtl`
+the sheet would have laid left-to-right rules under right-to-left text — half
+mirrored, which is worse than either. Its direction-carrying rules are logical
+now, `Tests\Support\CssDirection::SCOPE` names the file so the next physical
+one fails a guard, and the Code 128 barcode is pinned to one direction at `.bc`
+because a mirrored barcode is a wrong barcode. Verified through Chromium's own
+print path in both directions — see `docs/cx-shots/README.md` for the numbers.
+
 ---
 
 ## Changes the integrator must make — anchors verified by count

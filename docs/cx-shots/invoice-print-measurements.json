@@ -1,0 +1,168 @@
+[
+  {
+    "name": "invoice-en",
+    "pdf": "/home/user/lane-cx/storage/cx-logs/invoice-print/invoice-en.pdf",
+    "png": "/home/user/lane-cx/storage/cx-logs/invoice-print/invoice-en.png",
+    "pdfBytes": 52503,
+    "pdfHeader": "%PDF-",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 1280,
+    "fact": {
+      "borderLeftWidth": 0,
+      "borderRightWidth": 1
+    },
+    "factLast": {
+      "borderLeftWidth": 0,
+      "borderRightWidth": 0
+    },
+    "theadTextAlign": "start",
+    "numTextAlign": "end",
+    "whatTextAlign": "end",
+    "vatTextAlign": null,
+    "firstTd": {
+      "paddingLeft": 0,
+      "paddingRight": 8
+    },
+    "lastTd": {
+      "paddingLeft": 8,
+      "paddingRight": 0
+    },
+    "totalsNum": {
+      "paddingLeft": 26,
+      "paddingRight": 0,
+      "textAlign": "end"
+    },
+    "barcode": null,
+    "letterSpacing": {
+      "label": "1.1px",
+      "doctype": "0.88px"
+    }
+  },
+  {
+    "name": "invoice-ar",
+    "pdf": "/home/user/lane-cx/storage/cx-logs/invoice-print/invoice-ar.pdf",
+    "png": "/home/user/lane-cx/storage/cx-logs/invoice-print/invoice-ar.png",
+    "pdfBytes": 122446,
+    "pdfHeader": "%PDF-",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "fact": {
+      "borderLeftWidth": 1,
+      "borderRightWidth": 0
+    },
+    "factLast": {
+      "borderLeftWidth": 0,
+      "borderRightWidth": 0
+    },
+    "theadTextAlign": "start",
+    "numTextAlign": "end",
+    "whatTextAlign": "end",
+    "vatTextAlign": null,
+    "firstTd": {
+      "paddingLeft": 8,
+      "paddingRight": 0
+    },
+    "lastTd": {
+      "paddingLeft": 0,
+      "paddingRight": 8
+    },
+    "totalsNum": {
+      "paddingLeft": 0,
+      "paddingRight": 26,
+      "textAlign": "end"
+    },
+    "barcode": null,
+    "letterSpacing": {
+      "label": "normal",
+      "doctype": "normal"
+    }
+  },
+  {
+    "name": "packing-en",
+    "pdf": "/home/user/lane-cx/storage/cx-logs/invoice-print/packing-en.pdf",
+    "png": "/home/user/lane-cx/storage/cx-logs/invoice-print/packing-en.png",
+    "pdfBytes": 59750,
+    "pdfHeader": "%PDF-",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 1280,
+    "fact": {
+      "borderLeftWidth": 0,
+      "borderRightWidth": 1
+    },
+    "factLast": {
+      "borderLeftWidth": 0,
+      "borderRightWidth": 0
+    },
+    "theadTextAlign": "end",
+    "numTextAlign": "end",
+    "whatTextAlign": "end",
+    "vatTextAlign": null,
+    "firstTd": {
+      "paddingLeft": 0,
+      "paddingRight": 8
+    },
+    "lastTd": {
+      "paddingLeft": 8,
+      "paddingRight": 0
+    },
+    "totalsNum": null,
+    "barcode": {
+      "direction": "ltr",
+      "bars": 37,
+      "firstBarX": 12.84,
+      "lastBarX": 165.09,
+      "containerLeft": 0,
+      "containerRight": 179.94
+    },
+    "letterSpacing": {
+      "label": "1.1px",
+      "doctype": "0.88px"
+    }
+  },
+  {
+    "name": "packing-forced-rtl",
+    "pdf": "/home/user/lane-cx/storage/cx-logs/invoice-print/packing-forced-rtl.pdf",
+    "png": "/home/user/lane-cx/storage/cx-logs/invoice-print/packing-forced-rtl.png",
+    "pdfBytes": 59691,
+    "pdfHeader": "%PDF-",
+    "dir": "rtl",
+    "lang": "en",
+    "scrollWidth": 1280,
+    "fact": {
+      "borderLeftWidth": 1,
+      "borderRightWidth": 0
+    },
+    "factLast": {
+      "borderLeftWidth": 0,
+      "borderRightWidth": 0
+    },
+    "theadTextAlign": "end",
+    "numTextAlign": "end",
+    "whatTextAlign": "end",
+    "vatTextAlign": null,
+    "firstTd": {
+      "paddingLeft": 8,
+      "paddingRight": 0
+    },
+    "lastTd": {
+      "paddingLeft": 0,
+      "paddingRight": 8
+    },
+    "totalsNum": null,
+    "barcode": {
+      "direction": "ltr",
+      "bars": 37,
+      "firstBarX": 1112.91,
+      "lastBarX": 1265.16,
+      "containerLeft": 1100.06,
+      "containerRight": 1280
+    },
+    "letterSpacing": {
+      "label": "normal",
+      "doctype": "normal"
+    }
+  }
+]

@@ -1,0 +1,446 @@
+[
+  {
+    "name": "en-000",
+    "width": 390,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/en-000-390.png",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "fillWidthStyle": "width:0%",
+    "fillClass": "fill cpg-flat",
+    "bar": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "fill": {
+      "left": 29,
+      "right": 29,
+      "width": 0
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "auto",
+      "right": "0px",
+      "transform": "none",
+      "animationName": "cpgbloom",
+      "display": "none"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "auto",
+      "right": "0px",
+      "transform": "none",
+      "animationName": "cpgpetal",
+      "display": "none"
+    }
+  },
+  {
+    "name": "en-000",
+    "width": 1280,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/en-000-1280.png",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "fillWidthStyle": "width:0%",
+    "fillClass": "fill cpg-flat",
+    "bar": {
+      "left": 853,
+      "right": 1199,
+      "width": 346
+    },
+    "fill": {
+      "left": 853,
+      "right": 853,
+      "width": 0
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "auto",
+      "right": "0px",
+      "transform": "none",
+      "animationName": "cpgbloom",
+      "display": "none"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "auto",
+      "right": "0px",
+      "transform": "none",
+      "animationName": "cpgpetal",
+      "display": "none"
+    }
+  },
+  {
+    "name": "en-045",
+    "width": 390,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/en-045-390.png",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "fillWidthStyle": "width:45%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "fill": {
+      "left": 29,
+      "right": 178.39,
+      "width": 149.39
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "123.391px",
+      "right": "0px",
+      "transform": "matrix(1.00455, 0, 0, 1.00455, 13, -13)",
+      "animationName": "cpgbloom",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "138.391px",
+      "right": "0px",
+      "transform": "matrix(0.749753, 0.661718, -0.661718, 0.749753, 5.5, -5.5)",
+      "animationName": "cpgpetal",
+      "display": "block"
+    }
+  },
+  {
+    "name": "en-045",
+    "width": 1280,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/en-045-1280.png",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "fillWidthStyle": "width:45%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 853,
+      "right": 1199,
+      "width": 346
+    },
+    "fill": {
+      "left": 853,
+      "right": 1008.69,
+      "width": 155.69
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "129.688px",
+      "right": "0px",
+      "transform": "matrix(1.01356, 0, 0, 1.01356, 13, -13)",
+      "animationName": "cpgbloom",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "144.688px",
+      "right": "0px",
+      "transform": "matrix(0.733099, 0.680122, -0.680122, 0.733099, 5.5, -5.5)",
+      "animationName": "cpgpetal",
+      "display": "block"
+    }
+  },
+  {
+    "name": "en-100",
+    "width": 390,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/en-100-390.png",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "fillWidthStyle": "width:100%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "fill": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "306px",
+      "right": "0px",
+      "transform": "matrix(1.02255, 0, 0, 1.02255, 13, -13)",
+      "animationName": "cpgbloom",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "321px",
+      "right": "0px",
+      "transform": "matrix(0.715916, 0.698187, -0.698187, 0.715916, 5.5, -5.5)",
+      "animationName": "cpgpetal",
+      "display": "block"
+    }
+  },
+  {
+    "name": "en-100",
+    "width": 1280,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/en-100-1280.png",
+    "dir": "ltr",
+    "lang": "en",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "fillWidthStyle": "width:100%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 853,
+      "right": 1199,
+      "width": 346
+    },
+    "fill": {
+      "left": 853,
+      "right": 1199,
+      "width": 346
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "320px",
+      "right": "0px",
+      "transform": "matrix(1.01358, 0, 0, 1.01358, 13, -13)",
+      "animationName": "cpgbloom",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "335px",
+      "right": "0px",
+      "transform": "matrix(0.73306, 0.680164, -0.680164, 0.73306, 5.5, -5.5)",
+      "animationName": "cpgpetal",
+      "display": "block"
+    }
+  },
+  {
+    "name": "ar-000",
+    "width": 390,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/ar-000-390.png",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "fillWidthStyle": "width:0%",
+    "fillClass": "fill cpg-flat",
+    "bar": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "fill": {
+      "left": 361,
+      "right": 361,
+      "width": 0
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "auto",
+      "transform": "none",
+      "animationName": "cpgbloomrtl",
+      "display": "none"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "auto",
+      "transform": "none",
+      "animationName": "cpgpetalrtl",
+      "display": "none"
+    }
+  },
+  {
+    "name": "ar-000",
+    "width": 1280,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/ar-000-1280.png",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "fillWidthStyle": "width:0%",
+    "fillClass": "fill cpg-flat",
+    "bar": {
+      "left": 81,
+      "right": 427,
+      "width": 346
+    },
+    "fill": {
+      "left": 427,
+      "right": 427,
+      "width": 0
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "auto",
+      "transform": "none",
+      "animationName": "cpgbloomrtl",
+      "display": "none"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "auto",
+      "transform": "none",
+      "animationName": "cpgpetalrtl",
+      "display": "none"
+    }
+  },
+  {
+    "name": "ar-045",
+    "width": 390,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/ar-045-390.png",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "fillWidthStyle": "width:45%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "fill": {
+      "left": 211.61,
+      "right": 361,
+      "width": 149.39
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "123.391px",
+      "transform": "matrix(1.00456, 0, 0, 1.00456, -13, -13)",
+      "animationName": "cpgbloomrtl",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "138.391px",
+      "transform": "matrix(0.749737, 0.661736, -0.661736, 0.749737, -5.5, -5.5)",
+      "animationName": "cpgpetalrtl",
+      "display": "block"
+    }
+  },
+  {
+    "name": "ar-045",
+    "width": 1280,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/ar-045-1280.png",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "fillWidthStyle": "width:45%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 81,
+      "right": 427,
+      "width": 346
+    },
+    "fill": {
+      "left": 271.31,
+      "right": 427,
+      "width": 155.69
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "129.688px",
+      "transform": "matrix(0.995467, 0, 0, 0.995467, -13, -13)",
+      "animationName": "cpgbloomrtl",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "144.688px",
+      "transform": "matrix(0.766039, 0.642794, -0.642794, 0.766039, -5.5, -5.5)",
+      "animationName": "cpgpetalrtl",
+      "display": "block"
+    }
+  },
+  {
+    "name": "ar-100",
+    "width": 390,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/ar-100-390.png",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "fillWidthStyle": "width:100%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "fill": {
+      "left": 29,
+      "right": 361,
+      "width": 332
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "306px",
+      "transform": "matrix(1.02257, 0, 0, 1.02257, -13, -13)",
+      "animationName": "cpgbloomrtl",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "321px",
+      "transform": "matrix(0.715877, 0.698226, -0.698226, 0.715877, -5.5, -5.5)",
+      "animationName": "cpgpetalrtl",
+      "display": "block"
+    }
+  },
+  {
+    "name": "ar-100",
+    "width": 1280,
+    "file": "/home/user/lane-cx/storage/cx-logs/shots/ar-100-1280.png",
+    "dir": "rtl",
+    "lang": "ar",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "fillWidthStyle": "width:100%",
+    "fillClass": "fill",
+    "bar": {
+      "left": 81,
+      "right": 427,
+      "width": 346
+    },
+    "fill": {
+      "left": 81,
+      "right": 427,
+      "width": 346
+    },
+    "before": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "320px",
+      "transform": "matrix(1.00452, 0, 0, 1.00452, -13, -13)",
+      "animationName": "cpgbloomrtl",
+      "display": "block"
+    },
+    "after": {
+      "insetInlineEnd": "0px",
+      "left": "0px",
+      "right": "335px",
+      "transform": "matrix(0.74981, 0.661653, -0.661653, 0.74981, -5.5, -5.5)",
+      "animationName": "cpgpetalrtl",
+      "display": "block"
+    }
+  }
+]

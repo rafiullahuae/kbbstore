@@ -295,30 +295,64 @@
   background-size:220% 100%;
   animation:cpgflow 2.6s linear infinite}
 @keyframes cpgflow{from{background-position:100% 0}to{background-position:-120% 0}}
-/* Both pseudo-elements are anchored to the RIGHT of the fill, so they ride the
-   leading edge and travel with it as the order value grows. The translate is
+/* Both pseudo-elements ride the fill's LEADING EDGE — the end it grows
+   towards — so they travel with it as the order value grows. The translate is
    part of every transform below, because a transform that omitted it would
-   snap the bloom back to the corner the moment its animation took over. */
+   snap the bloom back to the corner the moment its animation took over.
+
+   ── WHICH EDGE THAT IS, AND WHY THIS IS NOT A ONE-PROPERTY EDIT ───────────
+   The leading edge is the inline-END of the fill, which is the RIGHT edge in
+   English and the LEFT edge under [dir="rtl"]. `inset-inline-end` moves the
+   anchor on its own; the `translate(50%,…)` that centres the shape ON that
+   edge does not, because translateX has no logical form and its sign is
+   measured along the physical x axis. Converting the inset alone would anchor
+   the bloom to the Arabic fill's left edge and then push it 50% further LEFT,
+   off the end of the track and out over the summary — half-mirrored, which is
+   worse than either.
+
+   So both halves move together, the way kbb.css:648 and kbb-shop.css:268 do it
+   for the off-canvas drawers: logical inset, and a [dir="rtl"] rule directly
+   under the one it mirrors that flips the sign of the transform. The animations
+   need the same treatment for the same reason — a running animation replaces
+   the static transform outright, so an RTL override of the static one alone
+   would hold for a fraction of a second and then be overwritten by a keyframe
+   still translating the other way. Each keyframe set therefore has an RTL twin,
+   identical but for that sign, and the override switches animation-name rather
+   than restating the animation. */
 .kbb-cartpage.cpg-squeeze .sum .ship .fill::before,
 .kbb-cartpage.cpg-squeeze .sum .ship .fill::after{
-  content:"";position:absolute;top:50%;right:0;pointer-events:none}
+  content:"";position:absolute;top:50%;inset-inline-end:0;pointer-events:none}
 .kbb-cartpage.cpg-squeeze .sum .ship .fill::before{
   width:26px;height:26px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(170,240,205,.55) 42%,rgba(170,240,205,0) 72%);
   transform:translate(50%,-50%);
   animation:cpgbloom 1.9s ease-in-out infinite}
+[dir="rtl"] .kbb-cartpage.cpg-squeeze .sum .ship .fill::before{
+  transform:translate(-50%,-50%);
+  animation-name:cpgbloomrtl}
 @keyframes cpgbloom{
   0%,100%{transform:translate(50%,-50%) scale(.85)}
   50%{transform:translate(50%,-50%) scale(1.15)}}
-/* Four petals out of one element, no image and no extra request. */
+@keyframes cpgbloomrtl{
+  0%,100%{transform:translate(-50%,-50%) scale(.85)}
+  50%{transform:translate(-50%,-50%) scale(1.15)}}
+/* Four petals out of one element, no image and no extra request. The clip-path
+   is symmetric about both axes, so the petal itself needs no mirroring — only
+   the translate that places it does. */
 .kbb-cartpage.cpg-squeeze .sum .ship .fill::after{
   width:11px;height:11px;background:#fff;
   clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%);
   transform:translate(50%,-50%) rotate(0deg);
   animation:cpgpetal 4.2s linear infinite}
+[dir="rtl"] .kbb-cartpage.cpg-squeeze .sum .ship .fill::after{
+  transform:translate(-50%,-50%) rotate(0deg);
+  animation-name:cpgpetalrtl}
 @keyframes cpgpetal{
   from{transform:translate(50%,-50%) rotate(0deg)}
   to{transform:translate(50%,-50%) rotate(360deg)}}
+@keyframes cpgpetalrtl{
+  from{transform:translate(-50%,-50%) rotate(0deg)}
+  to{transform:translate(-50%,-50%) rotate(360deg)}}
 /* AT ZERO THERE IS NOTHING TO BLOOM FROM, and the shape would sit outside the
    track looking like a stray mark. The Blade puts this class on a fill of
    width 0 rather than the stylesheet guessing from the inline width. */

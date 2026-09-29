@@ -98,6 +98,8 @@ because anything went physical.
 | `resources/views/store/account/order-detail.blade.php` | 5 | 154 |
 | `resources/views/store/account/track.blade.php` | 1 | 63 |
 | `resources/views/store/routines.blade.php` | 1 | 174 |
+| `resources/views/store/cart-squeeze.blade.php` | 6 | 473 |
+| `resources/views/invoices/document.blade.php` | 12 | 237 |
 <!-- rtl-audit:floors:end -->
 
 `kbb-banner.css` had none to begin with; it is in scope so that a physical
@@ -157,6 +159,8 @@ exactly, in both directions, so the document cannot drift from the code.
 | `resources/views/layouts/store.blade.php` | `.qv-btn` | `left: 50%` | centre |
 | `resources/views/store/app.blade.php` | `.toast` | `left: 50%` | centre |
 | `resources/views/store/skin-quiz.blade.php` | `.toast` | `left: 50%` | centre |
+| `resources/views/invoices/document.blade.php` | `.bc i.b` | `border-left-style: solid` | barcode |
+| `resources/views/invoices/document.blade.php` | `.bc i.b` | `border-left-color: #000` | barcode |
 <!-- rtl-audit:physical:end -->
 
 ### The reasons in full
@@ -189,6 +193,25 @@ trick for hiding something from sight while leaving it in the accessibility
 tree; it is not a reading direction, so all three stay. **But which edge is safe
 is not the same in both directions, and the note that used to be here had it
 backwards** — see §11.4, which is a bug this lane found by measuring.
+
+**`barcode` (2)** — the Code 128 bars on the packing slip and the dispatch
+label, `.bc i.b { border-left-style; border-left-color }`. Added by Lane CX with
+the printed sheet's conversion, and the one group here whose reason is not
+typographic at all: **a barcode is data, not text.** Its bar order is what the
+scanner reads, `.bc` is a flex row, and a flex row follows the document's
+direction — so a right-to-left sheet would lay the bars out backwards and the
+symbol would stop being the order number. `.bc` therefore carries
+`direction: ltr`, which pins the whole symbol; inside that element `left` and
+`inline-start` are the same edge in every document this shop prints, which is
+what makes these two correct rather than merely tolerated. They also have to
+stay physical for a second reason: `partials/barcode.blade.php` writes
+`border-left-width` into each bar's own `style=""`, and an inline declaration
+beats any author rule, so a logical `border-inline-start-style` would style an
+edge with no width while the edge that has one had no style — a blank strip
+where the barcode should be. **Verified rather than assumed**: the packing slip
+forced to `dir="rtl"` still computes `direction: ltr` on `.bc`, with 37 bars
+ascending from x 1114.59 to x 1265.16, the same order as the `ltr` sheet's 12.84
+to 163.41. See `docs/cx-shots/README.md`.
 
 **`rotated` (1)** — the account-menu caret, `.acct::before`: two adjacent
 borders on a square rotated 45°, and *which* two borders is what makes the tip
@@ -256,12 +279,30 @@ codebase.
 
 ## 5. Out of scope, and why
 
-253 physical declarations were audited and **not** converted:
+241 physical declarations were audited and **not** converted.
+
+`resources/views/invoices/document.blade.php` used to head this list, with 12
+declarations, on the grounds that "a printed document's column alignment is a
+typographic decision, not a reading-direction one, and it should be made by
+whoever owns that lane." **Lane CX made it**: the document already takes its
+`dir` from `Locale::direction()`, so leaving the sheet physical meant an Arabic
+invoice would render right-to-left over left-to-right rules the day the mirrored
+layout is switched on — half mirrored, which is worse than either whole answer.
+
+The count above was 12 and the declaration reader finds **14**: the two extra are
+`text-align: left` inside the `@media screen and (max-width: 820px)` block, which
+the original audit's manual count missed. All fourteen are converted bar two, and
+the file is in `CssDirection::SCOPE` with its floors row above — so the next one
+added there fails `RtlReadinessTest` instead of waiting to be noticed on a
+customer's copy. The two exceptions are the Code 128 bars, which must not mirror
+at all and are pinned with `direction: ltr` on `.bc`; both are in the physical
+table above.
+
+The rest:
 
 | area | declarations | why not |
 |---|---|---|
 | `resources/views/admin/**` + `resources/css/kbb/admin-skin-preview.css` | 223 | The admin panel is a single-locale operator tool; nothing in the plan asks for an Arabic admin. `resources/views/admin/app.blade.php` (153 of the 223) is off-limits to this lane, and its skin-preview block is *generated from* `admin-skin-preview.css` — converting the source without the generated copy would put the two out of step. Several `lane/admin-*` branches are live in this file set. |
-| `resources/views/invoices/document.blade.php` | 12 | The printable invoice/packing slip, owned by `lane/printed-documents`. A printed document's column alignment is a typographic decision, not a reading-direction one, and it should be made by whoever owns that lane. |
 | `resources/views/welcome.blade.php` | 18 | Laravel's stock welcome page. No route resolves to it (`grep -rn "view('welcome"` over `app/` and `routes/` finds nothing); its 18 declarations are a minified Tailwind dump on one line. Converting dead vendored CSS buys nothing. |
 | `resources/views/emails/**` | 0 | Nothing to convert — but recorded here because it is the one place where a future conversion would be **wrong**. Email clients (Outlook's Word renderer in particular) do not support logical properties, so the email layouts must stay physical whatever happens to the storefront. |
 

@@ -106,7 +106,7 @@ final class Checkpoint
             ->first();
 
         if ($existing !== null && $restart) {
-            DB::table(self::TABLE)->where('id', $existing->id)->update([
+            DB::table(self::TABLE)->where('id', $existing->id)->update(self::clearedDroppedFields() + [
                 'processed' => 0,
                 'created_rows' => 0,
                 'updated_rows' => 0,
@@ -149,10 +149,12 @@ final class Checkpoint
                 $processed = 0;
 
                 /*
-                 * AND THE FOUR COUNTERS ARE ZEROED WITH IT. They count
-                 * outcomes among the `processed` rows; leaving them behind
-                 * while the offset goes back to zero makes them describe a
-                 * pass that is over. That was not merely untidy: it is the
+                 * AND THE FOUR COUNTERS -- AND THE DROPPED-FIELD NAMES -- ARE
+                 * ZEROED WITH IT. They all describe outcomes among the
+                 * `processed` rows; leaving them behind while the offset goes
+                 * back to zero makes them describe a pass that is over.
+                 *
+                 * That was not merely untidy: it is the
                  * arithmetic EntityReport::verification() now uses to reach a
                  * verdict on a resumed run, and a stale refusal in it
                  * understates the rows the table should hold -- turning a
@@ -165,7 +167,7 @@ final class Checkpoint
                  * its baselineFor() is updated alongside this so the two agree
                  * rather than compensating twice.
                  */
-                $counters = [
+                $counters = self::clearedDroppedFields() + [
                     'created_rows' => 0,
                     'updated_rows' => 0,
                     'unchanged_rows' => 0,
@@ -357,6 +359,52 @@ final class Checkpoint
         }
 
         return self::$hasColumn = Schema::hasColumn(self::TABLE, 'dropped_fields');
+    }
+
+    /**
+     * The column reset that belongs beside `processed`, as an update fragment.
+     *
+     * ── THE OTHER HALF OF THE STALENESS Lane FIN2 FIXED ONE LEVEL UP ────────
+     *
+     * `dropped_fields` is the set of fields an entity declared it is NOT
+     * carrying, unioned across the batches of one pass. open() zeroes
+     * `processed` and the four counters when a run is restarted and when a
+     * FINISHED entity is run again -- because both mean "a new pass over a new
+     * file starts at row one" -- and it did not clear this one with them.
+     *
+     * So a field the PREVIOUS export of a file carried was still being named
+     * after a new export of that same file stopped carrying it. The runbook's
+     * sequence makes that the ordinary case and not an edge: a full import, a
+     * delta, then a cutover delta, each from a fresh export of the same
+     * entities. Fix `weight` in WooCommerce, export again, re-run, and the
+     * progress page still reads "... and 22 fields skipped (weight, ...)" --
+     * the owner's one check on whether his catalogue came across whole,
+     * answering about an export he has already replaced.
+     *
+     * It over-reports rather than under-reports, which is the same shape and
+     * the same danger as the sentence FIN2 scoped in ImportChain: the number
+     * beside the names is derived from this list, so a stale name inflates a
+     * count whose whole job is to be exact.
+     *
+     * NOTHING IS LOST BY CLEARING IT. The list is not a record of history, it
+     * is this pass's account of this file: advance() re-reports every field the
+     * new export is still missing, on the new pass's first committed batch, and
+     * unions it back in. A field that is genuinely still dropped is named again
+     * within one batch; one that has been fixed is not named at all, which is
+     * the whole point.
+     *
+     * RETURNS AN EMPTY FRAGMENT WHEN THE COLUMN IS NOT THERE, for the reason
+     * mergeDroppedFields() gives at length: these packages are applied by hand,
+     * and an import that dies because a progress-page nicety has no column is a
+     * far worse failure than a progress page that cannot show one number. An
+     * UPDATE naming a column that does not exist throws, and this one runs
+     * before a single row has been imported.
+     *
+     * @return array<string, null>
+     */
+    private static function clearedDroppedFields(): array
+    {
+        return self::columnExists() ? ['dropped_fields' => null] : [];
     }
 
     private function mergeDroppedFields(array $fields): ?string
