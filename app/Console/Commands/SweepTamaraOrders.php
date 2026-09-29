@@ -26,11 +26,23 @@ use Illuminate\Console\Command;
  *     0 * * * * cd <app root> && php artisan payments:tamara-sweep >> storage/logs/tamara-sweep.log 2>&1
  *
  * The owner does not need a shell for it either: the same service is behind
- * POST /admin-api/payments/tamara/sweep, so the button on the payments screen
- * does exactly what this does. This command exists for the person who has a
- * shell, for CI, and because a service reachable only through a browser is one
- * that is hard to exercise at its seams — the same reasoning
- * ReconcilePayments states at its head.
+ * POST /admin-api/payments/tamara/sweep, so "Run the sweep" on
+ * Store -> Gateway webhooks does exactly what this does.
+ *
+ * ▲ THAT SENTENCE WAS FALSE FOR AS LONG AS THIS FILE EXISTED, and is worth
+ *   keeping as a note. It said "the button on the payments screen" and there
+ *   was no button anywhere: nothing in resources/views/admin/** called any of
+ *   the five Tamara endpoints, so the only caller of this service was this
+ *   command and a Playwright harness that POSTed to the endpoint directly. Lane
+ *   TM built the screen the sentence describes. A comment asserting that
+ *   somebody else's code exists is a claim like any other and this one went
+ *   unchecked for a release.
+ *
+ * This command exists for the person who has a shell, for CI, and because a
+ * service reachable only through a browser is one that is hard to exercise at
+ * its seams — the same reasoning ReconcilePayments states at its head. Its two
+ * siblings, payments:tamara-webhook and payments:tamara-limits, exist for the
+ * same reason and were added with that screen.
  *
  * EXIT CODES. 0 when the sweep ran and nothing was left in an error state, 1
  * when any order could not be read from Tamara — "I could not check" is not
