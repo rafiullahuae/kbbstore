@@ -34,6 +34,7 @@ const OUT = process.env.PT_OUT || `${APP}/docs/lane-pt-shots`;
 const FULL = 'lanept-heartleaf-toner';
 const DEVICE = 'lanept-led-mask';
 const UNTOUCHED = 'lanept-ceramide-moisturiser';
+const SET = 'lanept-glow-set';
 
 async function shoot(page, name, w, h, extra) {
   await page.setViewportSize({ width: w, height: h });
@@ -78,6 +79,17 @@ async function shoot(page, name, w, h, extra) {
       adminArabicBoxes: document.querySelectorAll('.kbbar').length,
       adminRteBars: document.querySelectorAll('.kpt-rte-bar').length,
       adminOpenEditors: document.querySelectorAll('.kpt-edit').length,
+      /* ── the "where it shows" control (round 2) ───────────────────────── */
+      ruleSelect: document.querySelector('[data-kpt-audience]')?.value ?? null,
+      ruleOptions: [...document.querySelectorAll('[data-kpt-audience] option')]
+        .map((n) => n.value + '=' + n.textContent.trim()),
+      ruleChips: [...document.querySelectorAll('.kpt-chip span')].map((n) => n.textContent.trim()),
+      ruleTicks: document.querySelectorAll('[data-kpt-tick]').length,
+      ruleTicked: [...document.querySelectorAll('[data-kpt-tick]:checked')].length,
+      rulePicker: !!document.querySelector('#kptRuleSearch'),
+      ruleSummaries: [...document.querySelectorAll('.kpt-row .kpt-meta')]
+        .map((n) => n.textContent.trim()).filter((x) => x.startsWith('On ')),
+
       adminCrumb: document.querySelector('#crumb')?.textContent ?? null,
       adminTitle: document.querySelector('#ptitle')?.textContent ?? null,
       adminNavRow: !!document.querySelector('#nav [data-go="product-tabs"]'),
@@ -123,8 +135,14 @@ async function signIn(page) {
   await page.goto(`${BASE}/ar/product/${FULL}/`, { waitUntil: 'networkidle' });
   for (const w of [390, 1280]) await shoot(page, '07-product-arabic', w, 2200);
 
-  /* THE CONTROL CASE, and the whole point of it: a product nobody has touched
-     draws exactly the tabs it drew before this package. */
+  /* A SET, which gets the sets-targeted tab and nothing a picker had to name. */
+  await page.goto(`${BASE}/product/${SET}/`, { waitUntil: 'networkidle' });
+  for (const w of [390, 1280]) await shoot(page, '09-product-set-rule', w, 2000);
+
+  /* THE CONTROL CASE, and the whole point of it: a product in neither the
+     targeted category nor the targeted brand, and not a set, shows NONE of the
+     four targeted tabs. This is the "another product page correctly without
+     it" half of the round-2 evidence. */
   await page.goto(`${BASE}/product/${UNTOUCHED}/`, { waitUntil: 'networkidle' });
   for (const w of [390, 1280]) await shoot(page, '08-product-untouched', w, 1800);
 
@@ -143,9 +161,37 @@ async function signIn(page) {
   await page.waitForTimeout(900);
   for (const w of [390, 1280]) await shoot(page, '02-admin-global-editor', w, 2100);
 
+  /* ── the round-2 control, in each of its three shapes ─────────────────── */
+
+  // CATEGORIES: the tick list, with the PARENT category ticked.
+  await page.setViewportSize({ width: 1280, height: 2100 });
+  await page.click('[data-kpt-open="global:1"]');
+  await page.waitForTimeout(500);
+  await page.click('[data-kpt-open="global:2"]');
+  await page.waitForTimeout(900);
+  for (const w of [390, 1280]) await shoot(page, '10-rule-categories', w, 2200);
+
+  // BRANDS: the same list shape over a different vocabulary.
+  await page.setViewportSize({ width: 1280, height: 2100 });
+  await page.click('[data-kpt-open="global:2"]');
+  await page.waitForTimeout(400);
+  await page.click('[data-kpt-open="global:4"]');
+  await page.waitForTimeout(900);
+  for (const w of [390, 1280]) await shoot(page, '11-rule-brands', w, 2200);
+
+  // PRODUCTS: the console's shared type-ahead, with a chip already picked.
+  await page.setViewportSize({ width: 1280, height: 2100 });
+  await page.click('[data-kpt-open="global:4"]');
+  await page.waitForTimeout(400);
+  await page.click('[data-kpt-open="global:6"]');
+  await page.waitForTimeout(900);
+  await page.fill('#kptRuleSearch', 'Heartleaf');
+  await page.waitForTimeout(1200);
+  for (const w of [390, 1280]) await shoot(page, '12-rule-products-picker', w, 2200);
+
   // Close it again before the product half, so the shots are not cumulative.
   await page.setViewportSize({ width: 1280, height: 1900 });
-  await page.click('[data-kpt-open="global:1"]');
+  await page.click('[data-kpt-open="global:6"]');
   await page.waitForTimeout(600);
 
   /* One product's whole picture. */

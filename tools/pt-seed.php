@@ -25,7 +25,18 @@
 ]);
 
 $brand = \App\Models\Brand::updateOrCreate(['slug' => 'anua'], ['name' => 'Anua']);
-$category = \App\Models\Category::updateOrCreate(['slug' => 'skincare'], ['name' => 'Skincare']);
+$other = \App\Models\Brand::updateOrCreate(['slug' => 'medicube'], ['name' => 'Medicube']);
+
+/* A REAL BRANCH, because the category rule inherits down it. (round 2)
+   Skincare -> Toners, and the toner sits in the CHILD while the tab is written
+   against the PARENT -- which is the case the whole inheritance decision is
+   about and the one a screenshot has to show. */
+$category = \App\Models\Category::updateOrCreate(['slug' => 'skincare'],
+    ['name' => 'Skincare', 'depth' => 0, 'path' => 'skincare']);
+$toners = \App\Models\Category::updateOrCreate(['slug' => 'toners'],
+    ['name' => 'Toners', 'parent_id' => $category->id, 'depth' => 1, 'path' => 'skincare/toners']);
+$devices = \App\Models\Category::updateOrCreate(['slug' => 'devices'],
+    ['name' => 'Devices', 'depth' => 0, 'path' => 'devices']);
 
 $pic = function (string $a, string $b): string {
     $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240">'
@@ -37,15 +48,18 @@ $pic = function (string $a, string $b): string {
 };
 
 $make = function (array $row) use ($brand, $category) {
+    $in = $row['category'] ?? $category;
+    $of = $row['brand'] ?? $brand;
+
     $p = \App\Models\Product::updateOrCreate(['slug' => $row['slug']], [
         'name' => $row['name'],
-        'type' => 'simple',
+        'type' => $row['type'] ?? 'simple',
         'status' => 'publish',
         'is_visible' => true,
         'price' => $row['price'],
         'stock_status' => 'instock',
-        'brand_id' => $brand->id,
-        'category_id' => $category->id,
+        'brand_id' => $of->id,
+        'category_id' => $in->id,
         'image' => $row['image'],
         'short_description' => $row['short'] ?? null,
         'description' => $row['description'] ?? null,
@@ -53,7 +67,7 @@ $make = function (array $row) use ($brand, $category) {
         'how_to_use' => $row['how_to_use'] ?? null,
     ]);
 
-    $p->categories()->syncWithoutDetaching([$category->id]);
+    $p->categories()->syncWithoutDetaching([$in->id]);
 
     return $p;
 };
@@ -62,6 +76,7 @@ $full = $make([
     'slug' => 'lanept-heartleaf-toner',
     'name' => 'Heartleaf 77% Soothing Toner 250ml',
     'price' => 9000,
+    'category' => $toners,
     'image' => $pic('#F7C6D4', '#E0567B'),
     'short' => '<p>A gentle daily toner that calms redness.</p>',
     'description' => '<p>A daily toner built around 77% houttuynia cordata extract. '
@@ -77,6 +92,8 @@ $device = $make([
     'slug' => 'lanept-led-mask',
     'name' => 'LED Recovery Mask',
     'price' => 149000,
+    'category' => $devices,
+    'brand' => $other,
     'image' => $pic('#CFE0F7', '#3E62A8'),
     'short' => '<p>Seven wavelengths, twenty minutes a session.</p>',
     'description' => '<p>A rechargeable LED mask with seven wavelengths and a twenty minute '
@@ -89,6 +106,8 @@ $make([
     'slug' => 'lanept-ceramide-moisturiser',
     'name' => 'Ceramide Barrier Moisturiser 50ml',
     'price' => 11500,
+    'category' => $devices,
+    'brand' => $other,
     'image' => $pic('#E7DCC9', '#9A7B45'),
     'short' => '<p>A plain, unscented barrier cream.</p>',
     'description' => '<p>A plain, unscented barrier cream with ceramides NP, AP and EOP. '
@@ -127,6 +146,72 @@ $patch = \App\Models\ProductTab::updateOrCreate(
             .'your face. Stop if it stings.</p>',
         'position' => 120,
         'is_enabled' => true,
+    ]
+);
+
+/* ─────────────────────────────── round 2: one tab per targeting rule ────── */
+
+$gift = $make([
+    'slug' => 'lanept-glow-set',
+    'name' => 'Glow Starter Set',
+    'price' => 24900,
+    'type' => 'set',
+    'image' => $pic('#EFD9C2', '#B07B3A'),
+    'short' => '<p>Three of our best sellers in one box.</p>',
+    'description' => '<p>A toner, a serum and a barrier cream, boxed together.</p>',
+]);
+
+// CATEGORIES, and the tab is written against the PARENT. The toner sits in
+// Skincare -> Toners and must inherit it; the LED mask is in Devices and must
+// not. That pair is the whole inheritance decision, on one screenshot.
+\App\Models\ProductTab::updateOrCreate(
+    ['product_id' => null, 'source_key' => null, 'title' => 'Ingredients policy'],
+    [
+        'body' => '<p>Every INCI list on this shop is copied from the box in front of us, not '
+            .'from the brand\'s website.</p>',
+        'position' => 130,
+        'is_enabled' => true,
+        'audience' => 'categories',
+        'audience_ids' => [$category->id],
+    ]
+);
+
+// BRANDS.
+\App\Models\ProductTab::updateOrCreate(
+    ['product_id' => null, 'source_key' => null, 'title' => 'How we authenticate'],
+    [
+        'body' => '<p>We buy this brand direct. Every box carries the importer sticker and we '
+            .'keep the invoice.</p>',
+        'position' => 140,
+        'is_enabled' => true,
+        'audience' => 'brands',
+        'audience_ids' => [$brand->id],
+    ]
+);
+
+// SETS — a type match, so the box built next month is covered too.
+\App\Models\ProductTab::updateOrCreate(
+    ['product_id' => null, 'source_key' => null, 'title' => 'If one item is out of stock'],
+    [
+        'body' => '<p>We hold the box until every product in it is back, or we call you and swap '
+            .'the missing one.</p>',
+        'position' => 150,
+        'is_enabled' => true,
+        'audience' => 'sets',
+        'audience_ids' => null,
+    ]
+);
+
+// SPECIFIC PRODUCTS.
+\App\Models\ProductTab::updateOrCreate(
+    ['product_id' => null, 'source_key' => null, 'title' => 'Ships in its own crate'],
+    [
+        'body' => '<p>This one leaves in a rigid crate rather than a bag, so it takes a day '
+            .'longer and cannot be same-day.</p>',
+        'position' => 160,
+        'is_enabled' => true,
+        'audience' => 'products',
+        'audience_ids' => [$device->id],
     ]
 );
 

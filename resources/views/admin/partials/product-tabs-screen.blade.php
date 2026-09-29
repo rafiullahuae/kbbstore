@@ -183,8 +183,16 @@
    list and the Save button has to stay reachable on a phone. */
 .kpt-ticks{max-height:210px;overflow-y:auto;border:1px solid var(--border,#e6e9f2);
   border-radius:var(--r-xs,9px);background:var(--surface,#fff);min-width:0}
-.kpt-tick{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;min-width:0;
-  font-size:12.5px;line-height:1.4;border-bottom:1px solid var(--border,#e6e9f2);cursor:pointer}
+/* `.kpt-f label.kpt-tick` and not `.kpt-tick`, which is the whole of why this
+   rule needs saying twice. A tick is a <label> and it sits inside a `.kpt-f`,
+   so `.kpt-f label{display:grid}` -- the rule that stacks a field's caption
+   over its control -- was winning on equal specificity and stacking the
+   CHECKBOX over its own text. Measured, not guessed: the box rendered on the
+   right-hand end of a two-row cell. Raising the specificity fixes it without
+   touching the rule that every other field on this screen depends on. */
+.kpt-f label.kpt-tick{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;min-width:0;
+  font-size:12.5px;font-weight:500;letter-spacing:0;color:var(--ink,#101729);line-height:1.4;
+  border-bottom:1px solid var(--border,#e6e9f2);cursor:pointer}
 .kpt-tick:last-child{border-bottom:0}
 .kpt-tick:hover{background:var(--surface-2,#f2f4fb)}
 .kpt-tick input{margin:2px 0 0;flex:none}
@@ -408,8 +416,12 @@
 
     var list = audience === 'categories' ? (boot.categories || []) : (boot.brands || []);
 
+    /* THE NAME, not the path. `path` is a chain of SLUGS -- a top-level
+       category's path is "skincare", which reads as a typo next to "Anua" on
+       the same row of chips. The path is where it belongs, under the name in
+       the tick list, where it is doing the job of telling two "Masks" apart. */
     for (var i = 0; i < list.length; i++) {
-      if (list[i].id === id) return list[i].path || list[i].name;
+      if (list[i].id === id) return list[i].name;
     }
 
     return '#' + id;
@@ -436,13 +448,29 @@
       return '<div class="kpt-note">There are no ' + esc(kind) + ' to pick yet.</div>';
     }
 
-    return '<div class="kpt-ticks">' + list.map(function (row) {
+    /* TICKED FIRST, and otherwise in the server's order. The list scrolls at
+       210px and a shop with thirty categories would otherwise open with the one
+       category that IS ticked somewhere below the fold -- a control that does
+       not show its own state. Sorted on a copy, so the bootstrap's list is not
+       reordered under the next render. */
+    var ordered = list.slice().sort(function (a, b) {
+      var ta = rule.ids.indexOf(a.id) !== -1 ? 0 : 1;
+      var tb = rule.ids.indexOf(b.id) !== -1 ? 0 : 1;
+      return ta - tb;
+    });
+
+    return '<div class="kpt-ticks">' + ordered.map(function (row) {
       var on = rule.ids.indexOf(row.id) !== -1;
 
       return '<label class="kpt-tick">'
         + '<input type="checkbox" data-kpt-tick="' + esc(row.id) + '"' + (on ? ' checked' : '') + '>'
         + '<span>' + esc(row.name)
-        + (kind === 'categories' && row.path && row.path !== row.name
+        /* The path ONLY when it is nested. `path` is a chain of slugs, so a
+           top-level category's path is its own slug -- "Cleansers" over
+           "cleansers", which reads as a rendering fault rather than as extra
+           information. A "/" in it is exactly the case where it earns its
+           line: it is what tells two "Masks" in different branches apart. */
+        + (kind === 'categories' && row.path && row.path.indexOf('/') !== -1
             ? '<small>' + esc(row.path) + '</small>' : '')
         + '</span></label>';
     }).join('') + '</div>';
