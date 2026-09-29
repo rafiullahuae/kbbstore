@@ -392,3 +392,61 @@ it('records the English it was translated from, so a later edit marks it stale',
         ->and($row->source_hash)->toBe(sha1(InterfaceStrings::english('store.cart.heading')))
         ->and($row->reviewed_at)->toBeNull('nobody has reviewed these yet and the column must say so');
 });
+
+/* ══════════════════ 5. the three groups the console could not open ══════════════════ */
+
+it('opens product tabs, video sections and clips on Content -> Translations', function () {
+    /*
+     * THE OTHER HALF OF THE CONTENT FIX, AND THE ONE THE OWNER ACTUALLY TOUCHES.
+     *
+     * TranslationsApiController::contentClassFor() resolves a group name by
+     * walking TranslationEstimate::CONTENT. ProductTab, UgcSection and UgcVideo
+     * were on no such list, so `?group=product_tabs` resolved to null and the
+     * screen could not list them AT ALL -- there was no way to type the Arabic
+     * for a product tab, a video section heading or a clip's title anywhere in
+     * the admin except the two editors that happen to draw an inline box.
+     *
+     * UgcSection has no inline box, so before this it had NO path at all: two
+     * columns the storefront reads through $section->t() and nowhere to fill
+     * them in. This is the assertion that it now has one.
+     *
+     * MUTATION: drop any of the three from TranslationEstimate::CONTENT and the
+     * matching group 404s here. Ran it for ugc_sections.
+     */
+    ArabicShop::on();
+
+    $admin = \App\Models\AdminUser::create([
+        'name' => 'Lane AR owner',
+        'email' => 'lane-ar-'.uniqid().'@example.com',
+        'password' => bcrypt('secret'),
+        'role' => 'owner',
+    ]);
+
+    $section = \App\Models\UgcSection::create([
+        'handle' => 'ar-'.uniqid(),
+        'title' => 'Shop the look',
+        'heading' => 'Shop the look',
+        'subheading' => 'Real routines from our community.',
+        'status' => 'publish',
+    ]);
+
+    foreach (['product_tabs', 'ugc_sections', 'ugc_videos'] as $group) {
+        $this->actingAs($admin, 'admin')
+            ->getJson('/admin-api/translations?locale=ar&group='.$group)
+            ->assertOk()
+            ->assertJsonPath('group', $group);
+    }
+
+    // And a heading typed there reaches the storefront reader, which is the
+    // whole point -- UgcRail::… calls $section->t('heading').
+    $this->actingAs($admin, 'admin')
+        ->postJson('/admin-api/translations', [
+            'locale' => 'ar', 'group' => 'ugc_sections', 'item_id' => $section->id,
+            'field' => 'heading', 'value' => 'تسوقي الإطلالة',
+        ])->assertOk();
+
+    TranslationStore::flush();
+    app()->setLocale('ar');
+
+    expect($section->fresh()->t('heading'))->toBe('تسوقي الإطلالة');
+});
