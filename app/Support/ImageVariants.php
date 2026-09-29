@@ -492,10 +492,151 @@ final class ImageVariants
      *
      * Thumbnails use srcsetFor(), not detailSrcsetFor(): a 66px box has no use
      * for a 1000px original, so there is nothing to read a header for.
+     *
+     * ── AND WHY IT TAKES AN ASPECT NOW (Lane IM2) ───────────────────────────
+     *
+     * The owner: "i want the product gallery images thumbnail to be cropped or
+     * load square size mini 100x100 only to reduce the page load." The strip is
+     * now `object-fit: cover` rather than `contain`, so each tile is a square
+     * CROP of its photograph instead of the whole photograph letterboxed inside
+     * a square. That is the picture he asked for, and it costs nothing — but it
+     * quietly invalidates the arithmetic above, and that IS worth a header
+     * read.
+     *
+     * A `w` descriptor states a candidate's WIDTH and `sizes` states the box's
+     * width, and under `contain` those two are the right pair: the picture is
+     * scaled until it fits, so the binding dimension is whichever one runs out
+     * first and the width descriptor is never an overstatement. Under `cover`
+     * the picture is scaled until it FILLS, so the binding dimension is the
+     * image's SHORT side — and for a photograph wider than it is tall the short
+     * side is the height, which no descriptor in a srcset mentions.
+     *
+     * Measured on this preview: a 1778x1000 photograph's 200w copy is 200x112.
+     * Covering a 66px square at device-pixel-ratio 3 wants 198 device pixels
+     * each way, so 112 rows of pixels are stretched to 198 — a 1.77x upscale,
+     * on a tile that was sharp the day before. A square or portrait original is
+     * untouched by any of this: its short side IS its width, and 200 >= 198.
+     *
+     * So: `$aspect` is the ORIGINAL's width divided by its height, and the
+     * declaration is the box multiplied by max(1, aspect) — the width a file
+     * must have for its short side to cover the box. For every square and every
+     * portrait that is exactly 1, so this returns the same '66px' it always
+     * returned and the rendered markup does not move a byte. Only a landscape
+     * photograph widens, and only by what it actually needs.
+     *
+     * The default is the unchanged answer, so every other caller and every
+     * photograph whose header could not be read gets today's behaviour rather
+     * than a guess.
+     *
+     * @param  float|null  $aspect  the original's width / height, or null for "not known"
      */
-    public static function thumbSizesAttribute(): string
+    public static function thumbSizesAttribute(?float $aspect = null): string
     {
-        return '66px';
+        if ($aspect === null || ! is_finite($aspect) || $aspect <= 1.0) {
+            return '66px';
+        }
+
+        // Ceil, not round: this declaration's whole job is to not understate,
+        // and a fractional CSS pixel is not a thing a sizes attribute can say.
+        return (int) ceil(66 * min($aspect, 8.0)).'px';
+    }
+
+    /**
+     * A photograph's width divided by its height, or null when that cannot be
+     * answered from this web root.
+     *
+     * ONLY FOR A CALLER THAT HAS ALREADY DECIDED THE ANSWER CAN BUY SOMETHING.
+     * This opens the original's header, which is the one cost srcsetFor()
+     * refuses to pay per tile; detailSrcsetFor() pays it and explains when that
+     * trade is right. The gallery strip is the one caller, it pays it once per
+     * shot on a page that already reads the same headers for the main frame's
+     * srcset, and it asks only when a variant exists to choose between.
+     *
+     * getimagesize() and not a database column for the reason the whole class
+     * is filesystem-backed: a column can disagree with the disk, and a `sizes`
+     * computed from a stale one serves the wrong file with no way to tell.
+     */
+    public static function aspectOf(string $image): ?float
+    {
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return null;
+        }
+
+        $source = self::insidePublicRoot($parts[2]);
+
+        if ($source === null) {
+            return null;
+        }
+
+        $info = @getimagesize($source);
+
+        if (! is_array($info) || (int) ($info[0] ?? 0) < 1 || (int) ($info[1] ?? 0) < 1) {
+            return null;
+        }
+
+        return (int) $info[0] / (int) $info[1];
+    }
+
+    /**
+     * What a REVIEW photograph is drawn at on the review wall
+     * (partials/reviews.blade.php, `.sr-pp`), which is the one surface on this
+     * shop where a shopper's phone camera original is painted into a card.
+     *
+     * ── WHY THIS TAKES THE COLUMN COUNT RATHER THAN GUESSING IT ─────────────
+     *
+     * `.sr-grid` is `column-count: var(--sr-cols, 4)` and `--sr-cols` is set
+     * from Review Settings, so the card's width is the OWNER'S, not this
+     * file's. Every other sizes declaration here can hardcode its breakpoints
+     * because the box behind it is fixed; this one cannot, and a hardcoded
+     * "300px" would be right at the default four columns and half the truth at
+     * two — which is a soft review photograph on the setting the owner is most
+     * likely to reach for. The partial already has `$cols` in hand
+     * (ReviewSettings::all()), so the exact number is free.
+     *
+     * THE ARITHMETIC, from sorina-reviews.css and the site's own gutters:
+     *   content width  = viewport - 2 x 22px page gutter, capped at 1680px
+     *   card           = (content - (cols - 1) x 14px column gap) / cols
+     *   card interior  = card - 2 x 16px card padding
+     *   .sr-pp.one     = the whole interior;  .sr-pp.multi = half of it, less
+     *                    the 4px grid gap
+     * Below 760px the stylesheet overrides the column count to 2 and the gap to
+     * 10px, so that branch is written out rather than derived.
+     *
+     * A BOX WITH A FIXED HEIGHT AND A COVER FIT, so the same caveat as the
+     * gallery thumbnail applies in principle — but not in size. `.sr-pp.one` is
+     * 160px tall against ~266px of width and `.sr-pp.multi` 76px against
+     * ~131px, so both boxes are WIDER than they are tall and a photograph has
+     * to be more than 1.66:1 before its height binds. At that point the
+     * understatement is under 7%, which cannot change which candidate a browser
+     * picks out of a list that steps 200 / 400 / 800. The gallery thumbnail is
+     * a square box, where the same question is a 1.77x upscale — that is why
+     * one of these reads a header and this one does not.
+     *
+     * @param  int   $columns  the value of --sr-cols
+     * @param  bool  $multi    true for the two-up grid a card with 2+ photographs draws
+     */
+    public static function reviewPhotoSizesAttribute(int $columns, bool $multi): string
+    {
+        // The setting is an integer the owner types; a zero or a negative would
+        // divide by nothing and a huge one would declare a sub-pixel box.
+        $columns = max(1, min(8, $columns));
+
+        $phone = $multi ? '21vw' : '43vw';
+
+        $wide = static function (string $content) use ($columns, $multi): string {
+            $card = "calc(($content - ".(($columns - 1) * 14)."px) / $columns - 32px)";
+
+            return $multi ? "calc(($card - 4px) / 2)" : $card;
+        };
+
+        // Three branches and not two: above 1724px the page stops growing (the
+        // 1680px site cap plus its gutters), so a vw term there would go on
+        // declaring a box that is no longer getting any wider.
+        return '(max-width: 760px) '.$phone
+            .', (max-width: 1724px) '.$wide('100vw - 44px')
+            .', '.$wide('1636px');
     }
 
     /**
