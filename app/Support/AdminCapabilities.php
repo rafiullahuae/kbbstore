@@ -185,6 +185,27 @@ final class AdminCapabilities
          */
         'sets.stock' => ['owner', 'manager'],
 
+        /*
+         * Catalog -> Product tabs (Lane PT, routes/product-tabs-admin.php).
+         * Tabs the owner writes himself: global ones that appear on every
+         * product, and ones that exist on a single product.
+         *
+         * TWO NEW CAPABILITIES AND NOT `catalog.manage`, which would have been
+         * the lazy answer and is wrong in BOTH directions. A global tab's body
+         * is operator-authored HTML printed on EVERY product page in the shop,
+         * so granting it to everyone who may correct a product's name is too
+         * wide; and requiring it would mean the person who writes the shipping
+         * copy must also be allowed to change prices, which is too narrow.
+         *
+         * SPLIT IN TWO for the reason reviews.view is split from
+         * reviews.moderate: reading what a product's tabs say is not the same
+         * act as rewriting the paragraph that appears on seven hundred pages.
+         * `editor` holds both, because this is storefront copy and that is what
+         * the editor role is for.
+         */
+        'producttabs.view' => ['owner', 'manager', 'editor'],
+        'producttabs.manage' => ['owner', 'manager', 'editor'],
+
         'content.manage' => ['owner', 'manager', 'editor'],
 
         /*
@@ -940,6 +961,33 @@ final class AdminCapabilities
          */
         ['GET', 'admin-api/set-stock', 'sets.stock'],
         ['POST', 'admin-api/set-stock', 'sets.stock'],
+
+        /*
+         * Catalog -> Product tabs (Lane PT). THE WRITES ABOVE THE READS,
+         * because RULES is first-match-wins: a `GET admin-api/product-tabs/**`
+         * rule listed first would resolve POST /product-tabs/product/7/override
+         * -- which rewrites what a live product page says -- to
+         * `producttabs.view`. Same shape as the Sets pair above it, and the
+         * same shape as the quiz-leads and coupons/manage mistakes this file
+         * names further down.
+         *
+         * A SEPARATE PATH FROM 'admin-api/products', deliberately. '*' never
+         * crosses a slash and '**' matches whole segments, so neither the
+         * catalogue rules below nor the sets rules above can ever claim
+         * 'admin-api/product-tabs' -- the hyphen makes it a different segment,
+         * not a child of 'admin-api/product'.
+         *
+         * GET admin-api/product-tabs/search is the product picker and falls
+         * correctly to `producttabs.view` through the read wildcard: it reads
+         * the catalogue by name and writes nothing.
+         */
+        ['POST', 'admin-api/product-tabs', 'producttabs.manage'],
+        ['POST', 'admin-api/product-tabs/**', 'producttabs.manage'],
+        ['PUT', 'admin-api/product-tabs/**', 'producttabs.manage'],
+        ['PATCH', 'admin-api/product-tabs/**', 'producttabs.manage'],
+        ['DELETE', 'admin-api/product-tabs/**', 'producttabs.manage'],
+        ['GET', 'admin-api/product-tabs', 'producttabs.view'],
+        ['GET', 'admin-api/product-tabs/**', 'producttabs.view'],
 
         // The redirect ledger sits under /categories/ but is a map of the
         // store's old URLs, so it is content rather than catalogue. Above the

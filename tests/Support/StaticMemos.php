@@ -17,6 +17,7 @@ use App\Services\Update\InstalledVersion;
 use App\Support\Facets;
 use App\Support\SiteHost;
 use App\Support\Money;
+use App\Support\ProductTabs;
 use App\Support\Shortcodes;
 use App\Support\SetPricing;
 use App\Support\Url;
@@ -71,6 +72,17 @@ final class StaticMemos
             IndexNow::class => static fn () => IndexNow::forgetKey(),
             InstalledVersion::class => static fn () => InstalledVersion::forget(),
             Facets::class => static fn () => Facets::reset(),
+            /*
+             * The authored product tabs, both layers (Lane PT).
+             *
+             * Same shape and the same reason as Setting::map() above: a
+             * per-process memo over a cache entry, so a test that writes a tab
+             * and then renders a product page would otherwise be served the
+             * answer whichever test ran first got. forgetMemo() clears only the
+             * memo, which is what a test needs; ProductTabs::flush() clears the
+             * cache too and is what the model hooks call.
+             */
+            ProductTabs::class => static fn () => ProductTabs::forgetMemo(),
             Money::class => static fn () => Money::forgetConfig(),
             Url::class => static fn () => Url::forgetBase(),
             /*

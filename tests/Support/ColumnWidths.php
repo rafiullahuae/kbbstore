@@ -432,6 +432,21 @@ final class ColumnWidths
             'tag' => 255,
             'title' => 255,
         ],
+        'product_tabs' => [
+            /*
+             * A HEADING, not prose: printed escaped into a <button> and an
+             * accordion heading. 120 is about twice the longest title that fits
+             * the tab strip at 1280 before it starts scrolling. (Lane PT)
+             */
+            'title' => 120,
+            /*
+             * The closed vocabulary App\Support\ProductTabs::SOURCE_KEY_PATTERN
+             * enforces: `builtin:how_to_use` is the longest literal and
+             * `global:` plus a bigint is the longest possible value. 64 says so;
+             * 255 would have said this column holds text.
+             */
+            'source_key' => 64,
+        ],
         'product_variants' => [
             'image' => 255,
             'sku' => 255,

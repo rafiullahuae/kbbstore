@@ -10,6 +10,7 @@ use App\Models\Review;
 use App\Services\DemoContent;
 use App\Services\ProductSections;
 use App\Services\SettingsService;
+use App\Support\ProductTabs;
 use App\Support\ReviewSettings;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -606,50 +607,36 @@ class ProductController extends Controller
     /**
      * The detail tabs.
      *
-     * Description and Ingredients come from the product; anything configured
-     * under product_tabs is appended. A tab with no content is dropped rather
-     * than rendered empty, so the bar never shows a dead heading.
+     * ── WHAT MOVED, AND WHAT DID NOT ───────────────────────────────────────
+     *
+     * The list itself is now App\Support\ProductTabs::forProduct(), because
+     * the owner can author tabs of his own -- global ones that appear on every
+     * product and ones that exist on a single product -- and because a product
+     * may hide or re-word a global tab. That is a decision about what a tab IS,
+     * and it belongs in one place rather than in a controller method. That
+     * file's header is the whole design, including what these tabs were before
+     * it existed and why the three built-ins stayed built in.
+     *
+     * The three built-in tabs still read the same two kinds of text they always
+     * did, and ProductTabs::builtins() carries the note that used to be here:
+     * the HEADINGS are interface strings, keyed, the same three words on every
+     * product page; the BODIES are this product's own prose, read with t()
+     * against its row. description, ingredients and how_to_use are all in
+     * TranslationStore::LONG_FIELDS, so they are fetched by this page in ONE
+     * query rather than carried in the map on every page of the site, and the
+     * first of the three reads pays for the other two. Blank still means
+     * untranslated: t() falls back to the English column.
+     *
+     * WHAT STAYED HERE, and why. The demo top-up and the never-empty fallback
+     * are both about the SHOP being empty rather than about what a tab is, and
+     * both are unchanged -- same order, same condition, same literals.
      */
     private function tabs($product): array
     {
-        /*
-         * TWO DIFFERENT KINDS OF TEXT, READ TWO DIFFERENT WAYS.
-         *
-         * The HEADINGS are interface: the same three words on every product
-         * page, so they are keys. They were English literals here, which is why
-         * the interface conversion never saw them — a heading built in a
-         * controller is still a heading.
-         *
-         * The BODIES are catalogue: this product's own prose, so they are t()
-         * against its row. description, ingredients and how_to_use are all in
-         * TranslationStore::LONG_FIELDS, so they are fetched by this page in
-         * ONE query rather than carried in the map on every page of the site.
-         * One query for all three and not three: longFor() records every id it
-         * was asked about, so the first of these three reads pays for the
-         * other two.
-         *
-         * Blank still means untranslated: t() falls back to the English column,
-         * so a product with an Arabic description and no Arabic ingredients
-         * shows both tabs with one of them in English rather than showing an
-         * empty tab or dropping it.
-         */
-        $tabs = [
-            ['title' => __('store.product.tab_description'), 'body' => (string) ($product->t('description') ?: $product->t('short_description'))],
-            ['title' => __('store.product.tab_ingredients'), 'body' => (string) ($product->t('ingredients') ?? '')],
-            ['title' => __('store.product.tab_how_to_use'), 'body' => (string) ($product->t('how_to_use') ?? '')],
-        ];
-
-        foreach ((array) $this->settings->get('product_tabs', []) as $custom) {
-            $tabs[] = [
-                'title' => (string) ($custom['title'] ?? ''),
-                'body' => (string) ($custom['body'] ?? ''),
-            ];
-        }
-
-        $tabs = array_values(array_filter(
-            $tabs,
-            fn ($t) => $t['title'] !== '' && trim(strip_tags($t['body'])) !== ''
-        ));
+        $tabs = ProductTabs::forProduct(
+            $product,
+            (array) $this->settings->get('product_tabs', [])
+        );
 
         // With demo content on, top the tabs up so the bar can be seen before
         // the real copy exists. Real tabs always come first.
