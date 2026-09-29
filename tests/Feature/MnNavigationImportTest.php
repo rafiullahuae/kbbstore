@@ -644,6 +644,41 @@ it('imports the same export twice and writes nothing the second time', function 
     foreach (mnItems() as $source => $item) {
         expect($item->id)->toBe($before[$source]->id, 'item '.$source.' is a different row after the second import');
     }
+
+    /*
+     * AND THE MATCH IS ON THE ID, NOT ON THE LABEL — which is the assertion
+     * that was missing. Renaming an item in WordPress is the commonest edit
+     * there is, and an importer matching on the label would file the renamed
+     * one as a brand new row and leave the old one in the menu for ever.
+     *
+     * MUTATION NOTE — RAN, AND THE FIRST ATTEMPT SURVIVED. Matching on `label`
+     * instead of `source_post_id` was green against an unchanged export,
+     * because every label still matched. It is red here: 8 rows in a table that
+     * should hold 7, with "Sale" still in the menu beside "Clearance".
+     */
+    $dir = sys_get_temp_dir().'/kbb-mn-renamed-'.bin2hex(random_bytes(4));
+    mkdir($dir, 0755, true);
+
+    foreach (glob(mnExportDir().'/*') as $file) {
+        copy($file, $dir.'/'.basename($file));
+    }
+
+    file_put_contents($dir.'/menu_items.csv', str_replace(
+        '"Sale","item"',
+        '"Clearance","item"',
+        (string) file_get_contents($dir.'/menu_items.csv')
+    ));
+
+    mnImport(['directory' => $dir]);
+
+    $renamed = mnItems();
+
+    expect(count($renamed))->toBe(7, 'a renamed menu item was imported as a second row');
+    expect($renamed[7503]->id)->toBe($before[7503]->id, 'a renamed item did not stay the same row');
+    expect($renamed[7503]->label)->toBe('Clearance');
+
+    array_map('unlink', glob($dir.'/*') ?: []);
+    rmdir($dir);
 });
 
 it('leaves a menu the owner typed by hand completely alone, and does not mount its own', function () {
@@ -765,10 +800,14 @@ it('flushes the five-minute navigation cache after an import', function () {
      * before the import — and the owner refreshes, sees no change, and imports
      * again.
      *
-     * MUTATION NOTE — RAN. Deleting the flush() call from
-     * MenuItemImporter::finalise() fails this test: the header still reads
-     * "Skincare" after the label was changed to "Skin care" in the export and
-     * re-imported.
+     * MUTATION NOTE — RAN, AND THE FIRST ATTEMPT SURVIVED. Deleting the
+     * flush() from MenuItemImporter::finalise() ALONE leaves this green,
+     * because MenuImporter::finalise() runs first and has already forgotten the
+     * key — nothing re-warms it in between, so the reader still sees fresh
+     * rows. Both calls are real (the menus one covers an import that carries
+     * menus.csv and no items), and the mutation that reddens this is deleting
+     * BOTH: the header then serves "Skincare" for five minutes after the import
+     * renamed it.
      */
     mnImport();
 
@@ -801,7 +840,7 @@ it('flushes the five-minute navigation cache after an import', function () {
     rmdir($dir);
 });
 
-it('imports the same rows at --batch=1 and at --batch=500', function () {
+it('imports the same rows at --batch=1, at --batch=500 and one row per request', function () {
     /*
      * A BATCH IS A SEPARATE TRANSACTION, and the parent link is the thing that
      * crosses one: `_menu_item_menu_item_parent` names a row that may be in the
@@ -816,10 +855,35 @@ it('imports the same rows at --batch=1 and at --batch=500', function () {
      * separate HTTP request; anything tallied across batches names only the
      * last request's data on a live site."
      *
-     * MUTATION NOTE — RAN. Removing the database half of
-     * MenuItemImporter::localItemId() — the `MenuItem::where('source_post_id')`
-     * lookup — leaves batch=500 green and fails batch=1 with three top-level
-     * items that should be children.
+     * ── AND BATCH SIZE ALONE CANNOT BREAK IT, WHICH IS WORTH SAYING ───────
+     *
+     * Two mutations were run against this and BOTH SURVIVED — removing the
+     * database half of `localItemId()`, and removing that AND finalise()'s
+     * repair loop. The reason is the finding: `ImportContext`'s id map is per
+     * RUN, not per batch, so at batch=1 the parent written by the previous
+     * batch is still in memory. Batch size changes when rows COMMIT; it does
+     * not change what the importer remembers.
+     *
+     * The boundary that does is a separate REQUEST, so this test now compares
+     * three shapes rather than two: everything in one batch, one row per batch,
+     * and one row per REQUEST — a fresh ImportRunner each time, the way Store →
+     * Import steps it. The third is what makes this assert a defence rather
+     * than a property.
+     *
+     * MUTATION NOTE — THREE RUN, ALL THREE SURVIVED, AND THAT IS THE FINDING
+     * RATHER THAN A GAP. Removing the database half of `localItemId()`;
+     * removing that AND finalise()'s repair loop; writing `null` into
+     * `source_parent_post_id`. None of them reddens this, and the reason is
+     * worth writing down: the id map is per RUN, and in THIS file every parent
+     * precedes its children, so every shape above resolves at import time and
+     * the deferred machinery is never reached.
+     *
+     * So this test asserts an AGREEMENT and not a defence, and that is what it
+     * is for. The defence is the next test, `it nests a child imported in an
+     * earlier request than its parent`, which reorders the file so a child
+     * comes first — and the `source_parent_post_id` mutation IS red there. Two
+     * tests, one property each, rather than one test that looks like it covers
+     * both.
      */
     $shape = static function (): array {
         $out = [];
@@ -841,16 +905,45 @@ it('imports the same rows at --batch=1 and at --batch=500', function () {
         return $out;
     };
 
+    $wipe = static function (): void {
+        MenuItem::query()->whereNotNull('source_post_id')->delete();
+        Menu::query()->whereNotNull('source_term_id')->delete();
+    };
+
     mnImport(['batchSize' => 500]);
     $big = $shape();
 
-    MenuItem::query()->whereNotNull('source_post_id')->delete();
-    Menu::query()->whereNotNull('source_term_id')->delete();
+    $wipe();
 
     mnImport(['batchSize' => 1]);
     $small = $shape();
 
+    $wipe();
+
+    // ONE ROW PER REQUEST. `limit` is what the import screen uses, and every
+    // call is a fresh ImportRunner holding a fresh importer and a fresh id map
+    // — which is the boundary batch size does not cross.
+    $manifest = mnManifest();
+    $key = 'mn-requests-'.bin2hex(random_bytes(4));
+
+    for ($request = 0; $request < 40; $request++) {
+        (new ImportRunner)->run(new ImportOptions(
+            directory: mnExportDir(),
+            sourceTimezone: $manifest['source']['timezone'],
+            adoptBySlug: true,
+            runKey: $key,
+            limit: 1,
+        ));
+
+        if (MenuItem::query()->whereNotNull('source_post_id')->count() === 7) {
+            break;
+        }
+    }
+
+    $sliced = $shape();
+
     expect($small)->toBe($big, 'one row per batch produced a different menu from all of them at once');
+    expect($sliced)->toBe($big, 'one row per REQUEST produced a different menu from all of them at once');
     expect(count($small))->toBe(7);
     expect($small[7504]['parent'])->toBe(7501);
 });
@@ -1117,11 +1210,19 @@ it('leaves no file in the export that nothing opens', function () {
      */
     $report = mnImport();
 
+    /*
+     * THE FILE NAME IS IN `field`, NOT IN `before`. ImportRunner's unread-file
+     * discard puts the name in `line` and in `field` and the ROW COUNT in
+     * `before` — so a test reading `before` compares file names against
+     * "1 data row, read by nothing" and passes whatever happens. Found by
+     * running this test's own mutation: unregistering MenuImporter left it
+     * green.
+     */
     $named = [];
 
     foreach ($report->for('export')->discards() as $discard) {
         foreach ($discard['samples'] ?? [] as $sample) {
-            $named[] = $sample['before'] ?? '';
+            $named[] = $sample['field'] ?? '';
         }
     }
 

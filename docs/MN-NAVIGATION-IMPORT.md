@@ -249,8 +249,20 @@ pictures.
 
 ## 10. The instrument
 
-`tests/Feature/MnNavigationImportTest.php` — **22 tests, 16 mutation notes, all
-16 run.**
+`tests/Feature/MnNavigationImportTest.php` — **22 tests, 21 mutation notes,
+every one of them RUN.** Twenty were applied by a driver that patches the source,
+runs the single test the note names, and reverts; the results are what the notes
+say, including four that did not go as written and were corrected rather than
+left as claims.
+
+**The four that survived their first mutation, and what each one taught:**
+
+| note | first attempt | what it showed |
+|---|---|---|
+| `it leaves no file in the export that nothing opens` | unregistering `MenuImporter` left it GREEN | the test read `before` off the discard sample, and the file name is in `field` — `before` holds "1 data row, read by nothing", so it was comparing file names against a row count and could never fail. **A test bug, found by its own mutation.** |
+| `it imports the same export twice` | matching on `label` left it GREEN | an unchanged export has unchanged labels, so the match key never showed. It now re-imports with an item RENAMED — the commonest edit in WordPress — and the mutation is red with 8 rows in a table that should hold 7. |
+| `it flushes the five-minute navigation cache` | deleting `MenuItemImporter`'s flush left it GREEN | `MenuImporter::finalise()` runs first and has already forgotten the key. Both calls are real; the note now names the mutation that is red, which is deleting both. |
+| `it imports the same rows at --batch=1, --batch=500 and one row per request` | three separate mutations all left it GREEN | `ImportContext`'s id map is per RUN, not per batch, and in this fixture every parent precedes its children — so batch size cannot reach the deferred path at all. The test asserts an AGREEMENT, the defence lives in the next test (which reorders the file so a child comes first), and the note says so instead of claiming cover it does not have. |
 
 **Two defects were found by an assertion rather than by design, and both are the
 kind only a measurement produces.**
