@@ -243,3 +243,21 @@ oversell — the decrement is a conditional `UPDATE` — and `SetStockReconciler
 resolves shelves correctly for the basket, so the owner's case is fixed either
 way. Fixing `perShelf()` itself means loading products and variants before the
 sum, which is a query-budget decision worth its own lane.
+
+---
+
+## Two guards that are red at this lane's base, and are not this lane's
+
+`ModuleSchemaEquivalenceTest > it answers every recorded cast exactly as it did
+before the shared schema` (5172 against a fixture of 4929) and
+`ModuleScreenPayloadTest > it sends every module screen the shape it sent
+before` (the header's tab count, 7 against 6) fail on **`fc5c322` with none of
+this lane's work in the tree** — checked out detached and run, identical numbers.
+
+They are already fixed on the integrator's branch by `0ab7f28`, *"Advance three
+fixtures for the flag bar and the cart-row controls, additively"*, which lands
+after this lane branched. Nothing here touches modules, their schemas or the
+header, and the fixtures are another lane's to advance. Merging this branch onto
+current `claude/kind-mayer-rpqesv` greens both.
+
+Everything else in the suite is green: **7,826 passed, 22 skipped**.
