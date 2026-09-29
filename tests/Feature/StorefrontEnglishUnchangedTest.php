@@ -203,6 +203,34 @@ it('renders byte-identical English on every storefront page after the __() conve
             . json_encode($reflowed));
 
     /*
+     * THE APPROVED REMOVALS, applied to the BEFORE side and counted.
+     *
+     * The mirror of the insertions below, and paired with them one for one: a
+     * lane that REPLACES a piece of chrome leaves a "before" with no "after" as
+     * well as an "after" with no "before", and cutting only one side leaves
+     * this walk comparing a page against itself minus half a change.
+     * EnglishRenderWalk::approvedRemovals() says what each one is.
+     */
+    $removed = [];
+    $removedTwice = [];
+
+    foreach (EnglishRenderWalk::approvedRemovals() as $name => $rule) {
+        $hits = 0;
+
+        foreach ($before as $uri => $html) {
+            $perPage = 0;
+            $before[$uri] = EnglishRenderWalk::cutApproved($html, $rule['pattern'], $perPage);
+            $hits += $perPage;
+        }
+
+        $removed[$name] = ['expected' => $rule['hits'], 'actual' => $hits];
+    }
+
+    expect(array_keys(array_filter($removed, fn (array $r): bool => $r['expected'] !== $r['actual'])))
+        ->toBe([], 'Each approved removal must match the elements it was written for. Got: '
+            . json_encode($removed));
+
+    /*
      * THE APPROVED INSERTIONS, applied to the AFTER side and counted.
      *
      * A whole element deliberately added to the layout has no "before" to
@@ -211,10 +239,17 @@ it('renders byte-identical English on every storefront page after the __() conve
      * for why that is preferred to moving BASE_COMMIT — which would blind this
      * walk, and PrintedEnglishUnchangedTest with it, to every other lane's work.
      *
-     * A page may carry an approved element at most ONCE. Two is a second
-     * @include picked up in a merge, which is a real failure and one that
-     * nothing else here would see: the totals could still add up while one page
-     * carried two strips and another none.
+     * A page may carry an approved element at most ONCE, unless the rule says
+     * otherwise with `perPage`. Two is a second @include picked up in a merge,
+     * which is a real failure and one that nothing else here would see: the
+     * totals could still add up while one page carried two strips and another
+     * none.
+     *
+     * `perPage` is for an element the layout draws a FIXED number of times —
+     * the footer's three column headings are one rule and three matches on
+     * every page that has a footer — and it is a number rather than a switch
+     * for the same reason the total is: four headings on one page and two on
+     * another would still add to the right total, and the guard is what notices.
      */
     $inserted = [];
     $twice = [];
@@ -226,8 +261,11 @@ it('renders byte-identical English on every storefront page after the __() conve
             $perPage = 0;
             $after[$uri] = EnglishRenderWalk::cutApproved($html, $rule['pattern'], $perPage);
 
-            if ($perPage > 1) {
-                $twice[] = $name . ' appears ' . $perPage . ' times on ' . $uri;
+            $allowed = $rule['perPage'] ?? 1;
+
+            if ($perPage > $allowed) {
+                $twice[] = $name . ' appears ' . $perPage . ' times on ' . $uri
+                    . ' (at most ' . $allowed . ' expected)';
             }
 
             $hits += $perPage;
@@ -241,6 +279,23 @@ it('renders byte-identical English on every storefront page after the __() conve
         ->toBe([], "An approved insertion no longer appears on the pages it was approved for.\n"
             . "Fewer means the element stopped rendering; more means a page gained it.\n"
             . 'Read the diff, then move the count. Got: ' . json_encode($inserted));
+
+    /*
+     * 1b. The approved SUBSTITUTIONS, applied to the same BEFORE side.
+     *
+     * One entry: the shipped card style, which the owner asked to change in as
+     * many words. Same mechanism the printed documents' test already uses —
+     * applyApproved() counts what each rule fired, and a rule that stops
+     * excusing anything fails here rather than quietly excusing nothing. See
+     * EnglishRenderWalk::approvedStorefrontChanges() for the argument.
+     */
+    $substituted = EnglishRenderWalk::applyApproved(
+        EnglishRenderWalk::approvedStorefrontChanges(),
+        $before,
+    );
+    expect(array_keys(array_filter($substituted, fn (array $r): bool => $r['expected'] !== $r['actual'])))
+        ->toBe([], 'Each approved storefront change must match exactly the pages it was written for. Got: '
+            . json_encode($substituted));
 
     // 2. The bar itself.
     $changed = [];

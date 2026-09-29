@@ -52,18 +52,51 @@ function flArabicOn(bool $rtl = true): void
     TranslationStore::flush();
 }
 
+
+/**
+ * The document with every `@font-face` block removed.                Lane PERF
+ *
+ * ── WHY THIS IS NOT TIDINESS ────────────────────────────────────────────────
+ *
+ * The three cases below scan for `font-family:` and check what comes FIRST in
+ * what they find, because a stack that puts Cairo first substitutes the brand
+ * face instead of backing it up. Since Cairo is served by this shop rather than
+ * by Google, the page also carries twelve `@font-face{font-family:'Cairo';…}`
+ * rules — and a `@font-face` DECLARES a family, it does not choose between
+ * families. Scanned as a stack, every one of them reads "Cairo is first" and
+ * the test reports a substitution that is not there.
+ *
+ * This is the same shape of fault CardsBannerSectionShapeTest::bnsMarkup()
+ * exists for: "an absence assertion has to be made against the MARKUP, not
+ * against the markup plus a document that mentions every class by name".
+ */
+function flStacksOnly(string $html): string
+{
+    return (string) preg_replace('/@font-face\s*\{[^}]*\}/i', '', $html);
+}
+
 it('names Cairo in the font stack on an Arabic page, not just in a <link>', function () {
     flArabicOn();
 
     $html = test()->get('/ar/my-wishlist/')->assertOk()->getContent();
 
-    expect(str_contains($html, 'family=Cairo'))->toBeTrue(
-        'The stylesheet link is gone; the rest of this test would pass against a face that is never fetched.');
+    /* WAS `family=Cairo`, WHICH WAS A GOOGLE FONTS URL — Lane PERF. Cairo is
+       served by this shop now (App\Support\WebFonts carries the measurement),
+       so what has to be true is unchanged and only its spelling moved: the page
+       declares the face and tells the browser to fetch it early. A preload for
+       a file the page never names in a @font-face is the same "never fetched"
+       failure this assertion was written for, so both halves are checked. */
+    expect(str_contains($html, "@font-face{font-family:'Cairo'"))->toBeTrue(
+        'The face declaration is gone; the rest of this test would pass against a face that is never fetched.');
+    expect($html)->toContain('rel="preload" as="font"');
+    expect($html)->toMatch('#href="[^"]*cairo-arabic-[^"]*\.woff2"#');
 
     // At least one real font stack has to say Cairo, or the download is wasted
     // and every Arabic word renders in the device fallback.
-    preg_match_all('/font-family\s*:\s*([^;}]*Cairo[^;}]*)/i', $html, $stacks);
-    preg_match_all('/--sans\s*:\s*([^;}]*Cairo[^;}]*)/i', $html, $tokens);
+    $stacksOnly = flStacksOnly($html);
+
+    preg_match_all('/font-family\s*:\s*([^;}]*Cairo[^;}]*)/i', $stacksOnly, $stacks);
+    preg_match_all('/--sans\s*:\s*([^;}]*Cairo[^;}]*)/i', $stacksOnly, $tokens);
 
     $named = array_merge($stacks[1], $tokens[1]);
 
@@ -76,7 +109,7 @@ it('appends Cairo after the Latin face instead of substituting for it', function
 
     $html = test()->get('/ar/my-wishlist/')->getContent();
 
-    preg_match_all('/(?:font-family|--sans)\s*:\s*([^;}]*Cairo[^;}]*)/i', $html, $m);
+    preg_match_all('/(?:font-family|--sans)\s*:\s*([^;}]*Cairo[^;}]*)/i', flStacksOnly($html), $m);
 
     // Quotes are NOT excluded from that character class on purpose: every stack
     // on this page quotes at least one family name, and a class that stopped at
@@ -122,10 +155,15 @@ it('asks for weight 800, which the storefront uses and which costs no font bytes
     // — same URL, same 30,896 bytes, verified by fetching both. Without 800 the
     // wordmark, the checkout h1 and the order total all drop a weight step on
     // an Arabic page while the English page keeps it.
-    preg_match('/family=Cairo:wght@([0-9;]+)/', $html, $m);
+    /* WAS a `family=Cairo:wght@…` query string — Lane PERF. The weights are
+       twelve @font-face rules now rather than a list in a URL, and the thing
+       that must not be lost is the same: 79 declarations in the storefront set
+       text at 800, and Cairo's four weights are ONE variable file per subset,
+       so 800 costs no font bytes at all. */
+    preg_match_all("/@font-face\{font-family:'Cairo';font-style:normal;font-weight:(\d+);/", $html, $m);
 
-    expect($m)->not->toBeEmpty('The Cairo request no longer names its weights.');
-    expect(in_array('800', explode(';', $m[1]), true))->toBeTrue(
+    expect($m[1])->not->toBeEmpty('The Cairo request no longer names its weights.');
+    expect(in_array('800', $m[1], true))->toBeTrue(
         'Weight 800 has been dropped from the Cairo request. 79 declarations in the storefront style text at font-weight:800, and it costs no font bytes: the same variable WOFF2 serves every weight in the list.');
 });
 
@@ -140,5 +178,5 @@ it('loads the Arabic face with RTL switched off as well', function () {
 
     expect(str_contains($html, 'dir="ltr"'))->toBeTrue(
         'This test is meant to run with the mirrored layout OFF; if dir is rtl the setting did not apply.');
-    expect($html)->toContain('family=Cairo')->and($html)->toContain('Cairo');
+    expect($html)->toContain("@font-face{font-family:'Cairo'")->and($html)->toContain('Cairo');
 });

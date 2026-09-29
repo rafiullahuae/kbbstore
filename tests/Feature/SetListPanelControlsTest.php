@@ -583,8 +583,32 @@ it('draws the list on the product page and the admin preview, and nowhere else',
 
     sort($includes);
 
+    /* ── A THIRD INCLUDE, AND THE PIN IS ADVANCED RATHER THAN WIDENED. (Lane PDP)
+     *
+     * resources/views/store/pdp-preview/parts/options.blade.php is the buy
+     * column of the five product-page designs the owner is choosing between
+     * (docs/PDP-PRODUCT-PAGE-DESIGNS.md). It draws the panel in EXACTLY the
+     * place and for exactly the reason this guard's header allows: a set's own
+     * product page, in the buy column, in the slot the bundle bars occupy on an
+     * ordinary product, reading `$product`, at 346px on a phone and 425–640px
+     * at 1280. It is not a new SURFACE — it is the same surface, drawn five
+     * ways, behind `auth:admin` and `catalog.view` where no shopper can reach
+     * it.
+     *
+     * THE POINT OF LISTING IT RATHER THAN LOOSENING THE ASSERTION. A `count() >=
+     * 2` or a "starts with resources/views/store" would stop catching the thing
+     * this guard is for — the cart row, the order page, a second full list
+     * beside the fan. The list stays exact; it just has three entries while
+     * these previews exist.
+     *
+     * ▲ AND IT GOES BACK TO TWO. Four of the five designs are deleted the day
+     *   the owner picks one, and the fifth becomes an edit to
+     *   resources/views/store/product.blade.php rather than a sixth copy of it.
+     *   Whoever does that removes this line with the directory.
+     */
     expect($includes)->toBe([
         'resources/views/admin/previews/set-appearance.blade.php',
+        'resources/views/store/pdp-preview/parts/options.blade.php',
         'resources/views/store/product.blade.php',
     ], 'The set list is drawn somewhere new; it is sized for the buy column and reads $product.');
 });

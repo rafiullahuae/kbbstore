@@ -692,6 +692,19 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/catalog-admin.php';
 
         /*
+         * The five product-page designs the owner is choosing between (Lane
+         * PDP). PREVIEW ONLY -- nothing here is reachable from the shop, and a
+         * test fetches the real product page with ?layout=, ?pv=, ?candidate=
+         * and ?lang= and requires byte-identity with the plain page, because a
+         * previous round put a ?layout= switch on the live template and it cost
+         * ~240 lines of dead CSS to take out again.
+         *
+         * Inside this group, and governed by the catalog.view rule that already
+         * covers admin-api/catalog/** -- so it needs no capability of its own.
+         */
+        require __DIR__.'/pdp-preview-admin.php';
+
+        /*
          * Catalog → Sets. A set is a `products` row with type='set' plus the
          * product_set_items pivot, so these endpoints create, reprice,
          * republish and DELETE products — and GET /admin-api/sets/products
@@ -723,6 +736,17 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * 2027_03_22_000200_clear_caches_cards_banner.
          */
         require __DIR__.'/banners-admin.php';
+
+        /*
+         * Appearance → Grid sections (Lane GS). The owner's ONE reusable
+         * product-grid section, used as many times as he likes. Writes what the
+         * front page shows, reads the catalogue for the manual picker, and
+         * renders a storefront partial from an unsaved draft — so it belongs
+         * inside this guarded group like every other Appearance writer. Its own
+         * capabilities are `gridsections.view` and `gridsections.manage`; its
+         * package ships 2027_05_11_000100_clear_caches_grid_sections.
+         */
+        require __DIR__.'/grid-sections-admin.php';
 
         // Catalog → Categories & Brands: merge, the redirect ledger, and the
         // brand tree with its reorder. Same guarded group — the redirect

@@ -19,6 +19,23 @@ use App\Support\GridSkins;
 class HomepageSections
 {
     /** key => [label, description, has a product grid, default skin] */
+    /*
+     * ── THE FOUR RAILS' OWN SKINS NOW FOLLOW THE SHOP'S ───────── Lane PG2 ──
+     *
+     * The fourth element of a row is that section's DEFAULT CARD STYLE, and the
+     * four product rails carried four different ones — `classic`, `soft`,
+     * `luxe` and `ribbon`. They are `GridSkins::DEFAULT` now, because the owner
+     * asked for one card "on the whole website everywhere" and the homepage is
+     * the one place that was deliberately exempt from the store-wide setting:
+     * these rails CHOOSE their own, which is exactly what "used wherever a grid
+     * does not choose its own" excludes.
+     *
+     * A SHOP THAT HAS ALREADY SAVED A HOMEPAGE KEEPS WHAT IT SAVED. all() reads
+     * the stored payload first and falls back to the registry, so this moves the
+     * rails on a shop that has never opened Appearance → Homepage and nothing
+     * on one that has. Either way each rail's picker is still there and still
+     * offers all 32.
+     */
     public const REGISTRY = [
         'hero'        => ['Hero slider', 'The rotating banners at the top.', false, null],
         'delivery'    => ['Delivery strip', '1-3 days delivery, free over AED 199.', false, null],
@@ -51,8 +68,8 @@ class HomepageSections
          */
         'cards_banner' => ['Cards banner', 'An auto-scrolling row of picture cards. Build the sets in Appearance → Banners → Cards banner and pick which one shows; nothing shows until you do.', false, null],
         'categories'  => ['Category circles', 'Shop by category, scrollable.', false, null],
-        'bundles'     => ['Big savings bundles', 'Skincare sets and routines.', true, 'classic'],
-        'recommended' => ['Recommended for you', 'Handpicked essentials.', true, 'soft'],
+        'bundles'     => ['Big savings bundles', 'Skincare sets and routines.', true, GridSkins::DEFAULT],
+        'recommended' => ['Recommended for you', 'Handpicked essentials.', true, GridSkins::DEFAULT],
         'routine'     => ['Build your routine', 'The six-step routine.', false, null],
         'quiz'        => ['Skin quiz', 'The two-minute routine finder.', false, null],
         'brands'      => ['Top brands', 'Brand tiles with product counts.', false, null],
@@ -92,14 +109,66 @@ class HomepageSections
          */
         'videos'      => ['Video rail', 'A shoppable video rail. Pick which section in Content → Shoppable video → Appearance → Homepage; nothing shows until you do.', false, null],
         'instagram'   => ['Instagram Profile', 'Recent posts and reels from our own Instagram, with the profile box. Connect it in Content → Instagram; nothing shows until you do.', false, null],
-        'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, 'luxe'],
-        'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, 'ribbon'],
+        'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, GridSkins::DEFAULT],
+        'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, GridSkins::DEFAULT],
         'blog'        => ['Skincare guide', 'Latest journal articles.', false, null],
         'about'       => ['About us', 'Story and proof numbers.', false, null],
         'reviews'     => ['Customer reviews', 'Score summary and review cards.', false, null],
         'trust'       => ['Trust row', 'Shipping, payments, authenticity, support.', false, null],
         'newsletter'  => ['Newsletter', 'Ten percent off the first order.', false, null],
     ];
+
+    /**
+     * THE REGISTRY THE REST OF THIS CLASS READS: the const above, plus one row
+     * per grid section the owner has built (Lane GS).
+     *
+     * ── WHY THE CONST COULD NOT SIMPLY GROW A ROW ───────────────────────────
+     *
+     * The owner asked for ONE section type he can add as many times as he
+     * likes — "we can re-use this grid section anywhere multiple times with
+     * different products etc selection". There is therefore no fixed number of
+     * sections any more, and `REGISTRY` is a `const`. Every other property this
+     * screen has — the saved order, the Desktop and Mobile switches, the
+     * dividers, the presets, `settle()`'s renumbering — is keyed off whatever
+     * this method returns, so returning the const plus the built instances
+     * gives an instance ALL of it and adds no second mechanism beside it. That
+     * is the thing this file's own comments say the project has already paid
+     * for elsewhere, and it would surface here as two screens disagreeing about
+     * where a section sits.
+     *
+     * ── IT COSTS AN UNCONFIGURED SHOP NOTHING ───────────────────────────────
+     *
+     * With no instances built, `GridSections::registryRows()` returns `[]` and
+     * `self::REGISTRY + []` is `self::REGISTRY` — the same keys in the same
+     * order, so `isDefaultOrder()` is unchanged, `orderStyle()` still returns
+     * `''`, and the page emits not one extra byte. That is the same argument
+     * the `cards_banner` row above makes, one level further along.
+     *
+     * ── `+` AND NOT array_merge(), WHICH IS NOT A STYLE CHOICE ──────────────
+     *
+     * Both preserve string keys, but `+` keeps the LEFT operand's value on a
+     * collision and `array_merge()` keeps the right's. The const must win: a
+     * `grid_*` key cannot collide with a shipped one today, and if a future
+     * release ever shipped a section whose key an instance already held, the
+     * shipped section is the one the template draws and the instance is the one
+     * that would silently take its place on the page.
+     *
+     * ── THE INSTANCES ARE APPENDED, AND THE TEMPLATE AGREES ─────────────────
+     *
+     * They land AFTER the seventeen, and store/home.blade.php draws its loop
+     * after `newsletter` for exactly that reason: this list IS the default
+     * order, and a key whose position here disagrees with the template would
+     * hand Appearance → Homepage a picture the shop does not draw. The owner
+     * moves an instance up the page with the ↑ on that screen, which is the
+     * mechanism that already exists and which now emits the ordering rules for
+     * it too.
+     *
+     * @return array<string, array{0: string, 1: string, 2: bool, 3: string|null}>
+     */
+    public static function registry(): array
+    {
+        return self::REGISTRY + GridSections::registryRows();
+    }
 
     /**
      * Sections whose markup is drawn INSIDE another section, and the host they
@@ -350,7 +419,7 @@ class HomepageSections
         $out = [];
         $order = 0;
 
-        foreach (self::REGISTRY as $key => [$label, $desc, $hasGrid, $defaultSkin]) {
+        foreach (self::registry() as $key => [$label, $desc, $hasGrid, $defaultSkin]) {
             $row = is_array($saved[$key] ?? null) ? $saved[$key] : [];
             $cast = self::castRow($key, $row);
 
@@ -499,7 +568,7 @@ class HomepageSections
      */
     private static function isDefaultOrder(array $rows): bool
     {
-        return array_keys($rows) === array_keys(self::REGISTRY);
+        return array_keys($rows) === array_keys(self::registry());
     }
 
     /**
@@ -741,7 +810,7 @@ class HomepageSections
      */
     private static function fieldsFor(string $key): array
     {
-        $defaultSkin = (string) (self::REGISTRY[$key][3] ?? '');
+        $defaultSkin = (string) (self::registry()[$key][3] ?? '');
 
         return ModuleSchema::normalised(
             self::class.':'.$defaultSkin,
@@ -767,7 +836,7 @@ class HomepageSections
     {
         return ['skin' => [
             'options' => GridSkins::ALL,
-            'default' => (string) (self::REGISTRY[$key][3] ?? ''),
+            'default' => (string) (self::registry()[$key][3] ?? ''),
         ]];
     }
 
@@ -797,7 +866,7 @@ class HomepageSections
     {
         $schema = self::SECTION_SCHEMA;
 
-        if (! (self::REGISTRY[$key][2] ?? false)) {
+        if (! (self::registry()[$key][2] ?? false)) {
             unset($schema['skin']);
         }
 
@@ -846,7 +915,7 @@ class HomepageSections
         return [
             'desktop' => (bool) $out['desktop'],
             'mobile' => (bool) $out['mobile'],
-            'skin' => self::REGISTRY[$key][2] ? (string) $out['skin'] : null,
+            'skin' => (self::registry()[$key][2] ?? false) ? (string) $out['skin'] : null,
         ];
     }
 
@@ -870,7 +939,7 @@ class HomepageSections
         $order = 0;
 
         foreach ($sections as $key => $row) {
-            if (! isset(self::REGISTRY[$key])) {
+            if (! isset(self::registry()[$key])) {
                 continue;
             }
 

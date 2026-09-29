@@ -240,7 +240,12 @@
   var SET_KEYS = ['name', 'status', 'position', 'ratio', 'animation', 'shadow',
     'per_view', 'peek', 'speed_ms', 'gap', 'card_radius',
     'autoplay', 'pause_on_hover', 'show_text', 'show_button', 'show_dots', 'show_arrows',
-    'bg_mode', 'bg_color', 'bg_image', 'btn_bg', 'btn_text', 'btn_hover', 'title_pos'];
+    'bg_mode', 'bg_color', 'bg_image', 'btn_bg', 'btn_text', 'btn_hover', 'title_pos',
+    /* Lane BN2. `kind` is the banner TYPE and the other three belong to the
+       slider. They are in this one list with everything else because the Save
+       and the preview both send exactly these keys — a control added to the
+       screen without its key here is a control that saves nothing. */
+    'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m'];
 
   var CARD_KEYS = ['image', 'alt', 'heading', 'body', 'button_label', 'button_url', 'position', 'status'];
 
@@ -518,11 +523,63 @@
       + 'body{padding:14px 0}</style></head><body><div class="wrap">'
       + body.html + '</div></body></html>';
 
+    /*
+     * ── THE FRAME HAS TO BE TALL ENOUGH FOR WHAT IS IN IT — Lane BN2 ───────
+     *
+     * The three fixed heights are the CARDS row's, and they are right for it:
+     * its own height comes from a card ratio the phone and the desktop both
+     * narrow to about the same band. A slider is a single picture at the shape
+     * the owner chose, so a 21:9 banner at 1280 is 560px tall and a 470px frame
+     * cut the bars — the controls he is choosing between — off the bottom.
+     *
+     * Computed from the RATIO TOKEN, which is two integers out of
+     * BannerSet::SLIDER_RATIOS and therefore arithmetic rather than a
+     * measurement; the phone's token below 768px, because that is the
+     * breakpoint the partial itself switches at. The slack is the body padding,
+     * the wrap's gutters and the bar strip.
+     */
     var height = previewWidth <= 430 ? 470 : (previewWidth <= 800 ? 430 : 470);
+    var box = 'height:' + height + 'px';
 
+    if (draft && draft.set && draft.set.kind === 'slider') {
+      var token = String((previewWidth < 768 ? draft.set.slider_ratio_m : draft.set.slider_ratio) || '');
+      var parts = token.split('/');
+      var w = Number(parts[0]);
+      var h = Number(parts[1]);
+      var ratio = (w > 0 && h > 0) ? w / h : 16 / 9;
+
+      /*
+       * AN ASPECT RATIO ON THE FRAME, NOT A HEIGHT, and the difference shows on
+       * a narrow console. The wrapper is `width:<previewWidth>px;max-width:100%`
+       * — so on a 1280 console the 1280 preview is really about 900 wide, and a
+       * height computed for 1280 leaves a third of the frame empty. Given the
+       * ratio instead, the frame's height follows whatever width it ends up
+       * with, which is also what the banner inside it does. No measurement: it
+       * is two integers out of BannerSet::SLIDER_RATIOS and a constant.
+       */
+      box = 'aspect-ratio:' + (previewWidth / (Math.round((previewWidth - 36) / ratio) + 92)).toFixed(4) + ';height:auto';
+    }
+
+    /*
+     * ── `allow-scripts`, AND `allow-same-origin` IS GONE ──────────────────
+     *
+     * The slider is the first storefront section with a script in it, and a
+     * preview that cannot run it would draw the no-script fallback — a plain
+     * rail with no arrows and no bars, which is precisely what the owner is
+     * being asked to choose between. So the frame has to run scripts.
+     *
+     * DROPPING `allow-same-origin` IS WHAT MAKES THAT SAFE, and it is a
+     * TIGHTENING rather than a trade. The two together are the documented
+     * escape hatch — a frame with both can reach the parent document and its
+     * cookies, so the sandbox buys nothing. With `allow-scripts` alone the
+     * frame is a unique opaque origin: the script runs, and it can touch
+     * nothing outside its own document. The section needs no more than that —
+     * it reads its own elements and its own data attributes — and the cards
+     * banner, which has no script at all, cannot tell the difference.
+     */
     stage.innerHTML = '<div style="width:' + previewWidth + 'px;max-width:100%">'
-      + '<iframe class="bns-frame" style="height:' + height + 'px" '
-      + 'sandbox="allow-same-origin" title="Cards banner preview" srcdoc="' + esc(doc) + '"></iframe></div>';
+      + '<iframe class="bns-frame" style="' + box + '" '
+      + 'sandbox="allow-scripts" title="Banner preview" srcdoc="' + esc(doc) + '"></iframe></div>';
   }
 
   /* ---------------------------------------------------------------- views */
@@ -562,11 +619,19 @@
   function setsView(){
     var html = '<div class="bns-card">'
       + '<div class="bns-title">Your banner sets</div>'
-      + '<div class="bns-sub">Each set is its own row of cards with its own speed, animation, background and shape. Build as many as you like and switch between them above.</div>'
-      + '<div class="bns-row" style="margin-bottom:11px"><button class="bns-btn is-primary" id="bns-new">New set</button></div>';
+      + '<div class="bns-sub">Two types live in this one list. A <b>cards banner</b> is a row of picture cards that scrolls itself; a <b>picture slider</b> is one picture at a time with arrows and thin bars along the bottom. Each set carries its own speed, background and shape. Build as many as you like and pick which one the homepage shows, above.</div>'
+      + '<div class="bns-row" style="margin-bottom:11px">'
+      /* NO `id` ON EITHER, and that is a rule rather than a tidy-up:
+         AdminConsoleControlsAreLiveTest walks this console for an `id` that no
+         handler binds, and both of these are bound by `[data-bns-kind]` — one
+         loop, so neither can end up wired and the other not. An id here would
+         be a control the guard has to take on trust. */
+      + '<button class="bns-btn is-primary" data-bns-kind="cards">New cards banner</button>'
+      + '<button class="bns-btn is-primary" data-bns-kind="slider">New picture slider</button>'
+      + '</div>';
 
     if (!(data.sets || []).length) {
-      html += '<div class="bns-empty">No sets yet. Press “New set” to build your first one.</div></div>';
+      html += '<div class="bns-empty">No sets yet. Press one of the two buttons above to build your first one.</div></div>';
       return html;
     }
 
@@ -582,7 +647,12 @@
         + '<span class="bns-nm">' + esc(s.name) + '</span>'
         + '<span class="bns-pill' + (s.status === 'publish' ? ' is-on' : '') + '">' + esc(s.status === 'publish' ? 'Published' : 'Draft') + '</span>'
         + (String(s.id) === chosen ? '<span class="bns-pill is-live">On the homepage</span>' : '')
-        + '<span class="bns-pill">' + esc(s.cards_count) + ' card' + (s.cards_count === 1 ? '' : 's') + '</span>'
+        /* THE TYPE, ON EVERY ROW. Two kinds in one list is unreadable without
+           it — the sets are named by the owner and nothing else on the row says
+           which editor opening it will give him. */
+        + '<span class="bns-pill">' + esc(s.kind === 'slider' ? 'Picture slider' : 'Cards banner') + '</span>'
+        + '<span class="bns-pill">' + esc(s.cards_count)
+          + (s.kind === 'slider' ? ' picture' : ' card') + (s.cards_count === 1 ? '' : 's') + '</span>'
         + '<button class="bns-btn" data-bns-open="' + esc(s.id) + '">' + (openId === s.id ? 'Close' : 'Edit') + '</button>'
         + '<button class="bns-btn" data-bns-dup="' + esc(s.id) + '">Duplicate</button>'
         + '<button class="bns-btn is-danger" data-bns-del="' + esc(s.id) + '">Delete</button>'
@@ -671,20 +741,62 @@
     return v >= 9000 ? 'Very slow' : v >= 6000 ? 'Slow' : v >= 3000 ? 'Medium' : v >= 1600 ? 'Fast' : 'Very fast';
   }
 
-  function speedText(ms, cards){
+  /* ── TWO UNITS, ONE COLUMN — Lane BN2 ──────────────────────────────────
+     `speed_ms` is the time attached to ONE item in both banner types, which is
+     what lets them share the column. What that time IS differs: on the cards
+     row it is how long a card takes to travel its own width, and on the slider
+     it is how long a picture rests before the next one comes. The owner reads a
+     sentence, not a column name, so the sentence has to say which. */
+  function speedText(ms, cards, slider){
+    if (slider) {
+      return '<b>' + esc(speedBands(ms)) + '</b> — each picture rests '
+        + esc((ms / 1000).toFixed(1)) + 's, so ' + esc(((ms * Math.max(1, cards)) / 1000).toFixed(0))
+        + 's to show all ' + esc(Math.max(1, cards))
+        + '. <span class="bns-dim">(' + esc(ms) + ' ms per picture)</span>';
+    }
+
     var loop = (ms * Math.max(1, cards)) / 1000;
     return '<b>' + esc(speedBands(ms)) + '</b> — ' + esc((ms / 1000).toFixed(1)) + 's per card, so '
       + esc(loop.toFixed(0)) + 's for one full loop of ' + esc(Math.max(1, cards))
       + ' card' + (cards === 1 ? '' : 's') + '. <span class="bns-dim">(' + esc(ms) + ' ms per card)</span>';
   }
 
-  function speedField(value, lim, cards){
+  function speedField(value, lim, cards, slider){
     var mirrored = lim[0] + lim[1] - value;
     return '<div class="bns-fld"><span class="bns-lab">Speed</span>'
       + '<input class="bns-rng" type="range" data-bns-speed="1" value="' + esc(mirrored) + '" '
       + 'min="' + esc(lim[0]) + '" max="' + esc(lim[1]) + '" step="100">'
       + '<div class="bns-ends"><span>slower</span><span>faster</span></div>'
-      + '<span class="bns-help" data-bns-out="speed_ms">' + speedText(value, cards) + '</span></div>';
+      + '<span class="bns-help" data-bns-out="speed_ms">' + speedText(value, cards, slider) + '</span></div>';
+  }
+
+  /*
+   * ── THE SECTION BACKGROUND, WRITTEN ONCE FOR BOTH BANNER TYPES ──────────
+   *
+   * `bg_mode`, `bg_color` and `bg_image` are three columns BOTH kinds read, and
+   * the block that draws them carries three element ids. Copied into each
+   * branch those ids appeared TWICE IN THE SOURCE — only one is ever rendered,
+   * but AdminNavAndIdsTest reads the source and is right to: a duplicated id is
+   * how a screen comes to have two controls writing one value, and the copy is
+   * how the two come to drift. It caught this the day it was written.
+   *
+   * Only the two sentences differ between the types, so only those are
+   * arguments.
+   */
+  function backgroundSection(s, heading, colourHelp){
+    return '<div class="bns-sec">' + esc(heading) + '</div><div class="bns-grid">'
+      + pick('bg_mode', 'Background', 'What sits behind the whole thing, edge to edge. \u201CNone\u201D is how every set has looked so far.', s.bg_mode, data.enums.bg_modes)
+      + '<div data-bns-when="color"' + (s.bg_mode === 'color' ? '' : ' hidden') + '>'
+      + colour('bg_color', 'Background colour', colourHelp, s.bg_color)
+      + '</div>'
+      + '<div data-bns-when="image"' + (s.bg_mode === 'image' ? '' : ' hidden') + '>'
+      + fld('Background picture', 'Cropped to fill, centred. It goes into your Media Library like any other upload.',
+          '<div class="bns-crow"><div class="bns-bgth" id="bns-bgth">'
+          + (s.bg_image ? '<img src="' + esc(draft.bgUrl || openSet.set.bg_image_url) + '" alt="">' : 'none')
+          + '</div><button class="bns-btn" id="bns-bgpic">' + (s.bg_image ? 'Change' : 'Choose') + '</button>'
+          + '<button class="bns-btn is-danger" id="bns-bgclr">Remove</button></div>')
+      + '</div>'
+      + '</div>';
   }
 
   function editorView(){
@@ -704,74 +816,121 @@
       + 'Adding, deleting and duplicating happen straight away, because they create and destroy the rows themselves.</div>'
       + '<div id="bns-bar"></div>';
 
-    /* ── motion ── */
-    html += '<div class="bns-sec">Motion</div><div class="bns-grid">'
-      + speedField(s.speed_ms, L.speed_ms, cards.length)
-      + pick('animation', 'Animation', 'The row loops seamlessly with no JavaScript at all, so it costs the page nothing to run.', s.animation, e.animations)
-      + '</div>'
-      + '<div class="bns-row" style="margin-top:11px">'
-      + sw('autoplay', 'Scroll by itself', s.autoplay)
-      + sw('pause_on_hover', 'Pause when the mouse is over it', s.pause_on_hover)
+    /* ── THE BANNER TYPE, FIRST AND ON ITS OWN — Lane BN2 ──────────────────
+       It is the control everything under it depends on, so it is the control
+       at the top. Changing it RE-RENDERS the editor rather than hiding rows,
+       because the two types do not share a control set: a slider has no card
+       count, no gap and no text band, and leaving those on screen greyed out
+       would be four controls that do nothing. The draft survives the redraw —
+       it is the same buffer — so nothing typed is lost by looking at the other
+       type and changing back. */
+    var slider = s.kind === 'slider';
+
+    html += '<div class="bns-sec">Banner type</div><div class="bns-grid">'
+      + pick('kind', 'What this set is', 'Both types live in the same list and the homepage shows whichever set you pick above. Changing this changes nothing until you press Save.', s.kind, e.kinds)
       + '</div>';
 
-    /* ── shape ── */
-    html += '<div class="bns-sec">Cards &amp; shape</div><div class="bns-grid">'
-      + pick('ratio', 'Card shape', 'Every card in the row is exactly this shape, whatever is written in it and whatever shape the picture is.', s.ratio, e.ratios)
-      + pick('shadow', 'Shadow', 'No border at all — the corner radius and the shadow are what lift the card off the page.', s.shadow, e.shadows)
-      + num('per_view', 'Cards across on desktop', 'full cards, with the next one peeking past the edge. Phones and tablets narrow this by themselves — one across on a phone.', s.per_view, L.per_view[0], L.per_view[1])
-      + num('peek', 'How much of the next card shows', '% of a card past the edge. This is what makes the row read as swipeable at a glance.', s.peek, L.peek[0], L.peek[1])
-      + num('gap', 'Space between cards', 'px', s.gap, L.gap[0], L.gap[1])
-      + num('card_radius', 'Corner radius', 'px', s.card_radius, L.card_radius[0], L.card_radius[1])
-      + '</div>';
+    if (slider) {
+      /* ── the look, which is the four previews ── */
+      html += '<div class="bns-sec">Look</div><div class="bns-grid">'
+        + pick('slider_style', 'Where the arrows and bars sit', 'All four have the same arrows and the same bars — what changes is where they sit and how they read.', s.slider_style, e.slider_styles)
+        + '</div>'
+        + '<div class="bns-help" style="margin-top:9px" data-bns-note="slider_style">'
+        + esc(e.slider_style_notes[s.slider_style] || '') + '</div>';
 
-    /* ── the section's background ── */
-    html += '<div class="bns-sec">Behind the row</div><div class="bns-grid">'
-      + pick('bg_mode', 'Background', 'What sits behind the whole row, edge to edge. “None” is how every set has looked so far.', s.bg_mode, e.bg_modes)
-      + '<div data-bns-when="color"' + (s.bg_mode === 'color' ? '' : ' hidden') + '>'
-      + colour('bg_color', 'Background colour', 'Shown behind the cards, right across the page.', s.bg_color)
-      + '</div>'
-      + '<div data-bns-when="image"' + (s.bg_mode === 'image' ? '' : ' hidden') + '>'
-      + fld('Background picture', 'Cropped to fill, centred. It goes into your Media Library like any other upload.',
-          '<div class="bns-crow"><div class="bns-bgth" id="bns-bgth">'
-          + (s.bg_image ? '<img src="' + esc(draft.bgUrl || openSet.set.bg_image_url) + '" alt="">' : 'none')
-          + '</div><button class="bns-btn" id="bns-bgpic">' + (s.bg_image ? 'Change' : 'Choose') + '</button>'
-          + '<button class="bns-btn is-danger" id="bns-bgclr">Remove</button></div>')
-      + '</div>'
-      + '</div>';
+      /* ── shape ── */
+      html += '<div class="bns-sec">Shape &amp; frame</div><div class="bns-grid">'
+        + pick('slider_ratio', 'Shape on a computer', 'From a tablet up. The picture is cropped to fill this shape, centred.', s.slider_ratio, e.slider_ratios)
+        + pick('slider_ratio_m', 'Shape on a phone', 'Below a tablet. A 21:9 banner is a 44px band on a phone, which is why this is its own choice.', s.slider_ratio_m, e.slider_ratios)
+        + num('card_radius', 'Corner radius', 'px', s.card_radius, L.card_radius[0], L.card_radius[1])
+        + pick('shadow', 'Shadow', 'No border at all — the corner radius and the shadow are what lift the picture off the page.', s.shadow, e.shadows)
+        + '</div>';
 
-    /* ── the button ── */
-    html += '<div class="bns-sec">The button</div>'
-      + '<div class="bns-sub" style="margin-bottom:10px">One set of colours for the whole row — a row whose buttons are four different colours is not a row. Leave all three on “the shop’s own” and they are the pink the rest of the shop uses.</div>'
-      + '<div class="bns-grid">'
-      + colour('btn_bg', 'Button colour', 'The pill behind the label.', s.btn_bg)
-      + colour('btn_text', 'Button text', 'The label itself. Check it against the colour above — pale on pale is the one mistake this control makes easy.', s.btn_text)
-      + colour('btn_hover', 'Button when the mouse is over it', 'Left on the shop’s own, the button simply darkens a little, which works for any colour.', s.btn_hover)
-      + '</div>';
+      /* ── motion ── */
+      html += '<div class="bns-sec">Motion</div><div class="bns-grid">'
+        + speedField(s.speed_ms, L.speed_ms, cards.length, true)
+        + '</div>'
+        + '<div class="bns-row" style="margin-top:11px">'
+        + sw('autoplay', 'Move by itself', s.autoplay)
+        + '</div>'
+        + '<div class="bns-help" style="margin-top:9px">'
+        + 'It <b>always</b> stops while the mouse is over it, while anything inside it has keyboard focus, and for a shopper whose device asks for less motion — those are not switches, because a slideshow that cannot be stopped is one a shopper with a tremor or a screen reader cannot use. There is also a real pause button in the corner of the picture whenever it is moving.'
+        + '</div>';
 
-    /* ── text ── */
-    html += '<div class="bns-sec">The words on a card</div><div class="bns-grid">'
-      + pick('title_pos', 'Where the words sit', 'On the picture, they sit over the bottom of it with a soft dark scrim behind them so they stay readable over a pale photograph as well as a dark one.', s.title_pos, e.title_positions)
-      + '</div>'
-      + '<div class="bns-row" style="margin-top:11px">'
-      + sw('show_text', 'Show the heading and the line under it', s.show_text)
-      + sw('show_button', 'Show the button', s.show_button)
-      + '</div>'
-      + '<div class="bns-help" style="margin-top:9px">'
-      + 'With the words off the card is the picture alone, at the same shape, and the button goes with them — the whole picture becomes the link instead.'
-      + '</div>';
+      /* ── the section's background, the same control the cards row has ── */
+      html += backgroundSection(s, 'Behind the banner', 'Shown behind the picture, right across the page.');
 
-    /* ── steering ── */
-    html += '<div class="bns-sec">How a shopper moves the row</div>'
-      + '<div class="bns-row">'
-      + sw('show_dots', 'Show dots under the row', s.show_dots)
-      + sw('show_arrows', 'Show arrows', s.show_arrows)
-      + '</div>'
-      + '<div class="bns-help" style="margin-top:9px">'
-      + 'Both appear only while the row is <em>not</em> scrolling by itself, and for a shopper whose device asks for less motion — while it is scrolling by itself there is nothing for them to steer. '
-      + '<b>The dots work in every browser</b>, and the one for the card you jumped to is drawn as a filled bar so a shopper can see where he is. '
-      + '<b>Arrows are drawn by Chrome and Edge only.</b> They are the browser’s own scroll buttons, which is the only way to move a row from CSS with no JavaScript; Safari and Firefox draw nothing at all, so roughly a third of shoppers will not see them however this switch is set. The row is still scrollable by hand and by the dots in all four. '
-      + 'If you want one control that everybody gets, use the dots.'
-      + '</div>';
+      /* ── steering ── */
+      html += '<div class="bns-sec">How a shopper moves it</div>'
+        + '<div class="bns-row">'
+        + sw('show_arrows', 'Show the arrows', s.show_arrows)
+        + sw('show_dots', 'Show the bars along the bottom', s.show_dots)
+        + '</div>'
+        + '<div class="bns-help" style="margin-top:9px">'
+        + '<b>Both work in every browser</b>, unlike the cards row\u2019s arrows — these are real buttons rather than the browser\u2019s own scroll controls. '
+        + 'The bars are one per picture: the one for the picture on show is lit, and tapping any of them goes straight to it. '
+        + 'A shopper can also swipe, and use the left and right arrow keys once he has tabbed into it. '
+        + 'With one picture in the set neither is drawn, because there is nowhere to go.'
+        + '</div>';
+    } else {
+        /* ── motion ── */
+        html += '<div class="bns-sec">Motion</div><div class="bns-grid">'
+          + speedField(s.speed_ms, L.speed_ms, cards.length)
+          + pick('animation', 'Animation', 'The row loops seamlessly with no JavaScript at all, so it costs the page nothing to run.', s.animation, e.animations)
+          + '</div>'
+          + '<div class="bns-row" style="margin-top:11px">'
+          + sw('autoplay', 'Scroll by itself', s.autoplay)
+          + sw('pause_on_hover', 'Pause when the mouse is over it', s.pause_on_hover)
+          + '</div>';
+
+        /* ── shape ── */
+        html += '<div class="bns-sec">Cards &amp; shape</div><div class="bns-grid">'
+          + pick('ratio', 'Card shape', 'Every card in the row is exactly this shape, whatever is written in it and whatever shape the picture is.', s.ratio, e.ratios)
+          + pick('shadow', 'Shadow', 'No border at all — the corner radius and the shadow are what lift the card off the page.', s.shadow, e.shadows)
+          + num('per_view', 'Cards across on desktop', 'full cards, with the next one peeking past the edge. Phones and tablets narrow this by themselves — one across on a phone.', s.per_view, L.per_view[0], L.per_view[1])
+          + num('peek', 'How much of the next card shows', '% of a card past the edge. This is what makes the row read as swipeable at a glance.', s.peek, L.peek[0], L.peek[1])
+          + num('gap', 'Space between cards', 'px', s.gap, L.gap[0], L.gap[1])
+          + num('card_radius', 'Corner radius', 'px', s.card_radius, L.card_radius[0], L.card_radius[1])
+          + '</div>';
+
+        /* ── the section's background ── */
+      html += backgroundSection(s, 'Behind the row', 'Shown behind the cards, right across the page.');
+
+        /* ── the button ── */
+        html += '<div class="bns-sec">The button</div>'
+          + '<div class="bns-sub" style="margin-bottom:10px">One set of colours for the whole row — a row whose buttons are four different colours is not a row. Leave all three on “the shop’s own” and they are the pink the rest of the shop uses.</div>'
+          + '<div class="bns-grid">'
+          + colour('btn_bg', 'Button colour', 'The pill behind the label.', s.btn_bg)
+          + colour('btn_text', 'Button text', 'The label itself. Check it against the colour above — pale on pale is the one mistake this control makes easy.', s.btn_text)
+          + colour('btn_hover', 'Button when the mouse is over it', 'Left on the shop’s own, the button simply darkens a little, which works for any colour.', s.btn_hover)
+          + '</div>';
+
+        /* ── text ── */
+        html += '<div class="bns-sec">The words on a card</div><div class="bns-grid">'
+          + pick('title_pos', 'Where the words sit', 'On the picture, they sit over the bottom of it with a soft dark scrim behind them so they stay readable over a pale photograph as well as a dark one.', s.title_pos, e.title_positions)
+          + '</div>'
+          + '<div class="bns-row" style="margin-top:11px">'
+          + sw('show_text', 'Show the heading and the line under it', s.show_text)
+          + sw('show_button', 'Show the button', s.show_button)
+          + '</div>'
+          + '<div class="bns-help" style="margin-top:9px">'
+          + 'With the words off the card is the picture alone, at the same shape, and the button goes with them — the whole picture becomes the link instead.'
+          + '</div>';
+
+        /* ── steering ── */
+        html += '<div class="bns-sec">How a shopper moves the row</div>'
+          + '<div class="bns-row">'
+          + sw('show_dots', 'Show dots under the row', s.show_dots)
+          + sw('show_arrows', 'Show arrows', s.show_arrows)
+          + '</div>'
+          + '<div class="bns-help" style="margin-top:9px">'
+          + 'Both appear only while the row is <em>not</em> scrolling by itself, and for a shopper whose device asks for less motion — while it is scrolling by itself there is nothing for them to steer. '
+          + '<b>The dots work in every browser</b>, and the one for the card you jumped to is drawn as a filled bar so a shopper can see where he is. '
+          + '<b>Arrows are drawn by Chrome and Edge only.</b> They are the browser’s own scroll buttons, which is the only way to move a row from CSS with no JavaScript; Safari and Firefox draw nothing at all, so roughly a third of shoppers will not see them however this switch is set. The row is still scrollable by hand and by the dots in all four. '
+          + 'If you want one control that everybody gets, use the dots.'
+          + '</div>';
+
+    }
 
     /* ── name and order ── */
     html += '<div class="bns-sec">This set</div><div class="bns-grid">'
@@ -783,12 +942,15 @@
       + '</div>';
 
     /* ---------------------------------------------------------- the cards */
-    html += '<div class="bns-sec">Cards</div>'
-      + '<div class="bns-sub">A picture, one or two lines under it, and a small button. Anything you leave blank is simply not drawn — it leaves no gap.</div>'
-      + '<div class="bns-row"><button class="bns-btn is-primary" id="bns-newcard">Add a card</button></div>';
+    html += '<div class="bns-sec">' + (slider ? 'Pictures' : 'Cards') + '</div>'
+      + '<div class="bns-sub">' + (slider
+          ? 'One picture each, in this order. A picture with a link becomes a link — the whole picture, since there is no button on this banner type. The description is what a screen reader says; leave it empty for a picture that is decoration and has nothing to add.'
+          : 'A picture, one or two lines under it, and a small button. Anything you leave blank is simply not drawn — it leaves no gap.')
+      + '</div>'
+      + '<div class="bns-row"><button class="bns-btn is-primary" id="bns-newcard">' + (slider ? 'Add a picture' : 'Add a card') + '</button></div>';
 
     if (!cards.length) {
-      html += '<div class="bns-empty">No cards yet.</div>' + footer() + '</div>';
+      html += '<div class="bns-empty">' + (slider ? 'No pictures yet.' : 'No cards yet.') + '</div>' + footer() + '</div>';
       return html;
     }
 
@@ -810,10 +972,19 @@
           + '<button class="bns-btn is-danger" data-bns-delcard="' + esc(c.id) + '">Delete</button>'
           + '<span class="bns-warn" data-bns-badurl="' + esc(c.id) + '"' + (c.button_url && !c.button_url_safe ? '' : ' hidden') + '>That link is not a kind of address this shop will publish, so no button is drawn.</span>'
         + '</div>'
-        + '<input class="bns-in" type="text" placeholder="Heading" maxlength="190" data-bns-card="' + esc(c.id) + '" data-bns-k="heading" value="' + esc(d.heading) + '">'
-        + '<input class="bns-in" type="text" placeholder="One short line under it" maxlength="255" data-bns-card="' + esc(c.id) + '" data-bns-k="body" value="' + esc(d.body) + '">'
+        /* THE THREE TEXT BOXES ARE THE CARDS ROW'S AND ARE NOT DRAWN FOR A
+           SLIDER, because this banner type draws no text at all — the owner's
+           words were "only images slider". They are HIDDEN, not deleted: the
+           columns keep whatever is in them, so a set switched to a slider and
+           back has its headings again. The link and the description ARE drawn,
+           because a slider picture can still be a link and still needs a name
+           for a screen reader. */
+        + (slider ? ''
+            : '<input class="bns-in" type="text" placeholder="Heading" maxlength="190" data-bns-card="' + esc(c.id) + '" data-bns-k="heading" value="' + esc(d.heading) + '">'
+              + '<input class="bns-in" type="text" placeholder="One short line under it" maxlength="255" data-bns-card="' + esc(c.id) + '" data-bns-k="body" value="' + esc(d.body) + '">')
         + '<div class="bns-grid">'
-          + '<input class="bns-in" type="text" placeholder="Button label" maxlength="80" data-bns-card="' + esc(c.id) + '" data-bns-k="button_label" value="' + esc(d.button_label) + '">'
+          + (slider ? ''
+              : '<input class="bns-in" type="text" placeholder="Button label" maxlength="80" data-bns-card="' + esc(c.id) + '" data-bns-k="button_label" value="' + esc(d.button_label) + '">')
           + '<input class="bns-in" type="text" placeholder="Where it goes, e.g. /shop/" maxlength="400" data-bns-card="' + esc(c.id) + '" data-bns-k="button_url" value="' + esc(d.button_url) + '">'
           + '<input class="bns-in" type="text" placeholder="Picture description, for screen readers" maxlength="255" data-bns-card="' + esc(c.id) + '" data-bns-k="alt" value="' + esc(d.alt) + '">'
           + '<input class="bns-in" type="number" min="0" max="9999" placeholder="Order" data-bns-card="' + esc(c.id) + '" data-bns-k="position" value="' + esc(d.position) + '">'
@@ -909,19 +1080,26 @@
       }
     };
 
-    var add = document.querySelector('#bns-new');
-    if (add) add.onclick = async function(){
-      if (!mayLeave('Start a new set and lose them?')) return;
-      add.disabled = true;
-      try {
-        var body = await api('/banners/sets', 'POST', {name: 'Cards banner'});
-        await load();
-        openEditor(body.set.id);
-      } catch (e) {
-        add.disabled = false;
-        say(explain(e, 'Could not create a set.'));
-      }
-    };
+    /* THE TWO NEW-SET BUTTONS. The kind is sent rather than set afterwards, so
+       a brand-new slider is a slider on its first draw — created without it the
+       owner would meet the cards editor, change the type and have an unsaved
+       change on a set he had not touched. The controller validates the token
+       against BannerSet::KINDS and falls back to `cards`. */
+    document.querySelectorAll('[data-bns-kind]').forEach(function(add){
+      add.onclick = async function(){
+        var kind = add.dataset.bnsKind;
+        if (!mayLeave('Start a new set and lose them?')) return;
+        add.disabled = true;
+        try {
+          var body = await api('/banners/sets', 'POST', {kind: kind});
+          await load();
+          openEditor(body.set.id);
+        } catch (e) {
+          add.disabled = false;
+          say(explain(e, 'Could not create a set.'));
+        }
+      };
+    });
 
     document.querySelectorAll('[data-bns-open]').forEach(function(b){
       b.onclick = function(){
@@ -977,6 +1155,26 @@
             w.hidden = w.dataset.bnsWhen !== el.value;
           });
         }
+
+        /* THE ONE CONTROL THAT REDRAWS THE EDITOR, and the reason is in
+           editorView(): the two banner types do not share a control set. The
+           draft is untouched by the redraw, so nothing typed is lost. */
+        if (key === 'kind') {
+          markDirty();
+          render();
+          refreshPreview();
+          return;
+        }
+
+        /* The sentence under the Look picker is the chosen treatment's own, out
+           of the enum the server sent. Written straight into the element rather
+           than by re-rendering — the same decision markDirty() makes, and for
+           the same reason. */
+        if (key === 'slider_style') {
+          var note = document.querySelector('[data-bns-note="slider_style"]');
+          if (note) note.textContent = (data.enums.slider_style_notes || {})[el.value] || '';
+        }
+
         markDirty();
         schedulePreview();
       };
@@ -994,7 +1192,7 @@
       var applySpeed = function(){
         var ms = lim[0] + lim[1] - Number(speed.value);
         draft.set.speed_ms = ms;
-        if (out) out.innerHTML = speedText(ms, (openSet.cards || []).length);
+        if (out) out.innerHTML = speedText(ms, (openSet.cards || []).length, draft.set.kind === 'slider');
         markDirty();
         schedulePreview();
       };

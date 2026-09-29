@@ -810,6 +810,53 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'status' => 'publish',
     ]);
 
+    /*
+     * Appearance -> Grid sections -> open one, and its live preview (Lane GS).
+     * Both caught by this walk on the day they were wired, which is the fifth
+     * time it has done that job.
+     *
+     * DRIVEN rather than excused, and not as "the same shape as the banner set
+     * above": the list further down already records why a route excused because
+     * a sibling is covered is a route nobody drives. These two read a DIFFERENT
+     * shape from anything else here -- the product pool for a `manual` source
+     * is a `whereIn` over a stored id list re-ordered in PHP, and the option
+     * sets the screen is handed are two `orderBy('name')` reads on `brands` and
+     * `categories` whose collation is the thing the two engines disagree about:
+     * MySQL's default utf8mb4 collation is case- and accent-insensitive and
+     * SQLite's BINARY is neither, so a picker listed in one order here and
+     * another there is exactly the divergence this file exists to surface.
+     *
+     * The preview additionally RENDERS the storefront partial over that read,
+     * so a dialect fault in it lands as a 500 on a screen rather than as a
+     * wrong list.
+     */
+    $gridSection = \App\Models\GridSection::create([
+        'name' => 'Guard grid',
+        'slug' => 'guard-grid-'.substr(md5(uniqid()), 0, 8),
+        'status' => 'publish',
+        'position' => 0,
+        'show_heading' => true,
+        'heading' => 'Guard grid',
+        'subheading' => '',
+        'source' => 'manual',
+        'include_children' => false,
+        'manual_ids' => [$setProduct->id],
+        'count' => 4,
+        'mobile_count' => 4,
+        'desktop_layout' => 'grid',
+        'desktop_cols' => 4,
+        'mobile_layout' => 'carousel',
+        'mobile_cols' => 2,
+        'skin' => '',
+        'card_label' => '',
+        'show_rank' => false,
+        'show_view_all' => true,
+        'view_all_label' => 'View all',
+        'view_all_url' => '/shop/',
+    ]);
+
+    \App\Services\GridSections::flush();
+
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
         'type' => 'percent',
@@ -909,6 +956,24 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          */
         'admin-api/ugc-videos/{id}' => '/admin-api/ugc-videos/' . $ugcVideo->id,
         /*
+         * Appearance -> the product-page design previews (Lane PDP). Listed
+         * here because this walk caught it: the route landed with no entry on
+         * either list and this file went red -- which is what the walk is for,
+         * and it caught my own wiring rather than a lane's.
+         *
+         * DRIVEN RATHER THAN EXCUSED, and specifically not as "it renders a
+         * product page, which is already covered". It is not the storefront
+         * route: it calls Store\ProductController::show() and then renders one
+         * of five candidate templates, so it runs that page's whole read --
+         * the gallery, BundleService, ProductTabs with its audience matching,
+         * TrustClaims, PaymentChips and SetContents -- against an admin
+         * connection, under an admin guard, with a candidate name in the path.
+         * Nothing else on this list drives that combination, and the point of
+         * this walk is the QUERY a route really makes rather than the family it
+         * belongs to.
+         */
+        'admin-api/catalog/pdp-preview/{candidate}/{slug}' => '/admin-api/catalog/pdp-preview/ledger/' . $product->slug,
+        /*
          * Content -> Video sections -> Open (Lane V3). Listed here because this
          * walk caught it too: the route landed with no entry on either list and
          * this file went red, which is exactly what the walk is for.
@@ -989,6 +1054,11 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          */
         'admin-api/banners/sets/{set}' => '/admin-api/banners/sets/' . $bannerSet->id,
         'admin-api/banners/sets/{set}/preview' => '/admin-api/banners/sets/' . $bannerSet->id . '/preview',
+
+        // Appearance -> Grid sections (Lane GS). The fixture above carries the
+        // argument for driving these two rather than excusing them.
+        'admin-api/grid-sections/{grid}' => '/admin-api/grid-sections/' . $gridSection->id,
+        'admin-api/grid-sections/{grid}/preview' => '/admin-api/grid-sections/' . $gridSection->id . '/preview',
     ];
 
     /** Route URI => why driving it here would prove nothing. */

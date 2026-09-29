@@ -251,8 +251,13 @@ it('loads an Arabic typeface only on an Arabic page', function () {
     // in whatever the device falls back to. And an extra render-blocking
     // stylesheet on every English page is the defect the account-panel font
     // block was written to fix.
-    expect(test()->get('/ar/my-wishlist/')->getContent())->toContain('family=Cairo')
-        ->and(test()->get('/my-wishlist/')->getContent())->not->toContain('family=Cairo');
+    /* WAS `family=Cairo`, a Google Fonts query string — Lane PERF. Cairo is
+       served by this shop now, so the face is declared in the document instead
+       of linked from a third party. Both halves of the assertion are the same
+       claim they were: the Arabic page has an Arabic-capable face, the English
+       page carries not one byte of it. */
+    expect(test()->get('/ar/my-wishlist/')->getContent())->toContain("@font-face{font-family:'Cairo'")
+        ->and(test()->get('/my-wishlist/')->getContent())->not->toContain('Cairo');
 });
 
 /* ══════════════════ 3. interface strings, end to end ══════════════════ */

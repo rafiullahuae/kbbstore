@@ -453,6 +453,137 @@ final class ImageVariants
     }
 
     /**
+     * A STORED image column, as a path split() will accept.          Lane PERF
+     *
+     * ── THE DEFECT THIS EXISTS FOR ──────────────────────────────────────────
+     *
+     * `split()` refuses a bare relative path, and says why: "a bare relative
+     * path resolves against whichever page is being rendered, so it already
+     * means different files on /shop/ and on /product/x/". That is right about
+     * a path found in HTML and wrong about a path found in a COLUMN, and the
+     * two are not the same thing — `MediaRegistrar::normalise()` ends with
+     * `ltrim($path, '/')`, so every value this application stores is bare by
+     * construction.
+     *
+     * Measured, not assumed: `banner_cards.image` holds
+     * `uploads/posters/perf-poster-1.jpg`, and
+     * `ImageVariants::generate()` on that exact string answers
+     * `['made' => 0, 'skipped' => 0, 'reason' => 'not a local image']`. With a
+     * leading slash in front of it, `['made' => 3]`. Same file, same disk.
+     *
+     * So a caller holding a stored column and calling srcsetFor() on it
+     * directly gets '' every time, silently, and concludes the variants are
+     * missing. Anything that reaches these methods through a rendered URL —
+     * which is most of the storefront — never meets it.
+     *
+     * A SCHEME IS REFUSED RATHER THAN PREFIXED. `'/'.'https://other/x.jpg'` is
+     * a path on this host that does not exist, and turning a remote address
+     * into a local-looking one is how a 404 gets into a srcset. split()'s own
+     * URL branch handles a genuine absolute URL; this one is only ever given
+     * what a column holds.
+     */
+    public static function rootRelative(string $stored): string
+    {
+        $value = trim($stored);
+
+        if ($value === '' || preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $value) === 1) {
+            return $value;
+        }
+
+        return '/'.ltrim($value, '/');
+    }
+
+    /**
+     * THE CARDS BANNER'S PICTURE (`.kbbn-im img`).                  Lane PERF
+     *
+     * WHY THIS ONE TAKES ARGUMENTS WHEN THE OTHERS DO NOT. Every other frame
+     * on this shop has a column count the stylesheet decides, so its `sizes`
+     * is a constant. This one does not: `--kbbn-per-lg` and `--kbbn-peek-lg`
+     * are written into the element's own `style` attribute by
+     * Banners::cssVariables() from the operator's choice, and per_view ranges
+     * 1..8 (BannerSet::LIMITS). A shop showing two big cards draws a 650 CSS
+     * pixel box where the shipped four draws 356 — and `sizes` is the one
+     * attribute where being wrong in the small direction is visible, because
+     * the browser never looks at `src` again once it has chosen.
+     *
+     * ── THE ARITHMETIC, AND IT WAS MEASURED IN A BROWSER RATHER THAN READ ───
+     *
+     * It was read off the stylesheet first and it was WRONG, in the direction
+     * that matters: 209 CSS pixels declared where the card draws 233 at 390px,
+     * which on a device-pixel-ratio 1.75 phone is the difference between the
+     * 400w copy and the 800w one, and the 400w copy in a 434-device-pixel box
+     * is a visibly soft photograph. What the reading missed is
+     * `@media(max-width:680px)` at kbb.css:3096, where the homepage section's
+     * card frame comes off entirely — `width:100%; max-width:none; border:0;
+     * padding-inline:12px` — so below 680 the container is 24px narrower than
+     * the viewport and above it 38px narrower plus the gutter.
+     *
+     * So the numbers below come from
+     * `storage/perf-logs/measure-kbbn.cjs`, which reads `.kbbn-vp`'s own
+     * content box and `.kbbn-c`'s rectangle at seventeen viewport widths:
+     *
+     *   vw     100cqi    card (per/peek)      this method
+     *   360     336      213.33  (1/.5)       213.33   exact
+     *   390     366      233.33  (1/.5)       233.33   exact
+     *   412     388      248.00  (1/.5)       248.00   exact
+     *   520     496      189.38  (2/.45)      189.39   exact
+     *   600     576      222.03  (2/.45)      222.04   exact
+     *   767     705      274.69  (2/.45)      274.69   exact
+     *   768     706      193.52  (3/.4)       193.53   exact
+     *  1023     956      267.08  (3/.4)       268.53   +0.5%
+     *  1024     957      203.89  (4/.38)      205.02   +0.6%
+     *  1280    1203      260.00  (4/.38)      263.47   +1.3%
+     *  1920    1622      355.70  (4/.38)      360.27   +1.3%
+     *
+     * Every row is exact or a shade ABOVE, which is the direction
+     * tileSizesAttribute() already names as the one that cannot hurt:
+     * overstating makes a browser choose the larger candidate, understating
+     * leaves the photograph soft. The +1.3% is the gutter, declared at its
+     * 18px floor instead of `clamp(18px, 2vw, 28px)` so the expression carries
+     * no clamp() — a `sizes` entry a browser cannot parse is DROPPED, and the
+     * default for a dropped entry is 100vw, which overstates hugely.
+     *
+     * ── AND IT PAIRS WITH detailSrcsetFor(), NOT srcsetFor() ────────────────
+     *
+     * srcsetFor() stops at 800w on the stated ground that "the widest frame on
+     * the site is 399 CSS pixels" — a sentence about tiles, and false here: at
+     * per_view 2 on a 1920 screen this box is 650 CSS pixels and a
+     * device-pixel-ratio 2 browser wants 1300 of them. Offered nothing wider
+     * than 800w it would take the 800 and the owner's banner would come out
+     * SOFTER than it is today, which is the one outcome a delivery change must
+     * never produce.
+     *
+     * ▲ AND ONE THING THIS CANNOT FIX, SAID HERE BECAUSE IT LOOKS LIKE A BUG.
+     * On a 412px phone at ratio 1.75 the card needs 434 device pixels, and
+     * `WIDTHS` offers 400 and then 800 with nothing between, so the browser
+     * takes the 800w copy — which for an 810px original is very nearly the
+     * original. The desktop saving is real (ratio 1, 260 CSS px, the 400w copy)
+     * and the phone saving is not. A 600w entry in `WIDTHS` would close it and
+     * would also make every variant set in the shop report `isComplete()`
+     * false until the owner re-ran the batch, which is a decision for him and
+     * not for a delivery change. docs/PERF-PAGESPEED.md §6 carries it.
+     *
+     * @param  int  $per     cards per row at >= 1024px (BannerSet::LIMITS['per_view'], 1..8)
+     * @param  int  $peekPct how much of the next card shows, in percent (0..90)
+     * @param  int  $gap     the gap between cards in CSS pixels (0..48)
+     */
+    public static function bannerCardSizesAttribute(int $per, int $peekPct, int $gap): string
+    {
+        $per = max(1, $per);
+        $divisor = number_format($per + ($peekPct / 100), 2, '.', '');
+
+        /* Above 680px the section still draws its card frame: 24px of inset,
+           2px of border and 18px of padding a side. */
+        $frame = 'min(100vw - 24px, 1680px)';
+
+        return '(max-width: 519px) calc((100vw - '.(24 + $gap).'px) / 1.5)'
+            .', (max-width: 680px) calc((100vw - '.(24 + 2 * $gap).'px) / 2.45)'
+            .', (max-width: 767px) calc((100vw - '.(62 + 2 * $gap).'px) / 2.45)'
+            .', (max-width: 1023px) calc(('.$frame.' - '.(38 + 3 * $gap).'px) / 3.4)'
+            .', calc(('.$frame.' - '.(38 + $gap * $per).'px) / '.$divisor.')';
+    }
+
+    /**
      * The "frequently bought together" row: `.kbb-fbt-item img` is a fixed 90px
      * square at every viewport, declared inline on the element itself, so there
      * is no viewport term to write. The 200w copy covers it to

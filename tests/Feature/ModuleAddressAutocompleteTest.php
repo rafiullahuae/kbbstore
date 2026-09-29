@@ -418,10 +418,34 @@ it('has already done, unconditionally, what the performance row describes', func
 
     expect($lazy)->toBeGreaterThanOrEqual(7, 'lazy loading is no longer applied unconditionally');
 
-    $layout = (string) file_get_contents(base_path('resources/views/layouts/store.blade.php'));
-    $hints = substr_count($layout, 'preconnect') + substr_count($layout, 'dns-prefetch');
+    /*
+     * ── THIS USED TO COUNT preconnect/dns-prefetch HINTS — Lane PERF ────────
+     *
+     * Three of them, to fonts.googleapis.com and fonts.gstatic.com, were the
+     * evidence that "the connection hints are applied unconditionally". They
+     * are gone, and their absence is the stronger form of the same claim: the
+     * storefront asks NO third party for a font any more (App\Support\WebFonts
+     * carries the measurement — the two hops to those two origins were 4,369 ms
+     * of critical path on the owner's own mobile report), so there is no
+     * connection left to warm up. A preconnect to an origin the page never asks
+     * for is a TCP and TLS handshake spent on nothing.
+     *
+     * So the assertion is what replaced them: this origin's own font files,
+     * preloaded in <head> unconditionally, on every page of the shop. If either
+     * half goes to zero the row is lying again.
+     *
+     * AND IT IS ASSERTED ON THE RENDERED PAGE, not on the template's source.
+     * The old form counted the word 'preconnect' in the file, and after this
+     * change the file still contains it twice — in a comment explaining why the
+     * hints went. A source-text search reads prose as code; this repository has
+     * already paid for that once in CardsBannerSectionShapeTest.
+     */
+    $html = test()->get('/')->assertOk()->getContent();
 
-    expect($hints)->toBeGreaterThanOrEqual(3, 'the connection hints are no longer applied unconditionally');
+    expect(substr_count($html, 'rel="preload" as="font"'))->toBeGreaterThanOrEqual(4,
+        'the font preloads are no longer applied unconditionally');
+    expect($html)->not->toContain('fonts.googleapis.com')
+        ->and($html)->not->toContain('fonts.gstatic.com');
 });
 
 it('draws no switch for a module with nothing to switch', function () {

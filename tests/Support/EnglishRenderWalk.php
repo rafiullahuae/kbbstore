@@ -1502,6 +1502,52 @@ final class EnglishRenderWalk
      *
      * @return array<string, string> a name => the pattern that selects the element's inner text
      */
+    /**
+     * The approved STOREFRONT differences — one, and it is the card style.
+     *
+     * ── WHAT CHANGED AND WHY IT IS ALLOWED ──────────────────────────────────
+     *
+     * The owner, verbatim: "apply this design on the whole website everywhere.
+     * exept cart and checkout pages. keep this design by default from backend."
+     * CLAUDE.md rule 1 has exactly one exception — "a default the owner asked
+     * for in as many words" — and this is it, so `GridSkins::DEFAULT` moved
+     * from `classic` to the showcase card and every grid that does not choose
+     * its own skin follows it.
+     *
+     * ── WHY A RULE AND NOT A BASE_COMMIT MOVE ───────────────────────────────
+     *
+     * The same argument the printed sheet's rules make above: moving the
+     * constant would blind this walk to every OTHER lane's change as well, for
+     * one attribute. A rule stays narrow, and applyApproved() counts the hits —
+     * so when the base does move past this work it fails as a rule that has
+     * stopped excusing anything, which is the signal to delete it.
+     *
+     * ── FOUR HITS, AND THEY ARE NAMED ───────────────────────────────────────
+     *
+     * The four curated collection listings — /new-in, /best-sellers,
+     * /super-sale and /everything-under-54-aed — are the only pages in this
+     * walk that BOTH render a product grid and have products in the fixture to
+     * put in it. One grid each, one attribute each. Measured, not predicted:
+     * before this rule existed the test named those four pages and no others.
+     *
+     * The REPLACEMENT names the constant rather than repeating a skin name, so
+     * the day the owner picks a different treatment of the same card this rule
+     * still excuses exactly the difference it was written for and the count
+     * does not move.
+     *
+     * @return array<string, array{pattern: string, with: string, hits: int}>
+     */
+    public static function approvedStorefrontChanges(): array
+    {
+        return [
+            'the shipped card style, which the owner asked to change' => [
+                'pattern' => '#<div class="kbb-pgrid" data-skin="classic">#',
+                'with' => '<div class="kbb-pgrid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">',
+                'hits' => 4,
+            ],
+        ];
+    }
+
     public static function approvedReflows(): array
     {
         return [
@@ -1562,7 +1608,7 @@ final class EnglishRenderWalk
      * Applied to the AFTER side, which is the opposite of every other rule in
      * this class, because the element is in the new tree and not in the old.
      *
-     * @return array<string, array{pattern: string, hits: int}>
+     * @return array<string, array{pattern: string, hits: int, perPage?: int}>
      */
     public static function approvedInsertions(): array
     {
@@ -1608,6 +1654,121 @@ final class EnglishRenderWalk
             'the flag bar above the header (Lane FB)' => [
                 'pattern' => '#<div class="kfb [^>]*>\s*<div class="kfb-in">.*?</div>\s*</div>\n#s',
                 'hits' => 31,
+            ],
+
+            /*
+             * THE SELF-HOSTED POPPINS FACES — Lane PERF, paired with
+             * approvedRemovals()' 'the Google Fonts request for Poppins'.
+             *
+             * Four <link rel=preload> for the `latin` subset the page actually
+             * uses, and one <style id="kbb-poppins"> holding all twelve
+             * @font-face rules css2 returns. The counts are the claim: four
+             * preloads and not twelve (a preload for a face no codepoint on the
+             * page needs is bandwidth taken from the LCP image), and one style
+             * block and not two.
+             *
+             * `.*?` IS SAFE HERE AND ONLY BECAUSE OF THE id. The block is
+             * <style id="kbb-poppins">…</style> with no nested <style>, so the
+             * lazy match ends at its own close; the flag bar's rule above needs
+             * two levels of </div> for exactly the reason this one does not.
+             */
+            'the self-hosted Poppins faces (Lane PERF)' => [
+                'pattern' => '#(?:<link rel="preload" as="font" type="font/woff2" crossorigin href="[^"]+">\n){4}'
+                    .'<style id="kbb-poppins">.*?</style>\n#s',
+                'hits' => 33,
+            ],
+
+            /*
+             * The same three footer headings, as <h2>. See the removal.
+             *
+             * `perPage` is 3 because the footer draws three columns with a
+             * heading and one without, on every page that has a footer. The
+             * per-page guard stays armed at that number rather than being
+             * switched off: four on one page and two on another would still add
+             * to 87.
+             */
+            'the footer column headings as h2 (Lane PERF)' => [
+                'pattern' => '#<div class="fcol"><h2>[^<]*</h2>#',
+                'hits' => 87,
+                'perPage' => 3,
+            ],
+        ];
+    }
+
+    /**
+     * WHOLE ELEMENTS TAKEN OFF EVERY PAGE, ON PURPOSE, AND APPROVED ONE BY ONE.
+     *
+     * The mirror image of approvedInsertions(), and it exists for the same
+     * reason at the other end: a lane that REPLACES a piece of chrome has a
+     * "before" with no "after" as well as an "after" with no "before", and
+     * cutting only one side leaves the walk comparing a page against itself
+     * minus half a change.
+     *
+     * Applied to the BEFORE side, with the same cutApproved() and the same
+     * counting discipline: if the element stops being there in the old tree the
+     * count falls and this is red, and when a later lane adds a page that drew
+     * it the count rises with it, deliberately.
+     *
+     * Every rule here is PAIRED with one in approvedInsertions(), and the pair
+     * has to delete the same surrounding bytes or the two pages stop lining up
+     * — which is the whole point: whatever is left on both sides is still
+     * compared byte for byte.
+     *
+     * @return array<string, array{pattern: string, hits: int}>
+     */
+    public static function approvedRemovals(): array
+    {
+        return [
+            /*
+             * THE GOOGLE FONTS REQUEST FOR POPPINS — Lane PERF.
+             *
+             * Three connection hints and a render-blocking stylesheet, on every
+             * page of the shop, replaced by the same font served from this
+             * origin. The owner's own PageSpeed report is the measurement:
+             * those two third-party origins were the whole of a 4,369 ms
+             * critical path, and `font-display: swap` repainted every word on
+             * the page when the last of the four files finally arrived at 4.4 s.
+             * App\Support\WebFonts carries the argument in full.
+             *
+             * PAIRED WITH 'the self-hosted Poppins faces'. The two patterns end
+             * at the same point — the newline that closed the stylesheet link
+             * and the newline that closes the <style> — so the blank lines
+             * around the block are untouched on both sides and still compared.
+             *
+             * THE PATTERN NAMES THE WEIGHTS. `family=Poppins[^"]*` would go on
+             * matching after somebody quietly dropped weight 800 from the
+             * request, which is exactly the regression this file exists to
+             * notice.
+             */
+            'the Google Fonts request for Poppins (Lane PERF)' => [
+                'pattern' => '#<link rel="preconnect" href="https://fonts\.googleapis\.com">\n'
+                    .'<link rel="dns-prefetch" href="https://fonts\.gstatic\.com">\n'
+                    .'<link rel="preconnect" href="https://fonts\.gstatic\.com" crossorigin>\n\n'
+                    .'<link href="https://fonts\.googleapis\.com/css2\?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">\n#',
+                'hits' => 33,
+            ],
+
+            /*
+             * THE FOOTER'S THREE COLUMN HEADINGS, as <h5> — Lane PERF.
+             *
+             * Nine <h2> and then an <h5> is a heading level skipped twice, and
+             * axe scores it: it was one of the two audits costing Accessibility
+             * its five points. Not one pixel moves — kbb.css line 180 is
+             * `*{box-sizing:border-box;margin:0;padding:0}`, so the only
+             * User-Agent declaration either tag carries is font-size and
+             * `.fcol h2` sets 12px exactly as `.fcol h5` did.
+             *
+             * THE LABEL IS INSIDE THE CUT, WHICH LOSES COVERAGE, AND IT IS
+             * BOUGHT BACK. `[^<]*` swallows "Shop", "Customer Care" and "My
+             * Account" on both sides, so this walk would no longer see somebody
+             * rewriting them. PerfDeliveryTest pins all three against the
+             * shipped English, by tag, which is the sharper form of the same
+             * check — a rule that cuts more than its element has to say what it
+             * stopped watching.
+             */
+            'the footer column headings as h5 (Lane PERF)' => [
+                'pattern' => '#<div class="fcol"><h5>[^<]*</h5>#',
+                'hits' => 87,
             ],
 
             /*

@@ -429,7 +429,13 @@
      --}}@unless ($sections->hidden('cards_banner'))
 @php $bnSection = app(\App\Services\Banners::class)->forHome(); @endphp
 @if ($bnSection !== null)
-<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include('partials.home.cards-banner', ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
+{{-- THE PARTIAL IS THE SET'S OWN, AND IT IS A LOOKUP IN A CONSTANT — Lane BN2.
+     `banner_sets.kind` chose between two banner types and BannerSet::homePartial()
+     maps its two tokens to two literal view names; a set whose kind is anything
+     else, including null, returns the cards partial this line named before the
+     column existed. The section, its class, its padding and its query are
+     unchanged, which is why a shop with no slider renders the same bytes. --}}
+<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
 @endif
 @endunless
 
@@ -982,6 +988,63 @@
   </div>
 </div></section>
 @endunless
+{{--
+
+     THE OWNER'S REUSABLE PRODUCT GRID, EVERY INSTANCE HE HAS BUILT — Lane GS.
+
+     "DO ONE thing. prepare a proper grid section with all controls and it can
+      be use anywhere, and can be edit that specific grid section. so this case
+      we can re-use this grid section anywhere multiple times with different
+      products etc selection."
+
+     ONE LOOP, NOT A SECTION. There is no fixed number of these, so there is no
+     block to write per instance: `forHome()` answers a list and each row is one
+     `<section>` drawn by the same partial. Adding another is a row in
+     `grid_sections`, never a change to this file.
+
+     IT SITS AT THE END, AND THAT IS WHAT MAKES THE CONSOLE HONEST.
+     `HomepageSections::registry()` appends the instances after the seventeen,
+     and this list IS the default order — a key whose position there disagreed
+     with the position here would hand Appearance → Homepage a picture the shop
+     does not draw, which is the fault `settle()` exists to stop one level
+     along. The owner moves an instance up the page with the ↑ on that screen;
+     the ordering rules `orderStyle()` emits reach these sections exactly as
+     they reach the other fifteen, because each one is a direct child of
+     `.kbb-home`.
+
+     IT DRAWS NOTHING ON A SHOP THAT HAS BUILT NONE. `forHome()` returns `[]`
+     before it reads anything at all when the table is empty, so the @if is
+     false, no `<section>` is emitted, no style is pushed, and
+     `HomepageSections::registry()` is the const byte for byte — which is rule
+     1 on the most visible page in the shop. GridSectionShipsOffTest renders
+     this page with instances in the table and asserts the bytes; the two rows
+     the owner named are presets on his own screen, not defaults this ships.
+
+     THE STYLE GOES THROUGH @push, WHICH REACHES THE HEAD BECAUSE BLADE
+     EVALUATES THIS SECTION BEFORE THE LAYOUT. It is inline for the reason
+     `orderStyle()` above already argues at length: the storefront serves BUILT
+     css from a web root that is a different directory, `npx vite build` is a
+     manual step nobody runs during an update, and a rule added to kbb.css
+     therefore ships inert. Written on ONE line with nothing after the echo,
+     because Blade doubles the whitespace following a raw echo and
+     StorefrontEnglishUnchangedTest cannot tell a newline that moved from a
+     sentence that changed — the identical trap this file records at its @vite
+     line and in four other places.
+
+     AND THE DEVICE SWITCHES ARE APPLIED HERE, ON THE LIST, rather than inside
+     the partial. An instance switched off for BOTH devices is not rendered at
+     all — the rule every one of the seventeen shipped sections follows — and
+     doing it on the list is what keeps the @push below honest: gated inside
+     the partial, a shop whose only instance was switched off would still put
+     this feature's whole stylesheet in the head of its front page.
+
+     --}}@php $gsRows = array_values(array_filter(app(\App\Services\GridSections::class)->forHome(), fn ($r) => ! $sections->hidden($r['section']->sectionKey()))); @endphp
+@if ($gsRows !== [])
+@push('styles'){!! \App\Services\GridSections::css() !!}@endpush
+@foreach ($gsRows as $gsRow)
+@include('partials.home.grid-section', ['section' => $gsRow['section'], 'items' => $gsRow['items'], 'sections' => $sections])
+@endforeach
+@endif
 
 </div>
 @endsection

@@ -60,7 +60,7 @@
     @else
         @include('partials.home.grid', [
             'items' => $products,
-            'skin' => $settings->get('grid_skin', 'classic'),
+            'skin' => \App\Support\GridSkins::resolve(null),
             'catLabel' => __('store.wishlist.grid_label'),
         ])
     @endif

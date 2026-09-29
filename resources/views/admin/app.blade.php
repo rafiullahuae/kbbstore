@@ -1517,6 +1517,17 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 /* header preview */
 .hdpv{background:var(--hd-bg,#fff);border-radius:12px;overflow:hidden;width:100%;color:#2A2228}
 .hdpv-bar{display:flex;align-items:center;gap:10px;padding:0 12px;min-height:var(--hd-h,64px)}
+/* The flag strip, in the header preview. Lane FB shipped the strip and could
+   not add it here — this mock is hand-written in app.blade.php, which a lane
+   may not edit — so Appearance → Header → Flag bar had eleven correct controls
+   and a preview that never showed what they did. Drawn from the same custom
+   properties the storefront reads, so moving a slider moves the picture. */
+.hdpv-fb{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:0 12px;min-height:var(--fb-h,30px);background:var(--fb-bg,#FDEFF4)}
+.hdpv-fb span.t{font-size:var(--fb-size,12px);font-weight:600;color:var(--fb-ink,#E0567B);
+  line-height:1.2;text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdpv-fb span.t.pill{border:1px solid var(--fb-border,#F0B6C9);border-radius:99px;padding:2px 10px;flex:0 1 auto}
+.hdpv-fb svg{height:var(--fb-flag-h,14px);width:calc(var(--fb-flag-h,14px) * 1.5);flex:none;display:block}
 .hdpv-bar.bd{border-bottom:1px solid #F0E8EB}
 .hdpv-logo{font-size:var(--hd-logo,22px);font-weight:700;color:var(--hd-logo-c,#2A2228);flex:1;letter-spacing:-.02em}
 .hdpv-logo em{font-style:normal;color:var(--hd-logo-a,#E0567B)}
@@ -1777,6 +1788,36 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .skinprev .kbb-badge-new{left:7px;background:var(--kbb-new,#1F9D55)}
 .skinprev .kbb-badge-sale{right:7px;background:var(--kbb-sale,#E23B57)}
 .skinprev .kbb-card-cart{display:block;margin-top:7px;text-align:center;font-size:9.5px;font-weight:700;border-radius:7px;padding:6px;background:var(--kbb-cart-bg,#E0567B);color:var(--kbb-cart-fg,#fff)}
+/* ▲ COPIED FROM resources/css/kbb/admin-skin-preview.css, which this console
+   carries a generated copy of. Without it the four new Showcase entries in
+   the picker draw the bare card — nothing breaks and no test reddens, but
+   the owner would be choosing between swatches that look alike, which is
+   the one thing the picker exists to prevent. Keep the two in step. */
+/* ── THE SHOWCASE FAMILY, as the admin swatch draws it ───────────── Lane PG2 ──
+   skinCard() in resources/views/admin/app.blade.php builds a card with no
+   `.kbb-card-shot` and no `.heart`, so the shop's `display:contents` trick has
+   nothing to do here: the thumb keeps its own frame and these rules only carry
+   the FAMILY'S LOOK — the padding, the type scale, the price pair and the four
+   button shapes — which is what a swatch is for. Physical properties, like the
+   rest of this sheet, because the admin console is left-to-right only. */
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card{background:#fff;border:1px solid rgba(42,34,40,.10);overflow:hidden}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-thumb{background:#FBF5F3;border-radius:0}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .cb{padding:12px;text-align:left}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-cat,.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-brand{color:#9A8D94}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .cn{font-size:12px;color:#221A20}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .cp{display:flex;align-items:baseline;gap:6px;margin-top:8px}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg{margin-right:0;color:#A2959B}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg+.kbb-card-price{color:#C13E63}
+.skinprev .kbb-pgrid[data-skin^="showcase"] .kbb-card-cart{margin-top:9px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;padding:9px 6px}
+.skinprev .kbb-pgrid[data-skin="showcase-compact"] .cb{padding:8px}
+.skinprev .kbb-pgrid[data-skin="showcase-compact"] .kbb-card-cart{margin-top:6px;border-radius:2px;padding:6px 4px;font-size:8.5px}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .cb{display:grid;grid-template-columns:1fr auto;column-gap:8px;align-items:end}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cat,.skinprev .kbb-pgrid[data-skin="showcase-row"] .cn,.skinprev .kbb-pgrid[data-skin="showcase-row"] .kbb-card-rate{grid-column:1/-1}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .cp{grid-column:1;margin-top:8px}
+.skinprev .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{grid-column:2;margin-top:8px;padding:8px 12px;border-radius:3px}
+.skinprev .kbb-pgrid[data-skin="showcase-airy"] .kbb-card{border-color:transparent;box-shadow:0 6px 18px rgba(42,34,40,.09)}
+.skinprev .kbb-pgrid[data-skin="showcase-airy"] .cb{padding:16px}
+.skinprev .kbb-pgrid[data-skin="showcase-airy"] .kbb-card-cart{background:transparent;color:var(--kbb-cart-bg,#E0567B);box-shadow:inset 0 0 0 1.5px var(--kbb-cart-bg,#E0567B);border-radius:2px;margin-top:11px}
 
 
 /* skin picker */
@@ -2577,6 +2618,41 @@ const I={
    keep in sync. */
 const ADMIN_BASE = window.location.pathname.replace(/\/+$/, '');
 
+/* ---------- LANE NAV · the dashboard asks for its numbers now, not at 39% ---
+   THE OTHER HALF OF THE OWNER'S REPORT: "some pages don't show immidiately and
+   it takes long to long", with "Loading the latest orders..." still spinning in
+   his screenshot.
+
+   That line is renderDash()'s placeholder and hydrateDash() replaces it from
+   GET /admin-api/stats. The endpoint is not slow -- measured cold, 62.7ms. It
+   was not being CALLED. hydrateDash() is defined in the second script block and
+   its only boot call sits at the foot of that block, which on the applied
+   console is byte 1,324,219 of 3,425,404: the browser must download and parse
+   1.3 MB before the dashboard so much as asks for its own numbers, and at
+   2 Mbit/s that is more than five seconds of a screen that is drawn but empty.
+
+   The request is started HERE instead, at byte ~197,000, which is as early as
+   the address of the endpoint is knowable. It is one GET with no side effects
+   and the dashboard is the screen this console opens on, so it is never
+   wasted; hydrateDash() below awaits this promise rather than issuing its own.
+
+   IT CANNOT BREAK hydrateDash(). The promise is stored resolved-or-rejected and
+   read exactly once -- a second hydrate (the order-status save re-hydrates)
+   falls through to a fresh api() call, which is what every call after the first
+   did before this existed. A rejection here is caught into `null` so an
+   unhandled rejection can never reach the console, and hydrateDash() treats a
+   null exactly as it treats a throw: it returns and leaves the screen alone.
+
+   NOT A CACHE, and deliberately not one. It answers the FIRST paint only. */
+window.__kbbStatsFirst = (function(){
+  try{
+    var url = ADMIN_BASE.replace(/\/[^\/]*$/, '') + '/admin-api/stats';
+    return fetch(url, {credentials:'same-origin', headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; });
+  }catch(e){ return null; }
+})();
+
 /* ---------- nav ---------- */
 const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
@@ -2638,6 +2714,78 @@ const NAV=[
   {sec:'Storefront',items:[['shopfilters','Shop Filters','<path d="M4 5h16l-6 7v5l-4 2v-7z"/>']]},
   {sec:'Core Updates',items:[['updates','Core Updates','<path d=\"M21 12a9 9 0 1 1-3-6.7\"/><path d=\"M21 3v6h-6\"/><path d=\"M12 8v5l3 2\"/>']]}
 ];
+
+/* ---------- LANE NAV · the rows that ship inside a partial ----------------
+   THE COMPLAINT THIS EXISTS FOR, and the measurement behind it.
+
+   Reported with a screenshot of the console part-way through loading: the
+   sidebar showed Appearance holding ten rows and not the eleven others that
+   belong in it, and some parent menus were short of children entirely. It was
+   not a rendering fault. It was the clock.
+
+   Twenty-one of this console's sidebar rows do not come from NAV above. They
+   are contributed by screen partials, each of which registers its own row when
+   its script runs -- and every one of those scripts is at the END of this
+   document, because a partial cannot call window.kbbAddNavEntry before the
+   block that defines it. Measured on the applied console: buildNav() runs at
+   byte 731,657 of a 3,425,404-byte document, which is 21.4 per cent of the way
+   through it, and the last of the twenty-one registers at byte 3,388,358 --
+   98.9 per cent. Between those two points the sidebar is genuinely incomplete,
+   and on a throttled load (2 Mbit/s, CPU at one quarter) that gap measured
+   10.8 seconds: Appearance held ten rows from 4.3s to 15.1s, then eighteen.
+   Appearance -> Set registers last of all, which is exactly the row the
+   owner's screenshot is missing.
+
+   So the rows are declared HERE, where the server renders them, and registered
+   immediately after buildNav(). A partial's own kbbAddNavEntry() call is then
+   a no-op -- it is keyed on the screen id and returns the row that is already
+   there -- so nothing in any partial changes and nothing registers twice. What
+   a partial still contributes is the only thing it alone can: its renderer.
+
+   THE ORDER OF THIS ARRAY IS THE SIDEBAR'S ORDER AND IS NOT ALPHABETICAL.
+   kbbAddNavEntry() inserts each row directly after the first of its `after`
+   anchors that is already in the group, so the order rows arrive in decides
+   where they land. This array is in the order the console registers them in
+   today -- the three that register while the document is still parsing first,
+   then the eighteen that wait for DOMContentLoaded, each of those in the order
+   this file includes them. The one place that matters is 'setap': it names
+   'cartpanel' first, but it registers before cart-panel does, so it has always
+   landed after 'productpage' instead. Sorting this array would silently move
+   that row. The settled sidebar was captured from the browser before and after
+   this change and is byte-identical; AdminSidebarIsCompleteAtBuildTest pins
+   both the order and the anchors.
+
+   EACH ROW'S label, group AND after ARE COPIES OF THE PARTIAL'S OWN CALL, and
+   a copy can drift. That is what the guard test compares, in both directions:
+   a partial that registers a row missing from here, or a row here that no
+   partial registers, fails the suite rather than the sidebar. */
+const LATE_NAV=[
+  {screen:'ugcsections',label:'Shoppable video',group:'Content',after:['media','htmlblocks','posts'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="m9 14 4 2-4 2z"/>'},
+  {screen:'instagram',label:'Instagram',group:'Content',after:['ugcsections','media','htmlblocks','posts'],icon:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/>'},
+  {screen:'setap',label:'Set',group:'Appearance',after:['cartpanel','productpage'],icon:'<circle cx="8.5" cy="12" r="4.2"/><circle cx="14" cy="12" r="4.2"/><circle cx="19" cy="12" r="1.6"/>'},
+  {screen:'order-new',label:'New Order',group:'Store',after:['orders'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'},
+  {screen:'coupon-editor',label:'Coupons',group:'Store',after:['order-new','orders'],icon:'<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M12 9v6"/><path d="M9 12h6"/>'},
+  {screen:'category-tree',label:'Categories',group:'Catalog',after:['catalog'],icon:'<path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/>'},
+  {screen:'brands-manager',label:'Brands',group:'Catalog',after:['category-tree','catalog'],icon:'<path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 0-7.1 5 5 0 0 1 7.1 0L12 7.8l1.5-1.5a5 5 0 0 1 7.1 7.1Z"/>'},
+  {screen:'product-editor',label:'Product editor',group:'Catalog',after:['catalog'],icon:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'},
+  {screen:'hpcontent',label:'Homepage content',group:'Appearance',after:['homepage'],icon:'<path d="M3 5h18v6H3z"/><path d="M3 15h9"/><path d="M3 19h6"/>'},
+  {screen:'routines',label:'Build my routine',group:'Catalog',after:['product-editor','catalog'],icon:'<path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="15" cy="18" r="2"/>'},
+  {screen:'cache',label:'Cache',group:'Platform',after:['siteaddr','settings'],icon:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'},
+  {screen:'cartpanel',label:'Cart panel',group:'Appearance',after:['dividers','mobilehdr','prodstyles'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'},
+  {screen:'cartpage',label:'Cart page',group:'Appearance',after:['cartpanel','dividers'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M9.5 9.5h7"/>'},
+  {screen:'checkoutpage',label:'Checkout page',group:'Appearance',after:['cartpage','cartpanel','dividers'],icon:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>'},
+  {screen:'slimfooter',label:'Footer',group:'Appearance',after:['checkoutpage','cartpage','dividers'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18"/><path d="M7 18h5"/>'},
+  {screen:'sitelayout',label:'Site layout',group:'Appearance',after:['layout','prodstyles','header','dividers'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/>'},
+  {screen:'security',label:'Security',group:'Store',after:['payments','modules','analytics'],icon:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/>'},
+  {screen:'paygw',label:'Gateway webhooks',group:'Store',after:['payments','orders'],icon:'<path d="M12 3a4 4 0 0 1 3.4 6.1l2.8 4.6"/><path d="M8.2 20a4 4 0 0 1-1.4-7.1L9.6 8"/><path d="M18 20a4 4 0 0 0 1-7.9H13"/>'},
+  {screen:'sets',label:'Sets',group:'Catalog',after:['catalog'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M12 7V4"/><path d="M8 4h8"/>'},
+  {screen:'product-tabs',label:'Product tabs',group:'Catalog',after:['catalog','sets'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M8 7V4"/><path d="M14 7V4"/>'},
+  {screen:'banners',label:'Banners',group:'Appearance',after:['hpcontent','homepage'],icon:'<rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/>'},
+  {screen:'gridsections',label:'Grid sections',group:'Appearance',after:['banners','hpcontent','homepage'],icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
+];
+
+/* The ids above, for the click guard below. */
+const LATE_NAV_IDS=new Set(LATE_NAV.map(r=>r.screen));
 /* LANE DH - the 'live' tag and its badge are gone.
    Debug & Monitor was the only NAV row that carried it, and the branch it
    selected rendered a literal <span class="cnt">3</span>. Not a count of
@@ -2671,7 +2819,7 @@ function buildNav(){
     const chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 6 6 6-6 6"/></svg>';
     return `<div class="nav-group" data-sec="${g.sec}"><button class="nav-gh"><span class="gh-name">${g.sec}</span>${badge}${chev}</button><div class="nav-sub">${g.items.map(navItemHTML).join('')}</div></div>`;
   }).join('');
-  $$('#nav .nav-item').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  $$('#nav .nav-item').forEach(b=>b.onclick=()=>kbbNavClick(b.dataset.go));
   $$('#nav .nav-gh').forEach(h=>h.onclick=()=>h.closest('.nav-group').classList.toggle('open'));
   syncNavOpen(cur);
 }
@@ -2756,7 +2904,7 @@ function kbbAddNavEntry(opts){
   b.className = 'nav-item';
   b.dataset.go = screen;
   b.innerHTML = ic(o.icon || '') + '<span>' + (o.label || screen) + '</span>';
-  b.onclick = () => window.go(screen);
+  b.onclick = () => kbbNavClick(screen);
 
   const sub = o.group ? nav.querySelector('.nav-group[data-sec="' + o.group + '"] .nav-sub') : null;
   const after = o.after == null ? [] : (Array.isArray(o.after) ? o.after : [o.after]);
@@ -2797,6 +2945,77 @@ function kbbAddNavEntry(opts){
 }
 window.kbbAddNavEntry = kbbAddNavEntry;
 
+/* ---------- LANE NAV · clicking a row whose renderer has not arrived -------
+   LATE_NAV puts twenty-one rows in the sidebar at buildNav(), which is 21.4
+   per cent of the way through this document. Their renderers are still being
+   parsed. So for the first few seconds of a cold load a row can be clicked
+   before the partial that draws it exists -- a window this console never had
+   before, because the row did not exist either.
+
+   Clicked in that window, go() finds no entry in its dispatch object and ends
+   `||renderDash`: THE DASHBOARD UNDER THE CLICKED SCREEN NAME, with no error.
+   That is the exact defect LATE_RENDERED and the deep-link replay were built
+   for, reached by a click instead of by an address, so it is answered the same
+   way -- navigate now, and if nothing but the dashboard drew, navigate once
+   more when the document is parsed and the renderer exists.
+
+   THE TEST IS renderDash S OWN WRAPPER, not a marker and not a timer. A marker
+   cannot tell the two cases apart here: go() clears #content before it draws,
+   so a marker placed before the call is destroyed whichever screen wins, and
+   one placed after survives a screen that drew itself correctly and would
+   replay over it. Lane DA measured that double render on `rev-all`. #kbbDashWrap
+   is present only when renderDash() painted, which is precisely the case that
+   needs replaying, so a screen whose partial had already arrived is never
+   replayed and never drawn twice.
+
+   ONE QUEUED TARGET, CANCELLED BY THE NEXT CLICK. Every sidebar row routes
+   through here, so a second click overwrites the first. The replay then checks
+   `cur` as well: any other navigation -- an inline go() inside the dashboard,
+   a deep-link replay, the address bar -- has moved it, and the queued target is
+   dropped rather than yanking the owner off the screen he is now on.
+
+   AFTER DOMContentLoaded THIS DOES NOTHING AT ALL. Every partial has run by
+   then, so there is nothing left to wait for and no replay is ever armed; the
+   call is one Set lookup and a readyState test. */
+let kbbNavReplay=null;
+let kbbNavReplayArmed=false;
+function kbbNavClick(id){
+  kbbNavReplay=null;
+  if(typeof window.go!=='function') return;
+  window.go(id);
+  if(document.readyState!=='loading') return;      /* every partial has run */
+  if(id==='dash') return;
+  /* The arming set is the deep link's, plus the rows declared above. Both
+     answer the same question -- can the go() that exists right now draw this
+     id at all -- and LIVE_RENDERED is the half this lane MEASURED rather than
+     reasoned about: clicking Store -> Orders 4.6s into a throttled load left
+     the console on "Orders could not be loaded ... Reload the page." for good,
+     and reloading reproduces it, because the address is not the cause. That is
+     Lane DA's defect reached by a click instead of by a link, and it is older
+     than this lane. AdminNavAndIdsTest already keeps every id that draws itself
+     after an await OUT of both sets, which is the rule this must not break. */
+  if(!(LATE_NAV_IDS.has(id) || LIVE_RENDERED.has(id) || LATE_RENDERED.has(id))) return;
+  if(!$('#kbbDashWrap') && !$('#kbbFrameStartup')) return;   /* a real screen drew it: nothing to replay */
+  kbbNavReplay=id;
+  if(kbbNavReplayArmed) return;
+  kbbNavReplayArmed=true;
+  document.addEventListener('DOMContentLoaded',function(){
+    /* setTimeout for the same reason the deep-link replay uses one: this
+       listener is registered before any partial is parsed, so it runs ahead of
+       the very boots whose result it reads. A task queued from inside it runs
+       after the lot. */
+    setTimeout(function(){
+      const want=kbbNavReplay;
+      kbbNavReplay=null;
+      if(!want) return;
+      if(cur!==want) return;                       /* the owner has moved on */
+      if(!$('#kbbDashWrap') && !$('#kbbFrameStartup')) return;   /* something drew it after all */
+      try{ window.go(want); }catch(e){}
+    },0);
+  });
+}
+window.kbbNavClick = kbbNavClick;
+
 /* Breadcrumb and page title per screen: [group, title].
 
    The group here is the sidebar group the entry actually sits in, and the title
@@ -2830,7 +3049,7 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
    opened the dashboard. Same fix, same condition, and the strings are copied
    from what each partial's own go() writes so the heading cannot depend on how
    the screen was reached. */
-'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer']};
+'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -2863,7 +3082,7 @@ function go(id,sub){
    it is rendered to the page as visible text. That is not hypothetical — it
    shipped to a screenshot in this lane before being caught. */
 function renderDash(){
-  $('#content').innerHTML=`<div class="wrap">
+  $('#content').innerHTML=`<div class="wrap" id="kbbDashWrap">
     <div class="banner">${ic('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>')}<div>This is the <b>foundation</b>. Real numbers appear once your WooCommerce data is imported in <b>Phase 1</b> — the layout, modules, and safety tools below are live and clickable now.</div></div>
     <div class="kpis">
       ${kpi(I.revenue,'#15a85a','var(--accent-soft)','Revenue (30d)','AED —','Awaiting import')}
@@ -6237,7 +6456,9 @@ function hdPreview(){
     --hd-icon:${g('icon_size')}px;--hd-badge:${g('badge_bg')};--hd-nav:${g('nav_size')}px;--hd-gap:${g('nav_gap')}px;
     --hd-hot:${g('nav_hot_colour')};--hd-sup-bg:${g('support_icon_bg')};--hd-sup-fg:${g('support_icon_fg')};
     --mi-size:${g('menu_icon_size')}px;--mi-speed:${g('menu_icon_speed')}s;
-    --mi-c1:${g('menu_icon_c1')};--mi-c2:${g('menu_icon_c2')};--mi-c3:${g('menu_icon_c3')}`;
+    --mi-c1:${g('menu_icon_c1')};--mi-c2:${g('menu_icon_c2')};--mi-c3:${g('menu_icon_c3')};
+    --fb-h:${g('fb_height')}px;--fb-size:${g('fb_size')}px;--fb-flag-h:${g('fb_flag_h')}px;
+    --fb-bg:${g('fb_bg')};--fb-ink:${g('fb_ink')};--fb-border:${g('fb_border')}`;
   const icon=g('menu_icon');
   const fam = icon==='tiles'?'tiles' : icon==='dots9'?'dots9' : icon==='dots3'?'dots3' : 'bars';
   const inner = fam==='tiles' ? '<span class="s"></span>'.repeat(4)
@@ -6245,7 +6466,19 @@ function hdPreview(){
               : fam==='dots3' ? '<span class="d"></span>'.repeat(3)
               : '<span class="b"></span>'.repeat(3);
   const nav=['Brands','Skincare','Sunscreens','SUPER SALE','BLOG'];
+  /* The two flags are CONSTANTS here, as they are in app/Support/FlagArt.php:
+     emoji regional indicators render as boxed AE/KR on Windows, which is the
+     one place this strip's claim must not break. Kept deliberately simple —
+     this is a 21px mock, not the shipped artwork. */
+  const fbFlags = {
+    ae: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><rect width="30" height="6.67" fill="#00732f"/><rect y="13.33" width="30" height="6.67" fill="#000"/><rect width="7.5" height="20" fill="#ce1126"/></svg>',
+    kr: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="5" fill="#cd2e3a"/><path d="M10 10a5 5 0 0 1 10 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 0-5 0z" fill="#0047a0"/></svg>',
+  };
+  const fbOn = g('fb_mobile') || g('fb_desktop');
+  const fbText = String(g('fb_text') || '').trim() || "UAE's Authentic K-Beauty Store";
+
   $('#hdPhone').innerHTML=`<div class="hdpv" style="${vars}">
+    ${fbOn?`<div class="hdpv-fb">${g('fb_flags')?fbFlags.ae:''}<span class="t${g('fb_pill')?' pill':''}">${escHtml(fbText)}</span>${g('fb_flags')?fbFlags.kr:''}</div>`:''}
     <div class="hdpv-bar${g('bar_border')?' bd':''}">
       <span class="kbbmi kbbmi-${icon}">${inner}</span>
       <span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>
@@ -7219,7 +7452,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -7271,7 +7504,11 @@ function frameNotBuiltHTML(title,id){
 }
 /* Lane AM's wording for 'rev-all', reused verbatim so the two agree. */
 function frameStartupHTML(title){
-  return `<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">${escHtml(title)} could not be loaded — the admin script did not finish starting up. Reload the page.</p></div>`;
+  /* The id is kbbNavClick's signal, exactly as #kbbDashWrap is. This card is
+     painted only when mountFrame() had nothing else to draw with, which is the
+     same "nothing claimed this screen" condition and wants the same replay.
+     A constant, never a setting. */
+  return `<div class="wrap" id="kbbFrameStartup"><p style="padding:24px;color:var(--ink-soft)">${escHtml(title)} could not be loaded — the admin script did not finish starting up. Reload the page.</p></div>`;
 }
 
 function mountFrame(id,src,title,query){
@@ -11511,6 +11748,11 @@ function bindMail(){
 
 $('.side-pin .nav-item').onclick=()=>go('console');
 buildNav();
+/* The twenty-one partial-contributed rows, registered HERE rather than
+   2.7 MB further down this document. kbbAddNavEntry() is keyed on the screen
+   id, so each partial's own call further down returns this row and adds
+   nothing -- one row, one position, whichever runs first. */
+LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 
 /* ===== LANE DA · deep links · BEGIN ========================================
    Deep link: /{admin}?go=updates or /{admin}#updates opens that panel directly.
@@ -12019,7 +12261,15 @@ buildNav();
 
   /* ---------- Dashboard: real KPIs + recent orders ---------- */
   async function hydrateDash(){
-    var s; try{ s = await api('/admin-api/stats'); }catch(e){ return; }
+    var s = null;
+    /* The first paint reads the request the head of this document already
+       started; every later hydrate issues its own, exactly as before. */
+    if(window.__kbbStatsFirst){
+      var first = window.__kbbStatsFirst; window.__kbbStatsFirst = null;
+      try{ s = await first; }catch(e){ s = null; }
+    }
+    if(!s){ try{ s = await api('/admin-api/stats'); }catch(e){ return; } }
+    if(!s) return;
     function setKpi(label, val, sub, opts){
       opts = opts || {};
       document.querySelectorAll('#content .kpi').forEach(function(k){
@@ -22098,6 +22348,24 @@ buildNav();
      entry to the rendered nav rather than reaching NAV and TITLES, which are
      module-scoped consts here. --}}
 @include('admin.partials.set-appearance-screen')
+
+{{-- Appearance → Grid sections (Lane GS). The owner: "prepare a proper grid
+     section with all controls and it can be use anywhere, and can be edit that
+     specific grid section. so this case we can re-use this grid section
+     anywhere multiple times with different products etc selection."
+
+     ONE section type, added as many times as he likes. Each instance is a row
+     in HomepageSections::registry() as well, so its position on the page and
+     its Desktop/Mobile switches are the ones Appearance → Homepage has always
+     shown — there is no second ordering mechanism beside that one.
+
+     It registers its own sidebar entry inside the Appearance group and wraps
+     window.go, exactly as the screens above it do.
+
+     Applying it changes nothing on the live shop: the table is created empty,
+     so the homepage renders the bytes it rendered before. The two rows he named
+     are one-click presets on this screen, not defaults this ships. --}}
+@include('admin.partials.grid-sections-screen')
 
 @verbatim
 <script>

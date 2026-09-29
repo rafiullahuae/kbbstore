@@ -107,6 +107,18 @@ class BannerApiController extends Controller
                 'statuses' => BannerSet::STATUSES,
                 'bg_modes' => BannerSet::BG_MODES,
                 'title_positions' => BannerSet::TITLE_POSITIONS,
+                // Lane BN2. `kinds` is what the type picker at the top of the
+                // editor is drawn from; the other three belong to the slider
+                // and are simply not read while the set is a cards banner.
+                'kinds' => BannerSet::KINDS,
+                'slider_styles' => self::labels(BannerSet::SLIDER_STYLES),
+                // The second half of each style row: the sentence under the
+                // picker that says what the treatment actually does. Sent
+                // rather than retyped in the screen, for the reason this
+                // method's own header gives — a second copy of a fact goes
+                // stale, and this one describes pixels a lane may move.
+                'slider_style_notes' => array_map(static fn (array $r): string => $r[1], BannerSet::SLIDER_STYLES),
+                'slider_ratios' => self::labels(BannerSet::SLIDER_RATIOS),
                 'limits' => BannerSet::LIMITS,
             ],
         ]);
@@ -150,13 +162,28 @@ class BannerApiController extends Controller
 
     public function createSet(Request $request): JsonResponse
     {
-        $name = trim((string) $request->input('name', ''));
-        $name = $name === '' ? 'Cards banner' : Str::limit($name, 180, '');
+        /*
+         * THE KIND IS SETTABLE AT CREATE, and it is validated here rather than
+         * trusted: `Rule::in(array_keys(...))` over the model's own enum, with
+         * `cards` when the key is absent — which is what every caller that
+         * predates Lane BN2 sends, so the button that has always made a cards
+         * banner goes on making one.
+         */
+        $data = $request->validate([
+            'name' => ['sometimes', 'nullable', 'string', 'max:400'],
+            'kind' => ['sometimes', Rule::in(array_keys(BannerSet::KINDS))],
+        ]);
+
+        $kind = (string) ($data['kind'] ?? 'cards');
+
+        $name = trim((string) ($data['name'] ?? ''));
+        $name = $name === '' ? ($kind === 'slider' ? 'Picture slider' : 'Cards banner') : Str::limit($name, 180, '');
 
         $set = BannerSet::create([
             'name' => $name,
             'slug' => $this->uniqueSlug($name),
             'status' => 'draft',
+            'kind' => $kind,
             'position' => (int) (BannerSet::query()->max('position') ?? 0) + 1,
         ]);
 
@@ -220,6 +247,23 @@ class BannerApiController extends Controller
             'bg_mode' => ['sometimes', Rule::in(array_keys(BannerSet::BG_MODES))],
             'title_pos' => ['sometimes', Rule::in(array_keys(BannerSet::TITLE_POSITIONS))],
             'bg_image' => ['sometimes', 'nullable', 'string', 'max:400'],
+
+            /*
+             * ── LANE BN2: the four columns of the second banner type ────────
+             *
+             * All four are `Rule::in(array_keys(...))` over BannerSet's own
+             * enums — rule 5, "a select stores one of its own options or the
+             * default" — and the model refuses an unknown token a SECOND time
+             * at render, where `kind()` answers `cards` for anything it does
+             * not know. That second door is the one that matters for `kind`:
+             * it decides which template draws the section, so a value nobody
+             * issued must resolve to the section that already existed rather
+             * than to a blank page.
+             */
+            'kind' => ['sometimes', Rule::in(array_keys(BannerSet::KINDS))],
+            'slider_style' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_STYLES))],
+            'slider_ratio' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_RATIOS))],
+            'slider_ratio_m' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_RATIOS))],
         ];
 
         foreach (['bg_color', 'btn_bg', 'btn_text', 'btn_hover'] as $colour) {
@@ -646,7 +690,10 @@ class BannerApiController extends Controller
         return response()->json([
             'ok' => true,
             'empty' => false,
-            'html' => view('partials.home.cards-banner', ['set' => $loaded[0], 'cards' => $loaded[1]])->render(),
+            // The SET'S OWN partial (Lane BN2). A preview that always drew the
+            // cards banner would show an owner building a slider the wrong
+            // section, which is the one thing a preview must never do.
+            'html' => view($loaded[0]->homePartial(), ['set' => $loaded[0], 'cards' => $loaded[1]])->render(),
         ]);
     }
 
@@ -730,7 +777,10 @@ class BannerApiController extends Controller
         return response()->json([
             'ok' => true,
             'empty' => false,
-            'html' => view('partials.home.cards-banner', ['set' => $draftSet, 'cards' => $cards])->render(),
+            // The DRAFT set's kind, not the stored one: switching the type is
+            // one of the edits the buffer holds, so the preview has to redraw
+            // as the other banner before Save is pressed.
+            'html' => view($draftSet->homePartial(), ['set' => $draftSet, 'cards' => $cards])->render(),
         ]);
     }
 
@@ -779,6 +829,11 @@ class BannerApiController extends Controller
             'btn_text' => $set->btn_text,
             'btn_hover' => $set->btn_hover,
             'title_pos' => $set->title_pos,
+            // Lane BN2, named one by one for the same reason as the seven above.
+            'kind' => $set->kind(),
+            'slider_style' => $set->sliderStyle(),
+            'slider_ratio' => $set->slider_ratio,
+            'slider_ratio_m' => $set->slider_ratio_m,
             'cards_count' => $set->cards_count ?? $set->cards()->count(),
         ];
     }

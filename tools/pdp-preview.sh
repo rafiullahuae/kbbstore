@@ -1,0 +1,89 @@
+#!/bin/sh
+# Boot a preview for the Lane PDP screenshots -- five product-page designs.
+# Modelled on tools/sp-preview.sh, which is modelled on tools/set-preview.sh.
+set -e
+# DERIVED FROM THIS SCRIPT'S OWN LOCATION, NEVER HARDCODED. Two harnesses in
+# this repository became unrunnable because they named their lane's worktree and
+# that worktree was removed when the branch merged -- the screenshots are a
+# deliverable, so the thing that produces them has to travel with the branch.
+APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+DIR=$APP/storage/framework/testing/lane-pdp-preview
+ROOT=$DIR/webroot
+DB=$DIR/preview.sqlite
+PORT=${1:-8987}
+
+rm -rf "$DIR"
+mkdir -p "$ROOT"
+ln -sfn "$APP" "$DIR/kbb-upgrade-app"
+cp "$APP/public-web-root/index.php" "$ROOT/index.php"
+
+# ── THE PREVIEW MOUNTS THIS LANE'S ROUTE FILE FOR ITSELF ────────────────────
+#
+# routes/web.php is the INTEGRATOR's file and this lane may not edit it, so
+# routes/pdp-preview-admin.php is not in a fresh checkout's compiled route
+# table. Without this block every preview URL 404s and the screenshots would be
+# of an error page rather than of a design.
+#
+# So the PREVIEW's COPY of the front controller -- a file under
+# storage/framework/testing, never the repository's own -- mounts it with the
+# real middleware stack the integrator's require will give it: `web`,
+# `auth:admin` and NoStoreAdminApi, under the admin-api prefix. It is the same
+# mounting tests/Support/PdpPreviewRoutes.php does for the suite, and the same
+# one tools/sp-preview.sh already does for its lane.
+#
+# The moment routes/web.php carries the require, this block is dead weight and
+# can go; PdpPreviewTest's wiring pin is what says when.
+python3 - "$ROOT/index.php" <<'PATCH'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+old = "(require_once $base.'/bootstrap/app.php')\n    ->handleRequest(Request::capture());"
+new = """$kbbApp = require_once $base.'/bootstrap/app.php';
+
+$kbbApp->booted(function ($app) {
+    \\Illuminate\\Support\\Facades\\Route::middleware(['web', 'auth:admin', \\App\\Http\\Middleware\\NoStoreAdminApi::class])
+        ->prefix('admin-api')
+        ->group(base_path('routes/pdp-preview-admin.php'));
+});
+
+$kbbApp->handleRequest(Request::capture());"""
+assert s.count(old) == 1, 'front controller shape changed'
+open(p, 'w').write(s.replace(old, new, 1))
+PATCH
+cp -r "$APP/public/build" "$ROOT/build" 2>/dev/null || true
+mkdir -p "$ROOT/uploads"
+: > "$DB"
+
+export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
+  DB_CONNECTION=sqlite DB_DATABASE="$DB" SESSION_DRIVER=file CACHE_STORE=file \
+  PHP_CLI_SERVER_WORKERS=4 \
+  APP_CONFIG_CACHE="$DIR/compiled/config.php" \
+  APP_ROUTES_CACHE="$DIR/compiled/routes.php" \
+  APP_EVENTS_CACHE="$DIR/compiled/events.php" \
+  APP_SERVICES_CACHE="$DIR/compiled/services.php" \
+  APP_PACKAGES_CACHE="$DIR/compiled/packages.php"
+mkdir -p "$DIR/compiled"
+
+php "$APP/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -30 "$DIR/migrate.log"; exit 1; }
+# </dev/null ON BOTH ARMS. `artisan tinker <file>` runs the file and then drops
+# into its REPL, which BLOCKS on stdin for ever whenever a terminal is attached:
+# the log says the seed is done and the server never comes up. (Lane UG3 found
+# it in its own copy; Lane FIN swept the other eleven.)
+php "$APP/artisan" tinker "$APP/tools/pdp-seed.php" >>"$DIR/migrate.log" 2>&1 </dev/null \
+  || php "$APP/artisan" tinker --execute="require '$APP/tools/pdp-seed.php';" >>"$DIR/migrate.log" 2>&1 </dev/null \
+  || { tail -30 "$DIR/migrate.log"; exit 1; }
+
+# ── THE COMPILED ROUTE TABLE HAS TO GO, OR THE BLOCK ABOVE DOES NOTHING ─────
+#
+# A migration in this repository runs route:cache, so by the end of `migrate`
+# the preview has a compiled routes file at $APP_ROUTES_CACHE. A compiled table
+# is a CompiledRouteCollection, and routes registered at runtime against one of
+# those are never matched -- measured: with the file in place even a one-line
+# marker route 404'd.
+rm -f "$DIR/compiled/routes.php"
+
+cp "$APP/tools/m1-router.php" "$ROOT/router.php"
+php -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
+echo $! > "$DIR/server.pid"
+sleep 2
+echo "preview on http://127.0.0.1:$PORT  pid $(cat "$DIR/server.pid")  root $ROOT"

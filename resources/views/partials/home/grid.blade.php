@@ -35,7 +35,18 @@
     WHAT IT NEEDS LOADED: `brand`, for the card. Its callers are named in
     tests/Feature/ComponentLoadContractTest.php.
 --}}
-<div class="kbb-pgrid" data-skin="{{ $skin ?? 'classic' }}">
+{{-- `GridSkins::resolve()` AND NOT `$skin ?? 'classic'`.        Lane PG2
+
+     Two things were wrong with the literal. It named the OLD shipped default,
+     so a rail whose own skin is not set would have kept drawing the previous
+     card while every other grid on the site moved — "everywhere" with one page
+     left out. And it was unvalidated: a `grid_skin` row holding a name no skin
+     answers to rendered a grid with no card styling at all, where resolve()
+     falls back rather than rendering the bare markup.
+
+     It is the same expression store/product.blade.php's related rail already
+     used, so the two agree by construction now instead of by coincidence. --}}
+<div class="kbb-pgrid" data-skin="{{ \App\Support\GridSkins::resolve($skin ?? null) }}">
     @foreach ($items as $i => $p)
         <x-product-card :product="$p" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
     @endforeach

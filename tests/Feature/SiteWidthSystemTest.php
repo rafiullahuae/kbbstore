@@ -418,10 +418,16 @@ it('leaves /shop automatic until the shopper picks a column count', function () 
     /*
      * The shop grid carries `kbb-pgrid` and a skin now (Lane PG): it draws the
      * same tile as every other grid on the shop, so it answers to the same
-     * styling and the same 28 skins. What this case is about is `data-cols`,
+     * styling and the same 32 skins. What this case is about is `data-cols`,
      * which is the PIN — and it is still absent until the shopper chooses.
+     *
+     * The skin is named by CONSTANT and not by literal (Lane PG2): the shipped
+     * default moved from `classic` to `showcase` at the owner's request, and a
+     * literal here would have failed a width test for a card-style change.
      */
-    expect($auto)->toContain('<div class="grid kbb-pgrid" id="grid" data-skin="classic">');
+    expect($auto)->toContain(
+        '<div class="grid kbb-pgrid" id="grid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">'
+    );
     expect($auto)->not->toContain('data-cols');
 
     // And no button claims to be the current choice.
@@ -429,7 +435,7 @@ it('leaves /shop automatic until the shopper picks a column count', function () 
 
     $picked = $this->get('/shop/?cols=3')->assertOk()->getContent();
 
-    expect($picked)->toContain('id="grid" data-skin="classic" data-cols="3"');
+    expect($picked)->toContain('id="grid" data-skin="'.\App\Support\GridSkins::DEFAULT.'" data-cols="3"');
     expect($picked)->toContain('data-c="3" class="on"');
 
     // A value outside the allowlist is not a choice, so the grid stays automatic.

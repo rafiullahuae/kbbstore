@@ -121,6 +121,24 @@ function mScreenUrls(): array
     ];
 }
 
+/*
+ * ── ONE SCREEN'S RECORDED PAYLOAD MOVED ON PURPOSE ────────────────── Lane PG2 ──
+ *
+ * `product-styles` in tests/Fixtures/module-screen-payloads.json, and three
+ * values in it:
+ *
+ *     skins                     28 entries -> 32; the showcase family is four
+ *                               new selectable card templates
+ *     grid_skin.default         "classic" -> "showcase"
+ *     grid_skin.value           "classic" -> "showcase"
+ *
+ * The second and third are the owner's own words — "keep this design by default
+ * from backend" — which is CLAUDE.md rule 1's one exception, and the first is
+ * what a picker looks like when four options are added to it. NOTHING ELSE in
+ * the file moved: the field count is the same, every other screen is untouched,
+ * and `grid_skin`'s label, help and type are as they were. Read before it was
+ * advanced, and advanced for that change and nothing else.
+ */
 it('sends every module screen the payload it sent before the shared schema', function () {
     $owner = AdminUser::create([
         'name' => 'Payload Owner',
@@ -231,6 +249,38 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // edit in that file is the Layout tab's description, which named columns and
     // spacing that the tab no longer has.
     //
+    // ── 29 SEPTEMBER, THREE ADVANCES, ALL ADDITIVE OR EXPLAINED ──────────
+    //
+    // `header` went 6 tabs to 7: Lane FB's Flag bar, 11 fields. The six
+    // recorded tabs were carried across byte for byte and the seventh appended;
+    // nothing already recorded was regenerated.
+    //
+    // `cart-page` went 7 tabs to 9: Lane CR's "Product rows · spacing and size"
+    // and "Product rows · phone". ▲ THE TABS ARE COMPARED BY POSITION, not by
+    // key — see the `$was['tabs'] as $i` loop below — and the two new ones sit
+    // at indexes 2 and 3, not at the end. Appending them read as "cart-page.rec:
+    // field count changed, 13 against 12", which is the wrong tab entirely and
+    // sent the first attempt at this hunting a field that had not moved. The
+    // fixture is now in the ORDER the screen sends, with every recorded tab
+    // still carrying its own recorded bytes.
+    //
+    // And `cart-page.rows` changed its label and description, which is the one
+    // non-additive edit here and is deliberate:
+    //
+    //   was: "Product rows" / "One height drives the whole line. Everything in
+    //        it is worked out from that number."
+    //   now: "Product rows · the squeezed layout" / "ONLY on the Squeezed
+    //        layout — these four are custom properties that the classic cart
+    //        page does not read. …"
+    //
+    // Lane CR found that those four sliders read `--cpg-*` properties whose only
+    // readers live in the squeezed stylesheet, so on the CLASSIC cart page they
+    // save, report success and move nothing — which is why the owner believed
+    // the screen already had row controls and asked for them again. The rename
+    // is the screen telling the truth about itself; the real controls are the
+    // two new tabs. No field moved, and the old strings are above so the change
+    // is visible rather than silent.
+    //
     // Each of the five moved nothing on the shop and each was a SECOND ANSWER to
     // a question another screen already owns — the column count belongs to
     // Appearance → Site layout, the gap is set per grid on purpose, and the
@@ -252,7 +302,14 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // all seven did the same nothing. The menu icon is chosen on Appearance →
     // Header → Icon now, which reaches the element and offers a family, a
     // speed, a size and three colours besides.)
-    expect($compared)->toBe(520, 'the number of controls drawn changed');
+    // 558 AFTER LANES FB AND CR, 29 September, and the arithmetic is the whole
+    // check: 520 + 11 + 13 + 14 = 558. 11 is Appearance → Header → Flag bar;
+    // 13 and 14 are Appearance → Cart page → "Product rows · spacing and size"
+    // and "Product rows · phone". Every one of the 520 already recorded is still
+    // compared and still answers what it answered — this walk counts controls,
+    // and a control that CHANGED would have failed the key-by-key comparison
+    // above long before reaching this line.
+    expect($compared)->toBe(558, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

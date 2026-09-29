@@ -215,9 +215,32 @@ it('draws the preview from the shop’s own partial and not a second copy of it'
     $partial = (string) file_get_contents(base_path('resources/views/admin/partials/banners-screen.blade.php'));
     $controller = (string) file_get_contents(app_path('Http/Controllers/Admin/BannerApiController.php'));
 
+    /*
+     * ── THE PIN MOVED IN ROUND 8, AND ONLY THE ANCHOR MOVED — Lane BN2 ──────
+     *
+     * This used to read `->toContain("view('partials.home.cards-banner'")`,
+     * which was the right assertion while there was one banner type. There are
+     * two now (`banner_sets.kind`), and the preview has to draw whichever this
+     * SET is — a preview that always drew the cards banner would show an owner
+     * building a slider the wrong section, which is the one thing a preview
+     * must never do.
+     *
+     * WHAT THIS CASE IS FOR IS UNCHANGED: the preview is the shop's own
+     * template rather than a second copy of the markup in the screen's
+     * JavaScript. So the view name is still not built in the controller — it
+     * comes from `BannerSet::homePartial()`, which is a lookup in a constant —
+     * and the constant still names this partial.
+     *
+     * MUTATION, run: change `homePartial()` to build the name with
+     * `'partials.home.'.$this->kind.'-banner'` and the KIND_PARTIALS assertion
+     * below is unchanged but the model check in SliderBannerTest goes red; put
+     * a literal view name back in the controller and the first line here does.
+     */
     expect($partial)->not->toContain('kbbn-c')
         ->and($partial)->toContain('/preview')
-        ->and($controller)->toContain("view('partials.home.cards-banner'");
+        ->and($controller)->toContain('view($loaded[0]->homePartial()')
+        ->and($controller)->toContain('view($draftSet->homePartial()')
+        ->and(\App\Models\BannerSet::KIND_PARTIALS['cards'])->toBe('partials.home.cards-banner');
 });
 
 /* ═════════════════════════════ the endpoints ══════════════════════════════ */

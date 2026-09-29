@@ -239,9 +239,27 @@ it('falls back to the section’s own default skin rather than refusing one it d
 
     $all = app(HomepageSections::class)->all();
 
-    expect($all['bestsellers']['skin'])->toBe('luxe')
-        ->and($all['flash']['skin'])->toBe('ribbon')
+    /*
+     * THE REGISTRY'S OWN VALUE, NOT A LITERAL.                     Lane PG2
+     *
+     * These read `'luxe'` and `'ribbon'` until the owner asked for one card
+     * "on the whole website everywhere" and the four rails' defaults became
+     * GridSkins::DEFAULT. A literal here would have reddened a case about the
+     * FALLBACK MECHANISM for a change of card style, which is the wrong test
+     * failing — what this case is about is that an unknown skin falls back to
+     * whatever the section's own default is, and that is exactly what naming
+     * the registry asserts.
+     *
+     * MUTATION: put SECTION_POLICY['invalid'] back to 'strict' and this is red
+     * with null in place of both.
+     */
+    expect($all['bestsellers']['skin'])->toBe(HomepageSections::REGISTRY['bestsellers'][3])
+        ->and($all['flash']['skin'])->toBe(HomepageSections::REGISTRY['flash'][3])
         ->and($all['categories']['skin'])->toBeNull();
+
+    // And the two rails really do carry a default, or the lines above would be
+    // asserting that null falls back to null.
+    expect(HomepageSections::REGISTRY['bestsellers'][3])->not->toBeNull();
 });
 
 it('keeps `order` out of the schema, because a position is not a control', function () {
