@@ -69,8 +69,7 @@ class GridSectionApiController extends Controller
             'presets' => collect(GridSections::PRESETS)
                 ->map(fn ($p, $k) => ['key' => $k, 'label' => $p['label']])
                 ->values()->all(),
-            'skins' => GridSkins::ALL,
-        ]);
+        ] + self::optionSets());
     }
 
     /**
@@ -92,7 +91,41 @@ class GridSectionApiController extends Controller
             'section' => self::summary($grid),
             'tabs' => GridSections::tabsFor($grid),
             'manual' => self::manualProducts($grid),
-        ]);
+        ] + self::optionSets());
+    }
+
+    /**
+     * The option sets a select's own payload cannot carry, as their own
+     * top-level keys.
+     *
+     * ── WHY THEY ARE NOT ON THE FIELD ───────────────────────────────────────
+     *
+     * `ModuleSchema::fields()` emits `options` from the module's DECLARED
+     * schema and deliberately not from `overrides()` — its own comment says
+     * why, and names the two screens (ProductStyles' card style, SectionDividers'
+     * picker) that draw their picker from a separate top-level key for exactly
+     * this reason. `overrides()` exists so that `cast()` can hold a control to
+     * an option set that lives in another registry; putting those sets on the
+     * render payload instead moved two other modules' payloads when it was
+     * tried, and was caught by a snapshot diff rather than by reading.
+     *
+     * So the three that come from elsewhere — the brands, the categories and
+     * the 28 card templates — travel beside the tabs, and the screen composes
+     * them onto the three fields by key. `GridSectionApiSurfaceTest` asserts
+     * the keys the cast checks against and the keys the screen is handed are
+     * the same sets, so the picker cannot offer a value the save refuses.
+     *
+     * @return array<string, mixed>
+     */
+    private static function optionSets(): array
+    {
+        $overrides = GridSections::overrides();
+
+        return [
+            'brands' => $overrides['source_brand_id']['options'] ?? [],
+            'categories' => $overrides['source_category_id']['options'] ?? [],
+            'skins' => $overrides['skin']['options'] ?? GridSkins::ALL,
+        ];
     }
 
     /**
@@ -145,15 +178,25 @@ class GridSectionApiController extends Controller
     /** Save one instance. Only the keys the payload carries. */
     public function update(Request $request, GridSection $grid): JsonResponse
     {
+        /*
+         * `sometimes` AND NOT `required` on both keys, which is the same rule
+         * apply() follows one level down: a caller that moves ONE control must
+         * not be forced to send every other one back, or a narrow write becomes
+         * a wide one and a field the caller never saw is overwritten with
+         * whatever it last read. A PUT carrying only `manual_ids` is a
+         * legitimate request and used to 422.
+         */
         $data = $request->validate([
-            'values' => ['required', 'array'],
+            'values' => ['sometimes', 'array'],
             'manual_ids' => ['sometimes', 'array'],
             'manual_ids.*' => ['integer'],
         ]);
 
-        self::apply($grid, (array) $data['values']);
+        $values = (array) ($data['values'] ?? []);
 
-        if (array_key_exists('name', (array) $data['values'])) {
+        self::apply($grid, $values);
+
+        if (array_key_exists('name', $values)) {
             $grid->slug = self::uniqueSlug((string) $grid->name, (int) $grid->id);
         }
 
@@ -169,7 +212,7 @@ class GridSectionApiController extends Controller
             'section' => self::summary($grid),
             'tabs' => GridSections::tabsFor($grid),
             'manual' => self::manualProducts($grid),
-        ]);
+        ] + self::optionSets());
     }
 
     /**
