@@ -51,18 +51,18 @@
         <div class="co-note err">{{ $errors->first() }}</div>
     </div>
     @endif
+{{-- ONE JAR, CLAIMED TWICE (Lane SEC). Rendered only when a set in this basket
+     has taken the last of something the shopper also added loose:
+     App\Services\SetStockReconciler removed the loose line before the totals
+     below were computed, so this is what says why the figures moved. Same band
+     and the same inline geometry as the error notice above it, so nothing new
+     is introduced to this page's layout.
 
-    {{-- ONE JAR, CLAIMED TWICE (Lane SEC). Rendered only when a set in this
-         basket has taken the last of something the shopper also added loose:
-         App\Services\SetStockReconciler removed the loose line before the
-         totals below were computed, so this is what says why the figures moved.
-         Same band and same inline geometry as the error notice above it, so
-         nothing new is introduced to the checkout's layout.
-
-         On one line at column 0 inside the @if, so an empty list contributes
-         ZERO BYTES and this page stays byte-identical to the one
-         StorefrontEnglishUnchangedTest pinned. --}}
-@if ((($setStockNotices ?? [])) !== [])<div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">@include('partials.set-stock-notice')</div>@endif
+     ZERO BYTES WHEN THERE IS NOTHING TO SAY: the block starts at COLUMN 0, the
+     comment's closer touches the conditional, and PHP swallows the newline
+     after the conditional's compiled closing tag. Indented and on its own line
+     it added a blank line to every checkout in the shop, which is how
+     StorefrontEnglishUnchangedTest found it. --}}@if ((($setStockNotices ?? [])) !== [])<div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">@include('partials.set-stock-notice')</div>@endif
 
     <form name="checkout" method="post" class="checkout woocommerce-checkout" action="{{ Url::to('/checkout/place') }}" enctype="multipart/form-data" id="kbbCheckoutForm">
         @csrf

@@ -379,13 +379,31 @@ it('counts them as drafts awaiting review and not as work already done', functio
      *
      * `translated` is still 0, all three are DRAFTS, and the strip renders its
      * English on /ar until somebody approves them.
+     *
+     * ── 1,026 -> 1,028, SAME PROCEDURE AGAIN, LANE SEC ────────────────────
+     *
+     * Two more, and they are the set-stock notice's:
+     * store.cart.set_took_the_last_one and store.cart.set_took_some — what a
+     * shopper reads when a set in their basket has taken the last of something
+     * they also added loose and the loose line has gone. Before this lane the
+     * whole basket simply could not be paid for, so there was nothing to say
+     * and no string to say it with.
+     *
+     * They reach an EXISTING install through a migration of their own --
+     * 2027_05_20_000100_seed_set_stock_notice_arabic_drafts -- for the reason
+     * the paragraph above gives: both earlier seeding migrations have already
+     * run on this shop and a migration that has run does not run again.
+     *
+     * The sibling case that enumerates the untranslated set BY NAME is
+     * untouched and green, which is what says these two are the whole of the
+     * difference. `translated` is still 0 and both are DRAFTS.
      */
     ArabicShop::on();
 
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1026, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1028, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
