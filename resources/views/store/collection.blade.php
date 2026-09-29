@@ -30,7 +30,7 @@
     @else
         @include('partials.home.grid', [
             'items' => $products,
-            'skin' => $settings->get('grid_skin', 'classic'),
+            'skin' => \App\Support\GridSkins::resolve(null),
             {{-- The small line above each product's name. It is the page title
                  for the four curated listings, whose titles are two words
                  ("New In", "Super Sale") and read well there.

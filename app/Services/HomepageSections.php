@@ -19,6 +19,23 @@ use App\Support\GridSkins;
 class HomepageSections
 {
     /** key => [label, description, has a product grid, default skin] */
+    /*
+     * ── THE FOUR RAILS' OWN SKINS NOW FOLLOW THE SHOP'S ───────── Lane PG2 ──
+     *
+     * The fourth element of a row is that section's DEFAULT CARD STYLE, and the
+     * four product rails carried four different ones — `classic`, `soft`,
+     * `luxe` and `ribbon`. They are `GridSkins::DEFAULT` now, because the owner
+     * asked for one card "on the whole website everywhere" and the homepage is
+     * the one place that was deliberately exempt from the store-wide setting:
+     * these rails CHOOSE their own, which is exactly what "used wherever a grid
+     * does not choose its own" excludes.
+     *
+     * A SHOP THAT HAS ALREADY SAVED A HOMEPAGE KEEPS WHAT IT SAVED. all() reads
+     * the stored payload first and falls back to the registry, so this moves the
+     * rails on a shop that has never opened Appearance → Homepage and nothing
+     * on one that has. Either way each rail's picker is still there and still
+     * offers all 32.
+     */
     public const REGISTRY = [
         'hero'        => ['Hero slider', 'The rotating banners at the top.', false, null],
         'delivery'    => ['Delivery strip', '1-3 days delivery, free over AED 199.', false, null],
@@ -51,8 +68,8 @@ class HomepageSections
          */
         'cards_banner' => ['Cards banner', 'An auto-scrolling row of picture cards. Build the sets in Appearance → Banners → Cards banner and pick which one shows; nothing shows until you do.', false, null],
         'categories'  => ['Category circles', 'Shop by category, scrollable.', false, null],
-        'bundles'     => ['Big savings bundles', 'Skincare sets and routines.', true, 'classic'],
-        'recommended' => ['Recommended for you', 'Handpicked essentials.', true, 'soft'],
+        'bundles'     => ['Big savings bundles', 'Skincare sets and routines.', true, GridSkins::DEFAULT],
+        'recommended' => ['Recommended for you', 'Handpicked essentials.', true, GridSkins::DEFAULT],
         'routine'     => ['Build your routine', 'The six-step routine.', false, null],
         'quiz'        => ['Skin quiz', 'The two-minute routine finder.', false, null],
         'brands'      => ['Top brands', 'Brand tiles with product counts.', false, null],
@@ -92,8 +109,8 @@ class HomepageSections
          */
         'videos'      => ['Video rail', 'A shoppable video rail. Pick which section in Content → Shoppable video → Appearance → Homepage; nothing shows until you do.', false, null],
         'instagram'   => ['Instagram Profile', 'Recent posts and reels from our own Instagram, with the profile box. Connect it in Content → Instagram; nothing shows until you do.', false, null],
-        'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, 'luxe'],
-        'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, 'ribbon'],
+        'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, GridSkins::DEFAULT],
+        'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, GridSkins::DEFAULT],
         'blog'        => ['Skincare guide', 'Latest journal articles.', false, null],
         'about'       => ['About us', 'Story and proof numbers.', false, null],
         'reviews'     => ['Customer reviews', 'Score summary and review cards.', false, null],

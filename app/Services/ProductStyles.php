@@ -17,7 +17,13 @@ class ProductStyles
 {
     public const SCHEMA = [
         // ── Layout ──
-        'grid_skin'          => ['skin',   'Default card style', 'classic', 'Used wherever a grid does not choose its own.'],
+        // ▲ `showcase`, NOT `classic` — the default the owner asked for in as
+        // many words ("keep this design by default from backend"). It is
+        // GridSkins::DEFAULT rather than the literal, because this screen and
+        // the resolver disagreeing about what "default" means is the defect
+        // that shape of duplication produces. See that constant for the whole
+        // list of places the switch lives.
+        'grid_skin'          => ['skin',   'Default card style', GridSkins::DEFAULT, 'Used wherever a grid does not choose its own.'],
         /*
          * ── FIVE CONTROLS ARE GONE FROM HERE, AND WHY EACH ONE ────── Lane AD ──
          *

@@ -68,7 +68,36 @@ final class GridSkins
         'showcase-airy' => 'Showcase Airy — more air, lighter button',
     ];
 
-    public const DEFAULT = 'classic';
+    /*
+     * ── THE SHIPPED DEFAULT, AND IT MOVED ──────────────────────── Lane PG2 ──
+     *
+     * The owner, in as many words: "apply this design on the whole website
+     * everywhere. exept cart and checkout pages. keep this design by default
+     * from backend."
+     *
+     * That is CLAUDE.md rule 1's one exception — "a default the owner asked for
+     * in as many words" — so it is called out here and in the commit rather
+     * than buried. It was `classic` for every release before this one.
+     *
+     * THIS CONSTANT AND FOUR OTHER PLACES ARE THE WHOLE SWITCH, and they are
+     * listed so that choosing a different treatment is one edit per line rather
+     * than a hunt:
+     *
+     *   here                                        every grid that does not
+     *                                               choose its own
+     *   ProductStyles::SCHEMA['grid_skin']          what the admin screen calls
+     *                                               "Default card style"
+     *   HomepageSections::REGISTRY, four rows       the homepage's own rails,
+     *                                               which DO choose their own
+     *   the two `grid_skin` fallbacks in
+     *   store/wishlist.blade.php and
+     *   store/collection.blade.php                  a shop that has never saved
+     *                                               the setting at all
+     *
+     * DefaultCardStyleTest pins all five together, so a change to one of them
+     * alone is red.
+     */
+    public const DEFAULT = 'showcase';
 
     /**
      * An explicit skin wins; otherwise the store setting; otherwise the default.
