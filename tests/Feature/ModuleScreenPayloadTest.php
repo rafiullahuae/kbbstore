@@ -222,7 +222,22 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // `desktop`/`mobile`), two labels that had a device suffix which the tab now
     // says for them, and two help sentences that were empty. All of it was read
     // off the diff rather than regenerated on trust.
-    expect($compared)->toBe(525, 'the number of controls drawn changed');
+    //
+    // 520 AFTER LANE AD, which is 525 less the five controls removed from
+    // Appearance → Product styles. They are removals and nothing else: the
+    // fixture entry was edited by CUTTING those five field objects out of it,
+    // byte for byte, so every surviving control still carries the key, type,
+    // label, help, value, default and options it carried before. The only other
+    // edit in that file is the Layout tab's description, which named columns and
+    // spacing that the tab no longer has.
+    //
+    // Each of the five moved nothing on the shop and each was a SECOND ANSWER to
+    // a question another screen already owns — the column count belongs to
+    // Appearance → Site layout, the gap is set per grid on purpose, and the
+    // button's words are in Content → Translations. The reasoning is recorded in
+    // full in ProductStyles::SCHEMA, and ProductStylesReachTheShopTest is the
+    // measurement it rests on.
+    expect($compared)->toBe(520, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

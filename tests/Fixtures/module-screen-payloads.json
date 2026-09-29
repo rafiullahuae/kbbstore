@@ -2819,7 +2819,7 @@
       {
         "key": "layout",
         "label": "Layout",
-        "description": "Columns, spacing and card shape.",
+        "description": "Card shape and corners.",
         "fields": [
           {
             "key": "grid_skin",
@@ -2829,62 +2829,6 @@
             "default": "classic",
             "value": "classic",
             "options": null
-          },
-          {
-            "key": "grid_columns",
-            "type": "range",
-            "label": "Columns · desktop",
-            "help": "",
-            "default": 4,
-            "value": 4,
-            "options": {
-              "min": 2,
-              "max": 6,
-              "step": 1,
-              "unit": ""
-            }
-          },
-          {
-            "key": "grid_columns_tablet",
-            "type": "range",
-            "label": "Columns · tablet",
-            "help": "",
-            "default": 3,
-            "value": 3,
-            "options": {
-              "min": 2,
-              "max": 4,
-              "step": 1,
-              "unit": ""
-            }
-          },
-          {
-            "key": "grid_columns_mobile",
-            "type": "range",
-            "label": "Columns · phone",
-            "help": "Two is the most a narrow screen holds comfortably.",
-            "default": 2,
-            "value": 2,
-            "options": {
-              "min": 1,
-              "max": 2,
-              "step": 1,
-              "unit": ""
-            }
-          },
-          {
-            "key": "grid_gap",
-            "type": "range",
-            "label": "Gap between cards",
-            "help": "",
-            "default": 16,
-            "value": 16,
-            "options": {
-              "min": 6,
-              "max": 32,
-              "step": 2,
-              "unit": "px"
-            }
           },
           {
             "key": "card_radius",
@@ -2982,15 +2926,6 @@
             "help": "",
             "default": true,
             "value": true,
-            "options": null
-          },
-          {
-            "key": "cart_label",
-            "type": "text",
-            "label": "Button wording",
-            "help": "",
-            "default": "Add to cart",
-            "value": "Add to cart",
             "options": null
           },
           {
