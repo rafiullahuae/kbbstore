@@ -7,8 +7,7 @@ namespace App\Services;
 use App\Support\Color;
 
 /**
- * Appearance → Set — every control the fanned stack and its popup have.
- * (Lane SA)
+ * Appearance → Set — every control the three set surfaces have.      (Lane SA)
  *
  * The owner, verbatim:
  *
@@ -72,16 +71,21 @@ use App\Support\Color;
  * without anybody meaning them to. They live on the Desktop tab, which says so,
  * and the Mobile tab says where they are.
  *
- * ── ONE BREAKPOINT, 760px, AND IT IS A SETTING ──────────────────────────────
+ * ── THREE BREAKPOINTS, AND THEY ARE MEANT TO DIFFER ────────────────────────
  *
- * The sheet already switches at 760px and it is the right number rather than a
- * round one: `.kbb-checkout .panels` is `max-height:148px;overflow:hidden`
- * below 760, which is the width at which the popup has to stop being an
- * absolutely-positioned box inside a clipping ancestor and pin itself to the
- * viewport instead. Moving the type turnover away from that width would leave
- * a band where the popup escapes its clip at one size and the words change at
- * another. So: one breakpoint, shipping at 760, and it is the first control on
- * the Mobile tab because "mobile" means nothing until it is a number.
+ * 600 for the cart page's rows, 760 for the set box, 480 for the buy column's
+ * list. They are the widths the three stylesheets ALREADY turn over at, and
+ * each is about a different thing collapsing: the cart page's two columns, the
+ * checkout summary starting to clip its own contents (`.kbb-checkout .panels`
+ * is `max-height:148px;overflow:hidden` below 760, which is where the popup has
+ * to stop being an absolutely-positioned box inside a clipping ancestor and pin
+ * itself to the viewport), and a buy column that is narrow at every width.
+ *
+ * Collapsing them to one number would change what the shop renders at every
+ * width in between, which is the one thing a new setting may not do. All three
+ * are settings, all three ship at the number the sheet carries, and they are
+ * the first card on the Mobile tab — because "mobile" means nothing until it is
+ * a number, and on this screen it means three of them.
  *
  * ── FONTS: SIZES AND WEIGHTS, NEVER A FAMILY ────────────────────────────────
  *
