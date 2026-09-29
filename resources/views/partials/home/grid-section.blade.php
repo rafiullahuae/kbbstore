@@ -69,6 +69,16 @@
 --}}
 @php
     $gsKey = $section->sectionKey();
+@endphp
+{{-- THE SECTION'S OWN Desktop/Mobile SWITCHES, WHICH IT INHERITS RATHER THAN
+     OWNS. Off on both is not rendered at all — the rule every one of the
+     seventeen shipped sections follows in store/home.blade.php, applied here
+     instead because there is one loop and not one block per instance. Left out,
+     an instance switched off on both devices would still emit its <section>,
+     its class attribute and its divider mark, which is the "empty wrapper"
+     shape CardsBannerShipsOffTest's header catalogues. --}}
+@unless ($sections->hidden($gsKey))
+@php
     $gsSkin = \App\Services\GridSections::skinFor($section);
     $gsHref = \App\Services\GridSections::viewAllHref($section);
     $gsHeading = trim((string) $section->heading);
@@ -115,3 +125,4 @@
   <div class="gs-foot"><a class="gs-all" href="{{ $gsHref }}">{{ $gsLabel !== '' ? $gsLabel : __('store.home.grid_view_all') }}</a></div>
   @endif
 </div></section>
+@endunless
