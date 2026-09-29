@@ -55,10 +55,11 @@ class CutUgcCovers extends Command
         {--id=* : Only these clip ids. Repeatable.}
         {--limit=50 : How many clips to attempt in one run.}
         {--force : Re-cut clips that already have a cover, replacing it.}
+        {--recut-teasers : One-off: re-cut teasers that were cut at an older length. Type it; the scheduler never does.}
         {--dry-run : List what would be cut and change nothing.}
         {--unattended : Running from the scheduler. A machine that cannot cut is a no-op, not a failure.}';
 
-    protected $description = 'Cut the cover and 2.5s teaser for shoppable-video clips, from the CLI';
+    protected $description = 'Cut the cover and 1s teaser for shoppable-video clips, from the CLI';
 
     public function handle(UgcTranscoder $transcoder, UgcDerivedFiles $derivedFiles): int
     {
@@ -108,9 +109,12 @@ class CutUgcCovers extends Command
         $clips = $this->clips();
 
         if ($clips->isEmpty()) {
-            $this->info($this->option('force')
-                ? 'No clips with a video file to cut from.'
-                : 'Nothing to do — every clip with a video already has a cover.');
+            $this->info(match (true) {
+                (bool) $this->option('recut-teasers') => 'Nothing to do — every teaser on this shop was already cut at '
+                    .UgcTranscoder::TEASER_SECONDS.'s.',
+                (bool) $this->option('force') => 'No clips with a video file to cut from.',
+                default => 'Nothing to do — every clip with a video already has a cover.',
+            });
 
             return self::SUCCESS;
         }
@@ -154,7 +158,15 @@ class CutUgcCovers extends Command
                 $derived = $transcoder->derive(
                     $clip,
                     remakePoster: (bool) $this->option('force'),
-                    remakeTeaser: (bool) $this->option('force'),
+                    /*
+                     * THE TEASER LEG IS FORCED BY EITHER SWITCH, and only the
+                     * teaser leg by the second. `--recut-teasers` is about a
+                     * LENGTH: the posters are already right and re-cutting them
+                     * would spend an ffmpeg run each to write the same frame
+                     * back. derive() skips a poster that exists unless asked,
+                     * so this is exactly "re-cut the loops, leave the covers".
+                     */
+                    remakeTeaser: (bool) $this->option('force') || (bool) $this->option('recut-teasers'),
                 );
             } catch (\Throwable $e) {
                 /*
@@ -292,7 +304,46 @@ class CutUgcCovers extends Command
              * trade against a silent permanent gap: a retry costs one ffmpeg
              * start, and the alternative cost the shop every teaser it has.
              */
-            ->when(! $this->option('force'), fn ($q) => $q->where(function ($q) {
+            /*
+             * ── AND THE ONE-OFF: TEASERS CUT AT AN OLDER LENGTH ─────────────
+             *
+             * UgcTranscoder::TEASER_SECONDS moved from 2.5 to 1 because the
+             * owner asked for one second. Every teaser file already on a shop
+             * is 2.5s, and a rail carrying both lengths loops at two different
+             * speeds in the same row, which is worse than either.
+             *
+             * SO THIS RE-CUTS THEM — and it is a switch a PERSON TYPES, which
+             * is the whole of the answer to "the selection must not loop for
+             * ever on a clip that cannot be cut":
+             *
+             *   the SCHEDULE selects on "a derivative is MISSING", which is a
+             *     real gap on the shop — an 11 MB full-clip loop instead of a
+             *     30 KB one — and is worth one ffmpeg start a minute for ever,
+             *     which is what the round before this one decided and why.
+             *   THIS selects on "a teaser exists and is the wrong LENGTH". A
+             *     clip in that state is not broken: it has a working loop, it
+             *     is merely 1.5 seconds longer than the shop now cuts. Retrying
+             *     it every minute for ever would buy nothing and cost an ffmpeg
+             *     start each time, so it is never on the schedule at all.
+             *
+             * A clip whose re-cut fails therefore KEEPS ITS WORKING 2.5s TEASER
+             * and is named in the run's output. The next `--recut-teasers` a
+             * person types tries again; nothing tries on its own.
+             *
+             * THE SELECTION IS FREE — see UgcTranscoder::teaserMark(). The
+             * length a teaser was cut at is in its file NAME, so this is a LIKE
+             * on a column the query has already loaded rather than an ffprobe
+             * per clip. A teaser with no marker at all is every teaser cut
+             * before this change, and it is also a file an owner dropped in by
+             * hand: both are re-cut, because a hand-dropped teaser of unknown
+             * length is exactly the thing this is for, and because a person had
+             * to type the switch to get here.
+             */
+            ->when((bool) $this->option('recut-teasers'), fn ($q) => $q
+                ->whereNotNull('teaser_path')
+                ->where('teaser_path', '!=', '')
+                ->where('teaser_path', 'not like', '%teaser-'.UgcTranscoder::teaserMark().'-%'))
+            ->when(! $this->option('force') && ! $this->option('recut-teasers'), fn ($q) => $q->where(function ($q) {
                 $q->whereNull('poster_path')->orWhere('poster_path', '')
                     ->orWhereNull('teaser_path')->orWhere('teaser_path', '');
             }))

@@ -102,12 +102,36 @@ class UgcSettings
             'options' => ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px'], 'store' => ModuleSchema::STORE_MODULE],
 
         /* ── Motion ─────────────────────────────────────────────────────── */
-        'teaser' => ['type' => 'bool', 'label' => 'Loop the first 2–3 seconds', 'default' => true,
-            'help' => 'Off shows the poster frame instead, which is what a phone asking to Save Data already gets. The loop costs about 129KB a tile; the poster costs about 22KB.',
+        'teaser' => ['type' => 'bool', 'label' => 'Loop the first second', 'default' => true,
+            'help' => 'Off shows the poster frame instead, which is what a phone asking to Save Data already gets. A one-second teaser file costs about 30KB a tile; the poster costs about 22KB.',
             'store' => ModuleSchema::STORE_MODULE],
-        'teaser_ms' => ['type' => 'range', 'label' => 'How long the loop runs before repeating', 'default' => 2500,
-            'help' => 'Only used when a clip has no separate teaser file and the loop has to be cut from the full one.',
-            'options' => ['min' => 1500, 'max' => 4000, 'step' => 100, 'unit' => 'ms'], 'store' => ModuleSchema::STORE_MODULE],
+        /*
+         * ── ONE SECOND, AND THE FLOOR HAD TO COME DOWN WITH IT ──────────────
+         *
+         * The owner: *"I also want 1 seconds video to be cropped as clip. 2-3
+         * seconds taking more time to load on front-end."* This is the other
+         * half of UgcTranscoder::TEASER_SECONDS — that constant is the length a
+         * teaser FILE is cut to, and this is the length the rail rewinds at when
+         * a clip has no teaser file and the loop has to come out of the full
+         * one. The two have to agree or a shop with a mix of cut and uncut clips
+         * loops at two different lengths in the same rail.
+         *
+         * THE FLOOR WAS 1500 AND THAT IS WHY IT MOVES. A default of 1000 under a
+         * minimum of 1500 is not a default, it is a value ModuleSchema::cast()
+         * clamps back up on the first save — and rule 5's clamping is the thing
+         * that would have hidden it. 1000 is the new floor and the range is
+         * 1000–4000, so "one second" is reachable and is where it ships.
+         *
+         * RULE 1, SAID PLAINLY: this default MOVES, from 2500 to 1000, and that
+         * is a change the owner asked for by name. A shop that has already saved
+         * a value keeps it — `all()` reads the saved row and only falls back to
+         * the default when nothing was saved — so an owner who had moved this
+         * slider to 4000 still has 4000 after the package applies, and reaches
+         * one second by moving it himself.
+         */
+        'teaser_ms' => ['type' => 'range', 'label' => 'How long the loop runs before repeating', 'default' => 1000,
+            'help' => 'Only used when a clip has no separate teaser file and the loop has to be cut from the full one. A clip with its own teaser file loops for as long as that file is — one second, as this shop cuts them.',
+            'options' => ['min' => 1000, 'max' => 4000, 'step' => 100, 'unit' => 'ms'], 'store' => ModuleSchema::STORE_MODULE],
         'max_playing' => ['type' => 'range', 'label' => 'Most clips moving at once', 'default' => 4,
             'help' => 'A phone never gets more than two tiles over the threshold at 390px, so this binds on a desktop.',
             'options' => ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => ''], 'store' => ModuleSchema::STORE_MODULE],
@@ -199,7 +223,7 @@ class UgcSettings
 
     public const TABS = [
         'layout' => ['Layout', 'How many tiles a shopper sees, and how big they are. The defaults are the measured geometry of R3.', ['cols', 'tile_w', 'desk_tile', 'gap', 'radius']],
-        'motion' => ['Motion', 'The 2–3 second loop, and what happens when somebody taps.', ['teaser', 'teaser_ms', 'max_playing', 'autoplay_open', 'controls', 'sound_on_open']],
+        'motion' => ['Motion', 'The one-second loop, and what happens when somebody taps.', ['teaser', 'teaser_ms', 'max_playing', 'autoplay_open', 'controls', 'sound_on_open']],
         'tile' => ['What a tile shows', 'Every one of these ships at what R3 draws.', ['rating', 'caption', 'handle', 'badge', 'strike']],
         'likes' => ['Likes', 'Whether a shopper can like a clip, and see how many others have.', ['likes_on']],
         'home' => ['Homepage', 'Which section the homepage’s own Video rail draws. Leave it on “Nothing yet” and the homepage shows no rail, which is how this ships. Turn the row on or move it in Appearance → Homepage.', ['home_section', 'home_limit']],

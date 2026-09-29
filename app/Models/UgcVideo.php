@@ -22,8 +22,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  *
  *   file_path    the full clip, 720x1280, ~1.5 MB for 15s. What an opened
  *                player streams.
- *   teaser_path  2.5s, 360x640, ~400 kbps, no audio, ~130 KB. What a rail tile
- *                loops. OPTIONAL — see below.
+ *   teaser_path  1s, 360x640, ~400 kbps, no audio, ~30 KB. What a rail tile
+ *                loops. OPTIONAL — see below. It was 2.5s and ~99 KB until the
+ *                owner asked for one second (UgcTranscoder::TEASER_SECONDS
+ *                carries the two measured file sizes).
  *   poster_path  ~22 KB WebP. What everything shows before anything moves, and
  *                what a rail shows when there is no teaser.
  *
