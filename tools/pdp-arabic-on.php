@@ -95,6 +95,15 @@ $arabic = [
             .'<li>ضعي ضختين أو ثلاثاً في راحة اليد.</li>'
             .'<li>اضغطيه على البشرة بدل مسحه.</li>'
             .'<li>انتظري ثلاثين ثانية ثم أتبعيه بالسيروم والمرطّب.</li></ol>',
+        /* `description` IS THE FIRST TAB'S BODY, and it was the one field left
+           out of the first Arabic pass — so the mirrored screenshots showed an
+           Arabic page whose open tab was three paragraphs of English, which is
+           the half-translated state the fixture exists to avoid. */
+        'description' => '<p>بنت أنوا هذا المنتج حول فكرة واحدة: أن التونر يجب أن '
+            .'يأخذ شيئاً دون أن يأخذ معه حاجز البشرة. ٧٧٪ من العبوة خلاصة هارتليف '
+            .'مستخلصة على البارد لا بالحرارة، والباقي أقصر قائمة تحتملها التركيبة.</p>'
+            .'<p>وهو المنتج الأكثر ترشيحاً في هذا المتجر للبشرة التي أُنهكت بالعلاجات، '
+            .'وهو الذي يعود له الناس.</p>',
     ],
     'pdp-glow-ritual-set' => [
         'name' => 'طقم الإشراق اليومي',

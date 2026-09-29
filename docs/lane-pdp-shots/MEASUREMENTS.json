@@ -1483,10 +1483,10 @@
     "brandY": 169,
     "title": {
       "w": 425,
-      "h": 25,
+      "h": 62,
       "y": 186
     },
-    "titleFont": "19px",
+    "titleFont": "24px",
     "money": {
       "w": 246,
       "h": 70,
@@ -1554,7 +1554,7 @@
   "deck-1280-sticky": {
     "topInViewport": 291,
     "onScreen": true,
-    "scrolledTo": 363
+    "scrolledTo": 372
   },
   "deck-1280": {
     "dir": "ltr",
@@ -1577,10 +1577,10 @@
     "brandY": 169,
     "title": {
       "w": 455,
-      "h": 27,
+      "h": 73,
       "y": 194
     },
-    "titleFont": "21px",
+    "titleFont": "28px",
     "money": {
       "w": 102,
       "h": 64,
@@ -1591,32 +1591,32 @@
     "ratingBar": {
       "w": 572,
       "h": 19,
-      "y": 288
+      "y": 297
     },
     "ratingFillPct": "96%",
     "blurb": {
       "w": 572,
       "h": 66,
-      "y": 321
+      "y": 330
     },
     "blurbLineHeight": "21.87px",
     "blurbMasked": true,
     "readMore": {
       "w": 104,
       "h": 18,
-      "y": 393
+      "y": 402
     },
     "bundleBars": 3,
     "setRows": 0,
     "addToCart": {
       "w": 446,
       "h": 52,
-      "y": 654
+      "y": 663
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 654
+      "y": 663
     },
     "tabs": 5,
     "tabRow": {
@@ -1648,13 +1648,13 @@
   "marquee-1280-sticky": {
     "topInViewport": 335,
     "onScreen": true,
-    "scrolledTo": 401
+    "scrolledTo": 410
   },
   "marquee-1280": {
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 1644,
+    "pageHeight": 1653,
     "galleryFrame": {
       "w": 534,
       "h": 534,
@@ -1671,10 +1671,10 @@
     "brandY": 187,
     "title": {
       "w": 455,
-      "h": 26,
+      "h": 73,
       "y": 212
     },
-    "titleFont": "20px",
+    "titleFont": "28px",
     "money": {
       "w": 102,
       "h": 64,
@@ -1685,38 +1685,38 @@
     "ratingBar": {
       "w": 572,
       "h": 19,
-      "y": 306
+      "y": 315
     },
     "ratingFillPct": "96%",
     "blurb": {
       "w": 572,
       "h": 66,
-      "y": 339
+      "y": 348
     },
     "blurbLineHeight": "21.87px",
     "blurbMasked": true,
     "readMore": {
       "w": 104,
       "h": 18,
-      "y": 411
+      "y": 420
     },
     "bundleBars": 3,
     "setRows": 0,
     "addToCart": {
       "w": 446,
       "h": 52,
-      "y": 736
+      "y": 745
     },
     "qty": {
       "w": 116,
       "h": 52,
-      "y": 736
+      "y": 745
     },
     "tabs": 5,
     "tabRow": {
       "w": 210,
       "h": 256,
-      "y": 845
+      "y": 854
     },
     "tabRowScrolls": false,
     "tabRowOverflowPx": 0,
@@ -1743,7 +1743,7 @@
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 2803,
+    "pageHeight": 2757,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -1827,7 +1827,7 @@
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 2715,
+    "pageHeight": 2645,
     "galleryFrame": {
       "w": 318,
       "h": 318,
@@ -1911,7 +1911,7 @@
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 2762,
+    "pageHeight": 2716,
     "galleryFrame": {
       "w": 346,
       "h": 346,

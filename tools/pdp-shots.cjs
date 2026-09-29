@@ -179,8 +179,20 @@ const signIn = async (page) => {
  * The override is injected by the HARNESS and is not in the page: nothing in
  * resources/views/store/pdp-preview/ knows this script exists.
  */
+/* `.head` IS ON THE LIST TOO, and it is not this lane's element: the shop's own
+   header is `position:sticky; top:0`, so in a full-page capture it is painted
+   partway down the document — over the product title in candidates A, D and E,
+   measured. A contact sheet where one design appears to have its header in the
+   middle of the page is a contact sheet that is lying about that design. */
+/* ▲ ONLY THE TWO ROWS THAT ARE REALLY STICKY, NOT `.pv .pv-tabrow`.
+   The broad selector was `position:static !important` on EVERY tab row, and the
+   base rule gives every row `position:relative` for a reason: candidate C's
+   sliding fill is absolutely positioned inside it. Flattened, the fill's
+   containing block became `.pv-tabs` and it painted a 270px white rectangle
+   down over the panel — measured in counter-tabs-1280.png, and it looked
+   exactly like a rendering fault in the design rather than in the camera. */
 const FLATTEN = '.pv .pv-gal,.pv .pv-card-buy,.pv .pv-band,.pv .pv-buygroup,.pv .pv-dock,'
-  + '.pv .pv-tabrow,.pv .pv-tabs-band .pv-tabrow{position:static !important}';
+  + '.pv-tabs-pill .pv-tabrow,.pv-e .pv-tabs-band .pv-tabrow,.head{position:static !important}';
 
 const settle = async (page) => {
   await page.waitForLoadState('networkidle');

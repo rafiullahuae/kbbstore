@@ -352,9 +352,18 @@
   .pv-c .pv-band .pv-money b{display:block;font-size:33px}
   .pv-c .pv-buygroup .pv-stock{margin-block:0 12px}
   .pv-c .pv-head{margin-block-start:0}
+  /* ▲ RESTATED PER CANDIDATE, BECAUSE THE PHONE SIZES OUTRANK THE DESKTOP ONE.
+       `.pv-c .pv-title` is two classes and `.pv-title` inside the media query is
+       one, so the 19px phone size WON at 1280 — measured: C and D and E all came
+       back with a 19-21px title on a 1280 screen, which is the "21px title on a
+       1280 screen is timid" note docs/PP-PRODUCT-PAGE-PROPOSALS.md already
+       carries. C stays the smallest of the three on purpose: its whole argument
+       is that the PRICE is the loudest thing, and 24 against 33 says that. */
+  .pv-c .pv-title{font-size:24px}
   .pv-c .pv-tabs-seg .pv-tabrow{--pv-segw:150px}
 
   /* D — the dock stops docking: on a desktop the button is never far away. */
+  .pv-d .pv-title{font-size:28px}
   .pv-d .pv-dock{position:static;box-shadow:none;border:0;padding:0;background:none}
   .pv-d .pv-card{flex-basis:54px}
   .pv-d .pv-spine{height:300px;font-size:13px}
@@ -362,6 +371,7 @@
   /* E — the stripes stop bleeding (there is a gutter to bleed into on a wide
      screen and it looks like an accident), the thumbnails stand up beside the
      photograph, and the band becomes a rail down the panel's inline-start. */
+  .pv-e .pv-title{font-size:28px}
   .pv-e .pv-strip{margin-inline:0;padding-inline:20px;border-radius:14px}
   .pv-e .pv-strip-plain{padding-inline:0;border-radius:0}
   .pv-e .pv-gal{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;direction:inherit}
