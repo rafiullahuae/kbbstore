@@ -658,7 +658,29 @@ class Product extends Model
      */
     public function advertisedSalePrice(): ?int
     {
-        if ($this->sale_price === null) {
+        /*
+         * ── A RULE-PRICED SET HAS A MARKDOWN AND NO `sale_price`. (Lane SG) ──
+         *
+         * This guard was `$this->sale_price === null` alone, and for the two
+         * discount modes that column is deliberately NULL -- Admin\ProductEditor-
+         * ApiController sets it so, because "the discount IS the markdown and a
+         * second one underneath it would be two answers to what the set costs".
+         *
+         * So the feed's own rule -- publish what will be charged -- was broken
+         * for exactly the products whose price is derived. Measured on the
+         * preview: /api/products answered `price: 18000, sale_price: null` for a
+         * set the shop was charging 16650 for, so a consumer computing
+         * `sale_price ?? price` quoted AED 180.00 against a checkout that takes
+         * AED 166.50. The same three keys on the same set's /api/products/{slug}
+         * response were right, because show() reads whole rows.
+         *
+         * SetPricing::derived() answers null for every product that is not a
+         * set priced by a rule -- which is every product in this shop and every
+         * set an operator has hand-priced -- so the second half of this test
+         * cannot change one published figure that was not already wrong, and
+         * for a non-set it is one `isSet()` on an attribute already in hand.
+         */
+        if ($this->sale_price === null && \App\Support\SetPricing::derived($this) === null) {
             return null;
         }
 

@@ -634,6 +634,80 @@ it('charges the advertised price when a set is added through POST /api/cart/add'
     );
 });
 
+
+/**
+ * THE PUBLIC FEED PUBLISHES WHAT THE CHECKOUT WILL TAKE, FOR A SET TOO.
+ *
+ * ── TWO DEFECTS, ONE ROW ──────────────────────────────────────────────────
+ *
+ * Api\ProductController::INDEX_COLUMNS did not carry the set columns, so the
+ * LIST endpoint priced a set at `products.price` while the SINGLE endpoint —
+ * which reads whole rows — priced it from the rule. One feed, two answers.
+ *
+ * And above that, Product::advertisedSalePrice() returned early on
+ * `$this->sale_price === null`, which is exactly what a rule-priced set has:
+ * the editor nulls that column on purpose, because the discount IS the
+ * markdown. So the key a consumer reads the charged figure out of was null on
+ * every derived set, on BOTH endpoints. `sale_price ?? price` quoted AED 180.00
+ * for a set the checkout takes AED 166.50 for.
+ *
+ * MUTATION NOTE — RUN, both halves.
+ *   Either one on its own reports
+ *
+ *     /api/products index quotes 18000 for a set the checkout takes 16650 for
+ *
+ *   -- put `if ($this->sale_price === null) { return null; }` back in
+ *   Product::advertisedSalePrice(), or remove the spread from
+ *   Api\ProductController::INDEX_COLUMNS.
+ *
+ * ▲ AND THE THREE COLUMNS STAY OFF THE WIRE. Asserted here by name as well as
+ *   in SetApiSecurityTest, because this lane is the one that put them in the
+ *   SELECT and the distinction between selecting and publishing is the whole
+ *   of why that was safe.
+ */
+it('publishes one price for a set on both public product endpoints', function () {
+    $toner = sgProduct('SG Feed Toner', 12000);
+    $serum = sgProduct('SG Feed Serum', 8000);
+
+    $set = sgSet([[$toner, 1], [$serum, 1]], [
+        'name' => 'SG Feed Set',
+        'set_price_mode' => SetPricing::MODE_PERCENT,
+        'set_discount' => 1000,
+        'price' => 18000,      // what the editor wrote at save time
+    ]);
+
+    $toner->update(['price' => 10500]);
+    SetPricing::forget();
+
+    $charged = Product::find($set->id)->effectivePrice();
+    expect($charged)->toBe(16650);
+
+    SetPricing::forget();
+    $list = collect($this->getJson('/api/products')->assertSuccessful()->json())
+        ->firstWhere('slug', $set->slug);
+
+    SetPricing::forget();
+    $one = $this->getJson('/api/products/'.$set->slug)->assertSuccessful()->json();
+
+    foreach (['index' => $list, 'show' => $one] as $where => $row) {
+        expect($row)->not->toBeNull("the {$where} endpoint did not return the set");
+
+        // The rule this feed states for itself, in toApi()'s own docblock:
+        // charged = sale_price ?? price.
+        expect($row['sale_price'] ?? $row['price'])->toBe(
+            $charged,
+            "/api/products {$where} quotes ".var_export($row['sale_price'] ?? $row['price'], true)
+            ." for a set the checkout takes {$charged} for"
+        );
+
+        foreach (SetPricing::COLUMNS as $column) {
+            expect(array_key_exists($column, $row))->toBeFalse(
+                "{$column} reached the public feed's {$where} response; selecting a column is not publishing one"
+            );
+        }
+    }
+});
+
 /* ════════════════════════════════════════════ and a placed order is fixed ═══ */
 
 /**
