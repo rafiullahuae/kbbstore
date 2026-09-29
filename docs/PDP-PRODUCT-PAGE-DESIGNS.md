@@ -298,7 +298,7 @@ checked against `Locale::isSupported()` before it reaches `setLocale()`.
 > the panel draws. An assertion a bug walks straight past is worse than no
 > assertion, because it is counted.
 
-## Three defects this lane shipped and then caught in its own pictures
+## Five defects this lane shipped, and caught in its own pictures and guards
 
 Recorded because each is the kind of thing a screenshot catches and a passing
 suite does not.
@@ -311,7 +311,19 @@ suite does not.
    150px of *width* inside a 44px card with `overflow:hidden` — five empty white
    boxes. That is the one place in the sheet where physical `width`/`height` is
    correct and logical properties are the bug.
-3. **`position: sticky` and full-page capture do not mix.** Chromium resizes the
+3. **The lifted card in B overlapped its own brand line.** The card starts 34px
+   up the page and its top padding was 20px, so on a set — where the brand is
+   long enough to reach the middle of the thumbnail strip — the strip painted
+   over "Beauty of Joseon". The top padding is now the same 34px the card
+   overlaps by: a z-index is the wrong answer to a layout that puts two things
+   in the same place.
+4. **The chooser's own prose sat in a shopper-facing directory.**
+   `StorefrontStringsAreKeyedTest` walks every Blade outside `views/admin/` and
+   reported five bare English sentences in it. It was right — the file was in
+   `views/store/`. It is an admin screen and now lives in `views/admin/`. The
+   five *designs* stay under `views/store/` and stay scanned on purpose: they
+   are drafts of the shopper's page, and all five pass.
+5. **`position: sticky` and full-page capture do not mix.** Chromium resizes the
    viewport to the whole document, so D's dock was painted *over the product
    title* and the shop's own sticky header landed mid-page in three of the five.
    The harness now shoots each design twice: a **flow** shot with sticky
