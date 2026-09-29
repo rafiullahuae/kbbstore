@@ -48,6 +48,19 @@ use Illuminate\Support\Facades\Schema;
  * 16 characters, which is one more than the longest word above. A column whose
  * width says what it holds, the same choice `source_key` made at 64.
  *
+ * ── NO ->after(), DELIBERATELY ─────────────────────────────────────────────
+ *
+ * The first draft of this file positioned both columns after `source_key` and
+ * MigrationConventionTest caught it. That guard exists because of a checkout
+ * outage: a chain of migrations each added a column AFTER the column the
+ * previous one was supposed to create, and on MySQL `ALTER ... AFTER` a column
+ * that does not exist is an error, so one missing anchor took out the rest of
+ * the chain. Each was wrapped in a hasColumn guard, so the failure looked like
+ * a clean no-op and recorded as run. SQLite ignores AFTER entirely, so the
+ * suite stayed green while checkout could not take an order.
+ *
+ * Column order in a table is cosmetic and is not worth that.
+ *
  * ── `audience_ids` ─────────────────────────────────────────────────────────
  *
  * A JSON list of integers, NULL for `global` and `sets`, which have no targets.
@@ -87,11 +100,11 @@ return new class extends Migration
                  * 'global', and two spellings of one state is how a matcher
                  * grows a branch that is wrong half the time.
                  */
-                $table->string('audience', 16)->default('global')->after('source_key');
+                $table->string('audience', 16)->default('global');
             }
 
             if (! Schema::hasColumn('product_tabs', 'audience_ids')) {
-                $table->text('audience_ids')->nullable()->after('audience');
+                $table->text('audience_ids')->nullable();
             }
         });
     }
