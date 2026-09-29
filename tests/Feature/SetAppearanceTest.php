@@ -93,23 +93,41 @@ it('ships every control at the value the partial already draws', function () {
         ['save_w', 'kset-savew', '700', $box],
 
         ['p_block', 'ksl-block', '14px', $list],
-        ['p_rowpad', 'ksl-rowpad', '6px', $list],
-        ['p_gap', 'ksl-gap', '10px', $list],
+        ['p_rowpad', 'ksl-rowpad', '3px', $list],
+        ['p_gap', 'ksl-gap', '12px', $list],
         ['p_wgap', 'ksl-wgap', '1px', $list],
-        ['p_photo', 'ksl-ph', '40px', $list],
-        ['p_radius', 'ksl-phr', '8px', $list],
+        ['p_photo', 'ksl-ph', '36px', $list],
+        ['p_radius', 'ksl-phr', '10px', $list],
         ['p_brand', 'ksl-br', '10px', $list],
         ['p_name', 'ksl-nm', '13.5px', $list],
         ['p_var', 'ksl-var', '11.5px', $list],
         ['p_qty', 'ksl-q', '12px', $list],
         ['p_more', 'ksl-more', '12.5px', $list],
         ['p_morept', 'ksl-morept', '8px', $list],
-        ['p_morepb', 'ksl-morepb', '6px', $list],
+        ['p_morepb', 'ksl-morepb', '4px', $list],
         ['p_foot', 'ksl-foot', '13px', $list],
         ['p_footsp', 'ksl-footsp', '9px', $list],
         ['p_footgy', 'ksl-footgy', '5px', $list],
         ['p_footgx', 'ksl-footgx', '16px', $list],
         ['p_lh', 'ksl-lh', '1.3', $list],
+        // The panel and the hang — Lane SA2. Every one of these was a LITERAL in
+        // the treatment until this release, which is to say the control that
+        // claimed to drive it drove nothing.
+        ['p_panel_r', 'ksl-pr', '18px', $list],
+        ['p_panel_pt', 'ksl-ppt', '12px', $list],
+        ['p_panel_pe', 'ksl-ppe', '14px', $list],
+        ['p_panel_pb', 'ksl-ppb', '11px', $list],
+        ['p_panel_ps', 'ksl-pps', '20px', $list],
+        ['p_over', 'ksl-over', '10px', $list],
+        ['p_ring', 'ksl-ring', '3px', $list],
+        ['p_sh_y', 'ksl-shy', '2px', $list],
+        ['p_sh_blur', 'ksl-shb', '6px', $list],
+        ['p_sh_a', 'ksl-sha', '.22', $list],
+        ['p_head_f', 'ksl-headf', '12.5px', $list],
+        ['p_head_gap', 'ksl-headgap', '7px', $list],
+        ['p_head_w', 'ksl-headw', '700', $list],
+        ['p_name_lh', 'ksl-nmlh', '1.3', $list],
+        ['p_brand_lh', 'ksl-brlh', '1.3', $list],
         ['p_brand_w', 'ksl-brw', '700', $list],
         ['p_brand_ls', 'ksl-brls', '.04em', $list],
         ['p_brand_op', 'ksl-brop', '.72', $list],
@@ -134,13 +152,26 @@ it('ships every control at the value the partial already draws', function () {
     // The phone half of the list's own media query, which is the other place a
     // default has to agree with a literal.
     foreach ([
-        'p_photo_m' => '--ksl-ph:36px',
-        'p_radius_m' => '--ksl-phr:7px',
-        'p_rowpad_m' => '--ksl-rowpad:5px',
+        'p_photo_m' => '--ksl-ph:32px',
+        'p_radius_m' => '--ksl-phr:9px',
         'p_gap_m' => '--ksl-gap:9px',
         'p_name_m' => '--ksl-nm:13px',
         'p_footgy_m' => '--ksl-footgy:4px',
         'p_footgx_m' => '--ksl-footgx:12px',
+        // The panel's own phone numbers — Lane SA2. They lived in a SECOND
+        // @media block of properties until this release, which is how the
+        // photograph came to be declared 36 in one and drawn 32 by the other.
+        'p_panel_r_m' => '--ksl-pr:16px',
+        'p_panel_pt_m' => '--ksl-ppt:8px',
+        'p_panel_pe_m' => '--ksl-ppe:9px',
+        'p_panel_pb_m' => '--ksl-ppb:8px',
+        'p_panel_ps_m' => '--ksl-pps:16px',
+        'p_ring_m' => '--ksl-ring:2.5px',
+        'p_sh_blur_m' => '--ksl-shb:5px',
+        'p_head_gap_m' => '--ksl-headgap:5px',
+        'p_footsp_m' => '--ksl-footsp:7px',
+        'p_name_lh_m' => '--ksl-nmlh:1.24',
+        'p_brand_lh_m' => '--ksl-brlh:1.15',
     ] as $key => $decl) {
         expect(str_contains($list, $decl))->toBeTrue("{$key}: the list's phone block has no `{$decl}`");
     }
@@ -724,5 +755,22 @@ it('draws nothing at all for a set with no members', function () {
     // And `p_on` takes the same door rather than opening a second empty case —
     // it is tested where the contents are computed, so a switched-off panel does
     // not do the work and throw the answer away.
-    expect(str_contains($list, "(\$product->isSet() && \$kbbSetAp['p_on'])"))->toBeTrue();
+    /* ▲ ADVANCED DELIBERATELY, Lane SA2: `p_on` is still the FIRST thing tested
+         and still the reason SetContents::fromProduct() is not run for a list
+         the owner has switched off — it is now the head of a ternary rather
+         than half of an `&&`, because the admin preview hands the panel its
+         contents and must not reach for a `$product` that does not exist
+         there. Both halves are pinned separately so neither can quietly go. */
+    expect(str_contains($list, "! \$kbbSetAp['p_on']"))->toBeTrue(
+        'p_on no longer gates the contents lookup, so a switched-off list still does the work.'
+    );
+    expect(str_contains($list, "\$product->isSet() ? SetContents::fromProduct(\$product)"))->toBeTrue(
+        'the storefront branch no longer reads the product.'
+    );
+    /* Against the CODE and never against the bare name: the file's own header
+       names SetContents::fromProduct() several thousand bytes earlier, in prose,
+       and a strpos that finds a comment proves nothing about the order things
+       run in. Found by running it — 11385 is not less than 6481. */
+    expect(strpos($list, "! \$kbbSetAp['p_on']"))
+        ->toBeLessThan(strpos($list, "\$product->isSet() ? SetContents::fromProduct(\$product)"));
 });

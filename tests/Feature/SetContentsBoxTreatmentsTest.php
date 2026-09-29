@@ -96,13 +96,31 @@ it('is a real box: a fill, a radius and inner padding on the panel', function ()
      * three is not a box, it is a restyled list — which is the note the owner
      * sent back twice about proposals that were too alike.
      *
-     * MUTATION: delete the `background:` line from the `.ksl` rule and this
-     * goes red.
+     * MUTATION: delete the `background:` line from the `.ksl-panel` rule and
+     * this goes red.
+     *
+     * ── TWO PINS ADVANCED DELIBERATELY, 29 September ───────────────────────
+     *
+     * The selector is `.ksl-panel` and not `.ksl`: the panel is a SETTING now
+     * — Appearance → Set → Desktop · Set list — what is drawn → "Draw the list
+     * inside a panel" — and SetAppearance::panelClass() puts that class on the
+     * element when it is on. Scoping the treatment under it is what lets the
+     * switch turn the box back into the bare list it was layered over without
+     * nine declarations having to be undone.
+     *
+     * And the padding is four LOGICAL longhands rather than one physical
+     * shorthand. That is the defect this release fixes and the reason the case
+     * below changed with it: `padding: a b c d` puts its fourth value on the
+     * LEFT in every language, while the chips' pull and the footing's pull-back
+     * are both inline-start, so on /ar the chips hung 16px past a panel whose
+     * leading padding they thought was 20 and the footing's rule pushed 6px out
+     * through the panel's own edge. Measured in Chromium, both widths, both
+     * languages — the numbers are in the partial's own comment.
      */
     $properties = [];
 
     foreach (CssDirection::declarations(splBoxCss()) as $d) {
-        if ($d['selector'] === '.ksl') {
+        if ($d['selector'] === '.ksl-panel') {
             $properties[] = $d['property'];
         }
     }
@@ -112,7 +130,17 @@ it('is a real box: a fill, a radius and inner padding on the panel', function ()
        second needle and the case fails on its own explanation. */
     expect(in_array('background', $properties, true))->toBeTrue('The panel has no fill.');
     expect(in_array('border-radius', $properties, true))->toBeTrue('The panel has no radius.');
-    expect(in_array('padding', $properties, true))->toBeTrue('The panel has no inner padding.');
+
+    foreach (['padding-block-start', 'padding-block-end', 'padding-inline-start', 'padding-inline-end'] as $side) {
+        expect(in_array($side, $properties, true))->toBeTrue(
+            "The panel has no {$side}; a `padding` shorthand here is physical and mirrors wrongly on /ar."
+        );
+    }
+
+    expect(in_array('padding', $properties, true))->toBeFalse(
+        'The panel is back on a `padding` shorthand, which is physical: its fourth value is the LEFT '
+        .'edge in every language, while the chips and the footing are pulled off the INLINE-START one.'
+    );
 });
 
 it('hangs the photographs outside the panel rather than inside it', function () {
@@ -132,24 +160,55 @@ it('hangs the photographs outside the panel rather than inside it', function () 
     $pad = null;
 
     foreach (CssDirection::declarations(splBoxCss()) as $d) {
-        if ($d['selector'] === '.ksl-ph' && $d['property'] === 'margin-inline-start') {
-            $pull ??= (int) preg_replace('/[^0-9-]/', '', $d['value']);
+        if ($d['selector'] === '.ksl-panel .ksl-ph' && $d['property'] === 'margin-inline-start') {
+            $pull ??= trim($d['value']);
         }
-        if ($d['selector'] === '.ksl' && $d['property'] === 'padding') {
-            /* `padding: 12px 14px 11px 20px` — the fourth value is the
-               inline-start inset in a physical shorthand that CSS has no
-               logical spelling of at this level. */
-            $parts = preg_split('/\s+/', trim($d['value'])) ?: [];
-            $pad ??= (int) preg_replace('/[^0-9]/', '', (string) ($parts[3] ?? $parts[1] ?? '0'));
+        if ($d['selector'] === '.ksl-panel' && $d['property'] === 'padding-inline-start') {
+            $pad ??= trim($d['value']);
         }
     }
 
     expect($pull)->not->toBeNull('The photographs carry no inline-start pull at all.');
-    expect($pad)->not->toBeNull('The panel declares no padding to hang off.');
-    expect(abs((int) $pull))->toBeGreaterThan(
-        (int) $pad,
+    expect($pad)->not->toBeNull('The panel declares no inline-start padding to hang off.');
+
+    /*
+     * ── AND IT IS NOW PINNED AS ARITHMETIC RATHER THAN AS TWO NUMBERS ──────
+     *
+     * Both are settings from this release, so comparing the two LITERALS would
+     * pin only the shipped pair and say nothing about the pair the owner can
+     * drag them to. The rule states the pull as `padding + overhang`, and that
+     * expression is larger than the padding for every positive overhang — which
+     * is the guarantee, and the schema's floor of 1px on `p_over` is what makes
+     * it total. So what is pinned here is the SHAPE: the pull must be the
+     * panel's own inline-start padding plus something, never a number of its
+     * own.
+     *
+     * MUTATION: write `margin-inline-start:calc(-1 * var(--ksl-over,10px))` —
+     * dropping the padding out of the sum, which is exactly the mistake that
+     * makes a 20px-padded panel swallow a 10px overhang — and this goes red.
+     * SetAppearanceTest's own case walks both sliders' ranges and asserts the
+     * rendered geometry, which is the other half of the same proof.
+     */
+    /* str_contains() and not ->toContain(): Pest's toContain() takes a LIST of
+       needles, so a message passed as its second argument is asserted as a
+       second needle and the case fails on its own explanation — the note on the
+       case above is this file paying for that once already. */
+    expect(str_contains((string) $pull, 'var(--ksl-pps,'))->toBeTrue(
+        'The chips are not pulled off the PANEL\'s own padding, so the two can be set to values '
+        .'that make the overhang vanish.'
+    );
+    expect(str_contains((string) $pull, 'var(--ksl-over,'))->toBeTrue('The chips carry no overhang term at all.');
+    expect($pad)->toBe('var(--ksl-pps,20px)');
+
+    /* The shipped pair, read out of the two fallbacks, so the numbers the shop
+       actually renders are still checked and not merely their arrangement. */
+    preg_match('/var\(--ksl-pps,\s*([0-9.]+)px\)/', (string) $pull, $a);
+    preg_match('/var\(--ksl-over,\s*([0-9.]+)px\)/', (string) $pull, $b);
+    expect((float) ($a[1] ?? 0) + (float) ($b[1] ?? 0))->toBeGreaterThan(
+        (float) ($a[1] ?? 0),
         'The chips do not hang: the pull must exceed the panel padding, or they sit flush inside it.'
     );
+    expect((float) ($b[1] ?? 0))->toBe(10.0, 'The shipped overhang is 10px.');
 });
 
 it('keeps the squeeze above the legible and tappable floor', function () {
@@ -179,7 +238,7 @@ it('keeps the squeeze above the legible and tappable floor', function () {
     };
 
     foreach (CssDirection::declarations(splBoxCss()) as $d) {
-        if ($d['selector'] === '.ksl-nm' && $d['property'] === 'font-size') {
+        if (in_array($d['selector'], ['.ksl-nm', '.ksl-panel .ksl-nm'], true) && $d['property'] === 'font-size') {
             $size = $px($d['value']);
 
             if ($size !== null) {
@@ -187,7 +246,8 @@ it('keeps the squeeze above the legible and tappable floor', function () {
             }
         }
 
-        if ($d['selector'] === '.ksl-ph' && in_array($d['property'], ['width', 'height'], true)) {
+        if (in_array($d['selector'], ['.ksl-ph', '.ksl-panel .ksl-ph'], true)
+            && in_array($d['property'], ['width', 'height'], true)) {
             $size = $px($d['value']);
 
             if ($size !== null) {
