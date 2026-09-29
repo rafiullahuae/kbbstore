@@ -329,10 +329,50 @@ it('puts the cut under the two file boxes instead of inside the cover box', func
     expect($cut > $files)
         ->toBeTrue('the cut is back inside the cover box rather than under both file boxes');
 
-    // The cover box itself holds no cut button any more.
-    $coverFrom = (int) strpos($body, 'var coverBody =');
-    $coverTo = (int) strpos($body, 'html += colsHTML(');
-    expect(str_contains(substr($body, $coverFrom, $coverTo - $coverFrom), 'data-ugs-derive'))
+    /*
+     * The cover box itself holds no cut button any more.
+     *
+     * ── THIS CHECK WAS BLIND, FOR THE REASON THE CASE ABOVE IT ALREADY FIXED —
+     *
+     * The end of the slice was `html += colsHTML(`, and the comment fifteen
+     * lines up records that step 2 stopped drawing its row with `colsHTML` and
+     * started drawing it with `cols3HTML` when the loop became a third column.
+     * That rename was made in the assertion above and NOT here, so from that
+     * commit on `strpos($body, 'html += colsHTML(')` was `false`.
+     *
+     * `false` does not blow up. `(int) false` is 0, so the length handed to
+     * substr() became `0 - $coverFrom`, a NEGATIVE number -- and a negative
+     * length in PHP 8 means "stop that many characters from the end of the
+     * string". Measured on the tree this was found in: `$coverFrom` was 1217
+     * and mediaPanel()'s body 3621 bytes, so the window this case examined was
+     * bytes 1217-2404 of the panel. Not the cover box: a 1187-byte slice whose
+     * far edge moves every time anything anywhere in that function grows or
+     * shrinks. It passed, it would have kept passing, and the day it started
+     * failing it would have been blamed on whatever had just been edited.
+     *
+     * So both anchors are CHECKED rather than cast, and the end of the box is
+     * its own statement terminator rather than the name of whatever is drawn
+     * next -- a helper can be renamed again without switching this case off.
+     *
+     * MUTATION NOTES, both run:
+     *   - rename `var coverBody =` to `var coverSlot =` in
+     *     ugc-library-screen.blade.php -> RED here, "the cover box is no longer
+     *     built as `var coverBody =`". On the old code that same edit was
+     *     GREEN, because strpos returned false twice and substr($body, 0, 0)
+     *     is the empty string.
+     *   - add `data-ugs-derive="1"` to the Re-cut button inside coverBody
+     *     -> RED, "the cover box still carries its own cut button".
+     */
+    $coverFrom = strpos($body, 'var coverBody =');
+    expect($coverFrom)->not->toBeFalse(
+        'the cover box is no longer built as `var coverBody =`, so this check has nothing to look at'
+    );
+
+    // The declaration ends at its own semicolon; what follows is a different box.
+    $coverTo = strpos($body, ";\n", (int) $coverFrom);
+    expect($coverTo)->not->toBeFalse('cannot find the end of the cover box declaration');
+
+    expect(str_contains(substr($body, (int) $coverFrom, (int) $coverTo - (int) $coverFrom), 'data-ugs-derive'))
         ->toBeFalse('the cover box still carries its own cut button');
 
     /*
