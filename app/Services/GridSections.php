@@ -178,7 +178,18 @@ class GridSections
      */
     public const PRESETS = [
         'bundles' => [
-            'label' => 'Big savings bundles — 4 across, carousel on the phone',
+            /*
+             * `bestsellers` IS THE STARTING SELECTION AND THE LABEL SAYS SO.
+             *
+             * The shipped `bundles` rail finds its products with a `slug LIKE
+             * '%set%'` category match, which is a rule this table has no column
+             * for and which no preset can carry: the owner's sets category has
+             * an id only his shop knows. A preset that silently guessed would
+             * be a row of the wrong products under the right heading, which is
+             * worse than a row he has to point at his category — one select,
+             * and the screen's own help text names it.
+             */
+            'label' => 'Big savings bundles — 4 across, carousel on the phone (then point it at your sets category)',
             'values' => [
                 'name' => 'Big savings bundles',
                 'heading' => 'Big savings bundles',
