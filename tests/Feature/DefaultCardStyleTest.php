@@ -423,6 +423,64 @@ it('leaves every colour on the card reachable from Appearance → Product styles
     }
 });
 
+it('gives every selectable skin a swatch in the admin picker\'s stylesheet', function () {
+    /*
+     * ── WHY THIS IS ABOUT admin-skin-preview.css AND NOT ABOUT app.blade.php ─
+     *
+     * Appearance → Product styles draws a small sample card per skin so the
+     * owner can see one before choosing it. Those swatches are styled by
+     * `resources/css/kbb/admin-skin-preview.css`, and
+     * `resources/views/admin/app.blade.php` carries a GENERATED COPY of that
+     * file — which is the file the console actually loads, and which this lane
+     * may not edit.
+     *
+     * So this case holds the half that is in this lane's hands: the SOURCE
+     * sheet never falls behind `GridSkins::ALL`. A skin with no swatch rule is
+     * an entry in the picker that draws the bare card — it does not break
+     * anything and no other test notices, which is exactly why it wants one.
+     * The generated copy is named as an integrator edit in
+     * docs/PG2-SHOWCASE-CARD.md §8, with the line it goes after.
+     *
+     * A PREFIX SELECTOR COUNTS, because the showcase family is written as one:
+     * `[data-skin^="showcase"]` styles all four of its members and an exact
+     * rule for each would be four copies of the same block.
+     *
+     * MUTATION: add a row to GridSkins::ALL without a matching rule and this is
+     * red naming it. RUN — and the first attempt at it, a throwaway
+     * 'showcase-wide', stayed GREEN, because the family's own prefix selector
+     * covers it. Which is the check working: a fifth showcase treatment really
+     * does get a swatch for nothing. A name outside the family, 'lantern',
+     * reddens it.
+     */
+    $css = (string) file_get_contents(base_path('resources/css/kbb/admin-skin-preview.css'));
+
+    preg_match_all('/\[data-skin(\^?)="([a-z0-9-]+)"\]/', $css, $m, PREG_SET_ORDER);
+
+    expect($m)->not->toBe([], 'no skin selectors were read out of admin-skin-preview.css, so this check is blind');
+
+    $unstyled = [];
+
+    foreach (array_keys(GridSkins::ALL) as $skin) {
+        $styled = false;
+
+        foreach ($m as [, $prefix, $name]) {
+            if ($prefix === '^' ? str_starts_with($skin, $name) : $skin === $name) {
+                $styled = true;
+
+                break;
+            }
+        }
+
+        if (! $styled) {
+            $unstyled[] = $skin;
+        }
+    }
+
+    expect($unstyled)->toBe([],
+        'these skins draw the bare card in the admin picker, so the owner would be choosing between swatches that look the same: '
+        . implode(', ', $unstyled));
+});
+
 /* ═══════════ 6 · the rating row is an ADDITION, not a removal ═════════════ */
 
 it('draws no rating row for an unreviewed product under the new default either', function () {
