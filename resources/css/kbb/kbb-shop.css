@@ -310,7 +310,26 @@ img{max-width:100%}
 .qvm .qvx{position:absolute;top:14px;inset-inline-end:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.85);display:grid;place-items:center;z-index:3}
 .qvm h3{font-size:21px;font-weight:800;letter-spacing:-.01em;line-height:1.2;margin:4px 0 8px}
 .qvm .qvprice{font-size:22px;font-weight:800;margin:12px 0}
-.qvm .qvprice s{font-size:15px;color:var(--muted);font-weight:500;margin-inline-start:8px}
+/* ▲ THIS RULE WAS DEAD, AND ITS DEATH HID THE SAME DEFECT THE CHECKOUT HAD.
+   It selects <s>. partials/quick-view.blade.php prints <del> and <ins> and has
+   no <s> in it at all, so the struck price in Quick view has been inheriting
+   the full 22px/800 beside the price being charged, and the price being
+   charged has been UNDERLINED by the browser default for <ins>. Kept as a
+   selector list rather than replaced, because a shop that renders <s> anywhere
+   in this block should still get the quiet treatment. */
+.qvm .qvprice s{font-size:15px;color:var(--muted);font-weight:500}
+/* Its own rule and not a selector list beside the one above -- StruckPrice-
+   IsQuietTest reads declarations per SELECTOR, and a list is one selector to a
+   CSS parser, so `.qvm .qvprice del` would be invisible to the guard that
+   exists to keep it styled. Duplication of two declarations against a rule
+   that cannot be checked is the right trade. */
+.qvm .qvprice del{font-size:15px;color:var(--muted);font-weight:500}
+/* The gap goes on whichever element is SECOND. <s> follows the price in the
+   older markup; <del> PRECEDES it in this one, so the margin belongs to <ins>.
+   Logical in both, so Arabic mirrors from the same declaration. */
+.qvm .qvprice s{margin-inline-start:8px}
+.qvm .qvprice ins{text-decoration:none;margin-inline-start:8px;
+                  color:inherit;font-weight:inherit}
 .qvm .qvdesc{font-size:13.5px;color:var(--ink-2);line-height:1.6;margin-bottom:16px}
 .qvtags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
 .qvtag{font-size:11px;font-weight:600;color:var(--pink-deep);background:var(--pink-soft);border-radius:99px;padding:5px 11px}
