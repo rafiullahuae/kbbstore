@@ -120,6 +120,19 @@ class ProductTabsApiController extends Controller
                 $this->rows(null)
             ),
             'builtins' => $this->builtinPayload(),
+            /*
+             * THE EMPTY SHAPE OF THE ARABIC BOXES, for the ADD form. (The same
+             * thing ProductEditorApiController::bootstrap() hands down, for the
+             * same reason.) A tab being created has no row and therefore no
+             * translations, but the blank form still has to draw a box for
+             * every translatable field. Handing the shape down is what lets the
+             * create form know which fields those are without this screen
+             * holding a second copy of ProductTab::$translatable -- exactly the
+             * kind of list that drifts. KBBArabic.boxIf() asks it before it
+             * draws anything, so a box is never offered for a field the server
+             * would silently drop.
+             */
+            'translations' => (new ProductTab)->translationsForEditor(),
             'limits' => [
                 'max_title' => 120,
                 'max_position' => ProductTabs::MAX_POSITION,
@@ -290,6 +303,8 @@ class ProductTabsApiController extends Controller
             ],
             'inherited' => $inherited,
             'own' => $own,
+            // The blank shape again, for this product's own add form.
+            'translations' => (new ProductTab)->translationsForEditor(),
             'limits' => [
                 'max_title' => 120,
                 'max_position' => ProductTabs::MAX_POSITION,
