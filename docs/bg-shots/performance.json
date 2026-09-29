@@ -1,0 +1,98 @@
+[
+  {
+    "label": "today — no wash",
+    "url": "/shop/",
+    "passes": 5,
+    "seconds": 12,
+    "cpuMsPerSecond": 113.24,
+    "cpuSpread": [
+      102.12,
+      143.3
+    ],
+    "scriptMsPerSecond": 0,
+    "styleRecalcs": 719,
+    "layouts": 0,
+    "heapMB": 0.8,
+    "nodes": 2162
+  },
+  {
+    "label": "treatment A (420s cycle)",
+    "url": "/shop/?kbbwash=a",
+    "passes": 5,
+    "seconds": 12,
+    "cpuMsPerSecond": 213.08,
+    "cpuSpread": [
+      122.24,
+      322.11
+    ],
+    "scriptMsPerSecond": 0,
+    "styleRecalcs": 716,
+    "layouts": 0,
+    "heapMB": 0.8,
+    "nodes": 2168
+  },
+  {
+    "label": "treatment B (120s cycle)",
+    "url": "/shop/?kbbwash=b",
+    "passes": 5,
+    "seconds": 12,
+    "cpuMsPerSecond": 183.48,
+    "cpuSpread": [
+      169.13,
+      301.45
+    ],
+    "scriptMsPerSecond": 0,
+    "styleRecalcs": 712,
+    "layouts": 0,
+    "heapMB": 0.8,
+    "nodes": 2168
+  },
+  {
+    "label": "treatment D (top, 180s)",
+    "url": "/shop/?kbbwash=d",
+    "passes": 5,
+    "seconds": 12,
+    "cpuMsPerSecond": 240.76,
+    "cpuSpread": [
+      162.43,
+      345.13
+    ],
+    "scriptMsPerSecond": 0,
+    "styleRecalcs": 686,
+    "layouts": 0,
+    "heapMB": 0.8,
+    "nodes": 2168
+  },
+  {
+    "label": "treatment B, cycle forced to 6s",
+    "url": "/shop/?kbbwash=b",
+    "passes": 5,
+    "seconds": 12,
+    "cpuMsPerSecond": 169.72,
+    "cpuSpread": [
+      141.05,
+      273.16
+    ],
+    "scriptMsPerSecond": 0,
+    "styleRecalcs": 715,
+    "layouts": 0,
+    "heapMB": 1.3,
+    "nodes": 2171
+  },
+  {
+    "label": "treatment B, prefers-reduced-motion",
+    "url": "/shop/?kbbwash=b",
+    "passes": 5,
+    "seconds": 12,
+    "cpuMsPerSecond": 0.1,
+    "cpuSpread": [
+      0.08,
+      0.2
+    ],
+    "scriptMsPerSecond": 0,
+    "styleRecalcs": 0,
+    "layouts": 0,
+    "heapMB": 0.8,
+    "nodes": 2168
+  }
+]

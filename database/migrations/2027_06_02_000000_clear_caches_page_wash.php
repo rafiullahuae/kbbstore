@@ -95,7 +95,7 @@ return new class extends Migration
 
         if (app()->runningInConsole()) {
             echo "Cleared {$cleared} compiled files. Appearance -> Page background is now\n"
-                ."on the menu, under Appearance, between Section dividers and Header.\n"
+                ."on the menu, under Appearance, between Section dividers and Cart panel.\n"
                 ."\n"
                 ."NOTHING ON THE SHOP HAS CHANGED. The colour wash ships OFF and the shop\n"
                 ."renders exactly the background it rendered before this package.\n"
