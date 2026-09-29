@@ -594,8 +594,11 @@ a{color:inherit;text-decoration:none}
    docs/PP-PRODUCT-PAGE-PROPOSALS.md rather than left half-applied here. The
    decision about frame shape belongs to whoever commissions the photography.
 
-   WHAT THE SET SIDE BECAME is not in this file at all: the product page draws
-   a set through resources/views/partials/set-row.blade.php — the fanned stack
-   with the tiny "What's inside" popup, chosen 28 September — whose rules that
-   partial inlines @once for every surface that draws a set.
+   NOTHING ELSE ON THE PRODUCT PAGE MOVED WITH THEM. In particular the set
+   contents list in the buy column — `.ksl` and the rules for it further up this
+   file, drawn by partials/set-contents-panel.blade.php — is untouched. Swapping
+   it for the fanned stack the cart surfaces use was considered in this round
+   and dropped: the owner's answer on seeing the cart page was "i think this is
+   already applied, skip it", and the squeezed list is a thing he asked for and
+   already has. CLAUDE.md rule 1 — nothing that already works changes.
    ═══════════════════════════════════════════════════════════════════════════ */
