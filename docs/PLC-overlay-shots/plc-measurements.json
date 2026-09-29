@@ -21,6 +21,7 @@
       false
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "input-text"
   },
   {
@@ -49,6 +50,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   },
   {
@@ -77,6 +79,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   },
   {
@@ -105,8 +108,9 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 23
+    "pressToTickMs": 30
   },
   {
     "shot": "overlay-leaving",
@@ -134,6 +138,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   },
   {
@@ -158,6 +163,12 @@
       false
     ],
     "notice": "Tamara is not available for this order. Please choose another payment method.",
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
     "focus": "co-note err"
   },
   {
@@ -178,8 +189,31 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks",
-    "order": "10004"
+    "order": "10013"
+  },
+  {
+    "shot": "basket-restored",
+    "width": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": null,
+    "focus": " dvs-ticks",
+    "order": "10013"
   },
   {
     "shot": "return-tick",
@@ -203,6 +237,7 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks"
   },
   {
@@ -227,7 +262,39 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks"
+  },
+  {
+    "shot": "timeout-no-answer",
+    "width": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [
+      false,
+      false,
+      false
+    ],
+    "notice": "We did not hear back from the shop. Your order may already have been placed — please check your email before trying again.",
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": "co-note err",
+    "abortWaitedMs": 45184
   },
   {
     "shot": "real-cod-tick",
@@ -255,8 +322,9 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 160,
+    "pressToTickMs": 108,
     "intercepted": false
   },
   {
@@ -277,6 +345,7 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks",
     "intercepted": false
   },
@@ -306,8 +375,9 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 31
+    "pressToTickMs": 26
   },
   {
     "shot": "arabic-working",
@@ -335,6 +405,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   },
   {
@@ -359,6 +430,7 @@
       false
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "input-text"
   },
   {
@@ -387,6 +459,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   },
   {
@@ -415,6 +488,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   },
   {
@@ -443,8 +517,9 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 22
+    "pressToTickMs": 40
   },
   {
     "shot": "overlay-leaving",
@@ -472,6 +547,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   },
   {
@@ -496,6 +572,12 @@
       false
     ],
     "notice": "Tamara is not available for this order. Please choose another payment method.",
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
     "focus": "co-note err"
   },
   {
@@ -516,8 +598,31 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks",
-    "order": "10008"
+    "order": "10017"
+  },
+  {
+    "shot": "basket-restored",
+    "width": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": null,
+    "focus": " dvs-ticks",
+    "order": "10017"
   },
   {
     "shot": "return-tick",
@@ -541,6 +646,7 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks"
   },
   {
@@ -565,7 +671,39 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks"
+  },
+  {
+    "shot": "timeout-no-answer",
+    "width": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [
+      false,
+      false,
+      false
+    ],
+    "notice": "We did not hear back from the shop. Your order may already have been placed — please check your email before trying again.",
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": "co-note err",
+    "abortWaitedMs": 45164
   },
   {
     "shot": "real-cod-tick",
@@ -593,8 +731,9 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 100,
+    "pressToTickMs": 165,
     "intercepted": false
   },
   {
@@ -615,6 +754,7 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
+    "noticeStyle": null,
     "focus": " dvs-ticks",
     "intercepted": false
   },
@@ -644,8 +784,9 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 29
+    "pressToTickMs": 28
   },
   {
     "shot": "arabic-working",
@@ -673,6 +814,7 @@
       true
     ],
     "notice": null,
+    "noticeStyle": null,
     "focus": "kbb-placing is-up"
   }
 ]

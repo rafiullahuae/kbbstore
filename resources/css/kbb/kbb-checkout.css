@@ -269,6 +269,26 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* returning-customer / email note (design .emailmsg) */
 .kbb-checkout .co-note{background:var(--cream);border:1px solid var(--blush);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:var(--ink-2)}
 .kbb-checkout .co-note.ok{background:#EEF8F1;border:1px solid #C9E7D5;color:#1F7D52;font-weight:600;display:flex;align-items:center;gap:7px}
+/* AND THE OTHER HALF OF THE PAIR, WHICH WAS NEVER WRITTEN. (Lane PLC, round 2)
+   `.co-note.err` is what the checkout draws for a refused Place order, a
+   rejected coupon, a gateway that declined and the Place-order overlay's own
+   failure notice -- and until now there was no rule for it anywhere in
+   resources/css. Measured in Chromium at 1280 on the real checkout, `.co-note
+   .err` computed IDENTICALLY to a plain `.co-note`:
+
+       plain   background rgb(255,248,245)  colour rgb(94,84,90)   weight 400
+       err     background rgb(255,248,245)  colour rgb(94,84,90)   weight 400
+       ok      background rgb(238,248,241)  colour rgb(31,125,82)  weight 600
+
+   So a payment failure read as a neutral aside while a CONFIRMATION was green
+   and bold -- the emphasis on exactly the wrong one of the two. Found by
+   walking every notice class on every storefront page against the stylesheets
+   that page actually loads.
+
+   The values are the ones partials/checkout/return-notice already uses for the
+   same sentence on the basket page, so the two pages say it the same way.
+   #A82F53 on #FDECEF is 6.9:1, which clears AA for body text. */
+.kbb-checkout .co-note.err{background:#FDECEF;border:1px solid #F3C4CE;color:#A82F53;font-weight:600}
 
 /* WhatsApp opt-in box (design .wa) — BRIDGE from the Woo checkbox field */
 .kbb-checkout .kbb-wa{background:var(--cream);border:1px solid var(--blush);border-radius:10px;padding:10px 12px;margin-top:10px}

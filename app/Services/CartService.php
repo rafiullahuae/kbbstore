@@ -135,6 +135,40 @@ class CartService
         return $cart;
     }
 
+    /**
+     * Point this browser at a cart it is not currently carrying.
+     *
+     * ── WHY THIS EXISTS (Lane PLC) ─────────────────────────────────────────
+     *
+     * A basket is marked `converted` the moment an order is placed, and this
+     * service then finds no active cart for that cookie — so the next page that
+     * asks with create:true mints a fresh empty one and re-cookies the browser.
+     * That is right for an order that went through, and wrong for one that did
+     * not: a shopper who abandons at Tabby or Tamara lands on /cart/, is given
+     * an empty cart and a new token on the way in, and their real basket is a
+     * `converted` row nothing can reach by cookie any more.
+     *
+     * Store\CheckoutReturnController::restore() puts that row back to `active`
+     * and calls this to hand the browser its token again. The pair is exactly
+     * what mergeGuestCart() does at the end of a merge — rememberCookie() for
+     * the new token, then drop the memo so anything resolving later in this
+     * request sees the swap rather than the cart it found first.
+     *
+     * MEASURED, and this is why it is a method rather than a cookie queued at
+     * the call site: the trap was found by pressing the button in a browser and
+     * looking at the answer. The offer was written on the request that landed
+     * the shopper and the press arrived one request later, by which time the
+     * cookie had moved — so "Put my basket back" said "There is nothing to put
+     * back". The cookie's name, its thirty days, httpOnly and SameSite=lax are
+     * decisions with reasons beside them in rememberCookie(), and a second copy
+     * of them in a controller is a second place for them to drift.
+     */
+    public function adopt(Cart $cart): void
+    {
+        $this->rememberCookie($cart->token);
+        $this->forget();
+    }
+
     /** Forget the memo — used after a merge swaps one cart for another. */
     public function forget(): void
     {

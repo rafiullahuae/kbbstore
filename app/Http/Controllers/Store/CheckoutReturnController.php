@@ -70,6 +70,19 @@ class CheckoutReturnController extends Controller
     /** The order the "Put my basket back" button was offered for, by number. */
     public const RESTORABLE_KEY = 'kbb_restorable';
 
+    /**
+     * The TOKEN of the basket that offer belongs to.
+     *
+     * Remembered because the cookie does not survive the trip. The offer is
+     * written on the request that lands the shopper; by the time they press the
+     * button one request later, the basket page has asked for a cart with
+     * create:true, found none active for their token, minted an empty one and
+     * re-cookied the browser. Looking the basket up by the LIVE cookie at that
+     * point finds the new empty cart and answers "there is nothing to put back"
+     * — which is what it did, in a browser, in front of a screenshot.
+     */
+    public const RESTORABLE_CART_KEY = 'kbb_restorable_cart';
+
     /** Set for exactly one request after a basket has been put back. */
     public const RESTORED_KEY = 'kbb_basket_restored';
 
@@ -247,15 +260,20 @@ class CheckoutReturnController extends Controller
         }
 
         /*
-         * The cart by its own cookie, not by a column on the order — `orders`
-         * has never carried a cart id. CartService::resolve() finds a cart by
-         * exactly this token and refuses anything that is not `active`, which
-         * is why `status` is the single field that decides whether this shopper
-         * still has a basket, and why it is the one being put back. Identical
-         * to cardAbandoned()'s, deliberately: two ways of finding "the basket
-         * this order was made from" is one too many.
+         * THE BASKET THE OFFER WAS MADE FOR, BY THE TOKEN REMEMBERED WITH IT —
+         * NOT BY THE COOKIE THIS REQUEST HAPPENS TO CARRY.
+         *
+         * `orders` has never carried a cart id, so a token is the only handle
+         * there is; `status` is still the single field that decides whether a
+         * basket is live, exactly as in cardAbandoned(). What differs is WHERE
+         * the token comes from, and it has to: between the offer and the press
+         * the shopper's cookie has moved on to a fresh empty cart the basket
+         * page minted for them. See RESTORABLE_CART_KEY.
+         *
+         * The token was read off this browser's own cookie when the offer was
+         * written, so nothing here trusts anything the shopper could choose.
          */
-        $token = (string) $request->cookie(CartService::COOKIE);
+        $token = trim((string) $request->session()->get(self::RESTORABLE_CART_KEY, ''));
 
         $cart = $token === '' ? null : Cart::query()
             ->where('token', $token)
@@ -286,7 +304,18 @@ class CheckoutReturnController extends Controller
             $cart->forceFill(['status' => 'active', 'converted_at' => null, 'last_activity_at' => now()])->save();
         });
 
+        /*
+         * AND THE BROWSER IS POINTED BACK AT IT. Putting the row to `active` is
+         * only half of a restore: this shopper is carrying the token of the
+         * empty cart the basket page gave them on the way in, and without this
+         * they would land on /cart/ and see it. The empty row is left behind
+         * rather than deleted — it holds nothing, and the abandoned-cart
+         * cleanup owns rows nobody is using.
+         */
+        $this->carts->adopt($cart);
+
         $request->session()->forget(self::RESTORABLE_KEY);
+        $request->session()->forget(self::RESTORABLE_CART_KEY);
         $request->session()->forget('kbb_last_order');
 
         return redirect(Url::redirect('/cart/', $request))->with(self::RESTORED_KEY, '1');
@@ -303,6 +332,7 @@ class CheckoutReturnController extends Controller
     private function nothingToPutBack(Request $request): RedirectResponse
     {
         $request->session()->forget(self::RESTORABLE_KEY);
+        $request->session()->forget(self::RESTORABLE_CART_KEY);
 
         return redirect(Url::redirect('/cart/', $request))
             ->withErrors(__('store.checkout.restore_gone'));
@@ -327,6 +357,7 @@ class CheckoutReturnController extends Controller
     private function rememberRestorable(Request $request, ?Order $order): void
     {
         $request->session()->forget(self::RESTORABLE_KEY);
+        $request->session()->forget(self::RESTORABLE_CART_KEY);
 
         if ($order === null || $order->paid_at !== null) {
             return;
@@ -336,6 +367,12 @@ class CheckoutReturnController extends Controller
             return;
         }
 
+        /*
+         * THIS is the request on which the cookie is still right: the shopper
+         * has just arrived from the provider and nothing has yet asked for a
+         * cart with create:true. The token is taken here and kept, because one
+         * request later it names a different, empty basket.
+         */
         $token = (string) $request->cookie(CartService::COOKIE);
 
         if ($token === '') {
@@ -350,6 +387,7 @@ class CheckoutReturnController extends Controller
 
         if ($restorable) {
             $request->session()->put(self::RESTORABLE_KEY, (string) $order->order_number);
+            $request->session()->put(self::RESTORABLE_CART_KEY, $token);
         }
     }
 

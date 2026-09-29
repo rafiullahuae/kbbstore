@@ -228,6 +228,58 @@ it('hands the stock back, through the funnel that owns it', function () {
         ->and(in_array('failed', OrderTransitionStock::RETURNS_STOCK, true))->toBeTrue();
 });
 
+it('finds the basket after the cookie has moved on, which it always has', function () {
+    /*
+     * ▲ THE ONE THE SCREENSHOT FOUND, AND NO OTHER CASE IN THIS FILE COULD.
+     *
+     * Every case above hands the same cart cookie to every request, which is
+     * not what a browser does. Measured in Chromium against the preview:
+     *
+     *     after add            cookie eyJpdiI6IlVF…
+     *     after the failed place   cookie eyJpdiI6IkRX…
+     *     after /checkout/pending -> /cart/   cookie eyJpdiI6Imxn…   NEW, and
+     *                              a fresh empty `active` cart row with it
+     *
+     * The basket page asks CartService for a cart with create:true, finds none
+     * active for the `converted` token, mints an empty one and re-cookies the
+     * browser on the way in. So the offer is written on a request where the
+     * cookie is still right, and the PRESS arrives one request later carrying a
+     * token that names an empty cart. Looking the basket up by the live cookie
+     * at that point answers "There is nothing to put back" — which is exactly
+     * what the button did, over a basket sitting one row away.
+     *
+     * The token is therefore remembered WITH the offer, and CartService::adopt()
+     * hands it back to the browser afterwards.
+     *
+     * MUTATION, run: read the token from $request->cookie(CartService::COOKIE)
+     * in restore() instead of from the session → this goes red with the
+     * "nothing to put back" sentence, which is the defect verbatim.
+     */
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]]);
+
+    rbComeHome($cart, $order);
+
+    // The empty cart the basket page gives them on the way in, and its cookie.
+    $fresh = Cart::create([
+        'token' => Str::random(32), 'currency' => 'AED', 'status' => 'active',
+        'shipping_country' => 'AE', 'last_activity_at' => now(),
+    ]);
+
+    $response = rbAs($fresh)->post('/checkout/restore-basket');
+
+    expect($cart->fresh()->status)->toBe('active', 'the basket the offer was made for was not found')
+        ->and($order->fresh()->status)->toBe('failed');
+
+    /* AND THE BROWSER IS POINTED BACK AT IT. Without the adopt() the row is
+       live and the shopper is still carrying the empty cart's token, so they
+       land on /cart/ and see nothing — a restore that restored nothing they
+       can see. The cookie on the response is the assertion. */
+    /* assertPlainCookie, not assertCookie: these requests run with
+       EncryptCookies removed — see rbAs() — so the queued value is the raw
+       token, and assertCookie would try to decrypt it and throw. */
+    $response->assertPlainCookie(CartService::COOKIE, $cart->token);
+});
+
 /* ══════════════ 2. the set case the coordinator asked for by name ══════════ */
 
 it('brings a set-and-loose basket back THROUGH the reconciler, not around it', function () {
