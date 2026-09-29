@@ -73,16 +73,22 @@ final class StaticMemos
             InstalledVersion::class => static fn () => InstalledVersion::forget(),
             Facets::class => static fn () => Facets::reset(),
             /*
-             * The authored product tabs, both layers (Lane PT).
+             * The authored product tabs, BOTH layers (Lane PT).
              *
              * Same shape and the same reason as Setting::map() above: a
              * per-process memo over a cache entry, so a test that writes a tab
              * and then renders a product page would otherwise be served the
-             * answer whichever test ran first got. forgetMemo() clears only the
-             * memo, which is what a test needs; ProductTabs::flush() clears the
-             * cache too and is what the model hooks call.
+             * answer whichever test ran first got.
+             *
+             * flush() and NOT forgetMemo(), which was the first shape and was
+             * half a reset. RefreshDatabase rolls the ROWS back and touches no
+             * cache at all, so a test that creates a global tab leaves that tab
+             * in the cache entry after its row has gone -- and the next test to
+             * render a product page is served a tab that no longer exists,
+             * which is the same order dependency one layer further out. The
+             * model hooks call the same function.
              */
-            ProductTabs::class => static fn () => ProductTabs::forgetMemo(),
+            ProductTabs::class => static fn () => ProductTabs::flush(),
             Money::class => static fn () => Money::forgetConfig(),
             Url::class => static fn () => Url::forgetBase(),
             /*
