@@ -632,6 +632,23 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // from, when it was taken and what each run did. Same group, because it
         // names the owner's own site, the digests of his export files and the
         // note text lifted out of his catalogue.
+        //
+        // ▲ THIS REQUIRE WAS MISSING AND THE COMMENT ABOVE WAS NOT. Lane GF
+        //   shipped routes/import-history-admin.php with a header that says
+        //   "LIVE. routes/web.php requires this file", the note above was
+        //   written into this file, and the one line between them never was:
+        //   `git log -S"import-history-admin" -- routes/web.php` finds no
+        //   commit that ever added or removed it. So GET /admin-api/import/
+        //   history, /history-page and /history.csv have answered 404 since the
+        //   screen was written -- and admin/app.blade.php:8438 renders a link
+        //   to /import/history-page that the owner can click TODAY and land on
+        //   a 404. The controller exists; nothing was ever wrong but this line.
+        //
+        //   A comment describing a require is not a require. That is the
+        //   failure shape, and it is the second one this round: the card form's
+        //   two reports had the same defect from the other side, a perfect
+        //   header and no line. Found by Lane FIN2 sweeping for exactly this.
+        require __DIR__.'/import-history-admin.php';
 
         // Store → Import → the run that keeps going with the tab closed (Lane
         // GO). Same group and the same reason as the two files above: pressing
