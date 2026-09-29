@@ -246,13 +246,28 @@ class Product extends Model
              * this whole change removes. Nothing-known stays null, exactly as
              * it reads today.
              *
-             * ▲ ON /api/products THIS STILL ANSWERS null, and deliberately so.
-             * Api\ProductController::INDEX_COLUMNS does not select `type`, and
-             * App\Services\VariantPricing declines to derive a price for a row
-             * whose shape it cannot confirm rather than guessing from a
-             * narrowed SELECT — the same fail-closed rule advertisedSalePrice()
-             * applies to the sale window. Adding `type` to that list is what
-             * turns this on for the endpoint; that file is another lane's.
+             * ▲ THIS NOW ANSWERS ON /api/products TOO, and the note that used
+             * to sit here said the opposite. It read: "ON /api/products THIS
+             * STILL ANSWERS null … INDEX_COLUMNS does not select `type` …
+             * adding `type` to that list is what turns this on for the
+             * endpoint; that file is another lane's." That lane came: `type` is
+             * in Api\ProductController::INDEX_COLUMNS, and so are the three
+             * SetPricing::COLUMNS, so the LIST endpoint and the DETAIL endpoint
+             * publish the same from-price for the same row.
+             *
+             * Left standing, that paragraph was worse than no comment. It
+             * described a fail-closed null as deliberate on the one surface
+             * where the value is now real, so the next reader measuring the feed
+             * would have found 9000 where the code said null and had to work out
+             * which of the two was lying.
+             *
+             * The fail-closed rule itself is unchanged and still the point: a
+             * SELECT that omits `type` or `price` still publishes null rather
+             * than guessing. Both states are pinned by measurement rather than
+             * by this paragraph — ApiCompareAtPriceTest, `it measures the saving
+             * against the from-price the tile printed` (the index route
+             * publishing 9000) and `it refuses to publish a compare-at for a row
+             * whose shape it cannot see` (the narrowed SELECT).
              */
             // compareAtPrice() and not the raw column: the two are the same
             // expression for every product that is not a hand-priced set
