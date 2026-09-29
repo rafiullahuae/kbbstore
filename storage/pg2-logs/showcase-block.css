@@ -190,6 +190,20 @@
 .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg{
     color:var(--sc-was);font-weight:500;font-size:calc(var(--sc-name) - 1.5px)}
 
+/* THE PLAIN PRICE IS THE OWNER'S COLOUR AND THE SALE PRICE IS PINK, and the
+   first half of that sentence is a repair rather than a preference. Measured in
+   Chromium on this branch's own preview: a price reads rgb(193,62,99) on /shop
+   and on every category archive, and rgb(42,34,40) on the homepage rails and
+   the wishlist — because `.kbb-pgrid .kbb-card-price{color:var(--kbb-price,…)}`
+   lives in kbb-grid-skins.css and the SECOND COPY of the skins inside kbb.css
+   stops short of it, so the pages that do not load the first sheet never reach
+   the control at all. Appearance → Product styles → Colour → Price therefore
+   moves the homepage and not the shop. That is not this lane's to unpick — it
+   is the same duplication CLAUDE.md and docs/W1-SITE-WIDTH.md already record —
+   but the showcase family can at least be the same colour on every page, so it
+   names the variable itself and both copies carry the line. */
+.kbb-pgrid[data-skin^="showcase"] .kbb-card-price{color:var(--kbb-price,#2A2228)}
+
 .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg+.kbb-card-price{color:var(--sc-sale)}
 
 /* `line-height` and not flex centring, so the button keeps the `display:block`
@@ -203,15 +217,34 @@
     letter-spacing:.09em;
     text-transform:uppercase;
     line-height:var(--sc-btn-h);
+    /* ONE LINE, ALWAYS. The height IS the line-height here — no flex centring,
+       because the button has to keep the `display:block` that `.pc-nocart`
+       overrides — so a label that wraps does not overflow, it DOUBLES the
+       button. Measured before this line: 88px at 390px against 44px at 1280px,
+       with "ADD TO CART" broken after "TO". */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .kbb-pgrid[data-skin^="showcase"] .kbb-card:has(.heart) .kbb-card-cart{
     margin-inline-end:calc(var(--sc-heart) + var(--sc-gap))}
 
-/* ── 2 · COMPACT ── the same anatomy, one step down in every number. ──────── */
+/* ── 2 · COMPACT ── the same anatomy, one step down in every number, AND NO
+   CARD CHROME. The border goes as well as the padding, deliberately: with only
+   the numbers changed this treatment and the one above it were the same picture
+   at thumbnail size, which is the note the owner has now sent back twice. A
+   card with no outline reads as a different design at a glance and is also what
+   "tighter" actually wants — the outline is most of the space a dense grid
+   loses. */
 .kbb-pgrid[data-skin="showcase-compact"]{
     --sc-pad:10px;--sc-gap:7px;--sc-name:12.5px;
     --sc-btn-h:34px;--sc-btn-r:2px;--sc-btn-fs:10px;--sc-heart:34px}
+.kbb-pgrid[data-skin="showcase-compact"] .kbb-card{border-color:transparent;background:none}
+.kbb-pgrid[data-skin="showcase-compact"] .kbb-card:hover{box-shadow:none}
+.kbb-pgrid[data-skin="showcase-compact"] .cb{padding:var(--sc-pad) 2px 0}
+.kbb-pgrid[data-skin="showcase-compact"] .kbb-card-shot{border-radius:var(--kbb-radius,14px)}
+.kbb-pgrid[data-skin="showcase-compact"] .heart{inset-inline-end:2px;bottom:0}
 .kbb-pgrid[data-skin="showcase-compact"] .kbb-card-rate{margin-top:5px;font-size:11px}
 .kbb-pgrid[data-skin="showcase-compact"] .heart svg{width:15px;height:15px}
 
@@ -237,8 +270,11 @@
     grid-row:-2;grid-column:1;margin-top:0;padding-top:0}
 .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
     grid-row:-2;grid-column:2;margin-top:0;padding:0 18px;justify-self:end}
+/* Bottom-end, because the -N% pill owns the photograph's top-end corner — the
+   same collision the phone rule at the foot of this block avoids, found the
+   same way: in the shot. */
 .kbb-pgrid[data-skin="showcase-row"] .heart{
-    grid-area:scphoto;top:10px;bottom:auto;inset-inline-end:10px;
+    grid-area:scphoto;top:auto;bottom:10px;inset-inline-end:10px;
     width:34px;height:34px;border-radius:50%;border-color:rgba(255,255,255,.7);
     background:rgba(255,255,255,.94)}
 .kbb-pgrid[data-skin="showcase-row"] .heart svg{width:16px;height:16px}
@@ -258,3 +294,55 @@
 .kbb-pgrid[data-skin="showcase-airy"] .kbb-card:hover .kbb-card-cart{
     background:var(--kbb-cart-bg,#E0567B);color:var(--kbb-cart-fg,#fff)}
 .kbb-pgrid[data-skin="showcase-airy"] .heart{border-color:rgba(42,34,40,.14)}
+
+/* ── THE PHONE, WHERE THE HEART CANNOT SHARE THE LINE ────────────────────────
+   At 390px the grid is two columns by design, so a tile is about 167px wide and
+   its text column about 135px. A 44px heart and its gap take 56px of that, and
+   the 79px left is not a button — measured, it is "ADD TO / CART" over two
+   lines and a button twice the height of the one beside it.
+
+   So on a phone the heart goes back onto the photograph, where it was before
+   this family and where it costs the button nothing. This is a MEDIA QUERY and
+   not the row arithmetic the columns use, because it is a question about one
+   tile's own width rather than about the row: the grid is already two columns
+   below 700px and cannot be anything else. */
+@media (max-width:700px){
+    /* BOTTOM-end, not top-end: the -N% pill takes the photograph's top-end
+       corner and a heart put there sits on top of it. This is the corner
+       `.kbb-tile .heart` chose in the first place, and for this reason. */
+    .kbb-pgrid[data-skin^="showcase"] .heart{
+        grid-area:scphoto;
+        top:auto;
+        bottom:9px;
+        inset-inline-end:9px;
+        width:34px;
+        height:34px;
+        border-radius:50%;
+        border-color:rgba(255,255,255,.7);
+        background:rgba(255,255,255,.94)}
+    .kbb-pgrid[data-skin^="showcase"] .heart svg{width:16px;height:16px}
+    .kbb-pgrid[data-skin^="showcase"] .kbb-card:has(.heart) .kbb-card-cart{margin-inline-end:0}
+    .kbb-pgrid[data-skin^="showcase"]{--sc-btn-fs:11px}
+    .kbb-pgrid[data-skin="showcase-compact"]{--sc-btn-fs:9.5px}
+    /* ── AND TREATMENT C STACKS ON A PHONE ──────────────────────────────────
+       Measured at 390px: a two-column row gives a 167px card and about 135px of
+       text column, and "AED 120  AED 94" beside an ADD TO CART is 210px of
+       content in it — the button sat on top of the struck price. A phone simply
+       does not have a line wide enough for the idea, so below 700px treatment C
+       is the stacked card the others are. Said plainly rather than hidden: at
+       390px, C and A are the same layout, and C's difference is a desktop
+       difference. */
+    .kbb-pgrid[data-skin="showcase-row"] .cb{
+        display:flex;
+        flex-direction:column;
+        /* `align-items:end` is still live from the grid rule above, and in a
+           flex COLUMN it means the cross axis — measured, it shrank the button
+           to its text, 106px inside a 135px column. */
+        align-items:stretch;
+        flex:1 1 auto;
+        min-height:0}
+    .kbb-pgrid[data-skin="showcase-row"] .cp{
+        margin-top:auto;padding-top:var(--sc-gap)}
+    .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
+        margin-top:var(--sc-gap);padding:0 10px}
+}
