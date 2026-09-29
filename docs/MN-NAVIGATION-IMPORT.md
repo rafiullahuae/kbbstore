@@ -307,6 +307,24 @@ added, so no `clear_caches_*` migration is needed. Nothing else in the schema
 moved: `menus.source_term_id` and `menu_items.source_post_id` have been there
 since the first schema migration, waiting.
 
+## 10b. Two things in other people's harnesses that this lane had to repair
+
+Neither is navigation, and both were found by this work rather than caused by it.
+
+**`screen-drive.mjs` answered `done:true` to two chains.** The driver clicks
+`#kbb-start` twice — once to get an export running under its hold, once after
+releasing it — so both stepping chains were still polling and both were told the
+export had finished. Each then started its own packing loop, and against a stub
+that caps at three units two loops post three or four times depending on which
+promise resolved first. `it packs and draws the archives` therefore failed about
+**one run in five** with *"4 is identical to 3"*, on an assertion whose whole
+point is one bounded unit per request. Measured before: five consecutive drives
+gave 3, 4, 3, 3, 3. After: six for six. A real screen has one chain because a
+real Start button disables itself; the stub is what had two.
+
+**The same driver's zip stub is a hand-written mirror of the group list** and
+went stale the moment a ninth group existed. It now has nine entries.
+
 ## 11. What is not fixed
 
 1. **A `post_type_archive` item is parked.** WordPress's "Shop" item points at
