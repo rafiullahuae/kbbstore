@@ -551,7 +551,10 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
             <div class="srow note">{{ __('store.cart.delivery_at_checkout') }}</div>
             <a class="cobtn" href="{{ Url::to('/checkout/') }}">{{ __('store.cart.checkout_cta') }}</a>
             <a class="conti" href="{{ Url::to('/shop/') }}">{{ __('store.cart.continue_shopping_link') }}</a>
-            <div class="paylogos"><span>Visa</span><span>Mastercard</span><span>Tabby</span><span>Tamara</span><span>Apple Pay</span><span>{{ __('store.footer.pay_cod') }}</span></div>
+            {{-- Asked, not typed — App\Support\PaymentChips gates the two wallets on
+                 App\Services\Payments\Wallets, so this row cannot go on claiming
+                 Apple Pay after the shop has stopped being able to take it. Same
+                 source as the trust row above, the footer and the product page. --}}<div class="paylogos">@foreach (\App\Support\PaymentChips::row('cart') as $kbbChip)<span>{{ $kbbChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
 @endif
         </aside>
 @if ($kbbSq)

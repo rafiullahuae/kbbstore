@@ -586,8 +586,18 @@ class SlimFooter
 
         $out = [];
 
+        /*
+         * The two wallet marks carry a second condition — see the same loop in
+         * CartPage::paymentMarks() for the whole of the argument. In short:
+         * `pay_apple` and `pay_google` were switches over a payment this shop
+         * could not take, and App\Services\Payments\Wallets is now the one
+         * place that answers whether it can. The merchant's own switch is
+         * still first and markAllowed() only ever narrows it.
+         */
+        $wallets = app(\App\Services\Payments\Wallets::class);
+
         foreach (\App\Support\PaymentMarkArt::marks() as $key => $art) {
-            if (! empty($c[$key])) {
+            if ($wallets->markAllowed($key, ! empty($c[$key]))) {
                 $out[] = $art;
             }
         }

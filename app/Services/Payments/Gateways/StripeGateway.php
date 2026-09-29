@@ -192,6 +192,62 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * required and nothing to remember.
              */
             'link_enabled' => ['bool', 'Stripe Link', 'Stripe’s own one-click autofill, offered inside the card number field. Off by default: it asks the shopper to save their card with Stripe rather than with this shop, and it puts a second sign-in in the middle of the checkout.', 'settings'],
+            /*
+             * THE TWO WALLETS, AND THEY LIVE HERE RATHER THAN IN A GATEWAY OF
+             * THEIR OWN BECAUSE THAT IS WHAT THEY ARE.
+             *
+             * Apple Pay and Google Pay are CARD wallets. What Stripe hands back
+             * when a shopper authorises one is a PaymentMethod of type `card`
+             * carrying `card.wallet.type`, charged against the same
+             * PaymentIntent a typed card is charged against. So they are two
+             * switches on the card gateway, not two gateways — see
+             * App\Services\Payments\Wallets, which is the one place that
+             * answers "can this shop take it", and the note on
+             * `payment_method_types` in openIntent() for why the intent needs
+             * no widening at all.
+             *
+             * BOTH OFF BY DEFAULT, and for Apple Pay that is a fact about the
+             * world rather than caution: Apple Pay on the web does not work
+             * until extrabeauty.ae is registered with Apple through the Stripe
+             * dashboard and the domain-association file is being served. Only
+             * the owner can do either. docs/WALLETS-APPLE-GOOGLE-PAY.md is the
+             * numbered list.
+             */
+            'wallet_apple_pay' => ['bool', 'Apple Pay', 'Draws the Apple Pay button on the checkout for Safari and iOS shoppers, and the Apple Pay mark in the footer, the basket and the product page. Off until you have registered this domain with Apple in the Stripe dashboard and the association file is being served — see docs/WALLETS-APPLE-GOOGLE-PAY.md. It rides this same card account: same payment, same capture, same refund.', 'settings'],
+            'wallet_google_pay' => ['bool', 'Google Pay', 'Draws the Google Pay button on the checkout for Chrome and Android shoppers, and the Google Pay mark in the footer, the basket and the product page. Needs no registration anywhere — only HTTPS and these live keys. It rides this same card account: same payment, same capture, same refund.', 'settings'],
+            /*
+             * THE ONE THING ONLY APPLE CAN BE SATISFIED BY, AND IT IS OPTIONAL.
+             *
+             * Apple will not draw a payment sheet on a domain it has not
+             * verified, and it verifies by fetching one file from the site
+             * root. Stripe hands that file over when the domain is added in its
+             * dashboard. This box is where the file's contents are pasted, and
+             * App\Http\Controllers\Store\AppleDomainController serves them at
+             * /.well-known/apple-developer-merchantid-domain-association.
+             *
+             * WHY IT IS A BOX ON A SCREEN RATHER THAN A FILE IN THE REPOSITORY:
+             * `public/` in this repository is not the directory this server
+             * serves — bootstrap/app.php's usePublicPath() points at a sibling
+             * of the application root — so a committed file would land
+             * somewhere no request can reach. See the controller's docblock.
+             *
+             * `optional`, the fifth element, and it earns its place: without it
+             * GatewayPreflight would print "Still to paste in: Apple Pay domain
+             * association file" on every shop that has never wanted Apple Pay,
+             * which is a false alarm on the one screen whose job is to remove
+             * them — the identical argument the `bool` skip there already makes.
+             *
+             * 'settings' and not 'keys' for the same reason: the keys column
+             * counts "N of M filled in", and a field nobody has to fill in
+             * would hold that count below full forever.
+             */
+            'apple_domain_association' => [
+                'text',
+                'Apple Pay domain file',
+                'Only needed for Apple Pay. In Stripe: Settings → Payments → Payment method domains → add extrabeauty.ae, then download the association file it offers and paste the whole contents here. This shop then serves it at /.well-known/apple-developer-merchantid-domain-association, which is where Apple looks. Full steps: docs/WALLETS-APPLE-GOOGLE-PAY.md.',
+                'settings',
+                'optional',
+            ],
         ];
     }
 
@@ -317,6 +373,30 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * 3-D Secure is unaffected. It is not a payment method, it is the
              * issuer's authentication step on a card payment, and Stripe runs
              * it in a modal over our page.
+             *
+             * ─── AND APPLE PAY AND GOOGLE PAY NEED NO WIDENING HERE ─────────
+             *
+             * Read before changing this line for the wallets, because the
+             * obvious edit is wrong. Apple Pay and Google Pay are not payment
+             * method TYPES at Stripe. They are card wallets: the PaymentMethod
+             * a shopper authorises in either sheet has `type: card` and carries
+             * `card.wallet.type = apple_pay` or `google_pay`. `['card']`
+             * already admits both.
+             *
+             * So the wallets ride this intent exactly as written — same amount,
+             * same currency, same metadata, same idempotency key, same capture,
+             * same refund, same reconciliation — and the two reasons above are
+             * respected rather than overwritten. Moving to
+             * `automatic_payment_methods` to "turn the wallets on" would buy
+             * nothing and would hand the box above the card fields to whatever
+             * is switched on in a dashboard nobody here can see, which is the
+             * first of those two reasons.
+             *
+             * `payment_method_types` and the Elements group that confirms
+             * against it have to agree, which is why
+             * partials/checkout/express-wallets passes `paymentMethodTypes:
+             * ['card']` to its own elements() call. If this list ever changes,
+             * that one changes with it.
              */
             'payment_method_types' => ['card'],
             'description' => 'Order ' . $this->reference($order),

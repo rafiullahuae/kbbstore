@@ -46,7 +46,20 @@
 
     <div class="fbot">
         <div>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => $kbbSettings->get('store_name', 'K-Beauty Bliss')]) }}</div>
-        <div class="fpay"><span>Tabby</span><span>Tamara</span><span>Visa</span><span>Mastercard</span><span>Apple Pay</span><span>{{ __('store.footer.pay_cod') }}</span></div>
+        {{-- THE CHIPS ARE A CLAIM, SO THEY ARE ASKED RATHER THAN TYPED.
+
+             This row printed "Apple Pay" on a shop that had no Apple Pay: no
+             gateway, no button that did anything, no way to take the payment.
+             The names now come from App\Support\PaymentChips, which gates the
+             two wallets on App\Services\Payments\Wallets — one answer, one
+             place, read the same way by the basket and the product page.
+
+             In PHP and not as five @ifs here, for the reason
+             CartPage::paymentMarks() already gives: they are company names, a
+             translated one is a different company, and a template full of them
+             is what StorefrontStringsAreKeyedTest exists to catch. COD stays
+             in the template because it is an English abbreviation and is
+             keyed. --}}<div class="fpay">@foreach (\App\Support\PaymentChips::row('footer') as $kbbChip)<span>{{ $kbbChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
         {{-- THE OWNER'S OWN PROFILES, NOT THE ONES THIS FILE WAS WRITTEN WITH.
 
              `social_instagram`, `social_tiktok` and `social_facebook` are real

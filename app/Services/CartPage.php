@@ -1195,8 +1195,27 @@ class CartPage
 
         $out = [];
 
+        /*
+         * AND THE TWO WALLET MARKS CARRY A SECOND CONDITION.
+         *
+         * `pay_apple` and `pay_google` used to be switches over nothing: this
+         * shop drew both marks and could take neither payment — there was no
+         * Apple Pay gateway, no Google Pay gateway and no button that did
+         * anything. App\Services\Payments\Wallets is the one place that
+         * answers whether either can actually be taken, and every site that
+         * draws these marks now asks it: this row, the slim footer, the page
+         * footer, the basket chips and the product page.
+         *
+         * The merchant's own switch still comes first. markAllowed() takes it
+         * as its argument and only ever narrows it, so switching a mark off on
+         * this screen switches it off however willing Stripe is — and the four
+         * scheme marks, which have no wallet behind them, are returned exactly
+         * as before.
+         */
+        $wallets = app(\App\Services\Payments\Wallets::class);
+
         foreach (\App\Support\PaymentMarkArt::marks() as $key => $art) {
-            if ($c[$key]) {
+            if ($wallets->markAllowed($key, (bool) $c[$key])) {
                 $out[] = $art;
             }
         }

@@ -226,11 +226,23 @@
                     <div class="sec pay">
                         <h2><span class="n">4</span> {{ __('store.checkout.step_payment') }}</h2>
 
-                            <div class="express" aria-hidden="true">
-                                <button type="button" class="xbtn xapple" tabindex="-1"> Apple&nbsp;Pay</button>
-                                <button type="button" class="xbtn xgoogle" tabindex="-1"><b><span class="xg-b">G</span><span class="xg-o">o</span><span class="xg-y">o</span><span class="xg-b">g</span><span class="xg-gr">l</span><span class="xg-o">e</span></b>&nbsp;Pay</button>
-                            </div>
-                            <div class="ordiv">{{ __('store.checkout.or_pay_with') }}</div>
+                        {{-- APPLE PAY AND GOOGLE PAY, FOR REAL THIS TIME.
+
+                             What stood here was two buttons with no listener
+                             behind them and no gateway behind that —
+                             `aria-hidden="true"` and `tabindex="-1"` kept a
+                             screen reader and a keyboard away from them, which
+                             is a fair description of what they were. The shop
+                             drew Apple Pay on every checkout and could not take
+                             an Apple Pay payment.
+
+                             The partial draws Stripe's Express Checkout Element
+                             instead, and draws NOTHING — no row, no divider, no
+                             gap — on a browser with no wallet, on a shop that
+                             has not switched the wallets on, or if Stripe fails
+                             to load. The "or pay with" divider moved inside it
+                             for that reason: a divider is a claim that there is
+                             something above it. --}}@include('partials.checkout.express-wallets')
 
                         {{-- The list itself lives in its own partial: adding a
                              product from Browsed can move the order total
