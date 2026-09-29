@@ -19,6 +19,13 @@ declare(strict_types=1);
 |
 |     require __DIR__.'/checkout-return.php';
 |
+| ▲ AND CHANGE THIS FILE'S HEADER WHEN YOU DO. RouteFileHeadersTest fails any
+| route file that routes/web.php requires while still saying it is not mounted —
+| fourteen files were once announcing themselves as dead code while serving live
+| traffic, which is how a reader concludes a working endpoint is broken and goes
+| hunting somewhere else. Delete the "NOT MOUNTED YET" line above and the two
+| paragraphs describing the edit; what is below them is true either way.
+|
 | Both halves matter, but they are not equally urgent: this file declares the
 | same URI and the same route NAME as the closure, and Laravel's RouteCollection
 | keys both its URI map and its name list on the last registration — so a

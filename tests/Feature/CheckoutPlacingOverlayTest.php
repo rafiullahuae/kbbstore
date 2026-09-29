@@ -78,6 +78,33 @@ function plcSource(string $partial): string
     return file_get_contents(resource_path('views/partials/checkout/' . $partial . '.blade.php'));
 }
 
+/**
+ * The same file with every comment taken out of it.
+ *
+ * ── WHY THIS EXISTS, AND IT IS NOT TIDINESS ─────────────────────────────────
+ *
+ * The bans below are on what the CODE does. partials/checkout/placing-overlay's
+ * own header names the forbidden APIs out loud — "Not one getBoundingClientRect,
+ * offsetWidth, offsetHeight…" and "There is also no innerHTML" — because a rule
+ * that is not written down beside the code is a rule the next lane breaks. A
+ * guard reading the raw file finds those words and calls the file an offender
+ * for explaining itself, so the only way to keep it green would be to delete
+ * the explanation. That is the wrong artefact to lose.
+ *
+ * Both comment forms are removed: Blade's {{-- --}} and JavaScript's /* * / and
+ * //. What is left is the code, the CSS and the markup.
+ */
+function plcCode(string $partial): string
+{
+    $src = plcSource($partial);
+
+    $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '', $src);
+    $src = (string) preg_replace('#/\*.*?\*/#s', '', $src);
+    $src = (string) preg_replace('#^\s*//.*$#m', '', $src);
+
+    return $src;
+}
+
 /* ══════════════════ 1. the overlay is on the checkout, once ═════════════════ */
 
 it('draws the overlay on the checkout exactly once, style, markup and script', function () {
@@ -173,16 +200,33 @@ it('measures no layout and names no gateway', function () {
         'clientHeight', 'getComputedStyle', 'scrollHeight', 'scrollWidth', 'innerHeight', 'innerWidth'];
 
     foreach (['placing-overlay', 'placing-card', 'placing-style', 'placed-tick', 'return-notice'] as $partial) {
-        $src = plcSource($partial);
+        // The CODE, with the comments stripped — see plcCode() for why.
+        $src = plcCode($partial);
 
+        /*
+         * str_contains() AND toBeFalse(), NOT ->not->toContain($needle, $msg).
+         *
+         * Pest's toContain() is VARIADIC: every argument after the first is
+         * another needle, so a "message" passed there is silently asserted as a
+         * second string that must also be absent — and `->not->toContain($api,
+         * "placing-overlay reaches for getBoundingClientRect")` can therefore
+         * never fail, because that sentence is not in the file either.
+         * ExpectationsThatCannotFailTest caught all four of them in this file
+         * on the first full run, which is exactly what it is for.
+         */
         foreach ($measuring as $api) {
-            expect($src)->not->toContain($api, $partial . ' reaches for ' . $api);
+            expect(str_contains($src, $api))->toBeFalse($partial . ' reaches for ' . $api);
         }
 
         foreach (["'tabby'", '"tabby"', "'tamara'", '"tamara"', "'cod'", '"cod"'] as $name) {
-            expect($src)->not->toContain($name, $partial . ' names a gateway');
+            expect(str_contains($src, $name))->toBeFalse($partial . ' names the gateway ' . $name);
         }
     }
+
+    /* And the prose is checked too, in the one direction that matters: the
+       overlay must still SAY that it does not measure, because the ban is only
+       as durable as the sentence explaining it. */
+    expect(plcSource('placing-overlay'))->toContain('getBoundingClientRect');
 });
 
 it('builds no markup from a string, so nothing it draws can come from a setting', function () {
@@ -200,9 +244,11 @@ it('builds no markup from a string, so nothing it draws can come from a setting'
      * "placing-overlay assembles markup in JavaScript".
      */
     foreach (['placing-overlay', 'placed-tick'] as $partial) {
-        expect(plcSource($partial))
-            ->not->toContain('innerHTML', $partial . ' assembles markup in JavaScript')
-            ->not->toContain('insertAdjacentHTML', $partial . ' assembles markup in JavaScript');
+        $src = plcCode($partial);
+
+        // str_contains(), for the reason spelled out in the case above.
+        expect(str_contains($src, 'innerHTML'))->toBeFalse($partial . ' assembles markup in JavaScript')
+            ->and(str_contains($src, 'insertAdjacentHTML'))->toBeFalse($partial . ' assembles markup in JavaScript');
     }
 });
 
@@ -715,6 +761,97 @@ it('shows no overlay behind a native payment sheet', function () {
         ->and($intentCheck)->not->toBeFalse()
         ->and($begin)->toBeGreaterThan($intentCheck, 'the overlay goes up before the payment sheet is finished')
         ->and(substr_count($wallets, 'ov.begin()'))->toBe(1, 'the wallet leg raises the overlay more than once');
+});
+
+/* ════════════════ 7b. the double submission, and the tick's one door ═══════ */
+
+it('freezes the page before the request leaves, not after it comes back', function () {
+    /*
+     * THE WHOLE POINT OF FREEZING, and it is an ORDERING property rather than a
+     * feature: the overlay and the disabled buttons have to be in place in the
+     * SAME TICK as the press, before anything crosses the network. Raised after
+     * the answer came back, they would be decoration over a double submission
+     * that had already happened.
+     *
+     * begin() is what does both — disable(true) then freeze(true) — and place()
+     * calls it first and bails if it returns false, which is what makes a second
+     * press a no-op rather than a second order.
+     *
+     * MUTATION, run: move `if (!begin()) { return; }` below the post() call →
+     * this goes red on the ordering assertion. And with it moved, two presses
+     * 50ms apart post twice.
+     */
+    $src = plcSource('placing-overlay');
+
+    $begin = strpos($src, 'function place() {');
+    $guard = strpos($src, 'if (!begin()) { return; }', $begin);
+    $post = strpos($src, 'post().then(', $begin);
+
+    expect($guard)->not->toBeFalse('place() does not take the lock at all')
+        ->and($post)->not->toBeFalse()
+        ->and($guard)->toBeLessThan($post, 'the request leaves before the page is frozen');
+
+    // And begin() locks before it paints, so there is no frame in which the
+    // overlay is up and the buttons are still live.
+    $body = substr($src, strpos($src, 'function begin(opts) {'));
+
+    expect(strpos($body, 'disable(true);'))->toBeLessThan(strpos($body, "box.classList.add('is-up');"))
+        ->and(strpos($body, 'freeze(true);'))->toBeLessThan(strpos($body, "box.classList.add('is-up');"));
+});
+
+it('stops the old full-page post from also running', function () {
+    /*
+     * resources/js/kbb/checkout.js answers [data-place] with a delegated BUBBLE
+     * listener that ends in form.submit(). If both ran, a shopper would get a
+     * fetch() AND a native form post for the same press — two orders, and the
+     * second one arriving to find its own cart already `converted`.
+     *
+     * stopPropagation() in the capture phase is what prevents it, and it is
+     * called before any branch can return early: an invalid form must stop the
+     * old path just as firmly as a valid one.
+     *
+     * MUTATION, run: delete the stopPropagation() → the ordering assertion goes
+     * red, and pressing the button places the order twice.
+     */
+    $src = plcSource('placing-overlay');
+    $handler = substr($src, strpos($src, "if (!event.target.closest || !event.target.closest('[data-place]')) { return; }"));
+
+    $stop = strpos($handler, 'event.stopPropagation();');
+    $firstBranch = strpos($handler, 'if (busy) { return; }');
+
+    expect($stop)->not->toBeFalse('nothing stops checkout.js from also submitting')
+        ->and($stop)->toBeLessThan($firstBranch, 'an early return can leave the old form post running');
+
+    // Capture phase, which is what makes it run before the bubble listener.
+    expect($src)->toContain("  }, true);");
+});
+
+it('draws the tick in exactly one place, and that place is the server\'s answer', function () {
+    /*
+     * "Never show the tick before the server has confirmed." The mark is keyed
+     * entirely off the `is-done` class, so the question is how many places can
+     * add it — and there is one, confirmed(), which is reached from the
+     * `action === "placed"` branch and from the API the card and wallet legs
+     * call after Stripe has said `succeeded`.
+     *
+     * A second `classList.add('is-done')` anywhere — a "show it optimistically
+     * and correct it later" — is the defect this counts.
+     *
+     * MUTATION, run: add `box.classList.add('is-done')` inside begin() → the
+     * count is 2, and every shopper sees a tick the instant they press.
+     */
+    $src = plcSource('placing-overlay');
+
+    expect(substr_count($src, "classList.add('is-done')"))->toBe(1, 'the tick can be drawn from more than one place');
+
+    $confirmed = strpos($src, 'function confirmed(url) {');
+    $add = strpos($src, "classList.add('is-done')");
+
+    expect($add)->toBeGreaterThan($confirmed, 'the tick is drawn outside confirmed()');
+
+    /* And the return leg's tick is the server's word too: `is-done` appears in
+     * placed-tick ONLY in the branch PlacementState called CONFIRMED. */
+    expect(substr_count(plcSource('placed-tick'), 'is-done'))->toBe(1);
 });
 
 /* ═══════════════════════════ 8. the wiring pin ═════════════════════════════ */

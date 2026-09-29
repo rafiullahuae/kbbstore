@@ -90,3 +90,8 @@ public/wp-content/
 # Built update packages, dropped at the repo root so the owner can download one
 # from the app. The durable copy is storage/app/packages/.
 /kbb-update-*.zip
+# Lane PLC's own run logs and suite output. The EVIDENCE lives in
+# docs/PLC-overlay-shots; this is the scratch that produced it, and CLAUDE.md
+# asks a lane to keep its logs inside its own worktree rather than in the shared
+# scratchpad — which is not the same as asking it to commit them.
+/storage/plc-logs

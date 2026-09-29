@@ -21,12 +21,21 @@
     keeps StorefrontEnglishUnchangedTest green for /cart and (with a basket)
     /cart, neither of which is ever walked with a flashed error.
 
-    The markup and the inline style are copied from store/checkout.blade.php's
-    own notice band rather than invented, so the two say the same thing in the
-    same voice, and no new CSS ships with this.
+    The class names are store/checkout.blade.php's own notice band, so the two
+    say the same thing in the same voice. The RULES for them are not: `.co-note`
+    lives in resources/css/kbb/kbb-checkout.css, which only the checkout and the
+    order-received page load — measured, and the first shot of this state was a
+    correct sentence in unstyled body text on the basket page. So the handful of
+    declarations travel with the message, inside the @if, and a basket page with
+    nothing to say still ships not one byte of them.
 --}}
 @if ($errors->any())
-<div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">
+<style>
+.kbb-cartpage .co-notices{max-width:1040px;margin:0 auto;padding:0 0 14px}
+.kbb-cartpage .co-note{border-radius:12px;padding:12px 15px;font-size:13px;font-weight:600;line-height:1.5}
+.kbb-cartpage .co-note.err{background:#FDECEF;border:1px solid #F3C4CE;color:#A82F53}
+</style>
+<div class="co-notices">
     <div class="co-note err" role="alert">{{ $errors->first() }}</div>
 </div>
 @endif

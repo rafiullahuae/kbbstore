@@ -91,7 +91,10 @@
   clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 @media (max-width:420px){
   .kbb-placing{padding:18px}
-  .kbb-placing-card{padding:28px 22px 24px;max-width:100%}
+  /* NOT max-width:100%. At 390 the overlay's own 18px of padding leaves 354,
+     and a card allowed to fill it reads as a page rather than as a card over
+     one. Measured at 390x844: 330 wide with 12px of cream either side. */
+  .kbb-placing-card{padding:28px 22px 24px}
   .kbb-placing-mark{width:84px;height:84px;margin-bottom:16px}
 }
 /* ── THE RETURN LEG'S OWN BEHAVIOUR: IT TAKES ITSELF DOWN, IN CSS ──────────
@@ -112,11 +115,20 @@
 /* ── prefers-reduced-motion ────────────────────────────────────────────────
    NON-NEGOTIABLE, and this is the shape of the compromise. Everything that
    MOVES is gone: the ring stops rotating, the card stops rising, the star stops
-   scaling and swinging in, the expanding ping is removed entirely. What stays
-   is the ring's own fill and the tick's stroke drawing, because those are not
-   decoration — they are the only indication that the shop is working, and an
-   indicator that never changes is indistinguishable from a page that has died.
-   Neither moves an object across the screen, which is what 2.3.3 is about.
+   scaling and swinging in, the expanding ping is removed entirely, and the tick
+   is drawn ALREADY COMPLETE rather than stroked on.
+
+   That last one was a correction, made after looking at the picture. The first
+   version kept the stroke drawing on the reasoning that it was information
+   rather than decoration — and the 1280 shot caught it at 250ms showing a
+   green badge with half a tick in it, which is not a slower confirmation, it is
+   a different and meaningless symbol. A reader who has asked for less motion
+   gets the finished mark at once.
+
+   What DOES stay is the ring's own fill while the order is in flight, because
+   that is the only indication that the shop is working at all, and an indicator
+   that never changes is indistinguishable from a page that has died. It does
+   not move an object across the screen, which is what 2.3.3 is about.
 
    `kbbp-out` IS DELIBERATELY NOT DISABLED HERE, and that is the important
    line in this block. It is not decoration either: it is how the return leg's
@@ -130,6 +142,7 @@
   .kbb-placing-ring{animation:none;transform:rotate(-90deg)}
   .kbb-placing-tick{transform:none}
   .kbb-placing.is-done .kbb-placing-tick{transition:opacity .01ms linear;transform:none}
+  .kbb-placing.is-done .kbb-placing-check{animation:none;stroke-dashoffset:0}
   .kbb-placing-ping,.kbb-placing.is-done .kbb-placing-ping{animation:none;display:none}
   .kbb-placing.is-selfclosing{animation:kbbp-out .01ms var(--kbbp-hold,1.25s) forwards}
 }
