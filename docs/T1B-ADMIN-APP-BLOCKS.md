@@ -159,7 +159,15 @@ const LATE_RENDERED=new Set(['media','tax']);
 /* 'banners' — Appearance → Banners, added when Lane BN merged, on the same
    condition: its partial wraps window.go and calls render() before load(),
    synchronously. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','banners','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
+/* 'product-tabs' — Catalog → Product tabs, added when Lane PT merged, and
+   caught by AdminNavAndIdsTest on the day it was wired rather than by a
+   shopper: a screen absent from TITLES opens the DASHBOARD on ?go= and has no
+   shareable URL at all, which is the same defect ugcvideo, ugcsections,
+   ugcstyle, instagram and sets each hit before being armed. Safe to arm on this
+   set's condition — its partial wraps window.go and calls render() before
+   load(), synchronously, so the replay's marker inside #content is destroyed
+   before the task runs. */
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','cache','cartpage','checkoutpage','routines','security','sitelayout','slimfooter']);
 ```
 
 ---
