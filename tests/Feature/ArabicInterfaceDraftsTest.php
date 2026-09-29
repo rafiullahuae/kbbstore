@@ -345,14 +345,29 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * stays honest: `translated` is untouched and `drafts` carries them.
      *
      * MUTATION: publish the seeded rows (STATUS_PUBLISHED in the migration) and
-     * `translated` jumps to 1,018 while nobody has read a word. Ran it.
+     * `translated` jumps to 1,023 while nobody has read a word. Ran it.
+     *
+     * ── 1,018 -> 1,023, ADVANCED DELIBERATELY AND THE DIFF READ FIRST ──────
+     *
+     * Five keys landed after the original 1,018 were written and had no Arabic
+     * at all: store.set.close (the set-contents popup's close button) and the
+     * four store.checkout.wallet_* sentences that came with Apple Pay and
+     * Google Pay. They are the whole of the difference -- the sibling case
+     * `it translates everything except the eight paragraphs it says it left`
+     * enumerates the untranslated set by NAME rather than by count, and it is
+     * unchanged and still green, which is what says no sixth key crept in
+     * behind these.
+     *
+     * `translated` is still 0 and the eight concern intros are still English.
+     * Nothing a shopper sees moved: every one of the five is a DRAFT like the
+     * 1,018 before them.
      */
     ArabicShop::on();
 
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1018, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1023, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
@@ -386,7 +401,7 @@ it('can be approved in one press, the way the console already does it', function
 
     $response->assertOk();
 
-    expect($response->json('published'))->toBeGreaterThanOrEqual(1018);
+    expect($response->json('published'))->toBeGreaterThanOrEqual(1023);
 
     TranslationStore::flush();
     app()->setLocale('ar');

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 1,018 Arabic interface strings, offered as DRAFTS. (Lane AR)
+ * 1,023 Arabic interface strings, offered as DRAFTS. (Lane AR, +5 by Lane AR2)
  *
  * ── WHAT THIS CHANGES ON THE SHOP: NOTHING ─────────────────────────────────
  *
@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Schema;
  * is built. So /ar renders exactly the English it rendered before this package,
  * /  is untouched in every particular, and the only thing that moves is a
  * number on Translation -> Progress: `Drafts awaiting approval` goes from 0 to
- * 1,018 while `Published in Arabic` stays where it is.
+ * 1,023 while `Published in Arabic` stays where it is.
  *
  * That is the point. The owner reads them, corrects what he wants, and presses
  * the console's existing "Publish all". Nothing a shopper can see changes until
@@ -168,7 +168,7 @@ return new class extends Migration
                 ."\n"
                 ."Read them at Translation -> Strings, where each one sits beside its\n"
                 ."English, and correct anything you would say differently. When you are\n"
-                ."happy, Translation -> Progress has one button -- 'Approve all 1018\n"
+                ."happy, Translation -> Progress has one button -- 'Approve all {$n}\n"
                 ."drafts' -- and pressing it is the moment the Arabic shop starts\n"
                 ."speaking Arabic.\n"
                 ."\n"

@@ -396,6 +396,13 @@ final class ArabicInterfaceDrafts
             'store.set.count_note' => 'لا منتجات|منتج واحد|منتجان|:count منتجات|:count منتجًا|:count منتج',
             'store.set.show_all' => 'عرض المزيد|عرض منتج واحد إضافي|عرض منتجين إضافيين|عرض :count منتجات إضافية|عرض :count منتجًا إضافيًا|عرض :count منتج إضافي',
             'store.set.show_fewer' => 'عرض أقل',
+            // The set-contents popup's own close button (Lane SA2's hanging-photo
+            // box). Every other Close on this shop is إغلاق -- store.ugc.close,
+            // store.quick_view.close_label, store.mobile_menu.close_label and
+            // store.reviews.close_label -- so this one is too. A second spelling
+            // of the same word on the same page is how an interface starts
+            // reading as a translation rather than as Arabic.
+            'store.set.close' => 'إغلاق',
 
             'store.page.page_title' => ':title · K-Beauty Bliss',
             'store.page.last_updated' => 'آخر تحديث :date',
@@ -668,6 +675,26 @@ final class ArabicInterfaceDrafts
             'store.checkout.card_not_ready' => 'ما زال نموذج البطاقة قيد التحميل. يرجى الانتظار لحظة والمحاولة مرة أخرى.',
             'store.checkout.card_generic_error' => 'تعذّر قبول هذه البطاقة. يرجى التحقق من البيانات أو تجربة بطاقة أخرى.',
             'store.checkout.card_working' => 'جارٍ تأكيد الدفع…',
+
+            /*
+             * THE WALLET ROW (Apple Pay / Google Pay), which landed after the
+             * 1,018 were written and so had no Arabic at all.
+             *
+             * These are the only four wallet sentences a shopper can read that
+             * this shop composes. Everything else in that row -- the button
+             * label itself, and every decline reason -- is drawn by Stripe and
+             * is NOT ours to key; see the note on locale in
+             * partials/checkout/express-wallets.blade.php.
+             *
+             * wallet_working matches card_working word for word because the
+             * English does: both are "Confirming your payment…" and a shopper
+             * who taps Apple Pay and a shopper who types a card are being told
+             * the same thing at the same moment.
+             */
+            'store.checkout.wallet_details_first' => 'يرجى إكمال بيانات التواصل والتوصيل بالأعلى أولًا، ثم اضغط مرة أخرى.',
+            'store.checkout.wallet_total_moved' => 'تغيّر إجمالي طلبك أثناء فتح نافذة الدفع، ولم يُخصم أي مبلغ. سلتك محفوظة — يرجى مراجعة الإجمالي والمحاولة مرة أخرى.',
+            'store.checkout.wallet_failed' => 'لم تتم عملية الدفع ولم يُخصم أي مبلغ. سلتك محفوظة — يرجى المحاولة مرة أخرى أو الدفع بالبطاقة بالأسفل.',
+            'store.checkout.wallet_working' => 'جارٍ تأكيد الدفع…',
             'store.checkout.tab_summary' => 'ملخص الطلب',
             'store.checkout.tab_browsed' => 'تصفحتها',
             'store.checkout.browsed_heading' => 'تصفحتها مؤخرًا — أضفها بضغطة',
