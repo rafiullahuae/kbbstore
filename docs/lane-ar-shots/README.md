@@ -48,24 +48,37 @@ rendered.
   attribute is a claim; where the logo is is a fact.
 - **`rtl` is mirrored.** Logo x = 154 at 390 and 1094.3–1097.2 at 1280, right
   of centre, on every one of the seven surfaces.
+- **The wordmark is no longer reordered by the mirror.** `fix-wordmark-BEFORE-
+  rtl-390.jpg` is the header at 390 with the mirror on, reading **BlissK-Beauty**;
+  `fix-wordmark-AFTER-rtl-390.jpg` is the same header reading K-BeautyBliss. The
+  measured form is the painted left-to-right order of the two runs, read from
+  each run's own client rect: `K-Beauty|Bliss` in all three states. See
+  `tests/Feature/WordmarkSurvivesRtlTest.php` for what caused it.
 - **Before approval every Arabic page prints `Add to cart`; after it, every one
   prints `أضف إلى السلة`.** Same tree, same settings, one button.
 
-## The English control, and the one thing that moves in it
+## The English control, and the two things that move in it
 
 `en-*.jpg` and `approved-en-*.jpg` are the same fourteen English pages taken
 either side of approving a thousand Arabic strings. **Eleven of the fourteen
 are byte-identical.**
 
-The three that are not — `en-product-1280`, `en-set-1280`, `en-tabs-1280` —
-differ by **138, 138 and 140 pixels**, all inside one **18×9** box at x=783.
-Cropped and read, that box is the dispatch cutoff: *"Order within **6h 24m** for
-delivery by …"* against *"Order within **6h 13m**"*. The two passes ran eleven
-minutes apart and the clock is live.
+The three that are not are `en-product-1280`, `en-set-1280` and `en-tabs-1280`,
+and amplifying the difference shows exactly two things in them:
 
-That is the same instrument artefact `docs/rtl-shots/manual/README.md` already
-records — "one live countdown timer that differs between two captures of the
-*same* tree". Nothing on the English shop moved.
+1. **The dispatch countdown**, which is live. Cropped and read, it says *"Order
+   within **5h 49m** for delivery by …"* against *"Order within **5h 47m**"* —
+   the two passes ran two minutes apart. On `product` and `set` that accounts
+   for the difference entirely: **73 pixels each**, all of them clock digits,
+   and nothing else in the page differs by a single level.
+2. On `tabs`, additionally, **one anti-aliased rounded border** on the product
+   image card. 246,175 pixels differ by *something*; only **1,324** differ by
+   more than 1% of full scale, the mean difference over the whole box is
+   **0.0011**, and the amplified difference map is a single hairline. This is
+   the same class as the *"two at 3 and 4 pixels with a maximum channel delta
+   of 2 out of 255"* that `docs/rtl-shots/manual/README.md` already records.
+
+Nothing on the English shop moved.
 
 ## Why JPEG
 
