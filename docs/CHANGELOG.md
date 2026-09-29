@@ -3,6 +3,119 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.319
+**A big one.** Five rounds of work land together: the video loop, review photos,
+your own product tabs, a set's real price everywhere, and twenty admin controls
+that had never done anything.
+
+### ▲ THE SET PRICE WAS WRONG IN THE BASKET, AND THE BASKET WAS THE ONE THAT MATTERED
+
+A set priced by a rule showed the right figure on its own page and **charged a
+higher one in the basket**. Measured on two sets: page AED 166.50 and AED 145.00,
+basket took **AED 180.00 and AED 160.00** — **AED 28.50 too much on two lines**.
+Your API feed quoted the wrong figure too.
+
+Fixed. A set now costs one number on the shop grid, its own page, the basket, the
+checkout and the feed. Nothing about a placed order moves.
+
+*Still to do, and said plainly:* sorting by "price, low to high" and the price
+filter still use the typed figure, so a rule-priced set can sit later in the list
+than its real price deserves. It is never sorted **cheaper** than it is.
+
+### THE VIDEO LOOP IS ONE SECOND
+
+You asked for it and it is done — and the measurement says the length was never
+the problem:
+
+| | bytes fetched |
+|---|---|
+| a clip **with** its loop file | **53 KB** |
+| the same clip **without** one | **3,232 KB** |
+
+**60× — for the same one second of picture.** Every clip on your shop is the
+second row. So the thing that will actually fix the loading you feel is the loop
+files getting cut, not the length. The one-second cut does make each file 3.3×
+smaller once they exist (101 KB → 31 KB).
+
+Already-cut 2.5-second loops are **not** re-cut automatically — they work, they
+are just longer than you asked for. `php artisan ugc:cut-covers --recut-teasers`
+does it once, by hand.
+
+**A tile now has three honest states:** a loader while it loads, the play button
+once it is ready, neither while it plays. A clip that fails gets its play button
+back rather than leaving you watching a spinner for ever. The loader is the same
+frosted disc the play button uses, with a turning rim — not a grey shimmer, which
+would be a smear over a photograph.
+
+### REVIEW PHOTOGRAPHS: 3,308 KB → 39 KB
+
+Your product pages were serving **full phone-camera photographs** for the little
+review thumbnails. The batch that makes phone-sized copies had never looked at
+review photos at all — it reported "0 remaining" over a wall of originals.
+
+**The admin got faster too:** Media Library 7,798 KB → **1,219 KB**.
+
+**Gallery thumbnails are square now**, cropped rather than letterboxed, so a tall
+photo and a wide one give the same tile.
+
+▲ **After applying: Content → Media Library → "Make phone-sized copies."** The
+backlog will be bigger than before, because it is finally honest.
+
+### YOUR OWN PRODUCT TABS
+
+**Catalog → Product tabs** — new.
+
+- **Global tabs** appear on every product: *Shipping & returns*, *How we
+  authenticate*, whatever you like.
+- **A tab for one product only.**
+- **Hide a tab on one product** — a gift set has no ingredients list, a device
+  needs no patch-test advice.
+- **Re-word a tab on one product** and keep the shop's version everywhere else.
+- Everything sorts on **one order**, so your tab can sit before Ingredients or
+  after How to use.
+- Arabic title and body for each, like every other field.
+
+Description, Ingredients and How to use stay where they are — each product still
+writes those in the product editor — but they now take the same hide, re-word and
+re-order as any tab you add.
+
+**Nothing appears until you write a tab.**
+
+### THE PRODUCT PAGE
+
+- **The set's contents list is squeezed** — no per-product prices, smaller
+  pictures, tighter rows. Saves **84–90px** with three products, **133–143px**
+  with twelve, and brings Add to cart up the page by as much again.
+- **The short description now sits below the list** on a set.
+- **The gap between the short description and the options is fixed.** That was a
+  real bug: a rule in one stylesheet had been cancelling a rule in another since
+  before this project started, so the gap was **zero pixels** on every product
+  page. Exactly the screenshot you sent.
+
+### TWENTY CONTROLS THAT DID NOTHING
+
+**Appearance → Product styles** offered twenty settings that had never moved one
+pixel of your shop. Fifteen are now wired and **five are removed**, because each
+was a second answer to a question another screen already owns.
+
+Seven menu-icon animations under **Appearance → Mobile menu** went the same way —
+**Appearance → Header → Icon** is the real control and always was.
+
+▲ **A value you had stored against one of those dead controls is cleared**, on
+purpose. It was never a preference — it was a slider you moved, watched do
+nothing, and forgot. Leaving it would have applied it to a live page the moment
+this package landed.
+
+### AND WHEN AN UPLOAD FAILS, IT NOW SAYS WHY
+
+Uploading to the Media Library used to say *"check folder permissions"* whatever
+went wrong — a full disk, a read-only folder, a misconfigured temp directory, all
+six words. Worse, a real failure produced a bare **"Server Error"**. It now names
+the actual fault and quotes the server's own words.
+
+Six admin screens also could not tell you that a **route cache** was the problem
+— the one fault that follows a package needing its cache cleared.
+
 ## 2.60.318
 **Your two decisions, both applied.** Both change how the shop behaves, so read
 the two ▲ lines before you apply this.
