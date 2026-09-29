@@ -431,19 +431,35 @@ smallest darkening of your own hue that clears 4.5 rather than a new colour.
 
 None of that is in this package. Say the word and it is one small lane.
 
-### Performance: the one image saving that does not exist on a phone
+### Performance: the image saving is a desktop saving, mostly
 
-`ImageVariants::WIDTHS` offers **200, 400 and 800** and nothing between. On a
-412px phone at device-pixel-ratio 1.75 the banner card needs **434** device
-pixels, so the browser takes the **800w** copy — which for an 810px original is
-very nearly the original. The desktop saving is real and large (ratio 1, a
-260 CSS pixel box, the 400w copy: the 276 KiB your report asked for). The phone
-saving is small.
+`ImageVariants::WIDTHS` offers **200, 400 and 800** and nothing between, and
+that decides how much this fix is worth on each device. Measured on the fixture,
+one of the banner pictures:
 
-Adding a **600w** width would close it. It is not in this package because it
-would make **every variant set in your shop report "incomplete"** on Content →
-Media Library until you re-ran the batch over the whole catalogue — a visible
-change to something that works, for a phone-only gain. Your call.
+    original (810 wide)   131,217 bytes
+    800w copy             106,948 bytes      −18%
+    400w copy              18,577 bytes      −86%
+    200w copy               3,886 bytes
+
+* **Desktop**, device-pixel-ratio 1, a 260 CSS pixel card: the browser takes the
+  **400w** copy. That is the 276 KiB your report asked for, and more — the whole
+  page went from 898 KiB to **252 KiB** here.
+* **Phone**, device-pixel-ratio 1.75, a 248 CSS pixel card: it needs **434**
+  device pixels, and with 400 and then 800 to choose from it takes the **800w**
+  copy. Real, and 18% rather than 86% — the page went from 898 KiB to 684 KiB.
+
+Adding a **600w** width would give the phone the desktop's saving. It is not in
+this package because it would make **every variant set in your shop report
+"incomplete"** on Content → Media Library until you re-ran the batch over the
+whole catalogue — a visible change to something that works, for a phone-only
+gain. Your call, and it is a good one to make.
+
+The other phone-side lever your report names is **`modern-image-formats`, 311
+KiB**: a WebP of the same photograph is roughly half the JPEG. `ImageVariants`
+deliberately keeps "same format in as out" so a cut-out PNG keeps its
+transparency, and changing that is a pipeline decision plus a re-run of the
+batch — the same shape of question as the 600w, and not a delivery change.
 
 ### Best Practices: 96 → 100 from code, and it stays there only if covers get cut
 
