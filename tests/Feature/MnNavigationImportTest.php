@@ -656,6 +656,74 @@ it('tells the Mega Menu screen which items the header will not draw', function (
         'the Mega Menu screen and the header disagree about which items are drawn');
 });
 
+it('names the CSS class it cannot import, rather than dropping it in silence', function () {
+    /*
+     * `_menu_item_classes` is the one WordPress menu field this shop has
+     * nowhere to put: `menu_items` has no column for a CSS class and no screen
+     * offers one. Both obvious answers are wrong -- a column for a value
+     * nothing renders and nothing can edit is dead schema, and cutting the
+     * field from the export loses the only record that the owner had put
+     * something there.
+     *
+     * ▲ AND THE CENSUS HAS BEEN ASSERTING THE REPAIR FOR SOME TIME WITHOUT IT
+     *   EXISTING. GqMigrationCensusTest classifies the key as "NOT imported …
+     *   It is named in the import report's discard list with its value", and
+     *   nothing anywhere named it. A documentation-as-test that describes a
+     *   behaviour nobody wrote is worse than no entry, because it reads as a
+     *   thing already checked. This is the half that makes the sentence true.
+     *
+     * QUIET WHEN THERE IS NOTHING TO SAY, which is why it is asserted both
+     * ways. WordPress stores one empty string on nearly every menu item ever
+     * made, so a report that counted those would turn the one number the owner
+     * reads into an alarm about data he never had -- and droppedFieldCount()
+     * is exactly the number the reconciliation line quotes.
+     *
+     * MUTATION NOTES -- BOTH RAN, and the first one is recorded because it
+     * FAILED TO REDDEN and that changed the code.
+     *
+     *   Widening the guard to `$classes !== null` and then to `!== ''`: GREEN
+     *   both ways. `Row::text()` trims and answers null for an empty cell, so
+     *   the quiet is already guaranteed one layer down and a second guard here
+     *   asserted nothing. It is gone, and the comment names Row::text() as the
+     *   reason instead of claiming a check of its own.
+     *
+     *   Replacing `$row->text(...)` with `$row->raw(...)`, which does NOT fold
+     *   an empty cell to null: RED with "the report does not carry the value:
+     *   classes: " -- an EMPTY row is now the first sample kept, so the owner's
+     *   one real class list is pushed out of the report by six rows that lost
+     *   nothing. That is the real mutation for this property, and it is a
+     *   better illustration of the defect than the count would have been.
+     *
+     *   Removing the droppedField() call: RED on droppedFieldNames().
+     */
+    $report = mnImport();
+
+    $entity = $report->for('menu-items');
+
+    // Exactly one item in the fixture carries classes: 7503, "Sale".
+    expect($entity->droppedFieldNames())->toBe(['classes']);
+    expect($entity->droppedFieldCount())->toBe(1);
+
+    $samples = [];
+
+    foreach ($entity->discards() as $discard) {
+        foreach ($discard['samples'] ?? [] as $sample) {
+            $samples[] = ($sample['field'] ?? '').': '.($sample['before'] ?? '');
+        }
+    }
+
+    $named = array_values(array_filter($samples, fn (string $s): bool => str_starts_with($s, 'classes:')));
+
+    expect($named)->not->toBe([], 'the dropped class is not in the report: '.implode(' | ', $samples));
+    expect(str_contains($named[0], 'menu-sale'))->toBeTrue('the report does not carry the value: '.$named[0]);
+    expect(str_contains($named[0], 'menu-highlight'))->toBeTrue('the report carries only part of the list: '.$named[0]);
+
+    // AND THE ITEM ITSELF CAME ACROSS WHOLE. A dropped class is not a dropped
+    // row, and saying so is the whole difference between this and a rejection.
+    expect(mnItems()[7503]->label)->toBe('Sale');
+    expect(mnItems()[7503]->url)->toBe('https://kbeautybliss.com/super-sale/');
+});
+
 it('un-parks an item the moment the owner gives it an address, with no second import', function () {
     /*
      * THE SELF-HEALING HALF, and the reason the gate is TWO conditions rather

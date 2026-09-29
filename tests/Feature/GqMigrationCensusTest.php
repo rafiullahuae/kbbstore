@@ -502,11 +502,15 @@ function gqCensus(): array
             'target' => GQ_LANDS.'menu_items.new_tab',
             'status' => GQ_GUARD.': an item WordPress had not published is imported and held out of the '
                 .'header, because `menu_items` has no draft state',
-            'object' => GQ_NAMED.': which taxonomy or post type -- reported, never branched on, so a shop '
-                .'whose brands live in another taxonomy resolves identically',
+            'object' => GQ_NAMED.': which taxonomy or post type -- reported, and branched on in exactly one '
+                .'place (`post_type_archive` + `product` -> UrlScheme::shop(), because an archive has no id '
+                .'to resolve on), so a shop whose brands live in another taxonomy still resolves identically',
             'object_slug' => GQ_NAMED.': what a parked item pointed at, by name, in the import report',
             'label_source' => GQ_NAMED.": whether the owner typed this label or WordPress supplied it",
-            'classes' => GQ_CONSOLIDATED.': `menu_items` has no column for a CSS class',
+            'classes' => GQ_NAMED.': `menu_items` has no column for a CSS class and no screen offers one, so '
+                .'the class is named in the report with its value and counted among the fields skipped -- '
+                .'and only for a row that carried one, because `Row::text()` folds the empty class list '
+                .'WordPress puts on nearly every menu item to null',
             'description' => GQ_CONSOLIDATED.": WordPress's menu-item description; this shop's menu has none",
         ]],
 
@@ -1296,8 +1300,11 @@ function gqMetaKeyCensus(): array
         '_menu_item_url' => 'menu_items.csv `url` -> menu_items.url, scheme-checked by SafeUrl::href()',
         '_menu_item_target' => 'menu_items.csv `target` -> menu_items.new_tab (`_blank`)',
         '_menu_item_classes' => 'menu_items.csv `classes`, as a comma list -- and NOT imported: `menu_items` '
-            .'has no column for a CSS class. It is named in the import report\'s discard list with its '
-            .'value, which is the one WordPress menu field this shop has nowhere to put'
+            .'has no column for a CSS class and no screen offers one. MenuItemImporter names it through '
+            .'EntityReport::droppedField(), so it is in the discard list WITH ITS VALUE and in the '
+            .'"fields skipped" count, and only for a row that carried one -- `Row::text()` folds the empty '
+            .'class list WordPress puts on nearly every item to null. This is the one WordPress menu field '
+            .'this shop has nowhere to put'
     ];
 }
 

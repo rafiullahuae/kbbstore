@@ -301,6 +301,49 @@ final class MenuItemImporter extends EntityImporter
 
         $outcome = $context->apply($item, $attributes);
 
+        /*
+         * ── THE ONE WORDPRESS MENU FIELD THIS SHOP HAS NOWHERE TO PUT ───────
+         *
+         * `_menu_item_classes` is a per-item list of CSS classes. `menu_items`
+         * has no column for one and no screen in this console offers one, so it
+         * cannot be imported, and the two obvious answers are both wrong: adding
+         * a column for a value nothing renders and nothing can edit is dead
+         * schema, and dropping the field from the export loses the only record
+         * that the owner had put something there.
+         *
+         * SAID OUT LOUD INSTEAD, which is the same third answer this class gives
+         * an item it cannot place. GqMigrationCensusTest has been asserting for
+         * some time that this field is "named in the import report's discard
+         * list with its value" -- and nothing anywhere said it. The census was
+         * describing a behaviour that did not exist, which is the failure mode a
+         * documentation-as-test has, and this is the half that makes it true.
+         *
+         * droppedField() and not discarded(), because this is a field the
+         * importer KNOWINGLY does not carry: it belongs in the "fields skipped"
+         * count the reconciliation line quotes, beside `weight` on products.
+         *
+         * ONLY WHEN IT CARRIED SOMETHING, and `Row::text()` is what makes that
+         * true rather than a guard here: it trims and answers NULL for an empty
+         * cell. WordPress stores `a:1:{i:0;s:0:"";}` -- one empty string -- on
+         * nearly every menu item ever made, which the export already flattens to
+         * ''. Six of the seven fixture rows are that shape. Counting them would
+         * turn the one number the owner is meant to read into an alarm about
+         * data he never had.
+         */
+        $classes = $row->text('classes', 'css_classes');
+
+        if ($classes !== null) {
+            $report->droppedField(
+                'a CSS class you had put on a menu item -- `menu_items` has no column for one and no screen '
+                .'here offers one, so the item is imported whole and the class is not. Nothing on the shop '
+                .'was styling by it: these classes belong to the old theme.',
+                $row->line,
+                (string) $id,
+                'classes',
+                $classes,
+            );
+        }
+
         $context->record($this->name(), $outcome);
         $context->remember($this->name(), $id, (int) $item->id);
     }
