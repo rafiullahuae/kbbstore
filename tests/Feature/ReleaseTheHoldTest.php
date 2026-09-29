@@ -657,3 +657,76 @@ it('shows the operator the same consequence sentence the panel shows', function 
 
     expect(app(PaymentVoider::class)->confirmation($order)['consequence'])->toBe($fromEndpoint);
 });
+
+/* ══════════════════════════════════ 6 · the settlement read, and its double ═ */
+
+/*
+ * ── TASK 4, DECIDED: THE ROUTE STAYS, AND THE DRIFT GETS A GUARD ───────────
+ *
+ * GET /admin-api/orders/{id}/settlement has no caller in the console, and the
+ * same `settlement` block already arrives inside the order-detail payload
+ * (AdminOrderController:295). Two implementations of one answer is the pair that
+ * drifts — and on this pair it ALREADY HAS: `void` was added to
+ * PaymentSettlementController::state() when the release endpoint shipped and was
+ * missing from the detail payload alone for a whole round, so the one screen the
+ * release button lives on was the one screen that could not see a release.
+ *
+ * It is NOT wired to anything by this lane and it is NOT deleted, for three
+ * reasons, written down here because "leave it" is only an answer with the
+ * reason attached:
+ *
+ *   1. UNIFYING THE COMPOSITION WOULD UNDO A MEASURED OPTIMISATION.
+ *      AdminOrderController reads `refundedFils()` and `capturedFils()` exactly
+ *      once each and passes the results into both the order-level keys and the
+ *      settlement block — deliberately, and with the numbers in its own comment:
+ *      five reads down to two, 11 statements down to 8 on the one page in this
+ *      admin that has money on it. A shared builder would re-derive them and put
+ *      two aggregates back on every order-detail load. CLAUDE.md rule 4.
+ *
+ *   2. THEY ANSWER DIFFERENT QUESTIONS. `/detail` is the whole order — items,
+ *      notes, refunds, customer history, attribution. `/settlement` is the money
+ *      state of one order and nothing else, which is what a caller wants after
+ *      an action, and it is already the exact shape POST /capture returns under
+ *      its own `settlement` key. Deleting it means deleting a route, a
+ *      controller method, a capability row and its tests to remove an
+ *      authenticated read that costs nothing while it is not called.
+ *
+ *   3. THE DRIFT IS THE ACTUAL HAZARD, AND IT CAN BE PINNED DIRECTLY.
+ *      Which is what this case does. Every key the two payloads share must hold
+ *      the same value for the same order — so the next key added to one and
+ *      forgotten on the other is caught here rather than on the shop.
+ *
+ * MUTATION, run: delete the `'void' => app(PaymentVoider::class)->status($order)`
+ * line from AdminOrderController's settlement block — which is precisely the
+ * defect that already happened — and this is red with `void` named.
+ */
+it('keeps the settlement endpoint and the order-detail payload in step', function () {
+    rhProvider();
+
+    $order = rhOrder(['order_number' => 'RH-STEP-1']);
+    $admin = rhAdmin();
+
+    $fromSettlement = test()->actingAs($admin, 'admin')
+        ->getJson('/admin-api/orders/' . $order->id . '/settlement')
+        ->assertOk()
+        ->json();
+
+    $fromDetail = test()->actingAs($admin, 'admin')
+        ->getJson('/admin-api/orders/' . $order->id . '/detail')
+        ->assertOk()
+        ->json('settlement');
+
+    $shared = array_intersect_key($fromSettlement, $fromDetail);
+
+    // The guard is blind if the two ever stop overlapping.
+    expect(count($shared))->toBeGreaterThan(5);
+    expect(array_key_exists('void', $shared))->toBeTrue(
+        'the order-detail payload no longer carries the release state, which is the drift that already happened once'
+    );
+
+    foreach ($shared as $key => $value) {
+        expect($fromDetail[$key])->toEqual($value, "settlement.{$key} disagrees between the two endpoints");
+    }
+
+    Http::assertNothingSent();
+});
