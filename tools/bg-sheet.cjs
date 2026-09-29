@@ -131,7 +131,7 @@ function esc(s) {
     html += '</table>';
 
     // ── the cycle ────────────────────────────────────────────────────────
-    html += `<h2>How far each one travels — the same home page at 0%, 33% and 66% of its own cycle</h2>
+    html += `<h2>How far each one travels — the same /shop/ page at 0%, 33% and 66% of its own cycle</h2>
       <table><tr><th class="row"></th>`;
     for (const pct of [0, 33, 66]) html += `<th class="col"><b>${pct}% through</b></th>`;
     html += '</tr>';
@@ -146,18 +146,49 @@ function esc(s) {
     }
     html += '</table>';
 
+    // ── the wash itself, with nothing on top of it ───────────────────────
+    //
+    // On a real page most of the pixels are cards, photographs and type, and
+    // the wash is the margin. This strip is the wash ALONE at the same three
+    // moments -- the exact gradient PageWash::css() paints, read out of the
+    // service by tools/bg-css.php rather than restated -- so that "how much
+    // does it actually change" has an answer that does not have to be squinted
+    // at. The floor colour under each row is the flat colour body carries, and
+    // the number beside it is the worst contrast of body text anywhere in that
+    // treatment's whole cycle.
+    const G = JSON.parse(fs.readFileSync(path.join(DIR, 'gradients.json'), 'utf8'));
+
+    html += `<h2>The wash itself, with nothing on top of it</h2><table><tr><th class="row"></th>`;
+    for (const pct of [0, 33, 66]) html += `<th class="col"><b>${pct}% through</b></th>`;
+    html += `<th class="col"><b>Worst contrast</b><span>body text against the darkest moment of the whole cycle. Today's shop is 13.11.</span></th></tr>`;
+
+    for (const [ck, name] of COLUMNS.slice(1)) {
+      const g = G[ck];
+      html += `<tr><th class="row">${esc(name.split(' · ')[0])}<br><span style="font-weight:400;color:#8C828A">${g.cycle}s</span></th>`;
+      for (const pct of [0, 33, 66]) {
+        html += `<td><div style="width:${tw}px;height:92px;border:1px solid #d9ccd3;border-radius:3px;background:${g.frames[pct]}"></div></td>`;
+      }
+      html += `<td class="cap" style="padding-top:8px">`
+        + `<b style="font:700 15px/1.2 system-ui">${g.contrast['--ink'].toFixed(2)}</b> body text<br>`
+        + `${g.contrast['--ink-2'].toFixed(2)} secondary<br>`
+        + `${g.contrast['--muted'].toFixed(2)} muted<br>`
+        + `${g.contrast['--pink'].toFixed(2)} pink accent<br>`
+        + `<span style="color:#5E545A">floor ${esc(g.floor)}</span></td></tr>`;
+    }
+    html += '</table>';
+
     // ── reduced motion, the gate, and Arabic ─────────────────────────────
     html += `<h2>Reduced motion · the gate · Arabic</h2><table><tr>
       <th class="col"><b>A, reduced motion</b><span>One still gradient. <code>getAnimations()</code> is empty.</span></th>
       <th class="col"><b>B, reduced motion</b><span>Same.</span></th>
-      <th class="col"><b>Signed out, <code>?kbbwash=b</code></b><span>The shop exactly as it is today. No style block is emitted at all.</span></th>
-      <th class="col"><b>/ar/ with the wash</b><span>Mirrored layout, same geometry.</span></th>
-      <th class="col"><b>/ar/ today</b><span>For comparison.</span></th></tr><tr>
+      <th class="col"><b>Signed out, <code>?kbbwash=b</code></b><span>/shop/ exactly as it is today — white. No style block is emitted at all.</span></th>
+      <th class="col"><b>/ar/shop/ with the wash</b><span>Mirrored layout, same geometry. The gradients are direction-agnostic and the layers are inset logically.</span></th>
+      <th class="col"><b>/ar/shop/ today</b><span>For comparison.</span></th></tr><tr>
       <td><img src="${uri(path.join(DIR, `reduced-a-${width}.png`))}"></td>
       <td><img src="${uri(path.join(DIR, `reduced-b-${width}.png`))}"></td>
       <td><img src="${uri(path.join(DIR, `signedout-b-home-${width}.png`))}"></td>
-      <td><img src="${uri(path.join(DIR, `ar-home-${width}.png`))}"></td>
-      <td><img src="${uri(path.join(DIR, `now-ar-home-${width}.png`))}"></td>
+      <td><img src="${uri(path.join(DIR, `ar-shop-${width}.png`))}"></td>
+      <td><img src="${uri(path.join(DIR, `now-ar-shop-${width}.png`))}"></td>
       </tr></table>`;
 
     const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });

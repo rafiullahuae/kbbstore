@@ -152,23 +152,31 @@ async function signIn(ctx) {
       }
     }
 
-    // ── the cycle, on the home page: 0%, 33% and 66% of each treatment ────
+    /* ── the cycle: 0%, 33% and 66% of each treatment, ON /shop/ ──────────
+     *
+     * NOT on the home page, which was the first draft and showed nothing. The
+     * home page's sections are white cards at rgba(255,255,255,.94) laid edge
+     * to edge over the page, so the wash shows at the gutters and between
+     * sections and nowhere else -- twelve frames of it came back looking like
+     * one frame. /shop/ is the page where the background IS most of the page,
+     * so it is the page that can show a background moving.
+     */
     for (const t of TREATMENTS) {
       const cycle = { a: 420, b: 120, c: 240, d: 180 }[t];
       for (const pct of [0, 33, 66]) {
-        await page.goto(`${BASE}/?kbbwash=${t}`, { waitUntil: 'networkidle' });
+        await page.goto(`${BASE}/shop/?kbbwash=${t}`, { waitUntil: 'networkidle' });
         await freeze(page, Math.round((cycle * pct) / 100));
-        await shoot(page, `cycle-${t}-${pct}`, w, h, { variant: t, page: 'home', cyclePct: pct });
+        await shoot(page, `cycle-${t}-${pct}`, w, h, { variant: t, page: 'shop', cyclePct: pct });
       }
     }
 
     // ── treatment d scrolled down, where its fade-out is the whole point ──
-    await page.goto(`${BASE}/?kbbwash=d`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE}/shop/?kbbwash=d`, { waitUntil: 'networkidle' });
     await page.evaluate(() => window.scrollTo(0, Math.round(window.innerHeight * 1.4)));
     await shoot(page, 'd-scrolled', w, h, { variant: 'd', page: 'home-scrolled' });
 
     // ── arabic, mirrored ─────────────────────────────────────────────────
-    for (const [pname, url] of [['ar-home', '/ar/'], ['ar-shop', '/ar/shop/']]) {
+    for (const [pname, url] of [['ar-shop', '/ar/shop/'], ['ar-home', '/ar/']]) {
       await page.goto(`${BASE}${url}?kbbwash=a`, { waitUntil: 'networkidle' });
       await freeze(page, 0);
       await shoot(page, pname, w, h, { variant: 'a', page: pname });
@@ -185,7 +193,7 @@ async function signIn(ctx) {
 
   for (const [w, h] of WIDTHS) {
     for (const t of TREATMENTS) {
-      await rmPage.goto(`${BASE}/?kbbwash=${t}`, { waitUntil: 'networkidle' });
+      await rmPage.goto(`${BASE}/shop/?kbbwash=${t}`, { waitUntil: 'networkidle' });
       await rmPage.waitForTimeout(600);
       await shoot(rmPage, `reduced-${t}`, w, h, { variant: t, page: 'home', reducedMotion: true });
     }
@@ -197,7 +205,7 @@ async function signIn(ctx) {
   const outPage = await out.newPage();
 
   for (const [w, h] of WIDTHS) {
-    await outPage.goto(`${BASE}/?kbbwash=b`, { waitUntil: 'networkidle' });
+    await outPage.goto(`${BASE}/shop/?kbbwash=b`, { waitUntil: 'networkidle' });
     await shoot(outPage, 'signedout-b-home', w, h, { variant: 'signed-out ?kbbwash=b', page: 'home' });
   }
   await out.close();
