@@ -315,6 +315,14 @@ node tools/pg2-card-geometry.cjs    # one tile, part by part, hovered
 node tools/pg2-names-shot.cjs       # the short-name / long-name pair
 ```
 
+`tools/pg2-evidence.sh` is the one to run: it boots the preview, shoots the five
+treatments, puts the skin back to the shipped default and walks every page that
+has a grid, takes the same card again with the wishlist off, turns Arabic on
+**last** and shoots the mirrored pair, then assembles the sheets. The order is
+the point — a shop with Arabic enabled renders a language switcher in its header
+that a shop without it does not, and the contact sheets are what the owner is
+choosing from, so they must show the chrome this shop has today.
+
 `tools/pg2-card-geometry.cjs` is the one that answers "is the card built the way
 it looks", which is a different question from "which of these do I want" and the
 one that caught the quick-view pill. It also checks the arithmetic the card
@@ -327,14 +335,35 @@ page, so the panels differ by the setting under test and by nothing else. A
 sheet assembled from five separately-booted previews could differ by the fixture
 as well and nobody could tell which.
 
-`tools/pg2-preview.sh` kills whatever is listening on its port **by PID** before
-it starts. That is not tidiness: `php -S` fails with "Address already in use" and
-the script used to carry on, leaving the old server answering from a database
-file that had just been deleted and recreated underneath it — a deleted inode is
-still a readable, *empty* database, so `/shop` answered 200 with a grid of
-nothing and `/collections/…/` answered 404. It reads exactly like a broken route
-and cost this lane two passes. Never `pkill -f php`: CLAUDE.md records what a
-pattern kill on this machine does to the other two lanes.
+`tools/pg2-preview.sh` carries two checks, and both were paid for in this
+session.
+
+**It refuses a port it does not own.** If something is listening, the script
+reads that PID's own command line: if it does not name *this worktree's* preview
+root, the script stops with exit 3 and **kills nothing**. A lane that wanted this
+port cleared it instead with
+`ps | grep '[p]hp -S 127.0.0.1:8931' | xargs kill -9` — CLAUDE.md's `pkill`
+hazard in a different hat, since a pattern matches every worker of a server that
+is not yours — and the shoot that ran afterwards looked completely finished.
+This lane's own earlier version killed by PID whatever held the port, which is
+the same mistake pointed the other way. Proved both ways: a foreign `php -S` on
+8932 was refused untouched, and Lane BG's real server on 8933 was refused too.
+
+**And a 200 is not evidence that the server is yours.** After booting, the
+script requests `/product/pg2-relief-sun/` — a slug only `tools/pg2-seed.php`
+creates — and requires both a 200 and the fixture's own product name in the
+body, or it stops with exit 4 and kills the server it just started. Proved by
+pointing it at a slug that does not exist.
+
+Two smaller things the same afternoon taught: **one preview directory per
+port**, because running the script on a second port used to `rm -rf` the first
+port's database out from under a live server (a deleted inode is still a
+readable, *empty* database — `/shop` answers 200 with a grid of nothing and
+`/collections/…/` answers 404, which reads exactly like a broken route); and
+`tools/pg2-wishlist.php` takes `KBB_WISHLIST=1` or `0` rather than only turning
+the module off, because a one-way switch left the Arabic pair with no heart in
+it — `heart=-` on all four rows — which is the one thing the mirrored shot
+exists to show.
 
 The shots harness measures `.kbb-card-shot` and not `.kbb-card-thumb`, because
 the thumb is `display:contents` under this family and has no box at all — a

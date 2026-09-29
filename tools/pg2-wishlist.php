@@ -1,6 +1,8 @@
 <?php
 /*
- * Turn the wishlist module OFF in the preview, which is how the shop ships.
+ * Turn the wishlist module ON or OFF in the preview: KBB_WISHLIST=1 or 0.
+ *
+ * It ships OFF, and that is the state the card actually arrives in.
  *
  * ── WHY THERE ARE SHOTS OF BOTH ────────────────────────────────────────────
  *
@@ -17,10 +19,18 @@
  * `:has(.heart)` rule is what gives the heart its room, so the button takes the
  * whole column when there is nothing to make room for.
  */
-app(\App\Services\SettingsService::class)->setModule('wishlist', false);
+/* ── AND IT TAKES A VALUE, WHICH IS NOT OVER-ENGINEERING ────────────────────
+   This was `setModule('wishlist', false)` with no way back, and the shoot that
+   ran after it took the Arabic pair with no heart in it — the one part of the
+   card the mirrored shot exists to show on the other side of the button.
+   Measured: `heart=-` on all four Arabic rows. A switch that only goes one way
+   leaves whatever runs next in a state nobody chose. */
+$on = (string) (getenv('KBB_WISHLIST') ?: '0') === '1';
+
+app(\App\Services\SettingsService::class)->setModule('wishlist', $on);
 
 \App\Models\Setting::flushMap();
 \App\Services\SettingsService::forgetMemo();
 app(\App\Services\SettingsService::class)->flush();
 
-echo "wishlist off\n";
+echo 'wishlist '.($on ? 'on' : 'off')."\n";

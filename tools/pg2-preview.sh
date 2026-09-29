@@ -52,24 +52,33 @@ DB=$DIR/preview.sqlite
 kbboccupied=$(ss -ltnp 2>/dev/null | grep ":$PORT " | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u)
 
 for kbbpid in $kbboccupied; do
-  # A PID `ss` listed that /proc no longer has is a process that exited between
-  # the two reads. Not an occupied port, and not somebody else's server: skip it
-  # rather than refusing to start over a race. Seen once, on the first run of
-  # this check.
-  if [ ! -r "/proc/$kbbpid/cmdline" ]; then
+  # ONE READ OF THE COMMAND LINE, AND AN EMPTY ANSWER MEANS GONE.
+  #
+  # `ss` lists a socket whose owner has already exited, and this raced twice:
+  # first with a `[ -r ... ]` test that passed and a `tr` that then found
+  # nothing, and the script refused to start over a process that no longer
+  # existed. A dead PID is not an occupied port and it is not somebody else's
+  # server, so it is skipped.
+  kbbcmd=$(tr '\0' ' ' < "/proc/$kbbpid/cmdline" 2>/dev/null || true)
+
+  if [ -z "$kbbcmd" ]; then
     continue
   fi
 
   # Matched on THIS WORKTREE's preview root, not on this port's own directory:
   # a server left over from before the per-port rename is still mine and still
   # safe to stop, and anything outside this worktree never is.
-  if tr '\0' ' ' < "/proc/$kbbpid/cmdline" 2>/dev/null | grep -qF "$APP/storage/framework/testing/lane-pg2-preview"; then
-    kill "$kbbpid" 2>/dev/null || true
-  else
-    echo "port $PORT is taken by pid $kbbpid, which is not this worktree's preview." >&2
-    echo "Pass another port: sh tools/pg2-preview.sh <port>. Nothing was killed." >&2
-    exit 3
-  fi
+  case "$kbbcmd" in
+    *"$APP/storage/framework/testing/lane-pg2-preview"*)
+      kill "$kbbpid" 2>/dev/null || true
+      ;;
+    *)
+      echo "port $PORT is taken by pid $kbbpid, which is not this worktree's preview." >&2
+      echo "  $kbbcmd" >&2
+      echo "Pass another port: sh tools/pg2-preview.sh <port>. Nothing was killed." >&2
+      exit 3
+      ;;
+  esac
 done
 
 [ -n "$kbboccupied" ] && sleep 1
