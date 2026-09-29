@@ -370,6 +370,21 @@ it('keeps LATE_NAV in the order the sidebar is built in', function () {
     ];
 
     // Captured from the browser on the code this lane started from.
+    //
+    // ▲ ADVANCED, 29 September: 'gridsections' after 'banners' in Appearance.
+    //   Lane GS added Appearance → Grid sections, whose partial anchors on
+    //   [banners, hpcontent, homepage], so kbbAddNavEntry places it after the
+    //   FIRST of those already present — banners. Nothing else in the list
+    //   moved, which is the check: this pin exists so that adding a row cannot
+    //   quietly reorder the rows around it, and the diff is one insertion.
+    //
+    //   It also caught two real mistakes of mine while wiring that screen. The
+    //   @include went in before banners-screen, so the anchor named a row that
+    //   had not registered yet and read as dead weight; and the LATE_NAV row
+    //   named [banners, homepage] while the partial named
+    //   [banners, hpcontent, homepage], which would have put the row in one
+    //   place on a cold load and another once the partial ran. Both were
+    //   reported by name.
     $settled = [
         'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'routines', 'category-tree', 'brands-manager'],
@@ -377,9 +392,9 @@ it('keeps LATE_NAV in the order the sidebar is built in', function () {
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'analytics', 'search', 'seo',
             'mail', 'store-settings', 'customers', 'quiz-leads'],
         'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram'],
-        'Appearance' => ['homepage', 'hpcontent', 'banners', 'prodstyles', 'mobilehdr', 'dividers',
-            'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel', 'header', 'mobilemenu',
-            'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
+        'Appearance' => ['homepage', 'hpcontent', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
+            'dividers', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel', 'header',
+            'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
     ];
 
     // kbbAddNavEntry's placement, steps 1 and 2. Steps 3 and 4 are its loud
