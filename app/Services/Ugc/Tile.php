@@ -54,6 +54,14 @@ final class Tile
         'products.price', 'products.sale_price', 'products.sale_starts_at', 'products.sale_ends_at',
         'products.stock_status', 'products.image', 'products.rating', 'products.review_count',
         'products.type',
+        /*
+         * ▲ AND THE THREE A SET'S PRICE CANNOT BE READ WITHOUT. (Lane SG)
+         *   Qualified like the rest of this list because it is used across a
+         *   join. See App\Support\SetPricing::COLUMNS: without them a set
+         *   pinned to a clip quotes the number in `products.price` while the
+         *   set's own page quotes the derived one.
+         */
+        'products.set_price_mode', 'products.set_discount', 'products.set_price_basis',
     ];
 
     /**

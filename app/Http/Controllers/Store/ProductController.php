@@ -27,6 +27,18 @@ class ProductController extends Controller
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
         'rating', 'review_count', 'featured', 'type',
+        /*
+         * ▲ AND THE THREE A SET'S PRICE CANNOT BE READ WITHOUT. (Lane SG)
+         *
+         * App\Support\SetPricing::COLUMNS carries the argument in full. In
+         * short: SetPricing::mode() and ::basis() read these off getAttributes()
+         * and fall back to "no rule, no anchor" for an absent column, so a
+         * narrow select does not fail -- it prices the set at the number in
+         * `products.price`, which is a stale snapshot for a rule-priced set and
+         * the pre-reduction figure for an anchored one. This grid showed one
+         * price and the set's own page showed another.
+         */
+        ...\App\Support\SetPricing::COLUMNS,
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -494,7 +506,7 @@ class ProductController extends Controller
     {
         $categoryIds = $product->categories->pluck('id');
 
-        return Product::query()
+        $related = Product::query()
             ->select(self::CARD_COLUMNS)
             ->visible()
             ->where('id', '!=', $product->id)
@@ -511,6 +523,22 @@ class ProductController extends Controller
             ->orderByDesc('id')
             ->limit(4)
             ->get();
+
+        /*
+         * ONE STATEMENT FOR EVERY SET ON THE RELATED RAIL, OR NONE AT ALL. (Lane SG)
+         *
+         * The three columns on the list above let a set be priced by its RULE;
+         * this is what makes reading that rule affordable. SetPricing::prime()
+         * looks first and touches the database only when one of these rows is
+         * actually a set -- so a shop with none pays nothing and
+         * StorefrontQueryBudgetTest's ceilings do not move. With sets present it
+         * is ONE grouped aggregate for all of them, flat in their number, in
+         * place of the one-per-set tally() the card would otherwise run lazily.
+         * prime()'s docblock carries the two alternatives and why not.
+         */
+        \App\Support\SetPricing::prime($related);
+
+        return $related;
     }
 
     /**

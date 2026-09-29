@@ -146,6 +146,14 @@ class UgcRail
             ->limit($cap)
             ->get();
 
+        /*
+         * ONE STATEMENT FOR EVERY SET PINNED TO THESE CLIPS, OR NONE. (Lane SG)
+         * A UGC tile prints Product::effectivePrice() exactly as a card does, so
+         * it needs the same three columns and the same parts total. prime()
+         * looks first and runs nothing when none of them is a set.
+         */
+        \App\Support\SetPricing::prime($videos->pluck('products')->flatten());
+
         $tiles = [];
 
         foreach ($videos as $video) {
