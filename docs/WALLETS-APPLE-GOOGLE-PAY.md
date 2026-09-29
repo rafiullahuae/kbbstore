@@ -23,6 +23,99 @@ Stripe account, and nothing draws a logo for a payment this shop cannot take.
 
 ---
 
+## 0b. Before the six steps — apply the package and check it landed
+
+You have a shell on this server and it is the fastest way to be certain. If you
+would rather not use it, every check below has a browser equivalent and the six
+steps work without it; this section is about *proving* the package is in rather
+than assuming.
+
+**The two directories, because they are not the same one.**
+
+| | Path |
+|---|---|
+| Application root (artisan, `.env`, `storage/logs`) | `/home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app` |
+| Web root (what a browser actually reaches) | `/home/1672906.cloudwaysapps.com/yjmakdgtjs/public_html` |
+
+`KBB_BASE_PATH` is **empty** on this server, so every URL in this document is
+`https://extrabeauty.ae/...` with nothing between the domain and the path. If
+you ever see `/kbb-upgrade/` in a URL here, the setting has been filled in by
+mistake — that prefix belongs to the old Hostinger box and nothing on
+extrabeauty.ae.
+
+**1. Apply the package** the ordinary way: **Store → Core Updates**, choose the
+zip, apply. Wait for it to report success.
+
+**2. Open a shell.** Cloudways → **Servers → Launch SSH Terminal** (or your own
+terminal with the Master Credentials).
+
+```bash
+cd /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app
+```
+
+**3. Confirm the migrations in the package actually ran.**
+
+```bash
+php artisan migrate:status | tail -20
+```
+
+You are looking for `2027_05_06_000000_clear_caches_wallet_domain` with **Ran**
+beside it. That migration is what clears the compiled route cache, and until it
+has run **the new addresses do not exist** however correctly the files were
+copied — a route this shop adds is invisible until that cache is cleared.
+
+If it says **Pending**, run it:
+
+```bash
+php artisan migrate --force
+```
+
+`--force` is required because the server is in production mode. It is not a
+destructive flag; it only stops artisan asking for confirmation on a terminal
+that may not be interactive.
+
+**4. Clear the caches by hand as well.** Harmless to repeat, and it costs
+nothing:
+
+```bash
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+**5. Prove the new addresses answer.** Run from the shell or from your own
+machine — the answers are the same:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://extrabeauty.ae/.well-known/apple-developer-merchantid-domain-association
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://extrabeauty.ae/checkout/wallet/amount
+```
+
+How to read those two numbers:
+
+| Line | Good answer | What a different answer means |
+|---|---|---|
+| 1st (Apple's file) | `404` **before** step 4, `200` after it | A `500` means the package is in but something is wrong — read the log below |
+| 2nd (the wallet total) | `419` or `422` | **`405` or `404` means the routes are not live.** Go back to step 3: the clear-caches migration has not run |
+
+The rule for the second line, stated so there is nothing to judge: **anything
+that is not `404` and not `405` means the address exists and the routes are
+live.** A `419` is the CSRF check refusing a bare `curl` that carries no
+session, and a `422` is the endpoint itself saying the basket is empty — both
+are the endpoint answering, which is all this check is asking.
+
+**6. If anything above looked wrong, read the log rather than guessing.**
+
+```bash
+tail -n 100 storage/logs/laravel.log
+```
+
+It is in the **application** root, not the web root — that is the `cd` at step
+2. If the file is large, `grep -i 'stripe\|wallet' storage/logs/laravel.log | tail -40`
+narrows it to this feature.
+
+---
+
 ## 1. Your six steps
 
 You will need: the Stripe dashboard, and the shop's admin. Steps 4 and 5 need
@@ -254,6 +347,32 @@ Stated plainly, because a claim with no evidence behind it is not a claim:
 The first real test-mode wallet payment is the thing that closes all three, and
 it costs one tap on your own phone once step 6 is done.
 
+### One thing that is not a wallet problem but will look like one
+
+**Until the package that wires `routes/checkout-card.php` reaches this server,
+a payment that FAILS does not give the basket back.**
+
+Two addresses — `/checkout/card/paid` and `/checkout/card/abandon` — are the
+ones the checkout reports to when a payment succeeds or is declined. They ship
+in a file that was never added to the shop's route list, so today they answer
+`405`. This is not new and it is not about wallets: the typed card form has used
+the same two addresses since it landed, and the same thing happens to it.
+
+What you would see, on a card or on a wallet: the shopper's payment is declined,
+they are told so correctly, **and their bag is empty**. The stock stays reserved
+against an order that was never paid for, and the abandoned payment is left open
+at Stripe rather than cancelled.
+
+What you would NOT see: a payment taken and lost. Successful payments are still
+marked paid, because Stripe's webhook does that independently and is the
+authority either way. **No money is at risk from this** — it costs a basket, not
+a payment.
+
+The fix is one line in `routes/web.php` and it is with the integrator. The check
+for it is the second `curl` in section 0b: run it against
+`https://extrabeauty.ae/checkout/card/abandon` and a `405` means the line has
+not shipped yet, while anything else means it has.
+
 ---
 
 ## 5. The pictures, and what each one is evidence of
@@ -272,6 +391,22 @@ in `measurements-390.json` and `measurements-1280.json`.
 | `checkout-stub-wallets-*` | Both On, Stripe reports Apple Pay and Google Pay available | The row present, in place, above the divider and the payment list |
 | `admin-wallet-switches-*` | Store → Payments → Credit or debit card → How this shop uses it | The two switches and the domain-file box, with their help text |
 | `footer-wallets-on-*` / `footer-wallets-off-*` | The footer chip row, both ways | The marks follow capability |
+| `checkout-ar-stub-wallets-*` | The same wallet row, **in Arabic** (`/ar/checkout`) | The row mirrors with the page — Apple Pay to the right, Google Pay to the left — at the same 316 × 48 and 560 × 48 it has in English, with no horizontal scroll |
+| `checkout-ar-wallets-off-*` | Arabic with both wallets Off | The row is absent in Arabic exactly as it is in English |
+
+The Arabic pair carries `lang` and `dir` in `measurements-*.json` beside every
+other number, because an "Arabic" screenshot that is quietly the English page is
+the easiest wrong evidence there is to produce. Both read `lang=ar` and
+`dir=rtl`.
+
+The English wording in the Arabic shots is not a defect: the preview has no
+Arabic translations entered. Every string the wallet row adds is registered in
+the translation console — `checkout.wallet_details_first`,
+`checkout.wallet_total_moved`, `checkout.wallet_failed`,
+`checkout.wallet_working`, and the pre-existing `checkout.or_pay_with` — so they
+are translated at **Store → Translations** like every other string on the shop.
+"Apple Pay" and "Google Pay" are deliberately NOT translatable: they are company
+names, and Stripe localises its own button artwork.
 
 **The stub, said plainly.** The two `stub` shots install a fake `window.Stripe`
 before the page loads, because this container has no wallet, no Apple hardware
@@ -289,12 +424,14 @@ moment a shopper with a wallet opens the page.
 | Express row, when present | 316 × 48 | 560 × 48 |
 | Payment list below it | 316 wide | 560 wide |
 | Payment options offered | 2 | 2 |
+| Express row in Arabic, when present | 316 × 48 | 560 × 48 |
+| `scrollWidth` in Arabic (both states) | **390** | **1280** |
 | Dead `.xbtn` buttons anywhere | **0** | **0** |
 | Footer chips, wallets on | Tabby · Tamara · Visa · Mastercard · Apple Pay · Google Pay · COD | same |
 | Footer chips, wallets off | Tabby · Tamara · Visa · Mastercard · COD | same |
 
-No horizontal scroll at either width in any of the four checkout states —
-`scrollWidth` equals `clientWidth` everywhere.
+No horizontal scroll at either width in any of the six checkout states, English
+or Arabic — `scrollWidth` equals `clientWidth` everywhere.
 
 **Queries on `/checkout`: 11 before this branch, 11 after.** Measured with the
 same warm-then-count method `StorefrontQueryBudgetTest` uses, on a one-line

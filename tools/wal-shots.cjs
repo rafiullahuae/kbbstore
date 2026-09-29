@@ -160,6 +160,12 @@ async function measure(page) {
     return {
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
+      /* Which language and which direction this page actually rendered in.
+         An "Arabic" screenshot that is quietly the English page is the easiest
+         wrong evidence there is to produce, so the picture carries the proof
+         beside it rather than relying on the filename. (Lane WAL2) */
+      lang: document.documentElement.getAttribute('lang'),
+      dir: document.documentElement.getAttribute('dir') || 'ltr',
       expressRowInDom: !!row,
       expressRowVisible: !!row && !row.hidden,
       dividerInDom: !!divider,
@@ -182,7 +188,16 @@ async function measure(page) {
 
   const report = { viewport: Number(w), base: BASE, shots: {} };
 
-  const shoot = async (name, { stub, wallets }) => {
+  /*
+   * `locale` is '' for English and 'ar' for Arabic. The shop serves Arabic at
+   * /ar/... and English unprefixed — SetLocaleFromPath strips the segment
+   * rather than declaring a Route::prefix('ar') — so the ONLY difference
+   * between an English and an Arabic shot is this prefix on the final goto.
+   * Everything before it (the login, the wallet switch, the basket) is
+   * language-independent and is deliberately done unprefixed, exactly as a
+   * shopper who switched language at the checkout would have done it.
+   */
+  const shoot = async (name, { stub, wallets, locale = '' }) => {
     const ctx = await browser.newContext({
       viewport: { width: +w, height: +h },
       deviceScaleFactor: 2,
@@ -199,7 +214,9 @@ async function measure(page) {
 
     await fillBasket(page);
 
-    await page.goto(BASE + '/checkout', { waitUntil: 'networkidle' });
+    const prefix = locale ? '/' + locale : '';
+
+    await page.goto(BASE + prefix + '/checkout', { waitUntil: 'networkidle' });
     // The row is revealed (or removed) by Stripe's `ready`, and by the five
     // second give-up when Stripe.js never arrives. Wait past both.
     await page.waitForTimeout(stub === null ? 6500 : 900);
@@ -221,6 +238,10 @@ async function measure(page) {
   await shoot('checkout-wallets-on-no-stripe', { stub: null, wallets: true });
   await shoot('checkout-stub-no-wallet', { stub: false, wallets: true });
   await shoot('checkout-stub-wallets', { stub: true, wallets: true });
+
+  /* ------------------------------------------------- the Arabic pair (WAL2) */
+  await shoot('checkout-ar-stub-wallets', { stub: true, wallets: true, locale: 'ar' });
+  await shoot('checkout-ar-wallets-off', { stub: null, wallets: false, locale: 'ar' });
 
   /* ------------------------------------------------------- the admin screen */
   {
