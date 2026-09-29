@@ -111,6 +111,22 @@ ordinary row is still exactly 96px — and the one row with an extra block is as
 tall as what is in it: 167px at 390 and 163px at 1280 with his padding, 122px at
 1280 at shipped defaults.
 
+## What the separation looks like
+
+`docs/CR-cart-shots/rowcontrols-390.png` and `rowcontrols-1280.png` are one
+basket with two sets and two ordinary products, with the two control sets
+dragged deliberately far apart — ordinary rows compact with small round
+thumbnails, set rows tall with large square ones:
+
+| | ordinary row | its name | a SET's row | its name |
+|---|---|---|---|---|
+| 1280 | 66px | 12px | 150px | 18px |
+| 390 | 89px | 11.5px | 170px | 15.5px |
+
+Two shapes on one page, and the phone's four numbers are its own — neither
+screen inherits the other breakpoint's. `document.documentElement.scrollWidth`
+is 390 and 1280.
+
 ## No control can put that state back
 
 The height control on **both** screens is a MINIMUM. There is no `height`, no
@@ -159,7 +175,7 @@ and the stepper.
 | `pop-after-first-*` | the same popup on the FIRST row, which was always fine |
 | `setrow-before-clip-*` / `setrow-after-clip-*` | the squeezed set row losing and keeping its name and stepper |
 | `ab-before-*` / `ab-after-*` | the same, on ONE basket with only the built stylesheet swapped |
-| `rowcontrols-*` | both control sets moved at once: ordinary rows 120px with a 16px name, the set row 150px with a 17px name |
+| `rowcontrols-*` | both control sets moved at once, deliberately far apart, so the separation is a picture and not a claim |
 | `en-*` / `ar-*` | the cart in both languages with the popup OPEN on the last row |
 | `cartpage-folded-*` | Appearance → Cart page → Product rows · spacing and size |
 | `setap-folded-*` / `setap-open-*` | the Set screen's cart section, folded to 4 controls and opened to 13 |
