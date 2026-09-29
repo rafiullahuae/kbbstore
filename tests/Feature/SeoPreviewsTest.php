@@ -78,6 +78,56 @@ function spPath(): string
 }
 
 /**
+ * THE ONE DATE ANY ROW BEHIND THIS PREVIEW MAY CARRY.
+ *
+ * ── THE LEAK THE CLOCK GUARD AT THE FOOT OF THIS FILE COULD NOT SEE ─────────
+ *
+ * That guard scans this file's SOURCE for a clock CALL, and it is right about
+ * every clock this file spells. The sitemap's `<lastmod>` is written by neither:
+ * SeoFilesController reads `updated_at` off pages, products, categories, brands
+ * and posts, and Eloquent stamps that column ITSELF on every insert. There is no
+ * `now()` anywhere for a source scan to find, and the preview still came out
+ * carrying today's date on nine sitemap entries.
+ *
+ * So the file went dirty the moment the calendar moved, in a working tree where
+ * nothing had changed. MEASURED, off this repository's own history — the
+ * `lastmod` on each committed version is the day that version was committed:
+ *
+ *     6d38bf6  committed 2026-09-29   lastmod 2026-09-29
+ *     18f6467  committed 2026-09-28   lastmod 2026-09-28
+ *     501b857  committed 2026-09-27   lastmod 2026-09-27
+ *
+ * Three commits whose only content change was the date. THREE SEPARATE LANES
+ * reported this and reverted the file by hand, and the reflex that teaches —
+ * `git checkout --` this path without reading it — is how a real change to the
+ * preview gets thrown away.
+ *
+ * `posts` was pinned once already, by the same means: a WRITE and not an
+ * attribute, because `updated_at` is exactly the column `save()` overwrites. The
+ * other four tables were not. spPinDates() pins all five, and the case at the
+ * foot of this file asserts the PROPERTY rather than the mechanism, so a table
+ * added to the sitemap later is caught on the run that adds it.
+ */
+const SP_PINNED_STAMP = '2026-09-01 01:00:00';
+
+/** The same instant, spelled the way the sitemap prints it. */
+const SP_PINNED_DATE = '2026-09-01';
+
+/**
+ * Every row the sitemap reads a date off, stamped with the one pinned instant.
+ *
+ * A mass query-builder update deliberately: it fires no model events, so pinning
+ * the fixture does not also evict the homepage fragment cache and move the
+ * query-count figures this page reports.
+ */
+function spPinDates(): void
+{
+    foreach ([Page::class, Product::class, Category::class, Brand::class, Post::class] as $model) {
+        $model::query()->update(['updated_at' => SP_PINNED_STAMP]);
+    }
+}
+
+/**
  * The store settings the preview is generated under.
  *
  * DELIBERATELY THIN. These are the values a shop cannot function without —
@@ -248,6 +298,20 @@ HTML,
         ['product_id' => $product->id, 'author_name' => 'Noor'],
         ['rating' => 5, 'content' => 'Three weeks in and the marks on my cheek are genuinely lighter.', 'status' => 'approved']
     );
+
+    /*
+     * LAST, because every row above has just been written and Eloquent has just
+     * stamped `updated_at` on each of them with the clock. Everything the
+     * sitemap reads a date off is pinned here — including the seven content
+     * pages the footer migration seeds, which this function never touches and
+     * which carried today's date into the preview all the same.
+     */
+    spPinDates();
+
+    $post->refresh();
+    $product->refresh();
+    $category->refresh();
+    $page->refresh();
 
     return ['product' => $product, 'category' => $category, 'post' => $post, 'page' => $page];
 }
@@ -2106,4 +2170,44 @@ it('reads no clock, so two runs write the same bytes', function () {
     expect($clocks)->toBe([], 'SeoPreviewsTest writes a tracked file, so it may read no clock and no randomness — found: '
         . implode(', ', $clocks)
         . '. Pin the value instead; docs/SEO-PREVIEWS.html has to be byte-identical on an unchanged tree.');
+});
+
+/*
+ * ── AND THE OTHER HALF OF THE SAME PROMISE ─────────────────────────────────
+ *
+ * The guard above is a source scan, so it sees only clocks this file SPELLS. The
+ * one that actually kept docs/SEO-PREVIEWS.html permanently dirty was spelled
+ * nowhere: Eloquent stamps `updated_at` on insert, SeoFilesController prints it
+ * as `<lastmod>`, and the preview embeds the sitemap. Nothing to scan for.
+ *
+ * So this asserts the PROPERTY instead — every date on the sitemap is the one
+ * pinned date — which is what the file being stable across a day boundary
+ * actually rests on. It is deliberately not "render twice and compare": two
+ * renders one second apart agree on today's date, which is precisely the bug.
+ *
+ * It also fails for the right reason in the case that will really happen. When
+ * a sixth table joins the sitemap, spPinDates() will not know about it, its rows
+ * will carry the clock, and this goes red naming the date it found — on the run
+ * that introduces it, rather than on some other lane's `git status` tomorrow.
+ *
+ * MUTATION NOTE — RAN. Drop `Page::class` from spPinDates() and this is red with
+ *   [SP_PINNED_DATE] -> ['2026-09-01', '<today>']
+ * Restore it and it is green.
+ */
+it('reads one date off every sitemap row, so the calendar cannot restamp the preview', function () {
+    spBaseSettings();
+    spSeed();
+
+    $xml = (string) test()->get('/sitemap.xml')->getContent();
+
+    expect(preg_match_all('#<lastmod>([^<]+)</lastmod>#', $xml, $found))->toBeGreaterThan(0,
+        'the sitemap carries no <lastmod> at all, so this case is asserting nothing');
+
+    $dates = array_values(array_unique($found[1]));
+    sort($dates);
+
+    expect($dates)->toBe([SP_PINNED_DATE],
+        'every <lastmod> on the preview\'s sitemap has to be the pinned date — a row carrying the '
+        .'clock makes docs/SEO-PREVIEWS.html, which is TRACKED, go dirty on its own the next day. '
+        .'Found: '.implode(', ', $dates));
 });

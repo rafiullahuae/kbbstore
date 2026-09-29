@@ -577,6 +577,34 @@ class AppServiceProvider extends ServiceProvider
             'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'rating',
             'review_count', 'featured', 'type', 'total_sales', 'status', 'is_visible',
             'deleted_at',
+            /*
+             * ▲ AND THE THREE COLUMNS A SET'S PRICE IS DERIVED FROM.
+             *
+             * A rule-priced set does not carry its price in `price` in any
+             * meaningful sense — SetPricing recomputes it at render off
+             * `set_price_mode`, `set_discount` and `set_price_basis`. The
+             * homepage rails cache SERIALISED products for ten to fifteen
+             * minutes, so a set whose rule changed but whose watched columns did
+             * not would keep advertising the old figure until the TTL, and a
+             * shopper would click a tile at one price and land on a page at
+             * another. That is the exact defect this hook was written for.
+             *
+             * It is UNREACHABLE TODAY, and the previous lane said so and left
+             * them out on that basis: ProductEditorApiController is the only
+             * writer of a set's rule and it writes `price` in the same save,
+             * from SetPricing::derived(). The reasoning is sound and it is also
+             * the whole problem — it is a fact about ONE call site, holding a
+             * model-level hook closed. This hook is bound to the MODEL rather
+             * than to each controller precisely because the review wall was done
+             * the other way and went stale twice when a new write path did not
+             * know to copy the key. A second writer is being built this round.
+             *
+             * Costs nothing to be right: these columns only move when somebody
+             * changes a set's pricing rule, which is rare and which should evict
+             * the homepage anyway. The failure it prevents is silent and
+             * commercial.
+             */
+            ...\App\Support\SetPricing::COLUMNS,
         ];
 
         /*

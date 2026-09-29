@@ -28,10 +28,44 @@ class NewsletterSettings
         'nl_placeholder' => ['text',   'Field placeholder', 'Your email address', ''],
         'nl_button'      => ['text',   'Button wording', 'Subscribe', ''],
 
-        // ── Messages ──
-        'nl_success'     => ['text',   'After signing up', 'You are on the list — check your inbox for the code.', ''],
-        'nl_duplicate'   => ['text',   'Already signed up', 'You are already on the list.', 'Shown when the address is one already held.'],
-        'nl_error'       => ['text',   'Bad address', 'That does not look like an email address.', ''],
+        /*
+         * ── Messages ──
+         *
+         * ▲ TWO OF THESE FOUR NO LONGER ANSWER A SHOPPER, AND THE SCREEN NOW
+         *   SAYS SO RATHER THAN IMPLYING THE OPPOSITE.
+         *
+         * `nl_duplicate`'s help used to read "Shown when the address is one
+         * already held", which described the behaviour EXACTLY as it was before
+         * double opt-in and exactly as it is not now.
+         * SubscribeController::CONFIRM_MESSAGE is a constant and is the ONE
+         * answer a signup ever gets -- new address, pending address, address
+         * that unsubscribed, address already confirmed -- because a second
+         * sentence for the already-held case is all a membership oracle needs,
+         * and routes/web.php still throttles this endpoint on that basis. The
+         * whole argument is in that controller's header.
+         *
+         * So an owner reading the old help had every reason to edit that box,
+         * save it, and believe he had changed what a shopper reads. He had not,
+         * and nothing on the screen told him.
+         *
+         * KEPT AND RELABELLED RATHER THAN DELETED, deliberately. The strings are
+         * still stored, still editable and still carry whatever an owner wrote;
+         * the newsletter panel's own preview draws `nl_success` as its
+         * confirmation line, which is a second, separate untruth in a file this
+         * lane may not edit, and removing the key underneath that preview would
+         * turn it into a blank line today in exchange for a fix somebody has to
+         * land tomorrow. The labels carry the fact instead, where the box is.
+         *
+         * `nl_error` is UNTOUCHED and still live: a malformed address is refused
+         * before the list is consulted, so it tells a stranger nothing about who
+         * is on it.
+         */
+        'nl_success'     => ['text',   'After signing up (not in use)', 'You are on the list — check your inbox for the code.',
+                             'NOT SHOWN TO A SHOPPER. Every signup gets the same confirmation sentence, which is fixed in the code so that two different answers cannot reveal who is already on the list. Kept because the panel preview above still draws it.'],
+        'nl_duplicate'   => ['text',   'Already signed up (not in use)', 'You are already on the list.',
+                             'NOT SHOWN TO A SHOPPER, for the same reason: answering differently for an address already held would let anyone test whether a given person is on this list.'],
+        'nl_error'       => ['text',   'Bad address', 'That does not look like an email address.',
+                             'Shown when what was typed is not an email address at all. This one is live — it is refused before the list is consulted, so it gives nothing away.'],
         'nl_source_tag'  => ['bool',   'Record where each signup came from', true, 'Stores the page the form was on, so a homepage signup can be told from a footer one later.'],
 
         // ── Appearance ──

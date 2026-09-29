@@ -150,6 +150,60 @@ it('drops the recommended rail when featured is toggled through the admin grid',
     expect(Cache::get('kbb.home.rails'))->toBeNull();
 });
 
+it('drops the rails when a set\'s pricing RULE changes and nothing else does', function () {
+    /*
+     * ▲ THE HOLE THE WATCH LIST HAD, AND THE REASON IT WAS ARGUED SHUT RATHER
+     *   THAN CLOSED.
+     *
+     * A rule-priced set does not keep its price in `price` in any meaningful
+     * sense: SetPricing recomputes it at render from `set_price_mode`,
+     * `set_discount` and `set_price_basis`. Those three were absent from
+     * $homeProductColumns, and the argument for leaving them out was that
+     * ProductEditorApiController -- the only writer of a set's rule -- writes
+     * `price` in the same save, from SetPricing::derived().
+     *
+     * That reasoning is correct and it is a fact about ONE CALL SITE holding a
+     * MODEL-LEVEL hook shut. The hook is bound to the model rather than to each
+     * controller precisely because the review wall was done the other way and
+     * went stale twice when a new write path did not know to copy the key --
+     * and the header of this file says so in as many words.
+     *
+     * So this writes the rule THROUGH THE MODEL and changes nothing else, which
+     * is exactly what a second writer will do: the discount moves from 10% to
+     * 20% and the homepage keeps advertising the old figure for up to fifteen
+     * minutes, while the product page prices it correctly. A shopper clicks one
+     * price and lands on another -- the defect this whole hook exists for.
+     *
+     * MUTATION NOTE -- RAN. Remove `...SetPricing::COLUMNS` from
+     * $homeProductColumns and this is red with kbb.home.rails surviving.
+     */
+    cwProduct([
+        'type' => 'set',
+        'set_price_mode' => \App\Support\SetPricing::MODE_PERCENT,
+        'set_discount' => 1000,
+    ]);
+
+    /*
+     * RE-READ, and the case is worthless without it. `wasRecentlyCreated` stays
+     * true for the life of the object that did the INSERT, and the hook evicts
+     * on `wasRecentlyCreated || wasChanged(...)` — so updating the instance that
+     * created the row passes whether the watched columns are right or wrong.
+     * The first draft of this case did exactly that and stayed GREEN under its
+     * own mutation, which is the only failure mode a test has that matters.
+     * The negative case at the foot of this file re-reads for the same reason.
+     */
+    $set = Product::query()->latest('id')->first();
+
+    cwWarm();
+
+    // The rule, and ONLY the rule. `price` is deliberately untouched, because a
+    // writer that also moves `price` is the one case already covered.
+    $set->update(['set_discount' => 2000]);
+
+    expect(cwSurvivors(['kbb.home.rails', 'kbb.home.routine']))->toBe([],
+        'a set\'s printed price changed and the homepage rails kept the old one');
+});
+
 it('drops the journal row when an article is published', function () {
     cwWarm();
 

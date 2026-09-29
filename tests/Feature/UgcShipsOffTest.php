@@ -221,15 +221,50 @@ it('reads the ugc tables from no storefront code at all', function () {
             // This lane's own files are the module; an admin controller is the
             // console. Neither is the storefront.
             if (str_contains($path, 'Ugc')
-                || str_starts_with($path, 'app/Http/Controllers/Admin/')
-                // The capability map names UgcVideo::toApi() in a comment
-                // explaining why rights evidence is never public. It is the
-                // permissions table, not a page.
-                || $path === 'app/Support/AdminCapabilities.php') {
+                || str_starts_with($path, 'app/Http/Controllers/Admin/')) {
                 continue;
             }
 
-            if (str_contains((string) file_get_contents($file->getPathname()), 'UgcVideo')) {
+            /*
+             * ▲ COMMENTS STRIPPED FIRST, AND THAT IS THE WHOLE OF THIS CHANGE.
+             *
+             * PROSE IS NOT A DEPENDENCY. This scan used to read whole files, so
+             * a file that merely MENTIONED the model in a comment was reported
+             * as reading it. It happened: app/Support/AdminCapabilities.php
+             * names `UgcVideo::toApi()` in a comment explaining why rights
+             * evidence is never public, and the case went red on a lane that
+             * had touched nothing — the answer at the time being to add that one
+             * path to the exemption list above.
+             *
+             * An exemption is the wrong repair, twice over. It is per-file, so
+             * the next docblock anywhere in app/ or resources/views/store/ costs
+             * another lane another round trip. And it is BLIND: once
+             * AdminCapabilities.php is exempt, a real read added to it later is
+             * invisible to the one guard that exists to catch it. The exemption
+             * is gone with this change, and that file is scanned again.
+             *
+             * The technique is the one SqlNeedleDialectGuardTest and
+             * OneProductTileTest already use here. `{{-- --}}` too, because this
+             * sweep covers resources/views/store, where a Blade comment is the
+             * form a note takes.
+             *
+             * `//` is matched only at the start of a line, NOT mid-line, and
+             * that is deliberately conservative: stripping from the first `//`
+             * anywhere would eat the rest of a line holding `https://…`, and a
+             * real reference after one would go unseen. A guard may be noisy; it
+             * may not be quietly blind.
+             *
+             * MUTATION NOTE — RAN. Remove the preg_replace and this is red with
+             * app/Support/AdminCapabilities.php, on a tree where nothing reads
+             * the model.
+             */
+            $code = (string) preg_replace(
+                ['#/\*.*?\*/#s', '/\{\{--.*?--\}\}/s', '/^[ \t]*(\/\/|#)[^\n]*/m'],
+                '',
+                (string) file_get_contents($file->getPathname()),
+            );
+
+            if (str_contains($code, 'UgcVideo')) {
                 $hits[] = $path;
             }
         }

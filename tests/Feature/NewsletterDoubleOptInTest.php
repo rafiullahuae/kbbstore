@@ -325,6 +325,96 @@ it('answers a new address, a pending one and a confirmed one identically', funct
     expect($new->json('ok'))->toBe($confirmed->json('ok'));
 });
 
+it('says on the screen that the two message boxes no longer answer a shopper', function () {
+    /*
+     * ▲ THE HELP TEXT UNDER `nl_duplicate` WAS TRUE OF THE SHOP BEFORE THE TEST
+     *   ABOVE THIS ONE EXISTED, AND FALSE AFTER IT.
+     *
+     * It read "Shown when the address is one already held" — an exact
+     * description of the oracle double opt-in was introduced to close. An owner
+     * reading it had every reason to edit that box, save it, and believe he had
+     * changed what a shopper reads. He had not, and nothing on the screen said
+     * so. `nl_success` is in the same state and its help said nothing at all,
+     * which is the quieter version of the same lie.
+     *
+     * The two halves have to agree, so this asserts BOTH in one case: the value
+     * an owner types reaches no shopper, AND the box he types it into says that.
+     * A future lane that re-wires either message has to move the other, which is
+     * the only arrangement that cannot drift.
+     *
+     * MUTATION NOTE — RAN. Put the old help back ("Shown when the address is one
+     * already held.") and this is red on the second half while the first stays
+     * green — which is the shape of the defect: behaviour right, screen wrong.
+     */
+    $settings = app(\App\Services\SettingsService::class);
+
+    foreach (['nl_success' => 'CANARY-SUCCESS-STRING', 'nl_duplicate' => 'CANARY-DUPLICATE-STRING'] as $key => $value) {
+        $settings->set($key, $value);
+    }
+
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+
+    // HALF ONE: neither canary reaches a shopper, on any of the three outcomes.
+    $new = $this->postJson('/api/subscribe', ['email' => 'canary-new@example.com']);
+
+    $this->postJson('/api/subscribe', ['email' => 'canary-done@example.com']);
+    pressButton('confirm', confirmUrlFromMail());
+    $confirmed = $this->postJson('/api/subscribe', ['email' => 'canary-done@example.com']);
+
+    foreach ([$new, $confirmed] as $response) {
+        $body = (string) $response->getContent();
+
+        expect(str_contains($body, 'CANARY-SUCCESS-STRING'))->toBeFalse('nl_success reached a shopper');
+        expect(str_contains($body, 'CANARY-DUPLICATE-STRING'))->toBeFalse('nl_duplicate reached a shopper');
+    }
+
+    expect($new->json('message'))->toBe(\App\Http\Controllers\Store\SubscribeController::CONFIRM_MESSAGE);
+
+    // HALF TWO: and the screen the owner edits them on says they are not in use.
+    $schema = \App\Services\NewsletterSettings::SCHEMA;
+
+    foreach (['nl_success', 'nl_duplicate'] as $key) {
+        expect(str_contains($schema[$key][1], 'not in use'))->toBeTrue(
+            $key.' does not reach a shopper, and its label on Appearance → Newsletter → Messages does not say so');
+        expect(str_contains($schema[$key][3], 'NOT SHOWN TO A SHOPPER'))->toBeTrue(
+            $key.'\'s help text does not say that what is typed there changes nothing');
+    }
+
+    /*
+     * HALF THREE: and the screen is handed the sentence a shopper really gets,
+     * so its panel preview can stop drawing `nl_success`.
+     *
+     * Published as a CONSTANT and not added to SCHEMA, deliberately: an owner
+     * who could edit this string would reopen the membership oracle without
+     * knowing he had, which is the argument in SubscribeController's header.
+     * Pinned here rather than in the payload fixture because it is a promise
+     * about the CONTENT -- the screen must be told the same sentence the
+     * endpoint answers, and a copy of the words would let the two drift.
+     */
+    $owner = \App\Models\AdminUser::create([
+        'name' => 'NL Owner',
+        'email' => 'nl-preview-owner@example.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('secret-secret'),
+        'role' => 'owner',
+    ]);
+
+    test()->actingAs($owner, 'admin');
+
+    expect(test()->getJson('/admin-api/newsletter')->json('confirm_message'))
+        ->toBe(\App\Http\Controllers\Store\SubscribeController::CONFIRM_MESSAGE)
+        ->toBe($new->json('message'));
+
+    // And `nl_error` is NOT swept up in that: it is still live, because a
+    // malformed address is refused before the list is consulted.
+    expect(str_contains($schema['nl_error'][1], 'not in use'))->toBeFalse();
+
+    $bad = $this->postJson('/api/subscribe', ['email' => 'not-an-address']);
+
+    expect(str_contains((string) $bad->getContent(), (string) $schema['nl_error'][2]))->toBeTrue(
+        'nl_error is labelled live but does not answer a malformed address');
+});
+
 it('sends nothing at all to an address already confirmed', function () {
     $this->postJson('/api/subscribe', ['email' => 'done@example.com'])->assertOk();
     pressButton('confirm', confirmUrlFromMail())->assertOk();

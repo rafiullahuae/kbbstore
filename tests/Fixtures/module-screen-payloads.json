@@ -2565,8 +2565,8 @@
           {
             "key": "nl_success",
             "type": "text",
-            "label": "After signing up",
-            "help": "",
+            "label": "After signing up (not in use)",
+            "help": "NOT SHOWN TO A SHOPPER. Every signup gets the same confirmation sentence, which is fixed in the code so that two different answers cannot reveal who is already on the list. Kept because the panel preview above still draws it.",
             "default": "You are on the list — check your inbox for the code.",
             "value": "You are on the list — check your inbox for the code.",
             "options": null
@@ -2574,8 +2574,8 @@
           {
             "key": "nl_duplicate",
             "type": "text",
-            "label": "Already signed up",
-            "help": "Shown when the address is one already held.",
+            "label": "Already signed up (not in use)",
+            "help": "NOT SHOWN TO A SHOPPER, for the same reason: answering differently for an address already held would let anyone test whether a given person is on this list.",
             "default": "You are already on the list.",
             "value": "You are already on the list.",
             "options": null
@@ -2584,7 +2584,7 @@
             "key": "nl_error",
             "type": "text",
             "label": "Bad address",
-            "help": "",
+            "help": "Shown when what was typed is not an email address at all. This one is live \u2014 it is refused before the list is consulted, so it gives nothing away.",
             "default": "That does not look like an email address.",
             "value": "That does not look like an email address.",
             "options": null

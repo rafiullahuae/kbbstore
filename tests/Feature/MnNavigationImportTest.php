@@ -461,6 +461,269 @@ it('parks an item whose target this shop refuses, instead of dropping it or link
     expect(str_contains($named[0], 'about-us'))->toBeTrue('the report does not carry the old slug: '.$named[0]);
 });
 
+it('lands WordPress\'s Shop archive item on this shop\'s catalogue, instead of parking it', function () {
+    /*
+     * THE ITEM THE PREVIOUS ROUND COULD NOT PLACE, AND IT IS THE SHOP'S OWN
+     * FRONT DOOR.
+     *
+     * WooCommerce's "Shop" menu entry is a `post_type_archive` item pointing at
+     * the `product` post type. It is the ONE pointer in this export with no id
+     * to resolve on -- `_menu_item_object_id` is 0, because there is no post
+     * and no term behind an archive, only a post TYPE -- so it fell past the
+     * taxonomy and post_type branches into custom(), found no
+     * `_menu_item_url` either, and was PARKED. The owner imported his
+     * navigation and the header came up without Shop on it, with the row
+     * sitting on the Mega Menu screen waiting for him to type an address the
+     * shop already knows.
+     *
+     * THE ADDRESS COMES FROM UrlScheme AND NOT A LITERAL, asserted here against
+     * the constant, because a literal `/shop/` in an importer is a sixth writer
+     * of an address the scheme class exists to own.
+     *
+     * The fixture has no archive row -- the plugin harness's menu is seven
+     * items and none of them is Shop -- so the Shop row is written over the
+     * "About us" line IN A COPY, the same way the brand-taxonomy case above
+     * rewrites `pa_brands`. Everything else about the export is untouched.
+     *
+     * MUTATION NOTE -- RAN. Delete the `post_type_archive` branch from
+     * MenuItemImporter::resolve() and this is red on the first expectation:
+     * target_type is `unresolved` and url is NULL, which is the defect exactly.
+     */
+    $dir = sys_get_temp_dir().'/kbb-mn-archive-'.bin2hex(random_bytes(4));
+    mkdir($dir, 0755, true);
+
+    foreach (glob(mnExportDir().'/*') as $file) {
+        copy($file, $dir.'/'.basename($file));
+    }
+
+    $csv = (string) file_get_contents($dir.'/menu_items.csv');
+
+    // The row WordPress writes for a Shop entry: type post_type_archive, object
+    // the post type, and object_id 0 because an archive has no row behind it.
+    $shop = '"7502","950","0","2","Shop","item","post_type_archive","product","0","","","","","","publish"';
+    $rewritten = str_replace(
+        '"7502","950","0","2","About us","item","post_type","page","7002","about-us","","","","","publish"',
+        $shop,
+        $csv,
+    );
+
+    expect($rewritten)->not->toBe($csv, 'the fixture no longer spells the About us row the way this test rewrites it');
+    file_put_contents($dir.'/menu_items.csv', $rewritten);
+
+    mnImport(['directory' => $dir]);
+
+    $item = mnItems()[7502] ?? null;
+
+    expect($item)->not->toBeNull('the Shop archive row was not imported at all');
+    expect($item->target_type)->toBe('shop');
+    expect($item->url)->toBe(UrlScheme::shop());
+    expect($item->url)->toBe('/shop/', 'UrlScheme::shop() no longer spells the address this shop serves');
+    expect($item->target_id)->toBeNull('an archive has no row to point at');
+
+    // AND IT REACHES THE HEADER, which is the whole difference from parked.
+    mnMount(Menu::query()->where('source_term_id', 950)->firstOrFail());
+
+    expect(in_array('Shop', mnLabels(app(NavigationService::class)->menu('primary')), true))
+        ->toBeTrue('the Shop item resolved but still does not render');
+
+    array_map('unlink', glob($dir.'/*') ?: []);
+    rmdir($dir);
+});
+
+it('keeps parking an archive of a post type this shop has no screen for', function () {
+    /*
+     * THE NARROWNESS IS THE POINT. `product` is WooCommerce's own post type --
+     * registered by the plugin, the same four letters on every installation --
+     * which is what makes matching on the NAME safe where the class header
+     * forbids it for a taxonomy. An archive of anything else is a listing this
+     * shop has no screen for, and guessing an address for it would put a 404 in
+     * the header, which is the answer the parking mechanism exists to avoid.
+     *
+     * MUTATION NOTE -- RAN. Widening the branch to `$type === 'post_type_archive'`
+     * with no check on $object makes this red: the portfolio archive resolves to
+     * /shop/ and renders in the header.
+     */
+    $dir = sys_get_temp_dir().'/kbb-mn-archive2-'.bin2hex(random_bytes(4));
+    mkdir($dir, 0755, true);
+
+    foreach (glob(mnExportDir().'/*') as $file) {
+        copy($file, $dir.'/'.basename($file));
+    }
+
+    file_put_contents($dir.'/menu_items.csv', str_replace(
+        '"7502","950","0","2","About us","item","post_type","page","7002","about-us","","","","","publish"',
+        '"7502","950","0","2","Portfolio","item","post_type_archive","portfolio","0","","","","","","publish"',
+        (string) file_get_contents($dir.'/menu_items.csv'),
+    ));
+
+    mnImport(['directory' => $dir]);
+
+    expect(mnItems()[7502]->target_type)->toBe(MenuItemImporter::UNRESOLVED);
+    expect(mnItems()[7502]->url)->toBeNull();
+
+    array_map('unlink', glob($dir.'/*') ?: []);
+    rmdir($dir);
+});
+
+it('tells the Mega Menu screen which items the header will not draw', function () {
+    /*
+     * ▲ THE SCREEN CALLS ITS TOP STRIP "LIVE PREVIEW", AND IT WAS NOT LIVE.
+     *
+     * mgmPreview() in the console draws from the raw tree this endpoint
+     * returns. NavigationService::tree() rejects a PARKED item -- `target_type`
+     * = 'unresolved' with no url, the state the import writes for a menu entry
+     * pointing at something this shop did not import -- so the preview drew an
+     * item the shop does not draw. A preview that disagrees with the page is
+     * worse than no preview: it is the one place the owner goes to check.
+     *
+     * The payload could not tell the screen, either. `target_type` was not even
+     * SELECTed, so the console had nothing to filter on however it was written.
+     *
+     * WHAT THIS PINS is the thing the preview has to be built out of: the set of
+     * items this endpoint reports as NOT parked is exactly the set the header
+     * renders. That holds in this worktree today and goes on holding after the
+     * console reads it, which is the property worth having rather than an
+     * assertion about a line of JavaScript.
+     *
+     * The parked row itself stays IN the tree, asserted below. It has to: the
+     * repair is typing an address on this screen, and the owner cannot repair
+     * what the screen does not show him.
+     *
+     * MUTATION NOTE -- RAN. Return `'parked' => false` unconditionally from
+     * MegaMenuApiController::tree() and this is red -- the screen is told the
+     * header will draw "About us", and the header does not.
+     */
+    mnImport();
+
+    $menu = Menu::query()->where('source_term_id', 950)->firstOrFail();
+    mnMount($menu);
+
+    $owner = \App\Models\AdminUser::create([
+        'name' => 'Menu Owner',
+        'email' => 'mn-preview-owner@example.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('secret-secret'),
+        'role' => 'owner',
+    ]);
+
+    test()->actingAs($owner, 'admin');
+
+    $payload = test()->getJson('/admin-api/mega-menu?menu_id='.$menu->id);
+
+    $payload->assertStatus(200);
+
+    /** @var callable(array): array<int, array{0: string, 1: bool}> $walk */
+    $walk = function (array $nodes) use (&$walk): array {
+        $out = [];
+
+        foreach ($nodes as $node) {
+            $out[] = [$node['label'], $node['parked']];
+
+            foreach ($walk($node['children'] ?? []) as $child) {
+                $out[] = $child;
+            }
+        }
+
+        return $out;
+    };
+
+    $reported = $walk($payload->json('tree') ?? []);
+
+    expect($reported)->not->toBe([], 'the endpoint returned no tree at all');
+
+    // HALF ONE: the parked row is on the screen, flagged.
+    $about = array_values(array_filter($reported, fn (array $r): bool => $r[0] === 'About us'));
+
+    expect($about)->not->toBe([], 'the parked item is missing from the screen, which is where it is repaired');
+    expect($about[0][1])->toBeTrue('the screen is not told that the header will skip this item');
+
+    // And the marker itself is not published. `target_type` is an import
+    // mechanism, no screen has ever written it, and a console that could see it
+    // is a console somebody would eventually make editable.
+    expect(array_key_exists('target_type', ($payload->json('tree') ?? [])[0] ?? []))->toBeFalse();
+
+    // HALF TWO: and what it reports as drawable is EXACTLY what the header draws.
+    $drawable = array_values(array_map(
+        fn (array $r): string => $r[0],
+        array_filter($reported, fn (array $r): bool => $r[1] === false),
+    ));
+
+    $rendered = mnLabels(app(NavigationService::class)->menu('primary'));
+
+    sort($drawable);
+    sort($rendered);
+
+    expect($drawable)->toBe($rendered,
+        'the Mega Menu screen and the header disagree about which items are drawn');
+});
+
+it('names the CSS class it cannot import, rather than dropping it in silence', function () {
+    /*
+     * `_menu_item_classes` is the one WordPress menu field this shop has
+     * nowhere to put: `menu_items` has no column for a CSS class and no screen
+     * offers one. Both obvious answers are wrong -- a column for a value
+     * nothing renders and nothing can edit is dead schema, and cutting the
+     * field from the export loses the only record that the owner had put
+     * something there.
+     *
+     * ▲ AND THE CENSUS HAS BEEN ASSERTING THE REPAIR FOR SOME TIME WITHOUT IT
+     *   EXISTING. GqMigrationCensusTest classifies the key as "NOT imported …
+     *   It is named in the import report's discard list with its value", and
+     *   nothing anywhere named it. A documentation-as-test that describes a
+     *   behaviour nobody wrote is worse than no entry, because it reads as a
+     *   thing already checked. This is the half that makes the sentence true.
+     *
+     * QUIET WHEN THERE IS NOTHING TO SAY, which is why it is asserted both
+     * ways. WordPress stores one empty string on nearly every menu item ever
+     * made, so a report that counted those would turn the one number the owner
+     * reads into an alarm about data he never had -- and droppedFieldCount()
+     * is exactly the number the reconciliation line quotes.
+     *
+     * MUTATION NOTES -- BOTH RAN, and the first one is recorded because it
+     * FAILED TO REDDEN and that changed the code.
+     *
+     *   Widening the guard to `$classes !== null` and then to `!== ''`: GREEN
+     *   both ways. `Row::text()` trims and answers null for an empty cell, so
+     *   the quiet is already guaranteed one layer down and a second guard here
+     *   asserted nothing. It is gone, and the comment names Row::text() as the
+     *   reason instead of claiming a check of its own.
+     *
+     *   Replacing `$row->text(...)` with `$row->raw(...)`, which does NOT fold
+     *   an empty cell to null: RED with "the report does not carry the value:
+     *   classes: " -- an EMPTY row is now the first sample kept, so the owner's
+     *   one real class list is pushed out of the report by six rows that lost
+     *   nothing. That is the real mutation for this property, and it is a
+     *   better illustration of the defect than the count would have been.
+     *
+     *   Removing the droppedField() call: RED on droppedFieldNames().
+     */
+    $report = mnImport();
+
+    $entity = $report->for('menu-items');
+
+    // Exactly one item in the fixture carries classes: 7503, "Sale".
+    expect($entity->droppedFieldNames())->toBe(['classes']);
+    expect($entity->droppedFieldCount())->toBe(1);
+
+    $samples = [];
+
+    foreach ($entity->discards() as $discard) {
+        foreach ($discard['samples'] ?? [] as $sample) {
+            $samples[] = ($sample['field'] ?? '').': '.($sample['before'] ?? '');
+        }
+    }
+
+    $named = array_values(array_filter($samples, fn (string $s): bool => str_starts_with($s, 'classes:')));
+
+    expect($named)->not->toBe([], 'the dropped class is not in the report: '.implode(' | ', $samples));
+    expect(str_contains($named[0], 'menu-sale'))->toBeTrue('the report does not carry the value: '.$named[0]);
+    expect(str_contains($named[0], 'menu-highlight'))->toBeTrue('the report carries only part of the list: '.$named[0]);
+
+    // AND THE ITEM ITSELF CAME ACROSS WHOLE. A dropped class is not a dropped
+    // row, and saying so is the whole difference between this and a rejection.
+    expect(mnItems()[7503]->label)->toBe('Sale');
+    expect(mnItems()[7503]->url)->toBe('https://kbeautybliss.com/super-sale/');
+});
+
 it('un-parks an item the moment the owner gives it an address, with no second import', function () {
     /*
      * THE SELF-HEALING HALF, and the reason the gate is TWO conditions rather

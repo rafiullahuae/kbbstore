@@ -78,6 +78,20 @@ final class UrlScheme
      */
     public const PRODUCT_BASE = '/product/';
 
+    /**
+     * The whole-catalogue archive.
+     *
+     * Named here rather than left as the literal `/shop/` because a second
+     * writer of an address is a writer that can disagree with the route, and
+     * this one has a reader outside this shop's own code: WordPress menus carry
+     * a `post_type_archive` item pointing at the `product` archive -- the
+     * "Shop" entry on nearly every WooCommerce header -- and
+     * MenuItemImporter has to resolve it to whatever this application serves
+     * the catalogue at. Spelling it beside the other five is what keeps that
+     * resolution from being a literal in an importer.
+     */
+    public const SHOP_BASE = '/shop/';
+
     /** `/collections/skincare/toners/` from `skincare/toners`. */
     public static function collection(string $path): string
     {
@@ -118,6 +132,12 @@ final class UrlScheme
     public static function product(string $slug): string
     {
         return self::PRODUCT_BASE.trim($slug, '/').'/';
+    }
+
+    /** The catalogue archive. */
+    public static function shop(): string
+    {
+        return self::SHOP_BASE;
     }
 
     /**

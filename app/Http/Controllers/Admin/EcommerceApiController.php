@@ -39,12 +39,32 @@ class EcommerceApiController extends Controller
                 'label' => 'General',
                 'sections' => [
                     'basics' => ['Store basics', 'Country and catalogue defaults.', 'globe', ['store_country', 'low_stock_at']],
-                    'layout' => ['Catalogue layout', 'How many products, and how wide.', 'grid', ['products_per_page', 'grid_columns']],
+                    /*
+                     * ▲ `grid_columns` IS GONE FROM THIS PANEL, AND IT WAS THE
+                     *   SECOND OF THREE SCREENS OFFERING IT.
+                     *
+                     * It reached no storefront pixel. --kbb-cols has exactly one
+                     * reader left -- the skin preview inside the admin console --
+                     * and ProductStyles::cssVariables() stopped emitting it, so
+                     * that fallback of 4 is what the preview draws whatever is
+                     * stored. The real count comes from --kbb-track in kbb.css,
+                     * derived from the row the grid actually has, and from
+                     * Appearance -> Site layout, which reaches all five product
+                     * grids where this reached none.
+                     *
+                     * Lane AD removed it from Appearance -> Product styles and
+                     * recorded, in the migration that did it, that the key was
+                     * left alive because "the Ecommerce panel's Catalogue layout
+                     * and LayoutApiController" still wrote it and those were
+                     * screens it did not own. This is one of the two.
+                     *
+                     * The section keeps `products_per_page`, which is live.
+                     */
+                    'layout' => ['Catalogue layout', 'How many products on a page.', 'grid', ['products_per_page']],
                 ],
                 'fields' => [
                     'store_country'    => ['select', 'Store country', 'AE', 'Used for shipping zones and tax.', ['AE' => 'United Arab Emirates', 'SA' => 'Saudi Arabia', 'KW' => 'Kuwait', 'QA' => 'Qatar', 'BH' => 'Bahrain', 'OM' => 'Oman']],
                     'products_per_page'=> ['int', 'Products per page', 24, 'Shop and category archives.'],
-                    'grid_columns'     => ['int', 'Grid columns', 4, 'Default column count on product grids.'],
                     'low_stock_at'     => ['int', 'Low stock threshold', 5, 'Shows a scarcity note at or below this.'],
                 ],
             ],
