@@ -37,6 +37,8 @@ use App\Models\Product;
 use App\Models\ProductSetItem;
 use App\Services\CartService;
 use App\Services\Orders\OrderTransitionStock;
+use Illuminate\Support\Facades\DB;
+use Tests\Support\SqlShape;
 use Illuminate\Support\Str;
 
 /* ═══════════════════════════════════ fixtures ══════════════════════════════ */
@@ -196,7 +198,9 @@ it('puts the basket back and lets the order go, in one press', function () {
      * and throw after the moveTo → the order is `failed` and the basket is
      * still `converted`, which is a shopper with no basket and no order.
      */
-    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 2]]);
+    $product = rbProduct('Rice Toner', 5);
+
+    [$cart, $order] = rbAwayAtTheProvider([[$product, 2]]);
 
     rbComeHome($cart, $order);
 
@@ -212,7 +216,18 @@ it('puts the basket back and lets the order go, in one press', function () {
     // And the basket really is theirs again: the cart page draws the line.
     $html = rbAs($cart)->get('/cart/')->assertOk()->getContent();
 
-    expect($html)->toContain('Rice Toner')
+    /*
+     * ▲ THE CART LINE'S OWN MARKUP, NOT THE BARE NAME. Measured on this page:
+     * 'Rice Toner' occurs TWICE, once in the cart line
+     *
+     *     <div class="cn"><a href="/product/…">Rice Toner</a></div>
+     *
+     * and once in the CART DRAWER's `.kc-nm`, which every page of this shop
+     * renders. So `toContain('Rice Toner')` was satisfied by the drawer alone
+     * and would have stayed green with the basket table gone — the assertion
+     * could not see the thing it was written about.
+     */
+    expect($html)->toContain('<div class="cn"><a href="/product/'.$product->slug.'/">Rice Toner</a></div>')
         ->and($html)->toContain('Your basket is back')
         ->and($html)->not->toContain('Put my basket back');
 });
@@ -429,12 +444,172 @@ it('brings a set-and-loose basket back THROUGH the reconciler, not around it', f
 
     expect($lines)->toHaveCount(1, 'the loose line survived the round trip')
         ->and((int) $lines->first()->product_id)->toBe($set->id, 'the set was taken and the loose line kept')
-        // And the shopper is told, in the reconciler's own words.
-        ->and($html)->toContain('1025 Dokdo Toner')
-        ->and($html)->toContain('Medicube booster set');
+        /*
+         * AND THE SHOPPER IS TOLD, IN THE RECONCILER'S OWN BAND.
+         *
+         * The two bare names were worth nothing here. Measured on this page
+         * they occur FOUR times each — the notice, the set-contents list under
+         * the basket line, Lane SEC's `.kc-note` in the drawer, and the
+         * drawer's own set list — so both assertions stayed green whether or
+         * not the shopper was told anything at all. The band and the sentence
+         * together are drawn by one thing.
+         */
+        ->and($html)->toContain('<div class="woocommerce-info" role="status">1025 Dokdo Toner has been taken out of your bag:')
+        ->and($html)->toContain('the last of it is inside the Medicube booster set you are buying');
 });
 
 /* ═════════════════════ 3. everything it has to refuse ══════════════════════ */
+
+it('leaves the basket alone when the payment confirms in the middle of the press', function () {
+    /*
+     * ▲ THE ROW MOVED UNDER A SHOPPER WHO WAS STANDING ON IT, and this is the
+     * one arrangement of that where the shop got it wrong.
+     *
+     * restore() asks `paid_at` twice on purpose — once for a good message, and
+     * again as `only: ['paid_at' => null]` inside moveTo(), which re-reads the
+     * row under `lockForUpdate` and writes NOTHING if a webhook has confirmed
+     * the payment since. That half was right.
+     *
+     * The other half was not. moveTo() returns null when its precondition does
+     * not hold, and restore() assigned that to `$moved` AND NEVER READ IT: the
+     * cart write sat in the same transaction, unconditional, so the basket went
+     * back to `active` over an order that had just been PAID. The shopper ends
+     * up holding a live basket of the same goods they have been charged for,
+     * the stock is never released because the order never moved, and the next
+     * thing they do is buy it all again.
+     *
+     * A guarded write that leaves state behind does not contain a failure, it
+     * seeds one — CLAUDE.md, about the updater, and the same sentence fits here.
+     *
+     * THE RACE IS PRODUCED, NOT WAITED FOR. The two reads are distinguishable
+     * in SQL: restore()'s guard looks the order up by `order_number`, moveTo()
+     * by key. A beforeExecuting hook on the second one is exactly the instant
+     * the webhook has to land in for this to happen at all.
+     *
+     * MUTATION, run: drop the `$moved === null` check from restore() → the
+     * basket assertion goes red and the shopper has both.
+     */
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 2]]);
+
+    rbComeHome($cart, $order);
+
+    $fired = false;
+
+    DB::beforeExecuting(function (string $query) use (&$fired, $order): void {
+        /* THROUGH SqlShape::portable(), because MySQL spells these identifiers
+           with backticks and the default lane spells them with double quotes.
+           Matched raw, this hook would never fire under -c phpunit-mysql.xml,
+           the webhook write would never land, and the case would pass while
+           proving nothing at all — which SqlNeedleDialectGuardTest caught in
+           this very file before it was committed. */
+        $sql = SqlShape::portable($query);
+
+        if ($fired || ! str_contains($sql, 'from "orders"') || ! str_contains($sql, '"orders"."id"')) {
+            return;
+        }
+
+        // Once, and before moveTo()'s locked read returns.
+        $fired = true;
+
+        DB::table('orders')->where('id', $order->id)->update([
+            'paid_at' => now(),
+            'status' => 'processing',
+        ]);
+    });
+
+    $response = rbAs($cart)->post('/checkout/restore-basket');
+
+    /* Disarmed by hand: beforeExecuting callbacks live on the CONNECTION, not
+       on the test, so one left armed would fire inside somebody else's case.
+
+       NOT ASSERTED HERE, because `expect($fired)->toBeTrue()` one line after
+       assigning it true is exactly the shape this round is about — an
+       assertion that cannot fail. That the hook fired is proved below by
+       `paid_at`, which only the hook could have written. */
+    $fired = true;
+
+    $after = $order->fresh();
+
+    expect($after->paid_at)->not->toBeNull('the webhook write did not land, so this case proves nothing')
+        ->and($after->status)->toBe('processing', 'moveTo let the order go despite paid_at')
+        // THE ASSERTION THIS CASE EXISTS FOR.
+        ->and($cart->fresh()->status)->toBe('converted', 'the basket was handed back over a paid order')
+        ->and($cart->fresh()->converted_at)->not->toBeNull();
+
+    // And they are told where their order is rather than shown a restored bag.
+    expect($response->headers->get('Location'))->toContain('/checkout/success');
+});
+
+it('still hands the basket back when the provider failed the order first', function () {
+    /*
+     * ▲ THE CASE THE FIX ABOVE COULD HAVE BROKEN, AND THE REASON moveTo()'s
+     * RETURN IS NOT THE TEST.
+     *
+     * Tamara's failure webhook can land before the shopper gets home, so the
+     * order is ALREADY `failed` when they press the button. moveTo() then
+     * writes nothing and returns null — "already there with nothing else to
+     * record" — which is the very same null the confirmed-mid-press race
+     * returns. Refusing on null would have left this shopper, who is owed
+     * their basket and has been charged nothing, holding an empty one.
+     *
+     * The row answers both: over, and took no money.
+     *
+     * MUTATION, run: make restore() refuse on `moveTo() === null` instead of on
+     * the locked row → this goes red while the race case above stays green,
+     * which is the pair that makes either assertion mean anything.
+     */
+    $product = rbProduct('Rice Toner', 3);
+
+    [$cart, $order] = rbAwayAtTheProvider([[$product, 2]], ['status' => 'failed']);
+
+    rbComeHome($cart, $order);
+
+    rbAs($cart)->post('/checkout/restore-basket');
+
+    expect($cart->fresh()->status)->toBe('active', 'a shopper the provider failed got no basket back')
+        ->and($cart->fresh()->converted_at)->toBeNull()
+        ->and($order->fresh()->status)->toBe('failed');
+});
+
+it('offers no way back for an order whose payment was reversed', function () {
+    /*
+     * THE OTHER ORDER OF THE SAME TWO EVENTS, and here the shop was already
+     * right — pinned so it stays that way.
+     *
+     * A reversal leaves `failed` sitting on a row that still carries `paid_at`;
+     * PlacementState says so in its own header and tests the refused statuses
+     * FIRST for exactly this reason. So pending() does not forward this shopper
+     * to a receipt (the order is REFUSED, not CONFIRMED) — and
+     * rememberRestorable() offers no button either, because `paid_at` is set
+     * and money moved. Releasing the stock and the coupon off a button, for an
+     * order that took a payment, is the one thing this page must never do.
+     *
+     * MUTATION, run: delete the `$order->paid_at !== null` clause from
+     * rememberRestorable()'s first guard → the button is offered over a
+     * reversed payment and this goes red.
+     */
+    PaymentProvider::create(['id' => 'tamara', 'title' => 'Tamara', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]], [
+        'status' => 'failed',
+        'paid_at' => now(),
+    ]);
+
+    rbComeHome($cart, $order)->assertRedirect();
+
+    expect(session(CheckoutReturnController::RESTORABLE_KEY))->toBeNull()
+        ->and(session(CheckoutReturnController::RESTORABLE_CART_KEY))->toBeNull();
+
+    $html = rbAs($cart)->get('/cart/')->assertOk()->getContent();
+
+    expect($html)->not->toContain('Put my basket back');
+
+    // And a press finds nothing, whatever the page drew.
+    rbAs($cart)->post('/checkout/restore-basket');
+
+    expect($cart->fresh()->status)->toBe('converted')
+        ->and($order->fresh()->status)->toBe('failed');
+});
 
 it('refuses an order that has been paid since, and sends them to the receipt', function () {
     /*
@@ -745,6 +920,122 @@ it('cannot be pressed twice', function () {
 
     expect(session('errors')->getBag('default')->first())->toContain('nothing to put back')
         ->and($again->headers->get('Location'))->toContain('/cart');
+});
+
+it('releases the stock exactly once when both presses get past the gate', function () {
+    /*
+     * ▲ THE DOUBLE SUBMIT, DRIVEN ALL THE WAY THROUGH RATHER THAN STOPPED AT
+     * THE DOOR.
+     *
+     * The case above pins the ordinary second press: the offer is forgotten
+     * when it is used, so a shopper hammering the button finds nothing. That is
+     * the gate, and it is not the interesting half, because a RACE does not
+     * meet the gate. Two requests in flight together both read the session
+     * before either writes it, and both read the basket before either commits —
+     * this shop has no session lock — so both arrive holding a live offer and a
+     * `converted` cart.
+     *
+     * That is the state reconstructed here, exactly as the second request saw
+     * it: the offer put back in the session and the cart put back to
+     * `converted`. It is not a contrivance to make the test pass, it is what
+     * the loser of the race actually had in its hands, and it drives the second
+     * press through the cart gate and into the transaction.
+     *
+     * ▲ AND THE MUTATION FOR THE SHELF DOES NOT EXIST, WHICH IS THE FINDING.
+     *
+     * Nothing here releases stock itself: `failed` is in
+     * OrderTransitionStock::RETURNS_STOCK and the move is what hands the units
+     * over. I tried to make the shelf read 7 and could not, one guard at a
+     * time — each of these was run, and this case stayed GREEN through every
+     * one of them:
+     *
+     *   · restore() moves to 'cancelled' rather than 'failed', so the second
+     *     press is a real transition instead of a no-op. Red — but on the
+     *     STATUS assertion below, not on the shelf. Still 5.
+     *   · StockClaim::release()'s sweep stops excluding rows that already carry
+     *     `released_at`. Still 5: the per-row claim refuses each one.
+     *   · that per-row claim's `$claimed !== 1` check neutralised. Still 5:
+     *     the sweep never selected the rows in the first place.
+     *   · the first and second together. Still 5.
+     *
+     * THREE INDEPENDENT MECHANISMS, and only all three at once could credit
+     * the shelf twice — at which point it is not a mutation, it is deleting the
+     * defence. So the shelf line below pins an OUTCOME rather than any one
+     * guard, and it is worth having for that: it is the sentence the owner
+     * cares about, and it would catch a fourth path to the shelf that came in
+     * around all three.
+     *
+     * What actually holds it on the shop is the FIRST of the three: moveTo() on
+     * an order already `failed` writes nothing and transitions nothing, so no
+     * release is even attempted. The ledger is why a REAL race — two presses
+     * that both transition — could not double-credit either.
+     */
+    $product = rbProduct('Rice Toner', 5);
+
+    [$cart, $order] = rbAwayAtTheProvider([[$product, 2]]);
+
+    // The claim the placing transaction made.
+    app(CartService::class)->claimStock($cart, $order);
+
+    expect($product->fresh()->stock)->toBe(3, 'the fixture did not actually claim the stock');
+
+    rbComeHome($cart, $order);
+    rbAs($cart)->post('/checkout/restore-basket');
+
+    expect($product->fresh()->stock)->toBe(5, 'the first press did not hand the units back');
+
+    /* The loser of the race, holding what it read before the winner committed. */
+    $cart->forceFill(['status' => 'converted', 'converted_at' => now()])->save();
+
+    test()->withSession([
+        'kbb_last_order' => $order->order_number,
+        CheckoutReturnController::RESTORABLE_KEY => $order->order_number,
+        CheckoutReturnController::RESTORABLE_CART_KEY => $cart->token,
+    ]);
+
+    $second = rbAs($cart)->post('/checkout/restore-basket');
+
+    expect($product->fresh()->stock)->toBe(5, 'the units went back a second time')
+        ->and($order->fresh()->status)->toBe('failed')
+        ->and($cart->fresh()->status)->toBe('active')
+        ->and($second->headers->get('Location'))->toContain('/cart');
+});
+
+it('says something sensible to a stale tab, rather than an accusation', function () {
+    /*
+     * The other tab, pressed after the basket is already back. The offer is
+     * gone from the session, so this takes nothingToPutBack() — and the
+     * sentence it gets is the one that happens to be TRUE for this shopper
+     * rather than merely generic: "There is nothing to put back. Your basket is
+     * as you left it." Their basket is, in fact, as they left it: the winning
+     * tab put it there.
+     *
+     * It is worth pinning because the same sentence is what a stranger poking
+     * the endpoint gets, and the reason it can be shared is that it accuses
+     * nobody of anything. A message naming the order, or saying the button had
+     * already been used, would be a better sentence here and an order-number
+     * oracle there.
+     *
+     * MUTATION, run: return the restore_done sentence from nothingToPutBack()
+     * → the stale tab claims to have restored a basket it did not touch, and
+     * this goes red on both needles.
+     */
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]]);
+
+    rbComeHome($cart, $order);
+    rbAs($cart)->post('/checkout/restore-basket');
+
+    // The stale tab, whose page was drawn before any of that happened.
+    $stale = rbAs($cart)->post('/checkout/restore-basket');
+
+    expect(session('errors')->getBag('default')->first())
+        ->toBe('There is nothing to put back. Your basket is as you left it.');
+
+    $html = rbAs($cart)->get('/cart/')->assertOk()->getContent();
+
+    expect($html)->toContain('class="co-note err" role="alert">There is nothing to put back.')
+        ->and($html)->not->toContain('Put my basket back')
+        ->and($stale->headers->get('Location'))->toContain('/cart');
 });
 
 it('does not offer the button for a cash-on-delivery order', function () {

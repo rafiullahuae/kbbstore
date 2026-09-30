@@ -122,7 +122,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "pressToTickMs": 23
+    "pressToTickMs": 35
   },
   {
     "shot": "overlay-leaving",
@@ -222,7 +222,7 @@
       "bg": "rgb(224, 86, 123)"
     },
     "bandText": "Your payment was not completed at Pay later with Tamara, so your order has not been placed",
-    "order": "10012"
+    "order": "10004"
   },
   {
     "shot": "return-reload-keeps-the-way-back",
@@ -257,7 +257,7 @@
       "bg": "rgb(224, 86, 123)"
     },
     "bandText": "Your payment was not completed, so your order has not been placed. Nothing has been charge",
-    "order": "10012"
+    "order": "10004"
   },
   {
     "shot": "basket-restored",
@@ -287,7 +287,37 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": "Your basket is back. The order that did not complete has been cancelled and nothing was ch",
-    "order": "10012"
+    "order": "10004"
+  },
+  {
+    "shot": "restore-pressed-twice",
+    "width": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": "There is nothing to put back. Your basket is as you left it.",
+    "order": "10004"
   },
   {
     "shot": "return-band-without-a-way-back",
@@ -406,7 +436,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "abortWaitedMs": 45119
+    "abortWaitedMs": 45263
   },
   {
     "shot": "real-cod-tick",
@@ -439,7 +469,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "pressToTickMs": 91,
+    "pressToTickMs": 140,
     "intercepted": false
   },
   {
@@ -498,7 +528,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "pressToTickMs": 25
+    "pressToTickMs": 42
   },
   {
     "shot": "arabic-working",
@@ -655,7 +685,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "pressToTickMs": 53
+    "pressToTickMs": 28
   },
   {
     "shot": "overlay-leaving",
@@ -755,7 +785,7 @@
       "bg": "rgb(224, 86, 123)"
     },
     "bandText": "Your payment was not completed at Pay later with Tamara, so your order has not been placed",
-    "order": "10016"
+    "order": "10008"
   },
   {
     "shot": "return-reload-keeps-the-way-back",
@@ -790,7 +820,7 @@
       "bg": "rgb(224, 86, 123)"
     },
     "bandText": "Your payment was not completed, so your order has not been placed. Nothing has been charge",
-    "order": "10016"
+    "order": "10008"
   },
   {
     "shot": "basket-restored",
@@ -820,7 +850,37 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": "Your basket is back. The order that did not complete has been cancelled and nothing was ch",
-    "order": "10016"
+    "order": "10008"
+  },
+  {
+    "shot": "restore-pressed-twice",
+    "width": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": "There is nothing to put back. Your basket is as you left it.",
+    "order": "10008"
   },
   {
     "shot": "return-band-without-a-way-back",
@@ -939,7 +999,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "abortWaitedMs": 45186
+    "abortWaitedMs": 45333
   },
   {
     "shot": "real-cod-tick",
@@ -972,7 +1032,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "pressToTickMs": 100,
+    "pressToTickMs": 136,
     "intercepted": false
   },
   {
@@ -1031,7 +1091,7 @@
     "restoreButtons": 0,
     "restoreBox": null,
     "bandText": null,
-    "pressToTickMs": 36
+    "pressToTickMs": 43
   },
   {
     "shot": "arabic-working",
