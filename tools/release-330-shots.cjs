@@ -9,6 +9,7 @@
  * background. The numbers are read out of the document rather than claimed.
  */
 const { chromium } = require('playwright');
+const { probeFamily } = require('./font-probe.cjs');
 const fs = require('fs');
 
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
@@ -55,14 +56,9 @@ const MEASURE = () => {
   const h1 = document.querySelector('h1');
   const name = document.querySelector('.kbb-card-nm');
 
-  /* Which face the text is actually PAINTED in, not which was asked for: a
-     width ruler against a face the page never loaded is the standard way this
-     measurement lies. document.fonts.check is the honest question. */
-  const outfitLoaded = document.fonts.check('400 14px Outfit');
 
   return {
     fontFamily: bodyCs.fontFamily,
-    outfitLoaded,
     h1Size: h1 ? getComputedStyle(h1).fontSize : null,
     h1Weight: h1 ? getComputedStyle(h1).fontWeight : null,
     nameSize: name ? getComputedStyle(name).fontSize : null,
@@ -112,7 +108,16 @@ const MEASURE = () => {
       await page.goto(BASE + url, { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready);
       const m = await page.evaluate(MEASURE);
-      rows.push({ page: name, width, ...m });
+      /* NOT document.fonts.check(). It answers TRUE for a family that does not
+         exist anywhere -- measured in this repo on a page declaring zero faces
+         -- so it cannot tell a font that loaded from one that was never
+         declared. The first version of this file asked it anyway and reported
+         "Outfit loaded: true" as a fact; FontProbesCannotReportTheFallbackTest
+         failed the release on it, by name, and was right to.
+         probeFamily() measures a SECOND ruler in a family that cannot exist:
+         equal widths mean the named family never rendered. */
+      const probe = await probeFamily(page, 'Outfit', [400, 500, 600, 700]);
+      rows.push({ page: name, width, ...m, outfit: probe.rendered, outfitWidths: probe.widths });
       await page.screenshot({ path: `${OUT}/330-${name}-${width}.png`, fullPage: name !== 'home' });
       if (name === 'home') await page.screenshot({ path: `${OUT}/330-${name}-${width}-full.png`, fullPage: true });
       await ctx.close();
@@ -127,17 +132,19 @@ const MEASURE = () => {
     const page = await ctx.newPage();
     await page.goto(BASE + url, { waitUntil: 'load' });
     await page.evaluate(() => document.fonts.ready);
-    rows.push({ page: name, width: 320, ...(await page.evaluate(MEASURE)) });
+    const m320 = await page.evaluate(MEASURE);
+    const probe320 = await probeFamily(page, 'Outfit', [400, 500, 600, 700]);
+    rows.push({ page: name, width: 320, ...m320, outfit: probe320.rendered, outfitWidths: probe320.widths });
     await page.screenshot({ path: `${OUT}/330-${name}-320.png`, fullPage: true });
     await ctx.close();
   }
 
   fs.writeFileSync(`${OUT}/measurements.json`, JSON.stringify(rows, null, 2));
-  console.log('\npage     w     font-resolved  Outfit  grad-layers pos      anim-dur   drawing cards heights                 scrollW  banner');
+  console.log('\npage     w     font-resolved  Outfit* grad-layers pos      anim-dur   drawing cards heights                 scrollW  banner');
   for (const r of rows) {
     console.log(
       `${r.page.padEnd(8)} ${String(r.width).padEnd(5)} ${String(r.fontFamily).split(',')[0].padEnd(14)} `
-      + `${String(r.outfitLoaded).padEnd(7)} ${String(r.gradient.layers).padEnd(11)} ${String(r.gradient.position).padEnd(8)} `
+      + `${String(Object.values(r.outfit || {}).every(Boolean)).padEnd(7)} ${String(r.gradient.layers).padEnd(11)} ${String(r.gradient.position).padEnd(8)} `
       + `${String(r.shiftB.duration).padEnd(10)} ${String(r.hasDrawing).padEnd(7)} `
       + `${String(r.cardCount).padStart(5)} ${JSON.stringify(r.cardHeights).padEnd(24)} ${String(r.scrollWidth).padEnd(8)} ${r.bannerPainted}/${r.bannerImgs}`);
   }

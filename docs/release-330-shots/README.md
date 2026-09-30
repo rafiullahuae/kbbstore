@@ -21,7 +21,7 @@ NODE_PATH=$PWD/node_modules SHOT_BASE=http://127.0.0.1:8971 node tools/release-3
 | | 1280 | 390 | 320 |
 |---|---|---|---|
 | typeface resolved | Outfit | Outfit | Outfit |
-| `document.fonts.check('400 14px Outfit')` | true | true | true |
+| Outfit actually rendered, all 4 weights | true | true | true |
 | background gradient layers | 1 | 1 | 1 |
 | background layer `position` | fixed | fixed | fixed |
 | shift cycle | 300s | 300s | 300s |
@@ -50,5 +50,28 @@ banner images and photographed three broken-image icons. `naturalWidth > 0` is
 the question that cannot be answered by a tag existing; the script now routes
 those requests at the preview and counts what actually painted.
 
-Both are the "instrument lying" class CLAUDE.md names: a measurement that is
-true for a reason unrelated to its subject.
+**And the font measurement was made with a question that cannot answer no.**
+The first version asked `document.fonts.check('400 14px Outfit')` and reported
+**"Outfit loaded: true"** as a fact. That call returns `true` for a family that
+does not exist anywhere — measured on this very page, `document.fonts.check(
+'400 14px NoSuchFaceZZQ')` answers **true**. So the reading was worthless, and
+`FontProbesCannotReportTheFallbackTest` failed the release by name over it,
+which is exactly its job.
+
+Re-measured with `probeFamily()` from `tools/font-probe.cjs`, which measures a
+second ruler in a family that cannot exist and calls the font rendered only when
+the two widths differ:
+
+| asked for | rendered | widths at 400 / 700 |
+|---|---|---|
+| **Outfit** | **true** | 456.55 / 472.20 |
+| Poppins | **false** | 436.63 / 463.36 |
+| a family that cannot exist | **false** | 436.63 / 463.36 |
+
+**The conclusion held — Outfit really is rendering at all four weights — but the
+evidence for it did not**, and the two are not the same thing. Poppins answering
+`false` is the independent check that the typeface swap is complete rather than
+layered.
+
+All three are the "instrument lying" class CLAUDE.md names: a measurement that
+is true for a reason unrelated to its subject.
