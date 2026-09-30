@@ -807,3 +807,192 @@ and every slider on the new screen saves, reports success and moves nothing.
   these variables: `store/pdp-preview/_layout.blade.php` loads
   `kbb-product.css` but not this partial, so every `var()` in it falls back and
   the five drawings are exactly what they were.
+
+## 10 · Round 5 — the preview the thirty controls never had
+
+Verbatim, and it is a gap this lane let through:
+
+> *"where's the preview on the product controls page? i need a proper preview
+> of mobile and desktop both."*
+
+Round 4 (§9) put **thirty controls** on `Appearance → Product page` and
+`renderProductPage()` emitted **no preview element of any kind** — checked in
+the source, not remembered. Thirty sliders, and the only way to find out what a
+number did was to save it onto the shop.
+
+### 10a · Where it is, and what it shows
+
+**`Appearance → Product page`** — on every tab, beside the controls: a sticky
+right-hand panel headed **Preview**, holding **two frames side by side**:
+
+| pane | viewport | how it is drawn |
+|---|---|---|
+| **Laptop · 1280px** | 1280 × 2400 | scaled ×0.31 inside a 372px window |
+| **Phone · 390px** | 390 × 2600 | scaled ×0.46 inside a 372px window |
+
+Both at once, and that is the point rather than a convenience: `title_m` is
+19px and `title_d` is 30px, so a single-width preview with a toggle on it would
+let him set a laptop size that ruins the phone and find out on the shop. Below
+1180px the panel drops under the controls; below 760px the pair stacks and both
+shrink. Neither pane is ever hidden.
+
+Each frame carries a **Full size ↗** link to the same page in a new tab.
+
+### 10b · ▲ It frames `/product/{slug}`, and NOT one of the five design previews
+
+The obvious URL was `admin-api/catalog/pdp-preview/ledger/{slug}` — the design
+he chose, already built, already gated — and §9e even reported it as the thing
+to fix. **It was the wrong answer, and the harness caught it.** The five
+candidates are drawn in markup of their own: every class in `ledger`,
+`dossier`, `counter`, `deck`, `marquee` and in `pdp-preview/parts/` is `pv-…`,
+while the thirty properties are read by `.pdp .bb-title`, `.sec h2` and
+`.details .dtabbar` in `kbb-product.css`. The first run photographed exactly
+that: two frames with a complete, handsome product page in them, and
+**twenty-nine of the thirty controls moving nothing**. The one selector the
+five share with the shop is `.dcontent`.
+
+So the panel frames the **shipped page**, through `Product::url()` (URL
+contract U-01, trailing slash and base prefix). `ProductPagePreviewPanelTest`
+fetches `preview.url` itself and asserts the response carries `bb-title`,
+`bb-price`, `bb-desc` and `dtabbar` — pointing it back at the candidate reds
+five expectations.
+
+`store/pdp-preview/_layout.blade.php` **did** gain
+`@include('partials.product-layout-css')`, which is the §9e gap closed; the
+file's own comment now records honestly that it moves exactly one rule
+(`.dcontent`) in those five drafts, and why that is still worth doing.
+
+### 10c · How "live" works, and what makes the two formatters agree
+
+`var(--pl-x, <literal>)` is how the stylesheet reads all thirty numbers, so the
+whole of *live* is writing those properties onto each frame's own `<html>` from
+the console — same origin, wrapped, repainted on the frame's `load` too. No
+POST, nothing stored; **Reset layout to defaults** and **Discard** both put the
+picture back, and a successful **Save** reloads both frames (the Sections
+switches decide which blocks render at all, and no custom property can show
+that).
+
+That means **two formatters for the same thirty numbers**, which is two places
+to drift. The split that makes them checkable:
+
+- `ProductLayout::PROPS` — schema key → property name, **one table**, used by
+  `css()` and sent to the console in the endpoint's new `preview.props`.
+- `ProductLayout::vars()` — the thirty `property => value` pairs; `css()` is now
+  an implode of it.
+- the console builds its value from the field's own `unit` and `scale`, which
+  `ModuleSchema` already sends it (`ppShow()` draws the readout with the same
+  two).
+
+`ProductPagePreviewPanelTest` reproduces the console's rule in PHP and demands
+it equals `vars()` **property for property**, on the shipped values and on a
+moved set. Deleting one key from `PROPS` or renaming it reds two cases.
+
+### 10d · Rule 4, and the one CSS trick it needed
+
+Nothing measures a rectangle. A 1280px page in a 400px panel is a **constant
+scale** per pane (`--ppv-s`) with every dimension derived by `calc()`; the test
+sweeps the region for `getBoundingClientRect`, `offsetWidth`, `offsetHeight`,
+`clientWidth`, `clientHeight` and `getComputedStyle` and finds none.
+
+▲ `transform:scale()` does not change an element's **layout** size, so a
+1280×2400 iframe still occupies 1280×2400 in its parent — the panel would have
+scrolled 2400px of nothing to reach content that visually ends at 744.
+`.ppv-scale` is the scaled box: it carries the multiplied width and height and
+positions the iframe absolutely inside it, so `.ppv-vp` scrolls exactly as far
+as there is picture. The frame is `pointer-events:none` so a click cannot
+navigate it away; the wheel and the scrollbar belong to `.ppv-vp`, which is not
+inert.
+
+### 10e · The shell is built once, and that is the preview's doing
+
+`paintProductPage()` used to replace `#content` wholesale on every tab click.
+With two iframes in it that is two product pages fetched per click — and worse,
+**re-inserting an iframe reloads it**, so the picture would flash back to the
+saved page and lose whatever he had just dragged. It now takes a `rebuild`
+argument: the shell (heading, strip host, preview panel, save bar) is written
+when the screen is entered, and a repaint refills only the strip, the control
+column and the action button.
+
+### 10f · Measured
+
+`docs/lane-pdp5-shots/` — screenshots at 1280 and 390, and `preview.json` with
+the computed sizes read **out of both frames** by the harness:
+
+| control moved | laptop frame | phone frame |
+|---|---|---|
+| — (shipped) | title 30px, `.sec` 34px, tab 13.5px | title 19px, `.sec` 34px, tab 13.5px |
+| `title_m` 190 → 280 | title **30px** (unchanged) | title **19 → 28px** |
+| `title_d` 300 → 440 | title **30 → 44px** | title **28px** (unchanged) |
+| `sec_pad` 34 → 90 | `.sec` **34 → 90px** | `.sec` **34 → 90px** |
+| `tab_s` 135 → 220 | tab **13.5 → 22px** | tab **13.5 → 22px** |
+
+`document.documentElement.scrollWidth` is **1280 at 1280** and **390 at 390** in
+every one of those states.
+
+### 10f½ · ▲ The near-miss, and the test that now catches it
+
+While `preview()` was being rewritten, the edit that replaced it matched from
+its docblock **to the end of the class** and took `save()` with it. `php -l`
+was clean. The screen loaded, both frames drew the product page, every slider
+moved the picture — and pressing **Save changes** answered
+
+```
+500  Call to undefined method …ProductPageApiController::save()
+```
+
+with the console showing *"Could not save."* **Eleven cases in the new test
+file were green through all of it**, because a preview is read-only and not one
+of them POSTed. It was found by driving the real screen in a browser, and the
+full suite named it four times over (`ProductPageLayoutTest` ×3 and
+`StorefrontRouteWalkTest`, which reports the route pointing at a method that
+does not exist).
+
+`ProductPagePreviewPanelTest > it still saves both halves` is the case that
+would have caught it first: it POSTs a layout value, asserts `saved => 1`, and
+then asserts the number really reaches `/product/{slug}`. Deleting `save()`
+reds that one case and leaves the other eleven green — which is the whole
+reason it is written.
+
+### 10g · Nothing on the shop moved
+
+This is an admin preview. `ProductLayout::storefrontCss()` still answers the
+empty string while every value is shipped, `partials/product-layout-css`
+still emits no element, and `StorefrontEnglishUnchangedTest` still needs no
+approved rule. The narrower statement it rests on is pinned here too, along
+with the other half — that once he saves one, `--pl-title-m:27.5px` really is
+on the page.
+
+### 10g½ · The one pin this round moved
+
+| test | was | now | mutation re-run |
+|---|---|---|---|
+| `ProductPageLayoutTest > it wires the Layout tabs into the console exactly once` | `substr_count($console, 'function paintProductPage(){')` is 1 | `…'function paintProductPage('` is 1 | declare a second `function paintProductPage(` → **RED**; restore → green |
+
+**Advanced, not worked around.** The signature gained an argument —
+`paintProductPage(rebuild)` — because the shell is now written once per visit
+and a repaint refills only the parts that change. The count the case is really
+about (one renderer, not zero and not two) is unchanged; the needle is the name
+and the opening paren rather than the empty list.
+
+### 10h · What the package needs
+
+```
+app/Services/ProductLayout.php                          PROPS + vars()
+app/Http/Controllers/Admin/ProductPageApiController.php  show() answers `preview`
+resources/views/admin/app.blade.php                     the panel + its CSS
+resources/views/store/pdp-preview/_layout.blade.php     one @include
+database/migrations/2027_06_20_000000_clear_caches_product_page_preview.php  NEW
+tests/Feature/ProductPagePreviewPanelTest.php           NEW
+tools/pdp5-shots.cjs  docs/lane-pdp5-shots/             the harness and the shots
+```
+
+**No stylesheet and no schema change.** Nothing under `resources/css` or
+`resources/js` is touched, so `public/build` is unchanged and §1's manifest
+warning does not apply to this package. `update.json` still declares the one
+migration in `migrations`.
+
+▲ **The `clear_caches` migration is not optional here.** The panel and its
+stylesheet are both **inline** in `app.blade.php`, so there is no hashed asset
+to bust: a stale compiled view serves yesterday's screen — thirty sliders and
+no preview, the exact complaint — while the endpoint underneath answers
+perfectly and the package reports as applied.

@@ -1,0 +1,618 @@
+{
+  "sections-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "30px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "19px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "ty_buy-before-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "30px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "19px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "title_m-280-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "30px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "title_d-440-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "sp_page-before-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "sec_pad-90-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "tab_s-220-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "22px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 22px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "22px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 22px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "sections-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "30px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "19px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "ty_buy-before-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "30px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "19px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 19px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "title_m-280-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "30px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 30px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "title_d-440-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "sp_page-before-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "34px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 34px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "sec_pad-90-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "13.5px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 13.5px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  },
+  "tab_s-220-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "panes": [
+      "desktop",
+      "mobile"
+    ],
+    "frames": [
+      "desktop",
+      "mobile"
+    ],
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "44px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "22px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 22px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "hasGallery": true,
+      "hasPrice": true,
+      "hasTabs": true,
+      "switcher": false,
+      "styleBlock": false,
+      "titleSize": "28px",
+      "titleWeight": "500",
+      "priceSize": "22px",
+      "secPadTop": "90px",
+      "headingSize": "22px",
+      "tabSize": "22px",
+      "descSize": "13.5px",
+      "inline": "--pl-sec-pad: 90px; --pl-buybox-gap: 22px; --pl-thumb-gap: 8px; --pl-tab-gap: 22px; --pl-tab-body-gap: 18px; --pl-head-gap: 8px; --pl-np-gap: 16px; --pl-rate-gap: 10px; --pl-rule-gap: 20px; --pl-rule-pad: 20px; --pl-trust-gap: 22px; --pl-trust-line-gap: 10px; --pl-chips-gap: 12px; --pl-title-m: 28px; --pl-title-d: 44px; --pl-title-w: 500; --pl-price-s: 22px; --pl-price-w: 800; --pl-was-s: 12.5px; --pl-off-s: 10px; --pl-vat-s: 11px; --pl-rate-s: 12px; --pl-desc-s: 13.5px; --pl-desc-lh: 1.62; --pl-trust-s: 12.5px; --pl-heading-s: 22px; --pl-heading-w: 600; --pl-tab-s: 22px; --pl-body-s: 13.5px; --pl-body-lh: 1.7;"
+    }
+  }
+}

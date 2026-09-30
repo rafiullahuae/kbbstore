@@ -80,6 +80,55 @@ class ProductLayout
      */
     public const TENTH = 10;
 
+    /**
+     * Schema key → the custom property the product stylesheet reads.
+     *
+     * ONE TABLE, READ BY BOTH SIDES. css() builds the <style> block from it and
+     * Admin\ProductPageApiController hands it to the console, where the live
+     * preview on `Appearance → Product page` writes the same properties onto
+     * the two preview frames as a slider moves. Before this existed the names
+     * were spelled out once in css() and would have had to be spelled out a
+     * second time in JavaScript — thirty strings, in two languages, with
+     * nothing to catch the day one of them was mistyped. A name that is wrong
+     * in the console does not error: the property is simply never read, and the
+     * preview quietly stops answering for one control while answering for the
+     * other twenty-nine.
+     *
+     * @var array<string, string>
+     */
+    public const PROPS = [
+        'sec_pad' => '--pl-sec-pad',
+        'buybox_gap' => '--pl-buybox-gap',
+        'thumb_gap' => '--pl-thumb-gap',
+        'tab_gap' => '--pl-tab-gap',
+        'tab_body_gap' => '--pl-tab-body-gap',
+        'head_gap' => '--pl-head-gap',
+        'name_price_gap' => '--pl-np-gap',
+        'rate_gap' => '--pl-rate-gap',
+        'rule_gap' => '--pl-rule-gap',
+        'rule_pad' => '--pl-rule-pad',
+        'trust_gap' => '--pl-trust-gap',
+        'trust_line_gap' => '--pl-trust-line-gap',
+        'chips_gap' => '--pl-chips-gap',
+        'title_m' => '--pl-title-m',
+        'title_d' => '--pl-title-d',
+        'title_w' => '--pl-title-w',
+        'price_s' => '--pl-price-s',
+        'price_w' => '--pl-price-w',
+        'was_s' => '--pl-was-s',
+        'off_s' => '--pl-off-s',
+        'vat_s' => '--pl-vat-s',
+        'rate_s' => '--pl-rate-s',
+        'desc_s' => '--pl-desc-s',
+        'desc_lh' => '--pl-desc-lh',
+        'trust_s' => '--pl-trust-s',
+        'heading_s' => '--pl-heading-s',
+        'heading_w' => '--pl-heading-w',
+        'tab_s' => '--pl-tab-s',
+        'body_s' => '--pl-body-s',
+        'body_lh' => '--pl-body-lh',
+    ];
+
     /** key => [type, label, default, help, options] */
     public const SCHEMA = [
 
@@ -408,6 +457,39 @@ class ProductLayout
      */
     public static function css(array $c): string
     {
+        $out = [];
+
+        foreach (self::vars($c) as $prop => $value) {
+            $out[] = $prop.':'.$value;
+        }
+
+        return ':root{'.implode(';', $out).'}';
+    }
+
+    /**
+     * The same thirty properties as css(), as `property => value`.
+     *
+     * ── WHY THIS IS SPLIT OUT, AND IT IS NOT TIDINESS ───────────────────────
+     *
+     * `Appearance → Product page` now carries a LIVE PREVIEW, and a live
+     * preview has to write these properties from JavaScript as a slider moves —
+     * before anything is saved, so before this class has run at all. That is a
+     * SECOND PLACE THAT FORMATS THESE VALUES, which is a second place to drift:
+     * the day one of them prints `13.5` where the other prints `13.5px`, the
+     * preview and the shop disagree and only the shop is right.
+     *
+     * The split is what makes the two checkable against each other. The console
+     * builds a property name out of PROPS and a value out of the field's own
+     * `unit` and `scale` — both of which ModuleSchema already sends it — and
+     * ProductPagePreviewPanelTest reproduces that rule in PHP and demands it
+     * equals this method, key for key, on the shipped values and on a moved
+     * set. Neither side can move without the other going red.
+     *
+     * @param  array<string, mixed>  $c
+     * @return array<string, string>
+     */
+    public static function vars(array $c): array
+    {
         $n = static fn (string $k): int => (int) $c[$k];
 
         $vars = [
@@ -452,6 +534,13 @@ class ProductLayout
             '--pl-body-lh:'.self::num($n('body_lh'), 100),
         ];
 
-        return ':root{'.implode(';', $vars).'}';
+        $out = [];
+
+        foreach ($vars as $pair) {
+            [$prop, $value] = explode(':', $pair, 2);
+            $out[$prop] = $value;
+        }
+
+        return $out;
     }
 }

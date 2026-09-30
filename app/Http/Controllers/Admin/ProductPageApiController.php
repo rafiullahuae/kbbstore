@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Services\ModuleSchema;
 use App\Services\ProductLayout;
 use App\Services\ProductSections;
@@ -50,6 +51,7 @@ class ProductPageApiController extends Controller
                 $this->layout->all(),
                 ProductLayout::POLICY,
             ),
+            'preview' => $this->preview(),
         ]);
     }
 
@@ -124,5 +126,56 @@ class ProductPageApiController extends Controller
                 ProductLayout::POLICY,
             ),
         ]);
+    }
+
+    /**
+     * What the live preview on that screen needs, and nothing else.       R5
+     *
+     *     "where's the preview on the product controls page? i need a proper
+     *      preview of mobile and desktop both."
+     *
+     * Round 4 shipped thirty sliders with NOTHING TO SEE THEM AGAINST. The
+     * screen now carries two frames — a phone and a laptop, side by side — and
+     * each one loads THE SHIPPED PRODUCT PAGE, `/product/{slug}`.
+     *
+     * ▲ AND NOT ONE OF THE FIVE DESIGN PREVIEWS, WHICH IS THE OBVIOUS CHOICE
+     *   AND THE WRONG ONE. `admin-api/catalog/pdp-preview/{candidate}/{slug}`
+     *   renders a CANDIDATE — markup of its own, every class `pv-…` — and the
+     *   thirty custom properties are read by `.pdp .bb-title`, `.sec h2`,
+     *   `.details .dtabbar` and the rest in kbb-product.css. Checked in the
+     *   templates, not assumed: the only selector the five share with the shop
+     *   is `.dcontent`. A panel framing a candidate would therefore have drawn
+     *   a handsome product page that answered ONE of the thirty controls, and
+     *   looked completely finished doing it. The shipped page answers all
+     *   thirty because they were written for it.
+     *
+     * ▲ `Product::url()` AND NOT A PATH BUILT IN THE CONSOLE. That method is
+     *   URL contract U-01 — `/product/{slug}/`, trailing slash and all — and it
+     *   carries the base prefix, which is EMPTY on extrabeauty.ae and
+     *   `/kbb-upgrade` on the old box. A path assembled in JavaScript from the
+     *   admin URL would be right on one of the two, and `route()` would drop
+     *   the trailing slash the contract requires. The console still checks what
+     *   comes back is same-origin before it becomes an `src` — rule 5, both
+     *   ends.
+     *
+     * ▲ A SHOP WITH NO VISIBLE PRODUCT GETS `slug => null` and no url, and the
+     *   console draws the panel's explanation instead of a frame pointed at a
+     *   404. A fresh install really is in that state until the catalogue
+     *   imports.
+     *
+     * @return array{slug: string|null, url: string|null, props: array<string, string>}
+     */
+    private function preview(): array
+    {
+        /* ORDERED, so the panel shows the same product on every visit —
+           `value()` on an unordered query is whatever the engine hands back
+           first, which is not stable across requests. */
+        $product = Product::query()->visible()->orderBy('id')->first(['id', 'slug']);
+
+        return [
+            'slug' => $product?->slug,
+            'url' => $product?->url(),
+            'props' => ProductLayout::PROPS,
+        ];
     }
 }
