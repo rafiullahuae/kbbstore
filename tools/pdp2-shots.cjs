@@ -218,6 +218,19 @@ const M = () => {
  * is exactly what would be written into kbb-product.css if he picks it.
  */
 const TYPE_OPTIONS = [
+  /* ▲ THE STATE HE COMPLAINED ABOUT, DRAWN IN TODAY'S TYPEFACE, AND IT IS THE
+       FIRST COLUMN FOR A REASON. He saw 21px at weight 600 in POPPINS, where it
+       came out at three line-boxes and 82px. The shop is Outfit now, which is
+       narrower, so "what he objected to" is a different picture from the one he
+       objected to — and a sheet of three fixes that does not show the fault
+       cannot say whether any of them is still needed. */
+  [
+    'p',
+    'P · as he saw it — 21px / 600',
+    `@media (max-width:880px){
+       .pdp .bb-title{font-size:21px;font-weight:600;line-height:1.3}
+     }`,
+  ],
   [
     'a',
     'A · Weight only — 21px / 500',
@@ -355,47 +368,80 @@ const sheet = async (browser, file, title, note, files, colWidth) => {
   if (!AR) {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
-    const captions = [];
 
-    for (const [key, label, css] of TYPE_OPTIONS) {
-      await page.goto(`${BASE}/product/pdp-heartleaf-toner/`, { waitUntil: 'networkidle' });
-      await settle(page);
-      await page.addStyleTag({ content: FLATTEN });
-      if (css) await page.addStyleTag({ content: css });
-      await page.waitForTimeout(200);
-      const m = await page.evaluate(M);
-      measured[`type-${key}-390`] = m;
+    /* ── TWO PRODUCTS PER OPTION, AND THE SECOND ONE IS THE POINT ───────────
+       The first sheet was drawn on `pdp-heartleaf-toner` alone — a 34-character
+       name that comes out at two line-boxes in all three options, so the three
+       pictures differed by a type size and not by the thing he complained
+       about, which is a THIRD LINE. `pdp-longest-real-name` is the longest name
+       in storage/catalog/products.json, the real catalogue import: 82
+       characters, at AED 2,450, which is also the widest price box in his
+       catalogue and therefore the narrowest title track. */
+    const TYPE_PRODUCTS = [
+      ['short', 'pdp-heartleaf-toner', 'his everyday name — 34 characters'],
+      ['long', 'pdp-longest-real-name', 'his LONGEST name — 82 characters, at his widest price'],
+    ];
 
-      /* From the top of the page down past the buy row, so the title is seen
-         against the price, the rating and the picture — the comparison he is
-         actually making. */
-      const stop = await page.evaluate(() => {
-        const el = document.querySelector('.stockline');
-        return el ? Math.round(el.getBoundingClientRect().top + window.scrollY) : 1400;
-      });
-      await page.screenshot({
-        path: path.join(OUT, `${TAG}-type-${key}-390.png`),
-        fullPage: true,
-        clip: { x: 0, y: 0, width: 390, height: Math.min(stop + 40, 2200) },
-      });
+    const typeCaptions = { short: [], long: [] };
 
-      captions.push([
-        label,
-        path.join(OUT, `${TAG}-type-${key}-390.png`),
-        `title ${m.titleFont} / ${m.titleWeight} / ${m.titleLines} line${m.titleLines === 1 ? '' : 's'} / ${m.title.h}px tall\n`
-          + `price ${m.priceFont} / ${m.priceWeight}\n`
-          + `brand→blurb block ${m.blurb ? m.blurb.y - m.brand.y : '—'}px`,
-      ]);
+    for (const [pk, slug, why] of TYPE_PRODUCTS) {
+      for (const [key, label, css] of TYPE_OPTIONS) {
+        await page.goto(`${BASE}/product/${slug}/`, { waitUntil: 'networkidle' });
+        await settle(page);
+        await page.addStyleTag({ content: FLATTEN });
+        if (css) await page.addStyleTag({ content: css });
+        await page.waitForTimeout(200);
+        const m = await page.evaluate(M);
+        measured[`type-${key}-${pk}-390`] = m;
+
+        /* From the top of the page down past the buy row, so the title is seen
+           against the price, the rating and the picture — the comparison he is
+           actually making. */
+        const stop = await page.evaluate(() => {
+          const el = document.querySelector('.stockline');
+          return el ? Math.round(el.getBoundingClientRect().top + window.scrollY) : 1400;
+        });
+        await page.screenshot({
+          path: path.join(OUT, `${TAG}-type-${key}-${pk}-390.png`),
+          fullPage: true,
+          clip: { x: 0, y: 0, width: 390, height: Math.min(stop + 40, 2200) },
+        });
+
+        typeCaptions[pk].push([
+          label,
+          path.join(OUT, `${TAG}-type-${key}-${pk}-390.png`),
+          `title ${m.titleFont} / ${m.titleWeight} / ${m.titleLines} line${m.titleLines === 1 ? '' : 's'} / ${m.title.h}px tall / ${m.title.w}px wide\n`
+            + `price ${m.priceFont} / ${m.priceWeight} / ${m.price.w}px wide\n`
+            + `brand→blurb block ${m.blurb ? m.blurb.y - m.brand.y : '—'}px   ·   scrollWidth ${m.scrollWidth}`,
+        ]);
+      }
     }
+
+    const captions = typeCaptions.short;
 
     await ctx.close();
     await sheet(
       browser,
       'sheet-real-type-390.png',
-      'The mobile type — three options at 390px',
+      'The mobile type — three options at 390px, on his everyday name (34 characters)',
       'The same product page, the same moment, one scale. B is what the branch ships; A and C are one CSS block each. '
-        + 'The numbers under each are measured in Chromium, not asserted.',
+        + 'Measured in Chromium in OUTFIT, the shop\'s typeface since 2.60.x — not in Poppins, which is what the first '
+        + 'version of this sheet was drawn in.',
       captions,
+      330
+    );
+
+    /* THE SHEET THAT DECIDES IT. Three lines is the complaint, and the everyday
+       name does not produce three lines in any of the options — so the sheet
+       above cannot separate them and this one can. */
+    await sheet(
+      browser,
+      'sheet-real-type-long-390.png',
+      'The mobile type — the same three, on the LONGEST name in his catalogue (82 characters)',
+      'Shark™ CryoGlow™ Under-Eye Cooling + LED Anti-Aging Red Light & Skin Clearing Mask, at AED 2,450 — the longest name '
+        + 'and the widest price box in storage/catalog/products.json, which is the real catalogue import. This is the picture '
+        + 'that separates the three, because a third line is what he objected to.',
+      typeCaptions.long,
       330
     );
 

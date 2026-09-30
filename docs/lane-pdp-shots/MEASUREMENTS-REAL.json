@@ -1478,7 +1478,7 @@
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4784,
+    "pageHeight": 4742,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -1530,10 +1530,10 @@
       "h": 86,
       "y": 886
     },
-    "blurbLines": 10,
+    "blurbLines": 8,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 978
     },
@@ -1563,29 +1563,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1278
+      "y": 1239
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1366
+      "y": 1327
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1372
+      "y": 1333
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
-      "h": 34,
-      "y": 1745
+      "h": 32,
+      "y": 1706
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 187,
+    "tabRowOverflowPx": 136,
     "tabOpacities": {
       "open": [
         "1"
@@ -1601,17 +1601,17 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1450
+      "y": 1411
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 2000,
+    "reviewsY": 1958,
     "reviewCards": 5,
-    "relatedY": 3252,
+    "relatedY": 3210,
     "relatedCards": 4,
-    "footerY": 4006
+    "footerY": 3964
   },
   "real-toner-390-open3": {
     "openTabIndex": 3,
@@ -1622,7 +1622,7 @@
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4048,
+    "pageHeight": 3980,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -1642,16 +1642,16 @@
       "y": 707
     },
     "title": {
-      "w": 256,
-      "h": 52,
+      "w": 257,
+      "h": 26,
       "y": 733
     },
     "titleFont": "19px",
     "titleWeight": "500",
     "titleLineHeight": "25.84px",
-    "titleLines": 2,
+    "titleLines": 1,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 25,
       "y": 733
     },
@@ -1661,21 +1661,21 @@
     "ratingRow": {
       "w": 346,
       "h": 0,
-      "y": 821
+      "y": 795
     },
     "ratingBarFill": null,
     "capsulePill": null,
     "blurb": {
       "w": 346,
       "h": 86,
-      "y": 825
+      "y": 799
     },
-    "blurbLines": 10,
+    "blurbLines": 8,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
-      "y": 917
+      "y": 891
     },
     "bundleBars": 3,
     "setRows": 0,
@@ -1703,29 +1703,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1217
+      "y": 1152
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1305
+      "y": 1240
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1311
+      "y": 1246
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
-      "h": 34,
-      "y": 1684
+      "h": 32,
+      "y": 1619
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 187,
+    "tabRowOverflowPx": 136,
     "tabOpacities": {
       "open": [
         "1"
@@ -1741,23 +1741,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1389
+      "y": 1324
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1881,
+    "reviewsY": 1813,
     "reviewCards": 0,
-    "relatedY": 2515,
+    "relatedY": 2448,
     "relatedCards": 4,
-    "footerY": 3269
+    "footerY": 3201
   },
   "real-many-390": {
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 5061,
+    "pageHeight": 4996,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -1777,7 +1777,7 @@
       "y": 707
     },
     "title": {
-      "w": 249,
+      "w": 248,
       "h": 52,
       "y": 733
     },
@@ -1786,7 +1786,7 @@
     "titleLineHeight": "25.84px",
     "titleLines": 2,
     "price": {
-      "w": 81,
+      "w": 82,
       "h": 25,
       "y": 733
     },
@@ -1809,10 +1809,10 @@
       "h": 86,
       "y": 879
     },
-    "blurbLines": 7,
+    "blurbLines": 6,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 970
     },
@@ -1842,29 +1842,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1270
+      "y": 1231
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1358
+      "y": 1319
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1364
+      "y": 1325
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
-      "h": 34,
-      "y": 1738
+      "h": 32,
+      "y": 1699
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 187,
+    "tabRowOverflowPx": 136,
     "tabOpacities": {
       "open": [
         "1"
@@ -1880,23 +1880,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1442
+      "y": 1403
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1980,
+    "reviewsY": 1915,
     "reviewCards": 96,
-    "relatedY": 3529,
+    "relatedY": 3464,
     "relatedCards": 4,
-    "footerY": 4283
+    "footerY": 4218
   },
   "real-longname-390": {
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4163,
+    "pageHeight": 4098,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -1916,7 +1916,7 @@
       "y": 745
     },
     "title": {
-      "w": 256,
+      "w": 257,
       "h": 129,
       "y": 771
     },
@@ -1925,7 +1925,7 @@
     "titleLineHeight": "25.84px",
     "titleLines": 5,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 59,
       "y": 771
     },
@@ -1944,10 +1944,10 @@
       "h": 86,
       "y": 940
     },
-    "blurbLines": 10,
+    "blurbLines": 8,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 1032
     },
@@ -1977,29 +1977,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1332
+      "y": 1293
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1420
+      "y": 1381
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1426
+      "y": 1387
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
-      "h": 34,
-      "y": 1799
+      "h": 32,
+      "y": 1760
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 187,
+    "tabRowOverflowPx": 136,
     "tabOpacities": {
       "open": [
         "1"
@@ -2015,23 +2015,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1504
+      "y": 1465
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1996,
+    "reviewsY": 1931,
     "reviewCards": 0,
-    "relatedY": 2630,
+    "relatedY": 2565,
     "relatedCards": 4,
-    "footerY": 3384
+    "footerY": 3319
   },
   "real-set-390": {
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4030,
+    "pageHeight": 4027,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -2079,10 +2079,10 @@
       "h": 86,
       "y": 1068
     },
-    "blurbLines": 6,
+    "blurbLines": 5,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 1160
     },
@@ -2109,13 +2109,13 @@
     "tabs": 5,
     "tabRow": {
       "w": 390,
-      "h": 34,
+      "h": 32,
       "y": 1666
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 187,
+    "tabRowOverflowPx": 136,
     "tabOpacities": {
       "open": [
         "1"
@@ -2137,17 +2137,17 @@
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1863,
+    "reviewsY": 1860,
     "reviewCards": 0,
-    "relatedY": 2498,
+    "relatedY": 2495,
     "relatedCards": 4,
-    "footerY": 3251
+    "footerY": 3248
   },
   "real-toner-1280": {
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 3174,
+    "pageHeight": 3123,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -2167,14 +2167,14 @@
       "y": 152
     },
     "title": {
-      "w": 493,
-      "h": 74,
+      "w": 494,
+      "h": 37,
       "y": 178
     },
     "titleFont": "30px",
     "titleWeight": "500",
     "titleLineHeight": "37.2px",
-    "titleLines": 2,
+    "titleLines": 1,
     "price": {
       "w": 73,
       "h": 59,
@@ -2186,7 +2186,7 @@
     "ratingRow": {
       "w": 582,
       "h": 38,
-      "y": 289
+      "y": 274
     },
     "ratingBarFill": "96%",
     "capsulePill": {
@@ -2197,14 +2197,14 @@
     "blurb": {
       "w": 582,
       "h": 86,
-      "y": 347
+      "y": 331
     },
-    "blurbLines": 6,
+    "blurbLines": 5,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
-      "y": 438
+      "y": 423
     },
     "bundleBars": 3,
     "setRows": 0,
@@ -2232,24 +2232,24 @@
     "stockline": {
       "w": 582,
       "h": 41,
-      "y": 699
+      "y": 684
     },
     "addToCart": {
       "w": 440,
       "h": 54,
-      "y": 787
+      "y": 772
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 793
+      "y": 778
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 1236,
-      "h": 34,
-      "y": 1166
+      "h": 32,
+      "y": 1151
     },
     "tabRowVisible": true,
     "accordionVisible": false,
@@ -2270,17 +2270,17 @@
     "trust": {
       "w": 582,
       "h": 98,
-      "y": 871
+      "y": 856
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1409,
+    "reviewsY": 1368,
     "reviewCards": 5,
-    "relatedY": 2356,
+    "relatedY": 2315,
     "relatedCards": 4,
-    "footerY": 2825
+    "footerY": 2784
   },
   "real-toner-1280-open3": {
     "openTabIndex": 3,
@@ -2291,7 +2291,7 @@
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2687,
+    "pageHeight": 2675,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -2311,7 +2311,7 @@
       "y": 152
     },
     "title": {
-      "w": 492,
+      "w": 493,
       "h": 37,
       "y": 178
     },
@@ -2320,7 +2320,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 1,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 25,
       "y": 178
     },
@@ -2339,10 +2339,10 @@
       "h": 86,
       "y": 256
     },
-    "blurbLines": 6,
+    "blurbLines": 5,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 348
     },
@@ -2388,7 +2388,7 @@
     "tabs": 5,
     "tabRow": {
       "w": 1236,
-      "h": 34,
+      "h": 32,
       "y": 1076
     },
     "tabRowVisible": true,
@@ -2416,17 +2416,17 @@
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1250,
+    "reviewsY": 1247,
     "reviewCards": 0,
-    "relatedY": 1869,
+    "relatedY": 1866,
     "relatedCards": 4,
-    "footerY": 2338
+    "footerY": 2335
   },
   "real-many-1280": {
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 3255,
+    "pageHeight": 3242,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -2455,7 +2455,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 2,
     "price": {
-      "w": 81,
+      "w": 82,
       "h": 25,
       "y": 178
     },
@@ -2481,7 +2481,7 @@
     "blurbLines": 4,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 438
     },
@@ -2527,7 +2527,7 @@
     "tabs": 5,
     "tabRow": {
       "w": 1236,
-      "h": 34,
+      "h": 32,
       "y": 1166
     },
     "tabRowVisible": true,
@@ -2555,17 +2555,17 @@
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1363,
+    "reviewsY": 1360,
     "reviewCards": 96,
-    "relatedY": 2437,
+    "relatedY": 2434,
     "relatedCards": 4,
-    "footerY": 2906
+    "footerY": 2903
   },
   "real-longname-1280": {
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2836,
+    "pageHeight": 2786,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -2585,16 +2585,16 @@
       "y": 152
     },
     "title": {
-      "w": 492,
-      "h": 186,
+      "w": 494,
+      "h": 149,
       "y": 178
     },
     "titleFont": "30px",
     "titleWeight": "500",
     "titleLineHeight": "37.2px",
-    "titleLines": 5,
+    "titleLines": 4,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 59,
       "y": 178
     },
@@ -2604,21 +2604,21 @@
     "ratingRow": {
       "w": 582,
       "h": 0,
-      "y": 401
+      "y": 364
     },
     "ratingBarFill": null,
     "capsulePill": null,
     "blurb": {
       "w": 582,
       "h": 86,
-      "y": 405
+      "y": 368
     },
-    "blurbLines": 6,
+    "blurbLines": 5,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
-      "y": 496
+      "y": 459
     },
     "bundleBars": 3,
     "setRows": 0,
@@ -2646,24 +2646,24 @@
     "stockline": {
       "w": 582,
       "h": 41,
-      "y": 757
+      "y": 720
     },
     "addToCart": {
       "w": 440,
       "h": 54,
-      "y": 845
+      "y": 808
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 851
+      "y": 814
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 1236,
-      "h": 34,
-      "y": 1225
+      "h": 32,
+      "y": 1187
     },
     "tabRowVisible": true,
     "accordionVisible": false,
@@ -2684,23 +2684,23 @@
     "trust": {
       "w": 582,
       "h": 98,
-      "y": 929
+      "y": 892
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1398,
+    "reviewsY": 1358,
     "reviewCards": 0,
-    "relatedY": 2018,
+    "relatedY": 1978,
     "relatedCards": 4,
-    "footerY": 2487
+    "footerY": 2447
   },
   "real-set-1280": {
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2736,
+    "pageHeight": 2723,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -2748,10 +2748,10 @@
       "h": 86,
       "y": 526
     },
-    "blurbLines": 4,
+    "blurbLines": 3,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 618
     },
@@ -2778,7 +2778,7 @@
     "tabs": 5,
     "tabRow": {
       "w": 1236,
-      "h": 34,
+      "h": 32,
       "y": 1124
     },
     "tabRowVisible": true,
@@ -2806,11 +2806,11 @@
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1298,
+    "reviewsY": 1295,
     "reviewCards": 0,
-    "relatedY": 1918,
+    "relatedY": 1915,
     "relatedCards": 4,
-    "footerY": 2387
+    "footerY": 2384
   },
   "type-a-390": {
     "dir": "ltr",
@@ -3233,7 +3233,7 @@
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4964,
+    "pageHeight": 4925,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -3318,29 +3318,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1278
+      "y": 1239
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1366
+      "y": 1327
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1372
+      "y": 1333
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
       "h": 40,
-      "y": 1777
+      "y": 1738
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 94,
+    "tabRowOverflowPx": 92,
     "tabOpacities": {
       "open": [
         "1"
@@ -3356,17 +3356,17 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1450
+      "y": 1411
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 2042,
+    "reviewsY": 2003,
     "reviewCards": 5,
-    "relatedY": 3329,
+    "relatedY": 3290,
     "relatedCards": 4,
-    "footerY": 4151
+    "footerY": 4112
   },
   "ar-real-toner-390-open3": {
     "openTabIndex": 3,
@@ -3377,7 +3377,7 @@
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4375,
+    "pageHeight": 4314,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -3397,7 +3397,7 @@
       "y": 707
     },
     "title": {
-      "w": 256,
+      "w": 257,
       "h": 26,
       "y": 733
     },
@@ -3406,7 +3406,7 @@
     "titleLineHeight": "25.84px",
     "titleLines": 1,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 25,
       "y": 733
     },
@@ -3425,7 +3425,7 @@
       "h": 86,
       "y": 799
     },
-    "blurbLines": 10,
+    "blurbLines": 8,
     "blurbMasked": true,
     "readMore": {
       "w": 54,
@@ -3458,29 +3458,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1191
+      "y": 1152
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1279
+      "y": 1240
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1285
+      "y": 1246
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
       "h": 40,
-      "y": 1890
+      "y": 1829
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 94,
+    "tabRowOverflowPx": 92,
     "tabOpacities": {
       "open": [
         "1"
@@ -3496,23 +3496,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1563
+      "y": 1502
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 2097,
+    "reviewsY": 2036,
     "reviewCards": 0,
-    "relatedY": 2739,
+    "relatedY": 2678,
     "relatedCards": 4,
-    "footerY": 3562
+    "footerY": 3501
   },
   "ar-real-many-390": {
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 5262,
+    "pageHeight": 5200,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -3532,7 +3532,7 @@
       "y": 707
     },
     "title": {
-      "w": 249,
+      "w": 248,
       "h": 52,
       "y": 733
     },
@@ -3541,7 +3541,7 @@
     "titleLineHeight": "25.84px",
     "titleLines": 2,
     "price": {
-      "w": 81,
+      "w": 82,
       "h": 25,
       "y": 733
     },
@@ -3564,7 +3564,7 @@
       "h": 86,
       "y": 879
     },
-    "blurbLines": 7,
+    "blurbLines": 6,
     "blurbMasked": true,
     "readMore": {
       "w": 54,
@@ -3597,29 +3597,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1270
+      "y": 1231
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1358
+      "y": 1319
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1364
+      "y": 1325
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
       "h": 40,
-      "y": 1769
+      "y": 1730
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 94,
+    "tabRowOverflowPx": 92,
     "tabOpacities": {
       "open": [
         "1"
@@ -3635,23 +3635,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1442
+      "y": 1403
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 2022,
+    "reviewsY": 1960,
     "reviewCards": 96,
-    "relatedY": 3627,
+    "relatedY": 3565,
     "relatedCards": 4,
-    "footerY": 4449
+    "footerY": 4387
   },
   "ar-real-longname-390": {
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4315,
+    "pageHeight": 4253,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -3671,7 +3671,7 @@
       "y": 745
     },
     "title": {
-      "w": 256,
+      "w": 257,
       "h": 129,
       "y": 771
     },
@@ -3680,7 +3680,7 @@
     "titleLineHeight": "25.84px",
     "titleLines": 5,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 59,
       "y": 771
     },
@@ -3699,7 +3699,7 @@
       "h": 86,
       "y": 940
     },
-    "blurbLines": 10,
+    "blurbLines": 8,
     "blurbMasked": true,
     "readMore": {
       "w": 54,
@@ -3732,29 +3732,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1332
+      "y": 1293
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1420
+      "y": 1381
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1426
+      "y": 1387
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
       "h": 40,
-      "y": 1831
+      "y": 1792
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 94,
+    "tabRowOverflowPx": 92,
     "tabOpacities": {
       "open": [
         "1"
@@ -3770,17 +3770,17 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1504
+      "y": 1465
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 2038,
+    "reviewsY": 1976,
     "reviewCards": 0,
-    "relatedY": 2680,
+    "relatedY": 2618,
     "relatedCards": 4,
-    "footerY": 3503
+    "footerY": 3441
   },
   "ar-real-set-390": {
     "dir": "rtl",
@@ -3870,7 +3870,7 @@
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 94,
+    "tabRowOverflowPx": 92,
     "tabOpacities": {
       "open": [
         "1"
@@ -3902,7 +3902,7 @@
     "dir": "rtl",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 3183,
+    "pageHeight": 3173,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -3922,7 +3922,7 @@
       "y": 152
     },
     "title": {
-      "w": 493,
+      "w": 494,
       "h": 37,
       "y": 178
     },
@@ -4046,7 +4046,7 @@
     "dir": "rtl",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2880,
+    "pageHeight": 2867,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -4066,7 +4066,7 @@
       "y": 152
     },
     "title": {
-      "w": 492,
+      "w": 493,
       "h": 37,
       "y": 178
     },
@@ -4075,7 +4075,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 1,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 25,
       "y": 178
     },
@@ -4094,7 +4094,7 @@
       "h": 86,
       "y": 256
     },
-    "blurbLines": 6,
+    "blurbLines": 5,
     "blurbMasked": true,
     "readMore": {
       "w": 54,
@@ -4144,7 +4144,7 @@
     "tabRow": {
       "w": 1236,
       "h": 40,
-      "y": 1240
+      "y": 1236
     },
     "tabRowVisible": true,
     "accordionVisible": false,
@@ -4165,23 +4165,23 @@
     "trust": {
       "w": 582,
       "h": 98,
-      "y": 944
+      "y": 940
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1424,
+    "reviewsY": 1420,
     "reviewCards": 0,
-    "relatedY": 2062,
+    "relatedY": 2058,
     "relatedCards": 4,
-    "footerY": 2531
+    "footerY": 2527
   },
   "ar-real-many-1280": {
     "dir": "rtl",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 3314,
+    "pageHeight": 3304,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -4210,7 +4210,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 2,
     "price": {
-      "w": 81,
+      "w": 82,
       "h": 25,
       "y": 178
     },
@@ -4320,7 +4320,7 @@
     "dir": "rtl",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2865,
+    "pageHeight": 2818,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -4340,16 +4340,16 @@
       "y": 152
     },
     "title": {
-      "w": 492,
-      "h": 186,
+      "w": 494,
+      "h": 149,
       "y": 178
     },
     "titleFont": "30px",
     "titleWeight": "500",
     "titleLineHeight": "37.2px",
-    "titleLines": 5,
+    "titleLines": 4,
     "price": {
-      "w": 74,
+      "w": 73,
       "h": 59,
       "y": 178
     },
@@ -4359,21 +4359,21 @@
     "ratingRow": {
       "w": 582,
       "h": 0,
-      "y": 401
+      "y": 364
     },
     "ratingBarFill": null,
     "capsulePill": null,
     "blurb": {
       "w": 582,
       "h": 86,
-      "y": 405
+      "y": 368
     },
-    "blurbLines": 6,
+    "blurbLines": 5,
     "blurbMasked": true,
     "readMore": {
       "w": 54,
       "h": 18,
-      "y": 496
+      "y": 459
     },
     "bundleBars": 3,
     "setRows": 0,
@@ -4401,24 +4401,24 @@
     "stockline": {
       "w": 582,
       "h": 41,
-      "y": 757
+      "y": 720
     },
     "addToCart": {
       "w": 440,
       "h": 54,
-      "y": 845
+      "y": 808
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 851
+      "y": 814
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 1236,
       "h": 40,
-      "y": 1225
+      "y": 1187
     },
     "tabRowVisible": true,
     "accordionVisible": false,
@@ -4439,23 +4439,23 @@
     "trust": {
       "w": 582,
       "h": 98,
-      "y": 929
+      "y": 892
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1408,
+    "reviewsY": 1371,
     "reviewCards": 0,
-    "relatedY": 2047,
+    "relatedY": 2010,
     "relatedCards": 4,
-    "footerY": 2516
+    "footerY": 2479
   },
   "ar-real-set-1280": {
     "dir": "rtl",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2744,
+    "pageHeight": 2734,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -4571,7 +4571,7 @@
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 3991,
+    "pageHeight": 3962,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -4591,16 +4591,16 @@
       "y": 707
     },
     "title": {
-      "w": 156,
-      "h": 77,
+      "w": 157,
+      "h": 52,
       "y": 733
     },
     "titleFont": "19px",
     "titleWeight": "500",
     "titleLineHeight": "25.84px",
-    "titleLines": 3,
+    "titleLines": 2,
     "price": {
-      "w": 174,
+      "w": 173,
       "h": 25,
       "y": 733
     },
@@ -4610,21 +4610,21 @@
     "ratingRow": {
       "w": 346,
       "h": 0,
-      "y": 847
+      "y": 821
     },
     "ratingBarFill": null,
     "capsulePill": null,
     "blurb": {
       "w": 346,
       "h": 65,
-      "y": 851
+      "y": 825
     },
     "blurbLines": 2,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
-      "y": 922
+      "y": 896
     },
     "bundleBars": 3,
     "setRows": 0,
@@ -4652,29 +4652,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1182
+      "y": 1157
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1270
+      "y": 1245
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1276
+      "y": 1251
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
-      "h": 34,
-      "y": 1650
+      "h": 32,
+      "y": 1624
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 187,
+    "tabRowOverflowPx": 136,
     "tabOpacities": {
       "open": [
         "1"
@@ -4690,23 +4690,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1354
+      "y": 1329
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1824,
+    "reviewsY": 1795,
     "reviewCards": 0,
-    "relatedY": 2458,
+    "relatedY": 2430,
     "relatedCards": 4,
-    "footerY": 3212
+    "footerY": 3183
   },
   "real-variable-1280": {
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2682,
+    "pageHeight": 2669,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -4726,7 +4726,7 @@
       "y": 152
     },
     "title": {
-      "w": 392,
+      "w": 393,
       "h": 74,
       "y": 178
     },
@@ -4735,7 +4735,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 2,
     "price": {
-      "w": 174,
+      "w": 173,
       "h": 25,
       "y": 178
     },
@@ -4757,7 +4757,7 @@
     "blurbLines": 1,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 342
     },
@@ -4803,7 +4803,7 @@
     "tabs": 5,
     "tabRow": {
       "w": 1236,
-      "h": 34,
+      "h": 32,
       "y": 1070
     },
     "tabRowVisible": true,
@@ -4831,17 +4831,17 @@
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1244,
+    "reviewsY": 1241,
     "reviewCards": 0,
-    "relatedY": 1864,
+    "relatedY": 1861,
     "relatedCards": 4,
-    "footerY": 2333
+    "footerY": 2330
   },
   "ar-real-variable-390": {
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4143,
+    "pageHeight": 4118,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -4861,16 +4861,16 @@
       "y": 707
     },
     "title": {
-      "w": 156,
-      "h": 77,
+      "w": 157,
+      "h": 52,
       "y": 733
     },
     "titleFont": "19px",
     "titleWeight": "500",
     "titleLineHeight": "25.84px",
-    "titleLines": 3,
+    "titleLines": 2,
     "price": {
-      "w": 174,
+      "w": 173,
       "h": 25,
       "y": 733
     },
@@ -4880,21 +4880,21 @@
     "ratingRow": {
       "w": 346,
       "h": 0,
-      "y": 847
+      "y": 821
     },
     "ratingBarFill": null,
     "capsulePill": null,
     "blurb": {
       "w": 346,
       "h": 65,
-      "y": 851
+      "y": 825
     },
     "blurbLines": 2,
     "blurbMasked": true,
     "readMore": {
       "w": 54,
       "h": 18,
-      "y": 922
+      "y": 896
     },
     "bundleBars": 3,
     "setRows": 0,
@@ -4922,29 +4922,29 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1182
+      "y": 1157
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1270
+      "y": 1245
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1276
+      "y": 1251
     },
     "buyNow": null,
     "tabs": 5,
     "tabRow": {
       "w": 390,
       "h": 40,
-      "y": 1682
+      "y": 1656
     },
     "tabRowVisible": true,
     "accordionVisible": false,
     "tabRowScrolls": true,
-    "tabRowOverflowPx": 94,
+    "tabRowOverflowPx": 92,
     "tabOpacities": {
       "open": [
         "1"
@@ -4960,23 +4960,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1354
+      "y": 1329
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1866,
+    "reviewsY": 1840,
     "reviewCards": 0,
-    "relatedY": 2508,
+    "relatedY": 2482,
     "relatedCards": 4,
-    "footerY": 3331
+    "footerY": 3305
   },
   "ar-real-variable-1280": {
     "dir": "rtl",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2711,
+    "pageHeight": 2701,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -4996,7 +4996,7 @@
       "y": 152
     },
     "title": {
-      "w": 392,
+      "w": 393,
       "h": 74,
       "y": 178
     },
@@ -5005,7 +5005,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 2,
     "price": {
-      "w": 174,
+      "w": 173,
       "h": 25,
       "y": 178
     },
@@ -5111,7 +5111,7 @@
     "dir": "ltr",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4040,
+    "pageHeight": 3975,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -5127,7 +5127,7 @@
       "y": 717
     },
     "title": {
-      "w": 246,
+      "w": 245,
       "h": 77,
       "y": 743
     },
@@ -5136,7 +5136,7 @@
     "titleLineHeight": "25.84px",
     "titleLines": 3,
     "price": {
-      "w": 84,
+      "w": 85,
       "h": 25,
       "y": 743
     },
@@ -5158,7 +5158,7 @@
     "blurbLines": 1,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 909
     },
@@ -5188,24 +5188,24 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1209
+      "y": 1170
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1297
+      "y": 1258
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1303
+      "y": 1264
     },
     "buyNow": null,
     "tabs": 3,
     "tabRow": {
       "w": 390,
-      "h": 34,
-      "y": 1677
+      "h": 32,
+      "y": 1638
     },
     "tabRowVisible": true,
     "accordionVisible": false,
@@ -5224,23 +5224,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1381
+      "y": 1342
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1873,
+    "reviewsY": 1809,
     "reviewCards": 0,
-    "relatedY": 2508,
+    "relatedY": 2443,
     "relatedCards": 4,
-    "footerY": 3262
+    "footerY": 3197
   },
   "real-unbreakable-1280": {
     "dir": "ltr",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2719,
+    "pageHeight": 2706,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -5265,7 +5265,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 3,
     "price": {
-      "w": 84,
+      "w": 85,
       "h": 25,
       "y": 178
     },
@@ -5287,7 +5287,7 @@
     "blurbLines": 1,
     "blurbMasked": true,
     "readMore": {
-      "w": 80,
+      "w": 70,
       "h": 18,
       "y": 379
     },
@@ -5333,7 +5333,7 @@
     "tabs": 3,
     "tabRow": {
       "w": 1236,
-      "h": 34,
+      "h": 32,
       "y": 1107
     },
     "tabRowVisible": true,
@@ -5359,17 +5359,17 @@
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1281,
+    "reviewsY": 1278,
     "reviewCards": 0,
-    "relatedY": 1901,
+    "relatedY": 1898,
     "relatedCards": 4,
-    "footerY": 2370
+    "footerY": 2367
   },
   "ar-real-unbreakable-390": {
     "dir": "rtl",
     "viewport": 390,
     "scrollWidth": 390,
-    "pageHeight": 4193,
+    "pageHeight": 4131,
     "galleryFrame": {
       "w": 390,
       "h": 390,
@@ -5385,7 +5385,7 @@
       "y": 717
     },
     "title": {
-      "w": 246,
+      "w": 245,
       "h": 77,
       "y": 743
     },
@@ -5394,7 +5394,7 @@
     "titleLineHeight": "25.84px",
     "titleLines": 3,
     "price": {
-      "w": 84,
+      "w": 85,
       "h": 25,
       "y": 743
     },
@@ -5446,24 +5446,24 @@
     "stockline": {
       "w": 346,
       "h": 41,
-      "y": 1209
+      "y": 1170
     },
     "addToCart": {
       "w": 204,
       "h": 54,
-      "y": 1297
+      "y": 1258
     },
     "qty": {
       "w": 130,
       "h": 56,
-      "y": 1303
+      "y": 1264
     },
     "buyNow": null,
     "tabs": 3,
     "tabRow": {
       "w": 390,
       "h": 40,
-      "y": 1708
+      "y": 1669
     },
     "tabRowVisible": true,
     "accordionVisible": false,
@@ -5482,23 +5482,23 @@
     "trust": {
       "w": 346,
       "h": 98,
-      "y": 1381
+      "y": 1342
     },
     "trustBackground": "rgba(0, 0, 0, 0)",
     "trustItems": 3,
     "payChips": 5,
     "fbtY": null,
-    "reviewsY": 1915,
+    "reviewsY": 1853,
     "reviewCards": 0,
-    "relatedY": 2558,
+    "relatedY": 2496,
     "relatedCards": 4,
-    "footerY": 3380
+    "footerY": 3318
   },
   "ar-real-unbreakable-1280": {
     "dir": "rtl",
     "viewport": 1280,
     "scrollWidth": 1280,
-    "pageHeight": 2748,
+    "pageHeight": 2738,
     "galleryFrame": {
       "w": 634,
       "h": 634,
@@ -5523,7 +5523,7 @@
     "titleLineHeight": "37.2px",
     "titleLines": 3,
     "price": {
-      "w": 84,
+      "w": 85,
       "h": 25,
       "y": 178
     },
@@ -5622,5 +5622,1101 @@
     "relatedY": 1930,
     "relatedCards": 4,
     "footerY": 2399
+  },
+  "type-a-short-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4742,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 241
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 601
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 707
+    },
+    "title": {
+      "w": 257,
+      "h": 56,
+      "y": 733
+    },
+    "titleFont": "21px",
+    "titleWeight": "500",
+    "titleLineHeight": "28.14px",
+    "titleLines": 2,
+    "price": {
+      "w": 73,
+      "h": 59,
+      "y": 733
+    },
+    "priceFont": "22px",
+    "priceWeight": "800",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 38,
+      "y": 829
+    },
+    "ratingBarFill": "96%",
+    "capsulePill": {
+      "background": "rgba(0, 0, 0, 0)",
+      "border": "0px",
+      "radius": "0px"
+    },
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 886
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 978
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1239
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1327
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1333
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1706
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1411
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1958,
+    "reviewCards": 5,
+    "relatedY": 3210,
+    "relatedCards": 4,
+    "footerY": 3964
+  },
+  "type-b-short-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4742,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 241
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 601
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 707
+    },
+    "title": {
+      "w": 257,
+      "h": 52,
+      "y": 733
+    },
+    "titleFont": "19px",
+    "titleWeight": "500",
+    "titleLineHeight": "25.84px",
+    "titleLines": 2,
+    "price": {
+      "w": 73,
+      "h": 59,
+      "y": 733
+    },
+    "priceFont": "22px",
+    "priceWeight": "800",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 38,
+      "y": 829
+    },
+    "ratingBarFill": "96%",
+    "capsulePill": {
+      "background": "rgba(0, 0, 0, 0)",
+      "border": "0px",
+      "radius": "0px"
+    },
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 886
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 978
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1239
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1327
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1333
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1706
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1411
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1958,
+    "reviewCards": 5,
+    "relatedY": 3210,
+    "relatedCards": 4,
+    "footerY": 3964
+  },
+  "type-c-short-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4743,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 241
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 601
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 707
+    },
+    "title": {
+      "w": 255,
+      "h": 48,
+      "y": 733
+    },
+    "titleFont": "17px",
+    "titleWeight": "500",
+    "titleLineHeight": "24.14px",
+    "titleLines": 2,
+    "price": {
+      "w": 75,
+      "h": 60,
+      "y": 733
+    },
+    "priceFont": "23px",
+    "priceWeight": "700",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 38,
+      "y": 830
+    },
+    "ratingBarFill": "96%",
+    "capsulePill": {
+      "background": "rgba(0, 0, 0, 0)",
+      "border": "0px",
+      "radius": "0px"
+    },
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 887
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 979
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1240
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1328
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1334
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1707
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1412
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1959,
+    "reviewCards": 5,
+    "relatedY": 3211,
+    "relatedCards": 4,
+    "footerY": 3965
+  },
+  "type-a-long-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4130,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 260
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 620
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 726
+    },
+    "title": {
+      "w": 224,
+      "h": 141,
+      "y": 752
+    },
+    "titleFont": "21px",
+    "titleWeight": "500",
+    "titleLineHeight": "28.14px",
+    "titleLines": 5,
+    "price": {
+      "w": 106,
+      "h": 25,
+      "y": 752
+    },
+    "priceFont": "22px",
+    "priceWeight": "800",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 0,
+      "y": 929
+    },
+    "ratingBarFill": null,
+    "capsulePill": null,
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 933
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 1024
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1324
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1412
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1418
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1792
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1496
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1963,
+    "reviewCards": 0,
+    "relatedY": 2597,
+    "relatedCards": 4,
+    "footerY": 3351
+  },
+  "type-b-long-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4092,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 260
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 620
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 726
+    },
+    "title": {
+      "w": 224,
+      "h": 103,
+      "y": 752
+    },
+    "titleFont": "19px",
+    "titleWeight": "500",
+    "titleLineHeight": "25.84px",
+    "titleLines": 4,
+    "price": {
+      "w": 106,
+      "h": 25,
+      "y": 752
+    },
+    "priceFont": "22px",
+    "priceWeight": "800",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 0,
+      "y": 892
+    },
+    "ratingBarFill": null,
+    "capsulePill": null,
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 896
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 987
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1287
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1375
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1381
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1754
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1459
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1925,
+    "reviewCards": 0,
+    "relatedY": 2560,
+    "relatedCards": 4,
+    "footerY": 3314
+  },
+  "type-c-long-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4085,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 260
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 620
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 726
+    },
+    "title": {
+      "w": 221,
+      "h": 97,
+      "y": 752
+    },
+    "titleFont": "17px",
+    "titleWeight": "500",
+    "titleLineHeight": "24.14px",
+    "titleLines": 4,
+    "price": {
+      "w": 109,
+      "h": 26,
+      "y": 752
+    },
+    "priceFont": "23px",
+    "priceWeight": "700",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 0,
+      "y": 885
+    },
+    "ratingBarFill": null,
+    "capsulePill": null,
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 889
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 980
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1280
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1368
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1374
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1748
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1452
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1919,
+    "reviewCards": 0,
+    "relatedY": 2553,
+    "relatedCards": 4,
+    "footerY": 3307
+  },
+  "type-p-short-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4742,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 241
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 4,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 601
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 707
+    },
+    "title": {
+      "w": 257,
+      "h": 55,
+      "y": 733
+    },
+    "titleFont": "21px",
+    "titleWeight": "600",
+    "titleLineHeight": "27.3px",
+    "titleLines": 2,
+    "price": {
+      "w": 73,
+      "h": 59,
+      "y": 733
+    },
+    "priceFont": "22px",
+    "priceWeight": "800",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 38,
+      "y": 829
+    },
+    "ratingBarFill": "96%",
+    "capsulePill": {
+      "background": "rgba(0, 0, 0, 0)",
+      "border": "0px",
+      "radius": "0px"
+    },
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 886
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 978
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1239
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1327
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1333
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1706
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1411
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1958,
+    "reviewCards": 5,
+    "relatedY": 3210,
+    "relatedCards": 4,
+    "footerY": 3964
+  },
+  "type-p-long-390": {
+    "dir": "ltr",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "pageHeight": 4125,
+    "galleryFrame": {
+      "w": 390,
+      "h": 390,
+      "y": 260
+    },
+    "galleryRadius": "0px",
+    "galleryAspect": "1 / 1",
+    "thumbs": 3,
+    "thumbStrip": {
+      "w": 390,
+      "h": 58,
+      "y": 620
+    },
+    "brand": {
+      "w": 346,
+      "h": 18,
+      "y": 726
+    },
+    "title": {
+      "w": 224,
+      "h": 136,
+      "y": 752
+    },
+    "titleFont": "21px",
+    "titleWeight": "600",
+    "titleLineHeight": "27.3px",
+    "titleLines": 5,
+    "price": {
+      "w": 106,
+      "h": 25,
+      "y": 752
+    },
+    "priceFont": "22px",
+    "priceWeight": "800",
+    "priceBesideTitle": true,
+    "ratingRow": {
+      "w": 346,
+      "h": 0,
+      "y": 925
+    },
+    "ratingBarFill": null,
+    "capsulePill": null,
+    "blurb": {
+      "w": 346,
+      "h": 86,
+      "y": 929
+    },
+    "blurbLines": 8,
+    "blurbMasked": true,
+    "readMore": {
+      "w": 70,
+      "h": 18,
+      "y": 1020
+    },
+    "bundleBars": 3,
+    "setRows": 0,
+    "optionRows": [
+      {
+        "on": true,
+        "oos": false,
+        "label": "1 unit",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "2-pack bundle",
+        "vid": null
+      },
+      {
+        "on": false,
+        "oos": false,
+        "label": "3-pack bundle",
+        "vid": null
+      }
+    ],
+    "armedVariationId": null,
+    "stockline": {
+      "w": 346,
+      "h": 41,
+      "y": 1320
+    },
+    "addToCart": {
+      "w": 204,
+      "h": 54,
+      "y": 1408
+    },
+    "qty": {
+      "w": 130,
+      "h": 56,
+      "y": 1414
+    },
+    "buyNow": null,
+    "tabs": 5,
+    "tabRow": {
+      "w": 390,
+      "h": 32,
+      "y": 1788
+    },
+    "tabRowVisible": true,
+    "accordionVisible": false,
+    "tabRowScrolls": true,
+    "tabRowOverflowPx": 136,
+    "tabOpacities": {
+      "open": [
+        "1"
+      ],
+      "closed": [
+        "0.38",
+        "0.38",
+        "0.38",
+        "0.38"
+      ]
+    },
+    "openPanels": 1,
+    "trust": {
+      "w": 346,
+      "h": 98,
+      "y": 1492
+    },
+    "trustBackground": "rgba(0, 0, 0, 0)",
+    "trustItems": 3,
+    "payChips": 5,
+    "fbtY": null,
+    "reviewsY": 1959,
+    "reviewCards": 0,
+    "relatedY": 2593,
+    "relatedCards": 4,
+    "footerY": 3347
   }
 }

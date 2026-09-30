@@ -865,8 +865,10 @@ a{color:inherit;text-decoration:none}
    ▲ AND THE MASK IS PHONE-ONLY, because at 1280 the five tabs fit with room to
      spare and there is nothing to the right to point at -- a fade there would
      dim the last tab for no reason. Measured in Chromium on the five-tab
-     fixture: the row overflows by 187px at 390 (94px on /ar, where the Arabic
-     titles are shorter) and by 0 at 1280. */
+     fixture: the row overflows by 136px at 390 (92px on /ar, where the Arabic
+     titles are shorter) and by 0 at 1280. Re-measured after the shop moved from
+     Poppins to Outfit, which is narrower and took 51px off the English figure
+     without coming near closing the gap. */
 .details .dtabbar{gap:22px;border-block-end:1px solid var(--line-2);margin-block-end:18px;
     overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
 .details .dtabbar::-webkit-scrollbar{display:none}
