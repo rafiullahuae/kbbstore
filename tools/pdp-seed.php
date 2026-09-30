@@ -414,6 +414,52 @@ foreach ([
     $v->attributeValues()->sync([$sizes[$label]->id]);
 }
 
+/* ── 3d. THE LONGEST NAME IN HIS OWN CATALOGUE. (Lane PDP2, round 2) ───────
+ *
+ * The mobile type sheet was first drawn on `pdp-heartleaf-toner`, whose name is
+ * 34 characters and comes out at two line-boxes in every option offered -- so
+ * the sheet showed him three pictures that differed by a type size and not by
+ * the thing he complained about, which is a THIRD LINE. The option that matters
+ * is the one that survives the longest name he actually sells.
+ *
+ * ▲ IT IS COPIED FROM storage/catalog/products.json, WHICH IS REAL. The README
+ *   says so in as many words -- "real source data (the product catalogue
+ *   import)" -- and tests/Feature/SeoPreviewsTest calls it the only real
+ *   catalogue data in this repository. 22 products; the median name is 39
+ *   characters and this one is 82, which makes it the worst case he owns rather
+ *   than the worst case anybody can imagine.
+ *
+ * ▲ THE ™ AND THE & ARE KEPT. They are in his data, they are wider than a
+ *   letter in most faces, and an ampersand is a break opportunity a fixture
+ *   without one would not have. A fixture that tidies its own input is a
+ *   fixture that measures something else -- the round before this one lost a
+ *   claim to exactly that, with hyphens.
+ *
+ * ▲ AND ITS PRICE IS HIS TOO. AED 2,450 is four figures plus a separator, which
+ *   is the widest price box in the catalogue and therefore the narrowest title
+ *   track. Option C raises the price, so the pair has to be drawn together.
+ */
+$shark = \App\Models\Brand::updateOrCreate(['slug' => 'shark-beauty'], ['name' => 'Shark Beauty']);
+
+\App\Models\Product::updateOrCreate(['slug' => 'pdp-longest-real-name'], [
+    'name' => 'Shark™ CryoGlow™ Under-Eye Cooling + LED Anti-Aging Red Light & Skin Clearing Mask',
+    'brand_id' => $shark->id,
+    'price' => 245000,
+    'status' => 'publish',
+    'is_visible' => true,
+    'stock_status' => 'instock',
+    'type' => 'simple',
+    'short_description' => $blurb,
+    'description' => '<p>An under-eye device combining cooling and red light.</p>',
+    'ingredients' => $ingredients,
+    'how_to_use' => $howTo,
+    'image' => $shot('#EDF1F7', '#D9E2EF', '#2F4A7A', '15'),
+    'images' => [
+        $shot('#F7EFF2', '#EDDAE2', '#8E3352', '16'),
+        $shot('#F1F7F2', '#DCEEE0', '#2F7F44', '17'),
+    ],
+]);
+
 /* ── 4. TWO GLOBAL TABS, so the row is FIVE long and actually overflows ─────
  *
  * `source_key` null and `product_id` null is what App\Support\ProductTabs calls

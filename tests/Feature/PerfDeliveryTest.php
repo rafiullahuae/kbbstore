@@ -319,7 +319,8 @@ it('carries every face Google serves, and preloads only the ones the page uses',
  * rather than a bug, and is exactly what nobody notices in review.
  *
  * MUTATION, run: put `Poppins` back in one declaration in kbb.css → red, and
- * the message names the file.
+ * the message names the file. Re-run after Lane PDP2 taught the scan to strip
+ * comments: still red, still names the file.
  */
 it('names one family for Latin text, and it is the one it serves', function () {
     $named = [];
@@ -329,7 +330,33 @@ it('names one family for Latin text, and it is the one it serves', function () {
         (array) glob(resource_path('views/**/*.blade.php')),
         (array) glob(resource_path('views/**/**/*.blade.php')),
     ) as $file) {
-        if (str_contains((string) file_get_contents((string) $file), 'Poppins')) {
+        /*
+         * ▲ COMMENTS COME OUT FIRST, BECAUSE THIS TEST'S CLAIM IS "ASKS FOR".
+         *                                                        (Lane PDP2)
+         *
+         * A comment naming the old family asks for nothing: it is stripped by
+         * the minifier and never reaches a browser, and the whole failure this
+         * case exists to catch is a `font-family` that FALLS THROUGH to
+         * system-ui. Scanned raw, the one thing nobody may do is write down
+         * that the migration happened -- which is what
+         * resources/css/kbb/kbb-product.css did, in a note correcting a
+         * measured tab-row overflow that moved BECAUSE of the swap, and this
+         * case went red on a stylesheet whose every declaration says Outfit.
+         *
+         * That is an assertion failing for a reason unrelated to what it
+         * claims, which is the same defect as one passing for the wrong reason
+         * and is caught the same way: name the thing under test.
+         *
+         * IT IS NOT A LOOSENING, AND THE MUTATION SAYS SO. Putting `Poppins`
+         * back into a real declaration in kbb.css is still RED and still names
+         * the file -- run both ways, see the note above this case.
+         */
+        $source = (string) file_get_contents((string) $file);
+        $source = (string) preg_replace('#/\*.*?\*/#s', '', $source);      // CSS
+        $source = (string) preg_replace('/\{\{--.*?--\}\}/s', '', $source); // Blade
+        $source = (string) preg_replace('#<!--.*?-->#s', '', $source);       // HTML
+
+        if (str_contains($source, 'Poppins')) {
             $named[] = str_replace(base_path().'/', '', (string) $file);
         }
     }

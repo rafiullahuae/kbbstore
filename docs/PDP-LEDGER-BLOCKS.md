@@ -55,13 +55,16 @@ never trust a file list.
 
 ---
 
-## Block 3 · the mobile type, once he has picked a letter
+## Block 3 · the mobile type — **A or B**, and C is withdrawn
 
-`docs/lane-pdp-shots/sheet-real-type-390.png` is the picture. **B ships**; this
-block is only if he answers **A** or **C**. See §4 of
-`docs/PDP-LEDGER-HANDOVER.md` for the measured numbers behind each.
+`docs/PDP-LEDGER-HANDOVER.md` §4 has the measurement. The short of it: drawn in
+Outfit, the state he complained about (21px / weight 600) is **two line-boxes on
+his everyday name, not three** — the size half of "big bold" went with the
+typeface. The weight half did not. **B ships and needs no edit.** A is one
+declaration. C is withdrawn: at 23px/700 its price box is 75px against B's 73px,
+which is not "the price leads", it is a rounding.
 
-In **`resources/css/kbb/kbb-product.css`**.
+**Only if he answers A.** In `resources/css/kbb/kbb-product.css`.
 
 **Anchor** (occurs once):
 
@@ -69,82 +72,37 @@ In **`resources/css/kbb/kbb-product.css`**.
 .pdp .bb-title{font-size:19px;font-weight:500;line-height:1.36;letter-spacing:-.005em}
 ```
 
-**Replacement for A · weight only (21px / 500):**
-
-```
-.pdp .bb-title{font-size:21px;font-weight:500;line-height:1.34;letter-spacing:-.005em}
-```
-
-**Replacement for C · price leads (17px / 500):**
-
-```
-.pdp .bb-title{font-size:17px;font-weight:500;line-height:1.42;letter-spacing:-.005em;color:var(--ink-2)}
-```
-
-**C only — a second anchor** (occurs once):
-
-```
-.pdp .bb-head .bb-price .now{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
-```
-
 **Replacement:**
 
 ```
-.pdp .bb-head .bb-price .now{display:block;font-size:23px;font-weight:700;letter-spacing:-.02em}
+.pdp .bb-title{font-size:21px;font-weight:500;line-height:1.34;letter-spacing:-.005em}
 ```
 
 Then, in the same commit and not afterwards:
 
 1. `npx vite build` and commit `public/build` — the source alone changes nothing
    on the shop, and `BuiltCssSelectorsAreCurrentTest` is what says so;
-2. move the two literals in `tests/Feature/ProductPageLedgerTest.php` →
-   *it ships the quiet mobile title and the Ledger desktop title*. They pin the
-   SHIPPED values by name on purpose, so that this stays a two-line change with
-   a test that notices when only one of the two lines is made.
+2. move the literal in `tests/Feature/ProductPageLedgerTest.php` →
+   *it ships the quiet mobile title and the Ledger desktop title*. It pins the
+   SHIPPED value by name on purpose, so this stays a one-line change with a test
+   that notices when the build half is forgotten.
 
-**The desktop is untouched by all three letters.** `.pdp .bb-title` inside
+**The desktop is untouched either way.** `.pdp .bb-title` inside
 `@media (min-width:881px)` stays 30px/500; he said the desktop is fine.
 
 ---
 
-## What is red before these are applied, and what is green after
+## The merge is done
 
-**Nothing is red.** This lane's branch is green as it stands — blocks 1 and 2 are
-properties of the **package**, which no test in this repository can see, and
-block 3 is a choice the owner has not made yet.
+Merged at `9de9044`. The integrator resolved the three-way as scoped:
+`kbb-product.css` and `EnglishRenderWalk.php` had no overlap, and `public/build`
+was rebuilt from the merged sources rather than taking a side — checked here by
+running `npx vite build` on the rebased tree and getting **no diff**, so the
+bundle on the branch is the one the merged sources produce.
 
-That is the reason this document exists at all: the two things that can go wrong
-here are both invisible to the suite, and one of them has already cost this
-project a round.
-
-**Both anchors in block 3 were counted, not eyeballed:** each occurs exactly once
-in `resources/css/kbb/kbb-product.css` at this commit.
-
----
-
-## The merge, and the one thing in it that is not mechanical
-
-This branch was cut at `768a6e8`; eight commits landed upstream while it was being
-written. Three files are touched on both sides, and all three merge mechanically:
-
-| file | mine | upstream | |
-|---|---|---|---|
-| `resources/css/kbb/kbb-product.css` | a block at the FOOT | one line at the TOP (`--sans`) | no overlap |
-| `tests/Support/EnglishRenderWalk.php` | two rules appended to two methods | rules edited elsewhere | no overlap |
-| `public/build/manifest.json` | one entry | many entries (the font rework) | **resolve by rebuilding** |
-
-**The manifest is the one to be careful with.** It is a build product, so do not
-hand-merge it: take either side, then run `npx vite build` and commit what it
-writes. Anything else risks a manifest that names a bundle that is not on disk —
-which is a silent 404 on a stylesheet, not an error.
-
-**And one thing that is not mechanical at all.** `a29a9dc` changes the shop's
-typeface from Poppins to Outfit, in this stylesheet's own `--sans`. Every line
-count and block height this lane measured was read with Poppins on the page. The
-sizes and weights are unaffected; the line counts may not be. See the banner at
-the head of `docs/PDP-LEDGER-HANDOVER.md` §4 — **re-shoot
-`sheet-real-type-390.png` after the merge** before putting the three options in
-front of the owner. `sh storage/pdp-logs/round3.sh` does it in about four minutes.
+The typeface caveat that was in this section is discharged: §3 and
+`docs/PDP-LEDGER-HANDOVER.md` §4 are re-measured in Outfit and both sheets are
+re-shot.
 
 ---
 
