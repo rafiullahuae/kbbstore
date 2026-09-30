@@ -71,6 +71,40 @@ class DemoCatalogueSeeder extends Seeder
         );
     }
 
+    /**
+     * ── THE FIVE GALLERY SHOTS ───────────────────────────────── Lane GAL ──
+     *
+     * The owner: *"also i can not see the product gallery thumnails, add some
+     * demo thumnails so i can see in action."*
+     *
+     * He never had. Store\ProductController::gallery() builds the strip from
+     * `image` merged with `images`, this seeder set NEITHER, and
+     * partials/product-gallery.blade.php draws the `.gthumbs` strip only
+     * `@if ($shotCount > 1)`. One shot came back on all 24 rows, so there was
+     * no strip on any of them.
+     *
+     * ▲ THIS MAKES FILES AND SETS NO COLUMN, which is the whole shape of the
+     * fix and is written up at length in App\Support\DemoProductShots' header.
+     * The five URLs were written into `products`.images first; that is
+     * catalogue data, five subsystems walk it, and the measurement was 23 test
+     * cases red across seven files with nothing to do with galleries — plus
+     * 120 placeholder pictures in the owner's media-library counts, his image
+     * sizes backlog and his image sitemap. gallery() reads the files instead.
+     *
+     * The migration beside this seeder draws the same files onto a shop that is
+     * ALREADY seeded, and editing here alone would change nothing the owner can
+     * see. One source, two readers — DemoProductDetails' shape, for
+     * DemoProductDetails' reason.
+     *
+     * A host with no GD, or no writable uploads directory, draws nothing and
+     * ensureFor() says so; the catalogue is then exactly the catalogue it is
+     * today rather than a page of broken thumbnails.
+     */
+    private function shots(string $name): void
+    {
+        \App\Support\DemoProductShots::ensureFor(Str::slug($name), $name);
+    }
+
     public function run(): void
     {
         $categories = ['Cleansers', 'Toners', 'Serums', 'Moisturisers', 'Sunscreens', 'Masks'];
@@ -166,6 +200,11 @@ class DemoCatalogueSeeder extends Seeder
                     'position' => $i,
                 ]
             );
+
+            // After the row, not inside it: this writes PNG files and returns
+            // nothing the row carries. See shots() above for why there is no
+            // column here to spread into.
+            $this->shots($name);
 
             if ($category) {
                 $product->categories()->syncWithoutDetaching([$category->id]);

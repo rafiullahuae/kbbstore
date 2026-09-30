@@ -29,7 +29,7 @@
  *      rewrite that drops one.
  *   2. THE LIST OF WRITERS IS PINNED AGAINST THE CALL SITES. Every file in app/
  *      that actually calls MediaRegistrar::record() has to be accounted for
- *      here, so a SEVENTH writer added later cannot reach the library without
+ *      here, so a NINTH writer added later cannot reach the library without
  *      this going red and making somebody decide what the sentence should say.
  *      That is the half that will still be working in six months; the first half
  *      only pins today's wording.
@@ -92,6 +92,17 @@ it('names every writer that puts a file in the media library', function () {
          * front page of his shop.
          */
         'app/Http/Controllers/Admin/BannerApiController.php' => ['banner'],
+        /*
+         * THE EIGHTH WRITER — Lane GAL. The demo catalogue's 24 products had
+         * no gallery at all ("also i can not see the product gallery
+         * thumnails"), so five placeholder shots per product are drawn on the
+         * server and registered here like any upload. Named on the screen
+         * because DELETING ONE IS THE UNDO: nothing in `media_usages` points at
+         * them, so the "still in use" guard does not stand in the way, and
+         * Store\ProductController::gallery() offers only the files that are
+         * really on disk. The owner has to be able to find them to remove them.
+         */
+        'app/Support/DemoProductShots.php' => ['demo products'],
     ];
 
     $blurb = mlbBlurb();
@@ -115,7 +126,7 @@ it('names every writer that puts a file in the media library', function () {
     expect($blurb)->not->toContain('uploaded through the admin');
 });
 
-it('goes red when an eighth writer starts filling the library', function () {
+it('goes red when a ninth writer starts filling the library', function () {
     /*
      * THE HALF THAT KEEPS WORKING. The case above pins today's wording; this one
      * pins the SET, so the next lane that teaches a new subsystem to register its
@@ -137,6 +148,9 @@ it('goes red when an eighth writer starts filling the library', function () {
         // Lane BN — Appearance → Banners → Cards banner. See the row beside it
         // in the case above for what the sentence now has to carry for it.
         'app/Http/Controllers/Admin/BannerApiController.php',
+        // Lane GAL — the demo products' gallery shots. See the row beside it in
+        // the case above.
+        'app/Support/DemoProductShots.php',
     ];
 
     $found = [];
