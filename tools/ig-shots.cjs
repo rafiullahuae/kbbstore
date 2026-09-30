@@ -245,8 +245,33 @@ async function measure(page) {
           viewport: document.documentElement.clientWidth,
           pageScrollWidth: document.documentElement.scrollWidth,
           horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-          contentOverflow: (document.querySelector('#content')?.scrollWidth ?? 0)
-            - (document.querySelector('#content')?.clientWidth ?? 0),
+          /*
+           * NULL WHEN THERE IS NO #content, NOT 0.                  (Lane BG)
+           *
+           * This read `(…?.scrollWidth ?? 0) - (…?.clientWidth ?? 0)`, which
+           * collapses "there is nothing to measure" into the same number as
+           * "it fits". Measured in Chromium on four pages:
+           *
+           *     a screen that fits                      0
+           *     a screen that OVERFLOWS               600
+           *     a screen that rendered nothing          0   <-- same as "fits"
+           *     a screen whose selector was renamed     0   <-- and this one
+           *                                                     really did
+           *                                                     overflow by 600
+           *
+           * So the instrument's failure mode was to report the all-clear on the
+           * exact defect it exists to catch, and a renamed selector would have
+           * turned every future run green without anybody touching the screen.
+           * Its neighbours in this same object -- box(), px(), trackClass,
+           * columns, gap, radius -- all return null for an absent element
+           * already; this line was the one that did not.
+           */
+          contentPresent: !!document.querySelector('#content'),
+          contentOverflow: (() => {
+            const c = document.querySelector('#content');
+
+            return c ? c.scrollWidth - c.clientWidth : null;
+          })(),
           previewPresent: !!document.querySelector('[data-igs-preview]'),
           frame: box(document.querySelector('.igs-pvf')),
           trackClass: track ? track.className : null,

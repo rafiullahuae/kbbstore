@@ -432,8 +432,30 @@ it('reserves its height in the stylesheet, so the header below it cannot jump', 
      */
     $source = (string) file_get_contents(base_path('resources/css/kbb/kbb.css'));
 
-    expect($source)->toContain('.kfb{display:none;')
-        ->and($source)->toContain('min-height:var(--kfb-h,30px)');
+    /*
+     * ▲ THE min-height ASSERTION IS READ OUT OF THE `.kfb` RULE ITSELF.
+     *                                                        (Lane BG, r5)
+     *
+     * It used to be `->and($source)->toContain('min-height:var(--kfb-h,30px)')`
+     * against the whole stylesheet, and that string occurs TWICE in kbb.css:
+     * once in `.kfb{…}` and once in the `@media` block below it. So the
+     * MUTATION NOTE above this case — "drop `min-height` from `.kfb` and this
+     * is red" — was not true. MEASURED: dropped exactly that declaration from
+     * `.kfb` and this file stayed at 18 passed; the media-query copy satisfied
+     * the needle.
+     *
+     * The rule is now cut out first and the declaration looked for inside it,
+     * so the note describes what happens again.
+     */
+    expect($source)->toContain('.kfb{display:none;');
+
+    $start = strpos($source, '.kfb{display:none;');
+    $rule = substr($source, (int) $start, (int) strpos($source, '}', (int) $start) - (int) $start + 1);
+
+    expect(str_contains($rule, 'min-height:var(--kfb-h,30px)'))->toBeTrue(
+        'the `.kfb` rule itself no longer sets min-height, so the strip can collapse to nothing'
+        .' on a page where no flag image loads. The declaration in the @media block below it does'
+        .' not cover that: the rule found was '.$rule);
 
     $bundles = glob(base_path('public/build/assets/kbb-*.css')) ?: [];
     $built = '';

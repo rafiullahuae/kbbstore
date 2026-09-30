@@ -75,12 +75,30 @@ const WEIGHTS = (process.env.PERF_WEIGHTS || '400,500,600,700,800').split(',').m
 
   const missing = WEIGHTS.filter((w) => !probe.rendered[w]);
 
+  /*
+   * ── THE VERDICT GOES TO stderr, AND THE EXIT CODE IS THE REAL ANSWER ─────
+   *                                                                (Lane BG)
+   * This script has NO callers -- nothing in CI, no shell script, no npm
+   * script runs it; it is typed by a human. That is exactly why how it fails
+   * matters: the first caller somebody writes will be a one-liner, and a
+   * one-liner is where an answer gets lost.
+   *
+   * The FAIL line used to go to stdout beside the JSON, so
+   * `node tools/perf-fontcheck.cjs URL > /dev/null` threw the verdict away and
+   * kept only an exit code nobody was checking. It now goes to stderr, which
+   * survives stdout redirection, while stdout stays clean JSON for a caller
+   * that wants to pipe it.
+   *
+   * AND IT CANNOT SILENTLY PASS WHEN IT MEASURED NOTHING. Measured: pointed at
+   * an unreachable URL, page.goto rejects and node exits 1 rather than printing
+   * OK on an empty measurement.
+   */
   if (missing.length > 0) {
-    console.log(`\nFAIL: ${FAMILY} did not render at weight(s) ${missing.join(', ')}`
+    console.error(`\nFAIL: ${FAMILY} did not render at weight(s) ${missing.join(', ')}`
       + ' -- the ruler matched the control exactly, which is the fallback.');
     process.exitCode = 1;
   } else {
-    console.log(`\nOK: ${FAMILY} rendered at every weight asked for (${WEIGHTS.join(', ')}).`);
+    console.error(`\nOK: ${FAMILY} rendered at every weight asked for (${WEIGHTS.join(', ')}).`);
   }
 
   await b.close();

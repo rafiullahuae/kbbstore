@@ -250,8 +250,30 @@ it('beats the site header\'s bare .logo rule, which stretched the box and centre
      *
      * MUTATION: remove the rule below and the glyph offset returns.
      */
-    expect($base)->toContain('.logo{font-size:18px;flex:1;text-align:center}')
-        ->and($css)->toContain('.kbb-checkout .co-head .logo{flex:0 0 auto;text-align:start}');
+    /*
+     * ▲ THE BARE RULE, NOT ANY RULE ENDING IN `.logo`.        (Lane BG, r5)
+     *
+     * This was `toContain('.logo{font-size:18px;flex:1;text-align:center}')`
+     * against the whole of kbb.css, and that string occurs TWICE: once as the
+     * bare `.logo` inside @media(max-width:900px) — the site header's mobile
+     * layout, which is the rule this whole case is about — and once as
+     * `.kbb-home .logo{…}`, whose selector cannot match on the checkout at all.
+     *
+     * MEASURED: deleting the bare rule inside the media query left this file at
+     * 16 passed, because the `.kbb-home` one satisfied the needle. So the
+     * assertion could be kept true by a rule that has nothing to do with the
+     * claim, on a page that rule never reaches.
+     *
+     * The leading newline-and-indent is what makes it the bare one: a
+     * descendant selector has a space and another class in front of it.
+     */
+    expect(str_contains($base, "\n  .logo{font-size:18px;flex:1;text-align:center}"))->toBeTrue(
+        "kbb.css no longer carries the SITE header's bare `.logo` rule inside its mobile media"
+        .' query. If it has really gone, the checkout override below is now beating nothing and'
+        .' should go with it; if it merely moved, point this at where it moved to.'
+        ." (`.kbb-home .logo{…}` is NOT it -- that selector never matches on the checkout.)");
+
+    expect($css)->toContain('.kbb-checkout .co-head .logo{flex:0 0 auto;text-align:start}');
 });
 
 it('does not treat the back-to-top arrow as a ruled row', function () {

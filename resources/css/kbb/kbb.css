@@ -1615,14 +1615,33 @@ body{padding-bottom:46px}
   --bg-corner:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20420%20380%27%20preserveAspectRatio%3D%27xMidYMid%20slice%27%3E%3Cg%20transform%3D%27translate%28-40%2C60%29%20rotate%28-18%29%20scale%282.0%29%27%20opacity%3D%270.34%27%3E%3Cpath%20d%3D%27M0%2C0%20C40%2C-36%2092%2C-30%20112%2C5%20C86%2C42%2034%2C42%200%2C0%20Z%27%20fill%3D%27%23EFA9BC%27%2F%3E%3Cpath%20d%3D%27M0%2C0%20C36%2C3%2078%2C7%20112%2C5%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.55%29%27%20stroke-width%3D%272.5%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M28%2C-14%20C40%2C-6%2052%2C-2%2066%2C0%20M46%2C-20%20C58%2C-11%2070%2C-6%2084%2C-3%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.32%29%27%20stroke-width%3D%271.6%27%20fill%3D%27none%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2880%2C-30%29%20rotate%2842%29%20scale%281.6%29%27%20opacity%3D%270.26%27%3E%3Cpath%20d%3D%27M0%2C0%20C40%2C-36%2092%2C-30%20112%2C5%20C86%2C42%2034%2C42%200%2C0%20Z%27%20fill%3D%27%23B9D6C1%27%2F%3E%3Cpath%20d%3D%27M0%2C0%20C36%2C3%2078%2C7%20112%2C5%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.55%29%27%20stroke-width%3D%272.5%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M28%2C-14%20C40%2C-6%2052%2C-2%2066%2C0%20M46%2C-20%20C58%2C-11%2070%2C-6%2084%2C-3%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.32%29%27%20stroke-width%3D%271.6%27%20fill%3D%27none%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%28190%2C150%29%20scale%281.4%29%27%20opacity%3D%270.3%27%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%280%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%2845%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%2890%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28135%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28180%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28225%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28270%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28315%29%27%2F%3E%3Ccircle%20r%3D%2713%27%20fill%3D%27%23EFAF6B%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2830%2C340%29%20rotate%28-12%29%20scale%281.2%29%27%20opacity%3D%270.28%27%20stroke%3D%27%23E8A7B8%27%20fill%3D%27none%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%3E%3Cpath%20d%3D%27M0%2C0%20C20%2C-40%2040%2C-80%2044%2C-130%27%2F%3E%3Cellipse%20cx%3D%2714%27%20cy%3D%27-30%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%28-26%2014%20-30%29%27%2F%3E%3Cellipse%20cx%3D%27-8%27%20cy%3D%27-46%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%2824%20-8%20-46%29%27%2F%3E%3Cellipse%20cx%3D%2726%27%20cy%3D%27-64%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%28-30%2026%20-64%29%27%2F%3E%3Cellipse%20cx%3D%272%27%20cy%3D%27-84%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%2820%202%20-84%29%27%2F%3E%3Cellipse%20cx%3D%2734%27%20cy%3D%27-100%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%28-34%2034%20-100%29%27%2F%3E%3Cellipse%20cx%3D%2712%27%20cy%3D%27-118%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%2818%2012%20-118%29%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --bg-wave:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%201200%20900%27%20preserveAspectRatio%3D%27xMidYMid%20slice%27%3E%3Cpath%20d%3D%27M0%2C600%20C240%2C510%20380%2C690%20640%2C600%20C860%2C524%201000%2C668%201200%2C584%20L1200%2C900%20L0%2C900%20Z%27%20fill%3D%27rgba%28255%2C255%2C255%2C.20%29%27%2F%3E%3Cpath%20d%3D%27M0%2C690%20C260%2C606%20420%2C766%20700%2C690%20C900%2C630%201040%2C748%201200%2C678%20L1200%2C900%20L0%2C900%20Z%27%20fill%3D%27rgba%28255%2C255%2C255%2C.14%29%27%2F%3E%3C%2Fsvg%3E");
 }
+/* ── THE PAGE BACKGROUND. ────────────────────────────────── (Lane BG)
+   THE DRAWING AND THE TILING ARE GONE, AND THE OWNER ASKED FOR THAT:
+   "you put some image on background of the whole site, which i don't want …
+   not continue type". `var(--bg-botanical)` was the drawing -- leaves, petals
+   and flowers as 9,130 bytes of SVG -- and `repeat-y` is what tiled it down
+   the page. Both are out of this rule. The artwork itself is NOT deleted: three
+   other rules still use it and its siblings on home-page panels, the footer and
+   the card thumbnails, and none of those is "the background of the whole site".
+   Appearance -> Page background -> "Botanical drawing" puts it back here, and
+   ships OFF.
+
+   THE GRADIENT IS A VARIABLE BECAUSE THE OWNER IS STILL CHOOSING IT. He asked
+   for "from one corner to another … some gradient type colors, not just one"
+   and for previews to choose from. The five candidates are in
+   docs/BG-BACKGROUND-CANDIDATES.md; picking a letter replaces the ONE
+   declaration below and nothing else. Until he picks, this is the gradient the
+   shop already had, minus the drawing it carried. */
+:root{
+  --kbb-page-gradient:linear-gradient(180deg,#FCE7EE 0%,#FDF2F5 26%,#FFF7F4 55%,#FBEAF0 100%);
+}
 body{
   background-color:#FDEFF3;
-  background-image:var(--bg-botanical),
-    linear-gradient(180deg,#FCE7EE 0%,#FDF2F5 26%,#FFF7F4 55%,#FBEAF0 100%);
-  background-size:1500px auto,auto;
-  background-position:center top,0 0;
-  background-repeat:repeat-y,no-repeat;
-  background-attachment:fixed,fixed;
+  background-image:var(--kbb-page-gradient);
+  background-size:auto;
+  background-position:0 0;
+  background-repeat:no-repeat;
+  background-attachment:fixed;
 }
 .kbb-home .sec{position:relative}
 .kbb-home .sec > .wrap{

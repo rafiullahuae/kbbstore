@@ -872,8 +872,36 @@ it('stops the old full-page post from also running', function () {
     expect($stop)->not->toBeFalse('nothing stops checkout.js from also submitting')
         ->and($stop)->toBeLessThan($firstBranch, 'an early return can leave the old form post running');
 
-    // Capture phase, which is what makes it run before the bubble listener.
-    expect($src)->toContain("  }, true);");
+    /*
+     * CAPTURE PHASE, ON THIS LISTENER — asserted inside $handler, not on the
+     * whole file.                                              (Lane BG, r5)
+     *
+     * This read `expect($src)->toContain("  }, true);")`, and that string
+     * occurs THREE times in placing-overlay.blade.php: the Escape keydown
+     * listener, this click listener, and the one below it. Any of the three
+     * satisfied it, so it could not say which listener was in capture phase —
+     * and this is the one that matters. MEASURED: changing this handler's close
+     * from `}, true);` to `});`, so it runs in the bubble phase, left the file
+     * at 29 passed.
+     *
+     * That is not a cosmetic miss. The comment above this listener records that
+     * checkout.js answers [data-place] with a delegated BUBBLE listener; the
+     * whole point of capture here is to run first and stop it. Demoted to
+     * bubble, both can run and the old form post goes with the overlay — which
+     * is the double-submit this file exists to prevent.
+     *
+     * The two assertions immediately above already located $handler for exactly
+     * this reason. This one now uses it too.
+     */
+    $close = strpos($handler, "\n  }");
+
+    expect($close)->not->toBeFalse('the [data-place] listener no longer closes at its own indent,'
+        .' so this guard cannot find the end of it');
+
+    expect(str_starts_with(substr($handler, (int) $close + 1), '  }, true);'))->toBeTrue(
+        'the [data-place] click listener is no longer registered in the capture phase. checkout.js'
+        .' answers the same selector with a bubble listener, so both will run and the old form'
+        .' post survives the overlay.');
 });
 
 it('draws the tick in exactly one place, and that place is the server\'s answer', function () {

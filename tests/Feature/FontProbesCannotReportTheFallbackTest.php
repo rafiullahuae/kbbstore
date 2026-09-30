@@ -167,6 +167,58 @@ it('keeps both mechanics inside the shared probe', function () {
         'the probe no longer decides "rendered" by comparing the ruler with the control');
 });
 
+it('keeps the teeth on the one instrument that reports a verdict', function () {
+    /*
+     * tools/perf-fontcheck.cjs is the only font instrument that says pass or
+     * fail rather than printing numbers, and round 4 gave it the ability to say
+     * fail at all. This is the pin that keeps it.
+     *
+     * ── IT HAS NO CALLERS, WHICH IS WHY THIS MATTERS RATHER THAN WHY IT DOES
+     *    NOT ───────────────────────────────────────────────────────────────
+     *
+     * Swept in round 5: nothing in .github/workflows, no shell script, no npm
+     * script and no other tool runs it — CI runs composer, `php -l` and pest
+     * and no node tools at all. So today the exit code reaches a human and
+     * nothing else. The first caller somebody writes will be a one-liner, and a
+     * one-liner is where an answer gets lost: a guard that fails into a pipe
+     * nobody reads is the same defect one level up.
+     *
+     * Two things have to survive a refactor for that caller to be able to
+     * notice anything:
+     *
+     *   1. A NON-ZERO EXIT CODE. Without it the script is back to being unable
+     *      to fail, which is the defect round 4 removed.
+     *   2. THE VERDICT ON stderr. It used to print beside the JSON on stdout,
+     *      so `… > /dev/null` threw it away. Measured after the change: with
+     *      stdout discarded the FAIL line still arrives and the exit is 1.
+     *
+     * MUTATIONS, both run:
+     *   - delete `process.exitCode = 1` → 'no longer sets a non-zero exit code'
+     *   - change console.error back to console.log for the verdict
+     *       → 'no longer writes its verdict to stderr'
+     */
+    $code = fpCode(base_path('tools/perf-fontcheck.cjs'));
+
+    expect(str_contains($code, 'process.exitCode = 1'))->toBeTrue(
+        'tools/perf-fontcheck.cjs no longer sets a non-zero exit code, so a caller cannot tell'
+        .' a page that got its fonts from one that did not — which is the state round 4 found it in.');
+
+    /*
+     * str_contains WITH A LITERAL, not preg_match. Written as a regex this read
+     *
+     *     preg_match('/console\.error\(`\\nFAIL:/', $code)
+     *
+     * and PHP single quotes collapse that `\\n` to `\n`, which preg then reads as
+     * the NEWLINE metacharacter rather than as backslash-n — so it hunted for a
+     * real line break where the JavaScript has the two characters of an escape
+     * inside a template literal, and reported the verdict missing from a file
+     * that has it. The plain literal cannot be misread by a second engine.
+     */
+    expect(str_contains($code, 'console.error(`\nFAIL:'))->toBeTrue(
+        'tools/perf-fontcheck.cjs no longer writes its verdict to stderr, so any caller that'
+        .' redirects stdout loses the one line that says what went wrong.');
+});
+
 it('makes the font-measuring instruments use the shared probe rather than their own', function () {
     /*
      * Named rather than swept, because "does this script measure a font?" is not
