@@ -115,9 +115,43 @@ function perfSliderMarkup(int $n = 3, array $setAttributes = []): string
     expect($loaded)->not->toBeNull();
     expect($loaded[0]->homePartial())->toBe('partials.home.slider-banner');
 
-    $html = view($loaded[0]->homePartial(), ['set' => $loaded[0], 'cards' => $loaded[1]])->render();
+    /*
+     * ▲ THE PUSHED `head` STACK IS STITCHED BACK ON.                (Lane SEC)
+     *
+     * The slider's `<link rel="preload">` used to be printed where this section
+     * sits and is now pushed to `head`, because the section is the homepage's
+     * banner and a preload 20 KB into the body is not reached by the preload
+     * scanner until that much of the body has arrived — the measurement
+     * cards-banner.blade.php records the owner taking.
+     *
+     * A standalone render has no layout to yield the stack into, and worse,
+     * View::render() ends in flushStateIfDoneRendering() and throws the pushes
+     * away as the render counter reaches zero. So the counter is held above
+     * zero across the render, which is what a layout does while yielding its
+     * own stacks, and the state is flushed explicitly afterwards so this
+     * render's tag cannot be counted again by the next one.
+     *
+     * `$sections` is passed because the push is guarded on it: a device whose
+     * switch hides the section must not preload a picture it will never draw.
+     */
+    $factory = app('view');
+    $factory->flushState();
+    $factory->incrementRender();
 
-    return (string) preg_replace('#<style>.*?</style>#s', '', $html);
+    try {
+        $html = view($loaded[0]->homePartial(), [
+            'set' => $loaded[0],
+            'cards' => $loaded[1],
+            'sections' => app(\App\Services\HomepageSections::class),
+        ])->render();
+
+        $head = $factory->yieldPushContent('head');
+    } finally {
+        $factory->decrementRender();
+        $factory->flushState();
+    }
+
+    return (string) preg_replace('#<style>.*?</style>#s', '', $head.$html);
 }
 
 /* ── 1. the fonts ────────────────────────────────────────────────────────── */

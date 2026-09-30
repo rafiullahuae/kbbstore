@@ -621,6 +621,49 @@ final class ImageVariants
      * applies here unchanged — and more sharply, because the slider's first
      * picture is the homepage's LCP element when the section is above the fold.
      */
+    /*
+     * ▲ CHECKED AGAINST A PORTRAIT PHONE FRAME, AND IT IS STILL RIGHT FOR THE
+     *   FRAME AND WRONG FOR SOME PICTURES.                          (Lane SEC)
+     *
+     * The homepage banner now ships at the owner's two shapes — 1920 × 550 on
+     * desktop and 500 × 600 on phones — and the phone one is PORTRAIT, which
+     * every number above was written without. The expression itself needed no
+     * change: `sizes` describes the frame's WIDTH, the frame is `.wrap` wide at
+     * every viewport, and the ratio moves only its height. Measured, Chromium,
+     * 390px viewport: frame 366 × 439.2, `aspect-ratio: 500 / 600`, no
+     * horizontal scroll.
+     *
+     * WHAT IT IS WRONG ABOUT, MEASURED RATHER THAN REASONED. `object-fit:
+     * cover` on a frame TALLER than it is wide makes the HEIGHT the binding
+     * dimension for a landscape source, and the width the browser then needs is
+     *
+     *     frameHeight × (sourceWidth / sourceHeight)
+     *
+     * not frameWidth. With the shipped shapes and a 1920 × 550 picture that is
+     * 439.2 × 3.49 = 1533 CSS pixels against the 390 this attribute declares —
+     * out by 3.9×. Chromium chose the 400w copy, painted it across 1533 CSS
+     * pixels of covered width, and the banner is visibly soft on a phone.
+     * storage/sec-logs/shots/many-390.png is the picture of it.
+     *
+     * IT IS NOT FIXED HERE, ON PURPOSE. Two honest fixes and both are bigger
+     * than an expression:
+     *
+     *   1. A per-card `sizes`, computed from `banner_cards.image_w/image_h`,
+     *      which this table already stores. Correct, and it means asking a
+     *      phone for the whole 1920px file — which is what covering a portrait
+     *      frame with a landscape picture actually costs.
+     *   2. A SECOND PICTURE PER SLIDE for phones. This is what the owner asked
+     *      for and nobody built: "for desktop the size should be 1920 x 550 and
+     *      in mobile 500 x 600" is two pictures, and a slide has one image
+     *      field. With a 500 × 600 phone picture in a 500/600 frame the width
+     *      IS binding, this attribute is exactly right, and nothing is cropped.
+     *
+     * Until one of them lands, a shop whose banner picture matches the frame it
+     * is shown in gets the right file and a shop using one wide picture for
+     * both gets a soft phone banner. Reported rather than papered over: a
+     * `sizes` widened by a guess would spend a phone's connection on the full
+     * file for every shop, including the ones that did upload a phone picture.
+     */
     public static function bannerSliderSizesAttribute(): string
     {
         return 'min(100vw, 2400px)';

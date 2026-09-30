@@ -35,8 +35,17 @@ class HomepageLayouts
                  * missing here, or placed anywhere else, makes applying
                  * Signature produce a page that is NOT the shipped order, which
                  * is what HomepageSectionOrderTest's "put it back" case checks.
+                 *
+                 * ▲ IT MOVED TO THE FRONT WITH THE REGISTRY.          (Lane SEC)
+                 * The picture banner is the homepage's banner now and the hero
+                 * yields to it — "the banner i need to change to simple image
+                 * banners, not cards". Signature is the SHIPPED order, so this
+                 * list is not a choice: it has to be array_keys(REGISTRY) or
+                 * "put it back" puts back something else. The four other
+                 * presets are orders the owner picks and are left as he picks
+                 * them.
                  */
-                'hero', 'delivery', 'ticker', 'cards_banner', 'categories', 'bundles', 'recommended',
+                'cards_banner', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'recommended',
                 'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'bestsellers', 'flash',
                 'blog', 'about', 'reviews', 'trust', 'newsletter',
             ],

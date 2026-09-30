@@ -444,9 +444,25 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
  * `if(): endif;`, whose closing `?>` swallows its own newline — so a shop that
  * turns it off on both widths gets back the byte-identical page it had before
  * the package. Appearance → Header → Flag bar.
+ *
+ * ── AND A PAGE MAY PLACE IT ITSELF. (Lane SEC) ──────────────────────────────
+ *
+ * The owner drew a red arrow on his own phone from this strip at the very top
+ * of the page, curving down to below the hero: "The top countries bar, i need
+ * under banner". That is the HOMEPAGE's order, and only the homepage has a
+ * banner to be under — so the strip is not moved for every page, it is
+ * CLAIMED by the page that wants it somewhere else.
+ *
+ * A page claims it with `@section('flagbar-placed', '1')` and then includes
+ * partials/flag-bar itself wherever it wants it. store/home.blade.php is the
+ * only page that does; every other page is untouched, which is why this is a
+ * claim rather than a move.
+ *
+ * flagBarOn() IS TESTED FIRST and the && short-circuits, so a shop with the
+ * strip off never reaches hasSection() and gets back exactly the bytes it had.
  */
 @endphp
-@if (app(\App\Services\HeaderSettings::class)->flagBarOn())@include('partials.flag-bar')@endif
+@if (app(\App\Services\HeaderSettings::class)->flagBarOn() && ! \Illuminate\Support\Facades\View::hasSection('flagbar-placed'))@include('partials.flag-bar')@endif
         @include('partials.header')
 @endunless
 

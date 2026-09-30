@@ -155,10 +155,23 @@ class HeaderSettings
          *   "whatever the page does today". CLAUDE.md rule 1 says a new setting
          *   ships at the value the page already has, with one exception — "a
          *   default the owner asked for in as many words" — and the sentence
-         *   above is that exception, quoted. `fb_mobile` therefore ships ON and
-         *   `fb_desktop` ships OFF, which is the whole of what moves when this
-         *   package is applied: a 30px strip appears at the top of the phone
-         *   shop and the desktop shop does not change by one pixel.
+         *   above is that exception, quoted. `fb_mobile` therefore shipped ON
+         *   and `fb_desktop` shipped OFF, which was the whole of what moved
+         *   when that package was applied: a 30px strip at the top of the phone
+         *   shop, and the desktop shop unchanged by one pixel.
+         *
+         * ▲ AND HE HAS SINCE CHANGED HIS MIND, IN AS MANY WORDS. (Lane SEC)
+         *   "The top countries bar, i need under banner ... apply this on
+         *   desktop and mobile both." So the quotation above is history and the
+         *   defaults below now read ON and ON. The strip has also MOVED: on the
+         *   home page it is drawn under the banner by store/home.blade.php,
+         *   which claims it from layouts/store.blade.php, and only on the other
+         *   pages is it still the thing above the header this paragraph calls
+         *   it. FlagBarUnderBannerTest pins both positions, because the walk in
+         *   StorefrontEnglishUnchangedTest structurally cannot see the move —
+         *   approvedInsertions() cuts the strip out of the AFTER side wherever
+         *   it sits, which is what makes that test green on a page whose strip
+         *   has travelled 21 kilobytes down the document.
          *
          * They live in header_settings and not in a module of their own because
          * that is ONE ROW, already read, already memoised, and already loaded by
@@ -178,8 +191,24 @@ class HeaderSettings
          */
         'fb_mobile'       => ['bool',   'Show it on phones', true,
                               'The thin strip above the header, with the two flags. On, because this is what the bar was asked for.'],
-        'fb_desktop'      => ['bool',   'Show it on desktop', false,
-                              'Off, so nothing above 900px wide changes. Turn it on to run the same strip across the desktop header.'],
+        /*
+         * ▲ OFF -> ON, and it is the owner's own sentence that moved it.
+         *                                                            (Lane SEC)
+         * "The top countries bar, i need under banner ... apply this on desktop
+         * and mobile both." The line above this array says `fb_desktop` ships
+         * OFF so that nothing above 900px wide changes, which was right when
+         * the strip was new and he had not asked for it there. He has now asked
+         * for it there in as many words, which is rule 1's one exception, and
+         * under the reversed rule 1 it ships on rather than waiting for him to
+         * find the switch.
+         *
+         * A shop that has SAVED the Header screen carries a stored `false` that
+         * this default can never overrule, so the migration
+         * `banner_ships_as_image_slider` writes the key as well. Both halves,
+         * for the reason `kind` needed both.
+         */
+        'fb_desktop'      => ['bool',   'Show it on desktop', true,
+                              'On, so the strip runs across the desktop header too. Turn it off to keep it to phones.'],
         'fb_text'         => ['text',   'Wording', '',
                               'Leave it empty to use the line the shop ships — which is translated, so an Arabic page shows Arabic. Typing here replaces it in every language.'],
         'fb_flags'        => ['bool',   'Show the two flags', true,
@@ -216,7 +245,7 @@ class HeaderSettings
                       ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
-        'flagbar' => ['Flag bar', 'The thin strip above the header: the UAE flag, one short line, the Korean flag. It ships on for phones and off for desktop.',
+        'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop.',
                       ['fb_mobile', 'fb_desktop', 'fb_text', 'fb_flags', 'fb_height', 'fb_size', 'fb_flag_h',
                        'fb_bg', 'fb_ink', 'fb_pill', 'fb_border']],
     ];

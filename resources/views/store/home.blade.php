@@ -1,4 +1,19 @@
 @extends('layouts.store')
+@php
+/*
+ * THE FLAG STRIP IS THIS PAGE'S TO PLACE. (Lane SEC) The layout draws it above
+ * the header unless the page says otherwise; this page draws it under the
+ * banner instead, which is what the owner's arrow asked for. See the note at
+ * the include further down, and the one in layouts/store.blade.php.
+ *
+ * A PHP COMMENT AND NOT A BLADE ONE, for the reason layouts/store.blade.php
+ * gives over its own copy: Blade strips a Blade comment by regex and leaves
+ * the newline that followed it, so a note written that way adds one byte to
+ * every homepage. Written the first way it cost exactly that, and
+ * StorefrontEnglishUnchangedTest reported it at byte 24715.
+ */
+@endphp
+@section('flagbar-placed', '1')
 @php use App\Support\Money; use App\Support\Url; use App\Support\Gradient; @endphp
 
 @section('title', 'K-Beauty Bliss · Authentic Korean skincare in the UAE')
@@ -63,7 +78,60 @@
      as one raw PHP block and never compiled. The page 500s on an "unexpected
      endif" three hundred lines below the actual mistake. --}}
 @php
-  $heroCarriesH1 = ! $sections->hidden('hero') && count($banners) > 0;
+  /*
+   * ── THE PICTURE BANNER IS READ FIRST, BECAUSE THE HERO YIELDS TO IT ──────
+   *                                                              (Lane SEC)
+   * The owner: "the banner i need to change to simple image banners, not
+   * cards, simple only images banner". The hero below is not, and cannot be
+   * made into, an image banner — App\Services\HomepageContent has no image
+   * field of any kind; a hero slide is two `linear-gradient` strings, a
+   * headline, a line of text and a button. So "change the banner to images" is
+   * answered by drawing the picture banner WHERE THE HERO WAS and standing the
+   * hero's rotation down while it does, rather than by growing a second
+   * uploader on a second screen for the same job.
+   *
+   * ONE BANNER ON THE PAGE, NEVER TWO. That is the whole reason this read is
+   * hoisted up here from the section further down: $heroCarriesH1 has to know
+   * about it, and a page with a picture banner AND a gradient rotation above it
+   * is two banners and one of them is the thing he asked to be rid of.
+   *
+   * IT COSTS NOTHING EXTRA. forHome() short-circuits on the module switch
+   * before any settings or table read, it is ONE joined query when the module
+   * is on, and it was already being called on this page — this moves the call,
+   * it does not add one. CardsBannerQueryCostTest holds the figure.
+   *
+   * AND A SHOP WITH NO BANNER PICTURES IS BYTE-IDENTICAL. forHome() answers
+   * null, so $heroCarriesH1 is exactly what it was, the hero draws exactly what
+   * it drew, and the moved section emits nothing from its new place just as it
+   * emitted nothing from its old one.
+   */
+  $bnSection = app(\App\Services\Banners::class)->forHome();
+
+  /*
+   * AND THE SECTION LIST IS TOLD, ONCE, WHEN THE BANNER IS ACTUALLY THERE.
+   *
+   * `cards_banner` is the first key in HomepageSections::REGISTRY now, and it
+   * is the one section whose <section> lives inside its own @if — so on a shop
+   * with no banner picture the document's first section is the hero while the
+   * ORDER still says the banner. The divider mark is suppressed above "the
+   * first section"; without this the hero counted as second and gained a tick
+   * rule directly under the header on every phone homepage of every shop that
+   * has not uploaded a picture.
+   *
+   * DECLARED WHEN PRESENT AND NOT WHEN ABSENT, which is the way round that
+   * matters: HomepageSections::draws() says why in full, and the short version
+   * is that a reader which has never heard of this call must get the page the
+   * shop rendered yesterday.
+   *
+   * The verdict is handed over rather than looked up because forHome() is a
+   * joined query and frameClass() runs once per section: the page has the
+   * answer already, in the variable above.
+   */
+  if ($bnSection !== null) {
+      $sections->draws('cards_banner');
+  }
+
+  $heroCarriesH1 = ! $sections->hidden('hero') && count($banners) > 0 && $bnSection === null;
 
   // THE SLIDER CARRIES THE HERO'S OWN Desktop/Mobile, AND THE BAND NO LONGER
   // DOES — Lane FW. See the note over the <section> below. Composed here and
@@ -75,6 +143,87 @@
   $heroOwnVis = $sections->deviceClassFor('hero');
   $heroSliderClass = $heroOwnVis === '' ? 'slider' : 'slider ' . $heroOwnVis;
 @endphp
+{{--
+
+     THE CARDS BANNER — Lane BN.
+
+     The owner: "I need multiple cards type with auto scroll smooth scroll, each
+     card will have image banner and downside 1-2 lines text with right side
+     small beautiful button ... we can turn on off card banners, and inside each
+     banner section we can create multiple cards and the whole section will have
+     full control options to choose which banner will show on homepage".
+
+     ── THE SHAPE IS THE VIDEO RAIL'S AND THE INSTAGRAM BLOCK'S, DELIBERATELY ─
+
+     Both blocks below carry the full argument; every word of it applies here and
+     is not repeated:
+
+       · the <section> is INSIDE the @if, not around it, so a shop that has not
+         switched this on — which is every shop the day the package applies —
+         emits NOT ONE BYTE more than it does today. An empty wrapper with a
+         classFor() on it is still a changed page: a new element, a new class
+         attribute, and a divider rule above it from SectionDividers.
+       · the @unless is kept as well, and it is not redundant: it is what makes
+         the Desktop/Mobile switches on Appearance → Homepage → Cards banner
+         work at all, and it short-circuits before any read on a shop that has
+         switched the row off for both.
+       · the directive is GLUED to the end of this comment. A Blade comment is
+         replaced by the empty string and ITS TRAILING NEWLINE SURVIVES, where a
+         line holding only a directive contributes nothing — the video block
+         below cost two newlines on every homepage on earth written the readable
+         way, and StorefrontEnglishUnchangedTest reported it at byte 51624.
+
+     ── ONE CALL, AND IT IS THE GATE AS WELL AS THE READ ─────────────────────
+
+     Banners::forHome() returns null for all three ways this section draws
+     nothing — the module is off, no set is chosen, or the chosen set is
+     missing, drafted or empty of drawable cards — so the template has one
+     question to ask rather than four. It short-circuits on the module switch
+     BEFORE any settings or table read, so a shop with this off pays exactly
+     what it paid before the package applied; with it on it is ONE query, a
+     join, for the set and its cards together. That class's header has the
+     measurement and CardsBannerQueryCostTest holds it.
+
+     Nothing from a setting is interpolated into this file: the partial escapes
+     the four operator strings itself and scheme-checks the button's URL before
+     it becomes an href.
+     --}}@unless ($sections->hidden('cards_banner'))
+@if ($bnSection !== null)
+{{-- THE PARTIAL IS THE SET'S OWN, AND IT IS A LOOKUP IN A CONSTANT — Lane BN2.
+     `banner_sets.kind` chose between two banner types and BannerSet::homePartial()
+     maps its two tokens to two literal view names; a set whose kind is anything
+     else, including null, returns the cards partial this line named before the
+     column existed. The section, its class, its padding and its query are
+     unchanged, which is why a shop with no slider renders the same bytes. --}}
+<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
+@endif
+@endunless
+@php
+/*
+ * THE FLAG STRIP, UNDER THE BANNER. (Lane SEC)
+ *
+ * The owner's red arrow ran from this strip at the top of the page down to
+ * here: "The top countries bar, i need under banner". layouts/store.blade.php
+ * draws it above the header on every page; this page claims it with
+ * @section('flagbar-placed') above and draws it itself, here.
+ *
+ * OUTSIDE BOTH GUARDS ABOVE, AND THAT IS THE DECISION. The banner section is
+ * conditional twice over -- the owner can hide it on Appearance -> Homepage,
+ * and forHome() answers null when no set is chosen or the module is off -- so
+ * "under the banner" has to mean something on a homepage with no banner. It
+ * means HERE: the top of the content, which is where the strip effectively
+ * was. The alternative was to put it inside the @if, and then turning the
+ * banner off would silently take the strip with it, which he did not ask for
+ * and would read as a second bug.
+ *
+ * Gated on flagBarOn() exactly as the layout's copy is, so a shop that
+ * switches the strip off on both widths adds no bytes here either. It ships ON
+ * for both now -- "apply this on desktop and mobile both" -- so on a shipped
+ * shop this include is the one that draws and the layout's is the one that does
+ * not.
+ */
+@endphp
+@if (app(\App\Services\HeaderSettings::class)->flagBarOn())@include('partials.flag-bar')@endif
 {{-- `?:` AND NOT get()'s SECOND ARGUMENT — Lane FW.
 
      `site_title` has a box now (Store → Business Details → Store identity;
@@ -381,62 +530,6 @@
   @endif
   @endunless
 </div></section>
-@endunless
-{{--
-
-     THE CARDS BANNER — Lane BN.
-
-     The owner: "I need multiple cards type with auto scroll smooth scroll, each
-     card will have image banner and downside 1-2 lines text with right side
-     small beautiful button ... we can turn on off card banners, and inside each
-     banner section we can create multiple cards and the whole section will have
-     full control options to choose which banner will show on homepage".
-
-     ── THE SHAPE IS THE VIDEO RAIL'S AND THE INSTAGRAM BLOCK'S, DELIBERATELY ─
-
-     Both blocks below carry the full argument; every word of it applies here and
-     is not repeated:
-
-       · the <section> is INSIDE the @if, not around it, so a shop that has not
-         switched this on — which is every shop the day the package applies —
-         emits NOT ONE BYTE more than it does today. An empty wrapper with a
-         classFor() on it is still a changed page: a new element, a new class
-         attribute, and a divider rule above it from SectionDividers.
-       · the @unless is kept as well, and it is not redundant: it is what makes
-         the Desktop/Mobile switches on Appearance → Homepage → Cards banner
-         work at all, and it short-circuits before any read on a shop that has
-         switched the row off for both.
-       · the directive is GLUED to the end of this comment. A Blade comment is
-         replaced by the empty string and ITS TRAILING NEWLINE SURVIVES, where a
-         line holding only a directive contributes nothing — the video block
-         below cost two newlines on every homepage on earth written the readable
-         way, and StorefrontEnglishUnchangedTest reported it at byte 51624.
-
-     ── ONE CALL, AND IT IS THE GATE AS WELL AS THE READ ─────────────────────
-
-     Banners::forHome() returns null for all three ways this section draws
-     nothing — the module is off, no set is chosen, or the chosen set is
-     missing, drafted or empty of drawable cards — so the template has one
-     question to ask rather than four. It short-circuits on the module switch
-     BEFORE any settings or table read, so a shop with this off pays exactly
-     what it paid before the package applied; with it on it is ONE query, a
-     join, for the set and its cards together. That class's header has the
-     measurement and CardsBannerQueryCostTest holds it.
-
-     Nothing from a setting is interpolated into this file: the partial escapes
-     the four operator strings itself and scheme-checks the button's URL before
-     it becomes an href.
-     --}}@unless ($sections->hidden('cards_banner'))
-@php $bnSection = app(\App\Services\Banners::class)->forHome(); @endphp
-@if ($bnSection !== null)
-{{-- THE PARTIAL IS THE SET'S OWN, AND IT IS A LOOKUP IN A CONSTANT — Lane BN2.
-     `banner_sets.kind` chose between two banner types and BannerSet::homePartial()
-     maps its two tokens to two literal view names; a set whose kind is anything
-     else, including null, returns the cards partial this line named before the
-     column existed. The section, its class, its padding and its query are
-     unchanged, which is why a shop with no slider renders the same bytes. --}}
-<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
-@endif
 @endunless
 
 {{-- CATEGORIES --}}

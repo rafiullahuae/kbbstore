@@ -34,9 +34,41 @@ class BannerSet extends Model
         'ratio', 'show_text', 'show_button', 'shadow',
         // Lane BP, round 7. Every one ships at what the page already draws.
         'bg_mode', 'bg_color', 'bg_image', 'btn_bg', 'btn_text', 'btn_hover', 'title_pos',
-        // Lane BN2, round 8. `kind` ships at `cards`, which is what every row
-        // in this table already is; the other three are read only by a slider.
+        // Lane BN2, round 8. The other three are read only by a slider.
+        //
+        // ▲ `kind` SHIPPED AT `cards` AND NOW SHIPS AT `slider`.     (Lane SEC)
+        // The three defaults below are the whole of that move at the model
+        // level; the rows that already exist are moved by the migration
+        // `banner_ships_as_image_slider`.
         'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
+    ];
+
+    /**
+     * WHAT A SET IS BEFORE ANYBODY HAS CHOSEN ANYTHING.
+     *
+     * Three moved defaults, all of them the owner's own words:            (SEC)
+     *
+     *   kind            cards      -> slider      "not cards, simple only
+     *                                              images banner"
+     *   slider_ratio    16/9       -> 1920/550    "for desktop the size should
+     *                                              be 1920 x 550"
+     *   slider_ratio_m  4/3        -> 500/600     "and in mobile 500 x 600"
+     *
+     * ON THE MODEL AND NOT ON THE COLUMN, deliberately. `->change()` on three
+     * string columns runs differently on SQLite (a table rebuild) and on MySQL
+     * (an in-place ALTER), and a rebuild of `banner_sets` inside an update
+     * package is a risk taken for nothing: nothing in this application inserts
+     * into the table except through this model, so the column default is never
+     * the value that wins. The migration writes the EXISTING rows and this
+     * writes every row made from here on; between them there is no row left
+     * holding the old shape.
+     *
+     * @var array<string, string>
+     */
+    protected $attributes = [
+        'kind' => 'slider',
+        'slider_ratio' => '1920/550',
+        'slider_ratio_m' => '500/600',
     ];
 
     protected $casts = [
@@ -167,6 +199,22 @@ class BannerSet extends Model
      * literal in this file, exactly as RATIOS' is.
      */
     public const SLIDER_RATIOS = [
+        /*
+         * ── THE TWO THE OWNER ASKED FOR BY NUMBER, FIRST ────────────────────
+         *
+         * "for desktop the size should be 1920 x 550 and in mobile 500 x 600".
+         * Those are 3.49 : 1 and 5 : 6 — a letterbox wider than the widest
+         * preset here was, and a PORTRAIT phone frame. Neither is within
+         * rounding of anything below: the nearest were 3 : 1 (3.00 against
+         * 3.49, so a 16% error) and 4 : 5 (0.80 against 0.83).
+         *
+         * WRITTEN AS THE PIXELS HE GAVE rather than reduced. `1920 / 550` and
+         * `500 / 600` are what `aspect-ratio` takes, they reduce to 192/55 and
+         * 5/6 which name nothing, and a label carrying his own numbers is the
+         * one he can check against the file he uploads.
+         */
+        '1920/550' => ['Banner — 1920 × 550', '1920 / 550'],
+        '500/600' => ['Phone banner — 500 × 600', '500 / 600'],
         '3/1' => ['Ultra-wide — 3 : 1', '3 / 1'],
         '21/9' => ['Cinematic — 21 : 9', '21 / 9'],
         '2/1' => ['Wide — 2 : 1', '2 / 1'],
@@ -303,9 +351,19 @@ class BannerSet extends Model
      * cards banner it has always drawn. There is no state of this table in
      * which a set silently becomes a slider.
      */
+    /**
+     * ▲ THE FALLBACK MOVED FROM 'cards' TO 'slider'.                (Lane SEC)
+     *
+     * The owner: "the banner i need to change to simple image banners, not
+     * cards, simple only images banner". A row with no `kind` at all, or with
+     * a value that is not a key of KINDS, is now a picture slider. The rows
+     * that hold the string 'cards' are moved by the migration rather than by
+     * this method, because 'cards' IS a key of KINDS and this branch never
+     * sees it.
+     */
     public function kind(): string
     {
-        return isset(self::KINDS[(string) $this->kind]) ? (string) $this->kind : 'cards';
+        return isset(self::KINDS[(string) $this->kind]) ? (string) $this->kind : 'slider';
     }
 
     public function isSlider(): bool
@@ -355,15 +413,33 @@ class BannerSet extends Model
         return $this->sliderStyle() === 'veil';
     }
 
-    /** The desktop `aspect-ratio` value for a slider, or the default's. */
+    /**
+     * The desktop `aspect-ratio` value for a slider, or the shipped shape's.
+     *
+     * ▲ THE FALLBACK MOVED FROM 16/9 TO 1920/550, and it is a moved default
+     * rather than a tidy-up.                                       (Lane SEC)
+     *
+     * The owner: "for desktop the size should be 1920 x 550 and in mobile 500
+     * x 600". Under the reversed rule 1 that is the shape the shop SHIPS at,
+     * not a preset he has to go and pick, so the value a row falls back to
+     * when it names nothing — every row created before the column existed, and
+     * every row whose stored value is not a key of SLIDER_RATIOS — is his.
+     *
+     * The migration `banner_ships_as_image_slider` writes the same two strings
+     * onto the rows that still hold `16/9` / `4/3`, so a set the owner has
+     * never opened and a set he saved at the old default both land on his
+     * numbers. This fallback is the half that covers a row the migration could
+     * not see; the migration is the half that covers a row this method is
+     * never asked about because the column holds a valid older key.
+     */
     public function sliderRatioCss(): string
     {
-        return (self::SLIDER_RATIOS[$this->slider_ratio] ?? self::SLIDER_RATIOS['16/9'])[1];
+        return (self::SLIDER_RATIOS[$this->slider_ratio] ?? self::SLIDER_RATIOS['1920/550'])[1];
     }
 
-    /** The same, below 768px. */
+    /** The same, below 768px. Moved from 4/3 to 500/600 in the same change. */
     public function sliderRatioMobileCss(): string
     {
-        return (self::SLIDER_RATIOS[$this->slider_ratio_m] ?? self::SLIDER_RATIOS['4/3'])[1];
+        return (self::SLIDER_RATIOS[$this->slider_ratio_m] ?? self::SLIDER_RATIOS['500/600'])[1];
     }
 }

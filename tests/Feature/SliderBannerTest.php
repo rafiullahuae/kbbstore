@@ -26,10 +26,14 @@ use Illuminate\Support\Facades\DB;
  *    that does — and the first case below is what keeps that script to ONE
  *    INTEGER when somebody later decides the swipe "needs the element width".
  *
- * 2. A SHOP WITH NO SLIDER DRAWS EXACTLY WHAT IT DREW BEFORE. `banner_sets.kind`
- *    ships at `cards`, which is what every row in that table already is, so
- *    applying this package moves no pixel. The second case renders it both ways
- *    and compares the bytes.
+ * 2. WHAT THE SHOP SHIPS DRAWING, which is the opposite of what it was when
+ *    this file was written and is the owner's own instruction.      (Lane SEC)
+ *    `banner_sets.kind` shipped at `cards` and the second case pinned a shop
+ *    with no slider drawing the same bytes it always had. He then asked for
+ *    "simple image banners, not cards" at 1920 x 550 and 500 x 600, and for it
+ *    to be applied rather than offered, so `kind` ships at `slider` at those
+ *    two shapes and the second case pins THAT — in the four places a default
+ *    has to move for the banner he is looking at to change.
  */
 
 /* ───────────────────────────────── helpers ──────────────────────────────── */
@@ -65,11 +69,60 @@ function sbLoad(array $setAttributes = [], int $n = 3, array $cardOverrides = []
     return $loaded;
 }
 
+/**
+ * The partial's own output, with whatever it pushed to `head` put back in front
+ * of it.
+ *
+ * ── WHY THE PUSHED STACK HAS TO BE STITCHED BACK ON ─────────────────────────
+ *
+ * The `<link rel="preload">` used to be printed where this section sits and is
+ * now pushed to `head`, because this section is the homepage's banner and its
+ * first picture is the page's LCP element — a preload 20 KB into the body is
+ * not reached by the preload scanner until that much of the body has arrived,
+ * which is the measurement cards-banner.blade.php records the owner taking.
+ *
+ * A standalone `view()->render()` has no layout to yield the stack into, so
+ * the pushed tag simply vanishes and every assertion about it would read zero.
+ * `yieldPushContent()` is what a layout's own stack directive compiles to, so
+ * this is the same string the page gets, in the same order, and reading it here
+ * keeps these cases measuring the partial rather than the layout.        (SEC)
+ *
+ * `incrementRender()` AROUND THE RENDER, AND IT IS THE WHOLE TRICK. View::
+ * render() ends in flushStateIfDoneRendering(), which throws the pushes away
+ * the moment the render counter reaches zero — so a `yieldPushContent()` after
+ * a bare standalone render reads '' however well the template pushed, which is
+ * exactly the false negative this helper was written under. Holding the counter
+ * above zero is what a layout does while it yields its own stacks, and the
+ * explicit flushState() afterwards is then required rather than tidy: the
+ * factory would otherwise carry this render's tag into the next one and
+ * `substr_count(...)` would read 2 for a page that emits 1.
+ *
+ * `$sections` IS PASSED because the push is guarded on it — the guard is the
+ * cards banner's, so that a device whose switch hides the section does not
+ * preload a picture it will never draw.
+ */
 function sbRender(array $setAttributes = [], int $n = 3, array $cardOverrides = []): string
 {
     [$set, $cards] = sbLoad($setAttributes, $n, $cardOverrides);
 
-    return view($set->homePartial(), ['set' => $set, 'cards' => $cards])->render();
+    $factory = app('view');
+    $factory->flushState();
+    $factory->incrementRender();
+
+    try {
+        $html = view($set->homePartial(), [
+            'set' => $set,
+            'cards' => $cards,
+            'sections' => app(\App\Services\HomepageSections::class),
+        ])->render();
+
+        $head = $factory->yieldPushContent('head');
+    } finally {
+        $factory->decrementRender();
+        $factory->flushState();
+    }
+
+    return $head.$html;
 }
 
 /**
@@ -215,66 +268,159 @@ it('holds one integer and reaches for no element-measuring API', function () {
     expect($script)->toContain("track.style.setProperty('--kbbs-i', at)");
 });
 
-/* ═══════════ rule 1: a shop with no slider draws what it always drew ══════ */
+/* ═════════ rule 1, REVERSED: the banner the owner asked for ships on ══════ */
 
-it('ships at cards, so every set that exists draws the same bytes', function () {
+it('ships at slider, at the two shapes the owner gave in pixels', function () {
     /*
-     * THE DEFECT THIS WOULD HAVE CAUGHT, and it is the one that matters on the
-     * most visible page in the shop: `kind` defaulting to anything but `cards`,
-     * or `homePartial()` not answering `cards` for a row whose column is null —
-     * which is every row on a server where the migration has added the column
-     * and no backfill has run, and every model a test builds by hand.
+     * ▲ THIS CASE USED TO SAY THE OPPOSITE, AND IT WAS RIGHT TO. (Lane SEC)
      *
-     * MUTATION, run: change `kind()` to `return (string) $this->kind;` and the
-     * null and the nonsense cases below go red; change the migration's default
-     * to 'slider' and the first one does.
+     * It was headed "rule 1: a shop with no slider draws what it always drew"
+     * and it pinned `kind` shipping at `cards`, the migration's column default
+     * at `cards`, and a cards banner rendering identically with all four new
+     * columns emptied. Every one of those pins was correct on the day it was
+     * written and every one of them is now wrong, because the owner asked for
+     * the other thing in as many words:
+     *
+     *   "the banner i need to change to simple image banners, not cards,
+     *    simple only images banner, with slide if multiple ... for desktop the
+     *    size should be 1920 x 550 and in mobile 500 x 600"
+     *
+     * and then, when asked whether that should be a control rather than the
+     * shipped state: "whatever i said, keep applying on the site ... i want to
+     * apply such things directly to the site to save time."
+     *
+     * CLAUDE.md on exactly this: "if it goes red, read the diff and either
+     * revert the accident or advance the pin for the change you meant — never
+     * both at once, and never without looking." This is the pin advanced. The
+     * OLD expectations are quoted above rather than deleted, so the next reader
+     * can tell a default that was moved on instruction from one that drifted.
+     *
+     * ── WHAT IS PINNED NOW, AND WHY IT IS FOUR PLACES AND NOT ONE ───────────
+     *
+     * A default that lives in one place would have moved nothing. `kind` is a
+     * real column whose database default is `cards`, so every row already on
+     * the shop carries the string and neither the model's fallback nor the
+     * create path is ever consulted for it. The four:
+     *
+     *   BannerSet::$attributes   a model built from nothing
+     *   BannerSet::kind()        a row whose column is null or nonsense
+     *   BannerApiController      a set created through the API without a kind
+     *   the migration            the rows that already exist
+     *
+     * Take any ONE of the four away and the owner's own banner still draws
+     * cards while three assertions say it does not, which is the shape this
+     * case exists to refuse.
+     *
+     * MUTATION, run:
+     *   - `BannerSet::$attributes` without `kind` -> the first block is red
+     *     ("kind" is then '' and kind() answers slider, but slider_ratio is
+     *     null and sliderRatioCss() falls back, so the ratio block stays
+     *     green — which is why the two are asserted separately below).
+     *   - `kind()` back to `: 'cards'` -> the null / nonsense rows are red.
+     *   - the migration's `where('kind', 'cards')` removed -> the last block.
+     *   - `sliderRatioCss()` back to `SLIDER_RATIOS['16/9']` -> the ratio
+     *     block is red on the null row only.
      */
-    $migration = (string) file_get_contents(
-        base_path('database/migrations/2027_04_05_000000_add_banner_kind_and_slider.php')
-    );
 
-    expect($migration)->toContain("\$t->string('kind', 16)->default('cards')");
+    // 1. A MODEL BUILT FROM NOTHING is a picture slider at his two shapes.
+    $fresh = new BannerSet;
 
-    foreach ([null, 'cards', '', 'slider-but-not-really', '<script>'] as $stored) {
+    expect($fresh->kind())->toBe('slider')
+        ->and($fresh->homePartial())->toBe('partials.home.slider-banner')
+        ->and($fresh->slider_ratio)->toBe('1920/550')
+        ->and($fresh->slider_ratio_m)->toBe('500/600')
+        ->and($fresh->sliderRatioCss())->toBe('1920 / 550')
+        ->and($fresh->sliderRatioMobileCss())->toBe('500 / 600');
+
+    // 2. AND A ROW THE COLUMN NEVER REACHED. Null is every row on a server
+    //    where the migration added the column and no backfill ran, and every
+    //    model a test builds by hand. Nonsense is a hand-edited database.
+    //    `cards` is the one value that still answers cards, because an owner
+    //    who picks the older treatment for one set has picked it.
+    foreach ([null, '', 'slider-but-not-really', '<script>'] as $stored) {
         $rogue = new BannerSet;
-        $rogue->forceFill(['kind' => $stored]);
+        $rogue->forceFill(['kind' => $stored, 'slider_ratio' => null, 'slider_ratio_m' => null]);
 
         expect($rogue->homePartial())->toBe(
-            $stored === 'slider' ? 'partials.home.slider-banner' : 'partials.home.cards-banner',
-            'a set whose kind is '.var_export($stored, true).' changed which section it draws'
+            'partials.home.slider-banner',
+            'a set whose kind is '.var_export($stored, true).' did not draw pictures'
+        );
+
+        expect($rogue->sliderRatioCss())->toBe('1920 / 550')
+            ->and($rogue->sliderRatioMobileCss())->toBe('500 / 600');
+    }
+
+    $cardsRow = new BannerSet;
+    $cardsRow->forceFill(['kind' => 'cards']);
+
+    expect($cardsRow->homePartial())->toBe(
+        'partials.home.cards-banner',
+        'a set explicitly set to cards stopped being able to draw cards'
+    );
+
+    /*
+     * 3. THE ROWS THAT ALREADY EXIST, which is the half a default cannot do.
+     *
+     * The migration is read as text rather than run, for the reason the case
+     * it replaced read the OTHER migration as text: the suite's database has
+     * already had every migration applied to it before the first assertion
+     * runs, so `banner_sets` is empty and an `update()` over no rows proves
+     * nothing about the shop. What can be asserted is that the three writes
+     * are there, that each is scoped to the value it is replacing, and that
+     * none of them is scoped to every row.
+     */
+    $migration = (string) file_get_contents(
+        base_path('database/migrations/2027_06_05_000000_banner_ships_as_image_slider.php')
+    );
+
+    foreach ([
+        "->where('kind', 'cards')->update(['kind' => 'slider'])",
+        "->where('slider_ratio', '16/9')->update(['slider_ratio' => '1920/550'])",
+        "->where('slider_ratio_m', '4/3')->update(['slider_ratio_m' => '500/600'])",
+    ] as $write) {
+        expect(str_contains($migration, $write))->toBeTrue(
+            'the migration no longer moves the rows that exist: '.$write
         );
     }
 
+    // And the column default it is moving them OFF is still what it was, so
+    // the scoping above still selects the rows it was written for.
+    $original = (string) file_get_contents(
+        base_path('database/migrations/2027_04_05_000000_add_banner_kind_and_slider.php')
+    );
+
+    expect($original)->toContain("\$t->string('kind', 16)->default('cards')");
+
     /*
-     * AND THE BYTES. The same cards set, once at the shipped values and once
-     * with all four new columns emptied the way a row that predates them is —
-     * rendered through whatever `homePartial()` answers, which is the whole
-     * path this round changed.
+     * 4. AND THE BYTES A REAL SET DRAWS. One published picture with a heading,
+     * a body and a button typed on it: the slider draws the PICTURE and none of
+     * the three, which is the whole of "simple only images banner". The cards
+     * partial drew all four, so this is also the proof that the kind actually
+     * changed what is rendered rather than only what a method answers.
      */
     BannerCard::query()->delete();
     BannerSet::query()->delete();
 
-    $set = BannerSet::create(['name' => 'Cards', 'slug' => 'sb-cards', 'status' => 'publish', 'position' => 0]);
+    $set = BannerSet::create(['name' => 'Pictures', 'slug' => 'sb-ships', 'status' => 'publish', 'position' => 0]);
 
     BannerCard::create([
         'banner_set_id' => $set->id, 'image' => 'uploads/banners/sb-1.webp', 'alt' => 'A',
-        'heading' => 'H', 'body' => 'B', 'button_label' => 'Shop', 'button_url' => '/shop/',
-        'image_w' => 900, 'image_h' => 1200, 'position' => 1, 'status' => 'publish',
+        'heading' => 'A HEADING NOBODY ASKED FOR', 'body' => 'B', 'button_label' => 'Shop',
+        'button_url' => '/shop/', 'image_w' => 1920, 'image_h' => 550, 'position' => 1, 'status' => 'publish',
     ]);
 
     [$shipped, $cards] = app(Banners::class)->forPreview($set->id);
 
-    expect($shipped->kind())->toBe('cards');
+    expect($shipped->kind())->toBe('slider');
 
-    $before = view($shipped->homePartial(), ['set' => $shipped, 'cards' => $cards])->render();
+    $html = view($shipped->homePartial(), ['set' => $shipped, 'cards' => $cards])->render();
 
-    $shipped->forceFill(['kind' => null, 'slider_style' => null, 'slider_ratio' => null, 'slider_ratio_m' => null]);
-
-    $after = view($shipped->homePartial(), ['set' => $shipped, 'cards' => $cards])->render();
-
-    expect($after)->toBe($before, 'the four new columns changed what a cards banner draws')
-        ->and($before)->not->toContain('kbbs')
-        ->and($before)->toContain('kbbn-c');
+    expect($html)->toContain('uploads/banners/sb-1.webp')
+        ->and($html)->toContain('aspect-ratio:var(--kbbs-arm')
+        ->and($html)->toContain('--kbbs-ar:1920 / 550')
+        ->and($html)->toContain('--kbbs-arm:500 / 600')
+        ->and($html)->not->toContain('A HEADING NOBODY ASKED FOR')
+        ->and($html)->not->toContain('kbbn-c');
 });
 
 it('is mounted exactly once, on the homepage and on the admin screen', function () {
@@ -513,14 +659,21 @@ it('prints nothing but constants and clamped integers into the style attribute',
         'speed_ms' => -5,
     ]);
 
-    expect($rogue->sliderRatioCss())->toBe('16 / 9')
-        ->and($rogue->sliderRatioMobileCss())->toBe('4 / 3')
+    /*
+     * ▲ THE TWO FALLBACKS MOVED, AND THE POINT OF THIS CASE DID NOT. (Lane SEC)
+     * It read '16 / 9' and '4 / 3' until the owner's two sizes became the
+     * shipped shapes. What is asserted is unchanged: an operator string that is
+     * not a key of SLIDER_RATIOS never reaches the stylesheet, whatever the
+     * default it is replaced by happens to be.
+     */
+    expect($rogue->sliderRatioCss())->toBe('1920 / 550')
+        ->and($rogue->sliderRatioMobileCss())->toBe('500 / 600')
         ->and($rogue->sliderStyle())->toBe('inset');
 
     $vars = Banners::sliderVariables($rogue, [], false);
 
     expect($vars)->toBe(
-        '--kbbs-ar:16 / 9;--kbbs-arm:4 / 3;--kbbs-r:40px;'
+        '--kbbs-ar:1920 / 550;--kbbs-arm:500 / 600;--kbbs-r:40px;'
         .'--kbbs-sh:'.BannerSet::SHADOWS['soft'][1].';--kbbs-dwell:0.60s;--kbbs-dirn:-1;--kbbs-flip:1'
     );
 

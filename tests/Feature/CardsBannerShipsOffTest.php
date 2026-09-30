@@ -21,9 +21,21 @@ use App\Services\SettingsService;
  * against its old self on an EMPTY database, so it would be equally green if
  * this section drew nothing because there was nothing to draw. This one fills
  * the tables — a published set, three published cards with pictures — and
- * asserts the homepage is STILL the same bytes, because the module is off and
- * no set is chosen. That is the real shipped state of the live shop the morning
- * after the package applies.
+ * asserts the homepage is STILL the same bytes for every state in which the
+ * section is not supposed to draw.
+ *
+ * ▲ THE SHIPPED STATE IN THAT LIST HAS CHANGED, AND THE FILE'S NAME IS NOW
+ *   HALF RIGHT.                                                     (Lane SEC)
+ *
+ * The module shipped OFF, and "off with the tables full" was the state of the
+ * live shop the morning after the package applied. The owner has since asked
+ * for the banner to BE the homepage's banner — "the banner i need to change to
+ * simple image banners, not cards ... apply this on desktop and mobile both" —
+ * and for it to be applied rather than offered. So the module ships ON with no
+ * set chosen, which draws exactly the same nothing for a different reason, and
+ * the four "not one byte" cases below now set the state they are testing
+ * instead of inheriting it. The name is left alone: renaming a test file loses
+ * its history for a word, and the gates it covers are the same four gates.
  *
  * ── WHAT THE DEFECT WOULD LOOK LIKE ON THE SHOP ─────────────────────────────
  *
@@ -85,6 +97,16 @@ function bnShop(): void
         'slug' => 'ramadan',
         'status' => 'publish',
         'position' => 0,
+        /*
+         * ▲ `kind` IS NAMED NOW, AND IT HAS TO BE.                  (Lane SEC)
+         * BannerSet::$attributes ships a new set as a picture slider, so a seed
+         * that left this out stopped seeding the thing this file is named after
+         * — every "not one byte" case below went on passing, and the one case
+         * that renders the row went red looking for `kbbn-c` in a slider. The
+         * cards treatment is still selectable per set, which is what this seed
+         * now says out loud.
+         */
+        'kind' => 'cards',
     ]);
 
     foreach (range(1, 3) as $i) {
@@ -124,11 +146,24 @@ it('draws not one byte with the module off, however full the tables are', functi
      * which left the setting at "None", stayed GREEN under that mutation, which
      * is why it now chooses a set.)
      */
+    /*
+     * ▲ THE MODULE IS SWITCHED OFF HERE NOW, WHERE IT USED TO BE OFF ALREADY.
+     *                                                              (Lane SEC)
+     * It shipped off and this case relied on that. It ships ON — the owner
+     * asked for the banner to be the homepage's banner rather than a switch to
+     * find — so the case switches it off itself. WHAT IS ASSERTED IS UNCHANGED
+     * and it is the thing that can still regress: the gate works, so an owner
+     * who turns the section off gets back exactly the page he had.
+     *
+     * The mutation note below still holds word for word, and was re-run.
+     */
     $bare = bnHome();
 
     bnShop();
 
-    app(SettingsService::class)->setModuleSetting(
+    $settings = app(SettingsService::class);
+    $settings->setModule('cards_banner', false);
+    $settings->setModuleSetting(
         Banners::MODULE, 'set', (string) BannerSet::query()->firstOrFail()->id
     );
 
@@ -211,6 +246,67 @@ it('DOES draw the row once the owner has turned it on and chosen a set', functio
         ->and(substr_count($html, 'class="kbbn-c'))->toBe(6); // three cards, doubled track
 });
 
+it('gives the hero no divider mark while the banner above it draws nothing', function () {
+    /*
+     * ── THE DEFECT, AND WHAT IT LOOKED LIKE ON THE SHOP ─────────────────────
+     *
+     * A tick rule directly under the header on every phone homepage of every
+     * shop that had not uploaded a banner picture. One element, no words, on
+     * the most visible page there is.
+     *
+     * HOW IT GOT THERE. `cards_banner` became the FIRST key in
+     * HomepageSections::REGISTRY this round, because the picture banner is the
+     * homepage's banner now and is drawn above the hero. Dividers ship ON
+     * (SectionDividers: style `ticks`, scope `all`, `first` off, desktop off),
+     * and HomepageSections::frameClass() suppresses the mark above "the first
+     * section" — which it read as array_key_first(), the first key in the
+     * ORDER. `cards_banner` is the one section in the registry whose <section>
+     * is inside its own @if, so on a shop with no picture the first key is not
+     * in the document at all and the hero, which IS, counted as second.
+     *
+     * THE FIX is firstDrawnKey(): the first key that will be in the page, with
+     * `cards_banner` assumed absent until store/home.blade.php says it is
+     * there. Written that way round on purpose — HomepageSections::draws()
+     * carries the reason, which is that StorefrontEnglishUnchangedTest renders
+     * BASE_COMMIT's Blade against the working tree's PHP.
+     *
+     * MUTATION, run: change firstDrawnKey() back to array_key_first($all) and
+     * the first expectation is red with `class="sec dv"`; the second stays
+     * green, which is what makes them two assertions and not one.
+     *
+     * AND WHY IT IS HERE RATHER THAN LEFT TO THE WALK.
+     * StorefrontEnglishUnchangedTest did not report it: its database leaves
+     * Appearance → Section dividers alone and its seed renders with the marks
+     * off, so `dv` appeared on neither side. The dividers are turned ON here,
+     * explicitly, which is the whole reason this case can see it.
+     */
+    $dividers = app(\App\Services\SectionDividers::class);
+    $dividers->save(['style' => 'ticks', 'scope' => 'all', 'first' => false, 'desktop' => true]);
+    SettingsService::forgetMemo();
+
+    expect($dividers->classFor('hero'))->toBe('dv', 'the dividers are off, so this case proves nothing');
+
+    // 1. NO PICTURES: the hero is the first section in the document and carries
+    //    no mark, exactly as it did before the banner moved above it.
+    bnShop();
+    $bare = bnHome();
+
+    expect($bare)->toContain('<section class="sec " style="padding-top:14px">')
+        ->and($bare)->not->toContain('<section class="sec dv" style="padding-top:14px">');
+
+    // 2. PICTURES: the banner IS the first section, so it carries no mark and
+    //    the hero — now genuinely second — carries one. A divider between two
+    //    sections is what the setting asks for.
+    $settings = app(SettingsService::class);
+    $settings->setModule('cards_banner', true);
+    $settings->setModuleSetting(Banners::MODULE, 'set', (string) BannerSet::query()->firstOrFail()->id);
+
+    $withBanner = bnHome();
+
+    expect($withBanner)->toContain('<section class="sec dv" style="padding-top:14px">')
+        ->and($withBanner)->toContain('<section class="sec " style="padding-top:8px">');
+});
+
 it('leaves the homepage carrying no empty content wrapper', function () {
     /*
      * THE EMPTY-WRAPPER SHAPE, caught without needing a "before".
@@ -232,11 +328,38 @@ it('leaves the homepage carrying no empty content wrapper', function () {
     expect(bnHome())->not->toContain('<div class="wrap"></div>');
 });
 
-it('ships the module off in the registry and the setting at None', function () {
-    // The two values the package applies with. A default the owner did not ask
-    // for is the one thing rule 1 allows nobody.
-    expect(ModuleRegistry::REGISTRY['cards_banner'][3])->toBeFalse()
-        ->and(app(Banners::class)->enabled())->toBeFalse()
+it('ships the module ON with no set chosen, so it is armed and drawing nothing', function () {
+    /*
+     * ▲ THIS CASE SAID "off in the registry and the setting at None", AND THE
+     *   FIRST HALF IS NOW THE OPPOSITE ON INSTRUCTION.              (Lane SEC)
+     *
+     * Its old comment: "The two values the package applies with. A default the
+     * owner did not ask for is the one thing rule 1 allows nobody." He asked
+     * for this one — "the banner i need to change to simple image banners ...
+     * apply this on desktop and mobile both", and then "i want to apply such
+     * things directly to the site to save time" — which is rule 1's one
+     * exception and, under the reversed rule, the ordinary case.
+     *
+     * ── AND THE SECOND HALF IS WHY TURNING IT ON MOVES NO PIXEL ─────────────
+     *
+     * The setting is still at None on a fresh install, and `forHome()` returns
+     * null while it is. So the module being on buys the owner one thing only:
+     * he picks a set and sees it, instead of picking a set, seeing nothing, and
+     * hunting for a switch. THAT is the whole claim, and the third assertion is
+     * what keeps it honest — an "on by default" that also drew something by
+     * default would be this lane changing the front page of a live shop on a
+     * guess about what is in its tables.
+     *
+     * The migration `banner_ships_as_image_slider` does choose a set, but only
+     * when there is exactly one that would draw. That is asserted in
+     * BannerShipsAsImageSliderTest, against real rows, rather than here.
+     *
+     * MUTATION: put the registry's fourth element back to `false` and the
+     * first expectation is red while the other two stay green — which is the
+     * point of asserting the toggle and the emptiness separately.
+     */
+    expect(ModuleRegistry::REGISTRY['cards_banner'][3])->toBeTrue()
+        ->and(app(Banners::class)->enabled())->toBeTrue()
         ->and(app(Banners::class)->all()['set'])->toBe('')
         ->and(app(Banners::class)->forHome())->toBeNull();
 });
@@ -249,13 +372,33 @@ it('keeps the homepage section list in the order the template draws it', functio
      * picture of a page the shop does not draw. That is the fault settle() and
      * HomepageLayouts::summaries() were both written about.
      *
+     * ▲ THE EXPECTED SEQUENCE MOVED, AND THE PROPERTY DID NOT.      (Lane SEC)
+     * It read ['hero', 'delivery', 'ticker', 'cards_banner', 'categories'].
+     * The picture banner is the homepage's banner now and is drawn above the
+     * hero band, so the registry's first key is `cards_banner` and the third
+     * assertion below is inverted: the banner's @unless comes BEFORE the hero
+     * band's, not after the ticker's. What is asserted is unchanged — that this
+     * list and the template agree — which is the only thing that keeps
+     * Appearance → Homepage showing the page the shop actually draws.
+     *
      * MUTATION: move 'cards_banner' after 'categories' in
      * HomepageSections::REGISTRY and this goes red. Run, red, put back.
      */
     $keys = array_keys(HomepageSections::REGISTRY);
     $home = (string) file_get_contents(base_path('resources/views/store/home.blade.php'));
 
-    expect(array_slice($keys, 0, 5))->toBe(['hero', 'delivery', 'ticker', 'cards_banner', 'categories'])
+    expect(array_slice($keys, 0, 5))->toBe(['cards_banner', 'hero', 'delivery', 'ticker', 'categories'])
         ->and(strpos($home, "hidden('cards_banner')"))->toBeLessThan((int) strpos($home, "hidden('categories')"))
-        ->and(strpos($home, "hidden('cards_banner')"))->toBeGreaterThan((int) strpos($home, "hidden('ticker')"));
+        ->and(strpos($home, "hidden('cards_banner')"))->toBeLessThan((int) strpos($home, "bandHidden('hero')"));
+
+    /*
+     * AND SIGNATURE IS array_keys(REGISTRY), exactly. Its own claim is "every
+     * section on, in the order the site uses today", and
+     * HomepageSections::orderIsDefault() compares the applied sequence against
+     * the registry's keys — so a preset that disagrees makes "put the shipped
+     * order back" put back something else. Asserted here rather than left to
+     * HomepageSectionOrderTest's indirect version, which reports it as a
+     * stylesheet that would not go away.
+     */
+    expect(\App\Services\HomepageLayouts::LAYOUTS['signature']['sections'])->toBe($keys);
 });

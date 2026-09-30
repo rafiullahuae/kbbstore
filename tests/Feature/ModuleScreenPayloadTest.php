@@ -220,6 +220,48 @@ it('sends every module screen the payload it sent before the shared schema', fun
         }
     }
 
+    /*
+     * ── 30 SEPTEMBER, FIVE EDITS TO THE FIXTURE, EACH ONE READ OFF THE DIFF ─
+     *                                                              (Lane SEC)
+     * None of them regenerated: the live payload was dumped, diffed against the
+     * recorded one leaf by leaf, and exactly these five leaves were written.
+     * Nothing else in the file was touched, and the field COUNT did not move.
+     *
+     *   header.tabs[6].description       Appearance → Header → Flag bar. The
+     *                                    strip is on for desktop now and, on
+     *                                    the home page, sits under the banner
+     *                                    rather than above the header. The
+     *                                    sentence said the opposite of both.
+     *   header.tabs[6].fields[1]         `fb_desktop`: help, default and value,
+     *                                    false => true. The owner asked for it
+     *                                    in as many words -- "apply this on
+     *                                    desktop and mobile both" -- which is
+     *                                    rule 1's one exception. FlagBarTest
+     *                                    carries the quotation.
+     *   dividers.sections[]              Appearance → Section dividers' picker
+     *                                    is built from
+     *                                    HomepageSections::REGISTRY, whose
+     *                                    first key is now `cards_banner`: the
+     *                                    picture banner is the homepage's
+     *                                    banner and is drawn above the hero.
+     *                                    A REORDER AND A RENAME, not an
+     *                                    addition -- the same row, moved, with
+     *                                    "Cards banner" now reading "Banners"
+     *                                    because the treatment it ships is
+     *                                    pictures.
+     *   security.tabs[2].fields[1].help  and
+     *   mail.fields[6].help              Two sentences that told the owner he
+     *                                    was on shared hosting. He is on
+     *                                    Cloudways, with a shell. Corrected in
+     *                                    the premise sweep; no control, value
+     *                                    or default moved with them.
+     *
+     * WHAT IS NOT HERE AND WAS EXPECTED TO BE: a new `settings.header_settings`
+     * row. The migration that turns the strip on writes that row ONLY when it
+     * already exists, because the schema default above covers a shop that has
+     * never opened the screen -- so a fresh install's settings table is
+     * untouched and SeoBackOfficePayloadTest's fixture needed no edit at all.
+     */
     expect($moved)->toBe([], "These module screens would now draw something different:\n".implode("\n", $moved));
 
     // A guard on the guard: if the fixture or the URL list is emptied, the loop
