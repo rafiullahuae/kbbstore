@@ -3,6 +3,86 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.332
+**Three things you pointed at, and one you had not seen yet.** Apply after .331.
+
+---
+
+### THE PHOTO NO LONGER HANGS OFF THE LEFT OF YOUR PAGE
+
+You drew a line down the screenshot through your logo and "Product details" —
+the picture started **22px to the left of it**. Measured at 1920, 1440 and 1280:
+exactly 22px every time, so it was built in rather than a screen-size accident.
+
+Now the picture, its thumbnails and the rest of the page share **one left edge**.
+
+> **On a phone it still runs to both screen edges, and that is on purpose.** That
+> is the Ledger look you picked and praised, and a phone has no "content edge"
+> for it to cross. Say the word and it comes in there too.
+
+### THE QUANTITY BOX IS LEVEL WITH ADD TO CART
+
+You marked both edges. They were off by two different amounts at once:
+
+| | before | now |
+|---|---|---|
+| Add to cart | 54px tall | 54px |
+| Quantity box | **56px**, sitting **6px lower** | 54px, **level** |
+
+**The 6px was not the product page's fault.** The cart drawer defines its own
+little quantity pill with a 6px top margin, and does it in a way that leaks onto
+every page in the shop — including your product page. It had been doing that for
+as long as both files existed. The other 2px was the stepper counting its own
+border and the button having none.
+
+Identical on desktop and mobile, so one fix covered both.
+
+### "FREQUENTLY BOUGHT TOGETHER" HAD NO STYLING AT ALL
+
+You did not report this one. That block was never given a stylesheet when the
+shop moved off WordPress — the original plugin supplied its own and it was never
+carried across. The result, measured at 320px:
+
+| | before | now |
+|---|---|---|
+| row heights | **18, 81, 156 and 210px** | **one height** |
+
+Four different heights in one strip, thumbnails floating out of place and the
+tick box, the name and the price running together as one paragraph.
+
+### AND "APPLY THIS EVERYWHERE" NOW MEANS EVERYWHERE
+
+When you asked for equal card heights everywhere, **eight** pages were checked.
+There are **fourteen**. The seven that were missed were missed for an honest
+reason: five of them are empty or hidden until something switches them on, and an
+empty page measures as "no problem here".
+
+Now measured at 320, 390 and 1280, all fourteen:
+
+home · shop · category · brand · search · related products · **new in** ·
+**best sellers** · **super sale** · **everything under 54 AED** · **by concern** ·
+**routines** · **wishlist** · cart and checkout (no product grid, correctly)
+
+**One card height on every one of them, at every width — and Arabic measures
+identically to English throughout.**
+
+---
+
+### ABOUT THE WISHLIST HEART
+
+It was never removed. It is in the code, it is built to sit beside Add to cart,
+and the only commit that ever touched it is the original one.
+
+**You cannot see it because the wishlist itself is switched off.** Turn it on at
+**Catalogue → Wishlist** and it appears. Measured with it on: your card heights
+do not change at all — the button simply narrows to make room.
+
+One thing to know before you switch it on: **on a phone the heart sits on the
+corner of the photo, not beside the button.** You asked for beside the button on
+both, so that is still owed.
+
+---
+
 ## 2.60.331
 **Your bundle rows were advertising the wrong discount.** Apply after .330.
 
