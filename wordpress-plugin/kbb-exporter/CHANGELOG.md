@@ -18,6 +18,42 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.7.1
+
+**Two things the plugin was doing right and had never said, both of which the
+owner meets on the screen he opens before the migration.** (Lane IE)
+
+- **HPOS compatibility is now declared.** WooCommerce 8.2+ lists every plugin
+  that has not called `FeaturesUtil::declare_compatibility('custom_order_tables')`
+  under **WooCommerce → Settings → Advanced → Features** as *incompatible with
+  High-Performance Order Storage*. This plugin has read HPOS's own `wc_orders`
+  tables since the orders stage was written — `KBB_Export_Orders_Source` picks
+  the storage, and the harness runs the real stages both ways with
+  `--storage=posts` and `--storage=hpos` producing **byte-identical CSVs**,
+  asserted in `GeWpExporterTest`. So the warning was false, and it was false on
+  the one screen an owner checks before trusting a migration tool with his
+  orders. Guarded twice (the hook is 7.1+, the class 7.5+), so it is inert on an
+  older shop rather than fatal.
+
+- **WooCommerce being absent is now said at the top of the screen instead of
+  midway through the export.** There was no check of any kind: on a site whose
+  WooCommerce is deactivated — which happens by accident during a migration —
+  **Tools → KBB Export** appeared exactly as usual and the run then died on
+  `wp_woocommerce_order_items` not existing, *after* the owner had started it.
+
+  Deliberately an admin notice and **not** a `Requires Plugins: woocommerce`
+  header. That header (WordPress 6.5+) makes WordPress REFUSE TO ACTIVATE this
+  plugin whenever it cannot match the slug — including a shop whose WooCommerce
+  sits in a differently named folder, which staging copies and some shared hosts
+  do produce. Blocking the migration tool over a folder name is a worse failure
+  than the one being fixed.
+
+Nothing about the export's output changed. A 1.7.0 export and a 1.7.1 export of
+the same shop are the same files, except for `source.plugin_version` in
+`manifest.json`.
+
+---
+
 ## 1.7.0
 
 **The navigation menu — the last thing a WordPress shop carries that no export

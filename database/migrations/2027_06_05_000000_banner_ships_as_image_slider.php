@@ -184,14 +184,50 @@ return new class extends Migration
         $moved['homepage set chosen'] = 0;
 
         if (trim((string) $chosen) === '') {
+            /*
+             * ── whereExists AND NOT join()+distinct() ───────────────────────
+             *
+             * THIS MIGRATION DID NOT RUN ON MySQL AT ALL, and the shop this
+             * ships to is MySQL. (Lane IE)
+             *
+             * The shape here was a join onto banner_cards with ->distinct() to
+             * collapse a set that has several published pictures, ordered by
+             * `position`. That compiles to
+             *
+             *     select distinct `banner_sets`.`id` ... order by `banner_sets`.`position`
+             *
+             * and MySQL under ONLY_FULL_GROUP_BY -- which is in Laravel's
+             * `strict => true`, hard-coded on the `mysql` connection in
+             * config/database.php, so it is on in production -- refuses it:
+             *
+             *     SQLSTATE[HY000]: General error: 3065 Expression #1 of ORDER BY
+             *     clause is not in SELECT list, references column
+             *     `banner_sets`.`position` which is not in SELECT list; this is
+             *     incompatible with DISTINCT
+             *
+             * SQLite accepts it, so the whole SQLite suite stayed green while
+             * `php artisan migrate --force` stops dead here on MySQL and the
+             * twelve migrations AFTER this one never run -- six of them
+             * clear_caches_*, which are the only thing that makes a newly
+             * shipped route exist on a server with a compiled route table.
+             * Measured: docs/IE-IMPORT-END-TO-END.md §2.
+             *
+             * whereExists asks the same question -- "is there a published card
+             * with a picture on this set" -- and answers one row per set by
+             * construction, so there is no DISTINCT for the ORDER BY to
+             * conflict with. Same rows, same order, both dialects.
+             */
             $candidates = DB::table('banner_sets')
-                ->join('banner_cards', 'banner_cards.banner_set_id', '=', 'banner_sets.id')
                 ->where('banner_sets.status', 'publish')
-                ->where('banner_cards.status', 'publish')
-                ->where('banner_cards.image', '<>', '')
+                ->whereExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('banner_cards')
+                        ->whereColumn('banner_cards.banner_set_id', 'banner_sets.id')
+                        ->where('banner_cards.status', 'publish')
+                        ->where('banner_cards.image', '<>', '');
+                })
                 ->orderBy('banner_sets.position')
                 ->orderBy('banner_sets.id')
-                ->distinct()
                 ->pluck('banner_sets.id');
 
             if ($candidates->count() === 1) {
