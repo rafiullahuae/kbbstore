@@ -24,24 +24,33 @@ red without it, and take the whole task.
 | | |
 |---|---|
 | Integration branch | `claude/kind-mayer-rpqesv` |
-| Shipped and in the owner's hands | **2.60.325** — thirteen lanes, 155 files, 14 migrations, built at `3b372db` and verified file-by-file against that tree |
-| Next package | **BLOCKED.** See *The one thing blocking the next package* below |
+| Built and waiting, **in this order** | **2.60.325** (thirteen lanes) → **2.60.326** (five fixes, no default moved) → **2.60.327** (one file, fixing a defect .326 shipped) |
+| Next package | Not blocked. The block that stood at .325 — nine navigated admin endpoints landing on a bare 404 — was cleared in .326 |
 | Lanes running | **SEC**, **PLC**, **BG** |
 
-### The one thing blocking the next package
+### The standing task all three lanes share
 
-Lane SEC's round 2 closed the second door on the admin-path leak: `/admin-api/*`
-answered a signed-out **browser** with a 302 naming the owner's secret admin
-path, and now answers a bare 404. Nine endpoints are reached by **navigating**
-the browser rather than by `fetch`, so with an expired session they now land on
-that 404 — and for the four that are `window.location.href`, the owner **loses
-the console screen he was on**, which is worse than the login page it replaced.
+Lane PLC measured the whole suite for assertions that are **true for the wrong
+reason** — a needle present because something unrelated on the page renders it.
+**6,958** `toContain` assertions instrumented at run time; **500** sites whose
+needle is prose occurring 2+ times in its own haystack; **157** of those reading
+like a sentence a shopper is shown; **151 files**.
 
-**2.60.325 does not contain this** — it was built before the merge. No package
-ships from this branch until it is fixed. It is Lane SEC's top priority and the
-fix arrives as anchor/replacement blocks, because the file is the integrator's.
+It had to be measured at run time, and that is the interesting part: the needle
+is fine, the haystack is fine, and the fault lives only in the relationship
+between them while the test runs. No static scan can see it.
 
----
+`tools/plc-needle-scan.sh` reproduces the list. **Every lane settles the rows in
+the files it owns.** The cheap test is whether blanking the thing under test
+leaves the assertion green; where it does, the needle is wrong and gets fixed,
+and where it does not, the string is recorded in `KBB_MULTI_RENDERED` with its
+reason. Report how many of yours were actually hiding something — even if the
+answer is none, that is the number that says whether this was worth doing.
+
+Three shapes already found, to know what you are looking for: an assertion
+satisfied by the cart **drawer** rather than the cart line; one satisfied by an
+`aria-label` rather than the visible text; and one satisfied by **a CSS comment**
+that ships the words to the page.
 
 ## Reading a brief
 
@@ -54,115 +63,98 @@ merge commit in the lane's own words rather than paraphrased.
 
 ---
 
-## Lane SEC — the nine navigations, and two smaller things
+## Lane SEC — the Instagram pop-up, and a cache that leaks between runs
 
-**Owns:** `app/Support/GuestRedirect.php`, `app/Services/SetStockReconciler.php`,
-`app/Services/Payments/StockClaim.php`, `tests/Feature/AdminPathNeverLeaksTest.php`,
-`tests/Feature/ClaimSumsByRealShelfTest.php`, `docs/SEC-*`, `docs/sec-shots/`.
+**Owns:** `app/Support/GuestRedirect.php`, `app/Support/ExportProbe.php`,
+`app/Services/SetStockReconciler.php`, `app/Services/Payments/StockClaim.php`,
+`resources/views/admin/partials/instagram-screen.blade.php`,
+`tests/Feature/AdminPathNeverLeaksTest.php`,
+`tests/Feature/DownloadNavigationGateTest.php`,
+`tests/Feature/ServerBuiltAdminUrlsTest.php`, `docs/SEC-*`, `docs/sec-shots/`.
 
-**1 · The nine navigations.** Five exports and the four order documents, all in
-`resources/views/admin/app.blade.php`, which is the integrator's file — so the
-console half is delivered as **anchor/replacement blocks** in the shape
-`docs/BG-ADMIN-APP-BLOCKS.md` established: an exact anchor and an exact
-replacement per block, each anchor verified to occur exactly once by count, plus
-a table of what is red before and green after. That document applied without a
-single adjustment and is the standard.
+**1 · The Instagram pop-up's console half.** Its server half shipped; the console
+half was specified and not written, because the partial belonged to another lane
+and no such lane exists. Two things make it more than four lines:
+`kbbTellIfDownloadRefused` is not in that partial's scope, and its deliberate
+blocked-pop-up fallback follows the anchor's `href` **in this tab**, which is a
+second navigation needing its own answer. `DownloadNavigationGateTest`'s pinned
+set must be updated to match — that is now the thing that catches a miss.
 
-Four of the nine are invisible to any scan of the console, because the address
-never appears in its source: the server builds them in
-`Admin\InvoiceController::invoiceUrl()` and its siblings, and the console
-receives them as data on the order row.
+**2 · `AdminPathService` memoises into `storage/framework/cache/data` inside the
+worktree**, shared with every pest run in it. Pinning `KBB_ADMIN_PATH` in one
+preview script was a workaround. Candidate answers, none obviously best: a
+run-specific cache key, not writing the memo in the testing environment, or
+`tests/bootstrap.php` giving each run its own cache path the way it already gives
+each run its own SQLite file. Check whether the same fix covers `Setting::map()`'s
+process-level static, which CLAUDE.md names as a trap in tests and queue workers,
+or whether they are separate problems.
 
-Two constraints that decide the shape, both to be measured rather than reasoned
-about: `/admin-api/health` is `throttle:6,1` and will 429 on the fourth export in
-a minute, so it is not a probe; and the comment at `olPrintDocs` records that a
-popup opened from an async continuation is blocked by the browser, so a
-`window.open` must happen inside the click.
-
-**2 · The Catalog screen blames route wiring for any error, including the 401**
-(`admin/app.blade.php:19323`). Not a regression from this work — pictured and
-proved. `product-editor-screen.blade.php:1021` already has the one-line remedy.
-The same sentence appears on 33 screens; say whether the other 32 branch
-correctly or give a block each.
-
-**3 · A guard for admin-api URLs the server builds**, so the next one cannot
-hide the way those four did.
-
-**Done when:** the expired-session frame is shot at 390 and 1280 for both an
-export and an order document, with the console still on screen and the sign-in
-message on it, and the blocks apply cleanly.
+**3 · The needle rows in the files above.**
 
 ---
 
-## Lane PLC — assertions that are true for the wrong reason, and the return leg
+## Lane PLC — 157 shopper-facing sentences, and a shape worth hunting
 
 **Owns:** `app/Services/Checkout/PlacementState.php`,
 `app/Http/Controllers/Store/CheckoutReturnController.php`,
 `routes/checkout-return.php`, `resources/views/partials/checkout/*`,
 `tests/Feature/CheckoutPlacingOverlayTest.php`,
-`tests/Feature/NoticeBandsAreStyledTest.php`, `docs/PLC-overlay-shots/`.
+`tests/Feature/CheckoutRestoreBasketTest.php`,
+`tests/Feature/NeedlesNameOneThingTest.php`, `tools/plc-needle-*`,
+`docs/PLC-overlay-shots/`.
 
-**1 · The mutation that did not bite.** `toContain('Your bag is empty.')` passed
-its mutation, because the cart **drawer** renders that exact sentence, period and
-all, in `.empty-d` — two occurrences on the page. The assertion is well-formed,
-so `ExpectationsThatCannotFailTest` structurally cannot see it; it simply does
-not test what it claims. **This is the variadic trap's positive twin and it is
-almost certainly not one instance.** Count them before fixing any: for each
-`toContain('<literal>')` whose needle is a plain sentence or a short token rather
-than markup, count how many times that literal occurs in the page the assertion
-runs against. More than once means the assertion cannot distinguish the thing it
-names from the thing it does not. The count is the interesting number; zero
-closes it.
+**1 · Work the 157 down.** Leaving the 492 sites outside this lane's files to
+their owners was right for one round; it is not a plan, because those lanes are
+working on other things. Take the shopper-facing ones — a duplicated `data-x`
+attribute matters much less than a checkout sentence that is asserted and never
+drawn. Change the **needle**, never the behaviour being asserted; a site that
+looks like it asserts the wrong thing entirely gets named, not rewritten.
 
-**2 · The provider sending the shopper back twice with different outcomes** — a
-cancel followed by a late webhook that confirms, or the reverse. `PlacementState`
-checks refused first because a reversed payment leaves `paid_at` set, and that
-reasoning is right; the open question is what the **page** does when the row
-changes underneath a shopper standing on it.
+**2 · The same question one layer out.** `toContain` is one of several ways to
+make this mistake. Check `assertSee`, `assertStringContainsString` and `toMatch`
+for the same class of false green, and extend the existing scan rather than
+writing a second one. If the suite barely uses them, one sentence closes it.
 
-**3 · A second press of the restore button** — twice quickly, after it has
-succeeded, and from a stale page in another tab. "The right thing once" includes
-not releasing stock twice.
-
-**Done when:** the count from 1 is reported, 2 and 3 are either fixed or pinned
-with a paragraph saying why they were already right.
+**3 · The discarded-return shape.** `restore()` assigned `moveTo()`'s answer to a
+variable and never read it, with an unguarded write underneath — a guarded write
+whose guard's answer is thrown away. CLAUDE.md's `UpdateRunner::recordManifest()`
+landmine is the same family. Sweep the checkout and order paths for every call
+whose return says *whether the write happened*, and whether the caller reads it.
+Fix what is in the checkout path; name the rest.
 
 ---
 
-## Lane BG — the webfont, the last two white pages, and the audit as a test
+## Lane BG — the review block, and the instrument generalised
 
 **Owns:** `app/Services/PageWash.php`, `app/Support/BrandAccent.php`,
 `app/Support/WebFonts.php`, `resources/views/partials/page-wash-css.blade.php`,
 `resources/views/partials/shop-appearance-css.blade.php`,
-`tests/Feature/OnePageBackgroundTest.php`,
-`tests/Feature/StandaloneDocumentHeadTest.php`, `docs/BG-*`, `docs/bg-shots/`.
+`resources/css/kbb/sorina-reviews.css`, `tests/Feature/OnePageBackgroundTest.php`,
+`tests/Feature/StandaloneDocumentHeadTest.php`, `tools/bg-*`, `docs/BG-*`,
+`docs/bg-shots/`.
 
-**1 · The webfont, and the arithmetic is already done** — in
-`docs/BG-STANDALONE-DOCUMENTS.md`, and worth re-measuring rather than trusting.
-The journal, an article and the review wall want weight **500**, which
-`WebFonts` does not carry; the skin quiz also wants **300**; `/app` asks for
-**Fraunces and Hanken Grotesk**, neither of which this shop has at all. Two
-separable pieces and they stay separate. Lane PERF self-hosted these fonts to
-cut a 4,369 ms critical path (mobile 76→86, desktop 88→99) — do not undo that
-gain to fix a synthesised weight. Two font families are not downloaded into this
-repo on a lane's own authority.
+**1 · `sorina-reviews.css` names Fraunces and Hanken Grotesk for the review block
+on every product page and neither family is ever loaded**, so those titles render
+in Georgia and always have. Correctly the owner's decision — and that is a reason
+to give him something to decide **between**, not a reason to leave it. Build the
+choice: as it is today, in the shop's own type, and, only if the families are
+genuinely worth it, properly loaded with the wire cost measured the way Poppins
+500 was. Do not download a font family to make the third option exist.
 
-**2 · The journal and an article are still white.** Two routes were reported and
-neither taken: load `kbb.css` there, or copy a ~40 KB data-URI gradient. A third
-was not costed — extract the designed background into its own small stylesheet
-that both the layout and the standalone documents link. Cost all three in bytes,
-requests and render, take the cheapest honest one, and if all three are worse
-than white, write the sentence that closes it for good.
+**2 · The instrument, generalised.** `tools/bg-weight500.cjs` is the only honest
+font-measuring instrument in this repo, and it exists because the previous one
+silently reported the fallback: a ruler set in `Poppins, system-ui, sans-serif`
+reports the **system** font's widths wherever Poppins is absent, identically on
+every such page — which is how three fabricated numbers reached a docblock as
+fact. Find whether any other probe in `tools/` or `tests/browser/` has the same
+shape: a measurement that cannot distinguish the thing it measures from the thing
+that stood in for it. And the `display:swap` race — probing a weight nothing on
+the page uses measures the fallback — belongs in the instrument, not in one
+script.
 
-**3 · Put the audit in `StandaloneDocumentHeadTest`**, taken at **moved**
-settings rather than defaults — four of those emitters print nothing until the
-owner touches something, so a table taken at defaults says they are all missing
-and tells you nothing.
-
-**Done when:** a seventh standalone document, or a new thing added to the
-layout's head, fails the suite loudly.
-
----
+**3 · The needle rows in the files above.** One of the 500 was satisfied by a CSS
+comment, which is the shape a lane shipping inline `<style>` into six documents
+should worry about most.
 
 ## What is waiting on the owner, not on us
 
@@ -173,9 +165,13 @@ first item.
   product page (five whole designs), the product card (A live, B/C/D one setting
   away), the picture slider's look (four), and the site background (four). One
   page carries all four at 390 and 1280 with the measured numbers under each.
-- **Apply 2.60.325**, then the two server-side jobs no package can do: cache
-  headers and HSTS, and registering the domain with Apple Pay in Stripe.
-  `docs/PERF-PAGESPEED.md` §5.
+- **Apply .325, .326 and .327, in that order**, then the two server-side jobs no
+  package can do: cache headers and HSTS, and registering the domain with Apple
+  Pay in Stripe. `docs/PERF-PAGESPEED.md` §5.
+- **Which version the server is actually running.** Recorded nowhere; one command
+  answers it now that the shop has a shell. Until somebody runs it, every package
+  built "on top of" the live state is a guess.
+- **The review block's fonts** — see Lane BG above.
 - **Darkening the brand pink, or not.** Accessibility is stuck at 96 on 108
   contrast failures, and `--muted` (3.14) and `--pink` (3.08) are already below
   AA against today's background. The Page background screen shows it beside the

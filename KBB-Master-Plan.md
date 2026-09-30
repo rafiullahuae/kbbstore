@@ -27,7 +27,7 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 |---|---|
 | Ledger completion at last count | **36%** (110 Fn ☑ / 94 Dsp ☑ of 305) |
 | **Counted now** | **91%** across 24 phases, 312 items — and that number is *counted*, not estimated: `tools/progress-dashboard/build.php` reads the checkboxes out of this file. A part-done item counts as half; an item struck as not-wanted is left out of the total entirely. Open `KBB-Progress-Dashboard.html` |
-| Releases shipped this stretch | 2.38.0 → **2.60.325**. ▲ **2.60.325 is built and waiting to be applied** — thirteen lanes, 155 files, 14 migrations, every file checked byte-for-byte against the tested tree. Apply after .324 |
+| Releases shipped this stretch | 2.38.0 → **2.60.327**. ▲ **Three are built and waiting, and the order matters: .325, then .326, then .327.** .325 is thirteen lanes; .326 is five fixes and moves no shipped default; .327 is one file, fixing a defect .326 itself shipped |
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |
@@ -105,29 +105,31 @@ is a bug in this section rather than a second opinion about the phase.
 
 
 
-- **Lane SEC — the download navigations, and the branch is package-blocked on
-  them.** Closing the second door on the admin-path leak made `/admin-api/*`
-  answer a browser with a bare 404, and nine endpoints are reached by NAVIGATING
-  rather than by fetch — five exports and the four order documents. With an
-  expired session those now land on a blank 404, and for the four
-  `window.location.href` ones that means the owner loses the console screen he was
-  on, which is worse than the login page it replaced. ▲ 2.60.325 does **not**
-  carry this — it was built before — and no package ships from this branch until
-  it is fixed. Four of the nine are invisible to any scan of the console, because
-  the address never appears there: the server builds them in
-  `Admin\InvoiceController::invoiceUrl()`
-- **Lane PLC — putting the basket back.** A shopper who abandons at Tabby or
-  Tamara comes back to an empty basket; `place()` marks the cart `converted`
-  inside the transaction that writes the order and nothing on the return leg
-  undoes it. A POST, gated on `kbb_last_order` + `hash_equals`, refusing any order
-  that is confirmed or carries `paid_at`. ▲ The restored basket has to come back
-  **through** `SetStockReconciler`, not around it, or it re-creates the
-  set-plus-loose order blocker the owner reported
-- **Lane BG — the webfont, and closing the standalone documents.** Converting the
-  five documents that carry their own `<head>` to the self-hosted fonts is not a
-  free swap and the arithmetic is written down: three of them want weight 500 and
-  the skin quiz also wants 300, none of which `WebFonts` carries, and `/app` asks
-  for Fraunces and Hanken Grotesk, neither of which this shop has at all
+- **Lane SEC — the Instagram pop-up's console half, and a cache that leaks
+  between runs.** The OAuth pop-up is the eleventh navigation; its server half
+  shipped in 2.60.326 and its console half was specified rather than written,
+  because the partial belongs to another lane. Nobody owns that lane, so a
+  specification that never becomes code is a defect with paperwork. ▲ And
+  `AdminPathService` memoises into a file cache **inside the worktree**, shared
+  with every pest run in it — a preview with no `admin_path` row still answered
+  the wrong path because the cache held another run's value. Pinning
+  `KBB_ADMIN_PATH` in one script is a workaround; the trap is still armed for
+  every lane
+- **Lane PLC — 157 assertions that may be true for the wrong reason.** The whole
+  suite was measured rather than sampled: **6,958** `toContain` assertions
+  instrumented at run time, **500** whose needle is prose occurring 2+ times in
+  its own haystack, **157** of those reading like a sentence a shopper is shown,
+  across **151 files**. It had to be run time — the needle is fine and the
+  haystack is fine, and the fault lives only in the relationship between them
+  while the test runs. The guard deliberately does **not** fail on the count: a
+  sentinel that reaches the page nine times is not a defect, so 500 is a screen
+  and each site needs a mutation to settle it
+- **Lane BG — the review block has been rendering in Georgia all along.**
+  `sorina-reviews.css` names Fraunces and Hanken Grotesk for the review block on
+  **every product page** and neither family is ever loaded. The fix is two more
+  families or a restyle in the shop's own type, and both change a page that
+  works — so the lane is building the owner a choice with the wire cost measured,
+  not making it for him
 
 ### Waiting on the owner, not on us
 
@@ -143,9 +145,16 @@ is a bug in this section rather than a second opinion about the phase.
     Banners → (the set) → Look
   - **The site background** — four treatments, previewed on his own pages.
     Appearance → Page background
-- **Apply 2.60.325**, then the two server-side jobs no package can do: cache
-  headers and HSTS, and registering the domain with Apple Pay in Stripe.
-  `docs/PERF-PAGESPEED.md` §5 is the walkthrough
+- **Apply .325, .326 and .327, in that order**, then the two server-side jobs no
+  package can do: cache headers and HSTS, and registering the domain with Apple
+  Pay in Stripe. `docs/PERF-PAGESPEED.md` §5 is the walkthrough
+- **▲ WHICH VERSION THE SERVER IS ACTUALLY RUNNING.** Recorded nowhere — see
+  `docs/REPO-STATE.md`. One command answers it now that the shop has a shell, and
+  until somebody runs it every package built "on top of" the live state is a guess
+- **The review block's fonts.** Every product page asks for two families this
+  shop has never loaded, so those titles render in Georgia and always have.
+  Fixing it means adding two families or restyling the block — both visible
+  changes to a working page
 - **Darkening the brand pink, or not.** Accessibility is stuck at 96 on 108
   contrast failures, and `--muted` (3.14) and `--pink` (3.08) are already below AA
   on the shop as it stands. That is the brand colour against a pale page; it is
