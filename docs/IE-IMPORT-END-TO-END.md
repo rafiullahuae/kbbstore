@@ -604,10 +604,11 @@ refreshed first and the answer written after.
 
 | run | result |
 |---|---|
-| SQLite, full | **8,261 passed, 22 skipped, 2 failed** |
-| …the two | `EverythingIsMountedOnceTest` (§8.5, the integrator's one line) and `MnNavigationImportTest` (fixed after that run; 26 passed, 219 assertions) |
-| MySQL parity, full | **8,263 passed, 16 skipped, 5 failed** — §7.5 names all five |
+| **SQLite, full, final** | **8,262 passed, 22 skipped, 1 failed** |
+| …the one | `EverythingIsMountedOnceTest` — §8.5, and it goes green on the integrator's one `require` line. Nothing else on this branch is red. |
+| MySQL parity, full | **8,263 passed, 16 skipped, 5 failed** — §7.5 names all five; three are pre-existing and not this lane's |
 | `php artisan migrate --force` on MySQL 8 | **500 DONE, 0 FAIL, exit 0** |
+| baseline before this round | 8,253 passed, 22 skipped, 0 failed |
 
 ▲ **A WARNING FROM THIS LANE'S OWN MISTAKE.** Two full suite runs were started in
 this worktree at once, both with `KBB_WP_DB=kbb_wp_ie`. Four tests failed with
