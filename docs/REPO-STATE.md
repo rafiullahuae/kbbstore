@@ -13,9 +13,9 @@ a session went into establishing which was which.
 
 | | |
 |---|---|
-| **Repo synced to** | **2.60.325** |
+| **Repo synced to** | **2.60.326** |
 | Date | 2026-09-30 |
-| Previous entry point | 2.60.107 |
+| Previous entry point | 2.60.325 |
 | Server version at sync | **NOT KNOWN.** See the gap below — this is the one thing this file exists to record and it is open again |
 | Verified how | The 2.60.325 package was built from `3b372db` with `php artisan kbb:package`, and all **155** files in it were compared byte-for-byte against that tree before it was handed over. `UpdatePackage::verify()` accepts it |
 
@@ -122,3 +122,4 @@ unknown state.
 | 2026-09-13 | 2.60.107 | 2.60.36 | Full handover: 234 files, every change since the 2.60.36 snapshot |
 | 2026-09-13 → 2026-09-29 | 2.60.108 → 2.60.324 | 2.60.107 | **217 versions, none of them logged here.** Reconstructible from `docs/CHANGELOG.md` and the commit history, which are complete; this table is not. Recorded as one row rather than invented as 217, because a row per version would claim a precision nobody has |
 | 2026-09-30 | 2.60.325 | 2.60.107 | Thirteen lanes. 155 files, 14 migrations, built from `3b372db` and diffed file-by-file against it. Entry point re-established after the 218-version gap above |
+| 2026-09-30 | 2.60.326 | 2.60.325 | Five fixes, no shipped default moved. Built from the commit that carries this row, and diffed file-by-file against it |

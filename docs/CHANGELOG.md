@@ -3,6 +3,127 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.326
+**Five fixes to things that were quietly wrong, and one of them means your shop
+has never rendered a font weight it asks for 57 times.** Apply after .325.
+
+> Your four design decisions are still waiting and none of them is in this
+> package. Nothing ships on any of them until you pick.
+
+---
+
+### ▲ SIGN OUT DID NOT SIGN YOU OUT
+
+The button posted to a fixed `/admin/logout` address — and your app answers 404
+at that address the moment the admin path is moved, which is the entire point of
+the setting. Measured on a real shop:
+
+    POST /admin/logout    → 404   the failure was swallowed silently
+    GET  /admin/login     → 404   a blank page
+    GET  /admin-api/stats → 200   ▲ you were still signed in
+
+So pressing Sign out gave you a blank page and left your session alive. Now it
+signs out of the console you are actually standing in, lands you on the real
+login page, and the session is genuinely dead afterwards.
+
+### ▲ YOUR EXPORT BUTTONS TOOK THE WHOLE CONSOLE AWAY WHEN THE SESSION HAD DIED
+
+Last package closed a hole where any stranger with the right tool could learn
+your secret admin address. The cost, which arrived with it: five export buttons
+and the four order-document buttons navigate the browser directly, so with an
+expired session they landed on a blank `404 NOT FOUND` — and for the exports,
+**the console screen you were on was gone.**
+
+Measured, before and after, with the session cookie actually dropped:
+
+| Orders → Export, session dead | console still there? | what it said |
+|---|---|---|
+| **before** | **no** — a blank 404 | nothing |
+| **after** | **yes** — sidebar and list intact | "Your session has ended" + **Sign in again** |
+
+The order-document buttons opened a tab and said **nothing at all**; they tell
+you now. Ten places in the console were changed, including two nobody had on any
+list: the **Stripe Connect** and **Instagram** pop-ups.
+
+### ▲ THE SHOP HAS NEVER RENDERED FONT WEIGHT 500, ANYWHERE
+
+Your stylesheets ask for medium weight in **57 rules**, and **106 visible things
+across eight pages** — prices, filter chips, navigation links — have been
+rendering as ordinary regular text instead.
+
+The reason it was missed: browsers fake **bold** when a weight is missing, so it
+is easy to assume they fake medium too. They do not. With regular and semi-bold
+loaded and medium absent, anything asking for medium silently gets regular.
+Measured: a medium heading rendered **497.20px wide against 497.20px for
+regular** — the same to the hundredth of a pixel — and 505.00px once the real
+face was there.
+
+Poppins Medium now ships with the shop. It costs nothing to load: the file is
+**smaller** than the regular and semi-bold you already serve, and it is not on
+the critical path, so last package's speed win is untouched. The one page whose
+text actually shifts is the home page, by **9 pixels of height on a phone**.
+
+### ▲ A SET PLUS THE SAME PRODUCT ON A SHARED SHELF GAVE THE WRONG ADVICE
+
+Where a set and a loose line draw from the same stock, the shop was checking them
+separately and saying *"Hydrating Serum **is sold out**. Please **remove it**"*
+when the truth was *"**Only 1** is left. Please **reduce the quantity**"*. A
+shopper told to remove a line removes it, and you lose the sale of the unit you
+had. It now counts against the shelf the units actually leave — and it got
+**cheaper**, not dearer: six lines went from 19 database statements to 4.
+
+### ▲ YOUR BRAND COLOUR HAD NEVER REACHED FIVE OF YOUR PAGES
+
+The journal, an article, the review wall, the skin quiz and the app page each
+build their own page head and never received your accent setting — so all five
+hard-coded the original pink. The skin quiz used it **twelve times**. Your site
+width was missing from three of them. If you had ever changed your brand colour,
+those five pages ignored you.
+
+Fixed, at **zero bytes changed** on a shop that has not moved the colour. The
+journal and an article also carry the shop's real background now instead of
+plain white, for **1.1 KB** and no extra request.
+
+---
+
+### THE ABANDONED BASKET COMES BACK
+
+A shopper who gets as far as Tabby or Tamara and does not finish used to return
+to an **empty basket**. There is a **Put my basket back** button now, and three
+separate things that stopped it being reachable are fixed: it vanished on a
+reload, it appeared in places where pressing it would be refused, and returning
+to that address a second time destroyed the only handle on the basket.
+
+`/cart/` also now shows error messages at all, which it never did — one of your
+own redirects has been sending a message there that nothing drew.
+
+---
+
+### WHAT MOVED, AND WHAT DID NOT
+
+**No shipped default changes in this package.** Everything above is either a fix
+to something that was broken or a setting at the value the page already had.
+The one visible difference on the storefront is text that asks for medium weight
+finally getting it.
+
+### STILL WAITING ON YOU
+
+1. **The product page** — five designs. Catalog → Product page → Design previews
+2. **The product card** — A is live; B, C and D are one setting away
+3. **The picture slider's look** — four. Appearance → Banners → (the set) → Look
+4. **The site background** — four. Appearance → Page background
+
+And two server-side jobs no package can do: cache headers and HSTS, and
+registering the domain with Apple Pay in Stripe.
+
+> **One new thing for your list.** The review block on **every product page**
+> asks for two fonts this shop has never loaded, so those titles render in
+> Georgia and always have. Fixing it means either adding two font families or
+> restyling the block in your own type — both change a page that currently
+> works, so it is your call and not mine.
+
+---
+
 ## 2.60.325
 **The biggest one yet: thirteen lanes, and three of them are fixes to things
 that were quietly broken on the live shop.** Apply after .324.
