@@ -768,6 +768,9 @@ final class ArabicInterfaceDrafts
             'store.checkout.placing_redirect_link' => 'المتابعة إلى :provider',
             'store.checkout.return_not_completed' => 'لم يكتمل الدفع، لذلك لم يتم تنفيذ طلبك. ولم يُخصم أي مبلغ.',
             'store.checkout.return_not_completed_at' => 'لم يكتمل الدفع لدى :provider، لذلك لم يتم تنفيذ طلبك. ولم يُخصم أي مبلغ.',
+            'store.checkout.restore_basket' => 'أعد حقيبتي',
+            'store.checkout.restore_done' => 'عادت حقيبتك. تم إلغاء الطلب الذي لم يكتمل ولم يُخصم أي مبلغ.',
+            'store.checkout.restore_gone' => 'لا يوجد ما يمكن إعادته. حقيبتك كما تركتها.',
         ];
     }
 

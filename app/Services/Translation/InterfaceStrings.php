@@ -1343,6 +1343,16 @@ final class InterfaceStrings
              */
             'checkout.return_not_completed' => 'Your payment was not completed, so your order has not been placed. Nothing has been charged.',
             'checkout.return_not_completed_at' => 'Your payment was not completed at :provider, so your order has not been placed. Nothing has been charged.',
+
+            /*
+             * PUTTING THE BASKET BACK. The button says what it does and does
+             * not promise what it cannot: "Put my basket back" is a request,
+             * and restore_done is the only sentence that claims anything
+             * happened — it is shown after the write, not before it.
+             */
+            'checkout.restore_basket' => 'Put my basket back',
+            'checkout.restore_done' => 'Your basket is back. The order that did not complete has been cancelled and nothing was charged.',
+            'checkout.restore_gone' => 'There is nothing to put back. Your basket is as you left it.',
         ];
     }
 

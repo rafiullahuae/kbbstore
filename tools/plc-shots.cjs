@@ -80,7 +80,35 @@ async function measure(page, key, vp, extra = {}) {
       inert: document.querySelectorAll('body > [inert]').length,
       buttonsDisabled: Array.from(document.querySelectorAll('[data-place]')).map((b) => b.disabled),
       notice: document.querySelector('#kbbPlacingNotice .co-note')?.textContent || null,
+      /* The refusal band's own colours, because "the overlay came down and the
+         reason is on the page" is only half the claim — the other half is that
+         it READS as a refusal. `.co-note.err` had no rule at all until this
+         round and computed identically to a neutral note. */
+      noticeStyle: (() => {
+        const el = document.querySelector('#kbbPlacingNotice .co-note')
+          || document.querySelector('.kbb-checkout .co-note.err')
+          /* The BASKET page draws the same band from its own rules — the
+             partial ships them inline, because kbb-checkout.css is not loaded
+             on /cart/. Read it here so the two are comparable. */
+          || document.querySelector('.kbb-cartpage .co-note.err')
+          || document.querySelector('.kbb-cartpage .co-note.ok');
+        if (!el) return null;
+        const cs = getComputedStyle(el);
+        return { bg: cs.backgroundColor, color: cs.color, border: cs.borderTopColor, weight: cs.fontWeight };
+      })(),
       focus: document.activeElement ? (document.activeElement.className || document.activeElement.tagName) : null,
+      /* THE WAY BACK, counted rather than eyeballed. The offer is drawn only
+         when pressing it would work, so 0 and 1 are both meaningful states and
+         the shots have to say which one they are. */
+      restoreButtons: document.querySelectorAll('.co-restore').length,
+      restoreBox: (() => {
+        const b = document.querySelector('.co-restore');
+        if (!b) return null;
+        const r = b.getBoundingClientRect();
+        const cs = getComputedStyle(b);
+        return { w: Math.round(r.width), h: Math.round(r.height), font: cs.fontSize, bg: cs.backgroundColor };
+      })(),
+      bandText: document.querySelector('.kbb-cartpage .co-note')?.textContent.trim().slice(0, 90) || null,
     };
   });
 
@@ -352,9 +380,68 @@ async function step(name, fn) {
         await page.goto(BASE + '/checkout/pending?order=' + order, { waitUntil: 'domcontentloaded' });
         await page.waitForTimeout(250);
         await shot(page, 'return-after-decline', vp, { order });
+
+        /*
+         * AND THE WAY OUT OF IT. The same real order, the same real session:
+         * the button is offered because this browser placed it, it is unpaid,
+         * and its basket is sitting `converted`. Pressing it is the whole of
+         * round 2 — the basket comes back, the order goes, and the page they
+         * land on is the one App\Services\SetStockReconciler runs on.
+         */
+        /*
+         * ▲ THE SAME PAGE AGAIN, WHICH IS WHERE THE WAY BACK USED TO VANISH.
+         *
+         * The reason is FLASHED and the offer is a SESSION VALUE, and the
+         * partial's outer gate asked only about the flash — so the second GET
+         * of /cart/ drew no band and no button while the offer was still live
+         * and the basket still sitting `converted`. Probed in the suite before
+         * the fix: offer set, first render button true, RELOAD FALSE. This is
+         * the shot of the reload, and `restoreButtons` in the measurements is
+         * the number that says it is there.
+         */
+        await page.goto(BASE + '/cart/', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(250);
+        await shot(page, 'return-reload-keeps-the-way-back', vp, { order });
+
+        const button = await page.$('.co-restore');
+
+        if (button) {
+          await button.click();
+          await page.waitForTimeout(600);
+          await shot(page, 'basket-restored', vp, { order });
+        } else {
+          console.log('  (no restore button on the page — the offer was not written)');
+        }
       } else {
         console.log('  (no order row to return from — the refusal did not reach place())');
       }
+      await ctx.close();
+    });
+
+    /* 5b. THE BAND WITH NO WAY BACK UNDER IT — the basket page's other state,
+           and the one a control that does nothing would ruin.
+
+           ▲ ITS OWN CONTEXT, AND THAT IS THE POINT RATHER THAN TIDINESS. This
+           was first written as two more navigations inside the step above: a
+           bogus order number, then the real one again to re-arm. The re-arm
+           printed "(no restore button on the page — the offer was not
+           written)" twice over and cost this lane a wrong diagnosis before the
+           right one — because BOTH halves are the shop behaving correctly. A
+           number this session did not place takes pending()'s generic branch
+           and rememberRestorable() drops the offer, which it should; and after
+           /cart/ has re-cookied the browser there is no live cookie left that
+           names the `converted` basket, so nothing can be re-derived. The
+           offer is deliberately not resurrectable from a stranger's number.
+
+           A fresh context has no `kbb_last_order` at all, which is the state of
+           anybody who opens this address cold. `restoreButtons` 0 beside the
+           same band is the measurement. */
+    await step('block@' + vp.tag, async () => {
+      const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h } });
+      const page = await ctx.newPage();
+      await page.goto(BASE + '/checkout/pending?order=KBB-NOT-THIS-SESSION', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(250);
+      await shot(page, 'return-band-without-a-way-back', vp);
       await ctx.close();
     });
 
@@ -386,6 +473,41 @@ async function step(name, fn) {
     });
 
     /*
+     * 5b. NO ANSWER AT ALL — the 45-second abort, which is the one state in the
+     *     whole feature that cannot be produced against a live server.
+     *
+     * It is produced here with NOTHING ON THE SERVER SIDE AT ALL: the request
+     * is taken by the browser's own interception and never answered, which is
+     * exactly what a hung connection is, and the overlay's own AbortController
+     * fires its 45-second timer against it. No test-only route, no sleeping
+     * endpoint, no flag — so there is nothing that could reach a package,
+     * because nothing was added to the application to keep out of one.
+     *
+     * The sentence it produces is the highest-stakes one in the feature: it
+     * says the order may already have been placed, and it deliberately does NOT
+     * invite a retry, because the request was sent.
+     */
+    await step('timeout@' + vp.tag, async () => {
+      const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h } });
+      const page = await openCheckout(ctx, '');
+      await fillForm(page);
+      await page.route('**/checkout/place', () => { /* taken and never answered */ });
+      await pressAndTime(page);
+      await page.waitForSelector('.kbb-placing.is-up', { timeout: 4000 });
+
+      /* ABORT_MS is 45000 in partials/checkout/placing-overlay. Waited out
+         rather than shortened: a shot of a timer that is not the shipped one is
+         a shot of something the shopper will never see. */
+      const armed = Date.now();
+      await page.waitForSelector('#kbbPlacingNotice', { timeout: 70000 });
+      const waited = Date.now() - armed;
+
+      await page.waitForTimeout(400);
+      await shot(page, 'timeout-no-answer', vp, { abortWaitedMs: waited });
+      await ctx.close();
+    });
+
+    /*
      * 6b. THE WHOLE HAPPY PATH, FOR REAL, AND THE ONLY HONEST PRESS-TO-TICK
      *     FIGURE IN THIS FILE.
      *
@@ -398,19 +520,34 @@ async function step(name, fn) {
       const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h } });
       const page = await openCheckout(ctx, '');
       await fillForm(page);
-      await page.route('**/checkout/success**', () => { /* held, as above */ });
+
+      /*
+       * THE NAVIGATION IS DELAYED, NOT HELD AND THEN UNROUTED.
+       *
+       * The first version held /checkout/success open, photographed the tick,
+       * then called unroute() and drove the same address by hand. unroute()
+       * does not resolve a request Playwright has ALREADY intercepted, so the
+       * page was left with a navigation pending and the goto() that followed
+       * deadlocked behind it — a run sat on that line for nineteen minutes and
+       * produced half an evidence folder. Delaying the same request instead
+       * leaves confirmed()'s own navigation to complete on its own: nothing is
+       * driven by hand, and there is nothing to un-hold.
+       */
+      await page.route('**/checkout/success**', async (route) => {
+        await new Promise((r) => setTimeout(r, 1600));
+        await route.continue();
+      });
+
       await pressAndTime(page);
       await page.waitForSelector('.kbb-placing.is-done', { timeout: 30000 });
       const timing = await page.evaluate(() => Math.round(window.__plc.tick - window.__plc.pressed));
       await page.waitForTimeout(700);
       await shot(page, 'real-cod-tick', vp, { pressToTickMs: timing, intercepted: false });
 
-      /* And it does arrive at the order-received page the owner already has —
-         released rather than re-driven: the same navigation confirmed()
-         scheduled, let through once the tick has been photographed. */
-      await page.unroute('**/checkout/success**');
-      await page.goto(BASE + '/checkout/success?order=' + (lastOrderNumber() || ''), { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(400);
+      /* And it arrives at the order-received page the owner already has, by
+         the navigation confirmed() scheduled and nothing else. */
+      await page.waitForURL('**/checkout/success**', { timeout: 20000 });
+      await page.waitForTimeout(500);
       await shot(page, 'real-cod-received', vp, { intercepted: false });
       await ctx.close();
     });

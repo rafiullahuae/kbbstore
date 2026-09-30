@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Services\CartService;
 use App\Services\Checkout\PlacementState;
+use App\Services\Orders\OrderStatus;
 use App\Services\Payments\GatewayRegistry;
 use App\Support\Url;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Coming back from Tabby or Tamara without having paid. (Lane PLC)
@@ -33,18 +36,16 @@ use Illuminate\Http\Request;
  * A shopper who has just been refused credit and lands on an unchanged form is
  * a shopper who presses Place order again.
  *
- * ── THIS CONTROLLER WRITES NOTHING. ─────────────────────────────────────────
+ * ── pending() WRITES NOTHING, AND restore() IS WHY IT DOES NOT HAVE TO ──────
  *
- * It is a GET, and a GET that changes the state of an order is a GET that a
- * link prefetcher, a corporate mail scanner or an antivirus browser extension
- * can fire on the shopper's behalf. The obvious thing to do here — mark the
- * order `failed`, hand the stock and the coupon back, put the basket back the
- * way Store\CheckoutController::cardAbandoned() does for a declined card — is
- * therefore NOT done here, and deliberately: it belongs behind a POST, and the
- * stock path is another lane's this round.
+ * pending() is a GET, and a GET that changes the state of an order is a GET
+ * that a link prefetcher, a corporate mail scanner or an antivirus browser
+ * extension can fire on the shopper's behalf. So it works out what actually
+ * happened, says so where the shopper will see it, and writes nothing at all.
  *
- * What is left is honest and complete on its own: work out what actually
- * happened to this order, and say so where the shopper will see it.
+ * Putting the basket back is the other half, and it is a POST the shopper
+ * presses — see restore() for the whole of why it is a button rather than a
+ * script that fires on load.
  *
  * ── AND IT NEVER TELLS A PAID SHOPPER THEIR PAYMENT FAILED ──────────────────
  *
@@ -66,6 +67,65 @@ use Illuminate\Http\Request;
  */
 class CheckoutReturnController extends Controller
 {
+    /** The order the "Put my basket back" button was offered for, by number. */
+    public const RESTORABLE_KEY = 'kbb_restorable';
+
+    /**
+     * The TOKEN of the basket that offer belongs to.
+     *
+     * Remembered because the cookie does not survive the trip. The offer is
+     * written on the request that lands the shopper; by the time they press the
+     * button one request later, the basket page has asked for a cart with
+     * create:true, found none active for their token, minted an empty one and
+     * re-cookied the browser. Looking the basket up by the LIVE cookie at that
+     * point finds the new empty cart and answers "there is nothing to put back"
+     * — which is what it did, in a browser, in front of a screenshot.
+     */
+    public const RESTORABLE_CART_KEY = 'kbb_restorable_cart';
+
+    /** Set for exactly one request after a basket has been put back. */
+    public const RESTORED_KEY = 'kbb_basket_restored';
+
+    /**
+     * The order the button may be pressed for right now, or '' for none.
+     *
+     * ── ONE COMPARISON, READ BY BOTH THE PAGE AND THE ENDPOINT ──────────────
+     *
+     * restore() has always refused an offer that no longer names
+     * `kbb_last_order`, because that key MOVES — place() overwrites it with
+     * every order this browser makes, and a boolean offer would let the button
+     * fail the shopper's NEWEST order. The partial that draws the button,
+     * though, asked only whether RESTORABLE_KEY was set at all, so the two
+     * gates were not the same gate.
+     *
+     * The shop therefore offered a way back that its own endpoint was about to
+     * refuse: a shopper who abandoned at Tamara and then placed a second order
+     * had a stale offer, and the next flashed error on their basket page drew
+     * them a "Put my basket back" whose only possible answer was "There is
+     * nothing to put back". A control that does nothing is its own defect —
+     * this lane paid for that lesson once already, when the cart cookie did
+     * not survive the trip.
+     *
+     * So the decision lives here, once, and the partial and restore() both
+     * read it. They cannot drift apart again.
+     *
+     * READS THE SESSION AND NOTHING ELSE — no query, so the basket page costs
+     * nothing to draw. hash_equals rather than === for the same reason
+     * orderThisSessionPlaced() uses it: a mismatch costs the same time whatever
+     * is wrong with it.
+     */
+    public static function offeredOrderNumber(): string
+    {
+        $mine = trim((string) session('kbb_last_order', ''));
+        $offered = trim((string) session(self::RESTORABLE_KEY, ''));
+
+        if ($mine === '' || $offered === '' || ! hash_equals($mine, $offered)) {
+            return '';
+        }
+
+        return $offered;
+    }
+
     public function __construct(
         private readonly PlacementState $placement,
         private readonly GatewayRegistry $gateways,
@@ -105,8 +165,319 @@ class CheckoutReturnController extends Controller
         $cart = $this->carts->current($request, create: false);
         $hasBasket = $cart !== null && $cart->items()->exists();
 
+        $this->rememberRestorable($request, $order);
+
         return redirect(Url::redirect($hasBasket ? '/checkout/' : '/cart/', $request))
             ->withErrors($reason);
+    }
+
+    /**
+     * Put the basket back, and let the order go. THE POST THE SHOPPER PRESSES.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * WHY A BUTTON AND NOT A SCRIPT THAT FIRES ON ARRIVAL
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * The smoother thing is to post this from the page as it loads: the
+     * shopper gets their basket back without being asked, and it reads as the
+     * shop tidying up after itself. It was rejected, and not on the usual "a
+     * GET must not write" grounds — this is a POST either way. Three reasons,
+     * in the order they matter:
+     *
+     *   1. THIS IS NOT ONLY "PUT MY BASKET BACK". It moves the order to
+     *      `failed`, and App\Services\Orders\OrderStatus hands the stock and
+     *      the coupon back with it. That is a decision about an order, made on
+     *      a page the shopper arrived at without asking for anything.
+     *
+     *   2. A SHOPPER CAN STILL FINISH AT THE PROVIDER. Tabby and Tamara open
+     *      their own page; `cancel` is where they send a shopper who backed
+     *      out of it, and a shopper who backs out and then thinks better of it
+     *      has a browser Back button and a live plan waiting. Killing the order
+     *      the instant they touch our return address takes that away from them
+     *      silently. Pressing a button that says "Put my basket back" is them
+     *      saying they are done with it.
+     *
+     *   3. THEY MAY NOT WANT IT BACK. Abandoning a payment is a decision too,
+     *      and restoring a basket over it is the shop arguing.
+     *
+     * The cost of the button is one press. Measured on the page it lands on:
+     * the basket is empty, the reason is the first thing on it, and the button
+     * sits inside that same notice — see partials/checkout/return-notice and
+     * the shots in docs/PLC-overlay-shots.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * WHAT IT REFUSES, AND IT RE-CHECKS EVERY ONE UNDER A LOCK
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     *   · an order that is not this session's         (kbb_last_order + hash_equals)
+     *   · an order the button was not offered for     (kbb_restorable, same number)
+     *   · an order that carries `paid_at`             (and again inside moveTo's `only`)
+     *   · an order PlacementState calls CONFIRMED     (a late webhook, a COD order)
+     *   · a basket that is not this browser's, or that was never converted
+     *
+     * The `paid_at` test is made twice on purpose. The first is a courtesy that
+     * produces a good message; the second is `only: ['paid_at' => null]` inside
+     * OrderStatus::moveTo(), which re-reads the row under `lockForUpdate` and
+     * refuses to move it at all — so a webhook marking this order paid between
+     * the read and the write cannot be overtaken by the button.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * IT DOES NOT CALL THE PROVIDER, AND THAT IS DELIBERATE
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * Store\CheckoutController::cardAbandoned() cancels the Stripe intent
+     * before it releases anything, because a card intent left confirmable is a
+     * payment a stale tab can still take. This leg has no such thing to cancel:
+     * RemoteGateway::returnUrl() points `cancel` and `failure` here, and both
+     * mean the plan was never approved, so there is no authorisation to void.
+     *
+     * Reaching for Tabby or Tamara anyway would put a third party's latency in
+     * front of a button a shopper is waiting on, and would make this endpoint
+     * able to hang. An authorisation that somehow does exist is released from
+     * Orders → (the order) → Items, which is what that control is for — see
+     * docs/OD-RELEASE-THE-HOLD.md.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * AND IT SENDS THEM TO THE BASKET, NOT TO THE CHECKOUT
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * App\Services\SetStockReconciler runs when the cart page and the checkout
+     * are RENDERED, and a basket that has been away at Tamara can come back to
+     * a shelf that moved under it — somebody else bought the last jar while
+     * they were gone. So a restored basket holding a set and one of its members
+     * loose has to be drawn before it is paid for, or this method hands back
+     * exactly the basket the owner reported as unplaceable.
+     *
+     * Both pages reconcile, so either would satisfy that. The basket is the
+     * right one anyway: the reconciler's own header says a shopper must not
+     * "pay for a basket they never agreed to, at a total they never saw", and
+     * dropping them on the checkout with a line silently trimmed and a
+     * different total is that sentence exactly.
+     */
+    public function restore(Request $request): RedirectResponse
+    {
+        /*
+         * BOTH FACTS COME OUT OF THIS BROWSER'S OWN SESSION, and NEITHER comes
+         * out of the request.
+         *
+         * pending() identifies its order from `?order=` checked against
+         * `kbb_last_order`, because a provider's return address is where that
+         * number arrives. A POST from a button has no such address, and reading
+         * an order number out of the form would be reading it from whatever was
+         * posted — so this reads `kbb_last_order` directly and never trusts the
+         * request at all. (The first version of this method called
+         * orderThisSessionPlaced(), which looks in the QUERY STRING: every press
+         * answered "there is nothing to put back" and every guard below was
+         * untested. The suite caught it; the reason it could is that the cases
+         * drive the button rather than the method.)
+         *
+         * THE SECOND HALF OF THE GATE IS NOT BELT AND BRACES, and it now lives
+         * on offeredOrderNumber() so that the PARTIAL WHICH DRAWS THE BUTTON
+         * reads the same comparison this does. `kbb_last_order` MOVES: place()
+         * overwrites it with every order this browser makes. Without the
+         * comparison a shopper who abandoned at Tamara and then placed a second
+         * order successfully would still have the button on their basket page —
+         * and pressing it would fail the NEW order, which is the one thing on
+         * this page that must never happen. Without the partial reading it too,
+         * the button was DRAWN in that state and merely refused when pressed,
+         * which is the defect the header on offeredOrderNumber() describes.
+         */
+        $offered = self::offeredOrderNumber();
+
+        if ($offered === '') {
+            return $this->nothingToPutBack($request);
+        }
+
+        $order = Order::where('order_number', $offered)->first();
+
+        if ($order === null) {
+            return $this->nothingToPutBack($request);
+        }
+
+        if ($order->paid_at !== null || $this->placement->forOrder($order) === PlacementState::CONFIRMED) {
+            // BOTH halves. This forgot the number and left the token behind,
+            // which is the half-forgotten offer forgetOffer() exists to make
+            // impossible: a token with no number is a row nothing will ever
+            // look at again, kept in the session of a shopper who has paid.
+            $this->forgetOffer($request);
+
+            return redirect(
+                Url::redirect('/checkout/success', $request).'?order='.urlencode((string) $order->order_number)
+            );
+        }
+
+        /*
+         * THE BASKET THE OFFER WAS MADE FOR, BY THE TOKEN REMEMBERED WITH IT —
+         * NOT BY THE COOKIE THIS REQUEST HAPPENS TO CARRY.
+         *
+         * `orders` has never carried a cart id, so a token is the only handle
+         * there is; `status` is still the single field that decides whether a
+         * basket is live, exactly as in cardAbandoned(). What differs is WHERE
+         * the token comes from, and it has to: between the offer and the press
+         * the shopper's cookie has moved on to a fresh empty cart the basket
+         * page minted for them. See RESTORABLE_CART_KEY.
+         *
+         * The token was read off this browser's own cookie when the offer was
+         * written, so nothing here trusts anything the shopper could choose.
+         */
+        $token = trim((string) $request->session()->get(self::RESTORABLE_CART_KEY, ''));
+
+        $cart = $token === '' ? null : Cart::query()
+            ->where('token', $token)
+            ->where('status', 'converted')
+            ->first();
+
+        if ($cart === null || ! $cart->items()->exists()) {
+            return $this->nothingToPutBack($request);
+        }
+
+        $moved = null;
+
+        DB::transaction(function () use ($order, $cart, &$moved) {
+            $moved = app(OrderStatus::class)->moveTo(
+                $order,
+                'failed',
+                by: 'system',
+                reason: 'The shopper put their basket back after the payment was not completed.',
+                only: ['paid_at' => null],
+            );
+
+            /*
+             * INSIDE THE SAME TRANSACTION AS THE STATUS MOVE. The two are one
+             * fact — this order is over and that basket is live again — and a
+             * half of it is the worst of both: a basket the shopper can pay
+             * with twice, or an order nothing releases.
+             */
+            $cart->forceFill(['status' => 'active', 'converted_at' => null, 'last_activity_at' => now()])->save();
+        });
+
+        /*
+         * AND THE BROWSER IS POINTED BACK AT IT. Putting the row to `active` is
+         * only half of a restore: this shopper is carrying the token of the
+         * empty cart the basket page gave them on the way in, and without this
+         * they would land on /cart/ and see it. The empty row is left behind
+         * rather than deleted — it holds nothing, and the abandoned-cart
+         * cleanup owns rows nobody is using.
+         */
+        $this->carts->adopt($cart);
+
+        $this->forgetOffer($request);
+        $request->session()->forget('kbb_last_order');
+
+        return redirect(Url::redirect('/cart/', $request))->with(self::RESTORED_KEY, '1');
+    }
+
+    /**
+     * Nothing was found to put back, said the same way whatever the reason.
+     *
+     * A number that is not this session's, a button pressed twice, a basket
+     * that has already been restored and a basket that never existed all get
+     * this. Telling them apart would be telling a stranger which order numbers
+     * are real, on an endpoint that takes no authentication.
+     */
+    private function nothingToPutBack(Request $request): RedirectResponse
+    {
+        $this->forgetOffer($request);
+
+        return redirect(Url::redirect('/cart/', $request))
+            ->withErrors(__('store.checkout.restore_gone'));
+    }
+
+    /**
+     * Offer the button, or do not.
+     *
+     * The ORDER NUMBER rather than a flag, so restore() can check that the
+     * offer and `kbb_last_order` still name the same order — see the note there
+     * about a shopper who abandons one payment and then completes another.
+     *
+     * A session value rather than a flash: a flash survives exactly one request,
+     * so reloading the basket page would take the button away while the basket
+     * is still perfectly restorable. It is forgotten when it is used, when it is
+     * refused, and when it stops matching `kbb_last_order`.
+     *
+     * NO QUERY IS ADDED TO THE BASKET PAGE BY THIS. The decision is made here,
+     * once, on the request that already loaded the cart; the partial that draws
+     * the button reads the session and nothing else.
+     */
+    private function rememberRestorable(Request $request, ?Order $order): void
+    {
+        if ($order === null
+            || $order->paid_at !== null
+            || $this->placement->forOrder($order) === PlacementState::CONFIRMED) {
+            $this->forgetOffer($request);
+
+            return;
+        }
+
+        /*
+         * ▲ AN OFFER THAT IS STILL GOOD SURVIVES THE VISIT, AND THIS METHOD
+         * USED TO THROW IT AWAY.
+         *
+         * It forgot both keys FIRST and then re-derived the basket from the
+         * LIVE cookie. That is right exactly once — on the request the
+         * provider sends them in on, which is the only one where the cookie
+         * still names the `converted` basket. By a SECOND visit the basket page
+         * has minted an empty `active` cart for that token and re-cookied the
+         * browser (see RESTORABLE_CART_KEY), so re-deriving found nothing and
+         * the offer it had just discarded was the last handle on that basket
+         * in existence. The way back was gone for good.
+         *
+         * The shot run found it: re-arming by visiting this address a second
+         * time printed "the offer was not written", in Chromium, against the
+         * real controller. Reachable from the Back button, from a provider that
+         * sends the shopper twice, and from a plain reload.
+         *
+         * So an offer that still names THIS order and whose REMEMBERED basket
+         * is still `converted` with rows in it is kept as it is. One query either way; the
+         * difference is which token it asks about.
+         */
+        $held = trim((string) $request->session()->get(self::RESTORABLE_CART_KEY, ''));
+        $offered = trim((string) $request->session()->get(self::RESTORABLE_KEY, ''));
+        $number = (string) $order->order_number;
+
+        if ($held !== '' && $offered !== '' && hash_equals($number, $offered) && $this->stillRestorable($held)) {
+            return;
+        }
+
+        $this->forgetOffer($request);
+
+        /*
+         * THE FIRST VISIT'S PATH. The cookie is still right here: the shopper
+         * has just arrived from the provider and nothing has yet asked for a
+         * cart with create:true. The token is taken and KEPT, because one
+         * request later it names a different, empty basket.
+         */
+        $token = (string) $request->cookie(CartService::COOKIE);
+
+        if ($token === '' || ! $this->stillRestorable($token)) {
+            return;
+        }
+
+        $request->session()->put(self::RESTORABLE_KEY, $number);
+        $request->session()->put(self::RESTORABLE_CART_KEY, $token);
+    }
+
+    /** Is there a `converted` basket with rows in it under this token? */
+    private function stillRestorable(string $token): bool
+    {
+        return Cart::query()
+            ->where('token', $token)
+            ->where('status', 'converted')
+            ->whereHas('items')
+            ->exists();
+    }
+
+    /**
+     * Drop the offer, both halves together.
+     *
+     * One place, because the two keys are one fact and a half-forgotten offer
+     * is the shape restore() cannot tell from a good one: the order number
+     * without the token names a basket nothing can find.
+     */
+    private function forgetOffer(Request $request): void
+    {
+        $request->session()->forget(self::RESTORABLE_KEY);
+        $request->session()->forget(self::RESTORABLE_CART_KEY);
     }
 
     /**
