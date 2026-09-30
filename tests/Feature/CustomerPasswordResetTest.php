@@ -104,7 +104,10 @@ it('sends a link that sets a new password end to end', function () {
     expect($row->token)->not->toBe($token)
         ->and(Hash::check($token, $row->token))->toBeTrue();
 
-    $this->get(resetPath($link))->assertOk()->assertSee('Set a new password');
+    // The reset form's own heading, not the <title> or og:title carrying the
+    // same words on the same page (Lane PLC; see AccountAreaTest for the
+    // mutation that settled all three of these).
+    $this->get(resetPath($link))->assertOk()->assertSee('<h1>Set a new password</h1>', escape: false);
 
     $this->post('/my-account/reset', [
         'id' => $id,

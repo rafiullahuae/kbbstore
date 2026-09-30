@@ -1,0 +1,78 @@
+[
+  {
+    "page": "home",
+    "path": "/",
+    "width": 390,
+    "file": "docs/PLC-css-drift-shots/home-390.png",
+    "sheets": [
+      "inline",
+      "kbb-GAXWQoUu.css",
+      "kbb-grid-skins-6jZzGHxc.css",
+      "inline"
+    ],
+    "saleBackground": "rgb(226, 59, 87)",
+    "newBackground": "rgb(31, 157, 85)",
+    "nameDisplay": "flow-root",
+    "nameLineClamp": "99",
+    "nameOverflow": "hidden",
+    "cardHeight": 358.95,
+    "scrollWidth": 390
+  },
+  {
+    "page": "home",
+    "path": "/",
+    "width": 1280,
+    "file": "docs/PLC-css-drift-shots/home-1280.png",
+    "sheets": [
+      "inline",
+      "kbb-GAXWQoUu.css",
+      "kbb-grid-skins-6jZzGHxc.css",
+      "inline"
+    ],
+    "saleBackground": "rgb(226, 59, 87)",
+    "newBackground": "rgb(31, 157, 85)",
+    "nameDisplay": "flow-root",
+    "nameLineClamp": "99",
+    "nameOverflow": "hidden",
+    "cardHeight": 411.72,
+    "scrollWidth": 1280
+  },
+  {
+    "page": "shop",
+    "path": "/shop",
+    "width": 390,
+    "file": "docs/PLC-css-drift-shots/shop-390.png",
+    "sheets": [
+      "inline",
+      "kbb-GAXWQoUu.css",
+      "kbb-shop-CExlr4on.css",
+      "inline"
+    ],
+    "saleBackground": "linear-gradient(135deg, rgb(255, 111, 145), rgb(193, 62, 99))",
+    "newBackground": "linear-gradient(135deg, rgb(28, 195, 106), rgb(18, 150, 90))",
+    "nameDisplay": "block",
+    "nameLineClamp": "none",
+    "nameOverflow": "visible",
+    "cardHeight": 356.95,
+    "scrollWidth": 390
+  },
+  {
+    "page": "shop",
+    "path": "/shop",
+    "width": 1280,
+    "file": "docs/PLC-css-drift-shots/shop-1280.png",
+    "sheets": [
+      "inline",
+      "kbb-GAXWQoUu.css",
+      "kbb-shop-CExlr4on.css",
+      "inline"
+    ],
+    "saleBackground": "linear-gradient(135deg, rgb(255, 111, 145), rgb(193, 62, 99))",
+    "newBackground": "linear-gradient(135deg, rgb(28, 195, 106), rgb(18, 150, 90))",
+    "nameDisplay": "block",
+    "nameLineClamp": "none",
+    "nameOverflow": "visible",
+    "cardHeight": 416.77,
+    "scrollWidth": 1280
+  }
+]

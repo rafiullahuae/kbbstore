@@ -98,9 +98,22 @@ it('says the best-sellers sentence in the shopper\'s language and still chooses 
 
     $html = $this->get('/ar/best-sellers/')->assertOk()->getContent();
 
+    /*
+     * ▲ BOTH NEEDLES NAME THE ELEMENT THEY ARE ABOUT. (Lane PLC)
+     *
+     * The heading is also the <title>, the og:title and the JSON-LD name of
+     * /ar/best-sellers/, and the standfirst is also its <meta description> and
+     * its JSON-LD `description` — so a listing that rendered neither of them
+     * passed both assertions on the bare strings.
+     *
+     * MUTATION, run: blank `<h1>` and `<p>` in the `.sh` block of
+     * store/collection.blade.php, so every curated listing on the shop shows no
+     * heading and no standfirst, and this file was green. With the needles
+     * below it is red.
+     */
     expect($html)
-        ->toContain('الأكثر مبيعاً')
-        ->toContain('حسب عدد القطع المباعة.')
+        ->toContain('<h1>الأكثر مبيعاً <span class="cnt">')
+        ->toContain('<p>حسب عدد القطع المباعة.</p>')
         // The claim the measurement does not support is still not made — in
         // either language.
         ->and($html)->not->toContain('ما يعود إليه عملاؤنا.')

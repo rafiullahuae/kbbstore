@@ -466,7 +466,19 @@ it('serves the Arabic article at /ar/{slug}/ from the same request that wrote it
     $this->get('/ar/blog/'.$slug.'/')
         ->assertOk()
         ->assertSee('ورقة القلب هي المهدّئة.', false)
-        ->assertSee('ورقة القلب، وما تفعله فعلًا', false);
+        /*
+         * ▲ THE ARABIC HEADLINE NAMES THE <h1>. (Lane PLC)
+         *
+         * Bare, it was also the <title>, the og:title meta and the JSON-LD
+         * Article `headline` of this page, so the assertion was answered by the
+         * document head whether or not the Arabic article rendered a heading.
+         *
+         * MUTATION, run: blank the <h1> in store/post.blade.php and this file
+         * was green on the bare needle; with the one below, red. (PostUrlTest
+         * carries the same repair for the English side, settled in the same
+         * run.)
+         */
+        ->assertSee('<h1>ورقة القلب، وما تفعله فعلًا</h1>', false);
 });
 
 /* ----------------------------------------------------- 6. the CollectionPage */

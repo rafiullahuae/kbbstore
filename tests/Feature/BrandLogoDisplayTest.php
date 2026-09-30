@@ -71,7 +71,11 @@ it('defaults to auto, drawing the logo when there is one and the initial when th
         ->assertOk()
         ->assertSee('https://cdn.example.test/t-hasalogo.png', escape: false)
         ->assertSee('class="brw-name"', escape: false)
-        ->assertSee('T Hasalogo')
+        // The name element. Bare, this was answered by the logo's `alt` and by
+        // the JSON-LD Brand `name` on the same page — and `class="brw-name"`
+        // above only says SOME tile has the element, not that this brand's does
+        // (Lane PLC).
+        ->assertSee('<span class="brw-name">T Hasalogo', escape: false)
         ->assertSee('<span class="brw-name">T Nologo', escape: false)
         // The brand with no logo keeps the initial-letter circle.
         ->assertSee('class="brw-initial"', escape: false);
@@ -134,7 +138,7 @@ it('ignores an unrecognised mode rather than rendering an empty directory', func
 
     $this->get('/brands/')
         ->assertOk()
-        ->assertSee('T Hasalogo')
+        ->assertSee('<span class="brw-name">T Hasalogo', escape: false)
         ->assertSee('class="brw-initial"', escape: false);
 });
 

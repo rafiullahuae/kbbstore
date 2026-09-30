@@ -189,9 +189,23 @@ it('renders a customer their own order in full', function () {
 
     asCustomer($customer)->get('/my-account/orders/' . $order->id)
         ->assertOk()
-        ->assertSee('Order #' . $order->order_number)
+        /*
+         * ▲ THE ORDER NUMBER NAMES THE PAGE'S <h1>. (Lane PLC)
+         *
+         * Bare, it was also the <title> and the og:title of this page, so the
+         * assertion could not tell an order page that had rendered from one
+         * that had rendered nothing but a <head>.
+         *
+         * MUTATION, run: blank the <h1> in store/account/order-detail.blade.php
+         * (with reset.blade.php's and track.blade.php's, for the two sister
+         * cases in CustomerPasswordResetTest and OrderReceivedPageTest) and the
+         * three files were 59 passed / 0 failed. With these needles, 3 red.
+         */
+        ->assertSee('<h1>Order #' . $order->order_number . '</h1>', escape: false)
         ->assertSee('Rice Toner')
-        ->assertSee('Beauty of Joseon')
+        // The order LINE's brand, not the header menu item and the navigation
+        // JSON that carry the same brand name on every page of the shop.
+        ->assertSee('<div class="kbbod-brand">Beauty of Joseon</div>', escape: false)
         ->assertSee('/uploads/rice-toner.jpg')          // the thumbnail
         ->assertSee('12 Marina Walk')                   // the delivery address
         ->assertSee('United Arab Emirates')             // country, not the code

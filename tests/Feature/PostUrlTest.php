@@ -34,9 +34,22 @@ it('resolves a blog post under /blog/', function () {
      * application could never serve. The root form still 301s here, which the
      * test below pins.
      */
+    /*
+     * ▲ THE HEADLINE NEEDLE NAMES THE <h1>, AND IT HAS TO. (Lane PLC)
+     *
+     * This read `assertSee('Heartleaf extract: transforming K-beauty skincare')`
+     * and could not see the headline at all: the article page carries its title
+     * FOUR more times over — in <title>, in the og:title and description metas,
+     * and in the JSON-LD Article `headline` — so the assertion was answered by
+     * the head of the document whether or not the article rendered a heading.
+     *
+     * MUTATION, run: blank the <h1> in resources/views/store/post.blade.php, so
+     * every article on the shop renders with no headline, and this file was
+     * 16 passed / 0 failed. With the needle below it is red.
+     */
     $this->get('/blog/' . LIVE_SLUG . '/')
         ->assertOk()
-        ->assertSee('Heartleaf extract: transforming K-beauty skincare')
+        ->assertSee('<h1>Heartleaf extract: transforming K-beauty skincare</h1>', escape: false)
         ->assertSee('Heartleaf is the quiet workhorse of a calming routine.', escape: false);
 });
 
@@ -159,10 +172,15 @@ it('follows every old article URL through to a 200', function () {
         '/skincare-guide/' . LIVE_SLUG . '/',
         '/post/' . LIVE_SLUG,
     ] as $old) {
+        /*
+         * The same anchor as the case above, for the same reason: a redirect
+         * that landed on a page carrying only the article's <head> would have
+         * passed on the bare string.
+         */
         $this->followingRedirects()
             ->get($old)
             ->assertOk()
-            ->assertSee('Heartleaf extract: transforming K-beauty skincare');
+            ->assertSee('<h1>Heartleaf extract: transforming K-beauty skincare</h1>', escape: false);
     }
 });
 
@@ -195,10 +213,26 @@ it('sends the retired /post/{slug} prefix straight to the article', function () 
 });
 
 it('sends bare /post and /skincare-guide to the Journal index', function () {
-    $this->followingRedirects()->get('/post')->assertOk()->assertSee('The Glow Journal');
-    $this->followingRedirects()->get('/skincare-guide')->assertOk()->assertSee('The Glow Journal');
+    /*
+     * ▲ THREE NEEDLES THAT NAMED THE INDEX'S EYEBROW, NOT ITS <title>.
+     *                                                          (Lane PLC)
+     *
+     * 'The Glow Journal' is `store.journal.eyebrow`, drawn in `.ey` above the
+     * index's heading — and it is ALSO the <title>, the og:title and the
+     * JSON-LD name of that page. So all three assertions were satisfied by the
+     * document head, and "did the redirect land on the Journal index" was
+     * really "did it land on something whose head says Journal".
+     *
+     * MUTATION, run: blank `<div class="ey">` in store/blog.blade.php, so the
+     * index draws no eyebrow, and this file was 16 passed / 0 failed. With the
+     * needles below it is red.
+     */
+    $eyebrow = '<div class="ey">The Glow Journal</div>';
+
+    $this->followingRedirects()->get('/post')->assertOk()->assertSee($eyebrow, escape: false);
+    $this->followingRedirects()->get('/skincare-guide')->assertOk()->assertSee($eyebrow, escape: false);
     // And /blog IS the index rather than a hop onto one.
-    $this->get('/blog')->assertOk()->assertSee('The Glow Journal');
+    $this->get('/blog')->assertOk()->assertSee($eyebrow, escape: false);
 });
 
 /*

@@ -279,6 +279,147 @@ it('keeps the repaired assertions naming the element they are about', function (
     expect($missing)->toBe([]);
 });
 
+/**
+ * ROUND 6. Thirty-three more sites, each carried through the same mutation and
+ * each repaired by naming the element its needle is about.
+ *
+ * Different shape from KBB_ELEMENT_ANCHORED above: a file may hold SEVERAL
+ * anchors of different kinds — BrandUrlTest names a heading, a card name and a
+ * standfirst — and one fragment per file could not record that.
+ *
+ * ── WHAT THE ROUND FOUND, AND HOW ───────────────────────────────────────────
+ *
+ * Six mutations, each blanking one element across the whole shop and re-running
+ * the tests that name it. Every number below was run, in both directions:
+ *
+ *   blank the article <h1> (store/post.blade.php)
+ *       PostUrlTest             16 passed / 0 failed  →  2 red
+ *   blank the journal eyebrow (store/blog.blade.php)
+ *       PostUrlTest             16 passed / 0 failed  →  1 red
+ *   blank both brand <h1>s (store/brands.blade.php)
+ *       BrandUrlTest + UrlSchemeTest
+ *                               25 passed / 0 failed  →  3 red
+ *   blank the collection <h1> (store/collection.blade.php)
+ *       ConcernCollectionsTest  15 passed / 0 failed  →  2 red
+ *   blank the three account <h1>s (order-detail, reset, track)
+ *       AccountAreaTest + CustomerPasswordResetTest + OrderReceivedPageTest
+ *                               59 passed / 0 failed  →  3 red
+ *   blank the card name, the brand-directory name, the brand standfirst, the
+ *   review caption and the order-line brand, together
+ *       seven files              4 red  →  13 red
+ *
+ * The first of those is the one to read if only one is read: blanking the <h1>
+ * of every article on the shop — a journal whose every piece is headless — was
+ * invisible to the file whose whole subject is that page.
+ *
+ * WHAT WAS SATISFYING THE NEEDLES: the <title> and the og:title of the same
+ * page (by far the commonest), the <meta name="description">, the JSON-LD
+ * Article/Product/Brand/ItemList name on the same document, an <img alt>, the
+ * add-to-basket link's `data-name`, and a navigation label repeated in the
+ * header's own JSON.
+ *
+ * MUTATION, run: shorten any needle below back to its bare string → the count
+ * for that file drops and this goes red naming it.
+ *
+ * @var array<string, list<array{0: string, 1: int}>>
+ */
+const KBB_ELEMENT_ANCHORED_R6 = [
+    'tests/Feature/PostUrlTest.php' => [
+        ['<h1>Heartleaf extract: transforming K-beauty skincare</h1>', 2],
+        ['<div class="ey">The Glow Journal</div>', 1],
+    ],
+    'tests/Feature/ConcernCollectionsTest.php' => [
+        ['<h1>Korean skincare for acne-prone skin <span class="cnt">', 2],
+        ['<span class="kbb-card-nm">', 3],
+    ],
+    'tests/Feature/BrandUrlTest.php' => [
+        ['<h1 class="brw-h1">', 3],
+        ['<span class="kbb-card-nm">', 3],
+        ['<p class="brw-sub">', 1],
+    ],
+    'tests/Feature/UrlSchemeTest.php' => [
+        ['<h1 class="brw-h1">Round Lab</h1>', 1],
+    ],
+    'tests/Feature/AccountAreaTest.php' => [
+        ['<h1>Order #', 1],
+        ['<div class="kbbod-brand">', 1],
+    ],
+    'tests/Feature/CustomerPasswordResetTest.php' => [
+        ['<h1>Set a new password</h1>', 1],
+    ],
+    'tests/Feature/OrderReceivedPageTest.php' => [
+        ['<h1>Track my order</h1>', 1],
+    ],
+    'tests/Feature/StorefrontReadsTranslationsTest.php' => [
+        ['<h1 class="bb-title" id="bbTitle">', 4],
+        ['<h1>About Us</h1>', 1],
+        ['<span class="kbb-card-nm">', 1],
+        ['bb-desc">', 1],
+    ],
+    'tests/Feature/ShopPhpLabelsAreKeyedTest.php' => [
+        ['<h1 class="ptitle">', 1],
+    ],
+    'tests/Feature/CategoryStorefrontSyncTest.php' => [
+        ['<h1 class="ptitle">', 1],
+    ],
+    'tests/Feature/CategoryPathWalkCostTest.php' => [
+        ['<span class="kbb-card-nm">', 3],
+    ],
+    'tests/Feature/DeadCategoryViewTest.php' => [
+        ['<span class="kbb-card-nm">', 3],
+    ],
+    'tests/Feature/ReviewBadgeScreenTest.php' => [
+        ['<span class="sr-cap-count">', 6],
+    ],
+    'tests/Feature/BrandLogoDisplayTest.php' => [
+        ['<span class="brw-name">', 6],
+    ],
+    'tests/Feature/JournalArticleEditorTest.php' => [
+        ['<h1>ورقة القلب، وما تفعله فعلًا</h1>', 1],
+    ],
+    'tests/Feature/CollectionPhpLabelsAreKeyedTest.php' => [
+        ['<h1>الأكثر مبيعاً <span class="cnt">', 1],
+        ['<p>حسب عدد القطع المباعة.</p>', 1],
+    ],
+];
+
+it('keeps the round-six repairs naming the element they are about', function () {
+    /*
+     * The same property as the case above, for the sites settled in round 6.
+     * A bare needle at any of these cannot tell its element from the <title>,
+     * the meta or the JSON-LD carrying the same words in the same document.
+     */
+    $missing = [];
+
+    foreach (KBB_ELEMENT_ANCHORED_R6 as $file => $anchors) {
+        $path = base_path($file);
+
+        expect(file_exists($path))->toBeTrue($file.' has moved; this pin needs its new home');
+
+        $source = (string) file_get_contents($path);
+
+        foreach ($anchors as [$fragment, $least]) {
+            $found = substr_count($source, $fragment);
+
+            if ($found < $least) {
+                $missing[] = $file.' names '.var_export($fragment, true).' '.$found
+                    .' times, was repaired to '.$least
+                    .'. A bare needle there is answered by the head of the document.';
+            }
+        }
+    }
+
+    expect($missing)->toBe([]);
+
+    /*
+     * Anti-vacuity: a loop over an empty table reports nothing missing. The
+     * floor is the number of files the round repaired.
+     */
+    expect(count(KBB_ELEMENT_ANCHORED_R6))->toBeGreaterThan(14,
+        'the round-six table has shrunk, which means repairs were dropped rather than that the '
+        .'suite improved');
+});
+
 it('reads a needle out of code and not out of the comment beside it', function () {
     /*
      * The guard above is only true because comments are stripped, and the file

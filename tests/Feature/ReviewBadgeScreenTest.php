@@ -262,7 +262,19 @@ it('changes the count wording, substituting the real number for {n}', function (
 
     rbgSave(['review_badge_label' => 'Loved by {n} shoppers'])->assertOk();
 
-    expect(rbgPage($product))->toContain('Loved by 3 shoppers');
+    /*
+     * ▲ THE CAPTION ELEMENT, NOT THE LINK BESIDE IT. (Lane PLC)
+     *
+     * The badge label is drawn in `<span class="sr-cap-count">` and again in
+     * the reviews anchor next to it, so a bare needle passed whether or not the
+     * caption rendered.
+     *
+     * MUTATION, run: blank `<span class="sr-cap-count">` in
+     * store/product.blade.php — every product page loses its review caption —
+     * and this file was 20 passed / 0 failed. With the needles here and at the
+     * case below, 2 red.
+     */
+    expect(rbgPage($product))->toContain('<span class="sr-cap-count">Loved by 3 shoppers</span>');
 });
 
 it('changes the star colour on the page', function () {
@@ -306,7 +318,9 @@ it('applies a preset by writing the keys the storefront already reads', function
 
     $html = rbgPage($product);
 
-    expect($html)->toContain('style="color:#15A85A"')->toContain('Loved by 3 shoppers');
+    expect($html)->toContain('style="color:#15A85A"')
+        // The caption element, for the reason set out at the case above.
+        ->toContain('<span class="sr-cap-count">Loved by 3 shoppers</span>');
 });
 
 it('reports the active theme by comparing values, not by remembering one', function () {
