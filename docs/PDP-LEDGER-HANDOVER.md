@@ -10,9 +10,16 @@ picked **A · Ledger**, and under the rule he set on 30 September — *"whatever
 said, keep applying on the site"* — it is the page the shop serves now. There is
 no switch and nothing to go and turn on.
 
-**The one thing still open is the mobile type**, §4. He asked to *see* options
-for that, so it is a preview: three at 390px with the measured numbers under
-each, and a two-line diff once he picks a letter.
+**The mobile type is settled**, §4: re-measured in Outfit, C withdrawn on the
+measurement, and the coordinator's answer on the rest was *"B ships and it stays
+shipped."* A stays one declaration away in `docs/PDP-LEDGER-BLOCKS.md` Block 3 if
+he ever wants it.
+
+**Round 3 is §8: the bundle price block.** Pressing a bundle row left the price
+block quoting the product's own markdown beside the tier's total — a struck
+figure that lagged and, worse, a **−25% badge on a tier discounted 6%**. Fixed
+in place, with the sticky bar and the schema.org offer settled by measurement
+rather than assumed.
 
 ---
 
@@ -45,17 +52,30 @@ silently does nothing if it is left out.
 ## 1 · What goes in the package
 
 ```
-resources/views/store/product.blade.php      the markup, one region of it
-resources/css/kbb/kbb-product.css            the Ledger block, at the foot
-public/build/assets/kbb-product-<hash>.css  NEW — the built bundle
-public/build/manifest.json                   MUST travel with it
+resources/views/store/product.blade.php       the markup, one region of it,
+                                              plus the two data attributes (§8)
+resources/css/kbb/kbb-product.css             the Ledger block, at the foot
+resources/js/kbb/pdp.js                       ROUND 3 — setPrice(), §8
+public/build/assets/kbb-product-<hash>.css    NEW — the built stylesheet
+public/build/assets/app-<hash>.js             NEW — the built script, round 3
+public/build/manifest.json                    MUST travel with both
 tests/Feature/ProductPageLedgerTest.php       new
-tests/Feature/PriceDisplayTruthTest.php      two pins advanced, §5
-tests/Feature/PerfDeliveryTest.php           one scan sharpened, §7b
-tests/Support/EnglishRenderWalk.php          the paired approved rule
-tools/pdp-seed.php  tools/pdp2-shots.cjs     the harness (not served)
-docs/…                                       this file, the blocks and the shots
+tests/Feature/ProductPriceBlockFollowsTierTest.php   ROUND 3 — new
+tests/Feature/PriceDisplayTruthTest.php       two pins advanced, §5
+tests/Feature/PerfDeliveryTest.php            one scan sharpened, §7b
+tests/Support/EnglishRenderWalk.php           two paired approved rules
+tools/pdp-seed.php  tools/pdp2-shots.cjs      the harness (not served)
+tools/pdp2-tier-shots.cjs                     ROUND 3 — the before/after shots
+tools/pdp2-settle-probe.cjs                   ROUND 3 — the sticky bar and the
+                                              schema block, read from a browser
+docs/…                                        this file, the blocks and the shots
 ```
+
+**Round 3 is the first of these rounds to move JavaScript**, so the package
+needs `public/build/assets/app-<hash>.js` as well as the stylesheet. Ship the
+template without it and every row carries `data-was`/`data-off` that nothing
+reads: the block goes on printing the wrong discount badge, with the fix
+apparently applied.
 
 **`manifest.json` is not optional and is the easiest file in this list to
 forget.** `@vite('resources/css/kbb/kbb-product.css')` resolves the hashed name
@@ -110,6 +130,7 @@ Nothing to find in the admin: open any product page.
 | the clamped tab body | a **white block** painted over the last two lines, on a page whose background is pink | a fade, by `mask-image`, correct on any ground |
 | a sold-out Add to cart | **full brand pink**, and reads as pressable | grey and `not-allowed`, which is what the drawing he chose shows |
 | a one-sentence blurb, or a one-line tab body | the fade ate the only line it had | painted flat — the fade now bites only text that is really being cut |
+| **pressing a bundle row or a size** (round 3) | the struck figure and the discount badge stayed at the product's own, so the 2-pack read **−25%** while its row read *Save 6%* | both follow the row — **~~AED 149~~ AED 140 −6%** — and a variation's block stops disagreeing with the row beneath it (§8) |
 
 **The controls he already had all still work**, and each is pinned by a case in
 `ProductPageLedgerTest`:
@@ -265,6 +286,15 @@ these, in both languages**. Everything is in
 
 Plus, on the same fixture:
 
+- **Round 3's before/after**, `tier-{before,after}-{bundle,variable}-row{n}-{390,1280}.png`
+  — ten pictures and `MEASUREMENTS-TIER-{BEFORE,AFTER}.json`. Each is the buy
+  column with one row pressed, shot as an ELEMENT rather than a clip rectangle:
+  Playwright measures `clip` against the viewport on an ordinary screenshot and
+  against the page on a full-page one, and pressing a row scrolls, so a
+  page-coordinate clip came back as a picture of the trust block twenty rows
+  further down. The site header and the sticky bar are made static for the shot
+  — both would otherwise sit on top of the title once the column is scrolled
+  into view — and the figures are read from `textContent`, which does not care.
 - **The Arabic mirror**, `dir=rtl`, at both widths — `ar-real-*.png`. The tab row
   scrolls the other way (overflow 92px against 136px in English, the Arabic
   titles being shorter). One `[dir]` rule in the whole block and it is the edge
@@ -359,8 +389,19 @@ the catalogue today. `storage/pdp-logs/crumb-probe.cjs` and
   from the owner's own marked-up screenshot and he answered *"i think this is
   already applied, skip it"*. CLAUDE.md rule 1's surviving half — nothing he did
   not ask about may change — says it stays.
-- **The bundle bars' struck price and discount badge do not follow the chosen
-  tier.** Scoped below — it is **one round**, and the estimate is in §8.
+- ~~**The bundle bars' struck price and discount badge do not follow the chosen
+  tier.**~~ **Fixed this round — §8.** It was one round, as scoped.
+- **A variable product's block opens on a RANGE while a row is already
+  highlighted.** Measured on `pdp-variable-ampoule` as served: the 50ml row is
+  the pre-selected one and prints `AED 99 / AED 79`, while the block above reads
+  `AED 69 – AED 127`. The range is the server's headline for a variable product
+  (`$kbbHeadline`) and predates this lane by a long way; the moment anything is
+  pressed the block resolves to that row's own pair, which is round 3's change.
+  Making the FIRST PAINT agree would mean the server rendering the pre-selected
+  variation's price instead of the range — a change to what every variable
+  product's tile-to-page journey says, which is the owner's call and not a
+  defect to fix inside a bundle-price round. Named here rather than left for
+  somebody to rediscover.
 
 
 ---
@@ -391,95 +432,164 @@ deliberate control cannot be read as a failure in the log.
 
 ---
 
-## 8 · The bundle price block, scoped
+## 8 · The bundle price block — built
 
-Asked for as an estimate rather than a fix. **One round**, and the shape is
-below.
+Scoped last round as one round; it was one round. **`BundleService` did not
+change**, which was the open question and the answer.
 
-### What it does now, read from the page and not from the template
+### Where it sits in the admin
 
-`storage/pdp-logs/bundle-probe.cjs` presses each row on
-`pdp-heartleaf-toner` and reads the block back:
+**Nowhere — there is no setting, and that is deliberate.** This is a defect
+fixed in place, not a control. The rows it corrects are drawn by
+**Store → Products → Quantity bundles** (the tier table) and by a variable
+product's own variations; neither screen gains a field, and neither default
+moves. Nothing on the page changes until a shopper presses a row.
 
-| pressed | the row itself says | the block says | |
+### The defect, in one picture and four numbers
+
+`docs/lane-pdp-shots/tier-before-bundle-row1-390.png` beside
+`tier-after-bundle-row1-390.png`, on `pdp-heartleaf-toner` with the 2-pack
+pressed:
+
+| | struck | live | badge |
 |---|---|---|---|
-| 1 unit | AED 74 | ~~AED 99~~ **AED 74** −25% | correct |
-| 2-pack bundle | ~~AED 149~~ AED 140 · Save 6% | ~~AED 99~~ **AED 140** −25% | **wrong twice** |
-| 3-pack bundle | ~~AED 223~~ AED 198 · Best value | ~~AED 99~~ **AED 198** −25% | **wrong twice** |
+| the row says | AED 149 | AED 140 | Save 6% |
+| **before** — the block said | **AED 99** | AED 140 | **−25%** |
+| **after** — the block says | AED 149 | AED 140 | −6% |
 
-So it is not only the strike. The **badge is wrong too**, and it is the worse of
-the two: "−25%" is a discount claim, and on the 2-pack the real saving is 6%.
-The row and the block contradict each other in one eyeful — the same "two
-renderings of one number must not be quoted two ways" rule this template already
-carries, one level up.
+The strike was untidy. **The badge was a false claim about money**: −25% printed
+beside a tier discounted 6%, on the page where the shopper decides. That is the
+defect; the strike is its sibling.
 
-`pdp.js`' `setPrice()` writes `.now` and nothing else, deliberately and with a
-comment saying so. It predates Ledger; what Ledger changed is the arrangement,
-from *live then struck, side by side* to *struck above live*.
+Every row, at 390 and at 1280, read out of the page by
+`tools/pdp2-tier-shots.cjs` into
+`docs/lane-pdp-shots/MEASUREMENTS-TIER-{BEFORE,AFTER}.json`:
 
-### Why the obvious fix is wrong, precisely
+| pressed | the row says | before | after |
+|---|---|---|---|
+| 1 unit | AED 74 | ~~99~~ **74** −25% | ~~99~~ **74** −25% (unchanged) |
+| 2-pack | ~~149~~ 140 · Save 6% | ~~**99**~~ **140** **−25%** | ~~149~~ **140** −6% |
+| 3-pack | ~~223~~ 198 · Best value | ~~**99**~~ **198** **−25%** | ~~223~~ **198** −11% |
+| 50ml (variable) | ~~99~~ 79 · Save 20% | **AED 79**, flat | ~~99~~ **79** −20% |
+| 100ml (variable) | ~~169~~ 127 · Best value | **AED 127**, flat | ~~169~~ **127** −25% |
 
-Copying the row's own `<s>` into the block breaks the row it opens on.
+The two variable rows are the reason the block is allowed to **create** the
+spans. A variable parent carries no price of its own, so `isOnSale()` is false
+on it and the server renders `.now` alone — the block and the row then disagreed
+on one page even though nothing was false.
+
+### Why the obvious fix is wrong, and it is the whole of the difficulty
+
+Copying the row's own `<s>` breaks the row the page **opens on**.
 `BundleService::forProduct()` computes `$was = $unit * $qty` where `$unit` is
-**`effectivePrice()`, the sale price** — so for the 1-unit tier `was === total`,
-`saved` is 0 and the row prints no struck figure at all. Take the row's pair
-literally and the default view loses "AED 99 / −25%", which is the product's own
-markdown and the one figure the page is really about.
+**`effectivePrice()`, the sale price** — so the 1-unit tier has `was === total`,
+`saved` of 0 and no struck figure at all. Take the row's pair literally and the
+default view silently loses "AED 99 / −25%", the product's own markdown and the
+one figure the page is really about.
 
-The two "was" figures are different things and both are true:
+The two "was" figures are different things and both are true: the **product's**
+(`compareAtPrice()`, AED 99 — what it cost before the sale) and the **tier's**
+(`qty × effectivePrice`, AED 149 — what two cost without the bundle discount).
+A row with a saving of its own means the second; a row without one falls back to
+the first.
 
-- the **product's** — `compareAtPrice()`, AED 99: what it cost before the sale;
-- the **tier's** — `qty × effectivePrice`, AED 149: what two cost without the
-  bundle discount.
+### What changed, in three places
 
-A correct fix has to know which one a given row means.
+**`app/Services/BundleService.php` — nothing.**
 
-### What each file would have to do
+**`resources/views/store/product.blade.php`** — two attributes per row, composed
+inside the `@php` blocks that already compute the figures:
 
-**`app/Services/BundleService.php` — nothing.** It already returns `was`,
-`saved` and `percent` per tier. That was the open question in the first pass and
-the answer is that there is no service change at all.
+```php
+$bHasOwn = $b['saved'] > 0;
+$bWas = $bHasOwn ? Money::plain((int) $b['was'], $bdp) : ($onSale ? Money::plain($kbbWas, $kbbSaleDp) : '');
+$bPct = $bHasOwn ? (int) $b['percent'] : ($onSale ? (int) $off : 0);
+$bOff = $bPct > 0 ? \App\Support\Bidi::number('-' . $bPct . '%') : '';
+```
 
-**`resources/views/store/product.blade.php`** — two attributes per row, in the
-two loops that already compute the figures:
+`Money::plain()`, not `Money::format()`, because the value crosses into
+JavaScript where markup would have to be trusted — the same reason `data-price`
+beside it is already plain — and at the row's own `$bdp`, so the block cannot
+quote one number at two widths. The badge TEXT is composed on the server because
+`Bidi::number()` wraps it in isolates on `/ar`, which a string built as
+`'-' + n + '%'` in the browser would not have.
 
-- the bundle loop: `data-was` = `$b['was']` at `$bdp` and `data-off` =
-  `$b['percent']`, **except on the tier whose `saved` is 0**, where they are the
-  product's own `$kbbWas` / `$off` — which is exactly what the block renders
-  server-side, so the default view is unchanged to the byte;
-- the variant loop: `data-was` = `$vreg` when `$vsale < $vreg`, `data-off` =
-  `$voff`, and empty otherwise.
+**`resources/js/kbb/pdp.js`** — `setPrice()` takes the pair and a `mayCreate`
+flag, updates `<s>` and `.off` where they exist, creates them in Ledger's order
+where the caller allows it, and hides an empty one with `style.display` rather
+than `[hidden]` — `kbb-product.css` gives both spans a `display` through a class
+selector, which outranks the User-Agent rule behind the attribute. Both figures
+go through `escapeHtml()` for the reason already written above `data-price`:
+`currency_symbol` is a free-text setting and the HTML parser decodes the
+attribute before JavaScript reads it (CLAUDE.md rule 5).
 
-Both go inside the `@php` blocks that are already there, so no directive gains a
-line of its own and `StorefrontEnglishUnchangedTest` sees two attributes, not a
-reflow.
+**The build** — `npx vite build`. `app-jOqRtoT7.js` → `app-BLfAa6WG.js`
+(46.84 kB → 47.28 kB); the name moved because the content moved, which is what
+`BuiltAssetNamesAreStableTest` exists to distinguish.
 
-**`resources/js/kbb/pdp.js`** — `setPrice()` takes the three figures instead of
-one and writes or removes `<s>` and `.off` alongside `.now`. It must create them
-when they are absent, which is the same reason it already creates `.now`, and it
-must escape them the way `data-price` is escaped — the `currency_symbol` is a
-free-text SETTING and that file already carries the note about it (CLAUDE.md
-rule 5).
+### The two things the coordinator asked be settled rather than assumed
 
-**The build** — `npx vite build`; `app-*.js` moves because its content really
-moves, which is what `BuiltAssetNamesAreStableTest` is there to distinguish from
-a stylesheet dragging the name along.
+**1 · The sticky bar does not go stale, and it is now protected from being
+given the problem.** Measured before any change, `tools/pdp2-settle-probe.cjs`:
+its `.now` already followed the tier (AED 74 → AED 140) and it carries
+**neither** a strike **nor** a badge — `struck: null, off: null` before and
+after. There is nothing there to lag. The real risk was the reverse: a fix that
+created the two spans everywhere would have **handed** the bar the defect while
+curing it upstairs. So `#stickyPrice` is called with `mayCreate: false`, and
+`M28` — passing `true` — is red.
 
-### What would pin it
+**2 · The schema.org offer cannot be fed a selected price.** It is built
+server-side by `App\Support\Seo::render()` into `<head>`, long before the buy
+column exists, and the script writes only into `#bbPrice` and `#stickyPrice`.
+Measured after pressing the 2-pack: the offers array, `og:price` (74.25) and the
+whole JSON-LD block were byte-identical, **5424 bytes both times**. The pest case
+pins the structure rather than the observation — the structured data is emitted
+before `id="bbPrice"` appears, `<head>` carries no copy of either id, the JSON
+quotes the unit price and never the 2-pack's AED 140.85, and every `setPrice()`
+call in the file is **enumerated**: `['bbPrice', 'stickyPrice']`, exactly, so a
+later lane pointing the writer at a third element is red (M35) rather than
+merely absent from a scan.
 
-- a pest case that each row emits `data-was`/`data-off` equal to what that row
-  itself prints, **and that the 1-unit row carries the product's own pair** —
-  which is the assertion the naive fix fails, so it is the one worth writing
-  first;
-- a harness shot: press the 2-pack, read `<s>`, `.now` and `.off`, expect
-  AED 149 / AED 140 / −6%. `bundle-probe.cjs` already does the reading.
+### And the badge is composed on the server, which `/ar` is the reason for
 
-### Out of scope, and it is what would make it two rounds
+`App\Support\Bidi::number()` wraps a signed number in LRI … PDI so `-6%` does
+not repaint as `6%-` inside a right-to-left paragraph. A string assembled in the
+browser as `'-' + n + '%'` would carry no isolates, and the defect would be
+**invisible to anybody reading the English page** — `Bidi::number()` returns the
+token unchanged in the default locale, so no English byte moves. Hence
+`data-off` holds the whole word `-6%` rather than the number 6, and the case that
+pins it renders `/ar` with the mirror on.
 
-- **the sticky bar**, which carries only a `.now` today and would need the same
-  treatment and its own shots;
-- **the schema.org offer block**, which quotes one price and must not follow a
-  UI selection — a crawler reading a price the shopper picked is a worse defect
-  than the one being fixed.
+### What pins it
 
-Leave both alone and it is one round.
+`tests/Feature/ProductPriceBlockFollowsTierTest.php` — 9 cases, 78 assertions.
+
+| mutation | |
+|---|---|
+| **M24** the naive fix: the row's own pair, copied literally | **RED** — and *only* `falls the 1-unit row back to the product own markdown` |
+| **M25** the badge half of the same naive fix | **RED** |
+| **M26** the tier stops handing over its pair (the defect as it shipped) | **RED**, 3 cases |
+| **M27** a variation stops handing over its pair | **RED** |
+| **M28** the sticky bar is allowed to grow a strike | **RED** |
+| **M29** the block is forbidden from growing one | **RED** — the variable product |
+| **M30 / M31** either figure crosses out of the attribute unescaped | **RED** |
+| **M32** the strike is inserted below the live figure | **RED** |
+| **M33** an empty span hidden with `[hidden]` instead of `display` | **RED** |
+| **M34** the badge drops `Bidi::number()` and is built as a bare string | **RED** — on `/ar` only, which is the point |
+| **M35** the price writer is pointed at a third element | **RED** — the schema case enumerates its two targets rather than scanning for an absence |
+
+`tools/plc-needle-scan.sh` over the new file: **5 `toContain` needles, 0
+ambiguous sites, 0 holes.** Every prose message in it goes through `tierHas` /
+`tierLacks`, which wrap `str_contains`, because Pest's `toContain()` is variadic
+— a message passed after the needle is asserted as a second needle, and
+`->not->toContain($needle, $why)` can never fail at all. One assertion in the
+first draft had exactly that shape and `ExpectationsThatCannotFailTest` is the
+sweep that would have caught it.
+
+`StorefrontEnglishUnchangedTest` carries a **paired** removal/insertion for the
+row's **opening tag only** — both patterns close on `(?=<span class="vr")`, so
+the label, both figures and the tag badge are still compared byte for byte on
+both sides. What the pair excuses is the two attributes and the blank line the
+`@php` block adds. `data-i`, `data-qty`, `data-price` and the `on`/`oos` classes
+stopped being watched there and are asserted element by element in the new file
+instead.

@@ -11,7 +11,7 @@ block the owner's answer on the mobile type will need.
 | 0 | `routes/web.php` | — | **no edit** |
 | 0 | `resources/views/admin/app.blade.php` | — | **no edit** |
 | 1 | the package's `update.json` | declare the `clear_caches_*` migration | **yes** |
-| 2 | the package's file list | `public/build/manifest.json` **and** the new bundle | **yes** |
+| 2 | the package's file list | `public/build/manifest.json` **and** the new bundles — **CSS *and* JS this round** | **yes** |
 | 3 | `resources/css/kbb/kbb-product.css` | the mobile type, once he picks a letter | only if he picks A or C |
 
 ---
@@ -39,13 +39,24 @@ view cache is.
 in the package:
 
 ```
-public/build/manifest.json                    (modified)
+public/build/manifest.json                      (modified)
 public/build/assets/kbb-product-<new hash>.css  (new)
-public/build/assets/kbb-product-CJbrmkEW.css  (deleted — may be left behind)
+public/build/assets/kbb-product-CJbrmkEW.css    (deleted — may be left behind)
 
-The two hashed names are in `git status`; read them from there rather than from
-this document, which cannot be right about a content hash after the next edit.
+ROUND 3 ADDS THE JAVASCRIPT BUNDLE, which earlier rounds did not touch:
+public/build/assets/app-BLfAa6WG.js             (new)
+public/build/assets/app-jOqRtoT7.js             (deleted — may be left behind)
+
+The hashed names are in `git status`; read them from there rather than from this
+document, which cannot be right about a content hash after the next edit.
 ```
+
+**The JS bundle is not optional this round.** The bundle price block's fix is
+half template and half `pdp.js`: ship the template without the new `app-*.js` and
+every variant row carries `data-was`/`data-off` that nothing reads, so the block
+goes on printing the stale strike and the **wrong discount badge** — the exact
+defect, with the fix apparently applied. `BuiltAssetNamesAreStableTest` is what
+says the name moved because the content moved.
 
 Ship the new bundle without the manifest and the shop goes on asking for
 `kbb-product-CJbrmkEW.css`, which is still on the server: **no 404, no error, no
