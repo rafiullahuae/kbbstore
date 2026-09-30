@@ -59,7 +59,7 @@ class ProductPageApiController extends Controller
          * `sections` IS NO LONGER `required`, AND `layout` IS NOT EITHER.
          *
          * The screen posts whichever half the owner was editing. Requiring both
-         * would mean the Layout tabs had to re-post eighteen module switches
+         * would mean the Layout tabs had to re-post seventeen module switches
          * they never showed him — and a payload a screen assembles from values
          * it did not draw is how a control it does not draw gets overwritten.
          * Requiring NEITHER would let an empty POST report success, so the two

@@ -4311,7 +4311,7 @@ async function renderProductPage(){
       elements etc. and fonts sizes control etc. pleas give me proper tabs for
       that on the product page > Layout."
 
-   What was here was a FLAT LIST of eighteen module switches and nothing else:
+   What was here was a FLAT LIST of seventeen module switches and nothing else:
    no spacing control, no font-size control and no tab grouping. The switches
    are untouched and now sit behind a tab called Sections; beside them are the
    four Layout tabs the endpoint returns from App\Services\ProductLayout.

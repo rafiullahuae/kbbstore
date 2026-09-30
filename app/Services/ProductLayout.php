@@ -16,7 +16,7 @@ namespace App\Services;
  *
  * ── WHAT THE SCREEN WAS, CHECKED RATHER THAN REMEMBERED ─────────────────────
  *
- * `Appearance → Product page` was a FLAT LIST of eighteen on/off switches, one
+ * `Appearance → Product page` was a FLAT LIST of seventeen on/off switches, one
  * per device, driven by App\Services\ProductSections::REGISTRY through
  * Admin\ProductPageApiController and drawn by renderProductPage() in
  * resources/views/admin/app.blade.php. There was no spacing control, no

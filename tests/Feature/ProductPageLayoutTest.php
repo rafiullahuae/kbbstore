@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
  *
  * ── WHAT WAS THERE BEFORE ───────────────────────────────────────────────────
  *
- * A FLAT LIST of eighteen on/off switches out of ProductSections::REGISTRY, and
+ * A FLAT LIST of seventeen on/off switches out of ProductSections::REGISTRY, and
  * nothing else. No spacing control, no font-size control, no tab grouping.
  *
  * ── THE TWO FAILURES THIS FILE IS POINTED AT ────────────────────────────────
@@ -262,7 +262,7 @@ it('answers both halves of the screen from the one endpoint', function () {
 it('saves either half on its own and leaves the other alone', function () {
     /*
      * The endpoint stopped requiring `sections` this round so the Layout tabs
-     * could save without re-posting eighteen switches they never drew. This is
+     * could save without re-posting seventeen switches they never drew. This is
      * the half of that change that could go wrong: a payload with one half
      * silently blanking the other.
      */
