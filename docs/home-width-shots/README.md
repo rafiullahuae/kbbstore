@@ -114,3 +114,24 @@ a reason unrelated to its subject.
 `children`, the count of elements inside the `.wrap`, because a section that
 rendered nothing measures a perfectly plausible width and photographs as blank
 page. Every section in these runs has at least one.
+
+## One failure in this tree that is not this round's
+
+`FontProbesCannotReportTheFallbackTest > it lets no instrument ask a question
+that cannot answer false` is **red on the integrator tip**, before and after
+this branch, and it names `tools/release-330-shots.cjs`:
+
+```
+release-330-shots.cjs asks document.fonts.check()
+```
+
+`document.fonts.check('13px X')` returns **true for a family that does not
+exist anywhere**, so it cannot distinguish a font that loaded from one that was
+never declared. The guard (`7259402`, "Five probes that could not fail") is an
+ANCESTOR of the shots commit (`5c45373`) that introduced the call, so the
+release-shots file was written against a rule already in the tree. The remedy
+the test itself names is `probeFamily()` from `tools/font-probe.cjs`, which
+measures a second ruler in a family that cannot exist.
+
+`tools/release-330-shots.cjs` is the integrator's file and this lane has not
+touched it. Reported rather than edited.
