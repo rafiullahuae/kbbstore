@@ -262,8 +262,31 @@ a{color:inherit;text-decoration:none}
 .variant .vtag.sold{color:var(--sale);background:#fdecee}
 .variant .vsw{width:22px;height:22px;border-radius:50%;flex-shrink:0;background-size:cover;background-position:center;border:1px solid var(--line)}
 .buyrow{display:flex;gap:12px;margin-bottom:14px}
-.qty{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:13px}
-.qty button{width:46px;height:54px;display:grid;place-items:center;font-size:20px;color:var(--ink-2)}
+/* ── THE STEPPER AND `Add to cart` ARE ONE ROW AND MUST MEASURE THE SAME.
+                                                          (2.60.331 follow-up)
+
+   THE DEFECT, measured in Chromium at 1280 AND 390 and identical at both:
+   the stepper sat 6px LOWER than the button and ended 8px lower, because it
+   was 56px tall against the button's 54px. The owner marked both edges.
+
+   ▲ THE 6px WAS NOT THIS FILE'S AND THAT IS WHY IT SURVIVED SO LONG.
+     kbb.css declares a BARE, UNSCOPED `.qty` in the middle of its cart-drawer
+     block -- among .drawer, .ci, .cinfo, .dfoot -- for the 26px quantity pill
+     on a basket line. It carries `margin-top:6px`. kbb.css loads on every page,
+     so that margin lands on the product page's big stepper as well, and the
+     rule below overrode the border and the radius but never the margin, so the
+     margin went on applying. `margin-top:0` here is that leak stopped AT THIS
+     END, deliberately: scoping the rule in kbb.css would be the tidier fix and
+     would also touch /cart and /checkout, which nobody asked to change.
+
+   ▲ AND THE 2px IS A BOX-MODEL MISMATCH, not a rounding error. `.addcart` is
+     `height:54px` with NO border, so it measures 54. This measured 54 from its
+     buttons PLUS 1.5px of border top and bottom. Giving the wrapper the height
+     instead -- box-sizing is border-box here, so 54 includes the borders -- and
+     letting the buttons fill it makes the two boxes the same object. Their
+     heights are now declared from the same number rather than arriving at it. */
+.qty{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:13px;height:54px;margin-top:0}
+.qty button{width:46px;height:100%;display:grid;place-items:center;font-size:20px;color:var(--ink-2)}
 .qty button:hover{color:var(--pink-deep)}
 .qty span{min-width:36px;text-align:center;font-size:15px;font-weight:700}
 .addcart{flex:1;height:54px;border-radius:13px;background:var(--pink);color:#fff;font-size:15.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;transition:.16s}
@@ -925,10 +948,29 @@ a{color:inherit;text-decoration:none}
 @media (min-width:881px){
   .pdp .bb-title{font-size:30px;font-weight:500;line-height:1.24}
   .pdp .bb-head .bb-price .now{font-size:22px}
-  /* The photograph keeps its bled edge on the OUTSIDE of the two columns, which
-     is the one place the full-bleed idea survives a wide screen. */
-  .pdp .gallery{margin-inline:calc(var(--site-gutter,22px) * -1) 0}
+  /* ── THE PHOTOGRAPH STOPS AT THE PAGE'S OWN CONTENT EDGE ON A WIDE SCREEN.
+                                                          (2.60.331 follow-up)
+
+     This used to pull the gallery out by one gutter on the start side, so the
+     picture began 22px to the LEFT of the logo and of "Product details" -- the
+     line the rest of the page is built on. The owner drew that line down a
+     screenshot. Measured before: exactly 22px of overhang at 1920, 1440 AND
+     1280, so it was structural rather than a breakpoint that slipped.
+
+     ▲ THE PHONE KEEPS ITS FULL BLEED, and that is a decision rather than an
+       oversight. The max-width:880px rule above pulls BOTH sides out by a
+       gutter, so on a phone the photograph touches the screen edges -- which is
+       the Ledger look the owner picked and praised, and which has no "content
+       edge" to violate because the gutter is the whole margin. Only the wide
+       layout, where the picture sits beside a column of text, had a line to
+       break. */
+  .pdp .gallery{margin-inline:0}
   .pdp .gmain{border-radius:0;border:0}
-  .pdp .gthumbs{margin-block-start:14px;padding-inline:var(--site-gutter,22px) 0}
+  /* The thumbnails line up with the PICTURE, and the picture just stopped
+     bleeding. This inset them by one gutter to compensate for the gallery's
+     negative start margin; with that margin gone (above) the same padding would
+     push them a gutter to the RIGHT of the photograph they belong to. The
+     mobile rule keeps its inset because the mobile gallery keeps its bleed. */
+  .pdp .gthumbs{margin-block-start:14px;padding-inline:0}
   .pdp .gthumb{box-shadow:none}
 }
