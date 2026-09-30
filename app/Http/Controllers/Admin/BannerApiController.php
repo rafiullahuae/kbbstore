@@ -545,6 +545,11 @@ class BannerApiController extends Controller
     {
         $rules = [
             'image' => ['sometimes', 'nullable', 'string', 'max:400'],
+            // Lane SEC. The phone picture, under the same rule as the one
+            // above and written through the same storedPath() gate — so the
+            // column cannot take a URL, an absolute path or a scheme this
+            // shop has not checked, whichever of the two fields it arrives in.
+            'image_m' => ['sometimes', 'nullable', 'string', 'max:400'],
             'alt' => ['sometimes', 'nullable', 'string', 'max:255'],
             'heading' => ['sometimes', 'nullable', 'string', 'max:190'],
             'body' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -588,21 +593,45 @@ class BannerApiController extends Controller
             $card->status = (string) $data['status'];
         }
 
-        if (array_key_exists('image', $data)) {
-            $path = self::storedPath((string) $data['image']);
+        /*
+         * ── ONE LOOP FOR TWO PICTURES, AND THAT IS THE POINT ────────────────
+         *                                                          (Lane SEC)
+         * The phone picture is written by the SAME code as the desktop one:
+         * the same storedPath() gate, the same MediaRegistrar::record() call,
+         * the same "clearing it clears its measured size too". Written as a
+         * second copied block the two would drift, and the half that drifted
+         * would be the one nobody looks at — a shopkeeper checks his desktop
+         * banner far more often than his phone one.
+         *
+         * `image_m` MAPS TO `image_m_w`/`image_m_h` rather than to `image_w`/
+         * `image_h`: the sizes are per picture, and the fallback arithmetic in
+         * slider-banner.blade.php reads whichever pair belongs to the picture
+         * it is about to draw.
+         */
+        foreach ([
+            'image' => ['image_w', 'image_h'],
+            'image_m' => ['image_m_w', 'image_m_h'],
+        ] as $field => [$widthColumn, $heightColumn]) {
+            if (! array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $path = self::storedPath((string) $data[$field]);
 
             if ($path === null) {
-                $card->image = '';
-                $card->image_w = null;
-                $card->image_h = null;
-            } else {
-                $card->image = $path;
+                $card->{$field} = '';
+                $card->{$widthColumn} = null;
+                $card->{$heightColumn} = null;
 
-                $media = MediaRegistrar::record($path);
-
-                $card->image_w = $media?->width === null ? null : (int) $media->width;
-                $card->image_h = $media?->height === null ? null : (int) $media->height;
+                continue;
             }
+
+            $card->{$field} = $path;
+
+            $media = MediaRegistrar::record($path);
+
+            $card->{$widthColumn} = $media?->width === null ? null : (int) $media->width;
+            $card->{$heightColumn} = $media?->height === null ? null : (int) $media->height;
         }
     }
 
@@ -895,6 +924,13 @@ class BannerApiController extends Controller
             'image_url' => $card->image === '' ? '' : Banners::imageUrl($card->image),
             'image_w' => $card->image_w,
             'image_h' => $card->image_h,
+            // Lane SEC. The console draws a second thumbnail and a second
+            // picker from these three, and the empty string is what makes the
+            // button read "Choose" rather than "Change".
+            'image_m' => $card->image_m,
+            'image_m_url' => $card->image_m === '' ? '' : Banners::imageUrl($card->image_m),
+            'image_m_w' => $card->image_m_w,
+            'image_m_h' => $card->image_m_h,
             'alt' => $card->alt,
             'heading' => $card->heading,
             'body' => $card->body,

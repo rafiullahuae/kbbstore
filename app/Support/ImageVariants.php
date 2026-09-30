@@ -622,51 +622,100 @@ final class ImageVariants
      * picture is the homepage's LCP element when the section is above the fold.
      */
     /*
-     * ▲ CHECKED AGAINST A PORTRAIT PHONE FRAME, AND IT IS STILL RIGHT FOR THE
-     *   FRAME AND WRONG FOR SOME PICTURES.                          (Lane SEC)
+     * ▲ CHECKED AGAINST A PORTRAIT PHONE FRAME, AND THEN CORRECTED FOR IT.
+     *                                                               (Lane SEC)
      *
-     * The homepage banner now ships at the owner's two shapes — 1920 × 550 on
-     * desktop and 500 × 600 on phones — and the phone one is PORTRAIT, which
-     * every number above was written without. The expression itself needed no
-     * change: `sizes` describes the frame's WIDTH, the frame is `.wrap` wide at
-     * every viewport, and the ratio moves only its height. Measured, Chromium,
-     * 390px viewport: frame 366 × 439.2, `aspect-ratio: 500 / 600`, no
-     * horizontal scroll.
+     * The homepage banner ships at the owner's two shapes — 1920 x 550 on
+     * desktop and 500 x 600 on phones — and the phone one is PORTRAIT, which
+     * every number above was written without. The expression itself was right
+     * about the FRAME: `sizes` declares the frame's WIDTH, the frame is `.wrap`
+     * wide at every viewport, and the ratio moves only its height. Measured,
+     * Chromium, 390px: frame 366 x 439.2, no horizontal scroll.
      *
-     * WHAT IT IS WRONG ABOUT, MEASURED RATHER THAN REASONED. `object-fit:
-     * cover` on a frame TALLER than it is wide makes the HEIGHT the binding
-     * dimension for a landscape source, and the width the browser then needs is
+     * WHAT IT WAS WRONG ABOUT. `object-fit: cover` on a frame taller than it is
+     * wide makes the HEIGHT binding for a landscape source, and the width the
+     * browser then needs is not the frame's:
      *
-     *     frameHeight × (sourceWidth / sourceHeight)
+     *     covered width = frameWidth x max(1, sourceAspect / frameAspect)
      *
-     * not frameWidth. With the shipped shapes and a 1920 × 550 picture that is
-     * 439.2 × 3.49 = 1533 CSS pixels against the 390 this attribute declares —
-     * out by 3.9×. Chromium chose the 400w copy, painted it across 1533 CSS
-     * pixels of covered width, and the banner is visibly soft on a phone.
-     * storage/sec-logs/shots/many-390.png is the picture of it.
+     * With the shipped shapes and a 1920 x 550 picture that is 100vw x 4.189 —
+     * 1533 CSS pixels against the 390 the flat expression declared, out by
+     * 3.9x. Chromium chose the 400w copy and painted it across 1533 pixels.
      *
-     * IT IS NOT FIXED HERE, ON PURPOSE. Two honest fixes and both are bigger
-     * than an expression:
-     *
-     *   1. A per-card `sizes`, computed from `banner_cards.image_w/image_h`,
-     *      which this table already stores. Correct, and it means asking a
-     *      phone for the whole 1920px file — which is what covering a portrait
-     *      frame with a landscape picture actually costs.
-     *   2. A SECOND PICTURE PER SLIDE for phones. This is what the owner asked
-     *      for and nobody built: "for desktop the size should be 1920 x 550 and
-     *      in mobile 500 x 600" is two pictures, and a slide has one image
-     *      field. With a 500 × 600 phone picture in a 500/600 frame the width
-     *      IS binding, this attribute is exactly right, and nothing is cropped.
-     *
-     * Until one of them lands, a shop whose banner picture matches the frame it
-     * is shown in gets the right file and a shop using one wide picture for
-     * both gets a soft phone banner. Reported rather than papered over: a
-     * `sizes` widened by a guess would spend a phone's connection on the full
-     * file for every shop, including the ones that did upload a phone picture.
+     * THE FACTOR IS 1 FOR EVERY CASE THIS SHOP HAD BEFORE, which is what makes
+     * this safe to apply everywhere: a source no wider than its frame is
+     * width-bound, `max(1, ...)` collapses, and the string is the one that was
+     * returned before, byte for byte. PerfDeliveryTest's 810 x 1440 fixture is
+     * such a case in BOTH frames and did not move.
      */
     public static function bannerSliderSizesAttribute(): string
     {
         return 'min(100vw, 2400px)';
+    }
+
+    /**
+     * The same, for one picture in one frame of a known shape.
+     *
+     * ── WHY THIS IS PER PICTURE AND THE ONE ABOVE IS NOT ────────────────────
+     *
+     * Because the answer depends on the picture. `sizes` cannot ask the browser
+     * "how wide will this file have to be to cover the box" — it is parsed
+     * before any image is fetched and it has no way to name the source's shape.
+     * But the shop KNOWS the source's shape: `banner_cards.image_w`/`image_h`
+     * are read off the file once when the picture is saved. So the arithmetic
+     * is done here, per card, and what goes into the attribute is a length.
+     *
+     * ── WHEN IT IS USED, WHICH IS THE INTERESTING PART ──────────────────────
+     *
+     * Mostly it is not. A slide with its own phone picture draws that picture
+     * in the phone frame, the shapes agree, the factor is 1, and this returns
+     * exactly what the flat expression returns. It earns its keep in the
+     * FALLBACK — a slide with no phone picture, whose desktop picture has to
+     * cover a portrait frame — and the decision there is deliberately to ask
+     * for the heavy file rather than serve a soft one: a shop that has not
+     * uploaded a phone picture is being shown a crop it did not choose either
+     * way, and soft is the worse of the two. Measured in
+     * BannerPhonePictureTest, and the numbers are in the lane's report.
+     *
+     * OVERSTATING IS STILL THE SAFE DIRECTION, so `$frameWidthCss` is the
+     * widest the frame can be asked for and the cap is the same 2400px: a
+     * pathological ratio cannot make this ask for a file that does not exist,
+     * because the browser picks the widest candidate on offer anyway.
+     *
+     * @param  int|null  $sourceW  the picture's own width, or null if unknown
+     * @param  int|null  $sourceH  the picture's own height
+     * @param  float  $frameAspect  the frame's width divided by its height
+     */
+    public static function bannerSliderCoverSizes(?int $sourceW, ?int $sourceH, float $frameAspect): string
+    {
+        $flat = self::bannerSliderSizesAttribute();
+
+        /*
+         * UNKNOWN DIMENSIONS FALL BACK TO THE FLAT EXPRESSION rather than to a
+         * guess. NULL is what `image_w`/`image_h` hold for a picture whose
+         * header could not be read, and multiplying by a guessed aspect would
+         * put a number in the attribute that nothing measured.
+         */
+        if ($sourceW === null || $sourceH === null || $sourceW < 1 || $sourceH < 1 || $frameAspect <= 0.0) {
+            return $flat;
+        }
+
+        $factor = ($sourceW / $sourceH) / $frameAspect;
+
+        /*
+         * ONE DECIMAL PLACE, and the comparison is against the ROUNDED value.
+         * A source a hair wider than its frame gives 1.0004; emitting
+         * `min(100vw * 1, 2400px)` for it would be a different string for the
+         * same page, which is a byte-for-byte diff with no meaning in it — and
+         * StorefrontEnglishUnchangedTest cannot tell that from a real one.
+         */
+        $factor = round($factor, 1);
+
+        if ($factor <= 1.0) {
+            return $flat;
+        }
+
+        return 'min(100vw * '.rtrim(rtrim(number_format($factor, 1, '.', ''), '0'), '.').', 2400px)';
     }
 
     /**

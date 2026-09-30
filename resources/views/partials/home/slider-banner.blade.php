@@ -182,6 +182,110 @@
         return $bsSrcsets[$image] ??= ImageVariants::detailSrcsetFor(ImageVariants::rootRelative($image));
     };
 
+    /*
+     * ── THE PHONE PICTURE, AND THE ONE BREAKPOINT BOTH HALVES MUST AGREE ON ─
+     *                                                              (Lane SEC)
+     *
+     * The owner gave two sizes — "for desktop the size should be 1920 x 550 and
+     * in mobile 500 x 600" — so a slide carries two pictures and this section
+     * draws whichever belongs to the frame on screen.
+     *
+     * `--kbbs-arm` IS THE DEFAULT AND `--kbbs-ar` IS ASSIGNED AT 768px, in the
+     * stylesheet below, so the phone frame is everything BELOW 768. The source
+     * element's `media` and the `sizes` condition are written from this one
+     * constant for that reason: two spellings of the same breakpoint is how a
+     * narrow tablet ends up with the portrait picture in the landscape frame,
+     * and the fault would show on one width nobody tests at.
+     *
+     * 767.98 AND NOT 767, because a viewport is not always an integer — a
+     * zoomed desktop and several Android handsets report fractional CSS pixel
+     * widths, and `(max-width:767px)` plus `(min-width:768px)` leaves a gap
+     * between them that a real device does land in. The frame's own rule is
+     * `min-width:768px`, so everything under it is this.
+     */
+    $bsPhoneQuery = '(max-width: 767.98px)';
+
+    /*
+     * The two frame shapes as numbers, read from the set, so the arithmetic
+     * below follows the pixels the browser lays out with rather than the label
+     * on the preset.
+     */
+    $bsArD = $set->sliderRatioValue();
+    $bsArM = $set->sliderRatioMobileValue();
+
+    /*
+     * WHAT EACH BREAKPOINT WILL ACTUALLY DRAW, decided once per card and here
+     * rather than in the markup, because five things are read off it — the
+     * source element, the img, both `sizes` and the preload — and a condition
+     * repeated five times is a condition that gets fixed in four places.
+     *
+     * The FALLBACK is the whole subtlety: a slide with no phone picture shows
+     * its DESKTOP picture in the portrait phone frame, cropped by `cover` to
+     * about a quarter of its width. That is today's behaviour and it is not
+     * changed here — what changes is that `sizes` now asks for the width
+     * covering that frame actually needs, instead of the frame's own width.
+     * Soft is worse than heavy for a shop that is being shown a crop it did not
+     * choose either way; ImageVariants::bannerSliderCoverSizes() carries the
+     * reasoning and the numbers are in BannerPhonePictureTest.
+     */
+    $bsPhoneFor = static function ($card) use ($bsArM): array {
+        $phone = $card->hasPhonePicture();
+
+        return [
+            'image' => $phone ? (string) $card->image_m : (string) $card->image,
+            'w' => $phone ? $card->image_m_w : $card->image_w,
+            'h' => $phone ? $card->image_m_h : $card->image_h,
+            'own' => $phone,
+            'sizes' => ImageVariants::bannerSliderCoverSizes(
+                $phone ? $card->image_m_w : $card->image_w,
+                $phone ? $card->image_m_h : $card->image_h,
+                $bsArM,
+            ),
+        ];
+    };
+
+    /*
+     * And the desktop frame's own. It is the flat expression for every picture
+     * this shop has ever had — a source no wider than its frame is width-bound
+     * and the factor collapses to 1 — so this is byte-identical on the whole
+     * existing catalogue and only speaks up for a picture wider than 1920:550.
+     */
+    $bsSizesFor = static function ($card) use ($bsArD): string {
+        return ImageVariants::bannerSliderCoverSizes($card->image_w, $card->image_h, $bsArD);
+    };
+
+    /*
+     * ── AND THE FALLBACK'S `sizes` HAS TO CARRY BOTH FRAMES IN ONE STRING ───
+     *
+     * A slide WITHOUT a phone picture has no source element, so its <img> is
+     * the only element on the page and one `sizes` has to answer for two frames
+     * of different shapes. `sizes` takes media conditions for exactly this —
+     * `(max-width: …) <length>, <length>` — and the condition is the same
+     * constant the source element and the preload use.
+     *
+     * WHEN THE TWO ANSWERS ARE THE SAME THE CONDITION IS OMITTED, and that is
+     * not tidiness: it is what keeps this byte-identical for every picture no
+     * wider than its frame, which is the whole existing catalogue and
+     * PerfDeliveryTest's 810 x 1440 fixture. A condition emitted for a pair of
+     * identical lengths is a changed page with no meaning in it, and
+     * StorefrontEnglishUnchangedTest cannot tell that from a real one.
+     *
+     * A SLIDE WITH a phone picture does NOT use this: its <img> never applies
+     * below 768px, because the source element wins there, so a phone term on it
+     * would describe a frame it will never be measured against.
+     */
+    $bsImgSizesFor = static function ($card) use ($bsSizesFor, $bsPhoneFor, $bsPhoneQuery): string {
+        $desktop = $bsSizesFor($card);
+
+        if ($card->hasPhonePicture()) {
+            return $desktop;
+        }
+
+        $phone = $bsPhoneFor($card)['sizes'];
+
+        return $phone === $desktop ? $desktop : $bsPhoneQuery.' '.$phone.', '.$desktop;
+    };
+
     $bsFirst = $cards[0] ?? null;
     /*
      * Computed HERE, in this block, and not in a second inline PHP block
@@ -200,6 +304,24 @@
      *    never spell them.
      */
     $bsLcpSrcset = $bsFirst !== null ? $bsSrcsetFor((string) $bsFirst->image) : '';
+    /*
+     * The preload's `imagesizes` mirrors the element it is a preload FOR, or
+     * the browser preloads one candidate and the parser then asks for another.
+     * The single unconditioned preload below stands in for the <img>, so it
+     * takes the <img>'s combined string; the media-scoped pair stands in for
+     * one element each and takes theirs.
+     */
+    $bsLcpSizes = $bsFirst !== null ? $bsImgSizesFor($bsFirst) : '';
+    $bsLcpDeskSizes = $bsFirst !== null ? $bsSizesFor($bsFirst) : '';
+
+    /*
+     * THE FIRST SLIDE'S PHONE HALF, for the preload below. Resolved here for
+     * the two reasons the block above this line gives, and for a third: it is
+     * what decides whether the page emits ONE preload or a MEDIA-SCOPED PAIR,
+     * and that decision cannot be made inside the condition it controls.
+     */
+    $bsLcpPhone = $bsFirst !== null ? $bsPhoneFor($bsFirst) : null;
+    $bsLcpPhoneSrcset = $bsLcpPhone !== null ? $bsSrcsetFor($bsLcpPhone['image']) : '';
 @endphp
 {{-- THE FIRST PICTURE IS THE ONE THE PAGE PRELOADS. With this section on it is
      the largest element in its part of the page and, above the fold, the
@@ -242,7 +364,25 @@
      an empty line into every homepage's head. --}}
 @if ($bsFirst !== null && isset($sections) && $sections->deviceClassFor('cards_banner') === '')
   @push('head')
-<link rel="preload" as="image" fetchpriority="high" href="{{ Banners::imageUrl($bsFirst->image) }}"@if ($bsLcpSrcset !== '') imagesrcset="{{ $bsLcpSrcset }}" imagesizes="{{ $bsSizes }}"@endif>
+@if ($bsLcpPhone['own'])
+{{-- TWO TAGS, ONE FETCH. A slide with its own phone picture has two different
+     files that could be the LCP element, and which one it is depends on the
+     viewport — so each preload carries the `media` that decides it and a
+     browser acts on exactly one. Written as a single unconditioned preload the
+     phone would fetch the DESKTOP file it is never going to paint, which is the
+     whole 1920px of it on the connection that can least afford it.
+
+     THE MEDIA IS THE SAME CONSTANT THE SOURCE ELEMENT BELOW USES, for the
+     reason that constant is declared at all: a preload that disagrees with the
+     picture by one pixel of breakpoint downloads both files on the width in
+     between. --}}
+<link rel="preload" as="image" fetchpriority="high" media="{{ $bsPhoneQuery }}" href="{{ Banners::imageUrl($bsLcpPhone['image']) }}"@if ($bsLcpPhoneSrcset !== '') imagesrcset="{{ $bsLcpPhoneSrcset }}" imagesizes="{{ $bsLcpPhone['sizes'] }}"@endif>
+<link rel="preload" as="image" fetchpriority="high" media="(min-width: 768px)" href="{{ Banners::imageUrl($bsFirst->image) }}"@if ($bsLcpSrcset !== '') imagesrcset="{{ $bsLcpSrcset }}" imagesizes="{{ $bsLcpDeskSizes }}"@endif>
+@else
+{{-- ONE TAG, because there is one file: the slide has no phone picture, so both
+     frames draw the desktop one and a `media` would say nothing. --}}
+<link rel="preload" as="image" fetchpriority="high" href="{{ Banners::imageUrl($bsFirst->image) }}"@if ($bsLcpSrcset !== '') imagesrcset="{{ $bsLcpSrcset }}" imagesizes="{{ $bsLcpSizes }}"@endif>
+@endif
   @endpush
 @endif
 <style>
@@ -327,6 +467,16 @@
    is waiting for. Measured with a real pointer drag across the frame — the
    slider did not move, and the handler had never run. The attribute on the tag
    and this declaration are the two halves browsers actually honour. */
+/* ▲ `picture` IS IN THIS SELECTOR AND IT IS A FIX, NOT TIDINESS. (Lane SEC)
+   A <picture> is an inline element with no height of its own, so wrapping the
+   <img> in one to art-direct the phone crop puts a box between the slide and
+   the picture and `height:100%` on the <img> then resolves against nothing —
+   the frame keeps its reserved height and the photograph collapses to its
+   intrinsic one inside it. Measured before the rule was added: the desktop
+   frame stayed 344.5px and the image drew 366px tall in it.
+   Only slides WITH a phone picture have the wrapper, so this declaration is
+   inert on every other one. */
+.kbbs-a picture{display:block;width:100%;height:100%}
 .kbbs-a img{display:block;width:100%;height:100%;object-fit:cover;
   -webkit-user-drag:none;user-select:none;pointer-events:none}
 .kbbs-a:focus-visible{outline:3px solid var(--ink,#2A2228);outline-offset:-3px}
@@ -569,6 +719,9 @@
             $bsHref = Banners::safeUrl($bsCard->button_url);
             $bsAlt = trim((string) $bsCard->alt) !== '' ? $bsCard->alt : '';
             $bsSrcset = $bsSrcsetFor((string) $bsCard->image);
+            $bsDeskSizes = $bsImgSizesFor($bsCard);
+            $bsPhone = $bsPhoneFor($bsCard);
+            $bsPhoneSrcset = $bsPhone['own'] ? $bsSrcsetFor($bsPhone['image']) : '';
           @endphp
           <div class="kbbs-s" role="group" aria-roledescription="slide"
                aria-label="{{ __('store.home.banner_slider_slide', ['n' => $bsI + 1, 'total' => $bsCount]) }}">
@@ -592,13 +745,41 @@
                    An empty alt is CORRECT here rather than lazy: a decorative
                    picture with no description of its own should be skipped, not
                    read out as a filename. The box on the screen says so. --}}
+@if ($bsPhone['own'])<picture>
+{{-- ── THE PHONE PICTURE, AND WHY IT IS A <source> AND NOT A SECOND srcset ──
+
+     `srcset` with `w` descriptors lets the BROWSER pick a size of the same
+     picture. This is a different picture — a different crop, framed for a
+     portrait box — which is art direction, and art direction is what <source
+     media> is for. A `w` candidate cannot express "and below 768px it is this
+     other photograph"; the browser would treat the two as interchangeable and
+     hand a desktop screen the phone crop whenever it happened to want that
+     width.
+
+     The <source> carries its OWN srcset and its OWN sizes, because the
+     candidates and the covered width both belong to the picture rather than to
+     the slide. The <img> underneath stays exactly the element it was — it is
+     the fallback the spec requires and the one every desktop draws.
+
+     ONLY EMITTED WHEN THERE IS A PHONE PICTURE. A slide without one renders the
+     <img> alone, with no <picture> wrapper at all, which is byte for byte what
+     this section emitted before the column existed.
+
+     THE CLOSER IS GLUED TO THE SOURCE TAG, as four other blocks in this file
+     are and for the measured reason they record: a Blade comment is replaced by
+     the empty string and ITS TRAILING NEWLINE SURVIVES, so a comment ending on
+     its own line puts a blank line inside every <picture> on the page. --}}<source media="{{ $bsPhoneQuery }}"
+                      srcset="{{ $bsPhoneSrcset !== '' ? $bsPhoneSrcset : Banners::imageUrl($bsPhone['image']) }}"
+                      @if ($bsPhoneSrcset !== '') sizes="{{ $bsPhone['sizes'] }}" @endif
+                      @if ($bsPhone['w'] && $bsPhone['h']) width="{{ (int) $bsPhone['w'] }}" height="{{ (int) $bsPhone['h'] }}" @endif>
+@endif
               <img src="{{ Banners::imageUrl($bsCard->image) }}"
                    alt="{{ $bsAlt }}"
                    draggable="false"
-                   @if ($bsSrcset !== '') srcset="{{ $bsSrcset }}" sizes="{{ $bsSizes }}" @endif
+                   @if ($bsSrcset !== '') srcset="{{ $bsSrcset }}" sizes="{{ $bsDeskSizes }}" @endif
                    @if ($bsCard->image_w && $bsCard->image_h) width="{{ (int) $bsCard->image_w }}" height="{{ (int) $bsCard->image_h }}" @endif
                    @if ($bsI === 0) fetchpriority="high" @else loading="lazy" @endif
-                   decoding="async">
+                   decoding="async">@if ($bsPhone['own'])</picture>@endif
             </a>
           </div>
         @endforeach
