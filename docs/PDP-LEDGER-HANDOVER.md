@@ -748,8 +748,41 @@ public/build/manifest.json                              MUST travel with it
 tests/Feature/ProductPageLayoutTest.php                 NEW
 tests/Feature/DemoProductTabsTest.php                   NEW
 tests/Feature/ModuleFrameworkGuardTest.php              product_layout enrolled
+tests/Feature/ProductPageLedgerTest.php                 two pins advanced
+tests/Feature/ProductMobileLayoutTest.php               one pin advanced
+tests/Feature/AdminNavAndIdsTest.php                    the screen registered
 tools/pdp4-shots.cjs  docs/lane-pdp4-shots/             the harness and the shots
 ```
+
+#### The five pins the round moved, and what each one now says
+
+The full suite named five failures. Every one was a pin on a literal this round
+turned into a variable, and each was ADVANCED rather than worked around — the
+number it asserts is the same number, which is the whole point of the round.
+
+| test | was | now | mutation re-run |
+|---|---|---|---|
+| `ProductPageLedgerTest > ships the quiet mobile title` | `.pdp .bb-title{font-size:19px;font-weight:500` | `…{font-size:var(--pl-title-m,19px);font-weight:var(--pl-title-w,500)` | `font-weight:600` back → **RED**; `21px` back → **RED**, in both files |
+| `ProductPageLedgerTest > wraps the blurb in a checkbox` | `transparent calc(3 * 1.62em + 20px)` | `transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px))` | as above |
+| `ProductMobileLayoutTest > leaves the related block on the same gutter` | `toContain('.sec{padding:34px0;')` + a negative naming one wrong value | the whole declaration read out and compared | 20px inline → **RED**; rule deleted → **RED**; fallback drifted to 40px → **RED** in two files |
+| `AdminNavAndIdsTest > lists every tab strip in the file` | — | `paintProductPage` in `TABBED_SCREENS`, with an `ectabs-hint` under the strip | drop the registration → **RED** |
+| `ReviewBadgeParityTest > defines the capsule in exactly the files it knows` | — | `ProductLayout`'s comment no longer writes the capsule selector as a rule | write it as a rule again → **RED** |
+
+▲ **One of those five was a false green about to happen and is now not.**
+`ProductMobileLayoutTest`'s pair — `toContain('.sec{padding:34px0;')` and
+`not->toContain('.sec{padding:34px20px')` — would have gone green with `.sec`'s
+horizontal padding set to ANY value, and green again with the rule deleted
+outright, the moment the declaration stopped beginning with `34px`. Both of
+those mutations were run against the new form and both are red.
+
+▲ **And one was this lane's own fault, caught by somebody else's guard.**
+`ReviewBadgeParityTest` sweeps `resources/` **and `app/`** for the capsule class
+followed by an opening brace, because a third file defining it is a third way
+for the shop to disagree with the admin preview. `ProductLayout`'s schema
+comment named the two rules it drives in CSS notation, braces and all — and to
+that regex a comment written as a rule is a rule. It is rewritten without them;
+so is the explanation of why, whose own first draft quoted the pattern and
+tripped the same sweep on the next run.
 
 `update.json` must declare **both** migrations in `migrations`, and the manifest
 warning in §1 applies unchanged: ship the new stylesheet without the manifest
