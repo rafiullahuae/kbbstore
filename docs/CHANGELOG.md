@@ -3,6 +3,54 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.327
+**One fix, and it is to something .326 shipped an hour earlier.** Apply after
+.326.
+
+> Nothing else in this package. It is one defect, found by the lane that wrote
+> the feature, in the feature it had just written.
+
+---
+
+### ▲ A SHOPPER COULD HAVE KEPT A BASKET THEY HAD ALREADY PAID FOR
+
+The **Put my basket back** button that arrived in .326 asked twice whether the
+order had been paid — and the second question, the one asked with the row locked,
+had its answer thrown away. So the order correctly refused to move, and the
+basket was handed back anyway.
+
+What that is on the shop: a shopper standing on the return page when the
+provider's confirmation lands, who then presses the button. They end up holding a
+live basket of goods **they have already been charged for**, and the stock those
+goods were holding is never released, because the order never moved.
+
+It needs the payment to confirm inside the few seconds the shopper is looking at
+that page. That is narrow — and narrow is not rare when a payment provider is
+sending the confirmation.
+
+**The obvious fix would have been wrong**, which is why this is a package of its
+own rather than a line in a bigger one. Simply refusing whenever that second
+check comes back empty breaks the ordinary case: a shopper whose payment the
+provider *failed* gets the same empty answer, and they are owed their basket
+back. The question is now asked of the locked row itself — *is this order over,
+and did it take no money?* — and the two cases are each other's proof: make it
+refuse the other way and the provider-failed case goes red while the race stays
+green.
+
+The reverse order of the same two events was already right and is now pinned: a
+payment that is **reversed** leaves a failed order still carrying its payment
+date, and no button is offered over money that has moved.
+
+---
+
+### WHAT MOVED, AND WHAT DID NOT
+
+Nothing else. No setting, no screen, no default, no new control. If you have not
+yet applied .326, apply **.325 → .326 → .327** in that order and nothing on your
+shop was ever exposed to this.
+
+---
+
 ## 2.60.326
 **Five fixes to things that were quietly wrong, and one of them means your shop
 has never rendered a font weight it asks for 57 times.** Apply after .325.
