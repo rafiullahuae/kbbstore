@@ -530,11 +530,23 @@ it('wraps the blurb in a checkbox and a label, once, on an ordinary product and 
        harness, so "is it masked" cannot tell them apart. What can is whether
        the stop is measured from the top or from the bottom.
 
+       ▲ THE PIN MOVED IN ROUND 4 AND THE NUMBERS DID NOT. `1.62em` is now
+         `var(--pl-desc-lh,1.62) * 1em` and `20px` is `var(--pl-rule-pad,20px)`,
+         because Appearance → Product page → Type · Buy column owns those two
+         and the cap has to follow them or the blurb clips mid-line at any other
+         setting. THE FALLBACKS ARE THE SAME TWO NUMBERS, which is what keeps
+         this a pin on the shipped page rather than on a mechanism:
+         ProductPageLayoutTest asserts that every fallback equals the value
+         ProductLayout ships, in both directions, and
+         docs/lane-pdp4-shots/base-measure.json is the browser agreeing —
+         `max-block-size: 85.61px` before the change and after it.
+
        MUTATION NOTE, RUN: put `calc(100% - 1.05em),transparent` back → RED,
        and a one-line blurb fades again. */
     $rules = ledgerCssRules();
     ledgerLacks($rules, 'calc(100% - 1.05em)', 'the blurb fade is not measured from the element bottom');
-    ledgerHas($rules, 'transparent calc(3 * 1.62em + 20px)', 'it ends exactly where the cap cuts');
+    ledgerHas($rules, 'transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px))',
+        'it ends exactly where the cap cuts');
     ledgerLacks($rules, 'calc(100% - 2.2em)', 'nor is the tab panel fade');
     ledgerHas($rules, 'transparent 104px', 'which ends where .dcontent.clamp cuts');
 });
@@ -613,16 +625,35 @@ it('ships the quiet mobile title and the Ledger desktop title', function () {
      * an edit to these two declarations and nothing else, which is why they are
      * pinned by their values rather than by their existence.
      *
+     * ▲ THE PIN MOVED IN ROUND 4 AND THE TYPE DID NOT. Both declarations are
+     *   now `var(--pl-title-m,19px)` / `var(--pl-title-d,30px)` /
+     *   `var(--pl-title-w,500)`, because Appearance → Product page →
+     *   Type · Buy column owns the three. THE FALLBACKS ARE THE SAME THREE
+     *   NUMBERS and that is the point: with nothing saved the screen emits no
+     *   <style> block at all, so the page renders 19/500 and 30/500 exactly as
+     *   it did. ProductPageLayoutTest compares every fallback against the value
+     *   ProductLayout ships, in both directions, and
+     *   docs/lane-pdp4-shots/base-measure.json is Chromium agreeing — 19px/500
+     *   at 390 and 30px/500 at 1280, before the change and after it.
+     *
+     *   Picking 21px/500 or 17px/500 off the sheet is still an edit to these
+     *   two declarations and nothing else; it is now an edit to a DEFAULT in
+     *   ProductLayout::SCHEMA and its fallback here, which have to move
+     *   together or the test above says so.
+     *
      * MUTATION NOTE, RUN: put `font-weight:600` back on `.pdp .bb-title` → RED,
      * naming the declaration. Restore 21px → RED.
      */
     $css = ledgerSourceCss();
 
-    ledgerHas($css, '.pdp .bb-title{font-size:19px;font-weight:500;line-height:1.36', 'the quiet phone title');
-    ledgerHas($css, '.pdp .bb-title{font-size:30px;font-weight:500', 'the desktop title he approved');
+    ledgerHas($css, '.pdp .bb-title{font-size:var(--pl-title-m,19px);font-weight:var(--pl-title-w,500);line-height:1.36',
+        'the quiet phone title');
+    ledgerHas($css, '.pdp .bb-title{font-size:var(--pl-title-d,30px);font-weight:var(--pl-title-w,500)',
+        'the desktop title he approved');
 
     // And in the bundle, or the shop is serving yesterday's type.
-    ledgerHas(ledgerBuiltCss(), 'font-size:19px;font-weight:500', 'the phone title is in the BUILT bundle');
+    ledgerHas(ledgerBuiltCss(), 'font-size:var(--pl-title-m,19px);font-weight:var(--pl-title-w,500)',
+        'the phone title is in the BUILT bundle');
 });
 
 it('takes the frame off the photograph and the ground out of the trust block', function () {
