@@ -1095,3 +1095,19 @@ a{color:inherit;text-decoration:none}
     transition:background .18s var(--ease);
 }
 .kbb-fbt-add:hover{background:var(--pink-deep)}
+
+/* ── TWO BUNDLE TILES ACROSS A PHONE, NOT ONE ─────────────────── Lane CARD ──
+   Measured at 320: the content box inside `.kbb-fbt` is 230px, and two tiles at
+   the desktop thumbnail cost 2×(90+20) + 10 gap + the `+` and its two gaps ≈
+   254 — so the strip wrapped to ONE TILE PER ROW and the block ran to four
+   stacked rows. A bundle the shopper cannot see as a bundle is most of what
+   this module is for.
+
+   The thumbnail is the only number that moves, and every track above is a
+   calc() over its own row, so the reservation follows it and the heights stay
+   equal — re-measured after: one height at 320, 390 and 1280. Nothing else in
+   the block is width-dependent. */
+@media (max-width:400px){
+    .kbb-fbt-items{--fbt-thumb:76px;--fbt-pad:8px}
+    .kbb-fbt-plus{font-size:15px}
+}
