@@ -368,10 +368,11 @@ it('reserves a track for every row of the card that a product may not have', fun
      * SIZED, which is what makes a card with a rating row and a card without
      * one the same height — and is why nothing had to be added to the markup.
      *
-     * MUTATION: take `var(--sc-rate-slot)` out of `.cb`'s grid-template-rows
-     * and this is red; on the shop, rows of unreviewed products go back to
-     * being 26px shorter than the rows around them. RUN, and re-measured: 1280
-     * came back 468.91 / 442.91 / 468.89 again.
+     * MUTATION: replace `var(--sc-rate-slot)` in `.cb`'s grid-template-rows
+     * with `auto` and this is red. RUN, and re-measured in Chromium with the
+     * sheet rebuilt: the category page went from one height to
+     * 392.27 / 418.25 / 418.27 at 1280 and 330.2 / 356.2 at 390 — rows of
+     * unreviewed products 26px short again.
      */
     foreach (['kbb-grid-skins.css', 'kbb.css'] as $file) {
         $rules = cehFamilyRules($file);
@@ -444,8 +445,11 @@ it('lets the price take one line only, and truncates the struck original before 
      * losing its last character is a readable card; the price the shopper pays
      * losing one is a lie.
      *
-     * MUTATION: put `flex-wrap:wrap` back and this is red; re-measured at 320,
-     * /shop went from one card height to three. RUN.
+     * MUTATION: put `flex-wrap:wrap` back and this is red. RUN, and re-measured
+     * with the sheet rebuilt: /shop went from one card height at 320 to
+     * 321.2 and 347.95 — 26.75px, one line of the price — while 390 stayed at
+     * a single 356.2, which is the measurement behind "nothing anybody can see
+     * above 320 moves".
      */
     foreach (['kbb-grid-skins.css', 'kbb.css'] as $file) {
         $rules = cehFamilyRules($file);
@@ -458,6 +462,56 @@ it('lets the price take one line only, and truncates the struck original before 
 
         expect(preg_match('/\.kbb-pgrid\[data-skin\^="showcase"\] \.kbb-card-price\{[^}]*flex:0 1 auto/s', $rules))
             ->toBe(1, $file.': the sale price no longer shrinks last');
+
+        /*
+         * ── AND THE ROW'S HEIGHT DOES NOT FOLLOW THE TYPE INSIDE IT ─────────
+         *
+         * Two defects in one line, both measured rather than reasoned.
+         *
+         * `align-items:baseline` across two font sizes offsets the two boxes to
+         * put their baselines on one line, and the union is taller than either:
+         * `.cp` came back 34px on a marked-down card and 33px on the plain one
+         * beside it, which put three card heights back on the category page at
+         * 1280 (416.75 / 417.75 / 417.77). Centring makes both boxes the row's
+         * own line-height and the row a constant 33px; the two figures still
+         * read as one line, because both inherit the same 21px.
+         *
+         * And that line-height is a LENGTH, `calc(var(--sc-name) * 1.5)`, not
+         * the ratio it would otherwise inherit — which is what lets the rule
+         * below print the struck original smaller on a 320px phone without
+         * costing the card 3px.
+         *
+         * MUTATION: put `align-items:baseline` back and this is red; measured,
+         * the category page went from one card height at 1280 to three. RUN.
+         */
+        expect(preg_match('/\.kbb-pgrid\[data-skin\^="showcase"\] \.cp\{[^}]*align-items:center/s', $rules))
+            ->toBe(1, $file.': the price row aligns on baselines again, and that makes a marked-down card 1px taller than its neighbour');
+
+        expect(preg_match('/\.kbb-pgrid\[data-skin\^="showcase"\] \.cp\{[^}]*line-height:calc\(var\(--sc-name\) \* 1\.5\)/s', $rules))
+            ->toBe(1, $file.': the price row\'s line-height is not a length any more, so its height follows the type inside it');
+
+        /*
+         * ── AND ON THE NARROWEST PHONE THE STRUCK ORIGINAL IS PRINTED SMALLER
+         *
+         * 320px is the narrowest card this grid draws. Measured there with a
+         * Range around the words — `scrollWidth` on a block reports the
+         * container and rounds 55.6 down to 55, which is how the first pass of
+         * this reported a price that fitted while the screenshot read "AED 2…"
+         * — the pair needs 51 + 8 + 55 in a 104px column. The rule takes the
+         * STRUCK original from 12.5px to 10.5px (50.66 to 42.53) and the gap
+         * from 8 to 5, which is 102.73, and leaves the sale price alone.
+         *
+         * MUTATION: delete the media query and this is red; measured at 320,
+         * the struck original goes back to a 42.81px box around 45px of words
+         * and prints "AED 2…". RUN.
+         */
+        expect(preg_match(
+            '/@media \(max-width:380px\)\{\s*'
+            .'\.kbb-pgrid\[data-skin\^="showcase"\] \.cp:has\(\.kbb-card-reg\)\{gap:5px\}\s*'
+            .'\.kbb-pgrid\[data-skin\^="showcase"\] \.cp:has\(\.kbb-card-reg\) \.kbb-card-reg\{\s*'
+            .'font-size:calc\(var\(--sc-name\) - 3\.5px\)\}/s',
+            $rules
+        ))->toBe(1, $file.': a marked-down price has no narrow-screen rule, so at 320px it is ellipsised');
     }
 });
 

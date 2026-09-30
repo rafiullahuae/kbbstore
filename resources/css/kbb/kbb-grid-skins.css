@@ -809,7 +809,16 @@
     margin-top:0;
     padding-top:var(--sc-gap);
     display:flex;
-    align-items:baseline;
+    /* ── CENTRED, NOT BASELINED, AND THAT IS A HEIGHT FIX ─────── Lane CARD ──
+       `align-items:baseline` offsets the struck original and the sale price to
+       put their baselines on one line, and because the two are at different
+       font sizes the union of the offset boxes is taller than either: measured,
+       `.cp` was 34px on a marked-down card and 33px on the plain one beside it,
+       which put three card heights back on a category page at 1280 (416.75 /
+       417.75 / 417.77). Centring makes both boxes the row's own line-height and
+       the row a constant 33px — and the two figures still read as one line,
+       because both inherit the same 21px. */
+    align-items:center;
     /* ── IT MAY NOT WRAP, AND WRAPPING IS NOT A STYLE QUESTION ── Lane CARD ──
        `flex-wrap:wrap` let "AED 260  AED 208" break onto two lines in a narrow
        text column, and a second line here is 26.75px of card height that its
@@ -827,6 +836,12 @@
     flex-wrap:nowrap;
     gap:8px;
     font-size:calc(var(--sc-name) + 1px);
+    /* ── A LENGTH, SO THE ROW'S HEIGHT DOES NOT FOLLOW ITS FONT SIZE ────────
+       Inherited as a length rather than as a ratio, which is the point: every
+       box on this line gets the same 21px, so the narrow-screen rule at the
+       foot of this block can print the struck original smaller on a 320px phone
+       without costing the card 3px of height. */
+    line-height:calc(var(--sc-name) * 1.5);
     font-weight:700;
 }
 
@@ -988,6 +1003,40 @@
     .kbb-pgrid[data-skin^="showcase"] .kbb-card:has(.heart) .kbb-card-cart{margin-inline-end:0}
     .kbb-pgrid[data-skin^="showcase"]{--sc-btn-fs:11px}
     .kbb-pgrid[data-skin="showcase-compact"]{--sc-btn-fs:9.5px}
+}
+
+/* ── AND ON THE NARROWEST PHONE, A MARKED-DOWN PRICE IS GIVEN ROOM ──────────
+                                                                  (Lane CARD)
+   Measured at 320px, which is the narrowest card this grid ever draws: the text
+   column is 104px and "AED 260  AED 208" needs 51 + 8 + 55 = 114. Something has
+   to give, and the three answers are wrap it (a second line, which is 26.75px
+   of card height its neighbour at one price does not have — the defect this
+   lane came to fix), clip it (the first pass of this rule, and the shot showed
+   "AED 2…" where the price a shopper pays should be), or print it smaller.
+
+   THE FIRST PASS LOOKED CORRECT AND WAS NOT, which is worth recording: the
+   element's own `scrollWidth` reported 55 for a 55.19px box and said the price
+   fitted, because scrollWidth is an integer and rounds the overflow away. A
+   Range around the CONTENTS is the honest instrument, and it read 55.2 against
+   a 55.19 box — 0.01px of overflow, and `text-overflow:ellipsis` needs no more
+   than that.
+
+   Smaller, then, and ONLY the figure that is crossed out, and only on the cards
+   that would otherwise not fit: `:has(.kbb-card-reg)` matches a price row that
+   has a struck original in front of it, so a product at one price is untouched
+   at every width and the SALE price is untouched at every width too. Measured
+   with the same Range: the struck original goes from 50.66px at 12.5px type to
+   42.53px at 10.5px, and 42.53 + 5 + 55.2 is 102.73 inside 104.
+
+   IT COSTS NO HEIGHT, which is the whole reason `.cp` declares its line-height
+   as a length and centres rather than baselines. */
+@media (max-width:380px){
+    .kbb-pgrid[data-skin^="showcase"] .cp:has(.kbb-card-reg){gap:5px}
+    .kbb-pgrid[data-skin^="showcase"] .cp:has(.kbb-card-reg) .kbb-card-reg{
+        font-size:calc(var(--sc-name) - 3.5px)}
+}
+
+@media (max-width:700px){
     /* ── AND TREATMENT C STACKS ON A PHONE ──────────────────────────────────
        Measured at 390px: a two-column row gives a 167px card and about 135px of
        text column, and "AED 120  AED 94" beside an ADD TO CART is 210px of
