@@ -30,10 +30,10 @@
 @endverbatim
 {!! $seo ?? '' !!}
 {!! app(\App\Services\Analytics::class)->headTags() !!}
-{{-- Poppins, served by this shop rather than by Google.            (Lane BG)
+{{-- Outfit, served by this shop rather than by Google.            (Lane BG)
      The twin of the Arabic-face include below, which did the same for Cairo
      and left the Latin half linking a render-blocking third-party stylesheet.
-     The partial's own header carries the measurement. --}}@include('partials.poppins-face')
+     The partial's own header carries the measurement. --}}@include('partials.outfit-face')
 {{-- AND IT STOPS ASKING FOR WEIGHT 300. This document was the only caller that
      did, and the census that decided it is in WebFonts' own note: ZERO visible
      elements at font-weight 300 on any of nine pages, and one invisible element
@@ -41,7 +41,7 @@
     AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
 
     The webfont link above carries no Arabic glyph. Before this, /ar/skin-quiz/
-    served real Arabic text in a document that linked Poppins only and named an
+    served real Arabic text in a document that linked Outfit only and named an
     Arabic-capable family ZERO times, so every Arabic word rendered in whatever
     face the device happened to have. Measured at 40px against Cairo and matching
     neither -- docs/rtl-standalone-documents.md §2 found it, and
@@ -60,7 +60,7 @@
     comments are removed, so the word in a comment opens a block of its own.)
 --}}@include('partials.arabic-face', [
     'weights' => '300;400;500;600;700;800',
-    'stacks' => [':root' => ['--sans' => '"Poppins",system-ui,-apple-system,Segoe UI,Roboto,sans-serif']],
+    'stacks' => [':root' => ['--sans' => '"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif']],
 ])
 @verbatim
 <style>
@@ -68,7 +68,7 @@
   --bg:#fff;--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#E0567B;--pink-deep:#C13E63;
   --pink-ink:#A82F53;--ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--line:rgba(42,34,40,.10);
   --line-2:rgba(42,34,40,.06);--gold:#BE8E2E;--green:#2E9E6B;--sale:#E23A4E;--lav:#8B5CF6;--coral:#F2884E;
-  --sans:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --sans:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
   --ease:cubic-bezier(.22,.61,.36,1);--sh-s:0 2px 12px rgba(42,34,40,.07);--sh-m:0 18px 40px -14px rgba(168,47,83,.34);
 }
 *{margin:0;padding:0;box-sizing:border-box}

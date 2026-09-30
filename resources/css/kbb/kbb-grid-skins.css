@@ -24,7 +24,7 @@
 
 .kbb-card .cb{padding:10px}
 
-.kbb-card .cn{font-size:13px;font-weight:600;font-family:'Poppins',sans-serif}
+.kbb-card .cn{font-size:13px;font-weight:600;font-family:'Outfit',sans-serif}
 
 .kbb-card .cp{font-size:13px;color:#C13E63;font-weight:700;margin-top:3px}
 
@@ -34,7 +34,7 @@
 
 .kbb-card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 
-.kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Poppins',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Outfit',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 
 .kbb-badge-new{inset-inline-start:9px;background:linear-gradient(135deg,#1cc36a,#12965a)}
 .kbb-badge-sale{inset-inline-end:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
@@ -57,7 +57,7 @@
 
 .kbb-card-price{color:#C13E63;font-weight:700}
 
-.kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif}
+.kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
 
 .kbb-pgrid .kbb-card{display:flex;flex-direction:column;height:100%}
 

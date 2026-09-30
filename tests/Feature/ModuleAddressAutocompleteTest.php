@@ -442,7 +442,21 @@ it('has already done, unconditionally, what the performance row describes', func
      */
     $html = test()->get('/')->assertOk()->getContent();
 
-    expect(substr_count($html, 'rel="preload" as="font"'))->toBeGreaterThanOrEqual(4,
+    /*
+     * ▲ FOUR BECAME ONE, AND THE CLAIM IS UNCHANGED.               (Lane PLC)
+     *
+     * The owner asked for Outfit site-wide. Outfit is a VARIABLE font: its five
+     * weights are ONE latin file, where Poppins needed five. So the floor moves
+     * from four preloads to one because there is one file to preload — not
+     * because a preload was dropped from the critical path, which is the thing
+     * this row is actually about.
+     *
+     * The assertion stays a FLOOR rather than an equality for the reason it
+     * always was: this case is about "unconditionally, on every page", and zero
+     * is what would make the row a lie. Wanting the exact count is
+     * PerfDeliveryTest's job and it asserts 1 there.
+     */
+    expect(substr_count($html, 'rel="preload" as="font"'))->toBeGreaterThanOrEqual(1,
         'the font preloads are no longer applied unconditionally');
     expect($html)->not->toContain('fonts.googleapis.com')
         ->and($html)->not->toContain('fonts.gstatic.com');

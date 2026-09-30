@@ -110,7 +110,7 @@ it('keeps kbb.css down to one type rule, one phone rule and one background rule'
 
     expect($rules)->toHaveCount(3, "kbb.css has ".count($rules)." body rules:\n  ".implode("\n  ", $rules));
 
-    expect($rules[0])->toContain('font:400 14px/1.6 Poppins')
+    expect($rules[0])->toContain('font:400 14px/1.6 Outfit')
         ->and($rules[0])->not->toContain('background');
     expect($rules[1])->toContain('padding-bottom:46px');
     expect($rules[2])->toContain('background-color:#FDEFF3');

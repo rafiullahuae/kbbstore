@@ -21,7 +21,7 @@
   --ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;
   --line:rgba(42,34,40,.12);--line-2:rgba(42,34,40,.06);
   --sale:#E23A4E;--green:#2E9E6B;--r:13px;
-  --sans:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --sans:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
   --ease:cubic-bezier(.22,.61,.36,1);
   --sh:0 14px 40px -18px rgba(42,34,40,.26);
   font-family:var(--sans);color:var(--ink);background:var(--cream);

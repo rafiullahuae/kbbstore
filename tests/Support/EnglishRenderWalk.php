@@ -1545,6 +1545,39 @@ final class EnglishRenderWalk
                 'with' => '<div class="kbb-pgrid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">',
                 'hits' => 4,
             ],
+
+            /*
+             * THE TYPEFACE, WHICH THE OWNER ASKED TO CHANGE.       (Lane PLC)
+             *
+             * "can u plz match the font of overal site to 'Outfit'". Every
+             * literal occurrence of the family name in rendered HTML — the
+             * `--sans` custom property on the four standalone documents, the
+             * `font:` shorthands inlined by the layout, and the @font-face
+             * blocks — is the same string with a different family in it.
+             *
+             * ONE RULE AND NOT SEVEN, deliberately. The alternative is a
+             * pattern per shape (`--sans:'…'`, `--sans:"…"`, `font:400 14px/1.6
+             * …`) and they would all say the same thing: this shop stopped
+             * naming Poppins.
+             *
+             * FOUR PAGES, and it is worth knowing which. They are the four
+             * standalone documents — the journal, an article, the review wall
+             * and the skin quiz — because those carry their own <head> with the
+             * `--sans` custom property written into it. The other 33 pages name
+             * the family only inside the <style id="kbb-outfit"> block, which
+             * the insertion rule above already owns, and in the built
+             * stylesheet, which is linked rather than inlined and so is not
+             * part of this comparison at all.
+             *
+             * ARABIC IS NOT IN THIS RULE AND MUST NOT BE. Cairo is untouched;
+             * `/ar` keeps its Arabic face exactly as it was, measured with two
+             * rulers at 441.81px and 449.45px before and after.
+             */
+            'the typeface, which the owner asked to change (Lane PLC)' => [
+                'pattern' => '#Poppins#',
+                'with' => 'Outfit',
+                'hits' => 4,
+            ],
         ];
     }
 
@@ -1657,43 +1690,37 @@ final class EnglishRenderWalk
             ],
 
             /*
-             * THE SELF-HOSTED POPPINS FACES — Lane PERF, paired with
-             * approvedRemovals()' 'the Google Fonts request for Poppins'.
+             * THE SELF-HOSTED OUTFIT FACES — Lane PERF's arrangement, paired
+             * with approvedRemovals()' 'the Google Fonts request for Poppins'.
              *
-             * Four <link rel=preload> for the `latin` subset the page actually
-             * uses, and one <style id="kbb-poppins"> holding all twelve
-             * @font-face rules css2 returns. The counts are the claim: four
-             * preloads and not twelve (a preload for a face no codepoint on the
-             * page needs is bandwidth taken from the LCP image), and one style
-             * block and not two.
+             * ONE <link rel=preload> for the `latin` subset the page actually
+             * uses, and one <style id="kbb-outfit"> holding all ten @font-face
+             * rules css2 returns.
              *
              * `.*?` IS SAFE HERE AND ONLY BECAUSE OF THE id. The block is
-             * <style id="kbb-poppins">…</style> with no nested <style>, so the
+             * <style id="kbb-outfit">…</style> with no nested <style>, so the
              * lazy match ends at its own close; the flag bar's rule above needs
              * two levels of </div> for exactly the reason this one does not.
              *
-             * ▲ 33 BECAME 37, AND FOUR PRELOADS STAYED FOUR.            (Lane BG)
+             * ▲ FOUR PRELOADS BECAME ONE, AND THE COUNT IS UNCHANGED AT 37.
+             *                                                       (Lane PLC)
              *
-             * The four pages that gained it are the standalone documents — the
-             * journal, an article, the review wall and the skin quiz — which
-             * carry their own <head> and were still linking
-             * fonts.googleapis.com while the other 33 were served from this
-             * origin. Their removals are the three rules paired with this one
-             * in approvedRemovals(); they are three rather than one because the
-             * four documents asked Google for three different weight lists.
+             * The owner asked for Outfit site-wide. Outfit is a VARIABLE font:
+             * its five weights are ONE latin file where Poppins needed five, so
+             * `{4}` became `{1}` — not because a preload was dropped from the
+             * critical path, but because there is one file to preload. Measured
+             * on the latin subset: Poppins 39,272 bytes across five files,
+             * Outfit 32,292 in one.
              *
-             * POPPINS 500 JOINED WebFonts IN THE SAME CHANGE and this count did
-             * NOT move by a fifth preload, which is the thing worth watching
-             * here: `{4}` is still `{4}` because WebFonts::NO_PRELOAD_WEIGHTS
-             * keeps 500 out of the preload list. Fifteen faces are inside the
-             * <style> block and four are preloaded. If a later lane preloads
-             * 500, this pattern stops matching and the count falls to 0 —
-             * loudly, which is correct: it is critical-path bandwidth taken
-             * from the LCP image.
+             * THE PAGE COUNT DOES NOT MOVE, and that is the half worth
+             * watching. 37 pages carried the block before and 37 carry it now:
+             * the swap changed what is inside it, not which documents emit it.
+             * A lane that preloads a second file, or loses the block on a
+             * standalone document, moves this number and says so loudly.
              */
-            'the self-hosted Poppins faces (Lane PERF)' => [
-                'pattern' => '#(?:<link rel="preload" as="font" type="font/woff2" crossorigin href="[^"]+">\n){4}'
-                    .'<style id="kbb-poppins">.*?</style>\n#s',
+            'the self-hosted Outfit faces (Lane PLC)' => [
+                'pattern' => '#(?:<link rel="preload" as="font" type="font/woff2" crossorigin href="[^"]+">\n){1}'
+                    .'<style id="kbb-outfit">.*?</style>\n#s',
                 'hits' => 37,
             ],
 

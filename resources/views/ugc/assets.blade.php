@@ -68,7 +68,7 @@
   --ugc-star:#A8760F;
   --ugc-sh:0 1px 2px rgba(42,34,40,.05),0 4px 14px rgba(42,34,40,.06);
   --ugc-ease:cubic-bezier(.22,.61,.36,1);
-  font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-family:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   line-height:1.5;
   color:var(--ugc-ink);
   -webkit-font-smoothing:antialiased;

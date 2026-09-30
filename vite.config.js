@@ -30,7 +30,10 @@ export default defineConfig({
                 // 28 product-grid card templates, selectable from the admin.
                 'resources/css/kbb/kbb-grid-skins.css',
                 /*
-                 * POPPINS, SELF-HOSTED — Lane PERF.
+                 * OUTFIT, SELF-HOSTED — Lane PERF's arrangement, Lane PLC's
+                 * typeface. The owner asked for Outfit site-wide; it is served
+                 * from this origin exactly as Poppins was, so no third-party
+                 * font host comes back.
                  *
                  * They are INPUTS and not files dropped into public/build,
                  * because `npx vite build` empties that directory: a woff2
@@ -39,31 +42,14 @@ export default defineConfig({
                  * face. As inputs they are hashed, listed in the manifest and
                  * resolved by App\Support\WebFonts through Vite::asset().
                  *
-                 * All FIFTEEN Poppins faces css2 returns, devanagari included
-                 * -- 500 joined them when Lane BG found that eight rules in
-                 * kbb.css ask for it and the browser was answering with 400 --
-                 * and Cairo's three (its four weights are one variable file
-                 * per subset). A
-                 * browser fetches a face only when a codepoint in its
-                 * unicode-range is on the page, so the four this shop has no
-                 * text for cost a shopper nothing and are what makes
-                 * "the same font, byte for byte" true without an exception.
+                 * TWO FILES, NOT FIFTEEN. Outfit is a variable font: css2
+                 * returns ten @font-face rules and one file per subset, every
+                 * weight. Poppins needed five files per subset and shipped a
+                 * devanagari subset besides; Outfit publishes none, and this
+                 * shop has no Devanagari text for it to carry — see WebFonts.
                  */
-                'resources/fonts/poppins/poppins-devanagari-400.woff2',
-                'resources/fonts/poppins/poppins-latin-400.woff2',
-                'resources/fonts/poppins/poppins-latin-ext-400.woff2',
-                'resources/fonts/poppins/poppins-devanagari-500.woff2',
-                'resources/fonts/poppins/poppins-latin-500.woff2',
-                'resources/fonts/poppins/poppins-latin-ext-500.woff2',
-                'resources/fonts/poppins/poppins-devanagari-600.woff2',
-                'resources/fonts/poppins/poppins-latin-600.woff2',
-                'resources/fonts/poppins/poppins-latin-ext-600.woff2',
-                'resources/fonts/poppins/poppins-devanagari-700.woff2',
-                'resources/fonts/poppins/poppins-latin-700.woff2',
-                'resources/fonts/poppins/poppins-latin-ext-700.woff2',
-                'resources/fonts/poppins/poppins-devanagari-800.woff2',
-                'resources/fonts/poppins/poppins-latin-800.woff2',
-                'resources/fonts/poppins/poppins-latin-ext-800.woff2',
+                'resources/fonts/outfit/outfit-latin.woff2',
+                'resources/fonts/outfit/outfit-latin-ext.woff2',
                 'resources/fonts/cairo/cairo-arabic.woff2',
                 'resources/fonts/cairo/cairo-latin.woff2',
                 'resources/fonts/cairo/cairo-latin-ext.woff2',

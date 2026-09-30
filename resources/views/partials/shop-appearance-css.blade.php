@@ -39,11 +39,11 @@
                            is no add-to-cart button on any of the five.
 
     THE SELF-HOSTED LATIN WEBFONT IS NOT HERE EITHER, and that is the one real
-    gap this file does not close. The layout serves Poppins from this shop
+    gap this file does not close. The layout serves Outfit from this shop
     (App\Support\WebFonts, Lane PERF); all five documents still link
     fonts.googleapis.com, which is a render-blocking third-party stylesheet on
     four pages a shopper reads. It is not converted here because
-    WebFonts::POPPINS_FACES carries weights 400, 600, 700 and 800 only, while
+    WebFonts::OUTFIT_FACES carries weights 400, 600, 700 and 800 only, while
     these documents ask for 500 (blog, post, skin quiz) and 300 (skin quiz) —
     so converting them silently drops two weights on pages that use them.
     Adding those faces is an asset change and belongs to the lane that owns the

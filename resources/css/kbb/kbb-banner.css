@@ -86,7 +86,7 @@
 }
 
 .kbb-banner__heading{
-  font-family:var(--sans, "Poppins", system-ui, sans-serif);
+  font-family:var(--sans, "Outfit", system-ui, sans-serif);
   /* Scaled down with the band. At the old size a two-line heading was
      taller than the whole banner now is. */
   font-size:clamp(20px, 2.8vw, 34px);
