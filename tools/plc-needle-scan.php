@@ -83,7 +83,15 @@ $kbbNeedleOrigin = static function (): array {
             continue;
         }
 
-        if (str_contains($file, '/tests/bootstrap.php') || str_contains($file, '/tests/Pest.php')) {
+        /*
+         * The instrument's own frames are not the caller. NeedleScan and
+         * RecordingTestResponse live under tests/Support, so without this every
+         * assertSee row was filed against NeedleScan.php:75 — a survey that
+         * blames itself for every hit it finds.
+         */
+        if (str_contains($file, '/tests/bootstrap.php')
+            || str_contains($file, '/tests/Pest.php')
+            || str_contains($file, '/tests/Support/')) {
             continue;
         }
 
@@ -246,6 +254,42 @@ expect()->pipe('toMatch', function (Closure $next, mixed ...$arguments) use ($kb
     }
 
     $next();
+});
+
+/*
+ * ── AND assertSee, THROUGH THE SUITE'S OWN TestCase ────────────────────────
+ *
+ * 94 distinct assertSee literals in tests/Feature, 57 of them reading as a
+ * sentence a shopper is shown — the same mistake is as available here as in
+ * toContain, and until now it was swept statically because assertSee could not
+ * be hooked. It can: MakesHttpRequests::createTestResponse() is the documented
+ * override point, Tests\TestCase uses it, and Tests\Support\NeedleScan is the
+ * switch. Off, it is one null check per response and the framework's own
+ * TestResponse comes back.
+ *
+ * THE NEEDLE IS RECORDED RAW AND COUNTED ESCAPED. assertSee escapes its
+ * argument by default and matches the escaped form, so counting the raw string
+ * would under-report any needle containing `&`, `<`, `>` or a quote — it would
+ * read 0 occurrences on a page that plainly shows it, and the survey would call
+ * a perfectly good assertion invisible.
+ */
+Tests\Support\NeedleScan::recordWith(static function (string $value, string $haystack, bool $escaped) use ($kbbNeedleHandle, $kbbNeedleOrigin, $kbbNeedleContexts): void {
+    [$file, $line] = $kbbNeedleOrigin();
+
+    $matched = $escaped ? e($value) : $value;
+    $count = substr_count($haystack, $matched);
+
+    fwrite($kbbNeedleHandle, json_encode([
+        'file' => $file,
+        'line' => $line,
+        'needle' => $value,
+        'count' => $count,
+        'haystack' => strlen($haystack),
+        'needles' => 1,
+        'kind' => 'assertSee',
+        'escaped' => $escaped,
+        'contexts' => ($count >= 2 && $count <= 12) ? $kbbNeedleContexts($haystack, $matched) : [],
+    ], JSON_UNESCAPED_SLASHES|JSON_INVALID_UTF8_SUBSTITUTE)."\n");
 });
 
 register_shutdown_function(static function () use ($kbbNeedleHandle): void {

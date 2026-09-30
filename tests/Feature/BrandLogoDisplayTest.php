@@ -72,7 +72,7 @@ it('defaults to auto, drawing the logo when there is one and the initial when th
         ->assertSee('https://cdn.example.test/t-hasalogo.png', escape: false)
         ->assertSee('class="brw-name"', escape: false)
         ->assertSee('T Hasalogo')
-        ->assertSee('T Nologo')
+        ->assertSee('<span class="brw-name">T Nologo', escape: false)
         // The brand with no logo keeps the initial-letter circle.
         ->assertSee('class="brw-initial"', escape: false);
 });
@@ -104,7 +104,7 @@ it('falls back to the name for a brand with no logo in logos mode', function () 
 
     $html = $this->get('/brands/')->assertOk()->getContent();
 
-    expect($html)->toContain('T Nologo')
+    expect($html)->toContain('<span class="brw-name">T Nologo')
         ->toContain('class="brw-name"')
         // No logo, and no initial circle standing in for one either: the
         // fallback is the name, not a different placeholder.
@@ -119,8 +119,8 @@ it('shows the name alone in names mode, with no logo and no initial circle', fun
 
     $html = $this->get('/brands/')->assertOk()->getContent();
 
-    expect($html)->toContain('T Hasalogo')
-        ->toContain('T Nologo')
+    expect($html)->toContain('<span class="brw-name">T Hasalogo')
+        ->toContain('<span class="brw-name">T Nologo')
         ->toContain('class="brw-name"')
         ->not->toContain('https://cdn.example.test/t-hasalogo.png')
         ->not->toContain('class="brw-initial"')

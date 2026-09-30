@@ -16,8 +16,26 @@ APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 OUT=$APP/storage/plc-logs
 CFG=$OUT/plc-needle-phpunit.xml
 
-mkdir -p "$OUT/needles"
-rm -f "$OUT"/needles/*.jsonl
+# ── EVERY RUN GETS ITS OWN DIRECTORY, AND NOTHING DELETES ANYBODY'S ─────────
+#
+# This read `mkdir -p "$OUT/needles"; rm -f "$OUT"/needles/*.jsonl`, and the
+# rm used $OUT — the script's own path — while the bootstrap honoured
+# KBB_NEEDLE_OUT. So a second scan started with KBB_NEEDLE_OUT pointing
+# somewhere else still wiped the shared directory, and it did: a fifteen-minute
+# full-suite scan was running when a one-file probe was started beside it, and
+# the probe deleted the rows out from under it. The scan kept writing to an
+# unlinked inode and finished with EXIT=0 and nothing to show, which is the
+# worst shape a failure can take — it looks like the run simply found nothing.
+#
+# Same family as this tool's hardcoded KBB_WP_DB: one unnamespaced resource that
+# two runs share. The fix is the same shape as the database's — give each run a
+# name of its own — and it removes the delete entirely, so a scan can no longer
+# destroy anything, including its own earlier results.
+RUN=${KBB_NEEDLE_RUN:-$(date +%Y%m%d-%H%M%S)-$$}
+NEEDLES=${KBB_NEEDLE_OUT:-$OUT/needles}/$RUN
+
+mkdir -p "$NEEDLES"
+export KBB_NEEDLE_OUT="$NEEDLES"
 
 # KBB_WP_DB BELONGS ON THIS RUN TOO. It is an ordinary full suite, so it reaches
 # the WordPress-exporter harness exactly as `vendor/bin/pest` does, and a run
@@ -64,4 +82,4 @@ KBBCFGPY
 cd "$APP"
 vendor/bin/pest -c "$CFG" --compact "$@" > "$OUT/plc-needle-suite.txt" 2>&1 || true
 tail -4 "$OUT/plc-needle-suite.txt" | tr -d '\033' | sed 's/\[[0-9;]*m//g'
-echo "rows: $(cat "$OUT"/needles/*.jsonl 2>/dev/null | wc -l)"
+echo "rows: $(cat "$NEEDLES"/*.jsonl 2>/dev/null | wc -l)  in $NEEDLES"

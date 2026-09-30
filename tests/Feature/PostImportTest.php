@@ -110,7 +110,7 @@ it('fills the Journal from an export, and the index has cards in it', function (
     $index = $this->get('/blog/');
 
     $index->assertOk();
-    expect($index->getContent())->toContain('Heartleaf extract, and why it is everywhere');
+    expect($index->getContent())->toContain('<div class="ptitle">Heartleaf extract, and why it is everywhere');
 
     $page = $this->get('/blog/heartleaf-extract-transforming-k-beauty-skincare/');
 

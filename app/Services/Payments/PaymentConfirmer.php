@@ -298,6 +298,16 @@ class PaymentConfirmer
                 only: ['paid_at' => null],
             );
 
+            /*
+             * KBB-GUARDED-WRITE-DELIBERATE: the write below is a LOG of what the
+             * provider said, not a consequence of the status move, so it is
+             * correct even when the move refuses. A provider that reports a
+             * failure for an order which has since been paid has still reported
+             * it, and the payment row is how that reference stays findable;
+             * nothing about the ORDER's own state is written underneath. Every
+             * other guarded write in this shop is a consequence and must consult
+             * its guard — see tests/Feature/GuardedWritesKeepTheirAnswerTest.
+             */
             $this->record($order, $provider, $providerRef, null, null, $reason, $summary);
         });
 

@@ -207,6 +207,24 @@ const KBB_ELEMENT_ANCHORED = [
     'tests/Feature/ProductEditorTest.php' => ['<meta name="description" content="', 1],
     'tests/Feature/SeoCrawlSurfaceTest.php' => ['<meta name="description" content="', 1],
     'tests/Feature/YoastImportReachesTheHeadTest.php' => ['<meta name="description" content="', 1],
+
+    /*
+     * Round 5. Sixteen more, found the same way and settled the same way — the
+     * visible element beside the machine's copy of it (JSON-LD `"name"`, an
+     * `alt`, a `<title>`, a script's string table).
+     *
+     * PROVED THE SAME WAY TOO: blank `<span class="brw-name">` in the brands
+     * page, so every brand on /brands/ has no name, and the bare needles were
+     * 48 passed. With these, 5 red.
+     */
+    'tests/Feature/BrandLogoDisplayTest.php' => ['<span class="brw-name">', 4],
+    'tests/Feature/BrandUrlTest.php' => ['<span class="brw-name">', 1],
+    'tests/Feature/UrlSchemeTest.php' => ['<span class="brw-name">', 1],
+    'tests/Feature/PdpPreviewTest.php' => ['<a class="ksl-nm" href="', 1],
+    'tests/Feature/PostImportTest.php' => ['<div class="ptitle">', 1],
+    'tests/Feature/CartPageSqueezeTest.php' => ['<button class="cpg-addrbtn"', 1],
+    'tests/Feature/StripeConnectTest.php' => ['<h1>Stripe was not connected</h1>', 2],
+    'tests/Feature/StripeOneClickConnectTest.php' => ['<h1>Stripe was not connected</h1>', 2],
 ];
 
 it('keeps the repaired assertions naming the element they are about', function () {
