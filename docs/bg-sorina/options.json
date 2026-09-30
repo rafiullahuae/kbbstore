@@ -1,0 +1,30 @@
+{
+  "rows": [
+    {
+      "option": "A-today",
+      "blockHeight": 564.11,
+      "titleWidth": 212.31,
+      "titleFamily": "Fraunces, Georgia, serif",
+      "avgWidth": 57.5,
+      "scrollWidth": 1280,
+      "poppinsRendered": true,
+      "frauncesRendered": false
+    },
+    {
+      "option": "B-shop-type",
+      "blockHeight": 578.11,
+      "titleWidth": 261.28,
+      "titleFamily": "Poppins, system-ui, -apple-system, \"Sego",
+      "avgWidth": 67.58,
+      "scrollWidth": 1280,
+      "poppinsRendered": true,
+      "frauncesRendered": false
+    }
+  ],
+  "swing": {
+    "Georgia": 212.31,
+    "DejaVu Serif": 264.69,
+    "Nimbus Roman": 208.39,
+    "FreeSerif": 205.92
+  }
+}

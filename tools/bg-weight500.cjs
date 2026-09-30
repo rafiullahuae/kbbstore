@@ -55,6 +55,7 @@
  * IDENTITY proves two pictures are the same, byte DIFFERENCE proves nothing.
  */
 const { chromium } = require('playwright');
+const { probeFamily } = require('./font-probe.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -70,36 +71,22 @@ const PAGES = [
 ];
 const WEIGHTS = [300, 400, 500, 600, 700, 800];
 
-/* Runs in the page. Two rulers, every weight loaded first. */
-const PROBE = async (weights) => {
-  for (const w of weights) {
-    try { await document.fonts.load(w + ' 40px Poppins'); } catch (e) { /* no such face */ }
-  }
-  await document.fonts.ready;
+/*
+ * ── THE TWO RULERS AND THE EXPLICIT LOAD NOW LIVE IN tools/font-probe.cjs ──
+ *                                                                  (Lane BG)
+ * They were written inline here, which was fine while this was the only honest
+ * font instrument in the repository and wrong the moment it was not:
+ * tools/perf-fontcheck.cjs had the same job and a different, blind answer to
+ * it. A mechanic that exists to stop a whole CLASS of mistake cannot live in
+ * the one script that already knows about the mistake.
+ *
+ * What is left here is the part that is genuinely this script's own: which
+ * pages to walk, the element census, and the page-level numbers the round
+ * needed.
+ */
 
-  const mk = (family) => {
-    const s = document.createElement('span');
-    s.style.cssText = 'position:absolute;left:-9999px;top:0;white-space:pre;'
-      + 'font-size:40px;font-family:' + family;
-    s.textContent = 'Hydrating Serum AED 149';
-    document.body.appendChild(s);
-    return s;
-  };
-
-  const real = mk("'Poppins'");
-  const control = mk("'KbbNoSuchFamily12345'");
-  const poppins = {}; const ctrl = {}; const rendered = {};
-
-  for (const w of weights) {
-    real.style.fontWeight = String(w);
-    control.style.fontWeight = String(w);
-    const a = Math.round(real.getBoundingClientRect().width * 100) / 100;
-    const b = Math.round(control.getBoundingClientRect().width * 100) / 100;
-    poppins[w] = a; ctrl[w] = b; rendered[w] = a !== b;
-  }
-
-  real.remove(); control.remove();
-
+/** The per-page work that is NOT about fonts: census, background, geometry. */
+const PAGE_FACTS = (weights) => {
   /* How many elements actually ASK for each weight, and how many are visible. */
   const census = (target) => {
     let total = 0; let visible = 0;
@@ -114,22 +101,21 @@ const PROBE = async (weights) => {
   };
 
   const bs = getComputedStyle(document.body);
+  const out = { census: {} };
 
-  return {
-    poppins,
-    control: ctrl,
-    rendered,
-    census: { 300: census(300), 500: census(500) },
-    bg: {
-      color: bs.backgroundColor,
-      layers: bs.backgroundImage === 'none' ? 0 : bs.backgroundImage.split(/,(?![^(]*\))/).length,
-      attachment: bs.backgroundAttachment,
-    },
-    scrollWidth: document.documentElement.scrollWidth,
-    bodyHeight: Math.round(document.body.getBoundingClientRect().height),
-    googleLinks: [...document.querySelectorAll('link[href*="googleapis"],link[href*="gstatic"]')]
-      .map((l) => l.rel + ' ' + l.href.slice(0, 72)),
+  for (const w of weights) out.census[w] = census(w);
+
+  out.bg = {
+    color: bs.backgroundColor,
+    layers: bs.backgroundImage === 'none' ? 0 : bs.backgroundImage.split(/,(?![^(]*\))/).length,
+    attachment: bs.backgroundAttachment,
   };
+  out.scrollWidth = document.documentElement.scrollWidth;
+  out.bodyHeight = Math.round(document.body.getBoundingClientRect().height);
+  out.googleLinks = [...document.querySelectorAll('link[href*="googleapis"],link[href*="gstatic"]')]
+    .map((l) => l.rel + ' ' + l.href.slice(0, 72));
+
+  return out;
 };
 
 (async () => {
@@ -151,7 +137,18 @@ const PROBE = async (weights) => {
       const page = await ctx.newPage();
       await page.goto(BASE + url, { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready);
-      row[key] = await page.evaluate(PROBE, WEIGHTS);
+
+      const probe = await probeFamily(page, 'Poppins', WEIGHTS);
+      const facts = await page.evaluate(PAGE_FACTS, WEIGHTS);
+
+      row[key] = {
+        poppins: probe.widths,
+        control: probe.control,
+        rendered: probe.rendered,
+        faces: probe.faces,
+        ...facts,
+      };
+
       await page.screenshot({ path: `${OUT}/${TAG}-${name}-${width}.png` });
       await ctx.close();
     }

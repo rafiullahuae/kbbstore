@@ -172,7 +172,49 @@ it('opens on the preview, and every control it draws calls a real endpoint', fun
      */
     $src = (string) file_get_contents(resource_path('views/admin/partials/page-wash-screen.blade.php'));
 
-    expect($src)->toContain("open = 'preview'");
+    /*
+     * ▲ BOTH NEEDLES BELOW USED TO BE BARE `toContain`, AND BOTH WERE GREEN ON
+     *   THE DEFECT THEY EXIST TO CATCH.              (Lane BG, round 4)
+     *
+     * Found with Lane PLC's tools/plc-needle-scan.sh, which records how many
+     * times each needle occurs in the haystack it ran against: a needle that
+     * occurs twice cannot distinguish the thing it names from the thing it does
+     * not. These were `x2` and `x3`. Both were then settled the cheap way --
+     * blank the thing under test and see whether the assertion notices:
+     *
+     *   toContain("open = 'preview'")
+     *     `open = 'preview'` appears TWICE: once as the initialiser (which is
+     *     the screen's opening tab, the thing under test) and once at the
+     *     bottom of applyTabs() as the fallback for an `open` that is no longer
+     *     in the tab list. MEASURED: changing the initialiser to
+     *     `open = 'colour'` -- the screen now opens on a tab of sliders that
+     *     write to the shop, which is the exact thing the case above forbids --
+     *     left this file at 10 passed. The fallback satisfied the needle.
+     *
+     *   toContain('previewParam')
+     *     appears THREE times: the declaration, the assignment from the
+     *     endpoint, and the use. Only the middle one is the claim. MEASURED:
+     *     deleting `previewParam = body.preview_param || 'kbbwash'` -- so the
+     *     screen hard-codes the parameter and drifts from the shop's routes,
+     *     which is what the comment below says it must not do -- left this file
+     *     at 10 passed.
+     *
+     * So each now names the ONE occurrence that is the claim.
+     */
+
+    /*
+     * THE INITIAL VALUE, read as the FIRST assignment to `open` in the file
+     * rather than as "the string appears somewhere". Written this way the
+     * fallback at the bottom of applyTabs() cannot stand in for it, and a lane
+     * that adds an even earlier assignment has genuinely changed what the
+     * screen opens on, so matching that one is correct rather than a loophole.
+     */
+    preg_match("/\bopen\s*=\s*'([a-z]+)'/", $src, $opens);
+
+    expect($opens[1] ?? null)->toBe('preview',
+        "the screen's first assignment to `open` is '".($opens[1] ?? 'none')."'. The owner asked"
+        .' to see the preview before anything writes to the shop, so a tab of sliders must not be'
+        .' what it opens on.');
 
     // Both endpoints, and no third path invented by the screen.
     preg_match_all("/api\('([^']+)'/", $src, $calls);
@@ -180,8 +222,16 @@ it('opens on the preview, and every control it draws calls a real endpoint', fun
 
     // The frames are built from the endpoint's own list, not from a hard-coded
     // set of paths that could drift from the shop's routes.
-    expect($src)->toContain('body.preview_pages')
-        ->and($src)->toContain('previewParam');
+    expect($src)->toContain('body.preview_pages');
+
+    /*
+     * THE ASSIGNMENT, not the identifier. `previewParam` on its own is
+     * satisfied by the declaration and by the use, neither of which says where
+     * the value came from -- and where it came from is the whole claim.
+     */
+    expect(str_contains($src, 'previewParam = body.preview_param'))->toBeTrue(
+        'the screen no longer takes the preview parameter from the endpoint, so the name it'
+        .' builds frame URLs with can drift from the one the shop actually reads.');
 });
 
 it('draws every field the schema declares, and no control the endpoint would refuse', function () {
