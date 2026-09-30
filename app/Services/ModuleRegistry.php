@@ -374,7 +374,18 @@ class ModuleRegistry
          * it. The integrator adds that partial's @include and its TITLES entry;
          * the lane report names both lines.
          */
-        'cards_banner' => ['store', 'Cards banner', 'A row of picture cards that scrolls itself, with one or two lines of text and a small button under each picture. Build any number of named sets under Appearance → Banners → Cards banner — each set carries its own speed, animation, how many cards show at once, corner radius and shadow — then pick which set the homepage shows. Off by default, and shows nothing until a published set with at least one card is chosen.', false, 'Appearance → Banners', 'banners', 'site', 'mid', 'The cards banner row on the homepage, once you have chosen a set for it.', 'live'],
+        // ▲ OFF -> ON, AND THE WORDING FOLLOWS THE SHIPPED TREATMENT. (Lane SEC)
+        // The owner: "the banner i need to change to simple image banners, not
+        // cards, simple only images banner ... apply this on desktop and mobile
+        // both." A banner that is the homepage's banner cannot ship behind an off
+        // switch, so this default moves with the three in BannerSet. It still shows
+        // nothing until a published set carries a picture, which is why turning it
+        // on moves no pixel on a shop that has not uploaded one.
+        //
+        // The label stays "Banners" rather than "Cards banner": both treatments
+        // live in the one screen, the id is read by ModuleFrameworkGuardTest and by
+        // every saved section payload, and renaming an id is a migration.
+        'cards_banner' => ['store', 'Banners', 'The homepage banner: one picture per slide, filling the frame, sliding left and right when there is more than one and standing still when there is one. 1920 × 550 on desktop and 500 × 600 on phones. Build any number of named sets under Appearance → Banners, then pick which set the homepage shows — each set carries its own sizes, arrows, bars and speed. On by default, and shows nothing until a published set with at least one picture is chosen. The older treatment, a scrolling row of picture cards with a line of text and a button under each, is still available per set.', true, 'Appearance → Banners', 'banners', 'site', 'mid', 'The picture banner on the homepage, once you have chosen a set for it.', 'live'],
         'media_library' => ['store', 'Media Library', 'The grid of every image uploaded through the admin, with search by name, by upload date and by the product, brand or category using it — plus what each image is used by before you delete it. Always on: this is a screen, not a switch.', true, 'Content → Media Library', 'media', 'site', 'all', 'An admin screen. Nothing visible on the storefront.', 'screen'],
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],

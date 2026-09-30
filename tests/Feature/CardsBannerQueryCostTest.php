@@ -47,6 +47,11 @@ function bnqSeed(int $cards): BannerSet
 
     $set = BannerSet::create([
         'name' => 'Budget', 'slug' => 'budget-'.uniqid(), 'status' => 'publish', 'position' => 0,
+        // ▲ NAMED, BECAUSE THE DEFAULT MOVED. BannerSet::$attributes now
+        // ships a set as a picture slider, and this file is about the CARDS
+        // treatment — without this the seed silently stopped seeding the
+        // thing being measured.                                  (Lane SEC)
+        'kind' => 'cards',
     ]);
 
     foreach (range(1, $cards) as $i) {
@@ -95,6 +100,12 @@ it('costs the homepage nothing at all while the section is off', function () {
      * deleted, because there would be no set to load either way — measured, and
      * the reason this line is here.
      *
+     * ▲ AND THE MODULE IS NOW SWITCHED OFF EXPLICITLY.               (Lane SEC)
+     * It shipped off and this case inherited that; it ships ON, because the
+     * owner asked for the banner to be the homepage's banner rather than a
+     * switch. The measurement is identical and so is the mutation below — what
+     * changed is one line of setup that used to be free.
+     *
      * MUTATION: delete the `enabled()` short-circuit at the top of
      * Banners::forHome() and this goes red by one, the join a switched-off shop
      * has no use for. Run, red, put back.
@@ -103,7 +114,9 @@ it('costs the homepage nothing at all while the section is off', function () {
 
     $set = bnqSeed(6);
 
-    app(SettingsService::class)->setModuleSetting(Banners::MODULE, 'set', (string) $set->id);
+    $settings = app(SettingsService::class);
+    $settings->setModule('cards_banner', false);
+    $settings->setModuleSetting(Banners::MODULE, 'set', (string) $set->id);
 
     expect(bnqCount())->toBe($bare);
 });

@@ -201,15 +201,49 @@
      */
     $bsLcpSrcset = $bsFirst !== null ? $bsSrcsetFor((string) $bsFirst->image) : '';
 @endphp
-@if ($bsFirst !== null)
-  {{-- THE FIRST PICTURE IS THE ONE THE PAGE PRELOADS. With this section on it
-       is the largest element in its part of the page and, above the fold, the
-       homepage's LCP element. `fetchpriority="high"` on the <img> below asks
-       for the same thing; this asks for it BEFORE the parser has reached the
-       markup, which is the half that matters on a slow connection. Only the
-       first — a preload of all five would spend the whole connection on
-       pictures four of which nobody has asked to see. --}}
-  <link rel="preload" as="image" fetchpriority="high" href="{{ Banners::imageUrl($bsFirst->image) }}"@if ($bsLcpSrcset !== '') imagesrcset="{{ $bsLcpSrcset }}" imagesizes="{{ $bsSizes }}"@endif>
+{{-- THE FIRST PICTURE IS THE ONE THE PAGE PRELOADS. With this section on it is
+     the largest element in its part of the page and, above the fold, the
+     homepage's LCP element. `fetchpriority="high"` on the <img> below asks for
+     the same thing; this asks for it before the parser has reached the markup,
+     which is the half that matters on a slow connection. Only the first — a
+     preload of all five would spend the whole connection on pictures four of
+     which nobody has asked to see.
+
+     ▲ IT IS PUSHED TO <head> NOW, AND IT USED TO BE PRINTED RIGHT HERE.
+                                                                     (Lane SEC)
+
+     Which was two thirds of the fix and looked like all of it. "Before the
+     parser has reached the markup" was true and not the claim that mattered:
+     printed in place, the tag sits wherever this section sits in the document —
+     measured on the shipped homepage with this section as the banner, 20.4 KB
+     in — and the preload scanner does not reach it until that much of the body
+     has arrived. cards-banner.blade.php's own note records the owner's
+     measurement of exactly this shape: "Resource load delay 2,260 ms", with
+     Lighthouse's LCP request discovery PASSING, on a 51 KiB document over a
+     1,638 kb/s link. The tag has to be in the first kilobyte, not merely
+     earlier than the picture.
+
+     It was invisible until this round because the slider was an optional
+     mid-page section, and a preload for a picture two screens down buys little
+     either way. It is the homepage's banner now, so its first picture IS the
+     LCP element and PerfDeliveryTest's `it names the first banner picture in
+     the head of the homepage` covers this partial as well as the cards one —
+     it went red on the kind change, which is how this was found.
+
+     THE GUARD IS THE CARDS BANNER'S, WORD FOR WORD AND FOR ITS REASONS.
+     `$sections` comes from the parent view and is guarded because the admin
+     preview renders this partial with no parent at all; `deviceClassFor()`
+     returns '' only when NEITHER device switch is off, because `d-off` and
+     `m-off` are `display:none !important` and a preload for a picture that
+     device never draws is bandwidth taken from whatever its LCP really is.
+
+     AND THE PUSH IS INSIDE THE CONDITION RATHER THAN AROUND IT, so a shop
+     whose switches hide the section pushes nothing at all instead of pushing
+     an empty line into every homepage's head. --}}
+@if ($bsFirst !== null && isset($sections) && $sections->deviceClassFor('cards_banner') === '')
+  @push('head')
+<link rel="preload" as="image" fetchpriority="high" href="{{ Banners::imageUrl($bsFirst->image) }}"@if ($bsLcpSrcset !== '') imagesrcset="{{ $bsLcpSrcset }}" imagesizes="{{ $bsSizes }}"@endif>
+  @endpush
 @endif
 <style>
 /* Prefix kbbs-, used nowhere else in this application. (The cards banner is

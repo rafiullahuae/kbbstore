@@ -393,8 +393,19 @@ it('refuses to show a nested section anywhere the page will not draw it', functi
 
     $keys = array_keys(app(HomepageSections::class)->all());
 
-    expect(array_slice($keys, 0, 4))->toBe(['newsletter', 'trust', 'hero', 'delivery']);
-    expect($keys[4])->toBe('ticker');
+    /*
+     * ▲ ONE KEY SHIFTED IN, AND THE PROPERTY UNDER TEST IS UNTOUCHED.
+     *                                                              (Lane SEC)
+     * It read ['newsletter', 'trust', 'hero', 'delivery']. `cards_banner` is
+     * now the registry's FIRST key — the picture banner is the homepage's
+     * banner and is drawn above the hero band — so an unlisted key falling in
+     * registry order lands ahead of `hero`. What this case is about is the two
+     * assertions either side of it: the ticker cannot be shown first, and it
+     * settles back to the position immediately behind its host, wherever that
+     * host now is.
+     */
+    expect(array_slice($keys, 0, 5))->toBe(['newsletter', 'trust', 'cards_banner', 'hero', 'delivery']);
+    expect($keys[5])->toBe('ticker');
 
     // Renumbered to the effective position, so the console posting this list
     // straight back is a no-op rather than a second, different order.

@@ -37,9 +37,6 @@ class HomepageSections
      * offers all 32.
      */
     public const REGISTRY = [
-        'hero'        => ['Hero slider', 'The rotating banners at the top.', false, null],
-        'delivery'    => ['Delivery strip', '1-3 days delivery, free over AED 199.', false, null],
-        'ticker'      => ['Promo ticker', 'The scrolling discount-code line.', false, null],
         /*
          * ── ONE ROW ADDED BY LANE BN, AND IT DRAWS NOTHING ON APPLY ─────────
          *
@@ -47,12 +44,30 @@ class HomepageSections
          * scroll ... we can turn on off card banners ... full control options
          * to choose which banner will show on homepage".
          *
-         * It sits HERE, immediately after the hero band, because that is where
-         * the template draws it and the two have to agree: this list IS the
+         * It sits HERE, and the position is the template's: this list IS the
          * default order, and a key whose position here disagrees with
          * store/home.blade.php would hand Appearance -> Homepage a picture the
          * shop does not draw. That is the fault HomepageSections::settle()
          * exists to stop one level along.
+         *
+         * ▲ IT MOVED FROM AFTER THE HERO BAND TO BEFORE IT.          (Lane SEC)
+         *
+         * "the banner i need to change to simple image banners, not cards,
+         * simple only images banner". The hero cannot become an image banner —
+         * App\Services\HomepageContent has no image field at all, a hero slide
+         * being two gradients and three lines of text — so the answer is to
+         * draw the picture banner WHERE THE HERO WAS and stand the hero's
+         * rotation down while it does. store/home.blade.php moved the section
+         * with it and gates `$heroCarriesH1` on `$bnSection === null`, so the
+         * page carries ONE banner and never two.
+         *
+         * AND IT STILL CHANGES NO BYTE ON A SHOP WITH NO BANNER PICTURES,
+         * which is the half that matters. `order` is the registry index for
+         * every row, so moving a key leaves orderIsDefault() true and
+         * orderStyle() returning '' — no CSS is emitted either way — and the
+         * section's element is inside the @if, so the moved block emits nothing
+         * from its new place exactly as it emitted nothing from its old one.
+         * StorefrontEnglishUnchangedTest is the instrument and it is green.
          *
          * IT COSTS AN UNCONFIGURED SHOP NOTHING. A key added to this list
          * changes no byte on its own: `order` is the registry index for every
@@ -66,7 +81,10 @@ class HomepageSections
          * Its Desktop and Mobile switches still work: the @unless on the
          * template is kept as well, and it short-circuits before any read.
          */
-        'cards_banner' => ['Cards banner', 'An auto-scrolling row of picture cards. Build the sets in Appearance → Banners → Cards banner and pick which one shows; nothing shows until you do.', false, null],
+        'cards_banner' => ['Banners', 'The picture banner at the top of the page: one image per slide, sliding when there is more than one. Build the sets in Appearance → Banners and pick which one shows; nothing shows until you do.', false, null],
+        'hero'        => ['Hero slider', 'The rotating coloured panels with a headline and a button. Drawn only when the Banners section above has no pictures to show — a shop with a picture banner has one banner, not two.', false, null],
+        'delivery'    => ['Delivery strip', '1-3 days delivery, free over AED 199.', false, null],
+        'ticker'      => ['Promo ticker', 'The scrolling discount-code line.', false, null],
         'categories'  => ['Category circles', 'Shop by category, scrollable.', false, null],
         'bundles'     => ['Big savings bundles', 'Skincare sets and routines.', true, GridSkins::DEFAULT],
         'recommended' => ['Recommended for you', 'Handpicked essentials.', true, GridSkins::DEFAULT],
@@ -745,6 +763,77 @@ class HomepageSections
     /**
      * @param  array<string, array<string, mixed>>  $all
      */
+    /**
+     * The sections whose <section> can be absent from the document entirely,
+     * and are therefore ASSUMED ABSENT until the page says otherwise.
+     *                                                                (Lane SEC)
+     *
+     * One key, and it is not a list waiting to grow: every other section in the
+     * registry writes its element unconditionally and hides it with a class, so
+     * "is it in the document" is a question only this one can answer
+     * differently. `cards_banner`'s element lives inside its own @if — a shop
+     * with no banner picture has no element for it at all — and it is now the
+     * FIRST key in the registry, which is what makes the distinction matter.
+     *
+     * @var list<string>
+     */
+    public const MAY_BE_ABSENT = ['cards_banner'];
+
+    /**
+     * The keys of MAY_BE_ABSENT this request has confirmed ARE in the document.
+     *
+     * @var array<string, true>
+     */
+    private array $present = [];
+
+    /**
+     * Tell this instance a section that may be absent is in fact being drawn.
+     *
+     * ── WHY THE DEFAULT IS "ABSENT" AND NOT "PRESENT" ───────────────────────
+     *
+     * Two reasons, and the second one is the whole of why it is written this
+     * way round.
+     *
+     * 1. It is what is true of the shop. `cards_banner` draws only when a
+     *    published set carries a published card with a picture, which is not
+     *    the case on any shop that has not uploaded one.
+     *
+     * 2. A READER THAT DOES NOT KNOW ABOUT THIS CALL GETS THE OLD ANSWER, and
+     *    there is such a reader on every run of StorefrontEnglishUnchangedTest.
+     *    That walk renders the views as they stood at BASE_COMMIT against the
+     *    PHP in the WORKING TREE — so the "before" page is old Blade calling
+     *    new PHP. Written the other way round (the page declaring absence) the
+     *    old Blade declared nothing, the banner counted as present, and the
+     *    hero gained a divider mark on the BEFORE side only: a red diff that is
+     *    an artefact of the harness rather than a changed page. Measured, byte
+     *    21488: `<section class="sec dv"` before against `<section class="sec "`
+     *    after. Written this way the old Blade gets exactly the page it always
+     *    rendered.
+     *
+     * Idempotent, and scoped to this instance — the shop and the admin preview
+     * each build their own.
+     */
+    public function draws(string $key): void
+    {
+        $this->present[$key] = true;
+    }
+
+    /**
+     * The first key in the effective order whose section will be in the page.
+     *
+     * @param array<string, array<string, mixed>> $all
+     */
+    private function firstDrawnKey(array $all): ?string
+    {
+        foreach ($all as $key => $_) {
+            if (! in_array($key, self::MAY_BE_ABSENT, true) || isset($this->present[$key])) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
     private function frameClass(string $key, array $all, bool $desktop, bool $mobile): string
     {
         $s = $all[$key];
@@ -760,7 +849,30 @@ class HomepageSections
         // same key and this renders identically; once the hero has been moved
         // down the page, `first => off` has to mean the section that is now at
         // the top, or the setting names a position rather than a section.
-        $mark = $key === array_key_first($all) && ! $divider->showAboveFirst()
+        //
+        // ▲ AND IT IS THE FIRST ONE THAT ACTUALLY DRAWS.              (Lane SEC)
+        //
+        // array_key_first() alone was right for as long as the first key was
+        // `hero`, which always renders its band. The first key is now
+        // `cards_banner`, which is the one section in this registry that can be
+        // absent from the document entirely — its <section> is inside its @if,
+        // so a shop with no banner picture has no element for it at all.
+        //
+        // THE BUG THAT CAUGHT, MEASURED: with dividers at their shipped values
+        // (`style` ticks, `scope` all, `first` off) every section but the first
+        // carries `dv`. With `cards_banner` first and ABSENT, the hero became
+        // "not first" and gained a tick mark above it — a rule directly under
+        // the header on every phone homepage of every shop that has not
+        // uploaded a banner picture, which is a changed page nobody asked for.
+        // HomepageHeroBandVisibilityTest reported it as `class="sec dv"` where
+        // it had pinned `class="sec "`.
+        //
+        // StorefrontEnglishUnchangedTest did NOT report it, which is worth the
+        // line: its database leaves the dividers screen alone and its seed puts
+        // the marks off, so the walk rendered `dv` on neither side. Two blind
+        // spots in one round — this and approvedInsertions() cutting the
+        // countries strip — and both were found by a narrower test.
+        $mark = $key === $this->firstDrawnKey($all) && ! $divider->showAboveFirst()
             ? ''
             : $divider->classFor($key);
 

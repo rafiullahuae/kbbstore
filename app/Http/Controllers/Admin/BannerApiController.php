@@ -174,7 +174,31 @@ class BannerApiController extends Controller
             'kind' => ['sometimes', Rule::in(array_keys(BannerSet::KINDS))],
         ]);
 
-        $kind = (string) ($data['kind'] ?? 'cards');
+        /*
+         * ── A NEW SET IS A PICTURE SLIDER NOW, AND THAT IS A DEFAULT CHANGE ──
+         *
+         * CLAUDE.md rule 1 says a new setting ships at the value the page
+         * already has, and that the only exception is a default the owner asked
+         * for in as many words. He did: "the banner i need to change to simple
+         * image banners, not cards, simple only images banner, with slide if
+         * multiple". So the fallback here moves from `cards` to `slider` and it
+         * is called out rather than buried.
+         *
+         * THIS IS ONLY THE HALF THAT COVERS SETS THAT DO NOT EXIST YET, and on
+         * its own it would have been the wrong answer. `kind` is a real column
+         * whose database default is `cards`, so every set ALREADY on the shop
+         * carries `cards` explicitly and not one of them is read through this
+         * line — a create-path default alone would have left the owner's own
+         * banner drawing cards and called the job done. The rows he has are
+         * moved by the migration `banner_ships_as_image_slider`, the rows he
+         * makes next are moved here, and BannerSet::$attributes covers a model
+         * built without going through either.
+         *
+         * A caller that SAYS `kind` still gets what it asked for, so the
+         * console keeps both buttons: "New picture slider" and, for an owner
+         * who wants the older treatment back on one set, "New cards banner".
+         */
+        $kind = (string) ($data['kind'] ?? 'slider');
 
         $name = trim((string) ($data['name'] ?? ''));
         $name = $name === '' ? ($kind === 'slider' ? 'Picture slider' : 'Cards banner') : Str::limit($name, 180, '');
@@ -185,6 +209,15 @@ class BannerApiController extends Controller
             'status' => 'draft',
             'kind' => $kind,
             'position' => (int) (BannerSet::query()->max('position') ?? 0) + 1,
+            /*
+             * The two shapes he gave in pixels, written explicitly rather than
+             * left to BannerSet::$attributes. Both routes reach the same two
+             * strings; naming them at the point of creation is what makes the
+             * shape of a new set readable here instead of two files away, and
+             * BannerShipsAsImageSliderTest asserts the two agree.
+             */
+            'slider_ratio' => '1920/550',
+            'slider_ratio_m' => '500/600',
         ]);
 
         /*

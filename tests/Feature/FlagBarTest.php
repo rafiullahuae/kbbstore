@@ -53,28 +53,42 @@ function fbElement(string $html): ?string
 
 /* ══════════════════ 1. what ships ══════════════════ */
 
-it('ships on for phones and off for desktop, which is what he asked for in those words', function () {
+it('ships on for phones AND for desktop, which is what he asked for in those words', function () {
     /*
      * CLAUDE.md rule 1 says a new setting ships at the value the page already
      * has, with one exception — "a default the owner asked for in as many
-     * words". This is that exception, and this case is where it is written
-     * down: `fb_mobile` true, `fb_desktop` false, and nothing else about the
-     * desktop shop moving at all.
+     * words". This case is where that exception is written down.
+     *
+     * ▲ AND THE WORDS CHANGED, SO THE PIN MOVED WITH THEM.           (Lane SEC)
+     *
+     * It read `fb_mobile` true, `fb_desktop` FALSE, on this sentence: "(This
+     * bar is only for mobile, keep this turnef off for desktop by default)".
+     * He has since said the other thing, about the same strip: "The top
+     * countries bar, i need under banner ... apply this on desktop and mobile
+     * both." So both defaults are now true.
+     *
+     * TWO PLACES, AND ONE OF THEM IS NOT A DEFAULT. HeaderSettings::SCHEMA
+     * covers a shop that has never saved the Header screen; a shop that HAS
+     * saved it carries a stored `fb_desktop: false` that no schema default can
+     * overrule, and the migration `banner_ships_as_image_slider` writes the
+     * key for that shop. This case can only see the first of the two — it
+     * reads `all()` on a fresh database — and that is worth saying, because a
+     * green here would not have told the owner his own shop had moved.
      *
      * MUTATION: flip either default in HeaderSettings::SCHEMA and this is red
-     * naming the one that moved. Ran both — `fb_desktop` true reported
-     * "the desktop shop would gain a strip", which is the failure that matters.
+     * naming the one that moved. Ran both — `fb_desktop` false now reports
+     * "the desktop shop is missing the strip he asked for".
      */
     $c = app(HeaderSettings::class)->all();
 
     expect($c['fb_mobile'])->toBeTrue('the strip the owner asked for is not on for phones');
-    expect($c['fb_desktop'])->toBeFalse('the desktop shop would gain a strip nobody asked for');
+    expect($c['fb_desktop'])->toBeTrue('the desktop shop is missing the strip he asked for');
 
     $el = fbElement(fbHome());
 
     expect($el)->not->toBeNull('no flag bar on the shipped storefront');
     expect($el)->toContain('kfb-m')
-        ->and($el)->not->toContain('kfb-d');
+        ->and($el)->toContain('kfb-d');
 });
 
 it('draws the UAE flag, then the words, then the Korean flag — in that source order', function () {

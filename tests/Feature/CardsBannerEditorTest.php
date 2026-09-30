@@ -67,6 +67,11 @@ function bpeSet(int $cards = 2): BannerSet
 {
     $set = BannerSet::create([
         'name' => 'Editor', 'slug' => 'ed-'.uniqid(), 'status' => 'publish', 'position' => 0,
+        // ▲ NAMED, BECAUSE THE DEFAULT MOVED. BannerSet::$attributes now
+        // ships a set as a picture slider, and this file is about the CARDS
+        // treatment — without this the seed silently stopped seeding the
+        // thing being measured.                                  (Lane SEC)
+        'kind' => 'cards',
     ]);
 
     foreach (range(1, $cards) as $i) {

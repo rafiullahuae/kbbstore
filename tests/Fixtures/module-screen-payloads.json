@@ -1687,7 +1687,7 @@
       {
         "key": "flagbar",
         "label": "Flag bar",
-        "description": "The thin strip above the header: the UAE flag, one short line, the Korean flag. It ships on for phones and off for desktop.",
+        "description": "The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop.",
         "fields": [
           {
             "key": "fb_mobile",
@@ -1704,10 +1704,10 @@
             "name": "fb_desktop",
             "type": "bool",
             "label": "Show it on desktop",
-            "help": "Off, so nothing above 900px wide changes. Turn it on to run the same strip across the desktop header.",
+            "help": "On, so the strip runs across the desktop header too. Turn it off to keep it to phones.",
             "options": null,
-            "default": false,
-            "value": false
+            "default": true,
+            "value": true
           },
           {
             "key": "fb_text",
@@ -3593,6 +3593,10 @@
     ],
     "sections": [
       {
+        "key": "cards_banner",
+        "label": "Banners"
+      },
+      {
         "key": "hero",
         "label": "Hero slider"
       },
@@ -3603,10 +3607,6 @@
       {
         "key": "ticker",
         "label": "Promo ticker"
-      },
-      {
-        "key": "cards_banner",
-        "label": "Cards banner"
       },
       {
         "key": "categories",
