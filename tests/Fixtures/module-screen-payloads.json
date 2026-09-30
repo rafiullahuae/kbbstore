@@ -7804,7 +7804,7 @@
             "key": "integrity_hours",
             "type": "range",
             "label": "Check again at most every",
-            "help": "Opening this screen runs the check when the last one is older than this. It is a file-by-file hash on shared hosting, so it is throttled rather than run on every refresh; \"Check now\" on the card ignores this.",
+            "help": "Opening this screen runs the check when the last one is older than this. It is a file-by-file hash on this host, so it is throttled rather than run on every refresh; \"Check now\" on the card ignores this.",
             "default": 6,
             "value": 6,
             "options": {

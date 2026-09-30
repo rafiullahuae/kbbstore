@@ -39,7 +39,7 @@ class MailSettings
         'mail_encryption' => ['choice', 'Encryption', 'ssl for port 465, tls for port 587, none only on a local relay.'],
         'mail_username' => ['text', 'Username', 'Usually the full mailbox address, e.g. no-reply@kbeautybliss.com'],
         'mail_password' => ['secret', 'Password', 'The mailbox password. Stored encrypted and never shown again once saved.'],
-        'mail_from_address' => ['text', 'From address', 'What customers see as the sender. On most modest hosts this MUST be a mailbox on this domain or the host rejects the message.'],
+        'mail_from_address' => ['text', 'From address', 'What customers see as the sender. On most shared hosts this MUST be a mailbox on this domain or the host rejects the message.'],
         'mail_from_name' => ['text', 'From name', 'e.g. K Beauty Bliss'],
         /*
          * Where the store itself is told an order has come in.
