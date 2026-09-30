@@ -215,5 +215,13 @@ it('gives an instance no card-template picker on the homepage screen', function 
         }
     }
 
-    expect($keys)->toBe(['desktop', 'mobile']);
+    /*
+     * ▲ TWO KEYS BECAME FOUR — Lane BG. `background` and `width` are offered to
+     * a built grid instance because it IS a `.sec` with a `.wrap` of its own,
+     * so both rules reach it and both controls do something. What this case
+     * asserts is unchanged and is still the only thing it was about: there is
+     * NO `skin` field for a section with no grid.
+     */
+    expect($keys)->toBe(['desktop', 'mobile', 'background', 'width'])
+        ->and($keys)->not->toContain('skin');
 });

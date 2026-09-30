@@ -211,6 +211,54 @@ class HeaderSettings
                               'On, so the strip runs across the desktop header too. Turn it off to keep it to phones.'],
         'fb_text'         => ['text',   'Wording', '',
                               'Leave it empty to use the line the shop ships — which is translated, so an Arabic page shows Arabic. Typing here replaces it in every language.'],
+        /*
+         * ── THE WORDS COME OFF THE DESKTOP STRIP ──────────────── Lane BG ──
+         *
+         * The owner, whole: *"UAE's Authentic K-Beauty Store — remove this from
+         * the desktop version."*
+         *
+         * He quoted the LINE, not the bar, so the bar stays: on desktop the
+         * strip keeps its two flags and loses the words, and on phones nothing
+         * changes at all. `fb_desktop` is deliberately untouched — turning that
+         * off would take the flags with it, which is the other reading of his
+         * sentence and not the one he wrote.
+         *
+         * ▲ IT SHIPS AT `false`, WHICH IS A MOVED DEFAULT. CLAUDE.md's
+         *   30-September reversal: a thing he asked for is the shop's new
+         *   state, not a switch he has to go and find. The control is here so
+         *   he can put the line back in one press.
+         *
+         * ── WHY A SWITCH AND NOT A SECOND `fb_text` FOR DESKTOP ────────────
+         *
+         * `fb_text` is ONE string shared by both widths. Emptying it, or
+         * giving desktop its own empty one, would strip the line from phones
+         * too — and "on phones nothing changes" is half of what he asked for.
+         * A boolean is the smallest thing that can be device-scoped without
+         * touching the wording he may still want on a phone.
+         *
+         * ── AND WHY THE MECHANISM IS A CLASS RATHER THAN NOT RENDERING IT ──
+         *
+         * This is the one decision worth reading. The strip is ONE ELEMENT in
+         * ONE DOCUMENT: `flagBarClass()` puts both `kfb-m` and `kfb-d` on it
+         * and the stylesheet's two media queries decide which width sees it.
+         * There is no desktop document and no phone document — this shop
+         * serves the same bytes to both, deliberately, because a cached page
+         * has to stay correct on every device and because sniffing the user
+         * agent is the thing this codebase refuses to do (see
+         * HomepageSections' own header on exactly that).
+         *
+         * So the words CANNOT be left out of the markup on desktop without
+         * also leaving them out on phones, which is the requirement inverted.
+         * The honest answer is a class the desktop media query reads, and the
+         * cost is named rather than hidden: the line stays in the HTML source,
+         * where a crawler can read it. What it does NOT stay in is the
+         * ACCESSIBILITY TREE — `display:none` removes an element from it
+         * outright, so a desktop screen-reader user hears the flags and no
+         * stray sentence, which is the half that would actually have been a
+         * defect.
+         */
+        'fb_text_desktop' => ['bool',   'Show the wording on desktop', false,
+                              'Off, so the desktop strip is the two flags and nothing between them — you asked for the line to come off there. Phones are not affected either way; the wording above is what they show.'],
         'fb_flags'        => ['bool',   'Show the two flags', true,
                               'The UAE flag at the reading start and the Korean flag at the end. On an Arabic page the pair swaps sides with the text.'],
         'fb_height'       => ['range',  'Bar height', 30,
@@ -245,8 +293,8 @@ class HeaderSettings
                       ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
-        'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop.',
-                      ['fb_mobile', 'fb_desktop', 'fb_text', 'fb_flags', 'fb_height', 'fb_size', 'fb_flag_h',
+        'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop — with the wording on phones only.',
+                      ['fb_mobile', 'fb_desktop', 'fb_text', 'fb_text_desktop', 'fb_flags', 'fb_height', 'fb_size', 'fb_flag_h',
                        'fb_bg', 'fb_ink', 'fb_pill', 'fb_border']],
     ];
 
@@ -471,6 +519,23 @@ class HeaderSettings
             $c['fb_mobile'] ? 'kfb-m' : '',
             $c['fb_desktop'] ? 'kfb-d' : '',
             $c['fb_pill'] ? 'kfb-pill' : '',
+            /*
+             * ── EMITTED FOR THE OFF STATE, WHICH IS THE ONE THAT SHIPS ──
+             *                                                    (Lane BG)
+             * The other three above name what is ON. This one names what is
+             * OFF, and that is a decision rather than an inconsistency: the
+             * stylesheet's BASELINE is the strip as it has always drawn —
+             * words at every width — and `kfb-notx` is the only thing that
+             * takes them off. Written the other way round, the baseline would
+             * have had to become "no words on desktop" and a shop that turns
+             * the line back on would depend on a second rule overriding the
+             * first, in a media query, by source order.
+             *
+             * Additive is also what makes it reviewable: not one existing
+             * declaration in the `.kfb` block moves, so the phone rendering
+             * is byte-identical by construction rather than by assertion.
+             */
+            $c['fb_text_desktop'] ? '' : 'kfb-notx',
         ])));
     }
 

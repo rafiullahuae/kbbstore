@@ -854,6 +854,26 @@ tr.invdirty{background:var(--accent-soft)}
 .hpskin{display:flex;align-items:center;gap:8px;margin-top:8px}
 .hpskin label{font-size:11.5px;color:#7b8697}
 .hpskin select{border:1px solid #dde4ec;border-radius:8px;padding:6px 9px;font:600 12px inherit;background:#fff}
+/* A section's background and width (Lane BG). Same controls as .hpskin, but
+   two of them, so they WRAP rather than squeezing the labels off the row: the
+   width option's label is a whole sentence and a phone-width console put it
+   through a 40px select. */
+.hpframe{display:flex;align-items:center;gap:8px 14px;margin-top:8px;flex-wrap:wrap;min-width:0}
+.hpframe label{font-size:11.5px;color:#7b8697;white-space:nowrap}
+.hpframe select{border:1px solid #dde4ec;border-radius:8px;padding:6px 9px;font:600 12px inherit;background:#fff;
+  /* A <select> is sized by its WIDEST OPTION and will not shrink below it
+     without both of these. At 390 the width option's label — "Full bleed —
+     edge to edge up to 1920px, no gutter at all (a picture or a band)" — ran
+     the control straight out of the card. `minmax(0,1fr)` on the grid track
+     below is the other half; neither alone is enough. */
+  min-width:0;width:100%}
+/* GRID, NOT FLEX, and `minmax(0,1fr)` rather than `1fr`: a flex or grid track
+   is `auto`-sized by default, which for a <select> means its widest option,
+   and `min-width:0` on the child cannot override a track that never offered to
+   shrink. `flex:1 1 300px` puts the two side by side when there is room for
+   both and stacks them full width when there is not, with no breakpoint. */
+.hpframe .hpf{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;
+  gap:8px;min-width:0;flex:1 1 300px}
 .hprow .ectog{margin:0 auto}
 @media(max-width:720px){
   .hphead{grid-template-columns:1fr 58px 58px;padding:0 12px 8px}
@@ -3972,6 +3992,47 @@ document.addEventListener('click', e=>{
   if(!e.target.closest('.skinpick')) document.querySelectorAll('.skinpop.on').forEach(p=>p.classList.remove('on'));
 });
 
+/* ── Appearance · Homepage · a section's BACKGROUND and WIDTH ── Lane BG ──
+ *
+ * The owner: "on homepage i want to remove the sections backgrounds by
+ * default, and if i need it for any section, i can put it myself", and "any
+ * section i can make full width upto 1920x".
+ *
+ * Both ship applied — the panels are off and the picture banner is edge to
+ * edge — so these two selects are how he PUTS ONE BACK, per section, which is
+ * his own second clause. They sit under the grid-style picker on the same row,
+ * because the question "what does this section look like" belongs next to the
+ * section rather than on a screen of its own.
+ *
+ * THE OPTIONS COME FROM THE SERVER, never from a list written out here:
+ * HP.backgrounds and HP.widths are App\Services\HomepageSections::BACKGROUNDS
+ * and ::WIDTHS, sent by show(). A list in this file is the way a screen comes
+ * to offer a token the storefront has stopped drawing.
+ *
+ * NOTHING IS DRAWN FOR A NESTED ROW. `delivery` and `ticker` are drawn inside
+ * the hero's own <section> and have no wrapper of their own, so the server
+ * sends null for both values and offers no control — the same answer
+ * HomepageSections::sectionTabs() gives the live-edit screen. `movable` is
+ * already the console's word for "this row is nested"; the null is what is
+ * actually tested, because it is the value the storefront reads.
+ */
+function hpFrame(s, i){
+  if (s.background == null && s.width == null) return '';
+
+  /* EACH LABEL AND ITS SELECT IN ONE SPAN. Written as four flex children the
+     row wrapped between the second label and its select — "Width" on one line
+     and its dropdown on the next, which reads as a label for the box above it.
+     The span is the unit that wraps. */
+  const sel = (k, opts, val) => `<span class="hpf"><label>${k==='background'?'Background':'Width'}</label>
+    <select data-hpf="${i}" data-k="${k}">${(opts||[]).map(o=>
+      `<option value="${escAttr(o.key)}"${o.key===val?' selected':''}>${escHtml(o.label)}</option>`).join('')}</select></span>`;
+
+  return `<div class="hpframe">
+    ${s.background == null ? '' : sel('background', HP.backgrounds, s.background)}
+    ${s.width == null ? '' : sel('width', HP.widths, s.width)}
+  </div>`;
+}
+
 function hpWire(L){
   const BAR={'Hero slider':22,'Category circles':13,'Big savings bundles':17,'Recommended for you':17,
     'Best sellers':17,'Flash sale':17,'Build your routine':13,'Skin quiz':15,'Top brands':11,
@@ -4071,7 +4132,7 @@ async function hpPreviewNow(base){
   try{
     const r = await fetch(base+'/preview',{method:'POST',credentials:'same-origin',
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({sections:HP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile,skin:s.skin}))})});
+      body:JSON.stringify({sections:HP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile,skin:s.skin,background:s.background,width:s.width}))})});
 
     if(!r.ok && r.status===404){
       /* Name the failure rather than saying "could not render". On this host a
@@ -4162,6 +4223,7 @@ function paintHomepage(base){
               ${HP.skins.map(k=>`<button class="skinopt${k.key===s.skin?' on':''}" type="button" data-pickskin="${i}|${escAttr(k.key)}">
                 <span class="skinprev">${skinCard(k.key)}</span><span class="skinopt-l">${escHtml(k.label)}</span></button>`).join('')}
             </span></span></div>`:''}
+        ${hpFrame(s,i)}
       </div>
       <span class="ectog${s.desktop?' on':''}" data-tg="${i}" data-k="desktop" role="switch" aria-checked="${s.desktop}" tabindex="0"></span>
       <span class="ectog${s.mobile?' on':''}" data-tg="${i}" data-k="mobile" role="switch" aria-checked="${s.mobile}" tabindex="0"></span>
@@ -4221,7 +4283,7 @@ async function hpSaveNow(base){
   try{
     const r = await fetch(base,{method:'POST',credentials:'same-origin',
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({sections:HP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile,skin:s.skin}))})});
+      body:JSON.stringify({sections:HP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile,skin:s.skin,background:s.background,width:s.width}))})});
     const j = await r.json();
     if(j.ok){
       HP.sections = j.sections;
@@ -4290,6 +4352,13 @@ document.addEventListener('click', e=>{
 document.addEventListener('change', e=>{
   const sel=e.target.closest('[data-skin]');
   if(sel && HP){ HP.sections[+sel.dataset.skin].skin=sel.value; hpDirty(); }
+
+  /* Lane BG. hpPreviewStale() as well as hpDirty(), because these two CHANGE
+     THE PICTURE: the preview card above the list would otherwise keep showing
+     a homepage drawn before the panel came off, with nothing saying so. The
+     grid-style picker already does both, four functions up. */
+  const frm=e.target.closest('[data-hpf]');
+  if(frm && HP){ HP.sections[+frm.dataset.hpf][frm.dataset.k]=frm.value; hpPreviewStale(); hpDirty(); }
 });
 document.addEventListener('keydown', e=>{
   if(e.target.dataset && e.target.dataset.tg && (e.key===' '||e.key==='Enter')){ e.preventDefault(); e.target.click(); }

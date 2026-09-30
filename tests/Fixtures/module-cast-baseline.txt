@@ -654,6 +654,17 @@ header_settings|fb_text|text|"  sp  "|'sp'
 header_settings|fb_text|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 header_settings|fb_text|text|null|''
 header_settings|fb_text|text|"<b>x<\/b>"|'<b>x</b>'
+header_settings|fb_text_desktop|bool|true|true
+header_settings|fb_text_desktop|bool|false|false
+header_settings|fb_text_desktop|bool|"1"|true
+header_settings|fb_text_desktop|bool|"0"|false
+header_settings|fb_text_desktop|bool|""|false
+header_settings|fb_text_desktop|bool|"on"|true
+header_settings|fb_text_desktop|bool|"off"|true
+header_settings|fb_text_desktop|bool|"no"|true
+header_settings|fb_text_desktop|bool|1|true
+header_settings|fb_text_desktop|bool|0|false
+header_settings|fb_text_desktop|bool|null|false
 header_settings|fb_flags|bool|true|true
 header_settings|fb_flags|bool|false|false
 header_settings|fb_flags|bool|"1"|true

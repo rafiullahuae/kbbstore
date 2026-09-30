@@ -473,8 +473,17 @@ it('fixes every card to the set ratio and the band to a fixed height', function 
     $rogue = new BannerSet;
     $rogue->forceFill(['ratio' => '; } body{display:none}', 'shadow' => 'x', 'animation' => 'x']);
 
+    /*
+     * ▲ THE SHADOW FALLBACK MOVED FROM `soft` TO `none` — Lane BG. The point of
+     * this line is that a token nobody issued cannot reach the stylesheet, and
+     * it still makes it: `'x'` gets a literal out of the enum rather than being
+     * printed. Which literal is the DEFAULT, and the default moved because the
+     * owner asked for the banner's shadow to go with its corners. The three
+     * doors have to agree — $attributes, the migration and this — or this
+     * fallback is the one place still drawing the old shadow.
+     */
     expect($rogue->ratioCss())->toBe('3 / 4')
-        ->and($rogue->shadowCss())->toBe(BannerSet::SHADOWS['soft'][1])
+        ->and($rogue->shadowCss())->toBe(BannerSet::SHADOWS['none'][1])
         ->and($rogue->animationCss())->toBe('kbbn-slide');
 });
 

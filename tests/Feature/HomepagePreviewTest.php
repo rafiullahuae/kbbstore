@@ -418,7 +418,15 @@ it('derives whether the picture is current rather than being told', function () 
 
     // The two edits that deliberately do not repaint #content still have to
     // repaint the sentence, or the note is right only after the next repaint.
-    expect(substr_count($console, 'hpPreviewStale();'))->toBe(2);
+    /*
+     * ▲ TWO BECAME THREE — Lane BG. The third caller is the Background / Width
+     * select on a section row, which changes the picture exactly as the
+     * grid-skin picker does and deliberately does not repaint #content (that
+     * would lose the owner's place under a control he has just used). A control
+     * that changed the page without staling the note would leave the sentence
+     * claiming the picture is current.
+     */
+    expect(substr_count($console, 'hpPreviewStale();'))->toBe(3);
 });
 
 it('is wired into routes/web.php, inside the group whose capability covers it', function () {

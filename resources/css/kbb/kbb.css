@@ -1690,11 +1690,35 @@ body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
   body{background-color:#fff}
 }
 .kbb-home .sec{position:relative}
+/* ═══ THE SECTION PANELS COME OFF THE HOME PAGE ══════════════════ Lane BG ══
+
+   The owner: "on homepage i want to remove the sections backgrounds by
+   default, and if i need it for any section, i can put it myself."
+
+   This lane measured why he asked. The white panels below covered 100% of the
+   home page's first screen at 1280 and 75% at 390 (docs/BG-BACKGROUND-
+   CANDIDATES.md), which is why the Corner light background he had just picked
+   barely showed on the page he looks at most.
+
+   WHAT MOVED IS THE PAINT AND ONLY THE PAINT. The four card declarations —
+   background, radius, shadow, border — are now behind `.kbb-secbg-on`, which
+   App\Services\HomepageSections::frameClass() writes for a section whose
+   `background` is set to `panel` on Appearance -> Homepage. The block padding
+   stays on the base rule: it is the page's vertical rhythm rather than part of
+   the card, and taking it off with the paint would have re-spaced eighteen
+   sections nobody asked about.
+
+   `kbb-secbg-` AND NOT `kbb-bg-`: the prefix is used nowhere else in this
+   application, and `bg` on its own is three characters from `--bg-corner`,
+   `--bg-petals` and `.has-bg`.
+   ═══════════════════════════════════════════════════════════════════════════ */
 .kbb-home .sec > .wrap{
-  background:rgba(255,255,255,.94);
-  border-radius:22px;
   padding-top:clamp(22px,2.6vw,34px);
   padding-bottom:clamp(22px,2.6vw,34px);
+}
+.kbb-home .sec.kbb-secbg-on > .wrap{
+  background:rgba(255,255,255,.94);
+  border-radius:22px;
   box-shadow:0 2px 0 rgba(255,255,255,.7) inset,0 18px 44px -30px rgba(140,80,100,.32);
   border:1px solid rgba(226,190,203,.5);
 }
@@ -1711,19 +1735,73 @@ body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
    logical form, so rather than respelling three direction-carrying values and
    keeping them in step by hand, the rendered corner is mirrored whole under
    [dir="rtl"] below. Nothing inside it is text. */
-.kbb-home .sec:nth-of-type(odd) > .wrap::before{
+/* THE ORNAMENT RIDES THE PANEL (Lane BG). It is masked into the card's rounded
+   top-right corner, so with no card there is no corner for it to sit in and it
+   would float on the page background as a rectangle of leaves. The phone rule
+   at the bottom of this file already hid it for exactly this reason when the
+   frame came off below 680px; this is the same sentence for the desktop. */
+.kbb-home .sec.kbb-secbg-on:nth-of-type(odd) > .wrap::before{
   content:'';position:absolute;top:0;inset-inline-end:0;width:220px;height:200px;
   background-image:var(--bg-corner);background-size:cover;background-repeat:no-repeat;
   opacity:.5;pointer-events:none;border-radius:0 22px 0 0;
   -webkit-mask-image:linear-gradient(230deg,#000 20%,transparent 72%);
           mask-image:linear-gradient(230deg,#000 20%,transparent 72%);
 }
-[dir="rtl"] .kbb-home .sec:nth-of-type(odd) > .wrap::before{transform:scaleX(-1)}
+[dir="rtl"] .kbb-home .sec.kbb-secbg-on:nth-of-type(odd) > .wrap::before{transform:scaleX(-1)}
 .kbb-home .sec > .wrap{overflow:hidden}
+
+/* ═══ A SECTION CAN RUN FULL WIDTH, UP TO 1920px ═════════════════ Lane BG ══
+
+   The owner: "any section i can make full width upto 1920x, give this option
+   and it must be auto adjusted to the screen sizes below 1920px width".
+
+   ── THE CAP IS `width:100%` + `max-width:1920px`, WHICH IS `min()` ────────
+
+   The same shape `--site-max` uses twenty lines from the top of this file, and
+   deliberately NOT `min(100vw, 1920px)`: `100vw` counts the classic desktop
+   scrollbar, so a section written that way is a few pixels wider than the page
+   and grows a HORIZONTAL scrollbar — which narrows the page, which is the
+   oscillation. `100%` is the page's real width at every viewport. There is no
+   breakpoint to maintain, nothing is measured by script (rule 4), and
+   `documentElement.scrollWidth` equals the viewport at 320, 390, 1280, 1440
+   and 1920 — which is the measurement, not the claim.
+
+   `margin-inline:auto` is already on `.kbb-home .wrap`, so above 1920 the
+   section is centred rather than pinned to the inline start.
+
+   ── TWO TOKENS, AND THE DIFFERENCE IS THE GUTTER ──────────────────────────
+
+   `full` keeps the section's side padding, so a section of TEXT set to full
+   width still has its words off the glass. `bleed` takes it off as well, which
+   is what a picture wants and what the banner needs to read as edge to edge.
+
+   SPECIFICITY IS WHY THESE WIN AT EVERY WIDTH. Four classes against the three
+   of `.kbb-home .sec > .wrap`, including the phone rule at the bottom of this
+   file that sets `width:100%;max-width:none;padding-inline:12px` — a media
+   query adds nothing to specificity, so these hold below 680px too and a
+   bleed section is edge to edge on a phone as well as on a desktop.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.kbb-home .sec.kbb-secw-full > .wrap,
+.kbb-home .sec.kbb-secw-bleed > .wrap{width:100%;max-width:1920px}
+/* ── AND `bleed` TAKES THE BLOCK PADDING WITH IT, WHICH IS THE "etc." ──────
+   Measured at 1280 on the real page: with the side gutter gone the banner was
+   still 41px below the header, and 33 of those were the wrap's own
+   `padding-top:clamp(22px,2.6vw,34px)` — an inset that stops a picture reading
+   as edge to edge exactly as the corner radius did. `full` keeps it, because a
+   section of TEXT set to full width still wants air above its heading; `bleed`
+   is the token that means "this is a band", and a band does not have a margin.
+   The 8px that remain are the section's own rhythm, not the banner's inset.
+   Putting it back is one dropdown — the same one. */
+.kbb-home .sec.kbb-secw-bleed > .wrap{padding-inline-start:0;padding-inline-end:0;
+  padding-top:0;padding-bottom:0}
 .kbb-home .sh :is(h1,h2)::before{content:'';display:inline-block;width:18px;height:18px;margin-inline-end:2px;
   background-image:var(--bg-corner);background-size:190px;background-position:-92px -66px;
   border-radius:50%;vertical-align:-3px;opacity:.85}
-.kbb-home .sec.tinted > .wrap{
+/* The tint is a BACKGROUND too, so it comes off with the rest of them and
+   comes back with `panel` — which is why BACKGROUNDS has two tokens and not
+   three: `panel` means "the background this section always had", and the
+   template's own `tinted` class decides which of the two that is. */
+.kbb-home .sec.tinted.kbb-secbg-on > .wrap{
   background:linear-gradient(160deg,rgba(255,240,245,.97),rgba(255,248,244,.97));
   border-color:rgba(224,150,175,.42);
 }
@@ -3189,11 +3267,27 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
     padding-top:16px;
     padding-bottom:16px;
   }
-  /* Alternating tint as a full-width band. */
-  .kbb-home .sec.tinted{
+  /* ▲ AND IT HAS TO BEAT `.kbb-secbg-on`, WHICH IS FOUR CLASSES TO THIS
+     RULE'S THREE (Lane BG). Without this line a section given its panel back
+     on Appearance -> Homepage would draw the DESKTOP card on a phone — a 22px
+     radius, a border and a shadow — which is the box this whole media query
+     exists to remove. The phone's answer for `panel` is the full-width tinted
+     band below, and it was that before this control existed. */
+  .kbb-home .sec.kbb-secbg-on > .wrap{background:none;border:0;border-radius:0;box-shadow:none}
+  /* Alternating tint as a full-width band — and it is a section background,
+     so it is gated with the rest of them (Lane BG). Switch a section's
+     background back on and the phone gets this band while the desktop gets the
+     card, which is what each width has always drawn for `panel`. */
+  .kbb-home .sec.tinted.kbb-secbg-on{
     background:linear-gradient(160deg,rgba(255,240,245,.75),rgba(255,248,244,.75));
   }
-  .kbb-home .sec.tinted > .wrap{background:none;border:0}
+  /* FIVE CLASSES ON THE SECOND SELECTOR, TO MATCH THE RULE IT UNDOES.
+     `.kbb-home .sec.tinted.kbb-secbg-on > .wrap` above is (0,5,0); this line
+     was (0,4,0) and would have lost, putting the DESKTOP tint gradient on the
+     wrap of a phone as well as the band on the section — the same gradient
+     painted twice, once at .97 over once at .75. (Lane BG) */
+  .kbb-home .sec.tinted > .wrap,
+  .kbb-home .sec.tinted.kbb-secbg-on > .wrap{background:none;border:0}
   /* The corner ornament was masked into the card's rounded top-right. With no
      card there is no corner to sit in. */
   .kbb-home .sec:nth-of-type(odd) > .wrap::before{display:none}
@@ -3919,6 +4013,37 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kfb-fl svg{display:block;height:var(--kfb-fh,14px);width:auto;border-radius:1px}
 @media (max-width:900px){.kfb-m{display:block}}
 @media (min-width:901px){.kfb-d{display:block}}
+/* ── THE WORDS COME OFF THE DESKTOP STRIP ───────────────────────── Lane BG ──
+
+   The owner: "UAE's Authentic K-Beauty Store — remove this from the desktop
+   version." The BAR stays; the line goes, above 900px only. `kfb-notx` is
+   written by HeaderSettings::flagBarClass() whenever `fb_text_desktop` is off,
+   which is what it ships at.
+
+   INSIDE THE SAME 901px QUERY the strip is already turned on in, so there is
+   one desktop/phone line in this block rather than two that could drift. Below
+   901 nothing in this rule exists at all, which is what makes "phones are
+   byte-identical" a property of the stylesheet rather than a claim.
+
+   ── AND `justify-content` HAS TO BE SAID, BECAUSE THE FLAGS MOVE ──────────
+
+   `.kfb-tx` carries `margin-inline:auto` and that auto margin is the ONLY
+   thing holding the two flags apart — `.kfb-in` sets no justification, so it
+   falls back to `flex-start`. Take the words out and both flags collapse into
+   a pair at the inline start of a 1680px strip, which is not a countries bar,
+   it is two stickers in a corner. Measured before this line was written:
+   UAE at x=142 and Korea at x=173 on a 1920 viewport, with 1585px of empty
+   strip after them.
+
+   CENTRED, not `space-between`. Space-between keeps them where they are today
+   — 1585px apart with nothing between — and a 30px strip empty from edge to
+   edge reads as something that failed to load. A centred pair reads as what it
+   is: the two countries, with the words gone. Both were photographed; see
+   docs/flagbar-shots/. */
+@media (min-width:901px){
+    .kfb-notx .kfb-tx{display:none}
+    .kfb-notx .kfb-in{justify-content:center}
+}
 /* ── THE NARROWEST PHONES, AND ONLY THEM ──────────────────────────────────
    Measured in Chromium: the shipped line is 215px at 12px Outfit, the two
    flags are 21px each and the page gutter is 22px a side, which comes to

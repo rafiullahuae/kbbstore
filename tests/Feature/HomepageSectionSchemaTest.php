@@ -174,11 +174,32 @@ it('stores every value on write exactly as the hand-written save did', function 
                 $defaultSkin = HomepageSections::REGISTRY[$key][3];
                 $raw = (string) ($row['skin'] ?? '');
 
+                /*
+                 * ▲ TWO KEYS ADDED TO THE EXPECTATION — Lane BG.
+                 *
+                 * This case's job is to hold save() to the rules the
+                 * HAND-WRITTEN save had, over an adversarial corpus, so that
+                 * moving it onto ModuleSchema could not change what it stores.
+                 * Two settings have been added SINCE that move, so the
+                 * hand-written baseline has nothing to say about them — and the
+                 * honest way to keep the case is to state the rule they follow
+                 * rather than to stop comparing the array.
+                 *
+                 * The rule is the one the header describes: a nested row stores
+                 * null (the control does not apply to it), and every other row
+                 * stores its own default, because the corpus posts no value for
+                 * either. `cards_banner` is the one section whose width default
+                 * is not `normal`.
+                 */
+                $nested = isset(HomepageSections::NESTED[$key]);
+
                 $expected[$key] = [
                     'desktop' => (bool) ($row['desktop'] ?? true),
                     'mobile' => (bool) ($row['mobile'] ?? true),
                     'order' => (int) ($row['order'] ?? $order),
                     'skin' => $hasGrid ? (GridSkins::exists($raw) ? $raw : $defaultSkin) : null,
+                    'background' => $nested ? null : 'off',
+                    'width' => $nested ? null : (HomepageSections::WIDTH_DEFAULTS[$key] ?? 'normal'),
                 ];
 
                 $order++;
@@ -197,8 +218,18 @@ it('stores every value on write exactly as the hand-written save did', function 
  | §2 · And the vocabulary really is the shared one
  |=========================================================================== */
 
-it('declares the three controls as ModuleSchema fields rather than as a fourth dialect', function () {
-    expect(array_keys(HomepageSections::SECTION_SCHEMA))->toBe(['desktop', 'mobile', 'skin']);
+it('declares the five controls as ModuleSchema fields rather than as a fourth dialect', function () {
+    /*
+     * ▲ THREE BECAME FIVE — Lane BG. `background` and `width` are the owner's
+     * per-section panel and width, and they are declared HERE rather than cast
+     * by hand for exactly the reason this case exists: the screen, the save and
+     * the preview all read them through the one ModuleSchema call, so there is
+     * no second dialect for them to disagree in.
+     *
+     * The loop below is what makes the number worth pinning at all, and it is
+     * unchanged: every field must declare a type ModuleSchema HAS.
+     */
+    expect(array_keys(HomepageSections::SECTION_SCHEMA))->toBe(['desktop', 'mobile', 'skin', 'background', 'width']);
 
     foreach (HomepageSections::SECTION_SCHEMA as $key => $field) {
         expect(array_key_exists($field['type'], App\Services\ModuleSchema::TYPES))
@@ -209,6 +240,19 @@ it('declares the three controls as ModuleSchema fields rather than as a fourth d
     // — "a select stores one of its own options or the default" — checkable
     // from the schema rather than from whoever remembered to call exists().
     expect(App\Services\ModuleSchema::OPTION_TYPES)->toContain('skin');
+
+    /*
+     * And the two added with them are `select`, which is the other member of
+     * OPTION_TYPES — so rule 5 is checkable from the schema for all three
+     * rather than from whoever remembered to call a validator. A `text` field
+     * whose value became a CSS class name would pass every other assertion in
+     * this file and print an operator's string into a class attribute.
+     */
+    expect(App\Services\ModuleSchema::OPTION_TYPES)->toContain('select')
+        ->and(HomepageSections::SECTION_SCHEMA['background']['type'])->toBe('select')
+        ->and(HomepageSections::SECTION_SCHEMA['width']['type'])->toBe('select')
+        ->and(array_keys(HomepageSections::SECTION_SCHEMA['background']['options']))->toBe(array_keys(HomepageSections::BACKGROUNDS))
+        ->and(array_keys(HomepageSections::SECTION_SCHEMA['width']['options']))->toBe(array_keys(HomepageSections::WIDTHS));
 });
 
 it('picks the plain boolean dialect in writing, because the word-aware one would move the shop', function () {

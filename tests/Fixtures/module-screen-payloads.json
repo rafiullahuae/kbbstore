@@ -1687,7 +1687,7 @@
       {
         "key": "flagbar",
         "label": "Flag bar",
-        "description": "The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop.",
+        "description": "The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop — with the wording on phones only.",
         "fields": [
           {
             "key": "fb_mobile",
@@ -1718,6 +1718,16 @@
             "options": null,
             "default": "",
             "value": ""
+          },
+          {
+            "key": "fb_text_desktop",
+            "name": "fb_text_desktop",
+            "type": "bool",
+            "label": "Show the wording on desktop",
+            "help": "Off, so the desktop strip is the two flags and nothing between them — you asked for the line to come off there. Phones are not affected either way; the wording above is what they show.",
+            "options": null,
+            "default": false,
+            "value": false
           },
           {
             "key": "fb_flags",

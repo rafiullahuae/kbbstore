@@ -368,7 +368,23 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // compared and still answers what it answered — this walk counts controls,
     // and a control that CHANGED would have failed the key-by-key comparison
     // above long before reaching this line.
-    expect($compared)->toBe(558, 'the number of controls drawn changed');
+    //
+    // 559 AFTER LANE BG: one control, `fb_text_desktop`, on Appearance →
+    // Header → Flag bar. "UAE's Authentic K-Beauty Store — remove this from
+    // the desktop version." `fb_text` is one string shared by both widths, so
+    // a switch is the only thing that can take the line off desktop without
+    // taking it off phones as well.
+    //
+    // ADVANCED ADDITIVELY, and the diff of the fixture is the proof: ELEVEN
+    // LINES INSERTED AND ONE CHANGED. The one is the tab's own description,
+    // which now says the wording is on phones only; the eleven are the new
+    // field object, written in the key ORDER the recorded ones use and placed
+    // at index 3, directly after the `fb_text` it qualifies — tabs and fields
+    // are compared BY POSITION here, so appending it would have reported
+    // `fb_flags` as having become `fb_text_desktop` and every field after it as
+    // moved. Every control already recorded still carries the key, type, label,
+    // help, value, default and options it carried.
+    expect($compared)->toBe(559, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
