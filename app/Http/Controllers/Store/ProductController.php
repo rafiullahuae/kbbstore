@@ -433,6 +433,42 @@ class ProductController extends Controller
             is_array($product->images) ? $product->images : []
         ))));
 
+        /*
+         * ── THE DEMO CATALOGUE'S OWN SHOTS ───────────────────────── Lane GAL
+         *
+         *   "also i can not see the product gallery thumnails, add some demo
+         *    thumnails so i can see in action."
+         *
+         * He could not see them because there were none to see.
+         * DemoCatalogueSeeder writes neither `image` nor `images` on any of its
+         * 24 rows, so `$images` came out EMPTY here, one shot was returned by
+         * the fallback at the bottom, and partials/product-gallery.blade.php
+         * draws the `.gthumbs` strip only `@if ($shotCount > 1)`. The padding
+         * below this loop would have filled it — but only `when
+         * DemoContent::enabled()`, and that setting ships off.
+         *
+         * WHY HERE AND NOT IN `products`.images, which is where it was built
+         * first: App\Support\DemoProductShots' header carries the measurement.
+         * `images` is catalogue data that the importer's re-pointer, MediaAudit,
+         * MediaUsageWriter and the image-variants backlog all walk, and filling
+         * it put 120 placeholder pictures into all four — 23 test cases across
+         * seven files that have nothing to do with galleries went red saying so.
+         *
+         * ONLY WHEN THE ROW HAS NOTHING OF ITS OWN. A demo product somebody has
+         * since given a photograph keeps exactly the gallery that photograph
+         * makes; this cannot push a real shot down the strip or displace one.
+         * And the three marks isDemo() requires mean the WordPress import turns
+         * this off by itself: an imported row carries a real `wc_id`.
+         *
+         * READ-ONLY and cheap: five `is_file()` calls on a page that already
+         * pays two per shot for ImageVariants, no query, and nothing drawn at
+         * request time. The pictures are made once by
+         * 2027_06_20_000000_draw_demo_gallery_shots.
+         */
+        if ($images === [] && \App\Support\DemoProductShots::isDemo($product)) {
+            $images = \App\Support\DemoProductShots::urlsFor((string) $product->slug);
+        }
+
         $labels = ['Front', 'Texture', 'Ingredients', 'On skin', 'Box', 'Video'];
         $shots = [];
 

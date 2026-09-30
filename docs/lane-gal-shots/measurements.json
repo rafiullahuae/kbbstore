@@ -1,0 +1,414 @@
+{
+  "390": {
+    "before": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "gmain": {
+        "x": 0,
+        "y": 241,
+        "w": 390,
+        "h": 390
+      },
+      "gmainImg": {
+        "x": 0,
+        "y": 241,
+        "w": 390,
+        "h": 390
+      },
+      "gthumbs": {
+        "x": 0,
+        "y": 601,
+        "w": 390,
+        "h": 58
+      },
+      "thumbCount": 5,
+      "active": 0,
+      "thumbBoxes": [
+        {
+          "x": 22,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 86,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 150,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 214,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 278,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        }
+      ],
+      "thumbSrcs": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "thumbData": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "mainSrc": "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+      "caption": "Round LabFront",
+      "mainNatural": {
+        "w": 900,
+        "h": 900
+      },
+      "thumbNatural": [
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        }
+      ]
+    },
+    "after": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "gmain": {
+        "x": 0,
+        "y": 241,
+        "w": 390,
+        "h": 390
+      },
+      "gmainImg": {
+        "x": 0,
+        "y": 241,
+        "w": 390,
+        "h": 390
+      },
+      "gthumbs": {
+        "x": 0,
+        "y": 601,
+        "w": 390,
+        "h": 58
+      },
+      "thumbCount": 5,
+      "active": 3,
+      "thumbBoxes": [
+        {
+          "x": 22,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 86,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 150,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 214,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        },
+        {
+          "x": 278,
+          "y": 601,
+          "w": 56,
+          "h": 56
+        }
+      ],
+      "thumbSrcs": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "thumbData": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "mainSrc": "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+      "caption": "Round LabFront",
+      "mainNatural": {
+        "w": 900,
+        "h": 900
+      },
+      "thumbNatural": [
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        }
+      ]
+    },
+    "changed": true,
+    "activeMoved": "0 -> 3",
+    "leftEdges": {
+      "gmain": 0,
+      "gthumbs": 0,
+      "firstThumb": 22
+    },
+    "alignment": 0
+  },
+  "1280": {
+    "before": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "gmain": {
+        "x": 22,
+        "y": 182.25,
+        "w": 611.55,
+        "h": 611.55
+      },
+      "gmainImg": {
+        "x": 22,
+        "y": 182.25,
+        "w": 611.55,
+        "h": 611.55
+      },
+      "gthumbs": {
+        "x": 22,
+        "y": 807.8,
+        "w": 611.55,
+        "h": 66
+      },
+      "thumbCount": 5,
+      "active": 0,
+      "thumbBoxes": [
+        {
+          "x": 22,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 98,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 174,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 250,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 326,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        }
+      ],
+      "thumbSrcs": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "thumbData": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "mainSrc": "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+      "caption": "Round LabFront",
+      "mainNatural": {
+        "w": 900,
+        "h": 900
+      },
+      "thumbNatural": [
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        }
+      ]
+    },
+    "after": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "gmain": {
+        "x": 22,
+        "y": 182.25,
+        "w": 611.55,
+        "h": 611.55
+      },
+      "gmainImg": {
+        "x": 22,
+        "y": 182.25,
+        "w": 611.55,
+        "h": 611.55
+      },
+      "gthumbs": {
+        "x": 22,
+        "y": 807.8,
+        "w": 611.55,
+        "h": 66
+      },
+      "thumbCount": 5,
+      "active": 3,
+      "thumbBoxes": [
+        {
+          "x": 22,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 98,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 174,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 250,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        },
+        {
+          "x": 326,
+          "y": 807.8,
+          "w": 66,
+          "h": 66
+        }
+      ],
+      "thumbSrcs": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "thumbData": [
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-1-front.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-2-texture.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-3-ingredients.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+        "/uploads/demo-shots/heartleaf-77-soothing-toner-5-box.png"
+      ],
+      "mainSrc": "/uploads/demo-shots/heartleaf-77-soothing-toner-4-on-skin.png",
+      "caption": "Round LabFront",
+      "mainNatural": {
+        "w": 900,
+        "h": 900
+      },
+      "thumbNatural": [
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        },
+        {
+          "w": 900,
+          "h": 900
+        }
+      ]
+    },
+    "changed": true,
+    "activeMoved": "0 -> 3",
+    "leftEdges": {
+      "gmain": 22,
+      "gthumbs": 22,
+      "firstThumb": 22
+    },
+    "alignment": 0
+  }
+}
