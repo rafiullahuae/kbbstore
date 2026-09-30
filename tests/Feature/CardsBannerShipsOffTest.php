@@ -303,8 +303,21 @@ it('gives the hero no divider mark while the banner above it draws nothing', fun
 
     $withBanner = bnHome();
 
+    /*
+     * ▲ THE BANNER'S SECTION GAINED `kbb-secw-bleed` — Lane BG, and the pin is
+     * advanced rather than loosened to a substring.
+     *
+     * The owner asked for the picture banner to run full width, so
+     * HomepageSections::WIDTH_DEFAULTS ships `cards_banner` at `bleed` and
+     * frameClass() writes the class. What this case asserts is UNCHANGED and is
+     * still the whole of it: the banner is the first section that draws, so it
+     * carries NO `dv` mark and the hero — now genuinely second — carries one.
+     * The class attribute is matched whole on purpose, because a `toContain`
+     * on `'class="sec'` alone would pass on a page with the mark back.
+     */
     expect($withBanner)->toContain('<section class="sec dv" style="padding-top:14px">')
-        ->and($withBanner)->toContain('<section class="sec " style="padding-top:8px">');
+        ->and($withBanner)->toContain('<section class="sec kbb-secw-bleed" style="padding-top:8px">')
+        ->and($withBanner)->not->toContain('<section class="sec kbb-secw-bleed dv"');
 });
 
 it('leaves the homepage carrying no empty content wrapper', function () {

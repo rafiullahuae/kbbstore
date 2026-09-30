@@ -39,6 +39,18 @@ class HomepageApiController extends Controller
             // explain the group once.
             'nested_note' => HomepageSections::NESTED_NOTE,
             'skins' => collect(GridSkins::ALL)->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(),
+            /*
+             * The two option lists, NAMED FROM THE SERVICE. (Lane BG)
+             *
+             * Appearance → Homepage draws its own row rather than going through
+             * ModuleSchema::tabs() — it is older than that framework — so it
+             * needs the options as data. Sending them rather than writing them
+             * into the console's JavaScript is what stops the screen coming to
+             * offer a token the storefront no longer draws, which is the same
+             * argument `nested_note` and `select_class` are sent on.
+             */
+            'backgrounds' => collect(HomepageSections::BACKGROUNDS)->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(),
+            'widths' => collect(HomepageSections::WIDTHS)->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(),
             'layouts' => $this->layouts->summaries(),
             'layout' => $this->layouts->current(),
         ]);
@@ -62,6 +74,26 @@ class HomepageApiController extends Controller
             'sections.*.desktop' => ['required', 'boolean'],
             'sections.*.mobile' => ['required', 'boolean'],
             'sections.*.skin' => ['nullable', 'string', 'max:40'],
+            /*
+             * NULLABLE AND BOUNDED, NOT `Rule::in()` — Lane BG, and it is the
+             * same decision the `skin` line above already made.
+             *
+             * The values are checked ONCE, in HomepageSections::SECTION_SCHEMA,
+             * where SECTION_POLICY's `invalid => default` replaces anything
+             * that is not a key of BACKGROUNDS / WIDTHS. Listing the tokens
+             * here as well would be a second vocabulary for the same question,
+             * which is exactly what the paragraph over payloadFor() says is how
+             * the two come to disagree — and this one would disagree LOUDLY: an
+             * `in:` rule 422s the whole save, where the schema quietly falls
+             * back, so a token added to WIDTHS and forgotten here would refuse
+             * to store a page the shop can draw.
+             *
+             * `nullable` because a nested row's value IS null — castRow()
+             * returns null for `delivery` and `ticker`, show() hands those rows
+             * to the console, and the console posts back what it was given.
+             */
+            'sections.*.background' => ['nullable', 'string', 'max:20'],
+            'sections.*.width' => ['nullable', 'string', 'max:20'],
         ];
     }
 
@@ -107,6 +139,8 @@ class HomepageApiController extends Controller
                 'desktop' => $row['desktop'],
                 'mobile' => $row['mobile'],
                 'skin' => $row['skin'] ?? null,
+                'background' => $row['background'] ?? null,
+                'width' => $row['width'] ?? null,
                 'order' => $order++,
             ];
         }

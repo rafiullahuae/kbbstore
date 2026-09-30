@@ -245,6 +245,100 @@ class HomepageSections
     public const NESTED_NOTE = 'Drawn inside the hero band, so it moves with the hero and cannot be placed elsewhere on the page. Its own Desktop and Mobile switches still decide whether it shows.';
 
     /**
+     * WHAT SITS BEHIND A HOMEPAGE SECTION, `token => label`.        (Lane BG)
+     *
+     * The owner: *"on homepage i want to remove the sections backgrounds by
+     * default, and if i need it for any section, i can put it myself."*
+     *
+     * ── `off` IS THE DEFAULT, AND THAT IS A MOVED DEFAULT ───────────────────
+     *
+     * Every section on the home page drew a white panel — `rgba(255,255,255,
+     * .94)` at 22px of radius with a border and a shadow, and a pink gradient
+     * on the four `tinted` ones. This lane measured those panels covering
+     * **100% of the first screen at 1280** (docs/BG-BACKGROUND-CANDIDATES.md),
+     * which is why the background he picked barely showed. He read that and
+     * asked for the panels to come off.
+     *
+     * So this ships at `off` rather than at what the page already draws, under
+     * CLAUDE.md's 30-September reversal: *"whatever i said, keep applying on
+     * the site … i want to apply such things directly to the site to save
+     * time."* The control exists — PER SECTION, which is his second clause —
+     * so any one of them can have its panel back without touching the rest.
+     *
+     * ── TWO OPTIONS AND NOT THREE ───────────────────────────────────────────
+     *
+     * `panel` is "the background this section always had", not "white": the
+     * four sections the template marks `tinted` get their pink gradient back
+     * and the rest get the white card, because the look is decided by a class
+     * the template writes and this only says whether it paints. A third token
+     * spelling "white, on a tinted section" would be a choice the screen offers
+     * and the template cannot honour.
+     *
+     * HOME PAGE ONLY. These classes are read by `.kbb-home .sec` rules, and
+     * `.kbb-home` is on four templates — but only store/home.blade.php draws
+     * `.sec` elements, so /shop/, a product page, the cart and the journal
+     * cannot be reached by any of this.
+     */
+    public const BACKGROUNDS = [
+        'off' => 'None — the page’s own background shows through',
+        'panel' => 'The section’s own panel — the card it used to draw',
+    ];
+
+    /**
+     * HOW WIDE A SECTION RUNS, `token => label`.                    (Lane BG)
+     *
+     * The owner: *"any section i can make full width upto 1920x, give this
+     * option and it must be auto adjusted to the screen sizes below 1920px
+     * width"*.
+     *
+     * ── THE CAP IS `min(100%, 1920px)` AND IT IS SPELT WITHOUT `vw` ─────────
+     *
+     * The stylesheet writes `width:100%;max-width:1920px` on an element whose
+     * containing block is the section, which is the page. That is the same
+     * `min()` the site width already uses one level up (`--site-max`), and it
+     * is deliberately NOT `min(100vw, 1920px)`: `100vw` includes the classic
+     * scrollbar on a desktop browser, so a full-width section written that way
+     * is a few pixels wider than the page and GROWS A HORIZONTAL SCROLLBAR —
+     * which then makes the page narrower, which is the oscillation this
+     * project has paid for elsewhere. `100%` is the page's real width at every
+     * viewport, so there is no breakpoint to maintain and no width at which it
+     * is undefined. Rule 4: nothing here is measured by script.
+     *
+     * ── THREE TOKENS, BECAUSE `full` AND `bleed` ARE DIFFERENT THINGS ───────
+     *
+     * `full` keeps the page's side gutter, so a section of TEXT set to full
+     * width still has its words off the edge of the screen. `bleed` takes the
+     * gutter off as well, which is what a picture or a coloured band wants and
+     * what the banner needs to read as edge to edge. A single "full width"
+     * token would have had to pick one, and picking `bleed` puts paragraphs
+     * against the glass on a phone.
+     *
+     * ── `cards_banner` DEFAULTS TO `bleed`, WHICH IS A MOVED DEFAULT ────────
+     *
+     * *"and by default, make the main images banner full width"*. Everything
+     * else defaults to `normal` — the width it has today — because rule 1's
+     * other half still holds: what he did not ask about ships byte-identical.
+     */
+    public const WIDTHS = [
+        'normal' => 'The page’s own width — 1680px, inset, as it is today',
+        'full' => 'Full width — edge to edge up to 1920px, side gutter kept',
+        'bleed' => 'Full bleed — edge to edge up to 1920px, no gutter at all (a picture or a band)',
+    ];
+
+    /**
+     * The sections whose `width` ships at something other than `normal`.
+     *
+     * ONE KEY, and it is the banner. A map rather than a fifth element on the
+     * REGISTRY rows because the registry's shape is read in eight places and
+     * `[label, description, hasGrid, defaultSkin]` is destructured by position
+     * in most of them — growing it to serve one key would have been eight
+     * edits for one fact. `overridesFor()` reads this and nothing else does.
+     *
+     * @var array<string, string>
+     */
+    public const WIDTH_DEFAULTS = ['cards_banner' => 'bleed'];
+
+    /**
      * The three controls a section row carries, as ModuleSchema fields.
      *
      * ── WHY THE ROW GETS A SCHEMA AT ALL ────────────────────────────────────
@@ -289,6 +383,35 @@ class HomepageSections
             'default' => '',
             'help' => 'One of the product-grid card templates. Only the four sections that draw a product grid carry one.',
         ],
+        /*
+         * ── THE TWO LANE BG ADDED, AND THEY COST THE SCHEMA NOTHING ─────────
+         *
+         * `select` is a type ModuleSchema already casts, already validates
+         * against its own `options` and already renders — so these two fields
+         * are drawn by the same ModuleSchema::tabs() call the three above are,
+         * and the live-edit screen picks them up with no line of it changing.
+         * That is the thing the header over this constant argues for: one cast,
+         * three readers, and a preview that answers the way the save does.
+         *
+         * SECTION_POLICY's `invalid => default` is what makes rule 5 hold here
+         * — "a select stores one of its own options or the default". A value
+         * that is not a key of BACKGROUNDS / WIDTHS cannot survive the read, so
+         * a hand-edited settings row cannot put a token into a class name.
+         */
+        'background' => [
+            'type' => 'select',
+            'label' => 'Section background',
+            'default' => 'off',
+            'options' => self::BACKGROUNDS,
+            'help' => 'The panel behind this section. Off everywhere on the home page — put it back here for any section that needs one.',
+        ],
+        'width' => [
+            'type' => 'select',
+            'label' => 'Section width',
+            'default' => 'normal',
+            'options' => self::WIDTHS,
+            'help' => 'How wide this section runs. Full width is capped at 1920px and follows the screen at every width below it, down to 320px.',
+        ],
     ];
 
     /**
@@ -331,6 +454,23 @@ class HomepageSections
             'Where it appears',
             'Which devices draw this section, and which card template its grid uses. A section off for both is not rendered at all, so it costs no queries either.',
             ['desktop', 'mobile', 'skin'],
+        ],
+        /*
+         * A SECOND GROUP, because these two are a different question. The
+         * first group is "does this section appear"; this one is "what shape is
+         * it when it does", and a heading that ran the five together would be
+         * the sentence that goes stale the day a sixth is added.
+         *
+         * Both are DROPPED by sectionTabs() for `delivery` and `ticker`, the
+         * two rows drawn inside the hero's own <section>. They have no `.wrap`
+         * of their own for either rule to reach, so offering the controls there
+         * would be two dropdowns that do nothing — the fault CLAUDE.md names
+         * three times and the reason NESTED_NOTE exists one row along.
+         */
+        'frame' => [
+            'How it looks',
+            'The panel behind this section and how wide it runs. Both are off the shipped page by default — the panels came off the home page and the picture banner runs edge to edge.',
+            ['background', 'width'],
         ],
     ];
 
@@ -447,6 +587,8 @@ class HomepageSections
                 'description' => $desc,
                 'has_grid' => $hasGrid,
                 'skin' => $cast['skin'],
+                'background' => $cast['background'],
+                'width' => $cast['width'],
                 'desktop' => $cast['desktop'],
                 'mobile' => $cast['mobile'],
                 'order' => (int) ($row['order'] ?? $order),
@@ -885,7 +1027,38 @@ class HomepageSections
             ? 'kbb-ord-' . $s['order'] . ' '
             : '';
 
-        $class = trim($ord . ($desktop ? '' : 'd-off ') . ($mobile ? '' : 'm-off ') . $mark);
+        /*
+         * ── THE PANEL AND THE WIDTH, AND ONLY WHEN THEY ARE NOT THE CSS
+         *    BASELINE ──────────────────────────────────────────────── Lane BG
+         *
+         * Same argument the divider and order classes above ride: all nineteen
+         * sections already call this method, so store/home.blade.php needed no
+         * per-section edit for either control and no section can be missed.
+         *
+         * WHICH VALUE IS SILENT IS A DECISION, NOT AN ACCIDENT. The stylesheet
+         * now draws no panel and the page's own width by DEFAULT, so `off` and
+         * `normal` emit nothing at all — which means the eighteen sections the
+         * owner has not touched carry exactly the class attribute they carried
+         * before this feature existed, to the byte. Only a section he has
+         * changed grows a class, and the one this release changes for him is
+         * the banner.
+         *
+         * Nothing here can print an operator's string: both values come back
+         * from castRow(), which is ModuleSchema::cast() under
+         * SECTION_POLICY's `invalid => default`, so a value that is not a key
+         * of BACKGROUNDS / WIDTHS is replaced by the default before it reaches
+         * this line. Rule 5 — "a select stores one of its own options or the
+         * default" — and the class name is built from a token this file
+         * declares rather than from anything a settings row holds.
+         *
+         * NULL ON A NESTED ROW, which is castRow() saying the control does not
+         * apply; the `?? ` arms are what make that mean "emit nothing" rather
+         * than "emit kbb-secw-".
+         */
+        $panel = ($s['background'] ?? 'off') === 'panel' ? 'kbb-secbg-on ' : '';
+        $width = ($s['width'] ?? 'normal') === 'normal' ? '' : 'kbb-secw-' . $s['width'] . ' ';
+
+        $class = trim($ord . $panel . $width . ($desktop ? '' : 'd-off ') . ($mobile ? '' : 'm-off ') . $mark);
 
         /*
          * THE SELECTION HOOK, AND ONLY ON AN ANNOTATING PROPOSAL (Lane HL).
@@ -924,8 +1097,26 @@ class HomepageSections
     {
         $defaultSkin = (string) (self::registry()[$key][3] ?? '');
 
+        /*
+         * ▲ THE MEMO KEY CARRIES THE WIDTH DEFAULT TOO, AND IT HAS TO.
+         *                                                          (Lane BG)
+         *
+         * ModuleSchema::normalised() is `self::$normalised[$key] ??= …`, a
+         * process-level memo. The key was the skin default alone, which was
+         * right while the skin was the only thing overridesFor() varied by
+         * section. `cards_banner` now overrides the WIDTH default as well and
+         * has no skin — so its key would have been `HomepageSections:` , the
+         * same string nineteen other sections without a skin produce, and
+         * whichever of them was read FIRST in the process would have decided
+         * the width default for all of them.
+         *
+         * The failure is order-dependent and silent: read the banner first and
+         * every section on the page goes full-bleed; read `hero` first and the
+         * banner never leaves its card. Both are one cached array away from the
+         * other, and neither errors.
+         */
         return ModuleSchema::normalised(
-            self::class.':'.$defaultSkin,
+            self::class.':'.$defaultSkin.':'.self::widthDefault($key),
             self::SECTION_SCHEMA,
             self::SECTION_POLICY,
             self::overridesFor($key),
@@ -946,10 +1137,27 @@ class HomepageSections
      */
     private static function overridesFor(string $key): array
     {
-        return ['skin' => [
-            'options' => GridSkins::ALL,
-            'default' => (string) (self::registry()[$key][3] ?? ''),
-        ]];
+        return [
+            'skin' => [
+                'options' => GridSkins::ALL,
+                'default' => (string) (self::registry()[$key][3] ?? ''),
+            ],
+            // The banner's `bleed`, and `normal` for every other section.
+            'width' => ['default' => self::widthDefault($key)],
+        ];
+    }
+
+    /**
+     * The width a section ships at, before anybody has chosen one.
+     *
+     * One line, and it exists so that the memo key in fieldsFor() and the
+     * override in overridesFor() cannot come to disagree — which is the exact
+     * shape of the defect the comment in fieldsFor() describes. Two literals in
+     * two methods is how that happens; one method is how it cannot.
+     */
+    private static function widthDefault(string $key): string
+    {
+        return self::WIDTH_DEFAULTS[$key] ?? 'normal';
     }
 
     /**
@@ -980,6 +1188,14 @@ class HomepageSections
 
         if (! (self::registry()[$key][2] ?? false)) {
             unset($schema['skin']);
+        }
+
+        // See castRow(): the two rows drawn inside the hero have no wrapper of
+        // their own, so neither rule can reach them and neither control is
+        // offered. ModuleSchema::tabs() drops a group whose fields are all
+        // gone, so the whole "How it looks" heading disappears with them.
+        if (isset(self::NESTED[$key])) {
+            unset($schema['background'], $schema['width']);
         }
 
         return ModuleSchema::tabs(
@@ -1028,6 +1244,17 @@ class HomepageSections
             'desktop' => (bool) $out['desktop'],
             'mobile' => (bool) $out['mobile'],
             'skin' => (self::registry()[$key][2] ?? false) ? (string) $out['skin'] : null,
+            /*
+             * NULL FOR A NESTED ROW, the same way `skin` is null for a section
+             * with no grid, and for the same reason: the value would be a
+             * setting that is stored, shown and never read. `delivery` and
+             * `ticker` are drawn inside the hero's `<section>` as plain divs —
+             * there is no `.wrap` of their own for either rule to reach — so
+             * the honest answer on those two rows is "this does not apply",
+             * and sectionTabs() drops the controls to match.
+             */
+            'background' => isset(self::NESTED[$key]) ? null : (string) $out['background'],
+            'width' => isset(self::NESTED[$key]) ? null : (string) $out['width'],
         ];
     }
 
@@ -1065,6 +1292,13 @@ class HomepageSections
                 'mobile' => $cast['mobile'],
                 'order' => (int) (is_array($row) ? ($row['order'] ?? $order) : $order),
                 'skin' => $cast['skin'],
+                // Lane BG. Stored through the same castRow() the other three
+                // go through, so what is written is a key of BACKGROUNDS /
+                // WIDTHS or the section's own default and never an operator's
+                // string — and a nested row stores null, which is castRow()
+                // saying the control does not apply to it.
+                'background' => $cast['background'],
+                'width' => $cast['width'],
             ];
 
             $order++;

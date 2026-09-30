@@ -182,10 +182,40 @@ class HomepageLayouts
         return $out;
     }
 
-    /** Apply a layout by writing its payload into the section configuration. */
+    /**
+     * Apply a layout by writing its payload into the section configuration.
+     *
+     * ── THE FRAME SETTINGS ARE CARRIED ACROSS, AND A PRESET DOES NOT TOUCH
+     *    THEM ───────────────────────────────────────────────────── Lane BG ──
+     *
+     * A preset is described on the screen as "order, visibility and grid
+     * styles in one move", and that sentence is the contract. `background` and
+     * `width` are neither: they are the panel behind a section and how wide it
+     * runs, and none of the four presets has an opinion about either.
+     *
+     * save() REPLACES the stored payload, so without this the two would fall
+     * back to their defaults on every Apply — a section the owner had given its
+     * panel back would lose it, silently, because he pressed a button about
+     * something else. That is the same "a control moved and nothing said so"
+     * shape the comment inside payloadFor() describes one method up, and it is
+     * why the values are read off the CURRENT configuration rather than being
+     * left to the default.
+     *
+     * Read through all(), so the values are already cast: a stored token that
+     * is not a key of BACKGROUNDS / WIDTHS has been replaced by the default
+     * before it gets here, and a nested row's null stays null.
+     */
     public function apply(string $key, HomepageSections $sections): void
     {
-        $sections->save($this->payloadFor($key));
+        $payload = $this->payloadFor($key);
+        $current = $sections->all();
+
+        foreach ($payload as $section => $row) {
+            $payload[$section]['background'] = $current[$section]['background'] ?? null;
+            $payload[$section]['width'] = $current[$section]['width'] ?? null;
+        }
+
+        $sections->save($payload);
         $this->settings->set('homepage_layout', $key);
     }
 

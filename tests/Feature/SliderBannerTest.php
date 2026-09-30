@@ -672,9 +672,16 @@ it('prints nothing but constants and clamped integers into the style attribute',
 
     $vars = Banners::sliderVariables($rogue, [], false);
 
+    /*
+     * ▲ `SHADOWS['soft']` BECAME `SHADOWS['none']` — Lane BG. The assertion is
+     * still the whole string, which is what makes it worth having: every value
+     * in it is either a clamped integer or a literal out of one of BannerSet's
+     * enums, and nothing an operator types is in it. The shadow's DEFAULT moved
+     * with the banner's corners; the grammar did not.
+     */
     expect($vars)->toBe(
         '--kbbs-ar:1920 / 550;--kbbs-arm:500 / 600;--kbbs-r:40px;'
-        .'--kbbs-sh:'.BannerSet::SHADOWS['soft'][1].';--kbbs-dwell:0.60s;--kbbs-dirn:-1;--kbbs-flip:1'
+        .'--kbbs-sh:'.BannerSet::SHADOWS['none'][1].';--kbbs-dwell:0.60s;--kbbs-dirn:-1;--kbbs-flip:1'
     );
 
     // And the class the token becomes is the default's, not the operator's.

@@ -65,10 +65,33 @@ class BannerSet extends Model
      *
      * @var array<string, string>
      */
+    /*
+     * ── AND TWO MORE, WHICH ARE THE BANNER'S CORNERS AND ITS SHADOW ─────────
+     *                                                            (Lane BG)
+     *   card_radius     18       -> 0           "by default, make the main
+     *   shadow          'soft'   -> 'none'       images banner full width, and
+     *                                            remove the corner radius etc."
+     *
+     * The "etc." is the SHADOW, and it is here rather than left out because a
+     * drop shadow is the second thing that stops a picture reading as edge to
+     * edge: with the radius gone but the shadow kept, the banner is a square
+     * card floating a few pixels off the page instead of part of it. It is
+     * still a control — Appearance → Banners → (a set) → Shadow — so putting it
+     * back is one dropdown.
+     *
+     * BOTH COLUMNS ARE SHARED WITH THE `cards` KIND, which is worth saying
+     * because it means a new CARDS set made from here on also starts square.
+     * `kind` itself defaults to `slider` two lines up, so a set made without
+     * choosing anything is the thing these two are chosen for; and the
+     * migration that moves the rows already on the shop is scoped to sliders,
+     * so an existing cards set keeps the corners it was given.
+     */
     protected $attributes = [
         'kind' => 'slider',
         'slider_ratio' => '1920/550',
         'slider_ratio_m' => '500/600',
+        'card_radius' => 0,
+        'shadow' => 'none',
     ];
 
     protected $casts = [
@@ -280,9 +303,21 @@ class BannerSet extends Model
         return (self::RATIOS[$this->ratio] ?? self::RATIOS['3/4'])[1];
     }
 
+    /**
+     * The `box-shadow`, or the default's.
+     *
+     * ▲ THE FALLBACK MOVED FROM `soft` TO `none` WITH THE DEFAULT. (Lane BG)
+     *
+     * This is the third door the class header describes, and a door has to
+     * agree with the other two or it is a way in. `$attributes['shadow']` is
+     * `none` and the migration writes `none` over every slider row holding
+     * `soft`, so a row that reaches here with a token the enum does not carry —
+     * hand-edited, or written by a release older than this one — would
+     * otherwise be the one place on the shop that still draws the old shadow.
+     */
     public function shadowCss(): string
     {
-        return (self::SHADOWS[$this->shadow] ?? self::SHADOWS['soft'])[1];
+        return (self::SHADOWS[$this->shadow] ?? self::SHADOWS['none'])[1];
     }
 
     /** The CSS animation-name, or '' when the row does not move. */

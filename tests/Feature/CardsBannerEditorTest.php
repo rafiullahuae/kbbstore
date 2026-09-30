@@ -405,8 +405,17 @@ it('writes nothing at all when one card in the batch is refused', function () {
         ],
     ])->assertStatus(422);
 
+    /*
+     * ▲ 18 BECAME 0 WITH THE MOVED DEFAULT — Lane BG, and the pin is advanced
+     * rather than the number softened. `BannerSet::$attributes` now makes a new
+     * set square, because the owner asked for the homepage banner to "remove
+     * the corner radius etc." What this case is ACTUALLY about is unchanged: a
+     * 422 on one card must leave the SET untouched, and `card_radius` is the
+     * untouched value it reads. Both numbers are "the value the set had before
+     * the refused write"; only which number that is has moved.
+     */
     expect($set->fresh()->speed_ms)->toBe(4000)
-        ->and($set->fresh()->card_radius)->toBe(18)
+        ->and($set->fresh()->card_radius)->toBe(0)
         ->and($cards[0]->fresh()->heading)->toBe('Heading 1');
 });
 

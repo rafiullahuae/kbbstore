@@ -242,19 +242,38 @@ it('hands back each section’s controls from its own schema, not from a second 
      * MUTATION: write the three fields out by hand in the controller and change
      * one label, or drop SECTION_POLICY from the call, and this is red.
      */
+    /*
+     * ▲ ONE TAB BECAME TWO, AND THREE FIELDS BECAME FIVE — Lane BG. The owner's
+     * Background and Width controls are a second SECTION_TABS group ("How it
+     * looks"), and this case is the proof that the claim in the controller's
+     * own comment is true: "a field added to SECTION_SCHEMA appears on the
+     * screen without a line of the screen changing". Not one line of the live
+     * panel was touched for either of them, and they arrive here fully formed
+     * — label, help, type and value — because they are drawn by the same
+     * ModuleSchema::tabs() call.
+     *
+     * The loop below is unchanged and is what makes this worth advancing
+     * rather than deleting: every field's label and help are still asserted to
+     * be the CONSTANT's, so a second list written out in the controller is
+     * still red.
+     */
     $bundles = hlSection(hlLive(hlRows()), 'bundles');
 
-    expect($bundles['tabs'])->toHaveCount(1);
+    expect($bundles['tabs'])->toHaveCount(2);
 
-    $fields = $bundles['tabs'][0]['fields'];
+    $fields = array_merge($bundles['tabs'][0]['fields'], $bundles['tabs'][1]['fields']);
 
-    expect(array_column($fields, 'key'))->toBe(['desktop', 'mobile', 'skin'])
-        ->and(array_column($fields, 'type'))->toBe(['bool', 'bool', 'skin']);
+    expect(array_column($fields, 'key'))->toBe(['desktop', 'mobile', 'skin', 'background', 'width'])
+        ->and(array_column($fields, 'type'))->toBe(['bool', 'bool', 'skin', 'select', 'select']);
 
     foreach ($fields as $field) {
         expect($field['label'])->toBe(HomepageSections::SECTION_SCHEMA[$field['key']]['label'])
             ->and($field['help'])->toBe(HomepageSections::SECTION_SCHEMA[$field['key']]['help']);
     }
+
+    // And the second group is the module framework's shape too.
+    expect($bundles['tabs'][1]['key'])->toBe('frame')
+        ->and(array_keys(HomepageSections::SECTION_TABS))->toBe(['placement', 'frame']);
 
     // The values are the arrangement that was posted, so the boxes open on what
     // the picture above them is of.
