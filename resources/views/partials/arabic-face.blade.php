@@ -82,10 +82,27 @@
      free. Taking it out of five call sites to delete one argument is five files
      of churn for nothing.
 
-     THEIR LATIN FACES ARE STILL GOOGLE'S. Poppins at 300 and 500, Fraunces and
-     Hanken Grotesk are linked by these documents' own <head> at weights this
-     package does not carry, so their preconnect hints are still doing work and
-     are deliberately left alone. --}}
+     THEIR LATIN FACES WERE STILL GOOGLE'S, AND FOUR OF THE FIVE NO LONGER ARE.
+                                                                      (Lane BG)
+     This paragraph used to read "Poppins at 300 and 500, Fraunces and Hanken
+     Grotesk are linked by these documents' own <head> at weights this package
+     does not carry, so their preconnect hints are still doing work and are
+     deliberately left alone", and it was true when it was written.
+
+     Poppins 500 is in App\Support\WebFonts now — it had to be, because a target
+     of 500 was resolving to the 400 face on 106 visible elements across the
+     shop — and weight 300 turned out to have no consumer at all: zero elements
+     at font-weight 300 on seven of eight pages, one invisible one on the
+     eighth. So the journal, an article, the review wall and the skin quiz all
+     include partials/poppins-face.blade.php and no longer ask Google for
+     anything. Their preconnect hints went with the link that needed them.
+
+     /app IS THE ONE LEFT, and deliberately: it is built on Fraunces and Hanken
+     Grotesk, which this shop does not self-host, and it is admin-only
+     (PageController::app() aborts 404 without an admin session), noindex, and
+     linked from nowhere on the storefront. Self-hosting two more families for a
+     page no shopper can reach is the wrong trade; docs/BG-STANDALONE-DOCUMENTS.md
+     §3 carries the measurement. Its preconnect hints are still doing work. --}}
 {!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::CAIRO) !!}<style id="kbb-cairo">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::CAIRO) !!}</style>
 <style id="kbb-arabic-face">
 {!! implode("\n", $kbbFaceRules) !!}

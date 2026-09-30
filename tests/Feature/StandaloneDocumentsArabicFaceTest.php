@@ -413,7 +413,10 @@ it('declares a Cairo face for every weight its own Latin link asks for', functio
     $expected = [
         '/blog/' => '400;500;600;700',
         '/blog/fs-face-post/' => '400;500;600;700',
-        '/skin-quiz/' => '300;400;500;600;700;800',
+        // 300 was in this list because the quiz ASKED Google for it, not because
+        // it styles anything at 300: the census found zero elements at
+        // font-weight 300 on every storefront page. It stopped asking. (Lane BG)
+        '/skin-quiz/' => '400;500;600;700;800',
         '/app/' => '400;500;600;700',
         '/reviews/' => '400;500;600;700;800',
     ];
@@ -446,9 +449,71 @@ it('declares a Cairo face for every weight its own Latin link asks for', functio
         expect(array_values($declared))->toBe(['400', '600', '700', '800'],
             "/ar{$url} does not declare Cairo's four weights");
 
-        // And the document's own Latin link is still a Google one, which is
-        // what makes the preconnect hints in its <head> worth keeping.
-        expect(preg_match_all('/fonts\.googleapis\.com\/css2\?family=[^"\']*wght@([0-9;.,a-zA-Z@]+)/', $html, $all))->toBeGreaterThanOrEqual(1);
+        /*
+         * ▲ THE LATIN LINK IS NO LONGER GOOGLE'S ON FOUR OF THE FIVE.
+         *                                                        (Lane BG)
+         *
+         * This assertion used to read, for every one of the five:
+         *
+         *     // And the document's own Latin link is still a Google one, which
+         *     // is what makes the preconnect hints in its <head> worth keeping.
+         *     expect(preg_match_all('…fonts\.googleapis\.com…'))
+         *         ->toBeGreaterThanOrEqual(1);
+         *
+         * It was true and load-bearing when it was written: the preconnect
+         * hints in these heads were worth keeping precisely because a
+         * render-blocking Google stylesheet followed them. The journal, an
+         * article, the review wall and the skin quiz now serve Poppins from
+         * this shop (partials/poppins-face.blade.php) and their hints went with
+         * the link that needed them, so the OLD assertion can only be made true
+         * again by putting four pages back on a third-party origin.
+         *
+         * SO IT IS INVERTED RATHER THAN DELETED, and the inverted form is the
+         * stronger one: it is the finished state, and it catches two real
+         * regressions the old shape could not — a document drifting back onto
+         * fonts.googleapis.com, and a `preconnect` left behind pointing at an
+         * origin the page no longer fetches anything from.
+         *
+         * /app/ IS THE EXCEPTION AND KEEPS ITS LINK. It is built on Fraunces
+         * and Hanken Grotesk, which this shop does not self-host, and it is
+         * admin-only, noindex and linked from nowhere — so its hints ARE still
+         * doing work and the original sentence still applies to it alone.
+         * docs/BG-STANDALONE-DOCUMENTS.md §3.5 carries the argument.
+         *
+         * MUTATIONS, and the first one written here was WRONG, which is worth
+         * keeping because it is the easy mistake with an inverted assertion.
+         * "delete @include('partials.poppins-face') from store/review-wall" was
+         * the obvious note and it leaves this case GREEN: removing the
+         * self-hosted faces does not put a Google link back, so `=== 0` still
+         * holds. It is caught by StandaloneDocumentHeadTest, which counts the
+         * include, and this case is about the OTHER direction. The mutations
+         * that do go red here, both run:
+         *
+         *   - add any `fonts.googleapis.com/css2` link to store/review-wall
+         *       → "/ar/reviews/ is back on fonts.googleapis.com…"
+         *   - add a lone `<link rel=preconnect href=…fonts.gstatic.com>` to
+         *     store/skin-quiz
+         *       → "/ar/skin-quiz/ still carries a preconnect … to a Google font
+         *         origin it no longer fetches anything from"
+         *   - remove the Fraunces link from store/app
+         *       → "/ar/app/ no longer links Google for its Latin faces"
+         */
+        $googleCss = preg_match_all('/fonts\.googleapis\.com\/css2\?family=[^"\']*/', $html);
+        $googleHints = preg_match_all('/<link[^>]+(?:preconnect|dns-prefetch)[^>]+fonts\.(?:googleapis|gstatic)\.com/', $html);
+
+        if ($url === '/app/') {
+            expect($googleCss)->toBeGreaterThanOrEqual(1,
+                '/ar/app/ no longer links Google for its Latin faces. If it was converted,'
+                .' move it into the list below and say so in docs/BG-STANDALONE-DOCUMENTS.md §3.5,'
+                .' which argues for leaving it alone.');
+        } else {
+            expect($googleCss)->toBe(0,
+                "/ar{$url} is back on fonts.googleapis.com for its Latin faces. It serves Poppins"
+                .' from this shop through partials/poppins-face.blade.php.');
+            expect($googleHints)->toBe(0,
+                "/ar{$url} still carries a preconnect or dns-prefetch to a Google font origin it no"
+                .' longer fetches anything from, which costs a connection and buys nothing.');
+        }
     }
 });
 

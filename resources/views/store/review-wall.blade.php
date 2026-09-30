@@ -82,9 +82,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {!! $seo ?? '' !!}
 {!! app(\App\Services\Analytics::class)->headTags() !!}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">{{--
+{{-- Poppins, served by this shop rather than by Google.            (Lane BG)
+     The twin of the Arabic-face include below, which did the same for Cairo
+     and left the Latin half linking a render-blocking third-party stylesheet.
+     The partial's own header carries the measurement. --}}@include('partials.poppins-face'){{--
     AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
 
     The webfont link above carries no Arabic glyph. Before this, /ar/reviews/

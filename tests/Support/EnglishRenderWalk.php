@@ -1671,11 +1671,30 @@ final class EnglishRenderWalk
              * <style id="kbb-poppins">…</style> with no nested <style>, so the
              * lazy match ends at its own close; the flag bar's rule above needs
              * two levels of </div> for exactly the reason this one does not.
+             *
+             * ▲ 33 BECAME 37, AND FOUR PRELOADS STAYED FOUR.            (Lane BG)
+             *
+             * The four pages that gained it are the standalone documents — the
+             * journal, an article, the review wall and the skin quiz — which
+             * carry their own <head> and were still linking
+             * fonts.googleapis.com while the other 33 were served from this
+             * origin. Their removals are the three rules paired with this one
+             * in approvedRemovals(); they are three rather than one because the
+             * four documents asked Google for three different weight lists.
+             *
+             * POPPINS 500 JOINED WebFonts IN THE SAME CHANGE and this count did
+             * NOT move by a fifth preload, which is the thing worth watching
+             * here: `{4}` is still `{4}` because WebFonts::NO_PRELOAD_WEIGHTS
+             * keeps 500 out of the preload list. Fifteen faces are inside the
+             * <style> block and four are preloaded. If a later lane preloads
+             * 500, this pattern stops matching and the count falls to 0 —
+             * loudly, which is correct: it is critical-path bandwidth taken
+             * from the LCP image.
              */
             'the self-hosted Poppins faces (Lane PERF)' => [
                 'pattern' => '#(?:<link rel="preload" as="font" type="font/woff2" crossorigin href="[^"]+">\n){4}'
                     .'<style id="kbb-poppins">.*?</style>\n#s',
-                'hits' => 33,
+                'hits' => 37,
             ],
 
             /*
@@ -1746,6 +1765,38 @@ final class EnglishRenderWalk
             'the Place-order overlay on the checkout (Lane PLC)' => [
                 'pattern' => '#\n<!--kbb-placing-->.*?<!--/kbb-placing-->\n#s',
                 'hits' => 1,
+            ],
+
+            /*
+             * THE SHOP'S DESIGNED PAGE BACKGROUND, on the two documents that
+             * were white — Lane BG, and it has NO removal paired with it.
+             *
+             * TWO pages, the journal and an article. They do not extend
+             * layouts/store.blade.php and so never loaded kbb.css, where the
+             * designed `body` rule lives, and they rendered
+             * rgb(255,255,255) with no background-image while every other
+             * storefront page rendered rgb(253,239,243) and five layers.
+             * Measured with getComputedStyle on ten URLs, before and after.
+             *
+             * UNPAIRED ON PURPOSE. Every other rule in this method replaces
+             * something; this one adds a background where there was none, so
+             * there is nothing on the before side to cut. That is also why it
+             * is the one insertion here that is a VISIBLE change rather than a
+             * neutral one: docs/BG-STANDALONE-DOCUMENTS.md §5 costs the three
+             * ways of delivering it and this is the cheapest honest one, at
+             * +1,093 gzipped bytes and no extra request.
+             *
+             * `.*?` IS SAFE BECAUSE OF THE id, exactly as it is for
+             * kbb-poppins: the block is <style id="kbb-page-background">…
+             * </style> with no nested <style>. The artwork inside it is 9,130
+             * bytes of URL-encoded SVG and is held byte-identical to kbb.css's
+             * own copy by StandaloneDocumentHeadTest, so a lane that edits one
+             * and not the other is red there rather than silently different
+             * here.
+             */
+            'the designed page background on the journal and an article (Lane BG)' => [
+                'pattern' => '#<style id="kbb-page-background">.*?</style>#s',
+                'hits' => 2,
             ],
         ];
     }
@@ -1824,6 +1875,58 @@ final class EnglishRenderWalk
             'the footer column headings as h5 (Lane PERF)' => [
                 'pattern' => '#<div class="fcol"><h5>[^<]*</h5>#',
                 'hits' => 87,
+            ],
+
+            /*
+             * THE GOOGLE FONTS REQUEST ON THE FOUR STANDALONE DOCUMENTS.
+             *                                                        (Lane BG)
+             *
+             * Paired with 'the self-hosted Poppins faces', whose count went
+             * from 33 to 37 in the same change. Lane PERF self-hosted Poppins
+             * for every page that extends layouts/store.blade.php; these four
+             * carry their own <head> and were missed, so the journal, an
+             * article, the review wall and the skin quiz were still fetching a
+             * render-blocking stylesheet from a third-party origin.
+             *
+             * THREE RULES FOR FOUR PAGES, and the split is the documents' own:
+             * each had hand-written its head, so no two asked Google for the
+             * same thing. The journal and an article agree (400;500;600;700 and
+             * no connection hints at all); the review wall asked for 800 as
+             * well and hinted twice; the skin quiz asked for 300 too and hinted
+             * once. Keeping them separate is deliberate — one merged rule with
+             * `[^"]*` where the weights go would go on matching after somebody
+             * changed a weight list, which is the regression this file exists
+             * to notice, and it is the same argument the rule above this one
+             * makes for naming the layout's weights.
+             *
+             * WEIGHT 500 IS THE REASON THIS COULD HAPPEN AT ALL. All four asked
+             * for 500 and WebFonts carried 400/600/700/800, so converting them
+             * before would have dropped a weight. App\Support\WebFonts' note has
+             * the measurement: a target of 500 was resolving to the 400 face on
+             * 106 visible elements across the shop, so 500 was added and these
+             * four lost nothing. The skin quiz's 300 was measured the same way
+             * and dropped: zero elements at font-weight 300 on seven of eight
+             * pages, one invisible one on the eighth.
+             */
+            'the Google Fonts request on the journal and an article (Lane BG)' => [
+                'pattern' => '#\n<link href="https://fonts\.googleapis\.com/css2\?family=Poppins:'
+                    .'wght@400;500;600;700&display=swap" rel="stylesheet">\n#',
+                'hits' => 2,
+            ],
+
+            'the Google Fonts request on the review wall (Lane BG)' => [
+                'pattern' => '#\n<link rel="preconnect" href="https://fonts\.googleapis\.com">\n'
+                    .'<link rel="preconnect" href="https://fonts\.gstatic\.com" crossorigin>\n'
+                    .'<link href="https://fonts\.googleapis\.com/css2\?family=Poppins:'
+                    .'wght@400;500;600;700;800&display=swap" rel="stylesheet">#',
+                'hits' => 1,
+            ],
+
+            'the Google Fonts request on the skin quiz (Lane BG)' => [
+                'pattern' => '#\n<link rel="preconnect" href="https://fonts\.googleapis\.com">\n'
+                    .'<link href="https://fonts\.googleapis\.com/css2\?family=Poppins:'
+                    .'wght@300;400;500;600;700;800&display=swap" rel="stylesheet">\n#',
+                'hits' => 1,
             ],
 
         ];
