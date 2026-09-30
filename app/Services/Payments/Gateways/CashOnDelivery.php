@@ -104,13 +104,36 @@ class CashOnDelivery implements PaymentGateway, SettlesPayments
          * difference is that the funnel checks it on the row re-read under a
          * lock rather than on whatever this instance happened to be carrying.
          */
-        app(\App\Services\Orders\OrderStatus::class)->moveTo(
+        $moved = app(\App\Services\Orders\OrderStatus::class)->moveTo(
             $order,
             'processing',
             by: 'system',
             reason: 'Cash on delivery: the order goes straight to the warehouse.',
             only: ['status' => 'pending'],
         );
+
+        /*
+         * ▲ AND THE ANSWER IS READ, BECAUSE placed() IS A CLAIM ABOUT THE ROW.
+         *
+         * The precondition above says "only an order still waiting to be paid
+         * for is moved on". Until this check existed, the refusal was silent:
+         * moveTo() declined to touch an order somebody had cancelled and this
+         * method returned PaymentStart::placed() anyway, so place() went on to
+         * show the receipt, send the confirmation and leave the units claimed
+         * for an order the shop had already given up on. The guard prevented
+         * the write and not the consequence, which is the whole of this defect
+         * family — see Store\CheckoutReturnController::restore() and
+         * CheckoutController::cardAbandoned(), where it cost a basket.
+         *
+         * `null` here is unambiguous, unlike on the two basket legs: this call
+         * moves `pending` to `processing`, so "already there with nothing else
+         * to record" cannot arise — the precondition IS `pending` and the
+         * target is not. A null therefore means exactly one thing, the
+         * precondition did not hold, and it can be tested directly.
+         */
+        if ($moved === null) {
+            return PaymentStart::failed('That order is no longer awaiting payment.');
+        }
 
         return PaymentStart::placed();
     }

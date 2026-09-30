@@ -22,8 +22,30 @@ rm -f "$OUT"/needles/*.jsonl
 # KBB_WP_DB BELONGS ON THIS RUN TOO. It is an ordinary full suite, so it reaches
 # the WordPress-exporter harness exactly as `vendor/bin/pest` does, and a run
 # without it collides with any other lane's (CLAUDE.md).
-: "${KBB_WP_DB:=kbb_wp_plc}"
+#
+# ── DERIVED FROM THE WORKTREE, NOT HARDCODED TO THE LANE THAT WROTE THIS ────
+#
+# This read `: "${KBB_WP_DB:=kbb_wp_plc}"`. The moment the tool merged, ANOTHER
+# LANE RAN IT: `php vendor/bin/pest -c /home/user/lane-bg/storage/plc-logs/
+# plc-needle-phpunit.xml` was on the process list within the hour, and with that
+# default it would have driven kbb_wp_plc -- Lane PLC's database -- from Lane
+# BG's worktree, dropping and rebuilding the WordPress harness tables under
+# whatever Lane PLC was running. That is precisely the collision CLAUDE.md names,
+# shipped inside the tool meant to find false greens.
+#
+# A shared tool must not carry one lane's name as a default. The worktree
+# already knows which lane it is, so the database is named from it and every
+# lane that runs this gets its own without being told.
+if [ -z "${KBB_WP_DB:-}" ]; then
+  KBB_WP_DB=kbb_wp_$(basename "$APP" | sed 's/^lane-//')
+fi
 export KBB_WP_DB
+
+# Created here rather than left as a step in a comment somebody has to notice:
+# the harness DROPS the tables it uses, so a missing database is a failed run
+# and a shared one is a failure in somebody else's.
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`$KBB_WP_DB\`;" 2>/dev/null || true
+echo "wp harness database: $KBB_WP_DB"
 
 python3 - "$APP" "$CFG" <<'KBBCFGPY'
 import sys, re

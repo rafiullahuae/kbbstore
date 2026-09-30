@@ -676,8 +676,8 @@ it('publishes a saved SEO title and description into the storefront head', funct
     $html = (string) test()->get('/product/'.$product->slug.'/')->getContent();
 
     expect($html)
-        ->toContain('Glow Serum | Best price in Dubai')
-        ->toContain('Authentic Korean glow serum, delivered across the UAE.');
+        ->toContain('<title>Glow Serum | Best price in Dubai</title>')
+        ->toContain('<meta name="description" content="Authentic Korean glow serum, delivered across the UAE.">');
 });
 
 /* ------------------------------------------------------------ the guard itself */

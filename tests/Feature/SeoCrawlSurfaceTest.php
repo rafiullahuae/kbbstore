@@ -246,7 +246,7 @@ it('gives each curated listing its own description and a self-referencing canoni
     // that is specifically the stock that has just landed.
     $head = scsHead(scsGet('/new-in'));
 
-    expect($head)->toContain('The latest Korean skincare to land')
+    expect($head)->toContain('<meta name="description" content="The latest Korean skincare to land')
         ->toContain('<link rel="canonical" href="' . SCS_BASE . '/new-in/">');
 
     // Two collections must not describe themselves identically.

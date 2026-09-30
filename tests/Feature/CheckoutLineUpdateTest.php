@@ -137,7 +137,7 @@ it('raises the quantity and returns the re-rendered summary, totals and bag stri
      */
     expect($line->fresh()->unit_price)->toBe(13500);
     expect($response->json('itemsHtml'))
-        ->toContain('Barrier Cream')
+        ->toContain('<div class="n">Barrier Cream</div>')
         ->toContain('405');
 
     // 2. The totals block, which opens with the free-delivery bar. Subtotal is
@@ -184,7 +184,7 @@ it('removes a line on quantity zero and keeps the rest of the bag', function () 
 
     expect($cart->items()->count())->toBe(1);
     expect($response->json('itemsHtml'))
-        ->toContain('Staying Put')
+        ->toContain('<div class="n">Staying Put</div>')
         ->not->toContain('Going Away');
 });
 

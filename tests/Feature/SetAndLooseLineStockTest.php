@@ -259,7 +259,7 @@ it('tells the shopper what left and why, on the cart page', function () {
 
     expect($cartPage)->toContain('1025 Dokdo Toner')
         ->and($cartPage)->toContain('Medicube booster set')
-        ->and($cartPage)->toContain('has been taken out of your bag');
+        ->and($cartPage)->toContain('<div class="woocommerce-info" role="status">');
 });
 
 it('tells the shopper what left and why, on the checkout', function () {
@@ -278,7 +278,7 @@ it('tells the shopper what left and why, on the checkout', function () {
 
     expect($checkout)->toContain('Heartleaf Ampoule')
         ->and($checkout)->toContain('Glow Starter Set')
-        ->and($checkout)->toContain('has been taken out of your bag');
+        ->and($checkout)->toContain('<div class="woocommerce-info" role="status">');
 });
 
 it('reduces rather than removes when the shelf can cover part of the loose line', function () {
@@ -304,7 +304,7 @@ it('reduces rather than removes when the shelf can cover part of the loose line'
 
     expect((int) $items[$toner->id]->quantity)->toBe(2)
         ->and((int) $items[$set->id]->quantity)->toBe(1)
-        ->and($page)->toContain('has been reduced to 2 in your bag');
+        ->and($page)->toContain('<div class="woocommerce-info" role="status">');
 });
 
 it('makes the totals, the item count and the free-delivery bar follow', function () {

@@ -776,8 +776,8 @@ it('writes SEO to the column the storefront publishes from', function () {
     $html = (string) test()->get('/product/'.$product->slug.'/')->getContent();
 
     expect($html)
-        ->toContain('Hydrating Toner | KBB')
-        ->toContain('A gentle Korean toner for dry skin');
+        ->toContain('<title>Hydrating Toner | KBB</title>')
+        ->toContain('<meta name="description" content="A gentle Korean toner for dry skin');
 });
 
 it('applies noindex to the page when the owner asks for it', function () {
