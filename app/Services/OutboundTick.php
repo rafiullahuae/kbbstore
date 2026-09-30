@@ -14,11 +14,22 @@ use function Illuminate\Support\defer;
  * ===========================================================================
  * THE CONSTRAINT, STATED PLAINLY
  * ===========================================================================
- * There is no queue worker on this host. There is no shell, no supervisor and
- * no cron — CLAUDE.md says so, Support\ProductVisibility's header says so, and
- * the image-sizes and product-editor screens both exist in the shape they do
- * because of it. So `queue:work` is not an option that is merely inconvenient;
- * there is nothing on this server that could run it.
+ * There is no queue worker on this host, and nothing in this application is
+ * queued: NothingHereOutlivesOneRequestTest pins that as a fact rather than a
+ * belief, and is red the day it stops being one.
+ *
+ * ▲ THE REASON THIS HEADER GAVE HAS GONE STALE, AND THE CONCLUSION HAS NOT.
+ * It used to read "there is no shell, no supervisor and no cron — CLAUDE.md
+ * says so", and inferred from that that `queue:work` was not merely
+ * inconvenient but impossible. THE SHELL EXISTS NOW: the live shop moved from
+ * the old shared Hostinger box to Cloudways, which provides SSH, and CLAUDE.md
+ * was corrected on 24 September 2026 — it records that believing otherwise had
+ * already cost real time. About a hundred comments in app/ still carry the old
+ * premise; they were right about the host they were written for.
+ *
+ * What is still true is the only thing this design needs: NO WORKER AND NO CRON
+ * IS CONFIGURED, so nothing here may assume one will run. The design stands on
+ * that, not on the impossibility of ever having one. (Lane SEC)
  *
  * That forces one thing above all others: NOTHING HAPPENS UNLESS A REQUEST
  * HAPPENS. Whatever triggers a send has to be a web request, because a web

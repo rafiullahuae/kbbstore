@@ -281,8 +281,12 @@ it('renders the screen as script, not as literal Blade', function () {
     expect($html)->toContain("var SCREEN = 'slimfooter';")
         ->and($html)->toContain('.sfs-wrap{');
 
-    $from = strpos($html, "var SCREEN = 'slimfooter';");
-    $mine = substr($html, (int) $from, 18000);
+    /* THIS SCREEN'S REGION, AS A RELATIONSHIP. (Lane SEC) This was
+       `substr($html, $from, 18000)` against a region of 20,709 bytes, so the
+       last 2,709 were never checked by these negative assertions. */
+    $mine = Tests\Support\ConsoleScreen::region($html, 'slimfooter');
+
+    expect($mine)->not->toBe('', 'the slimfooter screen is not on the console at all');
 
     expect($mine)->not->toContain('@json(')
         ->and($mine)->not->toContain('@php')

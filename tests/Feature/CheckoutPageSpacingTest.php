@@ -327,10 +327,15 @@ it('carries the multiplier into the mobile stepper override as well', function (
      */
     $css = copCss();
 
-    $at = strpos($css, '.kbb-checkout .qty .co-q{');
-    expect($at)->not->toBeFalse();
+    /* THE RULE, TO ITS OWN CLOSING BRACE. (Lane SEC) This was
+       `substr($css, $at, 320)` against a rule of 374 bytes, so the last 54 were
+       never read — and the last assertion below is NEGATIVE, so it did not
+       fail, it stopped looking. A `width:23px` in that tail shipped silently
+       and the mutation note under this case was true only for the first 320
+       bytes. Tests\Support\CssRule carries the measurement. */
+    $rule = Tests\Support\CssRule::at($css, '.kbb-checkout .qty .co-q{');
 
-    $rule = substr($css, (int) $at, 320);
+    expect($rule)->not->toBe('', 'the .co-q rule is not in this stylesheet at all');
 
     expect($rule)->toContain('width:calc(23px * var(--cop-qtys))')
         ->and($rule)->toContain('min-width:calc(23px * var(--cop-qtys))')

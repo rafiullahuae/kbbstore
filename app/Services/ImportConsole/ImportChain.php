@@ -34,12 +34,17 @@ use function Illuminate\Support\defer;
  * =============================================================================
  * THE MECHANISM, AND WHY THIS ONE
  * =============================================================================
- * NOTHING RUNS ON THIS HOST UNLESS A REQUEST RUNS IT. No shell, no cron, no
- * queue worker, no supervisor — CLAUDE.md, and App\Services\OutboundTick's
- * header spells out what that forecloses. `queue:work` is not inconvenient
- * here, there is nothing on the server that could execute it, and the owner
+ * NOTHING RUNS ON THIS HOST UNLESS A REQUEST RUNS IT. No cron and no queue
+ * worker is configured, nothing in this application is queued, and the owner
  * configures cron through a hosting panel this code must not require him to
- * open.
+ * open. App\Services\OutboundTick's header spells out what that forecloses,
+ * and NothingHereOutlivesOneRequestTest pins it.
+ *
+ * ▲ "NO SHELL" USED TO BE PART OF THIS SENTENCE AND IS NO LONGER TRUE: the live
+ * shop is on Cloudways, which provides SSH, and CLAUDE.md was corrected on
+ * 24 September 2026. The conclusion is unchanged, because it never needed that
+ * clause — what this design requires is that nothing is RUNNING to pick work
+ * up, not that nothing could ever be installed. (Lane SEC)
  *
  * So the question is not "how do we run a background job" but "what makes the
  * NEXT request happen when there is no browser to make it". There is exactly
