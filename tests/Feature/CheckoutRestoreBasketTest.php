@@ -139,6 +139,20 @@ function rbAs(Cart $cart)
         ->withUnencryptedCookie(CartService::COOKIE, $cart->token);
 }
 
+/**
+ * An error bag sitting in the session, exactly as `redirect()->withErrors('...')`
+ * leaves one: `parseErrors()` wraps a bare string in a MessageBag under the
+ * `default` key, and `$errors->first()` is what the page then prints.
+ *
+ * Used by the stale-offer case below, which needs A flashed error on the basket
+ * page and does not care which of the shop's redirects put it there.
+ */
+function rbFlashedError(string $message): Illuminate\Support\ViewErrorBag
+{
+    return (new Illuminate\Support\ViewErrorBag)
+        ->put('default', new Illuminate\Support\MessageBag([$message]));
+}
+
 /** The whole return leg: the provider sends them back, and the page they land on. */
 function rbComeHome(Cart $cart, Order $order)
 {
@@ -282,6 +296,99 @@ it('finds the basket after the cookie has moved on, which it always has', functi
 
 /* ══════════════ 2. the set case the coordinator asked for by name ══════════ */
 
+it('does not throw a good offer away when the shopper comes back to the return address', function () {
+    /*
+     * ▲ FOUND BY THE SHOT RUN, IN CHROMIUM, AND IT IS THE THIRD FACE OF THE
+     * SAME COOKIE. The shot script re-armed the offer by visiting
+     * /checkout/pending a second time and the run printed "(no restore button
+     * on the page — the offer was not written)" — which is the shop, not the
+     * script.
+     *
+     * rememberRestorable() FORGOT BOTH KEYS FIRST and then re-derived the
+     * basket from the LIVE cookie. By a second visit that cookie has moved on:
+     * the basket page mints an empty `active` cart for the `converted` token
+     * and re-cookies the browser (see the case above). So the second visit
+     * found nothing to offer, having just discarded an offer that was still
+     * perfectly good — and the remembered token with it, which is the only
+     * handle on that basket there is. The button was gone for good, on a
+     * basket sitting one row away, for a shopper whose only mistake was the
+     * Back button.
+     *
+     * REACHABLE THREE WAYS: the browser's Back button onto the return address,
+     * a provider that sends the shopper twice, and a reload of
+     * /checkout/pending itself.
+     *
+     * An offer that still names THIS order and whose remembered basket is
+     * still `converted` with rows in it now SURVIVES the visit, and nothing is
+     * re-derived over it. Same one query either way.
+     *
+     * MUTATION, run: forget the two keys unconditionally at the top of
+     * rememberRestorable() again → both session assertions below go red and
+     * the press answers "there is nothing to put back".
+     */
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]]);
+
+    rbComeHome($cart, $order);
+
+    // The empty cart the basket page minted on the way in, and its cookie.
+    $fresh = Cart::create([
+        'token' => Str::random(32), 'currency' => 'AED', 'status' => 'active',
+        'shipping_country' => 'AE', 'last_activity_at' => now(),
+    ]);
+
+    // The provider's return address a second time, carrying the NEW cookie.
+    rbAs($fresh)->get('/checkout/pending?order='.$order->order_number)->assertRedirect();
+
+    expect(session(CheckoutReturnController::RESTORABLE_KEY))->toBe($order->order_number)
+        ->and(session(CheckoutReturnController::RESTORABLE_CART_KEY))->toBe($cart->token);
+
+    // And the way back still works, which is the whole point of keeping it.
+    rbAs($fresh)->post('/checkout/restore-basket');
+
+    expect($cart->fresh()->status)->toBe('active')
+        ->and($order->fresh()->status)->toBe('failed');
+});
+
+it('drops a held offer once its basket has gone, rather than drawing a dead button', function () {
+    /*
+     * THE OTHER HALF OF KEEPING AN OFFER, and it is what stops the fix above
+     * from becoming the defect it repaired. An offer is kept only while its
+     * REMEMBERED basket is still `converted` with rows in it — so a basket that
+     * has already been put back in another tab, or one the abandoned-cart sweep
+     * has taken, drops the offer instead of leaving a button whose only
+     * possible answer is "There is nothing to put back".
+     *
+     * MUTATION, run: keep the offer on the order number alone — drop
+     * `&& $this->stillRestorable($held)` from rememberRestorable() → the offer
+     * survives a basket that is no longer there and the button is drawn over
+     * it, red on both assertions below.
+     */
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]]);
+
+    rbComeHome($cart, $order);
+
+    expect(session(CheckoutReturnController::RESTORABLE_KEY))->toBe($order->order_number);
+
+    // Another tab got there first: the basket is live again and is not the
+    // `converted` row the offer was written against.
+    $cart->forceFill(['status' => 'active', 'converted_at' => null])->save();
+
+    $fresh = Cart::create([
+        'token' => Str::random(32), 'currency' => 'AED', 'status' => 'active',
+        'shipping_country' => 'AE', 'last_activity_at' => now(),
+    ]);
+
+    rbAs($fresh)->get('/checkout/pending?order='.$order->order_number)->assertRedirect();
+
+    expect(session(CheckoutReturnController::RESTORABLE_KEY))->toBeNull()
+        ->and(session(CheckoutReturnController::RESTORABLE_CART_KEY))->toBeNull();
+
+    // And the page says the reason without offering a way back.
+    $html = rbAs($fresh)->get('/cart/')->assertOk()->getContent();
+
+    expect($html)->not->toContain('Put my basket back');
+});
+
 it('brings a set-and-loose basket back THROUGH the reconciler, not around it', function () {
     /*
      * ▲ THE ONE THAT WOULD HAVE RE-CREATED THE OWNER'S OWN BUG.
@@ -418,6 +525,171 @@ it('will not follow the shopper onto a later order', function () {
         ->and($abandoned->fresh()->status)->toBe('pending')
         ->and($cart->fresh()->status)->toBe('converted')
         ->and($response->headers->get('Location'))->toContain('/cart');
+});
+
+it('keeps the way back on a reload, which is the whole reason the offer is not a flash', function () {
+    /*
+     * ▲ MEASURED, AND IT CONTRADICTED THE PARTIAL'S OWN DOCBLOCK. The offer is
+     * kept in a session value rather than a flash, and rememberRestorable()
+     * says why in as many words: "a flash survives exactly one request, so
+     * reloading the basket page would take the button away while the basket is
+     * still perfectly restorable."
+     *
+     * It took it away anyway. The partial's outer gate was
+     * `@if ($errors->any() || $kbbReturnRestored)`, and the flashed reason is
+     * consumed by the first render — so the second GET of /cart/ drew NO band
+     * and NO button while `kbb_restorable` was still sitting in the session,
+     * naming a `converted` basket with rows in it. Probed in this suite before
+     * the fix:
+     *
+     *     offer still set            RB77263
+     *     first render has button    true
+     *     reload has button          FALSE
+     *     reload has band            FALSE
+     *
+     * A shopper who reloaded, or wandered off to /shop/ and came back, had no
+     * way back to their basket at all — the exact state this round exists to
+     * end, one request later.
+     *
+     * MUTATION, run: drop `|| $kbbReturnRestorable` from the partial's outer
+     * @if and the reload assertions below go red while the first render stays
+     * green, which is the shape of the defect.
+     */
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]]);
+
+    rbComeHome($cart, $order);
+
+    $first = rbAs($cart)->get('/cart/')->assertOk()->getContent();
+
+    expect($first)->toContain('Put my basket back');
+
+    // The same page again, with the flash long consumed.
+    $again = rbAs($cart)->get('/cart/')->assertOk()->getContent();
+
+    expect($again)->toContain('Put my basket back')
+        ->and($again)->toContain('/checkout/restore-basket')
+        // The provider's name came off the flash, so the reload says the
+        // sentence that does not claim one.
+        ->and($again)->toContain('Your payment was not completed, so your order has not been placed.');
+
+    // And it still works after the reload, which is the point of drawing it.
+    rbAs($cart)->post('/checkout/restore-basket');
+
+    expect($cart->fresh()->status)->toBe('active')
+        ->and($order->fresh()->status)->toBe('failed');
+});
+
+it('draws the basket page\'s own flashed reasons, which nothing drew before', function () {
+    /*
+     * ▲ A NAMED CONSEQUENCE OF THIS PARTIAL, NOT AN ACCIDENT, and the owner
+     * should hear it as a change rather than find it.
+     *
+     * /cart/ never printed $errors at all before this lane — measured: no
+     * `errors` anywhere in store/cart.blade.php at the base commit. One
+     * pre-existing redirect already flashed one there and nothing drew it:
+     * CheckoutController's empty-basket guard answers a Place order press on a
+     * basket that is gone with `redirect('/cart/')->withErrors('Your bag is
+     * empty.')`. That is the SAME defect class this whole round is about — a
+     * sentence the shop wrote for the shopper and then swallowed — so it is
+     * drawn now, in the band beside it.
+     *
+     * It matters more than tidiness: that redirect is exactly where a declined
+     * shopper ends up when they do what round one predicted and press Place
+     * order again on the unchanged form. Drawing the band there is what puts
+     * "Put my basket back" in front of them on the page they actually reach.
+     *
+     * MUTATION, run: print the standing sentence unconditionally in the
+     * partial — `{{ __('store.checkout.return_not_completed') }}` in place of
+     * `{{ $errors->first() ?: __(...) }}` → the flashed reason is swallowed
+     * again and this goes red.
+     *
+     * Dropping `$errors->any()` from the outer @if does NOT bite here and is
+     * not the mutation for this case: `kbb_restorable` is set on this walk, so
+     * the band still draws through the restorable branch and still prints
+     * $errors->first(). It bites on a basket page with a flash and no offer,
+     * which is every OTHER redirect that flashes an error to /cart/.
+     */
+    [$cart, $order] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]]);
+
+    rbComeHome($cart, $order);
+
+    // The empty-basket guard's own flash, in the shape withErrors() leaves it.
+    test()->withSession(['errors' => rbFlashedError('Your bag is empty.')]);
+
+    $html = rbAs($cart)->get('/cart/')->assertOk()->getContent();
+
+    /*
+     * ▲ THE NEEDLE IS THE BAND AND THE SENTENCE TOGETHER, and it has to be.
+     * A bare `toContain('Your bag is empty.')` PASSED THE MUTATION — measured,
+     * 2 occurrences on this page — because the cart drawer renders that exact
+     * string, period and all, in its own `.empty-d` line on every page of the
+     * shop:
+     *
+     *     <div class="empty-d">Your bag is empty.<br>Add something glowy ✨</div>
+     *
+     * So the assertion was green whether or not the band drew anything. This
+     * needle is produced by nothing but the band.
+     */
+    expect($html)->toContain('class="co-note err" role="alert">Your bag is empty.')
+        // The offer names THIS order, so the way back is offered with it.
+        ->and($html)->toContain('Put my basket back');
+});
+
+it('does not draw a button that cannot work, once kbb_last_order has moved on', function () {
+    /*
+     * ▲ A CONTROL THAT DOES NOTHING IS ITS OWN DEFECT, and this lane has paid
+     * for that lesson once already: last commit's button answered "There is
+     * nothing to put back" over a basket sitting one row away. This is the
+     * other half of the same shape, and it was found by reading the partial's
+     * gate against restore()'s rather than by a screenshot.
+     *
+     * restore() refuses an offer that no longer names `kbb_last_order` — the
+     * case directly above, which protects a later order from the button. But
+     * the PARTIAL drew the button on the strength of `kbb_restorable` being
+     * set at all. So the shop offered a way back that its own endpoint was
+     * about to refuse, and the shopper's press earned them the generic
+     * "There is nothing to put back" over a basket that really was there.
+     *
+     * REACHABLE, not theoretical. place() overwrites `kbb_last_order` on
+     * every order and never clears the offer, so a shopper who abandons at
+     * Tamara and then places a second order carries a stale one. Its own
+     * empty-basket guard — CheckoutController, 'Your bag is empty.' — then
+     * redirects to /cart/ WITH an error, which is the flash used here, in the
+     * shape redirect()->withErrors() leaves it.
+     *
+     * MUTATION, run: gate the partial on the session key alone again
+     * (`trim((string) session(RESTORABLE_KEY, '')) !== ''`) and the button is
+     * back on a page where pressing it is refused — red on both needles.
+     */
+    [$cart, $abandoned] = rbAwayAtTheProvider([[rbProduct('Rice Toner'), 1]]);
+
+    rbComeHome($cart, $abandoned);
+
+    // The second order, which is the one `kbb_last_order` now names.
+    [, $second] = rbAwayAtTheProvider([[rbProduct('Snail Essence'), 1]]);
+
+    test()->withSession([
+        'kbb_last_order' => $second->order_number,
+        CheckoutReturnController::RESTORABLE_KEY => $abandoned->order_number,
+        CheckoutReturnController::RESTORABLE_CART_KEY => $cart->token,
+        'errors' => rbFlashedError('Your bag is empty.'),
+    ]);
+
+    $html = rbAs($cart)->get('/cart/')->assertOk()->getContent();
+
+    /*
+     * The sentence is still drawn — this case is about the button, not the
+     * band, and a stale offer must not swallow the shopper's reason. The needle
+     * is the band together with the sentence because the cart drawer renders
+     * 'Your bag is empty.' on its own account; see the case above.
+     *
+     * It also pins the band for a flash with NO usable offer, which is what
+     * every other redirect that flashes an error to /cart/ produces, and which
+     * nothing else in this file reaches.
+     */
+    expect($html)->toContain('class="co-note err" role="alert">Your bag is empty.')
+        ->and($html)->not->toContain('Put my basket back')
+        ->and($html)->not->toContain('/checkout/restore-basket');
 });
 
 it('says the same thing for an order number that is not this session\'s', function () {

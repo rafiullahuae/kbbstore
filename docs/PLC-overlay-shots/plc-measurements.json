@@ -22,7 +22,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "input-text"
+    "focus": "input-text",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "overlay-working",
@@ -51,7 +54,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "overlay-no-backdrop",
@@ -80,7 +86,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "overlay-tick",
@@ -110,7 +119,10 @@
     "notice": null,
     "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 30
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "pressToTickMs": 23
   },
   {
     "shot": "overlay-leaving",
@@ -139,7 +151,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "failure-real-refusal",
@@ -169,7 +184,10 @@
       "border": "rgb(243, 196, 206)",
       "weight": "600"
     },
-    "focus": "co-note err"
+    "focus": "co-note err",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "return-after-decline",
@@ -189,9 +207,57 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
-    "noticeStyle": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
     "focus": " dvs-ticks",
-    "order": "10013"
+    "restoreButtons": 1,
+    "restoreBox": {
+      "w": 196,
+      "h": 38,
+      "font": "13px",
+      "bg": "rgb(224, 86, 123)"
+    },
+    "bandText": "Your payment was not completed at Pay later with Tamara, so your order has not been placed",
+    "order": "10012"
+  },
+  {
+    "shot": "return-reload-keeps-the-way-back",
+    "width": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": " dvs-ticks",
+    "restoreButtons": 1,
+    "restoreBox": {
+      "w": 196,
+      "h": 38,
+      "font": "13px",
+      "bg": "rgb(224, 86, 123)"
+    },
+    "bandText": "Your payment was not completed, so your order has not been placed. Nothing has been charge",
+    "order": "10012"
   },
   {
     "shot": "basket-restored",
@@ -211,9 +277,46 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
-    "noticeStyle": null,
+    "noticeStyle": {
+      "bg": "rgb(238, 248, 241)",
+      "color": "rgb(31, 125, 82)",
+      "border": "rgb(191, 224, 205)",
+      "weight": "600"
+    },
     "focus": " dvs-ticks",
-    "order": "10013"
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": "Your basket is back. The order that did not complete has been cancelled and nothing was ch",
+    "order": "10012"
+  },
+  {
+    "shot": "return-band-without-a-way-back",
+    "width": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": "Your payment was not completed, so your order has not been placed. Nothing has been charge"
   },
   {
     "shot": "return-tick",
@@ -238,7 +341,10 @@
     "buttonsDisabled": [],
     "notice": null,
     "noticeStyle": null,
-    "focus": " dvs-ticks"
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "return-confirming",
@@ -263,7 +369,10 @@
     "buttonsDisabled": [],
     "notice": null,
     "noticeStyle": null,
-    "focus": " dvs-ticks"
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "timeout-no-answer",
@@ -294,7 +403,10 @@
       "weight": "600"
     },
     "focus": "co-note err",
-    "abortWaitedMs": 45184
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "abortWaitedMs": 45119
   },
   {
     "shot": "real-cod-tick",
@@ -324,7 +436,10 @@
     "notice": null,
     "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 108,
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "pressToTickMs": 91,
     "intercepted": false
   },
   {
@@ -347,6 +462,9 @@
     "notice": null,
     "noticeStyle": null,
     "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
     "intercepted": false
   },
   {
@@ -377,7 +495,10 @@
     "notice": null,
     "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 26
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "pressToTickMs": 25
   },
   {
     "shot": "arabic-working",
@@ -406,7 +527,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "checkout-resting",
@@ -431,7 +555,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "input-text"
+    "focus": "input-text",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "overlay-working",
@@ -460,7 +587,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "overlay-no-backdrop",
@@ -489,7 +619,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "overlay-tick",
@@ -519,7 +652,10 @@
     "notice": null,
     "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 40
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "pressToTickMs": 53
   },
   {
     "shot": "overlay-leaving",
@@ -548,7 +684,10 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "failure-real-refusal",
@@ -578,7 +717,10 @@
       "border": "rgb(243, 196, 206)",
       "weight": "600"
     },
-    "focus": "co-note err"
+    "focus": "co-note err",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "return-after-decline",
@@ -598,9 +740,57 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
-    "noticeStyle": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
     "focus": " dvs-ticks",
-    "order": "10017"
+    "restoreButtons": 1,
+    "restoreBox": {
+      "w": 196,
+      "h": 38,
+      "font": "13px",
+      "bg": "rgb(224, 86, 123)"
+    },
+    "bandText": "Your payment was not completed at Pay later with Tamara, so your order has not been placed",
+    "order": "10016"
+  },
+  {
+    "shot": "return-reload-keeps-the-way-back",
+    "width": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": " dvs-ticks",
+    "restoreButtons": 1,
+    "restoreBox": {
+      "w": 196,
+      "h": 38,
+      "font": "13px",
+      "bg": "rgb(224, 86, 123)"
+    },
+    "bandText": "Your payment was not completed, so your order has not been placed. Nothing has been charge",
+    "order": "10016"
   },
   {
     "shot": "basket-restored",
@@ -620,9 +810,46 @@
     "inert": 0,
     "buttonsDisabled": [],
     "notice": null,
-    "noticeStyle": null,
+    "noticeStyle": {
+      "bg": "rgb(238, 248, 241)",
+      "color": "rgb(31, 125, 82)",
+      "border": "rgb(191, 224, 205)",
+      "weight": "600"
+    },
     "focus": " dvs-ticks",
-    "order": "10017"
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": "Your basket is back. The order that did not complete has been cancelled and nothing was ch",
+    "order": "10016"
+  },
+  {
+    "shot": "return-band-without-a-way-back",
+    "width": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dir": "ltr",
+    "lang": "en",
+    "card": null,
+    "cardFont": null,
+    "overlayBg": null,
+    "backdrop": null,
+    "title": null,
+    "note": null,
+    "live": null,
+    "done": false,
+    "inert": 0,
+    "buttonsDisabled": [],
+    "notice": null,
+    "noticeStyle": {
+      "bg": "rgb(253, 236, 239)",
+      "color": "rgb(168, 47, 83)",
+      "border": "rgb(243, 196, 206)",
+      "weight": "600"
+    },
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": "Your payment was not completed, so your order has not been placed. Nothing has been charge"
   },
   {
     "shot": "return-tick",
@@ -647,7 +874,10 @@
     "buttonsDisabled": [],
     "notice": null,
     "noticeStyle": null,
-    "focus": " dvs-ticks"
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "return-confirming",
@@ -672,7 +902,10 @@
     "buttonsDisabled": [],
     "notice": null,
     "noticeStyle": null,
-    "focus": " dvs-ticks"
+    "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   },
   {
     "shot": "timeout-no-answer",
@@ -703,7 +936,10 @@
       "weight": "600"
     },
     "focus": "co-note err",
-    "abortWaitedMs": 45164
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "abortWaitedMs": 45186
   },
   {
     "shot": "real-cod-tick",
@@ -733,7 +969,10 @@
     "notice": null,
     "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 165,
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "pressToTickMs": 100,
     "intercepted": false
   },
   {
@@ -756,6 +995,9 @@
     "notice": null,
     "noticeStyle": null,
     "focus": " dvs-ticks",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
     "intercepted": false
   },
   {
@@ -786,7 +1028,10 @@
     "notice": null,
     "noticeStyle": null,
     "focus": "kbb-placing is-up is-done",
-    "pressToTickMs": 28
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null,
+    "pressToTickMs": 36
   },
   {
     "shot": "arabic-working",
@@ -815,6 +1060,9 @@
     ],
     "notice": null,
     "noticeStyle": null,
-    "focus": "kbb-placing is-up"
+    "focus": "kbb-placing is-up",
+    "restoreButtons": 0,
+    "restoreBox": null,
+    "bandText": null
   }
 ]

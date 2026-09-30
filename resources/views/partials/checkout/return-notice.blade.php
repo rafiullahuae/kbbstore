@@ -23,16 +23,17 @@
     backed out at the provider may still go back and finish, and killing their
     order the instant they touch our return address takes that away silently.
 
-    It is offered only when the controller has found something to put back —
-    `kbb_restorable` carries the order NUMBER, so it cannot follow the shopper
-    onto a later order — and reading the session costs the basket page no query
-    at all.
+    It is offered only when the controller has found something to put back AND
+    the offer still names the order `kbb_last_order` does — one reader,
+    CheckoutReturnController::offeredOrderNumber(), which restore() gates on
+    too, so a button is drawn exactly when pressing it would work. Reading it
+    costs the basket page no query at all.
 
     ── IT DRAWS NOTHING WITHOUT SOMETHING TO SAY, AND THAT IS LOAD-BEARING ─────
 
-    $errors is empty and neither session key is set on every ordinary visit to
-    the basket, so this renders as the empty string and the page is byte for
-    byte what it was — which is what keeps StorefrontEnglishUnchangedTest green
+    $errors is empty and no session key is set on every ordinary visit to the
+    basket, so this renders as the empty string and the page is byte for byte
+    what it was — which is what keeps StorefrontEnglishUnchangedTest green
     for /cart and (with a basket) /cart, neither of which is ever walked with a
     flashed message.
 
@@ -45,10 +46,14 @@
     nothing to say still ships not one byte of them.
 --}}
 @php
-    $kbbReturnRestorable = trim((string) session(\App\Http\Controllers\Store\CheckoutReturnController::RESTORABLE_KEY, '')) !== '';
+    // THE SAME COMPARISON restore() MAKES, not merely "is the key set". See
+    // CheckoutReturnController::offeredOrderNumber(): the offer carries an order
+    // NUMBER and `kbb_last_order` moves with every order, so asking only whether
+    // the key existed drew a button the endpoint was about to refuse.
+    $kbbReturnRestorable = \App\Http\Controllers\Store\CheckoutReturnController::offeredOrderNumber() !== '';
     $kbbReturnRestored = session(\App\Http\Controllers\Store\CheckoutReturnController::RESTORED_KEY) !== null;
 @endphp
-@if ($errors->any() || $kbbReturnRestored)
+@if ($errors->any() || $kbbReturnRestored || $kbbReturnRestorable)
 <style>
 .kbb-cartpage .co-notices{max-width:1040px;margin:0 auto;padding:0 0 14px}
 .kbb-cartpage .co-note{border-radius:12px;padding:12px 15px;font-size:13px;font-weight:600;line-height:1.5}
@@ -69,7 +74,12 @@
 @if ($kbbReturnRestored)
     <div class="co-note ok" role="status">{{ __('store.checkout.restore_done') }}</div>
 @else
-    <div class="co-note err" role="alert">{{ $errors->first() }}
+    {{-- $errors->first() is '' on a RELOAD, and the sentence has to survive one:
+         the offer is a session value rather than a flash precisely so that
+         reloading the basket page does not take the way back away, and drawing
+         nothing without a flash defeated that. The generic sentence is the one
+         that does not name a provider this request no longer knows. --}}
+    <div class="co-note err" role="alert">{{ $errors->first() ?: __('store.checkout.return_not_completed') }}
 @if ($kbbReturnRestorable)
         <form method="post" action="{{ \App\Support\Url::to('/checkout/restore-basket') }}">
             @csrf

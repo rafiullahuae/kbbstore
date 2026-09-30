@@ -85,12 +85,30 @@ async function measure(page, key, vp, extra = {}) {
          it READS as a refusal. `.co-note.err` had no rule at all until this
          round and computed identically to a neutral note. */
       noticeStyle: (() => {
-        const el = document.querySelector('#kbbPlacingNotice .co-note') || document.querySelector('.kbb-checkout .co-note.err');
+        const el = document.querySelector('#kbbPlacingNotice .co-note')
+          || document.querySelector('.kbb-checkout .co-note.err')
+          /* The BASKET page draws the same band from its own rules — the
+             partial ships them inline, because kbb-checkout.css is not loaded
+             on /cart/. Read it here so the two are comparable. */
+          || document.querySelector('.kbb-cartpage .co-note.err')
+          || document.querySelector('.kbb-cartpage .co-note.ok');
         if (!el) return null;
         const cs = getComputedStyle(el);
         return { bg: cs.backgroundColor, color: cs.color, border: cs.borderTopColor, weight: cs.fontWeight };
       })(),
       focus: document.activeElement ? (document.activeElement.className || document.activeElement.tagName) : null,
+      /* THE WAY BACK, counted rather than eyeballed. The offer is drawn only
+         when pressing it would work, so 0 and 1 are both meaningful states and
+         the shots have to say which one they are. */
+      restoreButtons: document.querySelectorAll('.co-restore').length,
+      restoreBox: (() => {
+        const b = document.querySelector('.co-restore');
+        if (!b) return null;
+        const r = b.getBoundingClientRect();
+        const cs = getComputedStyle(b);
+        return { w: Math.round(r.width), h: Math.round(r.height), font: cs.fontSize, bg: cs.backgroundColor };
+      })(),
+      bandText: document.querySelector('.kbb-cartpage .co-note')?.textContent.trim().slice(0, 90) || null,
     };
   });
 
@@ -370,6 +388,21 @@ async function step(name, fn) {
          * round 2 — the basket comes back, the order goes, and the page they
          * land on is the one App\Services\SetStockReconciler runs on.
          */
+        /*
+         * ▲ THE SAME PAGE AGAIN, WHICH IS WHERE THE WAY BACK USED TO VANISH.
+         *
+         * The reason is FLASHED and the offer is a SESSION VALUE, and the
+         * partial's outer gate asked only about the flash — so the second GET
+         * of /cart/ drew no band and no button while the offer was still live
+         * and the basket still sitting `converted`. Probed in the suite before
+         * the fix: offer set, first render button true, RELOAD FALSE. This is
+         * the shot of the reload, and `restoreButtons` in the measurements is
+         * the number that says it is there.
+         */
+        await page.goto(BASE + '/cart/', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(250);
+        await shot(page, 'return-reload-keeps-the-way-back', vp, { order });
+
         const button = await page.$('.co-restore');
 
         if (button) {
@@ -382,6 +415,33 @@ async function step(name, fn) {
       } else {
         console.log('  (no order row to return from — the refusal did not reach place())');
       }
+      await ctx.close();
+    });
+
+    /* 5b. THE BAND WITH NO WAY BACK UNDER IT — the basket page's other state,
+           and the one a control that does nothing would ruin.
+
+           ▲ ITS OWN CONTEXT, AND THAT IS THE POINT RATHER THAN TIDINESS. This
+           was first written as two more navigations inside the step above: a
+           bogus order number, then the real one again to re-arm. The re-arm
+           printed "(no restore button on the page — the offer was not
+           written)" twice over and cost this lane a wrong diagnosis before the
+           right one — because BOTH halves are the shop behaving correctly. A
+           number this session did not place takes pending()'s generic branch
+           and rememberRestorable() drops the offer, which it should; and after
+           /cart/ has re-cookied the browser there is no live cookie left that
+           names the `converted` basket, so nothing can be re-derived. The
+           offer is deliberately not resurrectable from a stranger's number.
+
+           A fresh context has no `kbb_last_order` at all, which is the state of
+           anybody who opens this address cold. `restoreButtons` 0 beside the
+           same band is the measurement. */
+    await step('block@' + vp.tag, async () => {
+      const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h } });
+      const page = await ctx.newPage();
+      await page.goto(BASE + '/checkout/pending?order=KBB-NOT-THIS-SESSION', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(250);
+      await shot(page, 'return-band-without-a-way-back', vp);
       await ctx.close();
     });
 
