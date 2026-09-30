@@ -1615,33 +1615,79 @@ body{padding-bottom:46px}
   --bg-corner:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20420%20380%27%20preserveAspectRatio%3D%27xMidYMid%20slice%27%3E%3Cg%20transform%3D%27translate%28-40%2C60%29%20rotate%28-18%29%20scale%282.0%29%27%20opacity%3D%270.34%27%3E%3Cpath%20d%3D%27M0%2C0%20C40%2C-36%2092%2C-30%20112%2C5%20C86%2C42%2034%2C42%200%2C0%20Z%27%20fill%3D%27%23EFA9BC%27%2F%3E%3Cpath%20d%3D%27M0%2C0%20C36%2C3%2078%2C7%20112%2C5%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.55%29%27%20stroke-width%3D%272.5%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M28%2C-14%20C40%2C-6%2052%2C-2%2066%2C0%20M46%2C-20%20C58%2C-11%2070%2C-6%2084%2C-3%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.32%29%27%20stroke-width%3D%271.6%27%20fill%3D%27none%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2880%2C-30%29%20rotate%2842%29%20scale%281.6%29%27%20opacity%3D%270.26%27%3E%3Cpath%20d%3D%27M0%2C0%20C40%2C-36%2092%2C-30%20112%2C5%20C86%2C42%2034%2C42%200%2C0%20Z%27%20fill%3D%27%23B9D6C1%27%2F%3E%3Cpath%20d%3D%27M0%2C0%20C36%2C3%2078%2C7%20112%2C5%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.55%29%27%20stroke-width%3D%272.5%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M28%2C-14%20C40%2C-6%2052%2C-2%2066%2C0%20M46%2C-20%20C58%2C-11%2070%2C-6%2084%2C-3%27%20stroke%3D%27rgba%28255%2C255%2C255%2C.32%29%27%20stroke-width%3D%271.6%27%20fill%3D%27none%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%28190%2C150%29%20scale%281.4%29%27%20opacity%3D%270.3%27%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%280%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%2845%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%2890%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28135%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28180%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28225%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28270%29%27%2F%3E%3Cellipse%20cx%3D%270%27%20cy%3D%27-32%27%20rx%3D%2717%27%20ry%3D%2734%27%20fill%3D%27%23F7C6D4%27%20transform%3D%27rotate%28315%29%27%2F%3E%3Ccircle%20r%3D%2713%27%20fill%3D%27%23EFAF6B%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2830%2C340%29%20rotate%28-12%29%20scale%281.2%29%27%20opacity%3D%270.28%27%20stroke%3D%27%23E8A7B8%27%20fill%3D%27none%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%3E%3Cpath%20d%3D%27M0%2C0%20C20%2C-40%2040%2C-80%2044%2C-130%27%2F%3E%3Cellipse%20cx%3D%2714%27%20cy%3D%27-30%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%28-26%2014%20-30%29%27%2F%3E%3Cellipse%20cx%3D%27-8%27%20cy%3D%27-46%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%2824%20-8%20-46%29%27%2F%3E%3Cellipse%20cx%3D%2726%27%20cy%3D%27-64%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%28-30%2026%20-64%29%27%2F%3E%3Cellipse%20cx%3D%272%27%20cy%3D%27-84%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%2820%202%20-84%29%27%2F%3E%3Cellipse%20cx%3D%2734%27%20cy%3D%27-100%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%28-34%2034%20-100%29%27%2F%3E%3Cellipse%20cx%3D%2712%27%20cy%3D%27-118%27%20rx%3D%2713%27%20ry%3D%277%27%20fill%3D%27%23E8A7B8%27%20stroke%3D%27none%27%20transform%3D%27rotate%2818%2012%20-118%29%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --bg-wave:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%201200%20900%27%20preserveAspectRatio%3D%27xMidYMid%20slice%27%3E%3Cpath%20d%3D%27M0%2C600%20C240%2C510%20380%2C690%20640%2C600%20C860%2C524%201000%2C668%201200%2C584%20L1200%2C900%20L0%2C900%20Z%27%20fill%3D%27rgba%28255%2C255%2C255%2C.20%29%27%2F%3E%3Cpath%20d%3D%27M0%2C690%20C260%2C606%20420%2C766%20700%2C690%20C900%2C630%201040%2C748%201200%2C678%20L1200%2C900%20L0%2C900%20Z%27%20fill%3D%27rgba%28255%2C255%2C255%2C.14%29%27%2F%3E%3C%2Fsvg%3E");
 }
-/* ── THE PAGE BACKGROUND. ────────────────────────────────── (Lane BG)
-   THE DRAWING AND THE TILING ARE GONE, AND THE OWNER ASKED FOR THAT:
-   "you put some image on background of the whole site, which i don't want …
-   not continue type". `var(--bg-botanical)` was the drawing -- leaves, petals
-   and flowers as 9,130 bytes of SVG -- and `repeat-y` is what tiled it down
-   the page. Both are out of this rule. The artwork itself is NOT deleted: three
-   other rules still use it and its siblings on home-page panels, the footer and
-   the card thumbnails, and none of those is "the background of the whole site".
-   Appearance -> Page background -> "Botanical drawing" puts it back here, and
-   ships OFF.
+/* ── THE PAGE BACKGROUND: "Corner light". ─────────────────── (Lane BG)
 
-   THE GRADIENT IS A VARIABLE BECAUSE THE OWNER IS STILL CHOOSING IT. He asked
-   for "from one corner to another … some gradient type colors, not just one"
-   and for previews to choose from. The five candidates are in
-   docs/BG-BACKGROUND-CANDIDATES.md; picking a letter replaces the ONE
-   declaration below and nothing else. Until he picks, this is the gradient the
-   shop already had, minus the drawing it carried. */
+   The owner chose it from five previews -- "B / Corner light is fine" -- after
+   rejecting what was here: "you put some image on background of the whole
+   site, which i don't want. i needed just light color, from one corner to
+   another, not continue type, and such color will change continues slidghtly
+   and very lightely … some gradient type colors, not just one."
+
+   Four things, and all four are answered here. No drawing: `--bg-botanical` is
+   gone from the page background (it is still drawn on the home-page panels, the
+   footer and the card thumbnails, which are not "the background of the whole
+   site", and Appearance -> Page background -> Botanical drawing puts it back).
+   No tiling: nothing repeats. Corner to corner: 115deg, which runs mostly
+   ACROSS the page. Four colours, not one. And it moves, slowly.
+
+   ── IT IS THREE FIXED LAYERS, NOT background-attachment:fixed ─────────────
+
+   The gradient has to stay put while the page scrolls, or it is stretched over
+   the whole document and each screenful shows one flat colour instead of a
+   diagonal. MEASURED at 390 on a 5,600px page, sampling the same viewport point
+   at the top, the middle and the bottom:
+
+       background-attachment:scroll   255,245,236 -> 254,249,251 -> 253,234,243
+       background-attachment:fixed    254,250,252 -> 254,250,252 -> 255,251,253
+       a fixed-POSITION layer         254,250,252 -> 254,250,252 -> 254,250,252
+
+   `scroll` destroys the thing he asked for. `fixed` holds it and is the one
+   declaration with a real cost -- on iOS Safari it forces a repaint of the
+   whole background on every scroll frame. A fixed-position LAYER is exactly
+   locked, to the byte, and carries none of that cost: it is an ordinary
+   composited element, which is the same reason App\Services\PageWash paints
+   its wash on layers rather than on the body. So `background-attachment` is
+   gone from this rule entirely, and the owner was not asked about a trade-off
+   that turned out not to be one.
+
+   ── AND THE SLOW SHIFT IS THIS GRADIENT'S OWN, AT ITS OWN 300s ───────────
+
+   Three moments of the SAME 115deg gradient with its stop positions slid along
+   the axis (38/72 -> 49/83 -> 60/94), crossfaded by opacity. Only `opacity`
+   animates, on layers the compositor owns, so nothing here touches layout or
+   costs a paint -- the same mechanism, and the same reasoning, as the wash's.
+   Under `prefers-reduced-motion` there is no animation at all and moment one is
+   what shows.
+
+   THE COLOUR WASH IS A DIFFERENT THING AND STAYS OFF. It is the owner's
+   optional override with its own palettes and its own geometry (soft radial
+   blobs, not a diagonal). It writes these same three pseudo-elements from a
+   <style> later in the head, so switching it on REPLACES this background rather
+   than sitting on top of it. One background at a time, never two. */
 :root{
-  --kbb-page-gradient:linear-gradient(180deg,#FCE7EE 0%,#FDF2F5 26%,#FFF7F4 55%,#FBEAF0 100%);
+  --kbb-page-gradient:linear-gradient(115deg,#FFF1E4 0%,#FFFFFF 38%,#FDECF4 72%,#FCE7F1 100%);
+  --kbb-page-gradient-b:linear-gradient(115deg,#FFF1E4 0%,#FFFFFF 49%,#FDECF4 83%,#FCE7F1 100%);
+  --kbb-page-gradient-c:linear-gradient(115deg,#FFF1E4 0%,#FFFFFF 60%,#FDECF4 94%,#FCE7F1 100%);
 }
 body{
   background-color:#FDEFF3;
-  background-image:var(--kbb-page-gradient);
-  background-size:auto;
-  background-position:0 0;
-  background-repeat:no-repeat;
-  background-attachment:fixed;
+  background-image:none;
+}
+html::before,body::before,body::after{
+  content:'';display:block;position:fixed;inset:0;pointer-events:none;
+}
+html::before{z-index:-4;background:var(--kbb-page-gradient)}
+body::before{z-index:-2;opacity:0;background:var(--kbb-page-gradient-b)}
+body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
+@keyframes kbb-page-b{0%{opacity:0}33%{opacity:1}66%{opacity:0}100%{opacity:0}}
+@keyframes kbb-page-c{0%{opacity:0}33%{opacity:0}66%{opacity:1}100%{opacity:0}}
+@media(prefers-reduced-motion:no-preference){
+  body::before{animation:kbb-page-b 300s ease-in-out infinite}
+  body::after{animation:kbb-page-c 300s ease-in-out infinite}
+}
+@media print{
+  html::before,body::before,body::after{display:none}
+  body{background-color:#fff}
 }
 .kbb-home .sec{position:relative}
 .kbb-home .sec > .wrap{

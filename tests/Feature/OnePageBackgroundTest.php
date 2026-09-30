@@ -65,24 +65,71 @@ function bgDeclaresBackground(string $rule): bool
     return (bool) preg_match('/(^|[{;])\s*background(-color|-image)?\s*:/', $rule);
 }
 
-it('gives body a page background in exactly one place', function () {
-    $withBackground = [];
+it('paints the page background in exactly one place, and it is a layer now', function () {
+    /*
+     * ▲ THE PAGE BACKGROUND MOVED OFF `body` AND ONTO A LAYER. (Lane BG)
+     *
+     * This case used to require exactly ONE body rule in the three sheets to
+     * declare a background, and that it was kbb.css's `background-color:#FDEFF3`
+     * under the designed gradient. The owner then chose "Corner light" from
+     * five previews, and it is painted on `html::before` -- a fixed-position
+     * layer -- rather than on `body`, because `background-attachment:fixed` is
+     * the only other way to keep a diagonal from being stretched over the whole
+     * document and it costs a full-background repaint per scroll frame on iOS
+     * Safari. Measured at 390 on a 5,600px page, sampling one viewport point at
+     * the top, middle and bottom:
+     *
+     *     attachment:scroll   255,245,236 -> 254,249,251 -> 253,234,243
+     *     attachment:fixed    254,250,252 -> 254,250,252 -> 255,251,253
+     *     a fixed-POSITION layer   254,250,252 -> 254,250,252 -> 254,250,252
+     *
+     * THE GUARD IS THE SAME GUARD. What it exists to catch is two rules fighting
+     * over the page background -- the defect that had /shop/ white while the home
+     * page was pink -- and that question is now asked about the layer and about
+     * `body` together.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+    $css = (string) preg_replace('#/\*.*?\*/#s', '', $css);
+
+    preg_match_all('/(?:^|[}\n])\s*(html::before\s*\{[^}]*\})/m', $css, $m);
+
+    expect($m[1])->toHaveCount(1, 'kbb.css paints '.count($m[1]).' html::before layers; one is the'
+        .' page background and a second would sit on top of it invisibly');
+
+    expect($m[1][0])->toContain('var(--kbb-page-gradient)')
+        ->and($m[1][0])->toContain('z-index:-4');
+
+    /*
+     * `position:fixed` is in the SHARED block, not in the rule above -- the
+     * three layers declare their box once between them. Asserting it on
+     * html::before alone was the first shape here and it failed on correct CSS,
+     * which is the same "read the wrong node" mistake this lane spent a round
+     * removing from other people's tests.
+     */
+    expect($css)->toContain("html::before,body::before,body::after{")
+        ->and($css)->toContain('position:fixed')
+        ->and($css)->toContain('pointer-events:none');
+
+    /*
+     * AND NO BODY RULE IN ANY OF THE THREE SHEETS PAINTS AN IMAGE. The flat
+     * colour under the layer is fine and is what stops a frame with nothing
+     * behind the text; a second background IMAGE is the thing that fights.
+     */
+    $imaged = [];
 
     foreach (['kbb.css', 'kbb-shop.css', 'kbb-product.css'] as $file) {
         foreach (bgBodyRules($file) as $rule) {
-            if (bgDeclaresBackground($rule)) {
-                $withBackground[] = $file.'  '.substr($rule, 0, 90);
+            if (preg_match('/(^|[{;])\s*background(-image)?\s*:\s*(?!none)/', $rule)) {
+                $imaged[] = $file.'  '.substr($rule, 0, 90);
             }
         }
     }
 
-    expect($withBackground)->toHaveCount(1, "the shop's page background is declared in "
-        .count($withBackground)." places:\n  ".implode("\n  ", $withBackground)
-        ."\n\nMore than one is how /shop/ came to be white while the home page was pink."
-        .' None at all means no page has a background.');
-
-    expect($withBackground[0])->toStartWith('kbb.css');
-    expect($withBackground[0])->toContain('background-color:#FDEFF3');
+    expect($imaged)->toBe([], "a body rule paints a page background image again:\n  "
+        .implode("\n  ", $imaged)
+        ."\n\nThe page background is html::before. A body background propagates to the canvas,"
+        .' which paints BEHIND every one of those layers, so a second one there is both a fight'
+        .' and invisible.');
 });
 
 it('leaves the two sheets that load after kbb.css out of it', function () {
@@ -105,15 +152,28 @@ it('leaves the two sheets that load after kbb.css out of it', function () {
     }
 });
 
-it('keeps kbb.css down to one type rule, one phone rule and one background rule', function () {
+it('keeps kbb.css down to a type rule, a phone rule, the flat colour and the print reset', function () {
+    /*
+     * ▲ THREE BECAME FOUR, AND THE FOURTH IS `@media print`. (Lane BG)
+     *
+     * "Corner light" paints on layers, so the page background's body rule is
+     * now a flat colour with `background-image:none`, and a print rule was
+     * added beside it that hides the three layers and puts the page back to
+     * white -- printed documents should not carry a gradient. This scanner
+     * reads body rules wherever they are, media query or not, so that print
+     * rule is the fourth. It is counted rather than excluded: a fifth body rule
+     * is still the thing worth noticing.
+     */
     $rules = bgBodyRules('kbb.css');
 
-    expect($rules)->toHaveCount(3, "kbb.css has ".count($rules)." body rules:\n  ".implode("\n  ", $rules));
+    expect($rules)->toHaveCount(4, 'kbb.css has '.count($rules)." body rules:\n  ".implode("\n  ", $rules));
 
     expect($rules[0])->toContain('font:400 14px/1.6 Outfit')
         ->and($rules[0])->not->toContain('background');
     expect($rules[1])->toContain('padding-bottom:46px');
-    expect($rules[2])->toContain('background-color:#FDEFF3');
+    expect($rules[2])->toContain('background-color:#FDEFF3')
+        ->and($rules[2])->toContain('background-image:none');
+    expect($rules[3])->toContain('background-color:#fff');
 });
 
 it('does not flatten the review wall or the skin quiz', function () {

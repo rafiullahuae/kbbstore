@@ -1,0 +1,162 @@
+[
+  {
+    "page": "home",
+    "bodyColor": "rgb(253, 239, 243)",
+    "bodyImage": "none",
+    "bodyAttachment": "scroll",
+    "baseLayer": {
+      "pos": "fixed",
+      "z": "-4",
+      "img": "linear-gradient(115deg, rgb(255, 241, 228) 0%, r…",
+      "events": "none"
+    },
+    "layerB": {
+      "z": "-2",
+      "opacity": "0",
+      "anim": "kbb-page-b",
+      "dur": "300s"
+    },
+    "layerC": {
+      "z": "-1",
+      "opacity": "0",
+      "anim": "kbb-page-c",
+      "dur": "300s"
+    },
+    "scrollWidth": 1280,
+    "bodyHeight": 8573,
+    "hasMotif": false
+  },
+  {
+    "page": "home@390",
+    "scrollWidth": 390,
+    "bodyHeight": 10360
+  },
+  {
+    "page": "shop",
+    "bodyColor": "rgb(253, 239, 243)",
+    "bodyImage": "none",
+    "bodyAttachment": "scroll",
+    "baseLayer": {
+      "pos": "fixed",
+      "z": "-4",
+      "img": "linear-gradient(115deg, rgb(255, 241, 228) 0%, r…",
+      "events": "none"
+    },
+    "layerB": {
+      "z": "-2",
+      "opacity": "2.15088e-07",
+      "anim": "kbb-page-b",
+      "dur": "300s"
+    },
+    "layerC": {
+      "z": "-1",
+      "opacity": "0",
+      "anim": "kbb-page-c",
+      "dur": "300s"
+    },
+    "scrollWidth": 1280,
+    "bodyHeight": 2867,
+    "hasMotif": false
+  },
+  {
+    "page": "shop@390",
+    "scrollWidth": 390,
+    "bodyHeight": 5629
+  },
+  {
+    "page": "product",
+    "bodyColor": "rgb(253, 239, 243)",
+    "bodyImage": "none",
+    "bodyAttachment": "scroll",
+    "baseLayer": {
+      "pos": "fixed",
+      "z": "-4",
+      "img": "linear-gradient(115deg, rgb(255, 241, 228) 0%, r…",
+      "events": "none"
+    },
+    "layerB": {
+      "z": "-2",
+      "opacity": "5.34079e-08",
+      "anim": "kbb-page-b",
+      "dur": "300s"
+    },
+    "layerC": {
+      "z": "-1",
+      "opacity": "0",
+      "anim": "kbb-page-c",
+      "dur": "300s"
+    },
+    "scrollWidth": 1280,
+    "bodyHeight": 2601,
+    "hasMotif": false
+  },
+  {
+    "page": "product@390",
+    "scrollWidth": 390,
+    "bodyHeight": 3840
+  },
+  {
+    "page": "cart",
+    "bodyColor": "rgb(253, 239, 243)",
+    "bodyImage": "none",
+    "bodyAttachment": "scroll",
+    "baseLayer": {
+      "pos": "fixed",
+      "z": "-4",
+      "img": "linear-gradient(115deg, rgb(255, 241, 228) 0%, r…",
+      "events": "none"
+    },
+    "layerB": {
+      "z": "-2",
+      "opacity": "0",
+      "anim": "kbb-page-b",
+      "dur": "300s"
+    },
+    "layerC": {
+      "z": "-1",
+      "opacity": "0",
+      "anim": "kbb-page-c",
+      "dur": "300s"
+    },
+    "scrollWidth": 1280,
+    "bodyHeight": 634,
+    "hasMotif": false
+  },
+  {
+    "page": "cart@390",
+    "scrollWidth": 390,
+    "bodyHeight": 709
+  },
+  {
+    "page": "journal",
+    "bodyColor": "rgb(253, 239, 243)",
+    "bodyImage": "none",
+    "bodyAttachment": "scroll",
+    "baseLayer": {
+      "pos": "fixed",
+      "z": "-4",
+      "img": "linear-gradient(115deg, rgb(255, 241, 228) 0%, r…",
+      "events": "none"
+    },
+    "layerB": {
+      "z": "-2",
+      "opacity": "0",
+      "anim": "kbb-page-b",
+      "dur": "300s"
+    },
+    "layerC": {
+      "z": "-1",
+      "opacity": "0",
+      "anim": "kbb-page-c",
+      "dur": "300s"
+    },
+    "scrollWidth": 1280,
+    "bodyHeight": 922,
+    "hasMotif": false
+  },
+  {
+    "page": "journal@390",
+    "scrollWidth": 390,
+    "bodyHeight": 1790
+  }
+]

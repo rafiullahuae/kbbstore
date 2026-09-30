@@ -1,7 +1,33 @@
 # Five backgrounds to choose from
 
-*Lane BG. **The drawing is already off** — that part you decided. The gradient
-is the part you are choosing: pick a letter and it ships.*
+*Lane BG. **Settled: you picked B, and B is live.** This page is kept as the
+record of what the five were and why B was recommended.*
+
+> **"B / Corner light is fine."**
+
+**What shipped:** 115°, `#FFF1E4 → #FFFFFF → #FDECF4 → #FCE7F1`, moving through
+three positions of the same gradient on a five-minute cycle. No drawing, no
+tiling, corner to corner, four colours. It is on every page of the shop,
+including the journal and articles.
+
+**Two things I decided rather than ask you about:**
+
+1. **The movement is this gradient's own**, not the older colour-wash feature.
+   They are different pictures — the wash is soft round blooms in its own
+   palettes — and running both would be two backgrounds fighting. The wash stays
+   off and remains yours to switch on; if you ever do, it replaces this one
+   rather than piling on top.
+2. **The background stays still while you scroll, and costs nothing to do so.**
+   The obvious way (`background-attachment:fixed`) makes iPhones repaint the
+   whole background on every scroll frame. Measured three ways at phone size on
+   a long page, sampling the same point at the top, middle and bottom: letting
+   it scroll stretches the gradient over the whole page so each screenful is one
+   flat colour (255,245,236 → 253,234,243); `fixed` holds it but drifts a shade;
+   painting it on a **fixed layer** is identical to the byte at every scroll
+   position and carries none of the phone cost. That is what shipped, so there
+   was no trade-off to put to you.
+
+---
 
 ## What you asked for, and what is in the way
 
