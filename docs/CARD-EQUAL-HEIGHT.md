@@ -305,6 +305,20 @@ All in `docs/card-shots/`, all Chromium, all with the measured numbers in
 | `card-ar-category-390/1280.png` | the same card on `/ar` — mirrored, with Arabic words in it |
 | `card-en-after-ar-390/1280.png` | English again from the same server, as the control |
 
+### And the typeface change moves none of it
+
+This branch was rebased onto the tip that carries Lane PLC's **Outfit for
+Poppins**, `public/build` was rebuilt against the merged stylesheets, and every
+shot above was taken again. **Every card height is identical to the figure it
+was under Poppins** — 321.95 at 320, 356.95 at 390, 416.77/416.75 at 1280, and
+the same for all four treatments — which is what a reservation built out of
+line-height ratios and lengths should do, and is the measurement that says so.
+
+The one number that did move is the one the narrow-screen rule is about: the
+struck original at 10.5px is **41.83px** of Outfit against 42.53px of Poppins,
+so 41.83 + 5 + 54.98 = **101.81 inside 104** and there is slightly more headroom
+than there was.
+
 ### Arabic
 
 The family is laid out on the logical axis and contains no `[dir]` selector, and
@@ -351,14 +365,16 @@ depends on out of CSS entirely, but it did not unpick the duplication: it is
 across would make eight controls live on four more pages in a release that was
 asked for something else. It wants a round of its own.
 
-**The Add to cart button is ellipsised at 320px, and it was before this lane.**
-Measured with a `Range` around the words: "ADD TO CART" is **84.97px** of text
-inside an **84px** content box (the button is 104px wide with `padding:0 10px`),
-so it prints "ADD TO CA…". One pixel. The button's width, padding and font size
-are byte-identical to what they were, and the fix — trimming the padding to
-`0 6px` below 380px — is a change to something the owner did not ask about, in a
-release that is about the card's height. Named here so the next round can take
-it in one line.
+**The Add to cart button was ellipsised at 320px, and another lane fixed it.**
+Measured on this branch before it was rebased: "ADD TO CART" was **84.97px** of
+text inside an **84px** content box (the button is 104px wide with
+`padding:0 10px`), so it printed "ADD TO CA…" — one pixel over, and it printed
+that before this lane as well. On the tip this branch now sits on, Lane PLC's
+typeface change (Outfit for Poppins) takes the same words to **84.00px** and it
+fits. Recorded rather than dropped, because the margin is a hundredth of a pixel
+wide: anything that widens that label — a longer translation, a heavier weight,
+a future typeface — brings the ellipsis straight back, and the fix is one line,
+`padding:0 6px` below 380px.
 
 **"Product name lines" does not govern this card's name box.**
 `.kbb-tile .kbb-card-nm` clamps to two lines and reserves two, and `--kbb-name-
