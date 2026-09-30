@@ -122,8 +122,13 @@ function psOffDefault(): array
         'grid_skin' => 'luxe',
         'card_radius' => 26,
         'image_ratio' => 'landscape',
-        'show_brand' => false,
-        'show_category' => false,
+        /* ▲ true, NOT false, FOR THESE TWO.                        (Lane CARD)
+           Their shipped default moved to false — the owner asked for the brand
+           line and the category eyebrow hidden in as many words — so `false` is
+           now the DEFAULT here and setting it would measure nothing. The
+           non-default value is switching them back on. */
+        'show_brand' => true,
+        'show_category' => true,
         'show_rating' => false,
         'show_was_price' => false,
         'show_discount' => false,
@@ -316,9 +321,19 @@ it('ships every wired control at the value the stylesheet was already falling ba
         ->and($values['star_colour'])->toBe('#E8A33D')
         ->and($values['cart_bg'])->toBe('#E0567B');
 
-    // All seven toggles ship ON, which is what makes bodyClass() empty and
-    // leaves the <body> class attribute byte-identical.
-    expect(app(ProductStyles::class)->bodyClass())->toBe('');
+    /*
+     * FIVE OF THE SEVEN TOGGLES SHIP ON, AND TWO SHIP OFF.        (Lane CARD)
+     *
+     * This read `->toBe('')` — all seven on, so the <body> class attribute was
+     * byte-identical after the package. Two of them moved: the owner asked for
+     * the brand line and the category eyebrow hidden by default in as many
+     * words ("i want to hide the brand name, category name by default"), and
+     * CLAUDE.md's rule 1 now says what he asked for ships on rather than
+     * waiting behind a switch. So bodyClass() carries those two classes, the
+     * <body> attribute moves by exactly that much, and nothing else on this
+     * screen changed — which is the claim the rest of this case still makes.
+     */
+    expect(app(ProductStyles::class)->bodyClass())->toBe('pc-nobrand pc-nocat');
 });
 
 /* ═════════ 4 · a value he set years ago does not surface on apply ═════════ */

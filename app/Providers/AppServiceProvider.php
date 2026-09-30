@@ -65,6 +65,24 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(\App\Services\VariantPricing::class);
 
         /*
+         * Appearance → Product styles, resolved once per request.    (Lane CARD)
+         *
+         * components/product-card.blade.php reads three of that screen's keys
+         * and runs once per tile, and ProductStyles::all() walks its whole
+         * schema through SettingsService::get() — which is a
+         * `Cache::rememberForever` per key. Measured: 24 × 29 = 696 cache reads
+         * on a /shop page, and about 87ms of the ~120ms it takes.
+         *
+         * `scoped` and not `singleton`, like the three above: a singleton would
+         * survive between requests on a queue worker and serve one shop's card
+         * settings to the next. Scoped also means
+         * `forgetScopedInstances()` clears it, which is how
+         * StorefrontQueryBudgetTest and every test that moves a setting and
+         * re-renders get a clean read — a static inside the class would not.
+         */
+        $this->app->scoped(\App\Services\ProductStyles::class);
+
+        /*
          * Bilingual foundation (Lane EP). Two bindings and nothing else.
          *
          * 1. __() READS THE DATABASE. Laravel's own translator is kept; only

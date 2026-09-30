@@ -138,6 +138,23 @@ function mScreenUrls(): array
  * the file moved: the field count is the same, every other screen is untouched,
  * and `grid_skin`'s label, help and type are as they were. Read before it was
  * advanced, and advanced for that change and nothing else.
+ *
+ * ── AND TWO MORE FIELDS ON THE SAME SCREEN ─────────────────────── Lane CARD ──
+ *
+ *     show_brand.default / .value      true -> false
+ *     show_category.default / .value   true -> false
+ *     show_brand.help / show_category.help   "" -> one sentence each
+ *
+ * The owner again, in as many words: "i want to hide the brand name, category
+ * name by default. only name, rating (if any), pricing and cart buttons." What
+ * moved is the shipped value of two controls that were already on this screen —
+ * they are still there, still switchable, and their key, type and label are
+ * untouched. The help text is new because a default that surprises somebody
+ * should say why on the screen itself.
+ *
+ * NOTHING ELSE in the file moved: the field count is the same, the other five
+ * "what the card shows" toggles still read true, and every other screen is
+ * untouched. Read field by field before it was advanced.
  */
 it('sends every module screen the payload it sent before the shared schema', function () {
     $owner = AdminUser::create([

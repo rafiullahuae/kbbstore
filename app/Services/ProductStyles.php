@@ -88,8 +88,38 @@ class ProductStyles
         'image_ratio'        => ['select', 'Image shape', 'square', '', ['square' => 'Square', 'portrait' => 'Portrait', 'tall' => 'Tall', 'landscape' => 'Landscape']],
 
         // ── What the card shows ──
-        'show_brand'         => ['bool',   'Brand name', true, ''],
-        'show_category'      => ['bool',   'Category label', true, ''],
+        /*
+         * ▲ TWO DEFAULTS MOVED FROM true TO false, AND THE OWNER ASKED FOR BOTH
+         *   IN AS MANY WORDS.                                      (Lane CARD)
+         *
+         * "i like this option, but i want to hide the brand name, category name
+         *  by default. only name, rating (if any), pricing and cart buttons"
+         *
+         * CLAUDE.md rule 1, as of 30 September: what he asked for is the shop's
+         * new state rather than a switch he has to go and find. The control is
+         * built anyway — he may want the line back, and a change with no way
+         * back is worse than no change — and the moved default is named in the
+         * commit rather than buried.
+         *
+         * THEY ARE NOT NEW CONTROLS. "Brand name" and "Category label" have sat
+         * on this screen since Lane AD wired it up, and adding a second pair
+         * somewhere else would be the "two answers to one question" the note
+         * above calls the thing this shop keeps paying for. What moved is the
+         * shipped value and — because the `.pc-no*` stylesheet rules that
+         * carried them reach only three pages of the shop — WHERE the decision
+         * is taken: components/product-card.blade.php reads these three keys and
+         * omits the markup. Its header carries that measurement.
+         *
+         * The migration beside this change deletes any stored row for the two,
+         * because a stored row is what stops a new default from being seen and
+         * a shop that has ever saved this screen has one at the old value.
+         *
+         * The other five did not move. The owner asked about the brand line and
+         * the category eyebrow, and rule 1's other half — everything he did not
+         * ask about ships byte-identical — is untouched.
+         */
+        'show_brand'         => ['bool',   'Brand name', false, 'Off: the owner asked the card to show the name, the rating, the price and the button.'],
+        'show_category'      => ['bool',   'Category label', false, 'Off, with Brand name, and for the same reason.'],
         'show_rating'        => ['bool',   'Stars and review count', true, ''],
         'show_was_price'     => ['bool',   'Was price', true, 'The struck-through original.'],
         'show_discount'      => ['bool',   'Discount badge', true, ''],
@@ -138,8 +168,47 @@ class ProductStyles
 
     public function __construct(private SettingsService $settings) {}
 
+    /**
+     * One resolved set of values per instance, and one instance per request.
+     *
+     * ── WHY THIS IS HERE, MEASURED RATHER THAN REASONED ───────── Lane CARD ──
+     *
+     * components/product-card.blade.php reads three of these keys, and it runs
+     * ONCE PER TILE. Every `$this->settings->get()` below calls
+     * SettingsService::all(), which is a `Cache::rememberForever` — so a
+     * 24-product /shop page was doing 24 × 29 = 696 cache reads for a set of
+     * values that cannot change inside one request.
+     *
+     * Measured on this branch's own preview, thirty sequential renders of
+     * /shop, three passes each way:
+     *
+     *     with a fresh all() per tile   6799 / 5576 / 6315 ms
+     *     with the values resolved once 3595 / 3811 / 3363 ms
+     *
+     * — about 87ms a page on a page that takes ~120. `StorefrontQueryBudgetTest`
+     * would never have seen it: it counts QUERIES, and this costs none.
+     *
+     * ── scoped, NOT singleton, AND NOT A STATIC ─────────────────────────────
+     *
+     * AppServiceProvider binds this class `scoped`, exactly as it binds
+     * CartService, SettingsService and VariantPricing, and for the reasons
+     * recorded there: a singleton would survive between requests on a queue
+     * worker, and a process-level static is the trap CLAUDE.md records against
+     * Setting::map() — it would survive `forgetScopedInstances()`, which is how
+     * both StorefrontQueryBudgetTest and every test in this repository that
+     * moves a setting and re-renders gets a clean read.
+     *
+     * save() drops it, so a screen that writes and then reads back in the same
+     * request sees what it wrote.
+     */
+    private ?array $resolved = null;
+
     public function all(): array
     {
+        if ($this->resolved !== null) {
+            return $this->resolved;
+        }
+
         $out = [];
 
         foreach (self::SCHEMA as $key => $def) {
@@ -147,7 +216,13 @@ class ProductStyles
             $out[$key] = $saved === null ? $def[2] : $this->cast($key, $saved);
         }
 
-        return $out;
+        return $this->resolved = $out;
+    }
+
+    /** Drop the resolved set, so the next all() reads the settings again. */
+    public function forgetResolved(): void
+    {
+        $this->resolved = null;
     }
 
     public function get(string $key): mixed
@@ -203,6 +278,11 @@ class ProductStyles
                 $this->settings->set($key, $this->cast($key, $value));
             }
         }
+
+        // The memo above is now a record of what this screen said BEFORE the
+        // save. A screen that writes and reads back in one request would
+        // otherwise be told its own change did not happen.
+        $this->resolved = null;
     }
 
     public function cssVariables(): string

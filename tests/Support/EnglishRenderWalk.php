@@ -2032,6 +2032,56 @@ final class EnglishRenderWalk
                 'pattern' => '#(?<=</div>)\s*<h1 class="bb-title".*?(?=<form class="cart)#s',
                 'hits' => 1,
             ],
+
+            /*
+             * THE BRAND LINE AND THE CATEGORY EYEBROW ON EVERY PRODUCT TILE.
+             *                                                      (Lane CARD)
+             *
+             * The owner, in as many words: "i want to hide the brand name,
+             * category name by default. only name, rating (if any), pricing and
+             * cart buttons." CLAUDE.md rule 1 as of 30 September says what he
+             * asked for is the shop's new state rather than a switch to go and
+             * find, so both ship hidden — and both are still controls, at
+             * Appearance → Product styles → Card content.
+             *
+             * UNPAIRED, because nothing replaces them: the two rows come off
+             * the card and the rows beneath move up. The stylesheet reserves
+             * their height as a grid track rather than as markup, so there is
+             * no "after" element to cut.
+             *
+             * WHAT IT DOES TO A PAGE, measured across the whole walk: 39 pages
+             * render, 9 lose one or both of these — 83 eyebrows and 110 brand lines, and on all 39 the rest of the
+             * document is identical. The eyebrow's diff is
+             *
+             *     before   …<div class="cb">⏎        <div class="kbb-card-cat">Skincare sets</div>        ⏎        <a class="cn"…
+             *     after    …<div class="cb">⏎                ⏎        <a class="cn"…
+             *
+             * — the eight spaces of the eyebrow's own line and the eight of the
+             * next line meet, which is why the pattern is the element and
+             * nothing around it.
+             *
+             * THE WORDS ARE INSIDE THE CUT, WHICH LOSES COVERAGE, AND IT IS
+             * BOUGHT BACK. `[^<]*` swallows the brand name and the category
+             * label on the before side, so this walk would no longer see
+             * somebody changing how either is printed. CardEqualHeightTest
+             * pins both directly — that the tile draws neither at the shipped
+             * defaults, that switching each on brings it back on /shop and on a
+             * category archive, and that the brand is still printed
+             * upper-cased — which is the sharper form of the same check.
+             *
+             * THE COUNTS ARE THE CLAIM. If the eyebrow stops being drawn in the
+             * old tree the count falls and this is red; if a later lane adds a
+             * storefront page with a grid on it the count rises and the number
+             * moves with it, deliberately.
+             */
+            'the category eyebrow on every product tile (Lane CARD)' => [
+                'pattern' => '#<div class="kbb-card-cat">[^<]*</div>#',
+                'hits' => 83,
+            ],
+            'the brand line on every product tile (Lane CARD)' => [
+                'pattern' => '#<span class="kbb-card-brand">[^<]*</span>#',
+                'hits' => 110,
+            ],
         ];
     }
 
