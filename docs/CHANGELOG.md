@@ -3,6 +3,106 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.330
+**The big one: your shop looks different.** New typeface, new product page, new
+homepage banner, new product card, new background. Apply after .329.
+
+---
+
+### THE TYPEFACE IS OUTFIT
+
+Everywhere, and it cost you **less** than Poppins did. Outfit is a variable font,
+so where Poppins needed five files your shop now loads **one** — 39,272 bytes
+across five files down to **32,292 in one**, and **one request where there were
+four**. The speed work from .325 is not undone; it is slightly better.
+
+Your header, every heading, every button, your card heights and — the one that
+mattered — **your checkout's form fields are identical to the hundredth of a
+pixel**. Arabic is untouched; it uses a different face and always did.
+
+Two things did move and are not being hidden: the home search box is 3px shorter
+and the footer 7–10px, because those take their height from the text rather than
+a fixed number.
+
+### THE PRODUCT PAGE IS LEDGER
+
+The design you picked, on mobile and desktop, and **the page does not end there** —
+frequently-bought-together, the tabs, your reviews, the related grid and the
+footer all follow it exactly as you asked.
+
+The photograph runs to both edges with the thumbnails floating on it, hairlines
+replace the boxes, and **the tab row now shows at every width** instead of
+collapsing into an accordion on phones.
+
+**And the "big bold font" is fixed — half of it by Outfit, before anyone touched
+it.** What you saw was 21px at weight 600, which wrapped to **three lines** in the
+old face. In Outfit the same settings wrap to **two**. The weight is now 500, the
+size 19px, and your longest product name went from five lines to four.
+
+### THE HOMEPAGE BANNER IS PICTURES, AND THE FLAG STRIP IS UNDER IT
+
+Simple image banners, swipeable both ways, with **no arrows or dots when there is
+only one picture**. 1920 × 550 on desktop, 500 × 600 on phones.
+
+**Each slide now takes two pictures** — the wide one and a phone one — with both
+sizes printed on the buttons at **Appearance → Banners**. A slide with no phone
+picture says so.
+
+And when a slide has no phone picture, your shop **makes the phone crop itself**,
+on the server. A phone downloads **80 KB instead of 458 KB** for the same picture,
+looking identical — the three quarters that get cropped away never leave the
+server.
+
+> Two fixes came out of this that you would have seen: a stray divider line under
+> your header on every phone homepage, and your banner's preload sitting 20 KB
+> into the page instead of at the top — which decides how fast your largest image
+> arrives.
+
+### THE PRODUCT CARD: NAME, RATING, PRICE, BUTTON
+
+Brand and category lines are **off**, as you asked. They are still switches at
+**Appearance → Product styles → Card content** if you want either back.
+
+**And the equal heights are now genuinely equal.** They were not before. A card
+stretches to match the others *in its own row*, and nothing lined it up with the
+row above — so on your real catalogue a category page had **three different
+heights on desktop and five on a phone**, and `/shop` at 320px had **seven**. Now
+one height per page, at 320, 390 and 1280, everywhere a product grid appears.
+
+Two things found in the pictures rather than the code: your **sale price was being
+cut off at 320px** (the shot read "AED 2…"), and one card treatment ran the sale
+price **under the button** on 5 of 12 tiles.
+
+Your shop page also got **87ms faster** — the card was reading its settings 696
+times on a 24-tile page.
+
+### THE BACKGROUND IS CORNER LIGHT
+
+The drawing is gone, the tiling with it. A light four-colour wash running corner
+to corner, shifting slowly over five minutes, and stopping completely on a phone
+set to reduce motion. If you ever want the leaves back, they are a switch at
+**Appearance → Page background**.
+
+> **Worth knowing before you look:** your own white panels cover **100% of the home
+> page's first screen**. So the background colours about **18% of /shop/, 16% of a
+> product page and 3% of the home page**. That is not a fault in the colour — it is
+> what sits on top of it.
+
+---
+
+### WHAT MOVED, AND WHAT DID NOT
+
+Five defaults moved and every one of them is something you asked for: the
+typeface, the product page, the banner, the card's two lines, the background.
+Everything you did not ask about is byte-identical.
+
+**This package runs migrations and needs them** — one adds the phone picture
+column, one makes the phone crops for the slides you already have, and one clears
+the compiled templates. Without them the shop applies the package and looks
+unchanged.
+
+---
+
 ## 2.60.329
 **Two more admin buttons that took your screen away, and a cache that answered
 for the wrong shop.** Apply after .328.
