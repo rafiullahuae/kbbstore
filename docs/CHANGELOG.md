@@ -3,6 +3,71 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.331
+**Your bundle rows were advertising the wrong discount.** Apply after .330.
+
+---
+
+### THE BADGE WAS CLAIMING A SAVING THAT WAS NOT THERE
+
+On a product with bundles, pressing **2-pack** changed the big price to AED 140
+and left everything around it alone. So the page read:
+
+> ~~AED 99~~ **AED 140** **−25%**
+
+next to a row that read **AED 149 / AED 140 / Save 6%**.
+
+The **−25%** was the single unit's discount, still sitting there. On a 2-pack
+discounted **6%** it is a **false claim about money**, on the screen where the
+customer is deciding. Every row on the page, before and after:
+
+| pressed | the row says | the price block said | now says |
+|---|---|---|---|
+| 1 unit | AED 74 | ~~99~~ 74 −25% | unchanged |
+| 2-pack | ~~149~~ 140 · Save 6% | ~~**99**~~ 140 **−25%** | ~~149~~ 140 **−6%** |
+| 3-pack | ~~223~~ 198 · Best value | ~~**99**~~ 198 **−25%** | ~~223~~ 198 **−11%** |
+| 50ml | ~~99~~ 79 · Save 20% | **AED 79**, no discount shown | ~~99~~ 79 **−20%** |
+| 100ml | ~~169~~ 127 · Best value | **AED 127**, no discount shown | ~~169~~ 127 **−25%** |
+
+The last two are the other half: on a product with **sizes**, the block showed
+the price and said nothing about the saving at all, because a product with
+variations carries no price of its own for the shop to mark down.
+
+### THE OBVIOUS FIX WOULD HAVE BROKEN THE VIEW THE PAGE OPENS ON
+
+Worth saying because it is not obvious. The "1 unit" row has no saving of its
+own — one unit at the sale price is just the sale price — so copying each row's
+figures straight into the block would have **removed "AED 99 / −25%" from the
+default view**, which is the product's real markdown and the number the page is
+mostly about. The two struck figures are different true things: **AED 99** is
+what one cost before the sale, **AED 149** is what two cost without the bundle
+deal. The block now shows whichever the pressed row actually means.
+
+### WHAT DID NOT CHANGE, AND WAS CHECKED RATHER THAN ASSUMED
+
+- **The bar that follows you down the page** already tracked the price
+  correctly and carries no discount badge by design. It was measured first,
+  found correct, and deliberately **left unable** to grow one — otherwise this
+  fix would have handed it the same bug while curing it above.
+- **Your Google listing did not move.** The price Google reads is written into
+  the page before the buy buttons exist. Measured pressing the 2-pack: the block
+  is **byte-identical, 5,424 bytes both times**. Nothing a customer clicks can
+  change what search engines are told.
+- **Arabic**: the percentage is composed on the server so it reads correctly
+  right-to-left, rather than being glued together in the browser where it would
+  not.
+
+> **One thing found and deliberately not changed:** a product with sizes opens
+> showing a **range** — "AED 69 – AED 127" — while the first size is already
+> highlighted below it. Pressing anything resolves it. Making the first view
+> agree would change what *every* product with sizes says before anyone touches
+> it, and that is your call, not a bug fix's.
+
+**This package carries JavaScript.** It must be applied as a whole; the price
+block is half template and half script and neither half works alone.
+
+---
+
 ## 2.60.330
 **The big one: your shop looks different.** New typeface, new product page, new
 homepage banner, new product card, new background. Apply after .329.
