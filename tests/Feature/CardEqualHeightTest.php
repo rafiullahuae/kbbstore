@@ -791,3 +791,220 @@ it('still puts no product tile on the basket or the checkout', function () {
             ->toBe(0, $what.' ('.$uri.') draws a product tile, and the owner excluded it by name');
     }
 });
+
+/* ═══ 6 · "everywhere" is bigger than the eight URLs somebody thought of ═══ */
+
+it('draws the card the owner asked for on the four curated collections too', function () {
+    /*
+     * ── THE ROUND THAT FOUND THESE MEASURED EIGHT URLs AND CALLED IT EVERY ──
+     *
+     * /new-in, /best-sellers, /super-sale and /everything-under-54-aed are four
+     * more pages of this shop that draw a product grid, and not one of them had
+     * ever been looked at. They are easy to miss for a specific reason worth
+     * writing down: CollectionController::COLLECTIONS keys them 'new-in',
+     * 'best-sellers', 'super-sale' and 'under-54', which reads exactly like
+     * /collections/<key>/ -- and routes/web.php mounts each at its own
+     * TOP-LEVEL path instead. A walk that guessed the URL got four 404s, and a
+     * 404 measures as "no product grid on this page", which reads like a pass.
+     *
+     * ── SO THE COUNT IS ASSERTED BEFORE ANYTHING ELSE IS ───────────────────
+     *
+     * Every claim below -- no brand line, no eyebrow -- is satisfied VACUOUSLY
+     * by a page that drew no card at all. That is the false-green shape this
+     * file's header lists twice, and the only guard against it is to say how
+     * many tiles the page is supposed to carry and check that first. Four
+     * products are created for each page's own selector, so the expected count
+     * is a number this test chose rather than whatever the catalogue happens to
+     * hold.
+     *
+     * MUTATION: make the card draw the brand line again -- remove the
+     * `$showBrand &&` guard from components/product-card.blade.php -- and this
+     * is red on all four pages with the brand count named. RUN.
+     *
+     * SECOND MUTATION, the one that proves the count is doing work: change the
+     * expected tile count to 0 and change the four paths to /new-in-typo etc.
+     * Without the count assertion the brand and eyebrow expectations stay GREEN
+     * on four 404 pages. RUN; that is exactly how these four went unmeasured.
+     */
+    for ($i = 0; $i < 4; $i++) {
+        cehProduct('ceh-cur-'.$i, 'Curated Ceramide Barrier Repair Night Cream '.$i, [
+            // On sale AND under AED 54, so one set of products satisfies the
+            // 'on_sale' and 'budget' selectors as well as 'newest'/'popular'.
+            // `price` is the regular figure and `sale_price` the markdown --
+            // there is no `regular_price` column; Product::effectivePrice() and
+            // compareAtPrice() read exactly this pair. tools/card-seed.php
+            // writes the same two.
+            'price' => 6000,
+            'sale_price' => 3000,
+            'created_at' => now(),
+        ]);
+    }
+
+    $pages = [
+        '/new-in' => 'New In',
+        '/best-sellers' => 'Best Sellers',
+        '/super-sale' => 'Super Sale',
+        '/everything-under-54-aed' => 'Everything under AED 54',
+    ];
+
+    foreach ($pages as $uri => $what) {
+        $html = cehGet($uri);
+
+        /*
+         * ▲ FIRST, AND THE REST OF THE CASE DEPENDS ON IT.
+         *
+         * BOUNDED RATHER THAN EXACT, and the bound is stated rather than
+         * discovered: at least the FOUR this test created for these four
+         * selectors, and never more than CollectionController::PER_PAGE, which
+         * is what a paginated collection may draw. An exact number is not
+         * available to assert -- 2026_08_27_100000_seed_demo_catalogue draws a
+         * demo catalogue into every test database, so these pages render the
+         * demo products plus this test's four and the figure is a property of
+         * that fixture rather than of this case. The floor is what does the
+         * work: ZERO is the shape that makes every expectation below vacuous,
+         * and zero is what a 404 or a mis-guessed URL produces.
+         */
+        $tiles = cehCount($html, 'kbb-card kbb-tile');
+
+        expect($tiles)->toBeGreaterThanOrEqual(
+            4,
+            $what.' ('.$uri.') drew '.$tiles.' product tiles — fewer than the four this test created for it, so every expectation below it would be vacuous'
+        );
+        expect($tiles)->toBeLessThanOrEqual(
+            24,
+            $what.' ('.$uri.') drew '.$tiles.' product tiles, past CollectionController::PER_PAGE — it is not paginating'
+        );
+
+        expect(cehCount($html, 'kbb-card-brand'))
+            ->toBe(0, $what.' still prints the brand line the owner asked to hide');
+
+        expect(cehCount($html, 'kbb-card-cat'))
+            ->toBe(0, $what.' still prints the category eyebrow the owner asked to hide');
+    }
+});
+
+it('gives the Frequently Bought Together strip the stylesheet it never had', function () {
+    /*
+     * ── THE ONE PRODUCT TILE ON THIS SHOP THAT HAD NO CSS AT ALL ───────────
+     *
+     * partials/fbt.blade.php draws a tile per bundle item and is the only
+     * product-tile surface outside the cart that never went through
+     * <x-product-card>. Its own header says why nobody noticed: "The plugin
+     * ships its own CSS for this block, so no theme stylesheet is involved" --
+     * true of the WordPress original, where the KBB Modules plugin styled it.
+     * THE PLUGIN'S CSS WAS NEVER PORTED, so in this Laravel app the block had
+     * no rules whatsoever and rendered as a wall of inline text.
+     *
+     * Measured in Chromium on the preview, module on, before this block
+     * existed -- .kbb-fbt-item heights:
+     *
+     *     @320    18 / 81 / 156 / 210      four heights
+     *     @390    18 / 60 / 81  / 114      four heights
+     *     @1280   18 / 114                 two heights
+     *
+     * and after: 175.94 at all three widths, one height.
+     * docs/card-shots/fbt-before-390.png and fbt-after-390.png are the pair.
+     *
+     * MUTATION: replace `var(--fbt-name-slot)` in `.kbb-fbt-item`'s
+     * grid-template-rows with `auto` and this is red. RUN, and re-measured in
+     * Chromium with the sheet rebuilt: the strip went back to TWO heights at
+     * all three widths -- 159.06 where the name fits one line and 175.94 where
+     * it takes two -- which is the same defect as the rating row on the shared
+     * card, arrived at from the other end. (The first draft of this note
+     * guessed 151.94/168.83 from reading the CSS; the measurement is what
+     * these numbers are, and the two did not agree.)
+     *
+     * A SECOND MUTATION for the clamp: delete `-webkit-line-clamp` from
+     * `.kbb-fbt-name` and the track is still reserved but a three-line name
+     * OVERFLOWS it, so the name runs into the price. RUN.
+     */
+    $css = cehCss('kbb-product.css');
+    $rules = (string) preg_replace('#/\*.*?\*/#s', '', $css);
+
+    expect(str_contains($rules, '.kbb-fbt-item'))
+        ->toBeTrue('the FBT strip has no stylesheet again — every item is as tall as its own name wraps');
+
+    // The reservation is a calc() over the numbers the name row is drawn with,
+    // so the track cannot drift from the row it reserves.
+    expect(preg_match('/--fbt-name-slot:\s*calc\(([^;]+)\)/', $rules, $m))
+        ->toBe(1, '--fbt-name-slot is not a calc() over the name row\'s own numbers');
+
+    foreach (['--fbt-name-fs', '--fbt-name-lh', '--fbt-name-lines'] as $term) {
+        expect(str_contains($m[1], $term))
+            ->toBeTrue('--fbt-name-slot does not read '.$term.', so the reservation can drift from the row it reserves');
+    }
+
+    // And the item SPENDS it, in a grid-template-rows that also reserves the
+    // picture and the price. `auto` in the middle track is the defect.
+    expect(preg_match(
+        '/\.kbb-fbt-item\{[^}]*grid-template-rows:\s*var\(--fbt-thumb\)\s+var\(--fbt-name-slot\)\s+var\(--fbt-price-slot\)/s',
+        $rules
+    ))->toBe(1, '.kbb-fbt-item no longer reserves the three rows in order — the strip goes back to one height per name length');
+
+    // The clamp and the track read the SAME property, which is what stops a
+    // three-line name overflowing a two-line reservation.
+    expect(preg_match('/\.kbb-fbt-name\{[^}]*-webkit-line-clamp:\s*var\(--fbt-name-lines\)/s', $rules))
+        ->toBe(1, '.kbb-fbt-name is not clamped to the number of lines its track reserves');
+
+    /*
+     * AND THE PRICE ROW IS A LENGTH, not a ratio. Declared unitless the
+     * struck/sale pair takes a taller line box than a plain price and puts a
+     * second height back on the strip — the pixel `.cp` already paid for on the
+     * shared card.
+     */
+    expect(preg_match('/\.kbb-fbt-price\{[^}]*line-height:\s*calc\(/s', $rules))
+        ->toBe(1, '.kbb-fbt-price\'s line-height is not a length, so the row follows the type inside it');
+});
+
+it('knows every product tile on this shop that is NOT the shared card', function () {
+    /*
+     * The case above this one enumerates the templates that call
+     * <x-product-card>. This one is its other half, and it is the half that
+     * found the defect: a template can draw a product tile WITHOUT calling the
+     * component, and then "apply this everywhere" silently does not reach it.
+     *
+     * Two exist. Both are listed here so a third cannot arrive unnoticed:
+     *
+     *   partials/fbt.blade.php        .kbb-fbt-item — the bundle strip on the
+     *                                 product page. IN SCOPE, and it is the one
+     *                                 this round fixed.
+     *   store/cart-inner.blade.php    .cpg-card — the recommended rail, drawn
+     *                                 only under the squeeze cart layout. OUT
+     *                                 of scope: the owner excluded the cart and
+     *                                 the checkout by name, and case 5 above
+     *                                 pins that exclusion.
+     *
+     * MUTATION: give any other storefront template its own product tile — a
+     * `<div class="kbb-fbt-item">` in store/shop.blade.php will do — and this
+     * is red with that file named. RUN.
+     */
+    $drawers = [];
+
+    /** @var SplFileInfo $file */
+    foreach (new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator(resource_path('views'))
+    ) as $file) {
+        if (! $file->isFile() || ! str_ends_with($file->getFilename(), '.blade.php')) {
+            continue;
+        }
+
+        $code = (string) preg_replace(
+            ['/\{\{--.*?--\}\}/s', '#/\*.*?\*/#s'],
+            '',
+            (string) file_get_contents($file->getPathname())
+        );
+
+        foreach (['kbb-fbt-item', 'cpg-card'] as $needle) {
+            if (preg_match('/class="[^"]*\b'.preg_quote($needle, '/').'\b/', $code)) {
+                $drawers[] = str_replace(base_path().DIRECTORY_SEPARATOR, '', $file->getPathname());
+            }
+        }
+    }
+
+    sort($drawers);
+
+    expect($drawers)->toBe([
+        'resources/views/partials/fbt.blade.php',
+        'resources/views/store/cart-inner.blade.php',
+    ], 'the set of templates drawing a product tile WITHOUT the shared card has changed — each one has to get the owner\'s card of its own, because none of them inherits it');
+});

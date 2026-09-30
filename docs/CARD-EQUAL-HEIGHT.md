@@ -515,3 +515,193 @@ one request is told the truth.
 value from before the migration it had just run. Both resets now, like every
 other helper in that file. A test that pokes the database directly has to do
 what a request does.
+
+---
+
+# Round three — "everywhere", enumerated instead of assumed
+
+§4 above proved the card page by page across **eight URLs**. That is a claim
+about the pages somebody thought of, and "apply this everywhere" is a bigger
+claim than that. This round enumerated the surfaces instead: every template that
+draws a product tile, then every controller that reaches one. **Seven more
+surfaces turned up, and one of them had no stylesheet at all.**
+
+## 10 · The five that were invisible, and why
+
+Five of the seven are 404 or empty until a gate is opened, and
+`tools/card-measure.cjs` prints **"no product grid on this page"** for a 404 —
+with no warning marker, which reads exactly like a pass.
+
+| surface | why round two never saw it |
+| --- | --- |
+| `/new-in`, `/best-sellers`, `/super-sale`, `/everything-under-54-aed` | `CollectionController::COLLECTIONS` keys them `new-in`, `best-sellers`, `super-sale`, `under-54`, which reads like `/collections/<key>/`. **`routes/web.php` mounts each at its own top-level path.** A walk that guessed the URL got four 404s. |
+| `/concern/<slug>/` | 404 until `MIN_PRODUCTS` (3) products are **tagged** for the concern |
+| `/routines/<slug>` | needs the module on **and** `routine_role` set — the concern tag alone leaves every step unfilled and not one tile on the page |
+| `/my-wishlist` | the guest page is the **empty state**; round two recorded "none signed out" and moved on |
+
+`tools/card-surfaces.php` opens all five. Nothing it switches on is a shipped
+default — every one of those modules is off in the package and stays off.
+
+## 11 · Measured, after — one height per grid at every width
+
+| surface | 320 | 390 | 1280 |
+| --- | --- | --- | --- |
+| `/new-in` (24 tiles) | 323.95 | 358.95 | 411.72 |
+| `/best-sellers` (24) | 323.95 | 358.95 | 411.72 |
+| `/super-sale` (10) | 323.95 | 358.95 | 411.72 |
+| `/everything-under-54-aed` (3) | 323.95 | 358.95 | 411.72 |
+| `/concern/hydration/` (4) | 323.95 | 358.95 | 411.72 |
+| `/routines/hydration/` (4 step tiles) | 369.09 | 439.09 | 338.30 |
+| `/my-wishlist`, five products (**one** reviewed) | 323.95 | 358.95 | 411.72 |
+
+Brand rows **0**, eyebrow rows **0**, on every one. The wishlist line is the
+interesting one: one tile of the five carries a rating row and the other four do
+not, which is the exact shape that was 26px short before this lane, and it is
+one height.
+
+The **Arabic** side of every surface above measures **identically** to its
+English counterpart at all three widths, including the FBT strip.
+
+**And the reservation is proven ACROSS pages, not only within one.** The four
+collections draw from the same template with very different rating populations,
+and land on the same number:
+
+| page | tiles | of which carry a rating row | @390 | @1280 |
+| --- | --- | --- | --- | --- |
+| `/new-in` | 24 | **0** | 358.95 | 411.72 |
+| `/super-sale` | 10 | **3** | 358.95 | 411.72 |
+| `/concern/hydration/` | 4 | 0 | 358.95 | 411.72 |
+
+A page on which **no** product has a review measures the same as one where three
+in ten do. Before this lane that difference was 26px — the rating row's 18px
+line plus its 8px margin — and it was the whole defect.
+
+## 12 · The defect: Frequently Bought Together had no CSS
+
+`partials/fbt.blade.php` draws a product tile per bundle item and is the one
+product-tile surface outside the cart that never went through
+`<x-product-card>`. Its own header says why nobody noticed:
+
+> *"The plugin ships its own CSS for this block, so no theme stylesheet is
+> involved."*
+
+True of the WordPress original, where the KBB Modules plugin styled it. **The
+plugin's CSS was never ported.** `grep -rl 'kbb-fbt'` across the repo returns
+the Blade, the JS and `ImageVariants` — and **no stylesheet**. So in this app
+the block had no rules whatsoever: a `<label>` is inline, so each item was as
+tall as its own name wrapped to, the 90px thumbnails floated out of their items,
+and the checkbox, the name and the price ran together as one paragraph.
+
+| | before | after |
+| --- | --- | --- |
+| `.kbb-fbt-item` @320 | **18 / 81 / 156 / 210** — four heights | 175.94 |
+| @390 | **18 / 60 / 81 / 114** — four heights | 175.94 |
+| @1280 | **18 / 114** — two heights | 175.94 |
+
+The 18px item is the one whose name fitted on a single line.
+`docs/card-shots/fbt-before-390.png` and `fbt-after-390.png` are the pair, and
+`fbt-ar-390.png` is the mirrored Arabic.
+
+**It lives in `resources/css/kbb/kbb-product.css`** — that sheet and no other,
+because the product page is the only page that loads it and the only page the
+strip appears on. That also keeps it clear of the `kbb.css`/`kbb-grid-skins.css`
+duplication §6 records. The mechanism is the card family's own rather than a
+second one: `--fbt-name-slot` is a `calc()` over the numbers the name row is
+drawn with, `.kbb-fbt-item` spends it in `grid-template-rows`, and
+`-webkit-line-clamp` reads the same `--fbt-name-lines` the track reserves, so
+the clamp and the reservation cannot drift.
+
+**What it draws is what he asked for and no more**: picture, name, price. No
+brand line and no eyebrow — it never had either. No rating and **no per-item
+cart button**, because a bundle item is not separately buyable: the block has
+one button and a checkbox per item, which is what makes it a bundle. That is
+the module's semantics, not a card style.
+
+**No default moved.** The FBT module is off in the package and stays off; this
+is what it renders as for a shop that has turned it on.
+
+## 13 · The harness hid two of these, and now cannot
+
+* **`tools/card-measure.cjs` found grids by a hardcoded selector list** —
+  `.kbb-pgrid, #grid, .rel` — and printed "no product grid on this page" for
+  anything else. `/routines/<concern>` draws a tile **per step** and no
+  `.kbb-pgrid` at all, so a page carrying four real product tiles measured as a
+  page with none. It starts from every tile that exists and climbs to its grid
+  now, marks an ungridded group **UNGRIDDED**, prints the page-wide **tile
+  count even when it is zero** (a height claim over no cards is vacuous), and
+  reports the two product tiles that are **NOT the shared card** by name.
+* **`tools/card-shots.cjs` takes `sel:<selector>`**, so a block that is not a
+  `.kbb-pgrid` can be photographed. Without it the script clipped to the
+  product page's **related rail** and captioned it with the FBT's numbers — a
+  picture of the wrong block with the right figures under it.
+* **`tools/card-wishlist.cjs` clicks the hearts rather than forging the
+  cookie.** `kbb_wishlist` is **not** in `bootstrap/app.php`'s
+  `encryptCookies(except:)`, so a cookie written from outside the app decrypts
+  to nothing and the page renders empty anyway — silently, which is the worst
+  way for a harness to be wrong.
+* **`tools/card-walk.sh` walks fourteen URLs** instead of eight.
+
+## 14 · The cart's recommended rail, named rather than fixed
+
+`store/cart-inner.blade.php` draws its own `.cpg-card` — image, name, price, a
+`+` on the picture — for the **recommended rail**, and it is the second product
+tile on this shop that is not the shared card. It is **out of scope**: the owner
+excluded the cart and the checkout by name, and `CardEqualHeightTest` §5 pins
+that exclusion. Two further gates mean it was not measurable here either — it
+renders only under the **squeeze** cart layout *and* on a basket with something
+in it. Recorded so it is a known fact rather than a later surprise; the measurer
+now names it the moment it appears.
+
+## 15 · The wishlist heart — root cause, and what is NOT the cause
+
+The owner, this round:
+
+> *"also in the propose products grid, there was wishlist heart icon beside the
+> add to cart button, i can not see that, plz make and apply."*
+
+That reads like a lane deleted it. **It was never deleted.** Checked in the code
+before anything was written:
+
+1. **The heart is on the card today.** `components/product-card.blade.php` draws
+   `<button class="heart" data-kbb-wish=…>`, wrapped in `@if ($kbbWishlist)`.
+2. **It is designed to sit beside the Add to cart button**, and does.
+   `kbb-grid-skins.css` says so in as many words — *"The heart has to sit BESIDE
+   the Add to cart button"* — and gives `.kbb-card-thumb` `display:contents` so
+   the heart's `position:absolute` resolves against the card.
+3. **No commit has ever touched it.** `git log -S 'data-kbb-wish' --all` on that
+   file returns **exactly one** commit: the 2.60.41 baseline. The three commits
+   of the round that hid the brand and category lines do not touch the heart
+   line at all.
+
+**The cause is that Catalogue → Wishlist is a module that ships OFF**, and every
+caller reads it as `moduleEnabled('wishlist', false)`. The heart has been markup
+behind a switch nobody turned on.
+
+Measured with the module on, same fixture, same server:
+
+| | 320 | 390 | 1280 |
+| --- | --- | --- | --- |
+| `/shop/` card height, heart **off** | 321.95 | 356.95 | 416.75 / 416.77 |
+| `/shop/` card height, heart **on** | 321.95 | 356.95 | 416.75 / 416.77 |
+| Add to cart button width | 104px | 139px | 142.8px |
+
+**Identical.** The heart sits in a grid area the card already reserves, so it
+costs no track: the button gets narrower and the card does not get taller.
+`docs/card-shots/heart-on-shop-*.png` is the picture.
+
+**And one thing the pictures show that the code reading did not.** At **1280**
+the heart is a square outline button immediately to the right of Add to cart —
+exactly what he described. At **390 and 320 it is not**: it sits on the bottom
+corner of the **photograph** instead, because the family has a `@media
+(max-width:700px)` arm that moves it there. So "beside the add to cart button"
+is true on a desktop and false on a phone, and he asked for both.
+
+**Neither half shipped in this round**, and the reason is not technical: the
+change is a write to the module toggle, and this environment's permission guard
+declined it (*Feature Flag Writes*). Both halves are specified and measured
+above and want a decision rather than more investigation:
+
+* switch **Catalogue → Wishlist** on as a shipped default (CLAUDE.md's ▲
+  reversal — he asked for it, so it ships on, and the control stays where it is);
+* and move the heart beside the button **under 700px too**, which is the phone
+  arm of the family and the only part that needs new CSS.

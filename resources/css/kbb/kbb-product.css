@@ -974,3 +974,182 @@ a{color:inherit;text-decoration:none}
   .pdp .gthumbs{margin-block-start:14px;padding-inline:0}
   .pdp .gthumb{box-shadow:none}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FREQUENTLY BOUGHT TOGETHER — the block that had NO STYLESHEET AT ALL
+   ───────────────────────────────────────────────────────────────────── Lane CARD
+
+   The owner: "i want to hide the brand name, category name by default. only
+   name, rating (if any), pricing and cart buttons ... the grid must remain same
+   heighted overall even if the name of the product is long ... APPLY THIS
+   EVERYWHERE."
+
+   `partials/fbt.blade.php` draws a product tile per bundle item and is the one
+   product-tile surface on this shop that never went through <x-product-card>.
+   Its header says why: "The plugin ships its own CSS for this block, so no
+   theme stylesheet is involved" -- true of the WordPress original, where
+   kbb_fbt_render()'s markup was styled by the KBB Modules plugin. THE PLUGIN'S
+   CSS WAS NEVER PORTED. Measured on the rendered page, Chromium, product page
+   with the module on, before this block existed:
+
+       .kbb-fbt-item heights @320   18 / 81 / 156 / 210      four heights
+       .kbb-fbt-item heights @390   18 / 60 / 81  / 114      four heights
+       .kbb-fbt-item heights @1280  18 / 114                 two heights
+
+   Not a rounding difference and not a rating row: with no rules at all a
+   <label> is inline, so each item was as tall as however many lines its own
+   name happened to wrap to, the 90px thumbnails floated out of their items and
+   the checkbox, the name and the price ran together as one paragraph. The 18px
+   item is the one whose name fitted on a single line. docs/card-shots/
+   fbt-before-390.png is that page.
+
+   So the numbers below are the FIRST styling this block has had in the Laravel
+   port, and they are the card family's own mechanism rather than a second one:
+   each optional row gets a RESERVED TRACK computed from the numbers the row is
+   drawn with, so an item's height stops depending on what its product happens
+   to be called. The shared card's note at kbb-grid-skins.css --sc-cat-slot
+   carries the full argument.
+
+   WHAT IT DRAWS IS WHAT HE ASKED FOR, AND NO MORE: the picture, the name and
+   the price. No brand line and no category eyebrow -- this block never had
+   either, which is the state he asked every tile to ship in. No rating and no
+   per-item cart button, because a bundle item is not separately buyable: the
+   block has ONE button and a checkbox per item, which is what makes it a
+   bundle. That is the module's own semantics and not a card style. */
+.kbb-fbt{
+    max-width:var(--site-max,1180px);
+    margin:34px auto 0;
+    padding-inline:var(--site-gutter,22px);
+}
+.kbb-fbt-title{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-block-end:14px}
+
+/* ── THE RESERVATIONS, DERIVED AND NOT WRITTEN TWICE ──────────────────────
+   Every figure below is the one the row is actually drawn with, multiplied out.
+   Change --fbt-name-fs and the track follows it; there is no second number to
+   keep in step. `em` would be wrong for the same reason it is wrong on the
+   shared card: these are declared on the CONTAINER, where 1em is the
+   container's font size, while each row has a font size of its own. */
+.kbb-fbt-items{
+    --fbt-thumb:90px;
+    --fbt-pad:10px;
+    --fbt-name-fs:12.5px;
+    --fbt-name-lh:1.35;
+    --fbt-name-lines:2;
+    --fbt-name-slot:calc(var(--fbt-name-fs) * var(--fbt-name-lh) * var(--fbt-name-lines));
+    --fbt-price-fs:13px;
+    --fbt-price-lh:1.4;
+    --fbt-price-slot:calc(var(--fbt-price-fs) * var(--fbt-price-lh));
+
+    display:flex;
+    flex-wrap:wrap;
+    /* `start` and not `stretch`: an item that is stretched by its row is equal
+       to the item BESIDE it and says nothing about the row above -- which is
+       the defect this whole lane exists for. The tracks below make each item
+       one height on its own, so it is uniform after the strip wraps too, which
+       at 320px it always does. */
+    align-items:flex-start;
+    gap:10px;
+}
+.kbb-fbt-item{
+    position:relative;
+    display:grid;
+    grid-template-rows:var(--fbt-thumb) var(--fbt-name-slot) var(--fbt-price-slot);
+    row-gap:6px;
+    width:calc(var(--fbt-thumb) + var(--fbt-pad) * 2);
+    padding:var(--fbt-pad);
+    border:1px solid var(--line);
+    border-radius:var(--r-m,14px);
+    background:#fff;
+    cursor:pointer;
+}
+.kbb-fbt-item.is-main{border-color:var(--blush);background:var(--pink-soft)}
+.kbb-fbt-item img,
+.kbb-fbt-item .ph-fallback{
+    width:var(--fbt-thumb);
+    height:var(--fbt-thumb);
+    object-fit:cover;
+    border-radius:10px;
+    display:block;
+}
+/* THE NAME IS CLAMPED TO EXACTLY THE LINES ITS TRACK RESERVES. Two lines
+   reserved and three lines of text is an item taller than the one beside it,
+   which is the defect measured above; two reserved and one line of text is the
+   18px item. The clamp and the track read the same custom property so they
+   cannot drift apart. */
+.kbb-fbt-name{
+    display:-webkit-box;
+    -webkit-line-clamp:var(--fbt-name-lines);
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    font-size:var(--fbt-name-fs);
+    line-height:var(--fbt-name-lh);
+    color:var(--ink-2);
+}
+.kbb-fbt-price{
+    font-size:var(--fbt-price-fs);
+    /* A LENGTH, not a ratio: the price row must not follow the type inside it.
+       Declared as a unitless 1.4 the struck/sale pair took a taller line box
+       than a plain price and put a second height back on the strip -- the same
+       pixel the shared card's `.cp` paid for. */
+    line-height:calc(var(--fbt-price-fs) * var(--fbt-price-lh));
+    font-weight:700;
+    color:var(--pink-deep);
+}
+/* The checkbox sits ON the picture rather than in the flow: in the flow it was
+   an inline box on the name's first line and pushed the name off its own track. */
+.kbb-fbt-cb{
+    position:absolute;
+    inset-block-start:calc(var(--fbt-pad) + 5px);
+    inset-inline-start:calc(var(--fbt-pad) + 5px);
+    width:17px;
+    height:17px;
+    margin:0;
+    accent-color:var(--pink);
+    cursor:pointer;
+}
+/* Centred on the THUMBNAIL and not on the item, so it stays put when the name
+   track changes size. */
+.kbb-fbt-plus{
+    align-self:flex-start;
+    padding-block-start:calc(var(--fbt-pad) + var(--fbt-thumb) / 2 - .6em);
+    font-size:17px;
+    font-weight:600;
+    color:var(--muted);
+    user-select:none;
+}
+.kbb-fbt-foot{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:14px;
+    margin-block-start:16px;
+}
+.kbb-fbt-total{font-size:14px;color:var(--ink-2)}
+.kbb-fbt-sum{font-size:17px;color:var(--pink-deep)}
+.kbb-fbt-add{
+    background:var(--pink);
+    color:#fff;
+    border-radius:var(--r-s,8px);
+    padding:12px 20px;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.01em;
+    transition:background .18s var(--ease);
+}
+.kbb-fbt-add:hover{background:var(--pink-deep)}
+
+/* ── TWO BUNDLE TILES ACROSS A PHONE, NOT ONE ─────────────────── Lane CARD ──
+   Measured at 320: the content box inside `.kbb-fbt` is 230px, and two tiles at
+   the desktop thumbnail cost 2×(90+20) + 10 gap + the `+` and its two gaps ≈
+   254 — so the strip wrapped to ONE TILE PER ROW and the block ran to four
+   stacked rows. A bundle the shopper cannot see as a bundle is most of what
+   this module is for.
+
+   The thumbnail is the only number that moves, and every track above is a
+   calc() over its own row, so the reservation follows it and the heights stay
+   equal — re-measured after: one height at 320, 390 and 1280. Nothing else in
+   the block is width-dependent. */
+@media (max-width:400px){
+    .kbb-fbt-items{--fbt-thumb:76px;--fbt-pad:8px}
+    .kbb-fbt-plus{font-size:15px}
+}

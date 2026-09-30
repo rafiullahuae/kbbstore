@@ -55,12 +55,34 @@ async function settle(page) {
 async function measure(page) {
   return page.evaluate(() => {
     const px = (n) => Math.round(n * 100) / 100;
-    const grids = [...document.querySelectorAll('.kbb-pgrid, #grid, .rel')].filter((g) =>
-      g.querySelector('.kbb-tile')
-    );
+    /* ── THE CONTAINER IS FOUND FROM THE TILE, NOT FROM A LIST OF SELECTORS ──
+       This read `querySelectorAll('.kbb-pgrid, #grid, .rel')` and reported
+       "no product grid on this page" for anything that was not one of those
+       three. /routines/<concern> draws a tile PER STEP and no .kbb-pgrid at
+       all, so a page carrying four real product tiles measured as a page with
+       none -- and "no product grid" prints without a ◀, which is the false
+       green CLAUDE.md describes: an assertion that passes for a reason
+       unrelated to its subject.
+
+       So: start from every tile that exists, and climb to its grid if it has
+       one. A tile inside .gs-cell inside .kbb-pgrid still groups by the grid
+       (closest() walks through the cell); a tile with no grid above it groups
+       by its own parent and is named as ungridded rather than dropped. */
+    const allTiles = [...document.querySelectorAll('.kbb-tile')];
+    const groups = new Map();
+
+    for (const t of allTiles) {
+      const container = t.closest('.kbb-pgrid, #grid, .rel') || t.parentElement;
+
+      if (!groups.has(container)) groups.set(container, []);
+
+      groups.get(container).push(t);
+    }
+
+    const grids = [...groups.keys()];
 
     const out = grids.map((grid) => {
-      const tiles = [...grid.querySelectorAll('.kbb-tile')];
+      const tiles = groups.get(grid);
 
       /* ── A TILE WITH NO BOX AT ALL IS NOT A TILE OF A DIFFERENT HEIGHT ──
          partials/home/grid-section.blade.php prints `count` cards and hides the
@@ -119,6 +141,7 @@ async function measure(page) {
 
       return {
         selector: grid.className || grid.id,
+        gridded: !!grid.closest('.kbb-pgrid, #grid, .rel'),
         skin: grid.getAttribute('data-skin'),
         tiles: rows.length,
         hidden,
@@ -144,10 +167,48 @@ async function measure(page) {
       };
     });
 
+    /* ── THE CARD IS NOT THE ONLY THING ON THIS SHOP THAT DRAWS A PRODUCT ──
+       Two surfaces draw their own product tile and never went through
+       <x-product-card>: the Frequently Bought Together strip on the product
+       page (.kbb-fbt-item, partials/fbt.blade.php) and the cart page's
+       recommended rail (.cpg-card, store/cart-inner.blade.php). Neither
+       carries .kbb-tile, so neither is visible to anything above, and a walk
+       that only counts .kbb-tile reports a clean sweep of a shop it has not
+       looked at all of.
+
+       They are measured here by their own class names. What they are NOT is
+       folded into `grids` -- the cart and the checkout are excluded by the
+       owner's own instruction ("exept cart and checkout pages"), so the rail
+       is reported as a fact and judged separately. */
+    const foreign = [...document.querySelectorAll('.kbb-fbt-item, .cpg-card')].map((e) => {
+      const b = e.getBoundingClientRect();
+
+      return { sel: e.className, h: px(b.height), w: px(b.width) };
+    });
+    const foreignByClass = {};
+
+    for (const f of foreign) {
+      const key = f.sel.split(/\s+/)[0];
+
+      (foreignByClass[key] ||= []).push(f.h);
+    }
+
     return {
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
       bodyClass: document.body.className,
+      /* THE COUNT, PAGE-WIDE, AND IT IS PRINTED EVEN WHEN IT IS ZERO.
+         "one height on this page" is satisfied vacuously by a page that drew
+         no card, so the count is what makes the height claim mean anything --
+         the brief's own instruction, and the reason /my-wishlist's honest
+         "0 tiles" is not allowed to look like /shop's 24. */
+      tileCount: allTiles.length,
+      foreign: Object.fromEntries(
+        Object.entries(foreignByClass).map(([k, hs]) => [
+          k,
+          { count: hs.length, heights: [...new Set(hs)].sort((a, b) => a - b) },
+        ])
+      ),
       grids: out,
     };
   });
@@ -180,13 +241,26 @@ async function measure(page) {
     );
     console.log(`   body.class  ${m.bodyClass.trim() || '(none)'}`);
 
+    console.log(
+      `   product tiles on this page: ${m.tileCount}` +
+        (m.tileCount === 0 ? '   (none — a height claim here would be vacuous)' : '')
+    );
+
+    for (const [cls, f] of Object.entries(m.foreign)) {
+      console.log(
+        `   NOT THE SHARED CARD — .${cls} ×${f.count}: ${f.heights.join(', ')}` +
+          (f.heights.length === 1 ? '   ✓ one height' : '   ◀ NOT EQUAL')
+      );
+    }
+
     if (!m.grids.length) {
       console.log('   no product grid on this page');
     }
 
     for (const g of m.grids) {
       console.log(
-        `   grid [${g.selector}] skin=${g.skin} tiles=${g.tiles} columns=${g.columns}` +
+        `   ${g.gridded ? 'grid' : 'UNGRIDDED'} [${g.selector}] skin=${g.skin} ` +
+          `tiles=${g.tiles} columns=${g.columns}` +
           (g.hidden ? `  (+${g.hidden} hidden at this width)` : '')
       );
       console.log(
