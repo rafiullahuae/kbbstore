@@ -69,11 +69,43 @@ it('draws no image on the page background and does not tile it', function () {
         'the page background tiles down the page again -- the "not continue type" the owner'
         ." asked to be rid of.\n  rule: ".$rule);
 
-    // and it still paints something, so the assertions above are not passing
-    // because the rule has been emptied out
-    expect(str_contains($rule, 'var(--kbb-page-gradient)'))->toBeTrue(
-        'the page background no longer paints the gradient, so this file is asserting the'
-        .' absence of things from a rule that draws nothing');
+    /*
+     * AND SOMETHING STILL PAINTS THE PAGE, so the assertions above are not
+     * passing because the background was deleted rather than cleaned up.
+     *
+     * ▲ IT IS NO LONGER THE BODY RULE THAT PAINTS IT.          (Lane BG)
+     * The owner chose "Corner light" and it is painted on `html::before`, a
+     * fixed-position layer, so `body` carries a flat colour and
+     * `background-image:none`. Asserting the gradient on the body rule was
+     * right until that moved and would now be asserting the old structure.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+
+    expect((bool) preg_match('/html::before\{[^}]*var\(--kbb-page-gradient\)[^}]*\}/', $css))->toBeTrue(
+        'nothing paints the page background any more, so this file is asserting the absence of'
+        .' things from a page that draws nothing. The gradient lives on html::before.');
+
+    /*
+     * AND NO LAYER PAINTS A DRAWING EITHER. The three layers are where the page
+     * background lives now, so "no image on the background" has to be asked of
+     * them and not only of `body` -- otherwise putting --bg-botanical back on
+     * html::before is caught only by the assertion above, which then reports
+     * "nothing paints the background", which is not what went wrong.
+     */
+    preg_match_all('/(?:html|body)::(?:before|after)\s*\{[^}]*\}/', $css, $layers);
+
+    foreach ($layers[0] as $layer) {
+        expect(str_contains($layer, '--bg-'))->toBeFalse(
+            'a page-background layer draws one of the motifs again. The owner asked for the'
+            ." drawing off the background of the site.\n  ".$layer);
+
+        expect(str_contains($layer, 'data:image'))->toBeFalse(
+            "a page-background layer carries an image again.\n  ".$layer);
+    }
+
+    expect(str_contains($rule, 'background-image:none'))->toBeTrue(
+        'the page-background body rule no longer says background-image:none, so a body image'
+        .' could be reintroduced without this file noticing');
 });
 
 it('leaves the artwork itself alone, because three other rules still use it', function () {
@@ -177,3 +209,93 @@ it('gives every storefront page one background layer, with no image in it', func
     expect(str_contains($journal, 'repeat-y'))->toBeFalse(
         'the journal still tiles its background, so the partial did not follow kbb.css');
 });
+
+it('keeps every colour the shipped background can show above the contrast floor', function () {
+    /*
+     * THE INVARIANT, ASKED OF WHAT ACTUALLY SHIPS.              (Lane BG)
+     *
+     * PageWashContrastTest enumerates all 15,876 colours the WASH can produce
+     * and requires none darker than PageWash::CONTRAST_FLOOR (#FCE7EE,
+     * luminance 0.8402) — the darkest flat background any storefront page
+     * renders. The shop's own background is now a gradient the owner chose, and
+     * nothing was asking the same question of it.
+     *
+     * It is a smaller set and can simply be read out of the stylesheet: three
+     * moments of four stops, plus the flat colour under them. Every one of the
+     * thirteen is checked, so a lane that deepens the pink to "make it show
+     * more" — which is exactly the temptation, given that his own panels cover
+     * 100% of the home page's first screen — fails here rather than on somebody
+     * squinting at a screenshot.
+     *
+     * THREE COLOURS ALREADY FAILED THIS ONCE, before they shipped: candidate
+     * b's #FBE2EE (0.8107) and candidate d's #FCE6F1 (0.8364) and #F8DEEC
+     * (0.7826) were walked toward white until they cleared it. The one the
+     * owner picked carries the corrected values.
+     *
+     * MUTATION: change any stop to #FBE2EE → red, naming the stop and both
+     * luminances. Run.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+    $floor = PageWash::luminance(pbHex(PageWash::CONTRAST_FLOOR));
+
+    preg_match_all('/--kbb-page-gradient[a-z-]*:[^;]+;/', $css, $declarations);
+
+    expect($declarations[0])->toHaveCount(3,
+        'the shipped background is no longer three gradient moments, so this guard is not'
+        .' checking what the shop draws');
+
+    $checked = 0;
+    $tooDark = [];
+
+    foreach ($declarations[0] as $declaration) {
+        $name = substr($declaration, 0, (int) strpos($declaration, ':'));
+
+        preg_match_all('/#[0-9A-Fa-f]{6}/', $declaration, $stops);
+
+        expect(count($stops[0]))->toBe(4, $name.' no longer has four stops');
+
+        foreach ($stops[0] as $hex) {
+            $checked++;
+            $luminance = PageWash::luminance(pbHex($hex));
+
+            if ($luminance < $floor) {
+                $tooDark[] = sprintf('  %s stop %s has luminance %.4f, below the floor %s (%.4f)',
+                    $name, $hex, $luminance, PageWash::CONTRAST_FLOOR, $floor);
+            }
+        }
+    }
+
+    // the flat colour under the layers, which is what shows for the one frame
+    // before they paint and on any engine that drops them
+    preg_match('/background-color:(#[0-9A-Fa-f]{6});/', $css, $flat);
+
+    expect($flat[1] ?? null)->not->toBeNull('the page background has no flat colour under its layers');
+
+    $checked++;
+    $flatLuminance = PageWash::luminance(pbHex($flat[1]));
+
+    if ($flatLuminance < $floor) {
+        $tooDark[] = sprintf('  the flat colour %s has luminance %.4f, below the floor',
+            $flat[1], $flatLuminance);
+    }
+
+    expect($checked)->toBe(13, 'expected twelve stops and one flat colour, checked '.$checked);
+
+    expect($tooDark)->toBe([], "the page background can show a colour darker than the shop's own"
+        ." floor:\n".implode("\n", $tooDark)
+        ."\n\nEvery text colour on the shop is set against that floor. A background below it costs"
+        .' contrast on every page at once, which is the one thing this lane guaranteed the wash'
+        .' would never do and the background must not either.');
+});
+
+/** '#RRGGBB' as the [r, g, b] triple PageWash::luminance() takes. */
+function pbHex(string $hex): array
+{
+    $hex = ltrim($hex, '#');
+
+    return [
+        (int) hexdec(substr($hex, 0, 2)),
+        (int) hexdec(substr($hex, 2, 2)),
+        (int) hexdec(substr($hex, 4, 2)),
+    ];
+}

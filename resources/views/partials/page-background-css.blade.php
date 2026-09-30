@@ -40,13 +40,27 @@
     glue the include between the markers of its own raw block without adding a
     blank line to the head of either document.
 --}}<style id="kbb-page-background">:root{
-  --kbb-page-gradient:linear-gradient(180deg,#FCE7EE 0%,#FDF2F5 26%,#FFF7F4 55%,#FBEAF0 100%);
+  --kbb-page-gradient:linear-gradient(115deg,#FFF1E4 0%,#FFFFFF 38%,#FDECF4 72%,#FCE7F1 100%);
+  --kbb-page-gradient-b:linear-gradient(115deg,#FFF1E4 0%,#FFFFFF 49%,#FDECF4 83%,#FCE7F1 100%);
+  --kbb-page-gradient-c:linear-gradient(115deg,#FFF1E4 0%,#FFFFFF 60%,#FDECF4 94%,#FCE7F1 100%);
 }
 body{
   background-color:#FDEFF3;
-  background-image:var(--kbb-page-gradient);
-  background-size:auto;
-  background-position:0 0;
-  background-repeat:no-repeat;
-  background-attachment:fixed;
+  background-image:none;
+}
+html::before,body::before,body::after{
+  content:'';display:block;position:fixed;inset:0;pointer-events:none;
+}
+html::before{z-index:-4;background:var(--kbb-page-gradient)}
+body::before{z-index:-2;opacity:0;background:var(--kbb-page-gradient-b)}
+body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
+@keyframes kbb-page-b{0%{opacity:0}33%{opacity:1}66%{opacity:0}100%{opacity:0}}
+@keyframes kbb-page-c{0%{opacity:0}33%{opacity:0}66%{opacity:1}100%{opacity:0}}
+@media(prefers-reduced-motion:no-preference){
+  body::before{animation:kbb-page-b 300s ease-in-out infinite}
+  body::after{animation:kbb-page-c 300s ease-in-out infinite}
+}
+@media print{
+  html::before,body::before,body::after{display:none}
+  body{background-color:#fff}
 }</style>

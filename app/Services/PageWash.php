@@ -74,6 +74,14 @@ use Illuminate\Http\Request;
  * checked against every stylesheet and every Blade in this repository before
  * three of them were claimed: none of the four is declared anywhere else.
  *
+ * ▲ ALL FOUR ARE CLAIMED NOW, AND BY TWO DIFFERENT THINGS.       (Lane BG)
+ * kbb.css paints the shop's own background -- "Corner light", the gradient the
+ * owner chose -- on `html::before` and the two `body` pseudo-elements, and the
+ * botanical drawing below claims the fourth. This service writes the same three
+ * from a <style> LATER in the head, so switching the wash on REPLACES that
+ * background rather than sitting on top of it. That is deliberate: they are two
+ * different pictures, and two backgrounds fighting is worse than either.
+ *
  * ── prefers-reduced-motion ──────────────────────────────────────────────────
  *
  * The two `animation` declarations are the ONLY thing inside
@@ -783,10 +791,25 @@ class PageWash
          * here; `motif` is a bool and the only thing it can do is choose
          * between this string and nothing.
          */
+        /*
+         * IT IS A LAYER, BECAUSE THE PAGE BACKGROUND IS LAYERS NOW. (Lane BG)
+         *
+         * kbb.css paints "Corner light" on html::before and two crossfading
+         * body pseudo-elements rather than on `body` itself, so a
+         * `body{background-image:…}` here would not sit over the gradient at
+         * all: body's background propagates to the canvas, which paints BEHIND
+         * every one of those layers. The drawing would disappear under the
+         * thing it is supposed to sit on.
+         *
+         * html::after at z-index -3 is between the base gradient (-4) and the
+         * first crossfade layer (-2), which puts the drawing exactly where it
+         * used to be: over the colour, under everything else.
+         */
         $motif = ! empty($values['motif'])
-            ? 'body{background-image:var(--bg-botanical),var(--kbb-page-gradient);'
-                .'background-size:1500px auto,auto;background-position:center top,0 0;'
-                .'background-repeat:repeat-y,no-repeat;background-attachment:fixed,fixed}'
+            ? "html::after{content:'';display:block;position:fixed;inset:0;z-index:-3;"
+                .'pointer-events:none;background-image:var(--bg-botanical);'
+                .'background-size:1500px auto;background-position:center top;'
+                .'background-repeat:repeat-y}'
             : '';
 
         if (empty($values['on'])) {
