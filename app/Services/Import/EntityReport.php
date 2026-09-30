@@ -56,7 +56,7 @@ final class EntityReport
      * construction — the run is a failure if it is not. Adjustments are the
      * opposite: "unit price truncated" can be true of forty thousand line items
      * in a perfectly good import, and holding forty thousand before/after pairs
-     * in memory on shared hosting to print "and 39,975 more" is a cost with no
+     * in memory on this host to print "and 39,975 more" is a cost with no
      * buyer. Each KIND keeps its full count and the first few examples, which
      * is what the owner reads: how many, and what one of them looks like.
      *

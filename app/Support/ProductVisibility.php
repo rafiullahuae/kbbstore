@@ -9,10 +9,18 @@ namespace App\Support;
  *
  * WHY SCHEDULING IS A READ-TIME TEST AND NOT A CRON.
  *
- * This host is shared hosting with no shell access, no cron and no queue
- * worker — CLAUDE.md says so, and the import screen exists precisely because
- * `php artisan` cannot be run there. So a scheduled publish cannot be a job
- * that flips a column at the appointed minute; there is nothing to run it.
+ * No cron and no queue worker is configured on this host, nothing in this
+ * application is queued, and the owner works through the admin screens rather
+ * than a command line — NothingHereOutlivesOneRequestTest pins all of that. So
+ * a scheduled publish cannot be a job that flips a column at the appointed
+ * minute; there is nothing running that would fire it.
+ *
+ * ▲ THIS PARAGRAPH USED TO SAY "shared hosting with no shell access" and that
+ * `php artisan` cannot be run here. The live shop
+ * moved to Cloudways, which has SSH, and CLAUDE.md was corrected on 24
+ * September 2026. The conclusion is unchanged and never needed that clause:
+ * what makes a read-time test right is that NOTHING IS RUNNING to fire a job,
+ * not that nothing could be installed.
  *
  * The precedent is already in this codebase and it is the right one:
  * Product::effectivePrice() honours sale_starts_at / sale_ends_at by comparing

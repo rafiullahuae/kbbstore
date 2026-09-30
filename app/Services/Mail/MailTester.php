@@ -148,7 +148,7 @@ class MailTester
             // server" means two different machines depending on the setting.
             'message' => match ($active) {
                 MailSettings::TRANSPORT_SERVER => 'This server accepted the message for ' . $to
-                    . '. Check that inbox (and its spam folder) to confirm it arrives — a shared host will '
+                    . '. Check that inbox (and its spam folder) to confirm it arrives — a modest host will '
                     . 'often accept a message and then have it filtered, so the inbox is the proof, not this line.',
                 MailSettings::TRANSPORT_SMTP => 'The mail server accepted the message for ' . $to
                     . '. Check that inbox (and its spam folder) to confirm it arrives.',

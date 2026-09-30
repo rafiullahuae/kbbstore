@@ -42,7 +42,7 @@ use App\Models\Media;
  * EXT_MIME out of this class rather than keeping its own copy.
  *
  * MediaBackfill keeps its bulk `insert()` — a rescan of several thousand files
- * cannot afford a model per row on shared hosting — so there are two WRITE
+ * cannot afford a model per row on this host — so there are two WRITE
  * SHAPES for one set of RULES. That is the split, and it is deliberate.
  *
  * ── A FAILURE HERE NEVER FAILS A CALLER, AND LEAVES NOTHING BEHIND ──────────

@@ -169,7 +169,7 @@ class ExtendedDelivery
          * that exemption is correct — but it CANNOT REACH THE LIVE SERVER.
          * UpdateGuard forbids `bootstrap/` in a package outright (a bad
          * bootstrap stops the application booting, which would leave the
-         * updater unable to roll itself back), and the host has no shell. So on
+         * updater unable to roll itself back), and the owner has no shell. So on
          * production the exemption is not there and the decrypted bag is empty.
          *
          * $_COOKIE is the request as PHP received it. No middleware touches it,

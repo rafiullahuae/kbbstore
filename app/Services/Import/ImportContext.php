@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * order row names its customer by `wp_user_id`; an order line names its product
  * by the Woo post id. Neither of those is the local primary key, and looking
  * each one up with its own SELECT would be one query per line item — several
- * hundred thousand of them on a five-year store, on shared hosting. The maps are
+ * hundred thousand of them on a five-year store, on this host. The maps are
  * int => int and a store with 5,000 products and 40,000 customers needs a few
  * megabytes for all of them, so they are simply held.
  *

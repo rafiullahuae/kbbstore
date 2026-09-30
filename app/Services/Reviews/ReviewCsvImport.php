@@ -57,7 +57,7 @@ final class ReviewCsvImport
     /**
      * The row ceiling for one file.
      *
-     * Not arbitrary: this runs in a web request on shared hosting with no
+     * Not arbitrary: this runs in a web request on this host with no
      * queue worker, and the whole point of the bounded batches below is that
      * the peak memory is a batch rather than a file. 20,000 rows is comfortably
      * more than this store's ~3,700 reviews and still finishes inside a normal
@@ -833,7 +833,7 @@ final class ReviewCsvImport
      * Every product's four identifying columns, read once.
      *
      * One query rather than a lookup per row: a 3,700-row import doing
-     * four SELECTs per row is 15,000 queries on a shared host. A name that more
+     * four SELECTs per row is 15,000 queries on a modest host. A name that more
      * than one product answers to is stored as null, so resolveProduct() can
      * refuse it rather than pick one.
      */

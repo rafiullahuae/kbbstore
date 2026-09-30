@@ -74,7 +74,7 @@ class AppServiceProvider extends ServiceProvider
          *    developer already knows.
          *
          *    This has to be an override rather than a new helper because the
-         *    server has no shell and lang/ is not on UpdateGuard's allowed
+         *    owner has no shell and lang/ is not on UpdateGuard's allowed
          *    prefixes — a translation the owner types can only live in the
          *    database, and the framework has to be told to look there. See
          *    App\Services\Translation\DatabaseTranslationLoader.

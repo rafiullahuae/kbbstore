@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Cache;
  *
  * Both layers are kept, because both earn their place:
  *
- *   - the CACHE, because on shared hosting the driver is a file and a storefront
+ *   - the CACHE, because on this host the driver is a file and a storefront
  *     page asks for dozens of strings; and
  *   - the per-process MEMO, because even one cache read per request is one file
  *     read, and the header alone asks for a dozen keys.

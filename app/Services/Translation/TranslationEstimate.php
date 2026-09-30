@@ -57,7 +57,7 @@ final class TranslationEstimate
      *
      * Declared here as well as on the models because the estimate has to be
      * able to count a table WITHOUT loading 671 Eloquent objects into memory on
-     * a shared host. Kept honest by a test that compares this list against each
+     * a modest host. Kept honest by a test that compares this list against each
      * model's own $translatable.
      *
      * @var array<class-string, list<string>>

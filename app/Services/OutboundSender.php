@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Mail;
  *
  * CLAIM, THEN SEND. Never the other way round and never "send, then mark". A
  * sender that mailed first and recorded afterwards would double-send every time
- * the process died between the two, and this host is shared hosting where a
+ * the process died between the two, and this host is one where a
  * request can be killed mid-flight for reasons nobody here controls.
  *
  * The cost of that ordering is stated rather than hidden: IF THE TRANSPORT

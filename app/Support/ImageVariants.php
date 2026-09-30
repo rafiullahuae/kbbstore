@@ -16,14 +16,14 @@ namespace App\Support;
  * the pixels are thrown away.
  *
  * WHY THE COPIES ARE MADE ON THE WAY IN AND NOT ON THE WAY OUT. This store is
- * on shared hosting with no shell, no queue worker and no CDN. Resizing when a
- * photograph is *requested* would put an image decode in front of every tile
- * on a cold page: twenty-five tiles is twenty-five PHP processes on a host
- * that has a handful, and the shopper waits for all of them. Measured here,
- * one 1000x1000 JPEG costs ~137ms and ~7.6MB of resident memory to turn into
- * both sizes; a 4000x4000 upload costs ~544ms and ~65MB. That is an
- * acceptable price once, when an image is uploaded. It is not a price to pay
- * per page view, per tile, forever.
+ * on modest managed hosting with no queue worker and no CDN, and the owner
+ * has no shell. Resizing when a photograph is *requested* would put an image
+ * decode in front of every tile on a cold page: twenty-five tiles is
+ * twenty-five PHP processes on a host that has a handful, and the shopper
+ * waits for all of them. Measured here, one 1000x1000 JPEG costs ~137ms and
+ * ~7.6MB of resident memory to turn into both sizes; a 4000x4000 upload costs
+ * ~544ms and ~65MB. That is an acceptable price once, when an image is
+ * uploaded. It is not a price to pay per page view, per tile, forever.
  *
  * So a variant exists because something made it — an upload, or a batch the
  * owner started from the Media Library — and never because a page asked for
@@ -50,7 +50,7 @@ namespace App\Support;
  * root (see bootstrap/app.php), and it is where uploads already go — the
  * directory is brought into existence by PHP's own mkdir() here, the same way
  * MediaUploadController already creates public/uploads/<folder>, because the
- * host has no shell to create it with.
+ * owner has no shell to create it with.
  *
  * Generated files are not source. They are gitignored, so nothing the packager
  * builds from git history can contain them, and 'public/img-cache/' is on
@@ -66,8 +66,8 @@ namespace App\Support;
  *
  * ── THE CACHE POLICY, IN FULL ───────────────────────────────────────────────
  *
- * Written down because a host with no shell and no queue worker cannot be
- * given a policy that says "a background job tidies up".
+ * Written down because a host the owner has no shell on and no queue worker
+ * cannot be given a policy that says "a background job tidies up".
  *
  * WHAT IS GENERATED. Two widths, 400 and 800, and never a width wider than the
  * original — a 300px logo is COMPLETE with neither, and isComplete() says so
@@ -1015,7 +1015,7 @@ final class ImageVariants
      *
      *   DELETE. Admin\MediaLibraryApiController::destroy() unlinks the original
      *   under public/uploads/ and forgets the row. Both copies stayed, in a
-     *   directory this host has no shell to reach and no screen that lists it.
+     *   directory the owner has no shell to reach and no screen that lists it.
      *   On the measured numbers — 121KB of variants per 1000x1000 JPEG — a
      *   catalogue's worth of deleted photographs is tens of megabytes of files
      *   nobody can see, name or remove.
@@ -1035,7 +1035,7 @@ final class ImageVariants
      * IT PRUNES ITS OWN EMPTY DIRECTORIES, up to but never including
      * `img-cache/<width>/`. The cache mirrors the original's path, so deleting
      * a catalogue leaves the whole `uploads/products/` tree behind as empty
-     * directories — invisible, but real inodes on a shared host with a file
+     * directories — invisible, but real inodes on a modest host with a file
      * quota. @rmdir only succeeds on an empty directory, so a sibling variant
      * still in use always stops the walk; there is no case where this can
      * remove a directory that still holds a file.

@@ -21,13 +21,14 @@ use Illuminate\Http\Response;
  *
  * ── WHY HTML AND NOT A PDF ──────────────────────────────────────────────────
  *
- * The host is shared Hostinger with no shell access, and `vendor/` cannot reach
- * the server through the updater at all: it is in BuildPackage::NEVER_SHIP and
- * in UpdateGuard::FORBIDDEN_PREFIXES, so a package containing a composer PDF
- * library would be refused, and installing one by hand is a change the updater
- * could not roll back. A print-ready HTML document has none of that problem and
- * loses nothing the owner needs — every browser's print dialog writes a PDF,
- * with selectable text and real fonts, from the same markup.
+ * The host is Cloudways, and the owner never opens a shell on it, and
+ * `vendor/` cannot reach the server through the updater at all: it is in
+ * BuildPackage::NEVER_SHIP and in UpdateGuard::FORBIDDEN_PREFIXES, so a
+ * package containing a composer PDF library would be refused, and installing
+ * one by hand is a change the updater could not roll back. A print-ready HTML
+ * document has none of that problem and loses nothing the owner needs — every
+ * browser's print dialog writes a PDF, with selectable text and real fonts,
+ * from the same markup.
  *
  * ── WHY THESE ROUTES LIVE BEHIND auth:admin AND NOWHERE ELSE ────────────────
  *

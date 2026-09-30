@@ -172,7 +172,7 @@ final class MediaSideloader
     /** Per file. A WooCommerce product photograph is tens of kilobytes. */
     public const MAX_FILE_BYTES = 12 * 1024 * 1024;
 
-    /** Default bytes per browser request. Shared hosting, not a workstation. */
+    /** Default bytes per browser request. A modest host, not a workstation. */
     public const DEFAULT_BATCH_BYTES = 8 * 1024 * 1024;
 
     /** Default files per browser request. */
@@ -206,7 +206,7 @@ final class MediaSideloader
      * is stated AS an estimate on the screen, and the hard guard is the one
      * that matters: before every single write, the volume must have room for
      * one more capped file plus this reserve, or the run stops and says so.
-     * Half-filling a shared host's volume takes the whole site down, not just
+     * Half-filling a modest host's volume takes the whole site down, not just
      * the pictures.
      */
     public const FREE_SPACE_RESERVE = 64 * 1024 * 1024;

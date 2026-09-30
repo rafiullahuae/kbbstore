@@ -34,7 +34,7 @@ use Illuminate\Http\Request;
  *   shopper of the day pays for the whole page, and pays worst on the phone
  *   this is meant to help. Serving them straight off disk instead needs a
  *   rewrite that falls through to PHP on a miss, and that rewrite lives in an
- *   .htaccess in the web root, which no package can ship and no shell can fix
+ *   .htaccess in the web root, which no package can ship
  *   if it is wrong.
  *
  *   Doing nothing, and letting only new uploads have copies. The existing
@@ -52,7 +52,7 @@ use Illuminate\Http\Request;
  *   that does not loads exactly what it loads today.
  *
  * THE COST IS REAL AND IS THE OWNER'S TO SPEND. About 137ms of CPU per
- * 1000x1000 photograph, so roughly seven minutes of a shared host's CPU for
+ * 1000x1000 photograph, so roughly seven minutes of a modest host's CPU for
  * three thousand of them, spread over a few hundred small requests while he
  * leaves a tab open. That is the price of the whole thing, once.
  */
@@ -228,7 +228,7 @@ class ImageSizesApiController extends Controller
         $seen = [];
 
         // toBase(): a work list is strings, and hydrating a model per row to
-        // read two columns is the expensive way to get them on a shared host.
+        // read two columns is the expensive way to get them on a modest host.
         // The cast comes back as raw JSON here, which is why it is decoded
         // below rather than assumed to be an array.
         $rows = Product::query()->toBase()->get(['image', 'images']);

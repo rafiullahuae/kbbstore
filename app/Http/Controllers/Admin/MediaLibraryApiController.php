@@ -247,10 +247,11 @@ class MediaLibraryApiController extends Controller
          * still in it, which is inside this application's own web root and is
          * a file this application did write.
          *
-         * So the guard had inverted: it was protecting the old store's files —
-         * which it can no longer reach anyway — while orphaning our own. Delete
-         * such a row and the bytes stayed on disk with nothing referencing
-         * them, unreachable from every screen, on a host with no shell.
+         * So the guard had inverted: it was protecting the old store's files
+         * — which it can no longer reach anyway — while orphaning our own.
+         * Delete such a row and the bytes stayed on disk with nothing
+         * referencing them, unreachable from every screen, on a host the
+         * owner has no shell on.
          *
          * `is_file()` already draws the only line that matters. A path this
          * tree genuinely cannot see answers false and nothing is unlinked,
@@ -283,7 +284,7 @@ class MediaLibraryApiController extends Controller
          * generate() deliberately skips a width that already exists — so this
          * endpoint was unlinking an original and leaving its copies behind
          * permanently. They are gitignored and on BuildPackage::NEVER_SHIP, so
-         * no package could clear them either, and the host has no shell: the
+         * no package could clear them either, and the owner has no shell: the
          * only way back was FTP. On the measured cost of a 1000x1000 JPEG,
          * 121KB per deleted photograph accumulates with nothing to bound it.
          *

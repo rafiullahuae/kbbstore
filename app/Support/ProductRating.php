@@ -43,7 +43,7 @@ use Illuminate\Support\Facades\DB;
  * computed pair.
  *
  * ONE GROUPED QUERY PER PRODUCT, and products are batched, because a bulk
- * action can touch 500 rows and a shared host is not a reporting server.
+ * action can touch 500 rows and a modest host is not a reporting server.
  */
 final class ProductRating
 {

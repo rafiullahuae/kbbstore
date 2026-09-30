@@ -29,7 +29,7 @@ use Illuminate\Validation\Rule;
  *
  * `kbb:import-redirects` and `kbb:import-media` were built, tested and written
  * up in the runbook, and **the owner of this shop cannot run either of them.**
- * There is no shell on the host. The runbook's §10 is a page of commands for a
+ * The owner has no shell. The runbook's §10 is a page of commands for a
  * person who has no way to type one. That is the whole gap: the URL map and the
  * media audit were not missing, they were unreachable.
  *
@@ -56,7 +56,7 @@ use Illuminate\Validation\Rule;
  * machinery with nothing to do is where the next resume bug lives. What this
  * does instead is state the cost honestly and put a `limit` on what it SENDS
  * back — the browser does not need 2,600 rows to draw a summary, and a 4MB JSON
- * response on a shared host is its own kind of timeout.
+ * response on a modest host is its own kind of timeout.
  *
  * If the catalogue ever grows to where this is not true, the thing that changes
  * is this comment and this class, not the two services behind it: both are pure

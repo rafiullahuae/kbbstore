@@ -140,7 +140,7 @@ class BulkDocumentController extends Controller
          *
          * ONE QUERY FOR THE ORDERS AND ONE FOR THE ITEMS. At the cap this is a
          * hundred orders; loading them one at a time inside the render loop
-         * would be two hundred round trips on a shared host.
+         * would be two hundred round trips on a modest host.
          */
         $rows = Order::withTrashed()
             ->with(['items' => fn ($q) => $q->orderBy('id')])

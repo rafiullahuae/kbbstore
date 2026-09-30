@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\Validator;
  * It does not take the new password as an argument by default, and prompts for
  * it instead. A password on a command line is written to ~/.bash_history and is
  * visible in `ps` to every other account on the box for as long as PHP runs —
- * on shared hosting that is a real reader, not a theoretical one. `--password`
+ * on this host that is a real reader, not a theoretical one. `--password`
  * exists for scripting and says so when used.
  *
  * It is a console command and nothing else: no route, no controller, nothing

@@ -19,15 +19,16 @@ use Illuminate\Support\Facades\Mail;
  *
  * THE RULE: PLACING AN ORDER MUST NEVER FAIL BECAUSE EMAIL FAILED.
  *
- * This is not a general preference for robustness. The store runs on shared
- * hosting through the host's own SMTP, and the ways that goes wrong are ordinary:
- * the relay refuses the From address, the mailbox password expires, outbound 465
- * is silently dropped so the connection hangs until the 20-second timeout in
- * MailConfigurator fires. Each of those throws a Symfony TransportException. If
- * one of them reached CheckoutController::place() the shopper would see a 500 on
- * a card that had already been charged — and this project has already had a
- * checkout outage (the missing $giftFee in the transaction closure) that nothing
- * caught until a test finally POSTed to the endpoint.
+ * This is not a general preference for robustness. The store runs on modest
+ * hosting through the host's own SMTP, and the ways that goes wrong are
+ * ordinary: the relay refuses the From address, the mailbox password expires,
+ * outbound 465 is silently dropped so the connection hangs until the
+ * 20-second timeout in MailConfigurator fires. Each of those throws a Symfony
+ * TransportException. If one of them reached CheckoutController::place() the
+ * shopper would see a 500 on a card that had already been charged — and this
+ * project has already had a checkout outage (the missing $giftFee in the
+ * transaction closure) that nothing caught until a test finally POSTed to the
+ * endpoint.
  *
  * So every send in this class is wrapped. A failure is logged with the order
  * number and the exception class, and the caller is told nothing, because there
@@ -53,7 +54,7 @@ class OrderMailer
      * Where a merchant alert goes when the owner has not named an address.
      *
      * The From address, because on this host it must already be a real mailbox on
-     * the domain — a shared host rejects anything else — so it is the one address
+     * the domain — a modest host rejects anything else — so it is the one address
      * we know exists and can receive. Better than dropping the alert silently.
      */
     public const MERCHANT_FALLBACK_KEY = 'mail_from_address';
@@ -235,7 +236,7 @@ class OrderMailer
                 'ok' => false,
                 // The driver's own words, redacted of the SMTP password, because
                 // "it failed" sends the owner to a log file they cannot read on
-                // shared hosting.
+                // modest hosting.
                 'message' => 'Could not send: ' . $this->redact($e->getMessage()),
             ];
         }
@@ -343,7 +344,7 @@ class OrderMailer
                 'ok' => false,
                 // The driver's own words, redacted of the SMTP password, because
                 // "it failed" sends the owner to a log file they cannot read on
-                // shared hosting.
+                // modest hosting.
                 'message' => 'Could not send: ' . $this->redact($e->getMessage()),
                 'invoice_number' => $number,
             ];

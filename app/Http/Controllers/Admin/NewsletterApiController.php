@@ -71,7 +71,7 @@ class NewsletterApiController extends Controller
      * The list as a CSV download.
      *
      * Streamed rather than assembled in memory: this table only grows, and a
-     * shared host will not thank us for holding thirty thousand rows to build
+     * modest host will not thank us for holding thirty thousand rows to build
      * a string that is written straight out again.
      *
      * EVERY CELL GOES THROUGH csvCell(). Both columns that carry text here are

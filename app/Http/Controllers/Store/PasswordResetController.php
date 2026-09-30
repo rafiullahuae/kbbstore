@@ -40,7 +40,7 @@ use function Illuminate\Support\defer;
  * Timing is handled in two places. Laravel's PasswordBroker already wraps the
  * lookup and the token write in a Timebox (200ms floor), so the cheap "no such
  * customer" path cannot return measurably sooner than the expensive one. What
- * the Timebox does NOT cover is the send: an SMTP handshake to a shared host
+ * the Timebox does NOT cover is the send: an SMTP handshake to a modest host
  * takes far longer than 200ms and varies wildly, so leaving it inside the
  * request would put the oracle straight back. The send is therefore deferred to
  * `app()->terminating()` — it happens after the response has been handed to the

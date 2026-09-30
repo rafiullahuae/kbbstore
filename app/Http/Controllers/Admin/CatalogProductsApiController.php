@@ -100,7 +100,7 @@ class CatalogProductsApiController extends Controller
     private const PER_PAGE_MIN = 10;
     private const PER_PAGE_MAX = 500;
 
-    /** Hard ceiling on one CSV. A shared host is not a reporting server. */
+    /** Hard ceiling on one CSV. A modest host is not a reporting server. */
     private const EXPORT_MAX = 50000;
 
     /** Rows per database round trip while streaming the CSV. */
@@ -1047,7 +1047,7 @@ class CatalogProductsApiController extends Controller
      * CSV of the CURRENT filtered view — the same rows, in the same order, as
      * the screen the operator is looking at.
      *
-     * Streamed in chunks: a shared host will not hold 2,266 products and their
+     * Streamed in chunks: a modest host will not hold 2,266 products and their
      * aggregates in memory alongside the request. Every cell goes through
      * csvCell(), because a product name is operator- and importer-supplied text
      * and `=HYPERLINK(...)` in a product name must not become a live formula

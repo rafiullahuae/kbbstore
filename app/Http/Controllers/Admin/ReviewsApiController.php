@@ -80,7 +80,7 @@ class ReviewsApiController extends Controller
 
     private const PER_PAGE_MAX = 200;
 
-    /** Hard ceiling on one CSV. A shared host is not a reporting server. */
+    /** Hard ceiling on one CSV. A modest host is not a reporting server. */
     private const EXPORT_MAX = 50000;
 
     /** Rows per database round trip while streaming the CSV. */
@@ -351,7 +351,7 @@ class ReviewsApiController extends Controller
      * CSV of the current filtered view — the same rows, in the same order, as
      * the screen the owner is looking at, not "every review".
      *
-     * Streamed in chunks, because a shared host will not hold the whole review
+     * Streamed in chunks, because a modest host will not hold the whole review
      * table in memory alongside the request, and bounded by counting rows
      * written rather than by ->limit(): chunk() walks with forPage(), which
      * SETS limit and offset instead of intersecting with one already on the

@@ -19,9 +19,9 @@ use Illuminate\Support\Facades\DB;
  *
  * WHAT THIS IS FOR. `php artisan kbb:import` is finished, tested and correct,
  * and it is unusable by the one person who needs it: the owner of this store
- * has no shell access. The host is shared hosting and every change reaches it
- * as a zip applied through the admin panel. A command-line importer on such a
- * host is a tool nobody can pick up. This controller is the handle.
+ * has no shell. Every change reaches it as a zip applied through the admin
+ * panel. A command-line importer on such a host is a tool nobody can pick up.
+ * This controller is the handle.
  *
  * WHAT IT IS NOT. It does not import anything itself. Every row that lands in
  * the database goes through App\Services\Import — the same mapping, the same
@@ -52,7 +52,7 @@ use Illuminate\Support\Facades\DB;
  * ---------------------------------------------------------------------------
  * WHY step() IS ITS OWN ENDPOINT
  * ---------------------------------------------------------------------------
- * Shared PHP-FPM kills long requests, and this host has no queue worker, so an
+ * PHP-FPM kills long requests, and this host has no queue worker, so an
  * import cannot be one request and cannot be a background job. It is many short
  * requests, driven from the browser, each continuing from the checkpoint the
  * last one committed. See ImportDriver's class comment for the whole argument;
@@ -305,7 +305,7 @@ class ImportApiController extends Controller
         $request->validate(['rows' => ['nullable', 'integer', 'min:1', 'max:'.ImportDriver::MAX_STEP_ROWS]]);
 
         /*
-         * RAISE ONLY. This call is correct on the shared host, where the default
+         * RAISE ONLY. This call is correct on this host, where the default
          * is around 30 seconds and one slice needs longer. Under the CLI the
          * default is 0 — unlimited — so the same call is a *lower*, and it arms
          * a 110-second countdown over the whole PHP process.

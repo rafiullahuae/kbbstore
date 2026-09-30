@@ -356,7 +356,7 @@ final class UpdateRunner
         try {
             // Longer than the 20s it was: the check now renders two storefront
             // pages rather than running SELECT 1, and a cold OPcache on a
-            // shared host makes the first render of a just-replaced file the
+            // modest host makes the first render of a just-replaced file the
             // slowest one it will ever do.
             $response = Http::timeout(45)->get($url, ['token' => $token]);
 

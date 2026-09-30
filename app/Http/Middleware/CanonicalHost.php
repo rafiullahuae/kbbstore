@@ -29,7 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Which host is which is decided by App\Support\SiteHost, whose class comment
  * carries the argument for why aliases are an allow-list. Short version: on
- * this host there is no shell, so a redirect rule cannot be undone from
+ * the owner has no shell, so a redirect rule cannot be undone from
  * outside the application, and "redirect anything not canonical" turns one typo
  * into a site nobody can reach.
  *

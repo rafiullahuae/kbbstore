@@ -64,7 +64,7 @@ use Illuminate\Http\UploadedFile;
  */
 final class ImportWorkspace
 {
-    /** Per file. Hostinger's own php.ini is usually lower; the screen shows both. */
+    /** Per file. The host's own php.ini is usually lower; the screen shows both. */
     public const MAX_BYTES = 64 * 1024 * 1024;
 
     /**
