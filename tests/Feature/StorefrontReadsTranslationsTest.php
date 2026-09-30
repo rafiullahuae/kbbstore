@@ -221,8 +221,11 @@ it('falls back to English per field, and never renders a blank where a name goes
 
     expect($html)->toContain(FP_NAME_AR)
         // Per FIELD, not per row: the untranslated blurb and description are
-        // the English ones, in full.
-        ->toContain(FP_BLURB_EN)
+        // the English ones, in full — and the blurb needle names `p.bb-desc`,
+        // because the same sentence is this page's <meta description> and its
+        // JSON-LD `description` too, so bare it could not see the paragraph
+        // (Lane PLC).
+        ->toContain('bb-desc">' . FP_BLURB_EN)
         ->toContain('The long English description nobody translated yet.');
 
     // And the heading is not empty. Asserted on the markup rather than by
@@ -253,10 +256,34 @@ it('leaves the English page exactly as it was, with the catalogue fully translat
 
     TranslationStore::flush();
 
-    foreach (['/shop/', '/product/' . $product->slug . '/'] as $path) {
+    /*
+     * ▲ THE NEEDLE NAMES THE ELEMENT THE NAME IS DRAWN IN, AND IT DIFFERS BY
+     * PAGE. (Lane PLC)
+     *
+     * This read a bare `toContain(FP_NAME_EN)`. The product name is on the
+     * product page five more times over — <title>, the og:title and description
+     * metas, the JSON-LD Product `name`, and the add-to-basket link's
+     * `data-name` — so "the English page still shows the English name" was
+     * answered by the document head whether or not the page drew a name.
+     *
+     * A single needle cannot serve both paths, because /shop/ draws the name in
+     * a card and the product page in its heading, so the anchor travels with
+     * the path.
+     *
+     * MUTATION, run: blank `<h1 class="bb-title" id="bbTitle">` in
+     * store/product.blade.php and `<h1 class="ptitle">` in store/shop.blade.php
+     * — a shop whose every product page and listing renders no heading — and
+     * this case was green. With the needles below it is red.
+     */
+    $drawnIn = [
+        '/shop/' => '<span class="kbb-card-nm">',
+        '/product/' . $product->slug . '/' => '<h1 class="bb-title" id="bbTitle">',
+    ];
+
+    foreach ($drawnIn as $path => $element) {
         $html = (string) test()->get($path)->assertOk()->getContent();
 
-        expect($html)->toContain(FP_NAME_EN);
+        expect($html)->toContain($element . FP_NAME_EN);
 
         foreach (['ZZSENTINELNAME', 'ZZSENTINELBLURB', 'ZZSENTINELDESC', 'ZZSENTINELINCI', 'ZZSENTINELHOWTO'] as $needle) {
             expect(str_contains($html, $needle))->toBeFalse(
@@ -369,7 +396,10 @@ it('translates a category, a brand, a page, an article and a menu label too', fu
     // And the English side of all five is untouched.
     $english = (string) test()->get('/about/')->assertOk()->getContent();
 
-    expect($english)->toContain('About Us')
+    // The page's own heading. 'About Us' is also this page's <title>, its
+    // og:title and a navigation label, so bare it could not see the page body
+    // at all (Lane PLC).
+    expect($english)->toContain('<h1>About Us</h1>')
         ->and(str_contains($english, 'ZZSENTINELPAGE'))->toBeFalse('The English page read the Arabic title.')
         ->and(str_contains($english, 'ZZSENTINELMENU'))->toBeFalse(
             'The English header read the Arabic menu label. NavigationService caches ONE '
@@ -731,8 +761,11 @@ it('never serves a draft translation to a shopper, long fields included', functi
     expect(str_contains($html, 'ZZDRAFTDESC'))->toBeFalse('A machine draft of a description reached a shopper.')
         ->and(str_contains($html, 'ZZDRAFTNAME'))->toBeFalse('A machine draft of a name reached a shopper.');
 
-    // And the page still shows the English, rather than a hole where the draft was.
-    expect($html)->toContain(FP_NAME_EN);
+    // And the page still shows the English, rather than a hole where the draft
+    // was — in the HEADING, which is where a shopper would see the hole. Bare,
+    // this was answered by the <title> and the JSON-LD on the same page, so a
+    // product page with an empty <h1> passed it (Lane PLC).
+    expect($html)->toContain('<h1 class="bb-title" id="bbTitle">' . FP_NAME_EN . '</h1>');
 });
 
 it('sanitises an Arabic rich field on the way in, whatever wrote it', function () {

@@ -28,17 +28,33 @@ beforeEach(function () {
 });
 
 it('serves the brand directory at /brands/', function () {
+    /*
+     * ▲ 'All brands' NAMES THE DIRECTORY'S <h1> NOW. (Lane PLC)
+     *
+     * Bare, it was also the <title>, the og:title meta and the JSON-LD name of
+     * this page, so it could not tell a directory that had rendered its heading
+     * from one that had rendered only its <head>. The tile name beside it was
+     * already anchored — this brings the heading up to it.
+     *
+     * MUTATION, run: blank both `<h1 class="brw-h1">` in store/brands.blade.php
+     * and this file plus UrlSchemeTest were 25 passed / 0 failed. With the
+     * needles here and at the case below, red.
+     */
     $this->get('/brands/')
         ->assertOk()
-        ->assertSee('All brands')
+        ->assertSee('<h1 class="brw-h1">All brands</h1>', escape: false)
         ->assertSee('<span class="brw-name">T Beauty of Joseon', escape: false);
 });
 
 it('serves a single brand page', function () {
     $this->get('/brands/t-beauty-of-joseon/')
         ->assertOk()
-        ->assertSee('T Beauty of Joseon')
-        ->assertSee('Hanbang formulas, modern textures.');
+        // The brand's own heading, not its <title>, its og:title, its CTA label
+        // or the JSON-LD Brand `name` — this page carries the words in all five.
+        ->assertSee('<h1 class="brw-h1">T Beauty of Joseon</h1>', escape: false)
+        // The standfirst the page prints, not the <meta description> and the
+        // JSON-LD carrying the same sentence in the same document.
+        ->assertSee('<p class="brw-sub">Hanbang formulas, modern textures.</p>', escape: false);
 });
 
 it('links each directory tile at the brand page, not the old address', function () {
@@ -72,7 +88,19 @@ it('shows the brand\'s visible products and hides the rest', function () {
 
     $this->get('/brands/t-beauty-of-joseon/')
         ->assertOk()
-        ->assertSee('T Glow Serum')
+        /*
+         * ▲ The product name in a listing is drawn in `<span class="kbb-card-nm">`
+     * and ALSO in the add-to-basket link's `data-name`, the tile image's `alt`
+     * and the JSON-LD ItemList — so a bare needle here could not tell a grid
+     * that had rendered its names from one that had rendered none of them.
+     *
+     * MUTATION, run: blank `<span class="kbb-card-nm">` in
+     * components/product-card.blade.php, so every product card in the shop
+     * carries no name, and this case was green. With the needle below it is
+     * red. (Lane PLC; the same run settled BrandUrlTest, CategoryPathWalkCost-
+     * Test, DeadCategoryViewTest and ConcernCollectionsTest together.)
+         */
+        ->assertSee('<span class="kbb-card-nm">T Glow Serum', escape: false)
         ->assertDontSee('T Draft Serum');
 });
 

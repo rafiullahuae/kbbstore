@@ -188,7 +188,19 @@ it('serves the category archive from the controller that is actually wired up', 
 
     $response->assertViewIs('store.shop');
 
-    expect($response->getContent())->toContain('Gentle Foaming Cleanser');
+    /*
+     * ▲ The product name in a listing is drawn in `<span class="kbb-card-nm">`
+     * and ALSO in the add-to-basket link's `data-name`, the tile image's `alt`
+     * and the JSON-LD ItemList — so a bare needle here could not tell a grid
+     * that had rendered its names from one that had rendered none of them.
+     *
+     * MUTATION, run: blank `<span class="kbb-card-nm">` in
+     * components/product-card.blade.php, so every product card in the shop
+     * carries no name, and this case was green. With the needle below it is
+     * red. (Lane PLC; the same run settled BrandUrlTest, CategoryPathWalkCost-
+     * Test, DeadCategoryViewTest and ConcernCollectionsTest together.)
+     */
+    expect($response->getContent())->toContain('<span class="kbb-card-nm">Gentle Foaming Cleanser');
 });
 
 it('leaves the description on that page to the one engine that owns it', function () {

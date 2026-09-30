@@ -154,9 +154,23 @@ it('serves the concern page with its own copy, not a slug turned into a heading'
 
     $html = test()->get('/concern/acne/')->assertOk()->getContent();
 
-    // The HEADING is written for a shopper arriving from a search, rather than
-    // being the concern's short label with a slug turned into title case.
-    expect($html)->toContain('Korean skincare for acne-prone skin')
+    /*
+     * The HEADING is written for a shopper arriving from a search, rather than
+     * being the concern's short label with a slug turned into title case.
+     *
+     * ▲ AND THE NEEDLE NAMES THE <h1>, WHICH IT DID NOT. (Lane PLC)
+     *
+     * This read `toContain('Korean skincare for acne-prone skin')`, and that
+     * sentence is on this page five more times over — <title>, the og:title and
+     * description metas, the JSON-LD `name`, and a `<span>` — so a comment
+     * saying "the HEADING" sat above an assertion that could not see the
+     * heading at all.
+     *
+     * MUTATION, run: blank the <h1> in store/collection.blade.php, so every
+     * collection page on the shop renders an empty heading, and this file was
+     * 15 passed / 0 failed. With the needle below it is red.
+     */
+    expect($html)->toContain('<h1>Korean skincare for acne-prone skin <span class="cnt">')
         ->and($html)->not->toContain('<h1>Acne &amp; blemishes</h1>')
         ->and($html)->not->toContain('>acne<');
 });
@@ -183,8 +197,20 @@ it('lists only the products tagged for that concern, and only live ones', functi
 
     $html = test()->get('/concern/acne/')->assertOk()->getContent();
 
+    /*
+     * ▲ The product name in a listing is drawn in `<span class="kbb-card-nm">`
+     * and ALSO in the add-to-basket link's `data-name`, the tile image's `alt`
+     * and the JSON-LD ItemList — so a bare needle here could not tell a grid
+     * that had rendered its names from one that had rendered none of them.
+     *
+     * MUTATION, run: blank `<span class="kbb-card-nm">` in
+     * components/product-card.blade.php, so every product card in the shop
+     * carries no name, and this case was green. With the needle below it is
+     * red. (Lane PLC; the same run settled BrandUrlTest, CategoryPathWalkCost-
+     * Test, DeadCategoryViewTest and ConcernCollectionsTest together.)
+     */
     foreach ($wanted as $product) {
-        expect($html)->toContain($product->name);
+        expect($html)->toContain('<span class="kbb-card-nm">' . $product->name);
     }
 
     expect($html)->not->toContain('CC Hydration Only')
@@ -424,8 +450,9 @@ it('gives the product cards a short label without changing the four curated list
     $concern = test()->get('/concern/acne/')->assertOk()->getContent();
 
     expect($concern)->toContain('kbb-card-cat">' . e(__(RoutineConcerns::labelKey('acne'))))
-        // The <h1> is still the sentence a search result wants.
-        ->and($concern)->toContain('Korean skincare for acne-prone skin');
+        // The <h1> is still the sentence a search result wants — and the needle
+        // says <h1>, for the reason set out at the first of these two sites.
+        ->and($concern)->toContain('<h1>Korean skincare for acne-prone skin <span class="cnt">');
 
     // And the curated listing still prints its own title on its cards.
     ccProduct([], ['name' => 'CC For New In']);

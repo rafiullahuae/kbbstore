@@ -74,7 +74,12 @@ it('shows a newly created category on the storefront without waiting for a cache
 
     $this->get('/collections/' . $created['slug'] . '/')
         ->assertStatus(200)
-        ->assertSee('AQ Fresh Category', false);
+        // The listing's own heading. The category name is on this page twelve
+        // times over — <title>, two metas, the JSON-LD breadcrumb, the sidebar
+        // dot and every card's category label — so bare it could not tell a
+        // listing that had rendered from one that had rendered nothing but its
+        // head (Lane PLC).
+        ->assertSee('<h1 class="ptitle">AQ Fresh Category', false);
 });
 
 it('changes the order the shop sidebar shows when categories are reordered', function () {

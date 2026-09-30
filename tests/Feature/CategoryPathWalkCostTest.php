@@ -188,7 +188,19 @@ it('walks the ancestry once per archive page, and not at all when the path colum
             // WHAT THE PAGE ACTUALLY DID, before any count is compared. A 301 or
             // a 404 is cheap and proves nothing about a rendered archive.
             expect($response->status())->toBe(200, "the archive at depth {$depth} did not render");
-            expect($response->getContent())->toContain('Q11 Chain Product');
+            /*
+             * ▲ The product name in a listing is drawn in `<span class="kbb-card-nm">`
+     * and ALSO in the add-to-basket link's `data-name`, the tile image's `alt`
+     * and the JSON-LD ItemList — so a bare needle here could not tell a grid
+     * that had rendered its names from one that had rendered none of them.
+     *
+     * MUTATION, run: blank `<span class="kbb-card-nm">` in
+     * components/product-card.blade.php, so every product card in the shop
+     * carries no name, and this case was green. With the needle below it is
+     * red. (Lane PLC; the same run settled BrandUrlTest, CategoryPathWalkCost-
+     * Test, DeadCategoryViewTest and ConcernCollectionsTest together.)
+             */
+            expect($response->getContent())->toContain('<span class="kbb-card-nm">Q11 Chain Product');
 
             $cost[$withPath ? 'set' : 'null'][$depth] = $categories;
         }

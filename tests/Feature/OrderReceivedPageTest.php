@@ -301,7 +301,10 @@ it('offers sign in, home and track, each pointing at a route that exists', funct
     // The track link is the one that carries state, so it is followed for real.
     test()->get('/track-my-order?order=' . $order->order_number)
         ->assertOk()
-        ->assertSee('Track my order');
+        // The tracking page's heading. Bare, this was answered by the <title>,
+        // the og:title and the link in the header that points here, so a
+        // tracking page that rendered no heading passed it (Lane PLC).
+        ->assertSee('<h1>Track my order</h1>', escape: false);
 });
 
 /* ------------------------------------------------------------------ access */

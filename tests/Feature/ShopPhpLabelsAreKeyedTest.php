@@ -133,7 +133,11 @@ it('says the listing\'s own heading and crumb in the shopper\'s language', funct
     $html = $this->get('/ar/shop/')->assertOk()->getContent();
 
     expect($html)
-        ->toContain('كل المنتجات')
+        // The shop's own heading. Bare, this was the <title>, the og:title and
+        // the JSON-LD name of /ar/shop/ as well, so a shop page that rendered an
+        // empty heading passed it (Lane PLC; the mutation is recorded in
+        // StorefrontReadsTranslationsTest, which was settled in the same run).
+        ->toContain('<h1 class="ptitle">كل المنتجات')
         ->and($html)->toContain('عناية كورية أصلية.')
         ->and($html)->toContain('المتجر')
         ->and($html)->not->toContain('>Shop all<')
