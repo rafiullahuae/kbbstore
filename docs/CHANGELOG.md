@@ -3,6 +3,36 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.333
+**You could not choose a grid design. Fixed.** Apply after .332.
+
+---
+
+### THE GRID STYLE PICKER WAS OPENING OFF THE SCREEN
+
+`Appearance → Homepage → Grid style` opened its panel of designs **leftwards**,
+so most of it landed outside the settings panel and the rest went **behind your
+left menu**. There was no way to reach the designs.
+
+Measured on the console at 1280, before and after:
+
+| | before | now |
+|---|---|---|
+| panel's left edge | **120.6** | **377.5** |
+| your left menu ends at | 248 | 248 |
+| what is painted at the panel's own top corner | **the menu** | **the panel** |
+| designs you can see and click | cut off | **32 of 32** |
+
+**Two faults, and the second only mattered because of the first.** The panel is
+470px wide and was pinned to the *right* edge of a button that sits near the
+left of the row — so it grew in the one direction with no room. The section list
+then clipped whatever escaped, because it was trimming its own rounded corners.
+
+It now opens to the right, where the space is. The rounded corners are kept by
+rounding the first and last row instead, so nothing is lost.
+
+---
+
 ## 2.60.332
 **Three things you pointed at, and one you had not seen yet.** Apply after .331.
 
