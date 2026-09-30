@@ -76,10 +76,22 @@
     the label themselves and pass it in; the pages that know their own category
     pass that; /shop passes null.
 
-    `brand` has to arrive loaded. A `loadMissing` here would be WORSE than the
-    lazy load it replaces: this component is handed ONE model, so it would be
-    one query per card either way, written where no caller could eager-load it
-    away. So a caller's query says:
+    `brand` has to arrive loaded, AND IT STILL HAS TO NOW THAT THE BRAND LINE
+    IS OFF BY DEFAULT (Lane CARD). The obvious follow-on to hiding that line is
+    to stop loading the relation and take the query budget down with it, and it
+    is wrong twice over. The relation is read by two things that are not the
+    brand line: `$seed` below, which App\Support\Gradient::for() hashes to
+    colour the placeholder of a product with no photograph, and
+    Gradient::initials($brand ?: $name), which is the letters drawn on it. And
+    the line is a SETTING rather than a deletion, so a shop that switches it back
+    on would lazy-load one query per card — under Model::preventLazyLoading()
+    that is not a slow page, it is an exception. StorefrontQueryBudgetTest is
+    unchanged by this lane for exactly that reason: measured, the budget does
+    not move, because nothing stopped being read.
+
+    A `loadMissing` here would be WORSE than the lazy load it replaces: this
+    component is handed ONE model, so it would be one query per card either way,
+    written where no caller could eager-load it away. So a caller's query says:
 
         ->with('brand:id,name,slug')
 
@@ -104,6 +116,44 @@
 
     // Catalogue → Quick view. Registered in ModuleRegistry, default on.
     $kbbQuickView = app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', true);
+
+    /*
+     * ── WHAT THE CARD SHOWS, DECIDED HERE AND NOT IN CSS ───────── Lane CARD ──
+     *
+     * The owner: "i want to hide the brand name, category name by default. only
+     * name, rating (if any), pricing and cart buttons."
+     *
+     * Three of Appearance → Product styles → Card content's switches are read
+     * here, and the other four are still the `.pc-no*` body classes they always
+     * were. THAT IS NOT INCONSISTENCY, IT IS THE ONLY MECHANISM THAT REACHES
+     * THE WHOLE SHOP. Measured on this branch: the seven `.pc-no*` rules exist
+     * ONLY in resources/css/kbb/kbb-grid-skins.css, and only three storefront
+     * pages @vite that sheet (home, wishlist, collection). /shop, every
+     * category archive, every brand page and the product page's related rail
+     * are styled from the SECOND, SHORTER copy of the skins inside kbb.css,
+     * which stops before those rules — so "Brand name: off" hid the brand on
+     * the homepage and left it on /shop. A default that only works on three
+     * pages is exactly the "setting that will be reported as broken" this lane
+     * was told to avoid, and CSS cannot fix it without unpicking ~180
+     * duplicated rules (see kbb.css's own note, and docs/PG2-SHOWCASE-CARD.md
+     * §6, which records the same duplication biting the colour controls).
+     *
+     * A markup gate has none of that: it is one decision, in PHP, on every page
+     * that draws a tile and under every one of the 32 skins.
+     *
+     * THESE THREE AND NOT ALL SEVEN, deliberately. Brand, category and rating
+     * are the card's VERTICAL ANATOMY: each is a row that is either there or
+     * not, and the stylesheet reserves a slot for each so that a card with a
+     * rating and a card without are the same height. The reservation and the
+     * markup have to agree about what exists, which is why these three moved
+     * and the four that only change a line's CONTENT (the was-price, the two
+     * badges, the button) did not.
+     *
+     * ONE all(), NOT THREE get() CALLS. ProductStyles::get() runs all() —
+     * every key in the schema — once for each key it is asked for, and this
+     * component renders once per tile.
+     */
+    $kbbShows = app(\App\Services\ProductStyles::class)->all();
 
     // t(), not the column. On English these two ARE the column — t() returns
     // early for the default locale — so an English card reads the same words it
@@ -311,21 +361,37 @@
         @if ($kbbWishlist)<button class="heart" type="button" aria-label="{{ __('store.product_card.save_label') }}" data-kbb-wish="{{ $product->id }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg></button>@endif
     </div>
     <div class="cb">
-        @if ($catLabel)<div class="kbb-card-cat">{{ $catLabel }}</div>@endif
+        @if ($catLabel && $kbbShows['show_category'])<div class="kbb-card-cat">{{ $catLabel }}</div>@endif
         {{-- THE NAME IS THE STRETCHED LINK. Its ::after covers the whole tile,
              so a click on the card's white space follows it. The clamp that
              holds the name to two lines whatever it says — so one long title
              cannot make its row taller than every other row — is in kbb.css,
              and it is a `calc()` reservation rather than anything measured. --}}
-        <a class="cn" href="{{ $link }}">@if ($brand)<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span>@endif<span class="kbb-card-nm">{{ $name }}</span></a>
-        @if ($rc > 0)
+        <a class="cn" href="{{ $link }}">@if ($brand && $kbbShows['show_brand'])<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span>@endif<span class="kbb-card-nm">{{ $name }}</span></a>
+        @if ($rc > 0 && $kbbShows['show_rating'])
             {{-- NO REVIEWS, NO BAR. The old skinned tile drew five empty stars
                  and a `(0)` for every unreviewed product, which reads as "rated
                  badly" rather than "not rated yet" — it is on every tile of the
-                 owner's own reference screenshot. The height it used to take is
-                 not reserved with an invisible row: `.cp` carries margin-top
-                 auto, so the price and the button sit on the card's bottom edge
-                 whatever is above them and every tile in a row lines up. --}}
+                 owner's own reference screenshot. So there is still no markup
+                 here for a product nobody has reviewed.
+
+                 ── AND THE SPACE IS RESERVED ANYWAY ─────────────── Lane CARD ──
+
+                 "i need all equal height in desktop and mobile both." `.cp`
+                 carrying margin-top:auto lines the BUTTONS up across one row
+                 and says nothing about the row above it, because `height:100%`
+                 equalises a grid item against its own row only. Measured on the
+                 shipped card, twelve products, showcase skin: at 1280 the three
+                 rows came back 468.91 / 442.91 / 468.89 and at 390 the six rows
+                 421.84 ×3, 395.84 ×2, 421.84 — the short ones being the rows
+                 whose every product happened to be unreviewed, 26px shorter,
+                 which is this row's 18px line plus its 8px margin exactly.
+
+                 The showcase family therefore reserves a fixed grid TRACK for
+                 this row — `--sc-rate-slot` in kbb-grid-skins.css — so the card
+                 is the same height with the row and without it. An empty <div>
+                 is not how it is reserved: the space is held by the layout, so
+                 an unreviewed product still emits nothing at all. --}}
             <div class="kbb-card-rate"><span class="kbb-crate">@for ($s = 1; $s <= 5; $s++)<span class="kbb-cstar{{ $s <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $rc }})</span></div>
         @endif
         <div class="cp">{!! $kbbPriceHtml !!}</div>

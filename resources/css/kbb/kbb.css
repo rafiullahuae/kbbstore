@@ -3804,7 +3804,15 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    and is also what keeps the name's budget constant: with the brand inline, a
    long brand would spend one of the name's two lines. */
 .kbb-tile .kbb-card-brand{display:block;line-height:1.3}
-.kbb-tile .kbb-card-nm{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.32;height:calc(2 * 1.32em)}
+/* ── THE TWO AND THE 1.32 ARE STATED ONCE NOW ─────────────────── Lane CARD ──
+   `-webkit-line-clamp:2` and `height:calc(2 * 1.32em)` were written here, and
+   the showcase family reserves a TRACK for this box out of the same two
+   numbers. Two places holding one fact is how they drift: a lane that clamped
+   to three lines here would get a name overflowing a track still reserved for
+   two, and nothing would say so. So the clamp reads the family's properties and
+   falls back to exactly what it said before — the other 31 skins never declare
+   them, so their name box is byte-for-byte the box it was. */
+.kbb-tile .kbb-card-nm{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--sc-name-lines,2);overflow:hidden;line-height:var(--sc-name-lh,1.32);height:calc(var(--sc-name-lines,2) * var(--sc-name-lh,1.32) * 1em)}
 
 /* ── THE MODULE BADGE ───────────────────────────────────────────────────────
    Growth & Marketing → Product Labels prints `.lbl`, and its position used to
@@ -3976,7 +3984,68 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
     --sc-btn-r:4px;
     --sc-btn-fs:12px;
     --sc-heart:44px;
+
+    /* ── THE FOUR ROWS OF THE TEXT COLUMN, AS RESERVED HEIGHTS ── Lane CARD ──
+       The owner: "make sure the grid must remain same heighted overall even if
+       the name of the product is long. i need all equal height in desktop and
+       mobile both."
+
+       `height:100%` on a grid item equalises a card against THE OTHER CARDS IN
+       ITS OWN ROW and says nothing about the row above it. Measured on the
+       shipped card before these properties existed, twelve products, five
+       columns at 1280: 468.91 / 442.91 / 468.89 — and at 390, two columns:
+       421.84, 421.84, 421.84, 395.84, 395.84, 421.84. The short rows are the
+       ones whose every product happened to be unreviewed, and they are 26px
+       shorter, which is the rating row's 18px line plus its 8px margin exactly.
+       At 320 there were SEVEN different heights on /shop, because the brand
+       line and a marked-down price wrap in a 104px text column as well.
+
+       So each optional row gets a RESERVED TRACK on `.cb` below, computed from
+       the same numbers the row itself is drawn with, and the card's height stops
+       depending on what any one product happens to have. Every figure is
+       derived rather than written twice: change --sc-rate-fs and the slot
+       follows it.
+
+       An `em` would have been wrong here and not shorter: these are declared on
+       the GRID, where 1em is the grid's font size, while each row has a font
+       size of its own. The multiplications are the line boxes. */
+    --sc-cat-fs:10px;
+    --sc-cat-lh:1.5;
+    --sc-cat-mb:4px;
+    --sc-cat-slot:calc(var(--sc-cat-fs) * var(--sc-cat-lh) + var(--sc-cat-mb));
+
+    --sc-brand-fs:10.5px;
+    --sc-brand-lh:1.3;
+    --sc-brand-mb:3px;
+    --sc-brand-slot:calc(var(--sc-brand-fs) * var(--sc-brand-lh) + var(--sc-brand-mb));
+
+    /* TWO LINES, ALWAYS TWO LINES, and 1.32 is `.kbb-card-nm`'s own
+       line-height in kbb.css — which reads these two properties now rather than
+       repeating the numbers, so the clamp and the track cannot drift. */
+    --sc-name-lines:2;
+    --sc-name-lh:1.32;
+    --sc-name-slot:calc(var(--sc-name) * var(--sc-name-lh) * var(--sc-name-lines));
+
+    --sc-rate-fs:12px;
+    --sc-rate-lh:1.5;
+    --sc-rate-mt:8px;
+    --sc-rate-slot:calc(var(--sc-rate-fs) * var(--sc-rate-lh) + var(--sc-rate-mt));
 }
+
+/* ── AND A ROW THE OWNER HAS SWITCHED OFF RESERVES NOTHING ────── Lane CARD ──
+   Appearance → Product styles → Card content puts `pc-nobrand`, `pc-nocat` and
+   `pc-norate` on <body>, and components/product-card.blade.php reads the same
+   three keys and omits the markup. A reserved track for a row that is never
+   drawn on any card is a permanent empty band, so the slot goes to zero from
+   the same switch that removed the row — one decision, two places that have to
+   agree about it, and CardEqualHeightTest checks that they do.
+
+   These declare a custom property and NOT `display`, which matters: a `display`
+   on `.kbb-card-brand` from a rule with this much weight would outrank the
+   switch itself. */
+.pc-nocat .kbb-pgrid[data-skin^="showcase"]{--sc-cat-slot:0px}
+.pc-nobrand .kbb-pgrid[data-skin^="showcase"]{--sc-brand-slot:0px}
+.pc-norate .kbb-pgrid[data-skin^="showcase"]{--sc-rate-slot:0px}
 
 .kbb-pgrid[data-skin^="showcase"] .kbb-card{
     display:grid;
@@ -4053,24 +4122,66 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 
 .kbb-pgrid[data-skin^="showcase"] .heart svg{width:19px;height:19px}
 
+/* ── THE TEXT COLUMN IS A GRID, AND THAT IS WHAT MAKES THE HEIGHTS EQUAL ────
+   It was a flex column with `margin-top:auto` on the price, which pins the
+   price and the button to the card's foot — the buttons on one row therefore
+   line up whatever is above them, and that is all it does. The CARD's height
+   was still the sum of whatever that particular product had: an eyebrow or not,
+   a brand or not, a rating row or not.
+
+   A grid with a reserved track per row is the same answer to the question the
+   flex column was answering, plus the one it was not. A missing element leaves
+   its track EMPTY AND STILL SIZED, which is the whole mechanism and is why
+   nothing had to be added to the markup — an unreviewed product still emits no
+   rating row at all. Row 4 is the `1fr` that eats the slack, so the price and
+   the button stay on the foot exactly as they did.
+
+   NO MEASUREMENT AND NO SCRIPT: six track sizes, five of them calc() over the
+   card's own type scale. */
 .kbb-pgrid[data-skin^="showcase"] .cb{
     grid-area:scbody;
-    display:flex;
-    flex-direction:column;
-    flex:1 1 auto;
+    display:grid;
+    grid-template-columns:100%;
+    grid-template-rows:
+        var(--sc-cat-slot)
+        calc(var(--sc-brand-slot) + var(--sc-name-slot))
+        var(--sc-rate-slot)
+        1fr
+        auto
+        auto;
     min-height:0;
     padding:var(--sc-pad);
     text-align:start;
 }
 
+/* ONE LINE, AND IT IS NOT COSMETIC. components/product-grid.blade.php resolves
+   this eyebrow PER PRODUCT — `$p->categories->first()?->t('name')` — so on a
+   brand page two tiles side by side can carry category names of different
+   lengths, and without a clamp the longer one wrapped and made its card taller.
+   Measured with a 40-character category at 390: the eyebrow was 45px, three
+   lines, against 15px for a short one. */
 .kbb-pgrid[data-skin^="showcase"] .kbb-card-cat{
-    font-size:10px;letter-spacing:.09em;color:var(--sc-muted);font-weight:600;margin-bottom:4px}
+    grid-row:1;
+    font-size:var(--sc-cat-fs);line-height:var(--sc-cat-lh);letter-spacing:.09em;
+    color:var(--sc-muted);font-weight:600;margin-bottom:var(--sc-cat-mb);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* ONE LINE HERE TOO, for the same reason and with a sharper measurement: at
+   320px the text column is 104px and "BEAUTY OF JOSEON" is 27.28px of brand
+   line against 13.64px for "MEDICUBE" — two tiles in one row, 13.64px apart,
+   on the shop's own demo catalogue. */
 .kbb-pgrid[data-skin^="showcase"] .kbb-card-brand{
-    font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--sc-muted);
-    font-weight:600;margin-bottom:3px}
+    font-size:var(--sc-brand-fs);line-height:var(--sc-brand-lh);letter-spacing:.07em;
+    text-transform:uppercase;color:var(--sc-muted);
+    font-weight:600;margin-bottom:var(--sc-brand-mb);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* ROW 2 HOLDS THE BRAND LINE AND THE NAME TOGETHER, because the brand is
+   INSIDE this link in the markup (`.cn > .kbb-card-brand + .kbb-card-nm`) and
+   the markup is one shared tile. The track is the sum of the two reservations,
+   so a product with no brand at all is the same height as one with a brand. */
 .kbb-pgrid[data-skin^="showcase"] .cn{
+    grid-row:2;
     font-size:var(--sc-name);font-weight:600;color:var(--sc-ink)}
 
 /* ▲ THE RATING ROW IS AN ADDITION, NOT A REMOVAL. The owner's card has none
@@ -4079,24 +4190,52 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    the round that built the tile. So there is nothing to switch off here: a
    reviewed product draws the row in the new design, an unreviewed one draws no
    markup and the layout closes up around it. */
-.kbb-pgrid[data-skin^="showcase"] .kbb-card-rate{margin-top:8px;gap:6px;font-size:12px}
+/* THE LINE-HEIGHT IS DECLARED, which is what makes --sc-rate-slot exact rather
+   than approximately right. Left to inherit, this row's height was the body's
+   line-height times its own font size, so a lane changing the shop's typeface
+   would move it and the reservation would no longer match the row. Measured
+   18px here, and 26px with the margin — which is precisely the difference
+   between the tall and the short rows in the numbers at the top of this block. */
+.kbb-pgrid[data-skin^="showcase"] .kbb-card-rate{
+    grid-row:3;
+    margin-top:var(--sc-rate-mt);gap:6px;
+    font-size:var(--sc-rate-fs);line-height:var(--sc-rate-lh);align-items:center}
 
 /* The price line sits directly above the button, and the pair is held to the
    bottom of the card by `margin-top:auto` here — so a short name, a long name
    and a missing rating row all leave the buttons on one line across the row. */
 .kbb-pgrid[data-skin^="showcase"] .cp{
-    margin-top:auto;
+    grid-row:5;
+    /* `margin-top:auto` is what held this pair on the card's foot in the flex
+       column. The `1fr` track above does it now, and leaving the auto margin
+       here as well would add the row's slack TWICE. */
+    margin-top:0;
     padding-top:var(--sc-gap);
     display:flex;
     align-items:baseline;
-    flex-wrap:wrap;
+    /* ── IT MAY NOT WRAP, AND WRAPPING IS NOT A STYLE QUESTION ── Lane CARD ──
+       `flex-wrap:wrap` let "AED 260  AED 208" break onto two lines in a narrow
+       text column, and a second line here is 26.75px of card height that its
+       neighbour at one price does not have. Measured on the shop's own demo
+       catalogue at 320px: `.cp` was 59px on a marked-down tile and 32.25px on a
+       tile beside it. At 390 and above the pair has always fitted on one line,
+       so this changes nothing anybody can see there — it removes a state the
+       card could get into on the narrowest phone.
+
+       WHAT GIVES WAY WHEN THERE IS NOT ROOM IS THE STRUCK ORIGINAL, never the
+       figure the shopper pays: flex-shrink 99 against 1 puts effectively all of
+       the shortfall on `.kbb-card-reg`, which ellipsises. A price that is
+       crossed out losing its last character is a readable card; the sale price
+       losing one is a lie. */
+    flex-wrap:nowrap;
     gap:8px;
     font-size:calc(var(--sc-name) + 1px);
     font-weight:700;
 }
 
 .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg{
-    color:var(--sc-was);font-weight:500;font-size:calc(var(--sc-name) - 1.5px)}
+    color:var(--sc-was);font-weight:500;font-size:calc(var(--sc-name) - 1.5px);
+    flex:0 99 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* THE PLAIN PRICE IS THE OWNER'S COLOUR AND THE SALE PRICE IS PINK, and the
    first half of that sentence is a repair rather than a preference. Measured in
@@ -4110,13 +4249,16 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    is the same duplication CLAUDE.md and docs/W1-SITE-WIDTH.md already record —
    but the showcase family can at least be the same colour on every page, so it
    names the variable itself and both copies carry the line. */
-.kbb-pgrid[data-skin^="showcase"] .kbb-card-price{color:var(--kbb-price,#2A2228)}
+.kbb-pgrid[data-skin^="showcase"] .kbb-card-price{
+    color:var(--kbb-price,#2A2228);
+    flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .kbb-pgrid[data-skin^="showcase"] .kbb-card-reg+.kbb-card-price{color:var(--sc-sale)}
 
 /* `line-height` and not flex centring, so the button keeps the `display:block`
    that `.pc-nocart` needs to be able to override. The height is the line. */
 .kbb-pgrid[data-skin^="showcase"] .kbb-card-cart{
+    grid-row:6;
     margin-top:var(--sc-gap);
     padding:0 10px;
     border-radius:var(--sc-btn-r);
@@ -4147,13 +4289,16 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    loses. */
 .kbb-pgrid[data-skin="showcase-compact"]{
     --sc-pad:10px;--sc-gap:7px;--sc-name:12.5px;
-    --sc-btn-h:34px;--sc-btn-r:2px;--sc-btn-fs:10px;--sc-heart:34px}
+    --sc-btn-h:34px;--sc-btn-r:2px;--sc-btn-fs:10px;--sc-heart:34px;
+    /* The slot follows the row: this treatment draws the rating smaller and
+       closer, so the reservation has to be told, or it reserves the faithful
+       treatment's 26px for a 21.5px row. */
+    --sc-rate-fs:11px;--sc-rate-mt:5px}
 .kbb-pgrid[data-skin="showcase-compact"] .kbb-card{border-color:transparent;background:none}
 .kbb-pgrid[data-skin="showcase-compact"] .kbb-card:hover{box-shadow:none}
 .kbb-pgrid[data-skin="showcase-compact"] .cb{padding:var(--sc-pad) 2px 0}
 .kbb-pgrid[data-skin="showcase-compact"] .kbb-card-shot{border-radius:var(--kbb-radius,14px)}
 .kbb-pgrid[data-skin="showcase-compact"] .heart{inset-inline-end:2px;bottom:0}
-.kbb-pgrid[data-skin="showcase-compact"] .kbb-card-rate{margin-top:5px;font-size:11px}
 .kbb-pgrid[data-skin="showcase-compact"] .heart svg{width:15px;height:15px}
 
 /* ── 3 · ROW ── the price and the button share the last line. ─────────────────
@@ -4165,19 +4310,33 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kbb-pgrid[data-skin="showcase-row"]{
     --sc-pad:14px;--sc-gap:10px;--sc-name:13.5px;
     --sc-btn-h:38px;--sc-btn-r:3px;--sc-btn-fs:11px}
+/* THE SAME THREE RESERVATIONS, one row shorter, because the price and the
+   button share the last line here. The three tracks above the spacer are the
+   family's own slots — a treatment that reserved nothing would be the one of
+   the four where a rating row still moves the card, which is the shape of bug
+   the brief calls "a setting that only works on one of the four". */
 .kbb-pgrid[data-skin="showcase-row"] .cb{
     display:grid;
     grid-template-columns:1fr auto;
-    grid-template-rows:auto auto auto 1fr auto;
+    grid-template-rows:
+        var(--sc-cat-slot)
+        calc(var(--sc-brand-slot) + var(--sc-name-slot))
+        var(--sc-rate-slot)
+        1fr
+        auto;
     column-gap:10px;
     align-items:end}
 .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cat,
 .kbb-pgrid[data-skin="showcase-row"] .cn,
 .kbb-pgrid[data-skin="showcase-row"] .kbb-card-rate{grid-column:1/-1}
+/* ROW 5 BY NUMBER AND NOT `-2`. `-2` means "the last row of the explicit grid",
+   which was the right way to say it while the tracks were all `auto` and the
+   count could change; it is now five named tracks and the number is the
+   clearer statement of the same place. */
 .kbb-pgrid[data-skin="showcase-row"] .cp{
-    grid-row:-2;grid-column:1;margin-top:0;padding-top:0}
+    grid-row:5;grid-column:1;margin-top:0;padding-top:0}
 .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
-    grid-row:-2;grid-column:2;margin-top:0;padding:0 18px;justify-self:end}
+    grid-row:5;grid-column:2;margin-top:0;padding:0 18px;justify-self:end}
 /* Bottom-end, because the -N% pill owns the photograph's top-end corner — the
    same collision the phone rule at the foot of this block avoids, found the
    same way: in the shot. */
@@ -4239,18 +4398,28 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
        does not have a line wide enough for the idea, so below 700px treatment C
        is the stacked card the others are. Said plainly rather than hidden: at
        390px, C and A are the same layout, and C's difference is a desktop
-       difference. */
+       difference.
+
+       ── AND IT STACKS BACK ONTO THE BASE GRID, NOT ONTO A FLEX COLUMN ─────
+       This was `display:flex` with `margin-top:auto` on the price, which is the
+       layout the base treatment USED to have. The base is a grid with reserved
+       tracks now, so reverting to flex here would leave treatment C as the one
+       phone card whose height still moves with the rating row. Same six tracks,
+       one column, and `align-items:stretch` because `end` is still live from
+       the desktop rule and in a flex column it meant the cross axis — measured
+       then, it shrank the button to its text, 106px inside a 135px column. */
     .kbb-pgrid[data-skin="showcase-row"] .cb{
-        display:flex;
-        flex-direction:column;
-        /* `align-items:end` is still live from the grid rule above, and in a
-           flex COLUMN it means the cross axis — measured, it shrank the button
-           to its text, 106px inside a 135px column. */
-        align-items:stretch;
-        flex:1 1 auto;
-        min-height:0}
+        grid-template-columns:100%;
+        grid-template-rows:
+            var(--sc-cat-slot)
+            calc(var(--sc-brand-slot) + var(--sc-name-slot))
+            var(--sc-rate-slot)
+            1fr
+            auto
+            auto;
+        align-items:stretch}
     .kbb-pgrid[data-skin="showcase-row"] .cp{
-        margin-top:auto;padding-top:var(--sc-gap)}
+        grid-row:5;grid-column:1;padding-top:var(--sc-gap)}
     .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
-        margin-top:var(--sc-gap);padding:0 10px}
+        grid-row:6;grid-column:1;margin-top:var(--sc-gap);padding:0 10px}
 }
