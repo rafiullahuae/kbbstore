@@ -71,4 +71,27 @@ foreach ([
     'phone' => '+971500000001', 'orders_count' => 3, 'total_spent' => 94500,
 ]);
 
+/* Round 4: the two navigations that live in PARTIALS need their screens to
+   draw a live control.
+
+   REVIEWS.IO -> EXPORT wants something to export, or the screen reads as
+   "there is nothing here" and the picture is of that rather than of the fix.
+
+   THE INSTAGRAM HANDSHAKE'S BUTTON is greyed out and carries no
+   `data-igs-oauth` until an app id and secret are stored -- so without these
+   two lines there is no anchor to click and the blocked-popup fallback cannot
+   be photographed at all. The values are obvious fakes; nothing here talks to
+   Meta, and the screen asks THIS server for the connection state. */
+foreach ([['Aisha', 5, 'Glass skin in a week'], ['Noor', 4, 'Light and not sticky'], ['Sara', 5, 'Repurchased twice']] as $i => [$who, $stars, $title]) {
+    \App\Models\Review::create([
+        'source' => 'store', 'product_id' => 1,
+        'author_name' => $who, 'author_email' => strtolower($who) . '@preview.test',
+        'rating' => $stars, 'title' => $title,
+        'content' => 'Seeded for the Lane SEC pictures. ' . $title . '.',
+        'status' => 'approved', 'verified' => true, 'helpful' => $i,
+    ]);
+}
+
+\App\Services\Instagram\InstagramCredentials::saveApp('1234567890123456', 'abcdef0123456789abcdef0123456789');
+
 echo "seeded\n";

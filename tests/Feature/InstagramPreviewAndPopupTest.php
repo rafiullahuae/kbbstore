@@ -82,6 +82,45 @@ function igpScreen(): string
     return (string) file_get_contents(base_path('resources/views/admin/partials/instagram-screen.blade.php'));
 }
 
+/**
+ * A whole JavaScript function body, from `function name(` to its matching brace.
+ *
+ * ▲ WRITTEN BECAUSE A FIXED-WIDTH substr() WAS ASSERTING THE WRONG THING.
+ * The timer case read the first 900 bytes of watchPopup() and checked that four
+ * things were inside them. That held only while the function stayed under 900
+ * bytes: adding a COMMENT to it turned the case red at a line that had not
+ * moved and still ran, which is an assertion that is true for a reason
+ * unrelated to the code it claims to be about.
+ *
+ * Counting braces is the honest window. Strings and comments containing braces
+ * would fool it, and there are none in the functions this is used on -- said
+ * here so the next reader does not take it for a parser.
+ */
+function igpFunctionBody(string $source, int $start): string
+{
+    $open = strpos($source, '{', $start);
+
+    if ($open === false) {
+        return substr($source, $start);
+    }
+
+    $depth = 0;
+
+    for ($i = $open, $n = strlen($source); $i < $n; $i++) {
+        if ($source[$i] === '{') {
+            $depth++;
+        } elseif ($source[$i] === '}') {
+            $depth--;
+
+            if ($depth === 0) {
+                return substr($source, $start, $i - $start + 1);
+            }
+        }
+    }
+
+    return substr($source, $start);
+}
+
 /* ─────────────────────────────── gap 1: the preview ───────────────────────── */
 
 it('puts the preview’s pictures on the payload the screen already asks for', function () {
@@ -550,43 +589,73 @@ it('keeps the anchor as the blocked-popup fallback and prevents nothing until a 
      * ── THE ORDER OF THREE LINES IS THE WHOLE OF THE FALLBACK ───────────────
      *
      * window.open first; if it returned a window, and only then, preventDefault().
-     * A blocked popup returns null, nothing is prevented, and the browser follows
-     * the href exactly as it did before this handler existed — so the owner finishes
-     * in this tab and reads Instagram's own sentence off the landing banner.
-     *
-     * Written the other way round, a blocked popup is a button that does nothing at
-     * all, with no way for the owner to tell that from a broken one. This asserts the
-     * ordering rather than the existence, because the existence is not the property
-     * that matters.
+     * Written the other way round, A BLOCKED POPUP IS A BUTTON THAT DOES NOTHING
+     * AT ALL, with no way for the owner to tell that from a broken one. That is
+     * the property, and it is still the property.
      *
      * The anchor's href also stays exactly one: two would be two things to keep in
      * step with the route, and zero is the state this gap was the other half of.
      *
-     * MUTATION NOTE. Move `e.preventDefault();` above `openPopup(...)` in the
-     * `data-igs-oauth` branch and this is red on the ordering. Delete the `<a ...>`
-     * in favour of a <button> and it is red on the href count. RUN: red.
+     * ▲ AND LANE SEC CHANGED WHAT SATISFIES IT, so this case was turned round
+     * rather than left to go red. `/admin-api/instagram/start` is admin-guarded
+     * and outside the secret admin path, so a signed-out browser gets a plain
+     * 404 — and the blocked-popup fallback was a navigation OF THIS TAB, so an
+     * expired session took the whole screen away and left that 404. It was the
+     * defect the ten console blocks in docs/SEC-ADMIN-APP-BLOCKS.md were written
+     * for, reached through a door none of them covered.
+     *
+     * The question cannot be asked in front of a navigation nobody prevented, so
+     * the fallback now DOES call preventDefault() — and askThenGo() makes the
+     * same navigation itself, afterwards. The old assertion was
+     * `guard < prevented` against a bare `if (!win) return;`, which pinned the
+     * mechanism; this pins the PROPERTY instead, which is the thing that was
+     * always meant:
+     *
+     *   1. a modified click is handed back to the browser, before anything else;
+     *   2. the popup is attempted before anything is prevented;
+     *   3. the blocked path prevents the default AND THEN NAVIGATES ANYWAY, via
+     *      askThenGo(), which ends in `window.location.href = url` on every path
+     *      except a positively identified dead session, and whose body is wrapped
+     *      so that a throw cannot strand it either.
+     *
+     * MUTATION NOTE. Move `e.preventDefault();` above `openPopup(...)` and this
+     * is red on the ordering. Delete the `window.location.href = url;` at the end
+     * of askThenGo() — the shape that WOULD bring the dead button back — and it
+     * is red on the last expectation. Delete the `<a ...>` in favour of a
+     * <button> and it is red on the href count. RUN: red on all three.
      */
     $screen = igpScreen();
 
     $branch = strpos($screen, "var oauth = t.closest('[data-igs-oauth]');");
     expect($branch)->not->toBeFalse();
 
-    $body = substr($screen, (int) $branch, 1400);
+    $body = substr($screen, (int) $branch, 2200);
     $modified = strpos($body, 'e.metaKey || e.ctrlKey || e.shiftKey || e.altKey');
     $opened = strpos($body, 'openPopup(');
-    $guard = strpos($body, 'if (!win) return;');
+    $guard = strpos($body, 'if (!win) {');
     $prevented = strpos($body, 'e.preventDefault();');
+    $rescued = strpos($body, 'askThenGo(href);');
 
     expect($modified)->not->toBeFalse()
         ->and($opened)->not->toBeFalse()
         ->and($guard)->not->toBeFalse()
         ->and($prevented)->not->toBeFalse()
+        ->and($rescued)->not->toBeFalse()
         /* A MODIFIED CLICK IS HANDED BACK TO THE BROWSER, and it is checked first:
            Ctrl, Cmd, Shift and Alt on a link mean "open it somewhere else", and this
            would otherwise be the one control in the console that ignores them. */
         ->and($modified < $opened)->toBeTrue('a Ctrl-click is swallowed into a popup')
         ->and($opened < $guard)->toBeTrue('the popup is prevented before it is attempted')
-        ->and($guard < $prevented)->toBeTrue('a blocked popup still calls preventDefault, so the anchor is dead');
+        ->and($guard < $prevented)->toBeTrue('the default is prevented before the popup is attempted')
+        ->and($prevented < $rescued)->toBeTrue('the blocked path prevents the default and then does nothing');
+
+    /* ▲ AND THE NAVIGATION REALLY IS STILL MADE. This is what replaces the old
+       "prevents nothing": the button is allowed to prevent the default only
+       because askThenGo() finishes the journey itself, on every path but a
+       confirmed dead session. Without this line the fallback is the dead button
+       the docblock above forbids. */
+    expect($screen)->toContain('window.location.href = url;')
+        ->and(substr_count($screen, 'async function askThenGo(url) {'))->toBe(1);
 
     /* The real link survives, exactly once, pointing at the real route and built
        from base() rather than from a constant — the admin path is a setting. Counted
@@ -627,7 +696,17 @@ it('leaves no timer running once the popup is gone', function () {
     $watch = strpos($screen, 'function watchPopup() {');
     expect($watch)->not->toBeFalse();
 
-    $body = substr($screen, (int) $watch, 900);
+    /*
+     * ▲ THE WHOLE FUNCTION, NOT THE FIRST 900 BYTES. This read `substr($screen,
+     * $watch, 900)`, so the assertions below held only while watchPopup() was
+     * short enough to fit — and when Lane SEC added a comment inside it the case
+     * went red at `waited >= 900 * 1000` although that line had not moved and
+     * still ran. An assertion that fails when a COMMENT is added is not
+     * asserting what it says it asserts.
+     *
+     * Balanced braces instead, so the window is the function.
+     */
+    $body = igpFunctionBody($screen, (int) $watch);
 
     expect(trim(substr($body, strpos($body, '{') + 1, 40)))->toStartWith('endWatch();');
     expect($body)->toContain('if (gone) {')

@@ -273,6 +273,10 @@
   /* The OAuth popup and the watchdog that notices it was closed by hand. Both
      nulled the moment either finishes; see watchPopup(). */
   var popup = null, popupWatch = null;
+  /* Set only when THIS SCREEN closed the handshake window because the admin
+     session had ended. watchPopup() reads it so the close does not look like
+     the owner abandoning the handshake -- see tellIfSessionEnded(). (Lane SEC) */
+  var oauthClosedBySessionGate = false;
   /* The sentence the OAuth callback redirected back with, read once from the
      query string and then kept in a variable — see landed() for why it is
      stripped out of the URL rather than left in it. */
@@ -1155,12 +1159,128 @@
       if (gone) {
         endWatch();
         popup = null;
+
+        /* ▲ NOT EVERY CLOSED WINDOW IS AN ABANDONED HANDSHAKE. (Lane SEC)
+           When the session gate closed it, the session is already known to be
+           dead: afterOauth() would call load(), load() would be refused as
+           well, and the sentence the owner is left looking at would be
+           "Content → Instagram could not be loaded" -- in place of the one
+           that names the actual fault and tells him what to do about it.
+           MEASURED before this line existed: the gate's banner was set and
+           then replaced, and the screen ended up showing no .igs-note at all. */
+        if (oauthClosedBySessionGate) {
+          oauthClosedBySessionGate = false;
+          return;
+        }
+
         afterOauth();
         return;
       }
 
       if (waited >= 900 * 1000) { endWatch(); popup = null; }
     }, 700);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     THE SESSION GATE ON THE HANDSHAKE                            (Lane SEC)
+     ══════════════════════════════════════════════════════════════════════
+
+     `/admin-api/instagram/start` is admin-guarded and lives OUTSIDE the secret
+     admin path, so a signed-out browser is answered with a plain 404 -- the
+     302 it used to answer with named `admin_path` in a Location header to
+     anyone who typed the prefix, which is the leak this lane closed.
+
+     TWO NAVIGATIONS REACH IT FROM THIS SCREEN, and they need different
+     answers:
+
+       1. THE POPUP, which is the normal path. It has to be opened inside the
+          click, so nothing can be awaited in front of it -- the question is
+          asked behind it, and a dead session closes the window this screen
+          still holds the handle to and says so on the banner.
+
+       2. THE BLOCKED-POPUP FALLBACK, which is the one the specification for
+          this work called out as needing its own answer. When window.open
+          returns null this handler used to prevent nothing, and the browser
+          followed the anchor's href IN THIS TAB -- so a dead session took the
+          whole console with it, which is exactly the defect the ten blocks in
+          docs/SEC-ADMIN-APP-BLOCKS.md were written for, reached by a path
+          none of them covers.
+
+          It is answered by preventing the default, asking, and then performing
+          the same navigation. NOT by the shape the comment in the click
+          handler warns against -- preventDefault() BEFORE window.open, which
+          turns a blocked popup into a button that does nothing. The popup has
+          already been attempted and has already failed by the time this runs.
+
+     AND IT FAILS OPEN. Only a POSITIVELY IDENTIFIED dead session stops the
+     fallback navigation; a refusal for any other reason, or no answer at all,
+     navigates exactly as the anchor would have. A button that does nothing is
+     the failure this screen is most careful about, and a probe must not be
+     able to introduce one.
+
+     The server half is App\Support\ExportProbe, called as the first statement
+     of Admin\InstagramController::start(), so a probe mints NO OAuth state --
+     `?probe=1` answers {"ok":true} and nothing else, through this action's own
+     capability. */
+
+  /* 'ok' | 'signedout' | 'other'. NEVER THROWS, so no caller needs a try. */
+  async function sessionVerdict(url) {
+    try {
+      var r = await fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'probe=1',
+        { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } });
+      if (r.ok) { return 'ok'; }
+      if (r.status === 401 || r.status === 419) { return 'signedout'; }
+      return 'other';
+    } catch (e) {
+      /* The request never reached a server. Reported as 'other' and not as a
+         dead session: "sign in again" is the wrong remedy for a dropped
+         connection. */
+      return 'other';
+    }
+  }
+
+  var OAUTH_SESSION_GONE = 'Your session has ended, so Instagram could not be opened. '
+    + 'Sign in again and press Configure now \u2014 nothing has been authorised and '
+    + 'nothing needs undoing.';
+
+  /* Behind the popup: it is already on screen and cannot be waited for. */
+  function tellIfSessionEnded(url, win) {
+    sessionVerdict(url).then(function (verdict) {
+      if (verdict !== 'signedout') { return; }
+
+      /* BEFORE the close, because watchPopup() polls every 700ms and the flag
+         has to be up by the time it notices. */
+      oauthClosedBySessionGate = true;
+      if (win) { try { win.close(); } catch (e) {} }
+
+      banner = { ok: false, text: OAUTH_SESSION_GONE };
+      render();
+    });
+  }
+
+  /* In front of the fallback: this one CAN be waited for, because the default
+     has been prevented. Fails open -- see the note above.
+
+     ▲ THE WHOLE BODY IS WRAPPED, and that is not belt-and-braces. By the time
+     this runs e.preventDefault() HAS ALREADY HAPPENED, so the browser is no
+     longer going to follow the href on its own: anything that throws in here
+     would leave exactly the dead button this screen's own comment says must
+     never exist. Before this lane the fallback could not fail, because it was
+     the absence of code. Now it is code, so it carries its own floor.
+
+     sessionVerdict() already promises never to throw; render() is the one that
+     could. Only the REFUSAL path returns without navigating, and only when it
+     got all the way through saying so. */
+  async function askThenGo(url) {
+    try {
+      if (await sessionVerdict(url) === 'signedout') {
+        banner = { ok: false, text: OAUTH_SESSION_GONE };
+        render();
+        return;
+      }
+    } catch (e) { /* fall through to the navigation the anchor would have made */ }
+
+    window.location.href = url;
   }
 
   /*
@@ -1335,13 +1455,29 @@
          here, so the browser does what it always does with the href. */
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || (e.button !== undefined && e.button !== 0)) return;
 
-      var win = openPopup(oauth.getAttribute('href'));
-      if (!win) return;
+      var href = oauth.getAttribute('href');
+      var win = openPopup(href);
+
+      if (!win) {
+        /* THE FALLBACK, AND IT IS A NAVIGATION OF THE WHOLE CONSOLE. (Lane SEC)
+           Nothing was prevented here before, so the browser followed the href in
+           this tab -- and on a dead session that is a blank 404 with the screen
+           gone. The default is prevented now and askThenGo() performs the same
+           navigation, after asking; it fails open, so every case except a
+           confirmed dead session still goes exactly where the anchor pointed. */
+        e.preventDefault();
+        askThenGo(href);
+        return;
+      }
 
       e.preventDefault();
       banner = { ok: true, text: 'Instagram is open in a separate window. Grant access there and it will '
         + 'close itself — this screen picks the connection up on its own, with nothing to reload.' };
       render();
+
+      /* Asked BEHIND the popup, which is the only place it can be asked: a
+         popup opened from an async continuation is blocked. (Lane SEC) */
+      tellIfSessionEnded(href, win);
       return;
     }
 

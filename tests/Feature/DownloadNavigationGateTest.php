@@ -75,6 +75,30 @@ function secConsole(): string
     return file_get_contents(resource_path('views/admin/app.blade.php'));
 }
 
+/**
+ * Every file the admin console is actually made of, labelled by its basename.
+ *
+ * ▲ THE PARTIALS ARE IN HERE BECAUSE LEAVING THEM OUT COST A NAVIGATION.
+ * Round 3 of this lane scanned admin/app.blade.php and reported eleven
+ * addresses reached by navigating the browser. There were TWELVE: Reviews ->
+ * Reviews.io -> Export does it with `window.location.href` from
+ * admin/partials/reviews-io-screen.blade.php -- the worst shape there is,
+ * because it replaces the whole document -- and no scan that reads one file
+ * was ever going to find it.
+ */
+function secConsoleFiles(): array
+{
+    $files = ['app' => resource_path('views/admin/app.blade.php')];
+
+    foreach (glob(resource_path('views/admin/partials/*.blade.php')) as $path) {
+        $files[basename($path, '.blade.php')] = $path;
+    }
+
+    ksort($files);
+
+    return $files;
+}
+
 it('declares the gate exactly once', function () {
     /*
      * ONE of each, never two. Two declarations of kbbProbeDownload() is the
@@ -179,13 +203,13 @@ it('leaves no navigation in the console unaccounted for', function () {
      * olDocLabel(), and beside cpSelectedIds() -- is RED at all three. RUN, all
      * three. The two earlier proximity drafts were green at the first two.
      */
-    $lines = explode("\n", secConsole());
-
     $sites = [];
 
-    foreach ($lines as $line) {
-        if (preg_match('/window\.open\s*\(|(?:window\.)?location\.href\s*=/', $line)) {
-            $sites[] = trim($line);
+    foreach (secConsoleFiles() as $label => $path) {
+        foreach (explode("\n", file_get_contents($path)) as $line) {
+            if (preg_match('/window\.open\s*\(|(?:window\.)?location\.(?:href\s*=|assign|replace)/', $line)) {
+                $sites[] = $label.'  '.trim($line);
+            }
         }
     }
 
@@ -196,31 +220,49 @@ it('leaves no navigation in the console unaccounted for', function () {
         // just succeeded. UpdateApiController builds it as "'/' . trim($path,
         // '/')" -- exactly one leading slash, so it cannot become a
         // protocol-relative URL pointing off-site.
-        'if(r.ok && r.data?.redirect){ toast(r.data.message); setTimeout(()=>{ window.location.href = r.data.redirect; }, 1200); return; }',
+        'app  if(r.ok && r.data?.redirect){ toast(r.data.message); setTimeout(()=>{ window.location.href = r.data.redirect; }, 1200); return; }',
         // UNDER the admin path rather than under /admin-api, so GuestRedirect
         // still answers it with the 302 to the login -- which is safe there,
         // because the URL the browser used already carries the secret.
-        "window.open(kbbHealthLogUrl(), '_blank', 'noopener');",
+        "app  window.open(kbbHealthLogUrl(), '_blank', 'noopener');",
         // The line above it awaits an authenticated POST to
         // /admin-api/import/background and returns on a refusal, so the session
         // is proven alive one statement earlier.
-        "window.open(impBase()+'/import/background-page','_blank');",
+        "app  window.open(impBase()+'/import/background-page','_blank');",
         // The gate's own sign-in button: the one navigation that is SUPPOSED to
         // leave the console.
-        'if(go) go.onclick = function(){ window.location.href = kbbAdminLoginUrl(); };',
+        'app  if(go) go.onclick = function(){ window.location.href = kbbAdminLoginUrl(); };',
 
         // ── TOLD AFTER THE FACT (window.open must happen inside the click) ──
-        "window.open(url, '_blank', 'noopener');",          // bulk documents
+        "app  window.open(url, '_blank', 'noopener');",      // bulk documents
         // ── GATED BEFORE (these replace the whole console) ─────────────────
-        'window.location.href = url;',                      // orders export
-        "window.open(url, '_blank', 'noopener');",          // the four order documents
-        'window.location.href = url;',                      // customers export
-        'window.location.href = url;',                      // reviews export
-        'window.location.href = url;',                      // catalogue export
+        'app  window.location.href = url;',                  // orders export
+        "app  window.open(url, '_blank', 'noopener');",      // the four order documents
+        'app  window.location.href = url;',                  // customers export
+        'app  window.location.href = url;',                  // reviews export
+        'app  window.location.href = url;',                  // catalogue export
         // ── TOLD AFTER THE FACT, and the only one with a handle to close ───
-        "try{ w=window.open(url,'kbbstripe','width=620,height=760'); }catch(e){ w=null; }",
-        // ── THE SIGN OUT, after its own POST. ──────────────────────────────
-        "location.href=base+'/login';",
+        "app  try{ w=window.open(url,'kbbstripe','width=620,height=760'); }catch(e){ w=null; }",
+        // ── THE SIGN OUT, after its own POST ───────────────────────────────
+        "app  location.href=base+'/login';",
+
+        // ══ AND THE THREE IN PARTIALS, WHICH NO EARLIER SCAN SAW ═══════════
+        //
+        // The Instagram handshake's BLOCKED-POPUP FALLBACK. This used to
+        // prevent nothing, so the browser followed the anchor's href in this
+        // tab and a dead session took the whole screen with it. askThenGo()
+        // prevents the default, asks, and then performs the same navigation --
+        // and FAILS OPEN, so only a confirmed dead session stops it. A button
+        // that does nothing is the failure that screen is most careful about.
+        'instagram-screen  window.location.href = url;',
+        // The popup itself, told after the fact because window.open has to
+        // happen inside the click. It is the one navigation in the console that
+        // keeps a handle, so the dead window is closed rather than left up.
+        "instagram-screen  win = window.open(url, 'kbb-instagram-oauth',",
+        // ▲ THE TWELFTH, and the reason this case reads the partials at all:
+        // Reviews -> Reviews.io -> Export replaced the whole console, and three
+        // scans of admin/app.blade.php never saw it.
+        'reviews-io-screen  window.location.href = exportUrl();',
     ], 'the set of navigations in the admin console has changed');
 });
 
@@ -458,4 +500,146 @@ it('keeps the handover document and the applied console in step', function () {
             'block '.($i + 1)." of docs/SEC-ADMIN-APP-BLOCKS.md is not in the console exactly once"
         );
     }
+});
+
+it('gates the two navigations in partials, each in the shape its own screen needs', function () {
+    /*
+     * ── THE TWELFTH NAVIGATION, AND THE TWO IN THE INSTAGRAM HANDSHAKE ─────
+     *
+     * These are NOT delivered as blocks: neither file is the integrator's, so
+     * this lane writes them and these assertions are green here and stay green.
+     *
+     * REVIEWS -> REVIEWS.IO -> EXPORT is the same shape as the four in
+     * app.blade.php -- `window.location.href` replaces the whole document -- so
+     * it is gated BEFORE, with an await, and the navigation itself is unchanged.
+     *
+     * THE INSTAGRAM HANDSHAKE has two, and they need different answers:
+     *
+     *   the popup           told AFTER the fact, because window.open must
+     *                       happen inside the click; the handle is kept, so the
+     *                       dead window is closed rather than left up.
+     *   the FALLBACK        window.open returned null, so the browser was about
+     *                       to follow the anchor's href IN THIS TAB. The default
+     *                       is prevented and askThenGo() performs the same
+     *                       navigation after asking.
+     *
+     * MUTATION NOTE. Drop the `await downloadOk()` guard from
+     * reviews-io-screen.blade.php and the first expectation is red; delete the
+     * `askThenGo(href)` line from instagram-screen.blade.php and the third is.
+     * RUN -- both.
+     */
+    $rio = file_get_contents(resource_path('views/admin/partials/reviews-io-screen.blade.php'));
+    $ig = file_get_contents(resource_path('views/admin/partials/instagram-screen.blade.php'));
+
+    expect(substr_count($rio, 'if (!(await downloadOk())) return;'))->toBe(1)
+        ->and(substr_count($rio, 'x.onclick = async function(){'))->toBe(1)
+        ->and(substr_count($rio, 'async function downloadOk(){'))->toBe(1);
+
+    expect(substr_count($ig, 'askThenGo(href);'))->toBe(1)
+        ->and(substr_count($ig, 'tellIfSessionEnded(href, win);'))->toBe(1)
+        ->and(substr_count($ig, 'async function sessionVerdict(url) {'))->toBe(1);
+});
+
+it('lets the Instagram fallback fail open, so a probe cannot make a dead button', function () {
+    /*
+     * ▲ THE ONE THING THAT MUST NOT GO WRONG HERE, and the screen's own comment
+     * says why: "Written the other way round -- preventDefault() first, then try
+     * to open -- a blocked popup is a button that does nothing at all, with no
+     * way for the owner to tell that from a broken one."
+     *
+     * This lane now DOES prevent the default on that path -- it has to, or the
+     * question cannot be asked in front of the navigation -- so the guarantee
+     * has to come from somewhere else. It comes from askThenGo() navigating on
+     * EVERYTHING except a positively identified dead session: a 403, a 500, a
+     * dropped connection and a probe that never answers all still go exactly
+     * where the anchor pointed.
+     *
+     * Asserted on the shape of the function, because the alternative is a
+     * browser test of a blocked popup, which no driver will reliably produce.
+     *
+     * MUTATION NOTE. Change askThenGo()'s test to `!== 'ok'` -- the obvious
+     * fail-CLOSED spelling -- and this is red on the first expectation. RUN.
+     */
+    $ig = file_get_contents(resource_path('views/admin/partials/instagram-screen.blade.php'));
+
+    // The refusal is the narrow case; the navigation is the default.
+    expect($ig)->toContain(
+        "    try {\n"
+        ."      if (await sessionVerdict(url) === 'signedout') {\n"
+        ."        banner = { ok: false, text: OAUTH_SESSION_GONE };\n"
+        ."        render();\n"
+        ."        return;\n"
+        ."      }\n"
+        ."    } catch (e) { /* fall through to the navigation the anchor would have made */ }\n"
+        ."\n"
+        ."    window.location.href = url;"
+    );
+
+    /*
+     * And sessionVerdict() never throws, or askThenGo() would never reach the
+     * navigation at all on a network failure.
+     *
+     * ▲ THIS NEEDLE WAS `"    } catch (e) {\n"` AND IT ASSERTED NOTHING.
+     * tools/plc-needle-scan.sh counted it SIX TIMES in this one file: the
+     * screen is full of `} catch (e) {`, so the expectation was green whether
+     * or not sessionVerdict() had a catch at all, and deleting the one it was
+     * written about would not have moved it. Found by running Lane PLC's survey
+     * over this lane's own files, which is round 4's third task.
+     *
+     * The whole catch BLOCK, counted, is the honest form: it names the comment
+     * inside it, so nothing else in the file can satisfy it.
+     */
+    expect(substr_count($ig,
+        "    } catch (e) {\n"
+        ."      /* The request never reached a server. Reported as 'other' and not as a\n"
+        ."         dead session: \"sign in again\" is the wrong remedy for a dropped\n"
+        ."         connection. */\n"
+        ."      return 'other';\n"
+        ."    }\n"
+    ))->toBe(1, 'sessionVerdict() no longer swallows a network failure');
+});
+
+it('does not let the gate closing the popup read as the owner abandoning the handshake', function () {
+    /*
+     * ▲ FOUND BY MEASURING THE POPUP PATH, NOT BY READING IT.
+     *
+     * The gate closes the handshake window when the session is dead. That close
+     * is indistinguishable, to watchPopup(), from the owner closing it himself
+     * — so afterOauth() ran, called load(), was refused with the same 401, and
+     * the sentence left on screen was "Content → Instagram could not be loaded"
+     * instead of the one naming the fault.
+     *
+     * MEASURED, on the preview, with the session dropped and the popup allowed
+     * to open (storage/sec-logs/ig-popup-probe.cjs):
+     *
+     *   before this flag   tabsAtPeak 1 -> 1, stillOnConsole true, said: NULL
+     *                      — no .igs-note on the screen at all
+     *   after              said: "Your session has ended, so Instagram could not
+     *                      be opened. Sign in again and press Configure now …"
+     *
+     * THE ORDER MATTERS AND IS ASSERTED: watchPopup() polls every 700ms, so the
+     * flag has to be up BEFORE win.close(), not after.
+     *
+     * MUTATION NOTE. Delete the `if (oauthClosedBySessionGate)` early return
+     * from watchPopup() and the second expectation is red; move the flag to
+     * after `win.close()` and the third is. RUN — both, and the first was run
+     * as the real defect above.
+     */
+    $ig = file_get_contents(resource_path('views/admin/partials/instagram-screen.blade.php'));
+
+    expect(substr_count($ig, 'var oauthClosedBySessionGate = false;'))->toBe(1);
+
+    expect($ig)->toContain(
+        "        if (oauthClosedBySessionGate) {\n"
+        ."          oauthClosedBySessionGate = false;\n"
+        ."          return;\n"
+        ."        }\n"
+        ."\n"
+        ."        afterOauth();"
+    );
+
+    expect($ig)->toContain(
+        "      oauthClosedBySessionGate = true;\n"
+        ."      if (win) { try { win.close(); } catch (e) {} }"
+    );
 });

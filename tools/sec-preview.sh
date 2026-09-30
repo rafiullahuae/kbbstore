@@ -82,23 +82,26 @@ export APP_KEY
 
 # ── THE ADMIN PATH IS SET HERE, AND DELIBERATELY NOT "admin" ────────────────
 #
-# TWO REASONS, AND THE FIRST ONE COST HALF AN HOUR.
+# ONE REASON NOW, AND IT USED TO BE TWO.
 #
-# AdminPathService::current() reads KBB_ADMIN_PATH, then the `admin_path`
-# settings row, then falls back to "admin" -- and it MEMOISES INTO THE FILE
-# CACHE, which on a default CACHE_STORE=file lives at
-# storage/framework/cache/data INSIDE THE WORKTREE and is therefore shared with
-# every pest run and every other preview this worktree has ever booted. This
-# preview's own database has no admin_path row at all, and /admin still answered
-# 404: the cache held `mr-cool` from something else entirely. A preview whose
-# admin address depends on what a test left behind is not reproducible, so it is
-# pinned here where it can be read.
+# It is pinned to a NON-DEFAULT value on purpose, because that is the shop this
+# lane photographs. routes/web.php answers `/admin/{any?}` with abort(404) as
+# soon as the path is moved -- so it is only on a moved path that the console's
+# hardcoded '/admin/logout' and '/admin/login' were dead, which is what
+# tools/sec-shots.cjs measures in its last section.
 #
-# And it is pinned to a NON-DEFAULT value on purpose, because that is the shop
-# this lane is photographing. routes/web.php answers `/admin/{any?}` with
-# abort(404) as soon as the path is moved -- so it is only on a moved path that
-# the console's hardcoded '/admin/logout' and '/admin/login' are dead, which is
-# what tools/sec-shots.cjs measures in its third section.
+# ▲ THE SECOND REASON IS GONE, and removing it was round 4's second task. This
+# line used to be load-bearing as a WORKAROUND as well: AdminPathService caches
+# the resolved path with rememberForever, the file cache lived in ONE directory
+# for the whole checkout, and this preview -- whose own database has no
+# `admin_path` row at all -- answered 404 on /admin because that directory held
+# `mr-cool` left by something else. Pinning the env var stepped over it.
+#
+# config/cache.php now gives every database its own cache directory
+# (App\Support\CacheScope), so the workaround is not needed: this preview boots
+# correctly without this line, which was checked by removing it. Lane AR had
+# patched tools/ar-preview.sh with CACHE_STORE=array for the same trap on a
+# different key.
 export KBB_ADMIN_PATH=sec-console
 
 export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \

@@ -809,9 +809,55 @@
     }
   }
 
+  /* The path and its query, kept apart from the origin so that the download and
+     the question asked in front of it are built from ONE place. (Lane SEC) */
+  function exportPath(){
+    return '/reviews-io/export?status=' + encodeURIComponent(form.status)
+      + '&emails=' + (form.emails ? '1' : '0');
+  }
+
   function exportUrl(){
-    var q = '?status=' + encodeURIComponent(form.status) + '&emails=' + (form.emails ? '1' : '0');
-    return apiBase() + '/reviews-io/export' + q;
+    return apiBase() + exportPath();
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     THE SESSION GATE ON THE DOWNLOAD                               (Lane SEC)
+     ══════════════════════════════════════════════════════════════════════════
+
+     ▲ A TWELFTH NAVIGATION, and it was missed by every scan this lane ran
+     before this one, because they all read admin/app.blade.php and this is in a
+     partial. It is also the WORST shape: `window.location.href` replaces the
+     whole document, so an expired session took this screen, its totals and the
+     file the owner was about to export away with it and left a blank 404.
+
+     `/admin-api/reviews-io/export` is admin-guarded and lives outside the
+     secret admin path, so a signed-out browser gets a plain 404 -- the 302 it
+     used to answer with named `admin_path` to anyone who typed the prefix.
+
+     So the button asks first. `?probe=1` on the export's OWN address, answered
+     `{"ok":true}` and nothing else by App\Support\ExportProbe as the first
+     statement of the action -- so no query is run, and the question passes
+     through this action's own `reviews.export` capability, because
+     AdminCapabilities matches on the route's URI and a query string is not part
+     of it.
+
+     NOT A BLOB. The comment at the call site below is the reason and it
+     predates this: the response is streamed with a Content-Disposition on it
+     and the file lands in Downloads instead of in the tab's memory. Measured on
+     the four exports in admin/app.blade.php: 11 bytes and 35 ms for the probe
+     against 619,968 bytes and 645 ms for the download it guards. */
+  async function downloadOk(){
+    try {
+      await api(exportPath() + '&probe=1');
+      return true;
+    } catch (e) {
+      banner = { kind: 'err', text: (e && (e.status === 401 || e.status === 419))
+        ? 'Your session has ended, so the download was not started — nothing was sent. '
+          + 'Sign in again and this screen comes back exactly as it is.'
+        : 'The export could not be started (' + ((e && e.status) || 'network') + '). Nothing was sent.' };
+      render();
+      return false;
+    }
   }
 
   /* THE CHOSEN FILE IS HELD HERE, NOT IN THE INPUT ELEMENT.
@@ -1366,9 +1412,15 @@
     };
 
     var x = document.querySelector('#rio-export');
-    if (x) x.onclick = function(){
+    if (x) x.onclick = async function(){
       /* A plain navigation, not fetch(): the response is a file download with
-         a Content-Disposition on it, and the session cookie goes with it. */
+         a Content-Disposition on it, and the session cookie goes with it.
+
+         AND THE GATE IS AWAITED IN FRONT OF IT. (Lane SEC) This line replaces
+         the whole document, so a dead session used to take this screen away and
+         leave a blank 404. downloadOk() asks the export itself first and says so
+         on this screen's own banner instead; the navigation is unchanged. */
+      if (!(await downloadOk())) return;
       window.location.href = exportUrl();
     };
 
