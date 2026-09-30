@@ -1,5 +1,26 @@
 # Lane PG2 — the showcase card, four treatments, and the default that carries it
 
+> **▲ THE NUMBERS BELOW ARE THE CARD AS THIS LANE LEFT IT, AND THE CARD HAS
+> MOVED.** Lane CARD took the brand line and the category eyebrow off by
+> default, reserved a grid track for every optional row, and re-measured
+> everything — `docs/CARD-EQUAL-HEIGHT.md`. Two claims on this page are now
+> wrong and worth naming rather than leaving to be rediscovered:
+>
+> * **"Every card in a row measured the same height … all twelve tiles are
+>   454px"** was true of this fixture and not of the card. `height:100%`
+>   equalises a card against the other cards in its OWN row, and every row of
+>   `tools/pg2-seed.php` happens to contain a reviewed product at both widths.
+>   A grid row whose every product is unreviewed was 26px shorter — measured
+>   468.91 / 442.91 / 468.89 at 1280 on a fixture built to show it.
+> * **"The brand line … is left ON"** — it ships off now, and so does the
+>   eyebrow, because the owner asked for both in as many words. Both are still
+>   switches at Appearance → Product styles → Card content.
+>
+> Everything else on this page — the four treatments, the `display:contents`
+> mechanism, the quick-view fix, the five homes of the default, the Arabic pair
+> — still stands.
+
+
 The owner's request, verbatim:
 
 > "I need to match the product grid design to the attached one, same mean

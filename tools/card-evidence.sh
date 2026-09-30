@@ -109,5 +109,21 @@ shot card-after-related "/product/card-toner/" 390,1280
 shot card-after-search "/shop/?s=cream" 390,1280
 shot card-after-cart "/cart" 390,1280
 
+# ── 7 · ARABIC, AND IT IS LAST FOR A REASON ─────────────────────────────────
+#
+# Turning Arabic on is not invisible to the ENGLISH pages: a shop with Arabic
+# enabled renders a language switcher in its header that a shop without it does
+# not, so every English panel above has to be taken first.
+#
+# What the mirrored shot exists to show is that the family is laid out on the
+# LOGICAL axis and carries no `[dir]` selector: the grid reads right to left,
+# the name and the rating row are right-aligned, the struck original sits at the
+# row's start, and the card measures the same. English is re-shot afterwards
+# from the same server as the control.
+say "Arabic, and the English control taken from the same server afterwards"
+preview_artisan card-arabic-on.php
+shot card-ar-category "/ar/collections/skincare-sets/" 390,1280
+shot card-en-after-ar "/collections/skincare-sets/" 390,1280
+
 echo ""
 echo "shots in $APP/docs/card-shots, numbers in $LOG"
