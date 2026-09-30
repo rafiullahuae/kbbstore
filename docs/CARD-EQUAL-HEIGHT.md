@@ -562,6 +562,20 @@ one height.
 The **Arabic** side of every surface above measures **identically** to its
 English counterpart at all three widths, including the FBT strip.
 
+**And the reservation is proven ACROSS pages, not only within one.** The four
+collections draw from the same template with very different rating populations,
+and land on the same number:
+
+| page | tiles | of which carry a rating row | @390 | @1280 |
+| --- | --- | --- | --- | --- |
+| `/new-in` | 24 | **0** | 358.95 | 411.72 |
+| `/super-sale` | 10 | **3** | 358.95 | 411.72 |
+| `/concern/hydration/` | 4 | 0 | 358.95 | 411.72 |
+
+A page on which **no** product has a review measures the same as one where three
+in ten do. Before this lane that difference was 26px — the rating row's 18px
+line plus its 8px margin — and it was the whole defect.
+
 ## 12 · The defect: Frequently Bought Together had no CSS
 
 `partials/fbt.blade.php` draws a product tile per bundle item and is the one
