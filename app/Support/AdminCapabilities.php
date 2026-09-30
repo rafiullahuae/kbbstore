@@ -466,6 +466,14 @@ final class AdminCapabilities
         'updates.manage' => ['owner'],
         'system.diagnostics' => ['owner'],
         'data.import' => ['owner'],
+        /*
+         * Store -> Import -> "Clean up before the migration". OWNER ALONE, and
+         * a capability of its own rather than a reuse of `data.import` beside
+         * it, because the import endpoints ADD rows to the shop and these two
+         * REMOVE them. A role trusted to load the owner's catalogue in is not
+         * thereby a role trusted to delete part of it. (Lane IE)
+         */
+        'data.cleanup' => ['owner'],
     ];
 
     /**
@@ -814,6 +822,13 @@ final class AdminCapabilities
         ['*', 'admin-api/urls-media/**', 'data.import'],
         ['*', 'admin-api/demo-content', 'data.import'],
         ['*', 'admin-api/demo-content/**', 'data.import'],
+        /*
+         * The pre-migration cleanup -- routes/cleanup-admin.php. Its own
+         * capability, for the reason given beside `data.cleanup` above. Both
+         * lines are needed: the bare prefix is not matched by the `/**` form.
+         */
+        ['*', 'admin-api/cleanup', 'data.cleanup'],
+        ['*', 'admin-api/cleanup/**', 'data.cleanup'],
         /*
          * The sample order -- routes/sample-order-admin.php. Sits with Demo
          * Content because that is the screen it is on, and carries its OWN

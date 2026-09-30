@@ -7,7 +7,7 @@
         "home_url": "https://kbeautybliss.com",
         "wp_version": "6.5.2",
         "woo_version": "8.7.0",
-        "plugin_version": "1.7.0",
+        "plugin_version": "1.7.1",
         "timezone": "Asia/Dubai",
         "order_storage": "posts",
         "permalink_structure": "/%postname%/",
