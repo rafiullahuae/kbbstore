@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Support\ExportProbe;
 use App\Http\Controllers\Controller;
 use App\Models\Review;
 use App\Support\AggregatesQueries;
@@ -360,8 +361,32 @@ class ReviewsApiController extends Controller
      *
      * No IP column: see the note at the top of this file.
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request): StreamedResponse|JsonResponse
     {
+        /*
+         * THE SESSION PROBE, BEFORE ANYTHING IS QUERIED. (Lane SEC)
+         *
+         * The console navigates the whole page at this address rather than
+         * fetching it, because that is what puts the file in Downloads instead
+         * of in memory and what keeps this response STREAMED. An expired
+         * session therefore used to take the administrator to the admin login;
+         * since that redirect stopped naming the secret admin path it takes him
+         * to a blank 404 with the console gone, which is worse than what it
+         * replaced.
+         *
+         * So the button asks first, with `?probe=1`, and navigates only on a
+         * yes. The question passes through this action's own capability
+         * (`reviews.export`) because AdminCapabilities matches on the route's URI
+         * and a query string is not part of it -- so it answers "may THIS
+         * operator run THIS export", which a shared liveness endpoint could not.
+         *
+         * FIRST STATEMENT, so a probe builds no query and no closure.
+         * App\Support\ExportProbe carries the whole argument.
+         */
+        if ($probe = ExportProbe::answer($request)) {
+            return $probe;
+        }
+
         $segment = $this->segment($request);
         $query = $this->baseQuery($request);
 

@@ -12207,6 +12207,136 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     }
     return url;
   }
+  /* ══════════════════════════════════════════════════════════════════════════
+     THE DOWNLOAD GATE                                             (Lane SEC)
+     ══════════════════════════════════════════════════════════════════════════
+
+     Eleven addresses in this console are reached by NAVIGATING the browser at
+     them rather than by fetch: the four CSV exports, the bulk-documents page,
+     the four order documents, and the two OAuth /start legs. An admin-api
+     address that does not carry the secret admin path answers a signed-out
+     browser with a plain 404, because the 302 it used to answer with named
+     `admin_path` in a Location header to anyone who typed the prefix.
+
+     So a navigation on a dead session used to land on the admin login, where
+     the owner signed back in, and now lands on a blank 404. For the four
+     `window.location.href` sites that takes THE WHOLE CONSOLE away with it and
+     loses the list he was standing on -- strictly worse than what it replaced,
+     and the reason this exists.
+
+     ── SO THE BUTTON ASKS FIRST ──────────────────────────────────────────────
+
+     `?probe=1` on the download's OWN address. App\Support\ExportProbe answers
+     `{"ok":true}` and nothing else, as the first statement of the action, so no
+     query is run and no OAuth state is minted -- and it passes through that
+     action's own capability, because AdminCapabilities matches on the route's
+     URI and a query string is not part of it. This therefore answers "may THIS
+     operator run THIS download", which a shared liveness endpoint could not.
+     `/admin-api/health` was considered and rejected: `throttle:6,1` would
+     refuse the fourth export in a minute.
+
+     ── AND NOT A BLOB, WHICH IS MEASURED AND NOT ASSERTED ────────────────────
+
+     The obvious repair is to fetch the file through api() and hand over a blob
+     URL. The call sites' own comment refuses it -- "the file lands in Downloads
+     instead of in memory" -- and all four CSV exports return a StreamedResponse.
+     Measured on this tree: at the live shop's 3,025 products the catalogue
+     export is 619,968 bytes and 645 ms, and the probe that guards it is 11
+     BYTES and 35 ms. The orders export measures 153 bytes per order, which is
+     the one that grows without bound as the shop takes orders.
+
+     SO THE HONEST ANSWER IS THAT 0.59 MB IS NOT RUINOUS, and the case for the
+     probe does not rest on memory. It rests on CLAUDE.md rule 1: a blob is a
+     different behaviour from a streamed download, the comment at every call
+     site promises the streamed one, and 35 ms buys leaving a working thing
+     exactly as it is.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* Where the sign-in page is. Derived off window.location.pathname, the way
+     fixAdminApiUrl() already derives the api base -- the console is served AT
+     the secret admin path, so the browser is standing on it already and reading
+     it back discloses nothing. NEVER from a setting, and never interpolated
+     into markup: it is assigned to location.href and nowhere else. */
+  function kbbAdminLoginUrl(){
+    return window.location.pathname.replace(/\/+$/,'') + '/login';
+  }
+
+  /* Ask, and classify. NEVER THROWS, so no caller needs a try. */
+  async function kbbProbeDownload(url){
+    var r;
+    try{
+      r = await fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'probe=1',
+        {credentials:'same-origin', cache:'no-store', headers:{'Accept':'application/json'}});
+    }catch(e){
+      /* The request never reached a server. Reported as ITSELF and not as a
+         dead session: "sign in again" is the wrong remedy for a dropped
+         connection, and it is the one sentence that would send the owner to
+         re-type his password over his own wifi. */
+      return {verdict:'unreachable', status:0};
+    }
+    if(r.ok)                                 return {verdict:'ok',        status:r.status};
+    if(r.status === 401 || r.status === 419)  return {verdict:'signedout', status:r.status};
+    if(r.status === 403)                     return {verdict:'forbidden', status:r.status};
+    return {verdict:'other', status:r.status};
+  }
+
+  /* What the console says, WITH THE CONSOLE STILL ON SCREEN. Every string here
+     is a constant. `opened` is true for the window.open sites, where the tab is
+     already up and the sentence has to be about the tab rather than about a
+     download that never started. */
+  function kbbSayDownloadRefused(answer, opened){
+    if(answer.verdict === 'signedout'){
+      openModal('<div class="modal-h"><b>Your session has ended</b>' +
+        '<button class="x" onclick="closeModal()">✕</button></div>' +
+        '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">' +
+        (opened
+          ? 'You are signed out, so that document could not be opened.'
+          : 'You are signed out, so the download was not started — nothing was sent.') +
+        '</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">' +
+        'Sign in again and this screen comes back exactly as it is, with your ' +
+        'filters and ticks where you left them.</p>' +
+        '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+        '<button class="btn ghost" onclick="closeModal()">Stay here</button>' +
+        '<button class="btn" id="kbbSessionSignIn">Sign in again</button></div></div>');
+      var go = document.getElementById('kbbSessionSignIn');
+      if(go) go.onclick = function(){ window.location.href = kbbAdminLoginUrl(); };
+      return;
+    }
+    if(answer.verdict === 'forbidden'){
+      toast('Your account is not allowed to download this. Nothing was sent.', 'bad');
+      return;
+    }
+    if(answer.verdict === 'unreachable'){
+      toast('Could not reach the server, so the download was not started.', 'bad');
+      return;
+    }
+    toast('The server refused that download (' + answer.status + '). Nothing was sent.', 'bad');
+  }
+
+  /* AWAIT THIS BEFORE a window.location.href. Nothing is navigated unless the
+     answer is yes, which is what keeps the console on the screen. */
+  async function kbbDownloadOk(url){
+    var answer = await kbbProbeDownload(url);
+    if(answer.verdict === 'ok') return true;
+    kbbSayDownloadRefused(answer, false);
+    return false;
+  }
+
+  /* AND THIS AFTER a window.open, which is the shape that cannot wait: a popup
+     opened from an async continuation is blocked by the browser, so the tab has
+     to be opened inside the click and the question asked behind it. `win` is
+     the handle when there is one, and then the dead window is closed rather
+     than left for the owner to find; window.open with 'noopener' returns none,
+     so the four order documents are told after the fact and no more. */
+  function kbbTellIfDownloadRefused(url, win){
+    kbbProbeDownload(url).then(function(answer){
+      if(answer.verdict === 'ok') return;
+      if(win){ try{ win.close(); }catch(e){} }
+      kbbSayDownloadRefused(answer, true);
+    });
+  }
+
   async function api(url, opts){
     opts = opts || {};
     url = fixAdminApiUrl(url);
@@ -13029,12 +13159,17 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
   function olPrintDocs(ids, type){
     if(!ids.length) return;
 
-    window.open(
-      fixAdminApiUrl('/admin-api/orders-bulk-documents') +
-        '?type=' + encodeURIComponent(type) + '&ids=' + ids.join(','),
-      '_blank',
-      'noopener'
-    );
+    /* Gated AFTER THE FACT, and that is the honest shape here. (Lane SEC)
+       The comment above is the constraint: window.open has to happen inside
+       the click, so nothing can be awaited in front of it. The tab opens,
+       and the console -- which is still on the screen behind it -- is told
+       whether it was ever going to work. 'noopener' returns no handle, so
+       the dead tab cannot be closed from here and the modal says so. */
+    var url = fixAdminApiUrl('/admin-api/orders-bulk-documents') +
+      '?type=' + encodeURIComponent(type) + '&ids=' + ids.join(',');
+
+    window.open(url, '_blank', 'noopener');
+    kbbTellIfDownloadRefused(url);
   }
 
   function olDocLabel(type){
@@ -13208,12 +13343,19 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     });
 
     var exportBtn = byId('olExport');
-    if(exportBtn) exportBtn.onclick = function(){
+    if(exportBtn) exportBtn.onclick = async function(){
       /* A normal navigation, not a fetch: the browser carries the same admin
          session cookie, the server refuses anyone without it, and the file
-         lands in Downloads instead of in memory. */
+         lands in Downloads instead of in memory.
+
+         AND THE GATE IS AWAITED IN FRONT OF IT. (Lane SEC) This line is a
+         navigation of the WHOLE CONSOLE, so a dead session took the screen
+         away and lost the filters and ticks on it. kbbDownloadOk() asks the
+         export itself first and says so on the console instead. */
       var qs = olParams(true);
-      window.location.href = fixAdminApiUrl('/admin-api/orders-export') + (qs ? '?' + qs : '');
+      var url = fixAdminApiUrl('/admin-api/orders-export') + (qs ? '?' + qs : '');
+      if(!(await kbbDownloadOk(url))) return;
+      window.location.href = url;
     };
   }
 
@@ -14080,7 +14222,17 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
                  : kind === 'Delivery note'  ? (o.delivery_note_url || '')
                  : kind === 'Dispatch label' ? (o.shipping_label_url || '')
                  : '';
-        if (url) { window.open(url, '_blank', 'noopener'); return; }
+        /* Gated after the fact, same constraint as the bulk documents above:
+           the popup has to be opened inside the click. (Lane SEC) THE ADDRESS
+           IS NOT WRITTEN IN THIS FILE -- it arrives on the payload from
+           Admin\InvoiceController::invoiceUrl() and its three siblings, which
+           is why no scan of the console found these four and why
+           ServerBuiltAdminUrlsTest reads the SERVER for them instead. */
+        if (url) {
+          window.open(url, '_blank', 'noopener');
+          kbbTellIfDownloadRefused(url);
+          return;
+        }
         toast('That document is not available for this order.', 'bad');
       };
     });
@@ -14639,12 +14791,19 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     });
 
     var exportBtn = byId('cuExport');
-    if(exportBtn) exportBtn.onclick = function(){
+    if(exportBtn) exportBtn.onclick = async function(){
       /* A normal navigation, not a fetch: the browser carries the same admin
          session cookie, the server refuses anyone without it, and the file
-         lands in Downloads instead of in memory. */
+         lands in Downloads instead of in memory.
+
+         AND THE GATE IS AWAITED IN FRONT OF IT. (Lane SEC) This line is a
+         navigation of the WHOLE CONSOLE, so a dead session took the screen
+         away and lost the filters and ticks on it. kbbDownloadOk() asks the
+         export itself first and says so on the console instead. */
       var qs = cuParams(true);
-      window.location.href = fixAdminApiUrl('/admin-api/customers/export') + (qs ? '?' + qs : '');
+      var url = fixAdminApiUrl('/admin-api/customers/export') + (qs ? '?' + qs : '');
+      if(!(await kbbDownloadOk(url))) return;
+      window.location.href = url;
     };
   }
 
@@ -15742,8 +15901,15 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     }
 
     var exp = document.getElementById('rvExport');
-    if(exp) exp.onclick = function(){
-      window.location.href = fixAdminApiUrl('/admin-api/reviews/export?' + rvParams(true));
+    if(exp) exp.onclick = async function(){
+      /* A navigation of the WHOLE CONSOLE, gated first. (Lane SEC) The other
+         four exports carry a comment saying why this is a navigation and not a
+         fetch; this one never did, so it is said here: the browser carries the
+         admin session cookie, the response is streamed, and the file lands in
+         Downloads instead of in the tab's memory. */
+      var url = fixAdminApiUrl('/admin-api/reviews/export?' + rvParams(true));
+      if(!(await kbbDownloadOk(url))) return;
+      window.location.href = url;
     };
   }
 
@@ -19319,11 +19485,30 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     try{
       CP.data = await api('/admin-api/catalog-products-list?' + cpParams(false));
     }catch(e){
+      /* SAY WHICH FAILURE IT WAS. (Lane SEC) This screen answered every
+         refusal with "the routes may not be wired into routes/web.php yet",
+         which for an EXPIRED SESSION sends the owner to Store -> Cache to
+         clear a route cache that is perfectly fine, while the one thing that
+         would fix it -- signing in again -- is never mentioned. The route
+         sentence is kept for the fault it was written for, and is now shown
+         only for that fault. Worded the way
+         admin/partials/product-editor-screen.blade.php already words it. */
       CP.err = e && e.message ? e.message : 'unknown error';
+
+      if(e && (e.status === 401 || e.status === 419)){
+        body.innerHTML = '<div class="card pad"><p style="color:var(--sale,#c0392b);font-size:13px">' +
+          'Your session has ended, so this list could not be loaded.</p>' +
+          '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">' +
+          'Sign in again and it loads as it did.</p></div>';
+        return;
+      }
+
       body.innerHTML = '<div class="card pad"><p style="color:var(--sale,#c0392b);font-size:13px">' +
         'The product list could not be loaded — ' + sesc(CP.err) + '</p>' +
-        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">If this is a fresh deployment, the ' +
-        'Catalog → Products routes may not be wired into routes/web.php yet.</p></div>';
+        (e && e.status === 404
+          ? '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">If this is a fresh deployment, the ' +
+            'Catalog → Products routes may not be wired into routes/web.php yet.</p>'
+          : '') + '</div>';
       return;
     }
 
@@ -19743,12 +19928,19 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     if(bulkPrice) bulkPrice.onclick = function(){ cpPriceDialog(cpSelectedIds()); };
 
     var exportBtn = byId('cplExport');
-    if(exportBtn) exportBtn.onclick = function(){
+    if(exportBtn) exportBtn.onclick = async function(){
       /* A normal navigation, not a fetch: the browser carries the same admin
          session cookie, the server refuses anyone without it, and the file
-         lands in Downloads instead of in memory. */
+         lands in Downloads instead of in memory.
+
+         AND THE GATE IS AWAITED IN FRONT OF IT. (Lane SEC) This line is a
+         navigation of the WHOLE CONSOLE, so a dead session took the screen
+         away and lost the filters and ticks on it. kbbDownloadOk() asks the
+         export itself first and says so on the console instead. */
       var qs = cpParams(true);
-      window.location.href = fixAdminApiUrl('/admin-api/catalog-products-export') + (qs ? '?' + qs : '');
+      var url = fixAdminApiUrl('/admin-api/catalog-products-export') + (qs ? '?' + qs : '');
+      if(!(await kbbDownloadOk(url))) return;
+      window.location.href = url;
     };
   }
 
@@ -21498,6 +21690,15 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     var w=null;
     try{ w=window.open(url,'kbbstripe','width=620,height=760'); }catch(e){ w=null; }
 
+    /* A TENTH NAVIGATION, and the one that can be cleaned up. (Lane SEC)
+       This address is admin-guarded, so an expired session shows a blank 404
+       in the popup with nothing said on the console behind it. Unlike the
+       order documents this one KEEPS THE HANDLE, so the dead window is
+       closed rather than left for the owner to find. Asked after the open
+       for the reason the comment above gives: a round trip in front of
+       window.open is what the popup blocker is looking for. */
+    if(w) kbbTellIfDownloadRefused(url, w);
+
     /* BLOCKED. window.open returns null, or an object that is already closed,
        or — in a couple of older browsers — something with no `closed` at all.
        All three are the same answer and none of them may leave a dead button. */
@@ -21870,8 +22071,26 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       b.id='kbbSignout'; b.className='iconbtn'; b.title='Sign out';
       b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>';
       b.onclick=async function(){
-        try{ await fetch('/admin/logout',{method:'POST',headers:{'X-XSRF-TOKEN':cookie('XSRF-TOKEN')},credentials:'same-origin'}); }catch(e){}
-        location.href='/admin/login';
+        /* THE ADMIN PATH IS NOT ALWAYS "admin". (Lane SEC) Both addresses
+           below were literals, and routes/web.php answers `/admin/{any?}`
+           with abort(404) the moment the owner moves his admin path -- which
+           is the point of the setting, and a control he has on Store -> Core
+           Updates. So this button posted to a 404, SWALLOWED IT, and then
+           navigated to a second 404.
+
+           MEASURED, on a preview whose admin lives at /sec-console:
+           POST /admin/logout -> 404, GET /admin/login -> 404, and
+           /admin-api/stats answered 200 immediately afterwards. He pressed
+           Sign out, was shown a blank 404, AND WAS STILL SIGNED IN -- on a
+           shared machine that is the whole of the damage.
+
+           Derived off window.location.pathname, the way fixAdminApiUrl()
+           already derives the api base: this console is served AT the admin
+           path, so the browser is standing on it and nothing is disclosed by
+           reading it back. Never from a setting. */
+        var base=window.location.pathname.replace(/\/+$/,'');
+        try{ await fetch(base+'/logout',{method:'POST',headers:{'X-XSRF-TOKEN':cookie('XSRF-TOKEN')},credentials:'same-origin'}); }catch(e){}
+        location.href=base+'/login';
       };
       var chip=top.querySelector('.userchip');
       if(chip) top.insertBefore(b, chip); else top.appendChild(b);

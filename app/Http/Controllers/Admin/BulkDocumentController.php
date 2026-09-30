@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
+use App\Support\ExportProbe;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Invoices\BulkDocumentRefused;
@@ -112,8 +114,19 @@ class BulkDocumentController extends Controller
      * At the cap of 100 the query string is around 700 characters, well inside
      * every limit that matters.
      */
-    public function show(Request $request): Response
+    public function show(Request $request): Response|JsonResponse
     {
+        /*
+         * THE SESSION PROBE, before the selection is even parsed. (Lane SEC)
+         * olPrintDocs() opens this in a new tab from inside the click, because a
+         * popup opened from an async continuation is blocked, and asks this
+         * question afterwards. Behind this action's own `invoices.view`
+         * capability -- AdminCapabilities matches on the URI, not the query.
+         */
+        if ($probe = ExportProbe::answer($request)) {
+            return $probe;
+        }
+
         try {
             $selection = BulkDocumentSelection::from($request->query('type'), $request->query('ids'));
         } catch (BulkDocumentRefused $refused) {

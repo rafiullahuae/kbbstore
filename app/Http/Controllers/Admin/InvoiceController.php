@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
+use App\Support\ExportProbe;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Invoices\InvoiceDocument;
@@ -140,8 +142,24 @@ class InvoiceController extends Controller
      * navigation for the operator standing at the screen, so its two strings
      * are resolved out here, before the locale changes, and passed in.
      */
-    public function invoice(int $id): View|Response
+    public function invoice(int $id): View|Response|JsonResponse
     {
+        /*
+         * THE SESSION PROBE. (Lane SEC) The console opens these in a new tab
+         * with window.open(), which must happen inside the click -- a popup
+         * opened from an async continuation is blocked -- so the tab is opened
+         * FIRST and this question is asked after it. A dead session then shows
+         * a 404 in a tab the console cannot close (window.open with `noopener`
+         * returns no handle), and the console says so and offers the login.
+         *
+         * It passes through this action's own `invoices.view` capability,
+         * because AdminCapabilities matches on the route's URI and a query
+         * string is not part of it. App\Support\ExportProbe carries the rest.
+         */
+        if ($probe = ExportProbe::answer(request())) {
+            return $probe;
+        }
+
         $order = $this->find($id);
 
         if ($order === null) {
@@ -205,8 +223,24 @@ class InvoiceController extends Controller
      * order has one already it is printed, because a warehouse matching a
      * parcel to a document is helped by it.
      */
-    public function packingSlip(int $id): View|Response
+    public function packingSlip(int $id): View|Response|JsonResponse
     {
+        /*
+         * THE SESSION PROBE. (Lane SEC) The console opens these in a new tab
+         * with window.open(), which must happen inside the click -- a popup
+         * opened from an async continuation is blocked -- so the tab is opened
+         * FIRST and this question is asked after it. A dead session then shows
+         * a 404 in a tab the console cannot close (window.open with `noopener`
+         * returns no handle), and the console says so and offers the login.
+         *
+         * It passes through this action's own `invoices.view` capability,
+         * because AdminCapabilities matches on the route's URI and a query
+         * string is not part of it. App\Support\ExportProbe carries the rest.
+         */
+        if ($probe = ExportProbe::answer(request())) {
+            return $probe;
+        }
+
         $order = $this->find($id);
 
         if ($order === null) {
@@ -269,8 +303,24 @@ class InvoiceController extends Controller
      * invoice: it is `.no-print` navigation for the operator standing at the
      * screen, so its two strings are resolved before the locale changes.
      */
-    public function deliveryNote(int $id): View|Response
+    public function deliveryNote(int $id): View|Response|JsonResponse
     {
+        /*
+         * THE SESSION PROBE. (Lane SEC) The console opens these in a new tab
+         * with window.open(), which must happen inside the click -- a popup
+         * opened from an async continuation is blocked -- so the tab is opened
+         * FIRST and this question is asked after it. A dead session then shows
+         * a 404 in a tab the console cannot close (window.open with `noopener`
+         * returns no handle), and the console says so and offers the login.
+         *
+         * It passes through this action's own `invoices.view` capability,
+         * because AdminCapabilities matches on the route's URI and a query
+         * string is not part of it. App\Support\ExportProbe carries the rest.
+         */
+        if ($probe = ExportProbe::answer(request())) {
+            return $probe;
+        }
+
         $order = $this->find($id);
 
         if ($order === null) {
@@ -300,8 +350,24 @@ class InvoiceController extends Controller
      * document, and a label printed for an order that is later cancelled must
      * not have consumed an invoice number.
      */
-    public function shippingLabel(int $id): View|Response
+    public function shippingLabel(int $id): View|Response|JsonResponse
     {
+        /*
+         * THE SESSION PROBE. (Lane SEC) The console opens these in a new tab
+         * with window.open(), which must happen inside the click -- a popup
+         * opened from an async continuation is blocked -- so the tab is opened
+         * FIRST and this question is asked after it. A dead session then shows
+         * a 404 in a tab the console cannot close (window.open with `noopener`
+         * returns no handle), and the console says so and offers the login.
+         *
+         * It passes through this action's own `invoices.view` capability,
+         * because AdminCapabilities matches on the route's URI and a query
+         * string is not part of it. App\Support\ExportProbe carries the rest.
+         */
+        if ($probe = ExportProbe::answer(request())) {
+            return $probe;
+        }
+
         $order = $this->find($id);
 
         if ($order === null) {

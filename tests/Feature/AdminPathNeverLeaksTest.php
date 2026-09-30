@@ -631,15 +631,31 @@ it('names every console path that navigates the browser to an admin-api address'
      *
      * With an expired session those nine used to land on the admin login and
      * now land on a 404. That is the price of closing the door; it is paid by
-     * the administrator, never by a shopper, and the fix is to fetch them
-     * through the console's own api() and hand the blob to the browser — an
-     * edit to admin/app.blade.php, which is the integrator's file.
+     * the administrator, never by a shopper.
      *
-     * THIS CASE IS THE COUNT, so the set cannot grow quietly: a seventh
-     * navigation is a red suite and a decision somebody makes on purpose.
+     * ▲ AND THE FIX LANDED, WHICH TURNED THIS CASE ROUND. It was written to
+     * pin the set of five addresses the console navigated to LITERALLY, so the
+     * set could not grow quietly. Every one of them now goes through
+     * `kbbDownloadOk()` — the address is built into `url` and the navigation
+     * names a variable — so the pinned set is EMPTY, and this case asserts the
+     * finished state rather than the broken one:
+     *
+     *   NO NAVIGATION IN THE CONSOLE NAMES AN admin-api ADDRESS DIRECTLY.
+     *
+     * That is a stronger claim than the old list and it is the one that stays
+     * true. A navigation written the old way is a red suite here whatever it
+     * points at; DownloadNavigationGateTest pins the whole set of navigation
+     * SITES beside it, including the ones whose URL is a variable, and the two
+     * together are what make a twelfth impossible to add quietly.
+     *
+     * The old expectation is kept immediately below in a comment, because the
+     * five addresses are the record of what was actually wrong.
+     *
+     *     'catalog-products-export', 'customers/export',
+     *     'orders-bulk-documents', 'orders-export', 'reviews/export'
      *
      * MUTATION NOTE. Add `location.href = '/admin-api/anything'` anywhere in
-     * admin/app.blade.php and this is red at 6 against 5. RUN.
+     * admin/app.blade.php and this is red at 1 against 0. RUN.
      */
     $console = file_get_contents(base_path('resources/views/admin/app.blade.php'));
 
@@ -659,13 +675,11 @@ it('names every console path that navigates the browser to an admin-api address'
     $literal = array_values(array_unique($matches[1] ?? []));
     sort($literal);
 
-    expect($literal)->toBe([
-        'catalog-products-export',
-        'customers/export',
-        'orders-bulk-documents',
-        'orders-export',
-        'reviews/export',
-    ], 'the set of admin-api addresses the console navigates to has changed');
+    expect($literal)->toBe(
+        [],
+        'a navigation in the admin console names an admin-api address directly; '
+        .'it must go through kbbDownloadOk() or kbbTellIfDownloadRefused() instead'
+    );
 
     /*
      * And the four the console never spells out, because the server hands them
@@ -680,6 +694,14 @@ it('names every console path that navigates the browser to an admin-api address'
         );
     }
 
-    // The console really does navigate to them rather than fetch them.
-    expect(substr_count($console, "window.open(url, '_blank', 'noopener')"))->toBe(1);
+    /*
+     * The console really does NAVIGATE to them rather than fetch them, and
+     * there are TWO such sites now, not one: the bulk-document print and the
+     * four per-order buttons. Both are `window.open`, both must stay inside
+     * their click — a popup opened from an async continuation is blocked — so
+     * both are told after the fact rather than gated before, which is the one
+     * asymmetry in the whole fix and the reason it is written down twice.
+     */
+    expect(substr_count($console, "window.open(url, '_blank', 'noopener');"))->toBe(2);
+    expect(substr_count($console, 'kbbTellIfDownloadRefused(url);'))->toBe(2);
 });
