@@ -87,6 +87,14 @@
  *   Lane FB added eleven keys to HeaderSettings for the flag bar and did it
  *   that way: 101 lines inserted, 0 modified, 0 removed — which is also how it
  *   could say the eleven changed nothing about the other 4,828 calls.
+ *
+ *   Lane BG added ONE — `fb_text_desktop`, the switch that takes the flag
+ *   bar's line off the desktop strip — and did it the same way: ELEVEN LINES
+ *   INSERTED, 0 MODIFIED, 0 REMOVED, at the eleven positions the `bool` corpus
+ *   puts them (656–666), which is what says the key changed nothing about the
+ *   other 5,172 calls. `fb_text_desktop|bool|"off"|true` is in there and is
+ *   correct: this screen's dialect is the plain `(bool)` cast, the same one the
+ *   eleven flag-bar keys beside it already answer with.
  */
 
 use App\Services\ModuleSchema;
