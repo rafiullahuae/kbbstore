@@ -64,17 +64,36 @@ async function settle(page) {
 
     const info = await page.evaluate((mode) => {
       const px = (n) => Math.round(n * 100) / 100;
-      const grid = [...document.querySelectorAll('.kbb-pgrid, #grid, .rel')].find((g) =>
-        g.querySelector('.kbb-tile')
-      );
+      /* ── `sel:<selector>` SHOOTS A BLOCK THAT IS NOT A .kbb-pgrid ──────────
+         Two surfaces of this shop draw a product tile outside any grid: the
+         Frequently Bought Together strip on the product page (.kbb-fbt) and a
+         routine step on /routines/<concern> (.kbb-tile with no grid above it).
+         Without this the script clipped to `.kbb-pgrid, #grid, .rel`, found
+         the RELATED RAIL on the product page and photographed that instead --
+         a picture of the wrong block, captioned with the right numbers, which
+         is worse than no picture. The selector is named on the command line so
+         the frame is never guessed. */
+      const pick = mode.startsWith('sel:') ? mode.slice(4) : null;
+      const grid = pick
+        ? document.querySelector(pick)
+        : [...document.querySelectorAll('.kbb-pgrid, #grid, .rel')].find((g) =>
+            g.querySelector('.kbb-tile')
+          );
 
       if (!grid) {
-        return { clip: null, note: 'no product grid on this page' };
+        return {
+          clip: null,
+          note: pick ? `nothing matches ${pick} on this page` : 'no product grid on this page',
+        };
       }
 
-      const tiles = [...grid.querySelectorAll('.kbb-tile')].filter(
-        (t) => t.getBoundingClientRect().height > 0
-      );
+      /* A block selected by name may hold .kbb-fbt-item rather than .kbb-tile,
+         and reporting "tiles 0" for a strip with four products in it is the
+         same false green this round exists to remove. */
+      const tiles = [
+        ...grid.querySelectorAll('.kbb-tile, .kbb-fbt-item'),
+        ...(grid.matches('.kbb-tile') ? [grid] : []),
+      ].filter((t) => t.getBoundingClientRect().height > 0);
       const heights = [...new Set(tiles.map((t) => px(t.getBoundingClientRect().height)))];
       const b = grid.getBoundingClientRect();
       const nameBoxes = [
