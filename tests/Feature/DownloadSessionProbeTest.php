@@ -260,3 +260,197 @@ it('is the export that decides, so a probe cannot reach an address the map does 
 
         expect(ExportProbe::PARAM)->toBe('probe');
 });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * A TENTH AND AN ELEVENTH NAVIGATION, found after the five above shipped
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * DownloadNavigationGateTest reads the CONSOLE for `window.open` and
+ * `location.href` rather than reading a list, and it turned up two more:
+ *
+ *   payStripeOauth()                   /admin-api/payments/stripe/connect/start
+ *   instagram-screen's openPopup()     /admin-api/instagram/start
+ *
+ * Both are admin-guarded GETs at addresses outside the secret admin path, so
+ * both answer an expired session with a blank 404 in a popup, with nothing said
+ * on the console behind it. Neither address is written anywhere this lane's
+ * first scan looked -- one is in app.blade.php's payments section, the other in
+ * a partial -- which is exactly why the guard reads the console instead.
+ *
+ * THESE ARE THE LEGS THE OWNER PRESSES. `/instagram/callback` and
+ * `/payments/stripe/connect/callback` are navigated to by INSTAGRAM and by
+ * STRIPE, so there is no click here to ask a question in front of; the fourth
+ * case in ServerBuiltAdminUrlsTest argues that at length. Catching the dead
+ * session at `/start` means the owner is told BEFORE he is sent to the
+ * provider, approves, comes back, and finds the round trip was wasted.
+ */
+it('lets the console ask before it opens an OAuth popup', function () {
+    /*
+     * MUTATION NOTE. Remove the ExportProbe::answer() call from
+     * Admin\StripeConnectController::start() and the first expectation is red:
+     * the probe gets a redirect to Stripe, or the closing page, instead of an
+     * answer -- so a dead session is indistinguishable from a live one and the
+     * popup is left showing a 404. RUN.
+     */
+    $admin = probeAdmin('owner');
+    $this->actingAs($admin, 'admin');
+
+    foreach ([
+        '/admin-api/payments/stripe/connect/start?mode=test&probe=1',
+        '/admin-api/instagram/start?probe=1',
+    ] as $url) {
+        expect($this->getJson($url)->json())->toBe(
+            ['ok' => true],
+            "{$url} cannot be asked whether the session is alive"
+        );
+    }
+});
+
+it('mints no OAuth state when it is only being probed', function () {
+    /*
+     * ▲ THE REASON THE PROBE IS THE FIRST STATEMENT AND NOT A LATER ONE.
+     *
+     * Both `start` actions put an unguessable state in the session, with a TTL,
+     * for the callback to compare against. A probe that reached that line would
+     * either burn the TTL on a window nobody opened, or -- worse -- replace the
+     * state a popup opened a moment earlier is about to come back with, which
+     * turns a working connection into "that request has expired".
+     *
+     * MUTATION NOTE, AND THE FIRST DRAFT FAILED IT. Moving the
+     * ExportProbe::answer() call in Admin\StripeConnectController::start() to
+     * AFTER `$request->session()->put(StripeConnect::STATE_SESSION_KEY, ...)`
+     * left the case GREEN, because nothing was configured and `authorizeUrl()`
+     * refused before reaching the put at all. With the credentials below the
+     * same mutation is RED naming the key. RUN.
+     */
+    $admin = probeAdmin('owner');
+    $this->actingAs($admin, 'admin');
+
+    /*
+     * ▲ BOTH PROVIDERS ARE CONFIGURED FIRST, AND THE FIRST DRAFT OF THIS CASE
+     * WAS NOT. Without credentials `authorizeUrl()` refuses before it mints
+     * anything, so `start` never reached the `put()` this is about -- and
+     * moving the probe to AFTER the state is minted left the case GREEN.
+     * Measured: unconfigured, an unprobed `/start` answers 200 and 302 and sets
+     * NEITHER key.
+     */
+    $stripe = \App\Models\PaymentProvider::firstOrNew(['id' => 'stripe']);
+    $stripe->fill(['title' => 'Credit or debit card', 'enabled' => false, 'mode' => 'test', 'position' => 1])->save();
+    $stripe->config = [
+        'connect_client_id_test' => 'ca_PROBEGUARD1',
+        'connect_client_secret_test' => 'sk_test_'.str_repeat('p', 24),
+    ];
+    $stripe->save();
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+
+    \App\Services\Instagram\InstagramCredentials::saveApp('1234567890123456', 'abcdef0123456789abcdef0123456789');
+
+    $stateKeys = [
+        'Stripe Connect' => \App\Services\Payments\StripeConnect::STATE_SESSION_KEY,
+        'Instagram OAuth' => \App\Services\Instagram\InstagramAuth::STATE_SESSION_KEY,
+    ];
+
+    /*
+     * THE CONTROL. An unprobed call really does mint both, or the assertion
+     * below is about nothing at all -- which is exactly what the first draft
+     * turned out to be.
+     */
+    foreach ($stateKeys as $_ => $key) {
+        session()->forget($key);
+    }
+
+    $this->get('/admin-api/payments/stripe/connect/start?mode=test');
+    $this->get('/admin-api/instagram/start');
+
+    foreach ($stateKeys as $what => $key) {
+        expect(session()->has($key))->toBeTrue("{$what} does not mint a state even unprobed, so this case asserts nothing");
+    }
+
+    // And now the probe, on a clean session.
+    foreach ($stateKeys as $_ => $key) {
+        session()->forget($key);
+    }
+
+    $this->getJson('/admin-api/payments/stripe/connect/start?mode=test&probe=1');
+    $this->getJson('/admin-api/instagram/start?probe=1');
+
+    foreach ($stateKeys as $what => $key) {
+        expect(session()->has($key))->toBeFalse("a probe minted a {$what} state");
+    }
+});
+
+it('refuses a probe on either OAuth leg to a caller with no admin session', function () {
+    /*
+     * Fails closed, by construction rather than by intention: the probe is the
+     * first statement of an action that is already behind `auth:admin`, so a
+     * caller with no session never reaches ExportProbe at all and gets the same
+     * 401 every other admin-api XHR gets.
+     *
+     * MUTATION NOTE. The route FILES carry no middleware of their own -- the
+     * group in routes/web.php that requires them does -- so the mutation is
+     * there: mounting routes/payments-connect.php under `['web']` alone instead
+     * of inside the `auth:admin` group makes the Stripe leg answer a guest.
+     * RUN; red, "answered a guest".
+     */
+    foreach ([
+        '/admin-api/payments/stripe/connect/start?mode=test&probe=1',
+        '/admin-api/instagram/start?probe=1',
+    ] as $url) {
+        expect($this->getJson($url)->status())->toBe(401, "{$url} answered a guest");
+    }
+});
+
+it('answers the same for an order that exists and one that never did', function () {
+    /*
+     * ▲ NO ID ORACLE, AND THIS REPOSITORY HAS PAID FOR ONE BEFORE.
+     *
+     * CLAUDE.md's known-gaps entry on Api\QuizController::expertRequest says it
+     * in as many words: "branching differently on the two restores the id
+     * oracle." The four order documents are probed at their OWN addresses,
+     * which carry an order id -- so if the probe ran after `$this->find($id)`
+     * it would answer "yes" for a real order and 404 for an invented one, and
+     * anybody holding a stolen admin cookie could walk the id space counting
+     * the shop's orders without ever fetching one.
+     *
+     * It does not, because ExportProbe::answer() is the FIRST STATEMENT: the
+     * answer depends on the session and the capability and on nothing else at
+     * all. That is the same reason it runs no query.
+     *
+     * The cost is real and is the right trade: a probe can say yes about an
+     * order somebody else has since deleted, and the navigation then 404s in
+     * its own tab. The console already has a fallback for a document it cannot
+     * open, and a wrong "yes" about one order is worth far less than a reliable
+     * count of every order.
+     *
+     * MUTATION NOTE. Move the ExportProbe::answer() call in
+     * Admin\InvoiceController::invoice() to AFTER `$order = $this->find($id);`
+     * and its `if ($order === null)` return, and this is red: the invented id
+     * answers 404 while the real one answers 200. RUN.
+     */
+    $admin = probeAdmin('owner');
+    $this->actingAs($admin, 'admin');
+
+    $order = \App\Models\Order::create([
+        'order_number' => 'ORACLE-'.\Illuminate\Support\Str::random(6),
+        'email' => 'buyer@example.com', 'status' => 'processing', 'currency' => 'AED',
+        'subtotal' => 10000, 'discount_total' => 0, 'shipping_total' => 0,
+        'fee_total' => 0, 'gift_fee' => 0, 'tax_total' => 0, 'total' => 10000,
+    ]);
+
+    $invented = $order->getKey() + 90_000;
+    expect(\App\Models\Order::find($invented))->toBeNull();
+
+    foreach (['invoice', 'packing-slip', 'delivery-note', 'shipping-label'] as $doc) {
+        $real = $this->getJson('/admin-api/orders/'.$order->getKey().'/'.$doc.'?probe=1');
+        $fake = $this->getJson('/admin-api/orders/'.$invented.'/'.$doc.'?probe=1');
+
+        expect($fake->status())->toBe(
+            $real->status(),
+            "{$doc} tells a real order id from an invented one by its status"
+        )->and($fake->getContent())->toBe(
+            $real->getContent(),
+            "{$doc} tells a real order id from an invented one by its body"
+        );
+    }
+});

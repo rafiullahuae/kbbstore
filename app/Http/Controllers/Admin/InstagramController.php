@@ -14,6 +14,7 @@ use App\Services\Instagram\InstagramSync;
 use App\Services\InstagramFeed;
 use App\Services\InstagramSettings;
 use App\Services\ModuleSchema;
+use App\Support\ExportProbe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -435,8 +436,40 @@ class InstagramController extends Controller
      * error page, because this endpoint is reached by navigation and there is nothing
      * on the other side to read a JSON body.
      */
-    public function start(Request $request): RedirectResponse
+    public function start(Request $request): RedirectResponse|JsonResponse
     {
+        /*
+         * THE SESSION PROBE, BEFORE A STATE IS REMEMBERED. (Lane SEC)
+         *
+         * AN ELEVENTH NAVIGATION. `instagram-screen.blade.php`'s openPopup()
+         * opens this address in a window it keeps the handle to, from inside the
+         * click, and with an expired session that window now shows a blank 404
+         * instead of the admin login. The console behind it says nothing at all.
+         *
+         * WHAT MAKES THIS THE LEG WORTH GUARDING is that it is the one the owner
+         * PRESSES. `/instagram/callback` is navigated to by Instagram, so there
+         * is no click here to ask a question in front of -- ServerBuiltAdminUrls-
+         * Test's fourth case argues that at length. Catching the dead session
+         * here means he is told before he is sent to Instagram, approves, comes
+         * back and finds the round trip was wasted.
+         *
+         * FIRST STATEMENT, so a probe remembers NO state and reaches
+         * InstagramAuth::authorizeUrl() -- which calls out to nothing but does
+         * read the stored credentials -- not at all.
+         *
+         * ▲ THIS IS THE SERVER HALF ONLY, AND ON PURPOSE. The console half lives
+         * in resources/views/admin/partials/instagram-screen.blade.php, which is
+         * another lane's file rather than the integrator's, so Lane SEC names it
+         * rather than writing it: see the section headed "ONE SITE IS NOT IN
+         * THIS DOCUMENT" in docs/SEC-ADMIN-APP-BLOCKS.md, which says what the
+         * four lines are and why they are not a copy of the Stripe block.
+         * Until they are written the popup still shows a bare 404 on a dead
+         * session -- but the question it needs to ask is answerable now.
+         */
+        if ($probe = ExportProbe::answer($request)) {
+            return $probe;
+        }
+
         $answer = InstagramAuth::authorizeUrl();
 
         if (! ($answer['ok'] ?? false)) {

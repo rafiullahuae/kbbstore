@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\Payments\GatewayCredentials;
 use App\Services\Payments\StripeConnect;
+use App\Support\ExportProbe;
 use App\Support\StripeConnectConsole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -265,8 +266,35 @@ class StripeConnectController extends Controller
      * because the popup has to be opened by the click itself or the browser
      * blocks it — there is no room for a round trip in between.
      */
-    public function start(Request $request): RedirectResponse|Response
+    public function start(Request $request): RedirectResponse|Response|JsonResponse
     {
+        /*
+         * THE SESSION PROBE, BEFORE A STATE IS MINTED. (Lane SEC)
+         *
+         * A TENTH NAVIGATION, found by the guard the rest of this lane's round
+         * was written around: payStripeOauth() opens THIS address in a popup,
+         * from inside the click, and the address is written in the console
+         * rather than built here -- so neither a scan of the server nor the
+         * `o.invoice_url` trail that found the four order documents would have
+         * turned it up. `tests/Feature/DownloadNavigationGateTest.php` reads the
+         * console for `window.open` instead, which is what finds this shape.
+         *
+         * With an expired session the popup used to land on the admin login and
+         * now lands on a blank 404, so the owner sits watching a dead window
+         * with nothing said on the console behind it. The console keeps the
+         * window HANDLE here -- unlike the order documents, which are opened
+         * with `noopener` -- so on a refusal it closes the popup itself and says
+         * why.
+         *
+         * FIRST STATEMENT, so a probe mints NO state. `start` puts a 40-character
+         * nonce in the session and a probe that minted one would either hand the
+         * real click a state the callback has already superseded, or burn the
+         * TTL on a window nobody opened.
+         */
+        if ($probe = ExportProbe::answer($request)) {
+            return $probe;
+        }
+
         $mode = $request->query('mode');
         $mode = $mode === 'live' ? 'live' : 'test';
 

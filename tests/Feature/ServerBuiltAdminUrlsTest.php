@@ -219,10 +219,13 @@ it('names the legs a third party navigates at, which nothing here can ask about 
      * an explanation rather than a connection.
      *
      * WHAT MAKES IT SMALL is that the leg the owner presses — `/start` — is a
-     * popup this console opens, so the dead session can be caught there, before
-     * he is sent to Instagram at all, instead of after he comes back. That is
-     * better than what existed before this lane, where he went, approved, came
-     * back and only then met the login.
+     * popup this console opens, so the dead session IS caught there, before he
+     * is sent to Instagram at all, instead of after he comes back. Both
+     * `/start` legs now answer `?probe=1` as the first statement of their
+     * action, minting no state while they do it; DownloadSessionProbeTest's
+     * last three cases are that, and DownloadNavigationGateTest is the console
+     * half. He went, approved, came back and only then met the login; now he is
+     * told before he goes.
      *
      * The addresses cannot simply move under the admin path, which is where a
      * redirect would still be safe: `InstagramAuth`'s own comment says why —
