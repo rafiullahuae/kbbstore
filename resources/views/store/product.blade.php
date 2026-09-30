@@ -304,7 +304,25 @@
 
   <!-- buy box -->
     <div class="buybox">
-      @if ($brand)<div class="bb-brand" id="bbBrand">{{ $brand }}</div>@endif
+{{-- THE BRAND NAME IS A LINK TO THE BRAND'S OWN PAGE.
+     The owner pointed at it: it was a bare <div>, so the one word on this page
+     that names a brand went nowhere, while `/brands/{slug}/` -- a real page with
+     that brand's copy, logo and product grid, and in the sitemap -- sat unlinked
+     from every product it sells.
+
+     `Brand::url()` is the helper for it and already existed; the pdp-preview
+     template `parts/facts.blade.php` was already using it, so the live page was
+     the odd one out rather than the URL being new.
+
+     ▲ THE ELEMENT STAYS A <div> AND THE <a> GOES INSIDE IT. `.bb-brand` carries
+       the eyebrow's size, letter-spacing, colour and the spacing above the
+       name, and `#bbBrand` is read elsewhere; swapping the tag would move the
+       line and break both. The anchor inherits, so nothing shifts.
+
+     ▲ AND IT IS RENDERED ONLY WHEN THERE IS SOMEWHERE TO GO. A brand with no
+       slug yields no url, and a link to nowhere is worse than plain text --
+       so the name still prints, unlinked. --}}
+      @if ($brand)<div class="bb-brand" id="bbBrand">@if ($product->brand?->url())<a href="{{ $product->brand->url() }}">{{ $brand }}</a>@else{{ $brand }}@endif</div>@endif
       @php
           /* ═══════════════════════════════════════════════════════════════
              LEDGER — THE PRICE JOINS THE NAME'S ROW, SO THIS BLOCK MOVED UP.
