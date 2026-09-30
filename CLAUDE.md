@@ -144,14 +144,37 @@ by luck:
 Set by the owner and not negotiable. A lane that skips one of these has not
 finished, however green its suite is.
 
-**1. Nothing that already works may change.** A lane fixes or adds the thing it
-was given and leaves the rest of the shop byte-identical. `Storefront-
+**1. Nothing the owner did not ask about may change.** A lane fixes or adds the
+thing it was given and leaves the rest of the shop byte-identical. `Storefront-
 EnglishUnchangedTest` is the instrument: if it goes red, read the diff and
 either revert the accident or advance the pin for the change you meant — never
-both at once, and never without looking. Any NEW setting ships at the value the
-page already has, so applying the package moves nothing until somebody moves a
-slider. The only exceptions are a default the owner asked for in as many words,
-and those get called out in the commit rather than buried.
+both at once, and never without looking.
+
+**▲ AND WHAT HE DID ASK FOR SHIPS ON, WHICH IS A REVERSAL — 30 September.** This
+rule used to end "any NEW setting ships at the value the page already has, so
+applying the package moves nothing until somebody moves a slider", with a
+default the owner asked for in as many words as the only exception. The
+exception has swallowed the rule, because he said so:
+
+> *"whatever i said, keep applying on the site, don't let me know that change
+> from the backend, i have the options on backend, i want to apply such things
+> directly to the site to save time."*
+
+So: **a thing he asked for is the shop's new state, not a switch he has to go
+and find.** Build the control anyway — he may want it back, and a change with no
+way to undo it is worse than no change — but ship it at the value he asked for,
+and say in the commit which default moved and that he asked for it.
+
+The half that did NOT change is the important half: everything he did not ask
+about still ships byte-identical. A lane given the product card does not also
+move the footer, and "he wants things applied" is not cover for a default
+nobody chose. `StorefrontEnglishUnchangedTest` going red on a page outside the
+brief is still an accident to revert.
+
+**And it does not override a preview he asked for.** When he has asked to see
+options before deciding — the page background, a type treatment — the previews
+are the deliverable and nothing ships until he picks a letter. "Apply what I
+said" means what he has decided, not what he is still choosing between.
 
 **2. Every patch arrives with a picture.** Not "it works" — a screenshot of the
 thing, taken in Chromium at 390px and at 1280px, plus the measured numbers that
