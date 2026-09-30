@@ -1647,6 +1647,60 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * THE BRAND NAME BECOMES A LINK TO ITS BRAND PAGE.      (2.60.336)
+             *
+             * The owner drew an arrow at the brand eyebrow on his own product
+             * page. It was a bare <div>, so the one word on that page naming a
+             * brand went nowhere, while /brands/{slug}/ -- a real page with
+             * that brand's copy, logo and product grid, and in the sitemap --
+             * sat unlinked from every product it sells.
+             *
+             * PAIRED, and that is the point of the pattern below: the REMOVED
+             * side is the bare text node and the INSERTED side is the same text
+             * wrapped in an anchor, so the brand's own NAME is still compared
+             * byte for byte on both sides. An approval that swallowed the whole
+             * element would stop noticing if the name itself changed, or
+             * vanished.
+             *
+             * The element, its class and its id are outside the cut on both
+             * sides for the same reason: `.bb-brand` carries the eyebrow's type
+             * and the spacing above the product name, and `#bbBrand` is read
+             * elsewhere, so a change to either must still be caught.
+             */
+            'the brand name wrapped in a link to its brand page (2.60.336)' => [
+                /* ANCHORED TO THE BRAND ELEMENT, NOT TO "an anchor tag".
+                   The first draft read `<a href="/brands/…">|</a>(?=</div>)`
+                   and matched FIFTEEN times across the walk -- every brand
+                   link anywhere in the shop, and every anchor that happened to
+                   close before a </div>. A pattern that wide would forgive a
+                   link appearing somewhere nobody approved, which is the whole
+                   thing this list exists to stop.
+                   `id="bbBrand">` is fixed-width, so it works as a lookbehind;
+                   the closing half is pinned to the element that actually
+                   follows the eyebrow on this page. */
+                'pattern' => '#(?<=id="bbBrand">)<a href="/brands/[^"]+/">#s',
+                'hits' => 1,
+            ],
+
+            /* The closing half, as its own entry rather than an alternation.
+               Written as one alternation first, and the pair reported 1 of 2 --
+               which says nothing about WHICH half missed. Two entries name it.
+
+               ▲ `\K` RATHER THAN A LOOKBEHIND, and that is what makes this
+                 safe. The tag has to be pinned to the brand eyebrow, but the
+                 brand NAME sits between the anchor and it and PCRE lookbehind
+                 must be fixed width. A bare `</a>(?=</div>)` was tried and
+                 fired EIGHT times on the home page alone -- it would have
+                 excused an anchor appearing anywhere nobody approved, which is
+                 the whole thing this list exists to stop. `\K` resets the
+                 match start, so the pattern reads the eyebrow and its name for
+                 context and cuts only the tag. */
+            'the brand link\'s closing tag (2.60.336)' => [
+                'pattern' => '#id="bbBrand">[^<]*\K</a>#s',
+                'hits' => 1,
+            ],
+
+            /*
              * THE FLAG BAR — Lane FB, Appearance → Header → Flag bar.
              *
              * The owner: "i need thin bar as same as attached, having uae flat,

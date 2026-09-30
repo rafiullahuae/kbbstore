@@ -310,9 +310,16 @@
      that brand's copy, logo and product grid, and in the sitemap -- sat unlinked
      from every product it sells.
 
-     `Brand::url()` is the helper for it and already existed; the pdp-preview
-     template `parts/facts.blade.php` was already using it, so the live page was
-     the odd one out rather than the URL being new.
+     `Brand::url()` is the helper for it and already existed; one of the design
+     preview templates was already calling it, so the live page was the odd one
+     out rather than the URL being new.
+
+     (That sentence originally named the preview directory, and
+     PdpPreviewTest's sweep went red on it -- the sweep reads this file for the
+     directory's name and cannot tell a comment from a reference. It was right
+     to: a shipped template must not reach into those previews, and a sweep that
+     forgave prose would forgive the real thing written inside a comment block
+     too.)
 
      ▲ THE ELEMENT STAYS A <div> AND THE <a> GOES INSIDE IT. `.bb-brand` carries
        the eyebrow's size, letter-spacing, colour and the spacing above the
@@ -321,8 +328,22 @@
 
      ▲ AND IT IS RENDERED ONLY WHEN THERE IS SOMEWHERE TO GO. A brand with no
        slug yields no url, and a link to nowhere is worse than plain text --
-       so the name still prints, unlinked. --}}
-      @if ($brand)<div class="bb-brand" id="bbBrand">@if ($product->brand?->url())<a href="{{ $product->brand->url() }}">{{ $brand }}</a>@else{{ $brand }}@endif</div>@endif
+       so the name still prints, unlinked.
+
+     ▲ THIS COMMENT'S CLOSING MARKER IS GLUED TO THE DIRECTIVE BELOW, WITH NO
+       NEWLINE BETWEEN THEM. A Blade comment is removed but the newline that
+       followed it is not, so writing this block on its own lines added ONE
+       BLANK LINE to the buy box of every product page in the shop.
+       StorefrontEnglishUnchangedTest reported it at byte 40177, alongside the
+       change that was actually meant. CLAUDE.md carries the same warning for
+       directives; it is just as true of comments.
+
+     ▲ AND THAT MARKER IS DESCRIBED HERE IN WORDS, NEVER TYPED. Spelling it out
+       inside a Blade comment CLOSES THE COMMENT AT THAT POINT: the first draft
+       of this note did exactly that, so every line after it compiled as
+       template code and the product page died with `syntax error, unexpected
+       token ":"`. Same family as writing the end-of-PHP-block directive inside
+       a PHP comment, which CLAUDE.md already records. --}}      @if ($brand)<div class="bb-brand" id="bbBrand">@if ($product->brand?->url())<a href="{{ $product->brand->url() }}">{{ $brand }}</a>@else{{ $brand }}@endif</div>@endif
       @php
           /* ═══════════════════════════════════════════════════════════════
              LEDGER — THE PRICE JOINS THE NAME'S ROW, SO THIS BLOCK MOVED UP.

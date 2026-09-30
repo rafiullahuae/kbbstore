@@ -753,8 +753,26 @@ it('leaves every section switch on the product page doing what it did', function
     $sections = app(ProductSections::class);
     $product = ledgerReviewed(5);
 
-    // Everything on, which is how the shop ships: nothing is marked off.
-    ledgerLacks(ledgerPage($product), 'class="d-off m-off', 'nothing is switched off on a shop as it ships');
+    /* ▲ PIN ADVANCED IN 2.60.336, AND NARROWED RATHER THAN DELETED.
+       This read "nothing is marked off", whose premise was that every section
+       ships on. The owner asked for the VAT line off by default -- "turned off
+       the vat line on product page by default" -- so exactly ONE section is now
+       marked off on a shop as it ships.
+
+       Deleting the assertion would throw away what it is for: catching a
+       section that stops rendering by accident. So it now says ONE, and says
+       WHICH. A second off-switch arriving by accident is still red, and so is
+       the VAT line silently coming back on. */
+    $shipped = ledgerPage($product);
+
+    expect(substr_count($shipped, 'class="d-off m-off'))->toBe(
+        1,
+        'exactly one section ships switched off — the VAT line — and nothing else'
+    );
+
+    // And it is the VAT line that carries it, not some other section that has
+    // quietly stopped rendering while the VAT line came back on.
+    expect($shipped)->toContain('class="d-off m-off bb-vat"');
 
     $sections->save([
         'reviews' => ['desktop' => false, 'mobile' => false],
