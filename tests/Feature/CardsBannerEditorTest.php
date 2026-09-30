@@ -199,7 +199,18 @@ it('draws a control for every card column the editor can write, exactly once', f
      * wrong space and shifts the page, which is what the partial's own note
      * says about printing neither attribute when they are unknown.
      */
-    $owned = array_values(array_diff((new BannerCard)->getFillable(), ['banner_set_id', 'image_w', 'image_h']));
+    /*
+     * ▲ AND THE PHONE PICTURE'S MEASURED PAIR JOINS THEM, for the identical
+     *   reason rather than an analogous one.                        (Lane SEC)
+     * `image_m_w`/`image_m_h` are read off the FILE by MediaRegistrar when the
+     * phone picture is chosen, exactly as `image_w`/`image_h` are for the
+     * desktop one. `image_m` itself is NOT exempt and must not be: it is a
+     * setting, it has a control, and it is pinned by name below.
+     */
+    $owned = array_values(array_diff(
+        (new BannerCard)->getFillable(),
+        ['banner_set_id', 'image_w', 'image_h', 'image_m_w', 'image_m_h'],
+    ));
 
     sort($owned);
     sort($sent);
@@ -216,6 +227,47 @@ it('draws a control for every card column the editor can write, exactly once', f
      * reach.
      */
     expect(substr_count($screen, "data-bns-k=\"status\""))->toBe(1, 'a card can be hidden twice, or not at all');
+
+    /*
+     * THE SAME ARGUMENT FOR THE PHONE PICTURE.                       (Lane SEC)
+     *
+     * `image_m` is in CARD_KEYS above, so the Save button sends it; if nothing
+     * on the screen writes it, the owner has a column he cannot reach and a
+     * banner that is soft on his own handset with no way to fix it. The owner
+     * asked for two sizes in as many words — "for desktop the size should be
+     * 1920 x 550 and in mobile 500 x 600" — so the second picker is the control
+     * that answers the second number.
+     *
+     * ONCE, NOT "AT LEAST ONCE". Two pickers bound to the same card would each
+     * overwrite the other's pick and the second thumbnail would disagree with
+     * the first; CLAUDE.md's rule about pinning the finished state is exactly
+     * this shape. Three counts, because the choose, the clear and the slot the
+     * picture lands in are three separate ways to be half-wired:
+     *
+     * MUTATION, run: delete the `[data-bns-picm]` handler block and this is red
+     * at 1 against 2 — the button is drawn and does nothing, which is the
+     * worst of the three states because it looks finished.
+     */
+    expect(substr_count($screen, 'data-bns-picm='))->toBe(1, 'the phone picture button is drawn twice, or not at all')
+        ->and(substr_count($screen, "querySelectorAll('[data-bns-picm]')"))->toBe(1, 'the phone picture button has no handler, or two')
+        /*
+         * THE NEEDLE IS THE MARKUP'S OWN AND NOT `data-bns-thumbm=`, which
+         * occurs TWICE: once where the slot is written and once inside the
+         * handler's `querySelector('[data-bns-thumbm="' + id + '"]')`. Counted
+         * the short way this read 2 for a correct screen — the ambiguous-needle
+         * class, found here rather than assumed, and the same one that made a
+         * strip count read 2 for one strip earlier in this lane.
+         */
+        ->and(substr_count($screen, 'data-bns-thumbm="\' + esc(c.id) + \'"'))->toBe(1, 'the phone picture has no slot to land in, or two')
+        ->and(substr_count($screen, "querySelectorAll('[data-bns-clearm]')"))->toBe(1, 'a phone picture cannot be removed once chosen');
+
+    /*
+     * AND THE TWO SIZES ARE ON THE BUTTONS THEMSELVES. He is uploading two
+     * pictures per slide now; a screen that does not say which shape goes where
+     * is a screen that gets one of them wrong. Written as the numbers he gave.
+     */
+    expect(str_contains($screen, '1920 × 550'))->toBeTrue('the desktop size is not on the screen')
+        ->and(str_contains($screen, '500 × 600'))->toBeTrue('the phone size is not on the screen');
 });
 
 /* ═════════════════════ 2. the Save button, and only it ════════════════════ */

@@ -289,7 +289,23 @@ class Banners
 
         $select = ['banner_cards.'.'id as c_id'];
 
-        foreach (['image', 'alt', 'heading', 'body', 'button_label', 'button_url', 'image_w', 'image_h', 'position'] as $c) {
+        /*
+         * ▲ THE PHONE PICTURE'S THREE COLUMNS JOIN THE LIST, AND THE WARNING
+         *   OVER $setColumns APPLIES TO THIS ONE WORD FOR WORD.     (Lane SEC)
+         *
+         * This list is the whole of what forHome() hydrates. A column added to
+         * `banner_cards` and not added here reaches the admin screen and the
+         * preview — which read the model — and silently does nothing on the
+         * shop. That is the exact fault `kind` shipped with once, and a phone
+         * picture that appears in the console and never on a phone would be the
+         * same fault with a longer feedback loop, because the owner would only
+         * find it by looking at his own site on his own handset.
+         */
+        foreach ([
+            'image', 'alt', 'heading', 'body', 'button_label', 'button_url',
+            'image_w', 'image_h', 'position',
+            'image_m', 'image_m_w', 'image_m_h',
+        ] as $c) {
             $select[] = 'banner_cards.'.$c.' as c_'.$c;
         }
 
@@ -351,6 +367,9 @@ class Banners
                 'button_url' => $row['c_button_url'],
                 'image_w' => $row['c_image_w'],
                 'image_h' => $row['c_image_h'],
+                'image_m' => $row['c_image_m'],
+                'image_m_w' => $row['c_image_m_w'],
+                'image_m_h' => $row['c_image_m_h'],
                 'position' => $row['c_position'],
                 'status' => 'publish',
             ])->syncOriginal();

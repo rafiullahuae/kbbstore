@@ -442,4 +442,46 @@ class BannerSet extends Model
     {
         return (self::SLIDER_RATIOS[$this->slider_ratio_m] ?? self::SLIDER_RATIOS['500/600'])[1];
     }
+
+    /** The desktop frame's width divided by its height. */
+    public function sliderRatioValue(): float
+    {
+        return self::ratioValue($this->sliderRatioCss());
+    }
+
+    /** The same, below 768px. */
+    public function sliderRatioMobileValue(): float
+    {
+        return self::ratioValue($this->sliderRatioMobileCss());
+    }
+
+    /**
+     * `'1920 / 550'` as 3.4909…                                   (Lane SEC)
+     *
+     * ── PARSED FROM THE CSS STRING AND NOT FROM THE KEY, DELIBERATELY ───────
+     *
+     * The key and the value are two different spellings of the same ratio and
+     * only one of them is what the browser lays out with. Parsing the CSS is
+     * therefore the version that cannot disagree with the frame: if a later
+     * preset is ever written with a key and a value that do not match, the
+     * arithmetic here follows the pixels rather than the label.
+     *
+     * It is also total. Every value in SLIDER_RATIOS is `<int> / <int>` and
+     * both accessors above fall back to a shipped preset for an unknown key, so
+     * the string can only be one of this class's own — but a zero denominator
+     * would be a division by zero on the front page, so it is guarded and
+     * answers 0.0, which bannerSliderCoverSizes() reads as "do not compute".
+     */
+    private static function ratioValue(string $css): float
+    {
+        $parts = array_map('trim', explode('/', $css));
+
+        if (count($parts) !== 2 || ! is_numeric($parts[0]) || ! is_numeric($parts[1])) {
+            return 0.0;
+        }
+
+        $height = (float) $parts[1];
+
+        return $height <= 0.0 ? 0.0 : (float) $parts[0] / $height;
+    }
 }

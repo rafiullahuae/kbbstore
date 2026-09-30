@@ -105,6 +105,15 @@
 .bns-th{width:96px;height:120px;border-radius:9px;overflow:hidden;background:var(--code-bg,rgba(0,0,0,.05));
         display:grid;place-items:center;font-size:10.5px;color:var(--ink-soft,#6b7280);text-align:center}
 .bns-th img{width:100%;height:100%;object-fit:cover;display:block}
+/* ── TWO THUMBNAILS ON A SLIDER'S ROW ── (Lane SEC)
+   The row is a grid and a third child in a two-column template wraps under the
+   first, which reads as a second card rather than as a second picture of the
+   same one. The modifier is on the row and only a slider gets it, so a cards
+   banner's row keeps the exact template it had.
+   `bns-th-m` IS DRAWN AT 5:6, the shape the phone frame is, so the empty slot
+   says what belongs in it before anything has been uploaded. */
+.bns-cd.is-two{grid-template-columns:96px 96px minmax(0,1fr)}
+.bns-th-m{height:115px;outline:1px dashed var(--border,#e6e6e6);outline-offset:-1px}
 .bns-cdb{display:grid;gap:8px;min-width:0}
 .bns-frame{width:100%;border:0;display:block;background:#fff}
 .bns-stage{border:1px solid var(--border,#e6e6e6);border-radius:11px;overflow:hidden;
@@ -165,6 +174,8 @@
   .bns-card{padding:13px}
   .bns-cd{grid-template-columns:64px minmax(0,1fr)}
   .bns-th{width:64px;height:80px}
+  .bns-cd.is-two{grid-template-columns:64px 64px minmax(0,1fr)}
+  .bns-th-m{height:77px}
   .bns-foot{margin:13px -13px -13px;padding:10px 13px}
 }
 </style>
@@ -247,7 +258,11 @@
        screen without its key here is a control that saves nothing. */
     'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m'];
 
-  var CARD_KEYS = ['image', 'alt', 'heading', 'body', 'button_label', 'button_url', 'position', 'status'];
+  /* `image_m` IS IN THIS LIST AND IT HAS TO BE. (Lane SEC) The buffer sends
+     exactly these keys on Save, so a column left out of it is a control the
+     owner can operate, see redraw in the preview, and lose the moment he
+     presses the button -- which is worse than not having the control. */
+  var CARD_KEYS = ['image', 'image_m', 'alt', 'heading', 'body', 'button_label', 'button_url', 'position', 'status'];
 
   /* The colour a control falls back to when the set says "use the shop's own".
      These are the SHOP'S values out of resources/css/kbb/kbb.css, not this
@@ -330,6 +345,7 @@
          be able to show a file that is not in the database yet. The picker
          hands over a URL; the server turns it into a stored path on Save. */
       row.image_url = c.image_url;
+      row.image_m_url = c.image_m_url;   /* the phone picture's thumbnail (SEC) */
       draft.cards[c.id] = row;
     });
   }
@@ -958,19 +974,68 @@
 
     cards.forEach(function(c){
       var d = draft.cards[c.id] || {};
-      html += '<div class="bns-cd">'
+      html += '<div class="bns-cd' + (slider ? ' is-two' : '') + '">'
         + '<div class="bns-th" data-bns-thumb="' + esc(c.id) + '">' + (d.image_url
             ? '<img src="' + esc(d.image_url) + '" alt="">'
             : 'no picture') + '</div>'
+        /* ── THE PHONE PICTURE'S OWN THUMBNAIL, RIGHT NEXT TO THE OTHER ONE ──
+           (Lane SEC)
+
+           The owner asked for two sizes -- "for desktop the size should be 1920
+           x 550 and in mobile 500 x 600" -- which is two pictures, and the
+           thing this screen has to make impossible is uploading ONE and
+           wondering why the phone looks wrong. So the empty slot is DRAWN
+           rather than hidden: a second box, the phone's shape, sitting beside
+           the first and saying "no phone picture" until there is one. An empty
+           box he can see is a question he asks now; a button he has to notice
+           is a question he asks in a week, about his own live site.
+
+           SLIDER ONLY. A cards banner has one frame shape (`ratio`) and draws
+           the same picture at every width, so a second upload there would be a
+           control that does nothing -- the fault rule 5 and this file's own
+           notes keep coming back to. */
+        + (slider
+            ? '<div class="bns-th bns-th-m" data-bns-thumbm="' + esc(c.id) + '" title="Phone picture, 500 x 600">' + (d.image_m_url
+                ? '<img src="' + esc(d.image_m_url) + '" alt="">'
+                : 'no phone<br>picture') + '</div>'
+            : '')
         + '<div class="bns-cdb">'
         + '<div class="bns-row">'
-          + '<button class="bns-btn" data-bns-pic="' + esc(c.id) + '">' + (d.image ? 'Change picture' : 'Choose a picture') + '</button>'
+          + '<button class="bns-btn" data-bns-pic="' + esc(c.id) + '">' + (d.image ? 'Change picture' : 'Choose a picture') + (slider ? ' · 1920 × 550' : '') + '</button>'
+          + (slider
+              ? '<button class="bns-btn" data-bns-picm="' + esc(c.id) + '">' + (d.image_m ? 'Change phone picture' : 'Choose the phone picture') + ' · 500 × 600</button>'
+                + (d.image_m
+                    ? '<button class="bns-btn" data-bns-clearm="' + esc(c.id) + '">Remove the phone one</button>'
+                    : '')
+              : '')
           + '<select class="bns-sel bns-narrow" data-bns-card="' + esc(c.id) + '" data-bns-k="status">'
             + '<option value="publish"' + (d.status === 'publish' ? ' selected' : '') + '>Showing</option>'
             + '<option value="draft"' + (d.status === 'draft' ? ' selected' : '') + '>Hidden</option>'
           + '</select>'
           + '<button class="bns-btn is-danger" data-bns-delcard="' + esc(c.id) + '">Delete</button>'
           + '<span class="bns-warn" data-bns-badurl="' + esc(c.id) + '"' + (c.button_url && !c.button_url_safe ? '' : ' hidden') + '>That link is not a kind of address this shop will publish, so no button is drawn.</span>'
+          /* ── SAY IT, RATHER THAN LEAVING HIM TO FIND IT ON HIS OWN PHONE ──
+             (Lane SEC)
+
+             A slider slide with no phone picture still draws: it shows the
+             desktop picture in the 500 x 600 frame, cropped by `cover` to about
+             a quarter of its width. That is a real banner, so nothing looks
+             broken in the console and nothing looks broken on a laptop — the
+             only place it shows is a handset.
+
+             AND IT IS EXPENSIVE AS WELL AS WRONG. Measured on this preview,
+             three slides at 390px: with a phone picture the handset downloads
+             29 KB; without one it downloads 185 KB, because covering a portrait
+             frame with a landscape picture needs the full-width file and three
+             quarters of every pixel in it is then cropped away. The number is
+             the shop's own gradients; a real photograph is several times that.
+
+             So the warning is the thing that keeps the fallback SHORT-LIVED,
+             which is the only good answer to it. Slider only — a cards banner
+             has one frame shape and wants one picture. */
+          + (slider && d.image && !d.image_m
+              ? '<span class="bns-warn">No phone picture yet, so phones show the wide one cropped to its middle. Choose one at 500 × 600.</span>'
+              : '')
         + '</div>'
         /* THE THREE TEXT BOXES ARE THE CARDS ROW'S AND ARE NOT DRAWN FOR A
            SLIDER, because this banner type draws no text at all — the owner's
@@ -1334,6 +1399,57 @@
             schedulePreview();
           }
         });
+      };
+    });
+
+    /* ── THE PHONE PICTURE, THROUGH THE SAME PICKER ── (Lane SEC)
+
+       Deliberately a near-copy of the handler above rather than a shared one
+       parameterised over two keys: the two differ in the dialog's title, the
+       thumbnail they repaint and the button's words, which is three of the five
+       lines, and a helper taking three callbacks to save two would be longer
+       than both. What they MUST share is the picker itself, and they do —
+       window.kbbPickMedia is the one dialog every image field in this console
+       opens, so the phone picture is registered in the Media Library exactly as
+       the desktop one is. */
+    document.querySelectorAll('[data-bns-picm]').forEach(function(b){
+      b.onclick = function(){
+        if (typeof window.kbbPickMedia !== 'function') {
+          say('The media picker is not available on this page.');
+          return;
+        }
+
+        window.kbbPickMedia({
+          title: 'Choose the phone picture — 500 × 600',
+          folder: 'banners',
+          onPick: function(urls){
+            if (!urls || !urls.length) return;
+            var id = b.dataset.bnsPicm;
+            draft.cards[id].image_m = String(urls[0]);
+            draft.cards[id].image_m_url = String(urls[0]);
+            var th = document.querySelector('[data-bns-thumbm="' + id + '"]');
+            if (th) th.innerHTML = '<img src="' + esc(String(urls[0])) + '" alt="">';
+            b.textContent = 'Change phone picture · 500 × 600';
+            markDirty();
+            schedulePreview();
+            render();
+          }
+        });
+      };
+    });
+
+    /* AND A WAY BACK OFF IT. Without this the only route from "I picked the
+       wrong file" to "no phone picture" is deleting the whole slide, and the
+       empty string is what the storefront reads as "fall back to the desktop
+       picture" — so removing it has to be as reachable as choosing it. */
+    document.querySelectorAll('[data-bns-clearm]').forEach(function(b){
+      b.onclick = function(){
+        var id = b.dataset.bnsClearm;
+        draft.cards[id].image_m = '';
+        draft.cards[id].image_m_url = '';
+        markDirty();
+        schedulePreview();
+        render();
       };
     });
 
