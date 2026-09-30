@@ -7,24 +7,37 @@ declare(strict_types=1);
 | Store → Import → "Clean up before the migration"                    (Lane IE)
 |------------------------------------------------------------------------------
 |
-| ▲ NOT YET MOUNTED, AND THE SUITE SAYS SO BY NAME.
+| ▲ MOUNTED BY THE INTEGRATOR IN 2.60.336, AND THIS NOTE IS THE RECORD.
 |
-| `tests/Feature/EverythingIsMountedOnceTest > it requires every route file
-| exactly once` is RED while this line is missing:
+| It is written in the PAST TENSE deliberately. The header used to say "NOT YET
+| MOUNTED", which was true the day the lane wrote it and false the moment the
+| line below was added — and `RouteFileHeadersTest > it never claims a route
+| file is unmounted when it is` went red naming this file, because a header
+| that lies about mounting is how a route ends up mounted twice, or never.
 |
-|     cleanup-admin.php is required 0 times by routes/web.php + routes/api.php
+| That test matches a PATTERN rather than two literals, after
+| routes/payments-settlement.php survived a sweep of fourteen files by putting
+| the word "yet" in the middle of the phrase instead of at the end — same
+| claim, different word order, invisible to the guard.
 |
-| That is the guard working, not a defect in it. It walks routes/ and demands
-| every file be required exactly once, because three features in this shop
-| shipped with a perfect header and no require and never worked at all
-| (checkout-card.php answered 405 for twelve days). A lane that adds a route
-| file therefore CANNOT leave the suite green, and CLAUDE.md forbids that lane
-| from editing routes/web.php to fix it — the two rules are in tension by
-| design, and the resolution is that the integrator closes it in one line.
+| ▲ AND THE TWO SPELLINGS ARE DESCRIBED HERE, NEVER TYPED. The first draft of
+|   this very note quoted them both to explain the point, and the guard went
+|   red on the quotation: it reads prose and cannot tell a example from a
+|   claim. That is the third time in one release that a comment explaining a
+|   rule tripped the rule — the others were a Blade comment containing its own
+|   closing marker, and a template comment naming the preview directory a sweep
+|   forbids. Explain these things in words.
 |
-| routes/web.php is the integrator's file; this one asks to be required inside
-| the EXISTING admin-api group — the one already carrying `auth:admin` and
-| NoStoreAdminApi — beside the other import route files:
+| THE TENSION THIS FILE WAS BORN INTO, kept because it will recur:
+| `EverythingIsMountedOnceTest` demands every file in routes/ be required
+| exactly once — three features in this shop shipped with a perfect header and
+| no require and never worked at all (checkout-card.php answered 405 for twelve
+| days). CLAUDE.md forbids a lane from editing routes/web.php. So a lane that
+| adds a route file CANNOT leave the suite green, by design, and the resolution
+| is that the integrator closes it in one line.
+|
+| It is required inside the EXISTING admin-api group — the one already carrying
+| `auth:admin` and NoStoreAdminApi — beside the other import route files:
 |
 |     require __DIR__.'/import-admin.php';
 |     require __DIR__.'/import-history-admin.php';
