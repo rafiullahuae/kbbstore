@@ -593,3 +593,127 @@ both sides. What the pair excuses is the two attributes and the blank line the
 `@php` block adds. `data-i`, `data-qty`, `data-price` and the `on`/`oos` classes
 stopped being watched there and are asserted element by element in the new file
 instead.
+
+---
+
+## 9 · Round 4 — the Layout screen, and the tabs that had nothing in them
+
+Two requests, both verbatim:
+
+> *"also i have control on the product page spacing between sections and
+> elements etc. and fonts sizes control etc. pleas give me proper tabs for that
+> on the product page > Layout."*
+
+> *"also put some demo tabs on the product page, so i can see in action."*
+
+### 9a · `Appearance → Product page` now has a tab strip
+
+It was a flat list of seventeen on/off switches out of
+`ProductSections::REGISTRY` and nothing else — checked before building, not
+remembered. The switches are untouched and sit behind **Sections**; beside them
+are four Layout tabs:
+
+| tab | admin path | controls |
+|---|---|---|
+| Spacing · Page | `Appearance → Product page → Spacing · Page` | 5 |
+| Spacing · Buy column | `Appearance → Product page → Spacing · Buy column` | 8 |
+| Type · Buy column | `Appearance → Product page → Type · Buy column` | 12 |
+| Type · Sections & tabs | `Appearance → Product page → Type · Sections & tabs` | 5 |
+
+`App\Services\ProductLayout` is the schema, drawn through
+`ModuleSchema::tabs()` — the same payload `Appearance → Product styles` and the
+Newsletter screen already draw, so the console renders it with the renderer it
+already has and nothing about the screen shape is new.
+
+**No route was added.** The Layout half travels through the two
+`/admin-api/product-page` paths that already exist, so `routes/web.php` is
+untouched and **there is nothing for the integrator to wire**, exactly as §0
+says of the rest of this lane.
+
+**Sizes are stored in tenths of a pixel** (13.5px is `135`) and line heights in
+hundredths, because `ModuleSchema`'s `range` is an integer and the page's own
+type is 13.5 and 1.62. The console divides by the field's `scale` to draw the
+label; the stored number is never shown.
+
+### 9b · ▲ Not one default moved, and that is the opposite of round 2
+
+He asked for the CONTROLS. `ProductLayout::storefrontCss()` answers the **empty
+string** while every value is at the number `kbb-product.css` already drew, and
+`partials/product-layout-css.blade.php` then emits no element, no attribute and
+no whitespace — so `StorefrontEnglishUnchangedTest` compares the product page
+byte for byte and needs **no approved rule**.
+
+The other half of that promise is the one only a test catches: every shipped
+default is the same number as the `var(--pl-x, <fallback>)` the stylesheet falls
+back to. If the two ever disagree, the day somebody moves ONE slider the other
+twenty-nine values jump to numbers nobody chose. `ProductPageLayoutTest`
+compares the two lists in both directions.
+
+`docs/lane-pdp4-shots/` carries the measurement: the page measured on the commit
+this branch started from and on this branch, at 390 and 1280, **DIFFERENCES: 0**
+across eleven boxes and seventeen groups of computed styles.
+
+### 9c · The detail tabs rendered one tab, on every demo product
+
+`DemoCatalogueSeeder` set `short_description` and none of `description`,
+`ingredients`, `how_to_use` — the three columns `ProductTabs` builds its
+built-ins from. It drops an entry with an empty body and falls Description back
+to the short description, so 24 of 24 demo products produced one tab with
+nothing beside it. Demo content is off by default, so its top-up never ran.
+
+The copy is `App\Support\DemoProductDetails` and has **two readers**: the seeder
+(a fresh install) and `2027_06_15_000000_backfill_demo_product_details` (his
+running shop, which a seeder edit would never have reached).
+
+The backfill fills a column only where it is blank, and only on a row carrying
+**all three** of the seeder's marks at once — `wc_id IS NULL`,
+`sku LIKE 'DEMO-%'`, and the seeder's exact `short_description`. An imported
+product carries a real `wc_id` and fails the first before the other two are
+asked. The copy states no figure and no claim, per `DemoContent`'s own rule, and
+says what it is in its last sentence.
+
+### 9d · What the package needs on top of §1 and §2
+
+```
+app/Services/ProductLayout.php                          NEW
+app/Support/DemoProductDetails.php                      NEW
+app/Http/Controllers/Admin/ProductPageApiController.php  save() no longer
+                                                        requires `sections`
+resources/views/partials/product-layout-css.blade.php   NEW
+resources/views/store/product.blade.php                 one @include
+resources/views/admin/app.blade.php                     the tab strip
+resources/css/kbb/kbb-product.css                       30 var() reads
+database/seeders/DemoCatalogueSeeder.php
+database/migrations/2027_06_15_000000_backfill_demo_product_details.php  NEW
+database/migrations/2027_06_15_000100_clear_caches_product_page_layout.php  NEW
+public/build/assets/kbb-product-<hash>.css              REBUILT
+public/build/manifest.json                              MUST travel with it
+tests/Feature/ProductPageLayoutTest.php                 NEW
+tests/Feature/DemoProductTabsTest.php                   NEW
+tests/Feature/ModuleFrameworkGuardTest.php              product_layout enrolled
+tools/pdp4-shots.cjs  docs/lane-pdp4-shots/             the harness and the shots
+```
+
+`update.json` must declare **both** migrations in `migrations`, and the manifest
+warning in §1 applies unchanged: ship the new stylesheet without the manifest
+and the page asks for the old hash, which is still on disk — no 404, no error,
+and every slider on the new screen saves, reports success and moves nothing.
+
+### 9e · Found and not fixed
+
+- **The preview fixture adds two GLOBAL product tabs** — "Shipping & returns"
+  and "Authenticity" — from `tools/pdp-seed.php`, not from a migration. His shop
+  does not have them. They were deleted from the preview database before the
+  before/after pass so the pictures show his own state; nothing in the branch
+  touches them.
+- **`.dcontent.clamp`'s 104px cap and its 76px fade stop are still literals.**
+  The tab body's size and line spacing are controls now, so a large enough
+  setting will show fewer lines before "Read more" than a small one. Expressing
+  the cap in line-boxes instead would have changed the rendered number at the
+  shipped values by a fraction of a pixel — 4.53 × 1.7 × 13.5 is 103.96, not 104
+  — and this round may not move the page by any amount. If the cap is ever to
+  follow the type, it wants its own control in px, which is one field.
+- **The five design previews are still mounted**, per §6, and they do not read
+  these variables: `store/pdp-preview/_layout.blade.php` loads
+  `kbb-product.css` but not this partial, so every `var()` in it falls back and
+  the five drawings are exactly what they were.
