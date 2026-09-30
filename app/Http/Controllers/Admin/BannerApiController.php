@@ -10,6 +10,7 @@ use App\Models\BannerSet;
 use App\Services\Banners;
 use App\Services\ModuleSchema;
 use App\Services\SettingsService;
+use App\Support\ImageVariants;
 use App\Support\MediaRegistrar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -431,6 +432,7 @@ class BannerApiController extends Controller
 
                 $this->fillCard($card, $row);
                 $card->save();
+                $this->cropPhoneCopies($card);
             }
         });
 
@@ -573,6 +575,51 @@ class BannerApiController extends Controller
     }
 
     /**
+     * Make the phone-shaped crops of a card's desktop picture.      (Lane SEC)
+     *
+     * ── WHY HERE AND NOT ON UPLOAD ──────────────────────────────────────────
+     *
+     * MediaUploadController already generates the width-scaled copies of
+     * everything uploaded, and this could not join it: the crop's shape is the
+     * SET's `slider_ratio_m`, which the upload endpoint has never heard of. A
+     * picture is only a banner picture once a card points at it.
+     *
+     * ── WHY NOT ON THE STOREFRONT'S FIRST REQUEST ───────────────────────────
+     *
+     * Because that is 43 to 159 ms of decode-and-encode inside a shopper's page
+     * render, on the home page, for a file the owner's own save could have
+     * written. Measured in ImageVariants::generateCrop()'s header. The
+     * storefront reads crops and never writes one; if none is there it falls
+     * back to the whole picture, correctly and heavily, and says so.
+     *
+     * NEVER FAILS THE SAVE. A shop with no GD, an SVG banner, a read-only cache
+     * directory — none of those is a reason to refuse the owner's edit, and the
+     * page draws without a crop. `report()` so it is not silent.
+     */
+    private function cropPhoneCopies(BannerCard $card): void
+    {
+        try {
+            if (trim((string) $card->image) === '') {
+                return;
+            }
+
+            $set = $card->relationLoaded('set') ? $card->set : BannerSet::find($card->banner_set_id);
+
+            if (! $set instanceof BannerSet || ! $set->isSlider()) {
+                return;
+            }
+
+            ImageVariants::generateCrop(
+                ImageVariants::rootRelative((string) $card->image),
+                $set->sliderRatioMobileToken(),
+                $set->sliderRatioMobileValue(),
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
      * Put a validated card payload onto a model, without saving it.
      *
      * @param  array<string, mixed>  $data
@@ -641,6 +688,7 @@ class BannerApiController extends Controller
 
         $this->fillCard($card, $data);
         $card->save();
+        $this->cropPhoneCopies($card);
 
         return response()->json(['ok' => true, 'card' => $this->cardPayload($card->fresh())], $status);
     }

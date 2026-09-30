@@ -449,3 +449,179 @@ it('writes and clears the phone picture through the same gate as the desktop one
 
     expect($phoneOnly->drawable())->toBeFalse();
 });
+
+/* ═══════════ 6. the server-made crop: the fallback that is not heavy ══════ */
+
+it('draws a server-made crop when there is no phone picture, at the frame shape', function () {
+    /*
+     * ── THE THIRD ANSWER, AND WHY IT BEATS BOTH THE OTHERS ──────────────────
+     *
+     * The fallback is not a transient state: the phone-picture field is NEW, so
+     * every slide on the shop falls back the day it applies. The two answers on
+     * the table were a soft banner (the flat `sizes`, 0.25 device pixels per CSS
+     * pixel) and a heavy one (the whole 1920px file, three quarters of it
+     * discarded in the browser). Measured on a photographic 1920 x 550, per
+     * slide: 4.3 KB soft, 152.6 KB heavy, and 38.6 KB for the server-made crop
+     * at its native 458 x 550 — sharp, with IDENTICAL pixels to the heavy one,
+     * because ImageVariants::coverRect() is the same rectangle `cover` picks.
+     *
+     * MUTATION, run: delete the crop files before rendering and this is red —
+     * the page falls back to the whole picture with the heavy `sizes`, which is
+     * the correct degradation and is asserted in the case below this one.
+     */
+    bppMakeImage('uploads/banners/bpp-desktop.jpg', 1920, 550);
+
+    $made = ImageVariants::generateCrop('/uploads/banners/bpp-desktop.jpg', '500x600', 500 / 600);
+
+    expect($made['made'])->toBeGreaterThan(0, 'no crop was written, so this case proves nothing');
+
+    $html = bppRender();
+
+    // The phone half is a <source>, exactly as an uploaded phone picture is —
+    // the machinery is the same and only the file differs.
+    expect(substr_count($html, '<picture>'))->toBe(1)
+        ->and(substr_count($html, '<source media='))->toBe(1);
+
+    $source = (string) (preg_match('#<source media=.*?>#s', $html, $m) ? $m[0] : '');
+
+    expect($source)->toContain('media="(max-width: 767.98px)"')
+        ->and($source)->toContain('/img-cache/c500x600/')
+        // THE CROP'S OWN SHAPE ON THE ELEMENT, not the source's: 1920 x 550 in
+        // a 5 : 6 frame is a 458 x 550 band, and printing 1920 x 550 here
+        // reserves a box of the wrong shape before the picture arrives.
+        ->and($source)->toContain('width="458" height="550"')
+        // And the width is binding again, so no factor.
+        ->and($source)->toContain('sizes="min(100vw, 2400px)"');
+
+    // The <img> is the desktop element only and carries no phone term.
+    $img = (string) (preg_match('#<img [^>]*>#s', $html, $m) ? $m[0] : '');
+
+    expect($img)->toContain('bpp-desktop.jpg')
+        ->and($img)->not->toContain('max-width')
+        ->and($img)->not->toContain('c500x600');
+
+    // The phone's preload names the crop, not the whole picture.
+    $head = (string) (preg_match_all('#<link rel="preload" as="image"[^>]*>#', $html, $m) ? implode("\n", $m[0]) : '');
+
+    expect(substr_count($head, 'rel="preload" as="image"'))->toBe(2)
+        ->and($head)->toContain('/img-cache/c500x600/');
+});
+
+it('falls back to the whole picture, heavily and correctly, when no crop exists', function () {
+    /*
+     * A crop can be absent for reasons that are nobody's fault — no GD on the
+     * host, an SVG, a restored database whose backfill has not run — and in
+     * every one of them the page must still draw the picture. So the honest
+     * heavy answer stays, and it is asserted rather than assumed: this is the
+     * case that runs on a machine where generateCrop() could not write.
+     */
+    foreach (glob(public_path('img-cache/c500x600/*/uploads/banners/bpp-desktop.jpg')) ?: [] as $file) {
+        @unlink($file);
+    }
+
+    $html = bppRender();
+
+    expect(substr_count($html, '<picture>'))->toBe(0)
+        ->and(substr_count($html, '<source'))->toBe(0)
+        ->and(substr_count($html, 'rel="preload" as="image"'))->toBe(1);
+
+    $img = (string) (preg_match('#<img [^>]*>#s', $html, $m) ? $m[0] : '');
+
+    expect($img)->toContain('sizes="(max-width: 767.98px) min(100vw * 4.2, 2400px), min(100vw, 2400px)"');
+});
+
+it('crops the rectangle cover shows, and nothing else', function () {
+    /*
+     * THE CLAIM THE WHOLE CROP RESTS ON: it is the same band the browser was
+     * going to show, so it changes what is downloaded and CANNOT change what is
+     * seen. `cover` scales to the larger of the two ratios and centres the
+     * overflow.
+     *
+     * The last row is the one that says what this cannot fix: the crop is
+     * CENTRED, and a shop banner usually has its subject off-centre. That is
+     * already true of the page — the browser centres it today — so the crop
+     * does not make it worse, and moving it would need a focal point the owner
+     * sets.
+     *
+     * MUTATION: drop the `/ 2` from either offset and the centring rows are
+     * red at 0 rather than the middle.
+     */
+    // 1920 x 550 in 5 : 6 — wider than the frame, so full height, middle
+    // columns: 550 x 0.8333 = 458, centred in 1920 leaves 731 either side.
+    expect(ImageVariants::coverRect(1920, 550, 500 / 600))->toBe([731, 0, 458, 550]);
+
+    // 900 x 1400 in 1920 : 550 — taller than the frame, so full width, middle
+    // rows: 900 / 3.4909 = 258, centred in 1400.
+    expect(ImageVariants::coverRect(900, 1400, 1920 / 550))->toBe([0, 571, 900, 258]);
+
+    // Already the frame's shape: the whole picture, nothing to crop, which is
+    // what generateCrop() refuses to write a second copy of.
+    expect(ImageVariants::coverRect(500, 600, 500 / 600))->toBe([0, 0, 500, 600]);
+
+    /*
+     * AND THE REASON IS THE SPECIFIC ONE. This asserted only that `reason` was
+     * non-null, which a missing file satisfies — so it was green for a picture
+     * that had never been written and said nothing about the branch it names.
+     * The file is made first and the string is checked.
+     */
+    bppMakeImage('uploads/banners/bpp-square.jpg', 500, 600);
+
+    expect(ImageVariants::generateCrop('/uploads/banners/bpp-square.jpg', '500x600', 500 / 600)['reason'])
+        ->toBe('already the frame shape');
+
+    expect(glob(public_path('img-cache/c500x600/*/uploads/banners/bpp-square.jpg')) ?: [])
+        ->toBe([], 'a picture already the frame shape had a crop written anyway');
+});
+
+it('refuses a cache directory it did not name', function () {
+    /*
+     * RULE 5, and the reason there are two locks rather than one. The token
+     * becomes a PATH SEGMENT under the web root. BannerSet::
+     * sliderRatioMobileToken() can only answer with a key of SLIDER_RATIOS —
+     * a constant — and cropDir() checks the shape again anyway, because the day
+     * somebody calls this from somewhere else is the day the first lock is not
+     * in the call stack.
+     *
+     * MUTATION: loosen the pattern to `#^[0-9x./]+$#` and the traversal rows
+     * below are green, which is the whole point of listing them.
+     */
+    foreach (['../../etc', '500x600/../..', '', '0x600', '500x', 'axb', '500/600', '500x600 ', '123456x1'] as $bad) {
+        expect(ImageVariants::cropDir($bad))->toBeNull('cropDir accepted '.var_export($bad, true));
+    }
+
+    expect(ImageVariants::cropDir('500x600'))->toBe('img-cache/c500x600')
+        ->and(ImageVariants::cropDir('1920x550'))->toBe('img-cache/c1920x550');
+
+    // And what the model can hand it is always one of its own keys.
+    $set = new BannerSet;
+    $set->forceFill(['slider_ratio_m' => '../../etc/passwd']);
+
+    expect($set->sliderRatioMobileToken())->toBe('500x600')
+        ->and(ImageVariants::cropDir($set->sliderRatioMobileToken()))->not->toBeNull();
+});
+
+it('takes its crops away when the original goes, which nothing used to do', function () {
+    /*
+     * ImageVariants::forget()'s own header records what it was written for: the
+     * cache had NO invalidation, so a replaced original served the new
+     * photograph on a desktop and the old one on a phone — `src` new, every
+     * srcset candidate stale. A crop is a srcset candidate on exactly the
+     * element that fault shows on, so leaving the crop directories out of that
+     * walk would have reintroduced the bug in the one place it is hardest to
+     * see.
+     *
+     * MUTATION, run: take the `c*` glob out of forget() and this is red — the
+     * crop survives the original.
+     */
+    bppMakeImage('uploads/banners/bpp-forget.jpg', 1920, 550);
+    ImageVariants::generateCrop('/uploads/banners/bpp-forget.jpg', '500x600', 500 / 600);
+
+    $crops = glob(public_path('img-cache/c500x600/*/uploads/banners/bpp-forget.jpg')) ?: [];
+
+    expect(count($crops))->toBeGreaterThan(0, 'no crop to forget, so this case proves nothing');
+
+    ImageVariants::forget('/uploads/banners/bpp-forget.jpg');
+
+    expect(glob(public_path('img-cache/c500x600/*/uploads/banners/bpp-forget.jpg')) ?: [])
+        ->toBe([], 'the crops outlived the original they were made from');
+});
