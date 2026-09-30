@@ -393,14 +393,39 @@ but the *content* is not. Specifically unknown until his export exists:
   - the real size of the Orders zip against his server's `upload_max_filesize`
     (§6.3) — 2.18 MB predicted against a PHP default of 2M.
 
-**7.5 The MySQL parity suite.** §2's fix is proven on `ImportContractTest`
-(8 failed → 8 passed) and on a full `php artisan migrate --force` (500 DONE,
-0 FAIL, exit 0). A full parity run was started this round; whether it completed
-is recorded in the hand-off. **CI's `mysql` job is the check that matters and it
-should be seen green before a package ships** — and note that GitHub Actions
-shows no CI run since 24 September, so no recent commit on this project has been
-checked by it at all. That is worth someone's attention independently of this
-lane.
+**7.5 The MySQL parity suite now runs, and it is not green.** This is the most
+useful thing §2's fix produced, so it is stated in full.
+
+Before the fix, **no test ran on MySQL at all** — every one errored in
+`RefreshDatabase`. After it, a complete parity run:
+
+```
+Tests: 5 failed, 16 skipped, 8263 passed (76159 assertions)
+```
+
+Of the five, **three are pre-existing MySQL-only defects in other lanes' work
+that nothing could have seen while the parity suite could not migrate**:
+
+| test | what MySQL refuses that SQLite allows |
+|---|---|
+| `SliderBannerTest > it prints nothin…` | `SQLSTATE[22001] 1406 Data too long for column 'slider_style'` — the test writes an XSS probe (`inset" onload="alert(1)`) into a column too short for it. MySQL in `STRICT_TRANS_TABLES` errors; SQLite truncates silently. |
+| `ColumnWidthGuardTest > it carries the widths a real…` | the column-width census disagrees with the live MySQL schema over `banner_cards.image_m`. (The column itself is fine — verified present as `varchar(400)` after a full `migrate --force`, along with all twelve previously stranded migrations.) |
+| `CacheControlScreenTest > it drops the compiled rout…` | `files_removed` came back 0 where at least 1 was expected. |
+
+**None of these three is this lane's to fix** — they belong to the banner and
+cache lanes — and none is a defect in the importer. They are named here because
+they have been invisible for as long as the parity suite has been dead, and
+somebody should own them before a package ships.
+
+The other two of the five were this lane's: `MnNavigationImportTest` pinned the
+plugin version as a literal and went red on the ordinary 1.7.1 bump (fixed — it
+now reads the version off the header and requires the other three copies to match
+it, with two mutations run), and `EverythingIsMountedOnceTest`, which is the
+awaiting-the-integrator state described in §8.5.
+
+**CI's `mysql` job is the check that matters.** Note that GitHub Actions shows
+**no CI run on this project since 24 September**, so no recent commit has been
+checked by it at all — worth someone's attention independently of this lane.
 
 **7.6 The live server has not been touched and must not be.** No cleanup was
 performed on his shop by this lane. §8 builds the tool; pressing the button is
@@ -572,4 +597,23 @@ refreshed first and the answer written after.
 - `tools/ie-preview.sh`, `tools/ie-seed.php`, `tools/ie-cleanup-shots.cjs` — the
   preview, its fixture and the Chromium run that drives the screen.
 - The §2 fix's instrument is the **MySQL parity suite**, which it brings back
-  from red-on-every-test.
+  from red-on-every-test to 8,263 passing — and which then reported three
+  MySQL-only defects that had been invisible for as long as it was dead (§7.5).
+
+### The suite, this branch
+
+| run | result |
+|---|---|
+| SQLite, full | **8,261 passed, 22 skipped, 2 failed** |
+| …the two | `EverythingIsMountedOnceTest` (§8.5, the integrator's one line) and `MnNavigationImportTest` (fixed after that run; 26 passed, 219 assertions) |
+| MySQL parity, full | **8,263 passed, 16 skipped, 5 failed** — §7.5 names all five |
+| `php artisan migrate --force` on MySQL 8 | **500 DONE, 0 FAIL, exit 0** |
+
+▲ **A WARNING FROM THIS LANE'S OWN MISTAKE.** Two full suite runs were started in
+this worktree at once, both with `KBB_WP_DB=kbb_wp_ie`. Four tests failed with
+`Table 'wp_options' already exists` — the WordPress harness does
+`DROP TABLE IF EXISTS` then `CREATE TABLE`, and the other run created it in
+between. They are not defects and they vanished on a single run. This is exactly
+the collision CLAUDE.md documents, and it is worth recording that it catches a
+lane that has just finished reading the warning: **one run at a time per
+`KBB_WP_DB`, not merely one name per lane.**
