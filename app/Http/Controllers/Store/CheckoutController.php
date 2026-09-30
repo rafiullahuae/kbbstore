@@ -1111,7 +1111,9 @@ class CheckoutController extends Controller
             ->where('status', 'converted')
             ->first();
 
-        DB::transaction(function () use ($order, $cart) {
+        $released = false;
+
+        DB::transaction(function () use ($order, $cart, &$released) {
             app(\App\Services\Orders\OrderStatus::class)->moveTo(
                 $order,
                 'failed',
@@ -1127,8 +1129,50 @@ class CheckoutController extends Controller
                 only: ['paid_at' => null],
             );
 
+            /*
+             * ▲ THE BASKET GOES BACK ONLY IF THE ORDER REALLY IS OVER.
+             *
+             * `only: ['paid_at' => null]` is an admission that this row can
+             * change under us — it is re-read under lockForUpdate inside
+             * moveTo() precisely because the `paid_at` test forty lines above
+             * was made on a stale read. But moveTo()'s answer was DISCARDED
+             * here and the cart write below ran regardless, so a confirmation
+             * landing in that window left the order paid AND the basket live:
+             * the shopper holds a bag of goods they have been charged for, and
+             * the units are never released because the order never moved.
+             *
+             * The same defect was found and fixed on the instalment leg
+             * (Store\CheckoutReturnController::restore()); this is its sibling,
+             * and the two are now the same shape.
+             *
+             * moveTo()'s null cannot be the test, because it means both "the
+             * precondition did not hold" and "already there with nothing else
+             * to record" — and the second is an ordinary shopper whose order
+             * was already `failed`, who is owed their basket. The row answers
+             * both at once, under the same lock, inside the same transaction.
+             */
+            $fresh = Order::query()->whereKey($order->getKey())->lockForUpdate()->first();
+
+            $released = $fresh !== null
+                && $fresh->paid_at === null
+                && app(\App\Services\Checkout\PlacementState::class)->forOrder($fresh)
+                    === \App\Services\Checkout\PlacementState::REFUSED;
+
+            if (! $released) {
+                return;
+            }
+
             $cart?->forceFill(['status' => 'active', 'converted_at' => null, 'last_activity_at' => now()])->save();
         });
+
+        /*
+         * The payment went through while they were pressing it. Nothing was
+         * written to either row, and they are told the same thing the stale
+         * read above tells anyone whose money has already moved.
+         */
+        if (! $released) {
+            return response()->json(['ok' => false, 'error' => 'That payment has already gone through.'], 409);
+        }
 
         $request->session()->forget('kbb_last_order');
 

@@ -40,17 +40,49 @@ It had to be measured at run time, and that is the interesting part: the needle
 is fine, the haystack is fine, and the fault lives only in the relationship
 between them while the test runs. No static scan can see it.
 
-`tools/plc-needle-scan.sh` reproduces the list. **Every lane settles the rows in
-the files it owns.** The cheap test is whether blanking the thing under test
-leaves the assertion green; where it does, the needle is wrong and gets fixed,
-and where it does not, the string is recorded in `KBB_MULTI_RENDERED` with its
-reason. Report how many of yours were actually hiding something — even if the
-answer is none, that is the number that says whether this was worth doing.
+**And the answer to "how many were actually hiding something" is now known for
+the first 140: one hundred and fourteen.** Not estimated — the scan records
+WHERE EACH COPY SITS (the innermost open tag, or `@tag[attr]` when the copy is
+inside an attribute value that has not closed yet), so the blanking test is
+mechanical: same element means blanking it removes every copy and the assertion
+goes red; different elements means the other copy stands and the assertion stays
+green. The 24 that are not holes are lists with two rows in them, doing their
+job.
 
-Three shapes already found, to know what you are looking for: an assertion
-satisfied by the cart **drawer** rather than the cart line; one satisfied by an
-`aria-label` rather than the visible text; and one satisfied by **a CSS comment**
-that ships the words to the page.
+Measured end to end rather than left as a proxy. Blank the product name out of
+every card on the shop and `BuildMyRoutineTest` was **21 passed, 0 failed**; with
+the repaired needles, **5 red**. Stop emitting `<meta name="description">`
+entirely and `AdminProductWritePathTest` was **28 passed**; repaired, **1 red**.
+Two shop-wide defects an owner would notice in a minute, and the suite could not
+see either.
+
+**Two tools, and the second is the one that makes this tractable:**
+`tools/plc-needle-scan.sh` produces the list; **`tools/plc-needle-holes.php`**
+runs the blanking test and groups candidates by context-pair, which turned 114
+decisions into about 20. Adjudicate per pair, not per site.
+
+Current figures on this tree: **496 ambiguous / 140 sentences / 114 holes**, of
+which 26 are repaired and 88 remain — 70 of them singletons in other lanes'
+files. **Every lane settles the rows in the files it owns.** Change the
+**needle**, never what is asserted; a site that can only be fixed by changing
+what is asserted gets named and left. Where a repeat is legitimate, record it in
+`KBB_MULTI_RENDERED` with the reason. Report how many of yours were actually
+hiding something — even if the answer is none, that is the number that says
+whether this was worth doing.
+
+Shapes already found, to know what you are looking for: an assertion satisfied by
+the cart **drawer** rather than the cart line; one satisfied by an `aria-label`
+rather than the visible text; one satisfied by **a CSS comment** that ships the
+words to the page; a product name satisfied by the add-to-basket link's
+`data-name`; and a `<title>` satisfied by **JSON-LD carrying the same words on
+the same page**.
+
+▲ **Run the scan with the database it derives, not one you set by hand.** Its
+first version hardcoded `KBB_WP_DB=kbb_wp_plc`, and another lane ran it within
+the hour — a lane that had not set the variable itself would have driven Lane
+PLC's harness database from its own worktree. It derives from the worktree now.
+This is the `KBB_WP_DB` landmine arriving through a shared tool rather than a
+shared shell.
 
 ## Reading a brief
 

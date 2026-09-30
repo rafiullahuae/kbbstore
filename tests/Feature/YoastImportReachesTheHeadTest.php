@@ -304,7 +304,7 @@ it('deletes a token this storefront cannot resolve, as the import report warns',
      */
     $head = yrhHead('yrh-unresolvable');
 
-    expect($head)->toContain('Buy Heartleaf Quercetinol Toner in')
+    expect($head)->toContain('<title>Buy Heartleaf Quercetinol Toner in')
         ->not->toContain('%%')
         ->not->toContain('currentyear');
 });
@@ -340,7 +340,7 @@ it('does not let the export overwrite what an operator typed in this admin', fun
     $head = yrhHead('yrh-typed');
 
     expect($head)->toContain('<title>The Title Rafi Typed</title>')
-        ->toContain('The description Rafi typed.')
+        ->toContain('<meta name="description" content="The description Rafi typed.">')
         ->not->toContain('Five-Year-Old')
         ->not->toContain('five-year-old');
 });

@@ -138,7 +138,7 @@ it('fills a step only from a published, visible, in-stock row', function () {
 
     $html = $this->get('/routines/acne')->assertOk()->getContent();
 
-    expect($html)->toContain('FM Visible Cleanser');
+    expect($html)->toContain('<span class="kbb-card-nm">FM Visible Cleanser</span>');
 
     foreach (['FM Draft Cleanser', 'FM Sold Out Cleanser', 'FM Future Cleanser'] as $hidden) {
         expect($html)->not->toContain($hidden);
@@ -152,13 +152,13 @@ it('never offers a product in a routine it was not tagged for', function () {
     $acne = $this->get('/routines/acne')->assertOk()->getContent();
     $hydration = $this->get('/routines/hydration')->assertOk()->getContent();
 
-    expect($acne)->toContain('FM Acne Only Serum');
+    expect($acne)->toContain('<span class="kbb-card-nm">FM Acne Only Serum</span>');
     expect($hydration)->not->toContain('FM Acne Only Serum');
 
     // The other half of the rule: a product that names NO concern suits every
     // routine, or the owner would have to tag one cleanser eight times.
-    expect($acne)->toContain('FM Untargeted Cleanser');
-    expect($hydration)->toContain('FM Untargeted Cleanser');
+    expect($acne)->toContain('<span class="kbb-card-nm">FM Untargeted Cleanser</span>');
+    expect($hydration)->toContain('<span class="kbb-card-nm">FM Untargeted Cleanser</span>');
 });
 
 it('shows an empty step as empty rather than dropping it', function () {
@@ -193,12 +193,12 @@ it('swaps the step a shopper asked to swap, and ignores a slug that is not an op
     $second = fmProduct('FM Second Toner', 'tone', [], ['position' => 2]);
 
     $default = $this->get('/routines/acne')->assertOk()->getContent();
-    expect($default)->toContain('FM First Toner');
+    expect($default)->toContain('<span class="kbb-card-nm">FM First Toner</span>');
 
     $swapped = $this->get('/routines/acne?tone='.$second->slug)->assertOk()->getContent();
 
     // The chosen one is in the card; the other is now the alternative offered.
-    expect($swapped)->toContain('FM Second Toner');
+    expect($swapped)->toContain('<span class="kbb-card-nm">FM Second Toner</span>');
     expect(strpos($swapped, 'FM Second Toner'))->toBeLessThan((int) strpos($swapped, 'FM First Toner'));
 
     /*
@@ -208,12 +208,12 @@ it('swaps the step a shopper asked to swap, and ignores a slug that is not an op
      * one of five steps went out of stock is a broken page.
      */
     $bogus = $this->get('/routines/acne?tone=no-such-product')->assertOk()->getContent();
-    expect($bogus)->toContain('FM First Toner');
+    expect($bogus)->toContain('<span class="kbb-card-nm">FM First Toner</span>');
 
     // And a slug belonging to a DIFFERENT step cannot be smuggled into this one.
     $crossed = $this->get('/routines/acne?tone='.$first->slug.'&cleanse='.$second->slug)->assertOk()->getContent();
     expect(substr_count($crossed, 'FM Second Toner'))->toBeGreaterThan(0);
-    expect($crossed)->toContain('FM First Toner');
+    expect($crossed)->toContain('<span class="kbb-card-nm">FM First Toner</span>');
 });
 
 /* ─────────────────────────── the offer strip ─────────────────────────────── */
@@ -329,7 +329,7 @@ it('puts a product into a routine when the owner tags it, and takes it out again
         ->assertJsonPath('product.role', 'tone')
         ->assertJsonPath('product.concerns', ['acne']);
 
-    expect($this->get('/routines/acne')->getContent())->toContain('FM Newly Tagged Toner');
+    expect($this->get('/routines/acne')->getContent())->toContain('<span class="kbb-card-nm">FM Newly Tagged Toner</span>');
     expect($this->get('/routines/hydration')->getContent())->not->toContain('FM Newly Tagged Toner');
 
     // Clearing the concerns widens it to every routine; clearing the role takes
@@ -338,7 +338,7 @@ it('puts a product into a routine when the owner tags it, and takes it out again
         ->postJson('/admin-api/routine-products/'.$product->id, ['concerns' => []])
         ->assertOk();
 
-    expect($this->get('/routines/hydration')->getContent())->toContain('FM Newly Tagged Toner');
+    expect($this->get('/routines/hydration')->getContent())->toContain('<span class="kbb-card-nm">FM Newly Tagged Toner</span>');
 
     $this->actingAs(fmAdmin(), 'admin')
         ->postJson('/admin-api/routine-products/'.$product->id, ['role' => null])

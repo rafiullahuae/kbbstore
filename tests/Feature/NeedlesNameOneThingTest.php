@@ -97,8 +97,24 @@ function kbbNeedlesIn(string $file): array
 
     $found = [];
 
-    // Both quote styles, and only a needle that is the WHOLE literal.
-    preg_match_all('/toContain\(\s*(\'((?:[^\'\\\\]|\\\\.)*)\'|"((?:[^"\\\\]|\\\\.)*)")\s*[,)]/', $clean, $matches, PREG_SET_ORDER);
+    /*
+     * EVERY WAY THIS SUITE ASSERTS CONTAINMENT, not just Pest's.
+     *
+     * The run-time instrument hooks Pest expectations, so it sees toContain and
+     * toMatch and CANNOT see assertSee: that is a method on
+     * Illuminate\Testing\TestResponse which calls PHPUnit's static
+     * assertStringContainsString directly, and there is no seam in front of it
+     * short of patching vendor or overriding createTestResponse() on the
+     * suite's shared TestCase. Measured anyway, statically: 94 distinct
+     * assertSee literals in tests/Feature, 57 of them prose a shopper reads,
+     * and 144 distinct toMatch patterns. The same mistake is available in all
+     * three, so the sweep reads all three.
+     *
+     * assertSee ESCAPES its needle by default, which does not help here: the
+     * strings below contain nothing that escapes, so a bare assertSee of one is
+     * exactly as unable to name its element as a bare toContain.
+     */
+    preg_match_all('/(?:toContain|toMatch|assertSee)\(\s*(\'((?:[^\'\\\\]|\\\\.)*)\'|"((?:[^"\\\\]|\\\\.)*)")\s*[,)]/', $clean, $matches, PREG_SET_ORDER);
 
     foreach ($matches as $match) {
         $found[] = $match[2] !== '' ? $match[2] : ($match[3] ?? '');
@@ -147,6 +163,74 @@ it('never asserts a bare string this shop draws in more than one place', functio
         .'which means the pattern has stopped matching rather than that the suite is clean');
 
     expect($offences)->toBe([]);
+});
+
+/**
+ * Sites repaired in round 4, by the element their needle now names.
+ *
+ * Each was measured as ambiguous at run time, confirmed by blanking the thing
+ * under test, and repaired by naming markup. This keeps the repair: a lane
+ * shortening one of these back to a bare string loses the only assertion that
+ * can see its element.
+ *
+ * @var array<string, array{0: string, 1: int}>  file => [needle fragment, how many]
+ */
+const KBB_ELEMENT_ANCHORED = [
+    'tests/Feature/BuildMyRoutineTest.php' => ['<span class="kbb-card-nm">', 10],
+    'tests/Feature/GridSectionTest.php' => ['<span class="kbb-card-nm">', 1],
+    'tests/Feature/CheckoutBrowsedAddTest.php' => ['<div class="n">', 2],
+    'tests/Feature/CheckoutLineUpdateTest.php' => ['<div class="n">', 2],
+    'tests/Feature/SetAndLooseLineStockTest.php' => ['<div class="woocommerce-info" role="status">', 3],
+    'tests/Feature/AdminProductWritePathTest.php' => ['<meta name="description" content="', 1],
+    'tests/Feature/ProductEditorTest.php' => ['<meta name="description" content="', 1],
+    'tests/Feature/SeoCrawlSurfaceTest.php' => ['<meta name="description" content="', 1],
+    'tests/Feature/YoastImportReachesTheHeadTest.php' => ['<meta name="description" content="', 1],
+];
+
+it('keeps the repaired assertions naming the element they are about', function () {
+    /*
+     * ▲ THE ROUND-4 SWEEP, PINNED WHERE IT LANDED.
+     *
+     * 140 assertion sites whose needle reads like a sentence a shopper is shown
+     * and occurs more than once on the page it ran against. 114 of them have
+     * their copies in DIFFERENT elements, which is the condition that makes an
+     * assertion unable to see its own subject: blank the element under test and
+     * the other copy keeps it green.
+     *
+     * That is not a proxy anybody has to take on trust. Measured twice, end to
+     * end:
+     *
+     *   · blank `<span class="kbb-card-nm">` in the product card — a shop whose
+     *     every product card has no name — and BuildMyRoutineTest was 21 passed.
+     *     With the repaired needles it is 5 red.
+     *   · stop emitting `<meta name="description">` altogether, so the shop
+     *     ships no description on any page, and AdminProductWritePathTest was
+     *     28 passed. With the repaired needle it is 1 red.
+     *
+     * The copies were in the visible element and in an attribute of the same
+     * component (`data-name`, `aria-label`) or in a parallel SEO surface
+     * (JSON-LD, `<title>`), which is why nothing was noticing.
+     *
+     * MUTATION, run: shorten any needle below back to its bare string → the
+     * count for that file drops and this goes red naming it.
+     */
+    $missing = [];
+
+    foreach (KBB_ELEMENT_ANCHORED as $file => [$fragment, $least]) {
+        $path = base_path($file);
+
+        expect(file_exists($path))->toBeTrue($file.' has moved; this pin needs its new home');
+
+        $found = substr_count((string) file_get_contents($path), $fragment);
+
+        if ($found < $least) {
+            $missing[] = $file.' names '.var_export($fragment, true).' '.$found
+                .' times, was repaired to '.$least
+                .'. A bare needle there cannot tell its element from the attribute beside it.';
+        }
+    }
+
+    expect($missing)->toBe([]);
 });
 
 it('reads a needle out of code and not out of the comment beside it', function () {

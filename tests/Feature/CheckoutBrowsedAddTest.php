@@ -173,7 +173,7 @@ it('puts the browsed product in the cart and returns the re-rendered summary and
     $json = $response->json();
 
     // The summary carries the new line...
-    expect($json['itemsHtml'])->toContain('Snail Mucin Serum')
+    expect($json['itemsHtml'])->toContain('<div class="n">Snail Mucin Serum</div>')
         ->and($json['count'])->toBe(2);
 
     // ...and the totals moved with it: 200.00 + 50.00 goods, 20.00 delivery.
@@ -312,7 +312,7 @@ it('moves the summary, the mobile bag strip and the free-delivery bar together',
         ->assertOk()->json();
 
     // 1. the summary lines
-    expect($json['itemsHtml'])->toContain('Barrier Cream');
+    expect($json['itemsHtml'])->toContain('<div class="n">Barrier Cream</div>');
 
     // 2. the mobile bag strip: a thumbnail per line, and the item count in words
     expect(substr_count($json['thumbsHtml'], 'class="kthumb"'))->toBe(2)

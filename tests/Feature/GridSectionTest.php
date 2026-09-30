@@ -590,7 +590,7 @@ it('draws the owner’s two named instances side by side, each with its own ever
         ->and($html)->toContain('--gs-d:5;')
         // The first is one brand's single product; the second is ten best
         // sellers with four hidden on the phone.
-        ->and($html)->toContain('GS Only On Brand Two')
+        ->and($html)->toContain('<span class="kbb-card-nm">GS Only On Brand Two</span>')
         ->and(substr_count($html, 'gs-d-only'))->toBe(4)
         // One stylesheet for both, pushed once — counted on the FULL document,
         // because that is the thing being counted.

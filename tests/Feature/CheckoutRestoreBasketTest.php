@@ -454,8 +454,7 @@ it('brings a set-and-loose basket back THROUGH the reconciler, not around it', f
          * not the shopper was told anything at all. The band and the sentence
          * together are drawn by one thing.
          */
-        ->and($html)->toContain('<div class="woocommerce-info" role="status">1025 Dokdo Toner has been taken out of your bag:')
-        ->and($html)->toContain('the last of it is inside the Medicube booster set you are buying');
+        ->and($html)->toContain('<div class="woocommerce-info" role="status">1025 Dokdo Toner has been taken out of your bag: the last of it is inside the Medicube booster set you are buying');
 });
 
 /* ═════════════════════ 3. everything it has to refuse ══════════════════════ */
