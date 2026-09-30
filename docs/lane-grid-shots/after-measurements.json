@@ -1,0 +1,212 @@
+[
+  {
+    "pass": "after",
+    "shot": "screen",
+    "viewport": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 146.7,
+      "h": 306.1
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 450,
+      "h": 583.5
+    },
+    "previewSkin": "showcase",
+    "previewCols": "4",
+    "previewGap": "16px",
+    "toggles": 7,
+    "sliders": 2
+  },
+  {
+    "pass": "after",
+    "shot": "picked-bold",
+    "viewport": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 146.7,
+      "h": 306.1
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 450,
+      "h": 545.9
+    },
+    "previewSkin": "bold",
+    "previewCols": "4",
+    "previewGap": "16px",
+    "toggles": 7,
+    "sliders": 2
+  },
+  {
+    "pass": "after",
+    "shot": "cart-off",
+    "viewport": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 146.7,
+      "h": 306.1
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 450,
+      "h": 493.4
+    },
+    "previewSkin": "bold",
+    "previewCols": "4",
+    "previewGap": "16px",
+    "toggles": 7,
+    "sliders": 2,
+    "visibleCartButtonsInPreview": 0
+  },
+  {
+    "pass": "after",
+    "shot": "gap-32",
+    "viewport": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 146.7,
+      "h": 306.1
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 450,
+      "h": 537.9
+    },
+    "previewSkin": "bold",
+    "previewCols": "4",
+    "previewGap": "32px",
+    "toggles": 7,
+    "sliders": 2
+  },
+  {
+    "pass": "after",
+    "shot": "screen",
+    "viewport": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 157,
+      "h": 306.4
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 332,
+      "h": 585.4
+    },
+    "previewSkin": "showcase",
+    "previewCols": "4",
+    "previewGap": "16px",
+    "toggles": 7,
+    "sliders": 2
+  },
+  {
+    "pass": "after",
+    "shot": "picked-bold",
+    "viewport": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 157,
+      "h": 306.4
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 332,
+      "h": 589.5
+    },
+    "previewSkin": "bold",
+    "previewCols": "4",
+    "previewGap": "16px",
+    "toggles": 7,
+    "sliders": 2
+  },
+  {
+    "pass": "after",
+    "shot": "cart-off",
+    "viewport": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 157,
+      "h": 306.4
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 332,
+      "h": 508.5
+    },
+    "previewSkin": "bold",
+    "previewCols": "4",
+    "previewGap": "16px",
+    "toggles": 7,
+    "sliders": 2,
+    "visibleCartButtonsInPreview": 0
+  },
+  {
+    "pass": "after",
+    "shot": "gap-32",
+    "viewport": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "swatches": 32,
+    "swatchesWithACard": 32,
+    "firstSwatchBox": {
+      "w": 157,
+      "h": 306.4
+    },
+    "firstSwatchHasCart": true,
+    "firstSwatchHasPrice": true,
+    "previewExists": true,
+    "previewCards": 8,
+    "previewBox": {
+      "w": 332,
+      "h": 610
+    },
+    "previewSkin": "bold",
+    "previewCols": "4",
+    "previewGap": "32px",
+    "toggles": 7,
+    "sliders": 2
+  }
+]

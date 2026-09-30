@@ -2529,6 +2529,105 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .sm-sec + .sm-sec{margin-top:18px;padding-top:16px}
   .sm-actions .btn{width:100%;justify-content:center}
 }
+
+/* ── Appearance → Product grid: real thumbnails, live preview, controls ───────
+                                                                    Lane GRID
+
+   THE 32 SWATCHES WERE BLANK PINK RECTANGLES, AND THIS IS THE CSS HALF OF WHY.
+
+   `.skinsw-p` (line ~703) is `height:52px` + `linear-gradient(135deg,#ffe3ec,
+   #ffc6da)` — a PLACEHOLDER. renderLayout() emitted it empty, carrying a
+   `data-skin-preview` attribute that NOTHING in this repository ever read, so
+   every design rendered as the same pink block with a label under it. The
+   markup half of the fix puts a real skinCard() inside it; these rules make it
+   fit.
+
+   THEY MUST SIT AFTER `.skinprev{width:132px}` (~1779) AND
+   `.skinprev{transform:scale(.86)}` (~1853). Those two pin the popup thumbnail
+   to a fixed width and scale; a swatch has to size to its own grid column and a
+   right-hand panel has to be a real grid. Same specificity, later wins — so
+   this block is at the END of the sheet on purpose, not for tidiness. */
+.skinsw-p.skinprev{height:auto;width:100%;background:none;transform:none;
+  border-radius:8px;overflow:hidden;margin-bottom:6px;pointer-events:none}
+.skinsw-p.skinprev .kbb-pgrid{display:block!important;gap:0!important;
+  grid-template-columns:none!important}
+/* `.skinprev .kbb-card{width:132px}` (~1781) pins the card to the popup
+   thumbnail's width. In a swatch the card should fill the column it was given,
+   or it sits in a 167px cell at 132px with a ragged strip of card down the
+   right of all 32. */
+.skinsw-p.skinprev .kbb-card{width:100%}
+
+/* THE SEVEN CARD-CONTENT SWITCHES DID NOT REACH ANY PREVIEW, AND STILL WOULD
+   NOT REACH THIS ONE.
+
+   The admin rules at ~1757 are `.skinprev .pc-nobrand .kbb-card-brand` — a
+   DESCENDANT combinator, so `pc-nobrand` has to sit on something INSIDE
+   `.skinprev`. psPreview() (Appearance → Product styles) puts it on `.skinprev`
+   ITSELF: `el.className='skinprev '+…`. Both classes on one element never match
+   a descendant combinator, so switching Brand name, Category label, Stars, Was
+   price, Discount badge, New badge or Add to cart off moved nothing in the
+   preview beside the switches. Since 2.60.330 shipped show_brand and
+   show_category OFF, that preview has been drawing a brand line and a category
+   eyebrow THE SHOP DOES NOT DRAW.
+
+   The storefront writes these unprefixed (`.pc-nobrand .kbb-card-brand`,
+   kbb-grid-skins.css:421) — an ANCESTOR class, which `.skinprev` itself is.
+   Adding the self-match is the admin saying what the shop says. Purely
+   additive: the descendant form above still applies. */
+.skinprev.pc-nobrand .kbb-card-brand{display:none}
+.skinprev.pc-nocat .kbb-card-cat{display:none}
+.skinprev.pc-norate .kbb-card-rate{display:none}
+.skinprev.pc-nowas .kbb-card-reg{display:none}
+.skinprev.pc-nodisc .kbb-badge-sale{display:none}
+.skinprev.pc-nonew .kbb-badge-new{display:none}
+.skinprev.pc-nocart .kbb-card-cart{display:none}
+
+/* the two-column screen: chooser and controls left, live preview right */
+.pgwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,480px);gap:18px;align-items:start}
+.pgcol{min-width:0}
+.pgside{position:sticky;top:16px;min-width:0}
+.pgpv-in{background:#F6F2F4;border:1px solid #EFE4EA;border-radius:16px;padding:14px}
+.pgpv-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.pgpv-hd b{font-size:13px;color:#2A2228}
+.pgpv-hd span{font-size:11.5px;color:#7b8697}
+.pgpv-note{font-size:11.5px;color:#7b8697;margin:10px 0 0;line-height:1.55}
+.pgpv-note b{color:#2A2228;font-weight:600}
+
+/* `.skinprev` pins width:132px, display:block and a .86 scale for the popup
+   thumbnail. The right-hand panel is a real grid of cards, so `.pgprev` undoes
+   exactly those three and nothing else. The column count and the gap arrive as
+   custom properties — calc() and CSS, never a measured number (rule 4). */
+.pgprev.skinprev{width:auto;transform:none}
+.pgprev.skinprev .kbb-pgrid{display:grid!important;
+  grid-template-columns:repeat(var(--pg-cols,4),minmax(0,1fr))!important;
+  gap:var(--pg-gap,16px)!important}
+/* AND THE CARD HAS TO GIVE UP ITS 132px TOO, or the tracks are right and the
+   cards overflow them. Measured before this line existed: four tracks of
+   85.5px carrying four cards of 132px, so `.pgpv-in` scrolled 451px inside a
+   418px box and the fourth card ran off the panel. */
+.pgprev.skinprev .kbb-card{width:auto}
+
+/* control rows, borrowed from the settings screens rather than reinvented */
+.pgrow{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid #eef2f7}
+.pgrow:first-of-type{border-top:0}
+.pgrow-l{flex:1;min-width:0}
+.pgrow-l b{display:block;font-size:13px;font-weight:600;color:#2A2228}
+.pgrow-l span{display:block;font-size:11.5px;color:#7b8697;margin-top:2px;line-height:1.5}
+.pgrow .ectog{margin-top:2px}
+.pgrng{display:flex;align-items:center;gap:9px;flex:none}
+.pgrng input[type=range]{width:132px;accent-color:#E0567B}
+.pgrng i{font-style:normal;font-size:12px;color:#475569;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+.pgwhere{font-size:11.5px;color:#7b8697;margin:0 0 12px;line-height:1.55}
+.pgwhere b{color:#2A2228;font-weight:600}
+
+@media (max-width:1100px){
+  .pgwrap{grid-template-columns:minmax(0,1fr)}
+  .pgside{position:static}
+}
+@media (max-width:640px){
+  .pgrng input[type=range]{width:104px}
+  .skingrid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
+}
 </style>
 </head>
 <body data-env="live">
@@ -3484,39 +3583,276 @@ async function renderUserPages(){
 }
 
 
-/* ---------- Appearance · Product grid ----------
-   28 card templates. Hovering a swatch previews it live in the sample grid, so
-   you can compare without saving. */
+/* ---------- Appearance · Product grid ----------------------- Lane GRID ------
+
+   32 card templates, a live preview of the one that is picked, and the controls
+   that decide what a card shows and how far apart cards sit.
+
+   ── WHY EVERY SWATCH WAS A BLANK PINK RECTANGLE ─────────────────────────────
+
+   Not a CSS failure and not a missing stylesheet. This screen NEVER RENDERED A
+   PREVIEW AT ALL. It emitted
+
+       <span class="skinsw-p" data-skin-preview="${s.key}"></span>
+
+   — an empty span — and `data-skin-preview` appeared exactly ONCE in the whole
+   repository: right there. Nothing selected it, nothing filled it. What the
+   owner photographed was `.skinsw-p`'s own placeholder, a 52px block with
+   `linear-gradient(135deg,#ffe3ec,#ffc6da)` behind it, 32 times over.
+
+   The same 32 designs rendered as real cards in the Homepage grid-style popup
+   because that call site does the two things this one did not:
+
+       skinCard(k.key)          the storefront's own card markup
+       <span class="skinprev">  the ONLY scope the card CSS is written against
+
+   The admin console links no external stylesheet — the whole sheet is inline —
+   so `.kbb-card` outside `.skinprev` is unstyled markup. Both halves are
+   needed, and the swatch now carries both.
+
+   ── WHERE THE CONTROLS CAME FROM, AND WHY NOT ONE OF THEM IS NEW ────────────
+
+   The owner asked for "full controls like spacings, turn on off elements etc."
+   Every one of them already existed, on two other screens:
+
+       what a card shows   Appearance → Product styles → Card content
+                           ProductStyles::SCHEMA — show_brand, show_category,
+                           show_rating, show_was_price, show_discount, show_new,
+                           show_cart
+       spacing             Appearance → Site layout → Product grid
+                           SiteLayout::SCHEMA — `gap` ("Gap between cards",
+                           → --kbb-gap) and `tile` ("Smallest card")
+
+   So this screen SURFACES them: the same keys, POSTed to the same two
+   endpoints, validated by the same two schemas. It does not define a setting of
+   its own. A second key for one question is the thing ProductStyles::SCHEMA's
+   own header calls "what this shop keeps paying for", and `grid_gap` was
+   DELETED from that schema for exactly this reason — the note there records
+   that --kbb-gap is a term in the track arithmetic in kbb.css, so a duplicate
+   gap slider would silently change the COLUMN COUNT too.
+
+   ── THE PREVIEW IS BUILT, NOT STRING-SPLICED, AND NOTHING IS MEASURED ───────
+
+   skinCard() returns one `.kbb-pgrid` wrapping one `.kbb-card`. A grid needs
+   several, and the way NOT to get them is to re-emit the card markup here —
+   that is a second copy to drift. So the card node is cloned. Column count and
+   gap reach the grid as custom properties read by `.pgprev` in the sheet; no
+   getBoundingClientRect, no offsetWidth, no clientWidth (rule 4).            */
+
+let PGL = null;      /* the /admin-api/layout payload */
+let PGS = {};        /* ProductStyles values, by key */
+let PGSL = {};       /* SiteLayout values, by key */
+/*
+ * ── THE VALUES AS LOADED, SO A SAVE CAN SEND ONLY WHAT MOVED ────────────────
+ *
+ * Measured: pressing Save after switching ONE thing used to POST all seven
+ * card-content keys and both spacing keys. Every one carried the value it
+ * already had, so nothing on the shop changed -- and that is not good enough.
+ * Writing a key at its current value turns "never saved, follows the default"
+ * into "stored at 220", and a STORED ROW IS WHAT STOPS A NEW DEFAULT FROM
+ * BEING SEEN. ProductStyles' own 2.60.330 migration exists to delete exactly
+ * such rows. So a control the owner never touched leaves no row behind.
+ */
+let PGS0 = {}, PGSL0 = {};
+let PGSKIN = '', PGCOLS = 4;
+let PGDIRTY = { layout: false, styles: false, space: false };
+let PGBOUND = false;
+
+/* The seven Product-styles keys this screen surfaces, and the class each one
+   turns into. Same pairs as psPreview(); same keys as ProductStyles::SCHEMA. */
+const PG_CONTENT = [
+  ['show_new',       'New badge',              'On products with no reviews yet.'],
+  ['show_discount',  'Discount badge',         'The -30% flash on the photo.'],
+  ['show_category',  'Category label',         'The small eyebrow above the name.'],
+  ['show_brand',     'Brand name',             'The line above the product name.'],
+  ['show_rating',    'Stars and review count', ''],
+  ['show_was_price', 'Was price',              'The struck-through original.'],
+  ['show_cart',      'Add to cart button',     ''],
+];
+const PG_NOCLASS = {
+  show_brand: 'pc-nobrand', show_category: 'pc-nocat', show_rating: 'pc-norate',
+  show_was_price: 'pc-nowas', show_discount: 'pc-nodisc', show_new: 'pc-nonew',
+  show_cart: 'pc-nocart',
+};
+/* key, label, min, max, step, unit — the same bounds SiteLayout::SCHEMA sets,
+   so a value this screen offers is one that endpoint will store. */
+const PG_SPACE = [
+  ['gap',  'Gap between cards', 6,   32,  2,  'px',
+   'The space between cards, across and down. The /shop listing and the related row keep their own 18px.'],
+  ['tile', 'Smallest card',     120, 420, 10, 'px',
+   'The column count is worked out from this and the width the grid really has. Smaller means more columns, sooner.'],
+];
+
+/* ── EVERY VALUE THAT REACHES MARKUP OR A STYLE ATTRIBUTE IS CHECKED ─────────
+   /admin-api is behind the console's auth, but rule 5 is "secure by
+   construction, not by intention": a select stores one of its own options or
+   the default, and nothing is printed unescaped that is not a constant.
+   skinCard() interpolates its argument straight into `data-skin="…"` without
+   escaping, so the skin is checked for MEMBERSHIP of the list the server sent
+   rather than escaped. */
+function pgSkinOk(k){ return !!(PGL && PGL.skins && PGL.skins.some(s => s.key === k)); }
+function pgHex(v, fb){ return (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) ? v : fb; }
+function pgNum(v, min, max, fb){ const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fb; }
+function pgBool(v){ return v === true || v === 1 || v === '1'; }
+
+/* ModuleSchema::tabs() nests fields under tabs; this screen wants them by key. */
+function pgFlat(tabs){
+  const o = {};
+  (tabs || []).forEach(t => (t.fields || []).forEach(f => { o[f.key] = f.value; }));
+  return o;
+}
+
+function pgApiRoot(){
+  return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '');
+}
+function pgGet(url){
+  return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    .then(r => r.ok ? r.json() : null).catch(() => null);
+}
+
+/* THE PREVIEW. Repainted on a skin click, a toggle, a slider and the Columns
+   select — everything the panel claims to be showing. */
+function pgPaint(){
+  const el = document.getElementById('pgPrev');
+  if (!el) return;
+
+  /* Element on/off, as the storefront spells it: the class sits on an ANCESTOR
+     of the card, which `.pgprev.skinprev` is. */
+  const off = Object.keys(PG_NOCLASS)
+    .filter(k => k in PGS && !pgBool(PGS[k]))
+    .map(k => PG_NOCLASS[k]);
+  el.className = ('skinprev pgprev ' + off.join(' ')).trim();
+
+  /* Custom properties only — the same ones psPreview() sets, plus the two this
+     panel adds for the grid itself. Every one is range- or pattern-checked. */
+  const ratio = PS_RATIO[PGS.image_ratio] || '1/1';
+  el.setAttribute('style', [
+    '--pg-cols:' + pgNum(PGCOLS, 1, 6, 4),
+    '--pg-gap:' + pgNum(PGSL.gap, 6, 32, 16) + 'px',
+    '--kbb-sale:' + pgHex(PGS.sale_colour, '#E23B57'),
+    '--kbb-new:' + pgHex(PGS.new_colour, '#1F9D55'),
+    '--kbb-price:' + pgHex(PGS.price_colour, '#2A2228'),
+    '--kbb-star:' + pgHex(PGS.star_colour, '#E8A33D'),
+    '--kbb-cart-bg:' + pgHex(PGS.cart_bg, '#E0567B'),
+    '--kbb-cart-fg:' + pgHex(PGS.cart_fg, '#FFFFFF'),
+    '--kbb-radius:' + pgNum(PGS.card_radius, 0, 26, 14) + 'px',
+    '--kbb-ratio:' + ratio,
+    '--kbb-name-lines:' + pgNum(PGS.name_lines, 0, 4, 0),
+  ].join(';'));
+
+  /* One card from skinCard(), then clones. Cloning rather than re-emitting the
+     markup is what stops this preview drifting from the shop's card. */
+  const skin = pgSkinOk(PGSKIN) ? PGSKIN : (PGL && PGL.current) || 'classic';
+  const host = document.createElement('div');
+  host.innerHTML = skinCard(skin);
+  const grid = host.firstElementChild;
+  const card = grid && grid.firstElementChild;
+  el.textContent = '';
+  if (!grid || !card) return;
+
+  /* Two rows, so the gap DOWN the grid is visible and not just the gap across
+     it — several of the 32 skins are about how cards sit beside each other. */
+  const want = Math.max(2, pgNum(PGCOLS, 1, 6, 4) * 2);
+  for (let i = 1; i < want; i++) grid.appendChild(card.cloneNode(true));
+  el.appendChild(grid);
+}
+
+function pgDirty(on){
+  if (on) { PGDIRTY[on] = true; }
+  const m = document.getElementById('layoutMsg');
+  if (m) { m.classList.remove('ok'); m.textContent = 'Unsaved changes'; }
+}
+
 async function renderLayout(){
-  const base = window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/layout';
+  const root = pgApiRoot();
+  const base = root + '/admin-api/layout';
   $('#content').innerHTML = `<div class="wrap"><div class="page-head"><h2>Product grid</h2><p>Loading…</p></div></div>`;
-  let d; try{ d = await (await fetch(base,{credentials:'same-origin',headers:{Accept:'application/json'}})).json(); }
+
+  let d;
+  try { d = await (await fetch(base, { credentials: 'same-origin', headers: { Accept: 'application/json' } })).json(); }
   catch(e){ $('#content').innerHTML = `<div class="wrap"><div class="card" style="padding:22px">Could not load layout settings.</div></div>`; return; }
 
-  const swatches = d.skins.map(s=>`<button class="skinsw${s.key===d.current?' on':''}" data-skin="${s.key}" title="${s.label}">
-      <span class="skinsw-p" data-skin-preview="${s.key}"></span><span class="skinsw-l">${s.label}</span></button>`).join('');
+  /* The two screens this one surfaces. A failure here is NOT fatal and NOT
+     faked: the group is simply not drawn, so nothing offers a control that
+     cannot be saved. */
+  const [psd, sld] = await Promise.all([
+    pgGet(root + '/admin-api/product-styles'),
+    pgGet(root + '/admin-api/site-layout'),
+  ]);
+
+  PGL = d;
+  PGS = psd ? pgFlat(psd.tabs) : {};
+  PGSL = sld ? pgFlat(sld.tabs) : {};
+  PGS0 = Object.assign({}, PGS);
+  PGSL0 = Object.assign({}, PGSL);
+  PGSKIN = pgSkinOk(d.current) ? d.current : (d.skins[0] && d.skins[0].key) || 'classic';
+  PGCOLS = pgNum(d.columns, 1, 6, 4);
+  PGDIRTY = { layout: false, styles: false, space: false };
+
+  /* THE FIX: a real card, in the design the swatch names, inside `.skinprev`
+     so the card CSS applies at all. `data-pgskin` rather than `data-skin`
+     BECAUSE skinCard() emits `data-skin` itself — the old handler's
+     `closest('[data-skin]')` and `querySelectorAll('[data-skin]')` would now
+     match the previews as well as the buttons. */
+  const swatches = d.skins.map(s => `<button class="skinsw${s.key === PGSKIN ? ' on' : ''}" type="button" data-pgskin="${escAttr(s.key)}" title="${escAttr(s.label)}">
+      <span class="skinsw-p skinprev" data-skin-preview="${escAttr(s.key)}">${skinCard(s.key)}</span><span class="skinsw-l">${escHtml(s.label)}</span></button>`).join('');
 
   const codes = d.shortcodes.map(c=>`<tr style="border-top:1px solid #eef2f7">
       <td style="padding:8px 12px"><code style="background:#f1f5f9;padding:2px 6px;border-radius:5px">${c.code.replace(/</g,'&lt;')}</code>
       <button class="btn small" style="margin-left:8px" data-copy="${c.code.replace(/"/g,'&quot;')}">Copy</button></td>
       <td style="padding:8px 12px" class="mdesc">${c.desc}</td></tr>`).join('');
 
-  $('#content').innerHTML = `<div class="wrap">
-    <div class="page-head"><h2>Product grid</h2><p>Pick the card template used across the shop, category pages and every <code>[kbb_products]</code> shortcode.</p></div>
+  const contentRows = psd ? PG_CONTENT.map(([k, label, help]) => `
+      <div class="pgrow"><div class="pgrow-l"><b>${escHtml(label)}</b>${help ? `<span>${escHtml(help)}</span>` : ''}</div>
+        <span class="ectog${pgBool(PGS[k]) ? ' on' : ''}" data-pgtog="${escAttr(k)}" role="switch"
+              aria-checked="${pgBool(PGS[k])}" aria-label="${escAttr(label)}" tabindex="0"></span></div>`).join('') : '';
 
-    <div class="card" style="padding:18px">
-      <div class="between" style="margin-bottom:12px">
-        <b style="font-size:13px">Skin</b>
-        <label style="font-size:12px;color:#64748b">Columns
-          <select id="gridCols" style="margin-left:6px;padding:4px 8px;border:1px solid #dbe3ec;border-radius:7px">
-            ${[1,2,3,4,5,6].map(n=>`<option value="${n}"${n===d.columns?' selected':''}>${n}</option>`).join('')}
-          </select></label>
+  const spaceRows = sld ? PG_SPACE.map(([k, label, min, max, step, unit, help]) => {
+      const v = pgNum(PGSL[k], min, max, min);
+      return `<div class="pgrow"><div class="pgrow-l"><b>${escHtml(label)}</b>${help ? `<span>${escHtml(help)}</span>` : ''}</div>
+        <span class="pgrng"><input type="range" min="${min}" max="${max}" step="${step}" value="${v}"
+          data-pgnum="${escAttr(k)}" aria-label="${escAttr(label)}"><i id="pgv-${escAttr(k)}">${v}${escHtml(unit)}</i></span></div>`;
+    }).join('') : '';
+
+  $('#content').innerHTML = `<div class="wrap">
+    <div class="page-head"><h2>Product grid</h2><p>Pick the card template used across the shop, category pages and every <code>[kbb_products]</code> shortcode. The panel on the right is the design you have picked, with the settings below applied.</p></div>
+
+    <div class="pgwrap">
+      <div class="pgcol">
+        <div class="card" style="padding:18px">
+          <div class="between" style="margin-bottom:12px">
+            <b style="font-size:13px">Skin</b>
+            <label style="font-size:12px;color:#64748b">Columns
+              <select id="gridCols" style="margin-left:6px;padding:4px 8px;border:1px solid #dbe3ec;border-radius:7px">
+                ${[1,2,3,4,5,6].map(n=>`<option value="${n}"${n===PGCOLS?' selected':''}>${n}</option>`).join('')}
+              </select></label>
+          </div>
+          <div class="skingrid" id="pgSkins">${swatches}</div>
+        </div>
+
+        ${psd ? `<div class="card" style="padding:18px;margin-top:16px">
+          <b style="font-size:13px;display:block;margin-bottom:4px">What each card shows</b>
+          <p class="pgwhere">Switch any part of the card off. These are the same seven settings as <b>Appearance → Product styles → Card content</b> — one setting each, shown in both places, not a second copy.</p>
+          ${contentRows}</div>` : ''}
+
+        ${sld ? `<div class="card" style="padding:18px;margin-top:16px">
+          <b style="font-size:13px;display:block;margin-bottom:4px">Spacing</b>
+          <p class="pgwhere">The same two settings as <b>Appearance → Site layout → Product grid</b>, where the rest of the grid arithmetic lives (never fewer than, never more than, and pinning an exact count).</p>
+          ${spaceRows}</div>` : ''}
+
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn primary" id="saveLayout">Save</button>
+          <span class="mdesc" id="layoutMsg"></span>
+        </div>
       </div>
-      <div class="skingrid">${swatches}</div>
-      <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
-        <button class="btn primary" id="saveLayout">Save</button>
-        <span class="mdesc" id="layoutMsg"></span>
-      </div>
+
+      <aside class="pgside">
+        <div class="pgpv-in">
+          <div class="pgpv-hd"><b>Preview</b><span id="pgPvName"></span></div>
+          <div class="skinprev pgprev" id="pgPrev"></div>
+        </div>
+        <p class="pgpv-note">The card the shop draws, in the design selected on the left, with the switches and spacing below applied. Nothing here is saved until you press <b>Save</b>.</p>
+      </aside>
     </div>
 
     <div class="page-head" style="margin-top:26px"><h2>Shortcodes</h2><p>Paste any of these into a page, post or HTML block.</p></div>
@@ -3526,26 +3862,130 @@ async function renderLayout(){
       <tbody>${codes}</tbody></table></div>
   </div>`;
 
-  let picked = d.current;
-  $('#content').addEventListener('click', async (e)=>{
-    const sw = e.target.closest('[data-skin]');
-    if(sw){ picked = sw.dataset.skin;
-      document.querySelectorAll('[data-skin]').forEach(b=>b.classList.toggle('on', b===sw)); return; }
+  pgName();
+  pgPaint();
+  pgBind();
+}
+
+function pgName(){
+  const el = document.getElementById('pgPvName');
+  if (!el || !PGL) return;
+  const s = (PGL.skins || []).find(k => k.key === PGSKIN);
+  el.textContent = s ? s.label : PGSKIN;
+}
+
+/* BOUND ONCE. `#content` is re-filled rather than replaced when a screen
+   changes, so a listener added per render is a listener that fires once per
+   visit to this screen — the save would go out twice on the second visit. */
+function pgBind(){
+  if (PGBOUND) return;
+  PGBOUND = true;
+  const content = $('#content');
+
+  content.addEventListener('click', async (e) => {
+    if (!document.getElementById('pgPrev')) return;
+
+    const sw = e.target.closest('[data-pgskin]');
+    if (sw) {
+      const k = sw.dataset.pgskin;
+      if (!pgSkinOk(k)) return;
+      PGSKIN = k;
+      const host = document.getElementById('pgSkins');
+      if (host) host.querySelectorAll('[data-pgskin]').forEach(b => b.classList.toggle('on', b === sw));
+      pgName(); pgPaint(); pgDirty('layout');
+      return;
+    }
+
+    const tg = e.target.closest('.ectog[data-pgtog]');
+    if (tg) {
+      const k = tg.dataset.pgtog;
+      if (!(k in PG_NOCLASS)) return;
+      const next = !pgBool(PGS[k]);
+      PGS[k] = next;
+      tg.classList.toggle('on', next);
+      tg.setAttribute('aria-checked', String(next));
+      pgPaint(); pgDirty('styles');
+      return;
+    }
 
     const cp = e.target.closest('[data-copy]');
-    if(cp){ navigator.clipboard?.writeText(cp.dataset.copy); toast('Shortcode copied'); return; }
+    if (cp) { navigator.clipboard?.writeText(cp.dataset.copy); toast('Shortcode copied'); return; }
 
-    if(e.target.id==='saveLayout'){
-      const cols = Number($('#gridCols').value);
-      try{
-        const r = await fetch(base,{method:'POST',credentials:'same-origin',
-          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-          body:JSON.stringify({skin:picked,columns:cols})});
-        const j = await r.json();
-        $('#layoutMsg').textContent = j.ok ? 'Saved — live on the storefront now.' : (j.error||'Could not save.');
-      }catch(err){ $('#layoutMsg').textContent = 'Could not save.'; }
-    }
+    if (e.target.id === 'saveLayout') await pgSave();
   });
+
+  content.addEventListener('keydown', (e) => {
+    const tg = e.target.closest?.('.ectog[data-pgtog]');
+    if (tg && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); tg.click(); }
+  });
+
+  content.addEventListener('input', (e) => {
+    const r = e.target.closest('[data-pgnum]');
+    if (!r) return;
+    const def = PG_SPACE.find(x => x[0] === r.dataset.pgnum);
+    if (!def) return;
+    const v = pgNum(r.value, def[2], def[3], def[2]);
+    PGSL[def[0]] = v;
+    const out = document.getElementById('pgv-' + def[0]);
+    if (out) out.textContent = v + def[5];
+    pgPaint(); pgDirty('space');
+  });
+
+  content.addEventListener('change', (e) => {
+    if (e.target.id !== 'gridCols') return;
+    PGCOLS = pgNum(e.target.value, 1, 6, 4);
+    pgPaint(); pgDirty('layout');
+  });
+}
+
+/* ONE Save, THREE endpoints, and only the ones that changed.
+   Each group goes to the endpoint that owns its schema, so every value is cast
+   and bounded by the same code the screen it came from uses. Nothing here
+   invents a setting, so nothing here needs a capability of its own. */
+async function pgSave(){
+  const root = pgApiRoot();
+  const msg = document.getElementById('layoutMsg');
+  const post = (url, body) => fetch(url, {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': uToken(), Accept: 'application/json' },
+    body: JSON.stringify(body),
+  }).then(r => r.json()).catch(() => ({ ok: false, error: 'Could not save.' }));
+
+  const failed = [];
+  try {
+    if (PGDIRTY.layout) {
+      const j = await post(root + '/admin-api/layout', { skin: PGSKIN, columns: PGCOLS });
+      if (!j.ok) failed.push(j.error || 'card style');
+    }
+    if (PGDIRTY.styles) {
+      const s = {};
+      Object.keys(PG_NOCLASS).forEach(k => {
+        if (k in PGS && pgBool(PGS[k]) !== pgBool(PGS0[k])) s[k] = pgBool(PGS[k]);
+      });
+      if (Object.keys(s).length) {
+        const j = await post(root + '/admin-api/product-styles', { settings: s });
+        if (!j.ok) failed.push(j.error || 'card content'); else Object.assign(PGS0, s);
+      }
+    }
+    if (PGDIRTY.space) {
+      const s = {};
+      PG_SPACE.forEach(([k, , min, max]) => {
+        if (!(k in PGSL)) return;
+        const v = pgNum(PGSL[k], min, max, min);
+        if (v !== pgNum(PGSL0[k], min, max, min)) s[k] = v;
+      });
+      if (Object.keys(s).length) {
+        const j = await post(root + '/admin-api/site-layout', { settings: s });
+        if (!j.ok) failed.push(j.error || 'spacing'); else Object.assign(PGSL0, s);
+      }
+    }
+  } catch (err) { failed.push('Could not save.'); }
+
+  if (!msg) return;
+  if (failed.length) { msg.classList.remove('ok'); msg.textContent = failed.join(' · '); return; }
+  PGDIRTY = { layout: false, styles: false, space: false };
+  msg.classList.add('ok');
+  msg.textContent = 'Saved — live on the storefront now.';
 }
 
 
