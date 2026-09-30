@@ -7,9 +7,24 @@ declare(strict_types=1);
 | Store → Import → "Clean up before the migration"                    (Lane IE)
 |------------------------------------------------------------------------------
 |
-| NOT YET MOUNTED. routes/web.php is the integrator's file; this one asks to be
-| required inside the EXISTING admin-api group — the one already carrying
-| `auth:admin` and NoStoreAdminApi — beside the other import route files:
+| ▲ NOT YET MOUNTED, AND THE SUITE SAYS SO BY NAME.
+|
+| `tests/Feature/EverythingIsMountedOnceTest > it requires every route file
+| exactly once` is RED while this line is missing:
+|
+|     cleanup-admin.php is required 0 times by routes/web.php + routes/api.php
+|
+| That is the guard working, not a defect in it. It walks routes/ and demands
+| every file be required exactly once, because three features in this shop
+| shipped with a perfect header and no require and never worked at all
+| (checkout-card.php answered 405 for twelve days). A lane that adds a route
+| file therefore CANNOT leave the suite green, and CLAUDE.md forbids that lane
+| from editing routes/web.php to fix it — the two rules are in tension by
+| design, and the resolution is that the integrator closes it in one line.
+|
+| routes/web.php is the integrator's file; this one asks to be required inside
+| the EXISTING admin-api group — the one already carrying `auth:admin` and
+| NoStoreAdminApi — beside the other import route files:
 |
 |     require __DIR__.'/import-admin.php';
 |     require __DIR__.'/import-history-admin.php';

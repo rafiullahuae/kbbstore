@@ -501,10 +501,26 @@ UNTOUCHED orders=1  order_items=1  customers=1  demo_seed_log=6
 **Store → Import → Clean up before the migration** —
 `GET /admin-api/cleanup/page`.
 
-▲ **FOR THE INTEGRATOR: this is not wired yet.** `routes/cleanup-admin.php`
-needs one line in `routes/web.php`, inside the EXISTING `admin-api` group that
-already carries `auth:admin` and `NoStoreAdminApi`, beside the other import route
-files:
+▲ **FOR THE INTEGRATOR: this is not wired yet, and ONE TEST IS RED UNTIL IT IS.**
+
+```
+EverythingIsMountedOnceTest > it requires every route file exactly once
+  cleanup-admin.php is required 0 times by routes/web.php + routes/api.php
+```
+
+**That is the expected state of this branch, not a defect.** That guard walks
+`routes/` and demands every file be required exactly once, because three features
+in this shop shipped with a perfect header and no `require` and never worked at
+all — `checkout-card.php` answered 405 for twelve days. CLAUDE.md forbids a lane
+from editing `routes/web.php`; this test makes an unmounted route file a hard
+failure. **The two rules are in tension by design, and only the integrator can
+resolve it.** (This lane also tried to add the line and the sandbox's own
+permission layer refused it as a shared resource, which is the same answer from a
+third direction.)
+
+`routes/cleanup-admin.php` needs one line in `routes/web.php`, inside the
+EXISTING `admin-api` group that already carries `auth:admin` and
+`NoStoreAdminApi`, beside the other import route files:
 
 ```php
 require __DIR__.'/import-admin.php';
@@ -513,7 +529,10 @@ require __DIR__.'/cleanup-admin.php';        // <- this
 ```
 
 and a sidebar entry pointing at `/admin-api/cleanup/page`, wherever Store →
-Import's entries live. The capability rules are already in
+Import's entries live. **No `app.blade.php` partial is needed** — the screen is a
+standalone document, so this lane touches none of the file two other lanes are
+editing. Adding that require turns the red test green; nothing else in the suite
+depends on it. The capability rules are already in
 `AdminCapabilities::RULES`, and
 `2027_06_18_000000_clear_caches_pre_migration_cleanup.php` ships with it so the
 compiled route table goes. Until that line exists the endpoints do not resolve at
