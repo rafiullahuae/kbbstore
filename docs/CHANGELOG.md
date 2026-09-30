@@ -3,6 +3,99 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.334
+**Your homepage, your product-page controls, and the demo tabs.** Apply after .333.
+
+---
+
+### THE HOMEPAGE PANELS ARE GONE, AND SECTIONS CAN RUN FULL WIDTH
+
+The white card behind every section is off. Each section can be **normal**,
+**full width** (edge to edge, text kept off the glass) or **bleed** (no gutter at
+all), capped at **1920px** and fluid below it.
+
+Measured on your real homepage, before → after:
+
+| | 320 | 390 | 1280 | 1440 | 1920 | 2200 |
+|---|---|---|---|---|---|---|
+| first section width | 320→**320** | 390→**390** | 1256→**1280** | 1416→**1440** | 1680→**1920** | **1920** |
+| banner width | 296→**320** | 366→**390** | 1203→**1280** | 1358→**1440** | 1622→**1920** | **1920** |
+| banner left edge | 12→**0** | 12→**0** | 39→**0** | 41→**0** | 149→**0** | 140 *(centred)* |
+| sideways scrollbar | none at any width, including 2200 |
+
+**The cap holds:** at 2200px the page stops at 1920 and centres.
+
+**The banner is square and flat.** Radius 18→0, shadow off, and the "etc." also
+cost it 33px of padding it was sitting under. Every one is a switch you can put
+back at **Appearance → Homepage → *section*** and **Appearance → Banners**.
+
+Two rows deliberately get no controls — the **Delivery strip** and **Promo
+ticker** live inside the hero band, so a width setting there would do nothing.
+
+> **A defect found on the way, which you would have hit and not understood.**
+> Section settings were being remembered under a key that ignored which setting
+> it was. Two sections without a grid style shared one entry, so whichever loaded
+> first decided the width **for all of them** — your whole page bleeding, or your
+> banner never leaving its card, with no error and no pattern. Also: applying a
+> homepage preset was throwing away every panel you had switched back on.
+
+### PRODUCT PAGE → LAYOUT: THIRTY CONTROLS
+
+`Appearance → Product page` now has a tab strip. Your seventeen on/off switches
+sit behind **Sections**; four new tabs sit beside them:
+
+| tab | controls | examples |
+|---|---|---|
+| **Spacing · Page** | 5 | space between sections (34px), gap between detail tabs (22px) |
+| **Spacing · Buy column** | 8 | above the name (8px), name to price (16px), above the trust lines (22px) |
+| **Type · Buy column** | 12 | name on phone (19px) and laptop (30px), price (22px), VAT line (11px) |
+| **Type · Sections & tabs** | 5 | section headings (22px), tab labels (13.5px), tab line spacing (1.7) |
+
+There is a **Reset layout to defaults** on the strip.
+
+**Nothing moves until you move it.** Every field ships at the number your page
+already draws, and the page emits **no styling block at all** until you change
+one. Proved by measuring the same page before and after — eleven boxes and
+seventeen groups of computed styles at 390 and 1280: **0 differences**. Saving
+twelve values and deleting them again also returns **0 differences**.
+
+### THE DETAIL TABS FINALLY HAVE SOMETHING IN THEM
+
+Every product showed **one** tab. None of the demo products carried
+`Ingredients` or `How to use`, and the tab row drops an empty one — so you have
+never seen the feature work.
+
+| | before | after |
+|---|---|---|
+| tab row | `Description` | `Description · Ingredients · How to use` |
+| clicking the third | — | opens it, exactly one panel visible |
+
+**Your real products cannot be touched by this.** It fills a column only where it
+is blank, and only on a row carrying **three** demo marks at once: no WooCommerce
+id, a `DEMO-` code, and the seeder's exact wording. An imported product fails the
+first check before the others are asked.
+
+### "UAE's Authentic K-Beauty Store" IS OFF THE DESKTOP STRIP
+
+The words go above 900px; the two flags stay. **Phones are byte-identical** —
+compared as images, not by eye. Put it back at **Appearance → Header → Flag bar →
+Show the wording on desktop**.
+
+> **Two things about this you should decide on, because I do not think it looks
+> right and will not pretend otherwise.** The words were the only thing holding
+> the two flags apart, so on a wide screen they now sit together in the middle of
+> an otherwise empty strip. Three layouts were tried and photographed; centred is
+> the best of them and none is handsome at 1920. Your two honest options are to
+> put the wording back, or to turn the whole strip off on desktop at **Appearance
+> → Header**.
+>
+> And the words leave the screen but **stay in the page source**. Your shop sends
+> identical pages to every device on purpose so they cache properly, so the text
+> cannot be removed for desktop only without also removing it from phones. It is
+> hidden from screen readers either way.
+
+---
+
 ## 2.60.333
 **You could not choose a grid design. Fixed.** Apply after .332.
 
