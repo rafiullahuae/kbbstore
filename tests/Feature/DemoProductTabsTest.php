@@ -121,18 +121,29 @@ it('gives a name it does not recognise three tabs as well', function () {
     }
 });
 
-it('files a sun product on the sun shelf although its name also says rice or serum', function () {
+it('shelves a two-word name by the first test rather than the last', function () {
     /*
      * Order inside DemoProductDetails::family() is the whole of that function,
-     * and two of the seeder's own 24 names are the reason.
+     * and two of the seeder's own 24 names are the reason: each carries two
+     * family words, and reordering the match list moves the product to another
+     * shelf with no error anywhere to show for it.
      *
-     * MUTATION NOTE. Move the `toner` and `serum` rows above `sunscreen` in
-     * that match list and this goes red on both. RUN.
+     * MUTATION NOTE. Move the `moisturiser` row above `sunscreen` and the Birch
+     * Juice line goes red; move `essence` above `toner` and the Ginseng line
+     * does. RUN: both, separately.
      */
+    expect(DemoProductDetails::family('Birch Juice Moisturizing Sunscreen'))->toBe('sunscreen');
+    expect(DemoProductDetails::family('Ginseng Essence Water'))->toBe('toner');
+
+    // The plain cases, so the two above are read against a working baseline
+    // rather than against an oracle that answers the same word to everything.
+    expect(DemoProductDetails::family('Ceramide Daily Moisturiser'))->toBe('moisturiser');
+    expect(DemoProductDetails::family('Advanced Snail 96 Mucin Power Essence'))->toBe('essence');
     expect(DemoProductDetails::family('Relief Sun Rice + Probiotics SPF50+'))->toBe('sunscreen');
     expect(DemoProductDetails::family('Hyaluronic Acid Watery Sun Gel'))->toBe('sunscreen');
     expect(DemoProductDetails::family('Rice Probiotics Toner'))->toBe('toner');
     expect(DemoProductDetails::family('Madagascar Centella Ampoule'))->toBe('serum');
+    expect(DemoProductDetails::family('Age-R Booster Pro Device'))->toBe('device');
 });
 
 it('states no figure and no claim anywhere in the demo copy', function () {

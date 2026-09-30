@@ -6,7 +6,6 @@ use App\Models\AdminUser;
 use App\Models\Product;
 use App\Services\ProductLayout;
 use App\Services\ProductSections;
-use App\Services\SettingsService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -302,25 +301,46 @@ it('refuses an empty save and an unknown key rather than reporting success', fun
 
 it('stores one of a weight control\'s own options or the shipped default', function () {
     /*
-     * Rule 5, on the two fields of this screen that are printed into a <style>
-     * element as a bare token rather than as a number with a unit.
+     * Rule 5, on the three fields of this screen that are printed into a
+     * <style> element as a bare token rather than as a number with a unit.
      *
-     * MUTATION NOTE. Make ProductLayout::weight() `return (string) $value;` and
-     * this goes red on `'900; color:red'`. RUN.
+     * MUTATION NOTE. Make ProductLayout::weight() `return $value;` and this
+     * goes red on the raw payload below. RUN.
      */
     $layout = app(ProductLayout::class);
 
+    // THE FIRST LOCK: ModuleSchema's `select` cast, on the way in.
     $layout->save(['title_w' => '700']);
     expect($layout->all()['title_w'])->toBe('700');
 
     $layout->save(['title_w' => '900; color:red']);
     expect($layout->all()['title_w'])->toBe('500');
 
-    // And the second lock, reached past the cast the way a hand-edited row
-    // would reach it: the owner has a shell on the live box.
-    app(SettingsService::class)->set(ProductLayout::PREFIX.'price_w', '}body{display:none');
+    /*
+     * THE SECOND LOCK: css() itself, and it is NOT the same lock again.
+     *
+     * all() casts on the way out as well as on the way in, so a hand-edited
+     * `settings` row — the owner has a shell on the live box — is repaired
+     * before css() ever sees it. But css() is `public static` and takes a plain
+     * array, so it is its own boundary and has to hold on its own, which is
+     * what rule 5 means by checking the value where it is printed. Handed a
+     * payload nothing cast, it still emits one of five digits.
+     */
+    $raw = ProductLayout::defaults();
+    $raw['title_w'] = '900;}body{display:none';
+    $raw['heading_w'] = ['an', 'array'];
+    $raw['price_w'] = '650';
 
-    expect(pdpLayParse(ProductLayout::css($layout->all()))['--pl-price-w'])->toBe('800');
+    $vars = pdpLayParse(ProductLayout::css($raw));
+
+    expect($vars['--pl-title-w'])->toBe('500');
+    expect($vars['--pl-heading-w'])->toBe('600');
+    expect($vars['--pl-price-w'])->toBe('800');
+
+    // …and a weight that IS one of the options still travels, so the guard is
+    // a filter rather than a wall.
+    $raw['price_w'] = '600';
+    expect(pdpLayParse(ProductLayout::css($raw))['--pl-price-w'])->toBe('600');
 });
 
 it('wires the Layout tabs into the console exactly once', function () {

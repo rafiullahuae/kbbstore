@@ -172,10 +172,20 @@ final class DemoProductDetails
     /**
      * The family a demo product's name puts it in.
      *
-     * ORDER IS THE WHOLE OF THIS FUNCTION. Two of the seeder's 24 names carry
-     * two family words — "Relief Sun Rice + Probiotics SPF50+" and "Hyaluronic
-     * Acid Watery Sun Gel" — and testing `toner` or `serum` first would file
-     * both away from the sun shelf they belong on.
+     * ORDER IS THE WHOLE OF THIS FUNCTION, and two of the seeder's own 24 names
+     * are why. Each carries two family words and the FIRST test wins:
+     *
+     *   "Birch Juice Moisturizing Sunscreen"   sunscreen, not moisturiser —
+     *                                          `sunscreen` is tested first.
+     *   "Ginseng Essence Water"                toner, not essence — `toner`
+     *                                          claims "essence water" before
+     *                                          `essence` sees the word.
+     *
+     * Reorder either pair and the product changes shelf with no error anywhere.
+     * DemoProductTabsTest pins both and its mutation note names the swap. The
+     * space-padded ' sun ' needle is the third ordering decision: it is there
+     * so "Hyaluronic Acid Watery Sun Gel" is a sunscreen without "Ginseng"
+     * matching on its middle syllable.
      */
     public static function family(string $name): string
     {
