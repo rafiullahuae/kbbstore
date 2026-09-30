@@ -2628,6 +2628,103 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .pgrng input[type=range]{width:104px}
   .skingrid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
 }
+
+/* ── Appearance → Product page: the live preview, phone AND laptop ───────────
+                                                            Lane PDP2, round 5
+
+   THE SCREEN HAD THIRTY SLIDERS AND NOTHING TO SEE THEM AGAINST.
+
+       "where's the preview on the product controls page? i need a proper
+        preview of mobile and desktop both."
+
+   He is right. Round 4 built four tabs of spacing and type on
+   `Appearance → Product page` and renderProductPage() emitted no preview
+   element of any kind — checked in the source, not remembered.
+
+   ── WHY TWO FRAMES AND NOT A SWITCH ────────────────────────────────────────
+
+   Several of the thirty controls are PER WIDTH by design: the product name is
+   19px on a phone and 30px on a laptop, and the space under the photograph
+   exists only below 881px. A single-width preview with a toggle would let him
+   set a laptop size that ruins the phone and find out on the shop. So both are
+   drawn at once, side by side, and neither is hidden behind anything.
+
+   ── AND NOTHING IS MEASURED, WHICH IS WHAT THE SCALE IS FOR ─────────────────
+
+   CLAUDE.md rule 4. A 1280px page inside a 397px pane is a SCALE, and the
+   scale is a constant per pane — `--ppv-s` — with every dimension derived from
+   it by calc(). No getBoundingClientRect, no offsetWidth, no clientWidth, and
+   nothing that reads a rectangle to decide a size. Lane GRID's `.pgprev` took
+   the same route one screen along, and this block deliberately mirrors its
+   shape: `.ppwrap` / `.ppside` / `.ppv-in` are `.pgwrap` / `.pgside` /
+   `.pgpv-in` with the numbers this panel needs.
+
+   ▲ THE SCALED IFRAME NEEDS A BOX OF ITS OWN. `transform:scale()` does not
+     change the LAYOUT size of an element, so an iframe declared 1280×2400 and
+     scaled by .31 still occupies 1280×2400 in its parent — the panel would
+     scroll 2400px of nothing to reach content that visually ends at 744.
+     `.ppv-scale` is the scaled box: it carries the multiplied width and height
+     and positions the iframe absolutely inside itself, so `.ppv-vp` scrolls
+     exactly as far as there is picture.
+
+   ▲ THE FRAME IS `pointer-events:none` ON PURPOSE. It is a picture of the
+     page, not a second shop: a click on a product link inside it would
+     navigate the frame away and leave him looking at a category listing with
+     no way back but a reload. The wheel and the scrollbar still work, because
+     they belong to `.ppv-vp`, which is not inert. */
+.ppwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,620px);gap:18px;align-items:start}
+.ppcol{min-width:0}
+.ppside{position:sticky;top:16px;min-width:0}
+.ppv-in{background:#F6F2F4;border:1px solid #EFE4EA;border-radius:16px;padding:14px}
+.ppv-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ppv-hd b{font-size:13px;color:#2A2228}
+.ppv-hd span{font-size:11.5px;color:#7b8697}
+.ppv-pair{display:flex;gap:12px;align-items:flex-start}
+.ppv-pane{min-width:0}
+.ppv-cap{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 5px;font-size:11px;color:#7b8697}
+.ppv-cap b{font-size:11px;font-weight:600;color:#2A2228}
+.ppv-cap a{color:#9a6b80;text-decoration:none;white-space:nowrap}
+.ppv-cap a:hover{text-decoration:underline}
+/* the window, the scaled box, and the frame — three sizes, one constant */
+.ppv-vp{overflow:auto;background:#fff;border:1px solid #E6DCE3;border-radius:10px;
+  width:calc(var(--ppv-w) * var(--ppv-s) * 1px);
+  height:calc(var(--ppv-win) * 1px)}
+.ppv-scale{position:relative;
+  width:calc(var(--ppv-w) * var(--ppv-s) * 1px);
+  height:calc(var(--ppv-h) * var(--ppv-s) * 1px)}
+.ppv-scale iframe{position:absolute;top:0;left:0;display:block;border:0;background:#fff;
+  width:calc(var(--ppv-w) * 1px);height:calc(var(--ppv-h) * 1px);
+  transform:scale(var(--ppv-s));transform-origin:top left;pointer-events:none}
+.ppv-pane[data-ppv="desktop"]{--ppv-w:1280;--ppv-h:2400;--ppv-s:.31;--ppv-win:372}
+.ppv-pane[data-ppv="mobile"]{--ppv-w:390;--ppv-h:2600;--ppv-s:.46;--ppv-win:372}
+.ppv-note{font-size:11.5px;color:#7b8697;margin:10px 0 0;line-height:1.55}
+.ppv-note b{color:#2A2228;font-weight:600}
+.ppv-empty{font-size:12.5px;color:#7b8697;line-height:1.6;margin:0}
+
+/* THE CONTROLS NOW LIVE IN A ~370px COLUMN INSTEAD OF THE FULL WIDTH.
+   `.mmrow` is label-and-control on one line, and the control's own floor is
+   130px of range plus a 44px readout — measured in that column the label got
+   about 110px and "Product name · phone" wrapped to three lines with its help
+   text in a ribbon beside it. So inside this column the row wraps: the label
+   takes the full width and the control a line of its own, which is exactly
+   what the 640px rung already does for phones. The preview keeps its size;
+   shrinking the frames to buy the label back would have cost the thing the
+   owner asked for. */
+.ppcol .mmrow{flex-wrap:wrap}
+.ppcol .mmlbl{flex:1 0 100%}
+
+@media (max-width:1180px){
+  .ppwrap{grid-template-columns:minmax(0,1fr)}
+  .ppside{position:static}
+}
+/* Below this rung 422 + 195 no longer fits the content column, so the pair
+   stacks and the laptop shrinks again. Both are still on the screen together
+   — the one thing that may not happen is either of them disappearing. */
+@media (max-width:760px){
+  .ppv-pair{flex-wrap:wrap}
+  .ppv-pane[data-ppv="desktop"]{--ppv-s:.25;--ppv-win:300}
+  .ppv-pane[data-ppv="mobile"]{--ppv-s:.4;--ppv-win:300}
+}
 </style>
 </head>
 <body data-env="live">
@@ -4825,7 +4922,8 @@ async function renderProductPage(){
     $('#content').innerHTML = `<div class="wrap"><div class="card" style="padding:22px">Could not load product page settings. <button class="btn small" onclick="renderProductPage()">Retry</button></div></div>`;
     return;
   }
-  paintProductPage();
+  PPPV = (PP && PP.preview) ? PP.preview : {slug:null, url:null, props:{}};
+  paintProductPage(true);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -4862,6 +4960,161 @@ async function renderProductPage(){
    ═════════════════════════════════════════════════════════════════════════ */
 let PPTAB='sections', PPDIRTY={sections:false,layout:false};
 
+/* ═════════════════════════════════════════════════════════════════════════
+   THE LIVE PREVIEW — PHONE AND LAPTOP, BOTH, AS HE MOVES A SLIDER.   (R5)
+
+     "where's the preview on the product controls page? i need a proper
+      preview of mobile and desktop both."
+
+   Round 4 put thirty controls on this screen and no preview element of any
+   kind. This is that gap.
+
+   ── IT IS THE REAL PRODUCT PAGE, NOT A DRAWING OF ONE ───────────────────
+
+   Each frame loads `/product/{slug}` — the shipped page, on a real product,
+   with the real header, the real stylesheet and the real markup. A preview
+   assembled here out of admin CSS would be a SECOND ANSWER to "what does a
+   product page look like", and a second answer can be right while the page is
+   wrong.
+
+   ▲ AND NOT ONE OF THE FIVE DESIGN PREVIEWS UNDER
+     `admin-api/catalog/pdp-preview/`, WHICH IS THE OBVIOUS CHOICE AND THE
+     WRONG ONE. Those are candidates drawn in markup of their own — every
+     class in them is `pv-…` — while the thirty properties are read by
+     `.pdp .bb-title`, `.sec h2` and `.details .dtabbar` in kbb-product.css.
+     Checked in the templates, not assumed: the one selector the five share
+     with the shop is `.dcontent`. Framing a candidate would have drawn a
+     handsome product page that answered ONE of the thirty controls and
+     looked completely finished doing it.
+
+   ── AND IT MOVES BEFORE ANYTHING IS SAVED ───────────────────────────────
+
+   `var(--pl-x, <literal>)` is how kbb-product.css reads all thirty numbers,
+   so the whole of "live" is writing those properties onto the frame's own
+   <html>. Nothing is posted, nothing is stored, and pressing Discard puts the
+   frames back by reloading them. Same-origin, so the frame's document is
+   reachable; every access is wrapped because a frame that has not finished
+   loading has no documentElement yet, and the `load` listener repaints it
+   when it does.
+
+   ── EVERY VALUE IS CHECKED BEFORE IT REACHES A STYLE OR AN src ──────────
+
+   Rule 5, and this is a place it really bites: a custom-property value goes
+   into a stylesheet, and an src goes into the browser's address bar.
+
+     · the property NAME comes from ProductLayout::PROPS, sent by the
+       endpoint, and is re-checked against /^--pl-[a-z0-9-]+$/ here;
+     · a range VALUE is clamped to the field's own min and max and divided by
+       its own scale — so it cannot be anything but digits and one dot;
+     · a select VALUE must be one of the keys the schema sent, or the shipped
+       default is used instead;
+     · the URL must be this shop's own origin or a root-relative path, or no
+       frame is drawn at all — which refuses `javascript:`, `data:` and any
+       other host by construction rather than by looking for them.
+
+   ── THE FORMATTER IS THE SERVER'S, EXPRESSED IN THE SCHEMA'S OWN TERMS ──
+
+   `unit` and `scale` are already on every field — ppShow() above draws the
+   readout with them. ppPvValue() uses the same two to build the CSS value, so
+   this is not thirty hard-coded conversions: it is one rule, and
+   ProductPagePreviewPanelTest reproduces that rule in PHP and demands it
+   equals ProductLayout::vars() property for property.
+   ═════════════════════════════════════════════════════════════════════════ */
+let PPPV = {slug:null, url:null, props:{}};
+
+/**
+ * The page a frame may load, or '' when there is nothing safe to point at.
+ *
+ * ▲ SAME ORIGIN, CHECKED HERE AS WELL AS BUILT BY route() THERE. This string
+ *   becomes an `src`, so it is treated as untrusted whatever produced it:
+ *   either it starts at this shop's own origin, or it is a root-relative path,
+ *   or no frame is drawn. That refuses `javascript:`, `data:` and any other
+ *   host by construction rather than by looking for them. Rule 5.
+ */
+function ppPvSrc(){
+  const u = PPPV && PPPV.url;
+  if(typeof u !== 'string' || u === '') return '';
+  if(u.indexOf(window.location.origin + '/') === 0) return u;
+  if(/^\/[^\/]/.test(u)) return u;
+  return '';
+}
+
+/** One field as the CSS value ProductLayout::vars() would print for it. */
+function ppPvValue(f){
+  const o = f.options || {};
+  if(f.type === 'select'){
+    const keys = Object.keys(o);
+    return keys.indexOf(String(f.value)) >= 0 ? String(f.value) : String(f.default);
+  }
+  if(f.type !== 'range') return null;
+  const sc = (+o.scale) || 1;
+  let n = Number(f.value);
+  if(!Number.isFinite(n)) n = Number(f.default);
+  n = Math.min(+o.max, Math.max(+o.min, n));
+  return String(n / sc) + (o.unit === 'px' ? 'px' : '');
+}
+
+/** [property, value] for every control, names taken from the server's map. */
+function ppPvVars(){
+  const props = (PPPV && PPPV.props) || {};
+  const out = [];
+  ppFields().forEach(f => {
+    const prop = props[f.key];
+    if(typeof prop !== 'string' || !/^--pl-[a-z0-9-]+$/.test(prop)) return;
+    const v = ppPvValue(f);
+    if(v !== null) out.push([prop, v]);
+  });
+  return out;
+}
+
+/** Write them onto both frames. Called on every input, and on every load. */
+function ppPaintPreview(){
+  const frames = $$('[data-ppframe]');
+  if(!frames.length) return;
+  const vars = ppPvVars();
+  frames.forEach(fr => {
+    let root = null;
+    try{ root = fr.contentDocument && fr.contentDocument.documentElement; }catch(err){ root = null; }
+    if(!root) return;
+    vars.forEach(pair => root.style.setProperty(pair[0], pair[1]));
+  });
+}
+
+/** Back to what is SAVED — after a save, and after Discard. */
+function ppReloadPreview(){
+  const src = ppPvSrc();
+  if(!src) return;
+  $$('[data-ppframe]').forEach(fr => { fr.setAttribute('src', src); });
+}
+
+/* The panel. Drawn ONCE per visit to this screen, by paintProductPage()'s
+   shell arm, and never again while he is on it -- re-inserting an <iframe>
+   reloads it, so a
+   panel rebuilt on every tab click would fetch two product pages every time he
+   moved between Spacing and Type. */
+function ppPreviewPanel(){
+  const src = ppPvSrc();
+
+  if(!src) return `<aside class="ppside"><div class="ppv-in">
+      <div class="ppv-hd"><b>Preview</b></div>
+      <p class="ppv-empty">There is no visible product to draw yet. Add one under <b>Catalog → Products</b> and this panel will show it at both widths.</p>
+    </div></aside>`;
+
+  const pane = (kind, label, note) => `<div class="ppv-pane" data-ppv="${kind}">
+      <p class="ppv-cap"><b>${label}</b><a href="${escAttr(src)}" target="_blank" rel="noopener">Full size ↗</a></p>
+      <div class="ppv-vp"><div class="ppv-scale"><iframe data-ppframe="${kind}" title="${escAttr(note)}" src="${escAttr(src)}" loading="lazy" referrerpolicy="same-origin"></iframe></div></div>
+    </div>`;
+
+  return `<aside class="ppside"><div class="ppv-in">
+      <div class="ppv-hd"><b>Preview</b><span>Live — moves as you do</span></div>
+      <div class="ppv-pair">
+        ${pane('desktop','Laptop · 1280px','Product page preview at 1280px')}
+        ${pane('mobile','Phone · 390px','Product page preview at 390px')}
+      </div>
+      <p class="ppv-note">The real product page, at both widths, updating as you move a control — <b>nothing here is saved until you press Save changes</b>. Scroll inside either frame to reach the detail tabs and the sections under them. The <b>Sections</b> switches change which blocks render at all, so those appear here once you have saved.</p>
+    </div></aside>`;
+}
+
 function ppTabs(){ return (PP && Array.isArray(PP.layout)) ? PP.layout : []; }
 function ppLayoutTab(){ return ppTabs().find(t=>t.key===PPTAB) || null; }
 
@@ -4887,7 +5140,7 @@ function ppField(f){
     <input type="text" value="${escAttr(String(f.value))}" data-pl="${escAttr(f.key)}"></div>`;
 }
 
-function paintProductPage(){
+function paintProductPage(rebuild){
   const lt=ppLayoutTab();
   const strip=`<div class="ectabs">
     <button class="ectab${PPTAB==='sections'?' on':''}" data-pptab="sections">Sections<span class="ecn">${PP.sections.length}</span></button>
@@ -4907,21 +5160,50 @@ function paintProductPage(){
         <span class="ectog${s.mobile?' on':''}" data-pp="${i}" data-k="mobile" role="switch" aria-checked="${s.mobile}" tabindex="0"></span>
       </div>`).join('')}</div>`;
 
-  $('#content').innerHTML = `<div class="wrap ecwrap mmwrap">
-    <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Product page</h2>
-      <p class="mdesc" style="margin:0">${lt
-        ? 'Spacing and type for one product page. Every control ships at the number the page already draws, so nothing moves until you move a slider.'
-        : 'Switch any module off, per device. A module off for both is not rendered at all.'}</p></div>
-    ${strip}
-    <p class="ectabs-hint">Five views of one product page, and they do different jobs. <b>Sections</b> switches a whole block of the page on or off, per device — that is the only tab that can make something disappear. The four Layout tabs move what is already there: <b>Spacing</b> is the gaps, between the big blocks of the page and between the elements inside the buy column; <b>Type</b> is the sizes and weights. Every Layout control ships at the number the page already draws, so the shop looks exactly the same until you move one, and <b>Reset layout to defaults</b> puts them all back.</p>
-    ${body}
-    <div class="ecsave">
-      <span class="ecdirty" id="ppDirty" style="visibility:${(PPDIRTY.sections||PPDIRTY.layout)?'visible':'hidden'}">Unsaved changes</span>
-      ${lt?`<button class="btn" id="ppReset">Reset layout to defaults</button>`:`<button class="btn" id="ppDiscard">Discard</button>`}
-      <button class="btn primary" id="ppSave">Save changes</button>
-    </div></div>`;
+  /* ▲ THE SHELL IS WRITTEN ONCE PER VISIT, AND THE PREVIEW IS THE REASON.
+       This function used to replace #content wholesale on every tab click.
+       With two <iframe>s in it that is two product pages fetched every time he
+       moves between Spacing and Type — and worse, a frame re-inserted into the
+       document RELOADS, so the picture would flash back to the saved page and
+       lose whatever he had just dragged. So the shell (the heading, the strip's
+       host, the preview panel and the save bar) is built when the screen is
+       entered, and a repaint refills only the three parts that really change.
+       renderProductPage() passes `true` because it has just re-fetched. */
+  if(rebuild || !$('#ppShell')){
+    $('#content').innerHTML = `<div class="wrap ecwrap mmwrap" id="ppShell">
+      <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Product page</h2>
+        <p class="mdesc" style="margin:0" id="ppLede"></p></div>
+      <div id="ppStrip"></div>
+      <p class="ectabs-hint">Five views of one product page, and they do different jobs. <b>Sections</b> switches a whole block of the page on or off, per device — that is the only tab that can make something disappear. The four Layout tabs move what is already there: <b>Spacing</b> is the gaps, between the big blocks of the page and between the elements inside the buy column; <b>Type</b> is the sizes and weights. The preview shown with them is the real product page at both widths — a laptop and a phone, side by side — and it follows every slider as you drag it, before anything is saved; <b>Reset layout to defaults</b> puts them all back.</p>
+      <div class="ppwrap"><div class="ppcol" id="ppCol"></div>${ppPreviewPanel()}</div>
+      <div class="ecsave">
+        <span class="ecdirty" id="ppDirty" style="visibility:hidden">Unsaved changes</span>
+        <span id="ppActs"></span>
+        <button class="btn primary" id="ppSave">Save changes</button>
+      </div></div>`;
+    /* A frame has no documentElement until it has loaded, so the first paint
+       would write thirty properties into nothing. This is the second paint. */
+    $$('[data-ppframe]').forEach(fr => fr.addEventListener('load', ppPaintPreview));
+  }
+
+  $('#ppLede').textContent = lt
+    ? 'Spacing and type for one product page. The preview is the real page at both widths — laptop and phone together — and follows every control as you move it.'
+    : 'Switch any module off, per device. A module off for both is not rendered at all.';
+  $('#ppStrip').innerHTML = strip;
+  $('#ppCol').innerHTML = body;
+  $('#ppActs').innerHTML = lt
+    ? `<button class="btn" id="ppReset">Reset layout to defaults</button>`
+    : `<button class="btn" id="ppDiscard">Discard</button>`;
+
+  const dirty = $('#ppDirty');
+  if(dirty){
+    dirty.classList.remove('ok');
+    dirty.textContent = 'Unsaved changes';
+    dirty.style.visibility = (PPDIRTY.sections||PPDIRTY.layout) ? 'visible' : 'hidden';
+  }
 
   $$('[data-pptab]').forEach(b=>b.onclick=()=>{ PPTAB=b.dataset.pptab; paintProductPage(); });
+  ppPaintPreview();
 }
 
 function ppMarkDirty(half){
@@ -4937,13 +5219,16 @@ document.addEventListener('input', e=>{
   f.value = el.type==='range' ? +el.value : el.value;
   const out=$('#plv-'+f.key); if(out) out.textContent=ppShow(f);
   ppMarkDirty('layout');
+  /* THE LIVE HALF. `input` and not `change`, so the picture moves while the
+     handle is under his finger rather than when he lets go. */
+  ppPaintPreview();
 });
 document.addEventListener('change', e=>{
   const el=e.target.closest('select[data-pl]');
   if(!el||!PP) return;
   const f=ppFields().find(x=>x.key===el.dataset.pl);
   if(!f) return;
-  f.value=el.value; ppMarkDirty('layout');
+  f.value=el.value; ppMarkDirty('layout'); ppPaintPreview();
 });
 
 document.addEventListener('click', async e=>{
@@ -4987,6 +5272,11 @@ document.addEventListener('click', async e=>{
       PP.sections=j.sections; if(Array.isArray(j.layout)) PP.layout=j.layout;
       PPDIRTY={sections:false,layout:false};
       paintProductPage();
+      /* The Sections switches decide which BLOCKS render at all, and no custom
+         property can show that — only the page itself can. So a save reloads
+         both frames, which is also how the panel proves what was stored rather
+         than what is merely on the screen. */
+      ppReloadPreview();
       const m2=$('#ppDirty');
       if(m2){ m2.style.visibility='visible'; m2.classList.add('ok'); m2.textContent=`Saved ${j.saved} settings — live now`;
         setTimeout(()=>{m2.classList.remove('ok');m2.textContent='Unsaved changes';m2.style.visibility='hidden';},2600); }

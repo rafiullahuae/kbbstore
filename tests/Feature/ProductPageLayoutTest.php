@@ -352,7 +352,18 @@ it('wires the Layout tabs into the console exactly once', function () {
     $console = file_get_contents(resource_path('views/admin/app.blade.php'));
 
     expect(substr_count($console, 'data-pptab="sections"'))->toBe(1);
-    expect(substr_count($console, "function paintProductPage(){"))->toBe(1);
+    /*
+     * ▲ ADVANCED, NOT WORKED AROUND — round 5. This read
+     * `function paintProductPage(){` and the signature gained an argument:
+     * `paintProductPage(rebuild)`. The preview panel holds two <iframe>s and
+     * re-inserting an iframe RELOADS it, so the shell is now written once per
+     * visit and a repaint refills only the parts that change; `rebuild` is how
+     * renderProductPage() says it has re-fetched. The count this case is
+     * really about — ONE renderer, not zero and not two — is unchanged, so the
+     * needle is the name and the opening paren rather than the empty list.
+     * MUTATION: declare a second `function paintProductPage(` and this reds.
+     */
+    expect(substr_count($console, 'function paintProductPage('))->toBe(1);
     expect(substr_count($console, 'id="ppSave"'))->toBe(1);
     // The Product page screen is still reachable from the router that draws it.
     expect(substr_count($console, 'productpage:renderProductPage'))->toBe(1);
