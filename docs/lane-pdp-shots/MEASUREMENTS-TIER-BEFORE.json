@@ -1,0 +1,92 @@
+{
+  "tier-before-bundle-row0-390": {
+    "row": "1 unit",
+    "rowPrints": "AED 74",
+    "blockStruck": "AED 99",
+    "blockNow": "AED 74",
+    "blockBadge": "-25%",
+    "stickyStruck": null,
+    "stickyNow": "AED 74"
+  },
+  "tier-before-bundle-row1-390": {
+    "row": "2-pack bundle",
+    "rowPrints": "AED 149AED 140",
+    "blockStruck": "AED 99",
+    "blockNow": "AED 140",
+    "blockBadge": "-25%",
+    "stickyStruck": null,
+    "stickyNow": "AED 140"
+  },
+  "tier-before-bundle-row2-390": {
+    "row": "3-pack bundle",
+    "rowPrints": "AED 223AED 198",
+    "blockStruck": "AED 99",
+    "blockNow": "AED 198",
+    "blockBadge": "-25%",
+    "stickyStruck": null,
+    "stickyNow": "AED 198"
+  },
+  "tier-before-variable-row1-390": {
+    "row": "50ml",
+    "rowPrints": "AED 99AED 79",
+    "blockStruck": null,
+    "blockNow": "AED 79",
+    "blockBadge": null,
+    "stickyStruck": null,
+    "stickyNow": "AED 79"
+  },
+  "tier-before-variable-row2-390": {
+    "row": "100ml",
+    "rowPrints": "AED 169AED 127",
+    "blockStruck": null,
+    "blockNow": "AED 127",
+    "blockBadge": null,
+    "stickyStruck": null,
+    "stickyNow": "AED 127"
+  },
+  "tier-before-bundle-row0-1280": {
+    "row": "1 unit",
+    "rowPrints": "AED 74",
+    "blockStruck": "AED 99",
+    "blockNow": "AED 74",
+    "blockBadge": "-25%",
+    "stickyStruck": null,
+    "stickyNow": "AED 74"
+  },
+  "tier-before-bundle-row1-1280": {
+    "row": "2-pack bundle",
+    "rowPrints": "AED 149AED 140",
+    "blockStruck": "AED 99",
+    "blockNow": "AED 140",
+    "blockBadge": "-25%",
+    "stickyStruck": null,
+    "stickyNow": "AED 140"
+  },
+  "tier-before-bundle-row2-1280": {
+    "row": "3-pack bundle",
+    "rowPrints": "AED 223AED 198",
+    "blockStruck": "AED 99",
+    "blockNow": "AED 198",
+    "blockBadge": "-25%",
+    "stickyStruck": null,
+    "stickyNow": "AED 198"
+  },
+  "tier-before-variable-row1-1280": {
+    "row": "50ml",
+    "rowPrints": "AED 99AED 79",
+    "blockStruck": null,
+    "blockNow": "AED 79",
+    "blockBadge": null,
+    "stickyStruck": null,
+    "stickyNow": "AED 79"
+  },
+  "tier-before-variable-row2-1280": {
+    "row": "100ml",
+    "rowPrints": "AED 169AED 127",
+    "blockStruck": null,
+    "blockNow": "AED 127",
+    "blockBadge": null,
+    "stickyStruck": null,
+    "stickyNow": "AED 127"
+  }
+}

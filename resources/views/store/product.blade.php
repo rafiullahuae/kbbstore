@@ -466,12 +466,20 @@
                * StorefrontEnglishUnchangedTest does not move.
                */
               $vImg  = \App\Support\ImageVariants::variantUrl((string) $v->image, 400);
+
+              /* THE SAME PAIR, FOR A REAL VARIATION. (Lane PDP2 round 3)
+                 A variation carries its own regular price, so there is no
+                 1-unit exception here: a row with `$vsale < $vreg` means its own
+                 markdown and a row without one means no strike and no badge at
+                 all. `$voff` is already computed above for the row's own tag. */
+              $vWas  = ($vsale < $vreg) ? Money::plain($vreg, $vdp) : '';
+              $vOff  = $voff > 0 ? \App\Support\Bidi::number('-' . $voff . '%') : '';
             @endphp
             {{-- Selected by identity, not by index: the highlighted row is the
                  first one that can be bought, which is the same row the hidden
                  field below is set to. `0 === $n` selected nothing at all when
                  option 0 was sold out. --}}
-            <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale, $vdp) }}">
+            <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale, $vdp) }}" data-was="{{ $vWas }}" data-off="{{ $vOff }}">
               @if (($vImgCss = CssUrl::value($vImg)) !== '')<span class="vsw" style="background-image:url('{{ $vImgCss }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
             </div>
           @endforeach
@@ -507,13 +515,61 @@
                  So the row takes the WIDER of its own requirement and the price
                  block's. max() and not a replacement, because a bundle whose own
                  pair needs more precision than the headline still needs it. --}}
+            {{-- ── AND THE PAIR THE PRICE BLOCK HAS TO SHOW WHEN THIS ROW IS
+                      PICKED, WHICH IS THE ROW'S OWN — EXCEPT ON THE FIRST.
+                                                            (Lane PDP2 round 3)
+
+                 THE DEFECT, READ OUT OF A BROWSER RATHER THAN OUT OF THIS FILE:
+                 press the 2-pack and the block read `AED 99 struck / AED 140 /
+                 -25%` while this row read `AED 149 / AED 140 / Save 6%`. The
+                 strike was untidy. THE BADGE WAS A FALSE CLAIM ABOUT MONEY --
+                 "-25%" on a tier discounted 6%, on the page where the shopper
+                 decides -- and it is the reason this is a defect and not a
+                 tidy-up.
+
+                 ▲ WHY THE FIRST ROW CANNOT USE ITS OWN PAIR, which is the whole
+                   reason the obvious fix is wrong. BundleService computes
+                   `was = qty * effectivePrice` -- the SALE price -- so the
+                   1-unit tier has `was === total`, `saved` of 0 and no struck
+                   figure at all. Copy this row's pair literally and the view the
+                   page OPENS ON loses "AED 99 / -25%", which is the product's
+                   own markdown and the one number the page is really about.
+
+                   The two `was` figures are different things and both are true:
+                   the PRODUCT's ($kbbWas, AED 99 -- what it cost before the
+                   sale) and the TIER's ($b['was'], AED 149 -- what two cost
+                   without the bundle discount). A row with a saving of its own
+                   means the second; a row without one means the first.
+
+                 ▲ PLAIN, NOT Money::format(), AND AT THE ROW'S OWN PRECISION.
+                   `data-price` beside it is already Money::plain() for the same
+                   reason: it crosses into JavaScript, where markup would have to
+                   be trusted. pdp.js escapes it on the way out. $bdp is the
+                   width this row prints at, so the block cannot end up quoting
+                   one number at two widths -- the rule the block above and the
+                   sticky bar below both already follow. The FALLBACK pair is at
+                   $kbbSaleDp and not $bdp for the same rule read the other way:
+                   it is the figure the server already rendered into .bb-price,
+                   so pressing 1 unit after a bundle has to restore that render
+                   exactly rather than a wider spelling of it.
+
+                 ▲ THE BADGE TEXT IS COMPOSED HERE, NOT IN THE BROWSER, because
+                   App\Support\Bidi::number() wraps it in isolates on /ar and a
+                   string built as '-' + n + '%' in JavaScript would not have
+                   them. The server already knows the number; it may as well say
+                   the whole word. --}}
             @php
                 $bdp = $b['saved'] > 0
                     ? Money::decimalsToDistinguish((int) $b['was'], (int) $b['total'])
                     : null;
                 $bdp = max($bdp ?? Money::displayDecimals(), $kbbSaleDp ?? Money::displayDecimals());
+
+                $bHasOwn = $b['saved'] > 0;
+                $bWas = $bHasOwn ? Money::plain((int) $b['was'], $bdp) : ($onSale ? Money::plain($kbbWas, $kbbSaleDp) : '');
+                $bPct = $bHasOwn ? (int) $b['percent'] : ($onSale ? (int) $off : 0);
+                $bOff = $bPct > 0 ? \App\Support\Bidi::number('-' . $bPct . '%') : '';
             @endphp
-            <div class="variant{{ 0 === $n ? ' on' : '' }}" data-i="{{ $n }}" data-qty="{{ $b['qty'] }}" data-price="{{ Money::plain($b['total'], $bdp) }}">
+            <div class="variant{{ 0 === $n ? ' on' : '' }}" data-i="{{ $n }}" data-qty="{{ $b['qty'] }}" data-price="{{ Money::plain($b['total'], $bdp) }}" data-was="{{ $bWas }}" data-off="{{ $bOff }}">
               <span class="vr"></span><span class="vn">{{ $b['label'] }}</span><span class="vp">@if ($b['saved'] > 0)<s>{!! Money::format($b['was'], $bdp) !!}</s>@endif{!! Money::format($b['total'], $bdp) !!}</span>@if ($b['tag'])<span class="vtag">{{ $b['tag'] }}</span>@endif
             </div>
           @endforeach

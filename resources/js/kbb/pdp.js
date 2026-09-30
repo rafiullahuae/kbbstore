@@ -85,8 +85,19 @@ export function initPdp() {
                returns. Nothing emits that attribute today, so escaping it
                would be wrong for the day something does. */
             const price = variant.dataset.pricehtml || escapeHtml(variant.dataset.price || '');
-            setPrice(document.getElementById('bbPrice'), price);
-            setPrice(document.getElementById('stickyPrice'), price);
+            /* THE STRUCK FIGURE AND THE BADGE TRAVEL WITH IT.
+               Escaped exactly as `price` is and for the same reason: both cross
+               out of a data attribute, whose contents the HTML parser has
+               already decoded, so neither may be trusted as markup. */
+            const was = escapeHtml(variant.dataset.was || '');
+            const off = escapeHtml(variant.dataset.off || '');
+            /* `true` FOR THE BLOCK AND `false` FOR THE BAR, and the caller is
+               where that decision belongs -- this file's own rule, stated above
+               setPrice(). The block is the one that has to agree with the row
+               beneath it; the bar carries a `.now` and nothing else by design
+               and must not grow a strike it never had. */
+            setPrice(document.getElementById('bbPrice'), price, was, off, true);
+            setPrice(document.getElementById('stickyPrice'), price, was, off, false);
             return;
         }
 
@@ -171,22 +182,85 @@ export function initPdp() {
 /**
  * Update a price block without losing its markup.
  *
- * The block is `<span class="now">…</span> <s>was</s> <span class="off">-30%</span>`.
- * Only the current price changes when a bundle is selected, so only that span
- * is touched; the struck-through original and the badge stay where they are.
+ * Ledger's block is `<s>was</s> <span class="now">…</span>
+ * <span class="off">-30%</span>`, and ALL THREE follow the row that was
+ * pressed: the tier's own struck figure and its own percentage, or the
+ * product's where the tier has none of its own. Leaving the outer two alone --
+ * which is what this did until round 3 -- printed the product's 25% beside a
+ * tier discounted 6%.
+ *
+ * `mayCreate` says whether this element is allowed to GROW the two spans when
+ * the server did not render them. The caller decides; see the note inside.
  */
-function setPrice(el, html) {
+function setPrice(el, html, was, off, mayCreate) {
     /* `html` IS markup here and is meant to be -- the caller decides. The one
        caller that passes a value out of a data attribute escapes it first; see
-       the comment above `const price` in initPdp(). */
+       the comment above `const price` in initPdp(). The same is true of `was`
+       and `off`. */
     if (!el || !html) return;
 
     const now = el.querySelector('.now');
-    if (now) { now.innerHTML = html; return; }
+    if (now) { now.innerHTML = html; } else {
+        // No .now span (a product that is not on sale) — keep the structure by
+        // creating one rather than flattening the block to bare text.
+        el.innerHTML = '<span class="now">' + html + '</span>';
+    }
 
-    // No .now span (a product that is not on sale) — keep the structure by
-    // creating one rather than flattening the block to bare text.
-    el.innerHTML = '<span class="now">' + html + '</span>';
+    /* ── THE STRUCK FIGURE AND THE BADGE FOLLOW THE ROW TOO.
+                                                           (Lane PDP2 round 3)
+
+       THE DEFECT THIS CLOSES, measured in a browser: pressing the 2-pack left
+       the block reading `AED 99 struck / AED 140 / -25%` while the row said
+       `AED 149 / AED 140 / Save 6%`. The strike was untidy; the BADGE was a
+       false claim about money, on the page where the shopper decides.
+
+       ▲ `mayCreate` IS THE CALLER'S, AND IT IS WHAT KEEPS THE STICKY BAR
+         RIGHT. This is called on #bbPrice AND on #stickyPrice, and the bar
+         carries a `.now` and nothing else -- by design, since Lane PP built it.
+         Measured before this change: its `.now` already followed the tier
+         (AED 74 -> AED 140) and it has neither strike nor badge, so it had
+         nothing to go stale. Creating the two spans for it would have GIVEN it
+         the problem while fixing it elsewhere, so it is passed `false`.
+
+       ▲ AND THE BLOCK IS PASSED `true` BECAUSE OF THE VARIABLE PRODUCT.
+         A variable parent carries no price of its own, so `isOnSale()` is false
+         on it and the server renders `.now` alone -- while its VARIATIONS are
+         marked down. Measured: pick the 100ml and the block read `AED 127` flat
+         while the row directly beneath it read `AED 169 / AED 127`. Not a false
+         claim, but the block and the row disagreeing on one page, which is the
+         whole thing this change is about.
+
+       ▲ AND THEY ARE INSERTED IN LEDGER'S ORDER -- struck figure BEFORE `.now`,
+         badge after it -- because that is the order the server writes and the
+         stylesheet lays out (`<s>` is display:block above the live figure). An
+         element created in the wrong place would be styled correctly and read
+         backwards.
+
+       ▲ style.display AND NOT `hidden`. kbb-product.css gives both spans a
+         `display` through a class selector, which outranks the User-Agent rule
+         behind the `hidden` attribute -- so `hidden` would set the attribute and
+         change nothing on the screen. */
+    const live = el.querySelector('.now');
+
+    let struck = el.querySelector('s');
+    if (!struck && was && mayCreate && live) {
+        live.insertAdjacentHTML('beforebegin', '<s></s>');
+        struck = el.querySelector('s');
+    }
+    if (struck) {
+        struck.innerHTML = was || '';
+        struck.style.display = was ? '' : 'none';
+    }
+
+    let badge = el.querySelector('.off');
+    if (!badge && off && mayCreate && live) {
+        live.insertAdjacentHTML('afterend', '<span class="off"></span>');
+        badge = el.querySelector('.off');
+    }
+    if (badge) {
+        badge.innerHTML = off || '';
+        badge.style.display = off ? '' : 'none';
+    }
 }
 
 

@@ -1880,6 +1880,44 @@ final class EnglishRenderWalk
                 'pattern' => '#(?<=</div>)\s*<div class="bb-head">.*?(?=<form class="cart)#s',
                 'hits' => 1,
             ],
+
+            /*
+             * THE OPENING TAG OF EVERY VARIANT / BUNDLE ROW, WHICH NOW CARRIES
+             * THE PAIR OF FIGURES IT PRINTS.             (Lane PDP2, round 3)
+             *
+             * PAIRED WITH approvedRemovals()' 'the shipped variant row opening
+             * tag', which is the same pattern against the old side. Both cut
+             * the OPENING TAG ONLY -- `(?=<span class="vr")` closes the match
+             * before the row's contents -- so the label, the struck figure, the
+             * live figure and the tag badge are all still compared byte for
+             * byte, on both sides. What the pair excuses is the two new
+             * attributes and the blank line the `@php` block above them adds.
+             *
+             * THE DEFECT IT BUYS: pressing the 2-pack left the price block
+             * reading `AED 99 / AED 140 / -25%` while the row said
+             * `AED 149 / AED 140 / Save 6%` — the strike untidy, the badge a
+             * false claim about money on the page where the shopper decides.
+             * pdp.js had the tier's total and nothing else to write, so the two
+             * figures beside it stayed as the server had rendered them.
+             *
+             * WHAT STOPPED BEING WATCHED, AND WHERE IT IS WATCHED INSTEAD:
+             * `data-i`, `data-qty` and `data-price`, plus the `on` and `oos`
+             * classes. tests/Feature/ProductPriceBlockFollowsTierTest reads
+             * every one of those attributes out of a real render and asserts
+             * what it holds — the 1-unit row's fallback pair, the empty pair on
+             * a product that is not on sale, and a full-price variation's empty
+             * pair — which is the sharper form of the same check.
+             *
+             * THE COUNT IS THE WALK'S OWN PRODUCT PAGE, which renders the three
+             * default bundle tiers. A fourth would mean a tier table changed
+             * under this walk, which is exactly the kind of thing the count is
+             * for; `perPage` says the same thing per page rather than in total.
+             */
+            'the variant row opening tag, with its pair of figures (Lane PDP2)' => [
+                'pattern' => '#\s*<div class="variant[^"]*" data-i="\d+"[^>]*>\s*(?=<span class="vr")#s',
+                'hits' => 3,
+                'perPage' => 3,
+            ],
         ];
     }
 
@@ -2031,6 +2069,21 @@ final class EnglishRenderWalk
             'the shipped head of the product buy column (Lane PDP2)' => [
                 'pattern' => '#(?<=</div>)\s*<h1 class="bb-title".*?(?=<form class="cart)#s',
                 'hits' => 1,
+            ],
+
+            /*
+             * THE SHIPPED VARIANT ROW OPENING TAG.       (Lane PDP2, round 3)
+             *
+             * PAIRED WITH approvedInsertions()' 'the variant row opening tag,
+             * with its pair of figures', whose note carries the argument, what
+             * the pair gives up and where it is asserted instead. The two
+             * patterns are deliberately identical and both close on
+             * `(?=<span class="vr")`, so the row's visible contents are
+             * compared byte for byte on both sides.
+             */
+            'the shipped variant row opening tag (Lane PDP2)' => [
+                'pattern' => '#\s*<div class="variant[^"]*" data-i="\d+"[^>]*>\s*(?=<span class="vr")#s',
+                'hits' => 3,
             ],
 
             /*
