@@ -1,0 +1,230 @@
+{
+  "admin-390": {
+    "tabs": [
+      "Sections17",
+      "Spacing · Page5",
+      "Spacing · Buy column8",
+      "Type · Buy column12",
+      "Type · Sections & tabs5"
+    ],
+    "scrollWidth": 390,
+    "viewport": 390,
+    "crumb": "Appearance"
+  },
+  "admin-sp_page-390": {
+    "heading": "Spacing · Page",
+    "note": "The gaps between the big blocks of the page — the picture, the buy column, and the three sections under them.",
+    "rows": [
+      "Space between page sections",
+      "Space under the photograph, on a phone",
+      "Gap between gallery thumbnails",
+      "Gap between the detail tabs",
+      "Space under the detail tab row"
+    ],
+    "values": [
+      "34px",
+      "22px",
+      "8px",
+      "22px",
+      "18px"
+    ],
+    "selects": [],
+    "scrollWidth": 390
+  },
+  "admin-sp_buy-390": {
+    "heading": "Spacing · Buy column",
+    "note": "The gaps between the elements inside the buy column: the name, the price, the rating, the hairline seams, the trust lines and the payment icons.",
+    "rows": [
+      "Space above the product name",
+      "Gap between the name and the price",
+      "Space above the rating",
+      "Space above each dividing line",
+      "Space below each dividing line",
+      "Space above the trust lines",
+      "Space between the trust lines",
+      "Space above the payment icons"
+    ],
+    "values": [
+      "8px",
+      "16px",
+      "10px",
+      "20px",
+      "20px",
+      "22px",
+      "10px",
+      "12px"
+    ],
+    "selects": [],
+    "scrollWidth": 390
+  },
+  "admin-ty_buy-390": {
+    "heading": "Type · Buy column",
+    "note": "Font sizes and weights for the top of the page. The product name has a phone size and a laptop size because those are the two numbers the page really draws.",
+    "rows": [
+      "Product name · phone",
+      "Product name · laptop",
+      "Product name weight",
+      "Price",
+      "Price weight",
+      "Struck-out price",
+      "Discount badge",
+      "VAT line",
+      "Rating line",
+      "Short description",
+      "Short description line spacing",
+      "Trust lines"
+    ],
+    "values": [
+      "19px",
+      "30px",
+      "22px",
+      "12.5px",
+      "10px",
+      "11px",
+      "12px",
+      "13.5px",
+      "1.62",
+      "12.5px"
+    ],
+    "selects": [
+      "500",
+      "800"
+    ],
+    "scrollWidth": 390
+  },
+  "admin-ty_sec-390": {
+    "heading": "Type · Sections & tabs",
+    "note": "The headings under the buy column, and the detail tabs.",
+    "rows": [
+      "Section headings",
+      "Section heading weight",
+      "Detail tab labels",
+      "Detail tab text",
+      "Detail tab line spacing"
+    ],
+    "values": [
+      "22px",
+      "13.5px",
+      "13.5px",
+      "1.7"
+    ],
+    "selects": [
+      "600"
+    ],
+    "scrollWidth": 390
+  },
+  "admin-1280": {
+    "tabs": [
+      "Sections17",
+      "Spacing · Page5",
+      "Spacing · Buy column8",
+      "Type · Buy column12",
+      "Type · Sections & tabs5"
+    ],
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "crumb": "Appearance"
+  },
+  "admin-sp_page-1280": {
+    "heading": "Spacing · Page",
+    "note": "The gaps between the big blocks of the page — the picture, the buy column, and the three sections under them.",
+    "rows": [
+      "Space between page sections",
+      "Space under the photograph, on a phone",
+      "Gap between gallery thumbnails",
+      "Gap between the detail tabs",
+      "Space under the detail tab row"
+    ],
+    "values": [
+      "34px",
+      "22px",
+      "8px",
+      "22px",
+      "18px"
+    ],
+    "selects": [],
+    "scrollWidth": 1280
+  },
+  "admin-sp_buy-1280": {
+    "heading": "Spacing · Buy column",
+    "note": "The gaps between the elements inside the buy column: the name, the price, the rating, the hairline seams, the trust lines and the payment icons.",
+    "rows": [
+      "Space above the product name",
+      "Gap between the name and the price",
+      "Space above the rating",
+      "Space above each dividing line",
+      "Space below each dividing line",
+      "Space above the trust lines",
+      "Space between the trust lines",
+      "Space above the payment icons"
+    ],
+    "values": [
+      "8px",
+      "16px",
+      "10px",
+      "20px",
+      "20px",
+      "22px",
+      "10px",
+      "12px"
+    ],
+    "selects": [],
+    "scrollWidth": 1280
+  },
+  "admin-ty_buy-1280": {
+    "heading": "Type · Buy column",
+    "note": "Font sizes and weights for the top of the page. The product name has a phone size and a laptop size because those are the two numbers the page really draws.",
+    "rows": [
+      "Product name · phone",
+      "Product name · laptop",
+      "Product name weight",
+      "Price",
+      "Price weight",
+      "Struck-out price",
+      "Discount badge",
+      "VAT line",
+      "Rating line",
+      "Short description",
+      "Short description line spacing",
+      "Trust lines"
+    ],
+    "values": [
+      "19px",
+      "30px",
+      "22px",
+      "12.5px",
+      "10px",
+      "11px",
+      "12px",
+      "13.5px",
+      "1.62",
+      "12.5px"
+    ],
+    "selects": [
+      "500",
+      "800"
+    ],
+    "scrollWidth": 1280
+  },
+  "admin-ty_sec-1280": {
+    "heading": "Type · Sections & tabs",
+    "note": "The headings under the buy column, and the detail tabs.",
+    "rows": [
+      "Section headings",
+      "Section heading weight",
+      "Detail tab labels",
+      "Detail tab text",
+      "Detail tab line spacing"
+    ],
+    "values": [
+      "22px",
+      "13.5px",
+      "13.5px",
+      "1.7"
+    ],
+    "selects": [
+      "600"
+    ],
+    "scrollWidth": 1280
+  }
+}

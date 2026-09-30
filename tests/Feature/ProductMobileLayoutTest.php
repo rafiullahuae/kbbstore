@@ -202,8 +202,31 @@ it('leaves the related block on the same gutter as the rest of the page', functi
      * and that is unchanged — the gutter is `--site-gutter` (22px) instead of a
      * literal 20px, and `.rel` still declares no padding at all.
      */
+    /*
+     * ▲ AND MOVED AGAIN BY LANE PDP2 R4, WHICH ALSO KILLED A NEGATIVE.
+     *
+     * `.sec`'s vertical padding is a control now — Appearance → Product page →
+     * Spacing · Page → "Space between page sections" — so the declaration reads
+     * `var(--pl-sec-pad,34px) 0`. The fallback is the same 34px, which is the
+     * number the page renders while nothing is saved;
+     * docs/lane-pdp4-shots/base-measure.json is Chromium reading 34px/34px
+     * before the change and after it, and ProductPageLayoutTest compares every
+     * fallback against ProductLayout's shipped value in both directions.
+     *
+     * The old pair — `toContain('.sec{padding:34px0;')` plus
+     * `not->toContain('.sec{padding:34px20px')` — would have left this case
+     * GREEN with the horizontal term set to anything at all, because the
+     * negative names one specific wrong value and the rule no longer begins
+     * with `34px`. So the declaration is read out whole and compared, which
+     * cannot go vacuous: the vertical term is the variable with its shipped
+     * fallback and the horizontal term is ZERO, which is the thing this case
+     * has always been about.
+     */
+    preg_match('/\.sec\{padding:([^;}]+)/', $css, $secPadding);
+
+    expect($secPadding[1] ?? '(no .sec rule at all)')->toBe('var(--pl-sec-pad,34px)0',
+        '.sec no longer pads 0 on the inline axis, so #related stops inheriting the page gutter');
+
     expect($css)->toContain('.wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}')
-        ->and($css)->toContain('.sec{padding:34px0;')
-        ->and($css)->not->toContain('.rel{padding')
-        ->and($css)->not->toContain('.sec{padding:34px20px');
+        ->and($css)->not->toContain('.rel{padding');
 });

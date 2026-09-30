@@ -1,0 +1,272 @@
+{
+  "page-390": {
+    "scrollWidth": 390,
+    "viewport": 390,
+    "styleBlock": false,
+    "boxes": {
+      "head": {
+        "x": 22,
+        "y": 705,
+        "w": 346,
+        "h": 25.83
+      },
+      "title": {
+        "x": 22,
+        "y": 705,
+        "w": 252.41,
+        "h": 25.83
+      },
+      "price": {
+        "x": 290.41,
+        "y": 705,
+        "w": 77.59,
+        "h": 25.3
+      },
+      "rate": null,
+      "desc": {
+        "x": 22,
+        "y": 771.33,
+        "w": 346,
+        "h": 64.72
+      },
+      "stockline": {
+        "x": 22,
+        "y": 1102.8,
+        "w": 346,
+        "h": 40.5
+      },
+      "trust": {
+        "x": 22,
+        "y": 1266.8,
+        "w": 346,
+        "h": 98.25
+      },
+      "chips": {
+        "x": 22,
+        "y": 1377.05,
+        "w": 346,
+        "h": 25.75
+      },
+      "tabbar": {
+        "x": 0,
+        "y": 1562.3,
+        "w": 390,
+        "h": 32
+      },
+      "panel": {
+        "x": 22,
+        "y": 1612.3,
+        "w": 346,
+        "h": 75.88
+      },
+      "secDetails": {
+        "x": 22,
+        "y": 1452.8,
+        "w": 346,
+        "h": 269.38
+      }
+    },
+    "type": {
+      "title": {
+        "fontSize": "19px",
+        "fontWeight": "500",
+        "lineHeight": "25.84px"
+      },
+      "price": {
+        "fontSize": "22px",
+        "fontWeight": "800"
+      },
+      "was": null,
+      "vat": {
+        "fontSize": "11px"
+      },
+      "rate": null,
+      "desc": {
+        "fontSize": "13.5px",
+        "lineHeight": "21.87px",
+        "maxBlockSize": "85.61px",
+        "marginBlockStart": "20px",
+        "paddingBlockStart": "20px"
+      },
+      "trustTi": {
+        "fontSize": "12.5px"
+      },
+      "trust": {
+        "rowGap": "10px",
+        "marginBlockStart": "22px",
+        "paddingBlockStart": "20px"
+      },
+      "stockline": {
+        "marginBlockStart": "20px",
+        "paddingBlockStart": "20px"
+      },
+      "sec": {
+        "paddingTop": "34px",
+        "paddingBottom": "34px"
+      },
+      "h2": {
+        "fontSize": "22px",
+        "fontWeight": "600"
+      },
+      "tabbar": {
+        "columnGap": "22px",
+        "marginBlockEnd": "18px"
+      },
+      "tab": {
+        "fontSize": "13.5px"
+      },
+      "body": {
+        "fontSize": "13.5px",
+        "lineHeight": "22.95px"
+      },
+      "thumbs": null,
+      "buybox": {
+        "paddingBlockStart": "22px"
+      }
+    },
+    "tabs": {
+      "buttons": [
+        "Description"
+      ],
+      "open": 0,
+      "panels": 1,
+      "visiblePanels": 1,
+      "openBody": "Demo product for layout testing. Replaced by the WordPress migration.\n"
+    }
+  },
+  "page-1280": {
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "styleBlock": false,
+    "boxes": {
+      "head": {
+        "x": 675.55,
+        "y": 208.25,
+        "w": 582.45,
+        "h": 37.19
+      },
+      "title": {
+        "x": 675.55,
+        "y": 208.25,
+        "w": 488.86,
+        "h": 37.19
+      },
+      "price": {
+        "x": 1180.41,
+        "y": 208.25,
+        "w": 77.59,
+        "h": 25.3
+      },
+      "rate": null,
+      "desc": {
+        "x": 675.55,
+        "y": 285.94,
+        "w": 582.45,
+        "h": 42.86
+      },
+      "stockline": {
+        "x": 675.55,
+        "y": 595.55,
+        "w": 582.45,
+        "h": 40.5
+      },
+      "trust": {
+        "x": 675.55,
+        "y": 759.55,
+        "w": 582.45,
+        "h": 98.25
+      },
+      "chips": {
+        "x": 675.55,
+        "y": 869.8,
+        "w": 582.45,
+        "h": 25.75
+      },
+      "tabbar": {
+        "x": 22,
+        "y": 1055.05,
+        "w": 1236,
+        "h": 32
+      },
+      "panel": {
+        "x": 22,
+        "y": 1105.05,
+        "w": 820,
+        "h": 52.94
+      },
+      "secDetails": {
+        "x": 22,
+        "y": 945.55,
+        "w": 1236,
+        "h": 246.44
+      }
+    },
+    "type": {
+      "title": {
+        "fontSize": "30px",
+        "fontWeight": "500",
+        "lineHeight": "37.2px"
+      },
+      "price": {
+        "fontSize": "22px",
+        "fontWeight": "800"
+      },
+      "was": null,
+      "vat": {
+        "fontSize": "11px"
+      },
+      "rate": null,
+      "desc": {
+        "fontSize": "13.5px",
+        "lineHeight": "21.87px",
+        "maxBlockSize": "85.61px",
+        "marginBlockStart": "20px",
+        "paddingBlockStart": "20px"
+      },
+      "trustTi": {
+        "fontSize": "12.5px"
+      },
+      "trust": {
+        "rowGap": "10px",
+        "marginBlockStart": "22px",
+        "paddingBlockStart": "20px"
+      },
+      "stockline": {
+        "marginBlockStart": "20px",
+        "paddingBlockStart": "20px"
+      },
+      "sec": {
+        "paddingTop": "34px",
+        "paddingBottom": "34px"
+      },
+      "h2": {
+        "fontSize": "22px",
+        "fontWeight": "600"
+      },
+      "tabbar": {
+        "columnGap": "22px",
+        "marginBlockEnd": "18px"
+      },
+      "tab": {
+        "fontSize": "13.5px"
+      },
+      "body": {
+        "fontSize": "13.5px",
+        "lineHeight": "22.95px"
+      },
+      "thumbs": null,
+      "buybox": {
+        "paddingBlockStart": "0px"
+      }
+    },
+    "tabs": {
+      "buttons": [
+        "Description"
+      ],
+      "open": 0,
+      "panels": 1,
+      "visiblePanels": 1,
+      "openBody": "Demo product for layout testing. Replaced by the WordPress migration.\n"
+    }
+  }
+}

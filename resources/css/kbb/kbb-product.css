@@ -306,9 +306,9 @@ a{color:inherit;text-decoration:none}
 .paychips span{font-size:10.5px;font-weight:700;color:var(--ink-2);border:1px solid var(--line);border-radius:6px;padding:4px 9px}
 
 /* sections */
-.sec{padding:34px 0;border-top:1px solid var(--line-2)}
+.sec{padding:var(--pl-sec-pad,34px) 0;border-top:1px solid var(--line-2)}
 .eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--pink);margin-bottom:7px}
-.sec h2{font-size:22px;font-weight:600;letter-spacing:-.01em;margin-bottom:18px}
+.sec h2{font-size:var(--pl-heading-s,22px);font-weight:var(--pl-heading-w,600);letter-spacing:-.01em;margin-bottom:18px}
 .acc{border:1px solid var(--line-2);border-radius:var(--r-m);overflow:hidden;max-width:820px}
 .acc-i{border-bottom:1px solid var(--line-2)}
 .acc-i:last-child{border-bottom:0}
@@ -348,7 +348,7 @@ a{color:inherit;text-decoration:none}
 .dtab:hover{color:var(--pink-deep)}
 .dtab.on{color:var(--pink-deep);border-color:var(--pink)}
 .dpanel{max-width:820px}
-.dcontent{font-size:13.5px;color:var(--ink-2);line-height:1.7;position:relative}
+.dcontent{font-size:var(--pl-body-s,13.5px);color:var(--ink-2);line-height:var(--pl-body-lh,1.7);position:relative}
 .dcontent.clamp{max-height:104px;overflow:hidden}
 .dcontent.clamp::after{content:"";position:absolute;inset-inline-start:0;inset-inline-end:0;bottom:0;height:56px;background:linear-gradient(transparent,#fff)}
 .dcontent ul{margin:6px 0 0 18px}.dcontent li{margin-bottom:5px}
@@ -719,7 +719,7 @@ a{color:inherit;text-decoration:none}
    cannot go below its content's min-content width, so a long unbroken product
    name would push the price off the inline edge and take the document's
    scrollWidth with it. Measured at 390 on a 118-character imported name. */
-.pdp .bb-head{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:start;margin-block:8px 0}
+.pdp .bb-head{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--pl-np-gap,16px);align-items:start;margin-block:var(--pl-head-gap,8px) 0}
 /* `overflow-wrap:anywhere` AND IT IS NOT DEFENSIVE TIDYING. `minmax(0,1fr)` lets
    the title TRACK be narrower than its content -- which is what keeps a long name
    from pushing the price off the edge -- but it does not stop the content itself
@@ -748,12 +748,12 @@ a{color:inherit;text-decoration:none}
    sheet-real-type-390.png shows this one beside 21px/500 (size unchanged) and
    17px/500 with a 23px price, with the measured numbers under each. Picking one
    of those is an edit to the two declarations below and to nothing else. */
-.pdp .bb-title{font-size:19px;font-weight:500;line-height:1.36;letter-spacing:-.005em}
+.pdp .bb-title{font-size:var(--pl-title-m,19px);font-weight:var(--pl-title-w,500);line-height:1.36;letter-spacing:-.005em}
 .pdp .bb-head .bb-price{display:block;text-align:end;white-space:nowrap;line-height:1.15;margin:0}
-.pdp .bb-head .bb-price s{display:block;font-size:12.5px;font-weight:500;color:var(--muted);opacity:1}
-.pdp .bb-head .bb-price .now{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
-.pdp .bb-head .bb-price .off{display:inline-block;margin-block-start:4px;font-size:10px;font-weight:700;padding:2px 6px}
-.pdp .bb-vat{font-size:11px;color:var(--muted);margin-block-start:4px}
+.pdp .bb-head .bb-price s{display:block;font-size:var(--pl-was-s,12.5px);font-weight:500;color:var(--muted);opacity:1}
+.pdp .bb-head .bb-price .now{display:block;font-size:var(--pl-price-s,22px);font-weight:var(--pl-price-w,800);letter-spacing:-.02em}
+.pdp .bb-head .bb-price .off{display:inline-block;margin-block-start:4px;font-size:var(--pl-off-s,10px);font-weight:700;padding:2px 6px}
+.pdp .bb-vat{font-size:var(--pl-vat-s,11px);color:var(--muted);margin-block-start:4px}
 
 /* ── the rating, as a thin bar rather than a lozenge ──────────────────────────
    A capsule says "4.8 · 212 reviews"; a bar also says how far off five that is,
@@ -762,13 +762,13 @@ a{color:inherit;text-decoration:none}
 
    `.pdp .cap-area .sr-capbar` AND NOT `.sr-capbar`: sorina-reviews.css is
    INLINED into <head> after this sheet's <link>, so it wins every tie. */
-.pdp .cap-area{margin-block:10px 0}
-.pdp .cap-area .sr-capbar{background:none;border:0;border-radius:0;padding:0;box-shadow:none;gap:8px;font-size:12px;color:var(--muted)}
+.pdp .cap-area{margin-block:var(--pl-rate-gap,10px) 0}
+.pdp .cap-area .sr-capbar{background:none;border:0;border-radius:0;padding:0;box-shadow:none;gap:8px;font-size:var(--pl-rate-s,12px);color:var(--muted)}
 .pdp .cap-area .sr-capbar:hover{transform:none;box-shadow:none}
 .pdp .cap-area .sr-cap-heart{display:none}
 .pdp .cap-area .sr-cap-avg{font-weight:700;color:var(--ink);font-size:12.5px}
 .pdp .cap-area .sr-cap-count{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
-.pdp .bb-rate{margin-block:10px 0;font-size:12px;color:var(--muted)}
+.pdp .bb-rate{margin-block:var(--pl-rate-gap,10px) 0;font-size:var(--pl-rate-s,12px);color:var(--muted)}
 /* `flex:0 1 96px` with a floor, so the hairline gives way to the words beside
    it on a narrow phone instead of pushing the count onto a second line. */
 .pdp .bb-ratebar{flex:0 1 96px;min-inline-size:44px;block-size:3px;border-radius:2px;background:var(--line-2);overflow:hidden}
@@ -791,11 +791,11 @@ a{color:inherit;text-decoration:none}
      flat. It only bites on a blurb that is actually being cut off, which is what
      a fade is for. Same arithmetic as the cap on the line below it, so the two
      cannot drift apart. */
-.pdp .bb-desc{font-size:13.5px;line-height:1.62;color:var(--ink-2);
-    border-block-start:1px solid var(--line-2);margin-block:20px 0;padding-block-start:20px;
-    max-block-size:calc(3 * 1.62em + 20px);overflow:hidden;
-    -webkit-mask-image:linear-gradient(to bottom,#000 calc(1.95 * 1.62em + 20px),transparent calc(3 * 1.62em + 20px));
-    mask-image:linear-gradient(to bottom,#000 calc(1.95 * 1.62em + 20px),transparent calc(3 * 1.62em + 20px))}
+.pdp .bb-desc{font-size:var(--pl-desc-s,13.5px);line-height:var(--pl-desc-lh,1.62);color:var(--ink-2);
+    border-block-start:1px solid var(--line-2);margin-block:var(--pl-rule-gap,20px) 0;padding-block-start:var(--pl-rule-pad,20px);
+    max-block-size:calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px));overflow:hidden;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(1.95 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)),transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)));
+    mask-image:linear-gradient(to bottom,#000 calc(1.95 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)),transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)))}
 .pdp .bb-more{display:inline-flex;align-items:center;gap:4px;margin-block-start:6px;font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer}
 .pdp .bb-morebox:checked ~ .bb-desc{max-block-size:none;-webkit-mask-image:none;mask-image:none}
 .pdp .bb-morebox:checked ~ .bb-more{display:none}
@@ -812,12 +812,12 @@ a{color:inherit;text-decoration:none}
    of the buy column -- and there is no selector for "the last one that
    rendered". Owned by the block below, a block that does not render takes its
    seam with it and the ones around it close up. */
-.pdp .opt-label{border-block-start:1px solid var(--line-2);margin-block:20px 9px;padding-block-start:20px}
-.pdp .stockline{border-block-start:1px solid var(--line-2);margin-block:20px 10px;padding-block-start:20px}
-.pdp .trust{background:none;padding:0;border-radius:0;grid-template-columns:minmax(0,1fr);gap:10px;
-    border-block-start:1px solid var(--line-2);margin-block-start:22px;padding-block-start:20px}
-.pdp .trust .ti{font-size:12.5px}
-.pdp .paychips{margin-block-start:12px}
+.pdp .opt-label{border-block-start:1px solid var(--line-2);margin-block:var(--pl-rule-gap,20px) 9px;padding-block-start:var(--pl-rule-pad,20px)}
+.pdp .stockline{border-block-start:1px solid var(--line-2);margin-block:var(--pl-rule-gap,20px) 10px;padding-block-start:var(--pl-rule-pad,20px)}
+.pdp .trust{background:none;padding:0;border-radius:0;grid-template-columns:minmax(0,1fr);gap:var(--pl-trust-line-gap,10px);
+    border-block-start:1px solid var(--line-2);margin-block-start:var(--pl-trust-gap,22px);padding-block-start:var(--pl-rule-pad,20px)}
+.pdp .trust .ti{font-size:var(--pl-trust-s,12.5px)}
+.pdp .paychips{margin-block-start:var(--pl-chips-gap,12px)}
 
 /* Rounder and shallower than the shipped bar, which is the one concession
    Ledger makes to a box: these are CONTROLS and a control with no edge cannot
@@ -853,11 +853,11 @@ a{color:inherit;text-decoration:none}
      is where the 30px comes from: it is lifted by half its own height plus the
      shadow. `z-index` because the thumbnails now overlap the frame. */
   .pdp .gthumbs{margin-block-start:-30px;padding-inline:var(--site-gutter,22px);position:relative;z-index:2;
-      gap:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory;padding-block-end:2px}
+      gap:var(--pl-thumb-gap,8px);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory;padding-block-end:2px}
   .pdp .gthumbs::-webkit-scrollbar{display:none}
   .pdp .gthumb{flex:0 0 auto;scroll-snap-align:start;width:56px;height:56px;border-radius:10px;
       box-shadow:var(--sh-s);background-color:#fff}
-  .pdp .buybox{padding-block-start:22px}
+  .pdp .buybox{padding-block-start:var(--pl-buybox-gap,22px)}
 }
 
 /* ── the tabs: one row, the open one prominent, the rest at 38% ───────────────
@@ -892,11 +892,11 @@ a{color:inherit;text-decoration:none}
      titles are shorter) and by 0 at 1280. Re-measured after the shop moved from
      Poppins to Outfit, which is narrower and took 51px off the English figure
      without coming near closing the gap. */
-.details .dtabbar{gap:22px;border-block-end:1px solid var(--line-2);margin-block-end:18px;
+.details .dtabbar{gap:var(--pl-tab-gap,22px);border-block-end:1px solid var(--line-2);margin-block-end:var(--pl-tab-body-gap,18px);
     overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
 .details .dtabbar::-webkit-scrollbar{display:none}
 .details .dtab{flex:0 0 auto;scroll-snap-align:start;padding:0 0 12px;margin-block-end:-1px;
-    border-block-end:2px solid transparent;font-size:13.5px;font-weight:600;color:var(--ink);opacity:.38;
+    border-block-end:2px solid transparent;font-size:var(--pl-tab-s,13.5px);font-weight:600;color:var(--ink);opacity:.38;
     transition:opacity .15s,color .15s}
 .details .dtab:hover{opacity:.7;color:var(--ink)}
 .details .dtab.on{opacity:1;font-weight:700;color:var(--ink);border-block-end-color:var(--ink)}
@@ -946,8 +946,8 @@ a{color:inherit;text-decoration:none}
       already turned. He said the desktop is fine, so the only things that move
       here are the two the phone rules would otherwise have dragged with them. */
 @media (min-width:881px){
-  .pdp .bb-title{font-size:30px;font-weight:500;line-height:1.24}
-  .pdp .bb-head .bb-price .now{font-size:22px}
+  .pdp .bb-title{font-size:var(--pl-title-d,30px);font-weight:var(--pl-title-w,500);line-height:1.24}
+  .pdp .bb-head .bb-price .now{font-size:var(--pl-price-s,22px)}
   /* ── THE PHOTOGRAPH STOPS AT THE PAGE'S OWN CONTENT EDGE ON A WIDE SCREEN.
                                                           (2.60.331 follow-up)
 
