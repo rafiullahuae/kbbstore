@@ -448,3 +448,40 @@ lies by rounding.** It reported 55 for a 55.19px box holding 55.2px of words and
 said the price fitted; the screenshot said "AED 2…". A `Range` around the
 element's contents is the honest instrument, and `tools/card-measure.cjs` prints
 card heights to a tenth of a pixel as well as raw for the same reason.
+
+---
+
+## 9 · One more thing this cost, and it was not a pixel
+
+`components/product-card.blade.php` reads three of that screen's keys, and it
+runs **once per tile**. `ProductStyles::all()` walks its whole schema through
+`SettingsService::get()`, and every one of those is a `Cache::rememberForever`
+— so a 24-product `/shop` page was doing **24 × 29 = 696 cache reads** for a set
+of values that cannot change inside one request.
+
+Thirty sequential renders of `/shop` on this branch's own preview, three passes
+each way:
+
+| | pass 1 | pass 2 | pass 3 |
+| --- | --- | --- | --- |
+| a fresh `all()` per tile | 6799 ms | 5576 ms | 6315 ms |
+| the values resolved once | 3595 ms | 3811 ms | 3363 ms |
+
+About **87ms on a page that takes ~120**. `StorefrontQueryBudgetTest` would
+never have seen it: it counts queries, and this costs none — which is the whole
+of rule 4's "measured rather than asserted".
+
+`ProductStyles` is bound **`scoped`** now, beside `CartService`,
+`SettingsService` and `VariantPricing`, and for the reasons recorded there: a
+singleton would survive between requests on a queue worker, and a process-level
+static is CLAUDE.md's `Setting::map()` trap — it would survive
+`forgetScopedInstances()` and flatter every test that moves a setting and
+re-renders. `save()` drops the memo, so a screen that writes and reads back in
+one request is told the truth.
+
+**The staleness is not theoretical.** The migration case in
+`CardEqualHeightTest` went red the moment the memo existed: it had called
+`SettingsService::forgetMemo()` and not `forgetScopedInstances()`, so it read a
+value from before the migration it had just run. Both resets now, like every
+other helper in that file. A test that pokes the database directly has to do
+what a request does.
