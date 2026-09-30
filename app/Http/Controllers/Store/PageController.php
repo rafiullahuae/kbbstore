@@ -415,7 +415,7 @@ class PageController extends Controller
      * reason to advertise it either.
      *
      * The gate lives here rather than in routes/web.php on purpose: this deploys
-     * as a signed zip to shared hosting with a compiled route cache, and a
+     * as a signed zip to this host with a compiled route cache, and a
      * middleware added to the route file does not take effect until that cache
      * is cleared. A check inside the controller is live the moment the file
      * lands. See CLAUDE.md, "How this ships".

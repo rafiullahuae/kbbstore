@@ -264,7 +264,7 @@ class MailLog
     /**
      * Keep the table from being the thing that fills the account's disk quota.
      *
-     * A shared host measures storage in gigabytes shared with the live
+     * A modest host measures storage in gigabytes shared with the live
      * WooCommerce store's uploads, and this table gets a row per email forever.
      * Pruned by count rather than by age alone: a quiet month must not erase the
      * only record of the failure the owner is trying to investigate, and a busy

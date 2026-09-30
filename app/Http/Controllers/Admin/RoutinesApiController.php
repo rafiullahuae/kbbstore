@@ -53,7 +53,7 @@ class RoutinesApiController extends Controller
      * headroom is for a caller that pages through a selection, not for a
      * caller that means the whole catalogue. A cap rather than no cap because
      * this endpoint's cost is linear in the ids it is handed and an
-     * unbounded admin write is how a shared host gets a request killed halfway.
+     * unbounded admin write is how a modest host gets a request killed halfway.
      */
     private const BULK_MAX = 4 * self::PER_PAGE;
 

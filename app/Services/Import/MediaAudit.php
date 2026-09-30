@@ -178,7 +178,7 @@ final class MediaAudit
         /*
          * `cursor()` and two columns, because `posts.body` is a longText and a
          * five-year Journal is megabytes of HTML. Hydrating all of it at once
-         * is the memory spike a shared host answers with a blank page.
+         * is the memory spike a modest host answers with a blank page.
          */
         foreach (Post::query()->select(['id', 'slug', 'cover', 'body'])->cursor() as $post) {
             $owner = 'article '.$post->id.' ('.$post->slug.')';

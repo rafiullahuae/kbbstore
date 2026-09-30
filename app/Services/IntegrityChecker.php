@@ -50,12 +50,12 @@ use ZipArchive;
  *
  * Every package this shop has ever applied arrived as a zip carrying
  * `update.json`, and that manifest holds a SHA-256 FOR EVERY PATH IT SHIPS.
- * UpdatePackage::checkChecksums() already verifies each file against it before
- * a single byte is written, so a package that installs is a package whose
- * bytes matched their hashes. `update_releases` records which packages
+ * UpdatePackage::checkChecksums() already verifies each file against it
+ * before a single byte is written, so a package that installs is a package
+ * whose bytes matched their hashes. `update_releases` records which packages
  * applied. Between them the shop can say what a shipped file is SUPPOSED to
- * hash to — which is the one thing a host with no shell cannot find out any
- * other way.
+ * hash to — which is the one thing a running server cannot
+ * find out any other way.
  *
  * Two sources, in this order:
  *
@@ -125,7 +125,7 @@ final class IntegrityChecker
 
     /**
      * Hard ceilings, so one screen open cannot become the slowest request on
-     * the site. Shared hosting, no shell, and the owner opens this on a phone.
+     * the site. A modest host, no shell, and the owner opens this on a phone.
      *
      * MAX_FILES bounds the walk; MAX_BYTES leaves a file bigger than 24 MB
      * unhashed and counts it as skipped rather than reading it; MAX_FINDINGS

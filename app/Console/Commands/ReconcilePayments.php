@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Schema;
  *     php artisan payments:reconcile --days=7 --provider=stripe --restart
  *     php artisan payments:reconcile --days=30 --cod
  *
- * WHO THIS IS FOR, WHICH IS NOT THE OWNER. This host is shared hosting with no
+ * WHO THIS IS FOR, WHICH IS NOT THE OWNER. The owner of this shop has no
  * shell access, so the person who most needs a reconciliation cannot run a
  * command. The screen behind Store → Payments → Reconcile is his handle, and it
  * drives the same Reconciler through the same phases; this command exists for

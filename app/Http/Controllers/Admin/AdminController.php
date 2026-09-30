@@ -2255,15 +2255,16 @@ class AdminController extends Controller
         /*
          * THE SHOP'S TRUST CLAIMS — Lane DR.
          *
-         * "100% original", "Direct from brands and trusted suppliers",
-         * "24/7 support", "Korean brands, all sourced direct" and two spellings
-         * of "100% authentic" were literals inside Blade templates: statements
+         * "100% original", "Direct from brands and trusted suppliers", "24/7
+         * support", "Korean brands, all sourced direct" and two spellings of
+         * "100% authentic" were literals inside Blade templates: statements
          * about how this business buys stock and how many hours a day it
          * answers the phone, made to every visitor and, on the checkout, to
          * every shopper in the second before they pay. Whether any of them is
          * true is the owner's question; that he could neither see them nor
-         * withdraw them was ours. On shared hosting with no shell, a claim in a
-         * template is a claim only a signed package can retract.
+         * withdraw them was ours. When code reaches the shop only as a signed zip,
+         * the admin screens, a claim in a template is a claim only a signed
+         * package can retract.
          *
          * `reassure_auth_text` was already read from settings by
          * partials/checkout/reassurance.blade.php and had NO ENTRY HERE, which
@@ -3586,8 +3587,9 @@ class AdminController extends Controller
          * they get is the one they asked for.
          *
          * Nothing else is refused. An operator who has just marked the wrong
-         * order completed can put it back to pending from this dropdown, which
-         * on a host with no shell is the only way that mistake ever gets fixed.
+         * order completed can put it back to pending from this dropdown,
+         * which, with no shell in the owner’s hands, is the only way that
+         * mistake ever gets fixed.
          */
         /*
          * IT CAN NOW FAIL, and that is the substance of this guard.

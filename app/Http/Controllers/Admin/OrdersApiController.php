@@ -94,7 +94,7 @@ class OrdersApiController extends Controller
     private const PER_PAGE_MIN = 10;
     private const PER_PAGE_MAX = 500;
 
-    /** Hard ceiling on one CSV. A shared host is not a reporting server. */
+    /** Hard ceiling on one CSV. A modest host is not a reporting server. */
     private const EXPORT_MAX = 50000;
 
     /** Rows per database round trip while streaming the CSV. */
@@ -211,7 +211,7 @@ class OrdersApiController extends Controller
      * CSV of the CURRENT filtered view — the same rows, in the same order, as
      * the screen the operator is looking at.
      *
-     * Streamed in chunks, because a shared host will not hold 2,419 orders and
+     * Streamed in chunks, because a modest host will not hold 2,419 orders and
      * their aggregates in memory alongside the request. Every cell goes through
      * csvCell(): a buyer whose billing name is `=HYPERLINK(...)` must not become
      * a live formula when the owner opens the file, and every name, email and

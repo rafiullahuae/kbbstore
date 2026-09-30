@@ -493,8 +493,8 @@ class CouponService
      * nothing, and the row going back to counting is what keeps Store ->
      * Coupons agreeing with the order that is printing the discount. Refusing
      * there would mean an owner who mis-cancelled an order last month cannot
-     * put it right, on a host with no shell and no other way in — a refusal
-     * that fires when it should not is its own kind of expensive.
+     * put it right, on a host the owner has no shell on and no other way in —
+     * a refusal that fires when it should not is its own kind of expensive.
      *
      * THE COUPON ROW IS LOCKED for the same reason recordRedemption() locks it:
      * the counter it is checked against must not move between the check and the

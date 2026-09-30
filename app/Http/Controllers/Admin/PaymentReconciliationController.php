@@ -19,12 +19,12 @@ use Illuminate\Support\Facades\DB;
  *
  * WHAT THIS IS THE HANDLE FOR. `php artisan payments:reconcile` exists and is
  * the thing CI runs, and it is useless to the one person who needs it: the
- * owner of this store has no shell. The host is shared hosting and every change
- * reaches it as a zip applied through the admin panel. The same argument
+ * owner of this store has no shell, and every change reaches the host as a
+ * zip applied through the admin panel. The same argument
  * ImportApiController's class comment makes, for the same host, about a
  * different long job.
  *
- * WHY step() IS ITS OWN ENDPOINT. Shared PHP-FPM kills long requests and there
+ * WHY step() IS ITS OWN ENDPOINT. PHP-FPM kills long requests and there
  * is no queue worker on this host, so a reconciliation cannot be one request
  * and cannot be a background job. It is many short requests driven from the
  * browser, each continuing from the checkpoint the last one committed. Two

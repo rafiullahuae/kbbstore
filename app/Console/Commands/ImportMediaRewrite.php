@@ -26,7 +26,7 @@ use Illuminate\Console\Command;
  * bare and it prints every host the catalogue points at, with a count, marking
  * this shop's own.
  *
- * THE OWNER CANNOT RUN THIS. There is no shell on the host. This command is for
+ * THE OWNER CANNOT RUN THIS. The owner has no shell. This command is for
  * CI, for the integrator and for a rehearsal on a copy; the owner's path is
  * Store → Import → "Addresses & pictures", which drives the same
  * `App\Services\Import\MediaRewrite` through

@@ -309,7 +309,7 @@ class MailConfigurator
         ];
 
         /*
-         * Always a timeout, defaulted rather than left null. A shared host that
+         * Always a timeout, defaulted rather than left null. A modest host that
          * silently drops outbound port 465 does not refuse the connection, it
          * hangs -- and an unbounded wait turns the test button into a request
          * that never comes back and a checkout that times out at the gateway.

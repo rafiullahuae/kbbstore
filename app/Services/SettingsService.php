@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Cache;
  * kbb_settings -> settings, kbb_modules -> module_toggles,
  * kbb_module_settings -> module_settings.
  *
- * Autoloaded settings are cached as one payload, because on shared hosting the
+ * Autoloaded settings are cached as one payload, because on this host the
  * cache driver is a file and one read beats forty.
  */
 class SettingsService

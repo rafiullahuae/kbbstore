@@ -218,7 +218,7 @@ final class MediaBackfill
 
         // Chunked, because `path` is only indexed, not unique, and asking the
         // database once per file for a tree of several thousand is the kind of
-        // loop that turns a migration into a timeout on shared hosting.
+        // loop that turns a migration into a timeout on this host.
         foreach (array_chunk($found, 500) as $chunk) {
             $paths = array_column($chunk, 'path');
             $known = Media::query()->whereIn('path', $paths)->pluck('path')->all();
@@ -280,7 +280,7 @@ final class MediaBackfill
         $iterator = new \RecursiveIteratorIterator(
             // SKIP_DOTS so `.` and `..` never start a loop, and the callback
             // swallows an unreadable directory rather than aborting the walk:
-            // on shared hosting one bad permission bit must not cost the whole
+            // on this host one bad permission bit must not cost the whole
             // backfill.
             new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::LEAVES_ONLY,

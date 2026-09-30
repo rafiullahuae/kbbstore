@@ -72,7 +72,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * The measurement scans the order history, so it is cached and the ORDER of a
  * storefront page is decided from the cached map rather than from a join. That
- * matters on this host: /best-sellers/ is a public page on shared hosting, and
+ * matters on this host: /best-sellers/ is a public page on this host, and
  * a derived table over every order line, twice per request (the paginator counts
  * as well as selects), is not a page-load cost worth paying for a sort.
  *

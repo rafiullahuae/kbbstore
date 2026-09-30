@@ -231,7 +231,7 @@ final class CacheApiController extends Controller
     }
 
     /**
-     * The buttons. There is no shell on a customer's host, so this is the only
+     * The buttons. The owner of a customer's host, so this is the only
      * way any of these caches can be dropped.
      */
     public function clear(Request $request): JsonResponse
@@ -279,7 +279,7 @@ final class CacheApiController extends Controller
              */
             $ran['files_removed'] = $this->unlinkCompiled();
 
-            // The half that matters for new PHP on a host with no shell: the
+            // The half that matters for new PHP on a host the owner has no shell on: the
             // file a package writes is not the file the server runs until
             // OPcache lets go of the old one.
             $ran['opcache_reset'] = function_exists('opcache_reset') ? (bool) @opcache_reset() : false;

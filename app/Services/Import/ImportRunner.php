@@ -47,7 +47,7 @@ use Illuminate\Support\Facades\DB;
  *               then commits, which is the one outcome worse than rejecting it.
  *
  *   NOT the whole import. A two-hour import that rolls back entirely on row
- *   400,000 cannot be resumed, and on shared hosting the two-hour import is the
+ *   400,000 cannot be resumed, and on this host the two-hour import is the
  *   one that gets killed.
  *
  * DRY RUN IS THE ONE EXCEPTION, and it inverts that. The whole run happens
@@ -356,7 +356,7 @@ final class ImportRunner
          * This is what makes --limit a resume point rather than a lie. A run
          * stopped by --limit has NOT finished the entity, and marking it
          * finished would make the next run start over from row one instead of
-         * carrying on — turning the one flag that lets a shared host import
+         * carrying on — turning the one flag that lets a modest host import
          * 5,000 rows per invocation into a flag that imports the same 5,000
          * rows forever.
          */
@@ -372,7 +372,7 @@ final class ImportRunner
              * below is about the file and not about this invocation. Counting
              * only what this process re-read would make every resumed import
              * report a shortfall the size of the work the last one did -- which
-             * on shared hosting, where every import is resumed, would be every
+             * on this host, where every import is resumed, would be every
              * import. They are counted as read and as accounted for, because
              * the batch that committed them advanced the checkpoint in the same
              * transaction: their outcome is recorded in `import_checkpoints`

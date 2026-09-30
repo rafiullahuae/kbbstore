@@ -286,7 +286,7 @@ class SecurityModule
          * the one round one made for the trail itself.
          *
          * The owner asked for this in as many words — Phase 18 item 3, "the
-         * part that answers auto reverse it" — and this host has no shell, so
+         * part that answers auto reverse it" — and the owner has no shell, so
          * he cannot diff, list or hash anything himself. A package applied
          * twice, half-applied after a timeout, or hand-edited by a support
          * agent with FTP is invisible today. A check that ships off checks
@@ -299,7 +299,7 @@ class SecurityModule
         'integrity_on' => ['bool', 'Check that shipped files still match their package', true,
                            'Every update package carries a SHA-256 for each file it installs. This hashes those files on the server and reports any that differ, or that are gone. It can only speak about files a package installed — not uploads, not anything hand-created, and not a file somebody ADDED, which has no hash to miss.'],
         'integrity_hours' => ['range', 'Check again at most every', 6,
-                              'Opening this screen runs the check when the last one is older than this. It is a file-by-file hash on shared hosting, so it is throttled rather than run on every refresh; "Check now" on the card ignores this.',
+                              'Opening this screen runs the check when the last one is older than this. It is a file-by-file hash on this host, so it is throttled rather than run on every refresh; "Check now" on the card ignores this.',
                               ['min' => 1, 'max' => 168, 'step' => 1, 'unit' => 'h']],
         /*
          * ONE OPTION, ON PURPOSE. Phase 18 lists "Restore automatically, or
@@ -994,11 +994,12 @@ class SecurityModule
         } catch (\Throwable) {
             /*
              * Deliberately silent, and the reason is the package model this
-             * shop ships under. A package lands as files and its migrations run
-             * afterwards; between the two, `audit_events` does not exist and
-             * every admin write would otherwise throw from a listener. Losing a
-             * row is a gap in a report. Throwing here is an admin panel that
-             * 500s on Save, on a host with no shell to repair it from.
+             * shop ships under. A package lands as files and its migrations
+             * run afterwards; between the two, `audit_events` does not exist
+             * and every admin write would otherwise throw from a listener.
+             * Losing a row is a gap in a report. Throwing here is an admin
+             * panel that 500s on Save, with no shell to
+             * repair it from.
              */
             return null;
         }
@@ -1210,9 +1211,9 @@ class SecurityModule
          * recorded". A wrong password is somebody trying to get in; a shipped
          * file that no longer matches the package that installed it is
          * somebody who already did — or a package that did not apply cleanly,
-         * which on a host with no shell is the same emergency. It is the most
-         * serious sentence this screen can say, so it is the first one it
-         * checks.
+         * which on a host the owner has no shell on is the same emergency. It
+         * is the most serious sentence this screen can say, so it is the
+         * first one it checks.
          */
         if ($integrity['findings'] > 0) {
             $n = (int) $integrity['findings'];
@@ -1226,7 +1227,7 @@ class SecurityModule
                     .'The findings are listed under "Integrity of the files packages installed" below, each with '
                     .'the hash the package declared and the hash the server holds now. '
                     .'Either something changed a file after it was installed, or a package did not apply '
-                    .'cleanly — on a host with no shell those look identical from here, and both are worth '
+                    .'cleanly — from this screen those look identical, and both are worth '
                     .'opening. Nothing has been restored and nothing has been blocked: this screen reports, '
                     .'and whether a file is put back automatically is a decision that has not been taken yet.',
             ];

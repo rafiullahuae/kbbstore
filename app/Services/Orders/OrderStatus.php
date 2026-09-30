@@ -113,14 +113,14 @@ use Illuminate\Support\Facades\DB;
  * short, which is something he can act on — restock it, or leave the order
  * cancelled — rather than a dropdown that says no.
  *
- * NOTHING ELSE IS REFUSED, including `completed` back to `pending`. The status
- * is typed by a human on the order screen, and a human who has just marked the
- * wrong order completed needs to be able to put it back. A whitelist of
- * permitted edges would leave that operator with a dropdown that refuses them
- * and no other way to fix it — on a host with no shell, that means the wrong
- * answer stays in the database. The transition is recorded, which is the
- * property that actually helps: an odd-looking move can be seen and explained
- * afterwards, which a refusal never allows.
+ * NOTHING ELSE IS REFUSED, including `completed` back to `pending`. The
+ * status is typed by a human on the order screen, and a human who has just
+ * marked the wrong order completed needs to be able to put it back. A
+ * whitelist of permitted edges would leave that operator with a dropdown that
+ * refuses them and no other way to fix it — on a host the owner has no shell
+ * on, that means the wrong answer stays in the database. The transition is
+ * recorded, which is the property that actually helps: an odd-looking move
+ * can be seen and explained afterwards, which a refusal never allows.
  *
  * ---------------------------------------------------------------------------
  * Where the transition is recorded

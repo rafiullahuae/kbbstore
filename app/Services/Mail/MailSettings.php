@@ -39,13 +39,13 @@ class MailSettings
         'mail_encryption' => ['choice', 'Encryption', 'ssl for port 465, tls for port 587, none only on a local relay.'],
         'mail_username' => ['text', 'Username', 'Usually the full mailbox address, e.g. no-reply@kbeautybliss.com'],
         'mail_password' => ['secret', 'Password', 'The mailbox password. Stored encrypted and never shown again once saved.'],
-        'mail_from_address' => ['text', 'From address', 'What customers see as the sender. On most shared hosts this MUST be a mailbox on this domain or the host rejects the message.'],
+        'mail_from_address' => ['text', 'From address', 'What customers see as the sender. On most modest hosts this MUST be a mailbox on this domain or the host rejects the message.'],
         'mail_from_name' => ['text', 'From name', 'e.g. K Beauty Bliss'],
         /*
          * Where the store itself is told an order has come in.
          *
          * A separate field rather than reusing the From address, because they are
-         * different jobs: From is what a customer sees and on a shared host must
+         * different jobs: From is what a customer sees and on a modest host must
          * be a mailbox on this domain, while this is wherever the person who packs
          * the orders actually reads their mail — a personal Gmail, more often than
          * not. Left blank it falls back to the From address, which is the one
@@ -150,7 +150,7 @@ class MailSettings
          * Blank by default, and the sentence appears only when the address does.
          *
          * A SEPARATE FIELD RATHER THAN THE FROM ADDRESS, for the same reason
-         * `mail_merchant_address` is separate: on a shared host the From must be
+         * `mail_merchant_address` is separate: on a modest host the From must be
          * a mailbox on this domain or the relay rejects the message, while the
          * place a customer's reply should land is wherever the owner actually
          * reads his mail. The two are different jobs.
@@ -660,7 +660,7 @@ class MailSettings
      * mailbox on this site's own domain, derived from APP_URL.
      *
      * Derived rather than left to config/mail.php's `hello@example.com`, because
-     * a shared host's MTA rejects or spam-scores a From on a domain it does not
+     * a modest host's MTA rejects or spam-scores a From on a domain it does not
      * host, and "the emails all went to junk" is the same outcome as not sending
      * them. Nothing is written to the database: this is a computed fallback, so
      * the day the owner types a real address it takes over with no migration.

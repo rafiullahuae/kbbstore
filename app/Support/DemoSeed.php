@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Schema;
  * this fact, per row, by model and id — it is the authority Remove itself
  * trusts to decide what to delete — so a column would be a SECOND answer to a
  * question that already has one, and two answers drift. It would also mean a
- * migration adding a column to a live `orders` table on shared hosting for a
+ * migration adding a column to a live `orders` table on this host for a
  * fact that is already recorded. The join costs one correlated subquery against
  * a table that holds a few dozen rows and is indexed on (model, record_id).
  *

@@ -28,7 +28,7 @@ class ExtendedDeliveryApiController extends Controller
 
     /**
      * If the delivery_countries table is missing — a migration that has not
-     * run yet, or failed silently on a shared host with restricted DDL
+     * run yet, or failed silently on a modest host with restricted DDL
      * privileges — this screen used to 500 with no way to tell why from the
      * browser. It now degrades the same way Newsletter does when its table is
      * absent: empty rows, on always false, and a flag the front end shows as

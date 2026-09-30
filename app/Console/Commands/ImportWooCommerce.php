@@ -34,7 +34,7 @@ use Illuminate\Console\Command;
  * and rolls it back, so its answer includes every foreign key resolved and
  * every constraint the database itself would refuse, and none of it survives.
  *
- * IF IT IS KILLED — and on shared hosting it will be — run exactly the same
+ * IF IT IS KILLED — and on this host it will be — run exactly the same
  * command again. Progress is recorded in `import_checkpoints` in the same
  * transaction as the rows it describes, so the re-run continues from the last
  * committed batch rather than starting over or duplicating. Running it twice

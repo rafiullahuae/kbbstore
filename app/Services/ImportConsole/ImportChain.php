@@ -187,7 +187,7 @@ use function Illuminate\Support\defer;
  * =============================================================================
  * THE HOST MAY REFUSE ALL OF THIS
  * =============================================================================
- * A shared host that will not open a connection to itself — no loopback, DNS
+ * A modest host that will not open a connection to itself — no loopback, DNS
  * that resolves the domain somewhere this machine cannot reach, an outbound
  * firewall — cannot run a chain, and there is nothing this code can do about
  * it. So the FIRST kick is the test: begin() fires it synchronously and, if it

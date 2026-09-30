@@ -44,7 +44,8 @@ use App\Services\SettingsService;
  * WHETHER THEY ARE TRUE IS NOT THIS CLASS'S QUESTION and is not a question any
  * lane can answer — sourcing and support hours are facts about the business.
  * What was wrong is that the owner could neither see the claims nor change
- * them: they were in files only a signed zip can edit, on a host with no shell.
+ * them: they were in files only a signed zip can edit, and the owner has no
+ * shell.
  *
  * ── WHAT THIS DOES ──────────────────────────────────────────────────────────
  *

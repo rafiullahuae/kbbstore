@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Schema;
  * =============================================================================
  *
  * The owner has no shell. The import has to happen inside PHP-FPM requests on
- * shared hosting, which means a hard ceiling — max_execution_time,
+ * modest hosting, which means a hard ceiling — max_execution_time,
  * request_terminate_timeout, or the proxy in front of them — that this code
  * cannot raise and cannot detect. There is NO QUEUE WORKER on this host, so
  * "dispatch a job" is not available either. A run therefore has to be made of

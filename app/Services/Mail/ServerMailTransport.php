@@ -16,14 +16,14 @@ use Symfony\Component\Mime\Message;
  *
  * WHY THIS EXISTS RATHER THAN config/mail.php's `sendmail` MAILER.
  *
- * Symfony's SendmailTransport does not shell out politely; it opens a pipe with
- * proc_open() (Transport/Smtp/Stream/ProcessStream::initialize). proc_open is
- * one of the first functions a shared host puts in `disable_functions`, and this
- * store runs on shared hosting with no shell access — so there is no way to
- * check from here and no way to fix it from there if the guess is wrong. It also
- * needs a correct binary path: the framework default is `/usr/sbin/sendmail -bs`,
- * and `-bs` (a full SMTP conversation over the pipe) is a stricter requirement
- * than `-t` that not every host's sendmail wrapper honours. Two ways to be
+ * Symfony's SendmailTransport does not shell out politely; it opens a pipe
+ * with proc_open() (Transport/Smtp/Stream/ProcessStream::initialize).
+ * proc_open is one of the first functions a shared host puts in
+ * `disable_functions`, and nothing in this application can check whether it is
+ * — nor put it right from here if the guess is wrong. It also needs a correct
+ * binary path: the framework default is `/usr/sbin/sendmail -bs`, and `-bs`
+ * (a full SMTP conversation over the pipe) is a stricter requirement than
+ * `-t` that not every host's sendmail wrapper honours. Two ways to be
  * silently wrong, on a host where "silently wrong" is the failure this whole
  * package exists to end.
  *
@@ -72,7 +72,7 @@ class ServerMailTransport extends AbstractTransport
     /**
      * Is PHP's mail() actually callable on this server?
      *
-     * Checked, not assumed. `disable_functions` is how a shared host switches it
+     * Checked, not assumed. `disable_functions` is how a modest host switches it
      * off, and function_exists() alone still returns true for a disabled
      * function on some builds, so both are consulted.
      */
@@ -149,7 +149,7 @@ class ServerMailTransport extends AbstractTransport
      * The call itself, and the one retry this class allows.
      *
      * `-f` sets the envelope sender, which is what a receiving server checks SPF
-     * against; without it a shared host stamps its own default and the message
+     * against; without it a modest host stamps its own default and the message
      * is markedly more likely to be filed as junk. But a locked-down sendmail
      * wrapper can refuse the flag outright rather than warn about it, and then
      * mail() returns false having sent nothing at all. So: try with it, and if

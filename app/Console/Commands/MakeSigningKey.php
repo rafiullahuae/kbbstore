@@ -73,7 +73,7 @@ class MakeSigningKey extends Command
 
         /* 0600 set BEFORE the bytes are written. touch-then-chmod leaves a
          * window in which the key is on disk at the umask's permissions, and on
-         * shared hosting that window is the whole exposure. */
+         * modest hosting that window is the whole exposure. */
         $handle = fopen($path, 'wb');
 
         if ($handle === false) {

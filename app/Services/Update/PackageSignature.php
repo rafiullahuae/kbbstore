@@ -17,7 +17,7 @@ use RuntimeException;
  * exists: to verify a package a customer's server needs the same secret that
  * signs one, in a `.env` file they can read, and with it they can forge a
  * package this updater accepts as genuine. PHP 8.4 carries Ed25519 in core
- * (`sodium_crypto_sign_*`), so a shared host needs nothing installed — the
+ * (`sodium_crypto_sign_*`), so a modest host needs nothing installed — the
  * private half never leaves the build machine and the public half can be
  * printed on a billboard.
  *

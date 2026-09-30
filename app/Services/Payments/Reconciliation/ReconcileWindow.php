@@ -11,7 +11,7 @@ use Carbon\CarbonImmutable;
  *
  * WHY THERE IS A WINDOW AT ALL. "Reconcile everything" is not a thing this
  * host can do. Every provider paginates, every provider rate-limits, and PHP
- * on shared hosting is killed somewhere between thirty seconds and two minutes
+ * on this host is killed somewhere between thirty seconds and two minutes
  * with no way to ask which. Years of history is tens of thousands of remote
  * rows, and a run that cannot finish reports nothing at all — which is
  * strictly worse than a run over last month that finishes.

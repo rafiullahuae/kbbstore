@@ -118,7 +118,7 @@ class ProductController extends Controller
         // blob -- and then discarded all of it, because toApi() publishes ten
         // named fields and none of those is one of them. Measured at 250
         // products with a 20KB description each: 6MB through memory to emit
-        // 54KB of JSON, on shared hosting, for free, to anybody.
+        // 54KB of JSON, on this host, for free, to anybody.
         //
         // THE ROW COUNT IS NOW BOUNDED, which is the half the column list did
         // not fix. Narrow columns made each row cheap; nothing made the number

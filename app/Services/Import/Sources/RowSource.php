@@ -36,7 +36,7 @@ interface RowSource
      * The rows, in a stable order, one array per record.
      *
      * A generator, not an array. A full order export is hundreds of thousands
-     * of lines and this has to run inside a shared host's memory limit.
+     * of lines and this has to run inside a modest host's memory limit.
      *
      * @return iterable<int, array<string, string>> line number => row
      */

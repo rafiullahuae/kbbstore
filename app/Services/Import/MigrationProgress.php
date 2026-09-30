@@ -67,7 +67,7 @@ final class MigrationProgress
             'generated_at' => now()->toIso8601String(),
             /*
              * The client polls on this, and it is the SERVER that decides.
-             * A page that keeps hitting a shared host every two seconds after
+             * A page that keeps hitting a modest host every two seconds after
              * the run has finished is a page that costs the owner money for
              * nothing, so the interval widens when nothing is happening and
              * `poll` goes false outright when there is nothing left to watch.

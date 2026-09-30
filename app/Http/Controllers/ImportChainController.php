@@ -85,7 +85,7 @@ use function Illuminate\Support\defer;
  * caller's process then exits, and only then does the slice start. If the work
  * were done before the response, every link would hold its predecessor open and
  * a twenty-minute import would be one twenty-minute-deep nest of live PHP
- * workers — on shared hosting, an exhausted pool inside a minute.
+ * workers — on this host, an exhausted pool inside a minute.
  *
  * `defer()` and not `app()->terminating()`, for the reason OutboundTick's
  * header gives: terminating callbacks are never cleared off the Application and

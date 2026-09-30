@@ -117,7 +117,7 @@ final class MediaUsageWriter
              * rows for an owner depend on nothing but its own image columns
              * and the `media` table, which the Media hooks below cover, so
              * re-deriving on a price change would add a delete and an insert
-             * to each of 2,400 products on an import run, on a shared host,
+             * to each of 2,400 products on an import run, on a modest host,
              * for no change in the answer.
              */
             $class::updated(static function (Model $owner) use ($kind): void {

@@ -12,10 +12,10 @@ namespace App\Services\Payments;
  * endpoint that is a practical attack, not a theoretical one — and the thing
  * being protected is "mark this order paid".
  *
- * Written by hand rather than pulled from a package on purpose. This app ships
- * as signed zip packages to shared hosting with no shell, so `composer
- * require` is not available at deploy time; a new runtime dependency would
- * have to be vendored into the package by hand on every update.
+ * Written by hand rather than pulled from a package on purpose. This app
+ * ships as signed zip packages and never as a composer install, so
+ * `composer require` is not available at deploy time; a new runtime dependency
+ * would have to be vendored into the package by hand on every update.
  */
 final class Signature
 {

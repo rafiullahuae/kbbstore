@@ -21,7 +21,7 @@ use RuntimeException;
  *   - INSIDE THE REPOSITORY is refused. Every other protection is one `git add
  *     -A` away from being undone, and this project has already shipped a token
  *     into its own history once (public_html/kbb-doctor.php, 2.60.266).
- *   - GROUP- OR WORLD-READABLE is refused. On the shared hosting this product
+ *   - GROUP- OR WORLD-READABLE is refused. On the modest hosting this product
  *     targets, "other" is other customers.
  *   - A SYMLINK is refused, because what it points at is not what was checked.
  *

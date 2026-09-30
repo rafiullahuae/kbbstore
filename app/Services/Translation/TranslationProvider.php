@@ -41,7 +41,7 @@ interface TranslationProvider
      *
      * A batch and not a string, because every one of these vendors bills a
      * request as well as a character and because 671 products one at a time is
-     * 671 round trips over a shared host's outbound connection.
+     * 671 round trips over a modest host's outbound connection.
      *
      * Returns translations in the SAME ORDER as $texts. An implementation that
      * cannot translate an entry returns null in its place rather than dropping

@@ -13,17 +13,19 @@ use Illuminate\Support\Facades\Log;
 /**
  * What the four order emails have in common.
  *
- * NONE OF THEM IMPLEMENTS ShouldQueue, AND THAT IS DELIBERATE. No queue worker
- * is configured on this host and nothing in this application is queued, which is
- * the same reason `abandoned_cart` and `back_in_stock` are still marked `todo`
- * in the module registry. (The clause "it is shared hosting with no shell
- * access" was here and is stale: the live shop moved to Cloudways, which has
- * SSH — CLAUDE.md, corrected 24 September 2026. What matters to this class is
- * that no worker is running, which NothingHereOutlivesOneRequestTest pins.) A queued Mailable here would be accepted, written to the jobs
- * table, and never run: the exact shape of failure CLAUDE.md records twice, a
- * feature whose signup half works and whose sending half does not. These send
- * inline, and App\Services\Mail\OrderMailer is what makes inline sending safe by
- * never letting a failure reach the caller.
+ * NONE OF THEM IMPLEMENTS ShouldQueue, AND THAT IS DELIBERATE. No queue
+ * worker is configured on this host and nothing in this application is
+ * queued, which is the same reason `abandoned_cart` and `back_in_stock` are
+ * still marked `todo` in the module registry. (The clause "it is shared hosting
+ * with no shell access" was here and is stale:
+ * the live shop moved to Cloudways, which has SSH — CLAUDE.md, corrected 24
+ * September 2026. What matters to this class is that no worker is running,
+ * which NothingHereOutlivesOneRequestTest pins.) A queued Mailable here would
+ * be accepted, written to the jobs table, and never run: the exact shape of
+ * failure CLAUDE.md records twice, a feature whose signup half works and
+ * whose sending half does not. These send inline, and
+ * App\Services\Mail\OrderMailer is what makes inline sending safe by never
+ * letting a failure reach the caller.
  *
  * EVERY ONE CARRIES A TEXT PART. Mail clients that render no HTML are not a
  * hypothetical for a receipt — they are watch faces, notification previews,

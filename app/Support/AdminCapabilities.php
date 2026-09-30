@@ -29,9 +29,9 @@ use Illuminate\Routing\Route;
  * There are four roles, they are a fixed vocabulary in AdminController's own
  * validator, and nothing in the product asks for per-account permission
  * editing. Tables, a pivot and a policy class per model would all have to be
- * migrated onto a shared host with no shell, and would still answer the same
- * question this array answers. When roles genuinely need to be editable, this
- * file is the thing that grows a database backing — until then it is the whole
+ * migrated onto the live shop through the updater alone, and would still answer
+ * the same question this array answers. When roles genuinely need to be
+ * editable, this file is the thing that grows a database backing — until then it is the whole
  * feature, readable in one screen, and diffable in a package.
  *
  * ---------------------------------------------------------------------------

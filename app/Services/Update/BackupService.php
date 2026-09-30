@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\DB;
  * Snapshots exactly what an update is about to change, so it can be put back.
  *
  * Only the files being replaced are copied, not the whole application — on
- * shared hosting a full copy would be slow, would risk the disk quota, and is
+ * modest hosting a full copy would be slow, would risk the disk quota, and is
  * not needed. Files the update *adds* are recorded by name so a rollback can
  * delete them again.
  *
- * The database dump is written in PHP because shared hosting has no shell, so
+ * The database dump is written in PHP because the owner has no shell, so
  * mysqldump is unavailable.
  */
 final class BackupService

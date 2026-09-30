@@ -759,7 +759,7 @@ final class DocumentMediaRewrite
      * `cursor()` and only the two columns, because `posts.body` is a `longText`
      * and an article is kilobytes: a shop with a five-year Journal is megabytes
      * of HTML, and hydrating all of it at once is the kind of memory spike a
-     * shared host answers with a blank page.
+     * modest host answers with a blank page.
      *
      * @return iterable<int, array{model: class-string, table: string, id: int, field: string, html: string}>
      */

@@ -93,7 +93,7 @@ use Illuminate\Validation\Rule;
  * ────────────────────────────────────────────────────────────────────────────
  *
  * Every request is bounded before it reaches the database, because a screen
- * that can insert ten thousand rows in one call is a way to take a shared host
+ * that can insert ten thousand rows in one call is a way to take a modest host
  * down. MAX_ROWS caps what one call may create, LIKES_MAX_REVIEWS caps what one
  * call may touch, and both are reported to the screen so it can say the number
  * rather than discovering it with a 422.

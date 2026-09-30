@@ -34,7 +34,7 @@ use App\Support\ReviewStatus;
  * takes a WooCommerce comment export through an admin upload. It is a different
  * door for a different moment: the owner uploading one file through a browser,
  * with a screen to read the result on and a 20,000-row ceiling because it runs
- * inside a web request on shared hosting.
+ * inside a web request on this host.
  *
  * This entity is the migration path — the folder of CSVs, the checkpointed
  * resume that survives a request being killed on a 110-second host, the dry run

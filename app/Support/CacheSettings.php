@@ -237,8 +237,8 @@ final class CacheSettings
      * the settings table to decide whether to register would run that query on
      * every console command too, including `migrate` on an install whose
      * settings table does not exist yet — which is an application that cannot
-     * boot to run the migration that would fix it. There is no shell here to
-     * fix that with.
+     * boot to run the migration that would fix it, and the owner has no shell
+     * to fix that with.
      */
     public static function enabled(SettingsService $settings): bool
     {

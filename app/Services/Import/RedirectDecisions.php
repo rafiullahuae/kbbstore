@@ -77,7 +77,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Writing is `upsert()` in chunks, not `updateOrCreate()` in a loop: accepting
  * a question's worth of rows is 300 answers, and 600 queries inside one
- * transaction on a shared host is the shape of request that gets killed halfway.
+ * transaction on a modest host is the shape of request that gets killed halfway.
  */
 final class RedirectDecisions
 {
@@ -100,7 +100,7 @@ final class RedirectDecisions
     /**
      * Rows per `upsert()`. Eight bound columns each, so 200 rows is 1,600
      * placeholders — comfortably inside SQLite's 32,766 and MySQL's 65,535,
-     * with room for the ceiling to be lower than documented on a shared host.
+     * with room for the ceiling to be lower than documented on a modest host.
      */
     private const CHUNK = 200;
 

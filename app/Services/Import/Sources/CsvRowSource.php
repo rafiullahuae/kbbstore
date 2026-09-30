@@ -31,7 +31,7 @@ use App\Services\Import\RowRejected;
  *
  * Memory: fgetcsv one line at a time, never file() or str_getcsv on the whole
  * file. A full order export from a store with five years of history is hundreds
- * of megabytes and this has to run inside a shared host's memory_limit.
+ * of megabytes and this has to run inside a modest host's memory_limit.
  *
  * The empty `escape` argument on both fgetcsv calls is deliberate and is not
  * boilerplate. PHP's historical default of `\` is a proprietary extension that

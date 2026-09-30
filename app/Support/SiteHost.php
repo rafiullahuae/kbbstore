@@ -21,7 +21,7 @@ use App\Models\Setting;
  * CANONICAL", WHICH IS WHAT EVERY OTHER IMPLEMENTATION OF THIS DOES
  * ---------------------------------------------------------------------------
  *
- * Because there is no shell on this host, and a redirect rule that sends the
+ * Because the owner has no shell, and a redirect rule that sends the
  * admin panel somewhere unreachable cannot be undone from inside the admin
  * panel. CLAUDE.md's constraint outranks the feature: an admin nobody can
  * reach cannot be repaired.

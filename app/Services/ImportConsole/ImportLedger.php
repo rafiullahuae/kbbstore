@@ -49,7 +49,7 @@ use Illuminate\Support\Facades\Schema;
  *
  *   PART-WAY — some files match and some do not. NEVER BLOCKS, and this is the
  *     important one to get right, because it is not an unusual state, it is the
- *     normal one. An import on shared hosting is sixty browser requests and the
+ *     normal one. An import on this host is sixty browser requests and the
  *     owner closes the tab; a delta export carries three files of nine; a run
  *     that stopped after customers is continued the next morning. Every one of
  *     those is part-way, and a guard that refused them would refuse the

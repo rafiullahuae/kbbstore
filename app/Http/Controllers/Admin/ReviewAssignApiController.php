@@ -69,7 +69,7 @@ class ReviewAssignApiController extends Controller
      * Reviews moved or copied in one call.
      *
      * The same ceiling the bulk moderation endpoint uses, and for the same
-     * reason: this runs in a web request on shared hosting, and the work per
+     * reason: this runs in a web request on this host, and the work per
      * row includes a rating recomputation for a product.
      */
     private const BULK_MAX = 200;

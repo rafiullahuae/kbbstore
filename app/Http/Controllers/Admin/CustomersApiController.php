@@ -71,7 +71,7 @@ class CustomersApiController extends Controller
     private const PER_PAGE_MIN = 10;
     private const PER_PAGE_MAX = 500;
 
-    /** Hard ceiling on one CSV. A shared host is not a reporting server. */
+    /** Hard ceiling on one CSV. A modest host is not a reporting server. */
     private const EXPORT_MAX = 50000;
 
     /** Rows per database round trip while streaming the CSV. */

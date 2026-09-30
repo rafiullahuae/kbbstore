@@ -36,8 +36,8 @@ class ShippingZone extends Model
      * owner unticked a method and saved, the row vanished from the screen —
      * and ShippingApiController::save() only updates ids the browser posts,
      * which are the ids the screen was given. The switch was one-way: nothing
-     * in the admin could turn a method back on, on a host with no shell access
-     * and no database client. Unticking both methods on the zone covering the
+     * in the admin could turn a method back on, and the owner holds neither a
+     * shell nor a database client. Unticking both methods on the zone covering the
      * UAE additionally leaves ratesFor() returning [], which
      * Store\CheckoutController::place() reports as "We do not deliver to that
      * country yet" — every checkout refused, with no screen able to undo it.

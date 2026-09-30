@@ -163,13 +163,13 @@ class CacheHeaders
          * THE SWITCH, AND IT IS READ HERE RATHER THAN AT REGISTRATION TIME.
          *
          * A provider that asked the settings table whether to register would
-         * ask it during `migrate` too, on an install whose settings table does
-         * not exist yet -- an application that cannot boot far enough to run
-         * the migration that would fix it, on a host with no shell. So the
-         * registration is unconditional and the decision is taken here, where
-         * there is certainly a database and certainly a request. Same shape as
-         * CanonicalHost, which is registered always and inert until an address
-         * is configured.
+         * ask it during `migrate` too, on an install whose settings table
+         * does not exist yet -- an application that cannot boot far enough to
+         * run the migration that would fix it, on a host the owner has no
+         * shell on. So the registration is unconditional and the decision is
+         * taken here, where there is certainly a database and certainly a
+         * request. Same shape as CanonicalHost, which is registered always
+         * and inert until an address is configured.
          */
         if (! CacheSettings::enabled($this->settings)) {
             return $response;

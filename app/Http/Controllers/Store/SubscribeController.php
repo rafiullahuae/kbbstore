@@ -124,7 +124,7 @@ class SubscribeController extends Controller
      * DEFERRED, AND FOR TWO SEPARATE REASONS.
      *
      * The first is the one PasswordResetController's header sets out: an SMTP
-     * handshake to a shared host takes far longer than the rest of this request
+     * handshake to a modest host takes far longer than the rest of this request
      * and varies wildly, so leaving it inline would make "we sent one" and "we
      * sent nothing" distinguishable by a stopwatch — rebuilding, in the timing,
      * the oracle the wording above just closed.

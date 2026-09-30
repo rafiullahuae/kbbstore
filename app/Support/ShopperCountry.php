@@ -57,15 +57,16 @@ use Illuminate\Http\Request;
  * country with source DEFAULT and every caller behaves exactly as it did
  * before this class existed. Nothing here is a hard dependency on a header that
  * may not be there. And nothing here calls out to a geo API: that would be a
- * network round trip inside a page render on shared hosting, which is slow when
+ * network round trip inside a page render on this host, which is slow when
  * it works and a white page when it does not.
  *
  * WHAT WE DO NOT KNOW ABOUT THIS HOST, stated rather than assumed. Whether
  * production actually receives `CF-IPCountry` has not been established: the
- * site is on Hostinger shared hosting, there is no trusted-proxy configuration
- * anywhere in the application, and no Cloudflare-specific handling exists in
- * this codebase beyond the optimistic header read in ExtendedDelivery. There is
- * no GeoIP extension binding, no IP-to-country table and no geo service in the
+ * site is on managed hosting behind a proxy this application does not
+ * control, there is no trusted-proxy configuration anywhere in the
+ * application, and no Cloudflare-specific handling exists in this codebase
+ * beyond the optimistic header read in ExtendedDelivery. There is no GeoIP
+ * extension binding, no IP-to-country table and no geo service in the
  * repository. So the header tier may well never fire in production, and this
  * class is written so that that costs nothing: it is one array lookup that
  * misses, and step 4 answers.
