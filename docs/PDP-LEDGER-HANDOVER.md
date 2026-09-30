@@ -635,6 +635,63 @@ hundredths, because `ModuleSchema`'s `range` is an integer and the page's own
 type is 13.5 and 1.62. The console divides by the field's `scale` to draw the
 label; the stored number is never shown.
 
+#### Every control, where it sits, and what it ships at
+
+`Appearance → Product page → **Spacing · Page**`
+
+| control | ships at | what it moves |
+|---|---|---|
+| Space between page sections | **34px** | `.sec` padding — above and below Product details, Reviews, You may also like |
+| Space under the photograph, on a phone | **22px** | `.pdp .buybox` top padding under 881px |
+| Gap between gallery thumbnails | **8px** | the strip floating on the picture's bottom edge |
+| Gap between the detail tabs | **22px** | between Description / Ingredients / How to use |
+| Space under the detail tab row | **18px** | between the row and the text it opens |
+
+`Appearance → Product page → **Spacing · Buy column**`
+
+| control | ships at | what it moves |
+|---|---|---|
+| Space above the product name | **8px** | between the brand line and the name/price row |
+| Gap between the name and the price | **16px** | the channel in that row |
+| Space above the rating | **10px** | both rating rows, so the Review badges control cannot lose it |
+| Space above each dividing line | **20px** | the air above every hairline seam |
+| Space below each dividing line | **20px** | the air under it |
+| Space above the trust lines | **22px** | 22 and not 20 — the sheet's own number |
+| Space between the trust lines | **10px** | one trust line to the next |
+| Space above the payment icons | **12px** | above the Tabby / Tamara / Visa row |
+
+`Appearance → Product page → **Type · Buy column**`
+
+| control | ships at | what it moves |
+|---|---|---|
+| Product name · phone | **19px** | round 2's option B |
+| Product name · laptop | **30px** | above 881px |
+| Product name weight | **Regular (500)** | both widths |
+| Price | **22px** | the live figure |
+| Price weight | **Heavy (800)** | |
+| Struck-out price | **12.5px** | |
+| Discount badge | **10px** | the "−25%" chip |
+| VAT line | **11px** | wording stays Store → Ecommerce → Tax's |
+| Rating line | **12px** | stars, score, count — and the capsule |
+| Short description | **13.5px** | the blurb above the options |
+| Short description line spacing | **1.62** | the three-line cap and the fade follow it |
+| Trust lines | **12.5px** | |
+
+`Appearance → Product page → **Type · Sections & tabs**`
+
+| control | ships at | what it moves |
+|---|---|---|
+| Section headings | **22px** | Product details, Reviews, You may also like |
+| Section heading weight | **Medium (600)** | |
+| Detail tab labels | **13.5px** | the words in the tab row |
+| Detail tab text | **13.5px** | the body inside an opened tab |
+| Detail tab line spacing | **1.7** | |
+
+Thirty controls, thirty `--pl-*` custom properties, and every one of those
+numbers is also the `var(--pl-x, <fallback>)` in `kbb-product.css`. The tab
+strip also carries **Reset layout to defaults**, which fills the buffer with
+these values and marks the bar dirty — it does not save by itself.
+
 ### 9b · ▲ Not one default moved, and that is the opposite of round 2
 
 He asked for the CONTROLS. `ProductLayout::storefrontCss()` answers the **empty
