@@ -1,5 +1,22 @@
 # Five product pages to choose from — Lane PDP
 
+> ### ▲ HE PICKED ONE. A · LEDGER IS THE PRODUCT PAGE NOW. *(30 September)*
+>
+> *"Ledger design is fine for mobile and desktop both. but don't end the page,
+> this desgn + existing reviews section, and related products section and then
+> footer. also in mobile you have used big bold font, whichi dont' want."*
+>
+> `docs/PDP-LEDGER-HANDOVER.md` is what happened next: Ledger became an edit to
+> `resources/views/store/product.blade.php` and a block at the foot of
+> `resources/css/kbb/kbb-product.css`, with the reviews section, the related grid
+> and the footer still on the end of the page, and the mobile type answered with
+> three options at 390 for him to pick a letter from.
+>
+> **The five previews below are still mounted and still work.** Nothing has been
+> deleted: the removal is an integrator change, because taking the route out means
+> editing `routes/web.php`. The file list is at the foot of this document.
+
+
 > *"For product page also i want a dedicated lane. to redesign almost fully. i
 > want the mobile version like this, image, then beautiful gallery, then small
 > brand name with link, then product name, and right side cut price and actual

@@ -235,6 +235,34 @@ it('shows a real half-price markdown that whole dirhams was hiding', function ()
 });
 
 it('never prints the same figure twice on the product page', function () {
+    /*
+     * ── THE PIN MOVED, AND IT WAS SHARPENED RATHER THAN LOOSENED. (Lane PDP2)
+     *
+     * This read `expect($figures)->toBe(['AED 99.80', 'AED 100.00'])` with the
+     * note "`.now` first, the struck original second — the order the template
+     * writes". Ledger stacks the struck figure ABOVE the live one rather than
+     * beside it, so store/product.blade.php now writes the <s> first and the
+     * two positions swapped. The FIGURES did not change and neither did the
+     * precision: this test's own claim — that a markdown from AED 100.00 to
+     * AED 99.80 must not print the same string twice — is exactly as true.
+     *
+     * So the positional assertion is replaced by an assertion ON THE ELEMENTS,
+     * which is what it was standing in for and which no future rearrangement
+     * can quietly satisfy: the struck figure is in the <s> and the live one is
+     * in `.now`.
+     *
+     * CHECKED BOTH WAYS, NOT REASONED ABOUT: this file was run against
+     * store/product.blade.php as it stood at the commit this lane branched from
+     * — `git show HEAD:resources/views/store/product.blade.php` put back in
+     * place, these assertions unchanged — and reported 15 passed, 70
+     * assertions. So it is not "whatever the page does now": it is the same
+     * claim, said in a way that does not depend on which of the two comes
+     * first.
+     *
+     * MUTATION NOTE, RUN: drop Money::decimalsToDistinguish() from the block —
+     * both elements print "AED 100" and the `not->toBe` and both element
+     * assertions are red.
+     */
     $product = pdtProduct(['price' => 10000, 'sale_price' => 9980]);
 
     $html = test()->get('/product/' . $product->slug)->assertOk()->getContent();
@@ -243,8 +271,13 @@ it('never prints the same figure twice on the product page', function () {
 
     expect($figures)->toHaveCount(2);
     expect($figures[0])->not->toBe($figures[1]);
-    // .now first, the struck original second — the order the template writes.
-    expect($figures)->toBe(['AED 99.80', 'AED 100.00']);
+
+    $block = substr($html, (int) strpos($html, 'id="bbPrice"'), 400);
+    $struck = substr($block, (int) strpos($block, '<s>'), (int) strpos($block, '</s>') - (int) strpos($block, '<s>'));
+    $live = substr($block, (int) strpos($block, '<span class="now">'), 220);
+
+    expect(pdtAmounts($struck))->toBe(['AED 100.00'], 'the struck figure is what it cost before');
+    expect(pdtAmounts($live)[0] ?? null)->toBe('AED 99.80', 'and .now is what it costs today');
 });
 
 it('never prints the same figure twice in the quick-view modal', function () {
@@ -406,7 +439,16 @@ it('quotes the single-unit row at the same width as the price block above it', f
 
     $html = test()->get('/product/' . $product->slug)->assertOk()->getContent();
 
-    $headline = pdtAmountsIn($html, 'id="bbPrice"', 400);
+    /* `.now`, NOT `$headline[0]`. (Lane PDP2) This read the FIRST amount inside
+       `#bbPrice`, which was the live price only because the template happened to
+       write `.now` before the <s>. Ledger stacks the struck figure above the
+       live one, so position 0 is now the struck original — a different number,
+       correctly printed, failing an assertion that was never about position.
+       The live price has always been the thing inside `.now`; that is what the
+       sticky bar reads and what pdp.js writes into. Asked for by element, this
+       passes on both sides of the change. */
+    $block = substr($html, (int) strpos($html, 'id="bbPrice"'), 400);
+    $headline = pdtAmounts(substr($block, (int) strpos($block, '<span class="now">'), 220));
     $rows = pdtAmountsIn($html, 'id="variants"', 1600);
 
     expect($headline[0])->toBe('AED 99.80');
