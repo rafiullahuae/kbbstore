@@ -70,8 +70,17 @@ it('renders the cart page screen as script, not as literal Blade', function () {
 
     // The screen is in the document at all.
     expect($html)->toContain("var SCREEN = 'cartpage';")
-        ->and($html)->toContain('kbbAddNavEntry')
         ->and($html)->toContain('.cps-wrap{');
+
+    /*
+     * ▲ AND THIS SCREEN'S OWN kbbAddNavEntry, NOT ANY OF THE FORTY-FOUR.
+     * (Lane SEC) Read against the whole console this was
+     * `toContain('kbbAddNavEntry')` — measured x44 by
+     * tools/plc-needle-scan.sh, because every screen registers a sidebar row —
+     * so deleting THIS screen's call left it green and the sidebar lost an
+     * entry with nothing to say so.
+     */
+    expect(Tests\Support\ConsoleScreen::region($html, 'cartpage'))->toContain('kbbAddNavEntry');
 
     /*
      * AND NOTHING FROM BLADE SURVIVED INTO IT. These are the exact shapes that
@@ -79,10 +88,14 @@ it('renders the cart page screen as script, not as literal Blade', function () {
      * inside a script block. Searched in THIS partial's own region, because the
      * console legitimately contains the characters elsewhere.
      */
-    $from = strpos($html, "var SCREEN = 'cartpage';");
-    expect($from)->not->toBeFalse();
+    /* THIS SCREEN'S REGION, AS A RELATIONSHIP. (Lane SEC) This was
+       `substr($html, $from, 24000)`, and the region is 60,018 bytes — so 36,018
+       of this partial, sixty per cent of it, was never looked at. These are
+       NEGATIVE assertions, so a short window does not fail, it stops looking:
+       a directive left raw past the cut shipped in silence. */
+    $mine = Tests\Support\ConsoleScreen::region($html, 'cartpage');
 
-    $mine = substr($html, (int) $from, 24000);
+    expect($mine)->not->toBe('', 'the cartpage screen is not on the console at all');
 
     expect($mine)->not->toContain('@json(')
         ->and($mine)->not->toContain('@if (')
@@ -92,6 +105,12 @@ it('renders the cart page screen as script, not as literal Blade', function () {
 // MUTATION: put `@json([1,2])` inside this partial's raw block. RED on the
 // `@json(` assertion — and nothing else in the suite notices, which is the
 // whole point of this test existing.
+//
+// ▲ AND IT WAS ONLY TRUE FOR THE FIRST 24,000 BYTES. Measured: the partial's
+// region is 60,018, the window was 24,000, and a raw `@json(` planted past the
+// cut left this case GREEN. Run again against the region, the same plant is
+// RED. A negative assertion inside a fixed window does not fail when the window
+// is too short — it stops looking.
 
 it('registers its own sidebar row instead of editing the nav arrays', function () {
     $partial = (string) file_get_contents(

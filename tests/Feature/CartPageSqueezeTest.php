@@ -1322,8 +1322,14 @@ it('fades the address line only once there is an address to fade', function () {
 
     // The unconditional pair keeps the one-line clipping and gives up only the
     // mask, so a browser with no mask support is where it always was.
-    $start = (int) strpos($css, '.cpg-squeeze .cpg-addrbar .who b,');
-    $unconditional = substr($css, $start, 190);
+    /* THE RULE, TO ITS OWN CLOSING BRACE. (Lane SEC) This was
+       `substr($css, $start, 190)` against a rule of 135 bytes, so the window
+       overshot 55 bytes INTO THE NEXT RULE — the negative assertion below could
+       have failed for a mask on a rule this case is not about, and the positive
+       one could have been answered by it. */
+    $unconditional = Tests\Support\CssRule::at($css, '.cpg-squeeze .cpg-addrbar .who b,');
+
+    expect($unconditional)->not->toBe('', 'the unconditional .who rule is gone');
 
     expect($unconditional)->toContain('display:block;white-space:nowrap;overflow:hidden}')
         ->and($unconditional)->not->toContain('mask-image');

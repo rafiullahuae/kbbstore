@@ -153,14 +153,41 @@ it('no longer paints any gallery photograph as a CSS background', function () {
     $f = galleryFixture();
     $html = test()->get('/product/' . $f['shot']->slug . '/')->assertSuccessful()->getContent();
 
-    $start = strpos($html, 'class="gallery"');
-    expect($start)->not->toBeFalse();
-    $gallery = substr($html, $start, 4000);
+    /*
+     * THE GALLERY ELEMENT, NOT FOUR THOUSAND BYTES FROM ITS OPENING TAG.
+     * (Lane SEC)
+     *
+     * This was `substr($html, $start, 4000)`, and the assertion below is
+     * NEGATIVE — so a window that is too short does not fail, it stops looking.
+     * A product with enough thumbnails to push the gallery past four thousand
+     * bytes could carry the exact `background:url(...)` this case exists to
+     * forbid, beyond the cut, in silence. The same defect, measured, took sixty
+     * per cent of the cart-page partial out of CartPageScreenTest's reach; see
+     * Tests\Support\ConsoleScreen.
+     *
+     * The element's own extent is a relationship and cannot be outgrown. The
+     * DOM is already loaded in this file for exactly this kind of question.
+     */
+    $doc = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="UTF-8">'.$html);
+    libxml_clear_errors();
+
+    $node = (new DOMXPath($doc))->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' gallery ')]")->item(0);
+
+    expect($node)->not->toBeNull('the product page has no gallery element at all');
+
+    $gallery = (string) $doc->saveHTML($node);
 
     /* The exact shape that used to hide every photograph from crawlers:
        `background:#fff url('...') center/contain no-repeat`. A gradient
        placeholder is still a background and is still allowed -- it is not a
        photograph. What must never come back is a url() carrying an image. */
+    /*
+     * MUTATION, RUN BOTH WAYS. A `background:#fff url('/pad.jpg')` planted
+     * inside the gallery past the old 4,000-byte cut left this case GREEN;
+     * bound to the element it is RED. (Lane SEC)
+     */
     expect($gallery)->not->toMatch('/background:[^"]*url\(/i');
 });
 

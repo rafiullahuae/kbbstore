@@ -44,13 +44,21 @@ it('renders the checkout page screen as script, not as literal Blade', function 
         ->getContent();
 
     expect($html)->toContain("var SCREEN = 'checkoutpage';")
-        ->and($html)->toContain('kbbAddNavEntry')
         ->and($html)->toContain('.chp-wrap{');
 
-    $from = strpos($html, "var SCREEN = 'checkoutpage';");
-    expect($from)->not->toBeFalse();
+    /*
+     * ▲ AND THIS SCREEN'S OWN kbbAddNavEntry, NOT ANY OF THE FORTY-FOUR — see
+     * CartPageScreenTest, which had the identical row at x44. (Lane SEC)
+     */
+    expect(Tests\Support\ConsoleScreen::region($html, 'checkoutpage'))->toContain('kbbAddNavEntry');
 
-    $mine = substr($html, (int) $from, 20000);
+    /* THIS SCREEN'S REGION, AS A RELATIONSHIP. (Lane SEC) This was
+       `substr($html, $from, 20000)` against a region of 47,140 bytes, so 27,140
+       of this partial went unchecked — and the assertions below are negative,
+       so the short window never failed, it simply stopped looking. */
+    $mine = Tests\Support\ConsoleScreen::region($html, 'checkoutpage');
+
+    expect($mine)->not->toBe('', 'the checkoutpage screen is not on the console at all');
 
     expect($mine)->not->toContain('@json(')
         ->and($mine)->not->toContain('@if (')

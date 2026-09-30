@@ -36,10 +36,19 @@ use Illuminate\Support\Facades\DB;
  *
  * In `artisan` there is no such seam at all. So the exposure is:
  *
- *   - QUEUED JOBS: safe today, and safe by the framework rather than by luck.
- *     The worker resets scope between jobs. (This application has no app/Jobs
- *     directory; Mail\OrderMail is the one ShouldQueue class and it prices
- *     nothing — order lines carry snapshotted `unit_price` columns.)
+ *   - QUEUED JOBS: safe today, and safe twice over. The worker would reset
+ *     scope between jobs — and there are no jobs. This application has no
+ *     app/Jobs directory and NOTHING IN app/ IMPLEMENTS ShouldQueue at all.
+ *
+ *     ▲ THIS PARAGRAPH SAID "Mail\OrderMail is the one ShouldQueue class",
+ *     WHICH IS THE OPPOSITE OF WHAT THAT CLASS SAYS ABOUT ITSELF: its header
+ *     opens "NONE OF THEM IMPLEMENTS ShouldQueue, AND THAT IS DELIBERATE",
+ *     because a queued Mailable on a host with no worker is written to the jobs
+ *     table and never run. The word appears in that file only inside the
+ *     sentence explaining its absence, which is how a scan — and this comment —
+ *     came to report it as queued. Corrected by Lane SEC, which pinned the
+ *     claim rather than restating it: NothingHereOutlivesOneRequestTest matches
+ *     the DECLARATION and not the word, and is red the day one appears.
  *   - CONSOLE COMMANDS: nothing in app/Console/Commands calls effectivePrice()
  *     or VariantPricing today, and the importer does not price at all —
  *     Import\Entities\ProductImporter and VariationImporter write the `price`
