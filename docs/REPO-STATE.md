@@ -13,9 +13,9 @@ a session went into establishing which was which.
 
 | | |
 |---|---|
-| **Repo synced to** | **2.60.327** |
+| **Repo synced to** | **2.60.328** |
 | Date | 2026-09-30 |
-| Previous entry point | 2.60.326 |
+| Previous entry point | 2.60.327 |
 | Server version at sync | **NOT KNOWN.** See the gap below — this is the one thing this file exists to record and it is open again |
 | Verified how | The 2.60.325 package was built from `3b372db` with `php artisan kbb:package`, and all **155** files in it were compared byte-for-byte against that tree before it was handed over. `UpdatePackage::verify()` accepts it |
 
@@ -124,3 +124,4 @@ unknown state.
 | 2026-09-30 | 2.60.325 | 2.60.107 | Thirteen lanes. 155 files, 14 migrations, built from `3b372db` and diffed file-by-file against it. Entry point re-established after the 218-version gap above |
 | 2026-09-30 | 2.60.326 | 2.60.325 | Five fixes, no shipped default moved. Built from the commit that carries this row, and diffed file-by-file against it |
 | 2026-09-30 | 2.60.327 | 2.60.326 | One fix, to a defect .326 shipped an hour earlier: a paid order's basket could be handed back. Built from the commit that carries this row |
+| 2026-09-30 | 2.60.328 | 2.60.327 | Two order defects found by sweeping for .327's SHAPE: cash on delivery reported "placed" whatever happened, and cardAbandoned() carried .327's fault the whole time. Built from the commit that carries this row |

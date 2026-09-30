@@ -3,6 +3,74 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.328
+**Two order defects, and the first one is not a rare race — it is ordinary cash
+on delivery.** Apply after .327.
+
+---
+
+### ▲ A CANCELLED ORDER COULD SHOW A RECEIPT AND SEND A CONFIRMATION
+
+When a cash-on-delivery order is placed, the shop moves it from *waiting to be
+paid for* to *processing*, and then tells the checkout what happened. It was
+saying **"placed"** whatever happened.
+
+The code's own comment says only an order still waiting to be paid for is moved
+on — and the answer to that question was thrown away. So for an order that had
+already been cancelled, the move correctly declined, the checkout was told the
+order was placed, **the receipt was shown, the confirmation email went out, and
+the stock stayed claimed.**
+
+Cash on delivery is most of this shop's orders, so this is the one to apply for.
+It is not a race and it does not need unlucky timing — it needs an order that is
+not in the state the shop assumed.
+
+### ▲ THE SAME DEFECT .327 FIXED, IN THE METHOD .327'S CODE WAS COPIED FROM
+
+`cardAbandoned()` — the path a card payment takes when the shopper walks away —
+has carried the identical fault the whole time, and it is where the code fixed in
+.327 was modelled on. It asked whether the order had been paid, and then put the
+basket back **regardless of the answer**.
+
+On the shop: a shopper whose card payment confirms in the moment they are leaving
+the checkout ends up holding a live basket of goods **they have already been
+charged for**, with the stock never released because the order never moved.
+
+Found by sweeping the whole application for the shape rather than by waiting for
+it to happen twice: *a guarded write whose guard's answer is discarded*. Five
+places do that; two were wrong, both in the checkout, and both are fixed. The
+third is correct and now says so at the line. A sixth cannot be added without the
+suite noticing.
+
+---
+
+### AND A LARGE NUMBER YOU MAY WANT TO KNOW
+
+None of this changes your shop, but it is the reason the two above were findable.
+The test suite was measured for assertions that pass for a reason unrelated to
+the thing they are testing. Of **140** that check for a sentence a shopper is
+shown, **114 could not see their own subject.**
+
+Two of them, proved by actually breaking the shop:
+
+- Take the **name off every product card on the site** — every card, no name at
+  all — and the suite reported **21 passed, 0 failed**.
+- Stop emitting a **page description on every page** — none, anywhere — and it
+  reported **28 passed**.
+
+Both are things you would notice within a minute. 26 are repaired and the rest
+are assigned. Nothing about your shop changed; what changed is that the suite can
+now see those two.
+
+---
+
+### WHAT MOVED, AND WHAT DID NOT
+
+No setting, no screen, no default, no new control, and no migration. Two order
+paths that were reporting success they had not earned now report the truth.
+
+---
+
 ## 2.60.327
 **One fix, and it is to something .326 shipped an hour earlier.** Apply after
 .326.
