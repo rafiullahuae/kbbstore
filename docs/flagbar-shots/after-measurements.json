@@ -1,0 +1,186 @@
+{
+  "home": {
+    "390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bar": {
+        "cls": "kfb kfb-m kfb-d kfb-pill kfb-notx",
+        "display": "block",
+        "height": 30,
+        "innerJustify": "normal",
+        "textInMarkup": "UAE's Authentic K-Beauty Store",
+        "textDisplay": "block",
+        "textBox": {
+          "x": 95,
+          "w": 200,
+          "h": 21
+        },
+        "flags": [
+          {
+            "x": 22,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 347,
+            "w": 21,
+            "h": 14
+          }
+        ],
+        "flagGap": 304
+      }
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "bar": {
+        "cls": "kfb kfb-m kfb-d kfb-pill kfb-notx",
+        "display": "block",
+        "height": 30,
+        "innerJustify": "center",
+        "textInMarkup": "UAE's Authentic K-Beauty Store",
+        "textDisplay": "none",
+        "textBox": {
+          "x": 0,
+          "w": 0,
+          "h": 0
+        },
+        "flags": [
+          {
+            "x": 614,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 645,
+            "w": 21,
+            "h": 14
+          }
+        ],
+        "flagGap": 10
+      }
+    },
+    "1920": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "bar": {
+        "cls": "kfb kfb-m kfb-d kfb-pill kfb-notx",
+        "display": "block",
+        "height": 30,
+        "innerJustify": "center",
+        "textInMarkup": "UAE's Authentic K-Beauty Store",
+        "textDisplay": "none",
+        "textBox": {
+          "x": 0,
+          "w": 0,
+          "h": 0
+        },
+        "flags": [
+          {
+            "x": 934,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 965,
+            "w": 21,
+            "h": 14
+          }
+        ],
+        "flagGap": 10
+      }
+    }
+  },
+  "shop": {
+    "390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bar": {
+        "cls": "kfb kfb-m kfb-d kfb-pill kfb-notx",
+        "display": "block",
+        "height": 30,
+        "innerJustify": "normal",
+        "textInMarkup": "UAE's Authentic K-Beauty Store",
+        "textDisplay": "block",
+        "textBox": {
+          "x": 95,
+          "w": 200,
+          "h": 21
+        },
+        "flags": [
+          {
+            "x": 22,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 347,
+            "w": 21,
+            "h": 14
+          }
+        ],
+        "flagGap": 304
+      }
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "bar": {
+        "cls": "kfb kfb-m kfb-d kfb-pill kfb-notx",
+        "display": "block",
+        "height": 30,
+        "innerJustify": "center",
+        "textInMarkup": "UAE's Authentic K-Beauty Store",
+        "textDisplay": "none",
+        "textBox": {
+          "x": 0,
+          "w": 0,
+          "h": 0
+        },
+        "flags": [
+          {
+            "x": 614,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 645,
+            "w": 21,
+            "h": 14
+          }
+        ],
+        "flagGap": 10
+      }
+    },
+    "1920": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "bar": {
+        "cls": "kfb kfb-m kfb-d kfb-pill kfb-notx",
+        "display": "block",
+        "height": 30,
+        "innerJustify": "center",
+        "textInMarkup": "UAE's Authentic K-Beauty Store",
+        "textDisplay": "none",
+        "textBox": {
+          "x": 0,
+          "w": 0,
+          "h": 0
+        },
+        "flags": [
+          {
+            "x": 934,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 965,
+            "w": 21,
+            "h": 14
+          }
+        ],
+        "flagGap": 10
+      }
+    }
+  }
+}

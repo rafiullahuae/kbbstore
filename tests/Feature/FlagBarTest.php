@@ -592,8 +592,19 @@ it('draws all eleven controls on Appearance → Header → Flag bar', function (
 
     $keys = array_column($tab['fields'], 'key');
 
+    /*
+     * ▲ ELEVEN FIELDS BECAME TWELVE — Lane BG, and the pin is advanced rather
+     * than loosened, because the ORDER is part of what it asserts: the screen
+     * draws the tab in this sequence and "Show the wording on desktop" belongs
+     * directly under "Wording", which is the field it qualifies.
+     *
+     * The owner: "UAE's Authentic K-Beauty Store — remove this from the
+     * desktop version." The line comes off the desktop strip and stays on the
+     * phone one; `fb_text` is shared by both widths, so a switch is the only
+     * thing that can be device-scoped without changing what a phone shows.
+     */
     expect($keys)->toBe([
-        'fb_mobile', 'fb_desktop', 'fb_text', 'fb_flags', 'fb_height', 'fb_size',
+        'fb_mobile', 'fb_desktop', 'fb_text', 'fb_text_desktop', 'fb_flags', 'fb_height', 'fb_size',
         'fb_flag_h', 'fb_bg', 'fb_ink', 'fb_pill', 'fb_border',
     ]);
 

@@ -4013,6 +4013,37 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kfb-fl svg{display:block;height:var(--kfb-fh,14px);width:auto;border-radius:1px}
 @media (max-width:900px){.kfb-m{display:block}}
 @media (min-width:901px){.kfb-d{display:block}}
+/* ── THE WORDS COME OFF THE DESKTOP STRIP ───────────────────────── Lane BG ──
+
+   The owner: "UAE's Authentic K-Beauty Store — remove this from the desktop
+   version." The BAR stays; the line goes, above 900px only. `kfb-notx` is
+   written by HeaderSettings::flagBarClass() whenever `fb_text_desktop` is off,
+   which is what it ships at.
+
+   INSIDE THE SAME 901px QUERY the strip is already turned on in, so there is
+   one desktop/phone line in this block rather than two that could drift. Below
+   901 nothing in this rule exists at all, which is what makes "phones are
+   byte-identical" a property of the stylesheet rather than a claim.
+
+   ── AND `justify-content` HAS TO BE SAID, BECAUSE THE FLAGS MOVE ──────────
+
+   `.kfb-tx` carries `margin-inline:auto` and that auto margin is the ONLY
+   thing holding the two flags apart — `.kfb-in` sets no justification, so it
+   falls back to `flex-start`. Take the words out and both flags collapse into
+   a pair at the inline start of a 1680px strip, which is not a countries bar,
+   it is two stickers in a corner. Measured before this line was written:
+   UAE at x=142 and Korea at x=173 on a 1920 viewport, with 1585px of empty
+   strip after them.
+
+   CENTRED, not `space-between`. Space-between keeps them where they are today
+   — 1585px apart with nothing between — and a 30px strip empty from edge to
+   edge reads as something that failed to load. A centred pair reads as what it
+   is: the two countries, with the words gone. Both were photographed; see
+   docs/flagbar-shots/. */
+@media (min-width:901px){
+    .kfb-notx .kfb-tx{display:none}
+    .kfb-notx .kfb-in{justify-content:center}
+}
 /* ── THE NARROWEST PHONES, AND ONLY THEM ──────────────────────────────────
    Measured in Chromium: the shipped line is 215px at 12px Outfit, the two
    flags are 21px each and the page gutter is 22px a side, which comes to
