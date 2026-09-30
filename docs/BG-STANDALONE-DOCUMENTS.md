@@ -282,7 +282,20 @@ gaining the 500 face — so its numbers isolate that fix:
 | | 1280 | 390 |
 |---|---|---|
 | body height | 8,587 → **8,587** | 10,513 → **10,522** (+9) |
-| differing pixels | 2,015 of 1,152,000 (0.17%) | 1,403 of 329,160 (0.43%) |
+| ~~differing pixels~~ | ~~2,015 of 1,152,000~~ | ~~1,403 of 329,160~~ |
+
+> **▲ THE PIXEL ROW IS WITHDRAWN — round 5.** The home page does not hold still:
+> two captures of the **unchanged** page differ by **2,936 pixels**, which is
+> *larger* than the 2,015 attributed here to the change. The signal cannot be
+> separated from the noise, so the honest statement is that the home page's
+> pixel delta says nothing either way. Cause: live infinite animations
+> (`miTiles` ×4, `sl` ×1) that `networkidle` and `document.fonts.ready` both
+> return before. `docs/BG-PROBES-THAT-CANNOT-FAIL.md` §3 has the seven-page
+> table and the two distinct causes.
+>
+> **The rest of this section stands**, because none of it is a pixel
+> comparison: the body heights are layout measurements, the census is a count,
+> and the ruler runs on a hidden probe no animation touches.
 
 **+9px at 390 is the fix, not a regression**: 27 visible elements on that page
 ask for weight 500 and now get a face that is ~1.5% wider than the regular they
