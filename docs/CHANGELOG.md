@@ -3,6 +3,77 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.329
+**Two more admin buttons that took your screen away, and a cache that answered
+for the wrong shop.** Apply after .328.
+
+---
+
+### ▲ TWO MORE PLACES THE CONSOLE VANISHED ON AN EXPIRED SESSION
+
+.326 fixed nine of these. Widening the guard that watches for them found two
+more, and neither lives in the file the earlier sweeps read — which is why three
+passes over the main console never saw them.
+
+**Reviews → Reviews.io → Export** replaced your whole screen with a blank
+`404 NOT FOUND`. It shows the screen's own banner now, with everything still on
+it.
+
+**Instagram → Connect**, when the browser blocks the pop-up. The screen has a
+deliberate fallback for that case — follow the link in this tab instead — and on
+a dead session that fallback took the console with it. It asks first now.
+
+That fallback is also the one place in this work where the answer had to be the
+*opposite* of everywhere else: the screen's own note says a blocked pop-up must
+never become a button that does nothing, so this one **fails open**. If the shop
+cannot tell whether your session is alive, it goes anyway.
+
+### ▲ A CACHED VALUE COULD ANSWER FOR A SHOP IT HAD NEVER BELONGED TO
+
+The shop remembers a handful of settings in files on disk rather than asking the
+database each time — sensibly, since the database read costs about ten times what
+the file read does. What it did not do was keep one shop's answers apart from
+another's. Two different databases on one machine both got the same admin
+address, left behind by neither of them.
+
+On your live server there is one shop, so this has not bitten you. It bites
+anywhere a second copy runs beside the first — a staging site, a test restore,
+the machine this work is built on — and the symptom is a setting that is
+correct in the database and wrong on the screen.
+
+Each shop now gets its own drawer, with no change to any of the forty places in
+the code that clear those settings. Clearing the cache by hand still clears all
+of them.
+
+---
+
+### AND ONE THING THE TESTS COULD NOT SEE
+
+The explanation a shopper gets when a set takes the last of something they also
+added loose — the fix from .325, for the problem you reported — was covered by a
+test that checked the **whole page** for the sentence. The cart drawer is drawn
+into every page and carries that same sentence, so the test passed whether the
+cart page said anything or not.
+
+Removing the explanation entirely: **15 passed, 0 failed.** The checkout had the
+same hole. Nothing about your shop changed here — what changed is that removing
+it now fails loudly.
+
+---
+
+### WHAT MOVED, AND WHAT DID NOT
+
+No setting, no screen, no default, no new control.
+
+> **This package does run a migration**, and it is only a cache clear — but it is
+> the half without which the rest of the package does nothing. Two of the files
+> in it are screens your server keeps a compiled copy of, and one is a
+> configuration file it may also have compiled. Applied without the clear, the
+> two buttons above would go on doing exactly what they do today and **nothing
+> would error**, which is the way this kind of change fails silently.
+
+---
+
 ## 2.60.328
 **Two order defects, and the first one is not a rare race — it is ordinary cash
 on delivery.** Apply after .327.
