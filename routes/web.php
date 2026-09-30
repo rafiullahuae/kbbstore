@@ -657,6 +657,14 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // order history, unattended, for as long as it takes.
         require __DIR__.'/import-background-admin.php';
 
+        // Store → Import → "Clean up before the migration" (Lane IE). Same
+        // group and emphatically the same reason: these endpoints DELETE rows.
+        // They sit inside the group that already carries `auth:admin` and
+        // NoStoreAdminApi, behind the owner-only `data.cleanup` capability, and
+        // deliberately NOT under /api/ — which is unauthenticated in this shop,
+        // and where a delete endpoint would be a public one.
+        require __DIR__.'/cleanup-admin.php';
+
         // Store → Import → "Addresses & pictures" (Lane GB). Same group and the
         // same reason: one of these endpoints writes the redirect rows that
         // move every visitor who lands on an address this shop does not serve,
