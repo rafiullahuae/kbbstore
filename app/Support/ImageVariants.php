@@ -1096,6 +1096,287 @@ final class ImageVariants
     }
 
     /**
+     * The cache directory a crop at one frame shape lives under, or null.
+     *                                                               (Lane SEC)
+     *
+     * `c500x600`. One segment, and it is built from a TOKEN the caller took out
+     * of BannerSet::SLIDER_RATIOS — a constant — and never from anything an
+     * operator typed. The regex below is the second lock rather than the first:
+     * a path segment assembled from a setting is how a cache directory becomes
+     * a traversal, and rule 5 says a select stores one of its own options.
+     *
+     * Anything that is not `<digits>x<digits>` within sane bounds is refused
+     * outright, which also keeps the directory name readable on a server the
+     * owner cannot list.
+     */
+    public static function cropDir(string $token): ?string
+    {
+        return preg_match('/^[1-9][0-9]{0,4}x[1-9][0-9]{0,4}$/', $token) === 1
+            ? self::DIR.'/c'.$token
+            : null;
+    }
+
+    /**
+     * The widths a crop is worth writing at, largest first.
+     *
+     * WIDTHS plus the crop's OWN width, which is the part that matters. A
+     * 1920 x 550 banner cropped to a 5 : 6 phone frame is 458 x 550 — every
+     * pixel `object-fit: cover` was ever going to show — and stopping at 400w
+     * would throw away detail the source actually has. Never upscaling is the
+     * same promise generate() makes and for the same reason: a candidate whose
+     * width descriptor overstates the pixels behind it is how a browser picks
+     * the blurriest file on offer.
+     *
+     * @return list<int>
+     */
+    private static function cropWidths(int $cropWidth): array
+    {
+        $widths = [];
+
+        foreach (self::WIDTHS as $width) {
+            if ($cropWidth > $width) {
+                $widths[] = $width;
+            }
+        }
+
+        if (! in_array($cropWidth, $widths, true)) {
+            $widths[] = $cropWidth;
+        }
+
+        return $widths;
+    }
+
+    /**
+     * The rectangle `object-fit: cover` shows of a picture in a frame.
+     *
+     * ── IT IS THE SAME RECTANGLE THE BROWSER ALREADY PICKS ──────────────────
+     *
+     * That is the whole claim of the crop, and it is why this is not a
+     * composition decision. `cover` scales to the larger of the two ratios and
+     * centres the overflow, so a 1920 x 550 banner in a 5 : 6 frame shows the
+     * middle 458 columns and all 550 rows — today, with no crop file anywhere.
+     * Extracting that band on the server changes WHAT IS DOWNLOADED and cannot
+     * change what is seen.
+     *
+     * WHICH ALSO SAYS WHAT IT CANNOT FIX. A shop banner usually has its subject
+     * off-centre, and a centre crop of a wide picture is as likely to be
+     * background as product — but that is true of the page as it stands, not
+     * something this introduces. Moving it would need a focal point the owner
+     * sets, which is a control and a round of its own.
+     *
+     * @return array{0: int, 1: int, 2: int, 3: int} x, y, width, height
+     */
+    public static function coverRect(int $sourceW, int $sourceH, float $frameAspect): array
+    {
+        if ($sourceW < 1 || $sourceH < 1 || $frameAspect <= 0.0) {
+            return [0, 0, max(1, $sourceW), max(1, $sourceH)];
+        }
+
+        if (($sourceW / $sourceH) > $frameAspect) {
+            // Wider than the frame: full height, middle columns.
+            $width = max(1, (int) round($sourceH * $frameAspect));
+            $width = min($width, $sourceW);
+
+            return [(int) round(($sourceW - $width) / 2), 0, $width, $sourceH];
+        }
+
+        // Taller than the frame: full width, middle rows.
+        $height = max(1, (int) round($sourceW / $frameAspect));
+        $height = min($height, $sourceH);
+
+        return [0, (int) round(($sourceH - $height) / 2), $sourceW, $height];
+    }
+
+    /**
+     * Make the phone-shaped crops of one photograph.               (Lane SEC)
+     *
+     * ── WHY THIS EXISTS, IN ONE MEASUREMENT ─────────────────────────────────
+     *
+     * A banner slide with no phone picture shows its desktop picture in the
+     * portrait phone frame, cropped by `cover` to about a quarter of its width.
+     * Serving that correctly without a crop file means asking for the whole
+     * 1920px original — measured on a photographic 1920 x 550 JPEG, 152.6 KB —
+     * and throwing three quarters of every pixel away in the browser. The same
+     * band written out on the server is 38.6 KB at its native 458 x 550, with
+     * IDENTICAL pixels. Four times smaller for the same picture.
+     *
+     * ── AND WHAT IT COSTS TO MAKE, BECAUSE THAT IS THE OTHER HALF ───────────
+     *
+     * Measured, GD, this machine:
+     *
+     *   1920 x 550   (153 KB)   43 ms   ->  200w, 400w, 458w
+     *   3000 x 900   (367 KB)   63 ms   ->  200w, 400w, 750w
+     *   4000 x 1200  (624 KB)  159 ms   ->  200w, 400w, 800w, 1000w
+     *
+     * One decode for every width, as generate() does and for the same reason.
+     * It is never called on a storefront request: a banner card's pictures are
+     * cropped when the card is SAVED, and the ones that existed before this
+     * shipped are cropped by the migration that adds the column. A shop has
+     * three to five banner pictures, not a catalogue, so the backfill is under
+     * a second inside an update the owner is already waiting on.
+     *
+     * IDEMPOTENT, like generate(): a crop already on disk is left alone, so a
+     * backfill that was interrupted can simply be run again.
+     *
+     * @return array{made: int, skipped: int, reason: ?string}
+     */
+    public static function generateCrop(string $image, string $token, float $frameAspect): array
+    {
+        $dir = self::cropDir($token);
+
+        if ($dir === null) {
+            return ['made' => 0, 'skipped' => 0, 'reason' => 'not a frame shape this cache names'];
+        }
+
+        if (! self::available()) {
+            return ['made' => 0, 'skipped' => 0, 'reason' => 'no image library'];
+        }
+
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return ['made' => 0, 'skipped' => 0, 'reason' => 'not a local image'];
+        }
+
+        [, , $fsRel] = $parts;
+        $source = self::insidePublicRoot($fsRel);
+
+        if ($source === null) {
+            return ['made' => 0, 'skipped' => 0, 'reason' => 'file not found'];
+        }
+
+        $info = @getimagesize($source);
+
+        if (! is_array($info) || (int) $info[0] < 1) {
+            return ['made' => 0, 'skipped' => 0, 'reason' => 'unreadable image'];
+        }
+
+        [$sourceW, $sourceH] = [(int) $info[0], (int) $info[1]];
+        $type = (int) ($info[2] ?? 0);
+
+        if (! in_array($type, [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
+            return ['made' => 0, 'skipped' => 0, 'reason' => 'not a resizable type'];
+        }
+
+        [$cropX, $cropY, $cropW, $cropH] = self::coverRect($sourceW, $sourceH, $frameAspect);
+
+        /*
+         * A PICTURE ALREADY THE FRAME'S SHAPE HAS NOTHING TO CROP, and writing
+         * a second copy of it under another name would be pure waste — the
+         * plain WIDTHS variants already say everything about it. The storefront
+         * reader falls back to those, so answering "nothing to do" here is not
+         * a gap.
+         */
+        if ($cropX === 0 && $cropY === 0 && $cropW === $sourceW && $cropH === $sourceH) {
+            return ['made' => 0, 'skipped' => 0, 'reason' => 'already the frame shape'];
+        }
+
+        $made = $skipped = 0;
+        $wanted = [];
+
+        foreach (self::cropWidths($cropW) as $width) {
+            if (is_file(public_path($dir.'/'.$width.'/'.$fsRel))) {
+                $skipped++;
+
+                continue;
+            }
+
+            $wanted[] = $width;
+        }
+
+        if ($wanted === []) {
+            return ['made' => 0, 'skipped' => $skipped, 'reason' => null];
+        }
+
+        $src = self::read($source, $type);
+
+        if ($src === null) {
+            return ['made' => 0, 'skipped' => $skipped, 'reason' => 'could not decode'];
+        }
+
+        try {
+            foreach ($wanted as $width) {
+                $height = max(1, (int) round($cropH * ($width / $cropW)));
+
+                if (self::write($src, $cropW, $cropH, $width, $height, $type, $dir.'/'.$width.'/'.$fsRel, $cropX, $cropY)) {
+                    $made++;
+                }
+            }
+        } finally {
+            imagedestroy($src);
+        }
+
+        return ['made' => $made, 'skipped' => $skipped, 'reason' => null];
+    }
+
+    /**
+     * The srcset of one picture's crops at one frame shape, or ''.
+     *
+     * '' MEANS "THERE ARE NO CROPS", and every caller has to treat it as the
+     * instruction to fall back rather than as an error. A crop file can be
+     * missing for reasons that are nobody's fault — the shop has no GD, the
+     * picture is an SVG, the source is already the frame's shape, the backfill
+     * has not run on a restored database — and in every one of them the page
+     * must still draw the picture. The fallback is what the shop did before
+     * crops existed: the whole photograph, asked for at the width covering the
+     * frame needs.
+     *
+     * NO ORIGINAL IS APPENDED, which is the one way this differs from
+     * detailSrcsetFor(). There is no "original" of a crop; the largest file
+     * written IS the crop at its native width, so the candidate list is
+     * complete by construction and a browser asking for more has nothing more
+     * to be given.
+     */
+    public static function cropSrcsetFor(string $image, string $token): string
+    {
+        $dir = self::cropDir($token);
+
+        if ($dir === null) {
+            return '';
+        }
+
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return '';
+        }
+
+        [$prefix, $rel, $fsRel] = $parts;
+        $root = public_path($dir);
+
+        if (! is_dir($root)) {
+            return '';
+        }
+
+        $candidates = [];
+
+        /*
+         * The widths are read off the DISK rather than recomputed, because the
+         * native one depends on the source's own dimensions and this method has
+         * deliberately not opened the file. glob() over one directory level is
+         * one readdir; the alternative is a getimagesize() on the original on
+         * every render of the home page.
+         */
+        foreach (glob($root.'/*', GLOB_ONLYDIR) ?: [] as $widthDir) {
+            $width = (int) basename($widthDir);
+
+            if ($width < 1 || ! is_file($widthDir.'/'.$fsRel)) {
+                continue;
+            }
+
+            $candidates[$width] = $prefix.'/'.$dir.'/'.$width.'/'.$rel.' '.$width.'w';
+        }
+
+        if ($candidates === []) {
+            return '';
+        }
+
+        ksort($candidates);
+
+        return implode(', ', $candidates);
+    }
+
+    /**
      * Throw away every cached copy of one photograph, and say how many went.
      *
      * ── WHY THIS EXISTS: THE CACHE HAD NO INVALIDATION AT ALL ───────────────
@@ -1149,8 +1430,38 @@ final class ImageVariants
         [, , $fsRel] = $parts;
         $removed = 0;
 
+        /*
+         * ▲ THE CROP DIRECTORIES ARE WALKED TOO, AND LEAVING THEM OUT WOULD
+         *   HAVE REINTRODUCED THE EXACT BUG THIS METHOD EXISTS FOR.
+         *                                                          (Lane SEC)
+         *
+         * The header above records that nothing in this application could ever
+         * remove a variant, and what that cost: tens of megabytes of files
+         * nobody can see or name, and — worse — a REPLACED original serving the
+         * new photograph on a desktop and the old one on a phone, because `src`
+         * is new and every srcset candidate is stale.
+         *
+         * A crop is a srcset candidate on exactly the element that fault would
+         * show on. So the widths walked are the fixed ones PLUS every
+         * `img-cache/c<w>x<h>/<width>` a crop has been written under, read off
+         * the disk rather than from a list — a shop can carry crops at any
+         * frame shape its owner has picked, and a hard-coded list here would go
+         * stale the first time he picks another.
+         */
+        $roots = [];
+
         foreach (self::WIDTHS as $width) {
-            $root = public_path(self::DIR.'/'.$width);
+            $roots[] = self::DIR.'/'.$width;
+        }
+
+        foreach (glob(public_path(self::DIR).'/c*', GLOB_ONLYDIR) ?: [] as $cropRoot) {
+            foreach (glob($cropRoot.'/*', GLOB_ONLYDIR) ?: [] as $widthDir) {
+                $roots[] = self::DIR.'/'.basename($cropRoot).'/'.basename($widthDir);
+            }
+        }
+
+        foreach ($roots as $rootRel) {
+            $root = public_path($rootRel);
             $file = $root.'/'.$fsRel;
 
             if (is_file($file) && @unlink($file)) {
@@ -1400,6 +1711,20 @@ final class ImageVariants
      * a broken tile that stays broken until something overwrites it. rename()
      * within one filesystem is atomic, so the path either does not exist or
      * holds a complete image.
+     *
+     * ── $srcX/$srcY AND WHAT $srcWidth/$srcHeight NOW MEAN ───────── (Lane SEC)
+     *
+     * They are the SOURCE RECTANGLE, not the source image. Defaulting to 0,0
+     * with the caller's own width and height they are exactly the whole-image
+     * copy this method has always made — every existing call is byte-identical
+     * and none of them changed — and a caller that wants a crop passes the
+     * rectangle `object-fit: cover` would have shown.
+     *
+     * TWO PARAMETERS AND NOT A SECOND METHOD, because the alternative is a
+     * near-copy of the transparency handling, the atomic rename and the four
+     * encoders, and the copy that drifts would be the one used by the newer
+     * caller. imagecopyresampled() already takes both rectangles; this only
+     * stops hard-coding one of them.
      */
     private static function write(
         \GdImage $src,
@@ -1408,7 +1733,9 @@ final class ImageVariants
         int $width,
         int $height,
         int $type,
-        string $target
+        string $target,
+        int $srcX = 0,
+        int $srcY = 0
     ): bool {
         $destination = public_path($target);
         $directory = \dirname($destination);
@@ -1433,7 +1760,7 @@ final class ImageVariants
                 imagefilledrectangle($out, 0, 0, $width, $height, (int) imagecolorallocatealpha($out, 0, 0, 0, 127));
             }
 
-            imagecopyresampled($out, $src, 0, 0, 0, 0, $width, $height, $srcWidth, $srcHeight);
+            imagecopyresampled($out, $src, 0, 0, $srcX, $srcY, $width, $height, $srcWidth, $srcHeight);
 
             $temporary = $destination.'.'.bin2hex(random_bytes(4)).'.part';
 

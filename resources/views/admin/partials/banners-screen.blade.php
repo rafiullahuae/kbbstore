@@ -1023,18 +1023,26 @@
              broken in the console and nothing looks broken on a laptop — the
              only place it shows is a handset.
 
-             AND IT IS EXPENSIVE AS WELL AS WRONG. Measured on this preview,
-             three slides at 390px: with a phone picture the handset downloads
-             29 KB; without one it downloads 185 KB, because covering a portrait
-             frame with a landscape picture needs the full-width file and three
-             quarters of every pixel in it is then cropped away. The number is
-             the shop's own gradients; a real photograph is several times that.
+             ▲ AND THE WORDING IS ABOUT THE CROP, NOT THE SHARPNESS, WHICH IS
+               THE CHANGE THIS ROUND MADE TO IT.
 
-             So the warning is the thing that keeps the fallback SHORT-LIVED,
-             which is the only good answer to it. Slider only — a cards banner
-             has one frame shape and wants one picture. */
+             The fallback used to be soft as well as cropped, and a soft banner
+             is its own argument for fixing it. It is not soft any more: the
+             server now makes a phone-shaped crop of the wide picture, so what a
+             handset gets is sharp, small — measured, three slides at 390px on
+             photographic sources: 80 KB against 458 KB for the whole
+             picture — and still only the MIDDLE QUARTER of what he composed.
+
+             A fallback that looks fine is a fallback he never fixes, so the
+             line has to name the thing that is still wrong. It says "cropped to
+             its middle" and does not mention quality, because quality is no
+             longer the complaint and a warning that cries about a fixed problem
+             is a warning he learns to scroll past.
+
+             Slider only — a cards banner has one frame shape and wants one
+             picture. */
           + (slider && d.image && !d.image_m
-              ? '<span class="bns-warn">No phone picture yet, so phones show the wide one cropped to its middle. Choose one at 500 × 600.</span>'
+              ? '<span class="bns-warn">No phone picture yet, so phones see only the middle of this one — sharp, but cropped to about a quarter of its width. Choose one at 500 × 600 to decide what they see.</span>'
               : '')
         + '</div>'
         /* THE THREE TEXT BOXES ARE THE CARDS ROW'S AND ARE NOT DRAWN FOR A

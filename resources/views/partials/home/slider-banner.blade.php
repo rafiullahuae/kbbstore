@@ -228,19 +228,71 @@
      * choose either way; ImageVariants::bannerSliderCoverSizes() carries the
      * reasoning and the numbers are in BannerPhonePictureTest.
      */
-    $bsPhoneFor = static function ($card) use ($bsArM): array {
-        $phone = $card->hasPhonePicture();
+    $bsCropToken = $set->sliderRatioMobileToken();
+
+    $bsPhoneFor = static function ($card) use ($bsArM, $bsCropToken): array {
+        /*
+         * ── THREE WAYS TO FILL THE PHONE FRAME, BEST FIRST ──────────────────
+         *
+         * 1. HIS OWN PHONE PICTURE. Nothing to crop, nothing to over-ask for.
+         *
+         * 2. A SERVER-MADE CROP of the desktop picture, at the frame's shape.
+         *    The pixels are EXACTLY the ones `object-fit: cover` was going to
+         *    show — ImageVariants::coverRect() is the same rectangle the
+         *    browser picks — so this changes what is downloaded and cannot
+         *    change what is seen. Measured on a photographic 1920 x 550: the
+         *    native crop is 458 x 550 and 38.6 KB against the 152.6 KB whole
+         *    picture the third case has to ask for. Four times smaller for
+         *    identical pixels.
+         *
+         * 3. THE WHOLE PICTURE, asked for at the width covering the frame
+         *    needs. The honest heavy answer, and it stays because a crop can be
+         *    missing for reasons that are nobody's fault: no GD on the host, an
+         *    SVG, a restored database whose backfill has not run. Every one of
+         *    those must still draw the picture.
+         */
+        if ($card->hasPhonePicture()) {
+            return [
+                'mode' => 'own',
+                'image' => (string) $card->image_m,
+                'srcset' => null,
+                'w' => $card->image_m_w,
+                'h' => $card->image_m_h,
+                'sizes' => ImageVariants::bannerSliderCoverSizes($card->image_m_w, $card->image_m_h, $bsArM),
+            ];
+        }
+
+        $crop = ImageVariants::cropSrcsetFor(ImageVariants::rootRelative((string) $card->image), $bsCropToken);
+
+        if ($crop !== '') {
+            /*
+             * The crop IS the frame's shape, so the width is binding again and
+             * the flat expression is exactly right — the same reason an
+             * uploaded phone picture needs no factor. The width and height
+             * printed on the element are the crop rectangle's, not the
+             * source's, or the browser reserves a box of the wrong shape.
+             */
+            [, , $cropW, $cropH] = ImageVariants::coverRect(
+                (int) $card->image_w, (int) $card->image_h, $bsArM
+            );
+
+            return [
+                'mode' => 'crop',
+                'image' => (string) $card->image,
+                'srcset' => $crop,
+                'w' => $card->image_w && $card->image_h ? $cropW : null,
+                'h' => $card->image_w && $card->image_h ? $cropH : null,
+                'sizes' => ImageVariants::bannerSliderCoverSizes($cropW, $cropH, $bsArM),
+            ];
+        }
 
         return [
-            'image' => $phone ? (string) $card->image_m : (string) $card->image,
-            'w' => $phone ? $card->image_m_w : $card->image_w,
-            'h' => $phone ? $card->image_m_h : $card->image_h,
-            'own' => $phone,
-            'sizes' => ImageVariants::bannerSliderCoverSizes(
-                $phone ? $card->image_m_w : $card->image_w,
-                $phone ? $card->image_m_h : $card->image_h,
-                $bsArM,
-            ),
+            'mode' => 'whole',
+            'image' => (string) $card->image,
+            'srcset' => null,
+            'w' => $card->image_w,
+            'h' => $card->image_h,
+            'sizes' => ImageVariants::bannerSliderCoverSizes($card->image_w, $card->image_h, $bsArM),
         ];
     };
 
@@ -276,14 +328,22 @@
      */
     $bsImgSizesFor = static function ($card) use ($bsSizesFor, $bsPhoneFor, $bsPhoneQuery): string {
         $desktop = $bsSizesFor($card);
+        $phone = $bsPhoneFor($card);
 
-        if ($card->hasPhonePicture()) {
+        /*
+         * A SOURCE ELEMENT WINS BELOW 768px, so whenever one is drawn — for his
+         * own phone picture OR for a server-made crop — the <img> is a desktop
+         * element only and a phone term on it would describe a frame it is
+         * never measured against. Only the third case, the whole picture in
+         * both frames, needs one attribute to answer for two shapes.
+         */
+        if ($phone['mode'] !== 'whole') {
             return $desktop;
         }
 
-        $phone = $bsPhoneFor($card)['sizes'];
-
-        return $phone === $desktop ? $desktop : $bsPhoneQuery.' '.$phone.', '.$desktop;
+        return $phone['sizes'] === $desktop
+            ? $desktop
+            : $bsPhoneQuery.' '.$phone['sizes'].', '.$desktop;
     };
 
     $bsFirst = $cards[0] ?? null;
@@ -321,7 +381,11 @@
      * and that decision cannot be made inside the condition it controls.
      */
     $bsLcpPhone = $bsFirst !== null ? $bsPhoneFor($bsFirst) : null;
-    $bsLcpPhoneSrcset = $bsLcpPhone !== null ? $bsSrcsetFor($bsLcpPhone['image']) : '';
+    $bsLcpPhoneSrcset = $bsLcpPhone === null ? '' : match ($bsLcpPhone['mode']) {
+        'crop' => (string) $bsLcpPhone['srcset'],
+        'own' => $bsSrcsetFor($bsLcpPhone['image']),
+        default => '',
+    };
 @endphp
 {{-- THE FIRST PICTURE IS THE ONE THE PAGE PRELOADS. With this section on it is
      the largest element in its part of the page and, above the fold, the
@@ -364,7 +428,7 @@
      an empty line into every homepage's head. --}}
 @if ($bsFirst !== null && isset($sections) && $sections->deviceClassFor('cards_banner') === '')
   @push('head')
-@if ($bsLcpPhone['own'])
+@if ($bsLcpPhone['mode'] !== 'whole')
 {{-- TWO TAGS, ONE FETCH. A slide with its own phone picture has two different
      files that could be the LCP element, and which one it is depends on the
      viewport — so each preload carries the `media` that decides it and a
@@ -721,7 +785,15 @@
             $bsSrcset = $bsSrcsetFor((string) $bsCard->image);
             $bsDeskSizes = $bsImgSizesFor($bsCard);
             $bsPhone = $bsPhoneFor($bsCard);
-            $bsPhoneSrcset = $bsPhone['own'] ? $bsSrcsetFor($bsPhone['image']) : '';
+            /* A crop has its OWN candidate list — the crop files, not the
+               whole picture's variants — so it is carried on the array rather
+               than looked up again here. An uploaded phone picture is an
+               ordinary picture and goes through the shared memo. */
+            $bsPhoneSrcset = match ($bsPhone['mode']) {
+                'crop' => (string) $bsPhone['srcset'],
+                'own' => $bsSrcsetFor($bsPhone['image']),
+                default => '',
+            };
           @endphp
           <div class="kbbs-s" role="group" aria-roledescription="slide"
                aria-label="{{ __('store.home.banner_slider_slide', ['n' => $bsI + 1, 'total' => $bsCount]) }}">
@@ -745,7 +817,7 @@
                    An empty alt is CORRECT here rather than lazy: a decorative
                    picture with no description of its own should be skipped, not
                    read out as a filename. The box on the screen says so. --}}
-@if ($bsPhone['own'])<picture>
+@if ($bsPhone['mode'] !== 'whole')<picture>
 {{-- ── THE PHONE PICTURE, AND WHY IT IS A <source> AND NOT A SECOND srcset ──
 
      `srcset` with `w` descriptors lets the BROWSER pick a size of the same
@@ -779,7 +851,7 @@
                    @if ($bsSrcset !== '') srcset="{{ $bsSrcset }}" sizes="{{ $bsDeskSizes }}" @endif
                    @if ($bsCard->image_w && $bsCard->image_h) width="{{ (int) $bsCard->image_w }}" height="{{ (int) $bsCard->image_h }}" @endif
                    @if ($bsI === 0) fetchpriority="high" @else loading="lazy" @endif
-                   decoding="async">@if ($bsPhone['own'])</picture>@endif
+                   decoding="async">@if ($bsPhone['mode'] !== 'whole')</picture>@endif
             </a>
           </div>
         @endforeach

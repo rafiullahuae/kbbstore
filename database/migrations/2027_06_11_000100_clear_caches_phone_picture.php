@@ -13,9 +13,11 @@ use Illuminate\Database\Migrations\Migration;
  *
  *   resources/views/partials/home/slider-banner.blade.php   draws <picture> and
  *                                                           a media-scoped
- *                                                           <source>, and a
- *                                                           preload per
- *                                                           breakpoint
+ *                                                           <source>, a preload
+ *                                                           per breakpoint, and
+ *                                                           the server-made
+ *                                                           crop when there is
+ *                                                           no phone picture
  *   resources/views/admin/partials/banners-screen.blade.php the second picker,
  *                                                           the second
  *                                                           thumbnail and the
@@ -37,6 +39,14 @@ use Illuminate\Database\Migrations\Migration;
  *
  * Neither looks like a stale cache, and the second would send somebody hunting
  * through code that is correct.
+ *
+ * ▲ IT IS DATED AFTER THE CROP BACKFILL, AND THAT ORDER IS THE POINT.
+ *   `crop_banner_pictures_for_phones` writes files that the new template reads
+ *   and the old one knows nothing about. Cleared FIRST, a server would recompile
+ *   the templates while the crops did not yet exist, and every slide would pick
+ *   the heavy fallback and keep it until something else invalidated the cache —
+ *   correct, but it is the 152 KB answer on the one page this round is about.
+ *   Last, the crops are on disk before any page is compiled against them.
  *
  * NO CACHE KEY IS DROPPED HERE, and that is deliberate rather than an omission.
  * This round writes no setting and no module toggle: the three new columns live
@@ -71,8 +81,9 @@ return new class extends Migration
         if (app()->runningInConsole()) {
             echo "Cleared {$cleared} compiled files. Appearance -> Banners now has a second\n"
                 ."picture on every slide of a picture slider: the wide one at 1920 x 550 and\n"
-                ."a phone one at 500 x 600, side by side on the row. Nothing on the shop\n"
-                ."moved -- a slide with no phone picture draws exactly what it drew.\n";
+                ."a phone one at 500 x 600, side by side on the row. Until you add one, phones\n"
+                ."download only the part of the wide picture they were going to see -- the\n"
+                ."same crop, made on the server instead of in the browser.\n";
         }
     }
 

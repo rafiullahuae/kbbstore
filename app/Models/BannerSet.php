@@ -443,6 +443,30 @@ class BannerSet extends Model
         return (self::SLIDER_RATIOS[$this->slider_ratio_m] ?? self::SLIDER_RATIOS['500/600'])[1];
     }
 
+    /**
+     * The phone frame's shape as a cache-directory token — `500x600`.
+     *                                                               (Lane SEC)
+     *
+     * Taken from the KEY of SLIDER_RATIOS and not from anything an operator
+     * typed: the accessor below falls back to a shipped preset for an unknown
+     * key, so what comes out of here is always one of this class's own
+     * constants with its slash turned into an `x`.
+     *
+     * ImageVariants::cropDir() checks it again with a strict pattern, and that
+     * is deliberate rather than belt-and-braces: this value becomes a PATH
+     * SEGMENT under the web root, and a path segment assembled from a setting
+     * is how a cache directory becomes a traversal. Two locks, one of which is
+     * in the class that builds the path.
+     */
+    public function sliderRatioMobileToken(): string
+    {
+        $key = isset(self::SLIDER_RATIOS[(string) $this->slider_ratio_m])
+            ? (string) $this->slider_ratio_m
+            : '500/600';
+
+        return str_replace('/', 'x', $key);
+    }
+
     /** The desktop frame's width divided by its height. */
     public function sliderRatioValue(): float
     {
