@@ -146,8 +146,15 @@ it('draws the overlay on the checkout exactly once, style, markup and script', f
         ->and(substr_count($html, '.kbb-placing{position:fixed'))->toBe(1, 'the overlay stylesheet is included the wrong number of times')
         /* The visible words live in the script's TEXT table, where @json has
            escaped the ellipsis to \u2026 — so the assertion is on the part that
-           survives that, which is also the part a translator would change. */
-        ->and($html)->toContain('Placing your order');
+           survives that, which is also the part a translator would change.
+
+           ▲ THE QUOTES AND THE ESCAPE ARE PART OF THE NEEDLE, and they have to
+           be. Measured: 'Placing your order' occurs TWICE on this page, because
+           the dialog also carries aria-label="Placing your order" — so the bare
+           phrase was green with the TEXT table gone, which is the one thing
+           this line is about. The ellipsis is what only the table has. */
+        ->and($html)->toContain('"Placing your order\u2026"');
+
 });
 
 it('registers its click listener AFTER the card, or the card is placed twice', function () {
@@ -409,9 +416,14 @@ it('has the tick waiting when a confirmed Tamara order comes home', function () 
 
     $html = plcReceived($order)->assertOk()->getContent();
 
+
     expect($html)->toContain('<!--kbb-placed-->')
         ->and($html)->toContain('is-up is-done is-selfclosing')
-        ->and($html)->toContain('Order placed')
+        /* THE VISIBLE TITLE. 'Order placed' is drawn twice — once here and once
+           in the `.kbb-placing-sr` live region beside it — so the bare phrase
+           could not tell a tick from a screen reader announcement with no card
+           under it. */
+        ->and($html)->toContain('<p class="kbb-placing-title">Order placed</p>')
         /* The MARKUP, not the stylesheet: `.kbb-placing-check` appears in
            placing-style too, once in the ordinary rules and once under
            prefers-reduced-motion. */
@@ -437,7 +449,10 @@ it('shows no tick, and one bounded refresh, while the payment is still unconfirm
 
     $first = plcReceived($order)->assertOk()->getContent();
 
-    expect($first)->toContain('Confirming your payment…')
+    /* The VISIBLE title each time, not the `.kbb-placing-sr` copy of it that
+       sits one element below: measured at 2 occurrences, so the bare phrase was
+       satisfied by the live region alone. */
+    expect($first)->toContain('<p class="kbb-placing-title">Confirming your payment…</p>')
         ->and($first)->not->toContain('is-up is-done is-selfclosing')
         ->and($first)->toContain('is-up is-selfclosing')
         ->and(substr_count($first, 'window.location.replace'))->toBe(1, 'the receipt does not reload itself exactly once')
@@ -448,8 +463,14 @@ it('shows no tick, and one bounded refresh, while the payment is still unconfirm
     $second = test()->get('/checkout/success?order=' . $order->order_number . '&confirming=1')
         ->assertOk()->getContent();
 
-    expect($second)->toContain('Confirming your payment…')
-        ->and($second)->toContain('still being confirmed')
+    expect($second)->toContain('<p class="kbb-placing-title">Confirming your payment…</p>')
+        /* ▲ AND THIS ONE WAS SATISFIED BY A COMMENT. 'still being confirmed'
+           occurs 3 times, and one of them is PROSE IN A CSS COMMENT that
+           placing-style ships to the page — "while the payment is still being
+           confirmed it can be on screen for four or five seconds". So the
+           assertion was green with the shopper's sentence gone. The sentence
+           itself is what it meant: order_received.confirming_slow. */
+        ->and($second)->toContain('Your payment is still being confirmed.')
         ->and(substr_count($second, 'window.location.replace'))->toBe(0, 'the receipt schedules a second reload');
 });
 

@@ -403,12 +403,49 @@ async function step(name, fn) {
         await page.waitForTimeout(250);
         await shot(page, 'return-reload-keeps-the-way-back', vp, { order });
 
+        /*
+         * THE SECOND TAB IS OPENED NOW, BEFORE ANY PRESS, because that is what
+         * makes it stale. Opened after the press it would simply re-render with
+         * the offer gone and draw no button — which is the shop being right and
+         * proves nothing about a tab that has been sitting open.
+         */
+        const staleTab = await ctx.newPage();
+        await staleTab.goto(BASE + '/cart/', { waitUntil: 'domcontentloaded' });
+        await staleTab.waitForTimeout(200);
+
         const button = await page.$('.co-restore');
 
         if (button) {
           await button.click();
           await page.waitForTimeout(600);
           await shot(page, 'basket-restored', vp, { order });
+
+          /*
+           * AND THE STALE TAB — A SECOND REAL TAB, NOT THE BACK BUTTON.
+           *
+           * Back was tried first and is the wrong instrument: Playwright's
+           * goBack re-requests the page, so the server re-renders /cart/ with
+           * the offer already consumed and there is no button to press. The run
+           * said so — "the back page had no button" — which is the shop being
+           * right, not the state being unreachable.
+           *
+           * A stale tab does not re-request anything. It is holding a DOM that
+           * was true when it was drawn, with the shop's own form and the
+           * session's own token still in it. So: two tabs on the basket page,
+           * press in the first, then press the one that has been sitting there.
+           * Same context, same cookies, same session.
+           */
+          const stale = await staleTab.$('.co-restore');
+
+          if (stale) {
+            await stale.click();
+            await staleTab.waitForTimeout(700);
+            await shot(staleTab, 'restore-pressed-twice', vp, { order });
+          } else {
+            console.log('  (the second tab drew no button — the offer was already gone)');
+          }
+
+          await staleTab.close();
         } else {
           console.log('  (no restore button on the page — the offer was not written)');
         }

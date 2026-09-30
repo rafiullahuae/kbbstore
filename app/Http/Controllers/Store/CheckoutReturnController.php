@@ -301,9 +301,7 @@ class CheckoutReturnController extends Controller
             // look at again, kept in the session of a shopper who has paid.
             $this->forgetOffer($request);
 
-            return redirect(
-                Url::redirect('/checkout/success', $request).'?order='.urlencode((string) $order->order_number)
-            );
+            return $this->toReceipt($request, $order);
         }
 
         /*
@@ -331,16 +329,51 @@ class CheckoutReturnController extends Controller
             return $this->nothingToPutBack($request);
         }
 
-        $moved = null;
+        $restored = false;
 
-        DB::transaction(function () use ($order, $cart, &$moved) {
-            $moved = app(OrderStatus::class)->moveTo(
+        DB::transaction(function () use ($order, $cart, &$restored) {
+            app(OrderStatus::class)->moveTo(
                 $order,
                 'failed',
                 by: 'system',
                 reason: 'The shopper put their basket back after the payment was not completed.',
                 only: ['paid_at' => null],
             );
+
+            /*
+             * ▲ THE BASKET GOES BACK ONLY IF THE ORDER REALLY IS OVER, AND THAT
+             * IS READ OFF THE ROW RATHER THAN OFF moveTo()'s ANSWER.
+             *
+             * This block used to assign moveTo()'s return to `$moved` and never
+             * read it, with the cart write below unconditional underneath. A
+             * webhook confirming the payment in the instant between restore()'s
+             * guard and moveTo()'s own locked re-read makes that write refuse —
+             * correctly, `only: ['paid_at' => null]` is exactly for this — and
+             * the basket went back ANYWAY. The shopper then holds a live basket
+             * of goods they have just been charged for, and the stock is never
+             * released because the order never moved. A guarded write that
+             * leaves state behind does not contain a failure, it seeds one.
+             *
+             * moveTo()'s null CANNOT be the test, because it means two things:
+             * "the precondition did not hold" and "the order was already there
+             * with nothing else to record". The second is an ordinary shopper
+             * whose order the provider had already failed, and they are owed
+             * their basket. So the question is asked of the row instead, which
+             * answers both at once: is this order over, and did it take no
+             * money?
+             *
+             * LOCKED, and inside the same transaction as the cart write, so
+             * nothing can confirm the payment between the answer and the act.
+             */
+            $fresh = Order::query()->whereKey($order->getKey())->lockForUpdate()->first();
+
+            $restored = $fresh !== null
+                && $fresh->paid_at === null
+                && $this->placement->forOrder($fresh) === PlacementState::REFUSED;
+
+            if (! $restored) {
+                return;
+            }
 
             /*
              * INSIDE THE SAME TRANSACTION AS THE STATUS MOVE. The two are one
@@ -350,6 +383,18 @@ class CheckoutReturnController extends Controller
              */
             $cart->forceFill(['status' => 'active', 'converted_at' => null, 'last_activity_at' => now()])->save();
         });
+
+        /*
+         * THE ORDER MOVED UNDER THEM. Nothing was written to either row, so
+         * there is nothing to undo — and they are sent where the truth about
+         * their order is, which is the same place the paid guard above sends
+         * anyone else whose payment turned out to have gone through.
+         */
+        if (! $restored) {
+            $this->forgetOffer($request);
+
+            return $this->toReceipt($request, $order);
+        }
 
         /*
          * AND THE BROWSER IS POINTED BACK AT IT. Putting the row to `active` is
@@ -455,6 +500,20 @@ class CheckoutReturnController extends Controller
 
         $request->session()->put(self::RESTORABLE_KEY, $number);
         $request->session()->put(self::RESTORABLE_CART_KEY, $token);
+    }
+
+    /**
+     * Where an order that turned out to stand sends its shopper.
+     *
+     * One place, because two branches of restore() reach it for the same
+     * reason — the payment went through after all — and they must not drift
+     * into telling the shopper two different things about one order.
+     */
+    private function toReceipt(Request $request, Order $order): RedirectResponse
+    {
+        return redirect(
+            Url::redirect('/checkout/success', $request).'?order='.urlencode((string) $order->order_number)
+        );
     }
 
     /** Is there a `converted` basket with rows in it under this token? */
