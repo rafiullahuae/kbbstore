@@ -68,6 +68,14 @@ function probeAddresses(): array
         'admin-api/reviews/export' => 'reviews.export',
         'admin-api/catalog-products-export' => 'catalog.export',
         'admin-api/orders-bulk-documents' => 'invoices.view',
+        /*
+         * ▲ THE TWELFTH, ADDED IN ROUND 4. Reviews -> Reviews.io -> Export
+         * navigates the whole console at this address from
+         * admin/partials/reviews-io-screen.blade.php. Three scans of
+         * admin/app.blade.php never saw it; widening
+         * DownloadNavigationGateTest's pinned set to the partials did.
+         */
+        'admin-api/reviews-io/export' => 'reviews.export',
     ];
 }
 
@@ -155,7 +163,7 @@ it('refuses a probe to an operator whose role may not run that export', function
 it('leaves the export itself streamed, which is why the probe exists', function () {
     /*
      * ▲ THE THING THE PROBE IS PROTECTING. If a later lane converts these to a
-     * buffered response the comment at the four call sites stops being true —
+     * buffered response the comment at the five call sites stops being true —
      * "the file lands in Downloads instead of in memory" — and the whole reason
      * for the probe evaporates.
      *
@@ -167,6 +175,10 @@ it('leaves the export itself streamed, which is why the probe exists', function 
         [\App\Http\Controllers\Admin\CustomersApiController::class, 'export'],
         [\App\Http\Controllers\Admin\ReviewsApiController::class, 'export'],
         [\App\Http\Controllers\Admin\CatalogProductsApiController::class, 'export'],
+        // The twelfth navigation's action, added in round 4. Reviews.io's
+        // export streams too, and the call site's own comment promises it:
+        // "the response is a file download with a Content-Disposition on it".
+        [\App\Http\Controllers\Admin\ReviewsIoApiController::class, 'export'],
     ];
 
     foreach ($reflect as [$class, $method]) {

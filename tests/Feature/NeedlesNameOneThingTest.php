@@ -180,7 +180,29 @@ const KBB_ELEMENT_ANCHORED = [
     'tests/Feature/GridSectionTest.php' => ['<span class="kbb-card-nm">', 1],
     'tests/Feature/CheckoutBrowsedAddTest.php' => ['<div class="n">', 2],
     'tests/Feature/CheckoutLineUpdateTest.php' => ['<div class="n">', 2],
-    'tests/Feature/SetAndLooseLineStockTest.php' => ['<div class="woocommerce-info" role="status">', 3],
+    /*
+     * ▲ THIS ROW WAS `['<div class="woocommerce-info" role="status">', 3]` AND
+     * LANE SEC REPLACED IT WITH A STRONGER REPAIR OF THE SAME THREE SITES,
+     * reached in the same round from the other side.
+     *
+     * Anchoring the SENTENCE to the element catches a deleted notice. It does
+     * not catch a notice that is present and names the wrong product, because
+     * the two NAME needles were still running against the whole page — and the
+     * cart page carries the product name three more times over, in the line
+     * item and in the drawer.
+     *
+     * slsPageNotice() makes the haystack the element instead, so all three
+     * needles are anchored rather than one, and the deleted-notice case is
+     * subsumed: the helper returns '' when the div is absent, so every
+     * assertion in the case fails. Measured both ways in
+     * tests/Feature/SetAndLooseLineStockTest.php's own notes — dropping the
+     * @include from store/cart.blade.php takes TWO cases red, and from
+     * store/checkout.blade.php one.
+     *
+     * The fragment is the call with a variable argument, so it counts the three
+     * SITES and not the helper's own declaration.
+     */
+    'tests/Feature/SetAndLooseLineStockTest.php' => ['slsPageNotice($', 3],
     'tests/Feature/AdminProductWritePathTest.php' => ['<meta name="description" content="', 1],
     'tests/Feature/ProductEditorTest.php' => ['<meta name="description" content="', 1],
     'tests/Feature/SeoCrawlSurfaceTest.php' => ['<meta name="description" content="', 1],
@@ -213,6 +235,12 @@ it('keeps the repaired assertions naming the element they are about', function (
      *
      * MUTATION, run: shorten any needle below back to its bare string → the
      * count for that file drops and this goes red naming it.
+     *
+     * ▲ AND ONE ROW IS NOT A MARKUP FRAGMENT. SetAndLooseLineStockTest's three
+     * sites are anchored by extracting the element into the haystack rather
+     * than by naming it in the needle, which is stronger for the reason set out
+     * beside that row. The property this case guards is unchanged: those sites
+     * cannot be answered by a copy of the sentence somewhere else on the page.
      */
     $missing = [];
 

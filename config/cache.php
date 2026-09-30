@@ -46,10 +46,27 @@ return [
             'lock_table' => env('DB_CACHE_LOCK_TABLE'),
         ],
 
+        /*
+         * ONE DIRECTORY PER DATABASE, not one per checkout.        (Lane SEC)
+         *
+         * Almost everything this shop caches is read out of the database and
+         * kept with rememberForever, and this directory used to be shared by
+         * every process in the checkout however separate their databases were.
+         * Two lanes lost a day each to reading another run's answer back: the
+         * Arabic preview served `dir="rtl"` from the other preview's settings,
+         * and the admin console answered 404 because `kbb.admin_path` held a
+         * path from a database this process had never opened. Neither errors;
+         * both look like data.
+         *
+         * App\Support\CacheScope carries the whole argument, including why the
+         * fix is on the STORE and not on the keys. The scope is a SUBDIRECTORY
+         * so that `rm -rf storage/framework/cache/data/*` still clears every one
+         * of them.
+         */
         'file' => [
             'driver' => 'file',
-            'path' => storage_path('framework/cache/data'),
-            'lock_path' => storage_path('framework/cache/data'),
+            'path' => App\Support\CacheScope::path(storage_path('framework/cache/data')),
+            'lock_path' => App\Support\CacheScope::path(storage_path('framework/cache/data')),
         ],
 
         'memcached' => [

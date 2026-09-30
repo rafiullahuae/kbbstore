@@ -70,6 +70,18 @@ function measure() {
 
 async function shoot(page, name, w) {
   await page.setViewportSize({ width: w, height: w === 390 ? 844 : 1000 });
+  /* TO THE TOP FIRST. These screens say what happened in a banner at the top of
+     #content, and a viewport screenshot taken where the button was photographs
+     the button and not the answer -- which is how the first Instagram shot came
+     out showing "Configure now" and no sentence.
+
+     EVERY SCROLLED ELEMENT, not window. This console scrolls an inner
+     container, so window.scrollTo(0, 0) moved nothing at all and the second
+     attempt came out identical to the first. */
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    document.querySelectorAll('*').forEach((el) => { if (el.scrollTop) { el.scrollTop = 0; } });
+  });
   await page.waitForTimeout(600);
   const m = await page.evaluate(measure);
   const file = `${OUT}/${LABEL}-${name}-${w}.png`;
@@ -177,7 +189,72 @@ async function killSession(ctx) {
     await ctx.close();
   }
 
-  // -------------------------------------------- 4. WHAT SIGN OUT ACTUALLY DOES
+  // ------------------------- 4. THE TWO NAVIGATIONS THAT LIVE IN PARTIALS
+  //
+  // Round 4. Neither is in admin/app.blade.php, which is why three scans of
+  // that file never found the Reviews.io one at all.
+  for (const w of [1280, 390]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: w === 390 ? 844 : 1000 } });
+    const page = await signIn(ctx);
+
+    // ── Reviews -> Reviews.io -> Export. `window.location.href`, so the whole
+    //    console goes with it.
+    await page.goto(`${BASE}/${ADMIN}?go=rev-io`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2200);
+    await shoot(page, 'reviewsio-live', w);
+
+    await killSession(ctx);
+
+    await page.click('#rio-export');
+    await page.waitForTimeout(2500);
+    console.log(JSON.stringify({
+      reviewsIoSaid: await page.evaluate(() => {
+        const b = document.querySelector('#content .rio-banner, #content [class*="banner"], #content .rio-note');
+        return b ? b.innerText.replace(/\s+/g, ' ').trim().slice(0, 200) : (document.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+      }),
+    }));
+    await shoot(page, 'reviewsio-export-expired', w);
+
+    await ctx.close();
+  }
+
+  // ── The Instagram handshake, both ways ────────────────────────────────────
+  for (const w of [1280, 390]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: w === 390 ? 844 : 1000 } });
+    const page = await signIn(ctx);
+
+    await page.goto(`${BASE}/${ADMIN}?go=instagram`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2200);
+
+    /*
+     * THE BLOCKED-POPUP FALLBACK. A real popup blocker cannot be turned on for
+     * one click from here, so window.open is stubbed to return null -- which is
+     * exactly what a blocker makes it do, and it is the ONLY thing the handler
+     * branches on. Nothing else is stubbed and no response is intercepted.
+     */
+    await page.evaluate(() => { window.open = function () { return null; }; });
+    await killSession(ctx);
+
+    const before = ctx.pages().length;
+    const link = await page.$('[data-igs-oauth]');
+    if (link) { await link.click(); } else { console.log(JSON.stringify({ oauthLink: 'not on screen - app id and secret not saved' })); }
+    await page.waitForTimeout(2600);
+
+    console.log(JSON.stringify({
+      width: w,
+      instagramTabsOpened: ctx.pages().length - before,
+      instagramStillOnConsole: await page.evaluate(() => !!document.getElementById('nav')),
+      instagramSaid: await page.evaluate(() => {
+        const b = document.querySelector('#content .igs-note');
+        return b ? b.innerText.replace(/\s+/g, ' ').trim().slice(0, 200) : (document.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+      }),
+    }));
+    await shoot(page, 'instagram-fallback-expired', w);
+
+    await ctx.close();
+  }
+
+  // -------------------------------------------- 5. WHAT SIGN OUT ACTUALLY DOES
   //
   // Not part of the gate, and found while measuring it: the top-bar Sign out
   // posts to a LITERAL '/admin/logout' and then navigates to a LITERAL

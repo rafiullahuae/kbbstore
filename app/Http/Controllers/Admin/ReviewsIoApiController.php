@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\Reviews\ReviewCsvImport;
+use App\Support\ExportProbe;
 use App\Support\ReviewStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -129,8 +130,32 @@ class ReviewsIoApiController extends Controller
      * would stream the whole table. That mistake is recorded in
      * CustomersApiController, which found it, and in the sibling export above.
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request): StreamedResponse|JsonResponse
     {
+        /*
+         * THE SESSION PROBE, BEFORE ANYTHING IS VALIDATED OR QUERIED. (Lane SEC)
+         *
+         * ▲ A TWELFTH NAVIGATION, and the one every earlier scan in this lane
+         * missed: Reviews -> Reviews.io -> Export reaches this address with
+         * `window.location.href`, which replaces the whole console, and the
+         * scans all read admin/app.blade.php while this call site is in
+         * admin/partials/reviews-io-screen.blade.php. Found by widening
+         * DownloadNavigationGateTest's pinned set to the partials, which is the
+         * only reason it is not still there.
+         *
+         * An expired session therefore took the screen away and left a blank
+         * 404 -- the same defect the ten console blocks were written for,
+         * through a door none of them covered.
+         *
+         * FIRST STATEMENT, so a probe runs no query and builds no closure, and
+         * it passes through this action's own `reviews.export` capability
+         * because AdminCapabilities matches on the route's URI and a query
+         * string is not part of it. App\Support\ExportProbe carries the rest.
+         */
+        if ($probe = ExportProbe::answer($request)) {
+            return $probe;
+        }
+
         $data = $request->validate([
             'status' => ['sometimes', 'string', Rule::in(array_merge(['all'], ReviewStatus::ALL))],
             'emails' => ['sometimes', 'in:0,1'],

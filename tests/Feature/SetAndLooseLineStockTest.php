@@ -181,6 +181,66 @@ function slsPlace(Cart $cart)
     ]);
 }
 
+/**
+ * The PAGE's own set-stock notice, and nothing else on the page.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ▲ WRITTEN BECAUSE THREE CASES IN THIS FILE WERE GREEN WITH THE NOTICE GONE
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * `it tells the shopper what left and why, on the cart page` asserted that the
+ * PAGE contained the product name, the set name and the sentence, and its own
+ * mutation note said that deleting
+ * `@include('partials.set-stock-notice')` from store/cart.blade.php would turn
+ * it red.
+ *
+ * IT DID NOT. Measured: with that include deleted the whole file was 15 passed,
+ * 0 failed — because THE CART DRAWER is rendered into every page and carries
+ * its own copy of the same sentence, in `<div class="kc-note">`. The product
+ * name was in the page three more times over besides. So a shopper could lose a
+ * line from his basket with no explanation anywhere on the cart page and this
+ * suite would have said nothing. The checkout case had the same hole, confirmed
+ * the same way.
+ *
+ * Found by running Lane PLC's tools/plc-needle-scan.sh over this lane's files:
+ * `'has been taken out of your bag'` counted x2 against the page, and
+ * `'1025 Dokdo Toner'` x4. A needle that occurs more than once cannot tell the
+ * thing it names from the thing it does not.
+ *
+ * THE CURE IS TO MAKE THE HAYSTACK THE THING UNDER TEST. Each assertion below
+ * reads as it always did; what changed is that it now runs against the notice
+ * rather than against the page, so the drawer cannot answer for it.
+ *
+ * `woocommerce-info` is the page notice's class (partials/set-stock-notice) and
+ * `kc-note` is the drawer's (partials/cart-drawer): two surfaces, two controls,
+ * and this file has a case for each.
+ */
+function slsNoticeIn(string $html, string $class): string
+{
+    $open = '<div class="'.$class.'"';
+    $at = strpos($html, $open);
+
+    if ($at === false) {
+        return '';
+    }
+
+    $end = strpos($html, '</div>', $at);
+
+    return $end === false ? substr($html, $at) : substr($html, $at, $end - $at + 6);
+}
+
+/** The cart/checkout page's own notice. */
+function slsPageNotice(string $html): string
+{
+    return slsNoticeIn($html, 'woocommerce-info');
+}
+
+/** The drawer's notice, which is a different control on a different surface. */
+function slsDrawerNotice(string $html): string
+{
+    return slsNoticeIn($html, 'kc-note');
+}
+
 it('places the order the owner could not place', function () {
     /*
      * ▲ THE DEFECT, END TO END, THROUGH THE REAL CHECKOUT.
@@ -248,8 +308,18 @@ it('tells the shopper what left and why, on the cart page', function () {
      * shop loads, and the assertion about it passes or fails against the FIRST
      * basket. This file cost a round of exactly that before it was split.
      *
-     * MUTATION NOTE. Drop the @include('partials.set-stock-notice') line from
-     * store/cart.blade.php and this is red. RUN.
+     * MUTATION NOTE, AND IT WAS FALSE UNTIL ROUND 4. Dropping the
+     * @include('partials.set-stock-notice') line from store/cart.blade.php left
+     * this file at 15 passed, 0 failed: the three needles ran against the whole
+     * PAGE, and the cart drawer — rendered into every page — carries the same
+     * sentence, while the product name was in the page three more times over.
+     * A shopper could have lost a line with no explanation on the cart page and
+     * nothing here would have moved. Found by tools/plc-needle-scan.sh, which
+     * counted the sentence x2 and the product name x4.
+     *
+     * The needles now run against slsPageNotice($cartPage). RUN: the same
+     * mutation is red, and it takes the "reduces rather than removes" case with
+     * it, which read the same page for the same reason.
      */
     $toner = slsProduct('1025 Dokdo Toner', 1);
     $set = slsSet('Medicube booster set', [[$toner, 1]]);
@@ -257,9 +327,22 @@ it('tells the shopper what left and why, on the cart page', function () {
 
     $cartPage = slsAs($cart)->get('/cart')->assertOk()->getContent();
 
-    expect($cartPage)->toContain('1025 Dokdo Toner')
-        ->and($cartPage)->toContain('Medicube booster set')
-        ->and($cartPage)->toContain('<div class="woocommerce-info" role="status">');
+    /* AGAINST THE PAGE'S OWN NOTICE, not against the page -- see slsPageNotice().
+       Read against the whole page all three were green with the notice deleted,
+       because the drawer says the same thing on every page and the product name
+       is in the page three more times over.
+
+       ▲ LANE PLC REACHED THE SAME SITE IN THE SAME ROUND and replaced the
+       SENTENCE with `toContain('<div class="woocommerce-info" role="status">')`,
+       which does catch the deleted notice. This SUBSUMES it -- slsPageNotice()
+       returns '' when there is no such div, so all three fail -- and it also
+       catches a notice that is present and names the wrong product, which an
+       assertion about the page cannot. */
+    $notice = slsPageNotice($cartPage);
+
+    expect($notice)->toContain('1025 Dokdo Toner')
+        ->and($notice)->toContain('Medicube booster set')
+        ->and($notice)->toContain('has been taken out of your bag');
 });
 
 it('tells the shopper what left and why, on the checkout', function () {
@@ -267,8 +350,11 @@ it('tells the shopper what left and why, on the checkout', function () {
      * The same sentence, from the same partial, on the page the owner was
      * actually stuck on.
      *
-     * MUTATION NOTE. Drop the @include('partials.set-stock-notice') line from
-     * store/checkout.blade.php and this is red. RUN.
+     * MUTATION NOTE, FALSE UNTIL ROUND 4 FOR THE REASON THE CART CASE GIVES.
+     * Dropping the @include('partials.set-stock-notice') line from
+     * store/checkout.blade.php left this case GREEN — measured — because the
+     * drawer is on the checkout too. Against slsPageNotice($checkout) the same
+     * mutation is red. RUN.
      */
     $toner = slsProduct('Heartleaf Ampoule', 1);
     $set = slsSet('Glow Starter Set', [[$toner, 1]]);
@@ -276,9 +362,15 @@ it('tells the shopper what left and why, on the checkout', function () {
 
     $checkout = slsAs($cart)->get('/checkout')->assertOk()->getContent();
 
-    expect($checkout)->toContain('Heartleaf Ampoule')
-        ->and($checkout)->toContain('Glow Starter Set')
-        ->and($checkout)->toContain('<div class="woocommerce-info" role="status">');
+    /* The checkout's own notice, for the reason the cart case gives: measured
+       green with `@include('partials.set-stock-notice')` deleted from
+       store/checkout.blade.php, which is the exact mutation the note claims.
+       Subsumes Lane PLC's markup assertion at the same site. */
+    $notice = slsPageNotice($checkout);
+
+    expect($notice)->toContain('Heartleaf Ampoule')
+        ->and($notice)->toContain('Glow Starter Set')
+        ->and($notice)->toContain('has been taken out of your bag');
 });
 
 it('reduces rather than removes when the shelf can cover part of the loose line', function () {
@@ -304,7 +396,16 @@ it('reduces rather than removes when the shelf can cover part of the loose line'
 
     expect((int) $items[$toner->id]->quantity)->toBe(2)
         ->and((int) $items[$set->id]->quantity)->toBe(1)
-        ->and($page)->toContain('<div class="woocommerce-info" role="status">');
+        /* ▲ THE WORDING IS KEPT, and that is the difference that matters here.
+           Lane PLC replaced this needle with the notice's markup in the same
+           round, which catches a deleted notice but no longer asserts the
+           REDUCED branch at all -- and which of the two sentences this case
+           gets is its entire subject: `left === 0` says "taken out of your
+           bag", `left > 0` says "reduced to 2". Bound to the notice instead,
+           so it keeps the wording AND cannot be answered by the drawer.
+           MUTATION: swap the two arms of the ternary in
+           partials/set-stock-notice.blade.php and this is red. RUN. */
+        ->and(slsPageNotice($page))->toContain('has been reduced to 2 in your bag');
 });
 
 it('makes the totals, the item count and the free-delivery bar follow', function () {
@@ -654,6 +755,12 @@ it('says it in the drawer as well, which is where the shopper is standing', func
      *
      * MUTATION NOTE. Delete the notice block from
      * resources/views/partials/cart-drawer.blade.php and this is red. RUN.
+     *
+     * ▲ THE SENTENCE always caught that one; THE TWO NAMES did not. The drawer
+     * lists the line the shopper just added, so `toContain('1025 Dokdo Toner')`
+     * against the whole drawer was answered by the line item and said nothing
+     * about the notice naming the product — x2, per tools/plc-needle-scan.sh.
+     * They run against slsDrawerNotice($drawer) now.
      */
     $toner = slsProduct('1025 Dokdo Toner', 1);
     $set = slsSet('Medicube booster set', [[$toner, 1]]);
@@ -666,9 +773,15 @@ it('says it in the drawer as well, which is where the shopper is standing', func
 
     $drawer = (string) $response->json('drawer');
 
-    expect($drawer)->toContain('1025 Dokdo Toner')
-        ->and($drawer)->toContain('Medicube booster set')
-        ->and($drawer)->toContain('has been taken out of your bag');
+    /* THE NOTICE, not the drawer. The drawer also lists the line the shopper
+       just added, so `toContain('1025 Dokdo Toner')` against the whole drawer
+       was satisfied by the line item and said nothing about the notice naming
+       the product -- counted x2 by tools/plc-needle-scan.sh. */
+    $note = slsDrawerNotice($drawer);
+
+    expect($note)->toContain('1025 Dokdo Toner')
+        ->and($note)->toContain('Medicube booster set')
+        ->and($note)->toContain('has been taken out of your bag');
 
     /*
      * And it is inside the item list rather than in the band that can be
