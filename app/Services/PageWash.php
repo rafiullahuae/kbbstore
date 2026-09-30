@@ -204,6 +204,25 @@ class PageWash
         'on' => ['bool', 'Colour wash on', false,
             'Off is how this ships. Nothing about the shop changes until this is switched on — the page keeps the background it has today.'],
 
+        /*
+         * ── THE DRAWING, AND IT SHIPS OFF BECAUSE HE ASKED FOR IT OFF ───────
+         *                                                          (Lane BG)
+         * "you put some image on background of the whole site, which i don't
+         * want." So `--bg-botanical` is out of kbb.css's page-background rule
+         * and this is the way back to it, at FALSE.
+         *
+         * CLAUDE.md rule 1 as it now reads: a thing he asked for is the shop's
+         * new state, not a switch he has to find — and "build the control
+         * anyway, he may want it back, a change with no way to undo it is worse
+         * than no change". This is that control.
+         *
+         * It is NOT gated on `on`. The wash and the drawing are separate
+         * questions: he may want the drawing back without the wash, and css()
+         * below emits for either.
+         */
+        'motif' => ['bool', 'Botanical drawing', false,
+            'The leaves-and-petals drawing that used to sit behind every page, tiled down it. Off is how this now ships — you asked for it off. Turning it back on puts it behind the page again; it is still used on the home page panels and the footer either way.'],
+
         'palette' => ['select', 'Palette', self::DEFAULT_PALETTE,
             'Three colours, blended into one another. Every one of them is already pale; the strength slider below can only take them further towards white.',
             [
@@ -251,7 +270,7 @@ class PageWash
     public const TABS = [
         'colour' => ['Colour',
             'Three pale colours and how much of them reaches the page. The strength slider can only ever mix towards white, so no position on it produces a background darker than the palette it is listed with.',
-            ['on', 'palette', 'c1', 'c2', 'c3', 'intensity']],
+            ['on', 'motif', 'palette', 'c1', 'c2', 'c3', 'intensity']],
         'motion' => ['Motion',
             'Only opacity moves, and only where the visitor has not asked for less motion. Somebody browsing with "reduce motion" on sees one still gradient and no animation at all.',
             ['drift', 'cycle']],
@@ -752,8 +771,26 @@ class PageWash
     {
         $values = $this->effective($request);
 
+        /*
+         * ── THE DRAWING IS ANSWERED BEFORE THE WASH, AND SEPARATELY ────────
+         *                                                          (Lane BG)
+         * `motif` is not gated on `on`: the owner may want the botanical back
+         * without the colour wash, so this emits for either. Both off is still
+         * the empty string, which is what keeps a shop that has touched neither
+         * byte-identical.
+         *
+         * IT IS A LITERAL, NOT A SAVED VALUE. Every character below is written
+         * here; `motif` is a bool and the only thing it can do is choose
+         * between this string and nothing.
+         */
+        $motif = ! empty($values['motif'])
+            ? 'body{background-image:var(--bg-botanical),var(--kbb-page-gradient);'
+                .'background-size:1500px auto,auto;background-position:center top,0 0;'
+                .'background-repeat:repeat-y,no-repeat;background-attachment:fixed,fixed}'
+            : '';
+
         if (empty($values['on'])) {
-            return '';
+            return $motif;
         }
 
         if (($values['where'] ?? 'all') === 'content' && $this->isPlainPath($request)) {
@@ -792,7 +829,13 @@ class PageWash
 
         $common = "content:'';display:block;{$box}pointer-events:none;";
 
-        $css = 'body{background-color:'.$floor.';background-image:none}';
+        /*
+         * The motif first, then the wash's own `background-image:none`, so a
+         * shop with both on gets the wash -- which is what it asked for by
+         * switching the wash on. Source order is the whole of that.
+         */
+        $css = $motif;
+        $css .= 'body{background-color:'.$floor.';background-image:none}';
 
         $css .= 'html::before{'.$common.'z-index:-3;background:'.self::gradient($moments[2], 2).'}';
         $css .= 'body::before{'.$common.'z-index:-2;opacity:1;background:'.self::gradient($moments[0], 0).'}';

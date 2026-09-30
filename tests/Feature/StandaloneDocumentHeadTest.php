@@ -613,34 +613,79 @@ it('includes the webfont partial exactly once in each document that needs it', f
 
 it('keeps the copied background declaration identical to the one in kbb.css', function () {
     /*
-     * THE ANTI-DIVERGENCE PIN, and the whole reason a copy of the artwork is
-     * tolerable in partials/page-background-css.blade.php. kbb.css keeps its
-     * own declaration because moving it would add a render-blocking request to
-     * forty working pages — the partial's header costs that out — so the two
+     * THE ANTI-DIVERGENCE PIN, and the whole reason a copy of the page
+     * background is tolerable in partials/page-background-css.blade.php.
+     * kbb.css keeps its own copy because moving it into a separate stylesheet
+     * would add a render-blocking request to the forty pages that already fetch
+     * kbb.css -- docs/BG-STANDALONE-DOCUMENTS.md §5 costs that out -- so the two
      * have to be held identical by something that fails.
      *
-     * MUTATION: change one byte of the data URI in either file → red, naming
-     * both.
+     * ▲ WHAT IS PINNED CHANGED WHEN THE DRAWING CAME OFF.
+     *
+     * This used to require the partial to carry kbb.css's 9,130-byte
+     * `--bg-botanical` declaration byte for byte. The owner asked for that
+     * drawing to come off the page background, so neither file carries it any
+     * more and the pin would have been asserting the absence of nothing. What
+     * the two files still share -- and what a lane can still edit in one and
+     * not the other -- is the gradient declaration and the body rule that uses
+     * it, so that is what this holds together now.
+     *
+     * MUTATION: change one byte of the gradient in either file → red, naming
+     * both. Run, both directions.
      */
     $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
     $partial = (string) file_get_contents(resource_path('views/partials/page-background-css.blade.php'));
 
-    $start = strpos($css, '--bg-botanical:url("data:image/svg+xml;utf8,');
-    expect($start)->not->toBeFalse('kbb.css no longer declares --bg-botanical, so this guard asserts nothing');
+    $start = strpos($css, '--kbb-page-gradient:');
 
-    $declaration = substr($css, (int) $start, (int) strpos($css, ');', (int) $start) - (int) $start + 2);
+    expect($start)->not->toBeFalse('kbb.css no longer declares --kbb-page-gradient, so this guard'
+        .' asserts nothing. If the page background moved, move this with it.');
 
-    expect(strlen($declaration))->toBeGreaterThan(9000, 'the extracted declaration is too short to be the artwork');
-    expect(str_contains($partial, $declaration))
-        ->toBeTrue('partials/page-background-css.blade.php and kbb.css no longer carry the SAME'
-            .' --bg-botanical declaration. One of them was edited on its own; the journal and an'
-            .' article would now render a different background from every other page.');
+    $declaration = substr($css, (int) $start, (int) strpos($css, "\n", (int) $start) - (int) $start);
+    $declaration = rtrim($declaration);
 
-    // and the body rule that uses it, property for property
-    foreach (['background-color:#FDEFF3', 'background-size:1500px auto,auto',
-        'background-repeat:repeat-y,no-repeat', 'background-attachment:fixed,fixed'] as $property) {
-        expect(str_contains($partial, $property))->toBeTrue('the partial has lost '.$property);
-        expect(str_contains($css, $property))->toBeTrue('kbb.css has lost '.$property);
+    expect(strlen($declaration))->toBeGreaterThan(40,
+        'the extracted gradient declaration is too short to be the page background');
+
+    expect(str_contains($partial, $declaration))->toBeTrue(
+        'partials/page-background-css.blade.php and kbb.css no longer carry the SAME'
+        .' --kbb-page-gradient declaration. One of them was edited on its own; the journal and an'
+        ." article would now render a different background from every other page.\n"
+        .'  kbb.css: '.$declaration);
+
+    /*
+     * AND NEITHER OF THEM PUTS THE DRAWING BACK. The owner asked for it off the
+     * page background; a lane that reinstates it in either file fails here
+     * rather than on somebody noticing it on the shop.
+     */
+    $bodyRuleStart = strpos($css, 'body{'."\n".'  background-color:#FDEFF3;');
+
+    expect($bodyRuleStart)->not->toBeFalse('kbb.css no longer has the page-background body rule');
+
+    $bodyRule = substr($css, (int) $bodyRuleStart, (int) strpos($css, '}', (int) $bodyRuleStart) - (int) $bodyRuleStart + 1);
+
+    /*
+     * THE PARTIAL'S EMITTED CSS, NOT THE WHOLE FILE — and this caught itself.
+     *                                                          (Lane BG)
+     * Written as `$partial`, the check below went red on a correct file: the
+     * partial's own header comment explains at length that it USED to carry
+     * `--bg-botanical` and no longer does, and that prose satisfied the needle.
+     * The same shape this lane spent round 5 removing from three other files,
+     * in the assertion written to guard against it. The emitted stylesheet
+     * starts at the style tag; everything before it is commentary.
+     */
+    $emitted = substr($partial, (int) strpos($partial, '<style id="kbb-page-background">'));
+
+    foreach ([['kbb.css', $bodyRule], ['the partial', $emitted]] as [$label, $haystack]) {
+        expect(str_contains($haystack, '--bg-botanical'))->toBeFalse(
+            $label.' puts the botanical drawing back on the page background. The owner asked for'
+            .' it off: "you put some image on background of the whole site, which i don\'t want".'
+            .' Appearance → Page background → "Botanical drawing" is how it comes back, and it'
+            .' ships off.');
+
+        expect(str_contains($haystack, 'repeat-y'))->toBeFalse(
+            $label.' tiles the page background down the page again -- the "not continue type" the'
+            .' owner asked to be rid of.');
     }
 });
 
