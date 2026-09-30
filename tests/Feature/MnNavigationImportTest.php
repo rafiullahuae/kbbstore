@@ -163,21 +163,53 @@ it('carries the navigation in two files the contract names, and the plugin says 
      * the 1.5.0 plugin said 1.0.0.
      *
      * MUTATION NOTE — BOTH HALVES RUN. Setting PLUGIN_VERSION back to '1.6.0'
-     * while leaving the header at 1.7.0 fails on the PLUGIN_VERSION line;
-     * setting the header back to 1.6.0 while leaving the other two fails on the
-     * header line. Two literals, two failures, which is the point of there
-     * being three copies.
+     * while leaving the header where it is fails on the PLUGIN_VERSION line;
+     * setting the header back while leaving the other two fails on the header
+     * line. Two edits, two failures, which is the point of there being three
+     * copies.
+     *
+     * ── READ, NOT SPELLED OUT ──────────────────────────────────── Lane IE ──
+     *
+     * These four assertions used to carry the literal `1.7.0`, four times. That
+     * pins the wrong thing: the property is that the three copies AGREE with
+     * each other and with what the manifest tells the owner, not that they hold
+     * one particular number. The literal made this test fail on the next
+     * ordinary version bump — it did, at 1.7.1 — with the message "the plugin
+     * header is not at 1.7.0", which reads like a defect in the bump rather than
+     * a stale pin, and which teaches the next lane to edit the number until the
+     * red goes away. A test that has to be edited to stay true is a test nobody
+     * trusts.
+     *
+     * So the version is READ from the header and the other three are required to
+     * match it, which is the real guard, plus a floor of 1.7.0 because that is
+     * the release the navigation shipped in and this file is about the
+     * navigation. Downgrade the plugin below it and this is red; disagree
+     * between any two copies and this is red; bump all three together and it
+     * stays green, as it should.
      */
     $header = (string) file_get_contents(base_path('wordpress-plugin/kbb-exporter/kbb-exporter.php'));
     $runner = (string) file_get_contents(base_path('wordpress-plugin/kbb-exporter/includes/class-kbb-export-runner.php'));
 
-    expect(str_contains($header, 'Version:           1.7.0'))->toBeTrue('the plugin header is not at 1.7.0');
-    expect(str_contains($header, "define( 'KBB_EXPORTER_VERSION', '1.7.0' );"))->toBeTrue('KBB_EXPORTER_VERSION is not at 1.7.0');
-    expect(str_contains($runner, "const PLUGIN_VERSION = '1.7.0';"))->toBeTrue('PLUGIN_VERSION is not at 1.7.0');
+    expect(preg_match('/^ \* Version:\s+(\d+\.\d+\.\d+)$/m', $header, $m))
+        ->toBe(1, 'the plugin header carries no Version: line');
+
+    $version = $m[1];
+
+    expect(version_compare($version, '1.7.0', '>='))
+        ->toBeTrue("the plugin is at {$version}, below the 1.7.0 that shipped the navigation");
+
+    expect(str_contains($header, "define( 'KBB_EXPORTER_VERSION', '{$version}' );"))
+        ->toBeTrue("the header says {$version} and KBB_EXPORTER_VERSION does not");
+
+    expect(str_contains($runner, "const PLUGIN_VERSION = '{$version}';"))
+        ->toBeTrue("the header says {$version} and PLUGIN_VERSION -- the only copy that reaches manifest.json -- does not");
 
     $manifest = mnManifest();
 
-    expect($manifest['source']['plugin_version'])->toBe('1.7.0');
+    expect($manifest['source']['plugin_version'])->toBe(
+        $version,
+        'the export tells the owner it was written by a build that is not this one'
+    );
 
     // Both files are described, with their row counts, and the contract's rule
     // is that `rows` excludes the header.
