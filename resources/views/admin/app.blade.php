@@ -829,7 +829,16 @@ tr.invdirty{background:var(--accent-soft)}
 .hphead{display:grid;grid-template-columns:1fr 74px 74px;gap:8px;padding:0 16px 8px;
   font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b8697}
 .hphead span:not(:first-child){text-align:center}
-.hplist{border:1px solid #e9edf3;border-radius:14px;overflow:hidden;background:#fff}
+/* NO `overflow:hidden` HERE, and the radius is put on the rows instead.
+   THE DEFECT: the grid-style picker's panel is position:absolute inside this
+   box, so overflow:hidden CLIPPED IT and the owner could not reach the designs
+   at all. Measured at 1280: the panel ran 120.6 -> 590.6 while this box starts
+   at 265.9, so 145px of it was cut, and the sidebar (right edge 248) covered
+   what was left. Rounding the first and last row gives the same corners with
+   nothing to clip. */
+.hplist{border:1px solid #e9edf3;border-radius:14px;background:#fff}
+.hplist>.hprow:first-child{border-top-left-radius:13px;border-top-right-radius:13px}
+.hplist>.hprow:last-child{border-bottom-left-radius:13px;border-bottom-right-radius:13px}
 .hprow{display:grid;grid-template-columns:38px 1fr 74px 74px;gap:8px;align-items:center;
   padding:12px 16px 12px 8px;border-bottom:1px solid #f3f6fa}
 .hprow:last-child{border-bottom:0}
@@ -1826,7 +1835,13 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   cursor:pointer;min-width:190px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .skinpick-b i{font-style:normal;color:#7b8697;font-size:11px}
 .skinpick-b:hover{border-color:#E0567B}
-.skinpop{position:absolute;top:calc(100% + 6px);right:0;z-index:40;background:#fff;border:1px solid #e2e8f0;
+/* IT OPENS TO THE RIGHT, NOT THE LEFT. `right:0` anchored this 470px panel to
+   the button's right edge, so it grew LEFTWARDS -- off the settings panel and
+   underneath the sidebar, which is exactly what the owner photographed. The
+   button sits near the left of a full-width row, so the free space is all to
+   its right. `z-index` raised above the console's own layers for the same
+   reason. */
+.skinpop{position:absolute;top:calc(100% + 6px);left:0;z-index:60;background:#fff;border:1px solid #e2e8f0;
   border-radius:14px;box-shadow:0 22px 50px -18px rgba(16,24,40,.35);padding:10px;
   display:none;grid-template-columns:repeat(3,1fr);gap:8px;width:470px;max-height:380px;overflow-y:auto}
 .skinpop.on{display:grid}
