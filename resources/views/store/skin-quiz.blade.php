@@ -30,9 +30,14 @@
 @endverbatim
 {!! $seo ?? '' !!}
 {!! app(\App\Services\Analytics::class)->headTags() !!}
-@verbatim
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">@endverbatim{{--
+{{-- Poppins, served by this shop rather than by Google.            (Lane BG)
+     The twin of the Arabic-face include below, which did the same for Cairo
+     and left the Latin half linking a render-blocking third-party stylesheet.
+     The partial's own header carries the measurement. --}}@include('partials.poppins-face')
+{{-- AND IT STOPS ASKING FOR WEIGHT 300. This document was the only caller that
+     did, and the census that decided it is in WebFonts' own note: ZERO visible
+     elements at font-weight 300 on any of nine pages, and one invisible element
+     on a product page. --}}{{--
     AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
 
     The webfont link above carries no Arabic glyph. Before this, /ar/skin-quiz/

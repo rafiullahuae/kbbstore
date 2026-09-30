@@ -30,8 +30,10 @@
 @endverbatim
 {!! $seo ?? '' !!}
 {!! app(\App\Services\Analytics::class)->headTags() !!}
-@verbatim
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">@endverbatim{{--
+{{-- Poppins, served by this shop rather than by Google.            (Lane BG)
+     The twin of the Arabic-face include below, which did the same for Cairo
+     and left the Latin half linking a render-blocking third-party stylesheet.
+     The partial's own header carries the measurement. --}}@include('partials.poppins-face'){{--
     AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
 
     The webfont link above carries no Arabic glyph. Before this, /ar/skincare-guide/
@@ -161,6 +163,25 @@
   .mnav-x{align-self:flex-end;font-size:20px;background:none;border:none;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
   @media(max-width:900px){.grid{grid-template-columns:1fr}h1{font-size:29px}.nav-links{display:none}.burger{display:grid}}
 </style>@endverbatim
+{{-- The shop's designed page background.                          (Lane BG)
+
+     THIS DOCUMENT WAS WHITE, and it was the last part of the same hole that
+     kept the brand colour and the site width off it: no `extends`, so no
+     kbb.css, so never the designed `body` rule. Measured before this include
+     with getComputedStyle on the rendered page: background-color
+     rgb(255,255,255) and background-image `none`, against rgb(253,239,243) and
+     five layers on the home page, /shop/, a product page and the cart.
+
+     AFTER THIS DOCUMENT'S OWN <style> AND BEFORE THE WASH, and both halves are
+     load-bearing. The rule it has to beat is this file's own
+     `body{background:var(--bg)}`, and `body` ties with `body` on specificity,
+     so it has to come later. The wash is the owner's own choice and has to beat
+     THIS, so the wash has to come later still — which is the order
+     layouts/store.blade.php already has, kbb.css first and the wash last.
+
+     NOT ZERO BYTES, unlike the two includes below it: +9,461 raw and +1,093
+     gzipped, and the partial's own header costs those three ways against each
+     other. --}}@include('partials.page-background-css')
 {{-- The brand colour and the site width.                           (Lane BG)
 
      THIS DOCUMENT DOES NOT EXTEND layouts/store.blade.php, so nothing that

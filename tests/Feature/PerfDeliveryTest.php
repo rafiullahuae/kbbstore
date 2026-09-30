@@ -212,16 +212,37 @@ it('lists every face file as a vite input', function () {
 });
 
 /*
- * Twelve faces, four preloads, three Cairo files behind twelve Cairo rules.
+ * Fifteen faces, four preloads, three Cairo files behind twelve Cairo rules.
  * The counts are the claim "the same font, byte for byte" made checkable: a
  * subset dropped to save repository weight changes which glyphs a codepoint
  * resolves to, and that is the exception rule 1 does not allow.
  *
- * MUTATION: remove the four devanagari rows from POPPINS_FACES — red.
+ * ▲ TWELVE BECAME FIFTEEN AND FOUR PRELOADS STAYED FOUR.          (Lane BG)
+ *
+ * Poppins 500 joined POPPINS_FACES: eight rules in kbb.css ask for it, 47
+ * elements on /shop/ compute to it, and with only 400 and 600 present CSS font
+ * matching answers with 400 outright -- measured at 543.28px against 552.38px
+ * with the real face. That is three more faces.
+ *
+ * It is NOT three more preloads, and the two numbers moving apart is the point
+ * of asserting both. preloadTags() emits one link per face of the preload
+ * subset, so 500 would have added a fifth preload and taken critical-path
+ * bandwidth from the LCP image -- the exact cost this lane's preload list was
+ * chosen to avoid. WebFonts::NO_PRELOAD_WEIGHTS keeps it out, and this case is
+ * what says so.
+ *
+ * MUTATION: remove the four devanagari rows from POPPINS_FACES — red. Remove
+ * `500` from NO_PRELOAD_WEIGHTS — red on the preload count, at 5 against 4.
  */
 it('carries every face Google serves, and preloads only the ones the page uses', function () {
-    expect(WebFonts::faces(WebFonts::POPPINS))->toHaveCount(12)
+    expect(WebFonts::faces(WebFonts::POPPINS))->toHaveCount(15)
         ->and(WebFonts::faces(WebFonts::CAIRO))->toHaveCount(12);
+
+    // Five weights across three subsets, and every one of them a real file.
+    // array_unique keeps the ORIGINAL keys, so the comparison is on the values.
+    $weights = array_values(array_unique(array_column(WebFonts::faces(WebFonts::POPPINS), 'weight')));
+    sort($weights);
+    expect($weights)->toBe([400, 500, 600, 700, 800]);
 
     // Cairo is variable: twelve rules, three files.
     $cairoFiles = array_unique(array_column(WebFonts::faces(WebFonts::CAIRO), 'file'));

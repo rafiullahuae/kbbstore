@@ -39,7 +39,9 @@ export default defineConfig({
                  * face. As inputs they are hashed, listed in the manifest and
                  * resolved by App\Support\WebFonts through Vite::asset().
                  *
-                 * All twelve Poppins faces css2 returns, devanagari included,
+                 * All FIFTEEN Poppins faces css2 returns, devanagari included
+                 * -- 500 joined them when Lane BG found that eight rules in
+                 * kbb.css ask for it and the browser was answering with 400 --
                  * and Cairo's three (its four weights are one variable file
                  * per subset). A
                  * browser fetches a face only when a codepoint in its
@@ -50,6 +52,9 @@ export default defineConfig({
                 'resources/fonts/poppins/poppins-devanagari-400.woff2',
                 'resources/fonts/poppins/poppins-latin-400.woff2',
                 'resources/fonts/poppins/poppins-latin-ext-400.woff2',
+                'resources/fonts/poppins/poppins-devanagari-500.woff2',
+                'resources/fonts/poppins/poppins-latin-500.woff2',
+                'resources/fonts/poppins/poppins-latin-ext-500.woff2',
                 'resources/fonts/poppins/poppins-devanagari-600.woff2',
                 'resources/fonts/poppins/poppins-latin-600.woff2',
                 'resources/fonts/poppins/poppins-latin-ext-600.woff2',

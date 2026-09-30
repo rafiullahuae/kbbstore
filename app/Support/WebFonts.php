@@ -88,6 +88,24 @@ final class WebFonts
     public const CAIRO = 'Cairo';
 
     /**
+     * The weights that are SERVED but never PRELOADED.
+     *
+     * preloadTags() emits one `<link rel=preload>` per face of the preload
+     * subset, so adding a weight silently adds a preload -- and a preload is
+     * critical-path bandwidth taken from the LCP image, which is the exact cost
+     * the note on DIRS below says the preload list was chosen to avoid.
+     *
+     * 500 is on prices, filter chips and small labels. None of them is the LCP
+     * element, so the face is fetched when a 500 glyph is first needed -- after
+     * first paint -- and the critical path stays byte-for-byte what Lane PERF
+     * measured it down to. Four preloads before this change and four after it;
+     * PerfDeliveryTest counts them.
+     *
+     * @var list<int>
+     */
+    private const NO_PRELOAD_WEIGHTS = [500];
+
+    /**
      * Where each family's files live under resources/, and which subset is
      * worth a preload.
      *
@@ -106,13 +124,75 @@ final class WebFonts
 
     /**
      * Exactly what fonts.googleapis.com/css2 returned on 29 September 2026 for
-     * `family=Poppins:wght@400;600;700;800&display=swap`, transcribed rather
-     * than retyped: the subset names, the weights and the unicode-ranges are
-     * Google's.
+     * `family=Poppins:wght@400;500;600;700;800&display=swap`, transcribed
+     * rather than retyped: the subset names, the weights and the unicode-ranges
+     * are Google's.
+     *
+     * ── 500 ARRIVED LATER, AND IT IS A FIX RATHER THAN AN ADDITION ──────────
+     *
+     * This shop asks for weight 500 in 57 rules across its STOREFRONT
+     * stylesheets -- eight in kbb.css, 22 in kbb-shop.css, 13 in
+     * kbb-product.css, and the rest over cart, checkout, the grid skins and the
+     * review block -- in three more in an admin preview, and in three each in
+     * the journal, an article and the skin quiz. It had no 500 face to serve
+     * any of them. Counted in Chromium, on the rendered page: 47 elements on
+     * /shop/ compute to font-weight 500 (29 of them visible), 34 on a product
+     * page (31 visible), 29 on the home page (27 visible), and 106 visible
+     * across the eight pages measured.
+     *
+     * AND THE BROWSER DOES NOT SYNTHESISE IT. There is synthetic BOLD, and
+     * there is no synthetic medium: CSS font matching for a target of 500 tries
+     * 500, then weights BELOW it in descending order, and only then above -- so
+     * with 400 and 600 present it picks 400 OUTRIGHT, and the text is the
+     * regular face with no emboldening of any kind.
+     *
+     * Measured twice, because the first attempt at this measurement was wrong
+     * and shipped wrong numbers in this very comment. A ruler string set in
+     * `Poppins, system-ui, sans-serif` reports the SYSTEM font's widths on any
+     * page where Poppins is absent, and reports them identically on every such
+     * page -- which is what "the same number on all eight pages" meant and
+     * nobody read. The honest instrument sets the ruler in `Poppins` ALONE and
+     * measures a second ruler in a family that cannot exist; equal widths mean
+     * Poppins never rendered. Both numbers below are from that instrument, on a
+     * 40px ruler reading `Hydrating Serum AED 149`:
+     *
+     *   target weight      400      500      600      700      800
+     *   before (no 500)  497.20   497.20   510.17   516.17   521.25
+     *   after            497.20   505.00   510.17   516.17   521.25
+     *
+     * 500 sat EXACTLY on 400 to the hundredth of a pixel, which is the proof
+     * that it was the 400 face and not a near miss. Every "medium" label,
+     * price and filter chip on this shop rendered as regular from the day the
+     * faces were self-hosted until this one.
+     *
+     * WHAT IT COSTS: 7,748 bytes for the latin file -- SMALLER than the 400
+     * (7,884) and the 600 (8,000) already shipped -- fetched once, same origin,
+     * `display:swap`, and NOT preloaded (see NO_PRELOAD_WEIGHTS). So it is not
+     * on the critical path Lane PERF cut from 4,369 ms, and the preload count
+     * is four before this change and four after it.
+     *
+     * AND THE THREE FILES ARE GOOGLE'S OWN, not a re-export: each was fetched
+     * from the URL `css2` names and is sha256-IDENTICAL to it --
+     * latin 7,748 bytes, latin-ext 5,484, devanagari 39,084, all three
+     * byte-for-byte. `usWeightClass` reads 500 and the name table reads
+     * "Poppins Medium", against "Poppins" at 400 and "Poppins SemiBold" at 600.
+     * The unicode-ranges below were compared against the same response rather
+     * than retyped.
+     *
+     * WEIGHT 300 IS NOT HERE, and was asked the same question rather than
+     * skipped. store/skin-quiz was the only document that requested it. The
+     * census found ZERO elements at font-weight 300 on seven of the eight pages
+     * and exactly one on a product page, invisible (0x0). A target of 300 also
+     * resolves to the 400 face -- 497.20px, the same number as 400 and 500 --
+     * so the quiz was asking Google for a file that would have changed nothing.
+     * It stops asking.
      *
      * @var list<array{subset: string, weight: int, file: string, range: string}>
      */
     private const POPPINS_FACES = [
+            ['subset' => 'devanagari', 'weight' => 500, 'file' => 'poppins-devanagari-500.woff2',     'range' => 'U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B09'],
+            ['subset' => 'latin',      'weight' => 500, 'file' => 'poppins-latin-500.woff2',          'range' => 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD'],
+            ['subset' => 'latin-ext',  'weight' => 500, 'file' => 'poppins-latin-ext-500.woff2',      'range' => 'U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF'],
             ['subset' => 'devanagari', 'weight' => 400, 'file' => 'poppins-devanagari-400.woff2',  'range' => 'U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B09'],
             ['subset' => 'latin',      'weight' => 400, 'file' => 'poppins-latin-400.woff2',       'range' => 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD'],
             ['subset' => 'latin-ext',  'weight' => 400, 'file' => 'poppins-latin-ext-400.woff2',   'range' => 'U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF'],
@@ -198,6 +278,10 @@ final class WebFonts
 
         foreach (self::faces($family) as $face) {
             if ($face['subset'] !== $subset || isset($done[$face['file']])) {
+                continue;
+            }
+
+            if (in_array($face['weight'], self::NO_PRELOAD_WEIGHTS, true)) {
                 continue;
             }
 

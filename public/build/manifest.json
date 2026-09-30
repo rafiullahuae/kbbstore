@@ -60,6 +60,10 @@
     "file": "assets/poppins-devanagari-400-CJDn6rn8.woff2",
     "src": "resources/fonts/poppins/poppins-devanagari-400.woff2"
   },
+  "resources/fonts/poppins/poppins-devanagari-500.woff2": {
+    "file": "assets/poppins-devanagari-500-BIdkeU1p.woff2",
+    "src": "resources/fonts/poppins/poppins-devanagari-500.woff2"
+  },
   "resources/fonts/poppins/poppins-devanagari-600.woff2": {
     "file": "assets/poppins-devanagari-600-STEjXBNN.woff2",
     "src": "resources/fonts/poppins/poppins-devanagari-600.woff2"
@@ -76,6 +80,10 @@
     "file": "assets/poppins-latin-400-cpxAROuN.woff2",
     "src": "resources/fonts/poppins/poppins-latin-400.woff2"
   },
+  "resources/fonts/poppins/poppins-latin-500.woff2": {
+    "file": "assets/poppins-latin-500-C8OXljZJ.woff2",
+    "src": "resources/fonts/poppins/poppins-latin-500.woff2"
+  },
   "resources/fonts/poppins/poppins-latin-600.woff2": {
     "file": "assets/poppins-latin-600-zEkxB9Mr.woff2",
     "src": "resources/fonts/poppins/poppins-latin-600.woff2"
@@ -91,6 +99,10 @@
   "resources/fonts/poppins/poppins-latin-ext-400.woff2": {
     "file": "assets/poppins-latin-ext-400-by3JarPu.woff2",
     "src": "resources/fonts/poppins/poppins-latin-ext-400.woff2"
+  },
+  "resources/fonts/poppins/poppins-latin-ext-500.woff2": {
+    "file": "assets/poppins-latin-ext-500-CK-6C4Hw.woff2",
+    "src": "resources/fonts/poppins/poppins-latin-ext-500.woff2"
   },
   "resources/fonts/poppins/poppins-latin-ext-600.woff2": {
     "file": "assets/poppins-latin-ext-600-CAhIAdZj.woff2",
