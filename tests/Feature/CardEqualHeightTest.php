@@ -348,14 +348,86 @@ it('clears the stored rows that would hide the new default from his own shop', f
     expect(cehCount($html, 'kbb-card-brand'))->toBe(0, 'the migration left the stored brand row behind');
     expect(cehCount($html, 'kbb-card-cat'))->toBe(0, 'the migration left the stored category row behind');
 
-    // And it does NOT touch the third key, which did not change value: a shop
-    // that has switched the stars off chose that.
+    /*
+     * And it does NOT touch the third key, which did not change value: a shop
+     * that has switched the stars off chose that.
+     *
+     * BOTH RESETS, AND THE SECOND ONE IS NOT DECORATION. ProductStyles is bound
+     * `scoped` and memoises its resolved values for the request — see
+     * AppServiceProvider, and the 87ms a page that buys. `forgetMemo()` clears
+     * SettingsService's static and leaves the ProductStyles instance holding
+     * what it read BEFORE the migration ran, so this read the pre-migration
+     * value and passed against a migration that had deleted the row. Every
+     * helper in this file that re-renders does both; a case that pokes the
+     * database directly has to as well.
+     */
     $settings->set('show_rating', false);
     $migration->up();
     SettingsService::forgetMemo();
+    app()->forgetScopedInstances();
 
     expect(app(ProductStyles::class)->all()['show_rating'])
         ->toBeFalse('the migration cleared show_rating, which nobody asked it to move');
+});
+
+it('resolves the card settings once per request, not once per tile', function () {
+    /*
+     * ── THE DEFECT, AND IT COST 87ms A PAGE ────────────────────────────────
+     *
+     * components/product-card.blade.php reads three keys off ProductStyles and
+     * it runs ONCE PER TILE. ProductStyles::all() walks its whole schema through
+     * SettingsService::get(), and every one of those is a
+     * `Cache::rememberForever` — so a 24-product /shop was doing 24 × 29 = 696
+     * cache reads for a set of values that cannot change inside one request.
+     *
+     * Measured on this branch's own preview, thirty sequential renders of
+     * /shop, three passes each way: 6799 / 5576 / 6315 ms against 3595 / 3811 /
+     * 3363 ms. StorefrontQueryBudgetTest would never have seen it — it counts
+     * queries, and this costs none — which is why rule 4 says measured rather
+     * than asserted.
+     *
+     * TWO HALVES, AND EACH IS USELESS WITHOUT THE OTHER: the binding has to be
+     * `scoped` (or every tile builds its own instance and the memo memoises
+     * nothing), and the instance has to memoise (or the shared instance walks
+     * the schema again for every tile).
+     *
+     * MUTATION 1: drop `$this->app->scoped(ProductStyles::class)` from
+     * AppServiceProvider — red on the first expectation. RUN.
+     * MUTATION 2: delete the `$this->resolved` memo in ProductStyles::all() —
+     * red on the second. RUN.
+     * MUTATION 3: delete `$this->resolved = null;` from save() — red on the
+     * third, and on the shop Appearance → Product styles reads back the value
+     * it had before you pressed Save. RUN.
+     */
+    expect(app(ProductStyles::class))
+        ->toBe(app(ProductStyles::class), 'ProductStyles is not bound scoped, so every tile builds its own and memoises nothing');
+
+    $styles = app(ProductStyles::class);
+
+    expect($styles->all()['show_brand'])->toBeFalse();
+
+    // A write that goes round the service: the memo is what keeps this from
+    // being read again, and it is the whole point.
+    app(SettingsService::class)->set('show_brand', true);
+    SettingsService::forgetMemo();
+
+    expect($styles->all()['show_brand'])
+        ->toBeFalse('ProductStyles::all() read the settings again inside one request, which is 29 cache reads per tile');
+
+    // …until something says the values have moved.
+    $styles->forgetResolved();
+
+    expect($styles->all()['show_brand'])
+        ->toBeTrue('forgetResolved() does not drop the memo, so nothing can ever refresh it');
+
+    /*
+     * AND save() DROPS IT ITSELF, so the screen that writes and reads back in
+     * one request is told the truth.
+     */
+    $styles->save(['show_brand' => false]);
+
+    expect($styles->all()['show_brand'])
+        ->toBeFalse('save() left the pre-save values memoised, so the admin screen reads back what it just overwrote');
 });
 
 /* ═════════ 3 · the height is reserved, and it is reserved in CSS ═════════ */

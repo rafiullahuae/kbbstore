@@ -168,8 +168,47 @@ class ProductStyles
 
     public function __construct(private SettingsService $settings) {}
 
+    /**
+     * One resolved set of values per instance, and one instance per request.
+     *
+     * ── WHY THIS IS HERE, MEASURED RATHER THAN REASONED ───────── Lane CARD ──
+     *
+     * components/product-card.blade.php reads three of these keys, and it runs
+     * ONCE PER TILE. Every `$this->settings->get()` below calls
+     * SettingsService::all(), which is a `Cache::rememberForever` — so a
+     * 24-product /shop page was doing 24 × 29 = 696 cache reads for a set of
+     * values that cannot change inside one request.
+     *
+     * Measured on this branch's own preview, thirty sequential renders of
+     * /shop, three passes each way:
+     *
+     *     with a fresh all() per tile   6799 / 5576 / 6315 ms
+     *     with the values resolved once 3595 / 3811 / 3363 ms
+     *
+     * — about 87ms a page on a page that takes ~120. `StorefrontQueryBudgetTest`
+     * would never have seen it: it counts QUERIES, and this costs none.
+     *
+     * ── scoped, NOT singleton, AND NOT A STATIC ─────────────────────────────
+     *
+     * AppServiceProvider binds this class `scoped`, exactly as it binds
+     * CartService, SettingsService and VariantPricing, and for the reasons
+     * recorded there: a singleton would survive between requests on a queue
+     * worker, and a process-level static is the trap CLAUDE.md records against
+     * Setting::map() — it would survive `forgetScopedInstances()`, which is how
+     * both StorefrontQueryBudgetTest and every test in this repository that
+     * moves a setting and re-renders gets a clean read.
+     *
+     * save() drops it, so a screen that writes and then reads back in the same
+     * request sees what it wrote.
+     */
+    private ?array $resolved = null;
+
     public function all(): array
     {
+        if ($this->resolved !== null) {
+            return $this->resolved;
+        }
+
         $out = [];
 
         foreach (self::SCHEMA as $key => $def) {
@@ -177,7 +216,13 @@ class ProductStyles
             $out[$key] = $saved === null ? $def[2] : $this->cast($key, $saved);
         }
 
-        return $out;
+        return $this->resolved = $out;
+    }
+
+    /** Drop the resolved set, so the next all() reads the settings again. */
+    public function forgetResolved(): void
+    {
+        $this->resolved = null;
     }
 
     public function get(string $key): mixed
@@ -233,6 +278,11 @@ class ProductStyles
                 $this->settings->set($key, $this->cast($key, $value));
             }
         }
+
+        // The memo above is now a record of what this screen said BEFORE the
+        // save. A screen that writes and reads back in one request would
+        // otherwise be told its own change did not happen.
+        $this->resolved = null;
     }
 
     public function cssVariables(): string
