@@ -24,6 +24,53 @@ use Illuminate\Support\Str;
  */
 class DemoCatalogueSeeder extends Seeder
 {
+    /**
+     * ── THE THREE COLUMNS THE DETAIL TABS ARE BUILT FROM ────── Lane PDP2 R4 ──
+     *
+     * The owner: *"also put some demo tabs on the product page, so i can see in
+     * action."*
+     *
+     * He never had. App\Support\ProductTabs builds the tab row from
+     * `description`, `ingredients` and `how_to_use`, drops any entry whose body
+     * is empty, and falls Description back to the short description — so a
+     * seeder that set ONLY short_description gave every demo product exactly
+     * one tab and a strip with nothing to switch between. Demo content is off
+     * by default, so ProductTabs' DemoContent top-up never ran either.
+     *
+     * The words live in App\Support\DemoProductDetails because the migration
+     * beside this seeder writes the same three columns onto a shop that is
+     * ALREADY seeded — editing here alone would change nothing the owner can
+     * see. One source, two readers.
+     *
+     * ▲ AND THE COLUMNS ARE PROBED, WHICH IS NOT DEFENSIVE TIDYING.
+     *
+     * This seeder is run from a MIGRATION — 2026_08_27_100000_seed_demo_
+     * catalogue — and `ingredients` and `how_to_use` are added five weeks later
+     * in migration order, by 2026_10_05_000000. On a fresh install this method
+     * therefore runs at a moment when two of the three columns DO NOT EXIST,
+     * and writing them unguarded is not a graceful degradation, it is
+     * `SQLSTATE[HY000]: table products has no column named ingredients` and a
+     * migrate that stops there. Measured: three cases of
+     * StorefrontEnglishUnchangedTest went red on exactly that, on the first run
+     * after this was written without the probe.
+     *
+     * A fresh install is not left short because of it: the two columns arrive
+     * empty in October and 2027_06_15_000000_backfill_demo_product_details
+     * fills them with these same strings later in the same `migrate`. What the
+     * probe buys is that `db:seed --class=DemoCatalogueSeeder` on a
+     * fully-migrated shop writes all three at once.
+     *
+     * @return array<string, string>
+     */
+    private function details(string $name): array
+    {
+        return array_filter(
+            \App\Support\DemoProductDetails::for($name),
+            static fn (string $column): bool => \Illuminate\Support\Facades\Schema::hasColumn('products', $column),
+            ARRAY_FILTER_USE_KEY
+        );
+    }
+
     public function run(): void
     {
         $categories = ['Cleansers', 'Toners', 'Serums', 'Moisturisers', 'Sunscreens', 'Masks'];
@@ -86,7 +133,8 @@ class DemoCatalogueSeeder extends Seeder
                      */
                     'sale_price' => $onSale ? WholeDirhams::toward((int) round($price * 0.7)) : null,
                     'stock_status' => $i % 9 === 0 ? 'outofstock' : 'instock',
-                    'short_description' => 'Demo product for layout testing. Replaced by the WordPress migration.',
+                    'short_description' => \App\Support\DemoProductDetails::SEEDED_SHORT_DESCRIPTION,
+                    ...$this->details($name),
                     /*
                      * ZERO, NOT AN INVENTED FIGURE — and the reason is the one
                      * bug the owner actually reported.

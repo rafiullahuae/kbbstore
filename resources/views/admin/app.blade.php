@@ -4282,7 +4282,11 @@ document.addEventListener('keydown', e=>{
 
 
 /* ---------- Appearance · Product page ----------
-   Same shape as the Homepage screen: a switch per device for every module. */
+   TWO HALVES. `PP.sections` is the module list this screen has always drawn --
+   a switch per device, the same shape as the Homepage screen. `PP.layout` is
+   round 4's addition: four tabs of spacing and type, in the ModuleSchema::tabs()
+   payload Appearance -> Product styles already uses. Both arrive from one GET
+   and go back through one POST; see the block above paintProductPage(). */
 let PP = null;
 
 function ppBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/product-page'; }
@@ -4300,24 +4304,122 @@ async function renderProductPage(){
   paintProductPage();
 }
 
+/* ═════════════════════════════════════════════════════════════════════════
+   Appearance → Product page — TWO HALVES, ONE SCREEN.        (Lane PDP2, R4)
+
+     "also i have control on the product page spacing between sections and
+      elements etc. and fonts sizes control etc. pleas give me proper tabs for
+      that on the product page > Layout."
+
+   What was here was a FLAT LIST of eighteen module switches and nothing else:
+   no spacing control, no font-size control and no tab grouping. The switches
+   are untouched and now sit behind a tab called Sections; beside them are the
+   four Layout tabs the endpoint returns from App\Services\ProductLayout.
+
+   THE SHAPE IS Appearance → Product styles', NOT A NEW ONE. `PP.layout` is the
+   same `[{key,label,description,fields:[…]}]` payload `PS.tabs` is — both come
+   out of ModuleSchema::tabs() — so the strip, the per-tab count, the card, the
+   `.mmrow` fields and the save bar below are the ones eight other screens in
+   this console already draw. A screen that invents its own shape is a screen
+   the next reader has to learn separately.
+
+   ▲ TENTHS. A `range` in this framework is an INTEGER, and the product page's
+     own type is 13.5px, 12.5px and a 1.62 line height. ProductLayout stores
+     those as 135, 125 and 162 and declares `scale` beside min/max/step; the
+     readout below divides by it. The stored number is never shown, and nothing
+     but that class and this screen ever reads it.
+
+   ▲ THE TWO HALVES SAVE SEPARATELY, and that is the endpoint's contract rather
+     than a convenience here: a POST carrying `layout` alone leaves the module
+     switches alone, and a POST carrying `sections` alone leaves the thirty
+     layout values alone. Each half is posted only when it has really been
+     touched, so opening a tab and pressing Save cannot write the half he was
+     not looking at.
+   ═════════════════════════════════════════════════════════════════════════ */
+let PPTAB='sections', PPDIRTY={sections:false,layout:false};
+
+function ppTabs(){ return (PP && Array.isArray(PP.layout)) ? PP.layout : []; }
+function ppLayoutTab(){ return ppTabs().find(t=>t.key===PPTAB) || null; }
+
+/** Every layout field, flat — used by Save and by Reset. */
+function ppFields(){ const out=[]; for(const t of ppTabs()) for(const f of t.fields) out.push(f); return out; }
+
+/** The number the owner reads, from the number the schema stores. */
+function ppShow(f){
+  const sc=(f.options && +f.options.scale) || 1;
+  const unit=(f.options && f.options.unit) || '';
+  return (sc>1 ? String(+f.value/sc) : String(f.value)) + unit;
+}
+
+function ppField(f){
+  if(f.type==='range'){ const o=f.options||{};
+    return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+      <span class="mmrange"><input type="range" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${f.value}" data-pl="${escAttr(f.key)}">
+        <i id="plv-${escAttr(f.key)}">${escHtml(ppShow(f))}</i></span></div>`; }
+  if(f.type==='select')
+    return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+      <select data-pl="${escAttr(f.key)}">${Object.entries(f.options||{}).map(([k,l])=>`<option value="${escAttr(k)}"${String(k)===String(f.value)?' selected':''}>${escHtml(l)}</option>`).join('')}</select></div>`;
+  return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
+    <input type="text" value="${escAttr(String(f.value))}" data-pl="${escAttr(f.key)}"></div>`;
+}
+
 function paintProductPage(){
-  $('#content').innerHTML = `<div class="wrap ecwrap">
-    <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Product page</h2>
-      <p class="mdesc" style="margin:0">Switch any module off, per device. A module off for both is not rendered at all.</p></div>
-    <div class="hphead"><span>Module</span><span>Desktop</span><span>Mobile</span></div>
-    <div class="hplist">${PP.sections.map((s,i)=>`
+  const lt=ppLayoutTab();
+  const strip=`<div class="ectabs">
+    <button class="ectab${PPTAB==='sections'?' on':''}" data-pptab="sections">Sections<span class="ecn">${PP.sections.length}</span></button>
+    ${ppTabs().map(t=>`<button class="ectab${t.key===PPTAB?' on':''}" data-pptab="${escAttr(t.key)}">${escHtml(t.label)}<span class="ecn">${t.fields.length}</span></button>`).join('')}
+  </div>`;
+
+  const body = lt
+    ? `<div class="mmcols"><div class="card mmcard">
+         <div class="mmhd"><b>${escHtml(lt.label)}</b><span>${escHtml(lt.description)}</span></div>
+         <div class="mmbody">${lt.fields.map(ppField).join('')}</div></div></div>`
+    : `<div class="hphead"><span>Module</span><span>Desktop</span><span>Mobile</span></div>
+       <div class="hplist">${PP.sections.map((s,i)=>`
       <div class="hprow${(!s.desktop&&!s.mobile)?' alloff':''}" data-i="${i}">
         <div class="hpmove"></div>
         <div class="hpmain"><b>${escHtml(s.label)}</b><span>${escHtml(s.description)}</span></div>
         <span class="ectog${s.desktop?' on':''}" data-pp="${i}" data-k="desktop" role="switch" aria-checked="${s.desktop}" tabindex="0"></span>
         <span class="ectog${s.mobile?' on':''}" data-pp="${i}" data-k="mobile" role="switch" aria-checked="${s.mobile}" tabindex="0"></span>
-      </div>`).join('')}</div>
+      </div>`).join('')}</div>`;
+
+  $('#content').innerHTML = `<div class="wrap ecwrap mmwrap">
+    <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Product page</h2>
+      <p class="mdesc" style="margin:0">${lt
+        ? 'Spacing and type for one product page. Every control ships at the number the page already draws, so nothing moves until you move a slider.'
+        : 'Switch any module off, per device. A module off for both is not rendered at all.'}</p></div>
+    ${strip}
+    ${body}
     <div class="ecsave">
-      <span class="ecdirty" id="ppDirty" style="visibility:hidden">Unsaved changes</span>
-      <button class="btn" id="ppDiscard">Discard</button>
+      <span class="ecdirty" id="ppDirty" style="visibility:${(PPDIRTY.sections||PPDIRTY.layout)?'visible':'hidden'}">Unsaved changes</span>
+      ${lt?`<button class="btn" id="ppReset">Reset layout to defaults</button>`:`<button class="btn" id="ppDiscard">Discard</button>`}
       <button class="btn primary" id="ppSave">Save changes</button>
     </div></div>`;
+
+  $$('[data-pptab]').forEach(b=>b.onclick=()=>{ PPTAB=b.dataset.pptab; paintProductPage(); });
 }
+
+function ppMarkDirty(half){
+  PPDIRTY[half]=true;
+  const d=$('#ppDirty'); if(d){ d.style.visibility='visible'; d.classList.remove('ok'); d.textContent='Unsaved changes'; }
+}
+
+document.addEventListener('input', e=>{
+  const el=e.target.closest('[data-pl]');
+  if(!el||!PP) return;
+  const f=ppFields().find(x=>x.key===el.dataset.pl);
+  if(!f) return;
+  f.value = el.type==='range' ? +el.value : el.value;
+  const out=$('#plv-'+f.key); if(out) out.textContent=ppShow(f);
+  ppMarkDirty('layout');
+});
+document.addEventListener('change', e=>{
+  const el=e.target.closest('select[data-pl]');
+  if(!el||!PP) return;
+  const f=ppFields().find(x=>x.key===el.dataset.pl);
+  if(!f) return;
+  f.value=el.value; ppMarkDirty('layout');
+});
 
 document.addEventListener('click', async e=>{
   if(!PP) return;
@@ -4328,22 +4430,41 @@ document.addEventListener('click', async e=>{
     tg.classList.toggle('on', s[tg.dataset.k]);
     tg.setAttribute('aria-checked', s[tg.dataset.k]);
     tg.closest('.hprow').classList.toggle('alloff', !s.desktop && !s.mobile);
-    const d=$('#ppDirty'); if(d){d.style.visibility='visible';d.classList.remove('ok');d.textContent='Unsaved changes';}
+    ppMarkDirty('sections');
     return;
   }
-  if(e.target.id==='ppDiscard'){ renderProductPage(); return; }
+  if(e.target.id==='ppDiscard'){ PPDIRTY={sections:false,layout:false}; renderProductPage(); return; }
+  if(e.target.id==='ppReset'){
+    /* The SHIPPED value of every layout field, which is the number the page
+       renders with no <style> block at all. Not a save — it fills the buffer
+       and the bar says so, exactly as Product styles' own Reset does. */
+    ppFields().forEach(f=>{ f.value=f.default; });
+    ppMarkDirty('layout'); paintProductPage(); return;
+  }
   if(e.target.id!=='ppSave') return;
 
   const msg=$('#ppDirty');
+  const payload={};
+  if(PPDIRTY.sections) payload.sections=PP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile}));
+  if(PPDIRTY.layout){ payload.layout={}; ppFields().forEach(f=>{ payload.layout[f.key]=f.value; }); }
+
+  if(!payload.sections && !payload.layout){
+    if(msg){ msg.style.visibility='visible'; msg.textContent='Nothing has changed.'; }
+    return;
+  }
+
   try{
     const r=await fetch(ppBase(),{method:'POST',credentials:'same-origin',
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({sections:PP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile}))})});
+      body:JSON.stringify(payload)});
     const j=await r.json();
     if(j.ok){
-      PP.sections=j.sections;
-      msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} modules — live now`;
-      setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600);
+      PP.sections=j.sections; if(Array.isArray(j.layout)) PP.layout=j.layout;
+      PPDIRTY={sections:false,layout:false};
+      paintProductPage();
+      const m2=$('#ppDirty');
+      if(m2){ m2.style.visibility='visible'; m2.classList.add('ok'); m2.textContent=`Saved ${j.saved} settings — live now`;
+        setTimeout(()=>{m2.classList.remove('ok');m2.textContent='Unsaved changes';m2.style.visibility='hidden';},2600); }
     }else{ msg.style.visibility='visible'; msg.textContent=j.error||'Could not save.'; }
   }catch(err){ msg.style.visibility='visible'; msg.textContent='Could not save — check your connection.'; }
 });

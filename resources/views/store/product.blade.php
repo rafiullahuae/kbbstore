@@ -265,9 +265,34 @@
     @endif
 @endpush
 
+{{-- ▲ THE @include BELOW SITS HARD AGAINST THE MARGIN, AND THAT IS MEASURED.
+
+     partials/product-layout-css.blade.php emits NOTHING while every value on
+     Appearance → Product page → Layout is at the number this page already
+     draws — which is what makes applying this package a change of nothing. So
+     the directive may add no bytes of its own either, and BOTH obvious
+     placements do:
+
+       indented on its own line   the four leading spaces are literal output and
+                                  are pushed into <head> whatever the partial
+                                  emits.
+       on the end of the </style> line   worse, and this is the one that was
+                                  written first: Blade compiles @include to
+                                  `<?php echo … ?>` and PHP swallows ONE newline
+                                  after a closing tag — so the include ate the
+                                  newline that used to end the <style> line.
+                                  StorefrontEnglishUnchangedTest caught it at
+                                  byte 19916 of the product page, a single ⏎,
+                                  which is exactly the size of accident that
+                                  test exists to refuse.
+
+     Its own line, no indentation: the newline the directive swallows is its
+     own, the <style> line keeps the one it had, and the rendered <head> is byte
+     for byte what it was. --}}
 @push('styles')
     @vite('resources/css/kbb/kbb-product.css')
     <style>{!! $reviewsCss !!}</style>
+@include('partials.product-layout-css')
 @endpush
 
 @section('content')

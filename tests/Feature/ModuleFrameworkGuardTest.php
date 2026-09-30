@@ -68,6 +68,7 @@ use App\Services\MobileHeader;
 use App\Services\MobileMenu;
 use App\Services\NewsletterSettings;
 use App\Services\ProductLabels;
+use App\Services\ProductLayout;
 use App\Services\ProductStyles;
 use App\Services\SectionDividers;
 use App\Services\SecurityModule;
@@ -624,6 +625,22 @@ function ehSchemaModules(): array
          * nothing is the point rather than an exemption.
          */
         'set_appearance' => ['schema' => SetAppearance::SCHEMA, 'tabs' => SetAppearance::TABS, 'policy' => SetAppearance::POLICY],
+
+        /*
+         * ── LANE PDP2 R4: Appearance → Product page → Layout ────────────────
+         *
+         * Enrolled in the round it shipped, for the reason the paragraph above
+         * gives: a module that "passes as written" is a module nobody has run
+         * the guard over. 30 fields across four tabs, `store` defaulted to
+         * `module` on every one of them, so missingRules() has nothing to find.
+         *
+         * The two `select` weights are the reason this line matters most: rule
+         * 5 says a select stores one of its own options or the default, and
+         * ProductLayout prints its value straight into a <style> element. That
+         * is only checkable from here because the options are declared in the
+         * SCHEMA rather than looked up somewhere else.
+         */
+        'product_layout' => ['schema' => ProductLayout::SCHEMA, 'tabs' => ProductLayout::TABS, 'policy' => ProductLayout::POLICY],
     ];
 }
 
