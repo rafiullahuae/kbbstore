@@ -1825,6 +1825,61 @@ final class EnglishRenderWalk
                 'pattern' => '#<style id="kbb-page-background">.*?</style>#s',
                 'hits' => 2,
             ],
+
+            /*
+             * THE HEAD OF THE PRODUCT PAGE'S BUY COLUMN, REDRAWN AS LEDGER.
+             *                                                     (Lane PDP2)
+             *
+             * The owner, verbatim: "Ledger design is fine for mobile and
+             * desktop both. but don't end the page, this desgn + existing
+             * reviews section, and related products section and then footer.
+             * also in mobile you have used big bold font, whichi dont' want."
+             *
+             * He is answering docs/PDP-PRODUCT-PAGE-DESIGNS.md, which put five
+             * whole product pages in front of him at
+             * /admin-api/catalog/pdp-preview/{design}/{slug}. CLAUDE.md rule 1
+             * has exactly one exception -- "a default the owner asked for in as
+             * many words" -- and a page he picked out of five is it.
+             *
+             * ── WHAT THE PAIR CUTS, AND WHAT IS STILL COMPARED ──────────────
+             *
+             * One contiguous region of ONE page: from the product title down to
+             * the blurb, stopping at the cart form. Inside it the price joined
+             * the title's row, the rating rows gained a hairline and the blurb
+             * gained a checkbox and a label. Everything else on that page --
+             * the <head>, the header, the breadcrumb, the gallery, the whole
+             * cart form, the bundle bars, the set contents panel, the stock
+             * line, the buy row, the trust lines, the payment chips, the tabs,
+             * the reviews section, the related grid and the footer -- is
+             * OUTSIDE the cut and still compared byte for byte, which is what
+             * makes "the rest of the page must not end" checkable rather than
+             * asserted. Ledger is otherwise a stylesheet: see the block at the
+             * foot of resources/css/kbb/kbb-product.css.
+             *
+             * ── THE TWO PATTERNS BEGIN AND END AT THE SAME BYTES ────────────
+             *
+             * `(?<=</div>)` is the brand line's closing tag on both sides, and
+             * `\s*` then swallows the indentation between it and the region --
+             * which is not the same on the two sides, because the @php block
+             * that computes the struck price moved UP with the price it belongs
+             * to and a Blade directive contributes its own leading whitespace to
+             * the rendered page. Both cuts therefore start immediately after
+             * `</div>` and both end immediately before `<form class="cart`, so
+             * the bytes either side of the pair line up exactly.
+             *
+             * ── WHAT THIS STOPPED WATCHING, AND WHAT BUYS IT BACK ───────────
+             *
+             * The cut swallows the product name, both price figures, the VAT
+             * sentence and the review-badge label, so this walk no longer sees
+             * somebody rewriting any of them. tests/Feature/ProductPageLedgerTest
+             * pins every one of those against the shipped English, by element,
+             * which is the sharper form of the same check -- a rule that cuts
+             * more than its own element has to say what it stopped watching.
+             */
+            'the Ledger head of the product buy column (Lane PDP2)' => [
+                'pattern' => '#(?<=</div>)\s*<div class="bb-head">.*?(?=<form class="cart)#s',
+                'hits' => 1,
+            ],
         ];
     }
 
@@ -1956,6 +2011,27 @@ final class EnglishRenderWalk
                 'hits' => 1,
             ],
 
+            /*
+             * THE SHIPPED HEAD OF THE PRODUCT PAGE'S BUY COLUMN.   (Lane PDP2)
+             *
+             * PAIRED WITH 'the Ledger head of the product buy column', whose
+             * note carries the argument, what the pair gives up and what buys it
+             * back. The two patterns are deliberately the same shape: they open
+             * on the brand line's `</div>` and close on `<form class="cart`, so
+             * the region either side of them is identical on both sides and
+             * still compared byte for byte.
+             *
+             * WHAT IS IN HERE ON THE OLD SIDE: `<h1 class="bb-title">`, the
+             * rating capsule, the inline rating row, `.bb-price` in the position
+             * it used to occupy BELOW them, the VAT line and the blurb. The
+             * price moved up into the title's row, which is the one thing in
+             * this change that cannot be expressed as a reflow: it is the same
+             * element at a different point in the document.
+             */
+            'the shipped head of the product buy column (Lane PDP2)' => [
+                'pattern' => '#(?<=</div>)\s*<h1 class="bb-title".*?(?=<form class="cart)#s',
+                'hits' => 1,
+            ],
         ];
     }
 

@@ -280,65 +280,155 @@
   <!-- buy box -->
     <div class="buybox">
       @if ($brand)<div class="bb-brand" id="bbBrand">{{ $brand }}</div>@endif
-      <h1 class="bb-title" id="bbTitle">{{ $name }}</h1>
       @php
+          /* ═══════════════════════════════════════════════════════════════
+             LEDGER — THE PRICE JOINS THE NAME'S ROW, SO THIS BLOCK MOVED UP.
+             (Lane PDP2)
+
+               "then product name, and right side cut price and actual price
+                beautifully present."
+
+             `$kbbWas` and `$kbbSaleDp` were computed inside `.bb-price`, three
+             elements lower down the column. The price is now the second track
+             of the title's row, so the computation travels with it. Both of its
+             OTHER readers -- the bundle loop's `max($bdp, $kbbSaleDp)` and the
+             sticky bar's `.now` -- are further down this file still, so nothing
+             else moves.
+
+             ▲ $kbbWas, NOT `(int) $product->price`. A variable product's
+               markdown lives on its VARIATIONS and `products.price` is NULL on
+               the parent, so the moment Product::isOnSale() started telling the
+               truth about one of them, the <s> below would have printed `AED 0`
+               beside a real from-price. Product::compareAtPrice() is what this
+               page advertised the day before the sale opened -- the lowest
+               REGULAR price across the options -- and it is the same figure the
+               tile's badge and the "On sale" facet compare against.
+
+             ▲ BOTH FIGURES AT ONE PRECISION, and the precision that separates
+               them. Money::decimalsToDistinguish() answers 0 -- no change at
+               all -- for every markdown whole dirhams can already tell apart,
+               and 2 for the one that cannot: without it a markdown from
+               AED 100.00 to AED 99.80 prints `AED 100` inside the <s> and
+               `AED 100` inside `.now` beside it, striking a price through and
+               quoting the identical number next to it.
+
+             ▲ ONE @php REGION AND NOT THREE. A directive on a line of its own
+               contributes its indentation and its newline to every page that
+               renders it, and StorefrontEnglishUnchangedTest compares BYTES --
+               the same trap this file already records twice. */
+          $kbbWas = (int) $product->compareAtPrice();
+          $kbbSaleDp = $onSale ? Money::decimalsToDistinguish($kbbWas, $price) : null;
+
           $badgeHeart  = (bool) $settings->get('review_badge_heart', true);
           $badgeAvg    = (bool) $settings->get('review_badge_avg', true);
           $badgeCount  = (bool) $settings->get('review_badge_count', true);
           $badgeSold   = (bool) $settings->get('review_badge_sold', true);
           $badgeLabel  = str_replace('{n}', number_format($rcount), (string) $settings->get('review_badge_label', __('store.product.review_badge_label')));
           $badgeColour = (string) $settings->get('review_badge_colour', '#E8A33D');
+
+          /* THE RATING HAIRLINE'S FILL IS ARITHMETIC ON A NUMBER THE SERVER
+             ALREADY HAS -- `$rating / 5` as a percent, written into the style
+             attribute. Nothing in the browser measures anything (CLAUDE.md rule
+             4), and it is `inline-size`, so the bar fills from the inline-start
+             edge and therefore from the RIGHT on /ar with no [dir] rule.
+
+             CLAMPED, because a rating outside 0..5 is a data fault and a bar
+             140% wide would be a layout fault stacked on top of it. It is only
+             ever drawn under `@if ($rcount)` / `$showCap && $rcount`, so an
+             unreviewed product draws no bar rather than an empty one -- the
+             same refusal the shipped page already makes about the number. */
+          $kbbRateFill = max(0, min(100, (int) round(($rating / 5) * 100)));
       @endphp
+      {{-- TWO TRACKS, AND THE PRICE TRACK IS SIZED TO ITS CONTENT.
+           `minmax(0,1fr)` on the title track is what keeps a 118-character
+           imported name from pushing the price off the inline edge: without the
+           `0` minimum a grid track refuses to shrink below its content and the
+           row overflows, which at 390px is a horizontal scrollbar on the whole
+           document. Measured on pdp-very-long-name-ampoule, at both widths.
+
+           THE LIVE PRICE IS ALWAYS INSIDE `.now`, ON SALE OR NOT, and that is
+           carried over from the block this replaced rather than rediscovered:
+           without the span an ordinary price rendered bare and then JUMPED IN
+           SIZE the moment a bundle was picked, because pdp.js' setPrice()
+           creates the span when it cannot find one. See its `// No .now span`
+           branch.
+
+           THE STRUCK FIGURE IS FIRST IN THE MARKUP BECAUSE IT IS FIRST ON THE
+           PAGE. Ledger stacks it ABOVE the live figure rather than beside it --
+           beside it is where the pair wraps badly on a 390px phone with a
+           forty-character K-beauty name, at which point the two prices have
+           wrapped rather than been designed. pdp.js finds `.now` by selector and
+           never by position (see setPrice()), so the order costs nothing. --}}
+      <div class="bb-head">
+        <h1 class="bb-title" id="bbTitle">{{ $name }}</h1>
+        <div class="bb-price" id="bbPrice">@if ($onSale)<s>{!! Money::format($kbbWas, $kbbSaleDp) !!}</s>@endif<span class="now">@if ($kbbHeadline !== null){!! $kbbHeadline !!}@else{!! Money::format($price, $kbbSaleDp) !!}@endif</span>@if ($onSale && $off)<span class="off">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif</div>
+      </div>
+      @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif
       <div class="cap-area" id="capArea">
           @if ($showCap && $rcount)
               <a class="{{ $modules->classFor('capsule') }} sr-capbar" href="#sr">
                   @if ($badgeHeart)<span class="sr-cap-heart">&#10084;</span>@endif
                   <span class="sr-cap-stars" style="color:{{ $badgeColour }}">★★★★★</span>
                   @if ($badgeAvg)<span class="sr-cap-avg">{{ number_format($rating, 1) }}</span>@endif
+                  {{-- The hairline, in BOTH rating rows and not just this one.
+                       Store → Ecommerce → Product page → Review badges picks
+                       which of the two is drawn (capsule / inline / both), and a
+                       shopper who has chosen `inline` is looking at .bb-rate --
+                       so a bar added to only one of them is a bar that
+                       disappears when the owner moves a control he already had.
+                       On `both` there are two rating rows and therefore two
+                       bars, which is correct: each row states its own rating. --}}
+                  <span class="bb-ratebar"><i style="inline-size:{{ $kbbRateFill }}%"></i></span>
                   @if ($badgeCount)<span class="sr-cap-count">{{ $badgeLabel }}</span>@endif
               </a>
           @endif
       </div>
       @if ($rcount)
-      <div class="{{ $modules->classFor('rating') }} bb-rate" id="bbRate" @unless ($showRate) style="display:none" @endunless><span class="stars" id="bbStars" style="color:{{ $badgeColour }}">@for ($i = 1; $i <= 5; $i++){!! $i <= round($rating) ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span> @if ($badgeAvg)<span>{{ number_format($rating, 1) }}</span> @endif @if ($badgeCount)· <a href="#sr">{{ $badgeLabel }}</a>@endif @if ($badgeSold && $product->total_sales > 999) · <span style="color:var(--green);font-weight:600">{{ __('store.product.sold_thousands', ['count' => round($product->total_sales / 1000)]) }}</span>@endif</div>
+      <div class="{{ $modules->classFor('rating') }} bb-rate" id="bbRate" @unless ($showRate) style="display:none" @endunless><span class="stars" id="bbStars" style="color:{{ $badgeColour }}">@for ($i = 1; $i <= 5; $i++){!! $i <= round($rating) ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span> @if ($badgeAvg)<span>{{ number_format($rating, 1) }}</span> @endif<span class="bb-ratebar"><i style="inline-size:{{ $kbbRateFill }}%"></i></span>@if ($badgeCount)· <a href="#sr">{{ $badgeLabel }}</a>@endif @if ($badgeSold && $product->total_sales > 999) · <span style="color:var(--green);font-weight:600">{{ __('store.product.sold_thousands', ['count' => round($product->total_sales / 1000)]) }}</span>@endif</div>
       @endif
-      <div class="bb-price" id="bbPrice">{{-- The current price is always inside .now, on sale or not.
-        Without it an ordinary price rendered bare and then jumped in size the
-        moment a bundle was selected, because the update adds the span. --}}
-        {{-- The struck price and the live price are quoted at ONE precision,
-             chosen so the two are actually different numbers. Whole dirhams is
-             this store's display setting, and at whole dirhams a markdown from
-             AED 100.00 to AED 99.80 printed `AED 100` inside .now and `AED 100`
-             inside the <s> beside it. See Money::decimalsToDistinguish(): it
-             answers 0 — no change at all — for every markdown the rounded form
-             can already tell apart. --}}
-        @php
-        /* $kbbWas, NOT `(int) $product->price`. A variable product's markdown
-           lives on its VARIATIONS and `products.price` is NULL on the parent,
-           so the moment Product::isOnSale() started telling the truth about one
-           of them, the <s> below would have printed `AED 0` beside a real
-           from-price. Product::compareAtPrice() is what this page advertised
-           the day before the sale opened -- the lowest REGULAR price across the
-           options -- and it is the same figure the tile's badge and the "On
-           sale" facet compare against. For every product that carries a price
-           of its own it IS `(int) $product->price`, unchanged.
+      {{-- "2-3 lines short description with fade read more."
 
-           BOTH STATEMENTS IN THE ONE @php REGION, and that is not tidiness. A
-           second `@php` line of its own contributes its indentation to the
-           rendered page and StorefrontEnglishUnchangedTest compares BYTES --
-           the same trap components/product-card.blade.php records for computing
-           the range beside the markup instead of up here. */
-        $kbbWas = (int) $product->compareAtPrice();
-        $kbbSaleDp = $onSale ? Money::decimalsToDistinguish($kbbWas, $price) : null;
-        @endphp
-        <span class="now">@if ($kbbHeadline !== null){!! $kbbHeadline !!}@else{!! Money::format($price, $kbbSaleDp) !!}@endif</span>
-        @if ($onSale)
-            <s>{!! Money::format($kbbWas, $kbbSaleDp) !!}</s>
-            @if ($off)<span class="off">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
-        @endif
-      </div>
-      @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif
-      @if ($product->short_description && ! $kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
+           THREE LINE-BOXES, THEN A FADE, THEN ONE TAP TO THE REST, AND NO
+           JAVASCRIPT. The cap is `max-block-size: calc(3 * <line-height>)` and
+           the bottom of it is dissolved with `mask-image`; the toggle is a
+           CHECKBOX, so `.bb-morebox:checked ~ .bb-desc` lifts the cap and
+           removes the mask in one rule and it works with JavaScript off.
+
+           ▲ WHY NOT `-webkit-line-clamp`. Clamp ends the third line with an
+             ELLIPSIS, and an ellipsis is a truncation mark, not a fade. He drew
+             a fade -- the last line going to nothing.
+
+           ▲ AND WHY NOTHING MEASURES IT. "Is this text actually longer than
+             three lines" is the canonical reason a page reaches for
+             scrollHeight, and CLAUDE.md rule 4 forbids it. It is not asked: the
+             cap and the mask are declared in CSS and paint identically whether
+             the blurb runs to two lines or to nine, and a short blurb simply
+             never reaches the mask, so it fades nothing.
+
+           ▲ ONE ID PER PAGE, AND THE TWO POSITIONS ARE MUTUALLY EXCLUSIVE.
+             `$kbbShortBelow` is true only on a set whose contents panel really
+             draws, and this @if carries `! $kbbShortBelow` while the one inside
+             the form carries `$kbbShortBelow` -- so exactly one `#bbMore` is
+             ever in the document and the label cannot point at the wrong one.
+
+           ▲ OFF-CANVAS, NOT `hidden`. A `hidden` checkbox is `display:none`,
+             and a display:none control cannot be reached by keyboard -- which
+             would make the only way to read the rest of the blurb a mouse. It is
+             parked at 1x1px with opacity 0 instead, which is the same reasoning
+             parts/tabs.blade.php gives for its radio group. It carries no
+             `name`, so the copy of it that lands inside the cart form on a set
+             is not serialised with the basket.
+
+           ▲ NO CHEVRON BESIDE THE ARROW. `store.product.read_more` is already
+             "Read more ↓" in English and "اقرأ المزيد ↓" in Arabic; the drawing
+             put an SVG chevron after it as well, which is two arrows saying one
+             thing on the page he has just asked to make quieter.
+
+           ▲ ON ONE SOURCE LINE, and that is not tidiness. Blade contributes a
+             directive's own indentation and newline to the rendered page even
+             when the directive prints nothing, and this file already records
+             what that costs. --}}
+      @if ($product->short_description && ! $kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore"><p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p><label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
@@ -483,7 +573,7 @@
 
                Same trap the .bb-price block above records for computing the
                range beside the markup instead of up in the php block at the top. --}}
-        @include('partials.set-contents-panel')@if ($kbbShortBelow)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
+        @include('partials.set-contents-panel')@if ($kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore"><p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p><label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the

@@ -618,3 +618,315 @@ a{color:inherit;text-decoration:none}
    already applied, skip it", and the squeezed list is a thing he asked for and
    already has. CLAUDE.md rule 1 — nothing that already works changes.
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LEDGER — THE PRODUCT PAGE THE OWNER PICKED.                     (Lane PDP2)
+   ═══════════════════════════════════════════════════════════════════════════
+
+     "Ledger design is fine for mobile and desktop both. but don't end the page,
+      this desgn + existing reviews section, and related products section and
+      then footer. also in mobile you have used big bold font, whichi dont'
+      want."
+
+   Five whole pages were drawn at /admin-api/catalog/pdp-preview/{design}/{slug}
+   and he picked A · Ledger. docs/PDP-PRODUCT-PAGE-DESIGNS.md is the argument
+   behind all five; the short form of this one is THERE IS NOT A SINGLE BOX ON
+   THIS PAGE. The photograph runs to both edges of the phone with no frame and
+   no corner radius, the thumbnails float on its bottom edge, and everything
+   below is separated by hairline rules rather than by cards, tints and borders.
+   The only strong marks left are the picture, the price and the button.
+
+   ── WHY THIS IS CSS AND NOT A SIXTH TEMPLATE ────────────────────────────────
+
+   Because four fifths of Ledger IS a treatment. The markup moved in exactly
+   three places -- the price joined the title's row, a hairline was added to the
+   rating rows, and the blurb gained a checkbox and a label -- and everything
+   else here is this sheet talking to markup that was already on the page. A
+   sixth copy of store/product.blade.php is what the round before last shipped
+   (`?layout=`, three drawings, none chosen, ~240 lines of dead CSS for somebody
+   else to delete), and docs/PP-PRODUCT-PAGE-PROPOSALS.md carries the banner.
+
+   ── AND WHY IT IS AT THE END OF THIS FILE ───────────────────────────────────
+
+   Specificity is not the only thing deciding these rules; ORDER is. Three
+   sheets describe this page and they arrive in this order:
+
+       kbb.css            (shared, and NOT this lane's file)
+       kbb-product-*.css  (this one)
+       <style> sorina-reviews.css </style>   inlined by ProductController
+
+   So a rule here beats an equally specific one in kbb.css, and LOSES to an
+   equally specific one in the inlined review sheet -- which is why the capsule
+   below is addressed as `.pdp .cap-area .sr-capbar` (0,3,0) rather than as
+   `.sr-capbar` (0,1,0). Checked in Chromium, not reasoned about.
+
+   ── NOTHING BELOW THE BUY COLUMN IS TOUCHED ─────────────────────────────────
+
+   He was explicit that the page must not end where the preview ended. The
+   frequently-bought strip, the details section, the reviews and the related
+   grid are exactly what they were, and the one rule in here that reaches past
+   the buy column is the tab strip -- which is the thing he asked for an idea
+   about and the reason Ledger has a tab treatment at all.
+
+   ── LOGICAL PROPERTIES THROUGHOUT, so /ar is the same sheet ─────────────────
+
+   `inline-size`, `margin-inline`, `padding-block`, `border-block-start`. THE
+   ONE UNAVOIDABLE EXCEPTION is `mask-image`, whose gradients take physical
+   directions only and have no logical form, so the tab row's edge fade carries
+   a single [dir="rtl"] override and it is the only one in this block.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── AND THE BREADCRUMB, WHICH TURNED OUT TO BE THE ONE THAT REALLY OVERFLOWED
+   `.crumb` (line 77 of this sheet) prints the product's name unguarded, and a
+   name with no break opportunity in it pushes a TEXT NODE past the viewport —
+   which no element's bounding box reports, which is why it took a hit-test to
+   find. Measured at 390 on pdp-unbreakable-name: `scrollWidth` 437 against a
+   390 viewport, and hiding `.crumb` alone brings it back to 390 while hiding
+   the title, the tab row, the reviews or the related grid changes nothing.
+
+   ▲ IT IS OLDER THAN THIS LANE AND IT IS THIS LANE'S ANYWAY. The breadcrumb is
+     not touched by Ledger; the fixture that found it was written for the TITLE's
+     overflow, and it found this instead. `.crumb` is declared in THIS sheet, so
+     the rule reaches the product page and nothing else. */
+.crumb{overflow-wrap:anywhere}
+
+/* ── the name and the price, one row ──────────────────────────────────────── */
+/* `minmax(0,1fr)` on the title track, for the same reason `.pdp` itself carries
+   it 500 lines above: a `1fr` track is `minmax(auto,1fr)` and an `auto` minimum
+   cannot go below its content's min-content width, so a long unbroken product
+   name would push the price off the inline edge and take the document's
+   scrollWidth with it. Measured at 390 on a 118-character imported name. */
+.pdp .bb-head{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:start;margin-block:8px 0}
+/* `overflow-wrap:anywhere` AND IT IS NOT DEFENSIVE TIDYING. `minmax(0,1fr)` lets
+   the title TRACK be narrower than its content -- which is what keeps a long name
+   from pushing the price off the edge -- but it does not stop the content itself
+   from spilling out of the track, and a grid does not clip. So one unbreakable
+   token longer than the track (an imported name run together with hyphens, a
+   model code) would paint past the viewport and take the document's scrollWidth
+   with it: the same 8px sideways scroll `.pdp` itself carries a note about 600
+   lines above, in a narrower box. Ledger made this track NARROWER than the
+   shipped full-width title, so it is more exposed than the page was, not less. */
+.pdp .bb-head .bb-title{margin:0;overflow-wrap:anywhere}
+
+/* ── THE MOBILE TYPE, WHICH IS HIS SECOND COMPLAINT ───────────────────────────
+   Measured on the Ledger preview at 390: 21px at weight 600 over three
+   line-boxes, 82px tall, beside a 22px/800 price. Two heavy objects in one row,
+   and the title the loudest thing on the screen.
+
+   The desktop he approved is 30px at weight FIVE HUNDRED, so the weight is what
+   differs between the half he likes and the half he does not -- and the third
+   line is what makes the block tall. This takes both: 19px/500 fits the name in
+   two line-boxes and reads as a label beside the price rather than as a
+   headline. The price is left where Ledger put it, because with the title
+   quieter the price is already the loudest thing on the page, which is what a
+   shop wants.
+
+   THE OTHER TWO OPTIONS ARE PICTURES, NOT CODE: docs/lane-pdp-shots/
+   sheet-real-type-390.png shows this one beside 21px/500 (size unchanged) and
+   17px/500 with a 23px price, with the measured numbers under each. Picking one
+   of those is an edit to the two declarations below and to nothing else. */
+.pdp .bb-title{font-size:19px;font-weight:500;line-height:1.36;letter-spacing:-.005em}
+.pdp .bb-head .bb-price{display:block;text-align:end;white-space:nowrap;line-height:1.15;margin:0}
+.pdp .bb-head .bb-price s{display:block;font-size:12.5px;font-weight:500;color:var(--muted);opacity:1}
+.pdp .bb-head .bb-price .now{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.pdp .bb-head .bb-price .off{display:inline-block;margin-block-start:4px;font-size:10px;font-weight:700;padding:2px 6px}
+.pdp .bb-vat{font-size:11px;color:var(--muted);margin-block-start:4px}
+
+/* ── the rating, as a thin bar rather than a lozenge ──────────────────────────
+   A capsule says "4.8 · 212 reviews"; a bar also says how far off five that is,
+   in three pixels of height and no extra row. The pill's own ground, border and
+   radius go, because a lozenge is a box and this page has none.
+
+   `.pdp .cap-area .sr-capbar` AND NOT `.sr-capbar`: sorina-reviews.css is
+   INLINED into <head> after this sheet's <link>, so it wins every tie. */
+.pdp .cap-area{margin-block:10px 0}
+.pdp .cap-area .sr-capbar{background:none;border:0;border-radius:0;padding:0;box-shadow:none;gap:8px;font-size:12px;color:var(--muted)}
+.pdp .cap-area .sr-capbar:hover{transform:none;box-shadow:none}
+.pdp .cap-area .sr-cap-heart{display:none}
+.pdp .cap-area .sr-cap-avg{font-weight:700;color:var(--ink);font-size:12.5px}
+.pdp .cap-area .sr-cap-count{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.pdp .bb-rate{margin-block:10px 0;font-size:12px;color:var(--muted)}
+/* `flex:0 1 96px` with a floor, so the hairline gives way to the words beside
+   it on a narrow phone instead of pushing the count onto a second line. */
+.pdp .bb-ratebar{flex:0 1 96px;min-inline-size:44px;block-size:3px;border-radius:2px;background:var(--line-2);overflow:hidden}
+.pdp .bb-ratebar i{display:block;block-size:100%;background:var(--pink);border-start-end-radius:2px;border-end-end-radius:2px}
+
+/* ── the blurb: three line-boxes, a real fade, and one tap to the rest ────── */
+.pdp .bb-morebox{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
+/* ▲ THE FADE'S STOPS ARE LENGTHS FROM THE TOP, NOT `100% - x`, AND THE
+     DIFFERENCE IS A SHORT BLURB.
+
+     `linear-gradient(to bottom,#000 calc(100% - 1.05em),transparent)` measures
+     from the element's OWN bottom, and a one-sentence blurb is a 42px element --
+     so its single line was dissolved into nothing although there was nothing
+     underneath it to hide. Measured on pdp-variable-ampoule, whose blurb is one
+     sentence: the fade ate the last two words of the only line it had.
+
+     Written as distances from the TOP instead, the fade begins at 20px of
+     padding plus 1.95 line-boxes and is complete at the cap, so an element
+     shorter than that never reaches the gradient's first stop and is painted
+     flat. It only bites on a blurb that is actually being cut off, which is what
+     a fade is for. Same arithmetic as the cap on the line below it, so the two
+     cannot drift apart. */
+.pdp .bb-desc{font-size:13.5px;line-height:1.62;color:var(--ink-2);
+    border-block-start:1px solid var(--line-2);margin-block:20px 0;padding-block-start:20px;
+    max-block-size:calc(3 * 1.62em + 20px);overflow:hidden;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(1.95 * 1.62em + 20px),transparent calc(3 * 1.62em + 20px));
+    mask-image:linear-gradient(to bottom,#000 calc(1.95 * 1.62em + 20px),transparent calc(3 * 1.62em + 20px))}
+.pdp .bb-more{display:inline-flex;align-items:center;gap:4px;margin-block-start:6px;font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer}
+.pdp .bb-morebox:checked ~ .bb-desc{max-block-size:none;-webkit-mask-image:none;mask-image:none}
+.pdp .bb-morebox:checked ~ .bb-more{display:none}
+
+/* ── the hairlines that replace the boxes ─────────────────────────────────────
+   One rule between one idea and the next, the way a well-set invoice is
+   separated -- and each seam is declared as a `border-block-START` on the block
+   BELOW it rather than as a bottom border on the block above.
+
+   That is not a preference. Half of these blocks are conditional: a product with
+   no blurb draws no `.bb-desc`, a set draws no `.opt-label`, a shop with the
+   trust lines switched off draws no `.trust`. A seam owned by the block above
+   would then be a rule with nothing under it -- a hairline hanging at the bottom
+   of the buy column -- and there is no selector for "the last one that
+   rendered". Owned by the block below, a block that does not render takes its
+   seam with it and the ones around it close up. */
+.pdp .opt-label{border-block-start:1px solid var(--line-2);margin-block:20px 9px;padding-block-start:20px}
+.pdp .stockline{border-block-start:1px solid var(--line-2);margin-block:20px 10px;padding-block-start:20px}
+.pdp .trust{background:none;padding:0;border-radius:0;grid-template-columns:minmax(0,1fr);gap:10px;
+    border-block-start:1px solid var(--line-2);margin-block-start:22px;padding-block-start:20px}
+.pdp .trust .ti{font-size:12.5px}
+.pdp .paychips{margin-block-start:12px}
+
+/* Rounder and shallower than the shipped bar, which is the one concession
+   Ledger makes to a box: these are CONTROLS and a control with no edge cannot
+   be pressed. Everything else that had a border has lost it. */
+.pdp .variants{margin-block-end:0}
+.pdp .variant{border-radius:12px;padding-block:11px}
+
+/* ── A SOLD-OUT BUTTON THAT LOOKED PRESSABLE ─────────────────────────────
+   `.addcart` is `background:var(--pink)` and there is no `[disabled]` rule for
+   it anywhere in this sheet, so an Add to cart the SERVER has already disabled
+   renders in full brand pink and reads as the one thing on the page you are
+   meant to press. Measured on pdp-sold-out-serum before this rule: a pink button
+   saying "Sold out", with `disabled` set on the element.
+
+   It is Ledger's own answer and not an invention. The drawing the owner chose
+   from carries `.pv-add[disabled]{background:var(--pv-mut);cursor:not-allowed}`
+   and he approved it with that state in front of him --
+   docs/lane-pdp-shots/ledger-soldout-390.png is the grey button he was looking
+   at. The hover is restated in the same rule because `.addcart:hover` would
+   otherwise darken a button that cannot be pressed.
+
+   ▲ THIS IS A SHIPPED DEFAULT THAT MOVES, and it is called out in the commit
+     rather than buried. CLAUDE.md rule 1's surviving half is that nothing he did
+     NOT ask about may change; he asked for this page to become Ledger, and this
+     is what Ledger does with a button the server has already disabled. */
+.pdp .addcart[disabled],.pdp .addcart[disabled]:hover{background:var(--muted);cursor:not-allowed}
+
+/* ── the photograph, unframed, running to both edges of the phone ─────────── */
+@media (max-width:880px){
+  .pdp .gallery{margin-inline:calc(var(--site-gutter,22px) * -1)}
+  .pdp .gmain{border-radius:0;border:0}
+  /* The strip floats ON the picture's bottom edge rather than under it, which
+     is where the 30px comes from: it is lifted by half its own height plus the
+     shadow. `z-index` because the thumbnails now overlap the frame. */
+  .pdp .gthumbs{margin-block-start:-30px;padding-inline:var(--site-gutter,22px);position:relative;z-index:2;
+      gap:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory;padding-block-end:2px}
+  .pdp .gthumbs::-webkit-scrollbar{display:none}
+  .pdp .gthumb{flex:0 0 auto;scroll-snap-align:start;width:56px;height:56px;border-radius:10px;
+      box-shadow:var(--sh-s);background-color:#fff}
+  .pdp .buybox{padding-block-start:22px}
+}
+
+/* ── the tabs: one row, the open one prominent, the rest at 38% ───────────────
+     "i want these tabs in same row with opened promient, and other slightely
+      faded by default, and can be scroll left to right between tags and and can
+      directly click on any tab, it will open."
+
+   THE SHIPPED PAGE ALREADY DID THIS -- ON A DESKTOP ONLY. `.dtabbar` is an
+   underline row at 1280 and `display:none` under 720px, where an ACCORDION was
+   drawn instead: a stack, not a row, with no faded siblings and nothing to
+   scroll. So the phone, which is where he asked for the idea, was the one width
+   that did not have it. The row is now drawn at every width and the accordion is
+   not drawn at all.
+
+   ▲ THE ACCORDION IS STILL RENDERED, and that is deliberate rather than
+     forgotten. partials/product-tabs.blade.php prints every tab body twice --
+     once into `.dpanel` and once into `.macc` -- and both were always in the
+     HTML; hiding one with CSS is what the shipped page already did at the other
+     width. Deleting the markup is a change to a partial this lane does not need
+     to touch and would cost the no-JavaScript reading of the page nothing but
+     risk. tabs.js binds `.dtab` and `.macc-h` by class with no width test, so
+     the row's clicks already worked at 390 -- there was simply nothing to click.
+
+   ▲ "THERE IS MORE TO THE RIGHT" IS SAID BY A MASK, not by an arrow: the row
+     bleeds to the screen edge and its last 34px dissolve into the page, so a tab
+     is visibly CUT rather than visibly ending. No arrow, no width spent.
+
+   ▲ AND THE MASK IS PHONE-ONLY, because at 1280 the five tabs fit with room to
+     spare and there is nothing to the right to point at -- a fade there would
+     dim the last tab for no reason. Measured in Chromium on the five-tab
+     fixture: the row overflows by 187px at 390 (94px on /ar, where the Arabic
+     titles are shorter) and by 0 at 1280. */
+.details .dtabbar{gap:22px;border-block-end:1px solid var(--line-2);margin-block-end:18px;
+    overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
+.details .dtabbar::-webkit-scrollbar{display:none}
+.details .dtab{flex:0 0 auto;scroll-snap-align:start;padding:0 0 12px;margin-block-end:-1px;
+    border-block-end:2px solid transparent;font-size:13.5px;font-weight:600;color:var(--ink);opacity:.38;
+    transition:opacity .15s,color .15s}
+.details .dtab:hover{opacity:.7;color:var(--ink)}
+.details .dtab.on{opacity:1;font-weight:700;color:var(--ink);border-block-end-color:var(--ink)}
+@media (max-width:720px){
+  /* Beats `@media(max-width:720px){.dtabbar,.dpanel{display:none}.macc{display:block}}`
+     in this file AND the identical pair in kbb.css: two classes against one. */
+  .details .dtabbar{display:flex;margin-inline:calc(var(--site-gutter,22px) * -1);
+      padding-inline:var(--site-gutter,22px);
+      -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent);
+      mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent)}
+  .details .dpanel{display:block}
+  .details .macc{display:none}
+  /* mask-image has no logical form: this pair is the block's only [dir] rule. */
+  [dir="rtl"] .details .dtabbar{
+      -webkit-mask-image:linear-gradient(to left,#000 calc(100% - 34px),transparent);
+      mask-image:linear-gradient(to left,#000 calc(100% - 34px),transparent)}
+}
+
+/* ── THE FADE UNDER A CLAMPED TAB BODY WAS A WHITE RECTANGLE ─────────────────
+   `.dcontent.clamp::after` (500 lines above) paints
+   `linear-gradient(transparent,#fff)` over the bottom 56px of the panel, which
+   is a fade only while the page behind it is white. Appearance → Page
+   background can make this page pink -- it is pink on this shop today -- and
+   then it is a white BLOCK sitting on top of the last two lines of the
+   description. Measured at 1280 before this lane touched anything, and it is
+   this lane's to fix now because the panel it lives in is drawn on a PHONE for
+   the first time above, which is where it is most obvious.
+
+   A mask fades the TEXT instead of painting over it, so it is correct on any
+   ground and needs to know nothing about the setting. Same mechanism as the
+   blurb's fade, for the same reason. The rule it replaces is turned off rather
+   than edited, because it is three screens up this file and belongs to the
+   shipped tab panel rather than to Ledger. */
+/* AND THE STOPS ARE LENGTHS FROM THE TOP FOR THE SAME REASON AS THE BLURB'S.
+   `.dcontent.clamp` is `max-height:104px` and a short tab body is a single 23px
+   line -- with the stops written as `100% - 2.2em` that line was faded away
+   although nothing was hidden behind it. Measured on pdp-variable-ampoule, whose
+   Description is one sentence. 76px is three of this panel's line-boxes, so the
+   fade only begins on a panel that has already run past three lines and is
+   complete exactly where the cap cuts. */
+.details .dcontent.clamp::after{display:none}
+.details .dcontent.clamp{
+    -webkit-mask-image:linear-gradient(to bottom,#000 76px,transparent 104px);
+    mask-image:linear-gradient(to bottom,#000 76px,transparent 104px)}
+
+/* ── desktop. 881px is this sheet's own breakpoint, so the page turns where it
+      already turned. He said the desktop is fine, so the only things that move
+      here are the two the phone rules would otherwise have dragged with them. */
+@media (min-width:881px){
+  .pdp .bb-title{font-size:30px;font-weight:500;line-height:1.24}
+  .pdp .bb-head .bb-price .now{font-size:22px}
+  /* The photograph keeps its bled edge on the OUTSIDE of the two columns, which
+     is the one place the full-bleed idea survives a wide screen. */
+  .pdp .gallery{margin-inline:calc(var(--site-gutter,22px) * -1) 0}
+  .pdp .gmain{border-radius:0;border:0}
+  .pdp .gthumbs{margin-block-start:14px;padding-inline:var(--site-gutter,22px) 0}
+  .pdp .gthumb{box-shadow:none}
+}

@@ -201,6 +201,219 @@ foreach ($members as $i => $m) {
     ],
 ]);
 
+/* ── 3b. THE THREE CASES THE PREVIEW NEVER HAD TO DRAW. (Lane PDP2) ────────
+ *
+ * The five drawings were shot on ONE ordinary product, one set and one sold-out
+ * row, and that was enough to choose between five layouts. It is not enough to
+ * say the chosen one holds on the real catalogue, which is what TASK 3 asks:
+ * the two dimensions a product page actually varies in are HOW LONG THE NAME IS
+ * and HOW MUCH RATING THERE IS TO PRINT, and both of them land in the title row
+ * the owner has just complained about.
+ *
+ *  · NO REVIEWS AT ALL is already covered — pdp-sold-out-serum has none, and
+ *    the set has none either, so the "no rating row is drawn" case is shot
+ *    twice without another fixture.
+ *  · 96 REVIEWS is the other end: a four-digit count in the same row, and the
+ *    denormalised columns refreshed off real rows rather than guessed.
+ *  · A VERY LONG NAME is the one that breaks a two-track grid. `minmax(0,1fr)`
+ *    on the title track is what stops it pushing the price off the inline edge;
+ *    without a fixture that tests it, that claim is a comment rather than a
+ *    measurement.
+ */
+$manyBlurb = 'A ceramide-and-panthenol cream for a barrier that has been through '
+    .'something: retinoid, acid, sun, a long flight, a change of water. Thick in the '
+    .'jar and thin on the skin, with no fragrance to react to and nothing that '
+    .'pills under sunscreen. Use it as the last step at night, and as the step '
+    .'before sunscreen when the day is going to be cold.';
+
+$many = \App\Models\Product::updateOrCreate(['slug' => 'pdp-many-reviews-cream'], [
+    'name' => 'Ceramide Barrier Repair Cream 80ml',
+    'brand_id' => $boj->id,
+    'price' => 13900,
+    'status' => 'publish',
+    'is_visible' => true,
+    'stock_status' => 'instock',
+    'type' => 'simple',
+    'short_description' => $manyBlurb,
+    'description' => '<p>Five ceramides in the ratio the skin makes them, plus '
+        .'panthenol and squalane, in a base that spreads far enough that one jar is '
+        .'a season rather than a month.</p>',
+    'ingredients' => $ingredients,
+    'how_to_use' => $howTo,
+    'total_sales' => 4200,
+    'manage_stock' => false,
+    'image' => $shot('#F2F6F4', '#DCEDE6', '#2F7F60', '05'),
+    'images' => [
+        $shot('#F7F1F6', '#EEDCEA', '#8E3C78', '06'),
+        $shot('#F5F3EC', '#EAE4D2', '#8A7A32', '07'),
+    ],
+]);
+
+/* NINETY-SIX, WRITTEN ONCE AND NOT NINETY-SIX TIMES. `insert()` takes the
+   whole array in one statement; ninety-six create() calls is ninety-six
+   round trips and the same rows. The stars are spread so the average is a
+   real fraction rather than a flat 5.0 — a 5.0 bar is full and says nothing
+   about whether the fill is arithmetic at all. */
+\App\Models\Review::where('product_id', $many->id)->delete();
+
+$manyRows = [];
+
+for ($i = 0; $i < 96; $i++) {
+    $manyRows[] = [
+        'product_id' => $many->id,
+        'author_name' => 'Reviewer '.($i + 1),
+        'rating' => [5, 5, 5, 4, 5, 4, 5, 3][$i % 8],
+        'title' => 'Bought it again',
+        'content' => 'Third jar. Nothing else has kept my cheeks from flaking in winter.',
+        'status' => 'approved',
+        'verified' => true,
+        'source' => 'import',
+        'created_at' => now()->subDays(200 - $i),
+        'updated_at' => now()->subDays(200 - $i),
+    ];
+}
+
+\App\Models\Review::insert($manyRows);
+\App\Support\ProductRating::refresh([$many->id]);
+
+/* A NAME AT THE LENGTH THIS CATALOGUE REALLY REACHES. Not an invented
+   pathological string: this is the shape of an imported WooCommerce title —
+   brand, actives, a claim, a volume and a pack note — and it is 118
+   characters, which is longer than anything in the demo catalogue and
+   shorter than the longest real one. */
+/* AND ONE WITH NO BREAK OPPORTUNITY IN IT AT ALL, which is the other half of the
+ * same risk: `minmax(0,1fr)` lets the title TRACK shrink, and a single token
+ * longer than the track spills out of it and drags the document's scrollWidth
+ * sideways, because a grid does not clip.
+ *
+ * ▲ NO HYPHENS, AND THE FIRST VERSION OF THIS FIXTURE HAD THEM. A hyphen is a
+ *   break opportunity whatever `overflow-wrap` says, so
+ *   "Anua-Heartleaf-77-Percent-..." wrapped perfectly well with the guard
+ *   switched off and measured scrollWidth 390 either way -- a fixture that
+ *   proved the rule was unnecessary because it never exercised it. Measured in
+ *   Chromium at 390 with the run-together name below: 390 with
+ *   `overflow-wrap:anywhere` and 672 without it, which is 282px of sideways
+ *   scroll on the whole document.
+ *
+ * ▲ AND IT IS A SYNTHETIC WORST CASE, said plainly. No name in this catalogue
+ *   looks like this; what does happen is an import that loses its spaces, and
+ *   the rule costs one declaration whether or not it ever fires. */
+\App\Models\Product::updateOrCreate(['slug' => 'pdp-unbreakable-name'], [
+    'name' => 'ANUAHEARTLEAF77SOOTHINGTONER250MLDOUBLEPACKREFILLEDITION',
+    'brand_id' => $anua->id,
+    'price' => 10400,
+    'status' => 'publish',
+    'is_visible' => true,
+    'stock_status' => 'instock',
+    'type' => 'simple',
+    'short_description' => 'One token, no spaces to break at.',
+    'description' => '<p>A fixture for the narrowest thing the title row has to hold.</p>',
+    'image' => $shot('#F4F1F7', '#E3DCF0', '#4A3A82', '14'),
+]);
+
+\App\Models\Product::updateOrCreate(['slug' => 'pdp-very-long-name-ampoule'], [
+    'name' => 'Advanced Snail 96 Mucin Power Repairing Ampoule with Niacinamide and '
+        .'Peptides for Dull, Uneven Skin 100ml (Double Pack)',
+    'brand_id' => $anua->id,
+    'price' => 11900,
+    'sale_price' => 8330,
+    'status' => 'publish',
+    'is_visible' => true,
+    'stock_status' => 'instock',
+    'type' => 'simple',
+    'short_description' => $blurb,
+    'description' => '<p>A 96% mucin ampoule with niacinamide and five peptides.</p>',
+    'ingredients' => $ingredients,
+    'how_to_use' => $howTo,
+    'manage_stock' => true,
+    'stock' => 3,
+    'image' => $shot('#F6F2F7', '#E6DCEF', '#5B3C8E', '08'),
+    'images' => [
+        $shot('#F2F7F5', '#DDEEE7', '#2F8060', '09'),
+        $shot('#FAF3EC', '#F3E4CC', '#A97A33', '10'),
+    ],
+]);
+
+/* ── 3c. A VARIABLE PRODUCT WHOSE FIRST OPTION IS SOLD OUT. (Lane PDP2) ─────
+ *
+ * The five drawings never had one: parts/options.blade.php in the preview is a
+ * sketch and the ordinary fixture product has BUNDLE bars, which
+ * BundleService generates from the tier table and which are not variations at
+ * all. The real page's `@if ($isVar)` branch is a different strip with a hidden
+ * `variation_id` behind it, and it carries the defect the shipped template's own
+ * `$buyable` exists to answer: `$variants->first()` regardless of stock left a
+ * product whose FIRST size was sold out with no option highlighted, an enabled
+ * Add to cart, and a hidden field pointing at the sold-out row.
+ *
+ * So the first option here is out of stock on purpose. What the shots have to
+ * show is the SECOND row highlighted, the first one struck through and tagged
+ * Sold out, and a live button.
+ *
+ * ▲ THE LABELS COME FROM ATTRIBUTE VALUES, which is what
+ *   ProductVariant::label() reads -- `$this->attributeValues->pluck('name')`.
+ *   Without them every row falls back to "Option 1 / Option 2 / Option 3",
+ *   which renders and proves nothing about a strip whose whole job is to say
+ *   what the options ARE.
+ */
+$sizeAttr = \App\Models\Attribute::updateOrCreate(['slug' => 'size'], [
+    'name' => 'Size', 'is_variation_axis' => true, 'is_filterable' => true, 'position' => 10,
+]);
+
+$sizes = [];
+
+foreach ([['30ml', 0], ['50ml', 1], ['100ml', 2]] as [$label, $position]) {
+    $sizes[$label] = \App\Models\AttributeValue::updateOrCreate(
+        ['attribute_id' => $sizeAttr->id, 'slug' => \Illuminate\Support\Str::slug($label)],
+        ['name' => $label, 'position' => $position]
+    );
+}
+
+$variable = \App\Models\Product::updateOrCreate(['slug' => 'pdp-variable-ampoule'], [
+    'name' => 'Niacinamide 10% + Zinc Ampoule',
+    'brand_id' => $anua->id,
+    // NULL on the parent, exactly as WooCommerce leaves it -- the figures live
+    // on the variations and App\Services\VariantPricing is what answers the
+    // headline. A parent with a price of its own would hide the defect.
+    'price' => null,
+    'status' => 'publish',
+    'is_visible' => true,
+    'stock_status' => 'instock',
+    'type' => 'variable',
+    /* ONE SENTENCE, ON PURPOSE. Every other product in this fixture has a
+       six-line blurb, which is what the fade and the "Read more" are for -- and
+       which means nothing here ever exercised the OTHER case. A mask whose stops
+       are written as `100% - x` dissolves a one-line blurb too, and that defect
+       is invisible until a fixture has a short one. (Lane PDP2) */
+    'short_description' => 'A 10% niacinamide ampoule with 1% zinc PCA, for texture and tone.',
+    'description' => '<p>A 10% niacinamide ampoule with 1% zinc PCA.</p>',
+    'ingredients' => $ingredients,
+    'how_to_use' => $howTo,
+    'image' => $shot('#F1F4F8', '#DEE6F2', '#33528E', '11'),
+    'images' => [
+        $shot('#F8F2F4', '#EFD9E1', '#9E3358', '12'),
+        $shot('#F3F7F1', '#DEEEDB', '#3C8040', '13'),
+    ],
+]);
+
+\App\Models\ProductVariant::where('product_id', $variable->id)->delete();
+
+foreach ([
+    ['30ml', 6900, null, 'outofstock', null],
+    ['50ml', 9900, 7920, 'instock', null],
+    ['100ml', 16900, 12675, 'instock', 'Best value'],
+] as $n => [$label, $regular, $sale, $stock, $tag]) {
+    $v = \App\Models\ProductVariant::create([
+        'product_id' => $variable->id,
+        'price' => $regular,
+        'sale_price' => $sale,
+        'stock_status' => $stock,
+        'position' => $n,
+        'tag' => $tag,
+    ]);
+
+    $v->attributeValues()->sync([$sizes[$label]->id]);
+}
+
 /* ── 4. TWO GLOBAL TABS, so the row is FIVE long and actually overflows ─────
  *
  * `source_key` null and `product_id` null is what App\Support\ProductTabs calls
