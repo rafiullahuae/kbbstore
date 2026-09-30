@@ -425,15 +425,35 @@ it('reserves exactly two lines for the product name whatever the name says', fun
 
     expect($block)->not->toBe('', 'the name clamp has gone from kbb.css');
 
-    expect(optCssValue($block, '-webkit-line-clamp'))->toBe('2');
+    /*
+     * ▲ THE TWO AND THE 1.32 ARE PROPERTIES NOW, NOT LITERALS.     (Lane CARD)
+     *
+     * This read `->toBe('2')` and `calc(2 * <line-height>em)`. The showcase
+     * family reserves a GRID TRACK for this box out of the same two numbers, so
+     * having them written here as well is two places holding one fact: a lane
+     * clamping to three lines would get a name overflowing a track still
+     * reserved for two, and nothing would say so. The clamp reads
+     * `--sc-name-lines` and `--sc-name-lh` with its old literals as the
+     * FALLBACKS, so the other 31 skins — which declare neither — have
+     * byte-for-byte the box they had, and this case still asserts exactly what
+     * it asserted: two lines, clamped, and a height that is two of this
+     * element's own lines.
+     */
+    expect(optCssValue($block, '-webkit-line-clamp'))->toBe('var(--sc-name-lines,2)');
     expect(optCssValue($block, 'overflow'))->toBe('hidden');
 
     $lineHeight = optCssValue($block, 'line-height');
     $height = optCssValue($block, 'height');
 
-    expect($lineHeight)->not->toBeNull('the clamp needs a line-height it can reserve two of');
-    expect($height)->toBe('calc(2 * '.$lineHeight.'em)',
+    expect($lineHeight)->toBe('var(--sc-name-lh,1.32)',
+        'the clamp needs a line-height it can reserve two of');
+    expect($height)->toBe('calc(var(--sc-name-lines,2) * var(--sc-name-lh,1.32) * 1em)',
         'the reserved height must be exactly two of this element\'s own lines, got: '.var_export($height, true));
+
+    // And the two fallbacks ARE the numbers this case was written against, so
+    // nothing moved for a skin that declares neither property.
+    expect(optCssValue($block, '-webkit-line-clamp'))->toContain(',2)');
+    expect(optCssValue($block, 'line-height'))->toContain(',1.32)');
 
     // NO SCRIPT ANYWHERE NEAR IT. Rule 4: this project sizes with calc().
     $card = (string) file_get_contents(resource_path('views/components/product-card.blade.php'));
@@ -475,6 +495,23 @@ it('labels a category archive\'s tiles with the category and costs no query for 
      * lazy load' in ComponentLoadContractTest is red on /shop.
      */
     optProduct('opt-eyebrow');
+
+    /*
+     * ▲ THE EYEBROW IS SWITCHED ON FOR THIS CASE.                   (Lane CARD)
+     *
+     * Appearance → Product styles → Card content → "Category label" ships OFF
+     * now — the owner asked for it in as many words — and the tile reads that
+     * key itself, so a shop at the shipped defaults draws no `.kbb-card-cat`.
+     *
+     * This case is not about the default. It is about WHERE the eyebrow's text
+     * comes from — a caller's string rather than `$product->categories`, which
+     * is what keeps it off four pages' eager loads — and that is unchanged. So
+     * the control is turned on and the shape is asserted where the element
+     * exists; CardEqualHeightTest pins the default, in both directions.
+     */
+    app(\App\Services\SettingsService::class)->set('show_category', true);
+    \App\Services\SettingsService::forgetMemo();
+    app()->forgetScopedInstances();
 
     $archive = optTile(optGet('/collections/opt-care/'), 'opt-eyebrow');
     $shop = optTile(optGet('/shop/'), 'opt-eyebrow');

@@ -584,6 +584,45 @@ it('lets the price take one line only, and truncates the struck original before 
             .'font-size:calc\(var\(--sc-name\) - 3\.5px\)\}/s',
             $rules
         ))->toBe(1, $file.': a marked-down price has no narrow-screen rule, so at 320px it is ellipsised');
+
+        /*
+         * ── AND TREATMENT C IS THE ONE THAT HAS TO WRAP ────────────────────
+         *
+         * `showcase-row` gives its width to the button: measured at 1280, five
+         * columns, the tile is 230.8px, `.cb` takes 14px of padding each side,
+         * the button is 121px and the column gap is 10 — which leaves the price
+         * about 72px against the 114 a marked-down pair needs. That is not a
+         * font-size away. `flex-wrap:nowrap` clipped it, and the shot showed the
+         * sale price running under the button on five of twelve tiles.
+         *
+         * So this one treatment wraps and RESERVES the second line, which is
+         * the same answer as everywhere else arrived at from the other end.
+         * `row-gap:0` is part of it and was measured: the family's `gap:8px` is
+         * both axes and only shows up once the container wraps, so the two
+         * lines came to 48.5 against a 40.5 reservation and a marked-down card
+         * was 8px taller than the plain one beside it (370.94 / 370.92 /
+         * 362.92 on the three rows).
+         *
+         * MUTATION: delete the `flex-wrap:wrap` line and C is red — measured,
+         * the sale price is clipped by the button again; delete `row-gap:0` and
+         * C's grid goes back to three heights. RUN, both.
+         */
+        expect(preg_match(
+            '/\.kbb-pgrid\[data-skin="showcase-row"\] \.cp\{[^}]*'
+            .'flex-wrap:wrap;[^}]*align-content:flex-end;[^}]*'
+            .'column-gap:8px;[^}]*row-gap:0;[^}]*'
+            .'min-height:calc\(var\(--sc-name\) \* 1\.5 \* 2\)\}/s',
+            $rules
+        ))->toBe(1, $file.': treatment C does not wrap and reserve its price row, so its sale price is clipped by the button at 1280');
+
+        // …and it is a DESKTOP answer. Below 700px C is the stacked card the
+        // others are, its price has the whole text column, and a reserved
+        // second line there would be an empty one on every card.
+        expect(preg_match(
+            '/@media \(max-width:700px\)\{.*\.kbb-pgrid\[data-skin="showcase-row"\] \.cp\{[^}]*'
+            .'flex-wrap:nowrap;min-height:0\}/s',
+            $rules
+        ))->toBe(1, $file.': treatment C reserves a second price line on a phone, where it has the width not to');
     }
 });
 

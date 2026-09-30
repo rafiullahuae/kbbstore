@@ -945,8 +945,34 @@
    which was the right way to say it while the tracks were all `auto` and the
    count could change; it is now five named tracks and the number is the
    clearer statement of the same place. */
+/* ── C IS THE ONE TREATMENT WHOSE PRICE HAS TO WRAP ───────────── Lane CARD ──
+   Measured at 1280, five columns: the tile is 230.8px, `.cb` takes 14px of
+   padding each side, the button is 121px of its own and the column gap is 10 —
+   which leaves the price about 72px, and "AED 260  AED 208" is 114. That is not
+   a font-size away; it is a treatment that has given its width to the button.
+
+   `flex-wrap:nowrap` on the family clips it, and the shot showed the sale price
+   running under the button. So this ONE treatment wraps, and reserves the
+   second line so a plain price and a marked-down one are the same height —
+   which is the same answer as everywhere else, arrived at from the other end.
+
+   `align-content:flex-end` is what keeps the row reading straight: with one
+   line in a two-line box the default stretches it and the plain price floats
+   half way up, out of line with the marked-down price beside it. Stacked to the
+   bottom, the figure the shopper pays is on the same line on every card. */
 .kbb-pgrid[data-skin="showcase-row"] .cp{
-    grid-row:5;grid-column:1;margin-top:0;padding-top:0}
+    grid-row:5;grid-column:1;margin-top:0;padding-top:0;
+    flex-wrap:wrap;
+    align-content:flex-end;
+    /* ROW-GAP ZERO, AND THE FAMILY'S `gap:8px` IS WHY THIS IS HERE. `gap` on a
+       flex container is both axes, and it only shows up once the container
+       wraps: the two lines measured 20.25 + 8 + 20.25 = 48.5 against a 40.5
+       reservation, and a marked-down card came out 8px taller than the plain
+       one beside it. The two figures are one price and want no gutter between
+       them anyway. */
+    column-gap:8px;
+    row-gap:0;
+    min-height:calc(var(--sc-name) * 1.5 * 2)}
 .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
     grid-row:5;grid-column:2;margin-top:0;padding:0 18px;justify-self:end}
 /* Bottom-end, because the -N% pill owns the photograph's top-end corner — the
@@ -1064,8 +1090,13 @@
             auto
             auto;
         align-items:stretch}
+    /* AND NOT ON A PHONE. Below 700px C is the stacked card the others are, so
+       its price has the whole text column and wants the family's own one-line
+       row back — `min-height` here would be a reserved empty line on every
+       card. */
     .kbb-pgrid[data-skin="showcase-row"] .cp{
-        grid-row:5;grid-column:1;padding-top:var(--sc-gap)}
+        grid-row:5;grid-column:1;padding-top:var(--sc-gap);
+        flex-wrap:nowrap;min-height:0}
     .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
         grid-row:6;grid-column:1;margin-top:var(--sc-gap);padding:0 10px}
 }

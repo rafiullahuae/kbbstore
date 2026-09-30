@@ -399,6 +399,24 @@ it('gives the product cards a short label without changing the four curated list
     ccMount();
     ccSettings();
 
+    /*
+     * ▲ THE EYEBROW IS SWITCHED ON HERE NOW.                        (Lane CARD)
+     *
+     * Appearance → Product styles → Card content → "Category label" ships OFF
+     * — the owner asked for it in as many words ("i want to hide the brand
+     * name, category name by default") — and the tile reads that key itself, so
+     * a shop at the shipped defaults draws no `.kbb-card-cat` at all.
+     *
+     * What this case is about is UNCHANGED and is still worth asserting: that
+     * the concern page passes its own label to the card rather than the page
+     * title. So the control is turned on for the length of this case and the
+     * claim is made where the element exists. CardEqualHeightTest is what pins
+     * the shipped default, in both directions.
+     */
+    app(\App\Services\SettingsService::class)->set('show_category', true);
+    \App\Services\SettingsService::forgetMemo();
+    app()->forgetScopedInstances();
+
     foreach (range(1, ConcernCollections::MIN_PRODUCTS) as $i) {
         ccProduct(['acne']);
     }

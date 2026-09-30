@@ -2983,18 +2983,18 @@
             "key": "show_brand",
             "type": "bool",
             "label": "Brand name",
-            "help": "",
-            "default": true,
-            "value": true,
+            "help": "Off: the owner asked the card to show the name, the rating, the price and the button.",
+            "default": false,
+            "value": false,
             "options": null
           },
           {
             "key": "show_category",
             "type": "bool",
             "label": "Category label",
-            "help": "",
-            "default": true,
-            "value": true,
+            "help": "Off, with Brand name, and for the same reason.",
+            "default": false,
+            "value": false,
             "options": null
           },
           {

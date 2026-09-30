@@ -256,12 +256,26 @@ One height each, at both widths:
 | --- | --- | --- |
 | **A** showcase | 356.95 | 416.77 / 416.75 |
 | **B** compact | 304.25 | 364.06 / 364.05 |
-| **C** row | 340.88 | 360.44 / 360.42 |
+| **C** row | 340.88 | 362.94 / 362.92 |
 | **D** airy | 375.09 | 434.91 / 434.89 |
 
 C needed the same reservations twice: its own desktop grid, and the phone block
 where it stacks — which used to revert to a **flex column**, and would have left
 C as the one phone card whose height still moved with the rating row.
+
+**And C is the one treatment whose price has to wrap.** It gives its width to
+the button: measured at 1280, five columns, the tile is 230.8px, `.cb` takes
+14px of padding each side, the button is 121px and the column gap is 10 — which
+leaves the price about **72px against the 114** a marked-down pair needs. That
+is not a font-size away. `flex-wrap:nowrap` clipped it and the shot showed the
+sale price running under the button on five of twelve tiles, so this one
+treatment wraps and **reserves the second line**, which is the same answer as
+everywhere else arrived at from the other end. `row-gap:0` is part of it and was
+measured too: the family's `gap:8px` is both axes and only shows up once the
+container wraps, so the two lines came to 48.5 against a 40.5 reservation and a
+marked-down card was 8px taller than the plain one beside it (370.94 / 370.92 /
+362.92 on the three rows). Below 700px C is the stacked card the others are, has
+the whole text column, and gets the family's one-line row back.
 
 ### And when he switches the two lines back on
 
