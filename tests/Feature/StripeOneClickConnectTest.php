@@ -611,7 +611,7 @@ describe('the OAuth state', function () {
             ->withSession([StripeConnect::STATE_SESSION_KEY => $stored])
             ->get('/admin-api/payments/stripe/connect/callback?state=' . $query['state'] . '&code=ac_code')
             ->assertOk()
-            ->assertSee('not connected', false);
+            ->assertSee('<h1>Stripe was not connected</h1>', false);
 
         expect(fgStored())->not->toHaveKey('secret_key');
     });
@@ -715,7 +715,7 @@ describe('the OAuth state', function () {
         $this->actingAs(fgAdmin(), 'admin')
             ->get('/admin-api/payments/stripe/connect/callback?code=ac_attacker_code')
             ->assertOk()
-            ->assertSee('not connected', false);
+            ->assertSee('<h1>Stripe was not connected</h1>', false);
 
         Http::assertNothingSent();
         expect(fgStored())->not->toHaveKey('secret_key');
@@ -738,7 +738,7 @@ describe('every way this fails in front of the owner', function () {
             ->get('/admin-api/payments/stripe/connect/callback?state=' . $state
                 . '&error=access_denied&error_description=' . urlencode('The user denied your request'))
             ->assertOk()
-            ->assertSee('The user denied your request', false);
+            ->assertSee('<p>The user denied your request', false);
 
         Http::assertNothingSent();
         expect(fgStored())->not->toHaveKey('secret_key');
@@ -763,7 +763,7 @@ describe('every way this fails in front of the owner', function () {
             ->withSession([StripeConnect::STATE_SESSION_KEY => ['value' => $state, 'mode' => 'test', 'issued_at' => time()]])
             ->get('/admin-api/payments/stripe/connect/callback?state=' . $state . '&code=ac_spent')
             ->assertOk()
-            ->assertSee('Authorization code already used or expired.', false);
+            ->assertSee('<p>Authorization code already used or expired.', false);
 
         expect(fgStored())->not->toHaveKey('secret_key');
     });

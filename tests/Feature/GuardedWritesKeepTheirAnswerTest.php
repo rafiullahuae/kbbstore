@@ -386,106 +386,137 @@ function gwAppFiles(): array
 }
 
 /**
- * Guarded writes whose answer is deliberately not acted on, with the reason.
+ * The marker a guarded write carries when its underneath-write is deliberate.
  *
- * One entry. Adding another needs the argument written down here, because the
- * whole point of this file is that the shape is a defect until somebody says
- * out loud why this instance is not.
+ * ▲ IT LIVES AT THE SITE, AND THAT IS THE WHOLE POINT. This was an array in
+ * this file mapping a FILE PATH to a reason, which is where the next defect
+ * hides twice over: the exemption was per-file, so one consulted site excused
+ * every other guarded write in the same file; and the argument sat here, three
+ * hundred lines from the code it excuses, where nobody editing that code would
+ * ever read it.
+ *
+ * Now the reason is a comment beside the write, the sweep is per SITE, and
+ * widening the exemption means editing the application file — which is the one
+ * place a reviewer is already looking.
  */
-const GW_DELIBERATE = [
-    'app/Services/Payments/PaymentConfirmer.php' =>
-        'recordLate()\'s failure write. The provider really did report a failure and the '
-        .'payment row is a LOG of what it said, not a consequence of the status move — so it '
-        .'is correct to write it even when the order has since been paid and the move refuses. '
-        .'Nothing about the order\'s own state is changed underneath.',
-];
+const GW_MARKER = 'KBB-GUARDED-WRITE-DELIBERATE:';
 
-it('consults the answer at every moveTo that passes a precondition', function () {
+/** How much argument a marker has to carry before it counts as one. */
+const GW_REASON_CHARS = 120;
+
+/**
+ * How many deliberate sites the shop is expected to have.
+ *
+ * Pinned so the exemption cannot grow quietly: a sixth guarded write that
+ * claims to be a log needs BOTH its reason at the site AND this number moved,
+ * which is two deliberate acts and a diff a reviewer can see.
+ */
+const GW_DELIBERATE_SITES = 1;
+
+it('consults the answer at every guarded write, one site at a time', function () {
     /*
-     * ▲ THE SURVEY, PINNED. `only:` is how a caller says "this row may have
-     * changed under me"; a caller that then ignores what came back has written
+     * ▲ THE SURVEY, PINNED PER SITE. `only:` is how a caller says "this row may
+     * have changed under me"; a caller that ignores what came back has written
      * the bug the argument was added to prevent.
      *
-     * FIVE guarded sites in app/ today. Each must do one of three things:
-     * read moveTo()'s return into a variable it branches on; re-read the row
-     * under `lockForUpdate` and branch on that; or appear in GW_DELIBERATE with
-     * the argument for why its underneath-write is a log rather than a
+     * Each `only: [` in app/ must, within its own window, do one of three
+     * things: read moveTo()'s return into a variable it branches on; re-read
+     * the row under `lockForUpdate` and branch on that; or carry GW_MARKER with
+     * a real argument for why its underneath-write is a log rather than a
      * consequence.
      *
-     * The re-read is what both basket legs do, because their null is
-     * overloaded — "precondition failed" and "already there" are the same
-     * answer and only one of them means refuse. CashOnDelivery can test the
-     * null directly, because it moves `pending` to `processing` and so cannot
-     * be "already there".
-     *
-     * A source sweep rather than a behaviour test on purpose: a sixth leg added
-     * tomorrow has no test of its own to go red, and that is exactly when this
-     * gets written again.
+     * A WINDOW RATHER THAN A PARSE, and named as crude: forty lines either side
+     * of the guarded call. A parser for "the enclosing transaction closure"
+     * would be a second thing to get wrong, and the window has the property
+     * that matters — it is per SITE, so a file with one consulted write and one
+     * unconsulted write is no longer excused by the first. That is exactly what
+     * the earlier per-file version did, and it is why PaymentConfirmer's second
+     * site was invisible to it.
      *
      * MUTATION, run: delete the `lockForUpdate` re-read from
-     * CheckoutReturnController::restore() → this names that file and goes red.
+     * CheckoutReturnController::restore() → this names that file and line.
      */
-    $sites = [];
+    $offences = [];
     $guarded = 0;
+    $deliberate = 0;
 
     foreach (gwAppFiles() as $file) {
-        $source = (string) file_get_contents($file);
+        $lines = file($file, FILE_IGNORE_NEW_LINES) ?: [];
         $relative = str_replace(base_path().'/', '', $file);
 
-        /*
-         * Comments quote `only: [...]` while explaining it — this file's own
-         * subjects do, at length — so the count is of real arguments only.
-         */
-        $code = '';
-
-        foreach (token_get_all($source) as $token) {
-            if (is_array($token) && in_array($token[0], [T_COMMENT, T_DOC_COMMENT], true)) {
+        foreach ($lines as $index => $line) {
+            if (! str_contains($line, 'only: [')) {
                 continue;
             }
 
-            $code .= is_array($token) ? $token[1] : $token;
-        }
+            /*
+             * Comments quote `only: [...]` while explaining it — the two basket
+             * legs do, at length — so a line inside a comment is not a site.
+             */
+            $trimmed = ltrim($line);
 
-        $here = substr_count($code, 'only: [');
+            if (str_starts_with($trimmed, '*') || str_starts_with($trimmed, '//') || str_starts_with($trimmed, '/*')) {
+                continue;
+            }
 
-        if ($here === 0) {
-            continue;
-        }
+            $guarded++;
 
-        $guarded += $here;
+            $window = implode("\n", array_slice($lines, max(0, $index - 40), 81));
 
-        if (array_key_exists($relative, GW_DELIBERATE)) {
-            continue;
-        }
+            if (str_contains($window, GW_MARKER)) {
+                $deliberate++;
 
-        /*
-         * Consulted anywhere in the file is enough. A tighter reading — the
-         * same transaction closure — was tried and is worse: it needs a parser
-         * to find the closure's end, and it reported PaymentConfirmer as an
-         * offence for a second `only:` that belongs to a different method.
-         */
-        $consulted = str_contains($code, 'lockForUpdate()')
-            || (bool) preg_match('/\$\w+\s*=\s*app\([^;]*OrderStatus[^;]*\)->moveTo\(/s', $code);
+                /*
+                 * A MARKER WITHOUT AN ARGUMENT IS NOT AN EXEMPTION. Everything
+                 * after the marker up to the end of its comment has to be a
+                 * reason somebody can disagree with, not the word "deliberate".
+                 */
+                $after = substr($window, strpos($window, GW_MARKER) + strlen(GW_MARKER));
+                $reason = trim(str_replace(['*', '/'], ' ', substr($after, 0, strpos($after.'*/', '*/'))));
 
-        if (! $consulted) {
-            $sites[] = $relative.' passes `only:` to moveTo() and never reads what it said. '
-                .'Branch on the return, or re-read the row under lockForUpdate and branch on that.';
+                if (strlen($reason) < GW_REASON_CHARS) {
+                    $offences[] = $relative.':'.($index + 1).' carries '.GW_MARKER
+                        .' with only '.strlen($reason).' characters of argument. An exemption '
+                        .'with no reason at the site is how this sweep gets widened quietly; '
+                        .'say why the write underneath is a log rather than a consequence.';
+                }
+
+                continue;
+            }
+
+            $consulted = str_contains($window, 'lockForUpdate()')
+                || (bool) preg_match('/\$\w+\s*=\s*app\([^;]*OrderStatus[^;]*\)->moveTo\(/s', $window);
+
+            if (! $consulted) {
+                $offences[] = $relative.':'.($index + 1).' passes `only:` to moveTo() and never reads '
+                    .'what it said. Branch on the return, re-read the row under lockForUpdate and '
+                    .'branch on that, or say at the site why the write underneath is a log.';
+            }
         }
     }
 
     /*
      * THE ANTI-VACUITY HALF, and it is the one that failed first: the original
      * sweep used a glob that could not reach three directories deep, so it
-     * examined none of the files it was written about and passed. The floor is
-     * on the guarded calls actually found.
+     * examined none of the files it was written about and passed.
      */
     expect($guarded)->toBeGreaterThan(3,
         'fewer than four guarded writes found in app/ — the sweep has stopped matching '
         .'rather than the shop having stopped using preconditions');
 
-    expect(gwAppFiles())->toHaveCount(count(gwAppFiles()))
-        ->and(count(gwAppFiles()))->toBeGreaterThan(250,
-            'the recursive walk found fewer than 250 files under app/, which is not this application');
+    expect(count(gwAppFiles()))->toBeGreaterThan(250,
+        'the recursive walk found fewer than 250 files under app/, which is not this application');
 
-    expect($sites)->toBe([]);
+    /*
+     * THE SITE MESSAGE FIRST, and the order is not cosmetic. Removing a marker
+     * makes BOTH of these true, and the count says only "a number moved" while
+     * the offence names the file, the line and what to do about it. A lane
+     * reading the count first would go and edit GW_DELIBERATE_SITES, which is
+     * the one wrong response available.
+     */
+    expect($offences)->toBe([]);
+
+    expect($deliberate)->toBe(GW_DELIBERATE_SITES,
+        'the number of guarded writes claiming to be a log has changed. That is allowed and it '
+        .'is not allowed to be quiet: move GW_DELIBERATE_SITES in the same commit as the reason');
 });

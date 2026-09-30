@@ -157,7 +157,7 @@ it('serves a category archive at its collections address', function () {
 });
 
 it('serves the brand directory and a brand page at /brands/', function () {
-    $this->get('/brands/')->assertOk()->assertSee('Round Lab');
+    $this->get('/brands/')->assertOk()->assertSee('<span class="brw-name">Round Lab', escape: false);
     $this->get('/brands/round-lab/')->assertOk()->assertSee('Round Lab');
 });
 

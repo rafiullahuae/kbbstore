@@ -1200,7 +1200,7 @@ describe('the endpoints', function () {
             ->withSession([StripeConnect::STATE_SESSION_KEY => 'the-real-state-value-0000000000'])
             ->get('/admin-api/payments/stripe/connect/callback?state=a-guess&code=ac_code')
             ->assertOk()
-            ->assertSee('not connected', false);
+            ->assertSee('<h1>Stripe was not connected</h1>', false);
 
         // No token exchange was even attempted.
         Http::assertNothingSent();
@@ -1252,7 +1252,7 @@ describe('the endpoints', function () {
         $this->actingAs($admin, 'admin')
             ->get('/admin-api/payments/stripe/connect/callback?state=' . $state . '&code=ac_code')
             ->assertOk()
-            ->assertSee('not connected', false);
+            ->assertSee('<h1>Stripe was not connected</h1>', false);
 
         expect(count(Http::recorded()))->toBe($before);
     });
@@ -1267,7 +1267,7 @@ describe('the endpoints', function () {
             ->get('/admin-api/payments/stripe/connect/callback?state=' . $state
                 . '&error=access_denied&error_description=' . urlencode('The user denied your request'))
             ->assertOk()
-            ->assertSee('The user denied your request', false);
+            ->assertSee('<p>The user denied your request', false);
 
         Http::assertNothingSent();
     });

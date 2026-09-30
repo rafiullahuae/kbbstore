@@ -27,7 +27,33 @@ declare(strict_types=1);
  * ones that turn out to be fine are recorded with the reason rather than
  * silently dropped.
  */
-$dir = $argv[1] ?? __DIR__.'/../storage/plc-logs/needles';
+/**
+ * The newest run's rows, or the directory named on the command line.
+ *
+ * Each scan writes into a directory of its own (see tools/plc-needle-scan.sh —
+ * two runs sharing one directory cost a full fifteen-minute survey), so the
+ * readers take the most recent rather than a fixed path.
+ */
+function kbbNewestRun(?string $given): string
+{
+    if ($given !== null && $given !== '') {
+        return $given;
+    }
+
+    $base = __DIR__.'/../storage/plc-logs/needles';
+    $runs = array_filter((array) glob($base.'/*'), 'is_dir');
+
+    if ($runs === []) {
+        return $base;
+    }
+
+    usort($runs, static fn (string $a, string $b): int => filemtime($b) <=> filemtime($a));
+
+    return $runs[0];
+}
+
+$dir = kbbNewestRun($argv[1] ?? null);
+echo '# rows from '.$dir."\n\n";
 $files = glob($dir.'/*.jsonl') ?: [];
 
 if ($files === []) {

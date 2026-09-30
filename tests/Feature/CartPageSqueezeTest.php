@@ -207,7 +207,7 @@ it('renders the docked rows, the summary and the trust row once switched on', fu
         ->and($html)->toContain('cpg-addrbar')
         ->and($html)->toContain('cpg-cobar')
         ->and($html)->toContain('Please choose your delivery address')
-        ->and($html)->toContain('+ Address')
+        ->and($html)->toContain('<button class="cpg-addrbtn" id="cpgAddrBtn" type="button">+ Address')
         ->and($html)->toContain('>Proceed to Checkout</a>')
         // The summary, as the reference reads.
         ->and($html)->toContain('Order Value')

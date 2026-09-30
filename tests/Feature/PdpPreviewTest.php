@@ -369,7 +369,7 @@ it('shows a set its contents instead of bundle bars, in every candidate', functi
               a class only the panel draws. An assertion that a bug walks
               straight past is worse than no assertion, because it is counted. */
         expect($html)->toContain('ksl-rows');
-        expect($html)->toContain($member->name);
+        expect($html)->toContain('<a class="ksl-nm" href="'.$member->url().'">'.$member->name);
         expect(str_contains($html, 'class="variants pv-variants"'))->toBeFalse(
             $candidate.' must not draw bundle bars on a set'
         );

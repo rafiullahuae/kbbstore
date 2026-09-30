@@ -6,6 +6,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Tests\Support\CompiledCaches;
 use Tests\Support\DeterministicRandom;
+use Tests\Support\NeedleScan;
+use Tests\Support\RecordingTestResponse;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -34,6 +36,55 @@ abstract class TestCase extends BaseTestCase
      *
      * Cheap: three is_file() calls and one glob per test.
      */
+    /**
+     * The ONE seam in front of assertSee, and it is inert unless a scan is on.
+     *
+     * ── WHY IT IS HERE AND NOT IN THE INSTRUMENT ────────────────────────────
+     *
+     * tools/plc-needle-scan.php measures how many times each assertion's needle
+     * occurs in the haystack it ran against — the defect being an assertion
+     * that is green for a reason unrelated to the code under test. Pest's
+     * expectations are pipeable, so `toContain` and `toMatch` are hooked
+     * without the suite knowing. `assertSee` is not: it lives on
+     * Illuminate\Testing\TestResponse and hands its haystack straight to
+     * PHPUnit through TestResponseAssert, an `@internal` class with a private
+     * constructor and no injectable factory.
+     *
+     * MakesHttpRequests::createTestResponse() is the documented override point
+     * for exactly this, so it is used, and the cost is deliberately small
+     * enough to be worth reading:
+     *
+     *   · NOTHING IS COPIED FROM THE FRAMEWORK. The parent builds the response
+     *     it always built — including the LoggedExceptionCollection wiring that
+     *     `assertThrows` and friends need — and the recording response is then
+     *     built from `$baseResponse` and handed `$exceptions`, both public API.
+     *     A reimplementation of the parent's body would have been framework
+     *     internals living in this class, rotting silently on the next upgrade.
+     *
+     *   · WHEN NOBODY IS SCANNING, THIS IS ONE NULL CHECK and the parent's own
+     *     object is returned untouched. RecordingTestResponse is not even
+     *     autoloaded.
+     *
+     *   · AND IT CHANGES NO ASSERTION. The subclass records and then calls
+     *     parent::assertSee(), so the assertion that runs is Laravel's, with
+     *     its escaping and its exception decoration intact.
+     *
+     * @param  \Illuminate\Http\Response  $response
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Testing\TestResponse
+     */
+    protected function createTestResponse($response, $request)
+    {
+        $made = parent::createTestResponse($response, $request);
+
+        if (! NeedleScan::armed()) {
+            return $made;
+        }
+
+        return RecordingTestResponse::fromBaseResponse($made->baseResponse, $request)
+            ->withExceptions($made->exceptions);
+    }
+
     public function createApplication(): Application
     {
         CompiledCaches::discard();

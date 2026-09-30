@@ -31,7 +31,7 @@ it('serves the brand directory at /brands/', function () {
     $this->get('/brands/')
         ->assertOk()
         ->assertSee('All brands')
-        ->assertSee('T Beauty of Joseon');
+        ->assertSee('<span class="brw-name">T Beauty of Joseon', escape: false);
 });
 
 it('serves a single brand page', function () {
