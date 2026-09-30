@@ -5,7 +5,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-banner.css": {
-    "file": "assets/kbb-banner-Bk_9ojQa.css",
+    "file": "assets/kbb-banner-DgQ_LAbX.css",
     "src": "resources/css/kbb/kbb-banner.css",
     "isEntry": true
   },
@@ -15,27 +15,27 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-checkout.css": {
-    "file": "assets/kbb-checkout-T9DNYQz-.css",
+    "file": "assets/kbb-checkout-DeajwjOB.css",
     "src": "resources/css/kbb/kbb-checkout.css",
     "isEntry": true
   },
   "resources/css/kbb/kbb-grid-skins.css": {
-    "file": "assets/kbb-grid-skins-BLfEA7zV.css",
+    "file": "assets/kbb-grid-skins-BJ1G4iy0.css",
     "src": "resources/css/kbb/kbb-grid-skins.css",
     "isEntry": true
   },
   "resources/css/kbb/kbb-product.css": {
-    "file": "assets/kbb-product-CJbrmkEW.css",
+    "file": "assets/kbb-product-DyDdJWV4.css",
     "src": "resources/css/kbb/kbb-product.css",
     "isEntry": true
   },
   "resources/css/kbb/kbb-shop.css": {
-    "file": "assets/kbb-shop-CLFR5gZi.css",
+    "file": "assets/kbb-shop-CExlr4on.css",
     "src": "resources/css/kbb/kbb-shop.css",
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-CaxFn0t-.css",
+    "file": "assets/kbb-EVa7MqaY.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
@@ -56,65 +56,13 @@
     "file": "assets/cairo-latin-PfPtmrPZ.woff2",
     "src": "resources/fonts/cairo/cairo-latin.woff2"
   },
-  "resources/fonts/poppins/poppins-devanagari-400.woff2": {
-    "file": "assets/poppins-devanagari-400-CJDn6rn8.woff2",
-    "src": "resources/fonts/poppins/poppins-devanagari-400.woff2"
+  "resources/fonts/outfit/outfit-latin-ext.woff2": {
+    "file": "assets/outfit-latin-ext-DdQaqQDo.woff2",
+    "src": "resources/fonts/outfit/outfit-latin-ext.woff2"
   },
-  "resources/fonts/poppins/poppins-devanagari-500.woff2": {
-    "file": "assets/poppins-devanagari-500-BIdkeU1p.woff2",
-    "src": "resources/fonts/poppins/poppins-devanagari-500.woff2"
-  },
-  "resources/fonts/poppins/poppins-devanagari-600.woff2": {
-    "file": "assets/poppins-devanagari-600-STEjXBNN.woff2",
-    "src": "resources/fonts/poppins/poppins-devanagari-600.woff2"
-  },
-  "resources/fonts/poppins/poppins-devanagari-700.woff2": {
-    "file": "assets/poppins-devanagari-700-O-jipLrW.woff2",
-    "src": "resources/fonts/poppins/poppins-devanagari-700.woff2"
-  },
-  "resources/fonts/poppins/poppins-devanagari-800.woff2": {
-    "file": "assets/poppins-devanagari-800-ACzlZF75.woff2",
-    "src": "resources/fonts/poppins/poppins-devanagari-800.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-400.woff2": {
-    "file": "assets/poppins-latin-400-cpxAROuN.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-400.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-500.woff2": {
-    "file": "assets/poppins-latin-500-C8OXljZJ.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-500.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-600.woff2": {
-    "file": "assets/poppins-latin-600-zEkxB9Mr.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-600.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-700.woff2": {
-    "file": "assets/poppins-latin-700-Qrb0O0WB.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-700.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-800.woff2": {
-    "file": "assets/poppins-latin-800-Bd8-pIP1.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-800.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-ext-400.woff2": {
-    "file": "assets/poppins-latin-ext-400-by3JarPu.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-ext-400.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-ext-500.woff2": {
-    "file": "assets/poppins-latin-ext-500-CK-6C4Hw.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-ext-500.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-ext-600.woff2": {
-    "file": "assets/poppins-latin-ext-600-CAhIAdZj.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-ext-600.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-ext-700.woff2": {
-    "file": "assets/poppins-latin-ext-700-cby-RkWa.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-ext-700.woff2"
-  },
-  "resources/fonts/poppins/poppins-latin-ext-800.woff2": {
-    "file": "assets/poppins-latin-ext-800-CDgOlX-1.woff2",
-    "src": "resources/fonts/poppins/poppins-latin-ext-800.woff2"
+  "resources/fonts/outfit/outfit-latin.woff2": {
+    "file": "assets/outfit-latin-Bc-8i84L.woff2",
+    "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
   "resources/js/kbb/app.js": {
     "file": "assets/app-jOqRtoT7.js",

@@ -127,7 +127,7 @@
       --line-2:rgba(42,34,40,.06);--cp-accent:#c9587f}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+body{font-family:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
      color:var(--ink);background:#fff;line-height:1.5;font-size:14px;-webkit-font-smoothing:antialiased}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 /* The cart line around the box, drawn plainly: the preview is about the set

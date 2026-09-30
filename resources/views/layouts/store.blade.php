@@ -136,12 +136,12 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 {!! \App\Support\Seo::render($kbbSeoCtx) !!}
 @stack('head')
 
-{{-- Poppins 400-800, matching the theme exactly (T-BOOT-10), AND SERVED BY
+{{-- Outfit 400-800, matching the theme exactly (T-BOOT-10), AND SERVED BY
      THIS SHOP — Lane PERF. App\Support\WebFonts carries the measurement in
      full; the short version is the owner's own mobile report:
 
          Initial Navigation  https://extrabeauty.ae         2,366 ms
-           /css2?family=Poppins…  (fonts.googleapis.com)     2,364 ms
+           /css2?family=Outfit…  (fonts.googleapis.com)     2,364 ms
              …pxiEyp8kv….woff2    (fonts.gstatic.com)        4,366 ms
              …pxiByp8kv….woff2    (fonts.gstatic.com)        4,369 ms
          Maximum critical path latency: 4,369 ms
@@ -149,7 +149,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
      Two hops to two third-party origins before a single glyph exists, off a
      <link> that blocks rendering while it happens. With font-display:swap
      every word on the page is painted twice — once in the system fallback at
-     FCP, once in Poppins two seconds later — and that repaint is most of why
+     FCP, once in Outfit two seconds later — and that repaint is most of why
      the Speed Index was 7.7 s against an LCP of 2.9 s.
 
      THE PRECONNECTS GO WITH IT. A preconnect to an origin the page no longer
@@ -158,7 +158,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 
      THE FILES ARE GOOGLE'S OWN, unchanged, all twelve faces css2 returns. The
      same codepoint resolves to the same face; only the host changed. --}}
-{!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::POPPINS) !!}<style id="kbb-poppins">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::POPPINS) !!}</style>
+{!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::OUTFIT) !!}<style id="kbb-outfit">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::OUTFIT) !!}</style>
 {{--
     POPPINS CARRIES NO ARABIC GLYPHS. Not "renders Arabic badly" — it has none
     of the letters, so every Arabic word falls back to whatever the device
@@ -191,11 +191,11 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 
     The <link> above is correct and correctly gated, and on its own it did
     nothing at all: no font stack in this storefront mentions Cairo. `--sans` is
-    "Poppins",system-ui,… in all four stylesheets that define it, and the product
-    card name, the badges and the add-to-cart button hard-code 'Poppins',
+    "Outfit",system-ui,… in all four stylesheets that define it, and the product
+    card name, the badges and the add-to-cart button hard-code 'Outfit',
     sans-serif of their own. A browser downloads a face when something uses it,
     so Cairo was fetched by nothing and every Arabic word still fell through
-    Poppins — which has no Arabic glyphs — to the system fallback. That is
+    Outfit — which has no Arabic glyphs — to the system fallback. That is
     exactly the defect the note above describes, with a 30 KB stylesheet request
     added on top of it.
 
@@ -209,7 +209,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
         weight 400   479.05     479.05      after
         weight 800   537.88     537.88      after
 
-    Before, the stack was `Poppins, system-ui, sans-serif` and matched neither —
+    Before, the stack was `Outfit, system-ui, sans-serif` and matched neither —
     it was rendering in the system fallback. After, it matches Cairo exactly at
     both weights, and the two weights differ from each other, so the `;800` in
     the request above is doing real work rather than being rounded to 700.
@@ -219,10 +219,10 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
     1800. What is left is <title>/<script>/<style>, which render nothing, and
     the blog and article views — see the note below.
 
-    APPENDED, NEVER SUBSTITUTED. Poppins stays first so Latin — the brand name,
+    APPENDED, NEVER SUBSTITUTED. Outfit stays first so Latin — the brand name,
     prices, SKUs, every English word on a mixed page — still renders in the
     brand face; per-codepoint font selection then reaches Cairo only for the
-    codepoints Poppins has no glyph for. The English page is unchanged byte for
+    codepoints Outfit has no glyph for. The English page is unchanged byte for
     byte: nothing here is emitted for it, and the rules are scoped to
     html[lang="ar"] besides.
 
@@ -248,20 +248,20 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 --}}
 @if ($kbbLocale !== \App\Support\Locale::DEFAULT)
 {{-- AND CAIRO IS SERVED BY THIS SHOP TOO — Lane PERF. Same argument as
-     Poppins above, and it has to go with it rather than after it: the two
-     preconnect hints that made this request cheap belonged to the Poppins
+     Outfit above, and it has to go with it rather than after it: the two
+     preconnect hints that made this request cheap belonged to the Outfit
      block, so leaving Cairo on fonts.googleapis.com while removing them would
      have made the Arabic pages SLOWER than they were. Its four weights are one
      variable file per subset — App\Support\WebFonts has the byte count that
      proves it — so this is three files, of which an Arabic page fetches one. --}}
 {!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::CAIRO) !!}<style id="kbb-cairo">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::CAIRO) !!}</style>
 <style id="kbb-arabic-face">
-html[lang="ar"],html[lang="ar"] .kbb-checkout{--sans:"Poppins","Cairo",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-html[lang="ar"] body{font-family:"Poppins","Cairo",system-ui,sans-serif}
-html[lang="ar"] .kbb-card .cn,html[lang="ar"] .kbb-badge,html[lang="ar"] .kbb-card-cart{font-family:'Poppins','Cairo',sans-serif}
+html[lang="ar"],html[lang="ar"] .kbb-checkout{--sans:"Outfit","Cairo",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+html[lang="ar"] body{font-family:"Outfit","Cairo",system-ui,sans-serif}
+html[lang="ar"] .kbb-card .cn,html[lang="ar"] .kbb-badge,html[lang="ar"] .kbb-card-cart{font-family:'Outfit','Cairo',sans-serif}
 html[lang="ar"] .sr{font-family:"Hanken Grotesk","Cairo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 html[lang="ar"] .sr-title,html[lang="ar"] .sr-avg,html[lang="ar"] .sr-stitle{font-family:Fraunces,"Cairo",Georgia,serif}
-html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-family:"Poppins","Cairo",sans-serif}
+html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-family:"Outfit","Cairo",sans-serif}
 </style>
 @endif
 
@@ -327,7 +327,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
         WHAT THIS IS AND IS NOT WORTH, measured rather than assumed. It is one
         fewer render-blocking request in <head> on every guest page — 15 -> 14
         on the home page, 28 -> 27 on /shop, 11 -> 10 on a product page, at
-        both 1280 and 390. It is NOT a saved origin: Poppins comes from the
+        both 1280 and 390. It is NOT a saved origin: Outfit comes from the
         same fonts.googleapis.com, so the connection is open either way. And it
         is NOT the WOFF2 files, because a browser fetches a face only when
         something on the page uses it, and on a guest page nothing does.

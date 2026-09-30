@@ -82,14 +82,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {!! $seo ?? '' !!}
 {!! app(\App\Services\Analytics::class)->headTags() !!}
-{{-- Poppins, served by this shop rather than by Google.            (Lane BG)
+{{-- Outfit, served by this shop rather than by Google.            (Lane BG)
      The twin of the Arabic-face include below, which did the same for Cairo
      and left the Latin half linking a render-blocking third-party stylesheet.
-     The partial's own header carries the measurement. --}}@include('partials.poppins-face'){{--
+     The partial's own header carries the measurement. --}}@include('partials.outfit-face'){{--
     AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
 
     The webfont link above carries no Arabic glyph. Before this, /ar/reviews/
-    served real Arabic text in a document that linked Poppins only and named an
+    served real Arabic text in a document that linked Outfit only and named an
     Arabic-capable family ZERO times, so every Arabic word rendered in whatever
     face the device happened to have. Measured at 40px against Cairo and matching
     neither -- docs/rtl-standalone-documents.md §2 found it, and
@@ -104,7 +104,7 @@
     Checked by fetching all seven English pages before and after: byte-identical.
 
     body, NOT :root: this is the one of the five that does not put its font in
-    a custom property. It hard-codes "Poppins",sans-serif on `body`, so
+    a custom property. It hard-codes "Outfit",sans-serif on `body`, so
     html[lang="ar"] body (0,1,2) is what has to win over body (0,0,1). And this
     document's link is already outside the verbatim block, so nothing is closed
     here.
@@ -114,7 +114,7 @@
     comments are removed, so the word in a comment opens a block of its own.)
 --}}@include('partials.arabic-face', [
     'weights' => '400;500;600;700;800',
-    'stacks' => ['body' => ['font-family' => '"Poppins",sans-serif']],
+    'stacks' => ['body' => ['font-family' => '"Outfit",sans-serif']],
 ])
 
 @verbatim
@@ -129,7 +129,7 @@
     --sr-gold:var(--gold); --sr-star-empty:#E7D2C9; --sr-radius:18px; --sr-cols:4;
   }
   *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;background:var(--cream);background-image:linear-gradient(180deg,#fff,var(--cream) 520px);background-repeat:no-repeat;color:var(--ink);font-family:"Poppins",sans-serif;-webkit-font-smoothing:antialiased}
+  body{margin:0;min-height:100vh;background:var(--cream);background-image:linear-gradient(180deg,#fff,var(--cream) 520px);background-repeat:no-repeat;color:var(--ink);font-family:"Outfit",sans-serif;-webkit-font-smoothing:antialiased}
   .page{max-width:1080px;margin:0 auto;padding:0 18px 80px}
   a{color:inherit}
 

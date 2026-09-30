@@ -1,0 +1,917 @@
+[
+  {
+    "run": "after",
+    "page": "home",
+    "width": "390",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "header": {
+      "w": 390,
+      "h": 127
+    },
+    "cards": 20,
+    "cardHeights": [
+      370.19
+    ],
+    "cardSpread": 0,
+    "firstButton": {
+      "w": 46,
+      "h": 46
+    },
+    "named": {
+      "h1": 48.28,
+      "lead": null,
+      "navRow": 675.2,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 50,
+      "footer": 737.36
+    },
+    "docHeight": 9318,
+    "bodyFont": "Outfit, system-ui, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "shop",
+    "width": "390",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "header": {
+      "w": 390,
+      "h": 127
+    },
+    "cards": 24,
+    "cardHeights": [
+      346.84
+    ],
+    "cardSpread": 0,
+    "firstButton": {
+      "w": 46,
+      "h": 46
+    },
+    "named": {
+      "h1": 34.55,
+      "lead": null,
+      "navRow": 675.2,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": null,
+      "footer": 732.75
+    },
+    "docHeight": 5629,
+    "bodyFont": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "product",
+    "width": "390",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "header": {
+      "w": 390,
+      "h": 127
+    },
+    "cards": 4,
+    "cardHeights": [
+      341.84
+    ],
+    "cardSpread": 0,
+    "firstButton": {
+      "w": 46,
+      "h": 46
+    },
+    "named": {
+      "h1": 32,
+      "lead": null,
+      "navRow": 675.2,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 0,
+      "footer": 732.75
+    },
+    "docHeight": 3680,
+    "bodyFont": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "cart",
+    "width": "390",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "header": {
+      "w": 390,
+      "h": 127
+    },
+    "cards": 0,
+    "cardHeights": [],
+    "cardSpread": null,
+    "firstButton": {
+      "w": 46,
+      "h": 46
+    },
+    "named": {
+      "h1": 33.59,
+      "lead": null,
+      "navRow": 675.2,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": null,
+      "footer": null
+    },
+    "docHeight": 844,
+    "bodyFont": "Outfit, system-ui, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "checkout",
+    "width": "390",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "header": {
+      "w": 390,
+      "h": 58
+    },
+    "cards": 0,
+    "cardHeights": [],
+    "cardSpread": null,
+    "firstButton": {
+      "w": 80.64,
+      "h": 46.8
+    },
+    "named": {
+      "h1": 27.55,
+      "lead": null,
+      "navRow": 675.2,
+      "cartRow": 46.8,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 46.8,
+      "footer": 164.48
+    },
+    "docHeight": 2326,
+    "bodyFont": "Outfit, system-ui, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "arabic-home",
+    "width": "390",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": {
+      "family": "Cairo",
+      "widths": {
+        "400": 441.81,
+        "700": 449.45
+      },
+      "control": {
+        "400": 436.63,
+        "700": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "700": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/loaded",
+        "400/unloaded",
+        "600/loaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/unloaded",
+        "800/unloaded",
+        "800/unloaded"
+      ]
+    },
+    "faces": 22,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "header": {
+      "w": 390,
+      "h": 127
+    },
+    "cards": 20,
+    "cardHeights": [
+      370.19
+    ],
+    "cardSpread": 0,
+    "firstButton": {
+      "w": 46,
+      "h": 46
+    },
+    "named": {
+      "h1": 48.28,
+      "lead": null,
+      "navRow": 675.2,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 50,
+      "footer": 737.36
+    },
+    "docHeight": 9318,
+    "bodyFont": "Outfit, Cairo, system-ui, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "home",
+    "width": "1280",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "header": {
+      "w": 1280,
+      "h": 93.5
+    },
+    "cards": 20,
+    "cardHeights": [
+      425.36
+    ],
+    "cardSpread": 0,
+    "firstButton": {
+      "w": 0,
+      "h": 0
+    },
+    "named": {
+      "h1": 91.38,
+      "lead": null,
+      "navRow": 0,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 48,
+      "footer": 347.17
+    },
+    "docHeight": 8046,
+    "bodyFont": "Outfit, system-ui, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "shop",
+    "width": "1280",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "header": {
+      "w": 1280,
+      "h": 93.5
+    },
+    "cards": 24,
+    "cardHeights": [
+      408.89,
+      408.91
+    ],
+    "cardSpread": 0.02,
+    "firstButton": {
+      "w": 0,
+      "h": 0
+    },
+    "named": {
+      "h1": 34.55,
+      "lead": null,
+      "navRow": 0,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": null,
+      "footer": 339.5
+    },
+    "docHeight": 2867,
+    "bodyFont": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "product",
+    "width": "1280",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "header": {
+      "w": 1280,
+      "h": 93.5
+    },
+    "cards": 4,
+    "cardHeights": [
+      408.89
+    ],
+    "cardSpread": 0,
+    "firstButton": {
+      "w": 0,
+      "h": 0
+    },
+    "named": {
+      "h1": 32,
+      "lead": null,
+      "navRow": 0,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 0,
+      "footer": 339.5
+    },
+    "docHeight": 2509,
+    "bodyFont": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "cart",
+    "width": "1280",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "header": {
+      "w": 1280,
+      "h": 93.5
+    },
+    "cards": 0,
+    "cardHeights": [],
+    "cardSpread": null,
+    "firstButton": {
+      "w": 0,
+      "h": 0
+    },
+    "named": {
+      "h1": 38.39,
+      "lead": null,
+      "navRow": 0,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": null,
+      "footer": null
+    },
+    "docHeight": 900,
+    "bodyFont": "Outfit, system-ui, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "checkout",
+    "width": "1280",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": null,
+    "faces": 10,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "header": {
+      "w": 1280,
+      "h": 58
+    },
+    "cards": 0,
+    "cardHeights": [],
+    "cardSpread": null,
+    "firstButton": {
+      "w": 80.64,
+      "h": 44.19
+    },
+    "named": {
+      "h1": 27.55,
+      "lead": null,
+      "navRow": 0,
+      "cartRow": 44.19,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 44.19,
+      "footer": 84.48
+    },
+    "docHeight": 1345,
+    "bodyFont": "Outfit, system-ui, sans-serif"
+  },
+  {
+    "run": "after",
+    "page": "arabic-home",
+    "width": "1280",
+    "family": "Outfit",
+    "probe": {
+      "family": "Outfit",
+      "widths": {
+        "400": 456.55,
+        "500": 458.17,
+        "600": 465.2,
+        "700": 472.2,
+        "800": 479.13
+      },
+      "control": {
+        "400": 436.63,
+        "500": 436.63,
+        "600": 463.36,
+        "700": 463.36,
+        "800": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "500": true,
+        "600": true,
+        "700": true,
+        "800": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/unloaded",
+        "500/loaded",
+        "500/unloaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/loaded",
+        "800/unloaded"
+      ]
+    },
+    "cairo": {
+      "family": "Cairo",
+      "widths": {
+        "400": 441.81,
+        "700": 449.45
+      },
+      "control": {
+        "400": 436.63,
+        "700": 463.36
+      },
+      "rendered": {
+        "400": true,
+        "700": true
+      },
+      "renderedAny": true,
+      "faces": [
+        "400/loaded",
+        "400/loaded",
+        "400/unloaded",
+        "600/loaded",
+        "600/loaded",
+        "600/unloaded",
+        "700/loaded",
+        "700/loaded",
+        "700/unloaded",
+        "800/unloaded",
+        "800/unloaded",
+        "800/unloaded"
+      ]
+    },
+    "faces": 22,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "header": {
+      "w": 1280,
+      "h": 93.5
+    },
+    "cards": 20,
+    "cardHeights": [
+      425.36
+    ],
+    "cardSpread": 0,
+    "firstButton": {
+      "w": 0,
+      "h": 0
+    },
+    "named": {
+      "h1": 91.38,
+      "lead": null,
+      "navRow": 0,
+      "cartRow": null,
+      "orderBox": null,
+      "payBtn": null,
+      "field": 48,
+      "footer": 347.17
+    },
+    "docHeight": 8045,
+    "bodyFont": "Outfit, Cairo, system-ui, sans-serif"
+  }
+]

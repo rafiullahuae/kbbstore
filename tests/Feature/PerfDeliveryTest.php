@@ -166,7 +166,7 @@ it('does not put the Arabic face on an English page', function () {
     $html = $this->get('/')->assertOk()->getContent();
 
     expect($html)->not->toContain("font-family:'Cairo'")
-        ->and($html)->toContain("font-family:'Poppins'");
+        ->and($html)->toContain("font-family:'Outfit'");
 });
 
 /*
@@ -212,51 +212,109 @@ it('lists every face file as a vite input', function () {
 });
 
 /*
- * Fifteen faces, four preloads, three Cairo files behind twelve Cairo rules.
- * The counts are the claim "the same font, byte for byte" made checkable: a
- * subset dropped to save repository weight changes which glyphs a codepoint
- * resolves to, and that is the exception rule 1 does not allow.
+ * TEN faces, ONE preload, two Outfit files — and three Cairo files behind
+ * twelve Cairo rules, unchanged.
  *
- * ▲ TWELVE BECAME FIFTEEN AND FOUR PRELOADS STAYED FOUR.          (Lane BG)
+ * The counts are the claim "this is what css2 returns" made checkable: a subset
+ * dropped to save repository weight changes which glyphs a codepoint resolves
+ * to, and that is the exception rule 1 does not allow.
  *
- * Poppins 500 joined POPPINS_FACES: eight rules in kbb.css ask for it, 47
- * elements on /shop/ compute to it, and with only 400 and 600 present CSS font
- * matching answers with 400 outright -- measured at 543.28px against 552.38px
- * with the real face. That is three more faces.
+ * ▲ FIFTEEN BECAME TEN AND FOUR PRELOADS BECAME ONE.              (Lane PLC)
  *
- * It is NOT three more preloads, and the two numbers moving apart is the point
- * of asserting both. preloadTags() emits one link per face of the preload
- * subset, so 500 would have added a fifth preload and taken critical-path
- * bandwidth from the LCP image -- the exact cost this lane's preload list was
- * chosen to avoid. WebFonts::NO_PRELOAD_WEIGHTS keeps it out, and this case is
- * what says so.
+ * The owner asked for Outfit site-wide. Outfit is a VARIABLE font: css2 returns
+ * ten rules and one file per subset, every weight, where Poppins needed five
+ * files per subset. Measured on the latin subset, the only one this shop's text
+ * needs — Poppins 39,272 bytes across five files, four of them preloaded;
+ * Outfit 32,292 bytes in one file with one preload.
  *
- * MUTATION: remove the four devanagari rows from POPPINS_FACES — red. Remove
- * `500` from NO_PRELOAD_WEIGHTS — red on the preload count, at 5 against 4.
+ * SO THE TWO NUMBERS MOVE TOGETHER HERE, WHERE LAST ROUND THEY MOVED APART, and
+ * both are asserted for the same reason: the preload count is not a free
+ * consequence of the face count. It fell because the FILES fell to one, not
+ * because anything was dropped from the critical path —
+ * WebFonts::NO_PRELOAD_WEIGHTS now selects nothing at all, and its own note
+ * says so rather than leaving a constant that looks like it is working.
+ *
+ * DEVANAGARI IS GONE AND IS THE ONE THING THAT IS NOT LIKE-FOR-LIKE. Outfit
+ * publishes no devanagari subset. A search for U+0900–U+097F across
+ * resources/views, resources/css and database/ returns no match, so there is no
+ * text on this shop for it to carry; the latin and latin-ext unicode-ranges are
+ * byte-identical to Poppins's, so every codepoint the shop DOES have resolves
+ * exactly as before.
+ *
+ * MUTATION: drop either latin-ext row pair from OUTFIT_FACES — red on the face
+ * count. Remove the dedupe from preloadTags() — red at 5 against 1.
  */
 it('carries every face Google serves, and preloads only the ones the page uses', function () {
-    expect(WebFonts::faces(WebFonts::POPPINS))->toHaveCount(15)
+    expect(WebFonts::faces(WebFonts::OUTFIT))->toHaveCount(10)
         ->and(WebFonts::faces(WebFonts::CAIRO))->toHaveCount(12);
 
-    // Five weights across three subsets, and every one of them a real file.
+    // Five weights across two subsets, and every one of them a real file.
     // array_unique keeps the ORIGINAL keys, so the comparison is on the values.
-    $weights = array_values(array_unique(array_column(WebFonts::faces(WebFonts::POPPINS), 'weight')));
+    $weights = array_values(array_unique(array_column(WebFonts::faces(WebFonts::OUTFIT), 'weight')));
     sort($weights);
     expect($weights)->toBe([400, 500, 600, 700, 800]);
 
-    // Cairo is variable: twelve rules, three files.
+    // Cairo is variable: twelve rules, three files. So is Outfit now: ten
+    // rules, two files, which is the whole reason the preload count moved.
     $cairoFiles = array_unique(array_column(WebFonts::faces(WebFonts::CAIRO), 'file'));
     expect($cairoFiles)->toHaveCount(3);
 
-    expect(substr_count(WebFonts::preloadTags(WebFonts::POPPINS), '<link'))->toBe(4)
+    $outfitFiles = array_unique(array_column(WebFonts::faces(WebFonts::OUTFIT), 'file'));
+    expect($outfitFiles)->toHaveCount(2);
+
+    expect(substr_count(WebFonts::preloadTags(WebFonts::OUTFIT), '<link'))->toBe(1)
         ->and(substr_count(WebFonts::preloadTags(WebFonts::CAIRO), '<link'))->toBe(1);
 
     // crossorigin, on every one of them. A preload whose mode does not match
     // the fetch that follows is downloaded twice, which is slower than no
     // preload at all.
-    foreach ([WebFonts::POPPINS, WebFonts::CAIRO] as $family) {
+    foreach ([WebFonts::OUTFIT, WebFonts::CAIRO] as $family) {
         $tags = WebFonts::preloadTags($family);
         expect(substr_count($tags, 'crossorigin'))->toBe(substr_count($tags, '<link'));
+    }
+});
+
+/*
+ * ▲ A HALF-DONE TYPEFACE SWAP IS THE FAILURE MODE THIS CATCHES.   (Lane PLC)
+ *
+ * The change is one name in 90 places across 11 stylesheets and views, plus a
+ * faces table, plus vite's input list. Miss one stylesheet and the shop asks
+ * for a family it no longer serves: CSS font matching falls through to
+ * `system-ui` for those rules ONLY, so one component renders in the system face
+ * while everything around it is Outfit — which looks like a design choice
+ * rather than a bug, and is exactly what nobody notices in review.
+ *
+ * MUTATION, run: put `Poppins` back in one declaration in kbb.css → red, and
+ * the message names the file.
+ */
+it('names one family for Latin text, and it is the one it serves', function () {
+    $named = [];
+
+    foreach (array_merge(
+        (array) glob(resource_path('css/kbb/*.css')),
+        (array) glob(resource_path('views/**/*.blade.php')),
+        (array) glob(resource_path('views/**/**/*.blade.php')),
+    ) as $file) {
+        if (str_contains((string) file_get_contents((string) $file), 'Poppins')) {
+            $named[] = str_replace(base_path().'/', '', (string) $file);
+        }
+    }
+
+    expect($named)->toBe([], "these still ask for Poppins, which this shop no longer serves:\n  ".implode("\n  ", $named));
+
+    // And the family that IS served is the one the stylesheets ask for.
+    expect(WebFonts::OUTFIT)->toBe('Outfit')
+        ->and(file_get_contents(resource_path('css/kbb/kbb.css')))->toContain('--sans:"Outfit"');
+
+    /*
+     * THE FILES ARE REALLY THERE. A faces table naming a file vite does not
+     * build is a 404 for the shop's own brand face, which is the shape
+     * 'every face this shop declares is a file it actually built' below
+     * catches for the manifest — this is the source half.
+     */
+    foreach (WebFonts::faces(WebFonts::OUTFIT) as $face) {
+        expect(file_exists(base_path('resources/fonts/outfit/'.$face['file'])))
+            ->toBeTrue('missing source font: '.$face['file']);
     }
 });
 

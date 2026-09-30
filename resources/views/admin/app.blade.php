@@ -992,7 +992,7 @@ tr.invdirty{background:var(--accent-soft)}
 .mgmpv{background:#FFF8F5;border:1px solid #FCE0E8;border-radius:14px;padding:16px 18px;margin-bottom:20px}
 .mgmpv-label{font-size:11px;font-weight:600;color:#8C828A;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .mgmpv-label::before{content:'';width:6px;height:6px;border-radius:50%;background:#2F9E6B;display:inline-block}
-.mgmpv-bar{display:flex;flex-wrap:wrap;gap:4px;font-family:"Poppins",system-ui,sans-serif}
+.mgmpv-bar{display:flex;flex-wrap:wrap;gap:4px;font-family:"Outfit",system-ui,sans-serif}
 .mgmpv-link{font-size:13px;font-weight:600;color:#2A2228;padding:6px 4px;display:inline-flex;align-items:center;gap:5px}
 .mgmpv-link em{font:700 9px/1 inherit;background:#15a85a;color:#fff;border-radius:99px;padding:2px 6px;font-style:normal}
 .mgmpv-empty{font-size:12.5px;color:#8C828A;font-style:italic}
@@ -1150,7 +1150,7 @@ tr.invdirty{background:var(--accent-soft)}
    so the two cannot drift apart without somebody noticing here first. */
 /* The counter is the storefront's own rule at preview scale, declaration for
    declaration -- `.ib i{position:absolute;top:1px;inset-inline-end:1px;
-   background:var(--pink);font:700 10px Poppins;border-radius:99px;padding:0 5px}`
+   background:var(--pink);font:700 10px Outfit;border-radius:99px;padding:0 5px}`
    with the 5px of padding taken to 3px, which is 0.6 of it, the same factor the
    script applies to every other number here. Given a shape of its own it would
    crop differently from the phone at the top of the slider, and the owner would
@@ -1560,12 +1560,12 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .skinprev .kbb-card{border:1px solid rgba(42,34,40,.06);border-radius:14px;overflow:hidden;text-decoration:none;color:#2A2228;display:block}
 .skinprev .kbb-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#FFF8F5}
 .skinprev .kbb-card .cb{padding:10px}
-.skinprev .kbb-card .cn{font-size:13px;font-weight:600;font-family:'Poppins',sans-serif}
+.skinprev .kbb-card .cn{font-size:13px;font-weight:600;font-family:'Outfit',sans-serif}
 .skinprev .kbb-card .cp{font-size:13px;color:#C13E63;font-weight:700;margin-top:3px}
 .skinprev .kbb-card{background:#fff;transition:.18s}
 .skinprev .kbb-card-thumb{position:relative;aspect-ratio:1;background:#FFF8F5;overflow:hidden}
 .skinprev .kbb-card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.skinprev .kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Poppins',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.skinprev .kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Outfit',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .skinprev .kbb-badge-new{left:9px;background:linear-gradient(135deg,#1cc36a,#12965a)}
 .skinprev .kbb-badge-sale{right:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
 .skinprev .kbb-card-cat{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8C828A;font-weight:600;margin-bottom:2px}
@@ -1578,7 +1578,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .skinprev .kbb-card-rc{color:#8C828A;font-size:11px}
 .skinprev .kbb-card-reg{color:#b3aab0;font-weight:500;text-decoration:line-through;font-size:12px}
 .skinprev .kbb-card-price{color:#C13E63;font-weight:700}
-.skinprev .kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif}
+.skinprev .kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
 .skinprev .kbb-pgrid .kbb-card{display:flex;flex-direction:column;height:100%}
 .skinprev .kbb-pgrid .kbb-card>.kbb-card-thumb{flex:none}
 .skinprev .kbb-pgrid .kbb-card>.cb{flex:1;display:flex;flex-direction:column}
@@ -1887,11 +1887,11 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .hhrow.nav{background:#F2FBF6}
 .hhrow.srch{background:#FFF6F9}
 .hhrow > span:first-child{font-size:9.5px;color:#7b8697;font-weight:600}
-.hhrow i{position:absolute;right:8px;font-style:normal;font:700 9px Poppins;background:#2A2228;color:#fff;
+.hhrow i{position:absolute;right:8px;font-style:normal;font:700 9px Outfit;background:#2A2228;color:#fff;
   border-radius:4px;padding:1px 5px}
 .hhrow.nav i{background:#1F7D52}
 .hhfld{position:absolute;left:50%;transform:translateX(-50%);background:#FFE3EC;border:1px solid #F3C7D6;
-  border-radius:99px;display:flex;align-items:center;padding:0 8px;font:600 8.5px Poppins;color:#C13E63}
+  border-radius:99px;display:flex;align-items:center;padding:0 8px;font:600 8.5px Outfit;color:#C13E63}
 
 /* login / register panel preview */
 .apdev{display:flex;gap:5px;margin-bottom:9px}
@@ -1903,7 +1903,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .apstage.phone{max-width:270px;margin:0 auto}
 .apbar{display:flex;align-items:center;padding:0 12px;min-height:40px;background:#fff;
   border-bottom:1px solid #F0E8EB}
-.aplg{font:700 14px Poppins;letter-spacing:-.02em;color:#2A2228}
+.aplg{font:700 14px Outfit;letter-spacing:-.02em;color:#2A2228}
 .aplg em{font-style:normal;color:#E0567B}
 .apic{margin-left:auto;width:16px;height:16px;border-radius:50%;border:1.6px solid #2A2228;position:relative}
 .apic::after{content:"";position:absolute;top:-2px;right:-2px;width:6px;height:6px;border-radius:50%;
@@ -1916,7 +1916,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   8%{max-height:130px;opacity:1;padding:14px 8px 12px}
   76%{max-height:130px;opacity:1;padding:14px 8px 12px}
   100%{max-height:0;opacity:0;padding:0}}
-.ap-kick{display:block;font:400 9px Poppins;letter-spacing:.24em;text-transform:uppercase;color:#A2939B;margin-bottom:4px}
+.ap-kick{display:block;font:400 9px Outfit;letter-spacing:.24em;text-transform:uppercase;color:#A2939B;margin-bottom:4px}
 .ap-name{display:block;font-family:var(--ap-font);font-weight:var(--ap-weight,300);
   font-size:var(--ap-size,27px);line-height:1.15;color:#C13E63}
 .ap-fill .ap-name,.ap-shimmer .ap-name,.ap-drift .ap-name,.ap-focus .ap-name{
@@ -1935,12 +1935,12 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 @keyframes apFo{0%{filter:blur(9px);letter-spacing:.14em;opacity:0}45%,100%{filter:blur(0);letter-spacing:0;opacity:1}}
 .aphead{display:flex;align-items:center;gap:9px;padding:8px 9px 10px;border-bottom:1px solid #F8F3F5}
 .apav{width:30px;height:30px;border-radius:50%;background:#FFF1F5;color:#C13E63;display:grid;place-items:center;
-  font:800 12px Poppins;flex:none}
-.apwho b{display:block;font:600 12px Poppins;color:#2A2228}
+  font:800 12px Outfit;flex:none}
+.apwho b{display:block;font:600 12px Outfit;color:#2A2228}
 .apwho span{font-size:10.5px;color:#A2939B}
-.apit{display:block;padding:7px 10px;font:400 12px Poppins;color:#2A2228;border-radius:8px}
+.apit{display:block;padding:7px 10px;font:400 12px Outfit;color:#2A2228;border-radius:8px}
 .apout{display:block;margin-top:3px;border-top:1px solid #F8F3F5;padding:8px;text-align:center;
-  font:600 11.5px Poppins;color:#6A5C64}
+  font:600 11.5px Outfit;color:#6A5C64}
 
 /* the name animating in the panel head, as it does on the storefront */
 .apwho .ap-greet{display:block;font-family:var(--ap-font);font-weight:var(--ap-weight,300);
@@ -1986,15 +1986,15 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .apform .authcard{background:#fff;border:1px solid #EDE4E8;border-radius:16px;padding:16px;
   box-shadow:0 12px 30px -20px rgba(36,29,34,.3)}
 .apform .mark{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;margin-bottom:10px;
-  background:linear-gradient(140deg,#E0567B,#C13E63);color:#fff;font:800 10px Poppins}
+  background:linear-gradient(140deg,#E0567B,#C13E63);color:#fff;font:800 10px Outfit}
 .apform h1{margin:0;font-size:15px;font-weight:700;letter-spacing:-.02em;color:#241D22}
 .apform .lede{margin:3px 0 12px;font-size:10.5px;color:#A2939B}
 .apform .segs{display:flex;gap:3px;padding:3px;background:#F6F0F3;border-radius:8px;margin-bottom:12px}
-.apform .seg{flex:1;text-align:center;padding:5px;border-radius:6px;font:600 9.5px Poppins;color:#6A5C64}
+.apform .seg{flex:1;text-align:center;padding:5px;border-radius:6px;font:600 9.5px Outfit;color:#6A5C64}
 .apform .seg.on{background:#fff;color:#241D22;box-shadow:0 1px 2px rgba(36,29,34,.1)}
 .apform .fld{position:relative;margin-bottom:8px}
 .apform .fld input{width:100%;border:1.5px solid #EDE4E8;border-radius:9px;background:#fff;
-  padding:calc(15px + var(--fld-gap,3px)) 10px 5px;font:400 11px Poppins;color:#241D22;outline:0}
+  padding:calc(15px + var(--fld-gap,3px)) 10px 5px;font:400 11px Outfit;color:#241D22;outline:0}
 .apform .fld.ico input{padding-left:32px}
 .apform .fld label{position:absolute;left:10px;top:10px;font-size:11px;color:#A2939B;pointer-events:none;
   transition:.16s;transform-origin:left top}
@@ -2008,7 +2008,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .apform .row a{color:#C13E63}
 .apform .chk{display:flex;align-items:center;gap:5px}
 .apform .chk .bx{width:12px;height:12px;border-radius:4px;border:1.5px solid #EDE4E8;display:block}
-.apform .go{width:100%;border:0;border-radius:9px;padding:9px;color:#fff;font:700 11px Poppins;
+.apform .go{width:100%;border:0;border-radius:9px;padding:9px;color:#fff;font:700 11px Outfit;
   background:linear-gradient(180deg,#E0567B,#C13E63);box-shadow:0 8px 18px -10px rgba(193,62,99,.75)}
 /* grouped */
 .apform.fs-grouped .fgroup{border:1.5px solid #EDE4E8;border-radius:10px;overflow:hidden}

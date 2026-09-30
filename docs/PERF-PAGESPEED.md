@@ -72,7 +72,7 @@ Speed Index of 7.7.
 
 | # | Audit it answers | What changed | Where |
 |---|---|---|---|
-| 1 | Render-blocking requests · Speed Index · FCP | **Poppins and Cairo are now served by your own shop.** Google's own font files, unchanged, committed and built into `public/build/`. The `@font-face` rules are inline in the page and the four weights the page uses are `<link rel=preload>`ed, so the download starts while the browser is still reading the first kilobyte of `<head>`. | `app/Support/WebFonts.php`, `resources/views/layouts/store.blade.php`, `resources/fonts/**`, `vite.config.js` |
+| 1 | Render-blocking requests · Speed Index · FCP | **Your Latin and Arabic faces are now served by your own shop** (Poppins when this was written; Outfit since — see the note at the end). Google's own font files, unchanged, committed and built into `public/build/`. The `@font-face` rules are inline in the page and the four weights the page uses are `<link rel=preload>`ed, so the download starts while the browser is still reading the first kilobyte of `<head>`. | `app/Support/WebFonts.php`, `resources/views/layouts/store.blade.php`, `resources/fonts/**`, `vite.config.js` |
 | 2 | LCP breakdown · "Resource load delay 2,260 ms" | **The first banner picture is named in `<head>`.** Not the usual mistake — LCP request discovery *passes* on your shop. The document is 51 KiB over a slow connection and that `<img>` is two thirds of the way down it, so the browser did not know the picture existed until the page body had arrived. | `resources/views/partials/home/cards-banner.blade.php` |
 | 3 | Improve image delivery · 276 KiB | **The banner serves the phone-sized copies you already generated.** Three 810×1440 originals were being painted into 298×529 boxes. The product tile beside them in the same report was already doing this properly; the banner was simply never given a `srcset`. | same file, `app/Support/ImageVariants.php` |
 | 4 | Best Practices 96 → 100 | **One console 404 is gone.** Measured with `tools/perf-console-404.cjs`, which scrolls the page to the bottom the way a shopper does: before `["404 /uploads/ugc/perf-poster-clip-3.jpg"]`, after `no failed requests`. A shoppable-video clip's cover file was never written to disk (the cut failed), and nothing between the database and the browser checked. The tile still draws and the clip still plays; the browser just stops asking for a file that is not there. | `app/Services/Ugc/Tile.php` |
@@ -487,3 +487,40 @@ video → (the clip) → Cover**, or re-upload the clip.
 - **`Reduce unused CSS`, 22 KiB.** Also unscored. It is real, and the honest fix
   is splitting `kbb.css`, which is a stylesheet four other lanes are editing
   this round.
+
+---
+
+## The Latin family changed after this report — 30 September 2026 (Lane PLC)
+
+Everything above is a record of a measurement taken on 29 September and is left
+exactly as it was written. One present-tense sentence in the table needed a
+correction, and this note is the rest of it.
+
+The owner asked for the shop's typeface to be **Outfit**: *"can u plz match the
+font of overal site to 'Outfit'"*. The arrangement this report argued for is
+unchanged — the faces are still Google's own files, served from this origin,
+with the `@font-face` rules inline in `<head>` and the used subset preloaded.
+No third-party font origin came back, and `PerfDeliveryTest` still fails if one
+does.
+
+**It got cheaper, because Outfit is a variable font.** `css2` returns ten rules
+and one file per subset where Poppins needed five files per subset:
+
+| | files (latin) | bytes (latin) | preloads |
+|---|---|---|---|
+| Poppins | 5 static | 39,272 | 4 |
+| Outfit | 1 variable | 32,292 | 1 |
+
+Four requests became one and the shop ships 6,980 fewer bytes of font. The
+preload count fell because the *files* fell to one, not because anything was
+taken off the critical path: the single file is the whole latin subset, so the
+weight the LCP text needs arrives in the first response instead of the fourth.
+
+**Cairo is untouched.** Measured with two rulers on `/ar` before and after —
+441.81 px at weight 400 and 449.45 px at 700, identical on both runs.
+
+**The one thing that is not like-for-like** is that Poppins publishes a
+devanagari subset and Outfit does not. There is no Devanagari text on this shop
+(searched across `resources/views`, `resources/css` and `database/`), and the
+latin and latin-ext unicode-ranges are byte-identical to Poppins's, so every
+codepoint the shop does have resolves exactly as it did.

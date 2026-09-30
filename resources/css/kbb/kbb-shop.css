@@ -9,7 +9,7 @@
   --sh-s:0 1px 2px rgba(42,34,40,.05), 0 3px 10px rgba(42,34,40,.05);
   --sh-m:0 8px 26px rgba(42,34,40,.10);
   --sh-l:0 20px 60px rgba(42,34,40,.20);
-  --sans:"Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --sans:"Outfit", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   --ease:cubic-bezier(.22,.61,.36,1);
 }
 *{margin:0;padding:0;box-sizing:border-box}

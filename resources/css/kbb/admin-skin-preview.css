@@ -5,12 +5,12 @@
 .skinprev .kbb-card{border:1px solid rgba(42,34,40,.06);border-radius:14px;overflow:hidden;text-decoration:none;color:#2A2228;display:block}
 .skinprev .kbb-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#FFF8F5}
 .skinprev .kbb-card .cb{padding:10px}
-.skinprev .kbb-card .cn{font-size:13px;font-weight:600;font-family:'Poppins',sans-serif}
+.skinprev .kbb-card .cn{font-size:13px;font-weight:600;font-family:'Outfit',sans-serif}
 .skinprev .kbb-card .cp{font-size:13px;color:#C13E63;font-weight:700;margin-top:3px}
 .skinprev .kbb-card{background:#fff;transition:.18s}
 .skinprev .kbb-card-thumb{position:relative;aspect-ratio:1;background:#FFF8F5;overflow:hidden}
 .skinprev .kbb-card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.skinprev .kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Poppins',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.skinprev .kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Outfit',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .skinprev .kbb-badge-new{left:9px;background:linear-gradient(135deg,#1cc36a,#12965a)}
 .skinprev .kbb-badge-sale{right:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
 .skinprev .kbb-card-cat{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8C828A;font-weight:600;margin-bottom:2px}
@@ -23,7 +23,7 @@
 .skinprev .kbb-card-rc{color:#8C828A;font-size:11px}
 .skinprev .kbb-card-reg{color:#b3aab0;font-weight:500;text-decoration:line-through;font-size:12px}
 .skinprev .kbb-card-price{color:#C13E63;font-weight:700}
-.skinprev .kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif}
+.skinprev .kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
 .skinprev .kbb-pgrid .kbb-card{display:flex;flex-direction:column;height:100%}
 .skinprev .kbb-pgrid .kbb-card>.kbb-card-thumb{flex:none}
 .skinprev .kbb-pgrid .kbb-card>.cb{flex:1;display:flex;flex-direction:column}

@@ -516,7 +516,7 @@
     var doc = '<!doctype html><html><head><meta charset="utf-8">'
       + '<meta name="viewport" content="width=device-width,initial-scale=1">'
       + '<style>html,body{margin:0;padding:0;background:#fff;'
-      + 'font-family:Poppins,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;'
+      + 'font-family:Outfit,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;'
       + '--site-gutter:18px;--site-max:1280px;--pink:#E0567B;--ink:#2A2228;--muted:#8C828A;'
       + '--line:rgba(42,34,40,.10);--line2:#F4EEF1}'
       + '.wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}'

@@ -224,7 +224,7 @@ it('keeps the composer and the partial answering the same question', function ()
  *     either in all six documents or listed as layout-only with a reason.
  *
  * MUTATION NOTES, all four run in this lane's worktree:
- *   - delete @include('partials.poppins-face') from store/review-wall.blade.php
+ *   - delete @include('partials.outfit-face') from store/review-wall.blade.php
  *       → 'the audit' fails: `review wall / Latin webfont` flips to absent.
  *   - drop the beforeEach's brand-colour line
  *       → 'the audit' fails on SIX rows at once, which is the point of the
@@ -324,7 +324,7 @@ function sdhEmitters(): array
         'page wash' => 'id="kbb-page-wash"',
         'brand colour' => 'id="kbb-brand-accent"',
         'site width' => 'id="kbb-layout"',
-        'Latin webfont' => 'id="kbb-poppins"',
+        'Latin webfont' => 'id="kbb-outfit"',
     ];
 }
 
@@ -593,7 +593,7 @@ it('includes the webfont partial exactly once in each document that needs it', f
         $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '',
             (string) file_get_contents(resource_path('views/'.$view)));
 
-        $got = substr_count($src, "@include('partials.poppins-face')");
+        $got = substr_count($src, "@include('partials.outfit-face')");
 
         if ($got !== $want) {
             $wrong[] = sprintf('  %-32s includes it %d times, expected %d', $view, $got, $want);
@@ -607,7 +607,7 @@ it('includes the webfont partial exactly once in each document that needs it', f
 
     // and the layout keeps serving it its own way, inline rather than by include
     $layout = (string) file_get_contents(resource_path('views/layouts/store.blade.php'));
-    expect(substr_count($layout, '<style id="kbb-poppins">'))
+    expect(substr_count($layout, '<style id="kbb-outfit">'))
         ->toBe(1, 'layouts/store.blade.php no longer emits the Poppins faces exactly once');
 });
 
@@ -713,7 +713,7 @@ it('finds every document that carries its own head, and everything in the layout
     $shared = [
         'shop-appearance-css' => 'the brand colour and the site width',
         'page-wash-css' => 'Appearance → Page background',
-        'kbb-poppins' => 'the self-hosted Latin webfont',
+        'kbb-outfit' => 'the self-hosted Latin webfont',
         'kbb-arabic-face' => 'the Arabic face',
         'kbb-cairo' => 'the Arabic face files',
     ];

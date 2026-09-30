@@ -3,7 +3,7 @@
     --ink:#2A2228; --ink-2:#5E545A; --muted:#8C828A; --line:rgba(42,34,40,.10); --line-2:rgba(42,34,40,.06);
     --sale:#E23A4E; --gold:#BE8E2E; --green:#2E9E6B;
     --r-s:10px; --r-m:16px; --r-l:24px; --sh-s:0 1px 2px rgba(42,34,40,.05),0 4px 14px rgba(42,34,40,.06);
-    --sh-m:0 14px 40px -18px rgba(42,34,40,.28); --sh-l:0 24px 60px -22px rgba(42,34,40,.4); --sans:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --sh-m:0 14px 40px -18px rgba(42,34,40,.28); --sh-l:0 24px 60px -22px rgba(42,34,40,.4); --sans:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
     --ease:cubic-bezier(.22,.61,.36,1);--mw:min(68vw,300px);--sw:min(58vw,250px);
 
     /* ═══════════════════════════════════════════════════════════════════════
@@ -183,7 +183,7 @@
        body{font-family:var(--sans);color:var(--ink);background:var(--bg);
             line-height:1.5;-webkit-font-smoothing:antialiased}
      and the `body` rule ~700 lines below re-declares ALL FIVE: `font:400
-     14px/1.6 Poppins,…` is the shorthand, so it resets font-family AND
+     14px/1.6 Outfit,…` is the shorthand, so it resets font-family AND
      line-height, and `color`, `background` and the smoothing are restated
      outright. Same selector, same specificity, later wins. Two rules apart in
      one file, so anyone reading either one read a number the shop does not use
@@ -890,7 +890,7 @@ html{scroll-behavior:smooth}
    Deleting it is a no-op on every page -- measured with getComputedStyle on ten
    URLs before and after -- and it means this file no longer states the page
    background in three places and means it in one. (Lane BG) */
-body{margin:0;color:var(--ink);font:400 14px/1.6 Poppins,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .kbb-home a{text-decoration:none;color:inherit}
 .kbb-home .wrap{max-width:var(--site-max);margin-inline:auto;padding-inline:var(--site-gutter)}
 .kbb-home .note{background:#2A2228;color:#F2DDE4;padding:9px;text-align:center;font-size:12.5px}
@@ -923,14 +923,14 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Poppins,system-ui,sans-serif;-w
 .kbb-home .logo{font-size:21px;font-weight:700;letter-spacing:-.03em;white-space:nowrap}
 .kbb-home .logo span{color:var(--pink)}
 .kbb-home .sbox{flex:1;max-width:640px;position:relative}
-.kbb-home .sbox input{width:100%;border:1.5px solid var(--line);background:var(--line2);border-radius:99px;padding:11px 16px 11px 42px;font:400 14px Poppins}
+.kbb-home .sbox input{width:100%;border:1.5px solid var(--line);background:var(--line2);border-radius:99px;padding:11px 16px 11px 42px;font:400 14px Outfit}
 .kbb-home .sbox input:focus{outline:0;border-color:var(--pink);background:#fff}
 .kbb-home .sbox>svg{position:absolute;inset-inline-start:15px;top:12px;width:17px;height:17px;color:var(--muted)}
 .kbb-home .hact{display:flex;gap:6px;align-items:center}
 .kbb-home .ib{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;position:relative;transition:.2s}
 .kbb-home .ib:hover{background:var(--pink-s)}
 .kbb-home .ib svg{width:20px;height:20px}
-.kbb-home .ib i{position:absolute;top:1px;inset-inline-end:1px;background:var(--pink);color:#fff;font:700 10px Poppins;border-radius:99px;padding:0 5px;font-style:normal}
+.kbb-home .ib i{position:absolute;top:1px;inset-inline-end:1px;background:var(--pink);color:#fff;font:700 10px Outfit;border-radius:99px;padding:0 5px;font-style:normal}
 .kbb-home .hinfo{display:flex;gap:6px;align-items:center;margin-inline-start:6px;padding-inline-start:14px;border-inline-start:1px solid var(--line)}
 .kbb-home .hi{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:11px;transition:.2s;white-space:nowrap}
 .kbb-home .hi:hover{background:var(--line2)}
@@ -1152,7 +1152,7 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Poppins,system-ui,sans-serif;-w
 .kbb-home .q-o .l span{font-size:11.5px;color:var(--muted)}
 .kbb-home .q-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;flex-wrap:wrap}
 .kbb-home .q-hint{font-size:12px;color:var(--muted)}
-.kbb-home .q-next{border:0;background:var(--ink);color:#fff;border-radius:99px;padding:12px 24px;font:600 13px Poppins;cursor:pointer;transition:.2s}
+.kbb-home .q-next{border:0;background:var(--ink);color:#fff;border-radius:99px;padding:12px 24px;font:600 13px Outfit;cursor:pointer;transition:.2s}
 .kbb-home .q-next:disabled{opacity:.35;cursor:default}
 .kbb-home .q-next:not(:disabled):hover{background:var(--pink)}
 .kbb-home .rout{grid-template-columns:repeat(6,1fr)}
@@ -1209,7 +1209,7 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Poppins,system-ui,sans-serif;-w
 .tabbar a.on{color:var(--pink-d)}
 .tabbar svg{width:20px;height:20px}
 .tabbar span{display:none}
-.tabbar i{position:absolute;top:7px;inset-inline-end:calc(50% - 16px);background:var(--pink);color:#fff;font:700 9px Poppins;
+.tabbar i{position:absolute;top:7px;inset-inline-end:calc(50% - 16px);background:var(--pink);color:#fff;font:700 9px Outfit;
             border-radius:99px;padding:0 5px;font-style:normal;line-height:14px}
 .tb-q .qb{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;
             margin-top:-12px;box-shadow:var(--sh-l)}
@@ -1352,7 +1352,7 @@ body{padding-bottom:46px}
 .kbb-home .rfilters{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}
 .kbb-home .rfilters::-webkit-scrollbar{display:none}
 .kbb-home .rfilter{border:1px solid var(--line);background:#fff;border-radius:99px;padding:8px 15px;
-         font:600 12.5px Poppins;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:.2s}
+         font:600 12.5px Outfit;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:.2s}
 .kbb-home .rfilter:hover{border-color:var(--pink)}
 .kbb-home .rfilter.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .kbb-home .rgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
@@ -1400,12 +1400,12 @@ body{padding-bottom:46px}
 .kbb-card{border:1px solid rgba(42,34,40,.06);border-radius:14px;overflow:hidden;text-decoration:none;color:#2A2228;display:block}
 .kbb-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#FFF8F5}
 .kbb-card .cb{padding:10px}
-.kbb-card .cn{font-size:13px;font-weight:600;font-family:'Poppins',sans-serif}
+.kbb-card .cn{font-size:13px;font-weight:600;font-family:'Outfit',sans-serif}
 .kbb-card .cp{font-size:13px;color:#C13E63;font-weight:700;margin-top:3px}
 .kbb-card{background:#fff;transition:.18s}
 .kbb-card-thumb{position:relative;aspect-ratio:1;background:#FFF8F5;overflow:hidden}
 .kbb-card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Poppins',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Outfit',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .kbb-badge-new{inset-inline-start:9px;background:linear-gradient(135deg,#1cc36a,#12965a)}
 .kbb-badge-sale{inset-inline-end:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
 .kbb-card-cat{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8C828A;font-weight:600;margin-bottom:2px}
@@ -1418,7 +1418,7 @@ body{padding-bottom:46px}
 .kbb-card-rc{color:#8C828A;font-size:11px}
 .kbb-card-reg{color:#b3aab0;font-weight:500;text-decoration:line-through;font-size:12px}
 .kbb-card-price{color:#C13E63;font-weight:700}
-.kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif}
+.kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
 .kbb-pgrid .kbb-card{display:flex;flex-direction:column;height:100%}
 .kbb-pgrid .kbb-card>.kbb-card-thumb{flex:none}
 .kbb-pgrid .kbb-card>.cb{flex:1;display:flex;flex-direction:column}
@@ -1605,7 +1605,7 @@ body{padding-bottom:46px}
 .kbb-home .skinbar{display:flex;align-items:center;gap:9px;margin:0 0 14px;flex-wrap:wrap;
   background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .kbb-home .skinbar b{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.kbb-home .skinbar select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:600 12.5px Poppins;background:#fff;color:var(--ink)}
+.kbb-home .skinbar select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:600 12.5px Outfit;background:#fff;color:var(--ink)}
 .kbb-home .skinbar span{font-size:11.5px;color:var(--muted)}
 @media(max-width:900px){.kbb-home .skinbar{padding:8px 10px;gap:7px}
 .kbb-home .skinbar span{display:none}}
@@ -1847,7 +1847,7 @@ header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:1px solid 
 
 
 
-.sbox input{width:100%;border:1.5px solid var(--line);background:var(--line2);border-radius:99px;padding:11px 16px 11px 42px;font:400 14px Poppins}
+.sbox input{width:100%;border:1.5px solid var(--line);background:var(--line2);border-radius:99px;padding:11px 16px 11px 42px;font:400 14px Outfit}
 
 
 
@@ -1875,7 +1875,7 @@ header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:1px solid 
 
 
 
-.ib i{position:absolute;top:1px;inset-inline-end:1px;background:var(--pink);color:#fff;font:700 10px Poppins;border-radius:99px;padding:0 5px;font-style:normal}
+.ib i{position:absolute;top:1px;inset-inline-end:1px;background:var(--pink);color:#fff;font:700 10px Outfit;border-radius:99px;padding:0 5px;font-style:normal}
 
 
 
@@ -3616,7 +3616,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
                                     out, which is why the floor is documented
                                     on the control as well as here.
      placeholder   inherit          it has never had a size of its own.
-     the counters  10px             from `.ib i{font:700 10px Poppins}` — the
+     the counters  10px             from `.ib i{font:700 10px Outfit}` — the
                                     shorthand also carries the weight and the
                                     family, so only the size is overridden.
      trending      12px             `.trend a` in the phone block.
@@ -3866,7 +3866,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 @media (max-width:900px){.kfb-m{display:block}}
 @media (min-width:901px){.kfb-d{display:block}}
 /* ── THE NARROWEST PHONES, AND ONLY THEM ──────────────────────────────────
-   Measured in Chromium: the shipped line is 215px at 12px Poppins, the two
+   Measured in Chromium: the shipped line is 215px at 12px Outfit, the two
    flags are 21px each and the page gutter is 22px a side, which comes to
    more than a 320px screen has — so `.kfb-tx` hit its own ellipsis and the
    strip read "UAE's Authentic K-Beauty…", which is the one rendering that

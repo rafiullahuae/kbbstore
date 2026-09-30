@@ -6,9 +6,9 @@
     them a real <html lang> and <html dir>, so they are bilingual documents now,
     and measured what that exposed: none of them linked an Arabic-capable webfont
     and none of them named one. /ar/skincare-guide/, /ar/<post>/, /ar/skin-quiz/
-    and /ar/reviews/ linked Poppins only; /ar/app/ linked Fraunces and Hanken
+    and /ar/reviews/ linked Outfit only; /ar/app/ linked Fraunces and Hanken
     Grotesk; all five named Cairo ZERO times against five font-family rules on
-    the /ar/shop/ control. Poppins, Fraunces and Hanken Grotesk carry no Arabic
+    the /ar/shop/ control. Outfit, Fraunces and Hanken Grotesk carry no Arabic
     glyphs at all, so every Arabic word on those pages fell through to whatever
     face the device happened to have.
 
@@ -84,17 +84,17 @@
 
      THEIR LATIN FACES WERE STILL GOOGLE'S, AND FOUR OF THE FIVE NO LONGER ARE.
                                                                       (Lane BG)
-     This paragraph used to read "Poppins at 300 and 500, Fraunces and Hanken
+     This paragraph used to read "Outfit at 300 and 500, Fraunces and Hanken
      Grotesk are linked by these documents' own <head> at weights this package
      does not carry, so their preconnect hints are still doing work and are
      deliberately left alone", and it was true when it was written.
 
-     Poppins 500 is in App\Support\WebFonts now — it had to be, because a target
+     Outfit 500 is in App\Support\WebFonts now — it had to be, because a target
      of 500 was resolving to the 400 face on 106 visible elements across the
      shop — and weight 300 turned out to have no consumer at all: zero elements
      at font-weight 300 on seven of eight pages, one invisible one on the
      eighth. So the journal, an article, the review wall and the skin quiz all
-     include partials/poppins-face.blade.php and no longer ask Google for
+     include partials/outfit-face.blade.php and no longer ask Google for
      anything. Their preconnect hints went with the link that needed them.
 
      /app IS THE ONE LEFT, and deliberately: it is built on Fraunces and Hanken
