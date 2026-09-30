@@ -193,7 +193,20 @@ class ProductLayout
         // .pdp .bb-vat{font-size:11px}
         'vat_s' => ['range', 'VAT line', 110, 'The tax sentence under the price. Its wording is Store → Ecommerce → Tax’s, not this screen’s.',
             ['min' => 80, 'max' => 180, 'step' => 5, 'unit' => 'px', 'scale' => self::TENTH]],
-        // .pdp .bb-rate{font-size:12px} and .pdp .cap-area .sr-capbar{font-size:12px}
+        /*
+         * `.pdp .bb-rate` and `.pdp .cap-area .sr-capbar`, both at 12px, so
+         * moving Store → Ecommerce → Product page → Review badges between
+         * capsule, inline and both cannot land the shopper on two sizes.
+         *
+         * ▲ NEITHER SELECTOR ABOVE IS FOLLOWED BY AN OPENING BRACE, AND THAT
+         *   IS DELIBERATE. ReviewBadgeParityTest sweeps resources/ AND app/
+         *   for the capsule class followed by one, and demands that the set of
+         *   files DEFINING the capsule is exactly the two it knows about — a
+         *   third copy is a third way for the shop to disagree with the admin
+         *   preview. To that regex a comment written as a rule is a rule, and
+         *   this file styles nothing. (Written first with the braces in; the
+         *   guard named this file, correctly, on the next run.)
+         */
         'rate_s' => ['range', 'Rating line', 120, 'The stars, the score and the review count.',
             ['min' => 90, 'max' => 200, 'step' => 5, 'unit' => 'px', 'scale' => self::TENTH]],
         // .pdp .bb-desc{font-size:13.5px;line-height:1.62}

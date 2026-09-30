@@ -284,6 +284,13 @@ const TABBED_SCREENS = [
     'renderSeo' => 'renderSeo',
     'paintEcom' => 'paintEcom',
     'paintProdStyles' => 'paintProdStyles',
+    /*
+     * Lane PDP2 R4. Appearance → Product page grew a strip: the module
+     * switches it always had, now behind a tab called Sections, and four
+     * Layout tabs beside them. paintProductPage() carries the ectabs-hint that
+     * says what the five are and which of them can make something disappear.
+     */
+    'paintProductPage' => 'paintProductPage',
     'paintNewsletter' => 'paintNewsletter',
     'paintMobileHdr' => 'paintMobileHdr',
     'paintDividers' => 'paintDividers',

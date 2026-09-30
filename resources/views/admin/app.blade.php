@@ -4389,6 +4389,7 @@ function paintProductPage(){
         ? 'Spacing and type for one product page. Every control ships at the number the page already draws, so nothing moves until you move a slider.'
         : 'Switch any module off, per device. A module off for both is not rendered at all.'}</p></div>
     ${strip}
+    <p class="ectabs-hint">Five views of one product page, and they do different jobs. <b>Sections</b> switches a whole block of the page on or off, per device — that is the only tab that can make something disappear. The four Layout tabs move what is already there: <b>Spacing</b> is the gaps, between the big blocks of the page and between the elements inside the buy column; <b>Type</b> is the sizes and weights. Every Layout control ships at the number the page already draws, so the shop looks exactly the same until you move one, and <b>Reset layout to defaults</b> puts them all back.</p>
     ${body}
     <div class="ecsave">
       <span class="ecdirty" id="ppDirty" style="visibility:${(PPDIRTY.sections||PPDIRTY.layout)?'visible':'hidden'}">Unsaved changes</span>
