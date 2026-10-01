@@ -20639,7 +20639,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
         return '<th style="' + align + (sort ? ';cursor:pointer' : '') + '"' + (sort ? ' data-cpsort="' + sort + '"' : '') + '>' +
           sesc(c[1]) + caret + '</th>';
       }).join('') +
-      '<th style="width:74px"></th>';
+      '<th style="width:170px"></th>';
 
     var bodyRows = rows.map(function(p){
       return '<tr' + (CP.sel[p.id] ? ' style="background:var(--border-2,rgba(0,0,0,.03))"' : '') + '>' +
@@ -20659,7 +20659,17 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
           '</div>' +
         '</div></td>' +
         CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){ return cpCell(c[0], p, d); }).join('') +
-        '<td><button class="btn ghost sm" data-cpedit="' + p.id + '">Edit</button></td>' +
+        /* (Lane PK) Visit beside Edit: the product on the shop, in a new tab.
+           The address is the server's (p.url is Product::url(), base path
+           included) and only drawn as a link when p.live says the shop would
+           answer it; otherwise a disabled "Not live yet", never a 404. The
+           scheme is checked because an href is an href. */
+        '<td><div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap">' +
+          ((p.live && /^(\/|https?:\/\/)/i.test(String(p.url || '')))
+            ? '<a class="btn ghost sm" data-cpvisit="' + p.id + '" href="' + sesc(p.url) + '" target="_blank" rel="noopener" title="Open on the shop, in a new tab" style="text-decoration:none">Visit</a>'
+            : '<button type="button" class="btn ghost sm" data-cpvisit="' + p.id + '" disabled title="The shop does not show this product yet" style="opacity:.55;cursor:default">Not live yet</button>') +
+          '<button class="btn ghost sm" data-cpedit="' + p.id + '">Edit</button>' +
+        '</div></td>' +
       '</tr>';
     }).join('');
 

@@ -1,0 +1,16 @@
+{
+  "_what": "Lane PK. Product editor header bar and Catalog -> Products table, measured in Chromium on the lane preview (tools/pk-preview.sh + tools/pk-measure-bar.cjs / tools/pk-measure-list.cjs). 'before' is the integration tip's own Blade, served by the same preview; 'after' is this branch. Products: 25 = GlowLab LED Booster Device (published, long name), 28 = Coming Soon Toner (draft), 29 = Glow Trio Set (published, short name).",
+  "editor_bar_height_px": {
+    "before": { "390": { "25": 106, "28": 106, "29": 106 }, "1280": { "25": 61, "28": 61, "29": 61 } },
+    "after_visit_appended_to_row_2_first_attempt": { "390": { "25": 152, "28": 152, "29": 106 }, "1280": { "25": 61, "28": 61, "29": 61 } },
+    "after_shipped_visit_beside_name_on_phones": { "390": { "25": 106, "28": 106, "29": 106 }, "1280": { "25": 61, "28": 61, "29": 61 } }
+  },
+  "editor_name_width_px_at_390": { "before": { "25": 230, "28": 230, "29": 130 }, "after": { "25": 166, "28": 125, "29": 166 } },
+  "visit_width_px": { "Visit": 54, "Not live yet": 95 },
+  "document_scrollWidth": { "editor_390": 390, "editor_1280": 1280, "catalog_390": 390, "catalog_1280": 1280 },
+  "catalog_table": {
+    "before": { "tableWidth": 1287, "scrollerWidth_at_1280": 994, "actionColumn": 73, "rowHeights": [64, 64, 59, 59, 59, 59] },
+    "after": { "tableWidth": 1383, "scrollerWidth_at_1280": 994, "actionColumn": 169, "rowHeights": [64, 64, 59, 59, 59, 59] },
+    "_note": "The table already scrolled sideways before this change; every other column width is identical before and after."
+  }
+}

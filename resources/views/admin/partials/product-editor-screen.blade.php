@@ -120,6 +120,26 @@
 .peo-btn.peo-primary:hover{background:#1a6b46}
 .peo-btn[disabled]{opacity:.5;cursor:default}
 .peo-btn.peo-danger{color:#b4443c;border-color:#e3c3c0}
+/* The Visit link wears the button's clothes (Lane PK). An <a> because it IS a
+   link -- middle-click, "open in new window" and the status-bar address all
+   work -- and the disabled state is a real <button disabled>, never an <a>
+   without an href, so "Not live yet" cannot be tabbed to and pressed. */
+a.peo-btn{display:inline-block;text-decoration:none}
+
+/* ON A PHONE, VISIT GOES UP BESIDE THE NAME, and that is a measured decision.
+   The bar wraps at 390px into two rows, 106px tall: ← Products and the name,
+   then Stripes · Arrange · status · Save. Appended to the second row, Visit
+   made it 338 + 52px wide in a 338px row, Save fell to a THIRD row and the
+   sticky bar grew to 152px -- 46px more of every phone screen gone for one
+   link. Moved up to the name's row it fits: the name keeps at least 120px and
+   ellipsises, as it already did for a long name, and the bar stays 106px.
+   Ordered here rather than in the markup so the desk keeps the order the owner
+   described (… Published · Visit · Save). (Lane PK) */
+@media(max-width:640px){
+  .peo-bar #peo-back,.peo-bar .peo-grow{order:-2}
+  .peo-bar #peo-visit{order:-1}
+  .peo-bar .peo-grow{flex:1 1 120px}
+}
 
 /* Two columns on a desk, one on a phone. minmax(0,…) on BOTH tracks, not
    1fr/320px: a bare 1fr is minmax(auto,1fr), and auto is the same refusal to
@@ -923,6 +943,7 @@
     /* The re-anchor instruction is spent. See collect()'s note: it must not
        survive into the next save of this product. (Lane SP2) */
     setReanchor = false;
+    setApplied = false;
     /* And this is the state the anchor the server just sent was taken against.
        setAnchorDirty() compares against it to decide whether the figures on the
        panel are live or about to be re-taken. */
@@ -969,6 +990,11 @@
   /* Pressed, not stored: "start again from today's total" is an instruction for
      ONE save. NOT on `model`, because it is not part of the product. (Lane SP2) */
   var setReanchor = false;
+
+  /* Whether "Apply to Price and Sale price" has just filled the Price card, and
+     with what ('price' or 'both'), so the panel can say so until the save.
+     Screen state, not part of the product; adopt() clears it. (Lane PK) */
+  var setApplied = false;
 
   /* The type this product was SAVED as, which is what decides whether picking
      Set is a conversion that has to be explained. Set by adopt() from the
@@ -2750,14 +2776,20 @@
         +   '<option value="discount_percent"' + (mode === 'discount_percent' ? ' selected' : '') + '>A percentage off the total</option>'
         +   '<option value="discount_amount"' + (mode === 'discount_amount' ? ' selected' : '') + '>An amount off the total</option>'
         + '</select>'
-        + '<button type="button" class="peo-btn" id="peo-usetotal" style="margin-top:9px">Use this total</button>'
+        + '<button type="button" class="peo-btn" id="peo-usetotal" style="margin-top:9px">Apply to Price and Sale price</button>'
+        + (setApplied
+            ? '<div class="peo-note" id="peo-setapplied" style="color:#1f7d52"><b>Filled in.</b> Price is what the '
+              + 'products cost bought separately' + (setApplied === 'both' ? ' and Sale price is the set price' : '')
+              + ', and the set is now priced by <b>A price I type</b>. Press <b>Save</b> to put it on the shop.</div>'
+            : '')
         + '<div class="peo-note">' + (mode === 'fixed'
             ? 'You type the price in <b>Price</b>, above. <b>Reduce a product&rsquo;s price and this set drops '
               + 'by the same amount, on its own</b> — off the price and off the sale price. Or press '
-              + '<b>Use this total</b> to price the set at what its products cost.'
+              + '<b>Apply to Price and Sale price</b> to put what its products cost into <b>Price</b>.'
             : 'Worked out fresh every time the price is shown. <b>Reduce a product&rsquo;s price and this set '
               + 'drops by the same amount, on its own.</b> A basket or an order already placed keeps the price '
-              + 'it was agreed at.') + '</div></div>'
+              + 'it was agreed at. To show it on the shop as a sale — the total struck through, the set price '
+              + 'beside it — press <b>Apply to Price and Sale price</b>.') + '</div></div>'
       + rule
 
       + '<div class="peo-fld"><label>Products in this box</label>'
@@ -2796,6 +2828,61 @@
     return (Math.round(Number(fils) || 0) / 100).toFixed(2);
   }
 
+  /* WHICH OF THE TWO TYPED FIGURES THE SHOP CHARGES TODAY. (Lane PK)
+
+     The tile under "Set price" used to read `price` alone in this mode, so a
+     set typed as Price 1310 / Sale 1179 -- which the shop sells at 1179 --
+     showed "Set price 1310 / Saving —" on its own panel. It is what
+     Product::ownPrice() decides: the sale price when there is one, lower than
+     the price, and today is inside its window. The window is read in this
+     browser's clock, which is the owner's; the server's decision on the shop
+     is the one that counts, and they agree on every day but the edges. */
+  function setChargedFils(){
+    var typed = setFils(model.price_aed || 0);
+
+    if (model.sale_aed === '' || model.sale_aed === null || model.sale_aed === undefined) return typed;
+
+    var sale = setFils(model.sale_aed);
+    var now = Date.now();
+    var from = model.sale_starts_at ? Date.parse(model.sale_starts_at) : NaN;
+    var to = model.sale_ends_at ? Date.parse(model.sale_ends_at) : NaN;
+
+    if (!isNaN(from) && now < from) return typed;
+    if (!isNaN(to) && now > to) return typed;
+
+    return sale < typed ? sale : typed;
+  }
+
+  /* THE TWO FIGURES THE PRICE CARD IS GIVEN, AS ITS BOXES TAKE THEM. (Lane PK)
+
+     Integer fils in, strings for the two boxes out. Pure -- it reads no model
+     and no DOM -- so SetPriceApplyButtonTest runs this very function in node.
+
+     WHOLE DIRHAMS, BECAUSE THE BOXES REFUSE ANYTHING ELSE. A price typed with
+     fils is refused by ProductEditorApiController::apply() ("Whole AED only"),
+     and the tiles can carry fils: 10% off a 1309.80 box is 1178.82. Each figure
+     is rounded to the NEAREST whole dirham, halves up -- WholeDirhams::nearest(),
+     the rule every money path here uses, and the same `+ half` before a floor
+     that SetPricing::derived() runs on the percentage. Both figures round the
+     same direction, so the sale can never come out above the price.
+
+     A set price that is not below the total -- a rule of 0, or an unpriced
+     set -- is no sale, so the sale box is emptied rather than given a figure
+     equal to the price: the tiles say "Saving —" for the same case. In "A
+     price I type" the sale box is left exactly as it was typed. */
+  function setApplyFigures(mode, partsFils, priceFils, saleTyped){
+    var whole = function(f){ return Math.floor((Math.max(0, Number(f) || 0) + 50) / 100) * 100; };
+    var total = whole(partsFils);
+
+    if (mode !== 'discount_percent' && mode !== 'discount_amount') {
+      return { price_aed: String(total / 100), sale_aed: saleTyped === undefined || saleTyped === null ? '' : saleTyped };
+    }
+
+    var set = whole(priceFils);
+
+    return { price_aed: String(total / 100), sale_aed: set > 0 && set < total ? String(set / 100) : '' };
+  }
+
   function setTotals(){
     var parts = 0, count = 0;
 
@@ -2818,7 +2905,7 @@
          subtraction and the same clamp App\Support\SetPricing::afterAdjustment()
          runs on the server, so the figure the owner watches while he types is
          the figure that is saved. (Lane SP2) */
-      price = setFixedPrice(setFils(model.price_aed || 0), parts);
+      price = setFixedPrice(setChargedFils(), parts);
     }
 
     /* ▲ AN UNPRICED SET IS NOT SAVING ANYBODY ANYTHING. The owner's first set,
@@ -3267,6 +3354,35 @@
     return '<div class="peo-arrnote">' + esc(text) + '</div>';
   }
 
+  /* ── VISIT: THIS PRODUCT ON THE SHOP, IN A NEW TAB (Lane PK) ─────────────
+
+     The owner asked for it on every product. The address is the SERVER'S --
+     readonly.url is Product::url(), which goes through Url::to(), so the
+     KBB_BASE_PATH prefix is whatever the shop itself uses (empty on
+     extrabeauty.ae) and this screen assembles no path of its own. It is the
+     SAVED product's address and the saved product's state: the status select
+     above can say Published while the row still says Draft, and the link would
+     be a 404 until Save -- so it follows the save, not the select.
+
+     A product the shop would not show -- a draft, private, hidden, scheduled
+     for later, or not created yet -- gets "Not live yet", disabled, rather than
+     a link to a 404. rel="noopener" so the shop tab cannot reach back into the
+     console through window.opener. url() refuses a javascript: scheme, which
+     the server cannot produce, as every href on this screen does. */
+  function visitButton(){
+    var ro = (model && model.readonly) || {};
+    var href = model && model.id && ro.live ? url(ro.url) : '';
+
+    if (href) {
+      return '<a class="peo-btn" id="peo-visit" href="' + href + '" target="_blank" rel="noopener"'
+        + ' title="Open this product on the shop, in a new tab">Visit</a>';
+    }
+
+    return '<button type="button" class="peo-btn" id="peo-visit" disabled'
+      + ' title="The shop does not show this product yet. Publish it and press Save, and this opens it.">'
+      + 'Not live yet</button>';
+  }
+
   function editorView(){
     var creating = !model.id;
 
@@ -3302,6 +3418,7 @@
         + '<button class="peo-btn" id="peo-arrange"' + (arranging ? ' style="border-color:#1f7d52;color:#1f7d52"' : '') + '>'
         +   (arranging ? 'Done arranging' : 'Arrange') + '</button>'
         + pill(model.status)
+        + visitButton()
         + '<button class="peo-btn peo-primary" id="peo-save"' + (busy ? ' disabled' : '') + '>'
         +   (busy ? 'Saving…' : (creating ? 'Create product' : 'Save')) + '</button>'
       + '</div>'
@@ -3453,19 +3570,55 @@
       });
     }
 
-    /* ── "USE THIS TOTAL" ─────────────────────────────────────────────────
-       NOT a button that copies the parts total into the price box. It switches
-       the rule to "the parts total, less nothing", which keeps following the
-       members afterwards -- a copied figure would go stale the first time a
-       product in the box was repriced, which is precisely what the owner asked
-       it not to do. */
+    /* ── "APPLY TO PRICE AND SALE PRICE" (Lane PK; was "Use this total") ───
+
+       The owner: "when i put the percentage or custom discount on the set
+       price, and when i press Use this price button, it's not bringing the
+       price to the actual price and sale price field above. i want if i press
+       the button, the actual price should set, also the sale price, and also
+       the discount will of course show on front-end."
+
+       WHAT IT USED TO DO, measured on a preview of his own case (Discount 131
+       off a 1310 box): it set the rule to "an amount off the total" with the
+       amount ZERO. His 131 was wiped from the box, the tiles went to 1310 /
+       1310 / —, Price and Sale price did not move until Save, and Save put the
+       set on the shop at AED 1,310 with no discount anywhere. Under either
+       rule the server also clears the sale price (applySetPricing: "NO SALE
+       PRICE UNDER A RULE"), so the shop could never strike anything through.
+
+       WHAT IT DOES NOW: copies the tiles into the Price card -- Price = what
+       the products cost bought separately, Sale price = the set price the
+       tiles show -- and switches the rule to "A price I type", so those two
+       typed figures ARE what the shop sells at and it shows the markdown the
+       way it shows any product on sale. Nothing is lost by the switch: a typed
+       set price already follows its members down (Lane SP2), off the price and
+       off the sale price alike, and setReanchor makes the next save measure
+       that from today's total. The sale DATES are not touched.
+
+       Already on "A price I type", there is no set price for the tiles to hand
+       over that is not the one typed, so it fills Price with the total and
+       leaves Sale price as typed. */
     var use = panel.querySelector('#peo-usetotal');
 
     if (use) {
       use.addEventListener('click', function(){
         collect();
-        model.price_mode = 'discount_amount';
-        model.discount_amount = '0';
+
+        var t = setTotals();
+
+        if (t.parts <= 0) {
+          banner = 'Add the products to the box first: the price is filled in from what they cost.';
+          render();
+          return;
+        }
+
+        var figures = setApplyFigures(model.price_mode || 'fixed', t.parts, t.price, model.sale_aed);
+
+        model.price_aed = figures.price_aed;
+        model.sale_aed = figures.sale_aed;
+        model.price_mode = 'fixed';
+        setReanchor = true;
+        setApplied = figures.sale_aed === '' || figures.sale_aed === null ? 'price' : 'both';
         dirty = true;
         render();
       });
@@ -3723,6 +3876,16 @@
           collect();
           refreshSetMoney();
           return;
+        }
+
+        /* A SET'S TILES READ THE SALE PRICE TOO, now that "Set price" is what
+           the shop charges (setChargedFils). Only for a set, and without the
+           early return the branch above takes, so for every other product this
+           event does exactly what it did before. (Lane PK) */
+        if ((model.type || 'simple') === 'set'
+            && (el.dataset.bind === 'sale_aed' || el.dataset.bind === 'sale_starts_at' || el.dataset.bind === 'sale_ends_at')) {
+          collect();
+          refreshSetMoney();
         }
 
         if (el.dataset.bind === 'status') {
