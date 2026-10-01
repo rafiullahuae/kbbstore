@@ -30,7 +30,26 @@ class Block extends Model
 {
     public const STATUSES = ['published', 'draft'];
 
+    /** `blocks.source` for a Rey theme Global Section imported from WordPress. (Lane PJ-B) */
+    public const SOURCE_REY = 'rey_global_section';
+
     protected $fillable = ['slug', 'name', 'content', 'status'];
+
+    protected $casts = ['source_modified_at' => 'datetime'];
+
+    /**
+     * A write drops what App\Support\GlobalSections holds for this request.
+     * Under PHP-FPM a request ends long before a block changes, but a queue
+     * worker or a test drives several "requests" through one container, and a
+     * held copy would draw the block as it was before the edit. (Lane PJ-B)
+     */
+    protected static function booted(): void
+    {
+        $forget = static fn () => app()->forgetInstance('kbb.global_sections');
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
 
     /** Only these render on the storefront. See Shortcodes::block(). */
     public function scopePublished(Builder $query): Builder
@@ -52,6 +71,25 @@ class Block extends Model
      */
     public function shortcode(): string
     {
+        /*
+         * AN IMPORTED REY GLOBAL SECTION IS PLACED BY THE OLD SHOP'S OWN TEXT.
+         * (Lane PJ-B) Its products already carry `[rey_global_section
+         * id="18159"]` in their descriptions, and App\Support\GlobalSections
+         * resolves exactly that against `wc_id`. Showing the owner a
+         * [kbb_block] string instead would name a shortcode none of his
+         * products contain -- it works too, and it is useless for finding
+         * where the block appears.
+         */
+        if ($this->wc_id !== null && in_array($this->source, \App\Support\GlobalSections::SHORTCODES, true)) {
+            return '[' . $this->source . ' id="' . (int) $this->wc_id . '"]';
+        }
+
         return '[kbb_block slug="' . $this->slug . '"]';
+    }
+
+    /** Came from the WordPress export rather than from this admin. */
+    public function isImported(): bool
+    {
+        return $this->wc_id !== null;
     }
 }

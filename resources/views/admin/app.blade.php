@@ -9422,7 +9422,14 @@ function impFilesCard(s){
   return '<div class="card pad" style="margin-bottom:16px">'
     +'<div class="between" style="margin-bottom:12px;flex-wrap:wrap;gap:10px"><div><b style="font-size:14px">1 · Your exports</b>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0">Upload as many as you have. You do not need all six — a file you leave out is simply not touched, '
-    +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div></div>'
+    +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div>'
+    /* Lane PJ-B: one button for what took the owner nine Remove presses. Shown only when there is a file
+       to remove; files only, never anything already imported -- the confirm() says so. */
+    +((s.files.some(f=>f.present)||(s.companions||[]).some(c=>c.present))
+      ?'<button class="btn ghost sm" id="impForgetAll"'+(s.run&&s.run.status==='running'?' disabled title="Stop the import first"':'')
+        +' style="padding:4px 11px;font-size:12px">Remove all files</button>'
+      :'')
+    +'</div>'
     +'<div class="impdrop" id="impDrop"><b>Drop your CSV files or a group\'s .zip here, or click to choose</b>'
     +'<span>Name them <code style="font-family:var(--mono)">categories.csv</code>, <code style="font-family:var(--mono)">brands.csv</code>, '
     +'<code style="font-family:var(--mono)">products.csv</code>, <code style="font-family:var(--mono)">customers.csv</code>, '
@@ -9997,6 +10004,15 @@ function impWire(){
       await impRefresh(); impPaint();
     };
   });
+
+  const forgetAll=$('#impForgetAll');
+  if(forgetAll) forgetAll.onclick=async()=>{
+    if(!confirm('Remove every uploaded file from this card?\n\nOnly the files go. Nothing you have already imported is touched — no product, order or customer.')) return;
+    forgetAll.disabled=true;
+    const r=await impApi('/import/forget',{method:'POST',body:JSON.stringify({entity:'all'})});
+    if(r.status!==200){ impMsg=(r.data&&r.data.message)||'Those files could not be removed.'; impMsgKind='warn'; }
+    await impRefresh(); impPaint();
+  };
 
   document.querySelectorAll('.impopt').forEach(b=>{
     b.onclick=()=>{

@@ -269,7 +269,15 @@ final class RichText
      */
     public static function toText(?string $html): string
     {
-        $text = (string) preg_replace('#</(p|div|li|h[1-6]|tr|td|th|blockquote)\s*>#i', ' ', (string) $html);
+        /*
+         * A `[rey_global_section id=N]` is a pointer at a block of pictures,
+         * not words (Lane PJ-B). The quick view and the meta description read
+         * product copy through here, and printed it as letters -- Google's
+         * snippet for a product began "[rey_global_section id="18159"] This
+         * foam…". Copy naming no section is untouched.
+         */
+        $text = GlobalSections::strip((string) $html);
+        $text = (string) preg_replace('#</(p|div|li|h[1-6]|tr|td|th|blockquote)\s*>#i', ' ', $text);
         $text = (string) preg_replace('#<(br|hr)\s*/?>#i', ' ', $text);
 
         $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -329,8 +337,30 @@ final class RichText
          * empty paragraph, a blank gap on the page. Taking the hostile markup
          * out first means autop() only ever lays out what will be printed.
          * The second clean() is still the one that guards the page.
+         *
+         * GlobalSections::isolate() between the two (Lane PJ-B): a
+         * `[rey_global_section id=N]` is put on a paragraph of its own, so
+         * GlobalSections::expand() can later replace that paragraph whole with
+         * the block. Left inline, `[rey…]\nThis foam…` became
+         * `<p>[rey…]<br />This foam…</p>` and the block landed inside a <p>
+         * the parser then broke apart. Copy naming no section is untouched.
          */
-        return self::clean(self::autop(self::clean($html)));
+        return self::clean(self::autop(GlobalSections::isolate(self::clean($html))));
+    }
+
+    /**
+     * forDisplay(), plus the old shop's Global Sections drawn as their blocks.
+     * (Lane PJ-B)
+     *
+     * For the storefront ONLY. forDisplay() stays free of the database because
+     * ProductImporter calls it at import time to store a tab's body, and a
+     * section expanded there would be frozen into the tab -- or, if its block
+     * had not been imported yet, deleted from it for good. Here it is resolved
+     * at render, so an edit in Content -> HTML Blocks reaches every product.
+     */
+    public static function forStorefront(?string $html): string
+    {
+        return GlobalSections::expand(self::forDisplay($html));
     }
 
     /**

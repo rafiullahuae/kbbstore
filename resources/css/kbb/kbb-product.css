@@ -1183,3 +1183,53 @@ a{color:inherit;text-decoration:none}
    would come to rest behind it. 12px of air on top of each. */
 .details{scroll-margin-top:106px}
 @media (max-width:900px){.details{scroll-margin-top:139px}}
+
+/* ── THE OLD SHOP'S GLOBAL SECTIONS, DRAWN. (Lane PJ-B) ─────────────────────
+   "[rey_global_section id="18159"]" printed as letters at the top of the
+   Description tab. On the old site that spot was a block: "Gentle Yet Effective
+   Ingredients", then three ingredients in a row, each a square picture on the
+   left and, beside it, a bold uppercase name over one sentence. The importer
+   turns the section's Elementor layout into .kbb-eblock markup
+   (App\Services\Import\ElementorToHtml) and App\Support\GlobalSections puts it
+   where the shortcode stood.
+
+   SIZED BY THE BLOCK'S OWN WIDTH, NOT THE WINDOW'S. The Description panel is
+   820px at most and the same block also lands in the blurb, so a viewport
+   breakpoint would put three columns into whatever width happened to be there.
+   A container query asks the question that matters -- is THIS block wide enough
+   for its row -- and the browser answers it in CSS, with nothing measured in
+   script. Under 600px every row is one item per line: the phone's stack.
+
+   THE PICTURE IS A SHARE OF ITS ITEM (a flex percentage), CLAMPED to the 100-145px square the old
+   site drew: about 122px in a desktop column of three, 145px when stacked on a
+   phone. Logical properties and flex/gap only, so /ar mirrors it with no [dir]
+   rule. Specificity: the panel's own `.details .dcontent :is(h2,h3,h4)` margin
+   rule is (0,2,1); the heading and title rules below are written at the same
+   weight and win by coming after it. */
+.kbb-eblock{container-type:inline-size;display:block;margin-block:0 1.1em;color:var(--ink-2)}
+.kbb-eblock > * + *{margin-block-start:18px}
+.kbb-eblock :is(h2,h3,h4).kbb-eblock__heading{margin:0;font-size:17px;font-weight:650;line-height:1.3;color:var(--ink)}
+.kbb-eblock--center{text-align:center}
+.kbb-eblock__row{display:grid;gap:18px 22px;grid-template-columns:repeat(var(--kbb-eb-cols,1),minmax(0,1fr))}
+.kbb-eblock__row--2{--kbb-eb-cols:2}
+.kbb-eblock__row--3{--kbb-eb-cols:3}
+.kbb-eblock__row--4{--kbb-eb-cols:4}
+.kbb-eblock__row--5{--kbb-eb-cols:5}
+.kbb-eblock__row--6{--kbb-eb-cols:6}
+@container (max-width:599px){.kbb-eblock__row{grid-template-columns:minmax(0,1fr)}}
+.kbb-eblock__col{min-width:0}
+.kbb-eblock__col > * + *{margin-block-start:12px}
+.kbb-eblock__item{display:flex;gap:14px;align-items:center;text-align:start}
+.kbb-eblock__item--top{flex-direction:column;align-items:flex-start}
+.kbb-eblock__item > :is(img,a){display:block;flex:0 0 clamp(100px,47%,145px);width:clamp(100px,47%,145px)}
+.kbb-eblock__item--top > :is(img,a){flex-basis:auto;width:min(100%,145px)}
+.kbb-eblock__img{display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:var(--pink-soft)}
+.kbb-eblock__body{min-width:0;flex:1 1 auto}
+.kbb-eblock h4.kbb-eblock__title{margin:0 0 4px;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.3;color:var(--ink)}
+.kbb-eblock__title a{color:inherit;text-decoration:none}
+.kbb-eblock__text{font-size:13px;line-height:1.55;color:var(--ink-2)}
+.kbb-eblock__figure{margin:0}
+.kbb-eblock__pic{display:block;max-width:100%;height:auto;border-radius:10px}
+.kbb-eblock__figure figcaption{margin-block-start:6px;font-size:12px;color:var(--muted)}
+.kbb-eblock__list{margin-block:0;margin-inline:18px 0}
+.kbb-eblock__rule{border:0;border-block-start:1px solid var(--line);margin:0}

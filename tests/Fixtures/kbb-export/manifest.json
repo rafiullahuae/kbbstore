@@ -1,13 +1,13 @@
 {
     "format": "kbb-export/1",
-    "export_id": "a74b1c5f-8231-41c9-a7dd-cb23d4774fc8",
-    "generated_at": "2026-10-01T22:34:33+04:00",
+    "export_id": "db71fdf7-5186-4d12-a3fd-4a2882472392",
+    "generated_at": "2026-10-02T00:57:56+04:00",
     "source": {
         "site_url": "https://kbeautybliss.com",
         "home_url": "https://kbeautybliss.com",
         "wp_version": "6.5.2",
         "woo_version": "8.7.0",
-        "plugin_version": "1.9.1",
+        "plugin_version": "1.10.0",
         "timezone": "Asia/Dubai",
         "order_storage": "posts",
         "permalink_structure": "/%postname%/",
@@ -93,6 +93,11 @@
             "bytes": 555,
             "sha256": "75624fa26b3f4ca2829d5e16e4c1b0da3830051a732d9b1817c1265a2f2e1c4c"
         },
+        "content_blocks.csv": {
+            "rows": 0,
+            "bytes": 110,
+            "sha256": "ea1336a6eac423cc7cf6dc7d2a62593722556845a8fcdf5e71387f13c43142d1"
+        },
         "seo.csv": {
             "rows": 4,
             "bytes": 594,
@@ -166,6 +171,7 @@
         "attributes": 2,
         "products": 4,
         "variations": 2,
+        "content_blocks": 0,
         "seo": 4,
         "coupons": 1,
         "customers": 3,
@@ -200,6 +206,7 @@
             "attributes.csv",
             "products.csv",
             "variations.csv",
+            "content_blocks.csv",
             "seo.csv",
             "coupons.csv",
             "customers.csv",
@@ -223,6 +230,7 @@
         "attributes.csv excludes `pa_brands`, which brands.csv carries instead -- exporting it in both would make every brand an attribute value as well as a brand.",
         "1 product is in the WordPress trash and NOT in products.csv. ProductImporter refuses a trashed product outright -- importing it would make it a live row -- so this export does what that refusal asks. Empty the trash or turn off \"skip trashed\" and re-export if you want them.",
         "These product meta keys look like product tabs and are NOT in products.csv `custom_tabs`: `_kbb_unknown_tab_plugin`. If the old product page showed extra tabs, they are stored under one of these keys and this build of the exporter does not read it yet.",
+        "SHORTCODES IN PRODUCT DESCRIPTIONS: none. No product description or short description in this export contains a shortcode (4 products read).",
         "1 coupon is not published (draft, pending or trashed) and NOT in coupons.csv. The shop has no status column for a coupon, so importing one would turn a code the owner had withdrawn back into a live discount; CouponImporter refuses them for that reason and this export does not offer them.",
         "customers.csv carries EVERY WordPress user, not only the ones with the customer role (1 administrator, 2 customer). A shopper whose role was changed, or an administrator who has ordered, would otherwise be left out and OrderImporter would synthesise a second, guest customer row for the same person.",
         "1 review had a comment_type that was not 'review' (WooCommerce before 3.0 left it empty) and it was written as 'review' in the export. Each is a comment on a product post carrying a star rating, which is the definition of a product review; left as it was, ReviewImporter would have refused every one of them.",

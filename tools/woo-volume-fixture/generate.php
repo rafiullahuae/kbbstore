@@ -140,6 +140,7 @@ final class VolumeFixture
         $this->seo();
         $this->posts();
         $this->navigation();
+        $this->contentBlocks();
         $this->unreadFiles();
 
         ksort($this->counts);
@@ -1312,6 +1313,79 @@ final class VolumeFixture
             'id', 'menu_term_id', 'parent_id', 'position', 'label', 'label_source',
             'type', 'object', 'object_id', 'object_slug', 'url', 'target', 'classes',
             'description', 'status',
+        ], $rows);
+    }
+
+    /**
+     * `content_blocks.csv` — the Rey Global Sections, in the columns Lane PJ-A's
+     * exporter writes (Lane PJ-B).
+     *
+     * THIRTY-ONE OF THEM, which is more than the 23-row slice the stop-and-
+     * resume rehearsal cuts at, so the entity is stopped mid-file and resumed
+     * like every other one. A real Rey shop carries a few dozen: one ingredient
+     * strip per product line, a how-to-use, a brand banner.
+     *
+     * Every seventh carries a widget the converter does not draw (a Rey
+     * carousel), so the plain-HTML fallback and its report line run at volume;
+     * every eleventh is a draft. Deterministic, like everything here: the same
+     * seed writes the same bytes.
+     */
+    private function contentBlocks(): void
+    {
+        $rows = [];
+
+        for ($i = 0; $i < 31; $i++) {
+            $id = 20000 + $i;
+            $item = static fn (int $n): array => [
+                'elType' => 'column', 'settings' => ['_column_size' => 33], 'elements' => [[
+                    'elType' => 'widget', 'widgetType' => 'image-box', 'settings' => [
+                        'image' => ['url' => 'https://kbeautybliss.com/wp-content/uploads/2024/0'.(1 + $n % 9).'/ingredient-'.$n.'-300x300.jpg'],
+                        'title_text' => 'INGREDIENT '.$n,
+                        'description_text' => 'What ingredient '.$n.' does, in one sentence.',
+                        'position' => 'left',
+                    ], 'elements' => [],
+                ]],
+            ];
+
+            $columns = [$item($i * 3), $item($i * 3 + 1), $item($i * 3 + 2)];
+
+            if ($i % 7 === 3) {
+                $columns[] = ['elType' => 'column', 'settings' => [], 'elements' => [
+                    ['elType' => 'widget', 'widgetType' => 'reycore-carousel', 'settings' => [], 'elements' => []],
+                ]];
+            }
+
+            $tree = [[
+                'elType' => 'section', 'settings' => [], 'elements' => [[
+                    'elType' => 'column', 'settings' => [], 'elements' => [
+                        ['elType' => 'widget', 'widgetType' => 'heading', 'settings' => ['title' => 'Key ingredients '.$i, 'header_size' => 'h3'], 'elements' => []],
+                        ['elType' => 'section', 'isInner' => true, 'settings' => [], 'elements' => $columns],
+                    ],
+                ]],
+            ]];
+
+            $referenced = $this->productIds === [] ? [] : [
+                $this->productIds[$i % count($this->productIds)],
+                $this->productIds[($i * 5 + 1) % count($this->productIds)],
+            ];
+
+            $rows[] = [
+                (string) $id,
+                'rey-global-sections',
+                'key-ingredients-'.$i,
+                'Key ingredients '.$i,
+                $i % 11 === 10 ? 'draft' : 'publish',
+                '2024-0'.(1 + $i % 9).'-1'.($i % 10).' 10:00:00',
+                'rey_global_section',
+                implode('|', array_unique($referenced)),
+                (string) json_encode($tree, JSON_UNESCAPED_SLASHES),
+                '<h3>Key ingredients '.$i.'</h3><p>Ingredient '.($i * 3).', '.($i * 3 + 1).' and '.($i * 3 + 2).'.</p>',
+            ];
+        }
+
+        $this->count('content_blocks', count($rows));
+        $this->csv('content_blocks.csv', [
+            'id', 'post_type', 'slug', 'title', 'status', 'modified', 'shortcode', 'referenced_by', 'elementor_data', 'plain_html',
         ], $rows);
     }
 

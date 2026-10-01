@@ -1,0 +1,20 @@
+{
+  "before-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "shortcodeTextOnPage": true
+  },
+  "before-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "shortcodeTextOnPage": true
+  },
+  "before-1280-expanded": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "shortcodeTextOnPage": true
+  }
+}

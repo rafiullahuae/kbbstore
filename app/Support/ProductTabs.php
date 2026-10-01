@@ -715,6 +715,16 @@ final class ProductTabs
      */
     public static function forProduct(object $product, array $legacySettingTabs = []): array
     {
+        /*
+         * Every Rey Global Section the page names, in ONE lookup (Lane PJ-B):
+         * the description's here and the blurb's in the view would otherwise
+         * be two. No query at all for copy that names none.
+         */
+        GlobalSections::prime(
+            (string) ($product->t('description') ?? ''),
+            (string) ($product->t('short_description') ?? ''),
+        );
+
         $entries = self::builtins($product);
 
         foreach ($legacySettingTabs as $custom) {
@@ -819,7 +829,17 @@ final class ProductTabs
 
         foreach ($entries as $entry) {
             $title = self::translated($entry, 'title');
-            $body = self::translated($entry, 'body');
+
+            /*
+             * THE OLD SHOP'S GLOBAL SECTIONS, DRAWN. (Lane PJ-B) The owner's
+             * Description tab opened with `[rey_global_section id="18159"]` as
+             * letters. Expanded here, on EVERY tab and after translation, so
+             * the description, an imported custom tab and a tab the owner wrote
+             * all resolve the same way -- and after forDisplay() laid the
+             * copy out, so the block is never inside wpautop()'s surgery. A
+             * body that names no section is returned untouched, byte for byte.
+             */
+            $body = GlobalSections::expand(self::translated($entry, 'body'));
 
             /*
              * THE DROP RULE, UNCHANGED. `trim(strip_tags($body)) !== ''` and

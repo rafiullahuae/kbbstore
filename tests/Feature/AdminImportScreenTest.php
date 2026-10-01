@@ -705,6 +705,14 @@ it('walks the entities in the importer\'s own dependency order, never its own co
              * `menu-items` because `menu_items.menu_id` is NOT NULL.
              */
             'menus', 'menu-items',
+            /*
+             * The old shop's Rey Global Sections (Lane PJ-B). NOT a dependency
+             * in either direction: a product's [rey_global_section id=N] is
+             * resolved against blocks.wc_id when the page is drawn, so the
+             * two can arrive in any order. Last because the catalogue matters
+             * more to a shop that has not finished importing.
+             */
+            'content-blocks',
         ])
         ->and(ImportWorkspace::entities())->toBe(ImportWorkspace::runnerOrder());
 
