@@ -120,10 +120,13 @@
 .peo-btn.peo-primary:hover{background:#1a6b46}
 .peo-btn[disabled]{opacity:.5;cursor:default}
 .peo-btn.peo-danger{color:#b4443c;border-color:#e3c3c0}
-/* The Visit link wears the button's clothes (Lane PK). An <a> because it IS a
-   link -- middle-click, "open in new window" and the status-bar address all
-   work -- and the disabled state is a real <button disabled>, never an <a>
-   without an href, so "Not live yet" cannot be tabbed to and pressed. */
+/* The Visit link wears the button's clothes (Lane PK). An anchor element
+   because it IS a link -- middle-click, "open in new window" and the
+   status-bar address all work -- and the disabled state is a real disabled
+   button element, never an anchor without an href, so "Not live yet" cannot
+   be tabbed to and pressed. (No literal tags in this comment:
+   AdminResetGuardTest scans the source for tag-shaped text, and a comment
+   that looks like a tag swallows the CSS after it as a "label".) */
 a.peo-btn{display:inline-block;text-decoration:none}
 
 /* ON A PHONE, VISIT GOES UP BESIDE THE NAME, and that is a measured decision.
