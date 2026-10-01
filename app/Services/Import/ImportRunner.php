@@ -410,6 +410,21 @@ final class ImportRunner
                 if ($seen <= $alreadyDone) {
                     $report->skipped();
 
+                    /*
+                     * SKIPPED FOR WRITING, NOT FOR FINALISE. The process that
+                     * committed this row may have been killed before its
+                     * finalise() ran, and finalise() in THIS process only knows
+                     * what this process was told. Measured: a kill mid-categories
+                     * left 9 categories at the top level, a kill mid-reviews
+                     * left 32 products rated 0.0. See
+                     * EntityImporter::alreadyCommitted().
+                     */
+                    try {
+                        $importer->alreadyCommitted(new Row($line, $cells), $context);
+                    } catch (RowRejected) {
+                        // Refused by the earlier pass; it committed nothing to remember.
+                    }
+
                     continue;
                 }
 

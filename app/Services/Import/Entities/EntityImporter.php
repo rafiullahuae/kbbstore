@@ -65,12 +65,62 @@ abstract class EntityImporter
     /**
      * Whatever has to happen once the entity's rows are all in.
      *
-     * Only categories use it, to recompute the cached `depth` and `path`
-     * columns after every parent link exists. It runs in its own transaction
-     * after the last batch commits, and it is idempotent, so an interrupted run
-     * that resumes and finishes still gets it.
+     * Categories use it to link parents and recompute the cached `depth` and
+     * `path`; reviews use it to recompute `products.rating`; the navigation
+     * uses it to link menu items and flush the menu cache. It runs in its own
+     * transaction after the last batch commits, and it is idempotent.
+     *
+     * "AN INTERRUPTED RUN THAT RESUMES AND FINISHES STILL GETS IT" WAS TRUE OF
+     * THE CALL AND FALSE OF ITS INPUT, until alreadyCommitted() below. A resumed
+     * process does run finalise() -- but anything finalise() works from that an
+     * importer collected in MEMORY during import() only covers the rows this
+     * process imported. See alreadyCommitted().
      */
     public function finalise(ImportContext $context): void {}
+
+    /**
+     * A row an EARLIER PROCESS committed, which this one is passing over on
+     * resume. Write nothing; remember whatever finalise() needs to know about it.
+     *
+     * ── WHY THIS EXISTS: kill -9, measured (docs/KR-KILL-AND-RESUME.md) ──────
+     *
+     * The runner resumes by POSITION: rows up to the checkpoint are skipped
+     * without being imported, because a batch that committed them committed its
+     * checkpoint in the same transaction. That is exactly right for the ROWS.
+     * It was wrong for two pieces of per-process memory that finalise() reads:
+     *
+     *   CategoryImporter::$pendingParents  every parent link is deferred to
+     *       finalise(). A process killed after the first committed batch of
+     *       categories.csv, then resumed, linked only the categories the SECOND
+     *       process read. Measured at full volume, killed after 10 of 59 rows:
+     *       9 categories imported at the TOP LEVEL with the wrong depth and the
+     *       wrong `path` -- and 9 imported menu items pointing at those wrong
+     *       addresses -- against an uninterrupted import of the same files.
+     *
+     *   ReviewImporter::$touched  the products whose rating is recomputed.
+     *       Killed after 1,000 of 2,514 reviews and resumed: 32 products kept
+     *       rating 0.0 out of 0 reviews while their pages listed the reviews,
+     *       because every one of their reviews was in the first 1,000 rows.
+     *       `sum(review_count)` 1,403 where the clean import has 1,449.
+     *
+     * Neither shows as an error, a refusal or a count mismatch: every row is
+     * present, every row count is right, and the report says "verified".
+     *
+     * NOT THE SAME AS --limit, which is why the in-process resume test never
+     * saw it. A --limit slice ENDS normally and runs finalise() over its own
+     * rows; a killed process never reaches finalise() at all, so the rows it
+     * committed are the ones nothing ever finalises.
+     *
+     * The default is nothing, because most entities keep nothing that outlives
+     * a row. An importer that DOES collect state in import() for finalise()
+     * must collect it here as well, or its finalise() is only correct when the
+     * host happens not to kill it.
+     *
+     * May throw RowRejected for a row that cannot even be identified -- the
+     * earlier process refused it, so it committed nothing to remember -- and
+     * the runner ignores that.
+     */
+    public function alreadyCommitted(Row $row, ImportContext $context): void {}
 
     /**
      * How many rows this entity's table holds that came from a WooCommerce
