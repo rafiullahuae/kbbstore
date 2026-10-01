@@ -3704,6 +3704,9 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 2 | Turn the top countries (flag) bar off entirely for now | PI-B | in progress |
 | 3 | Long product description has no line breaks or paragraph spacing (old site: headings, numbered items, lists, spaced paragraphs); short description shows a literal `<div>` | PI-A | in progress |
 | 4 | Breadcrumb ("Home / Super Sale / …") on product pages and the rest: controls for spacing, on/off, separately for phone and desktop — **default OFF** | PI-B | in progress |
+| 5 | Product tabs missing after import: the old site showed "Description" **and "Major Ingredients"** (and other tabs on other products); the new product page shows only Description | PI-A | queued after 1 & 3 |
+| 6 | Smallest phones: "Filters" and "Sort" do not fit on one row on category/shop pages — must shrink (size, font) to fit automatically | PI-B | queued after 2 & 4 |
+| 7 | Pagination arrows render giant/broken. Add a choice: arrows, **load more on scroll** in batches (12 / 15 / 20 / a number he types), or **load all** (no pagination). Must be fast, using the existing grey loading placeholders | PI-B | queued after 2 & 4 |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix
