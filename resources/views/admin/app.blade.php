@@ -1001,6 +1001,16 @@ tr.invdirty{background:var(--accent-soft)}
   .mmrow{flex-wrap:wrap}
   .mmrow input[type=text],.mmrow select{min-width:0;width:100%;flex:1 1 100%}
 }
+/* Store → Site Search → Sets in search → "Set shown first, by brand" (Lane PL).
+   A set's name can be long; on desktop the select is capped so it cannot push
+   the card wider than its column, and below the phone rung the rule above
+   already gives it a line of its own. */
+.ssbrand{margin-top:6px;border-top:1px solid #e9edf3;padding-top:12px}
+.ssbrand>b{display:block;font-size:13px}
+.ssbrand>span{display:block;font-size:11.5px;color:#7b8697;margin:1px 0 4px}
+.ssbrand .mmrow select{max-width:min(320px,62%)}
+.ssbrand .ssbn{font-size:11.5px;color:#7b8697}
+@media(max-width:640px){.ssbrand .mmrow select{max-width:none}}
 .mmrange{display:flex;align-items:center;gap:9px}
 
 /* ===== Mega Menu — brand-matched to the storefront's own rose palette,
@@ -7571,6 +7581,28 @@ function ssField(f){
     <input type="text" value="${escHtml(String(v))}" data-ss="${f.key}"></div>`;
 }
 
+/* "Set shown first, by brand" — one row per brand that has a set fitting it
+   (its own sets, or sets holding its products), from one grouped query on the
+   server. 0 is "Follow the rule above". Every value printed here is escaped;
+   the ids are integers the server sent and re-checks on save. */
+function ssBrandSets(){
+  const rows=SS.sets_by_brand||[];
+  const head=`<div class="ssbrand"><b>Set shown first, by brand</b>
+    <span>When a search names one of these brands, its chosen set is shown first, whatever “Which set comes first” says. Left on “Follow the rule above”, that brand uses the rule.</span>`;
+  if(!rows.length) return head+`<div class="mmrow"><div class="mmlbl"><span>No brand has a visible set yet.</span></div></div></div>`;
+  return head+rows.map(r=>`<div class="mmrow"><div class="mmlbl"><b>${escHtml(r.brand)}</b>
+      <span class="ssbn">${r.count} ${r.count===1?'set fits':'sets fit'}</span></div>
+      <select data-ssbrand="${+r.brand_id}" aria-label="Set shown first for ${escHtml(r.brand)}">
+        <option value="0"${r.chosen?'':' selected'}>Follow the rule above</option>
+        ${r.sets.map(x=>`<option value="${+x.id}"${+x.id===+r.chosen?' selected':''}>${escHtml(x.name)}</option>`).join('')}
+      </select></div>`).join('')+`</div>`;
+}
+document.addEventListener('change', e=>{
+  const el=e.target.closest('select[data-ssbrand]'); if(!el||!SS) return;
+  const r=(SS.sets_by_brand||[]).find(x=>+x.brand_id===+el.dataset.ssbrand); if(r) r.chosen=+el.value;
+  ssDirty();
+});
+
 function ssGet(k){ for(const t of SS.tabs){ const f=t.fields.find(x=>x.key===k); if(f) return f.value; } return null; }
 function ssSet(k,v){ for(const t of SS.tabs){ const f=t.fields.find(x=>x.key===k); if(f){ f.value=v; return; } } }
 
@@ -7583,7 +7615,7 @@ function paintSiteSearch(){
     <div class="mmgrid">
       <div class="mmcols"><div class="card mmcard">
         <div class="mmhd"><b>${escHtml(tab.label)}</b><span>${escHtml(tab.description)}</span></div>
-        <div class="mmbody">${tab.fields.map(ssField).join('')}</div>
+        <div class="mmbody">${tab.fields.map(ssField).join('')}${tab.key==='sets'?ssBrandSets():''}</div>
       </div></div>
       <div class="mmpv"><div class="mmpv-in" id="ssPanel"></div><p class="mmpv-note">Live preview — a sample match for "cream"</p></div>
     </div>
@@ -7652,15 +7684,21 @@ document.addEventListener('click', async e=>{
   const del=e.target.closest('[data-sstagdel]');
   if(del){ const idx=+del.dataset.sstagdel; const cur=String(ssGet('trending_words')||'').split(',').map(w=>w.trim()).filter(Boolean);
     cur.splice(idx,1); ssSet('trending_words', cur.join(', ')); paintSiteSearch(); ssDirty(); return; }
-  if(e.target.id==='ssReset'){ SS.tabs.forEach(t=>t.fields.forEach(f=>f.value=f.default)); paintSiteSearch(); ssDirty('Defaults restored — not saved yet'); return; }
+  if(e.target.id==='ssReset'){ SS.tabs.forEach(t=>t.fields.forEach(f=>f.value=f.default)); (SS.sets_by_brand||[]).forEach(r=>r.chosen=0); paintSiteSearch(); ssDirty('Defaults restored — not saved yet'); return; }
   if(e.target.id!=='ssSave') return;
   const payload={}; SS.tabs.forEach(t=>t.fields.forEach(f=>payload[f.key]=f.value));
-  const msg=$('#ssDirty');
+  const body={settings:payload};
+  if(Array.isArray(SS.sets_by_brand)){ const m={}; SS.sets_by_brand.forEach(r=>{ m[r.brand_id]=+r.chosen||0; }); body.sets_by_brand=m; }
+  let msg=$('#ssDirty');
   try{
     const r=await fetch(ssBase(),{method:'POST',credentials:'same-origin',
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({settings:payload})});
+      body:JSON.stringify(body)});
     const j=await r.json();
+    /* The server's list is the truth after a save (a set unpublished since
+       the screen loaded drops back to "Follow the rule above"). Repainting
+       replaces #ssDirty, so the message is written to the new one. */
+    if(j.ok&&Array.isArray(j.sets_by_brand)){ SS.sets_by_brand=j.sets_by_brand; if(SSTAB==='sets'){ paintSiteSearch(); msg=$('#ssDirty'); } }
     if(j.ok){ msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
       setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600); }
     else { msg.style.visibility='visible'; msg.textContent=j.error||'Could not save.'; }

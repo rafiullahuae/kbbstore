@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\HeaderSettings;
 use App\Services\SettingsService;
 use App\Support\Money;
+use App\Support\SearchSetChoices;
 use App\Support\SearchTerms;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
@@ -72,10 +73,14 @@ class SearchController extends Controller
 
         // The same query returns the same suggestions for everyone, and the
         // header fires one per keystroke. (Rule 27)
+        //
+        // The per-brand set choices are part of the key (a hash of the saved
+        // map, no query), so choosing a set for Anua takes effect on the next
+        // search rather than after the five minutes a cached payload lives.
         $payload = Cache::remember(
-            'kbb.search.' . md5(mb_strtolower($q)) . '.' . $this->limitKey() . '.s2',
+            'kbb.search.' . md5(mb_strtolower($q)) . '.' . $this->limitKey() . '.' . $this->choicesKey() . '.s3',
             300,
-            fn () => $this->build($q) + ['sets' => $this->setCandidates($q)]
+            fn () => $this->build($q) + $this->setCandidates($q)
         );
 
         // Picked per request, OUTSIDE the cache, so "a different one each
@@ -114,11 +119,22 @@ class SearchController extends Controller
      * the search is in its name. One query, at most eight rows, cached with
      * the rest of the payload.
      *
-     * @return list<array<string, mixed>>
+     * ▲ AND THE BRAND'S CHOSEN SET IS ALWAYS AMONG THE EIGHT (Lane PL). The
+     *   owner can pick one set per brand (Store -> Site Search -> Sets in
+     *   search -> Set shown first, by brand). A set nobody has bought yet sorts
+     *   last, so an ORDER BY that puts the chosen id first keeps it inside the
+     *   limit -- still one query, and still only if it fits and is visible,
+     *   which is what makes a deleted or unpublished choice fall back. The
+     *   brand id travels with the rows so setFirst() can honour the choice
+     *   outside the cache.
+     *
+     * @return array{sets: list<array<string, mixed>>, sets_brand: int|null}
      */
     private function setCandidates(string $q): array
     {
         $detected = $this->detectBrand($q, true);
+        $brandId = $detected !== null ? (int) $detected['brand']->id : null;
+        $chosen = $brandId !== null ? ($this->setChoices()[$brandId] ?? null) : null;
 
         $sets = Product::query()
             ->select(self::CARD_COLUMNS)
@@ -127,12 +143,7 @@ class SearchController extends Controller
             ->where('type', 'set')
             ->where(function ($w) use ($detected, $q) {
                 if ($detected !== null) {
-                    $brandId = $detected['brand']->id;
-                    $w->where('brand_id', $brandId)
-                        ->orWhereIn('id', \Illuminate\Support\Facades\DB::table('product_set_items')
-                            ->join('products as kbb_member', 'kbb_member.id', '=', 'product_set_items.member_product_id')
-                            ->where('kbb_member.brand_id', $brandId)
-                            ->select('product_set_items.set_product_id'));
+                    SearchSetChoices::whereFits($w, (int) $detected['brand']->id);
 
                     return;
                 }
@@ -151,18 +162,51 @@ class SearchController extends Controller
                     }
                 });
             })
+            ->when($chosen !== null, fn ($o) => $o->orderByRaw('CASE WHEN products.id = ? THEN 0 ELSE 1 END', [$chosen]))
             ->orderByDesc('total_sales')
             ->orderByDesc('id')
             ->limit(8)
             ->get();
 
         if ($sets->isEmpty()) {
-            return [];
+            return ['sets' => [], 'sets_brand' => $brandId];
         }
 
         \App\Support\SetPricing::prime($sets);
 
-        return $sets->map(fn ($p) => $this->productRow($p))->all();
+        return [
+            'sets' => $sets->map(fn ($p) => ['id' => (int) $p->id] + $this->productRow($p))->all(),
+            'sets_brand' => $brandId,
+        ];
+    }
+
+    /**
+     * The saved brand => set map, read once per REQUEST.
+     *
+     * Memoised on the request, not on $this: Laravel keeps a controller
+     * instance on its Route, so a property here outlives the request in a
+     * test, a queue worker or Octane -- the Setting::map() trap CLAUDE.md
+     * records -- and a choice saved after the first search would never be
+     * seen. Measured: the first draft of this did exactly that.
+     *
+     * @return array<int, int>
+     */
+    private function setChoices(): array
+    {
+        $attrs = request()->attributes;
+
+        if (! $attrs->has('kbb.search_set_choices')) {
+            $attrs->set('kbb.search_set_choices', SearchSetChoices::map());
+        }
+
+        return $attrs->get('kbb.search_set_choices');
+    }
+
+    private function choicesKey(): string
+    {
+        $map = $this->setChoices();
+
+        return $map === [] ? 'c0' : 'c' . substr(md5(json_encode($map)), 0, 10);
     }
 
     /**
@@ -173,15 +217,37 @@ class SearchController extends Controller
     private function setFirst(array $payload): array
     {
         $sets = $payload['sets'] ?? [];
-        unset($payload['sets']);
+        $brandId = $payload['sets_brand'] ?? null;
+        unset($payload['sets'], $payload['sets_brand']);
 
         if ($sets === [] || ! $this->header->get('search_sets_first')) {
             return $payload;
         }
 
-        $pick = $this->header->get('search_sets_pick') === 'best'
+        $pick = null;
+
+        // The owner's own choice for this brand wins over random / best -- but
+        // only while it is still one of the visible sets this search found for
+        // the brand. Anything else (deleted, unpublished, no longer holding the
+        // brand's products) is simply not in $sets, and the rule below runs.
+        $chosen = $brandId !== null ? ($this->setChoices()[(int) $brandId] ?? null) : null;
+
+        if ($chosen !== null) {
+            foreach ($sets as $row) {
+                if (($row['id'] ?? null) === $chosen) {
+                    $pick = $row;
+                    break;
+                }
+            }
+        }
+
+        $pick ??= $this->header->get('search_sets_pick') === 'best'
             ? $sets[0]
             : $sets[array_rand($sets)];
+
+        // The id was only ever for the match above; the panel row is the same
+        // shape every other product row has.
+        unset($pick['id']);
 
         $groups = $payload['groups'] ?? [];
         $at = null;
