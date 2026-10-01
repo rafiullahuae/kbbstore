@@ -133,7 +133,17 @@ final class ProductSeo
          * anyway — so a product with English words and no Arabic yet publishes
          * the English description rather than no tag.
          */
-        return self::hasText($product->short_description) ? $product->t('short_description') : null;
+        /*
+         * AS TEXT. (Lane PI-A) The blurb is HTML -- an imported WooCommerce
+         * excerpt always is -- and Seo strips the tags but not the entities, so
+         * "Lift & glow", stored by the importer's sanitiser as "Lift &amp;
+         * glow", reached the JSON-LD as "Lift &amp; glow" and the meta tag
+         * as "Lift &amp;amp; glow": Google would show "&amp;". toText() decodes
+         * once and keeps a space where a </p> or <div> stood, so the words on
+         * either side of a block do not weld together. A blurb with no tag and
+         * no entity in it reduces to exactly the string it did before.
+         */
+        return self::hasText($product->short_description) ? RichText::toText($product->t('short_description')) : null;
     }
 
     /**

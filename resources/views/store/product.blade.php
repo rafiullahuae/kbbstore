@@ -179,6 +179,28 @@
         && \App\Support\SetContents::fromProduct($product)['members'] !== [];
 
     /* ═══════════════════════════════════════════════════════════════════════
+       THE BLURB IS HTML, AND IT USED TO BE PRINTED AS TEXT. (Lane PI-A)
+
+       An imported WooCommerce short description is post_excerpt, which is
+       HTML, and `{{ }}` escaped it -- so the owner's product page read
+       "…fine lines and dryness. <div>This set is ideal for", the tag printed
+       as letters, and an "&" in the excerpt read "&amp;".
+
+       RichText::forDisplay() is the same render pipeline the Description tab
+       uses: the old shop's paragraph and <br> rules for bare newlines, then
+       the allowlist, last, because the result is printed with {!! !!}.
+
+       ▲ <p> UNLESS THE BLURB HAS BLOCKS IN IT. A <p> cannot contain a <div>,
+         a <p> or a <ul>: the parser closes it at the first one, and the rest
+         of the blurb lands OUTSIDE .bb-desc -- outside the three-line cap and
+         its fade, under "Read more" rather than behind it. So the element is
+         a <div> for a blurb that carries blocks, and stays the <p> it always
+         was for one that does not: two literal elements behind an @if, never
+         a tag name built from a variable. */
+    $kbbBlurb = \App\Support\RichText::forDisplay($product->t('short_description'));
+    $kbbBlurbBlocks = \App\Support\RichText::hasBlocks($kbbBlurb);
+
+    /* ═══════════════════════════════════════════════════════════════════════
        THE THREE PROPOSED LAYOUTS ARE GONE. (Lane PP2)
 
        Lane PP put a three-entry map here -- focus / editorial / compact --
@@ -492,7 +514,7 @@
              directive's own indentation and newline to the rendered page even
              when the directive prints nothing, and this file already records
              what that costs. --}}
-      @if ($product->short_description && ! $kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore"><p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p><label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
+      @if ($product->short_description && ! $kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
@@ -693,7 +715,7 @@
 
                Same trap the .bb-price block above records for computing the
                range beside the markup instead of up in the php block at the top. --}}
-        @include('partials.set-contents-panel')@if ($kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore"><p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p><label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
+        @include('partials.set-contents-panel')@if ($kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the

@@ -848,7 +848,22 @@ final class ProductTabs
             $out[] = [
                 'key' => 'builtin:' . $key,
                 'title' => (string) __($spec['string']),
-                'body' => $body,
+                /*
+                 * THE PRODUCT'S OWN COLUMN, LAID OUT THE WAY WORDPRESS LAID IT
+                 * OUT. (Lane PI-A) An imported WooCommerce description is
+                 * classic-editor text -- bare newlines, no <p> -- and printed as
+                 * stored it rendered as one run-on slab on the owner's shop.
+                 * RichText::forDisplay() builds the paragraphs and <br>s the old
+                 * site's wpautop() built, then runs the allowlist over the
+                 * result, because this body is printed with {!! !!}. Copy with
+                 * no stray newline (everything the admin editor saves) comes
+                 * back as clean() leaves it.
+                 *
+                 * Here, on the built-in entry only: an override or an authored
+                 * tab is editor HTML the owner wrote in this admin, and it
+                 * replaces this body whole further down.
+                 */
+                'body' => RichText::forDisplay($body),
                 'position' => $spec['position'],
             ];
         }
