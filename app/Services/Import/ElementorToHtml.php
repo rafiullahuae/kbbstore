@@ -110,7 +110,30 @@ final class ElementorToHtml
             return $this->fallback($plainHtml, 'the Elementor data draws nothing');
         }
 
-        return ['html' => $html, 'mode' => 'elementor', 'unknown' => [], 'reason' => null];
+        return ['html' => self::lines($html), 'mode' => 'elementor', 'unknown' => [], 'reason' => null];
+    }
+
+    /**
+     * One structural element per line, so the block can be edited.
+     *
+     * The owner edits an imported section in Content -> HTML Blocks, in a plain
+     * textarea; as clean() serialises it the whole section is ONE line of a
+     * kilobyte and a half, and finding the second ingredient's sentence in it
+     * is a search, not an edit. A newline before each of the converter's own
+     * structural tags changes nothing on the page -- whitespace between block
+     * and flex/grid children draws nothing -- and the block is printed after
+     * wpautop(), so no newline here can become a <br>.
+     */
+    private static function lines(string $html): string
+    {
+        $html = (string) preg_replace(
+            '/(?<!^)(<(?:div class="kbb-eblock__(?:row|col|item|copy)|h[234] class="kbb-eblock__heading|figure class="kbb-eblock__figure|ul class="kbb-eblock__list|hr class="kbb-eblock__rule)[^>]*>)/',
+            "\n$1",
+            $html,
+        );
+
+        // And the block's own closing tag on a line of its own.
+        return (string) preg_replace('/<\/div>$/', "\n</div>", $html);
     }
 
     /**

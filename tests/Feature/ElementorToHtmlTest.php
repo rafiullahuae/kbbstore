@@ -50,7 +50,7 @@ it('draws the owner\'s section as a heading and a row of three ingredients', fun
 
     expect($out['mode'])->toBe('elementor')
         ->and($out['unknown'])->toBe([])
-        ->and($out['html'])->toStartWith('<div class="kbb-eblock"><h3 class="kbb-eblock__heading">Gentle Yet Effective Ingredients</h3>')
+        ->and($out['html'])->toStartWith("<div class=\"kbb-eblock\">\n<h3 class=\"kbb-eblock__heading\">Gentle Yet Effective Ingredients</h3>\n<div class=\"kbb-eblock__row kbb-eblock__row--3\">")
         ->and(substr_count($out['html'], 'class="kbb-eblock__row kbb-eblock__row--3"'))->toBe(1)
         ->and(substr_count($out['html'], 'class="kbb-eblock__col"'))->toBe(3)
         ->and(substr_count($out['html'], 'class="kbb-eblock__item"'))->toBe(3);
@@ -61,6 +61,16 @@ it('draws the owner\'s section as a heading and a row of three ingredients', fun
             ->toContain('<div class="kbb-eblock__text">' . $item['text'] . '</div>')
             ->toContain('src="https://kbeautybliss.com/wp-content/uploads/' . $item['file'] . '"');
     }
+
+    /*
+     * ONE STRUCTURAL ELEMENT PER LINE. The owner edits this in a textarea on
+     * Content -> HTML Blocks, and as clean() serialises it the whole section
+     * was one 1.5 KB line. Heading, row, three columns, three items and the
+     * closing tag: nine line breaks.
+     *
+     * MUTATION, RUN: lines() returning $html unchanged -- red, 0.
+     */
+    expect(substr_count($out['html'], "\n"))->toBe(9);
 });
 
 it('gives every picture a size and lazy loading, read off the WordPress file name', function () {

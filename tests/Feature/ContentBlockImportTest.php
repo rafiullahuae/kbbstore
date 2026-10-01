@@ -72,7 +72,7 @@ it('imports a Global Section as a published HTML Block keyed by its WordPress id
         ->and($block->name)->toBe('Anua Heartleaf — Gentle Yet Effective Ingredients')
         ->and($block->slug)->toBe('gentle-yet-effective-ingredients')
         ->and($block->shortcode())->toBe('[rey_global_section id="18159"]')
-        ->and($block->content)->toStartWith('<div class="kbb-eblock"><h3 class="kbb-eblock__heading">Gentle Yet Effective Ingredients</h3>')
+        ->and($block->content)->toStartWith("<div class=\"kbb-eblock\">\n<h3 class=\"kbb-eblock__heading\">Gentle Yet Effective Ingredients</h3>\n<div class=\"kbb-eblock__row kbb-eblock__row--3\">")
         ->and(substr_count((string) $block->content, 'kbb-eblock__item'))->toBe(3);
 });
 

@@ -63,8 +63,8 @@ async function product(browser, width, result) {
     await details.screenshot({ path: `${OUT}/${PHASE}-description-${width}.png` });
     result[`${PHASE}-${width}`] = await measure(page);
 
-    // Desktop: Read more, so the whole block is in the frame.
-    if (width >= 721) {
+    // Read more, so the whole block is in the frame (the panel is clamped at every width).
+    {
         const more = page.locator('.dtabpanel.on .readmore');
         if (await more.count() && await more.isVisible()) {
             await more.click();
