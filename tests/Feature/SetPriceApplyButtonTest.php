@@ -429,14 +429,35 @@ it('puts Visit in the editor bar once, as a new-tab link or a disabled "Not live
     expect($visit)->toContain('target="_blank" rel="noopener"')
         ->and($visit)->toContain('ro.live')
         ->and($visit)->toContain('url(ro.url)')
-        ->and($visit)->toContain('>Visit</a>')
-        ->and($visit)->toContain(' disabled')
-        ->and($visit)->toContain('Not live yet</button>');
+        ->and($visit)->toContain(">Visit'")
+        ->and($visit)->toContain('Not live yet')
+        // The disabled shape is a <button disabled>, never an <a> with no href,
+        // which can still be focused and "pressed".
+        ->and($visit)->toContain("var tag = href ? 'a' : 'button';")
+        ->and($visit)->toContain("' type=\"button\" disabled title=");
+});
 
-    // The disabled branch is a <button>, never an <a> -- an <a> with no href
-    // can still be focused and "pressed".
-    [$link, $off] = explode('return \'<button', $visit, 2) + [1 => ''];
-    expect($off)->not->toContain('href=');
+it('draws Visit as a new-tab link when live and a disabled button when not', function () {
+    /*
+     * The function above, RUN, for the three states a product can be in on
+     * this screen. MUTATION NOTE: swap the ternary's branches and the draft
+     * gets a link to a 404 -- red. RUN.
+     */
+    pkNeedsNode();
+
+    $out = pkNode(['esc', 'url', 'visitButton'], 'var r = [];'
+        ."model = { id: 7, readonly: { live: true, url: '/product/glow-trio-set/' } }; r.push(visitButton());"
+        ."model = { id: 8, readonly: { live: false, url: '/product/coming-soon/' } }; r.push(visitButton());"
+        ."model = { id: null, name: 'New' }; r.push(visitButton());"
+        .'return r;');
+
+    expect($out[0])->toBe('<a class="peo-btn" id="peo-visit" href="/product/glow-trio-set/" target="_blank" rel="noopener" title="Open this product on the shop, in a new tab">Visit</a>');
+
+    foreach ([$out[1], $out[2]] as $off) {
+        expect($off)->toStartWith('<button class="peo-btn" id="peo-visit" type="button" disabled')
+            ->and($off)->toEndWith('>Not live yet</button>')
+            ->and($off)->not->toContain('href=');
+    }
 });
 
 it('gives each Catalog -> Products row its shop address and a Visit beside Edit', function () {

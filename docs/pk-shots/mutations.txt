@@ -1,10 +1,11 @@
-mutation 1 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it fills Price with the t… / [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it switches the set to "A… / [90mTests:[39m    [31;1m2 failed[39;22m[90m,[39m[39m [39m[32;1m7 passed[39;22m[90m (74 assertions)[39m
-mutation 2 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it fills Price with the t… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (4 assertions)[39m
-mutation 3 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it fills Price with the t… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (4 assertions)[39m
-mutation 4 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it shows the shop's own p… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (5 assertions)[39m
-mutation 5 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it saves the two figures,… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (7 assertions)[39m
-mutation 6 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it hands the editor the s… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (7 assertions)[39m
-mutation 7 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it builds the Visit addre… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (3 assertions)[39m
-mutation 8 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it puts Visit in the edit… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (2 assertions)[39m
-mutation 9 exit 2 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it gives…  [41;1m ErrorException [49;22m / [90mTests:[39m    [31;1m1 failed[39;22m[90m (2 assertions)[39m
-mutation 10 exit 1 | [41;1m FAILED [49;22m [1mTests\Feature\SetPriceApplyButtonTest[22m [90m>[39m it puts Visit in the edit… / [90mTests:[39m    [31;1m1 failed[39;22m[90m (3 assertions)[39m
+mutation 1 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it fills Price with the t… /  FAILED  Tests\Feature\SetPriceApplyButtonTest > it switches the set to "A… / Tests:    2 failed, 8 passed (86 assertions)
+mutation 2 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it fills Price with the t… / Tests:    1 failed (4 assertions)
+mutation 3 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it fills Price with the t… / Tests:    1 failed (4 assertions)
+mutation 4 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it shows the shop's own p… / Tests:    1 failed (5 assertions)
+mutation 5 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it saves the two figures,… / Tests:    1 failed (7 assertions)
+mutation 6 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it hands the editor the s… / Tests:    1 failed (7 assertions)
+mutation 7 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it builds the Visit addre… / Tests:    1 failed (3 assertions)
+mutation 8 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it puts Visit in the edit… / Tests:    1 failed (2 assertions)
+mutation 9 exit 2 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it gives…   ErrorException  / Tests:    1 failed (2 assertions)
+mutation 10 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it puts Visit in the edit… / Tests:    1 failed (3 assertions)
+mutation 11 exit 1 |  FAILED  Tests\Feature\SetPriceApplyButtonTest > it draws Visit as a new-t… / Tests:    1 failed (6 assertions)

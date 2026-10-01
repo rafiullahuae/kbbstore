@@ -3373,14 +3373,15 @@ a.peo-btn{display:inline-block;text-decoration:none}
     var ro = (model && model.readonly) || {};
     var href = model && model.id && ro.live ? url(ro.url) : '';
 
-    if (href) {
-      return '<a class="peo-btn" id="peo-visit" href="' + href + '" target="_blank" rel="noopener"'
-        + ' title="Open this product on the shop, in a new tab">Visit</a>';
-    }
+    /* ONE id literal for the two shapes: AdminNavAndIdsTest counts id="…" in
+       the source, and the link and the disabled button are the same control. */
+    var tag = href ? 'a' : 'button';
 
-    return '<button type="button" class="peo-btn" id="peo-visit" disabled'
-      + ' title="The shop does not show this product yet. Publish it and press Save, and this opens it.">'
-      + 'Not live yet</button>';
+    return '<' + tag + ' class="peo-btn" id="peo-visit"'
+      + (href
+          ? ' href="' + href + '" target="_blank" rel="noopener" title="Open this product on the shop, in a new tab">Visit'
+          : ' type="button" disabled title="The shop does not show this product yet. Publish it and press Save, and this opens it.">Not live yet')
+      + '</' + tag + '>';
   }
 
   function editorView(){
