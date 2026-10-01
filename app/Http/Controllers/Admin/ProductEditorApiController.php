@@ -1523,6 +1523,7 @@ class ProductEditorApiController extends Controller
                 ->select('set_product_id'))
             ->where('type', 'set')
             ->orderBy('name')
+            ->orderBy('id')
             ->limit(3)
             ->pluck('name')
             ->all();
