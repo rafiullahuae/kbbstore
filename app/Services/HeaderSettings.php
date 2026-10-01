@@ -688,11 +688,24 @@ class HeaderSettings
         $sel = ':root body :is(' . implode(',', self::CRUMB_SELECTORS) . ')';
 
         $device = static function (string $query, bool $on, int $above, int $below) use ($sel): string {
-            $rule = $on
-                ? 'margin-top:0;margin-bottom:0;padding-top:' . $above . 'px;padding-bottom:' . $below . 'px'
-                : 'display:none';
+            if ($on) {
+                return '@media ' . $query . '{' . $sel . '{margin-top:0;margin-bottom:0;padding-top:'
+                    . $above . 'px;padding-bottom:' . $below . 'px}}';
+            }
 
-            return '@media ' . $query . '{' . $sel . '{' . $rule . '}}';
+            /*
+             * OFF, AND THE HEADING BELOW IT KEEPS ITS AIR. On /shop and the
+             * collection pages the trail was the only thing between the header
+             * and the page heading, so hiding it left "K-BEAUTY · SKINCARE" 6px
+             * under the menu -- measured, and visibly cramped at 1280. The
+             * heading that follows a hidden trail gets the same "space above"
+             * this device's slider holds (18px by default), so the gap stays
+             * the owner's to set. Only listing headings (.eyebrow on /shop, .sh
+             * on collections): the product page already sits 22px down on its
+             * own padding and is left as it is.
+             */
+            return '@media ' . $query . '{' . $sel . '{display:none}'
+                . $sel . '+:is(.eyebrow,.sh){margin-top:' . $above . 'px}}';
         };
 
         return $device('(max-width:900px)', (bool) $c['bc_mobile'], (int) $c['bc_above_mobile'], (int) $c['bc_below_mobile'])

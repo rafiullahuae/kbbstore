@@ -136,9 +136,12 @@ it('ships OFF on phones and on desktop, because he said "by default keep it off"
 
     $sel = ':root body :is(.crumb,.brw-crumb,.rtn-crumb)';
 
+    // ▲ Off also gives the listing heading that follows the hidden trail the
+    // device's "space above" (18px default): without it /shop's eyebrow sat 6px
+    // under the menu at 1280. Integrator, 2.60.342.
     expect(app(HeaderSettings::class)->breadcrumbCss())->toBe(
-        '@media (max-width:900px){'.$sel.'{display:none}}'
-        .'@media (min-width:901px){'.$sel.'{display:none}}'
+        '@media (max-width:900px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:18px}}'
+        .'@media (min-width:901px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:18px}}'
     );
 });
 
@@ -209,7 +212,7 @@ it('switches phones and desktop independently, with each width its own spacing',
     $sel = ':root body :is(.crumb,.brw-crumb,.rtn-crumb)';
 
     expect($css)->toBe(
-        '@media (max-width:900px){'.$sel.'{display:none}}'
+        '@media (max-width:900px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:6px}}'
         .'@media (min-width:901px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:30px;padding-bottom:12px}}'
     );
 
@@ -217,7 +220,7 @@ it('switches phones and desktop independently, with each width its own spacing',
 
     expect(app(HeaderSettings::class)->breadcrumbCss())->toBe(
         '@media (max-width:900px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:6px;padding-bottom:6px}}'
-        .'@media (min-width:901px){'.$sel.'{display:none}}'
+        .'@media (min-width:901px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:30px}}'
     );
 
     // And the shop prints what the method says.
