@@ -425,13 +425,20 @@ it('lands a shopper\'s review photographs, which no export has ever carried', fu
     $photos = $review->images;
 
     expect(is_array($photos))->toBeTrue();
+    /*
+     * THREE SINCE LANE IE2. The fixture shop gave Layla's review a photograph of
+     * her own face that nothing else on the shop references, because the two
+     * serum shots are also product images and so reached media.csv whether or
+     * not anything read reviews. The third is the one that proves it did.
+     */
     expect(count($photos))->toBe(
-        2,
-        'Layla uploaded two photographs of the serum and the shop imported '.count($photos ?: []),
+        3,
+        'Layla uploaded two photographs of the serum and one of herself, and the shop imported '.count($photos ?: []),
     );
 
     expect($photos[0])->toBe('https://kbeautybliss.com/wp-content/uploads/2019/03/ginseng-serum.jpg');
     expect($photos[1])->toBe('https://kbeautybliss.com/wp-content/uploads/2019/03/ginseng-serum-2.jpg');
+    expect($photos[2])->toBe('https://kbeautybliss.com/wp-content/uploads/2019/03/layla-selfie.jpg');
 
     // The OTHER storage shape: a PHP-serialised array of uploads URLs rather
     // than attachment ids, written http:// before the shop moved to https. A
@@ -439,7 +446,13 @@ it('lands a shopper\'s review photographs, which no export has ever carried', fu
     // the fixture's first review and silent about every shop using the other.
     $older = Review::query()->where('source', 'wp_comment')->where('source_id', 8102)->first();
 
-    expect($older->images)->toBe(['http://kbeautybliss.com/wp-content/uploads/2020/01/skincare-category.jpg']);
+    // And the THIRD shape (Lane IE2): a path relative to the uploads root,
+    // read as a photograph because the uploads directory holds the file. Its
+    // neighbour `rp_missing` names a file that is not there and is left out.
+    expect($older->images)->toBe([
+        'http://kbeautybliss.com/wp-content/uploads/2020/01/skincare-category.jpg',
+        'https://kbeautybliss.com/wp-content/uploads/2020/01/layla-review-2.jpg',
+    ]);
 });
 
 it('refuses a review photograph that is not a picture this shop can serve', function () {
@@ -532,7 +545,7 @@ it('does not wipe photographs it already imported when a later export carries no
 
     $review = Review::query()->where('source', 'wp_comment')->where('source_id', 8101)->first();
 
-    expect(count((array) $review->images))->toBe(2, 'the first pass did not import the photographs');
+    expect(count((array) $review->images))->toBe(3, 'the first pass did not import the photographs');
 
     /*
      * The second export: identical in every way except that its `images`
@@ -576,7 +589,7 @@ it('does not wipe photographs it already imported when a later export carries no
     $review->refresh();
 
     expect(count((array) $review->images))->toBe(
-        2,
+        3,
         'a second export that did not recognise this shop\'s review-photo plugin deleted the photographs a '
         .'previous import had already landed',
     );

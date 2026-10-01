@@ -166,9 +166,20 @@ it('writes its asset tags against the host the console is really served from', f
 
     $preview = p1Owner()->postJson($host.'/admin-api/homepage/preview', ['sections' => p1Rows()])->json();
 
+    /*
+     * ▲ STRONGER SINCE 2.60.337. Asset tags are written root-relative now
+     * (`/build/assets/…`, AppServiceProvider), because an absolute https address
+     * on a page reached over http is a different site to the browser, and the
+     * module script and the font were refused -- the phone menu never started
+     * in Safari or Opera. The preview is shown through `iframe.srcdoc`, whose
+     * base address is the console's own, so `/build/` resolves to the host the
+     * console is served from, which is what this case exists to guarantee. No
+     * host at all can be the wrong host: localhost appearing is still red.
+     */
     expect($preview['ok'])->toBeTrue()
-        ->and($preview['html'])->toContain($host.'/build/')
-        ->and($preview['html'])->not->toContain('http://localhost/build/');
+        ->and($preview['html'])->toContain('="/build/assets/')
+        ->and($preview['html'])->not->toContain('http://localhost/build/')
+        ->and($preview['html'])->not->toContain($host.'/build/');
 });
 
 it('is the whole document and not a fragment', function () {

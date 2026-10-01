@@ -295,9 +295,15 @@ it('never lets a forged Host header into a canonical tag', function () {
     expect($offenders)->toBe([],
         "The forged host reached something that is not an in-band asset reference:\n".implode("\n", $offenders));
 
-    // And the loop ran: a document with no occurrence at all would pass the
-    // above while asserting nothing.
-    expect($found)->toBeGreaterThan(0);
+    /*
+     * ▲ AND SINCE 2.60.337 THERE IS NO OCCURRENCE AT ALL, which is the strongest
+     * form of the sentence above. Asset addresses are root-relative now, so the
+     * request host reaches nothing in the document, in-band or not. This used
+     * to require at least one occurrence, as proof the loop ran; the proof is
+     * now that the page still carries its own assets, by path.
+     */
+    expect($found)->toBe(0, 'the forged host reached the document again');
+    expect(substr_count($html, '/build/assets/'))->toBeGreaterThan(0);
 });
 
 /* ═══════════════════════════════════════════════ 2. the banner, and inertness */

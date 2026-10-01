@@ -1265,6 +1265,10 @@ function gqMetaKeyCensus(): array
          */
         'reviews-images' => 'reviews.csv `images` -> reviews.images -- attachment ids, two rows under one key',
         'cr_photos' => 'reviews.csv `images` -> reviews.images -- a PHP-serialised array of uploads URLs',
+        'rp_photo_paths' => 'reviews.csv `images` -> reviews.images, and a row in media.csv -- a path relative '
+            .'to the uploads root, read as a photograph because the uploads directory holds the file (Lane IE2)',
+        'rp_missing' => 'NOT exported: the same relative shape naming a file the uploads directory does not '
+            .'hold, so it is not a photograph. NAMED in the reviews stage\'s unused-key note in manifest.json',
 
         /*
          * And the two that are NOT photographs, which are here because the

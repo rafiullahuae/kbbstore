@@ -166,6 +166,18 @@ it('keeps kbb.css down to a type rule, a phone rule, the flat colour and the pri
      */
     $rules = bgBodyRules('kbb.css');
 
+    /*
+     * ▲ AND A FIFTH, NOTICED (2.60.337): on touch screens the three fixed
+     * full-screen layers are switched off and the wash is painted once on
+     * `html`, so body goes transparent there to let it through. Pinned to that
+     * exact rule and to that media query, so a fifth that is anything else is
+     * still red.
+     */
+    $src = (string) preg_replace(['#/\*.*?\*/#s', '/\s+/'], ['', ' '], (string) file_get_contents(resource_path('css/kbb/kbb.css')));
+    expect($src)->toContain('@media (hover:none) and (pointer:coarse){ html::before,body::before,body::after{display:none} html{background:var(--kbb-page-gradient)} body{background-color:transparent} }');
+    expect($rules[4] ?? null)->toBe('body{background-color:transparent}');
+    $rules = array_slice($rules, 0, 4);
+
     expect($rules)->toHaveCount(4, 'kbb.css has '.count($rules)." body rules:\n  ".implode("\n  ", $rules));
 
     expect($rules[0])->toContain('font:400 14px/1.6 Outfit')

@@ -642,7 +642,19 @@ it('leaves the nav bar able to catch a menu the stylesheet never measured', func
     $app = (string) file_get_contents(base_path('resources/js/kbb/app.js'));
     $code = (string) preg_replace(['#/\*.*?\*/#s', '#^\s*//.*$#m'], '', $app);
 
-    expect(substr_count($code, 'initNavFit()'))->toBe(
+    /*
+     * ▲ THE CALL SITE IS AN ENTRY IN `STEPS` NOW (2.60.337). boot() runs each
+     * start-up step from one list inside its own try/catch, so one step that
+     * throws cannot stop the ones after it -- that is what had killed the phone
+     * menu. initNavFit is listed there and called as `step()`, so the literal
+     * `initNavFit()` this counted no longer appears. Counted as a list entry
+     * instead, after the same comment stripping: delete it from STEPS, or
+     * comment it out there, and this is red.
+     */
+    preg_match('/const STEPS = \[(.*?)\];/s', $code, $steps);
+    $entries = array_map('trim', explode(',', $steps[1] ?? ''));
+
+    expect(count(array_keys($entries, 'initNavFit', true)))->toBe(
         1,
         'the nav bar no longer measures itself, and CSS alone cannot fit a row to text it cannot measure: '
         .'there is no length meaning "the width of this element\'s content", and a container query unit '
