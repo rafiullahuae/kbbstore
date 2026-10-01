@@ -3710,6 +3710,7 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 8 | Add to cart: replace the grey "Added to bag" pill with a choice of feedback — **an animated tick, grey → green, very fast, gone immediately** — while the cart panel still opens as now | PI-B | queued |
 | 9 | "Read less" collapses the description but leaves the shopper far down the page; it must bring them back to where the section closed | PI-A | queued |
 | 10 | **Major:** on the product edit page, convert any product into a proper **set** (choose its member products) — many of his sets were imported as plain products. Must be reliable and work with every option the set editor has | next free lane | being scoped by integrator |
+| 11 | Reviews were imported from the old site but **no product shows any review** on the new site; they must appear on every product that had reviews | integrator | diagnosing on his server |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix
