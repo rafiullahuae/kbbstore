@@ -341,6 +341,47 @@ you need it, not after.
 
 ---
 
+## 7. The http → https redirect lives in the web root's `.htaccess` (1 October 2026)
+
+**Symptom.** Opera and Safari opened `http://extrabeauty.ae`, Opera said
+*"connection is not secure"*, and before 2.60.337 the phone menu did not start
+there (an http page refusing its https module script). `curl -sI
+http://extrabeauty.ae/` answered **200**, not 301.
+
+**Cloudways' "HTTPS Redirection" toggle was ON and did nothing.** Checked on
+the server, not assumed: DNS is one A record (134.209.147.13, this server, no
+AAAA), `www` is a CNAME to the apex, the certificate's SANs are
+`*.extrabeauty.ae` AND `extrabeauty.ae`, and https answered 200 on both names.
+The insecure page carried no `http://` sub-resource (no mixed content). The
+web root's `.htaccess` held only Laravel's own rules.
+
+**Fix, applied by the owner over SSH.** Prepended to
+`/home/1672906.cloudwaysapps.com/yjmakdgtjs/public_html/.htaccess`, original
+kept beside it as `.htaccess.before-https`:
+
+```apache
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} =http
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301,NE,E=KBB_TO_HTTPS:1]
+</IfModule>
+<IfModule mod_headers.c>
+Header always set Cache-Control "no-store" env=KBB_TO_HTTPS
+</IfModule>
+```
+
+Why this shape and not `%{HTTPS} !=on`: TLS ends at nginx and Varnish sits in
+front of Apache, so Apache never sees HTTPS. `=http` (not `!https`) fires only
+when the proxy explicitly says http, so a missing header means no redirect
+rather than a loop; and the 301 is `no-store` because Varnish otherwise caches
+it and serves it to https visitors -- the documented redirect-loop case.
+Verified after applying: http → `301`, `Location: https://…`,
+`Cache-Control: no-store`; https → 200.
+
+**Update packages never write this file** (the repo tracks no `.htaccess`), so
+no package undoes it. To remove it: `cp .htaccess.before-https .htaccess` in
+the web root.
+
 ## 6. What comes next, and what does not
 
 You are pushing update packages to `extrabeauty.ae` directly for now, and testing
