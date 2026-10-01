@@ -72,7 +72,7 @@ class KBB_Export_Stage_Media extends KBB_Export_Stage {
 			return $this->sources;
 		}
 
-		$this->sources = array( 'product', 'product_cat', 'brand', 'post' );
+		$this->sources = array( 'product', 'product_cat', 'brand', 'post', 'review' );
 
 		return $this->sources;
 	}
@@ -112,7 +112,11 @@ class KBB_Export_Stage_Media extends KBB_Export_Stage {
 			'SELECT COUNT(*) FROM ' . $wpdb->prefix . "posts WHERE post_type IN ('post','page') AND post_status <> 'auto-draft'"
 		);
 
-		return $products + $categories + $brands + $posts;
+		$reviews = (int) $wpdb->get_var(
+			'SELECT COUNT(*) FROM ' . $wpdb->prefix . 'comments c WHERE ' . self::review_where()
+		);
+
+		return $products + $categories + $brands + $posts + $reviews;
 	}
 
 	public function batch( $cursor, $limit ) {
@@ -283,6 +287,98 @@ class KBB_Export_Stage_Media extends KBB_Export_Stage {
 
 			foreach ( KBB_Export_Media_Index::urls_in_html( $row['post_content'] ) as $url ) {
 				$references[] = array( 'url' => $url, 'by' => $row['post_type'], 'id' => $id, 'field' => 'content' );
+			}
+		}
+
+		return array(
+			'rows'      => $this->rows_for( $references ),
+			'cursor'    => (int) end( $ids ),
+			'exhausted' => count( $rows ) < (int) $limit,
+		);
+	}
+
+	/**
+	 * The definition of a product review, copied from the reviews stage.
+	 *
+	 * A comment on a product post carrying a non-empty `rating` meta. It is a
+	 * constant here and a private method there rather than one shared thing,
+	 * because the two ask it of different tables at different points in the
+	 * run -- but it is the same sentence, and if the two ever disagree it is
+	 * this file that goes quiet rather than loud: media.csv would stop listing
+	 * the photographs of reviews reviews.csv is still exporting.
+	 * GeWpExporterTest asserts the two agree on the fixture.
+	 */
+	const REVIEW_WHERE = "c.comment_post_ID IN (SELECT ID FROM %1\$sposts WHERE post_type = 'product')
+			AND EXISTS (SELECT 1 FROM %1\$scommentmeta cm WHERE cm.comment_id = c.comment_ID AND cm.meta_key = 'rating' AND cm.meta_value <> '')";
+
+	/** REVIEW_WHERE with this install's table prefix in it. */
+	private static function review_where() {
+		global $wpdb;
+
+		return sprintf( self::REVIEW_WHERE, $wpdb->prefix );
+	}
+
+	/**
+	 * THE CUSTOMERS' OWN PHOTOGRAPHS, AND THE ONLY FILE THAT SAYS "FETCH THIS".
+	 *
+	 * ========================================================================
+	 * THE DEFECT THIS SOURCE EXISTS FOR
+	 * ========================================================================
+	 *
+	 * reviews.csv has carried an `images` column since the photographs were
+	 * first exported. It names the ADDRESSES of a shopper's pictures on the old
+	 * site -- and this file, the list of files the new shop has to fetch before
+	 * the old one is switched off, walked products, categories, brands and
+	 * articles and NOT reviews.
+	 *
+	 * On the fixture that looked harmless, because the fixture's review photos
+	 * happen to be the product's photos too. On a real shop they are not: a
+	 * customer's photograph of her own face is referenced by NOTHING else, so
+	 * it was in no row of media.csv, `App\Services\Import\MediaAudit` on the
+	 * other side did not read `reviews.images` either, and the number the
+	 * runbook tells the owner to watch reached zero with every customer
+	 * photograph still served by the site he was about to switch off.
+	 *
+	 * A review photograph is the one picture on a shop that cannot be
+	 * re-created. The owner can retype a review; he cannot retype a customer's
+	 * picture of her own face, and she is not going to send it again.
+	 *
+	 * ── A `field` OF ITS OWN, WHICH IS WHAT THE OWNER ACTS ON ───────────────
+	 *
+	 * `referenced_by` is `review` and `referenced_id` is the comment id, which
+	 * is `reviews.source_id` on the new shop. So a fetch that fails names the
+	 * review that goes blank, in the vocabulary the import report already uses.
+	 *
+	 * @return array{rows: array<int,array<string,mixed>>, cursor: int, exhausted: bool}
+	 */
+	private function from_review( $cursor, $limit ) {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			'SELECT c.comment_ID FROM ' . $wpdb->prefix . 'comments c
+			 WHERE ' . self::review_where() . ' AND c.comment_ID > ' . (int) $cursor . '
+			 ORDER BY c.comment_ID
+			 LIMIT ' . (int) $limit,
+			ARRAY_A
+		);
+
+		$rows = (array) $rows;
+
+		if ( empty( $rows ) ) {
+			return array( 'rows' => array(), 'cursor' => (int) $cursor, 'exhausted' => true );
+		}
+
+		$ids        = $this->ids_of( $rows, 'comment_ID' );
+		$photos     = KBB_Export_Review_Photos::for_comments( $ids );
+		$references = array();
+
+		foreach ( $ids as $id ) {
+			if ( ! isset( $photos[ $id ] ) ) {
+				continue;
+			}
+
+			foreach ( $photos[ $id ] as $url ) {
+				$references[] = array( 'url' => $url, 'by' => 'review', 'id' => $id, 'field' => 'images' );
 			}
 		}
 

@@ -148,6 +148,7 @@ function add_management_page( $page_title, $menu_title, $capability, $slug, $cal
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-media-index.php';
+require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-review-photos.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-groups.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-zip.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-stage.php';

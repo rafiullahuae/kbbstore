@@ -64,6 +64,16 @@ foreach ( array( '2019/03', '2020/01', '2021/05' ) as $folder ) {
 file_put_contents( $uploads . '/2019/03/ginseng-serum.jpg', str_repeat( 'x', 2048 ) );
 file_put_contents( $uploads . '/2020/01/boj-logo.png', str_repeat( 'y', 1024 ) );
 
+// THE CUSTOMERS' OWN PHOTOGRAPHS. `layla-selfie.jpg` is referenced by nothing
+// but a review, which is the shape that made the reviews-in-media.csv hole
+// invisible for as long as the fixture's review photos were also the product's.
+// `layla-review-2.jpg` is the one stored as a path RELATIVE to this directory,
+// which is a photograph only because this line puts the file here -- the
+// fixture also carries `2020/01/never-uploaded.jpg`, in the same shape and
+// deliberately NOT written, so the stat() is exercised in both directions.
+file_put_contents( $uploads . '/2019/03/layla-selfie.jpg', str_repeat( 'z', 3072 ) );
+file_put_contents( $uploads . '/2020/01/layla-review-2.jpg', str_repeat( 'w', 1536 ) );
+
 require __DIR__ . '/wp-stubs.php';
 require __DIR__ . '/shop.php';
 
@@ -75,6 +85,7 @@ kbb_harness_build( $pdo, $prefix, $storage );
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-media-index.php';
+require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-review-photos.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-groups.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-zip.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-stage.php';

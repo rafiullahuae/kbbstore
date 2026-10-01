@@ -209,6 +209,7 @@ $wpdb = new KBB_Purge_Harness_Wpdb();
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-media-index.php';
+require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-review-photos.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-groups.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-zip.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-stage.php';
