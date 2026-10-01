@@ -175,9 +175,9 @@ it('keeps the BreadcrumbList structured data while the visible trail is hidden',
      * controller, so the structured data Google reads is unaffected by the
      * switch — which is the whole reason this is display:none and not an @if.
      *
-     * MUTATION, RUN: guard `$nodes[] = [... 'BreadcrumbList' ...]` in
-     * Support\Seo::graph() on `HeaderSettings::get('bc_desktop')` (the tempting
-     * "it is off, so drop it" shortcut) and this is red on all four pages.
+     * MUTATION, RUN: delete the `$nodes[] = [... 'BreadcrumbList' ...]` line in
+     * App\Support\Seo — what a "the trail is off, so drop its schema too"
+     * shortcut would amount to — and this is red at the product page.
      */
     $pages = bcPages();
 
@@ -402,9 +402,9 @@ it('costs no query of its own', function () {
      * read on this request, so the stylesheet is free. StorefrontQueryBudgetTest
      * is a budget.
      *
-     * MUTATION, RUN: read the keys through a settings row of their own
-     * (`app(SettingsService::class)->get('breadcrumbs')` in breadcrumbCss())
-     * after a forgetMemo() and this is red at 1.
+     * MUTATION, RUN: give breadcrumbCss() a settings read of its own
+     * (`Setting::query()->where('key', 'breadcrumbs')->value('value')`, the
+     * shape a separate "breadcrumbs" module would have) and this is red at 1.
      */
     app(HeaderSettings::class)->all();
 
