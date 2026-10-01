@@ -1,0 +1,349 @@
+{
+  "after-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "shortcodeTextOnPage": false,
+    "block": {
+      "w": 346,
+      "h": 511.1
+    },
+    "heading": {
+      "w": 346,
+      "h": 22.1,
+      "fontSize": "17px",
+      "fontWeight": "650"
+    },
+    "items": [
+      {
+        "w": 346,
+        "h": 145,
+        "top": 490
+      },
+      {
+        "w": 346,
+        "h": 145,
+        "top": 653
+      },
+      {
+        "w": 346,
+        "h": 145,
+        "top": 816
+      }
+    ],
+    "itemsPerRow": "3 rows",
+    "image": {
+      "w": 145,
+      "h": 145,
+      "attrW": "300",
+      "attrH": "300",
+      "loading": "lazy",
+      "naturalW": 300,
+      "src": "/wp-content/uploads/2024/03/anua-quercetinol-300x300.jpg"
+    },
+    "title": {
+      "fontSize": "13px",
+      "fontWeight": "700",
+      "textTransform": "uppercase"
+    },
+    "text": {
+      "fontSize": "13px",
+      "lineHeight": "20.15px"
+    }
+  },
+  "after-390-expanded": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "shortcodeTextOnPage": false,
+    "block": {
+      "w": 346,
+      "h": 511.1
+    },
+    "heading": {
+      "w": 346,
+      "h": 22.1,
+      "fontSize": "17px",
+      "fontWeight": "650"
+    },
+    "items": [
+      {
+        "w": 346,
+        "h": 145,
+        "top": 230
+      },
+      {
+        "w": 346,
+        "h": 145,
+        "top": 393
+      },
+      {
+        "w": 346,
+        "h": 145,
+        "top": 556
+      }
+    ],
+    "itemsPerRow": "3 rows",
+    "image": {
+      "w": 145,
+      "h": 145,
+      "attrW": "300",
+      "attrH": "300",
+      "loading": "lazy",
+      "naturalW": 300,
+      "src": "/wp-content/uploads/2024/03/anua-quercetinol-300x300.jpg"
+    },
+    "title": {
+      "fontSize": "13px",
+      "fontWeight": "700",
+      "textTransform": "uppercase"
+    },
+    "text": {
+      "fontSize": "13px",
+      "lineHeight": "20.15px"
+    }
+  },
+  "after-390-rtl": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "shortcodeTextOnPage": false,
+    "block": {
+      "w": 346,
+      "h": 511.1
+    },
+    "heading": {
+      "w": 346,
+      "h": 22.1,
+      "fontSize": "17px",
+      "fontWeight": "650"
+    },
+    "items": [
+      {
+        "w": 346,
+        "h": 145,
+        "top": 230
+      },
+      {
+        "w": 346,
+        "h": 145,
+        "top": 393
+      },
+      {
+        "w": 346,
+        "h": 145,
+        "top": 556
+      }
+    ],
+    "itemsPerRow": "3 rows",
+    "image": {
+      "w": 145,
+      "h": 145,
+      "attrW": "300",
+      "attrH": "300",
+      "loading": "lazy",
+      "naturalW": 300,
+      "src": "/wp-content/uploads/2024/03/anua-quercetinol-300x300.jpg"
+    },
+    "title": {
+      "fontSize": "13px",
+      "fontWeight": "700",
+      "textTransform": "uppercase"
+    },
+    "text": {
+      "fontSize": "13px",
+      "lineHeight": "20.15px"
+    }
+  },
+  "after-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "shortcodeTextOnPage": false,
+    "block": {
+      "w": 820,
+      "h": 161.7
+    },
+    "heading": {
+      "w": 820,
+      "h": 22.1,
+      "fontSize": "17px",
+      "fontWeight": "650"
+    },
+    "items": [
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      },
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      },
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      }
+    ],
+    "itemsPerRow": 3,
+    "image": {
+      "w": 121.6,
+      "h": 121.6,
+      "attrW": "300",
+      "attrH": "300",
+      "loading": "lazy",
+      "naturalW": 300,
+      "src": "/wp-content/uploads/2024/03/anua-quercetinol-300x300.jpg"
+    },
+    "title": {
+      "fontSize": "13px",
+      "fontWeight": "700",
+      "textTransform": "uppercase"
+    },
+    "text": {
+      "fontSize": "13px",
+      "lineHeight": "20.15px"
+    }
+  },
+  "after-1280-expanded": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "shortcodeTextOnPage": false,
+    "block": {
+      "w": 820,
+      "h": 161.7
+    },
+    "heading": {
+      "w": 820,
+      "h": 22.1,
+      "fontSize": "17px",
+      "fontWeight": "650"
+    },
+    "items": [
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      },
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      },
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      }
+    ],
+    "itemsPerRow": 3,
+    "image": {
+      "w": 121.6,
+      "h": 121.6,
+      "attrW": "300",
+      "attrH": "300",
+      "loading": "lazy",
+      "naturalW": 300,
+      "src": "/wp-content/uploads/2024/03/anua-quercetinol-300x300.jpg"
+    },
+    "title": {
+      "fontSize": "13px",
+      "fontWeight": "700",
+      "textTransform": "uppercase"
+    },
+    "text": {
+      "fontSize": "13px",
+      "lineHeight": "20.15px"
+    }
+  },
+  "after-1280-rtl": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "shortcodeTextOnPage": false,
+    "block": {
+      "w": 820,
+      "h": 161.7
+    },
+    "heading": {
+      "w": 820,
+      "h": 22.1,
+      "fontSize": "17px",
+      "fontWeight": "650"
+    },
+    "items": [
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      },
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      },
+      {
+        "w": 258.7,
+        "h": 121.6,
+        "top": 501
+      }
+    ],
+    "itemsPerRow": 3,
+    "image": {
+      "w": 121.6,
+      "h": 121.6,
+      "attrW": "300",
+      "attrH": "300",
+      "loading": "lazy",
+      "naturalW": 300,
+      "src": "/wp-content/uploads/2024/03/anua-quercetinol-300x300.jpg"
+    },
+    "title": {
+      "fontSize": "13px",
+      "fontWeight": "700",
+      "textTransform": "uppercase"
+    },
+    "text": {
+      "fontSize": "13px",
+      "lineHeight": "20.15px"
+    }
+  },
+  "admin-blocks-390": {
+    "rows": [
+      "Anua Heartleaf — Gentle Yet Effective Ingredients From WordPress [rey_global_section id=\"18159\"] Published 1 place Oct 1, 2026 Copy"
+    ],
+    "scrollWidth": 390
+  },
+  "admin-import-390": {
+    "button": {
+      "text": "Remove all files",
+      "w": 115,
+      "h": 24
+    },
+    "removeButtonsBefore": 9,
+    "scrollWidth": 390
+  },
+  "admin-blocks-1280": {
+    "rows": [
+      "Anua Heartleaf — Gentle Yet Effective Ingredients From WordPress [rey_global_section id=\"18159\"] Published 1 place Oct 1, 2026 Copy"
+    ],
+    "scrollWidth": 1280
+  },
+  "admin-import-1280": {
+    "button": {
+      "text": "Remove all files",
+      "w": 115,
+      "h": 24
+    },
+    "removeButtonsBefore": 9,
+    "scrollWidth": 1280,
+    "removeButtonsAfter": 0,
+    "buttonAfter": 0,
+    "dialogs": [
+      "Remove every uploaded file from this card?\n\nOnly the files go. Nothing you have already imported is touched — no product, order or customer."
+    ]
+  }
+}
