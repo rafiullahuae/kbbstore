@@ -1,0 +1,230 @@
+{
+  "phase": "before",
+  "saves": [
+    {
+      "status": 200,
+      "ok": true
+    }
+  ],
+  "ids": {
+    "trio": 29,
+    "duo": 30,
+    "draft": 28,
+    "simple": 25
+  },
+  "trio-server-before": {
+    "price_aed": "1179.00",
+    "sale_aed": null,
+    "price_mode": "discount_amount",
+    "discount_amount": "131.00",
+    "discount_percent": "",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1179.00",
+    "set_basis_aed": "",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-trio-set/"
+    }
+  },
+  "duo-server-before": {
+    "price_aed": "1179.00",
+    "sale_aed": null,
+    "price_mode": "discount_percent",
+    "discount_amount": "",
+    "discount_percent": "10",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1179.00",
+    "set_basis_aed": "",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-duo-set/"
+    }
+  },
+  "trio-1280-opened": {
+    "price": "1179.00",
+    "sale": "",
+    "mode": "discount_amount",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Use this total",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "trio-1280-pressed": {
+    "price": "1179.00",
+    "sale": "",
+    "mode": "discount_amount",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1310.00",
+      "saving": "—"
+    },
+    "button": "Use this total",
+    "applied": null,
+    "sub": "Unsaved changes"
+  },
+  "trio-1280-saved": {
+    "price": "1310.00",
+    "sale": "",
+    "mode": "discount_amount",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1310.00",
+      "saving": "—"
+    },
+    "button": "Use this total",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "trio-1280-server": {
+    "price_aed": "1310.00",
+    "sale_aed": null,
+    "price_mode": "discount_amount",
+    "discount_amount": "0.00",
+    "discount_percent": "",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1310.00",
+    "set_basis_aed": "",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-trio-set/"
+    }
+  },
+  "shop-trio-390": {
+    "pdp": {
+      "priceText": "AED 1,310",
+      "del": [],
+      "badge": [
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,310",
+      "scrollWidth": 390
+    },
+    "card": {
+      "text": "NEW Quick view Glow Trio Set AED 1,310 ADD TO CART",
+      "del": [],
+      "pct": null
+    }
+  },
+  "shop-trio-1280": {
+    "pdp": {
+      "priceText": "AED 1,310",
+      "del": [],
+      "badge": [
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,310",
+      "scrollWidth": 1280
+    },
+    "card": {
+      "text": "NEW Quick view Glow Trio Set AED 1,310 ADD TO CART",
+      "del": [],
+      "pct": null
+    }
+  },
+  "duo-390-opened": {
+    "price": "1179.00",
+    "sale": "",
+    "mode": "discount_percent",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Use this total",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "duo-390-pressed": {
+    "price": "1179.00",
+    "sale": "",
+    "mode": "discount_amount",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1310.00",
+      "saving": "—"
+    },
+    "button": "Use this total",
+    "applied": null,
+    "sub": "Unsaved changes"
+  },
+  "duo-390-saved": {
+    "price": "1310.00",
+    "sale": "",
+    "mode": "discount_amount",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1310.00",
+      "saving": "—"
+    },
+    "button": "Use this total",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "duo-390-server": {
+    "price_aed": "1310.00",
+    "sale_aed": null,
+    "price_mode": "discount_amount",
+    "discount_amount": "0.00",
+    "discount_percent": "",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1310.00",
+    "set_basis_aed": "",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-duo-set/"
+    }
+  },
+  "editorScrollWidth390": 390,
+  "shop-duo-390": {
+    "pdp": {
+      "priceText": "AED 1,310",
+      "del": [],
+      "badge": [
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,310",
+      "scrollWidth": 390
+    },
+    "card": {
+      "text": "NEW Quick view Glow Duo Set AED 1,310 ADD TO CART",
+      "del": [],
+      "pct": null
+    }
+  },
+  "shop-duo-1280": {
+    "pdp": {
+      "priceText": "AED 1,310",
+      "del": [],
+      "badge": [
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,310",
+      "scrollWidth": 1280
+    },
+    "card": {
+      "text": "NEW Quick view Glow Duo Set AED 1,310 ADD TO CART",
+      "del": [],
+      "pct": null
+    }
+  }
+}

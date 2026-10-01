@@ -1,0 +1,586 @@
+{
+  "phase": "after",
+  "saves": [
+    {
+      "status": 200,
+      "ok": true
+    }
+  ],
+  "ids": {
+    "trio": 29,
+    "duo": 30,
+    "draft": 28,
+    "simple": 25
+  },
+  "trio-server-before": {
+    "price_aed": "1179.00",
+    "sale_aed": null,
+    "price_mode": "discount_amount",
+    "discount_amount": "131.00",
+    "discount_percent": "",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1179.00",
+    "set_basis_aed": "",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-trio-set/",
+      "live": true
+    }
+  },
+  "duo-server-before": {
+    "price_aed": "1179.00",
+    "sale_aed": null,
+    "price_mode": "discount_percent",
+    "discount_amount": "",
+    "discount_percent": "10",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1179.00",
+    "set_basis_aed": "",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-duo-set/",
+      "live": true
+    }
+  },
+  "visit-trio-1280": {
+    "tag": "A",
+    "text": "Visit",
+    "href": "/product/pk-glow-trio-set/",
+    "target": "_blank",
+    "rel": "noopener",
+    "disabled": false,
+    "barHeight": 61,
+    "scrollWidth": 1280
+  },
+  "visit-duo-1280": {
+    "tag": "A",
+    "text": "Visit",
+    "href": "/product/pk-glow-duo-set/",
+    "target": "_blank",
+    "rel": "noopener",
+    "disabled": false,
+    "barHeight": 61,
+    "scrollWidth": 1280
+  },
+  "visit-draft-1280": {
+    "tag": "BUTTON",
+    "text": "Not live yet",
+    "href": null,
+    "target": null,
+    "rel": null,
+    "disabled": true,
+    "barHeight": 61,
+    "scrollWidth": 1280
+  },
+  "visit-simple-1280": {
+    "tag": "A",
+    "text": "Visit",
+    "href": "/product/pk-led-booster/",
+    "target": "_blank",
+    "rel": "noopener",
+    "disabled": false,
+    "barHeight": 61,
+    "scrollWidth": 1280
+  },
+  "shop-trio-asis-390": {
+    "pdp": {
+      "priceText": "AED 1,179",
+      "del": [],
+      "badge": [
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,179 You save AED 131",
+      "scrollWidth": 390
+    },
+    "card": {
+      "text": "NEW Quick view Glow Trio Set AED 1,179 ADD TO CART",
+      "del": [],
+      "was": null,
+      "wasDecoration": null,
+      "now": "AED 1,179",
+      "pct": null
+    }
+  },
+  "shop-trio-asis-1280": {
+    "pdp": {
+      "priceText": "AED 1,179",
+      "del": [],
+      "badge": [
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,179 You save AED 131",
+      "scrollWidth": 1280
+    },
+    "card": {
+      "text": "NEW Quick view Glow Trio Set AED 1,179 ADD TO CART",
+      "del": [],
+      "was": null,
+      "wasDecoration": null,
+      "now": "AED 1,179",
+      "pct": null
+    }
+  },
+  "trio-1280-opened": {
+    "price": "1179.00",
+    "sale": "",
+    "mode": "discount_amount",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Apply to Price and Sale price",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "trio-1280-pressed": {
+    "price": "1310",
+    "sale": "1179",
+    "mode": "fixed",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Apply to Price and Sale price",
+    "applied": "Filled in. Price is what the products cost bought separately and Sale price is the set price, and the set is now priced by A price I type. Press Save to put it on the shop.",
+    "sub": "Unsaved changes"
+  },
+  "trio-1280-saved": {
+    "price": "1310.00",
+    "sale": "1179.00",
+    "mode": "fixed",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Apply to Price and Sale price",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "trio-1280-server": {
+    "price_aed": "1310.00",
+    "sale_aed": "1179.00",
+    "price_mode": "fixed",
+    "discount_amount": "",
+    "discount_percent": "",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1179.00",
+    "set_basis_aed": "1310.00",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-trio-set/",
+      "live": true
+    }
+  },
+  "shop-trio-390": {
+    "pdp": {
+      "priceText": "AED 1,310 AED 1,179 -10%",
+      "del": [
+        "AED 1,310"
+      ],
+      "badge": [
+        "-10%",
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,179 You save AED 131",
+      "scrollWidth": 390
+    },
+    "card": {
+      "text": "NEW -10% Quick view Glow Trio Set AED 1,310 AED 1,179 ADD TO CART",
+      "del": [],
+      "was": "AED 1,310",
+      "wasDecoration": "line-through",
+      "now": "AED 1,179",
+      "pct": "-10%"
+    }
+  },
+  "shop-trio-1280": {
+    "pdp": {
+      "priceText": "AED 1,310 AED 1,179 -10%",
+      "del": [
+        "AED 1,310"
+      ],
+      "badge": [
+        "-10%",
+        "Inclusive of 5% VAT"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,179 You save AED 131",
+      "scrollWidth": 1280
+    },
+    "card": {
+      "text": "NEW -10% Quick view Glow Trio Set AED 1,310 AED 1,179 ADD TO CART",
+      "del": [],
+      "was": "AED 1,310",
+      "wasDecoration": "line-through",
+      "now": "AED 1,179",
+      "pct": "-10%"
+    }
+  },
+  "duo-390-opened": {
+    "price": "1179.00",
+    "sale": "",
+    "mode": "discount_percent",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Apply to Price and Sale price",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "duo-390-pressed": {
+    "price": "1310",
+    "sale": "1179",
+    "mode": "fixed",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Apply to Price and Sale price",
+    "applied": "Filled in. Price is what the products cost bought separately and Sale price is the set price, and the set is now priced by A price I type. Press Save to put it on the shop.",
+    "sub": "Unsaved changes"
+  },
+  "duo-390-saved": {
+    "price": "1310.00",
+    "sale": "1179.00",
+    "mode": "fixed",
+    "tiles": {
+      "parts": "AED 1310.00",
+      "price": "AED 1179.00",
+      "saving": "AED 131.00"
+    },
+    "button": "Apply to Price and Sale price",
+    "applied": null,
+    "sub": "All changes saved"
+  },
+  "duo-390-server": {
+    "price_aed": "1310.00",
+    "sale_aed": "1179.00",
+    "price_mode": "fixed",
+    "discount_amount": "",
+    "discount_percent": "",
+    "set_parts_total_aed": "1310.00",
+    "set_effective_aed": "1179.00",
+    "set_basis_aed": "1310.00",
+    "sale_starts_at": null,
+    "sale_ends_at": null,
+    "readonly": {
+      "total_sales": 0,
+      "rating": 0,
+      "review_count": 0,
+      "url": "/product/pk-glow-duo-set/",
+      "live": true
+    }
+  },
+  "editorScrollWidth390": 390,
+  "visit-trio-390": {
+    "tag": "A",
+    "text": "Visit",
+    "href": "/product/pk-glow-trio-set/",
+    "target": "_blank",
+    "rel": "noopener",
+    "disabled": false,
+    "barHeight": 106,
+    "scrollWidth": 390
+  },
+  "visit-duo-390": {
+    "tag": "A",
+    "text": "Visit",
+    "href": "/product/pk-glow-duo-set/",
+    "target": "_blank",
+    "rel": "noopener",
+    "disabled": false,
+    "barHeight": 106,
+    "scrollWidth": 390
+  },
+  "visit-draft-390": {
+    "tag": "BUTTON",
+    "text": "Not live yet",
+    "href": null,
+    "target": null,
+    "rel": null,
+    "disabled": true,
+    "barHeight": 106,
+    "scrollWidth": 390
+  },
+  "visit-simple-390": {
+    "tag": "A",
+    "text": "Visit",
+    "href": "/product/pk-led-booster/",
+    "target": "_blank",
+    "rel": "noopener",
+    "disabled": false,
+    "barHeight": 106,
+    "scrollWidth": 390
+  },
+  "shop-duo-390": {
+    "pdp": {
+      "priceText": "AED 1,310 AED 1,179 -10%",
+      "del": [
+        "AED 1,310"
+      ],
+      "badge": [
+        "-10%",
+        "Inclusive of 5% VAT",
+        "-10%"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,179 You save AED 131",
+      "scrollWidth": 390
+    },
+    "card": {
+      "text": "NEW -10% Quick view Glow Duo Set AED 1,310 AED 1,179 ADD TO CART",
+      "del": [],
+      "was": "AED 1,310",
+      "wasDecoration": "line-through",
+      "now": "AED 1,179",
+      "pct": "-10%"
+    }
+  },
+  "shop-duo-1280": {
+    "pdp": {
+      "priceText": "AED 1,310 AED 1,179 -10%",
+      "del": [
+        "AED 1,310"
+      ],
+      "badge": [
+        "-10%",
+        "Inclusive of 5% VAT",
+        "-10%"
+      ],
+      "panelFoot": "Bought separately AED 1,310 Set price AED 1,179 You save AED 131",
+      "scrollWidth": 1280
+    },
+    "card": {
+      "text": "NEW -10% Quick view Glow Duo Set AED 1,310 AED 1,179 ADD TO CART",
+      "del": [],
+      "was": "AED 1,310",
+      "wasDecoration": "line-through",
+      "now": "AED 1,179",
+      "pct": "-10%"
+    }
+  },
+  "list-1280": {
+    "rows": [
+      {
+        "name": "Glow Duo Set",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-glow-duo-set/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Glow Trio Set",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-glow-trio-set/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Coming Soon Toner",
+        "tag": "BUTTON",
+        "text": "Not live yet",
+        "href": null,
+        "target": null,
+        "rel": null,
+        "disabled": true
+      },
+      {
+        "name": "GlowLab Peptide Serum 30ml",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-peptide-serum/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "GlowLab Collagen Capsule Cream 50ml",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-capsule-cream/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "GlowLab LED Booster Device",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-led-booster/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Ceramide Daily Moisturiser",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/ceramide-daily-moisturiser/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Overnight Sleeping Mask",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/overnight-sleeping-mask/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Gentle Foaming Cleanser",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/gentle-foaming-cleanser/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Vitamin C Brightening Serum",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/vitamin-c-brightening-serum/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Barrier Repair Cream",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/barrier-repair-cream/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      }
+    ],
+    "scrollWidth": 1280
+  },
+  "list-390": {
+    "rows": [
+      {
+        "name": "Glow Duo Set",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-glow-duo-set/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Glow Trio Set",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-glow-trio-set/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Coming Soon Toner",
+        "tag": "BUTTON",
+        "text": "Not live yet",
+        "href": null,
+        "target": null,
+        "rel": null,
+        "disabled": true
+      },
+      {
+        "name": "GlowLab Peptide Serum 30ml",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-peptide-serum/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "GlowLab Collagen Capsule Cream 50ml",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-capsule-cream/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "GlowLab LED Booster Device",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/pk-led-booster/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Ceramide Daily Moisturiser",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/ceramide-daily-moisturiser/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Overnight Sleeping Mask",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/overnight-sleeping-mask/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Gentle Foaming Cleanser",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/gentle-foaming-cleanser/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Vitamin C Brightening Serum",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/vitamin-c-brightening-serum/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      },
+      {
+        "name": "Barrier Repair Cream",
+        "tag": "A",
+        "text": "Visit",
+        "href": "/product/barrier-repair-cream/",
+        "target": "_blank",
+        "rel": "noopener",
+        "disabled": false
+      }
+    ],
+    "scrollWidth": 390
+  }
+}

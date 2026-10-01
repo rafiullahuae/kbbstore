@@ -3,6 +3,39 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.344
+**Rey blocks on product pages, search that follows every word, sets first in
+search, Growth → Search Terms, the set price button, Visit, and "Are you
+sure?" before every reset.** Apply after .343. Ships with **WordPress plugin
+1.10.0** (Products must be exported once more).
+
+| # | Your report | Now | Where |
+|---|---|---|---|
+| 13 | `[rey_global_section id="…"]` printed as text | The block is exported (plugin 1.10.0), imported and drawn in place: heading, then image + title + text items, 3 across on desktop, stacked on phones. Pictures are brought across. A missing block shows nothing | Content → HTML Blocks (edit one, every product using it changes) |
+| 14 | Nine Remove buttons on the import screen | One "Remove all files" (uploaded files only, never imported data) | Store → Store Import / Export → 1 · Your exports |
+| 16 | "Use this total" did not fill Price and Sale price (it reset the discount to 0) | "Apply to Price and Sale price": Price = bought-separately total, Sale = set price; the shop shows the struck price, the badge and "You save" | Catalog → Product editor → a set → What is in the box |
+| 17 | A Visit button | Visit opens the live page; "Not live yet" when it is not published | Product editor top bar; Catalog → Products, beside Edit |
+| 18 | Resets happened by mistake | Every Reset / Restore / Revert / Back to defaults asks "Are you sure?" (No is the default) | Whole admin |
+| 20 | Search stopped after 2–3 words and showed unrelated products | Every word, any order; nothing unrelated is added | Search box and results page |
+| 21 | Sets never in search | A set at #1 for its brand (different one each search, or best seller), or the set you choose per brand | Store → Site Search → Sets in search |
+| 22 | See what people search | Ranked terms by day / week / month / year, with change, and what found nothing | Growth & Marketing → Search Terms |
+
+Defaults that moved because you asked: "Sets first" ON. Searches are now
+counted only once they settle (no "med" on the way to "medicube"), and a
+search that found nothing is counted too.
+
+Files: app/Http/Controllers/Admin/{BlocksApiController,CatalogProductsApiController,ImportApiController,ProductEditorApiController,SearchTermsApiController,SiteSearchApiController}.php,
+app/Http/Controllers/Store/{SearchController,ShopController}.php, app/Models/Block.php,
+app/Services/{HeaderSettings,SearchInsights,SearchTermsReport}.php,
+app/Services/Import/{DocumentMediaRewrite,ElementorToHtml,ImportRunner,MediaAudit}.php,
+app/Services/Import/Entities/{ContentBlockImporter,ProductImporter}.php,
+app/Services/ImportConsole/ImportWorkspace.php,
+app/Support/{AdminCapabilities,GlobalSections,ProductTabs,RichText,SearchSetChoices,SearchTerms}.php,
+resources/css/kbb/kbb-product.css, resources/js/kbb/search.js, public/build/*,
+resources/views/admin/app.blade.php, resources/views/admin/partials/{html-blocks-screen,product-editor-screen,reset-guard,search-terms-screen}.blade.php,
+resources/views/store/product.blade.php, routes/web.php, and migrations
+2027_07_08_000000 … 2027_07_09_000000 (six clear-caches, one adds block import columns).
+
 ## 2.60.343
 **Turn any product into a set.** Apply after .342. Works with WordPress
 plugin **1.9.1** (1.9.1 only stops a second installed copy from crashing

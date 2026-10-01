@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Import;
 
+use App\Models\Block;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Post;
@@ -264,6 +265,28 @@ final class MediaAudit
 
             foreach ($carried as $url => $tags) {
                 yield [$owner, isset($tags['img']) ? 'posts.body' : 'posts.body (link)', (string) $url];
+            }
+        }
+
+        /*
+         * IMPORTED CONTENT BLOCKS (Lane PJ-B). A Rey Global Section arrives
+         * from content_blocks.csv with its Elementor image-box pictures as full
+         * URLs on the old site, and it is printed inside the Description tab
+         * of every product that names it. A document, read through the same
+         * parser as `posts.body`, and paired with the entry in
+         * DocumentMediaRewrite::DOCUMENTS: a picture the rewrite can reach and
+         * the audit cannot see is a rewrite nobody is told to make.
+         */
+        foreach (Block::query()->whereNotNull('wc_id')->select(['id', 'slug', 'content'])->cursor() as $block) {
+            $carried = [];
+
+            foreach (DocumentMediaRewrite::addresses($block->content) as $address) {
+                $carried[$address['url']] ??= [];
+                $carried[$address['url']][$address['tag']] = true;
+            }
+
+            foreach ($carried as $url => $tags) {
+                yield ['block '.$block->id.' ('.$block->slug.')', isset($tags['img']) ? 'blocks.content' : 'blocks.content (link)', (string) $url];
             }
         }
 

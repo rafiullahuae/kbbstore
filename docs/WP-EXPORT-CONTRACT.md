@@ -32,6 +32,7 @@ names the existing importers already parse:
 | `posts.csv` | `PostImporter` | exists — Lane GJ |
 | `menus.csv` | `MenuImporter` | exists — Lane MN, plugin 1.7.0 |
 | `menu_items.csv` | `MenuItemImporter` | exists — Lane MN, plugin 1.7.0 |
+| `content_blocks.csv` | `ContentBlockImporter` | plugin 1.10.0 (Lane PJ-A); the importer is Lane PJ-B's |
 | `media.csv` | — | **gap** — `kbb:import-media` re-derives its download list from the imported product URLs instead, so this file is opened by nothing and the unread-file channel names it every run. Its `exists` column is a `stat()` taken on the OLD server and cannot be re-taken after the cutover |
 
 That is deliberate and it is the whole risk-management strategy here. Ten of
@@ -158,6 +159,46 @@ export still imports — it simply carries neither of these facts.
   `kbb:import-redirects` therefore requires `--permalinks=` on every run; see
   `docs/IMPORT-RUNBOOK.md` §10. Store → SEO & Meta does not need the flag —
   `UrlsMediaApiController` passes the uploaded file itself.
+
+## The 1.10.0 delta: the sections a description embeds
+
+ADDITIVE, in the `catalogue` group. A 1.9.x export still imports and simply
+carries no sections.
+
+On the old shop a product description can end with
+`[rey_global_section id="18159"]`, which renders a separate post built in
+Elementor. `products.csv` carries the shortcode verbatim; `content_blocks.csv`
+carries what it points at.
+
+| Column | Holds |
+| --- | --- |
+| `id` | the WordPress post id the shortcode names |
+| `post_type` | its post type as stored. Selected by id, never by type: `rey-global-sections` is the usual one, but an Elementor library template or a page works the same way through the shortcode |
+| `slug` | `post_name` |
+| `title` | `post_title` |
+| `status` | `post_status`, unfiltered — the importer decides what a draft section means |
+| `modified` | `post_modified_gmt` as `Y-m-d H:i:s` (UTC, unlike every other date in the export, which is local) |
+| `shortcode` | the tag that led to it, e.g. `rey_global_section` |
+| `referenced_by` | pipe-joined ids of the products whose description or short description names it directly. Empty for a section only another section names |
+| `elementor_data` | the raw `_elementor_data` meta string, byte for byte (JSON as `wp_json_encode` wrote it: `\/` in addresses), or empty |
+| `plain_html` | the post's own `post_content` — Elementor's HTML fallback, or the content of a section not built in Elementor. Carries newlines inside the quoted cell |
+
+- **Which posts:** every id a resolved shortcode names in the description or
+  short description of a product this export carries (the trash follows the
+  products stage's `skip_trashed`), plus ids those sections name in their own
+  `post_content` or anywhere in their Elementor tree, three levels below the
+  product, each written once. The id attribute is read as `id="N"`, `id='N'`
+  or `id=N`, with other attributes in any order; `[[tag ...]]`, WordPress's
+  escape for literal text, is not a use.
+- **What it cannot carry is said in `notes`:** a SHORTCODE CENSUS of every tag in
+  any carried product's descriptions with the number of products using it and
+  whether this export resolves it; ids named and not present (with the products
+  or sections naming them); sections nested too deep; the Elementor widget types
+  the sections use; how many pictures their trees name (those are NOT in
+  `media.csv`).
+- **A carried section is not also a `posts.csv` or `permalinks.csv` row**, when
+  the `catalogue` group is in the export. Posts, pages and products a shortcode
+  names are never taken out of their own files.
 
 ## The 1.7.0 delta: the navigation
 

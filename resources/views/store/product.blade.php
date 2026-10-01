@@ -196,8 +196,14 @@
          its fade, under "Read more" rather than behind it. So the element is
          a <div> for a blurb that carries blocks, and stays the <p> it always
          was for one that does not: two literal elements behind an @if, never
-         a tag name built from a variable. */
-    $kbbBlurb = \App\Support\RichText::forDisplay($product->t('short_description'));
+         a tag name built from a variable.
+
+       ▲ forStorefront(), NOT forDisplay(). (Lane PJ-B) The same pipeline plus
+         the old shop's `[rey_global_section id=N]` drawn as its block -- a
+         blurb naming no section comes back byte for byte as forDisplay()
+         returned it. A blurb that does name one carries a <div>, so
+         hasBlocks() below picks the <div> wrapper for it. */
+    $kbbBlurb = \App\Support\RichText::forStorefront($product->t('short_description'));
     $kbbBlurbBlocks = \App\Support\RichText::hasBlocks($kbbBlurb);
 
     /* ═══════════════════════════════════════════════════════════════════════

@@ -84,6 +84,22 @@ kbb_harness_build( $pdo, $prefix, $storage );
 // Dream Code Reviews' table: seeded with --dream=1, dropped otherwise (shop.php).
 kbb_harness_dream_reviews( $pdo, $prefix, isset( $args['dream'] ) && '1' === $args['dream'] );
 
+// Rey global sections and the descriptions that embed them: --rey=1 (shop.php).
+// The registered-shortcode list is what a Rey + Elementor site has after
+// `init`, which is when the export screen's requests run. It is set only with
+// the flag, so every other export is exactly what it was.
+if ( isset( $args['rey'] ) && '1' === $args['rey'] ) {
+	kbb_harness_rey_sections( $pdo, $prefix, true );
+
+	$GLOBALS['shortcode_tags'] = array(
+		'caption'            => 'img_caption_shortcode',
+		'gallery'            => 'gallery_shortcode',
+		'embed'              => '__return_false',
+		'rey_global_section' => 'reycore_global_section_shortcode',
+		'elementor-template' => 'elementor_template_shortcode',
+	);
+}
+
 // The plugin, loaded exactly as WordPress would load it.
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';

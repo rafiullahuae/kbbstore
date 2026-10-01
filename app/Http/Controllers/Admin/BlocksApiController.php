@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Block;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
+use App\Support\GlobalSections;
 use App\Support\Shortcodes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,9 +66,14 @@ class BlocksApiController extends Controller
      */
     public function index(): JsonResponse
     {
+        /*
+         * `wc_id` and `source` because shortcode() reads them: an imported Rey
+         * section is shown with the `[rey_global_section id="N"]` its products
+         * already carry. (Lane PJ-B)
+         */
         $blocks = Block::query()
             ->orderBy('name')
-            ->get(['id', 'slug', 'name', 'status', 'updated_at']);
+            ->get(['id', 'slug', 'name', 'status', 'updated_at', 'wc_id', 'source']);
 
         $usage = $this->usageCounts();
 
@@ -79,6 +86,7 @@ class BlocksApiController extends Controller
                 'status' => $b->status,
                 'updated_at' => optional($b->updated_at)->toIso8601String(),
                 'shortcode' => $b->shortcode(),
+                'imported' => $b->isImported(),
                 'used_in' => count($usage[$b->slug] ?? []),
             ])->all(),
             'statuses' => Block::STATUSES,
@@ -98,6 +106,7 @@ class BlocksApiController extends Controller
                 'status' => $block->status,
                 'content' => (string) $block->content,
                 'shortcode' => $block->shortcode(),
+                'imported' => $block->isImported(),
                 'updated_at' => optional($block->updated_at)->toIso8601String(),
             ],
             'used_in' => $this->usageCounts()[$block->slug] ?? [],
@@ -147,7 +156,7 @@ class BlocksApiController extends Controller
                 'ok' => false,
                 'error' => 'block_in_use',
                 'used_in' => $used,
-                'message' => $n . ' ' . Str::plural('page', $n) . ' or post still '
+                'message' => $n . ' ' . Str::plural('page', $n) . ', post or product still '
                     . ($n === 1 ? 'places' : 'place') . ' this block. Deleting it removes '
                     . ($n === 1 ? 'that section' : 'those sections') . ' from the storefront.',
             ], 422);
@@ -225,6 +234,47 @@ class BlocksApiController extends Controller
             ->where('body', 'like', '%[kbb_block%')
             ->get(['id', 'title', 'status', 'body'])
             ->each(fn ($p) => $record('post', $p, (string) $p->body));
+
+        /*
+         * AND THE PRODUCTS THAT NAME AN IMPORTED SECTION. (Lane PJ-B)
+         *
+         * An imported Rey Global Section is placed by `[rey_global_section
+         * id="N"]` in product copy, not by [kbb_block] in a page -- so without
+         * this every imported block read "—" in the Used in column while it was
+         * drawn on dozens of product pages, and Delete would remove it from all
+         * of them without the in-use warning. Read with the storefront's own
+         * pattern (GlobalSections::ids()), so the count cannot disagree with
+         * what the product page draws. The LIKE is a coarse prefilter only.
+         */
+        $slugByWcId = Block::query()->whereNotNull('wc_id')->pluck('slug', 'wc_id')->all();
+
+        if ($slugByWcId !== []) {
+            $query = Product::query()->select(['id', 'name', 'status', 'description', 'short_description'])
+                ->where(function ($q): void {
+                    foreach (GlobalSections::SHORTCODES as $shortcode) {
+                        $q->orWhere('description', 'like', '%[' . $shortcode . '%')
+                            ->orWhere('short_description', 'like', '%[' . $shortcode . '%');
+                    }
+                });
+
+            foreach ($query->cursor() as $product) {
+                foreach (GlobalSections::ids($product->description . ' ' . $product->short_description) as $wcId) {
+                    $slug = $slugByWcId[$wcId] ?? null;
+
+                    if ($slug === null) {
+                        continue;
+                    }
+
+                    $out[$slug] ??= [];
+                    $out[$slug]['product:' . $product->id] = [
+                        'type' => 'product',
+                        'id' => (int) $product->id,
+                        'title' => (string) $product->name,
+                        'status' => (string) $product->status,
+                    ];
+                }
+            }
+        }
 
         // Drop the type:id keys used for de-duplication; callers count and
         // list these, and a JSON object keyed "page:3" would reach the screen

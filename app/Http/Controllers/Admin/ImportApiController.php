@@ -226,6 +226,32 @@ class ImportApiController extends Controller
         }
 
         /*
+         * "Remove all files" (Lane PJ-B): the owner pressed nine Remove buttons
+         * to clear the card. The same endpoint, the same capability and the
+         * same workspace methods as each of those buttons -- no new route, so
+         * nothing for a compiled route cache to hide.
+         *
+         * REFUSED WHILE A RUN IS GOING. One Remove mid-run takes one file a
+         * step may still want; all of them takes every file the run was
+         * started over, and its next step would fail on a file that was there
+         * when he pressed Start. Stop it first, and the button works.
+         */
+        if ($entity === 'all') {
+            $run = $this->driver->run();
+
+            if ($run !== null && ($run->status ?? null) === 'running') {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'An import is part-way through and is reading these files. Stop it first, then remove them.',
+                ], 409);
+            }
+
+            $removed = $this->workspace->forgetAll();
+
+            return response()->json(['ok' => true, 'removed' => $removed, 'status' => $this->statusPayload()]);
+        }
+
+        /*
          * And the same for the two companion files, for the same reason. They
          * can be uploaded, so they have to be removable: a permalinks.csv from
          * the wrong export silently changes every redirect this shop proposes,

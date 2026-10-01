@@ -87,7 +87,7 @@ class KBB_Export_Runner {
 	 * plugin's main file; a test that they agree is the part a human cannot do
 	 * by looking at one file.
 	 */
-	const PLUGIN_VERSION = '1.9.1';
+	const PLUGIN_VERSION = '1.10.0';
 
 	/** @var array<string,mixed> */
 	private $state;
@@ -823,6 +823,13 @@ class KBB_Export_Runner {
 			new KBB_Export_Stage_Attributes( $s ),
 			new KBB_Export_Stage_Products( $s ),
 			new KBB_Export_Stage_Variations( $s ),
+			/*
+			 * 1.10.0. The page-builder sections product descriptions embed by
+			 * shortcode -- `[rey_global_section id="18159"]` -- which no file
+			 * carried, so the new shop printed the shortcode as text. Last in
+			 * the catalogue because it reads what the products stage reads.
+			 */
+			new KBB_Export_Stage_Content_Blocks( $s ),
 			new KBB_Export_Stage_Seo( $s ),
 			new KBB_Export_Stage_Coupons( $s ),
 			new KBB_Export_Stage_Customers( $s ),

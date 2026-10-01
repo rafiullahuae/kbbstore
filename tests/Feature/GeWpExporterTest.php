@@ -1521,6 +1521,8 @@ it('records which groups it exported, and a group left out is absent rather than
 
     expect(array_keys($manifest['files']))->toBe([
         'categories.csv', 'brands.csv', 'tags.csv', 'attributes.csv', 'products.csv', 'variations.csv',
+        // Plugin 1.10.0: the Rey / Elementor sections descriptions embed.
+        'content_blocks.csv',
     ]);
 
     // Not written, not listed, not on disk — all three, because any one of them
@@ -2143,7 +2145,7 @@ it('puts the group files at the archive root with no wrapping directory', functi
     $dir = gkExport('catalogue,customers,sales', 'sales:customers,sales:catalogue');
 
     $expected = [
-        'catalogue' => ['categories.csv', 'brands.csv', 'tags.csv', 'attributes.csv', 'products.csv', 'variations.csv'],
+        'catalogue' => ['categories.csv', 'brands.csv', 'tags.csv', 'attributes.csv', 'products.csv', 'variations.csv', 'content_blocks.csv'],
         'customers' => ['customers.csv'],
         'sales' => ['orders.csv', 'order_items.csv', 'refunds.csv', 'order_notes.csv'],
     ];
@@ -2197,7 +2199,7 @@ it('gives every archive of one export the same export id and a manifest narrowed
     $whole = json_decode((string) file_get_contents($dir.'/manifest.json'), true);
 
     $groups = [
-        'catalogue' => ['categories.csv', 'brands.csv', 'tags.csv', 'attributes.csv', 'products.csv', 'variations.csv'],
+        'catalogue' => ['categories.csv', 'brands.csv', 'tags.csv', 'attributes.csv', 'products.csv', 'variations.csv', 'content_blocks.csv'],
         'customers' => ['customers.csv'],
         'sales' => ['orders.csv', 'order_items.csv', 'refunds.csv', 'order_notes.csv'],
     ];

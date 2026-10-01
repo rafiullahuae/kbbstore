@@ -9432,7 +9432,14 @@ function impFilesCard(s){
   return '<div class="card pad" style="margin-bottom:16px">'
     +'<div class="between" style="margin-bottom:12px;flex-wrap:wrap;gap:10px"><div><b style="font-size:14px">1 · Your exports</b>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0">Upload as many as you have. You do not need all six — a file you leave out is simply not touched, '
-    +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div></div>'
+    +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div>'
+    /* Lane PJ-B: one button for what took the owner nine Remove presses. Shown only when there is a file
+       to remove; files only, never anything already imported -- the confirm() says so. */
+    +((s.files.some(f=>f.present)||(s.companions||[]).some(c=>c.present))
+      ?'<button class="btn ghost sm" id="impForgetAll"'+(s.run&&s.run.status==='running'?' disabled title="Stop the import first"':'')
+        +' style="padding:4px 11px;font-size:12px">Remove all files</button>'
+      :'')
+    +'</div>'
     +'<div class="impdrop" id="impDrop"><b>Drop your CSV files or a group\'s .zip here, or click to choose</b>'
     +'<span>Name them <code style="font-family:var(--mono)">categories.csv</code>, <code style="font-family:var(--mono)">brands.csv</code>, '
     +'<code style="font-family:var(--mono)">products.csv</code>, <code style="font-family:var(--mono)">customers.csv</code>, '
@@ -10007,6 +10014,15 @@ function impWire(){
       await impRefresh(); impPaint();
     };
   });
+
+  const forgetAll=$('#impForgetAll');
+  if(forgetAll) forgetAll.onclick=async()=>{
+    if(!confirm('Remove every uploaded file from this card?\n\nOnly the files go. Nothing you have already imported is touched — no product, order or customer.')) return;
+    forgetAll.disabled=true;
+    const r=await impApi('/import/forget',{method:'POST',body:JSON.stringify({entity:'all'})});
+    if(r.status!==200){ impMsg=(r.data&&r.data.message)||'Those files could not be removed.'; impMsgKind='warn'; }
+    await impRefresh(); impPaint();
+  };
 
   document.querySelectorAll('.impopt').forEach(b=>{
     b.onclick=()=>{
@@ -20688,7 +20704,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
         return '<th style="' + align + (sort ? ';cursor:pointer' : '') + '"' + (sort ? ' data-cpsort="' + sort + '"' : '') + '>' +
           sesc(c[1]) + caret + '</th>';
       }).join('') +
-      '<th style="width:74px"></th>';
+      '<th style="width:170px"></th>';
 
     var bodyRows = rows.map(function(p){
       return '<tr' + (CP.sel[p.id] ? ' style="background:var(--border-2,rgba(0,0,0,.03))"' : '') + '>' +
@@ -20708,7 +20724,17 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
           '</div>' +
         '</div></td>' +
         CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){ return cpCell(c[0], p, d); }).join('') +
-        '<td><button class="btn ghost sm" data-cpedit="' + p.id + '">Edit</button></td>' +
+        /* (Lane PK) Visit beside Edit: the product on the shop, in a new tab.
+           The address is the server's (p.url is Product::url(), base path
+           included) and only drawn as a link when p.live says the shop would
+           answer it; otherwise a disabled "Not live yet", never a 404. The
+           scheme is checked because an href is an href. */
+        '<td><div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap">' +
+          ((p.live && /^(\/|https?:\/\/)/i.test(String(p.url || '')))
+            ? '<a class="btn ghost sm" data-cpvisit="' + p.id + '" href="' + sesc(p.url) + '" target="_blank" rel="noopener" title="Open on the shop, in a new tab" style="text-decoration:none">Visit</a>'
+            : '<button type="button" class="btn ghost sm" data-cpvisit="' + p.id + '" disabled title="The shop does not show this product yet" style="opacity:.55;cursor:default">Not live yet</button>') +
+          '<button class="btn ghost sm" data-cpedit="' + p.id + '">Edit</button>' +
+        '</div></td>' +
       '</tr>';
     }).join('');
 

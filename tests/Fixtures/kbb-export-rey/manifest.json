@@ -1,0 +1,255 @@
+{
+    "format": "kbb-export/1",
+    "export_id": "f8f92585-c427-419b-9fdf-f0276769cec0",
+    "generated_at": "2026-10-02T01:22:17+04:00",
+    "source": {
+        "site_url": "https://kbeautybliss.com",
+        "home_url": "https://kbeautybliss.com",
+        "wp_version": "6.5.2",
+        "woo_version": "8.7.0",
+        "plugin_version": "1.10.0",
+        "timezone": "Asia/Dubai",
+        "order_storage": "posts",
+        "permalink_structure": "/%postname%/",
+        "woocommerce_permalinks": {
+            "product_base": "/product",
+            "category_base": "",
+            "tag_base": "product-tag",
+            "attribute_base": ""
+        },
+        "taxonomies": {
+            "category": 1,
+            "nav_menu": 1,
+            "pa_brands": 2,
+            "pa_size": 2,
+            "product_cat": 3,
+            "product_tag": 1,
+            "product_type": 2,
+            "product_visibility": 3
+        },
+        "post_types": {
+            "attachment": {
+                "inherit": 6
+            },
+            "elementor_library": {
+                "publish": 1
+            },
+            "nav_menu_item": {
+                "publish": 8
+            },
+            "page": {
+                "publish": 2
+            },
+            "post": {
+                "publish": 1
+            },
+            "product": {
+                "publish": 4,
+                "trash": 1
+            },
+            "product_variation": {
+                "private": 1,
+                "publish": 1
+            },
+            "rey-global-sections": {
+                "publish": 4
+            },
+            "shop_coupon": {
+                "draft": 1,
+                "publish": 1
+            },
+            "shop_order": {
+                "wc-completed": 1,
+                "wc-processing": 1,
+                "wc-refunded": 1
+            },
+            "shop_order_refund": {
+                "wc-completed": 1
+            }
+        }
+    },
+    "files": {
+        "categories.csv": {
+            "rows": 3,
+            "bytes": 294,
+            "sha256": "cb2973c7e2770dc89d0a6ffe85c64f464dcb15e0947359b529d103d11c18b5b5"
+        },
+        "brands.csv": {
+            "rows": 2,
+            "bytes": 222,
+            "sha256": "0485cbcfdbc091ddfea44f9c3ddf5d505b6aa4b660776ea3ed5f4d6ba5932cbc"
+        },
+        "tags.csv": {
+            "rows": 1,
+            "bytes": 115,
+            "sha256": "53417209467ee05ac663b8df53bac45dac0819b03808f3ddbb5f3e47d3a04195"
+        },
+        "attributes.csv": {
+            "rows": 2,
+            "bytes": 355,
+            "sha256": "9a6ff11f5f9637b5b4752a4de12d79c7ebeea42ba63bb6a2765ab1b0a02cb662"
+        },
+        "products.csv": {
+            "rows": 4,
+            "bytes": 2969,
+            "sha256": "d8958941df1048f592b92661d4b4ee8bad997a077a0cb2858368791b66b7c660"
+        },
+        "variations.csv": {
+            "rows": 2,
+            "bytes": 555,
+            "sha256": "75624fa26b3f4ca2829d5e16e4c1b0da3830051a732d9b1817c1265a2f2e1c4c"
+        },
+        "content_blocks.csv": {
+            "rows": 3,
+            "bytes": 5771,
+            "sha256": "9069d637ac595b2ae2bf5d1f0b4f07617cf3dd6c1bd442c2581ae29fad9e2787"
+        },
+        "seo.csv": {
+            "rows": 4,
+            "bytes": 594,
+            "sha256": "2dc9a0d7c5404948d3f09ebb60ee9d052078f89735c881c408a50edc7ad8f484"
+        },
+        "coupons.csv": {
+            "rows": 1,
+            "bytes": 583,
+            "sha256": "0a663f4e0a5d293bb4b2965c2f9de949345d2773476e6d5910396b5ab5bc5a18"
+        },
+        "customers.csv": {
+            "rows": 3,
+            "bytes": 1198,
+            "sha256": "7877a3892bd6c0a640d40a8459d7aa1518c4c8cfefdf25ad4b7be4c7282c2e64"
+        },
+        "orders.csv": {
+            "rows": 3,
+            "bytes": 1993,
+            "sha256": "3c03e23a56b18b252b8979c4b410a655ca9e0cd2d30e77f92ca59d403144cb43"
+        },
+        "order_items.csv": {
+            "rows": 4,
+            "bytes": 503,
+            "sha256": "04c1c4675518b2e182aa817d7ce9292a05ded07e255c95c569243a746da34250"
+        },
+        "refunds.csv": {
+            "rows": 1,
+            "bytes": 211,
+            "sha256": "016d006efd0769bdfe71a0607b95b730c7ea996b8ac382e8d40d7ee9ce35ba64"
+        },
+        "order_notes.csv": {
+            "rows": 1,
+            "bytes": 270,
+            "sha256": "f37e029bc3f3b2eddca904601bb569afda225c70f88201986a684fbe39d5e38b"
+        },
+        "reviews.csv": {
+            "rows": 2,
+            "bytes": 919,
+            "sha256": "9504829443f2e11c4574f76c8bc7ca38e96ce00d6d936bb7b9a2996b72205586"
+        },
+        "posts.csv": {
+            "rows": 5,
+            "bytes": 1500,
+            "sha256": "e9fcf118730868c942c9dae9a650a8a3381dc306c576ed2561873511d096dd1c"
+        },
+        "menus.csv": {
+            "rows": 1,
+            "bytes": 148,
+            "sha256": "e25b61307d580f54b780722cbaa3f828e0cd62792271cad70affb9c88b292082"
+        },
+        "menu_items.csv": {
+            "rows": 7,
+            "bytes": 1003,
+            "sha256": "d0f7a06e4e1136647c2437b8cb06a55f4d97a2ff34effd274bd52a6dbf4409d0"
+        },
+        "permalinks.csv": {
+            "rows": 22,
+            "bytes": 3482,
+            "sha256": "7f8a70e335a07ff240399a122d597575475c19ca873ab531dd93bdca1f6351a5"
+        },
+        "media.csv": {
+            "rows": 14,
+            "bytes": 2223,
+            "sha256": "412e99e1655711386f00137b733c8a0364dea1f69d815df401be5ffbfe16723b"
+        }
+    },
+    "counts": {
+        "categories": 3,
+        "brands": 2,
+        "tags": 1,
+        "attributes": 2,
+        "products": 4,
+        "variations": 2,
+        "content_blocks": 3,
+        "seo": 4,
+        "coupons": 1,
+        "customers": 3,
+        "orders": 3,
+        "order_items": 4,
+        "refunds": 1,
+        "order_notes": 1,
+        "reviews": 2,
+        "posts": 5,
+        "menus": 1,
+        "menu_items": 7,
+        "permalinks": 22,
+        "media": 14
+    },
+    "groups": {
+        "selected": [
+            "catalogue",
+            "seo",
+            "coupons",
+            "customers",
+            "sales",
+            "reviews",
+            "content",
+            "navigation",
+            "addresses"
+        ],
+        "skipped": [],
+        "files": [
+            "categories.csv",
+            "brands.csv",
+            "tags.csv",
+            "attributes.csv",
+            "products.csv",
+            "variations.csv",
+            "content_blocks.csv",
+            "seo.csv",
+            "coupons.csv",
+            "customers.csv",
+            "orders.csv",
+            "order_items.csv",
+            "refunds.csv",
+            "order_notes.csv",
+            "reviews.csv",
+            "posts.csv",
+            "menus.csv",
+            "menu_items.csv",
+            "permalinks.csv",
+            "media.csv"
+        ],
+        "assumed_already_imported": []
+    },
+    "notes": [
+        "Orders were read from legacy (wp_posts): orders are shop_order posts and their fields are wp_postmeta keys.",
+        "Every group was exported: Catalogue, SEO (Yoast), Coupons, Customers, Orders, Reviews, Journal articles, Navigation, Addresses and pictures.",
+        "brands.csv was read from the `pa_brands` taxonomy. BrandImporter promotes these terms to their own table with source_term_id carrying this term id.",
+        "attributes.csv excludes `pa_brands`, which brands.csv carries instead -- exporting it in both would make every brand an attribute value as well as a brand.",
+        "1 product is in the WordPress trash and NOT in products.csv. ProductImporter refuses a trashed product outright -- importing it would make it a live row -- so this export does what that refusal asks. Empty the trash or turn off \"skip trashed\" and re-export if you want them.",
+        "These product meta keys look like product tabs and are NOT in products.csv `custom_tabs`: `_kbb_unknown_tab_plugin`. If the old product page showed extra tabs, they are stored under one of these keys and this build of the exporter does not read it yet.",
+        "SHORTCODES IN PRODUCT DESCRIPTIONS: 4 distinct tags across the description and short description of 4 products. [rey_global_section] in 2 products -- RESOLVED: the posts it names are in content_blocks.csv; [Limited] in 1 product -- NOT RESOLVED: the new shop receives it as text (no shortcode of that name is registered on this site, so it may be ordinary text in square brackets, or belong to a plugin that is switched off); [caption] in 1 product -- NOT RESOLVED: the new shop receives it as text; [elementor-template] in 1 product -- NOT RESOLVED: the new shop receives it as text. A tag marked NOT RESOLVED prints on the new shop exactly as written unless something there understands it.",
+        "content_blocks.csv carries 3 sections that product descriptions pull in by shortcode: 1 named by a product directly, 2 only from inside another section (followed 3 levels down). By post type: 1 elementor_library, 2 rey-global-sections. Elementor widgets they use: heading x3, icon-list x1, image x1, image-box x2, shortcode x2, text-editor x3. They name 4 pictures by address inside `elementor_data`; media.csv does not list them, so they have to be fetched from the old site before it is switched off.",
+        "A SHORTCODE NAMES A SECTION THAT DOES NOT EXIST on this site, so nothing could be exported for it: id 88888 (named by section 18160); id 99999 (named by product 4022). There is nothing for the new shop to draw in its place: the shortcode stays as text in the description until it is removed or pointed at a section that exists.",
+        "Sections nested more than 3 levels below a product are NOT in content_blocks.csv: id 18162 (inside section 18161).",
+        "Shortcodes INSIDE the exported sections that this export does not resolve: [elementor-template] in section 18161.",
+        "1 coupon is not published (draft, pending or trashed) and NOT in coupons.csv. The shop has no status column for a coupon, so importing one would turn a code the owner had withdrawn back into a live discount; CouponImporter refuses them for that reason and this export does not offer them.",
+        "customers.csv carries EVERY WordPress user, not only the ones with the customer role (1 administrator, 2 customer). A shopper whose role was changed, or an administrator who has ordered, would otherwise be left out and OrderImporter would synthesise a second, guest customer row for the same person.",
+        "1 review had a comment_type that was not 'review' (WooCommerce before 3.0 left it empty) and it was written as 'review' in the export. Each is a comment on a product post carrying a star rating, which is the definition of a product review; left as it was, ReviewImporter would have refused every one of them.",
+        "1 comment on products carries no star rating and is NOT in reviews.csv -- these are customer questions, not reviews. ReviewImporter refuses a rating-less row rather than defaulting it to five stars, so exporting them would only produce refusals. The shop has nowhere to put a product question, so this is a real loss and it is named here rather than left silent.",
+        "Review photographs were read from 3 comment meta key(s): `cr_photos`, `reviews-images`, `rp_photo_paths`. They are in reviews.csv's `images` column, pipe-separated, they land in `reviews.images`, and every one of them is also a row in media.csv so the new shop fetches the FILE before this one is switched off. Recognised by the VALUE being an attachment id this site resolves, an address under its own uploads directory, or a path the uploads directory actually holds -- not by the key being one this plugin had heard of.",
+        "These comment meta keys are on reviews and are NOT in reviews.csv: `imported_avatar`, `rp_missing`, `wc_review_helpful`. Every one of them was checked against this site rather than against a list of plugin names: an attachment id it resolves, an address under its own uploads directory, and a path -- bare filename, uploads-relative or root-relative -- that the uploads directory actually holds. None of these keys answered to any of those, so they are a plugin's bookkeeping rather than pictures. They are named here because the alternative is an export that quietly carried nothing.",
+        "posts.csv does not carry these WordPress post types, which are either another file's job or WordPress's own machinery: 6 attachment. `attachment` in that list is the whole media library; media.csv carries the attachments the catalogue actually references, which is a smaller set and the one the new shop has to fetch.",
+        "THE NAVIGATION IS IN THIS EXPORT: 7 menu items across 1 menu, in menus.csv and menu_items.csv. Each item names what it points at by its WordPress id, and the new shop resolves that id against what it imported -- so run the navigation AFTER the catalogue and the articles, or the items that point at them cannot be placed. An imported menu arrives switched OFF on the new shop and does not replace a menu already there; it is switched on from Store -> Modules -> Mega Menu. 1 further nav_menu_item row belongs to no menu at all and is not exported: WordPress does not render it either.",
+        "4 previous addresses (`_wp_old_slug`) are in permalinks.csv with status `old-slug`. WordPress core answers these with a 301 on every front-end 404 (wp_old_slug_redirect), which is why they still work today and why nobody has noticed them. That is a WordPress feature and it stops when WordPress does: without these rows every one of these addresses 404s on the new shop, and the list cannot be recovered afterwards because it only ever existed in the old database.",
+        "This site's permalink settings, which produced every address in permalinks.csv: WordPress structure \"/%postname%/\"; WooCommerce product base \"/product\", category base \"\", tag base \"product-tag\", attribute base \"\". The category base is EMPTY, which means product category archives were served flat at the site root -- /toners/, not /product-category/toners/. That is the shape App\\Support\\LegacyCategoryUrls describes and this export confirms it from the setting itself rather than from the navigation menu."
+    ]
+}

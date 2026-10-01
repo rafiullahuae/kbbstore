@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Import;
 
+use App\Models\Block;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Product;
@@ -124,6 +125,17 @@ final class DocumentMediaRewrite
          */
         [Product::class, 'products', 'description'],
         [Product::class, 'products', 'short_description'],
+
+        /*
+         * AN IMPORTED CONTENT BLOCK IS A DOCUMENT (Lane PJ-B). A Rey Global
+         * Section's Elementor image-boxes arrive from content_blocks.csv with
+         * full URLs on the old site, and the block is printed in the
+         * Description tab of every product that names it. Its door is
+         * ContentBlockImporter, which writes nothing that has not been through
+         * RichText::clean() -- so the srcset argument below holds here too.
+         * MediaAudit reads the same column; the two are changed together.
+         */
+        [Block::class, 'blocks', 'content'],
     ];
 
     /**

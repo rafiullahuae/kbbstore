@@ -7,6 +7,7 @@ namespace App\Services\Import;
 use App\Services\Import\Entities\AttributeImporter;
 use App\Services\Import\Entities\BrandImporter;
 use App\Services\Import\Entities\CategoryImporter;
+use App\Services\Import\Entities\ContentBlockImporter;
 use App\Services\Import\Entities\CouponImporter;
 use App\Services\Import\Entities\CustomerImporter;
 use App\Services\Import\Entities\EntityImporter;
@@ -201,6 +202,18 @@ final class ImportRunner
              */
             new MenuImporter,
             new MenuItemImporter,
+            /*
+             * THE OLD SHOP'S REY GLOBAL SECTIONS (Lane PJ-B), LAST, and that is
+             * not a dependency in either direction. A section references
+             * nothing this import writes, and nothing here reads one: a
+             * product's `[rey_global_section id=N]` is resolved against
+             * `blocks.wc_id` when the page is drawn, not at import, so the two
+             * can arrive in either order and in separate runs. Last because
+             * this list is the order the owner's browser walks, and a product
+             * page with a shortcode where its ingredients block will go is a
+             * smaller loss than a shop with no products.
+             */
+            new ContentBlockImporter,
         ];
     }
 

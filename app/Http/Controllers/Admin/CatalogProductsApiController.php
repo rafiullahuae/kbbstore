@@ -1238,6 +1238,8 @@ class CatalogProductsApiController extends Controller
                 'products.created_at',
                 'products.updated_at',
                 'products.deleted_at',
+                // (Lane PK) For `live` on each row -- see rowToApi().
+                'products.published_at',
                 DB::raw('b.name as brand_name'),
             ]);
     }
@@ -1897,6 +1899,18 @@ class CatalogProductsApiController extends Controller
             'rating' => (float) $p->rating,
             'position' => (int) $p->position,
             'trashed' => $p->deleted_at !== null,
+            /*
+             * THE ROW'S "VISIT" LINK. (Lane PK)
+             *
+             * `url` is Product::url() -- Url::to(), so KBB_BASE_PATH is the
+             * shop's own prefix and nothing on the screen assembles a path.
+             * `live` is whether that address answers today: the in-memory twin
+             * of the product page's own visible() scope, and false for a row in
+             * the trash. The screen draws "Not live yet" rather than linking a
+             * 404 when it is false.
+             */
+            'url' => $p instanceof Product ? $p->url() : null,
+            'live' => $p->deleted_at === null && \App\Support\ProductVisibility::isLive($p),
             'created_at' => $this->iso($p->created_at),
             'updated_at' => $this->iso($p->updated_at),
             // What the old screen printed. Kept because a shop owner reads

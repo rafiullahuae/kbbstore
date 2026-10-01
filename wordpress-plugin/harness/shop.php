@@ -81,6 +81,7 @@ function kbb_harness_schema( PDO $pdo, $p ) {
 			comment_status VARCHAR(20) NOT NULL DEFAULT 'open',
 			post_name VARCHAR(200) NOT NULL DEFAULT '',
 			post_modified DATETIME NOT NULL DEFAULT '1970-01-02 00:00:00',
+			post_modified_gmt DATETIME NOT NULL DEFAULT '1970-01-02 00:00:00',
 			post_parent BIGINT UNSIGNED NOT NULL DEFAULT 0,
 			menu_order INT NOT NULL DEFAULT 0,
 			post_type VARCHAR(20) NOT NULL DEFAULT 'post',
@@ -1207,4 +1208,223 @@ function kbb_harness_dream_reviews( PDO $pdo, $p, $seed ) {
 	foreach ( $rows as $row ) {
 		$stmt->execute( $row );
 	}
+}
+
+/**
+ * THE OWNER'S REY GLOBAL SECTIONS, seeded only with run-export.php --rey=1.
+ * (Lane PJ-A, plugin 1.10.0)
+ *
+ * On kbeautybliss.com many product descriptions end with
+ * `[rey_global_section id="18159"]`, and that line renders a designed block --
+ * "Gentle Yet Effective Ingredients" over three pictures with QUERCETINOL /
+ * ANTI-SEBUM P / 0.5% BHA under them. The block is its own post, built in
+ * Elementor: the layout is post meta `_elementor_data`, a JSON tree in
+ * Elementor's real shape (elType section / column / container / widget,
+ * widgetType heading / image-box / image / text-editor / icon-list /
+ * shortcode), stored the way wp_json_encode() writes it -- slashes escaped --
+ * with Elementor's plain-HTML fallback in post_content.
+ *
+ * Behind a flag, the way --dream=1 is, so the checked-in fixture stays exactly
+ * what it was and only content_blocks.csv's header is new in it.
+ *
+ *   18159  rey-global-sections  the ingredients block. Named by product 4021
+ *          in its SHORT description only (`class=.. id='18159'`) and by 4022
+ *          in its description (`title=.. id=18159`, unquoted). Embeds 18160 by
+ *          shortcode widget.
+ *   18160  rey-global-sections  "How To Use", built with flexbox CONTAINERS and
+ *          an icon list. Embeds 18161, and 88888, which does not exist.
+ *   18161  elementor_library    an Elementor template -- not Rey's type, and
+ *          exported anyway, because the shortcode selects by id. Third level:
+ *          embeds 18162 (a fourth level, not followed) and 18159 (a cycle),
+ *          and an [elementor-template] nothing resolves.
+ *   18162  rey-global-sections  plain post_content and no Elementor data.
+ *          Reachable only below the depth limit, and by an ESCAPED
+ *          `[[rey_global_section id="18162"]]` in 4023's short description,
+ *          which WordPress prints literally.
+ *   18170  rey-global-sections  named only by 4024, which is in the trash.
+ *   99999  named by 4022 and not a post at all.
+ *
+ *   4025   carries the shortcodes nothing resolves, for the census: a
+ *          [caption], an [elementor-template] and "[Limited edition]", which is
+ *          text in brackets and no shortcode.
+ */
+function kbb_harness_rey_sections( PDO $pdo, $p, $seed ) {
+	if ( ! $seed ) {
+		return;
+	}
+
+	$uploads = 'https://kbeautybliss.com/wp-content/uploads';
+
+	$image = function ( $file, $id ) use ( $uploads ) {
+		return array( 'url' => $uploads . '/' . $file, 'id' => $id, 'size' => '', 'alt' => '', 'source' => 'library' );
+	};
+
+	$widget = function ( $id, $type, array $settings ) {
+		return array( 'id' => $id, 'elType' => 'widget', 'settings' => $settings, 'elements' => array(), 'widgetType' => $type );
+	};
+
+	$column = function ( $id, $size, array $elements ) {
+		return array(
+			'id' => $id, 'elType' => 'column',
+			'settings' => array( '_column_size' => $size, '_inline_size' => null ),
+			'elements' => $elements, 'isInner' => true,
+		);
+	};
+
+	$ingredients = array(
+		array(
+			'id' => '5e1f0a2', 'elType' => 'section',
+			'settings' => array(
+				'gap' => 'no', 'background_background' => 'classic',
+				'background_image' => $image( '2023/06/ingredients-bg.jpg', 18205 ),
+			),
+			'elements' => array(
+				array(
+					'id' => '2c7d9b1', 'elType' => 'column',
+					'settings' => array( '_column_size' => 100, '_inline_size' => null ),
+					'elements' => array(
+						$widget( '9a4e3f0', 'heading', array(
+							'title' => 'Gentle Yet Effective Ingredients', 'header_size' => 'h2', 'align' => 'center',
+						) ),
+						array(
+							'id' => 'b81c6d2', 'elType' => 'section', 'settings' => array( 'structure' => '30' ),
+							'elements' => array(
+								$column( 'c11a001', 33, array(
+									$widget( 'e21b001', 'image-box', array(
+										'image' => $image( '2023/06/quercetinol.png', 18201 ),
+										'title_text' => 'QUERCETINOL',
+										'description_text' => 'A plant antioxidant that calms redness and protects the skin barrier.',
+										'title_size' => 'h4', 'position' => 'top',
+									) ),
+								) ),
+								$column( 'c11a002', 33, array(
+									$widget( 'e21b002', 'image-box', array(
+										'image' => $image( '2023/06/anti-sebum-p.png', 18202 ),
+										'title_text' => 'ANTI-SEBUM P',
+										'description_text' => 'Controls excess oil so pores stay clear through the day.',
+										'title_size' => 'h4', 'position' => 'top',
+									) ),
+								) ),
+								$column( 'c11a003', 33, array(
+									$widget( 'e21b003', 'image', array(
+										'image' => $image( '2023/06/bha.png', 18203 ), 'image_size' => 'medium',
+									) ),
+									$widget( 'e21b004', 'heading', array( 'title' => '0.5% BHA', 'header_size' => 'h4' ) ),
+									$widget( 'e21b005', 'text-editor', array(
+										'editor' => '<p>Gently exfoliates inside the pore without stripping.</p>',
+									) ),
+								) ),
+							),
+							'isInner' => true,
+						),
+						$widget( 'd3f7a10', 'shortcode', array( 'shortcode' => '[rey_global_section id="18160"]' ) ),
+					),
+					'isInner' => false,
+				),
+			),
+			'isInner' => false,
+		),
+	);
+
+	$how_to = array(
+		array(
+			'id' => '4b2a8e6', 'elType' => 'container',
+			'settings' => array( 'content_width' => 'boxed', 'flex_direction' => 'column' ),
+			'elements' => array(
+				$widget( '7c1d2e3', 'heading', array( 'title' => 'How To Use', 'header_size' => 'h3' ) ),
+				array(
+					'id' => '8d2e3f4', 'elType' => 'container',
+					'settings' => array( 'flex_direction' => 'row' ),
+					'elements' => array(
+						$widget( '9e3f4a5', 'icon-list', array(
+							'icon_list' => array(
+								array( 'text' => 'Massage onto damp skin', 'selected_icon' => array( 'value' => 'fas fa-check', 'library' => 'fa-solid' ), '_id' => 'a1b2c3d' ),
+								array( 'text' => 'Rinse with lukewarm water', 'selected_icon' => array( 'value' => 'fas fa-check', 'library' => 'fa-solid' ), '_id' => 'b2c3d4e' ),
+							),
+						) ),
+					),
+					'isInner' => true,
+				),
+				$widget( 'af4a5b6', 'text-editor', array(
+					'editor' => "<p>Finish with the toner.</p>[rey_global_section id='18161'][rey_global_section id=\"88888\"]",
+				) ),
+			),
+			'isInner' => false,
+		),
+	);
+
+	$tip = array(
+		array(
+			'id' => '1a2b3c4', 'elType' => 'container', 'settings' => array( 'content_width' => 'full' ),
+			'elements' => array(
+				$widget( '2b3c4d5', 'text-editor', array(
+					'editor' => '<p>Routine tip: patch test first.</p>[rey_global_section id=18162][elementor-template id="555"]',
+				) ),
+				$widget( '3c4d5e6', 'shortcode', array( 'shortcode' => '[rey_global_section id="18159"]' ) ),
+			),
+			'isInner' => false,
+		),
+	);
+
+	$sections = array(
+		array( 18159, 'rey-global-sections', 'ingredients-quercetinol', 'Gentle Yet Effective Ingredients', 'publish',
+			"<h2>Gentle Yet Effective Ingredients</h2>\n"
+			. '<figure><img src="' . $uploads . '/2023/06/quercetinol.png" alt="" /></figure><h4>QUERCETINOL</h4>'
+			. "<p>A plant antioxidant that calms redness and protects the skin barrier.</p>\n"
+			. '<figure><img src="' . $uploads . '/2023/06/anti-sebum-p.png" alt="" /></figure><h4>ANTI-SEBUM P</h4>'
+			. "<p>Controls excess oil so pores stay clear through the day.</p>\n"
+			. '<img src="' . $uploads . '/2023/06/bha.png" alt="" /><h4>0.5% BHA</h4>'
+			. "<p>Gently exfoliates inside the pore without stripping.</p>\n"
+			. '[rey_global_section id="18160"]',
+			$ingredients ),
+		array( 18160, 'rey-global-sections', 'how-to-use-cleanser', 'How To Use', 'publish',
+			"<h3>How To Use</h3>\n<ul><li>Massage onto damp skin</li><li>Rinse with lukewarm water</li></ul>\n"
+			. "<p>Finish with the toner.</p>[rey_global_section id='18161'][rey_global_section id=\"88888\"]",
+			$how_to ),
+		array( 18161, 'elementor_library', 'routine-tip', 'Routine Tip', 'publish',
+			'<p>Routine tip: patch test first.</p>[rey_global_section id=18162][elementor-template id="555"]'
+			. "\n" . '[rey_global_section id="18159"]',
+			$tip ),
+		array( 18162, 'rey-global-sections', 'too-deep', 'Too Deep', 'publish', '<p>Four levels down.</p>', null ),
+		array( 18170, 'rey-global-sections', 'trashed-only', 'Only The Trash Uses This', 'publish', '<p>Only a trashed product names me.</p>', null ),
+	);
+
+	$post = $pdo->prepare(
+		'INSERT INTO `' . $p . 'posts` (ID, post_author, post_type, post_status, post_title, post_name, post_content,
+			post_excerpt, post_date, post_date_gmt, post_modified, post_modified_gmt)
+		 VALUES (?, 1, ?, ?, ?, ?, ?, \'\', \'2023-06-01 12:00:00\', \'2023-06-01 08:00:00\', \'2024-02-03 13:14:15\', \'2024-02-03 09:14:15\')'
+	);
+
+	$meta = $pdo->prepare( 'INSERT INTO `' . $p . 'postmeta` (post_id, meta_key, meta_value) VALUES (?, ?, ?)' );
+
+	foreach ( $sections as $section ) {
+		list( $id, $type, $slug, $title, $status, $html, $tree ) = $section;
+
+		$post->execute( array( $id, $type, $status, $title, $slug, $html ) );
+
+		if ( null !== $tree ) {
+			// json_encode() with no flags is what wp_json_encode() writes: `\/`
+			// in every address and `\"` around every attribute.
+			$meta->execute( array( $id, '_elementor_data', json_encode( $tree ) ) );
+			$meta->execute( array( $id, '_elementor_edit_mode', 'builder' ) );
+			$meta->execute( array( $id, '_elementor_version', '3.21.5' ) );
+		}
+	}
+
+	$append = $pdo->prepare(
+		'UPDATE `' . $p . 'posts` SET post_content = CONCAT(post_content, ?), post_excerpt = CONCAT(post_excerpt, ?) WHERE ID = ?'
+	);
+
+	// 4021 names it in the SHORT description only, so a read of post_content
+	// alone cannot find this product.
+	$append->execute( array( '', " [rey_global_section class=\"mt-0\" id='18159']", 4021 ) );
+	$append->execute( array( ' [rey_global_section title="Ingredients" id=18159] [rey_global_section id="99999"]', '', 4022 ) );
+	$append->execute( array( '', ' Write [[rey_global_section id="18162"]] to embed a section.', 4023 ) );
+	$append->execute( array( ' [rey_global_section id="18170"]', '', 4024 ) );
+	$append->execute( array(
+		' [caption id="attachment_9001" align="alignnone" width="300"]<img src="' . $uploads . '/2019/03/ginseng-serum.jpg" alt="" /> Serum[/caption]'
+			. ' <p>[Limited edition] while stocks last.</p> [elementor-template id="555"]',
+		'',
+		4025,
+	) );
 }
