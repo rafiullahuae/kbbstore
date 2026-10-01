@@ -3,6 +3,45 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.339
+**Remove everything that did not come from WordPress, from one screen.** Apply
+after .338, **before** you import.
+
+---
+
+You asked to remove all the products, categories, brands and the rest, and to
+keep your pages, menus, banners and videos.
+
+**Store → Import → Clean up before the migration** now lists, with names and
+counts, before anything is removed:
+
+| | on your shop now |
+|---|---|
+| Test orders (#10004, #10006) | 2 |
+| Demo products + every other product not from WooCommerce | 25 |
+| Categories not from WordPress | 6 |
+| Brands not from WordPress | 8 |
+| Reviews not from WordPress | 58 |
+| Customers not from WordPress | 3 |
+
+Tick what you want gone, type **DELETE**, press the button. If anything changed
+since the list was drawn, it refuses and removes nothing.
+
+**Never listed, never touched:** your pages, menus, homepage banners, videos,
+and anything imported from WooCommerce or WordPress -- including a product that
+a real imported order bought.
+
+Your menus link by web address, so menu entries like *Toners* work again the
+moment the import brings your real Toners category.
+
+Also fixed before it could reach you: on MySQL -- your server's database -- the
+product delete would have failed with error 1093 and removed nothing. Caught by
+running the test on MySQL, not SQLite.
+
+Files: `app/Services/Maintenance/PreMigrationCleanup.php`,
+`resources/views/admin/cleanup.blade.php`,
+`database/migrations/2027_07_04_000000_clear_caches_cleanup_everything.php`.
+
 ## 2.60.338
 **The import, rehearsed before you run it.** Apply after .337.
 

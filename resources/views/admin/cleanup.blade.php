@@ -74,9 +74,10 @@ button[disabled]{opacity:.5;cursor:not-allowed}
   <div class="card">
     <p class="why" style="margin:0">
       <b>Nothing here is deleted by looking.</b> This page lists what it would remove, with the
-      counts and the sizes. It never touches a product carrying a WooCommerce id, a demo product
-      that has been sold, an order, or a customer. Read the list, tick what you want gone,
-      type DELETE, and press the button.
+      counts and the sizes. It never touches anything imported from WooCommerce or WordPress:
+      a product with a WooCommerce id, a product bought in an imported order, an imported order,
+      customer, category, brand or review. Pages, menus, banners and videos are never listed.
+      Read the list, tick what you want gone, type DELETE, and press the button.
     </p>
   </div>
 
@@ -127,7 +128,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     state.counts = data.counts || {};
     state.buckets = data.buckets || {};
 
-    var order = ['demo_reviews', 'demo_products', 'patch_archives', 'logs'];
+    var order = ['test_orders', 'demo_products', 'other_products', 'placeholder_categories', 'placeholder_brands', 'demo_reviews', 'other_reviews', 'test_customers', 'patch_archives', 'logs'];
     var html = '';
     var anything = false;
 

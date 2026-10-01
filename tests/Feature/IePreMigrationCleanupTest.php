@@ -197,7 +197,15 @@ it('deletes every demo row and not one real one', function () {
         ->and($preview['counts']['demo_reviews'])->toBe(2)
         ->and($preview['buckets']['demo_products']['held_back'])->toBe(1);
 
-    $result = $cleanup->purge(PreMigrationCleanup::BUCKETS, $preview['counts']);
+    /*
+     * ▲ THE FOUR BUCKETS THIS CASE WAS WRITTEN FOR, NAMED, NOT ::BUCKETS. Since
+     * 1 October 2026 the list also holds other_products, other_reviews and the
+     * rest, which remove the hand-typed cleanser and the review written on this
+     * shop ON PURPOSE -- the owner asked for everything not from WordPress to
+     * go. What this case proves is unchanged: the demo buckets touch nothing
+     * real. The wider buckets are pinned by CleanupEverythingNotFromWordPressTest.
+     */
+    $result = $cleanup->purge(['demo_reviews', 'demo_products', 'patch_archives', 'logs'], $preview['counts']);
 
     expect($result['ok'])->toBeTrue()
         ->and($result['removed']['demo_products'])->toBe(3)

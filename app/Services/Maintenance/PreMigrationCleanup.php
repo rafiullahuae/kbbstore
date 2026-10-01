@@ -78,7 +78,41 @@ final class PreMigrationCleanup
      *
      * @var list<string>
      */
-    public const BUCKETS = ['demo_reviews', 'demo_products', 'patch_archives', 'logs'];
+    public const BUCKETS = [
+        'demo_reviews', 'other_reviews',
+        'test_orders',
+        'demo_products', 'other_products',
+        'placeholder_categories', 'placeholder_brands',
+        'test_customers',
+        'patch_archives', 'logs',
+    ];
+
+    /*
+     * ▲ SIX MORE BUCKETS, 1 October 2026, at the owner's instruction: "remove
+     * all the products ... categories, etc etc also", keeping the pages, menus,
+     * banners and videos. His shop held 25 products, 6 categories, 8 brands, 58
+     * reviews, 2 orders and 3 customers that did not come from WordPress, and
+     * the four buckets above reached only 7 of the products -- the demo
+     * catalogue was held back because his two TEST orders had bought it.
+     *
+     * The rule above still holds for every one of them: a row goes only when it
+     * carries the marker a WooCommerce row cannot carry, checked in the DELETE.
+     *
+     *   other_reviews           reviews with no WordPress comment id, not 'demo'
+     *   test_orders             orders.wc_order_id IS NULL
+     *   other_products          products.wc_id IS NULL that demo_products
+     *                           does not take: hand-typed, or sold
+     *   placeholder_categories  categories.source_term_id IS NULL
+     *   placeholder_brands      brands.source_term_id IS NULL
+     *   test_customers          customers.wp_user_id IS NULL with no order
+     *                           that came from WooCommerce
+     *
+     * ORDER: orders before products, so a sold demo product is no longer sold
+     * when demo_products re-evaluates and goes with the rest; customers after
+     * orders, so "has no WooCommerce order" is read once the test orders are
+     * gone. Pages, menus, banners, grids and videos have no bucket and are not
+     * touched -- the import brings none of them, and he asked to keep them.
+     */
 
     /**
      * What is here, what would go, and what is being held back.
@@ -89,12 +123,7 @@ final class PreMigrationCleanup
      */
     public function preview(): array
     {
-        $buckets = [
-            'demo_products' => $this->demoProducts(),
-            'demo_reviews' => $this->demoReviews(),
-            'patch_archives' => $this->patchArchives(),
-            'logs' => $this->logs(),
-        ];
+        $buckets = $this->buckets();
 
         return [
             'buckets' => $buckets,
@@ -119,12 +148,7 @@ final class PreMigrationCleanup
             return ['ok' => false, 'message' => 'Nothing was selected to delete.'];
         }
 
-        $now = $this->countsOf([
-            'demo_products' => $this->demoProducts(),
-            'demo_reviews' => $this->demoReviews(),
-            'patch_archives' => $this->patchArchives(),
-            'logs' => $this->logs(),
-        ]);
+        $now = $this->countsOf($this->buckets());
 
         /*
          * THE STALE-PREVIEW REFUSAL, and it is the guard that makes this
@@ -152,12 +176,283 @@ final class PreMigrationCleanup
             $removed[$key] = match ($key) {
                 'demo_products' => $this->deleteDemoProducts(),
                 'demo_reviews' => $this->deleteDemoReviews(),
+                'other_reviews' => $this->deleteOtherReviews(),
+                'test_orders' => $this->deleteTestOrders(),
+                'other_products' => $this->deleteOtherProducts(),
+                'placeholder_categories' => $this->deletePlaceholders('categories'),
+                'placeholder_brands' => $this->deletePlaceholders('brands'),
+                'test_customers' => $this->deleteTestCustomers(),
                 'patch_archives' => $this->deletePatchArchives(),
                 'logs' => $this->deleteLogs(),
             };
         }
 
         return ['ok' => true, 'removed' => $removed];
+    }
+
+
+    /** Every bucket, keyed, in no particular order -- purge() walks BUCKETS. */
+    private function buckets(): array
+    {
+        return [
+            'demo_products' => $this->demoProducts(),
+            'demo_reviews' => $this->demoReviews(),
+            'other_reviews' => $this->otherReviews(),
+            'test_orders' => $this->testOrders(),
+            'other_products' => $this->otherProducts(),
+            'placeholder_categories' => $this->placeholders('categories', 'Categories that did not come from WordPress'),
+            'placeholder_brands' => $this->placeholders('brands', 'Brands that did not come from WordPress'),
+            'test_customers' => $this->testCustomers(),
+            'patch_archives' => $this->patchArchives(),
+            'logs' => $this->logs(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function emptyBucket(string $label): array
+    {
+        return ['count' => 0, 'bytes' => 0, 'label' => $label, 'samples' => [], 'held_back' => 0, 'protected' => []];
+    }
+
+    /* ------------------------------------------------------- reviews, the rest */
+
+    private function otherReviewQuery(): \Illuminate\Database\Query\Builder
+    {
+        // No WordPress comment id is the marker, as for demo_reviews: a review
+        // that names a comment on the old site came from it, whatever its
+        // `source` says (an earlier import path stamped 'woocommerce').
+        return DB::table('reviews')
+            ->whereNull('source_id')
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhereNotIn('source', ['wp_comment', 'demo']);
+            });
+    }
+
+    private function otherReviews(): array
+    {
+        $label = 'Every other review not imported from WordPress (including any left on this shop)';
+
+        if (! Schema::hasTable('reviews')) {
+            return $this->emptyBucket($label);
+        }
+
+        return [
+            'count' => $this->otherReviewQuery()->count(),
+            'bytes' => 0,
+            'label' => $label,
+            'samples' => $this->otherReviewQuery()->orderBy('id')->limit(5)
+                ->get(['id', 'author_name', 'rating'])
+                ->map(fn ($r) => "#{$r->id} {$r->author_name} — {$r->rating}★")->all(),
+            'held_back' => 0,
+            'protected' => [
+                'reviews carrying a WordPress comment id' => DB::table('reviews')->whereNotNull('source_id')->count(),
+            ],
+        ];
+    }
+
+    private function deleteOtherReviews(): int
+    {
+        return DB::transaction(fn () => $this->otherReviewQuery()->delete());
+    }
+
+    /* ------------------------------------------------------------ test orders */
+
+    private function testOrderQuery(): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('orders')->whereNull('wc_order_id');
+    }
+
+    private function testOrders(): array
+    {
+        $label = 'Orders placed on this shop, not imported from WooCommerce (test orders)';
+
+        if (! Schema::hasTable('orders')) {
+            return $this->emptyBucket($label);
+        }
+
+        return [
+            'count' => $this->testOrderQuery()->count(),
+            'bytes' => 0,
+            'label' => $label,
+            'samples' => $this->testOrderQuery()->orderBy('id')->limit(8)
+                ->get(['id', 'order_number', 'email', 'total'])
+                ->map(fn ($o) => '#'.($o->order_number ?? $o->id).' '.$o->email
+                    .' — AED '.number_format(((int) $o->total) / 100, 2))->all(),
+            'held_back' => 0,
+            'protected' => [
+                'orders imported from WooCommerce' => DB::table('orders')->whereNotNull('wc_order_id')->count(),
+            ],
+        ];
+    }
+
+    /**
+     * Order lines, notes and refunds cascade with the order and payments lose
+     * their link (ON DELETE SET NULL). Four tables hold an order_id with no
+     * foreign key at all, so they are cleared by hand first, or they would be
+     * left pointing at orders that no longer exist.
+     */
+    private function deleteTestOrders(): int
+    {
+        return DB::transaction(function () {
+            $ids = $this->testOrderQuery()->pluck('id')->all();
+
+            if ($ids === []) {
+                return 0;
+            }
+
+            foreach (['coupon_redemptions', 'order_stock_claims', 'reconciliation_findings', 'payments'] as $table) {
+                if (Schema::hasTable($table)) {
+                    DB::table($table)->whereIn('order_id', $ids)->delete();
+                }
+            }
+
+            return $this->testOrderQuery()->whereIn('id', $ids)->delete();
+        });
+    }
+
+    /* --------------------------------------------- products demo_products leaves */
+
+    private function otherProductQuery(): \Illuminate\Database\Query\Builder
+    {
+        $demoIds = $this->demoProductQuery()->select('id');
+
+        return DB::table('products')
+            ->whereNull('wc_id')
+            ->whereNotIn('id', $demoIds)
+            // Sold in a REAL order -- one imported from WooCommerce -- is still
+            // sold, and stays: deleting it would leave that order's line with
+            // no product. Sold only in a test order is not, and the test_orders
+            // bucket takes those orders first.
+            ->whereNotExists(fn ($q) => $this->soldInRealOrder($q));
+    }
+
+    private function soldInRealOrder(\Illuminate\Database\Query\Builder $q): void
+    {
+        $q->select(DB::raw(1))
+            ->from('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereColumn('order_items.product_id', 'products.id')
+            ->whereNotNull('orders.wc_order_id');
+    }
+
+    private function otherProducts(): array
+    {
+        $label = 'Every other product not imported from WooCommerce (typed in here, or sold in a test order)';
+
+        if (! Schema::hasTable('products')) {
+            return $this->emptyBucket($label);
+        }
+
+        return [
+            'count' => $this->otherProductQuery()->count(),
+            'bytes' => 0,
+            'label' => $label,
+            'samples' => $this->otherProductQuery()->orderBy('id')->limit(8)
+                ->get(['id', 'sku', 'name'])->map(fn ($p) => "#{$p->id} ".($p->sku ?: '(no sku)')." — {$p->name}")->all(),
+            'held_back' => $heldBack = DB::table('products')->whereNull('wc_id')
+                ->whereExists(fn ($q) => $this->soldInRealOrder($q))->count(),
+            'protected' => [
+                'products carrying a WooCommerce id (wc_id)' => DB::table('products')->whereNotNull('wc_id')->count(),
+                'products sold in an order imported from WooCommerce, so kept' => $heldBack,
+            ],
+        ];
+    }
+
+    /**
+     * Re-evaluated at delete time. When test_orders went first, the demo
+     * products those orders bought are no longer sold and demo_products has
+     * already taken them, so this takes only what is left.
+     */
+    private function deleteOtherProducts(): int
+    {
+        // Ids first, then the delete: MySQL refuses a DELETE whose own WHERE
+        // selects from the table being deleted (error 1093), which is exactly
+        // what otherProductQuery()'s NOT IN does. SQLite allows it, so only
+        // the -c phpunit-mysql.xml run can say this line is needed.
+        return DB::transaction(function () {
+            $ids = $this->otherProductQuery()->pluck('id')->all();
+
+            return $ids === [] ? 0 : DB::table('products')->whereNull('wc_id')->whereIn('id', $ids)->delete();
+        });
+    }
+
+    /* ------------------------------------------------ placeholder taxonomies */
+
+    private function placeholders(string $table, string $label): array
+    {
+        if (! Schema::hasTable($table)) {
+            return $this->emptyBucket($label);
+        }
+
+        $query = DB::table($table)->whereNull('source_term_id');
+
+        return [
+            'count' => (clone $query)->count(),
+            'bytes' => 0,
+            'label' => $label,
+            'samples' => (clone $query)->orderBy('id')->limit(10)
+                ->get(['id', 'name', 'slug'])->map(fn ($r) => "#{$r->id} {$r->name} (/{$r->slug})")->all(),
+            'held_back' => 0,
+            'protected' => [
+                $table.' imported from WordPress' => DB::table($table)->whereNotNull('source_term_id')->count(),
+            ],
+        ];
+    }
+
+    /**
+     * Products and child categories lose the link (ON DELETE SET NULL);
+     * category_product cascades. Menus link by web address, not by id, so a
+     * menu entry for /collections/toners/ works again the moment the real
+     * Toners arrives with the same address.
+     */
+    private function deletePlaceholders(string $table): int
+    {
+        if (! in_array($table, ['categories', 'brands'], true)) {
+            return 0;
+        }
+
+        return DB::transaction(fn () => DB::table($table)->whereNull('source_term_id')->delete());
+    }
+
+    /* --------------------------------------------------------- test customers */
+
+    private function testCustomerQuery(): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('customers')
+            ->whereNull('wp_user_id')
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('orders')
+                    ->whereColumn('orders.customer_id', 'customers.id')
+                    ->whereNotNull('orders.wc_order_id');
+            });
+    }
+
+    private function testCustomers(): array
+    {
+        $label = 'Customers not imported from WordPress, with no imported order';
+
+        if (! Schema::hasTable('customers')) {
+            return $this->emptyBucket($label);
+        }
+
+        return [
+            'count' => $this->testCustomerQuery()->count(),
+            'bytes' => 0,
+            'label' => $label,
+            'samples' => $this->testCustomerQuery()->orderBy('id')->limit(8)
+                ->get(['id', 'email'])->map(fn ($c) => "#{$c->id} {$c->email}")->all(),
+            'held_back' => 0,
+            'protected' => [
+                'customers imported from WordPress' => DB::table('customers')->whereNotNull('wp_user_id')->count(),
+            ],
+        ];
+    }
+
+    /** Addresses cascade; carts, reviews and coupon redemptions lose the link. */
+    private function deleteTestCustomers(): int
+    {
+        return DB::transaction(fn () => $this->testCustomerQuery()->delete());
     }
 
     /* ------------------------------------------------------------ the buckets */
@@ -214,7 +509,7 @@ final class PreMigrationCleanup
                     ->whereNull('wc_id')->where(function ($q) {
                         $q->whereNull('sku')->orWhere('sku', 'not like', 'DEMO-%');
                     })->count(),
-                'demo products that have been SOLD, so kept' => $heldBack,
+                'demo products sold in an order -- listed under "Every other product" below' => $heldBack,
             ],
         ];
     }
@@ -242,7 +537,7 @@ final class PreMigrationCleanup
                 ->map(fn ($r) => "#{$r->id} {$r->author_name} — {$r->rating}★")->all(),
             'held_back' => 0,
             'protected' => [
-                'reviews from any other source (imported, or written on this shop)' => DB::table('reviews')
+                'reviews from any other source -- written on this shop ones are listed below' => DB::table('reviews')
                     ->where('source', '!=', 'demo')->count(),
                 'reviews carrying a WordPress comment id (source_id)' => DB::table('reviews')
                     ->whereNotNull('source_id')->count(),
