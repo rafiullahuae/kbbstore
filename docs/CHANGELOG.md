@@ -3,6 +3,144 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.336
+**Your product-page preview, your gallery thumbnails, and the migration checked
+end to end.** Apply after .335.
+
+---
+
+### ABOUT .335 AND YOUR SERVER
+
+.335 fixed a database step in .330 that MySQL rejects. **Your shop was not
+affected** — you checked with `migrate:status` and every step reads *Ran*. The
+broken query only runs on a shop that had not yet chosen a homepage banner set,
+and yours had. The fix still matters for any fresh install, which is why it
+shipped.
+
+The real lesson is the one underneath it: the MySQL test run that exists to
+catch exactly this had been broken, so nothing was watching. It works again,
+and switching it back on surfaced three more MySQL-only faults.
+
+### THE PRODUCT PAGE PREVIEW, PHONE AND LAPTOP TOGETHER
+
+`Appearance → Product page` now shows a **live preview beside the controls, on
+every tab** — **laptop (1280) and phone (390) side by side, never a toggle**, both
+always on screen, each with a **Full size ↗** link. It updates as you drag, before
+you save.
+
+It frames **your real product page**, not a mock-up. Proved by measurement:
+
+| moved | laptop frame | phone frame |
+|---|---|---|
+| Product name · phone, 19 → 28px | **unchanged** | **19 → 28px** |
+| Product name · laptop, 30 → 44px | **30 → 44px** | **unchanged** |
+| Space between sections, 34 → 90px | **34 → 90px** | **34 → 90px** |
+
+> **A first attempt that was wrong, and how it was caught.** The panel first
+> framed the five *design drafts* rather than the real page. It looked perfect —
+> two frames with a handsome product page in them — and **29 of your 30 controls
+> moved nothing**, because those drafts are built from entirely separate styling.
+> The screenshots caught it; the code looked fine.
+
+### YOUR GALLERY THUMBNAILS, SO YOU CAN SEE THEM WORK
+
+The strip under the product photograph now shows **five pictures** on every demo
+product — Front, Texture, Ingredients, On skin, Box — and clicking one changes the
+main photograph.
+
+| | phone | desktop |
+|---|---|---|
+| thumbnails | 5, 56 × 56 | 5, 66 × 66 |
+| strip lines up with the photograph | yes | yes |
+| clicking the 4th changes the main picture | yes | yes |
+
+**They are drawn on your server, not shipped in the package** — 23 KB per
+product, 563 KB for the whole catalogue. **They never touch your catalogue
+data.** The first approach put them on the products themselves, and that would
+have pushed 120 placeholder pictures into your Media Library, your image
+sitemap and your Google product data. So they live as files the page tops up
+from, only on demo products with no pictures of their own.
+
+Give a demo product a real photo and the placeholders stand aside. Delete one
+in **Content → Media Library** and it is gone.
+
+### BEFORE YOU MIGRATE FROM WORDPRESS
+
+The whole path was exercised rather than read — the plugin's real code against a
+WordPress-shaped database, then 18 deliberately broken inputs through the importer.
+
+**It behaves well, and its instinct is to refuse rather than guess:** a price
+written `1.234,50` is refused as *ambiguous* instead of being read as one value or
+the other; a review with no rating is refused rather than published as five stars
+nobody gave; a file cut off mid-upload is refused by name with the rows before it
+kept. Money is exact to the fil, dates exact through the Dubai-to-UTC conversion.
+
+**Two things needing your attention before you start:**
+
+1. **Upload size is fine.** Your server accepts 10 MB per request (you checked:
+   `post_max_size = 10M`), and your largest export file is about 2.2 MB.
+2. **Review photographs** are being made to travel with the export properly —
+   that is the next package, not this one.
+
+**Also fixed in the plugin:** WooCommerce 8.2+ was labelling it *"incompatible
+with High-Performance Order Storage"* on the very screen you would check before
+trusting it with your orders — it is compatible, and now says so. And if
+WooCommerce is missing it now tells you at the top of the screen instead of dying
+halfway through a run.
+
+### A CLEAN-UP TOOL, WHICH SHOWS YOU FIRST
+
+**Store → Import → "Clean up before the migration".** It lists what it would
+remove with counts and sizes, and **refuses to run unless those counts still
+match** what it showed you. You have to type DELETE.
+
+It reaches the demo products, demo reviews, the applied update packages (which
+nothing has ever pruned) and old logs. Four guards stand between it and anything
+real — and **a demo product that has actually been bought is held back**, because
+sold is sold.
+
+Proven on a real server: 24 demo products removed; an imported product, a
+hand-typed one and a bought demo product all **survived**; orders, order lines and
+customers untouched.
+
+### THE BRAND NAME IS A LINK, AND THE VAT LINE IS OFF
+
+The brand above the product title now links to that brand's page — which already
+existed, with its own copy, logo and product grid, and is already in your sitemap.
+Your product page was the one place that named a brand and linked nowhere.
+
+**"Inclusive of 5% VAT" is off.** Put it back at **Appearance → Product page →
+Sections → VAT line**.
+
+---
+
+### STILL UNPROVEN — SAID PLAINLY RATHER THAN GLOSSED
+
+Before you move your real shop, these are **not** verified:
+
+- **Nothing has been run against your actual data.** Unknown until your export
+  exists: how many orders carry unusable dates (all refused), whether any product
+  has a duplicate code.
+- **No import was killed mid-run.** The design is right and resuming is covered by
+  tests, but the hard rehearsal was not done.
+- **The pictures were not exercised at all** this round.
+- **A negative product price imports silently.** Found, deliberately not patched
+  at the end of a round.
+- **The plugin has no delivery mechanism** — it has to be zipped and sent by hand,
+  and nothing reminds anyone to do it.
+
+---
+
+## 2.60.335
+**Hotfix, one file.** A database step shipped in .330 used a query MySQL rejects
+(`ERROR 3065`). It only runs on a shop that has not yet chosen a homepage banner
+set, so it did not affect this shop — `migrate:status` reads *Ran* for every step
+— but on a fresh install it would stop the update and strand every step after
+it. Rewritten with `whereExists` instead of `join` + `distinct`, verified on a
+real MySQL 8 server.
+
+---
+
 ## 2.60.334
 **Your homepage, your product-page controls, and the demo tabs.** Apply after .333.
 
